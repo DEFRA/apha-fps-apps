@@ -1,0 +1,15 @@
+﻿@using Apha.FPSApps.Application.Dtos.FPS
+<div>
+	<label>Api Response:</label>
+	<div>
+		@{
+			var list = ViewBag.Weather as List<WeatherForecastDto>;
+		}
+
+		@if (list != null && list.Any())
+		{
+			@string.Join(" | ", list.Select(w =>
+						$"{w.Date} - {w.TemperatureC}C - {w.Summary}"))
+		}
+	</div>
+</div>
