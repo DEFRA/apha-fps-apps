@@ -53,10 +53,10 @@ Image Versions are indicated by **Git tags** in the repository (e.g. `v1.2.3`).
 You can view all available versions directly in the GitHub UI:  
 
 - **Releases page:**  
-  #[https://github.com/DEFRA/apha-vir/releases](https://github.com/DEFRA/apha-vir/releases)
+  #[https://github.com/DEFRA/apha-fps-apps/releases](https://github.com/DEFRA/apha-fps-apps/releases)
 
 - **Tags page:**  
-  #[https://github.com/DEFRA/apha-vir/tags](https://github.com/DEFRA/apha-vir/tags)
+  #[https://github.com/DEFRA/apha-fps-apps/tags](https://github.com/DEFRA/apha-fps-apps/tags)
 
 ---
 
