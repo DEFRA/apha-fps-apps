@@ -1,6 +1,6 @@
 # APHA-FPS-Apps (Suite of FPS Applications)
 
-![Build status](#https://github.com/DEFRA/apha-vir/actions/workflows/dev-ci.yaml/badge.svg)[![Quality Gate Status](#https://sonarcloud.io/api/project_badges/measure?project=DEFRA_apha-vir&metric=alert_status)](#https://sonarcloud.io/dashboard?id=DEFRA_apha-vir)[![Coverage](#https://sonarcloud.io/api/project_badges/measure?project=DEFRA_apha-vir&metric=coverage)](#https://sonarcloud.io/dashboard?id=DEFRA_apha-vir)
+#![Build status](#https://github.com/DEFRA/apha-vir/actions/workflows/dev-ci.yaml/badge.svg)[![Quality Gate Status](#https://sonarcloud.io/api/project_badges/measure?project=DEFRA_apha-vir&metric=alert_status)](#https://sonarcloud.io/dashboard?id=DEFRA_apha-vir)[![Coverage](#https://sonarcloud.io/api/project_badges/measure?project=DEFRA_apha-vir&metric=coverage)](#https://sonarcloud.io/dashboard?id=DEFRA_apha-vir)
 
 **APHA-FPS-Apps** is the codebase for suite of FPS applications, built using ASP.NET Core MVC web and Apis, and hosted on AWS. 
 
