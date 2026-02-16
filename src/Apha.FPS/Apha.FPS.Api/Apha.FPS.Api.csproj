@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+	<PackageReference Include="Microsoft.Identity.Web" Version="3.9.2" />
+	<PackageReference Include="Microsoft.Identity.Web.UI" Version="3.9.2" />
+    <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
+	<PackageReference Include="AWSSDK.CloudWatchLogs" Version="3.7.403.7" />
+    <PackageReference Include="Serilog.Sinks.AwsCloudWatch" Version="4.3.37" />
+	<PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="9.0.9" />
+	<PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+  </ItemGroup>
+
+  <ItemGroup>    
+    <ProjectReference Include="..\..\Apha.Common\Apha.Common.csproj" />    
+    <ProjectReference Include="..\Apha.FPS.Application\Apha.FPS.Application.csproj" />
+    <ProjectReference Include="..\Apha.FPS.DataAccess\Apha.FPS.DataAccess.csproj" />
+  </ItemGroup>
+
+</Project>
