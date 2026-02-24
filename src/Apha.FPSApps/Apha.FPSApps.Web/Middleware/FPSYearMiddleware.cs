@@ -17,8 +17,7 @@ namespace Apha.FPSApps.Web.Middleware
         IFPSYearContext fyContext)
         {
             int year;
-
-            // Priority order
+            
             if (context.Request.Query.TryGetValue("year", out var q))
             {
                 year = int.Parse(q);
@@ -27,15 +26,14 @@ namespace Apha.FPSApps.Web.Middleware
             {
                 year = int.Parse(h);
             }
-            //To find input hidden field value
+            
             else if (context.Request.HasFormContentType &&
                      context.Request.Form.TryGetValue("FPSYear", out var f))
             {
                 year = int.Parse(f);
             }
             else
-            {
-                //year = DateTime.UtcNow.Year;
+            {                
                 year = GetCurrentFPSYear();
             }
 

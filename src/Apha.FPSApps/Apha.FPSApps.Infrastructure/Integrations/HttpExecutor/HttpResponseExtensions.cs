@@ -16,19 +16,15 @@ namespace Apha.FPSApps.Infrastructure.Integrations.HttpExecutor
                 if (apiResponse != null)
                     return apiResponse;
             }
-            catch(Exception e) 
+            catch(Exception) 
             {
-                throw e;
-            }
-
-            //return new ApiResponse<T>.FailureResponse(
-            //    $"HTTP {(int)response.StatusCode}: {response.ReasonPhrase}"
-            //);
+                throw;
+            }            
 
             return new ApiResponse<T>
             {
                 Success = false,
-                Errors = new List<ApiError>{ new ApiError { Code = response.StatusCode.ToString(), Message = response.ReasonPhrase } },
+                Errors = new List<ApiError>{ new ApiError { Code = response.StatusCode.ToString(), Message = response.ReasonPhrase! } },
                 Meta = new ApiMeta
                 {
                     CorrelationId = Guid.NewGuid().ToString(),
