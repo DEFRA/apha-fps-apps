@@ -47,5 +47,11 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                    new ApiMetaDto());
             }
         }
+
+        public async Task<byte[]> ExportWeatherForecast()
+        {
+            return await _http.GetFileAsync(
+                   $"api/weather/Export");
+        }
     }
 }

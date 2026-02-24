@@ -1,4 +1,4 @@
-﻿using Apha.Common.Utilities.Cache;
+﻿using Apha.Common.Utilities.StateManagement;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
@@ -13,8 +13,8 @@ namespace Apha.FPS.Application.Services
     {
         private readonly IWeatherForecastRepository _weatherForecastRepository;
         private readonly IMapper _mapper;
-        private readonly ICacheService _cacheService;
-        public WeatherForecastService(IWeatherForecastRepository weatherForecastRepository, IMapper mapper, ICacheService cacheService)
+        private readonly IAppStateService _cacheService;
+        public WeatherForecastService(IWeatherForecastRepository weatherForecastRepository, IMapper mapper, IAppStateService cacheService)
         {
             _weatherForecastRepository = weatherForecastRepository;
             _mapper = mapper;

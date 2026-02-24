@@ -3,9 +3,9 @@ using Microsoft.Extensions.Caching.Distributed;
 using System.Text.Json;
 
 
-namespace Apha.Common.Utilities.Cache
+namespace Apha.Common.Utilities.StateManagement
 {
-    public class CacheService : ICacheService
+    public class CacheService : IAppStateService
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IDistributedCache _cache;            
@@ -18,6 +18,10 @@ namespace Apha.Common.Utilities.Cache
             _cache = cache;            
         }
 
+        private ISession? Session =>
+        _httpContextAccessor.HttpContext?.Session;
+
+        #region Cache        
         public async Task SetCacheValueAsync<T>(string key, T value, TimeSpan? expiration = null)
         {
             try
@@ -62,5 +66,33 @@ namespace Apha.Common.Utilities.Cache
                 throw;
             }
         }
+
+        #endregion
+
+        #region Session 
+        public Task SetSessionAsync<T>(string key, T value)
+        {
+            if (Session == null) return Task.CompletedTask;
+
+            Session.Set(key, JsonSerializer.SerializeToUtf8Bytes(value));
+            return Task.CompletedTask;
+        }
+
+        public Task<T?> GetSessionAsync<T>(string key)
+        {
+            if (Session == null) return Task.FromResult<T?>(default);
+
+            return Session.TryGetValue(key, out var data)
+                ? Task.FromResult(JsonSerializer.Deserialize<T>(data))
+                : Task.FromResult<T?>(default);
+        }
+
+        public Task RemoveSessionAsync(string key)
+        {
+            Session?.Remove(key);
+            return Task.CompletedTask;
+        }
+
+        #endregion
     }
 }

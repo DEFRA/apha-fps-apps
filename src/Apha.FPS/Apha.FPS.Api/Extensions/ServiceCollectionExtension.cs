@@ -1,4 +1,5 @@
-﻿using Apha.Common.Utilities.Cache;
+﻿using Apha.Common.Utilities.StateManagement;
+using Apha.Common.Utilities.ExcelExport;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Services;
 using Apha.FPS.Core.Interfaces;
@@ -19,7 +20,8 @@ namespace Apha.FPS.Api.Extensions
         {
             // Add your application services here
             services.AddScoped<IWeatherForecastService, WeatherForecastService>();
-            services.AddScoped<ICacheService, CacheService>();
+            services.AddScoped<IAppStateService, CacheService>();
+            services.AddScoped<IExcelExportService, ExcelExportService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)

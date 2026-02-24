@@ -6,7 +6,7 @@ namespace Apha.FPS.Api.Middleware
     public class RequestContextMiddleware
     {
         private readonly RequestDelegate _next;        
-        private const string FpsYearHeader = "X-Financial-Year";
+        private const string FpsYearHeader = "X-FPS-Year";
         private const string CorrelationIdHeader = "X-Correlation-ID";
 
         public RequestContextMiddleware(
@@ -34,9 +34,7 @@ namespace Apha.FPS.Api.Middleware
             if (!context.Request.Headers.TryGetValue(FpsYearHeader, out var header)
                             || !int.TryParse(header, out int fpsYear))
             {
-                //throw new ArgumentException($"Required request header '{FpsYearHeader}' is missing or empty.");
-                fpsYear = DateTime.Now.Year;
-                context.Request.Headers[FpsYearHeader] = DateTime.Now.Year.ToString();
+                throw new ArgumentException($"Required request header '{FpsYearHeader}' is missing or empty.");               
             }
 
             SetCorrelationId(context, CorrelationIdHeader);

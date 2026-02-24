@@ -1,4 +1,7 @@
-﻿<!DOCTYPE html>
+﻿@using Apha.FPSApps.Web.Handler
+@inject IFPSYearContext Fy
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -25,6 +28,17 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                         </li>
+                        <li>
+                            <div class="d-flex align-items-center gap-2">
+                                <label class="fw-bold">Year</label>                               
+                                <select id="yearSelector" class="form-control">
+                                    <option value="2023">2023-2024</option>
+                                    <option value="2024">2024-2025</option>
+                                    <option value="2025">2025-2026</option>
+                                    <option value="2026">2026-2027</option>
+                                </select>
+                            </div>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -44,6 +58,15 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <fps-year-script></fps-year-script>
+    <script>
+        let selectedYear = @Fy.Year
+        $('#yearSelector').val(selectedYear);
+        $('#yearSelector').change(function () {
+            selectedYear = this.value;
+            window.location.href = '/Home/Index?year=' + selectedYear;
+        });
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
