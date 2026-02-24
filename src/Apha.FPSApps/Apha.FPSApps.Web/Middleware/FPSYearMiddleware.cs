@@ -1,0 +1,58 @@
+﻿using Apha.FPSApps.Web.Handler;
+
+namespace Apha.FPSApps.Web.Middleware
+{
+    public class FPSYearMiddleware
+    {
+        private readonly RequestDelegate _next;
+
+
+        public FPSYearMiddleware(RequestDelegate next)
+        {
+            _next = next;
+        }
+
+        public async Task Invoke(
+        HttpContext context,
+        IFPSYearContext fyContext)
+        {
+            int year;
+
+            // Priority order
+            if (context.Request.Query.TryGetValue("year", out var q))
+            {
+                year = int.Parse(q);
+            }
+            else if (context.Request.Headers.TryGetValue("X-FPS-Year", out var h))
+            {
+                year = int.Parse(h);
+            }
+            //To find input hidden field value
+            else if (context.Request.HasFormContentType &&
+                     context.Request.Form.TryGetValue("FPSYear", out var f))
+            {
+                year = int.Parse(f);
+            }
+            else
+            {
+                //year = DateTime.UtcNow.Year;
+                year = GetCurrentFPSYear();
+            }
+
+            fyContext.Year = year;
+            context.Items["SelectedFPSYear"] = year;
+
+            await _next(context);
+        }
+
+        private int GetCurrentFPSYear()
+        {
+            var today = DateTime.Today;
+
+            if (today.Month >= 4)   // April to Dec
+                return today.Year;
+            else                    // Jan to March
+                return today.Year - 1;
+        }
+    }
+}

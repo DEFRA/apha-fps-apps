@@ -16,6 +16,13 @@ namespace Apha.FPSApps.Infrastructure.Integrations.HttpExecutor
             return await response.ToApiResponse<T>();
         }
 
+        public async Task<byte[]> GetFileAsync(string url)
+        {
+            var response = await _http.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadAsByteArrayAsync();
+        }
+
         public async Task<ApiResponse<T>> PostAsync<TRequest, T>(
             string url,
             TRequest body)

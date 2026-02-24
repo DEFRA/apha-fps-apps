@@ -16,7 +16,8 @@ namespace Apha.FPSApps.Web.Extensions
         {
             // Add your application services here
             services.AddScoped<IWeatherForecastService, WeatherForecastService>();
-            services.AddTransient<FinancialYearHeaderHandler>();
+            services.AddTransient<RequestHeadersHandler>();
+            services.AddScoped<IFPSYearContext, FPSYearContext>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)

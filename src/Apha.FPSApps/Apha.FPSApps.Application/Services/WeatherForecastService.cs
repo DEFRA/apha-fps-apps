@@ -19,5 +19,11 @@ namespace Apha.FPSApps.Application.Services
             var response = _fpsClient.FpsWeatherForecast.GetWeatherForecast();
             return response;
         }
+
+        public Task<byte[]> ExportWeatherForecast()
+        {
+            var response = _fpsClient.FpsWeatherForecast.ExportWeatherForecast();
+            return response;
+        }
     }
 }

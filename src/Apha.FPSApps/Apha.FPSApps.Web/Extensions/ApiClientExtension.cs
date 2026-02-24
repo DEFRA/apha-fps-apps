@@ -22,7 +22,7 @@ namespace Apha.FPSApps.Web.Extensions
                     configuration["FPSApiSettings:BaseUrl"]
                         ?? throw new InvalidOperationException("FPS base URL not configured"));                                
                 client.DefaultRequestHeaders.Add("Accept", "application/json");
-            }).AddHttpMessageHandler<FinancialYearHeaderHandler>(); 
+            }).AddHttpMessageHandler<RequestHeadersHandler>(); 
 
 
             services.AddScoped<IFpsHttpExecutor>(sp =>
@@ -39,7 +39,7 @@ namespace Apha.FPSApps.Web.Extensions
                 client.BaseAddress = new Uri(configuration["PACTApiSettings:BaseUrl"]
                     ?? throw new InvalidOperationException("PACT base URL not configured"));
                 client.DefaultRequestHeaders.Add("Accept", "application/json");
-            }).AddHttpMessageHandler<FinancialYearHeaderHandler>();
+            }).AddHttpMessageHandler<RequestHeadersHandler>();
 
             services.AddScoped<IPactHttpExecutor>(sp =>
             {
@@ -55,7 +55,7 @@ namespace Apha.FPSApps.Web.Extensions
                 client.BaseAddress = new Uri(configuration["PIMSApiSettings:BaseUrl"]
                     ?? throw new InvalidOperationException("PIMS base URL not configured"));
                 client.DefaultRequestHeaders.Add("Accept", "application/json");
-            }).AddHttpMessageHandler<FinancialYearHeaderHandler>();
+            }).AddHttpMessageHandler<RequestHeadersHandler>();
 
             services.AddScoped<IPimsHttpExecutor>(sp =>
             {
@@ -71,7 +71,7 @@ namespace Apha.FPSApps.Web.Extensions
                 client.BaseAddress = new Uri(configuration["CostBookApiSettings:BaseUrl"]
                     ?? throw new InvalidOperationException("CostBook base URL not configured"));
                 client.DefaultRequestHeaders.Add("Accept", "application/json");
-            }).AddHttpMessageHandler<FinancialYearHeaderHandler>();
+            }).AddHttpMessageHandler<RequestHeadersHandler>();
 
             services.AddScoped<ICostBookHttpExecutor>(sp =>
             {

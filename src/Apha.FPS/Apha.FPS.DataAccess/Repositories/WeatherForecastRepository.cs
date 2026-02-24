@@ -20,8 +20,10 @@ namespace Apha.FPS.DataAccess.Repositories
             };
 
         public async Task<IEnumerable<WeatherForecast>> Get()
-        {            
-            return await GetWeatherForecasts();                    
+        {
+            int selectedYear = Convert.ToInt32(_yearContext.Year);
+            var wetherData = await GetWeatherForecasts();           
+            return wetherData.Where(e => e.Date.Year == selectedYear).ToList();
         }
 
         public async Task<PagedData<WeatherForecast>> SearchWeather(PaginationParameters<object> query)

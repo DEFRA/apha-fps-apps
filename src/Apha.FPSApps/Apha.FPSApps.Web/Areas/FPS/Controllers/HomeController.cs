@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 {
-    [Area("FPS")]    
+    [Area("FPS")]
     public class HomeController : Controller
     {
         private readonly IWeatherForecastService _weatherForecastService;
@@ -20,8 +20,14 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             {
                 ViewBag.Weather = response.Data;
             }
-            
+
             return View();
+        }
+       
+        public async Task<IActionResult> ExportToExcel()
+        {
+            var fileContent = await _weatherForecastService.ExportWeatherForecast();
+            return File(fileContent, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "WeatherForecast.xlsx");
         }
     }
 }

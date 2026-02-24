@@ -1,5 +1,6 @@
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
+using Apha.Common.Utilities.ExcelExport;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
@@ -16,6 +17,7 @@ namespace Apha.FPS.Api.Controllers
     public class WeatherForecastController : ControllerBase
     {
         private readonly IWeatherForecastService _weatherForecastService;
+        private readonly IExcelExportService _excelService;
         private readonly IMapper _mapper;
 
         /// <summary>
@@ -25,9 +27,11 @@ namespace Apha.FPS.Api.Controllers
         /// <param name="mapper">Mapper for DTO conversions.</param>
         public WeatherForecastController(
                         IWeatherForecastService weatherForecastService,
+                         IExcelExportService excelService,
                         IMapper mapper)
         {
             _weatherForecastService = weatherForecastService;
+            _excelService = excelService;
             _mapper = mapper;
         }
 
@@ -72,6 +76,22 @@ namespace Apha.FPS.Api.Controllers
             var filter = _mapper.Map<QueryParameters<WeatherForecastCriteriaDto>>(query);
             var forecasts = await _weatherForecastService.SearchWeatherByModel(filter);
             return Ok(_mapper.Map<PaginationRes<WeatherForecastRes>>(forecasts));
+        }
+
+        /// <summary>
+        ///     Exports weather forecasts to an Excel file.
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="KeyNotFoundException"></exception>
+        [HttpGet("Export")]
+        public async Task<IActionResult> ExportToExcelAsync()
+        {
+            var forecasts = await _weatherForecastService.Get();
+            if (!forecasts.Any())
+                throw new KeyNotFoundException("DEFAULT_WEATHER data not found.");
+            var result = _mapper.Map<IEnumerable<WeatherForecastRes>>(forecasts);
+            var excelData = _excelService.ExportToExcel(result);
+            return File(excelData, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "WeatherForecasts.xlsx");
         }
     }
 }

@@ -92,6 +92,7 @@ namespace Apha.FPSApps.Web.Extensions
 
             app.UseSession();
             app.UseMiddleware<ExceptionMiddleware>();
+            app.UseMiddleware<FPSYearMiddleware>();
 
             app.UseAuthentication();
             app.UseAuthorization();
