@@ -36,14 +36,7 @@ namespace Apha.FPSApps.Web.Extensions
             var currentTime = DateTime.UtcNow;
             var userName = identity.Name! ?? string.Empty;
             var userroles = identity.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
-
-            //bool hasMatchingRole = userroles.Any(role => AuthorisationUtil.AppRoles.Contains(role, StringComparer.OrdinalIgnoreCase));
-
-            //if (!hasMatchingRole)
-            //{
-            //    var msg = $"Unauthorized access attempt by user {userName}. He is not a member of any of the application groups.";
-            //    throw new UnauthorizedAccessException(msg);
-            //}
+           
             var logger = context.HttpContext.RequestServices
                 .GetRequiredService<ILoggerFactory>()
                 .CreateLogger("AuthenticationExtension");
