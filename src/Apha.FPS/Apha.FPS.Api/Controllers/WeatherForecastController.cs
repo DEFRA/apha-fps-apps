@@ -5,6 +5,7 @@ using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Apha.FPS.Api.Controllers
@@ -13,6 +14,8 @@ namespace Apha.FPS.Api.Controllers
     /// Controller for managing weather forecast operations.
     /// </summary>
     [ApiController]
+    //[Authorize]
+    [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]    
     [Route("api/weather")]
     public class WeatherForecastController : ControllerBase
     {
@@ -44,7 +47,7 @@ namespace Apha.FPS.Api.Controllers
         {
             var forecasts = await _weatherForecastService.Get();
             if (!forecasts.Any())
-                throw new KeyNotFoundException("DEFAULT_WEATHER data not found.");
+                throw new  KeyNotFoundException("DEFAULT_WEATHER data not found.");
 
             var result = _mapper.Map<IEnumerable<WeatherForecastRes>>(forecasts);
             return Ok(result);
