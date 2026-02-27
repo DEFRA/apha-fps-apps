@@ -1,0 +1,33 @@
+﻿namespace Apha.FPSApps.Web.Models.Components.DataGrid
+{
+    public class DataGridConfig<T> where T : class
+    {
+        public string GridId { get; set; }
+        public string Title { get; set; }
+        public List<DataGridColumn> Columns { get; set; }
+        public List<T> Data { get; set; }
+        public bool ShowCheckboxColumn { get; set; }
+        public bool ShowPagination { get; set; }
+        public string KeyProperty { get; set; }
+        public bool AllowAdd { get; set; }
+        public bool AllowDelete { get; set; }
+        public string AddUrl { get; set; }
+        public string UpdateUrl { get; set; }
+        public string DeleteUrl { get; set; }
+        public string BindGridUrl { get; set; }
+        public string OpenForEdit { get; set; }
+        public PaginationModel Pagination { get; set; }
+        public string? CurrentSearch { get; set; }
+        public Dictionary<string, string>? CurrentFilters { get; set; } = null;
+
+        public DataGridConfig()
+        {
+            Columns = new List<DataGridColumn>();
+            Data = new List<T>();
+            ShowCheckboxColumn = true;
+            ShowPagination = true;
+            AllowAdd = true;
+            AllowDelete = true;
+        }
+    }
+}

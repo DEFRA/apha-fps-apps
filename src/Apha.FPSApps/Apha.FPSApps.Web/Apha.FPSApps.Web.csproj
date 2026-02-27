@@ -10,6 +10,7 @@
   <ItemGroup>
 	<PackageReference Include="Microsoft.Identity.Web" Version="3.9.2" />
 	<PackageReference Include="Microsoft.Identity.Web.UI" Version="3.9.2" />
+	<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
 	<PackageReference Include="AWSSDK.CloudWatchLogs" Version="3.7.403.7" />
     <PackageReference Include="Serilog.Sinks.AwsCloudWatch" Version="4.3.37" />
