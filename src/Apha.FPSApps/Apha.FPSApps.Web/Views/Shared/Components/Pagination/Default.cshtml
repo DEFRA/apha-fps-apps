@@ -1,0 +1,23 @@
+﻿@model Apha.FPSApps.Web.Models.Components.DataGrid.PaginationModel
+
+<div class="pagination">
+    <span>Record:</span>
+    <!-- First Page -->
+    <button class="nav-btn" data-pageno="1" @(Model.PageNumber == 1 ? "disabled" : "") title="First">
+        |◄
+    </button>
+    <!-- Previous Page -->
+    <button class="nav-btn" data-pageno="@(Model.PageNumber - 1)" @(Model.PageNumber == 1 ? "disabled" : "") title="Previous">
+        ◄
+    </button>
+    <!-- Current Page Number -->
+    <span class="record-info">@Model.PageNumber</span>
+    <!-- Next Page -->
+    <button class="nav-btn" data-pageno="@(Model.PageNumber + 1)" @(Model.PageNumber == Model.TotalPages ? "disabled" : "") title="Next">
+        ►
+    </button>
+    <!-- Last Page -->
+    <button class="nav-btn" data-pageno="@Model.TotalPages" @(Model.PageNumber == Model.TotalPages ? "disabled" : "") title="Last">
+        ►|
+    </button>
+</div>

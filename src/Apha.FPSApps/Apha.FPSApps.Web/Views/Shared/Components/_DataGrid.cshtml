@@ -1,0 +1,502 @@
+﻿@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model dynamic
+
+<div class="editable-grid-container">
+    <div class="grid-header">
+        <h2>@Model.Title</h2>
+        <div class="grid-toolbar">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <input type="text" id="@($"{Model.GridId}_gridSearchInput")" class="form-control form-control-sm"
+                       placeholder="Search..." style="width: 180px;" value="@Model.CurrentSearch" />
+                <!-- Page Size Dropdown START -->
+                <select id="@($"{Model.GridId}_pageSize")" class="form-control form-control-sm" style="width: 90px;">
+                    @{
+                        var sizes = new[] { 5, 10, 20, 50, 100 };
+                        int currentSize = Model.Pagination?.PageSize ?? 5;
+                    }
+                    @foreach (var size in sizes)
+                    {
+                        <option value="@size" selected="@(size == currentSize ? "selected" : null)">
+                            @size / page
+                        </option>
+                    }
+                </select>
+                <!-- Page Size Dropdown END -->
+                <button type="button" class="btn btn-sm btn-primary" id="@($"{Model.GridId}_btnSearch")">
+                    <i class="fa fa-search"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-secondary" id="@($"{Model.GridId}_unfilterBtn")">
+                    <i class="fa fa-times"></i> Unfilter
+                </button>
+                <button type="button" class="btn btn-success" id="@($"{Model.GridId}_addRowBtn")" onclick="openAddModal()">
+                    <i class="fa fa-plus"></i> Add
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid-wrapper">
+        <div class="grid-scroll-container">
+            <table id="@($"tbl_{Model.GridId}")" class="editable-grid-table">
+                <thead>
+                    <tr>
+                        @if (Model.ShowCheckboxColumn)
+                        {
+                            <th style="width: 30px;">
+                                <input type="checkbox" id="@($"{Model.GridId}_selectAll")" style="transform: scale(1.3);" />
+                            </th>
+                        }
+                        @foreach (var column in Model.Columns)
+                        {
+                            if (column.IsVisible)
+                            {
+                                var isSorted = (Model.Pagination.SortColumn == column.PropertyName);
+                                var sortIcon = "";
+                                if (isSorted)
+                                    sortIcon = Model.Pagination.SortDirection ? "▲" : "▼";
+                                <th style="width: @(column.Width)px; cursor:pointer;"
+                                    class="sortable-header"
+                                    data-column="@column.PropertyName"
+                                    data-sortdir="@(isSorted ? !Model.Pagination.SortDirection : false)">
+                                    @column.DisplayName <span class="sort-icon">@sortIcon</span>
+                                    <div class="column-resizer"></div>
+                                </th>
+                            }
+                        }
+                        <th class="row-number-header" style="width: 80px;">Action</th>
+                    </tr>
+                    <!-- Filter Row -->
+                    <tr class="filter-row">
+                        @if (Model.ShowCheckboxColumn)
+                        {
+                            <th></th>
+                        }
+                        @foreach (var column in Model.Columns)
+                        {
+                            if (column.IsVisible)
+                            {
+                                <th>
+                                    @if (column.IsFilterable)
+                                    {
+                                        var filterValue = Model.CurrentFilters != null && Model.CurrentFilters.ContainsKey(column.PropertyName)
+                                        ? Model.CurrentFilters[column.PropertyName]
+                                        : "";
+
+                                        if (column.FilterType == GridColumnType.Dropdown && column.FilterOptions != null)
+                                        {
+                                            <select class="grid-filter" data-filter="@column.PropertyName">
+                                                <option value="">All</option>
+                                                @foreach (var option in column.FilterOptions)
+                                                {
+                                                    <option value="@option.Key" selected="@(option.Key == filterValue ? "selected" : null)">
+                                                        @option.Value
+                                                    </option>
+                                                }
+                                            </select>
+                                        }
+                                        else if (column.FilterType == GridColumnType.Checkbox)
+                                        {
+                                            <select class="grid-filter" data-filter="@column.PropertyName">
+                                                <option value="">All</option>
+                                                <option value="true" selected="@(filterValue == "true" ? "selected" : null)">True</option>
+                                                <option value="false" selected="@(filterValue == "false" ? "selected" : null)">False</option>
+                                            </select>
+                                        }
+                                        //Add condition for datepicker
+                                        else if (column.FilterType == GridColumnType.Date)
+                                        {
+                                            <input type="date" class="grid-filter grid-date" data-filter="@column.PropertyName"
+                                                   value="@(!string.IsNullOrWhiteSpace(filterValue) ? Convert.ToDateTime(filterValue).ToString("yyyy-MM-dd") : "")" placeholder="Filter..." />
+                                        }
+                                        else
+                                        {
+                                            <input type="text" class="grid-filter" data-filter="@column.PropertyName" value="@filterValue" placeholder="Filter..." />
+                                        }
+                                    }
+                                </th>
+                            }
+                        }
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        var rowIndex = 0;
+                    }
+                    @foreach (var row in Model.Data)
+                    {
+                        <tr data-row-index="@rowIndex">
+                            @if (Model.ShowCheckboxColumn)
+                            {
+                                <td class="checkbox-cell">
+                                    <input type="checkbox" name="chk-box-_@rowIndex"
+                                           id="@($"chk_{Model.GridId}_{rowIndex}")" class="row-checkbox" />
+                                </td>
+                            }
+                            @foreach (var column in Model.Columns)
+                            {
+                                if (column.IsVisible)
+                                {
+                                    var value = GridHelpers.GetPropertyValue(row, column.PropertyName);
+                                    if (column.ColumnType == GridColumnType.Checkbox)
+                                    {
+                                        <td class="checkbox-cell" data-property="@column.PropertyName" data-type="@column.ColumnType">
+                                            <input readonly type="checkbox" name="@column.PropertyName"
+                                                   id="@($"{Model.GridId}_{column.PropertyName}_{rowIndex}")" class="@GridHelpers.GetTypeCssClass(column)"
+                                            @(Convert.ToBoolean(value) ? "checked" : "") @(column.IsEditable ? "" : "disabled") />
+                                        </td>
+                                    }
+                                    else
+                                    {
+                                        <td data-property="@column.PropertyName" data-type="@column.ColumnType">
+                                            <span name="@column.PropertyName"
+                                                  id="@($"{Model.GridId}_{column.PropertyName}_{rowIndex}")"
+                                                  class="@GridHelpers.GetTypeCssClass(column)">@GridHelpers.FormatValue(value, column)</span>
+                                        </td>
+                                    }
+                                }
+                            }
+                            <!-- Edit Button -->
+                            <td>
+                                <button type="button"
+                                        class="btn btn-sm btn-info edit-row-btn"
+                                        data-row='@Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(row))'
+                                        data-columns='@Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Columns))'
+                                        onclick="openEditModal(this)">
+                                    <i class="fa fa-edit"></i>
+                                </button>
+                                <button type="button"
+                                        class="btn btn-sm btn-danger delete-row-btn"
+                                        data-id="@GridHelpers.GetPropertyValue(row, Model.KeyProperty)"
+                                        onclick="deleteRow(this)">
+                                    <i class="fa fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        rowIndex++;
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    @if (Model.ShowPagination)
+    {
+        <div class="grid-footer">
+            <div class="record-navigation">
+                @await Component.InvokeAsync("Pagination", Model.Pagination)
+                <span class="record-info">
+                    Page @Model.Pagination.PageNumber of @Model.Pagination.TotalPages
+                    &nbsp;|&nbsp;
+                    Showing @((Model.Pagination.PageSize * (Model.Pagination.PageNumber - 1)) + 1)
+                    -
+                    @(Math.Min(Model.Pagination.PageSize * Model.Pagination.PageNumber, Model.Pagination.TotalCount))
+                    of @Model.Pagination.TotalCount
+                </span>
+            </div>
+        </div>
+    }
+</div>
+
+<script>
+
+    $(function(){
+        var gridId = '@Model.GridId';
+        var gridContainerSelector = '#gridContainer_' + gridId;
+        var addUrl = '@Model.AddUrl';
+        var updateUrl = '@Model.UpdateUrl';
+        var deleteUrl = '@Model.DeleteUrl';
+        var bindGridUrl = '@Model.BindGridUrl';
+        var openForEdit = '@Model.OpenForEdit';
+
+        function openAddModal() {
+            // Create an empty row object (all properties null/empty)
+            var emptyRow = {};
+            // Optionally, you can generate emptyRow from Model.Columns in C# and serialize it here
+            var columns = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Columns));
+
+            $.ajax({
+                url: openForEdit,
+                type: 'POST',
+                data: { model: JSON.stringify({ Item1: emptyRow, Item2: columns }) },
+                success: function (html) {
+                    $('#editModalBody').html(html);
+                    $('#editModal').show();
+                    $('.modal-title').text('Add Staff');
+                }
+            });
+        }
+
+        function openEditModal(button) {
+            const rowData = JSON.parse(button.dataset.row);
+            const columns = JSON.parse(button.dataset.columns);
+
+            $.ajax({
+                url: openForEdit,
+                type: 'POST',
+                data: { model: JSON.stringify({ Item1: rowData, Item2: columns }) },
+                success: function (html) {
+                    $('#editModalBody').html(html);
+                    $('#editModal').show();
+                }
+            });
+        }
+
+        function closeEditModal() {
+            $('#editModal').hide();
+        }
+
+        function deleteRow(button) {
+            var itemId = $(button).data('id');
+            if (confirm('Are you sure you want to delete this record?')) {
+                $.ajax({
+                    url: deleteUrl,
+                    type: 'POST',
+                    data: JSON.stringify({ id: itemId }),
+                    contentType: 'application/json',
+                    success: function (response) {
+                        if (response.success) {
+                            alert('Deleted successfully');
+                            location.reload();
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function () {
+                        alert('An error occurred while deleting');
+                    }
+                });
+            }
+        }
+        // Track changes for saving
+        $(document).ready(function() {
+            var changedRows = {};
+
+            $('.grid-input').on('change', function() {
+                var $row = $(this).closest('tr');
+                var rowIndex = $row.data('row-index');
+                var property = $(this).closest('td').data('property');
+                var value = $(this).is(':checkbox') ? $(this).is(':checked') : $(this).val();
+
+                if (!changedRows[rowIndex]) {
+                    changedRows[rowIndex] = {};
+                }
+                changedRows[rowIndex][property] = value;
+
+                // Visual indicator of change
+                $row.css('background-color', '#ffffcc');
+            });
+
+            // You can add a save button that sends changedRows to the server
+            window.getChangedRows = function() {
+                return changedRows;
+            };
+        });
+
+        $(gridContainerSelector).off('click', '.sortable-header').on('click', '.sortable-header', function (e) {
+            if (resizing) {
+                e.stopImmediatePropagation();
+                return; // Don't sort if resizing just happened
+            }
+            var column = $(this).data('column');
+            var sortDir = $(this).data('sortdir');
+            var searchTerm = $('#' + gridId + '_gridSearchInput').val();
+            var pageSize = $('#' + gridId + '_pageSize').val() || 10;
+            // Always reset to page 1 on sort
+            $.get(bindGridUrl, {
+                pageNo: 1,
+                pageSize: pageSize,
+                search: searchTerm,
+                column: column,
+                sortOrder: sortDir,
+                filters: JSON.stringify(getFilterModel())
+            }, function (htmlData) {
+                $(gridContainerSelector).html(htmlData);
+                applyGridColumnWidths(gridId);
+                deselectAllCheckboxes();
+            });
+        });
+
+        // Update pagination AJAX to include sort params
+        $(gridContainerSelector).off('click', '.pagination button').on('click', '.pagination button', function (e) {
+            e.preventDefault();
+            var $btn = $(this);
+            var pageNo = $btn.data('pageno');
+            var pageSize = $('#' + gridId + '_pageSize').val() || 10;
+            if ($btn.prop('disabled') || !pageNo || isNaN(pageNo) || pageNo < 1) return;
+            var searchTerm = $('#' + gridId + '_gridSearchInput').val();
+            // Get current sort from a global or hidden field, or from Model.Pagination
+            var column = '@Model.Pagination.SortColumn';
+            var sortOrder = '@Model.Pagination.SortDirection';
+            $.get(bindGridUrl, {
+                pageNo: pageNo,
+                pageSize: pageSize,
+                search: searchTerm,
+                column: column,
+                sortOrder: sortOrder,
+                filters: JSON.stringify(getFilterModel())
+            }, function (htmlData) {
+                $(gridContainerSelector).html(htmlData);
+                applyGridColumnWidths(gridId);
+                deselectAllCheckboxes();
+            });
+        });
+
+        $('#' + gridId + '_pageSize').on('change', function () {
+            var pageSize = $(this).val();
+            var searchTerm = $('#' + gridId + '_gridSearchInput').val();
+            // Always reset to page 1 on page size change
+            $.get(bindGridUrl, {
+                pageNo: 1,
+                pageSize: pageSize,
+                search: searchTerm,
+                filters: JSON.stringify(getFilterModel())
+            }, function (htmlData) {
+                $(gridContainerSelector).html(htmlData);
+                applyGridColumnWidths(gridId);
+                deselectAllCheckboxes();
+            });
+        });
+
+        // Handle filter changes (textboxes and dropdowns)
+        $(gridContainerSelector).on('change', '.grid-filter', function () {
+            var pageSize = $('#' + gridId + '_pageSize').val() || 10;
+            var searchTerm = $('#' + gridId + '_gridSearchInput').val();
+            // Always reset to page 1 on filter change
+            $.get(bindGridUrl, {
+                pageNo: 1,
+                pageSize: pageSize,
+                search: searchTerm,
+                filters: JSON.stringify(getFilterModel())
+            }, function (htmlData) {
+                $(gridContainerSelector).html(htmlData);
+                applyGridColumnWidths(gridId);
+                deselectAllCheckboxes();
+            });
+        });
+
+        // Search on Enter or blur
+        $('#' + gridId + '_gridSearchInput').on('keydown', function (e) {
+            if (e.key === 'Enter') {
+                triggerGridSearch();
+            }
+        }).on('blur', function () {
+            triggerGridSearch();
+        });
+
+        // Search button click
+        $('#' + gridId + '_btnSearch').on('click', function () {
+            triggerGridSearch();
+        });
+
+        // Unfilter button click
+        $('#' + gridId + '_unfilterBtn').on('click', function () {
+            $('#' + gridId + '_gridSearchInput').val('');
+            triggerGridSearch(true);
+        });
+
+        // "Select All" checkbox logic
+        $('#' + gridId + '_selectAll').on('change', function() {
+            var checked = $(this).is(':checked');
+            $('#tbl_' + gridId + ' .row-checkbox').prop('checked', checked);
+        });
+
+        // Deselect "Select All" if any row checkbox is unchecked
+        $(gridContainerSelector).off('change', '.row-checkbox').on('change', '.row-checkbox', function() {
+            var allChecked = $('.row-checkbox').length === $('.row-checkbox:checked').length;
+            $('#' + gridId + '_selectAll').prop('checked', allChecked);
+        });
+
+        // Deselect all on page/filter change
+        function deselectAllCheckboxes() {
+            $('#' + gridId + '_selectAll').prop('checked', false);
+            $('#tbl_' + gridId + ' .row-checkbox').prop('checked', false);
+        }
+
+        function getFilterModel() {
+            var filterModel = {};
+            $('.grid-filter').each(function () {
+                var prop = $(this).data('filter');
+                var val = $(this).val();
+                if (val !== undefined && val !== null && val !== '') {
+                    filterModel[prop] = val;
+                }
+            });
+            return filterModel;
+        }
+
+        function triggerGridSearch(isUnfilter) {
+            var searchTerm = $('#' + gridId + '_gridSearchInput').val();
+            var pageSize = $('#' + gridId + '_pageSize').val() || 10;
+            // Always reset to page 1 on search/unfilter
+            $.get(bindGridUrl, {
+                pageNo: 1,
+                pageSize: pageSize,
+                search: isUnfilter ? '' : searchTerm,
+                filters: JSON.stringify(getFilterModel())
+            }, function (htmlData) {
+                $(gridContainerSelector).html(htmlData);
+                applyGridColumnWidths(gridId);
+                deselectAllCheckboxes();
+            });
+        }
+
+        function saveGridColumnWidths(gridId) {
+            var widths = {};
+            $('#tbl_' + gridId + ' th[data-column]').each(function () {
+                var col = $(this).data('column');
+                if (col) widths[col] = $(this).outerWidth();
+            });
+            localStorage.setItem(gridId + '_colWidths', JSON.stringify(widths));
+        }
+
+        function applyGridColumnWidths(gridId) {
+            var widths = {};
+            try { widths = JSON.parse(localStorage.getItem(gridId + '_colWidths') || '{}'); } catch {}
+            $('#tbl_' + gridId + ' th[data-column]').each(function () {
+                var col = $(this).data('column');
+                if (col && widths[col]) $(this).css('width', widths[col] + 'px');
+            });
+        }
+
+
+        // JavaScript for resizing columns
+        const table = document.getElementById('tbl_' + gridId);
+        let pressed = false;
+        let startX, startWidth, th;
+        let resizing = false;
+
+        if (table) {
+            table.querySelectorAll('.column-resizer').forEach(function (resizer) {
+                resizer.addEventListener('mousedown', function (e) {
+                    pressed = true;
+                    resizing = false;
+                    th = resizer.parentElement;
+                    startX = e.pageX;
+                    startWidth = th.offsetWidth;
+                    document.body.style.cursor = 'col-resize';
+                    e.preventDefault(); // Only here!
+                });
+            });
+
+            document.addEventListener('mousemove', function (e) {
+                if (!pressed) return;
+                const diff = e.pageX - startX;
+                if (Math.abs(diff) > 2) resizing = true;
+                th.style.width = (startWidth + diff) + 'px';
+            });
+
+            // Use window here for best cross-browser support
+            window.addEventListener('mouseup', function (e) {
+                if (pressed) {
+                    pressed = false;
+                    setTimeout(() => { resizing = false; }, 100);
+                    document.body.style.cursor = '';
+                    saveGridColumnWidths(gridId);
+                }
+            });
+        }
+        //End JavaScript for resizing
+    });
+
+</script>
