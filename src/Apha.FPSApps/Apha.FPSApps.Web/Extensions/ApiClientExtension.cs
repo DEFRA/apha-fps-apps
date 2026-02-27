@@ -8,6 +8,7 @@ using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients;
 using Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients;
 using Apha.FPSApps.Web.Handler;
+using Microsoft.Identity.Web;
 
 namespace Apha.FPSApps.Web.Extensions
 {
@@ -22,6 +23,15 @@ namespace Apha.FPSApps.Web.Extensions
                     configuration["FPSApiSettings:BaseUrl"]
                         ?? throw new InvalidOperationException("FPS base URL not configured"));                                
                 client.DefaultRequestHeaders.Add("Accept", "application/json");
+            }).AddHttpMessageHandler(sp =>
+            {
+                var scopes = configuration["FPSApiSettings:Scope"]!
+                    .Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+                return new BearerTokenHandler(
+                    sp.GetRequiredService<ITokenAcquisition>(),
+                    sp.GetRequiredService<IHttpContextAccessor>(),
+                    scopes);
             }).AddHttpMessageHandler<RequestHeadersHandler>(); 
 
 
