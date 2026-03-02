@@ -1,14 +1,14 @@
 ﻿using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
-using Apha.FPS.Application.Dtos;
-using Apha.FPS.Application.Pagination;
+using Apha.Costbook.Application.Dtos;
+using Apha.Costbook.Application.Pagination;
 using AutoMapper;
 
-namespace Apha.FPS.Api.Mappings
+namespace Apha.Costbook.Api.Mappings
 {
-    public class RequestModelMapper : Profile
+    public class RequestMapper : Profile
     {
-        public RequestModelMapper()
+        public RequestMapper()
         {
             CreateMap(typeof(PaginationReq<>), typeof(QueryParameters<>)).ReverseMap();
             CreateMap(typeof(PaginationRes<>), typeof(PaginatedResult<>)).ReverseMap();

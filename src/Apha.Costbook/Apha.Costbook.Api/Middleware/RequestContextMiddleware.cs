@@ -1,7 +1,7 @@
-﻿using Apha.FPS.Core.Interfaces;
-using Apha.FPS.DataAccess.Context;
+﻿using Apha.Costbook.Core.Interfaces;
+using Apha.Costbook.DataAccess.Context;
 
-namespace Apha.FPS.Api.Middleware
+namespace Apha.Costbook.Api.Middleware
 {
     public class RequestContextMiddleware
     {
