@@ -1,9 +1,9 @@
-﻿using Apha.FPS.Core.Entities;
-using Apha.FPS.Core.Interfaces;
-using Apha.FPS.Core.Pagination;
+﻿using Apha.PACT.Core.Entities;
+using Apha.PACT.Core.Interfaces;
+using Apha.PACT.Core.Pagination;
 using Microsoft.EntityFrameworkCore.Internal;
 
-namespace Apha.FPS.DataAccess.Repositories
+namespace Apha.PACT.DataAccess.Repositories
 {
     public class WeatherForecastRepository : IWeatherForecastRepository
     {

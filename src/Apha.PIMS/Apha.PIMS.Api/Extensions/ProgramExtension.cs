@@ -1,15 +1,15 @@
 ﻿using System.Globalization;
-using Apha.FPS.Api.Extensions;
-using Apha.FPS.Api.Filters;
-using Apha.FPS.Api.Mappings;
-using Apha.FPS.Api.Middleware;
-using Apha.FPS.Application.Mappings;
-using Apha.FPS.DataAccess.Data;
+using Apha.PIMS.Api.Extensions;
+using Apha.PIMS.Api.Filters;
+using Apha.PIMS.Api.Mappings;
+using Apha.PIMS.Api.Middleware;
+using Apha.PIMS.Application.Mappings;
+using Apha.PIMS.DataAccess.Data;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 
-namespace Apha.FPS.Api.Extensions
+namespace Apha.PIMS.Api.Extensions
 {
     public static class ProgramExtension
     {

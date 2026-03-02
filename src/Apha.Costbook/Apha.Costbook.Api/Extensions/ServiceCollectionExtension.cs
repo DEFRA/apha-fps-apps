@@ -1,12 +1,12 @@
 ﻿using Apha.Common.Utilities.StateManagement;
 using Apha.Common.Utilities.ExcelExport;
-using Apha.FPS.Application.Interfaces;
-using Apha.FPS.Application.Services;
-using Apha.FPS.Core.Interfaces;
-using Apha.FPS.DataAccess.Context;
-using Apha.FPS.DataAccess.Repositories;
+using Apha.Costbook.Application.Interfaces;
+using Apha.Costbook.Application.Services;
+using Apha.Costbook.Core.Interfaces;
+using Apha.Costbook.DataAccess.Context;
+using Apha.Costbook.DataAccess.Repositories;
 
-namespace Apha.FPS.Api.Extensions
+namespace Apha.Costbook.Api.Extensions
 {
     public static class ServiceCollectionExtension
     {

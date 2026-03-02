@@ -1,15 +1,15 @@
 ﻿using System.Globalization;
-using Apha.FPS.Api.Extensions;
-using Apha.FPS.Api.Filters;
-using Apha.FPS.Api.Mappings;
-using Apha.FPS.Api.Middleware;
-using Apha.FPS.Application.Mappings;
-using Apha.FPS.DataAccess.Data;
+using Apha.PACT.Api.Extensions;
+using Apha.PACT.Api.Filters;
+using Apha.PACT.Api.Mappings;
+using Apha.PACT.Api.Middleware;
+using Apha.PACT.Application.Mappings;
+using Apha.PACT.DataAccess.Data;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 
-namespace Apha.FPS.Api.Extensions
+namespace Apha.PACT.Api.Extensions
 {
     public static class ProgramExtension
     {
