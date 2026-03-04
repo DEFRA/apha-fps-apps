@@ -16,6 +16,10 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<WeatherForecast, WeatherForecastDto>().ReverseMap();
             CreateMap<WeatherForecastCriteria, WeatherForecastCriteriaDto>().ReverseMap();
             CreateMap<PaginationData, PaginationDto>().ReverseMap();
+            CreateMap<StaffJobView, StaffJobViewDto>().ReverseMap();  
+            CreateMap<StaffWorkgroupLookup, StaffWorkgroupLookupDto>().ReverseMap();
+            CreateMap<StaffJob, StaffJobDto>().ReverseMap();
+            CreateMap<FpsSetting, FpsSettingDto>().ReverseMap();
         }
     }
 }

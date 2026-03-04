@@ -1,17 +1,21 @@
 ﻿using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
+using Apha.FPS.DataAccess.Data;
 using Microsoft.EntityFrameworkCore.Internal;
+using System.Linq;
 
 namespace Apha.FPS.DataAccess.Repositories
 {
     public class WeatherForecastRepository : IWeatherForecastRepository
     {
 
-        private readonly IYearContext _yearContext;
-        public WeatherForecastRepository(IYearContext yearContext)
+        private readonly IFpsYearContext _yearContext;
+        private readonly FpsDbContext _dbContext;
+        public WeatherForecastRepository(IFpsYearContext yearContext, FpsDbContext dbContext)
         {           
             _yearContext = yearContext;
+            _dbContext = dbContext;
         }
 
         private static readonly string[] Summaries = new[]
@@ -20,15 +24,15 @@ namespace Apha.FPS.DataAccess.Repositories
             };
 
         public async Task<IEnumerable<WeatherForecast>> Get()
-        {
-            int selectedYear = Convert.ToInt32(_yearContext.Year);
+        {              
+            int selectedYear = Convert.ToInt32(_yearContext.FPSYear);
             var wetherData = await GetWeatherForecasts();           
             return wetherData.Where(e => e.Date.Year == selectedYear).ToList();
         }
 
         public async Task<PagedData<WeatherForecast>> SearchWeather(PaginationParameters<object> query)
         {
-            int selectedYear = Convert.ToInt32(_yearContext.Year);
+            int selectedYear = Convert.ToInt32(_yearContext.FPSYear);
             var wetherData = await GetWeatherForecasts();
             wetherData = wetherData.Where(e => e.Date.Year == selectedYear).ToList();
             if (!string.IsNullOrEmpty(query.Search))
@@ -43,7 +47,7 @@ namespace Apha.FPS.DataAccess.Repositories
        
         public async Task<PagedData<WeatherForecast>> SearchWeatherByModel(PaginationParameters<WeatherForecastCriteria> query)
         {
-            int selectedYear = Convert.ToInt32(_yearContext.Year);
+            int selectedYear = Convert.ToInt32(_yearContext.FPSYear);
             var wetherData = await GetWeatherForecasts();
             wetherData = wetherData.Where(e => e.Date.Year == selectedYear).ToList();
 

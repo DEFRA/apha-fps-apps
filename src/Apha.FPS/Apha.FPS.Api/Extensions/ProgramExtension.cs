@@ -18,11 +18,10 @@ namespace Apha.FPS.Api.Extensions
             var services = builder.Services;
             var configuration = builder.Configuration;
 
-            // Add database context
-            services.AddDbContext<WeatherForecastDbContext>(options =>
-             options.UseSqlServer(builder.Configuration.GetConnectionString("WeatherForecastConnectionString")
-             ?? throw new InvalidOperationException("Connection string 'WeatherForecastConnectionString' not found.")));
-
+            services.AddDbContext<FpsDbContext>(options =>
+                    options.UseNpgsql(
+                        builder.Configuration.GetConnectionString("DefaultConnection")));
+                       
             services.AddStackExchangeRedisCache(options =>
             {
                 options.Configuration = builder.Configuration.GetConnectionString("RedisConnectionString");

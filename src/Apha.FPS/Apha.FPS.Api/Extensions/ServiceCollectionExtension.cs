@@ -22,13 +22,19 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IWeatherForecastService, WeatherForecastService>();
             services.AddScoped<IAppStateService, CacheService>();
             services.AddScoped<IExcelExportService, ExcelExportService>();
+            services.AddScoped<IStaffJobService, StaffJobService>();
+            services.AddScoped<IFpsSettingService, FpsSettingService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
         {
             // Add your data access services here
-            services.AddScoped<IYearContext, YearContext>();
+            services.AddScoped<IFpsYearContext, FpsYearContext>();
             services.AddScoped<IWeatherForecastRepository, WeatherForecastRepository>();
+            services.AddScoped<IProgramRepository, ProgramRepository>();
+            services.AddScoped<IProjectRepository, ProjectRepository>();
+            services.AddScoped<IStaffJobRepository, StaffJobRepository>();
+            services.AddScoped<IFpsSettingRepository, FpsSettingRepository>();  
             return services;
         }
     }
