@@ -10,17 +10,20 @@ namespace Apha.FPSApps.Web.Extensions
         public static IServiceCollection AddAuthenticationServices(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
-                .AddMicrosoftIdentityWebApp(options =>
-                {
-                    configuration.Bind("AzureAd", options);
-                    options.Events = new OpenIdConnectEvents
-                    {
-                        OnTokenValidated = context => HandleTokenValidatedAsync(context),
-                        OnRedirectToIdentityProvider = context => HandleRedirectToIdentityProvider(context),
-                        OnRemoteFailure = context => HandleRemoteFailure(context)
-                    };
+             .AddMicrosoftIdentityWebApp(options =>
+             {
+        configuration.Bind("AzureAd", options);
+        
+        options.Events = new OpenIdConnectEvents
+        {
+            OnTokenValidated = context => HandleTokenValidatedAsync(context),
+            OnRedirectToIdentityProvider = context => HandleRedirectToIdentityProvider(context),
+            OnRemoteFailure = context => HandleRemoteFailure(context)
+        };
 
-                });
+            })
+            .EnableTokenAcquisitionToCallDownstreamApi()
+             .AddInMemoryTokenCaches();
 
             return services;
         }

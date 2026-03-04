@@ -31,7 +31,7 @@ namespace Apha.FPS.Api.Extensions
 
             // AutoMapper
             services.AddAutoMapper(typeof(EntityMapper).Assembly);
-            services.AddAutoMapper(typeof(RequestModelMapper));
+            services.AddAutoMapper(typeof(RequestMapper));
 
             // MVC API
             services.AddControllers(options =>
