@@ -2,6 +2,7 @@
 using Apha.FPSApps.Infrastructure.Mappings;
 using Apha.FPSApps.Web.Mappings;
 using Apha.FPSApps.Web.Middleware;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Localization;
 
@@ -34,20 +35,36 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddAutoMapper(typeof(ViewModelMapper));
             services.AddAutoMapper(typeof(ApiDtoMapper).Assembly);
 
+            // HTTP Context
+            services.AddHttpContextAccessor();
+
             // MVC
             services.AddControllersWithViews();
 
+            // Authentication
+            services.AddAuthenticationServices(configuration);
+
+            // Save tokens in cookie
+            services.Configure<OpenIdConnectOptions>(OpenIdConnectDefaults.AuthenticationScheme, options =>
+            {
+                options.SaveTokens = true;
+            });
+
+            // Configure cookie expiration
+            services.ConfigureApplicationCookie(options =>
+            {
+                options.ExpireTimeSpan = TimeSpan.FromHours(8);
+                options.SlidingExpiration = true;
+            });
             //API clients
             services.AddApiClient(builder.Configuration);
 
             // Application services
             services.AddApplicationServices();
 
-            // Authentication
-            services.AddAuthenticationServices(configuration);
+           
 
-            // HTTP Context
-            services.AddHttpContextAccessor();
+           
 
             // Health checks
             services.AddHealthChecks();

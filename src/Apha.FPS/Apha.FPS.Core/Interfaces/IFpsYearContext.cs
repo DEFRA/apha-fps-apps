@@ -1,6 +1,6 @@
 ﻿namespace Apha.FPS.Core.Interfaces
 {
-    public interface IFpsYearContext
+    public interface IFPSYearContext
     {
         int FPSYear { get; }
     }
