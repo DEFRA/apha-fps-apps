@@ -5,12 +5,12 @@ using System.Text.Json;
 
 namespace Apha.Common.Utilities.StateManagement
 {
-    public class CacheService : IAppStateService
+    public class AppStateService : IAppStateService
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IDistributedCache _cache;            
 
-        public CacheService(
+        public AppStateService(
             IHttpContextAccessor httpContextAccessor,
             IDistributedCache cache)
         {
