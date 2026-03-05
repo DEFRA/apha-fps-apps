@@ -20,7 +20,7 @@ namespace Apha.FPS.Api.Extensions
         {
             // Add your application services here
             services.AddScoped<IWeatherForecastService, WeatherForecastService>();
-            services.AddScoped<IAppStateService, CacheService>();
+            services.AddScoped<IAppStateService, AppStateService>();
             services.AddScoped<IExcelExportService, ExcelExportService>();
             return services;
         }
