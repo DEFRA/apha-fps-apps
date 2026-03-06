@@ -1,0 +1,954 @@
+﻿@using Apha.FPSApps.Web.Handler
+@inject IFPSYearContext Fy
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.FPS.Models.ProjectPlanningViewModel
+@{
+    ViewData["Title"] = $"{Model.SelectedYear} : Project Planning";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>@ViewData["Title"]</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="~/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/fps_styles/styles.css" />
+    <link rel="stylesheet" href="~/css/main_style.css" />
+    <link rel="stylesheet" href="~/DataGrid/editable-grid.css" />    
+    <script src="~/lib/jquery/dist/jquery.js"></script>
+    <style>
+        /* Form Container */
+        .form-container {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 50px;
+        }
+
+        .form-left {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-center {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <header>
+        <div class="header-nav">
+            <div class="pims-log-wrapper">
+                <div>
+                    <img src="~/images/defra_logo.png" alt="Logo of Animal & Plant Health Agency" width="80px">
+                </div>
+                <div class="pims-log">
+                    <span style="display:inline-block; padding: 2px;">FPS</span>
+                </div>
+                <div class="pims-log">
+                    <select class="pims-log" style="border:0; margin-left: 0px;" aria-label="Year" asp-for="SelectedYear">
+                        <option class="pims-log" style="border:0; margin-left: 0px;" value="2017-2018">2017-2018</option>
+                        <option class="pims-log" style="border:0; margin-left: 0px;" value="2018-2019">2018-2019</option>
+                        <option class="pims-log" style="border:0; margin-left: 0px;" value="2019-2020">2019-2020</option>
+                        <option class="pims-log" style="border:0; margin-left: 0px;" value="2020-2021">2020-2021</option>
+                        <option class="pims-log" style="border:0; margin-left: 0px;" value="2021-2022">2021-2022</option>
+                        <option class="pims-log" style="border:0; margin-left: 0px;" value="2022-2023">2022-2023</option>
+                        <option class="pims-log" style="border:0; margin-left: 0px;" value="2023-2024">2023-2024</option>
+                        <option class="pims-log" style="border:0; margin-left: 0px;" value="2024-2025">2024-2025</option>
+                        <option class="pims-log" style="border:0; margin-left: 0px;" value="2025-2026" selected>2025-2026</option>
+                    </select>
+                </div>
+            </div>
+            <div class="btn-group" style=" display: flex; align-items: center;     font-size: 16px;">
+                @Model.UserName <button type="button" aria-label="user dropdown arrow to go home page" style="border: 0;" class="btn btn-secondary dropdown-toggle user-menu" data-bs-toggle="dropdown" aria-expanded="false">
+                    <img src="~/images/circle-user-regular-full.svg" alt="user icon" width="24"> <img src="~/images/down-arrow.png" alt="dropdown arrow for logout of application" width="30px" height="30px">
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" style="">
+                    <li>
+                        <a href="~/index.html" class="dropdown-item" type="button" aria-hidden="true">
+                            <img src="~/images/house-user-solid-full.svg" alt="dropdown home icon" width="22px">
+                            Home
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </header>
+    <nav class="navbar navbar-expand-lg main-nav">
+        <div class="container-fluid">
+
+            <button class="navbar-toggler" type="button" aria-label="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNavDropdown">
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-hidden="true"
+                           aria-expanded="false" aria-current="page" href="#">Programme Management<span class="arrow"><img src="~/images/arrow-down.svg" alt="dropdown arrow for Programme Management Menu" width="12px"></span></a>
+
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" aria-hidden="true" href="program_management.html">Select Programme</a></li>
+                            <li>
+                                <a class="dropdown-item" aria-hidden="true" style="display: flex; justify-content: space-between;">Plan Projects  <img src="~/images/right-arrow.png" alt="Arrow for Plan Projects Sub menu" width="30px" height="30px"></a>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" href="#" aria-hidden="true">
+                                            Set Up A New Projects
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="#" aria-hidden="true">
+                                            Plan Project Individually
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="#" aria-hidden="true">
+                                            Plan STAFF for Entire Programme
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="#" aria-hidden="true">
+                                            Plan Animals for Entire Programme
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="#" aria-hidden="true">
+                                            Plan Test Purchases for Entire Programme for Entire Programme
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="#" aria-hidden="true">
+                                            Plan Additional cost for Entire Programme
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" aria-hidden="true" style="display: flex; justify-content: space-between;" href="#">Review Plans <img src="~/images/right-arrow.png" alt="Arrow for Review Plans Sub menu" width="30px" height="30px"></a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" aria-hidden="true" href="#">Project Portability</a>                                 </li>
+                                    <li><a class="dropdown-item" aria-hidden="true" href="#">Staff Plan Pivot</a></li>
+                                </ul>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" aria-hidden="true" style="display: flex; justify-content: space-between;" href="#">Summary Printouts <img src="~/images/right-arrow.png" alt="Arrow for Summary Printouts Sub menu" width="30px" height="30px"></a>
+                                <ul class="dropdown-menu">
+
+                                    <li>
+                                        <a class="dropdown-item" aria-hidden="true" aria-label="Programme Profitability Report" href="#">Programme Profitability Report</a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" aria-hidden="true" aria-label="Summarized by disease" href="#">Summarized by disease</a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" aria-hidden="true" href="#">Summarized by Customer</a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" aria-hidden="true" href="#">Project Specifics</a>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link  dropdown-toggle" role="button" aria-hidden="true"
+                           data-bs-toggle="dropdown" aria-expanded="false" aria-current="page" href="#">
+                            Resource
+                            Management<span class="arrow"><img src="~/images/arrow-down.svg" alt="dropdown arrow for Resource Management Menu" width="12px"></span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" href="createresourcecenter.html" aria-hidden="true">Create Resource Center</a>
+                            </li>
+                            <li><a class="dropdown-item" href="setupresource.html" aria-hidden="true">Setup Resource</a></li>
+                            <li><a class="dropdown-item" href="reviewplans.html" aria-hidden="true">Review Plans</a></li>
+                            <li><a class="dropdown-item" href="reports.html" aria-hidden="true">Reports</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" aria-hidden="true">Contract </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" aria-hidden="true">Lab Testing Manager's </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" aria-hidden="true">Luvely Pivots</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle " role="button" aria-hidden="true" data-bs-toggle="dropdown" aria-expanded="false" aria-current="page" href="#">MAB <span class="arrow"><img src="~/images/arrow-down.svg" alt="dropdown arrow for Programme Management Menu" width="12px"></span></a>
+                        <div class="dropdown-menu my-flex-dropdown" style="border: 1px solid #000; left: -70px; ">
+                            <ul>
+                                <li>
+                                    <a class="dropdown-item" href="wgstaff.html" aria-hidden="true">
+                                        Maintenance Menu
+                                    </a>
+
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#" aria-hidden="true">
+                                        Stage 1 Plans
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#" aria-hidden="true">
+                                        ASU Data View
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#" aria-hidden="true">
+                                        VLA Project Totals
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#" aria-hidden="true">
+                                        Generic Bids
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#" aria-hidden="true">
+                                        Project Audit Trails
+                                    </a>
+                                </li>
+                            </ul>
+                            <ul>
+                                <li>
+                                    <a class="dropdown-item" href="#" aria-hidden="true">
+                                        SMG Summary Report - All Work
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#" aria-hidden="true">
+                                        SMG Summary Report - Assured Work Only
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#" aria-hidden="true">
+                                        All Programs Profitability
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#" aria-hidden="true">
+                                        Program Exceptional Bids
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#" aria-hidden="true">
+                                        Income Contribution Rpt
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#" aria-hidden="true">
+                                        Income Cont - Summary
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#" aria-hidden="true">
+                                        Project Specific - Query
+                                    </a>
+                                </li>
+                            </ul>
+                            <ul>
+                                <li>
+                                    <a class="dropdown-item" href="#" aria-hidden="true">
+                                        Resource Grades by
+                                        Programme
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#" aria-hidden="true">Resource Utilisation</a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#" aria-hidden="true">Open FPS</a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#" aria-hidden="true">Close FPS</a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#" aria-hidden="true">Run Snapshot Queries</a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#" aria-hidden="true">Run Comparison Queries</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+                    <li class="nav-item"><a class="nav-link" href="#" aria-hidden="true">Project Plan Viewer</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" aria-hidden="true">Project Group </a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" aria-hidden="true">Management Account </a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <div class="modal fade" id="" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+         aria-label="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-md">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <form>
+                        <div class="display-flex">
+                            <div class="col">
+                                <label for="select_program" class="col-form-label">Select a Programme</label>
+                                <select class="form-select" required="" id="select_program" value="">
+                                    <option>--select programme--</option>
+                                    <option>ADMIN</option>
+                                    <option>ASU</option>
+                                    <option>B&M</option>
+                                    <option>Bact</option>
+                                    <option>Bee Insp</option>
+                                    <option>BTB</option>
+                                    <option>Comm</option>
+                                    <option>DoES</option>
+                                    <option>GM</option>
+                                    <option>LapT</option>
+                                    <option>Path</option>
+                                    <option>PHINSLT</option>
+                                    <option>PHSIN</option>
+                                    <option>PVS</option>
+                                </select>
+                            </div>
+                            <div class="ms-3">
+                                <button class="btn btn-primary" type="button" onclick="SelectProgram()"
+                                        data-bs-dismiss="modal">
+                                    <i class="fa-solid fa-circle-chevron-right"></i>
+                                    GO
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container-fluid">
+        <div style="padding: 5px 5px;  border-bottom: 1px solid #b4b4b4" class="row">
+            <div style="display: flex;  font-size: 14px;   align-items: center; justify-content: space-between; ">
+                <div class="col-md-6">
+                    <a class="" href="fpshome.html">Home</a>  &gt; Programme Management &gt; Plan Projects &gt;  Setup A new Project
+                </div>
+                <div style="display: flex;
+                    justify-content: flex-end;" class="col-md-6">
+                    <div class="col-sm-4" style="border: 2px solid #1d70b8;
+                        border-radius: 5px;
+                        font-size: 13px;
+                        font-weight: normal;
+                        background-color: #fff;
+                        text-align: left;
+                        display: flex;
+
+                        margin-right: 10px;
+                        align-items: center;
+                        justify-content: space-between;">
+                        <div class="col" style="border-right: 1px solid #684e00; text-align: left; padding: 1px 5px;">
+                            Programme:<strong id="resultprogram"> @Model.SelectedProgramme </strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-6" style="padding:0px;  border-bottom: 2px solid #1d70b8;">
+                <h1 style="padding: 10px 0 0px 17px; font-weight: 700; font-size:16px;
+                                margin-bottom: 10px; ">
+                    Project Planning : <span class="projectcode_color">@Model.ProjectCode</span>
+                </h1>
+            </div>
+
+            <div class="col-lg-6" style=" text-align: right; border-bottom: 2px solid #1d70b8;">
+                <a class="btn btn-outline-primary btn-sm" href="program_management.html" style="  margin-top: 5px; margin-right: 10px; border: 1px solid #0d6efd;">Back</a>
+            </div>
+            <div class="col-lg-12">
+                <main class="main-content" style="padding:0px 10px 10px 10px">
+                    <div class="project-code-section" style="justify-content: space-between; margin-top: 10px; margin-bottom: 10px; background-color: #efefef; border: 1px solid #cbcbcb; padding: 4px;">
+                        <textarea class="form-control projectplan-code form-control-sm" aria-label="Salmonell Surveillance and control programme" style="width: 80%; height: 43px;" rows="2" asp-for="ProjectDescription">@Model.ProjectDescription</textarea>
+                        <button aria-label="Preview Report" class="btnBlue">Preview Report</button>
+                    </div>
+                    <div class="main-grid">
+                        <div class="left-column">
+                            <!-- Staff Booked Section -->
+                            <section class="data-section">
+                                <div>
+                                    <div id="@($"gridContainer_{Model.StaffBookedGrid.GridId}")">
+                                        @await Html.PartialAsync("_DataGrid", Model.StaffBookedGrid)
+                                    </div>
+                                    <div style=" border-left: 1px solid #1d70b8 !important; border-top: 1px solid #1d70b8 !important; border-right: 1px solid #1d70b8 !important; padding: 9px 20px 0px 20px; display: flex;justify-content: flex-end;align-items: center;">
+                                        <span style=" border-right: 0px;  border-bottom: 0px; font-size: 14px;   text-align: right;">
+                                            <span class="me-2">Total Staff Cost: </span>
+                                        </span>
+                                        <span style=" border-right: 0px;  border-left: 0px; border-bottom: 0px; padding-right: 0px !important;  text-align: right;font-size: 13px;"> <span class="total-amount">  <input type="text" value="@Model.TotalStaffCost.ToString("C")" aria-label="Total Staff Cost" style="padding-right:5px;" class="form-control form-control-sm " asp-for="TotalStaffCost"></span></span>
+                                    </div>
+                                    <div style="display: flex;
+                                                    margin-top: 0;
+                                                    margin-bottom: 0;
+                                                    border: 1px solid #1d70b8;
+                                                    padding: 5px 10px 5px 10px;
+                                                    border-top: 0;
+                                                    justify-content: space-between;
+                                                    align-items: center;
+                                                    border-radius: 0 0 10px 10px;">
+                                    </div>
+                                    @*  <div>
+
+                                        <div style="display: flex;
+     justify-content: space-between;
+     align-items: center;
+     background: #d4ebff;
+     padding: 7px;
+     color: #333;
+     border-radius: 7px 7px 0 0;
+     font-size: 16px;
+     border: 1px solid #1d70b8;">
+
+                                            <h1 class="accordion-header table-heading" id="headingOne">
+                                                Staff Booked
+                                            </h1>
+                                            <div style="display: flex;flex-direction: row;     justify-content: space-between; align-items: center; ">
+                                                <div class="col-9" style="padding-top: 0; padding-left: 6px; padding-bottom: 0; display:none">
+                                                    <label for="txtSearchProjectCode" class="sr-only">Search</label>
+                                                    <input type="text" id="txtSearchProjectCode" class="form-control" style="padding: 5px; margin: 5px 0px;" placeholder="Search by jobcode or name or type or workgroup">
+                                                </div>
+
+                                                <div class="" style="text-align: right;">
+                                                    <button class="btnBlue" id="addstaffbookedBtn" aria-label="Add staff booked"><img alt="plus icon for add staff booked" src="~/images/circle-plus-solid-full-white.svg" width="16px">&nbsp;Add </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="jobcodediv borderbottom_0 maxheight320">
+                                            <table class="table table-striped table-bordered custom-table" style="margin-bottom: 0px;">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>Name</th>
+                                                        <th>Rate</th>
+                                                        <th>Hrs</th>
+                                                        <th>Days</th>
+                                                        <th>StaffCost</th>
+                                                        <th>Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="tableBody">
+                                                    @if (Model.StaffBookedList != null && Model.StaffBookedList.Any())
+                                                    {
+                                                        @foreach (var staff in Model.StaffBookedList)
+                                                        {
+                                                            <tr class="@(staff.Id == 1 ? "selected-table-rowbg" : "")">
+                                                                <td class="editable-cell" data-field="staffname" data-id="@staff.Id">@staff.StaffName</td>
+                                                                <td class="editable-cell text-AlignRight" data-field="rate" data-id="@staff.Id">@staff.Rate.ToString("C")</td>
+                                                                <td class="editable-cell text-AlignRight" data-field="hrs" data-id="@staff.Id">@staff.Hrs</td>
+                                                                <td class="editable-cell text-AlignRight" data-field="days" data-id="@staff.Id">@staff.Days.ToString("N2")</td>
+                                                                <td class="editable-cell text-AlignRight" data-field="staffcost" data-id="@staff.Id">@staff.StaffCost.ToString("C")</td>
+                                                                <td>
+                                                                    <button class="btn btn-sm btn-outline-primary" onclick="handleEdit(@staff.Id)"><img src="~/images/pen-to-square-regular-full.svg" alt="Edit icon for selected record" class="editjobcode" width="20"></button>
+                                                                    <button class="btn btn-sm btn-outline-danger" onclick="handleDelete(@staff.Id)"> <img src="~/images/trash-can-regular-full.svg" alt="Delete icon for selected record" width="20"></button>
+                                                                </td>
+                                                            </tr>
+                                                        }
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        
+                                    </div> *@
+                                </div>
+                            </section>
+                            <!-- Animals Booked Section -->
+                            <section class="data-section">
+                                <div style="
+     display: flex;
+     justify-content: space-between;
+     align-items: center;
+     background: #d4ebff;
+     padding: 7px;
+     color: #333;
+     border-radius: 7px 7px 0 0;
+     font-size: 16px;
+     border: 1px solid #1d70b8;">
+                                    <h1>Animals Booked</h1>
+                                    <button class="btnBlue" id="" aria-label="Add Animals booked"><img alt="plus icon for add Animals booked" src="~/images/circle-plus-solid-full-white.svg" width="16px">&nbsp;Add </button>
+                                </div>
+                                <div class="jobcodediv borderbottom_0 maxheight320">
+                                    <table id="" class="table table-striped table-bordered custom-table" style="margin-bottom: 0px;">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Animal Type </th>
+                                                <th>Day </th>
+                                                <th>No.Req </th>
+                                                <th>Daily Rt </th>
+                                                <th>Cost </th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tableBody">
+                                            @if (Model.AnimalsBookedList != null && Model.AnimalsBookedList.Any())
+                                            {
+                                                @foreach (var animal in Model.AnimalsBookedList)
+                                                {
+                                                    <tr>
+                                                        <td>@animal.AnimalType</td>
+                                                        <td class="text-AlignRight">@animal.Day</td>
+                                                        <td class="text-AlignRight">@animal.NoReq</td>
+                                                        <td class="text-AlignRight">@animal.DailyRt.ToString("C")</td>
+                                                        <td class="text-AlignRight">@animal.Cost.ToString("C")</td>
+                                                        <td>
+                                                            <button type="button" aria-label="Edit" class="icon-bg edit-btn "><img src="~/images/edit_gridicon.svg" alt="Edit icon" width="20px" height="20px" title="Edit" /></button>
+                                                            <button type="button" aria-label="Delete" class="icon-bg  delete-btn "><img src="~/images/delete_gridicon.svg" alt="Delete icon" width="20px" height="20px" title="Delete" /></button>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div style=" border-top: 1px solid #1d70b8 !important; border-left: 1px solid #1d70b8 !important; border-right: 1px solid #1d70b8 !important; padding: 9px 20px 0px 20px; display: flex;justify-content: flex-end;align-items: center;">
+                                    <span style=" border-right: 0px;  border-bottom: 0px; font-size: 14px;   text-align: right;">
+                                        <span class="me-2">Total Animal Cost: </span>
+                                    </span>
+                                    <span style=" border-right: 0px;  border-left: 0px; border-bottom: 0px; padding-right: 0px !important;  text-align: right;font-size: 13px;"> <span class="total-amount">  <input type="text" value="@Model.TotalAnimalCost.ToString("C")" aria-label="Total Animal Cost" style="padding-right:5px;" class="form-control form-control-sm " asp-for="TotalAnimalCost"></span></span>
+                                </div>
+                                <div style="display: flex;
+                                            margin-top: 0;
+                                            margin-bottom: 0;
+                                            border: 1px solid #1d70b8;
+                                            padding: 5px 10px 5px 10px;
+                                            border-top: 0;
+                                            justify-content: space-between;
+                                            align-items: center;
+                                            border-radius: 0 0 10px 10px;">
+                                </div>
+                            </section>
+                        </div>
+                        <div class="right-column">
+                            <!-- Tests Booked Section -->
+                            <section class="data-section">
+                                <div style="
+     display: flex;
+     justify-content: space-between;
+     align-items: center;
+     background: #d4ebff;
+     padding: 7px;
+     color: #333;
+     border-radius: 7px 7px 0 0;
+     font-size: 16px;
+     border: 1px solid #1d70b8;">
+                                    <h1>Tests Booked</h1>
+                                    <button class="btnBlue" id="" aria-label="Add Tests Booked"><img alt="plus icon for add Tests Booked" src="~/images/circle-plus-solid-full-white.svg" width="16px">&nbsp;Add </button>
+                                </div>
+                                <div class="jobcodediv borderbottom_0 maxheight320">
+                                    <table id="" class="table table-striped table-bordered custom-table" style="margin-bottom: 0px;">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Test</th>
+                                                <th>Description </th>
+                                                <th>ReCUP </th>
+                                                <th>Num </th>
+                                                <th>AgrUP </th>
+                                                <th>TestCost</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tableBody">
+                                            @if (Model.TestsBookedList != null && Model.TestsBookedList.Any())
+                                            {
+                                                @foreach (var test in Model.TestsBookedList)
+                                                {
+                                                    <tr>
+                                                        <td>@test.Test</td>
+                                                        <td>@test.Description</td>
+                                                        <td class="text-AlignRight">@test.ReCUP.ToString("C")</td>
+                                                        <td class="text-AlignRight">@test.Num</td>
+                                                        <td class="text-AlignRight">@test.AgrUP.ToString("C")</td>
+                                                        <td class="text-AlignRight">@test.TestCost.ToString("C")</td>
+                                                        <td>
+                                                            <button type="button" aria-label="Edit" class="icon-bg edit-btn "><img src="~/images/edit_gridicon.svg" alt="Edit icon" width="20px" height="20px" title="Edit" /></button>
+                                                            <button type="button" aria-label="Delete" class="icon-bg  delete-btn "><img src="~/images/delete_gridicon.svg" alt="Delete icon" width="20px" height="20px" title="Delete" /></button>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div style=" border-left: 1px solid #1d70b8 !important;  border-top: 1px solid #1d70b8 !important;  border-right: 1px solid #1d70b8 !important; padding: 9px 20px 0px 20px; display: flex;justify-content: flex-end;align-items: center;">
+                                    <span style=" border-right: 0px;  border-bottom: 0px; font-size: 14px;   text-align: right;">
+                                        <span class="me-2">Total Test Cost: </span>
+                                    </span>
+                                    <span style=" border-right: 0px;  border-left: 0px; border-bottom: 0px; padding-right: 0px !important;  text-align: right;font-size: 13px;"> <span class="total-amount">  <input type="text" value="@Model.TotalTestCost.ToString("C")" aria-label="Total Test Cost" style="padding-right:5px;" class="form-control form-control-sm " asp-for="TotalTestCost"> </span></span>
+                                </div>
+                                <div style="display: flex;
+                                            margin-top: 0;
+                                            margin-bottom: 0;
+                                            border: 1px solid #1d70b8;
+                                            padding: 5px 10px 5px 10px;
+                                            border-top: 0;
+                                            justify-content: space-between;
+                                            align-items: center;
+                                            border-radius: 0 0 10px 10px;">
+                                </div>
+                            </section>
+                            <!-- Exceptional Costs Section -->
+                            <section class="data-section">
+                                <div style="
+     display: flex;
+     justify-content: space-between;
+     align-items: center;
+     background: #d4ebff;
+     padding: 7px;
+     color: #333;
+     border-radius: 7px 7px 0 0;
+     font-size: 16px;
+     border: 1px solid #1d70b8;">
+
+                                    <h1>Exceptional Costs</h1>
+                                    <button class="btnBlue" id="" aria-label="Add Exceptional Cost"><img alt="plus icon for add Exceptional Cost" src="~/images/circle-plus-solid-full-white.svg" width="16px">&nbsp;Add </button>
+                                </div>
+                                <div class="jobcodediv borderbottom_0 maxheight320">
+                                    <table id="" class="table table-striped table-bordered custom-table" style="margin-bottom: 0px;">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Description </th>
+                                                <th>Account </th>
+                                                <th>Total Cost </th>
+                                                <th>Freq or Mnth </th>
+                                                <th>Supplier</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tableBody">
+                                            @if (Model.ExceptionalCostsList != null && Model.ExceptionalCostsList.Any())
+                                            {
+                                                @foreach (var cost in Model.ExceptionalCostsList)
+                                                {
+                                                    <tr>
+                                                        <td>@cost.Description</td>
+                                                        <td>@cost.Account</td>
+                                                        <td class="text-AlignRight">@cost.TotalCost.ToString("C")</td>
+                                                        <td class="text-AlignRight">@cost.FreqOrMnth</td>
+                                                        <td class="">@cost.Supplier</td>
+                                                        <td>
+                                                            <button type="button" aria-label="Edit icon" class="icon-bg edit-btn "><img src="~/images/edit_gridicon.svg" width="20px" alt="Edit icon" height="20px" title="Edit" /></button>
+                                                            <button type="button" aria-label="Delete icon" class="icon-bg  delete-btn "><img src="~/images/delete_gridicon.svg" width="20px" alt="Delete icon" height="20px" title="Delete" /></button>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div style=" border-top: 1px solid #1d70b8 !important; border-left: 1px solid #1d70b8 !important; border-right: 1px solid #1d70b8 !important; padding: 9px 20px 0px 20px; display: flex;justify-content: flex-end;align-items: center;">
+                                    <span style=" border-right: 0px;  border-bottom: 0px; font-size: 14px;   text-align: right;">
+                                        <span class="me-2">Total Additional Cost: </span>
+                                    </span>
+                                    <span style=" border-right: 0px;  border-left: 0px; border-bottom: 0px; padding-right: 0px !important;  text-align: right;font-size: 13px;"> <span class="total-amount">  <input type="text" value="@Model.TotalAdditionalCost.ToString("C")" aria-label="Total Additional Cost" style="padding-right:5px;" class="form-control form-control-sm " asp-for="TotalAdditionalCost"></span></span>
+                                </div>
+                                <div style="display: flex;
+                                            margin-top: 0;
+                                            margin-bottom: 0;
+                                            border: 1px solid #1d70b8;
+                                            padding: 5px 10px 5px 10px;
+                                            border-top: 0;
+                                            justify-content: space-between;
+                                            align-items: center;
+                                            border-radius: 0 0 10px 10px;">
+                                </div>
+                            </section>
+                        </div>
+                    </div>
+                    <footer class="financial-summary">
+                        <div class="summary-row">
+                            <div class="summary-item">
+                                <label style="display:block" for="TransferIncome">Transfer Income:</label>
+                                <input type="text" value="@Model.TransferIncome.ToString("C")" aria-label="TransferIncome" id="TransferIncome" class="form-control form-control-sm" name="TransferIncome" asp-for="TransferIncome">
+                            </div>
+                            <div class="summary-item">
+                                <label style="display:block" for="ExternalIncome">External Income:</label>
+                                <input type="text" value="@Model.ExternalIncome.ToString("C")" aria-label="External Income" id="ExternalIncome" class="form-control form-control-sm" name="External Income" asp-for="ExternalIncome">
+                            </div>
+                            <div class="summary-item">
+                                <label style="display:block" for="BudgetCVL">Budget CVL:</label>
+                                <input type="text" value="@Model.BudgetCVL.ToString("C")" aria-label="Budget CVL" id="BudgetCVL" class="form-control form-control-sm" name="Budget CVL" asp-for="BudgetCVL">
+                            </div>
+                            <div class="summary-item">
+                                <label style="display:block" for="TotalCosts">Total Costs:</label>
+                                <input type="text" value="@Model.TotalCosts.ToString("C")" aria-label="Total Costs" id="TotalCosts" class="form-control form-control-sm" name="Total Costs" asp-for="TotalCosts">
+                            </div>
+                            <div class="summary-item">
+                                <label style="display:block" for="ProfitLoss">Profit/(Loss):</label>
+                                <input type="text" value="@(Model.ProfitLoss < 0 ? "(" + Math.Abs(Model.ProfitLoss).ToString("C") + ")" : Model.ProfitLoss.ToString("C"))" aria-label="Profit/(Loss)" id="ProfitLoss" class="form-control form-control-sm" name="Profit/(Loss)" asp-for="ProfitLoss">
+                            </div>
+                            <div class="summary-item">
+                                <label style="display:block" for="TargetProfit">Target Profit:</label>
+                                <input type="text" value="@Model.TargetProfit.ToString("C")" aria-label="Target Profit" id="TargetProfit" class="form-control form-control-sm" name="Target Profit" asp-for="TargetProfit">
+                            </div>
+                            <div class="summary-item">
+                                <label style="display:block" for="OffTarget">Off - Target:</label>
+                                <input type="text" value="@(Model.OffTarget < 0 ? "(" + Math.Abs(Model.OffTarget).ToString("C") + ")" : Model.OffTarget.ToString("C"))" aria-label="Off - Target" id="OffTarget" class="form-control form-control-sm" name="Off - Target" asp-for="OffTarget">
+                            </div>
+                        </div>
+                    </footer>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="timecodeModal" tabindex="-1">
+        <div class="modal-dialog modal-md">
+            <div class="modal-content">
+                <div class="modal-header flex-space-center">
+                    <h3 class="modal-title m-0" id="timecodeModalLabel">Add Time code</h3>
+                    <button type="button" class="btn-close btn-red" onclick="closeTCModal()">X</button>
+                </div>
+                <div class="modal-body">
+
+                    <form class="row" id="formAddJobcode">
+                        <div class="col-12">
+                            <label for="dpworkgroup" class="form-label p-0">Work Group:</label>
+                            <select class="form-select" id="dpworkgroup" style="border-radius: 5px;">
+                                <option value="CIT">CIT</option>
+                                <option value="CSCC">CSCC</option>
+                                <option value="CSCE">CSCE</option>
+                                <option value="CSCW">CSCW</option>
+                                <option value="EUExit">EUExit</option>
+                                <option value="Operations">Operations</option>
+                                <option value="PHINSLT">PHINSLT</option>
+                                <option value="PHSISW">PHSISW</option>
+                                <option value="BM1">PHSI-WCS</option>
+                                <option value="QAU">QAU</option>
+                                <option value="ROMD">ROMD</option>
+                                <option value="RONT">RONT</option>
+                                <option value="ROSC">ROSC</option>
+                                <option value="ROSW">ROSW</option>
+                                <option value="SVBU">SVBU</option>
+                            </select>
+                        </div>
+                        <div class="col-md-12">
+                            <label for="chktimecodestatus" class="col-form-label" style="display: flex;  align-items: center;">
+                                Active:
+                                <div style="margin: 0 0 0 10px;">
+                                    <input class="form-check-input" type="checkbox" id="chktimecodestatus" value="" aria-label="Checkbox for following text input">
+                                </div>
+                            </label>
+                        </div>
+                        <div class="col-12">
+                            <label for="dpjobcode" class="form-label">Job Code</label>
+                            <select class="form-select" id="dpjobcode" style="border-radius: 5px;">
+                                <option value="">--select--</option>
+                                <option value="AH003300">AH003300</option>
+                                <option value="AH003301">AH003301</option>
+                                <option value="AH003302">AH003302</option>
+                                <option value="AH003303">AH003303</option>
+                                <option value="AH003304">AH003304</option>
+                                <option value="AH003305">AH003305</option>
+                                <option value="AH003306">AH003306</option>
+                                <option value="AH003307">AH003307</option>
+                                <option value="AH003308">AH003308</option>
+                                <option value="AH003309">AH003309</option>
+                                <option value="AH003310">AH003310</option>
+                                <option value="AH003311">AH003311</option>
+                                <option value="AH003315">AH003315</option>
+                                <option value="AH003317">AH003317</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" aria-label="Cancel" onclick="closeTCModal()">Cancel</button>
+                    <button class="btn btn-primary" aria-label="Save" id="modaltcsaveBtn">Save</button>
+                    <button class="btn btn-primary" aria-label="Update" id="updateBtn" style="display: none;">Update</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        © Copyright Defra 2025
+    </div>
+
+    <div class="modal fade" id="modalPopup" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-md">
+            <div id="modaPopupBody" class="modal-content">
+                
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+            const encoded = urlParams.get("data");
+
+            if (encoded) {
+                const obj = JSON.parse(atob(encoded));
+                console.log(obj);
+                document.getElementById('project-code').value = obj.jobcode;
+                document.getElementById('project-title').value = obj.name;
+            }
+            let selectedRow = null;
+
+            function addRowEX() {
+                const table = document.getElementById("tblprojectjobcode").querySelector("tbody");
+                let c = 0;
+                const newRow = document.createElement("tr");
+                newRow.setAttribute("onclick", "selectRow(this)");
+
+                for (let i = 0; i < 4; i++) {
+                    const td = document.createElement("td");
+                    td.innerHTML = `<input type="text" class="form-control">`;
+                    newRow.appendChild(td);
+                }
+
+                const saveBtn = document.createElement("button");
+                saveBtn.className = "btn btn-link btn-sm";
+
+                saveBtn.dataset.mode = "Save";
+                saveBtn.innerHTML = `<img src="~/images/square-check-regular-full.svg" alt="save icon" width="20">`;
+                saveBtn.addEventListener("click", function () {
+                    const cells = firstdiv.querySelectorAll("div");
+                    const editBtn = document.createElement("button");
+                    editBtn.className = "btn btn-link btn-sm ms-2";
+                    editBtn.innerHTML = `<img src="~/images/pen-to-square-regular-full.svg" width="20">`;
+                    for (let i = 0; i < 4; i++) {
+                        const input = cells[i].querySelector("input");
+                        cells[i].innerText = input.value;
+                    }
+                });
+                table.appendChild(newRow);
+            }
+
+            function editRow(event) {
+                event.stopPropagation();
+                const btn = event.target.closest("button");
+                const tr = btn.closest("tr");
+                const cells = tr.querySelectorAll("td");
+
+                if (!btn.dataset.mode || btn.dataset.mode === "edit") {
+                    for (let i = 0; i < 4; i++) {
+                        const text = cells[i].innerText.trim();
+                        cells[i].innerHTML = `<input type="text" class="form-control" value="${text}">`;
+                    }
+                    btn.dataset.mode = "save";
+                    btn.innerHTML = `<img src="~/images/square-check-regular-full.svg" alt="Save icon for edited data" width="20">`;
+                    return;
+                }
+                for (let i = 0; i < 4; i++) {
+                    const input = cells[i].querySelector("input");
+                    cells[i].innerText = input.value;
+                }
+                btn.dataset.mode = "edit";
+                btn.innerHTML = `<img src="~/images/pen-to-square-regular-full.svg" alt="Edit icon for selected data" width="20">`;
+            }
+
+            function editRowTWO(event) {
+                event.stopPropagation();
+                let tr = event.target.closest("tr");
+                let cells = tr.querySelectorAll("td");
+                const btn = event.target;
+                if (!btn.dataset.mode || btn.dataset.mode === "edit") {
+
+                    for (let i = 0; i < 4; i++) {
+                        const text = cells[i].innerText;
+                        cells[i].innerHTML = `<input type="text" class="form-control" value="${text}">`;
+                    }
+                    btn.dataset.mode = "save";
+                    btn.innerHTML = `<img src="~/images/square-check-regular-full.svg" width="20">`;
+                    return;
+                }
+                for (let i = 0; i < 4; i++) {
+                    const input = cells[i].querySelector("input");
+                    cells[i].innerText = input.value;
+                }
+                btn.dataset.mode = "edit";
+                btn.innerHTML = `<img src="~/images/pen-to-square-regular-full.svg"" width="20">`;
+            }
+
+
+            function addRow(event) {
+                event.stopPropagation();
+                const table = document.getElementById("tblprojectjobcode").querySelector("tbody");
+
+                const newRow = document.createElement("tr");
+                newRow.onclick = function () { onclickRow(this); };
+
+                for (let i = 0; i < 4; i++) {
+                    const td = document.createElement("td");
+                    td.innerHTML = `<input type="text" class="form-control">`;
+                    newRow.appendChild(td);
+                }
+
+                const actionTd = document.createElement("td");
+                const saveBtn = document.createElement("button");
+                saveBtn.className = "btn btn-light btn-sm";
+                saveBtn.innerHTML = `<img src="~/images/check-solid-full.svg" alt="Save icon for new data" width="20">`;
+
+                saveBtn.addEventListener("click", function () {
+                    const cells = newRow.querySelectorAll("td");
+
+                    for (let i = 0; i < 4; i++) {
+                        const input = cells[i].querySelector("input");
+                        cells[i].innerText = input.value;
+                    }
+
+                    actionTd.innerHTML = "";
+                    const editBtn = document.createElement("button");
+                    editBtn.className = "btn btn-light btn-sm";
+                    editBtn.innerHTML = `<img src="~/images/pen-to-square-regular-full.svg" alt="Edit icon for selected data" width="20">`;
+                    actionTd.appendChild(editBtn);
+
+                    editBtn.addEventListener("click", function (event) {
+                        event.stopPropagation();
+                        const cells = newRow.querySelectorAll("td");
+                        for (let i = 0; i < 4; i++) {
+                            const text = cells[i].innerText;
+                            cells[i].innerHTML = `<input type="text" class="form-control" value="${text}">`;
+                        }
+                        actionTd.innerHTML = "";
+                        actionTd.appendChild(saveBtn);
+                    });
+                });
+
+                actionTd.appendChild(saveBtn);
+                newRow.appendChild(actionTd);
+
+                table.appendChild(newRow);
+            }
+
+            function selectRow(row) {
+                document.querySelectorAll("#myTable tbody tr")
+                    .forEach(r => r.classList.remove("selected-row"));
+
+                row.classList.add("selected-row");
+            }
+
+            function deleteRow(btn) {
+                btn.closest("tr").remove();
+            }
+
+            function backToSearchGrid() {
+                window.location.href = "project_maintenance_five.three.html";
+            }
+    </script>
+    <script src="~/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/modalpopup.js"></script>
+    <fps-year-script></fps-year-script>
+    <script>
+        let selectedYear = @Fy.Year
+        $('#yearSelector').val(selectedYear);
+        $('#yearSelector').change(function () {
+            selectedYear = this.value;
+            window.location.href = '/Home/Index?year=' + selectedYear;
+        });
+
+        function closeModal() {
+          $('#modaPopupBody').html("");
+          $('#modalPopup').removeClass("show");
+        }
+
+    </script>
+</body>
+</html>

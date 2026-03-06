@@ -8,7 +8,7 @@
 
         public double PlannedHours { get; set; }
 
-        public DateTime? SysTimestamp { get; set; }
+        //public DateTime? SysTimestamp { get; set; }
 
         public int? FpsCalYear { get; set; }
     }

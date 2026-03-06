@@ -46,6 +46,14 @@
                     if (value is DateTime dateTimeValue)
                         return dateTimeValue.ToString(column.DateFormat ?? "yyyy-MM-dd HH:mm");
                     break;
+                case GridColumnType.UsdValue:
+                    if (value is decimal usdValue)
+                        return usdValue.ToString("C", new System.Globalization.CultureInfo("en-US"));
+                    break;
+                case GridColumnType.GbpValue:
+                    if (value is decimal gbpValue)
+                        return gbpValue.ToString("C", new System.Globalization.CultureInfo("en-GB"));
+                    break;
                 // case GridColumnType.Decimal:
                 //     if (value is decimal decValue)
                 //         return decValue.ToString(column.DecimalFormat ?? "F2");

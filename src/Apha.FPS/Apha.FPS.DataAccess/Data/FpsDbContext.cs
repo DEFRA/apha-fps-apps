@@ -69,7 +69,7 @@ public partial class FpsDbContext : DbContext
                 .HasMaxLength(10)
                 .HasColumnName("programno");
             entity.Property(e => e.UserID).HasColumnName("user_id");
-            entity.Property(e => e.FpsCalYear).HasColumnName("fpscalyear");
+            entity.Property(e => e.FpsCalYear).HasColumnName("fpsyear");
             entity.HasQueryFilter(e => e.FpsCalYear == _fPSYearContext.FPSYear);
         });       
 
@@ -90,7 +90,7 @@ public partial class FpsDbContext : DbContext
             entity.Property(e => e.Directorate)
                 .HasMaxLength(15)
                 .HasColumnName("directorate");
-            entity.Property(e => e.FpsCalYear).HasColumnName("fpscalyear");
+            entity.Property(e => e.FpsCalYear).HasColumnName("fpsyear");
             entity.Property(e => e.Manager)
                 .HasMaxLength(50)
                 .HasColumnName("manager");
@@ -166,7 +166,7 @@ public partial class FpsDbContext : DbContext
             entity.Property(e => e.Finished)
                 .HasDefaultValue((short)0)
                 .HasColumnName("finished");
-            entity.Property(e => e.FpsCalYear).HasColumnName("fpscalyear");
+            entity.Property(e => e.FpsCalYear).HasColumnName("fpsyear");
             entity.Property(e => e.IncomeAccountCode)
                 .HasMaxLength(50)
                 .HasColumnName("incomeaccountcode");
@@ -239,11 +239,11 @@ public partial class FpsDbContext : DbContext
             entity.Property(e => e.JobCode)
                 .HasMaxLength(20)
                 .HasColumnName("jobcode");
-            entity.Property(e => e.FpsCalYear).HasColumnName("fpscalyear");
+            entity.Property(e => e.FpsCalYear).HasColumnName("fpsyear");
             entity.Property(e => e.PlannedHours).HasColumnName("plannedhours");
-            entity.Property(e => e.SysTimestamp)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("systimestamp");
+            //entity.Property(e => e.SysTimestamp)
+            //    .HasColumnType("timestamp without time zone")
+            //    .HasColumnName("systimestamp");
             entity.HasQueryFilter(e => e.FpsCalYear == _fPSYearContext.FPSYear);
         });
 
@@ -257,7 +257,7 @@ public partial class FpsDbContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("pactid");
             entity.Property(e => e.EndDate).HasColumnName("enddate");
-            entity.Property(e => e.FpsCalYear).HasColumnName("fpscalyear");
+            entity.Property(e => e.FpsCalYear).HasColumnName("fpsyear");
             entity.Property(e => e.HoursPerWeek).HasColumnName("hoursperweek");
             entity.Property(e => e.HrsAvail).HasColumnName("hrsavail");
             entity.Property(e => e.HrsPaid).HasColumnName("hrspaid");
@@ -298,7 +298,7 @@ public partial class FpsDbContext : DbContext
             entity.Property(e => e.FirstName)
                 .HasMaxLength(20)
                 .HasColumnName("firstname");
-            entity.Property(e => e.FPSCalYear).HasColumnName("fpscalyear");
+            entity.Property(e => e.FPSCalYear).HasColumnName("fpsyear");
             entity.Property(e => e.LastName)
                 .HasMaxLength(20)
                 .HasColumnName("lastname");
@@ -317,7 +317,7 @@ public partial class FpsDbContext : DbContext
             entity.Property(e => e.Id)
                 .HasMaxLength(50)
                 .HasColumnName("id");
-            entity.Property(e => e.FpsCalYear).HasColumnName("fpscalyear");
+            entity.Property(e => e.FpsCalYear).HasColumnName("fpsyear");
             entity.Property(e => e.Notes)
                 .HasMaxLength(255)
                 .HasColumnName("notes");
@@ -354,7 +354,7 @@ public partial class FpsDbContext : DbContext
             entity.Property(e => e.EmailRecipient)
                 .HasMaxLength(50)
                 .HasColumnName("email_recipient");
-            entity.Property(e => e.FpsCalYear).HasColumnName("fpscalyear");
+            entity.Property(e => e.FpsCalYear).HasColumnName("fpsyear");
             entity.Property(e => e.Owner)
                 .HasMaxLength(50)
                 .HasColumnName("owner");
@@ -388,7 +388,7 @@ public partial class FpsDbContext : DbContext
                 .HasDefaultValueSql("0")
                 .HasColumnType("money")
                 .HasColumnName("directratewg");
-            entity.Property(e => e.FpsCalYear).HasColumnName("fpscalyear");
+            entity.Property(e => e.FpsCalYear).HasColumnName("fpsyear");
             entity.Property(e => e.GradeCode)
                 .HasMaxLength(50)
                 .UseCollation("latin1_general_ci_as")
@@ -436,7 +436,7 @@ public partial class FpsDbContext : DbContext
                 .HasMaxLength(50)
                 .UseCollation("latin1_general_ci_as")
                 .HasColumnName("divisiongrade");
-            entity.Property(e => e.FPSCalYear).HasColumnName("fpscalyear");
+            entity.Property(e => e.FPSCalYear).HasColumnName("fpsyear");
             entity.Property(e => e.GradeCode)
                 .HasMaxLength(50)
                 .UseCollation("latin1_general_ci_as")
@@ -477,7 +477,7 @@ public partial class FpsDbContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("profitcentre");
             entity.Property(e => e.UserId).HasColumnName("user_id");
-            entity.Property(e => e.FpsCalYear).HasColumnName("fpscalyear");
+            entity.Property(e => e.FpsCalYear).HasColumnName("fpsyear");
             entity.HasQueryFilter(e => e.FpsCalYear == _fPSYearContext.FPSYear);
         });
 

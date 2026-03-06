@@ -3,6 +3,8 @@ using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using System.Dynamic;
 
 namespace Apha.FPS.DataAccess.Repositories
 {
@@ -30,8 +32,9 @@ namespace Apha.FPS.DataAccess.Repositories
                     select p).AsQueryable();
         }
 
-        public async Task<PagedData<StaffJobView>> GetJobStaffCostAsync(PaginationParameters<object> query)
+        public async Task<PagedData<StaffJobView>> GetJobStaffCostAsync(PaginationParameters<string> query)
         {
+
             var programs = _programRepository.Get();
             var projects = _projectRepository.Get();
             var staffs = Get();
@@ -46,13 +49,12 @@ namespace Apha.FPS.DataAccess.Repositories
                            };
             var dutyHours = await _dbContext.TblSettings.Where(e => e.Id == "HoursInDay").Select(e => e.Setting).FirstOrDefaultAsync();
 
-            var result = await (from sj in staffs
+            var queryStaffJob = (from sj in staffs
                                 join s in employee on sj.StaffId equals s.StaffId
                                 join wg in _dbContext.WorkgroupGrades on s.WorkGroupGrade equals wg.WgGrade
                                 join pc in _dbContext.ProfitcentreGrades on wg.ProfitCentreGrade equals pc.PcGrade
                                 join p in projects on sj.JobCode equals p.ParentProject
-                                join prg in programs on p.Program equals prg.ProgramNo
-                                where sj.JobCode == query.Search
+                                join prg in programs on p.Program equals prg.ProgramNo                               
                                 select new StaffJobView
                                 {
                                     StaffID = sj.StaffId,
@@ -71,7 +73,27 @@ namespace Apha.FPS.DataAccess.Repositories
                                     WorkGroup = wg.Workgroup,
                                     SectorName = prg.SectorName,
                                     Days = dutyHours != null ? sj.PlannedHours / Convert.ToDouble(dutyHours) : 0
-                                }).OrderBy(e => e.Name).ToListAsync();
+                                }).OrderBy(e => e.Name).AsQueryable();
+
+            //With ExpandoObject
+            if (!String.IsNullOrEmpty(query.Filter))
+            {
+                dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(query.Filter);
+                if (filterModel != null)
+                {
+                    var dict = (IDictionary<string, object>)filterModel;
+                    if (dict.ContainsKey("Name") && dict["Name"] != null)
+                    {
+                        queryStaffJob = queryStaffJob.Where(x => x.Name!.Contains(dict["Name"].ToString()));
+                    }
+                    if (dict.ContainsKey("PlannedHours") && dict["PlannedHours"] != null)
+                    {
+                        queryStaffJob = queryStaffJob.Where(x => x.PlannedHours.ToString().Contains(dict["PlannedHours"].ToString()));
+                    }
+                }
+            }
+
+            var result = await queryStaffJob.ToListAsync();
 
             return ApplyPaging(result, query.Page, query.PageSize);
         }

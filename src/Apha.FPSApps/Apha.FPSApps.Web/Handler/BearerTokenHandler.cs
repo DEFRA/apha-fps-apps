@@ -24,18 +24,25 @@ namespace Apha.FPSApps.Web.Handler
              HttpRequestMessage request,
              CancellationToken cancellationToken)
         {
-            var user = _httpContextAccessor.HttpContext?.User;
+            try
+            {
+                var user = _httpContextAccessor.HttpContext?.User;
 
-            if (user == null || !user.Identity?.IsAuthenticated == true)
-                throw new UnauthorizedAccessException("User is not authenticated.");
+                if (user == null || !user.Identity?.IsAuthenticated == true)
+                    throw new UnauthorizedAccessException("User is not authenticated.");
 
-            var accessToken = await _tokenAcquisition
-                .GetAccessTokenForUserAsync(_scopes, user: user);
+                var accessToken = await _tokenAcquisition
+                    .GetAccessTokenForUserAsync(_scopes, user: user);
 
-            request.Headers.Authorization =
-                new AuthenticationHeaderValue("Bearer", accessToken);
+                request.Headers.Authorization =
+                    new AuthenticationHeaderValue("Bearer", accessToken);
 
-            return await base.SendAsync(request, cancellationToken);
+                return await base.SendAsync(request, cancellationToken);
+            }
+            catch(Exception ex)
+            {
+                throw ex;
+            }
         }
     }
 }

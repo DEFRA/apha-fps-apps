@@ -24,7 +24,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                 var response = await _http.GetAsync<List<WeatherForecastRes>>(
                     $"api/weather");
 
-                if (response.Success && response.Data != null)
+                if (response.Success)
                 {
                     return _mapper.Map<ApiResponseDto<List<WeatherForecastDto>>>(response);
                 }
