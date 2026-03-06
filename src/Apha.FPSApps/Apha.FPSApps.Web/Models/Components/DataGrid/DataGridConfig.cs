@@ -14,8 +14,7 @@
         public string AddUrl { get; set; }
         public string UpdateUrl { get; set; }
         public string DeleteUrl { get; set; }
-        public string BindGridUrl { get; set; }
-        public string OpenForEdit { get; set; }
+        public string BindGridUrl { get; set; }        
         public PaginationModel Pagination { get; set; }
         public string? CurrentSearch { get; set; }
         public Dictionary<string, string>? CurrentFilters { get; set; } = null;

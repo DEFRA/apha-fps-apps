@@ -9,6 +9,7 @@ using System.Reflection.Emit;
 
 namespace Apha.FPS.Application.Services
 {
+    
     public class StaffJobService : IStaffJobService
     {
         private readonly IStaffJobRepository _staffJobRepository;
@@ -20,9 +21,9 @@ namespace Apha.FPS.Application.Services
             _mapper = mapper;
         }
 
-        public async Task<PaginatedResult<StaffJobViewDto>> GetJobStaffCostAsync(QueryParameters<object> queryFilter)
+        public async Task<PaginatedResult<StaffJobViewDto>> GetJobStaffCostAsync(QueryParameters<string> queryFilter)
         {
-            var filter = _mapper.Map<PaginationParameters<object>>(queryFilter);
+            var filter = _mapper.Map<PaginationParameters<string>>(queryFilter);
             var staffJobViews = await _staffJobRepository.GetJobStaffCostAsync(filter);
             return _mapper.Map<PaginatedResult<StaffJobViewDto>>(staffJobViews);
         }

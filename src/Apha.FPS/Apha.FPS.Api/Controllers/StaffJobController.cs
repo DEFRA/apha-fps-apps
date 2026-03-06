@@ -4,6 +4,7 @@ using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Apha.FPS.Api.Controllers
@@ -11,6 +12,8 @@ namespace Apha.FPS.Api.Controllers
     /// <summary>
     /// API controller for managing staff job assignments and related data.
     /// </summary>
+    /// 
+    [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
     [ApiController]
     [Route("api/staffjob")]
     public class StaffJobController : ControllerBase
@@ -36,9 +39,9 @@ namespace Apha.FPS.Api.Controllers
         /// <param name="query">Pagination and filter parameters.</param>
         /// <returns>Paginated list of staff job cost view results.</returns>
         [HttpGet]
-        public async Task<IActionResult> GetJobStaffCostAsync([FromQuery] PaginationReq<object> query)
+        public async Task<IActionResult> GetJobStaffCostAsync([FromQuery] PaginationReq<string> query)
         {
-            var filter = _mapper.Map<QueryParameters<object>>(query);
+            var filter = _mapper.Map<QueryParameters<string>>(query);
             var result = await _staffJobService.GetJobStaffCostAsync(filter);
             return Ok(_mapper.Map<PaginationRes<StaffJobViewRes>>(result));
         }

@@ -8,6 +8,8 @@
         Checkbox,
         Date,
         DateTime,
-        ReadOnly
+        ReadOnly,
+        UsdValue, // $0.00
+        GbpValue // £0.00
     }
 }

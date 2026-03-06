@@ -3,5 +3,6 @@
     public interface IFpsApiClient
     {
         IFpsWeatherForecastApiClient FpsWeatherForecast { get; }
+        IFpsStaffJobApiClient FpsStaffJob { get; }
     }
 }

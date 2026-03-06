@@ -5,6 +5,9 @@ namespace Apha.FPSApps.Infrastructure.Integrations.HttpExecutor
     public interface IHttpExecutor
     {
         Task<ApiResponse<T>> GetAsync<T>(string url);
+
+        Task<PaginatedApiResponse<T>> GetPaginatedAsync<T>(string url);
+
         Task<byte[]> GetFileAsync(string url);
 
         Task<ApiResponse<T>> PostAsync<TRequest, T>(

@@ -5,9 +5,7 @@
     <div class="grid-header">
         <h2>@Model.Title</h2>
         <div class="grid-toolbar">
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <input type="text" id="@($"{Model.GridId}_gridSearchInput")" class="form-control form-control-sm"
-                       placeholder="Search..." style="width: 180px;" value="@Model.CurrentSearch" />
+            <div style="display: flex; align-items: center; gap: 8px;">                
                 <!-- Page Size Dropdown START -->
                 <select id="@($"{Model.GridId}_pageSize")" class="form-control form-control-sm" style="width: 90px;">
                     @{
@@ -21,14 +19,8 @@
                         </option>
                     }
                 </select>
-                <!-- Page Size Dropdown END -->
-                <button type="button" class="btn btn-sm btn-primary" id="@($"{Model.GridId}_btnSearch")">
-                    <i class="fa fa-search"></i>
-                </button>
-                <button type="button" class="btn btn-sm btn-secondary" id="@($"{Model.GridId}_unfilterBtn")">
-                    <i class="fa fa-times"></i> Unfilter
-                </button>
-                <button type="button" class="btn btn-success" id="@($"{Model.GridId}_addRowBtn")" onclick="openAddModal()">
+                <!-- Page Size Dropdown END -->              
+                <button type="button" class="btn btn-success" id="@($"{Model.GridId}_addRowBtn")">
                     <i class="fa fa-plus"></i> Add
                 </button>
             </div>
@@ -42,7 +34,7 @@
                     <tr>
                         @if (Model.ShowCheckboxColumn)
                         {
-                            <th style="width: 30px;">
+                            <th scope="col" style="width: 30px;">
                                 <input type="checkbox" id="@($"{Model.GridId}_selectAll")" style="transform: scale(1.3);" />
                             </th>
                         }
@@ -54,7 +46,7 @@
                                 var sortIcon = "";
                                 if (isSorted)
                                     sortIcon = Model.Pagination.SortDirection ? "▲" : "▼";
-                                <th style="width: @(column.Width)px; cursor:pointer;"
+                                <th scope="col" style="width: @column.Width px; cursor:pointer;"
                                     class="sortable-header"
                                     data-column="@column.PropertyName"
                                     data-sortdir="@(isSorted ? !Model.Pagination.SortDirection : false)">
@@ -63,19 +55,19 @@
                                 </th>
                             }
                         }
-                        <th class="row-number-header" style="width: 80px;">Action</th>
+                        <th scope="col" class="row-number-header" style="width: 80px;">Action</th>
                     </tr>
                     <!-- Filter Row -->
                     <tr class="filter-row">
                         @if (Model.ShowCheckboxColumn)
                         {
-                            <th></th>
+                            <th scope="col"></th>
                         }
                         @foreach (var column in Model.Columns)
                         {
                             if (column.IsVisible)
                             {
-                                <th>
+                                <th scope="col">
                                     @if (column.IsFilterable)
                                     {
                                         var filterValue = Model.CurrentFilters != null && Model.CurrentFilters.ContainsKey(column.PropertyName)
@@ -116,7 +108,7 @@
                                 </th>
                             }
                         }
-                        <th></th>
+                        <th scope="col"></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -162,14 +154,14 @@
                                         class="btn btn-sm btn-info edit-row-btn"
                                         data-row='@Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(row))'
                                         data-columns='@Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Columns))'
-                                        onclick="openEditModal(this)">
-                                    <i class="fa fa-edit"></i>
+                                        onclick="openEditModal(this)">                                    
+                                    <img src="../images/edit_gridicon.svg" alt="Edit icon" width="20" height="20" title="Edit">
                                 </button>
                                 <button type="button"
                                         class="btn btn-sm btn-danger delete-row-btn"
                                         data-id="@GridHelpers.GetPropertyValue(row, Model.KeyProperty)"
-                                        onclick="deleteRow(this)">
-                                    <i class="fa fa-trash"></i>
+                                        onclick="deleteRow(this)">                                    
+                                    <img src="../images/delete_gridicon.svg" alt="Delete icon" width="20" height="20" title="Delete">
                                 </button>
                             </td>
                         </tr>
@@ -190,8 +182,8 @@
                     &nbsp;|&nbsp;
                     Showing @((Model.Pagination.PageSize * (Model.Pagination.PageNumber - 1)) + 1)
                     -
-                    @(Math.Min(Model.Pagination.PageSize * Model.Pagination.PageNumber, Model.Pagination.TotalCount))
-                    of @Model.Pagination.TotalCount
+                    @(Math.Min(Model.Pagination.PageSize * Model.Pagination.PageNumber, Model.Pagination.TotalRecords))
+                    of @Model.Pagination.TotalRecords
                 </span>
             </div>
         </div>
@@ -206,41 +198,7 @@
         var addUrl = '@Model.AddUrl';
         var updateUrl = '@Model.UpdateUrl';
         var deleteUrl = '@Model.DeleteUrl';
-        var bindGridUrl = '@Model.BindGridUrl';
-        var openForEdit = '@Model.OpenForEdit';
-
-        function openAddModal() {
-            // Create an empty row object (all properties null/empty)
-            var emptyRow = {};
-            // Optionally, you can generate emptyRow from Model.Columns in C# and serialize it here
-            var columns = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Columns));
-
-            $.ajax({
-                url: openForEdit,
-                type: 'POST',
-                data: { model: JSON.stringify({ Item1: emptyRow, Item2: columns }) },
-                success: function (html) {
-                    $('#editModalBody').html(html);
-                    $('#editModal').show();
-                    $('.modal-title').text('Add Staff');
-                }
-            });
-        }
-
-        function openEditModal(button) {
-            const rowData = JSON.parse(button.dataset.row);
-            const columns = JSON.parse(button.dataset.columns);
-
-            $.ajax({
-                url: openForEdit,
-                type: 'POST',
-                data: { model: JSON.stringify({ Item1: rowData, Item2: columns }) },
-                success: function (html) {
-                    $('#editModalBody').html(html);
-                    $('#editModal').show();
-                }
-            });
-        }
+        var bindGridUrl = '@Model.BindGridUrl';    
 
         function closeEditModal() {
             $('#editModal').hide();
@@ -299,18 +257,16 @@
                 return; // Don't sort if resizing just happened
             }
             var column = $(this).data('column');
-            var sortDir = $(this).data('sortdir');
-            var searchTerm = $('#' + gridId + '_gridSearchInput').val();
+            var sortDir = $(this).data('sortdir');           
             var pageSize = $('#' + gridId + '_pageSize').val() || 10;
             // Always reset to page 1 on sort
-            $.get(bindGridUrl, {
-                pageNo: 1,
-                pageSize: pageSize,
-                search: searchTerm,
-                column: column,
-                sortOrder: sortDir,
-                filters: JSON.stringify(getFilterModel())
-            }, function (htmlData) {
+            $.post(bindGridUrl, {
+                page: 1,
+                pageSize: pageSize,               
+                sortBy: column,
+                descending: sortDir,
+                filter: JSON.stringify(getFilterModel())
+            }).done(function (htmlData) {
                 $(gridContainerSelector).html(htmlData);
                 applyGridColumnWidths(gridId);
                 deselectAllCheckboxes();
@@ -323,19 +279,17 @@
             var $btn = $(this);
             var pageNo = $btn.data('pageno');
             var pageSize = $('#' + gridId + '_pageSize').val() || 10;
-            if ($btn.prop('disabled') || !pageNo || isNaN(pageNo) || pageNo < 1) return;
-            var searchTerm = $('#' + gridId + '_gridSearchInput').val();
+            if ($btn.prop('disabled') || !pageNo || isNaN(pageNo) || pageNo < 1) return;            
             // Get current sort from a global or hidden field, or from Model.Pagination
             var column = '@Model.Pagination.SortColumn';
             var sortOrder = '@Model.Pagination.SortDirection';
-            $.get(bindGridUrl, {
-                pageNo: pageNo,
-                pageSize: pageSize,
-                search: searchTerm,
-                column: column,
-                sortOrder: sortOrder,
-                filters: JSON.stringify(getFilterModel())
-            }, function (htmlData) {
+            $.post(bindGridUrl, {
+                page: pageNo,
+                pageSize: pageSize,               
+                sortBy: column,
+                descending: sortOrder,
+                filter: JSON.stringify(getFilterModel())
+            }).done(function (htmlData) {
                 $(gridContainerSelector).html(htmlData);
                 applyGridColumnWidths(gridId);
                 deselectAllCheckboxes();
@@ -343,15 +297,13 @@
         });
 
         $('#' + gridId + '_pageSize').on('change', function () {
-            var pageSize = $(this).val();
-            var searchTerm = $('#' + gridId + '_gridSearchInput').val();
+            var pageSize = $(this).val();            
             // Always reset to page 1 on page size change
-            $.get(bindGridUrl, {
-                pageNo: 1,
-                pageSize: pageSize,
-                search: searchTerm,
-                filters: JSON.stringify(getFilterModel())
-            }, function (htmlData) {
+            $.post(bindGridUrl, {
+                page: 1,
+                pageSize: pageSize,               
+                filter: JSON.stringify(getFilterModel())
+            }).done(function (htmlData) {
                 $(gridContainerSelector).html(htmlData);
                 applyGridColumnWidths(gridId);
                 deselectAllCheckboxes();
@@ -360,40 +312,18 @@
 
         // Handle filter changes (textboxes and dropdowns)
         $(gridContainerSelector).on('change', '.grid-filter', function () {
-            var pageSize = $('#' + gridId + '_pageSize').val() || 10;
-            var searchTerm = $('#' + gridId + '_gridSearchInput').val();
+            var pageSize = $('#' + gridId + '_pageSize').val() || 10;            
             // Always reset to page 1 on filter change
-            $.get(bindGridUrl, {
-                pageNo: 1,
-                pageSize: pageSize,
-                search: searchTerm,
-                filters: JSON.stringify(getFilterModel())
-            }, function (htmlData) {
+            $.post(bindGridUrl, {
+                page: 1,
+                pageSize: pageSize,                
+                filter: JSON.stringify(getFilterModel())
+            }).done(function (htmlData) {
                 $(gridContainerSelector).html(htmlData);
                 applyGridColumnWidths(gridId);
                 deselectAllCheckboxes();
             });
-        });
-
-        // Search on Enter or blur
-        $('#' + gridId + '_gridSearchInput').on('keydown', function (e) {
-            if (e.key === 'Enter') {
-                triggerGridSearch();
-            }
-        }).on('blur', function () {
-            triggerGridSearch();
-        });
-
-        // Search button click
-        $('#' + gridId + '_btnSearch').on('click', function () {
-            triggerGridSearch();
-        });
-
-        // Unfilter button click
-        $('#' + gridId + '_unfilterBtn').on('click', function () {
-            $('#' + gridId + '_gridSearchInput').val('');
-            triggerGridSearch(true);
-        });
+        });        
 
         // "Select All" checkbox logic
         $('#' + gridId + '_selectAll').on('change', function() {
@@ -405,6 +335,22 @@
         $(gridContainerSelector).off('change', '.row-checkbox').on('change', '.row-checkbox', function() {
             var allChecked = $('.row-checkbox').length === $('.row-checkbox:checked').length;
             $('#' + gridId + '_selectAll').prop('checked', allChecked);
+        });
+
+        //Add button click
+        $('#' + gridId + '_addRowBtn').on('click', function () {            
+            $.post(addUrl, {}).done(function (html) {
+                $('#modaPopupBody').html(html);
+                $('#modalPopup').addClass("show");
+            });
+        });
+
+        //Edit button click
+         $(gridContainerSelector).off('click', '.edit-row-btn').on('click', '.edit-row-btn', function() {             
+            $.post(updateUrl, {}).done(function (html) {
+                $('#modaPopupBody').html(html);
+                $('#modalPopup').addClass("show");
+            });
         });
 
         // Deselect all on page/filter change
@@ -425,16 +371,14 @@
             return filterModel;
         }
 
-        function triggerGridSearch(isUnfilter) {
-            var searchTerm = $('#' + gridId + '_gridSearchInput').val();
+        function triggerGridSearch(isUnfilter) {            
             var pageSize = $('#' + gridId + '_pageSize').val() || 10;
             // Always reset to page 1 on search/unfilter
-            $.get(bindGridUrl, {
-                pageNo: 1,
-                pageSize: pageSize,
-                search: isUnfilter ? '' : searchTerm,
-                filters: JSON.stringify(getFilterModel())
-            }, function (htmlData) {
+            $.post(bindGridUrl, {
+                page: 1,
+                pageSize: pageSize,                
+                filter: JSON.stringify(getFilterModel())
+            }).done(function (htmlData) {
                 $(gridContainerSelector).html(htmlData);
                 applyGridColumnWidths(gridId);
                 deselectAllCheckboxes();
