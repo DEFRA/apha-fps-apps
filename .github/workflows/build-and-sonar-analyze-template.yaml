@@ -121,70 +121,86 @@ jobs:
         shell: pwsh
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_PROJECT_KEY: ${{ inputs.sonar_project_key }}
+          SONAR_VERSION: ${{ steps.shortsha.outputs.shortsha }}
+          BRANCH_NAME: ${{ github.ref_name }}
         run: |
-          Write-Host "Using SonarQube Project Key: ${{ inputs.sonar_project_key }}"
+          Write-Host "Using SonarQube Project Key: $env:SONAR_PROJECT_KEY"
           .\.sonar\scanner\dotnet-sonarscanner begin `
-            /k:"${{ inputs.sonar_project_key }}" `
+            /k:"$env:SONAR_PROJECT_KEY" `
             /o:"defra" `
             /d:sonar.token="$env:SONAR_TOKEN" `
             /d:sonar.host.url="https://sonarcloud.io" `
-            /v:"${{ steps.shortsha.outputs.shortsha }}" `
+            /v:"$env:SONAR_VERSION" `
             /d:sonar.cs.opencover.reportsPaths="src/TestResults/*.coverage.opencover.xml" `
             /d:sonar.cs.vstest.reportsPaths="src/TestResults/*.test_results.trx" `
-            /d:sonar.branch.name="${{ github.ref_name }}" `
+            /d:sonar.branch.name="$env:BRANCH_NAME" `
             /d:sonar.verbose=true `
             /d:sonar.exclusions="**/wwwroot/**" `
             /d:sonar.coverage.exclusions="**/wwwroot/**,**/*.cshtml,**/Interfaces/*.cs,**/*Map.cs,**/*Mapper.cs,**/Program.cs,**/Startup.cs,**/DTOs/*.cs,**/Entities/*.cs,**/Models/*.cs"
 
       - name: Restore NuGet packages
         shell: pwsh
-        run: dotnet restore src/${{ inputs.dotnet_application_solution_name }}/${{ inputs.solution_file }}.sln
+        env:
+          APP_SOLUTION_NAME: ${{ inputs.dotnet_application_solution_name }}
+          SOLUTION_FILE: ${{ inputs.solution_file }}
+        run: dotnet restore src/$env:APP_SOLUTION_NAME/$env:SOLUTION_FILE.sln
 
       - name: Build Solution
         shell: pwsh
-        run: dotnet build src/${{ inputs.dotnet_application_solution_name }}/${{ inputs.solution_file }}.sln --configuration Release --no-restore
+        env:
+          APP_SOLUTION_NAME: ${{ inputs.dotnet_application_solution_name }}
+          SOLUTION_FILE: ${{ inputs.solution_file }}
+        run: dotnet build src/$env:APP_SOLUTION_NAME/$env:SOLUTION_FILE.sln --configuration Release --no-restore
 
       - name: Run Application Unit Tests with Coverage
         if: ${{ inputs.run_application_tests }}
         shell: bash
+        env:
+          APP_SOLUTION_NAME: ${{ inputs.dotnet_application_solution_name }}
         run: |
-          dotnet test src/${{ inputs.dotnet_application_solution_name }}/${{ inputs.dotnet_application_solution_name }}.Application.UnitTests/${{ inputs.dotnet_application_solution_name }}.Application.UnitTests.csproj \
+          dotnet test src/$APP_SOLUTION_NAME/$APP_SOLUTION_NAME.Application.UnitTests/$APP_SOLUTION_NAME.Application.UnitTests.csproj \
             --no-build --configuration Release \
             -p:CollectCoverage=true \
-            -p:CoverletOutput=$(pwd)/src/TestResults/${{ inputs.dotnet_application_solution_name }}.Application.coverage.opencover.xml \
+            -p:CoverletOutput=$(pwd)/src/TestResults/$APP_SOLUTION_NAME.Application.coverage.opencover.xml \
             -p:CoverletOutputFormat=opencover \
             -p:Deterministic=true \
             -p:DebugType=full \
             -p:DebugSymbols=true \
-            --logger "trx;LogFileName=$(pwd)/src/TestResults/${{ inputs.dotnet_application_solution_name }}.Application.test_results.trx"
+            --logger "trx;LogFileName=$(pwd)/src/TestResults/$APP_SOLUTION_NAME.Application.test_results.trx"
 
       - name: Run Web Unit Tests with Coverage
         if: ${{ inputs.run_web_tests }}
         shell: bash
+        env:
+          APP_SOLUTION_NAME: ${{ inputs.dotnet_application_solution_name }}
+          WEB_LAYER_SUFFIX: ${{ inputs.web_layer_suffix }}
         run: |
-          dotnet test src/${{ inputs.dotnet_application_solution_name }}/${{ inputs.dotnet_application_solution_name }}.${{ inputs.web_layer_suffix }}.UnitTests/${{ inputs.dotnet_application_solution_name }}.${{ inputs.web_layer_suffix }}.UnitTests.csproj \
+          dotnet test src/$APP_SOLUTION_NAME/$APP_SOLUTION_NAME.$WEB_LAYER_SUFFIX.UnitTests/$APP_SOLUTION_NAME.$WEB_LAYER_SUFFIX.UnitTests.csproj \
             --no-build --configuration Release \
             -p:CollectCoverage=true \
-            -p:CoverletOutput=$(pwd)/src/TestResults/${{ inputs.dotnet_application_solution_name }}.${{ inputs.web_layer_suffix }}.coverage.opencover.xml \
+            -p:CoverletOutput=$(pwd)/src/TestResults/$APP_SOLUTION_NAME.$WEB_LAYER_SUFFIX.coverage.opencover.xml \
             -p:CoverletOutputFormat=opencover \
             -p:Deterministic=true \
             -p:DebugType=full \
             -p:DebugSymbols=true \
-            --logger "trx;LogFileName=$(pwd)/src/TestResults/${{ inputs.dotnet_application_solution_name }}.${{ inputs.web_layer_suffix }}.test_results.trx"
+            --logger "trx;LogFileName=$(pwd)/src/TestResults/$APP_SOLUTION_NAME.$WEB_LAYER_SUFFIX.test_results.trx"
 
       - name: Run DataAccess Unit Tests with Coverage
         if: ${{ inputs.run_dataaccess_tests }}
         shell: bash
+        env:
+          APP_SOLUTION_NAME: ${{ inputs.dotnet_application_solution_name }}
         run: |
-          dotnet test src/${{ inputs.dotnet_application_solution_name }}/${{ inputs.dotnet_application_solution_name }}.DataAccess.UnitTests/${{ inputs.dotnet_application_solution_name }}.DataAccess.UnitTests.csproj \
+          dotnet test src/$APP_SOLUTION_NAME/$APP_SOLUTION_NAME.DataAccess.UnitTests/$APP_SOLUTION_NAME.DataAccess.UnitTests.csproj \
             --no-build --configuration Release \
             -p:CollectCoverage=true \
-            -p:CoverletOutput=$(pwd)/src/TestResults/${{ inputs.dotnet_application_solution_name }}.DataAccess.coverage.opencover.xml \
+            -p:CoverletOutput=$(pwd)/src/TestResults/$APP_SOLUTION_NAME.DataAccess.coverage.opencover.xml \
             -p:CoverletOutputFormat=opencover \
             -p:Deterministic=true \
             -p:DebugType=full \
             -p:DebugSymbols=true \
-            --logger "trx;LogFileName=$(pwd)/src/TestResults/${{ inputs.dotnet_application_solution_name }}.DataAccess.test_results.trx"
+            --logger "trx;LogFileName=$(pwd)/src/TestResults/$APP_SOLUTION_NAME.DataAccess.test_results.trx"
 
       - name: List coverage files
         shell: pwsh
