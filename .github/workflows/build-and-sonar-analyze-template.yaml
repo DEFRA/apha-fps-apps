@@ -55,7 +55,7 @@ on:
 jobs:
   build-and-sonar-analyze:
     name: build-and-sonar-analyze
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     environment: ${{ inputs.environment || '' }}
     permissions:
       id-token: write
@@ -78,7 +78,7 @@ jobs:
       - name: Cache SonarQube Cloud packages
         uses: actions/cache@v4
         with:
-          path: ~\sonar\cache
+          path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
           restore-keys: ${{ runner.os }}-sonar
 
@@ -86,22 +86,22 @@ jobs:
         id: cache-sonar-scanner
         uses: actions/cache@v4
         with:
-          path: .\.sonar\scanner
+          path: ./.sonar/scanner
           key: ${{ runner.os }}-sonar-scanner
           restore-keys: ${{ runner.os }}-sonar-scanner
 
       - name: Install SonarQube Cloud scanner
         if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
-        shell: pwsh
+        shell: bash
         run: |
-          New-Item -Path .\.sonar\scanner -ItemType Directory
-          dotnet tool update dotnet-sonarscanner --tool-path .\.sonar\scanner
+          mkdir -p ./.sonar/scanner
+          dotnet tool update dotnet-sonarscanner --tool-path ./.sonar/scanner
 
       - name: Extract short SHA
         id: shortsha
-        shell: pwsh
+        shell: bash
         run: |
-          "shortsha=$($env:GITHUB_SHA.Substring(0, 8))" >> $env:GITHUB_OUTPUT
+          echo "shortsha=${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
 
       - name: Check last commit message for 'ecrpush'
         id: check_commit
@@ -118,40 +118,40 @@ jobs:
           fi
 
       - name: Start Sonar Analysis
-        shell: pwsh
+        shell: bash
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_PROJECT_KEY: ${{ inputs.sonar_project_key }}
           SONAR_VERSION: ${{ steps.shortsha.outputs.shortsha }}
           BRANCH_NAME: ${{ github.ref_name }}
         run: |
-          Write-Host "Using SonarQube Project Key: $env:SONAR_PROJECT_KEY"
-          .\.sonar\scanner\dotnet-sonarscanner begin `
-            /k:"$env:SONAR_PROJECT_KEY" `
-            /o:"defra" `
-            /d:sonar.token="$env:SONAR_TOKEN" `
-            /d:sonar.host.url="https://sonarcloud.io" `
-            /v:"$env:SONAR_VERSION" `
-            /d:sonar.cs.opencover.reportsPaths="src/TestResults/*.coverage.opencover.xml" `
-            /d:sonar.cs.vstest.reportsPaths="src/TestResults/*.test_results.trx" `
-            /d:sonar.branch.name="$env:BRANCH_NAME" `
-            /d:sonar.verbose=true `
-            /d:sonar.exclusions="**/wwwroot/**" `
+          echo "Using SonarQube Project Key: $SONAR_PROJECT_KEY"
+          ./.sonar/scanner/dotnet-sonarscanner begin \
+            /k:"$SONAR_PROJECT_KEY" \
+            /o:"defra" \
+            /d:sonar.token="$SONAR_TOKEN" \
+            /d:sonar.host.url="https://sonarcloud.io" \
+            /v:"$SONAR_VERSION" \
+            /d:sonar.cs.opencover.reportsPaths="src/TestResults/*.coverage.opencover.xml" \
+            /d:sonar.cs.vstest.reportsPaths="src/TestResults/*.test_results.trx" \
+            /d:sonar.branch.name="$BRANCH_NAME" \
+            /d:sonar.verbose=true \
+            /d:sonar.exclusions="**/wwwroot/**" \
             /d:sonar.coverage.exclusions="**/wwwroot/**,**/*.cshtml,**/Interfaces/*.cs,**/*Map.cs,**/*Mapper.cs,**/Program.cs,**/Startup.cs,**/DTOs/*.cs,**/Entities/*.cs,**/Models/*.cs"
 
       - name: Restore NuGet packages
-        shell: pwsh
+        shell: bash
         env:
           APP_SOLUTION_NAME: ${{ inputs.dotnet_application_solution_name }}
           SOLUTION_FILE: ${{ inputs.solution_file }}
-        run: dotnet restore src/$env:APP_SOLUTION_NAME/$env:SOLUTION_FILE.sln
+        run: dotnet restore src/$APP_SOLUTION_NAME/$SOLUTION_FILE.sln
 
       - name: Build Solution
-        shell: pwsh
+        shell: bash
         env:
           APP_SOLUTION_NAME: ${{ inputs.dotnet_application_solution_name }}
           SOLUTION_FILE: ${{ inputs.solution_file }}
-        run: dotnet build src/$env:APP_SOLUTION_NAME/$env:SOLUTION_FILE.sln --configuration Release --no-restore
+        run: dotnet build src/$APP_SOLUTION_NAME/$SOLUTION_FILE.sln --configuration Release --no-restore -p:DebugType=full -p:DebugSymbols=true
 
       - name: Run Application Unit Tests with Coverage
         if: ${{ inputs.run_application_tests }}
@@ -165,8 +165,6 @@ jobs:
             -p:CoverletOutput=$(pwd)/src/TestResults/$APP_SOLUTION_NAME.Application.coverage.opencover.xml \
             -p:CoverletOutputFormat=opencover \
             -p:Deterministic=true \
-            -p:DebugType=full \
-            -p:DebugSymbols=true \
             --logger "trx;LogFileName=$(pwd)/src/TestResults/$APP_SOLUTION_NAME.Application.test_results.trx"
 
       - name: Run Web Unit Tests with Coverage
@@ -182,8 +180,6 @@ jobs:
             -p:CoverletOutput=$(pwd)/src/TestResults/$APP_SOLUTION_NAME.$WEB_LAYER_SUFFIX.coverage.opencover.xml \
             -p:CoverletOutputFormat=opencover \
             -p:Deterministic=true \
-            -p:DebugType=full \
-            -p:DebugSymbols=true \
             --logger "trx;LogFileName=$(pwd)/src/TestResults/$APP_SOLUTION_NAME.$WEB_LAYER_SUFFIX.test_results.trx"
 
       - name: Run DataAccess Unit Tests with Coverage
@@ -198,16 +194,16 @@ jobs:
             -p:CoverletOutput=$(pwd)/src/TestResults/$APP_SOLUTION_NAME.DataAccess.coverage.opencover.xml \
             -p:CoverletOutputFormat=opencover \
             -p:Deterministic=true \
-            -p:DebugType=full \
-            -p:DebugSymbols=true \
             --logger "trx;LogFileName=$(pwd)/src/TestResults/$APP_SOLUTION_NAME.DataAccess.test_results.trx"
 
       - name: List coverage files
-        shell: pwsh
-        run: Get-ChildItem -Recurse -Filter "*.coverage.opencover.xml"; Get-ChildItem -Recurse -Filter "*.test_results.trx"
+        shell: bash
+        run: |
+          find . -name "*.coverage.opencover.xml"
+          find . -name "*.test_results.trx"
 
       - name: End Sonar Analysis
-        shell: pwsh
+        shell: bash
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.token="$env:SONAR_TOKEN"
+        run: ./.sonar/scanner/dotnet-sonarscanner end /d:sonar.token="$SONAR_TOKEN"
