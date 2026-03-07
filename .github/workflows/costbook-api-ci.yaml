@@ -18,7 +18,7 @@ jobs:
     uses: ./.github/workflows/build-and-sonar-analyze-template.yaml
     with:
       dotnet_application_solution_name: Apha.Costbook
-      sonar_project_key: DEFRA_apha-fps-apps-costbook-api
+      sonar_project_key: DEFRA_apha-fps-apps
       solution_file: Apha.Costbook.Api
       run_application_tests: false
       run_web_tests: false
