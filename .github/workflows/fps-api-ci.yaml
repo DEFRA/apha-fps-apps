@@ -18,7 +18,7 @@ jobs:
     uses: ./.github/workflows/build-and-sonar-analyze-template.yaml
     with:
       dotnet_application_solution_name: Apha.FPS
-      sonar_project_key: DEFRA_apha-fps-apps-fps-api
+      sonar_project_key: DEFRA_apha-fps-apps
       solution_file: Apha.FPS.Api
       run_application_tests: false
       run_web_tests: false
