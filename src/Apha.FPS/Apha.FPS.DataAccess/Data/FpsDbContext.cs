@@ -240,10 +240,7 @@ public partial class FpsDbContext : DbContext
                 .HasMaxLength(20)
                 .HasColumnName("jobcode");
             entity.Property(e => e.FpsCalYear).HasColumnName("fpsyear");
-            entity.Property(e => e.PlannedHours).HasColumnName("plannedhours");
-            //entity.Property(e => e.SysTimestamp)
-            //    .HasColumnType("timestamp without time zone")
-            //    .HasColumnName("systimestamp");
+            entity.Property(e => e.PlannedHours).HasColumnName("plannedhours");           
             entity.HasQueryFilter(e => e.FpsCalYear == _fPSYearContext.FPSYear);
         });
 

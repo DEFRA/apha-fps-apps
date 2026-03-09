@@ -12,9 +12,7 @@ namespace Apha.FPS.Application.Dtos
 
         public string JobCode { get; set; } = null!;
 
-        public double PlannedHours { get; set; }
-
-        public DateTime? SysTimestamp { get; set; }
+        public double PlannedHours { get; set; }       
 
         public int? FpsCalYear { get; set; }
     }
