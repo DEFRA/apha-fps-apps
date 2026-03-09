@@ -2,7 +2,7 @@
 ARG PARENT_VERSION=dotnet8.0
 
 # ================================
-# -------- Development Stage ---------
+# -------- Development Stage --------
 # ================================
 FROM defradigital/dotnetcore-development:$PARENT_VERSION AS development
 ARG PARENT_VERSION=dotnet8.0
