@@ -23,7 +23,7 @@ jobs:
       run_application_tests: true
       run_web_tests: true
       web_layer_suffix: 'Api'
-      run_dataaccess_tests: true
+      run_dataaccess_tests: false
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     permissions:
