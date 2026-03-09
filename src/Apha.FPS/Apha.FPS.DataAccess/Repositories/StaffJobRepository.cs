@@ -84,11 +84,11 @@ namespace Apha.FPS.DataAccess.Repositories
                     var dict = (IDictionary<string, object>)filterModel;
                     if (dict.ContainsKey("Name") && dict["Name"] != null)
                     {
-                        queryStaffJob = queryStaffJob.Where(x => x.Name!.Contains(dict["Name"].ToString()));
+                        queryStaffJob = queryStaffJob.Where(x => x.Name!.Contains(dict["Name"].ToString()!));
                     }
                     if (dict.ContainsKey("PlannedHours") && dict["PlannedHours"] != null)
                     {
-                        queryStaffJob = queryStaffJob.Where(x => x.PlannedHours.ToString().Contains(dict["PlannedHours"].ToString()));
+                        queryStaffJob = queryStaffJob.Where(x => x.PlannedHours.ToString().Contains(dict["PlannedHours"].ToString()!));
                     }
                 }
             }
