@@ -40,44 +40,5 @@ namespace Apha.FPSApps.Infrastructure.Integrations.HttpExecutor
             };
         }
 
-        /// <summary>
-        /// Extension method for paginated API responses
-        /// </summary>
-        public static async Task<PaginatedApiResponse<T>> ToPaginatedApiResponse<T>(
-            this HttpResponseMessage response)
-        {
-            try
-            {
-                var apiResponse = await response.Content.ReadFromJsonAsync<PaginatedApiResponse<T>>(JsonOptions);
-
-                if (apiResponse != null)
-                    return apiResponse;
-            }
-            catch (Exception ex)
-            {
-                var content = await response.Content.ReadAsStringAsync();
-                throw new InvalidOperationException(
-                    $"Failed to deserialize paginated API response. Status: {response.StatusCode}, Content: {content}",
-                    ex);
-            }
-
-            return new PaginatedApiResponse<T>
-            {
-                Success = false,
-                Errors = new List<ApiError>
-                {
-                    new ApiError
-                    {
-                        Code = response.StatusCode.ToString(),
-                        Message = response.ReasonPhrase ?? "Unknown error"
-                    }
-                },
-                Meta = new ApiMeta
-                {
-                    CorrelationId = Guid.NewGuid().ToString(),
-                    TimestampUtc = DateTime.UtcNow
-                }
-            };
-        }
     }
 }

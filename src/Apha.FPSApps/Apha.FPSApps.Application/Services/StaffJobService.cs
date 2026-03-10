@@ -21,7 +21,7 @@ namespace Apha.FPSApps.Application.Services
             return workgroups;
         }
 
-        public async Task<PaginatedApiResponseDto<List<StaffJobViewDto>>> GetAllStaffJobsAsync(QueryParameters<string> staffJobReq)
+        public async Task<ApiResponseDto<List<StaffJobViewDto>>> GetAllStaffJobsAsync(QueryParameters<string> staffJobReq)
         {
             var staffJobs = await _fpsClient.FpsStaffJob.GetAllStaffJobAsync(staffJobReq);
             return staffJobs;

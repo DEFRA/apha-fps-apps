@@ -49,21 +49,21 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        public async Task<PaginatedApiResponseDto<List<StaffJobViewDto>>> GetAllStaffJobAsync(QueryParameters<string> staffJob)
+        public async Task<ApiResponseDto<List<StaffJobViewDto>>> GetAllStaffJobAsync(QueryParameters<string> staffJob)
         {
             try
             {
-                var url = QueryStringHelper.AddQueryString($"api/staffjob", staffJob);
-                var response = await _http.GetPaginatedAsync<List<StaffJobViewRes>>(url);
+                var url = QueryStringHelper.AddQueryString($"api/staffjob?jobCode=FZ2000", staffJob);
+                var response = await _http.GetAsync<List<StaffJobViewRes>>(url);
 
                 if (response.Success)
                 {
-                    return _mapper.Map<PaginatedApiResponseDto<List<StaffJobViewDto>>>(response);
+                    return _mapper.Map<ApiResponseDto<List<StaffJobViewDto>>>(response);
                 }
                 else
                 {
-                    var responseDto = _mapper.Map<PaginatedApiResponseDto<List<StaffJobViewDto>>>(response);
-                    return PaginatedApiResponseDto<List<StaffJobViewDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+                    var responseDto = _mapper.Map<ApiResponseDto<List<StaffJobViewDto>>>(response);
+                    return ApiResponseDto<List<StaffJobViewDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
                 }
             }
             catch (Exception ex)
@@ -75,7 +75,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                         Details = null
                     }
                 };
-                return PaginatedApiResponseDto<List<StaffJobViewDto>>.FailureResponse(apiErrosDto,
+                return ApiResponseDto<List<StaffJobViewDto>>.FailureResponse(apiErrosDto,
                    new ApiMetaDto());
             }
         }
