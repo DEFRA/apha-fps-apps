@@ -41,7 +41,8 @@ namespace Apha.FPSApps.Web.Middleware
                     context.Response.StatusCode = StatusCodes.Status403Forbidden;
                     errorCode = "403 - Forbidden";
                     errorType = _configuration["ExceptionTypes:Authorization"];
-                    break;               
+                    break;
+                case InvalidOperationException:
                 case ArgumentException:
                     context.Response.StatusCode = StatusCodes.Status400BadRequest;
                     errorCode = "ARGUMENT_INVALID";                    

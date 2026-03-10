@@ -34,7 +34,17 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         [HttpPost]
         public async Task<IActionResult> LoadStaffJobGrid(PaginationFilter<string> request)
         {
-            var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter);
+            if (!ModelState.IsValid)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Invalid request data",
+                    errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
+                });
+            }
+
+            var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter!);
             var queryParameters = _mapper.Map<QueryParameters<string>>(request);
             var staffJobPagedData = await _staffJobService.GetAllStaffJobsAsync(queryParameters);
             List<StaffJobItem> staffJobItems = new List<StaffJobItem>();
