@@ -32,9 +32,8 @@ namespace Apha.FPS.DataAccess.Repositories
                     select p).AsQueryable();
         }
 
-        public async Task<PagedData<StaffJobView>> GetJobStaffCostAsync(PaginationParameters<string> query)
+        public async Task<PagedData<StaffJobView>> GetJobStaffCostAsync(PaginationParameters<string> query, string jobCode)
         {
-
             var programs = _programRepository.Get();
             var projects = _projectRepository.Get();
             var staffs = Get();
@@ -54,7 +53,8 @@ namespace Apha.FPS.DataAccess.Repositories
                                 join wg in _dbContext.WorkgroupGrades on s.WorkGroupGrade equals wg.WgGrade
                                 join pc in _dbContext.ProfitcentreGrades on wg.ProfitCentreGrade equals pc.PcGrade
                                 join p in projects on sj.JobCode equals p.ParentProject
-                                join prg in programs on p.Program equals prg.ProgramNo                               
+                                join prg in programs on p.Program equals prg.ProgramNo
+                                where sj.JobCode == jobCode
                                 select new StaffJobView
                                 {
                                     StaffID = sj.StaffId,

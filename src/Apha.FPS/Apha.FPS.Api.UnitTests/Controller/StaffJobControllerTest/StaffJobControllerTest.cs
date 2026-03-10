@@ -34,10 +34,10 @@ namespace Apha.FPS.Api.UnitTests.Controller.StaffJobControllerTest
             var mappedResult = new PaginationRes<StaffJobViewRes>();
 
             _mapperMock.Map<QueryParameters<string>>(query).Returns(new QueryParameters<string>());
-            _serviceMock.GetJobStaffCostAsync(Arg.Any<QueryParameters<string>>()).Returns(serviceResult);
+            _serviceMock.GetJobStaffCostAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>()).Returns(serviceResult);
             _mapperMock.Map<PaginationRes<StaffJobViewRes>>(serviceResult).Returns(mappedResult);
 
-            var result = await _controller.GetJobStaffCostAsync(query);
+            var result = await _controller.GetJobStaffCostAsync(query, "");
 
             Assert.IsType<OkObjectResult>(result);
             Assert.Equal(mappedResult, ((OkObjectResult)result).Value);
@@ -51,10 +51,10 @@ namespace Apha.FPS.Api.UnitTests.Controller.StaffJobControllerTest
             var mappedResult = new PaginationRes<StaffJobViewRes>();
 
             _mapperMock.Map<QueryParameters<string>>(query).Returns(new QueryParameters<string>());
-            _serviceMock.GetJobStaffCostAsync(Arg.Any<QueryParameters<string>>()).Returns(serviceResult);
+            _serviceMock.GetJobStaffCostAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>()).Returns(serviceResult);
             _mapperMock.Map<PaginationRes<StaffJobViewRes>>(serviceResult).Returns(mappedResult);
 
-            var result = await _controller.GetJobStaffCostAsync(query);
+            var result = await _controller.GetJobStaffCostAsync(query, "");
 
             Assert.IsType<OkObjectResult>(result);
         }
@@ -64,9 +64,9 @@ namespace Apha.FPS.Api.UnitTests.Controller.StaffJobControllerTest
         {
             var query = new PaginationReq<string>();
             _mapperMock.Map<QueryParameters<string>>(query).Returns(new QueryParameters<string>());
-            _serviceMock.GetJobStaffCostAsync(Arg.Any<QueryParameters<string>>()).Throws(new Exception("Service error"));
+            _serviceMock.GetJobStaffCostAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>()).Throws(new Exception("Service error"));
 
-            await Assert.ThrowsAsync<Exception>(() => _controller.GetJobStaffCostAsync(query));
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetJobStaffCostAsync(query, ""));
         }
 
         [Fact]
@@ -75,7 +75,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.StaffJobControllerTest
             var query = new PaginationReq<string>();
             _mapperMock.Map<QueryParameters<string>>(query).Throws(new Exception("Mapping error"));
 
-            await Assert.ThrowsAsync<Exception>(() => _controller.GetJobStaffCostAsync(query));
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetJobStaffCostAsync(query, ""));
         }
 
         #endregion
