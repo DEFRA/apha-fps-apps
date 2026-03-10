@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Apha.FPSApps.Web.Controllers
 {
-    [Authorize]
+    [AllowAnonymous]//[Authorize]
     public class HomeController : Controller
     {
         public IActionResult Index()

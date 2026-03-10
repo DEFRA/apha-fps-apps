@@ -1,7 +1,4 @@
-﻿using Apha.FPSApps.Application.Pagination;
-using Apha.FPSApps.Application.Validation;
-
-namespace Apha.FPSApps.Application.DTOs
+﻿namespace Apha.FPSApps.Application.Dtos
 {
     public class ApiResponseDto<T>
     {

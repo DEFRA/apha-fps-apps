@@ -1,9 +1,10 @@
-﻿using Apha.FPSApps.Application.Interfaces;
+﻿using Apha.FPSApps.Application.Dtos.FPS;
+using Apha.FPSApps.Application.Interfaces;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
-using DocumentFormat.OpenXml.Spreadsheet;
+using DocumentFormat.OpenXml.Office2010.Excel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Identity.Web;
@@ -12,8 +13,8 @@ using Newtonsoft.Json;
 namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 {
     [Area("FPS")]
-    [Authorize(Roles = "FPSAdmin,FPSUser")]
-    [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")]
+    [AllowAnonymous]//[Authorize(Roles = "FPSAdmin,FPSUser")]
+    //[AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")]
     public class StaffJobController : Controller
     {
         private readonly IMapper _mapper;
@@ -51,11 +52,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 Title = "Staff Booked",
                 ShowCheckboxColumn = true,
                 ShowPagination = true,
-                KeyProperty = "Id",
-                AddUrl = "/FPS/StaffJob/StaffJob",
-                UpdateUrl = "/FPS/StaffJob/EditStaffJob",
+                KeyProperty = "StaffId",
+                AddUrl = "/FPS/StaffJob/Create",
+                UpdateUrl = "/FPS/StaffJob/Edit",
                 DeleteUrl = "/FPS/StaffJob/Delete",
-                BindGridUrl = "/FPS/StaffJob/LoadStaffJobGrid",                
+                BindGridUrl = "/FPS/StaffJob/LoadStaffJobGrid",
                 Data = staffJobItems,
                 Columns = GridDataProvider.GetColumnsDefination<StaffJobItem>(null),
                 Pagination = paginationModel,
@@ -65,14 +66,98 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return View("_DataGrid", staffJobGridConfig);
         }
 
-        public IActionResult AddStaffJob()
+        [HttpGet]
+        public IActionResult Create()
         {
             return View("_AddStaffJob");
         }
 
-        public IActionResult EditStaffJob()
+        [HttpPost]
+        public async Task<IActionResult> Create(StaffJobViewModel staffJobItem)
         {
-            return View("_EditStaffJob");
+            if (!ModelState.IsValid)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Invalid staff job data",
+                    errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
+                });
+            }
+            var staffJob = _mapper.Map<StaffJobDto>(staffJobItem);
+            var result = await _staffJobService.CreateStaffJobAsync(staffJob);
+
+            if (result.Success)
+            {
+                return Json(new { success = true, data = result.Data, message = "Staff job created successfully" });
+            }
+
+            return Json(new { success = false, errors = result.Errors });            
+        }  
+
+        [HttpGet]
+        public async Task<IActionResult> Edit(string staffId)
+        {
+            var result = await _staffJobService.GetStaffJobByIdAsync(staffId);
+
+            if (result.Success)
+            {
+                var staffJobItem = _mapper.Map<StaffJobItem>(result.Data);
+                return View("_EditStaffJob", staffJobItem);
+            }
+            else
+            {
+                // Handle the case where the staff job could not be retrieved
+                // For example, you could redirect to an error page or return a not found result
+                return NotFound($"Staff job with ID {staffId} not found.");
+            }
+        }          
+       
+        [HttpPost]
+        public async Task<IActionResult> Edit(string staffId, [FromBody] StaffJobViewModel staffJobItem)
+        {
+            if (!ModelState.IsValid)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Invalid staff job data",
+                    errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
+                });
+            }
+
+            var staffJobDto = _mapper.Map<StaffJobDto>(staffJobItem);
+            var result = await _staffJobService.UpdateStaffJobAsync(staffId, staffJobDto);
+
+            if (result.Success)
+            {
+                return Json(new { success = true, data = result.Data, message = "Staff job updated successfully" });
+            }
+
+            return Json(new { success = false, errors = result.Errors });
+        }       
+        
+        [HttpDelete]
+        public async Task<IActionResult> Delete(string staffId, string jobCode)
+        {
+            if (string.IsNullOrWhiteSpace(staffId))
+            {
+                return Json(new { success = false, message = "Staff ID is required" });
+            }
+
+            if (string.IsNullOrWhiteSpace(jobCode))
+            {
+                return Json(new { success = false, message = "Job code is required" });
+            }
+
+            var result = await _staffJobService.DeleteStaffJobAsync(staffId, jobCode);
+
+            if (result.Success)
+            {
+                return Json(new { success = true, message = "Staff job deleted successfully" });
+            }
+
+            return Json(new { success = false, errors = result.Errors });
         }
     }
 }

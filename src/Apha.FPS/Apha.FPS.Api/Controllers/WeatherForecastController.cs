@@ -15,7 +15,7 @@ namespace Apha.FPS.Api.Controllers
     /// </summary>
     [ApiController]
     //[Authorize]
-    [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]    
+    [AllowAnonymous]//[Authorize(Roles = "API-FPSUser,API-FPSAdmin")]    
     [Route("api/weather")]
     public class WeatherForecastController : ControllerBase
     {
