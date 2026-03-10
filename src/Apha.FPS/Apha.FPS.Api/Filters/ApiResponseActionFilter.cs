@@ -1,7 +1,6 @@
 ﻿using Apha.Common.Contracts;
-using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc;
-using Apha.FPS.Application.Pagination;
+using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace Apha.FPS.Api.Filters
 {
@@ -13,12 +12,6 @@ namespace Apha.FPS.Api.Filters
         {
             if (context.Result is not ObjectResult objectResult ||
                 objectResult.Value is null)
-            {
-                await next();
-                return;
-            }
-           
-            if (IsApiResponse(objectResult.Value))
             {
                 await next();
                 return;
@@ -36,16 +29,7 @@ namespace Apha.FPS.Api.Filters
             };
 
             await next();
-        }      
-
-        private static bool IsApiResponse(object value)
-        {
-            var type = value.GetType();
-
-            return type.IsGenericType &&
-                   (type.GetGenericTypeDefinition() == typeof(ApiResponse<>) ||
-                    type.GetGenericTypeDefinition() == typeof(PaginatedApiResponse<>));
-        }
+        }  
 
         private static bool IsPaginatedResult(object value)
         {
@@ -70,7 +54,7 @@ namespace Apha.FPS.Api.Filters
         {
             dynamic paginated = value;
 
-            return new PaginatedApiResponse<object>
+            return new ApiResponse<object>
             {
                 Success = true,
                 Data = paginated.Data,
