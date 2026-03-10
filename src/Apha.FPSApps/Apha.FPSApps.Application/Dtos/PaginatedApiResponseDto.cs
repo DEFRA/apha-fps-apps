@@ -1,4 +1,4 @@
-﻿using Apha.FPSApps.Application.DTOs;
+﻿using Apha.FPSApps.Application.Dtos;
 
 namespace Apha.FPSApps.Application.Dtos
 {

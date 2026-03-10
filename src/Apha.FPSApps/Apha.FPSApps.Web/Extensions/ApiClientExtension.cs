@@ -23,16 +23,18 @@ namespace Apha.FPSApps.Web.Extensions
                     configuration["FPSApiSettings:BaseUrl"]
                         ?? throw new InvalidOperationException("FPS base URL not configured"));                                
                 client.DefaultRequestHeaders.Add("Accept", "application/json");
-            }).AddHttpMessageHandler(sp =>
-            {
-                var scopes = configuration["FPSApiSettings:Scope"]!
-                    .Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            })
+            //    .AddHttpMessageHandler(sp =>
+            //{
+            //    var scopes = configuration["FPSApiSettings:Scope"]!
+            //        .Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
-                return new BearerTokenHandler(
-                    sp.GetRequiredService<ITokenAcquisition>(),
-                    sp.GetRequiredService<IHttpContextAccessor>(),
-                    scopes);
-            }).AddHttpMessageHandler<RequestHeadersHandler>(); 
+            //    return new BearerTokenHandler(
+            //        sp.GetRequiredService<ITokenAcquisition>(),
+            //        sp.GetRequiredService<IHttpContextAccessor>(),
+            //        scopes);
+            //})
+                .AddHttpMessageHandler<RequestHeadersHandler>(); 
 
 
             services.AddScoped<IFpsHttpExecutor>(sp =>

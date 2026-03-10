@@ -1,6 +1,6 @@
-﻿namespace Apha.Common.Contracts.FPS
+﻿namespace Apha.FPSApps.Application.Dtos.FPS
 {
-    public class StaffJobRes
+    public class StaffJobDto
     {
         public string StaffId { get; set; } = null!;
 

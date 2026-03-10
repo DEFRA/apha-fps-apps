@@ -13,6 +13,7 @@ namespace Apha.FPS.Api.Controllers
     [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
     [ApiController]
     [Route("api/setting")]
+    [AllowAnonymous]
     public class FpsSettingController : ControllerBase
     {
         private readonly IFpsSettingService _fpsSettingService;
