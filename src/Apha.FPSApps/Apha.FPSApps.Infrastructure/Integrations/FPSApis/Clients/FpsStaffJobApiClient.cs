@@ -13,7 +13,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
     {
         private readonly IFpsHttpExecutor _http;
         private readonly IMapper _mapper;
-
+        private const string internalCodeError = "INTERNAL_ERROR";    
         public FpsStaffJobApiClient(IFpsHttpExecutor http, IMapper mapper)
         {
             _http = http;
@@ -36,12 +36,12 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                     return ApiResponseDto<IEnumerable<StaffWorkgroupLookupDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 var apiErrosDto = new List<ApiErrorDto> {
                     new ApiErrorDto {
                          Message = "Failed to retrieve workgroup lookup data",
-                         Code = "INTERNAL_ERROR",
+                         Code = internalCodeError,
                          Details = null
                      }
                  };
@@ -66,12 +66,12 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                     return ApiResponseDto<List<StaffJobViewDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 var apiErrosDto = new List<ApiErrorDto> {
                    new ApiErrorDto {
                         Message = "Failed to retrieve user",
-                        Code = "INTERNAL_ERROR",
+                        Code = internalCodeError,
                         Details = null
                     }
                 };
@@ -96,12 +96,12 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                     return ApiResponseDto<StaffJobDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 var apiErrosDto = new List<ApiErrorDto> {
                    new ApiErrorDto {
                         Message = "Failed to retrieve staff job",
-                        Code = "INTERNAL_ERROR",
+                        Code = internalCodeError,
                         Details = null
                     }
                 };
@@ -126,12 +126,12 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                     return ApiResponseDto<StaffJobDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 var apiErrosDto = new List<ApiErrorDto> {
                    new ApiErrorDto {
                         Message = "Failed to create staff job",
-                        Code = "INTERNAL_ERROR",
+                        Code = internalCodeError,
                         Details = null
                     }
                 };
@@ -156,12 +156,12 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                     return ApiResponseDto<StaffJobDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 var apiErrosDto = new List<ApiErrorDto> {
                    new ApiErrorDto {
                         Message = "Failed to update staff job",
-                        Code = "INTERNAL_ERROR",
+                        Code = internalCodeError,
                         Details = null
                     }
                 };
@@ -185,12 +185,12 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                     return ApiResponseDto<bool>.FailureResponse(responseDto.Errors, responseDto.Meta);
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 var apiErrosDto = new List<ApiErrorDto> {
                    new ApiErrorDto {
                         Message = "Failed to delete staff job",
-                        Code = "INTERNAL_ERROR",
+                        Code = internalCodeError,
                         Details = null
                     }
                 };

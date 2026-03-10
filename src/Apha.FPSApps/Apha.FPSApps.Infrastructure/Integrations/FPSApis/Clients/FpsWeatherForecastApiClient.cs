@@ -34,7 +34,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                     return ApiResponseDto<List<WeatherForecastDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
                 }            
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 var apiErrosDto = new List<ApiErrorDto> {
                    new ApiErrorDto {

@@ -22,16 +22,16 @@ namespace Apha.FPSApps.Infrastructure.Integrations.HttpExecutor
 
                 if (apiResponse != null)
                     return apiResponse;
+            }           
+            catch (Exception ex)
+            {                
+                throw new InvalidOperationException("An unexpected error occurred while processing the response.", ex);
             }
-            catch(Exception ex) 
-            {
-                throw ex;
-            }            
 
             return new ApiResponse<T>
             {
                 Success = false,
-                Errors = new List<ApiError>{ new ApiError { Code = response.StatusCode.ToString(), Message = response.ReasonPhrase! } },
+                Errors = new List<ApiError> { new ApiError { Code = response.StatusCode.ToString(), Message = response.ReasonPhrase! } },
                 Meta = new ApiMeta
                 {
                     CorrelationId = Guid.NewGuid().ToString(),
@@ -39,6 +39,5 @@ namespace Apha.FPSApps.Infrastructure.Integrations.HttpExecutor
                 }
             };
         }
-
     }
 }

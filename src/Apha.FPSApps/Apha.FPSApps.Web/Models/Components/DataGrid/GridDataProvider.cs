@@ -4,10 +4,10 @@ using System.Reflection;
 
 namespace Apha.FPSApps.Web.Models.Components.DataGrid
 {
-    public class GridDataProvider
+    public static class GridDataProvider
     {
         public static List<DataGridColumn> GetColumnsDefination<T>(
-    Dictionary<string, List<SelectListItem>>? filterOptionsSource = null)
+            Dictionary<string, List<SelectListItem>>? filterOptionsSource = null)
         {
             var columns = new List<DataGridColumn>();
             foreach (var prop in typeof(T).GetProperties())

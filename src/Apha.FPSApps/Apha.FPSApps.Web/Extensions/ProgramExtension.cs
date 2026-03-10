@@ -12,8 +12,7 @@ namespace Apha.FPSApps.Web.Extensions
     {
         public static void ConfigureServices(this WebApplicationBuilder builder)
         {
-            var services = builder.Services;
-            var configuration = builder.Configuration;            
+            var services = builder.Services;                        
 
             services.AddStackExchangeRedisCache(options =>
             {
