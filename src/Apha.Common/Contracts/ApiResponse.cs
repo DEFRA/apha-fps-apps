@@ -4,6 +4,7 @@ namespace Apha.Common.Contracts
     {
         public bool Success { get; set; }
         public T? Data { get; set; }
+        public Pagination? Pagination { get; set; } = null;
         public List<ApiError>? Errors { get; set; } = new();
         public ApiMeta Meta { get; set; } = new();     
 
@@ -20,6 +21,14 @@ namespace Apha.Common.Contracts
     {
         public string CorrelationId { get; set; } = string.Empty;
         public DateTime TimestampUtc { get; set; } = DateTime.UtcNow;
+    }
+
+    public class Pagination
+    {
+        public int PageNumber { get; set; }
+        public int PageSize { get; set; }
+        public int TotalPages { get; set; }
+        public int TotalRecords { get; set; }
     }
 }
 
