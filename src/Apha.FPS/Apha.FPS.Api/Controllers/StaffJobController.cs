@@ -39,10 +39,10 @@ namespace Apha.FPS.Api.Controllers
         /// <param name="query">Pagination and filter parameters.</param>
         /// <returns>Paginated list of staff job cost view results.</returns>
         [HttpGet]
-        public async Task<IActionResult> GetJobStaffCostAsync([FromQuery] PaginationReq<string> query)
+        public async Task<IActionResult> GetJobStaffCostAsync([FromQuery] PaginationReq<string> query, string jobCode)
         {
             var filter = _mapper.Map<QueryParameters<string>>(query);
-            var result = await _staffJobService.GetJobStaffCostAsync(filter);
+            var result = await _staffJobService.GetJobStaffCostAsync(filter, jobCode);
             return Ok(_mapper.Map<PaginationRes<StaffJobViewRes>>(result));
         }
 
