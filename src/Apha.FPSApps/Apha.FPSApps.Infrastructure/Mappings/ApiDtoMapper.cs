@@ -11,8 +11,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
     {
         public ApiDtoMapper() 
         {            
-            CreateMap(typeof(ApiResponseDto<>), typeof(ApiResponse<>)).ReverseMap();            
-            CreateMap(typeof(PaginatedApiResponseDto<>), typeof(PaginatedApiResponse<>)).ReverseMap();            
+            CreateMap(typeof(ApiResponseDto<>), typeof(ApiResponse<>)).ReverseMap(); 
             CreateMap<ApiErrorDto, ApiError>().ReverseMap();
             CreateMap<ApiMetaDto, ApiMeta>().ReverseMap();
             CreateMap(typeof(PaginationRes<>), typeof(PaginatedResult<>)).ReverseMap();
