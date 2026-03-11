@@ -15,13 +15,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.HttpExecutor
         {
             var response = await _http.GetAsync(url);
             return await response.ToApiResponse<T>();
-        }
-
-         public async Task<PaginatedApiResponse<T>> GetPaginatedAsync<T>(string url)
-        {
-            var response = await _http.GetAsync(url);
-            return await response.ToPaginatedApiResponse<T>();
-        }
+        }        
 
         public async Task<byte[]> GetFileAsync(string url)
         {

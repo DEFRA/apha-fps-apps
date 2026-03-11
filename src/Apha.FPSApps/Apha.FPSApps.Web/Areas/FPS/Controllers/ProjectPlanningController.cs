@@ -11,8 +11,8 @@ using System.Collections.Generic;
 namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 {    
     [Area("FPS")]
-    [Authorize(Roles = "FPSAdmin,FPSUser")]
-    [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")]
+    [AllowAnonymous]//[Authorize(Roles = "FPSAdmin,FPSUser")]
+    //[AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")]
     public class ProjectPlanningController : Controller
     {
         private readonly IMapper _mapper;
@@ -147,9 +147,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 Title = "Staff Booked",
                 ShowCheckboxColumn = true,
                 ShowPagination = true,
-                KeyProperty = "Id",
-                AddUrl = "/FPS/StaffJob/AddStaffJob",
-                UpdateUrl = "/FPS/StaffJob/EditStaffJob",
+                KeyProperty = "StaffId",
+                AddUrl = "/FPS/StaffJob/Create",
+                UpdateUrl = "/FPS/StaffJob/Edit",
                 DeleteUrl = "/FPS/StaffJob/Delete",
                 BindGridUrl = "/FPS/StaffJob/LoadStaffJobGrid",                
                 Data = staffJobItems,

@@ -11,13 +11,13 @@ using NSubstitute.ExceptionExtensions;
 
 namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
 {
-    public class StaffJobRepositoryTest
+    public class StaffJobServiceTest
     {
         private readonly IStaffJobRepository _mockRepository;
         private readonly IMapper _mockMapper;
         private readonly StaffJobService _sut;
 
-        public StaffJobRepositoryTest()
+        public StaffJobServiceTest()
         {
             _mockRepository = Substitute.For<IStaffJobRepository>();
             _mockMapper = Substitute.For<IMapper>();
@@ -27,6 +27,7 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
         [Fact]
         public async Task GetJobStaffCostAsync_WithValidQueryFilter_ReturnsSuccessfulPaginatedResult()
         {
+            string jobCode = "JOB001";
             // Arrange
             var queryFilter = new QueryParameters<string>
             {
@@ -78,14 +79,14 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
             _mockMapper.Map<PaginationParameters<string>>(queryFilter)
             .Returns(mappedPaginationParams);
 
-            _mockRepository.GetJobStaffCostAsync(mappedPaginationParams)
+            _mockRepository.GetJobStaffCostAsync(mappedPaginationParams, jobCode)
             .Returns(repositoryResult);
 
             _mockMapper.Map<PaginatedResult<StaffJobViewDto>>(repositoryResult)
             .Returns(expectedResult);
 
             // Act
-            var result = await _sut.GetJobStaffCostAsync(queryFilter);
+            var result = await _sut.GetJobStaffCostAsync(queryFilter, jobCode);
 
             // Assert
             result.Should().NotBeNull();
@@ -97,13 +98,14 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
             result.Data.First().ChargeRate.Should().Be(75.50m);
 
             _mockMapper.Received(1).Map<PaginationParameters<string>>(queryFilter);
-            await _mockRepository.Received(1).GetJobStaffCostAsync(mappedPaginationParams);
+            await _mockRepository.Received(1).GetJobStaffCostAsync(mappedPaginationParams, jobCode);
             _mockMapper.Received(1).Map<PaginatedResult<StaffJobViewDto>>(repositoryResult);
         }
 
         [Fact]
         public async Task GetJobStaffCostAsync_WithValidQueryFilter_ReturnsEmptyPaginatedResult()
         {
+            string jobCode = "NONEXISTENT";
             // Arrange
             var queryFilter = new QueryParameters<string>
             {
@@ -147,14 +149,14 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
             _mockMapper.Map<PaginationParameters<string>>(queryFilter)
             .Returns(mappedPaginationParams);
 
-            _mockRepository.GetJobStaffCostAsync(mappedPaginationParams)
+            _mockRepository.GetJobStaffCostAsync(mappedPaginationParams, jobCode)
             .Returns(emptyRepositoryResult);
 
             _mockMapper.Map<PaginatedResult<StaffJobViewDto>>(emptyRepositoryResult)
             .Returns(emptyExpectedResult);
 
             // Act
-            var result = await _sut.GetJobStaffCostAsync(queryFilter);
+            var result = await _sut.GetJobStaffCostAsync(queryFilter, jobCode);
 
             // Assert
             result.Should().NotBeNull();
@@ -163,12 +165,13 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
             result.PaginationData.PageNumber.Should().Be(1);
             result.PaginationData.PageSize.Should().Be(10);
 
-            await _mockRepository.Received(1).GetJobStaffCostAsync(mappedPaginationParams);
+            await _mockRepository.Received(1).GetJobStaffCostAsync(mappedPaginationParams, jobCode);
         }
 
         [Fact]
         public async Task GetJobStaffCostAsync_WhenRepositoryThrowsException_PropagatesException()
         {
+            string jobCode = "";
             // Arrange
             var queryFilter = new QueryParameters<string>
             {
@@ -185,12 +188,12 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
             _mockMapper.Map<PaginationParameters<string>>(queryFilter)
             .Returns(mappedPaginationParams);
 
-            _mockRepository.GetJobStaffCostAsync(mappedPaginationParams)
+            _mockRepository.GetJobStaffCostAsync(mappedPaginationParams, jobCode)
             .Throws(new InvalidOperationException("Database connection failed"));
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-            async () => await _sut.GetJobStaffCostAsync(queryFilter)
+            async () => await _sut.GetJobStaffCostAsync(queryFilter, jobCode)
             );
 
             exception.Message.Should().Be("Database connection failed");

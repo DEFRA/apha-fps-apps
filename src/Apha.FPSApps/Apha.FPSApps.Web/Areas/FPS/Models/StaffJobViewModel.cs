@@ -1,6 +1,6 @@
-﻿namespace Apha.Common.Contracts.FPS
+﻿namespace Apha.FPSApps.Web.Areas.FPS.Models
 {
-    public class StaffJobRes
+    public class StaffJobViewModel
     {
         public string StaffId { get; set; } = null!;
 

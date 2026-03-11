@@ -1,24 +1,22 @@
-﻿using Apha.FPSApps.Application.Pagination;
-using Apha.FPSApps.Application.Validation;
-
-namespace Apha.FPSApps.Application.DTOs
+﻿namespace Apha.FPSApps.Application.Dtos
 {
     public class ApiResponseDto<T>
     {
         public bool Success { get; set; }
         public T? Data { get; set; }
+        public PaginationDto? Pagination { get; set; }
         public List<ApiErrorDto>? Errors { get; set; } = new();
         public ApiMetaDto Meta { get; set; } = new();
 
-        public static ApiResponseDto<T> SuccessResponse(T data, string message = "")
+        public static ApiResponseDto<T> SuccessResponse(T data, PaginationDto? pagination = null)
         {
             return new ApiResponseDto<T>
             {
                 Success = true,
                 Data = data,
+                Pagination = pagination,
                 Meta = new ApiMetaDto
                 {
-                    //Message = message,
                     CorrelationId = Guid.NewGuid().ToString(),
                     TimestampUtc = DateTime.UtcNow
                 }

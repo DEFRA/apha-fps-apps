@@ -1,5 +1,5 @@
-﻿using Apha.FPSApps.Application.Dtos.FPS;
-using Apha.FPSApps.Application.DTOs;
+﻿using Apha.FPSApps.Application.Dtos;
+using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces;
 using Apha.FPSApps.Application.Interfaces.FpsApiClients;
 

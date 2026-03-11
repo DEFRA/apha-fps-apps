@@ -6,7 +6,7 @@ namespace Apha.Common.Utilities.Query
     {
         public static string AddQueryString<T>(string url, T request)
         {
-            var dict = request.GetType()
+            var dict = request?.GetType()
                               .GetProperties()
                               .Where(p => p.GetValue(request) != null)
                               .ToDictionary(

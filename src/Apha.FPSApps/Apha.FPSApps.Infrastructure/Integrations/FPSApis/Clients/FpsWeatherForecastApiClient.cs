@@ -1,6 +1,6 @@
 ﻿using Apha.Common.Contracts.FPS;
+using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
-using Apha.FPSApps.Application.DTOs;
 using Apha.FPSApps.Application.Interfaces.FpsApiClients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
@@ -34,7 +34,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                     return ApiResponseDto<List<WeatherForecastDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
                 }            
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 var apiErrosDto = new List<ApiErrorDto> {
                    new ApiErrorDto {

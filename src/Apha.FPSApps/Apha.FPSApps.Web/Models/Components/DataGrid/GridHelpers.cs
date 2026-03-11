@@ -1,8 +1,10 @@
 ﻿namespace Apha.FPSApps.Web.Models.Components.DataGrid
 {
-    public class GridHelpers
+    public static class GridHelpers
     {
-        public static object GetPropertyValue(object obj, string propertyName)
+        private const string GridReadonlyCssClass = "grid-readonly";
+
+        public static object? GetPropertyValue(object obj, string propertyName)
         {
             try
             {
@@ -21,12 +23,12 @@
         {
             return column.ColumnType switch
             {
-                GridColumnType.Date => "grid-readonly",
-                GridColumnType.DateTime => "grid-readonly",
-                //GridColumnType.Decimal => "grid-readonly",
-                GridColumnType.Number => "grid-readonly",
-                GridColumnType.Text => "grid-readonly",
-                GridColumnType.Dropdown => "grid-readonly",
+                GridColumnType.Date => GridReadonlyCssClass,
+                GridColumnType.DateTime => GridReadonlyCssClass,
+                //GridColumnType.Decimal => GridReadonlyCssClass,
+                GridColumnType.Number => GridReadonlyCssClass,
+                GridColumnType.Text => GridReadonlyCssClass,
+                GridColumnType.Dropdown => GridReadonlyCssClass,
                 GridColumnType.Checkbox => "grid-input grid-checkbox",
                 _ => ""
             };
@@ -71,8 +73,7 @@
                 default:
                     return value?.ToString() ?? string.Empty;
             }
-
-            return value?.ToString() ?? string.Empty; ;
+            return value?.ToString() ?? string.Empty;
         }
     }
 }
