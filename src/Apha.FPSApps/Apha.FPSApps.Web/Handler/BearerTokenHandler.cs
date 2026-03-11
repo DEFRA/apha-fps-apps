@@ -41,7 +41,7 @@ namespace Apha.FPSApps.Web.Handler
             }
             catch(Exception ex)
             {
-                throw ex;
+                throw new UnauthorizedAccessException("User is not authenticated.", ex); 
             }
         }
     }

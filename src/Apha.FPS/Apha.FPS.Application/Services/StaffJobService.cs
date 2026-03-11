@@ -21,10 +21,10 @@ namespace Apha.FPS.Application.Services
             _mapper = mapper;
         }
 
-        public async Task<PaginatedResult<StaffJobViewDto>> GetJobStaffCostAsync(QueryParameters<string> queryFilter)
+        public async Task<PaginatedResult<StaffJobViewDto>> GetJobStaffCostAsync(QueryParameters<string> queryFilter, string jobCode)
         {
             var filter = _mapper.Map<PaginationParameters<string>>(queryFilter);
-            var staffJobViews = await _staffJobRepository.GetJobStaffCostAsync(filter);
+            var staffJobViews = await _staffJobRepository.GetJobStaffCostAsync(filter, jobCode);
             return _mapper.Map<PaginatedResult<StaffJobViewDto>>(staffJobViews);
         }
 

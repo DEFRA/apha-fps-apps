@@ -1,0 +1,71 @@
+name: Costbook API - Dev Build and Sonar Analysis
+on:
+  push:
+    branches:
+      - 'feature/*'
+      - 'fix/*'
+      - 'docs/*'
+      - main
+    paths:
+      - 'src/Apha.Costbook/**'
+      - '.github/workflows/costbook-api-ci.yaml'
+
+permissions: {}   # disables all default permissions
+
+jobs:
+  # 1️⃣ Build & Sonar analysis
+  build-and-sonar:
+    uses: ./.github/workflows/build-and-sonar-analyze-template.yaml
+    with:
+      dotnet_application_solution_name: Apha.Costbook
+      sonar_project_key: DEFRA_apha-fps-apps
+      solution_file: Apha.Costbook.Api
+      run_application_tests: false
+      run_web_tests: false
+      web_layer_suffix: 'Api'
+      run_dataaccess_tests: false
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    permissions:
+      id-token: write
+      contents: read
+
+  # 2️⃣ Check commit message for 'ecrpush'
+  check-commit:
+    needs: build-and-sonar
+    runs-on: ubuntu-latest
+    outputs:
+      should_push: ${{ steps.check_commit.outputs.should_push }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check last commit message for 'ecrpush'
+        id: check_commit
+        run: |
+          COMMIT_MSG="$(git log -1 --pretty=%B)"
+          echo "Last commit message: $COMMIT_MSG"
+          if [[ "$COMMIT_MSG" == *"ecrpush"* ]]; then
+            echo "should_push=true"
+            echo "should_push=true" >> $GITHUB_OUTPUT
+          else
+            echo "should_push=false"
+            echo "should_push=false" >> $GITHUB_OUTPUT
+          fi
+
+  # 3️⃣ Push image (only if commit contains 'ecrpush')
+  push-image:
+    needs: check-commit
+    if: needs.check-commit.outputs.should_push == 'true'
+    uses: ./.github/workflows/push-image-template.yaml
+    with:
+      repository: apha/costbook
+      dev_image_version_release: false
+      tag_short_description: ""
+    secrets:
+      AWS_ENV_REGION: ${{ secrets.AWS_ENV_REGION }}
+      AWS_ENV_ACCOUNT: ${{ secrets.AWS_ENV_ACCOUNT }}
+      AWS_ENV_ROLE: ${{ secrets.AWS_ENV_ROLE }}
+    permissions:
+      id-token: write
+      contents: write
