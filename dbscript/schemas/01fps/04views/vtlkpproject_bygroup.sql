@@ -1,0 +1,41 @@
+-- View: fps.vtlkpproject_bygroup
+
+CREATE OR REPLACE VIEW fps.vtlkpproject_bygroup AS
+ SELECT parentproject,
+    projecttitle,
+    program,
+    customer,
+    manager,
+    transferincome,
+    custincome,
+    wip_eoy,
+    wip_limit,
+    wip_current,
+    projectstatus,
+    costbookno,
+    datecreated,
+    feccost,
+    profit,
+    budget_cvl,
+    datecosted,
+    disease,
+    contract,
+    projectparent,
+    shorttitle,
+    caseworksub,
+    pvsincome,
+    plancaseworkdebit,
+    finished,
+    owningrc,
+    comments,
+    carryover,
+    carryoverseed,
+    isdefraproject,
+    costcentre,
+    oracleprojectcode,
+    subaccountcode,
+    projectgroup,
+    incomeaccountcode
+   FROM fps.tlkpproject
+  WHERE ((projectgroup)::text IN ( SELECT vtlkpprojectgroup.projectgroup
+           FROM fps.vtlkpprojectgroup));
