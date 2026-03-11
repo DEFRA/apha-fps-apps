@@ -47,6 +47,7 @@
     max-height: 423px;
     height: 403px;
     border: 0 !important;
+    z-index: 9999;
     overflow-y: auto;
     border-right: 1px solid var(--govuk-border-colour) !important;
 }
