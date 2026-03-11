@@ -321,7 +321,7 @@ td.action-cell:nth-child(5) {
 }
 
 .custom-table th {
-  padding: 9px 10px !important;
+ /* padding: 9px 10px !important;*/
   border: 1px solid #ddd;
   white-space: nowrap;
   vertical-align: middle;
@@ -1226,6 +1226,11 @@ background-color: #edf4ff;
     /* font-weight: 600; */
     background-color: #FAFAFA;
 	    text-align: right;
+}
+.cust-abs-top-right {
+    position: absolute;
+    top: -6px;
+    right: 10px;
 }
 
 

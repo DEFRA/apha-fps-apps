@@ -2,12 +2,18 @@
 @model dynamic
 
 <div class="editable-grid-container">
-    <div class="grid-header">
-        <h2>@Model.Title</h2>
+    <div class="sup_border sup_border_bottom_0">
+        <h2 class="sup_border-bottom sup_text_color sup_heading_bg_color govuk-heading-s sup_margin_0 sup_align_heading">
+            <div class="sup_flex_space_between">
+                @Model.Title  <button type="button"  class="govuk-button sup_margin_0 sup_p_8" id="@($"{Model.GridId}_addRowBtn")">
+                <i class="fa fa-plus"></i> Add
+            </button>
+            </div>
+        </h2>
         <div class="grid-toolbar">
-            <div style="display: flex; align-items: center; gap: 8px;">                
+            <div class="sup_flex_center_gap_0">
                 <!-- Page Size Dropdown START -->
-                <select id="@($"{Model.GridId}_pageSize")" class="form-control form-control-sm" style="width: 90px;">
+               @*  <select id="@($"{Model.GridId}_pageSize")" class="form-control form-control-sm" style="width: 90px;">
                     @{
                         var sizes = new[] { 5, 10, 20, 50, 100 };
                         int currentSize = Model.Pagination?.PageSize ?? 5;
@@ -18,24 +24,35 @@
                             @size / page
                         </option>
                     }
-                </select>
+                </select> *@
                 <!-- Page Size Dropdown END -->              
-                <button type="button" class="btn btn-success" id="@($"{Model.GridId}_addRowBtn")">
+             @*    <button type="button" class="btn btn-success" id="@($"{Model.GridId}_addRowBtn")">
                     <i class="fa fa-plus"></i> Add
-                </button>
+                </button> *@
             </div>
         </div>
     </div>
 
+
+
     <div class="grid-wrapper">
         <div class="grid-scroll-container">
-            <table id="@($"tbl_{Model.GridId}")" class="editable-grid-table">
-                <thead>
-                    <tr>
+            <table id="@($"tbl_{Model.GridId}")" class="editable-grid-table govuk-table custom-table">
+                <thead class="govuk-table__head">
+                    <tr class="govuk-table__row">
                         @if (Model.ShowCheckboxColumn)
                         {
-                            <th scope="col" style="width: 30px;">
-                                <input type="checkbox" id="@($"{Model.GridId}_selectAll")" style="transform: scale(1.3);" />
+                            <th scope="col" class="govuk-table__header sup_p_0">
+                               
+                                <div class="govuk-checkboxes govuk-checkboxes--small sup_margin_0 cust-abs-top-right" data-module="govuk-checkboxes">
+                                    <div class="govuk-checkboxes__item">
+                                        <input type="checkbox" id="@($"{Model.GridId}_selectAll")" class="govuk-checkboxes__input govuk-!-font-size-16" />
+                                 @*        <input class="govuk-checkboxes__input govuk-!-font-size-16" id="chkfinished" name="chkfinished" type="checkbox" value="finished"> *@
+                                        <label class="govuk-label govuk-checkboxes__label sup_label_auto_width sup_p_0 sup_w_h_0" for="@($"{Model.GridId}_selectAll")">
+                                        </label>
+                                    </div>
+
+                                </div>
                             </th>
                         }
                         @foreach (var column in Model.Columns)
@@ -55,10 +72,10 @@
                                 </th>
                             }
                         }
-                        <th scope="col" class="row-number-header" style="width: 80px;">Action</th>
+                        <th scope="col" class="row-number-header govuk-table__header" style="width: 80px;">Action</th>
                     </tr>
                     <!-- Filter Row -->
-                    <tr class="filter-row">
+                    <tr class="filter-row govuk-table__row">
                         @if (Model.ShowCheckboxColumn)
                         {
                             <th scope="col"></th>
@@ -76,7 +93,7 @@
 
                                         if (column.FilterType == GridColumnType.Dropdown && column.FilterOptions != null)
                                         {
-                                            <select class="grid-filter" data-filter="@column.PropertyName">
+                                            <select class="grid-filter govuk-input govuk-!-font-size-16" data-filter="@column.PropertyName">
                                                 <option value="">All</option>
                                                 @foreach (var option in column.FilterOptions)
                                                 {
@@ -88,7 +105,7 @@
                                         }
                                         else if (column.FilterType == GridColumnType.Checkbox)
                                         {
-                                            <select class="grid-filter" data-filter="@column.PropertyName">
+                                            <select class="grid-filter govuk-input govuk-!-font-size-16" data-filter="@column.PropertyName">
                                                 <option value="">All</option>
                                                 <option value="true" selected="@(filterValue == "true" ? "selected" : null)">True</option>
                                                 <option value="false" selected="@(filterValue == "false" ? "selected" : null)">False</option>
@@ -97,12 +114,12 @@
                                         //Add condition for datepicker
                                         else if (column.FilterType == GridColumnType.Date)
                                         {
-                                            <input type="date" class="grid-filter grid-date" data-filter="@column.PropertyName"
+                                            <input type="date" class="grid-filter grid-date govuk-input govuk-!-font-size-16" data-filter="@column.PropertyName"
                                                    value="@(!string.IsNullOrWhiteSpace(filterValue) ? Convert.ToDateTime(filterValue).ToString("yyyy-MM-dd") : "")" placeholder="Filter..." />
                                         }
                                         else
                                         {
-                                            <input type="text" class="grid-filter" data-filter="@column.PropertyName" value="@filterValue" placeholder="Filter..." />
+                                            <input type="text" class="grid-filter govuk-input govuk-!-font-size-16"  data-filter="@column.PropertyName" value="@filterValue" placeholder="Filter..." />
                                         }
                                     }
                                 </th>
@@ -111,7 +128,7 @@
                         <th scope="col"></th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="govuk-table__body">
                     @{
                         var rowIndex = 0;
                     }
@@ -120,9 +137,20 @@
                         <tr data-row-index="@rowIndex">
                             @if (Model.ShowCheckboxColumn)
                             {
-                                <td class="checkbox-cell">
-                                    <input type="checkbox" name="chk-box-_@rowIndex"
-                                           id="@($"chk_{Model.GridId}_{rowIndex}")" class="row-checkbox" />
+                                <td class="checkbox-cell govuk-table__cell">
+                                   @*  <input type="checkbox" name="chk-box-_@rowIndex"
+                                           id="@($"chk_{Model.GridId}_{rowIndex}")" class="row-checkbox" /> *@
+
+
+                                    <div class="govuk-checkboxes govuk-checkboxes--small sup_margin_0" data-module="govuk-checkboxes">
+                                        <div class="govuk-checkboxes__item sup_chk_margin">
+                                            <input type="checkbox" name="chk-box-_@rowIndex"
+                                           id="@($"chk_{Model.GridId}_{rowIndex}")" class="row-checkbox govuk-checkboxes__input govuk-!-font-size-16" />
+                                            <label class="govuk-label govuk-checkboxes__label sup_label_auto_width sup_p_0 sup_w_h_0" for="@($"{Model.GridId}_selectAll")">
+                                            </label>
+                                        </div>
+
+                                    </div>
                                 </td>
                             }
                             @foreach (var column in Model.Columns)
@@ -132,7 +160,7 @@
                                     var value = GridHelpers.GetPropertyValue(row, column.PropertyName);
                                     if (column.ColumnType == GridColumnType.Checkbox)
                                     {
-                                        <td class="checkbox-cell" data-property="@column.PropertyName" data-type="@column.ColumnType">
+                                        <td class="checkbox-cell govuk-table__cell" data-property="@column.PropertyName" data-type="@column.ColumnType">
                                             <input readonly type="checkbox" name="@column.PropertyName"
                                                    id="@($"{Model.GridId}_{column.PropertyName}_{rowIndex}")" class="@GridHelpers.GetTypeCssClass(column)"
                                             @(Convert.ToBoolean(value) ? "checked" : "") @(column.IsEditable ? "" : "disabled") />
@@ -140,7 +168,7 @@
                                     }
                                     else
                                     {
-                                        <td data-property="@column.PropertyName" data-type="@column.ColumnType">
+                                        <td data-property="@column.PropertyName" data-type="@column.ColumnType" class="govuk-table__cell">
                                             <span name="@column.PropertyName"
                                                   id="@($"{Model.GridId}_{column.PropertyName}_{rowIndex}")"
                                                   class="@GridHelpers.GetTypeCssClass(column)">@GridHelpers.FormatValue(value, column)</span>
@@ -149,7 +177,7 @@
                                 }
                             }
                             <!-- Edit Button -->
-                            <td>
+                            <td class="govuk-table__cell">
                                 <button type="button"
                                         class="btn btn-sm btn-info edit-row-btn"
                                         data-row='@Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(row))'
@@ -171,13 +199,30 @@
             </table>
         </div>
     </div>
+    <div class="sup_pagination_footer sup_p_0" >
+        <div class="sup_pagination_wrapper">
+        <div class="sup_margin_top_bottom_5_10 sup_flex_center">
+                <label for="recordsPerPage" class="sup_margin_right_5">Records per page  </label>
+                <select id="@($"{Model.GridId}_pageSize")" class="govuk-select govuk-select--width-2 sup_width_4em govuk-!-font-size-16">
+            @{
+                var sizes = new[] { 5, 10, 20, 50, 100 };
+                int currentSize = Model.Pagination?.PageSize ?? 5;
+            }
+            @foreach (var size in sizes)
+            {
+                <option value="@size" selected="@(size == currentSize ? "selected" : null)">
+                    @size
+                </option>
+            }
+        </select>
+         </div>
 
     @if (Model.ShowPagination)
     {
         <div class="grid-footer">
             <div class="record-navigation">
                 @await Component.InvokeAsync("Pagination", Model.Pagination)
-                <span class="record-info">
+                  <span class="record-info sup_display_none">
                     Page @Model.Pagination.PageNumber of @Model.Pagination.TotalPages
                     &nbsp;|&nbsp;
                     Showing @((Model.Pagination.PageSize * (Model.Pagination.PageNumber - 1)) + 1)
@@ -188,6 +233,8 @@
             </div>
         </div>
     }
+    </div>
+    </div>
 </div>
 
 <script>
