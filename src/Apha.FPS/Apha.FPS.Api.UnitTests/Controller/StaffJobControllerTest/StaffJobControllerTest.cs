@@ -339,7 +339,8 @@ namespace Apha.FPS.Api.UnitTests.Controller.StaffJobControllerTest
 
             var result = await _controller.DeleteAsync("S1", "J1");
 
-            Assert.IsType<NoContentResult>(result);
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.True((bool)okResult.Value!);
         }
         
 
