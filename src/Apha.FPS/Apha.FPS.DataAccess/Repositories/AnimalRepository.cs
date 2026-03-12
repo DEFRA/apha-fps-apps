@@ -15,16 +15,15 @@ using System.Threading.Tasks;
 
 namespace Apha.FPS.DataAccess.Repositories
 {
-    public class AnimalRepository : IAnimalRepository
+    public class AnimalRepository : BaseRepository, IAnimalRepository 
     {
         private readonly FpsDbContext _dbContext;      
         private readonly IProjectRepository _projectRepository;
         public AnimalRepository(FpsDbContext dbContext,
-            IProjectRepository projectRepository)
+            IProjectRepository projectRepository) : base(dbContext)
         {
-            _dbContext = dbContext;
-            _projectRepository = projectRepository;
-           
+            _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
+            _projectRepository = projectRepository ?? throw new ArgumentNullException(nameof(projectRepository));
         }
 
         public IQueryable<AnimalRequest> Get()
@@ -71,7 +70,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 return e;
             }).ToList();
 
-            return ApplyPaging(animalCostViews, query.Page, query.PageSize);
+            return base.ApplyPaging(animalCostViews, query.Page, query.PageSize);
         }
 
         public async Task<decimal?> GetAnimalRateByIdAsync(string animalType)
@@ -161,31 +160,7 @@ namespace Apha.FPS.DataAccess.Repositories
         private static IQueryable ApplyOrder<T>(IQueryable<AnimalCostView> query, Expression<Func<AnimalCostView, T>> keySelector, bool descending)
         {
             return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
-        }
-
-        private PagedData<T> ApplyPaging<T>(
-                    IEnumerable<T> source,
-                    int page,
-                    int pageSize)
-        {
-            var list = source.ToList();
-            var totalRecords = list.Count;
-
-            var result = list
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
-
-            var pagination = new PaginationData
-            {
-                PageNumber = page,
-                PageSize = pageSize,
-                TotalPages = (int)Math.Ceiling((double)totalRecords / pageSize),
-                TotalRecords = totalRecords
-            };
-
-            return new PagedData<T>(result, pagination);
-        }
+        }       
 
     }
 }

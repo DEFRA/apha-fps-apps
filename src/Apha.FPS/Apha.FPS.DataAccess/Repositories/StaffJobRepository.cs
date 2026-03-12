@@ -9,14 +9,14 @@ using System.Linq.Expressions;
 
 namespace Apha.FPS.DataAccess.Repositories
 {
-    public class StaffJobRepository : IStaffJobRepository
+    public class StaffJobRepository :  BaseRepository, IStaffJobRepository
     {       
         private readonly FpsDbContext _dbContext;
         private readonly IProgramRepository _programRepository;
         private readonly IProjectRepository _projectRepository;
 
         public StaffJobRepository(FpsDbContext dbContext,
-            IProjectRepository projectRepository, IProgramRepository programRepository)
+            IProjectRepository projectRepository, IProgramRepository programRepository) : base(dbContext)
         {           
             _dbContext = dbContext;
             _projectRepository = projectRepository;
@@ -76,7 +76,7 @@ namespace Apha.FPS.DataAccess.Repositories
                                     Days = dutyHours != null ? sj.PlannedHours / Convert.ToDouble(dutyHours) : 0
                                 }).OrderBy(e => e.Name).AsQueryable();
 
-            //With ExpandoObject
+            
             if (!String.IsNullOrEmpty(query.Filter))
             {
                 dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(query.Filter);
@@ -98,7 +98,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var result = await queryStaffJob.ToListAsync();
 
-            return ApplyPaging(result, query.Page, query.PageSize);
+            return base.ApplyPaging(result, query.Page, query.PageSize);
         }
 
         public async Task<List<StaffWorkgroupLookup>> GetStaffWorkgroupLookup()
@@ -261,30 +261,6 @@ namespace Apha.FPS.DataAccess.Repositories
         private static IQueryable ApplyOrder<T>(IQueryable<StaffJobView> query, Expression<Func<StaffJobView, T>> keySelector, bool descending)
         {
             return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
-        }
-
-        private PagedData<T> ApplyPaging<T>(
-                    IEnumerable<T> source,
-                    int page,
-                    int pageSize)
-        {
-            var list = source.ToList();
-            var totalRecords = list.Count;
-
-            var result = list
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
-
-            var pagination = new PaginationData
-            {
-                PageNumber = page,
-                PageSize = pageSize,
-                TotalPages = (int)Math.Ceiling((double)totalRecords / pageSize),
-                TotalRecords = totalRecords
-            };
-
-            return new PagedData<T>(result, pagination);
-        }
+        }               
     }
 }
