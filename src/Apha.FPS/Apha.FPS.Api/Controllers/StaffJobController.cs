@@ -13,7 +13,7 @@ namespace Apha.FPS.Api.Controllers
     /// API controller for managing staff job assignments and related data.
     /// </summary>
     /// 
-    [AllowAnonymous]//[Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
+    [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
     [ApiController]
     [Route("api/staffjob")]
     public class StaffJobController : ControllerBase
@@ -120,10 +120,10 @@ namespace Apha.FPS.Api.Controllers
         [HttpDelete]
         public async Task<IActionResult> DeleteAsync([FromQuery] string staffId, [FromQuery] string jobCode)
         {
-            var success = await _staffJobService.DeleteAsync(staffId, jobCode);
-            if (!success)
+            var isDeleted = await _staffJobService.DeleteAsync(staffId, jobCode);
+            if (!isDeleted)
                 throw new KeyNotFoundException("Data not found.");
-            return NoContent();
+            return Ok(isDeleted);
         }
     }
 }

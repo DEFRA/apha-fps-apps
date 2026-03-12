@@ -16,12 +16,18 @@ namespace Apha.FPS.Api.Mappings
             CreateMap<WeatherForecastRes, WeatherForecastDto>().ReverseMap();           
             CreateMap<WeatherForecastCriteriaReq, WeatherForecastCriteriaDto>().ReverseMap();
             CreateMap<Pagination, PaginationDto>().ReverseMap();
+            
             CreateMap<StaffJobViewDto, StaffJobViewRes>().ReverseMap();
             CreateMap<StaffWorkgroupLookupDto, StaffWorkgroupLookupRes>().ReverseMap();
-
             CreateMap<StaffJobDto, StaffJobReq>().ReverseMap();
             CreateMap<StaffJobDto, StaffJobRes>().ReverseMap();
+
             CreateMap<FpsSettingRes, FpsSettingDto>().ReverseMap();
+
+            CreateMap<AnimalCostViewDto, AnimalCostViewRes>().ReverseMap();
+            CreateMap<AnimalDto, AnimalRes>().ReverseMap();
+            CreateMap<AnimalRequestDto, AnimalRequestReq>().ReverseMap();
+            CreateMap<AnimalRequestDto, AnimalRequestRes>().ReverseMap();   
         }
     }
 }

@@ -5,6 +5,7 @@ using Apha.FPS.Application.Services;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.DataAccess.Context;
 using Apha.FPS.DataAccess.Repositories;
+using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 
 namespace Apha.FPS.Api.Extensions
 {
@@ -24,6 +25,7 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IExcelExportService, ExcelExportService>();
             services.AddScoped<IStaffJobService, StaffJobService>();
             services.AddScoped<IFpsSettingService, FpsSettingService>();
+            services.AddScoped<IAnimalService, AnimalService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
@@ -34,7 +36,8 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IProgramRepository, ProgramRepository>();
             services.AddScoped<IProjectRepository, ProjectRepository>();
             services.AddScoped<IStaffJobRepository, StaffJobRepository>();
-            services.AddScoped<IFpsSettingRepository, FpsSettingRepository>();  
+            services.AddScoped<IFpsSettingRepository, FpsSettingRepository>(); 
+            services.AddScoped<IAnimalRepository, AnimalRepository>();
             return services;
         }
     }
