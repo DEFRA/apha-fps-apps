@@ -3,23 +3,34 @@
 <div class="pagination govuk-pagination__list sup_flex_center">
     @* <span>Record:</span> *@
     <!-- First Page -->
-    <a class="nav-btnx govuk-link govuk-pagination__link" data-pageno="1" @(Model.PageNumber == 1 ? "disabled" : "") title="First">
+    <a class="govuk-link govuk-pagination__link" data-pageno="1" @(Model.PageNumber == 1 ? "disabled" : "") title="First">
         <svg class="govuk-pagination__icon govuk-pagination__icon--prev" xmlns="http://www.w3.org/2000/svg" height="13" width="15" aria-hidden="true" focusable="false" viewBox="0 0 15 13">
             <path d="m6.5938-0.0078125-6.7266 6.7266 6.7441 6.4062 1.377-1.449-4.1856-3.9768h12.896v-2h-12.984l4.2931-4.293-1.414-1.414z"></path>
         </svg>
     </a>
     <!-- Previous Page -->
-    <a class="nav-btnx govuk-link govuk-pagination__link" data-pageno="@(Model.PageNumber - 1)" @(Model.PageNumber == 1 ? "disabled" : "") title="Previous">
+    <a class="govuk-link govuk-pagination__link" data-pageno="@(Model.PageNumber - 1)" @(Model.PageNumber == 1 ? "disabled" : "") title="Previous">
        Previous
     </a>
     <!-- Current Page Number -->
-    <span class="record-info govuk-pagination__item govuk-pagination__item--current">@Model.PageNumber</span>
+    @* <span class="record-info govuk-pagination__item govuk-pagination__item--current" data-pageno="@(Model.PageNumber)">@Model.PageNumber</span> *@
+    @for (int i = Model.StartPage; i <= Model.EndPage; i++)
+    {
+        if (i == Model.PageNumber)
+        {
+            <span class="record-info govuk-pagination__item govuk-pagination__item--current" data-pageno="@i">@i</span>
+        }
+        else
+        {
+            <span class="record-info govuk-pagination__item" data-pageno="@i">@i</span>
+        }
+    }
     <!-- Next Page -->
-    <a class="nav-btnx govuk-link govuk-pagination__link" data-pageno="@(Model.PageNumber + 1)" @(Model.PageNumber == Model.TotalPages ? "disabled" : "") title="Next">
+    <a class="govuk-link govuk-pagination__link" data-pageno="@(Model.PageNumber + 1)" @(Model.PageNumber == Model.TotalPages ? "disabled" : "") title="Next">
         Next
     </a>
     <!-- Last Page -->
-    <a class="nav-btnx govuk-link govuk-pagination__link" data-pageno="@Model.TotalPages" @(Model.PageNumber == Model.TotalPages ? "disabled" : "") title="Last">
+    <a class="govuk-link govuk-pagination__link" data-pageno="@Model.TotalPages" @(Model.PageNumber == Model.TotalPages ? "disabled" : "") title="Last">
         <svg class="govuk-pagination__icon govuk-pagination__icon--next" xmlns="http://www.w3.org/2000/svg" height="13" width="15" aria-hidden="true" focusable="false" viewBox="0 0 15 13">
             <path d="m8.107-0.0078125-1.4136 1.414 4.2926 4.293h-12.986v2h12.896l-4.1855 3.9766 1.377 1.4492 6.7441-6.4062-6.7246-6.7266z"></path>
         </svg>

@@ -321,7 +321,7 @@
         });
 
         // Update pagination AJAX to include sort params
-        $(gridContainerSelector).off('click', '.pagination button').on('click', '.pagination button', function (e) {
+        $(gridContainerSelector).off('click', '.pagination a, .pagination span').on('click', '.pagination a, .pagination span', function (e) {
             e.preventDefault();
             var $btn = $(this);
             var pageNo = $btn.data('pageno');
@@ -330,6 +330,7 @@
             // Get current sort from a global or hidden field, or from Model.Pagination
             var column = '@Model.Pagination.SortColumn';
             var sortOrder = '@Model.Pagination.SortDirection';
+            debugger;
             $.post(bindGridUrl, {
                 page: pageNo,
                 pageSize: pageSize,               
