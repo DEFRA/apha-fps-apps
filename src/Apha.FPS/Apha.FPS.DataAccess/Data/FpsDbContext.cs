@@ -27,6 +27,11 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<ProfitCentreGrade> ProfitcentreGrades { get; set; }
         public virtual DbSet<UserProfitcentre> UserProfitcentres { get; set; }
         public virtual DbSet<ProfitCentre> ProfitCentres { get; set; }
+        public virtual DbSet<JobCode> JobCodes { get; set; }
+        public virtual DbSet<Status> Statuses { get; set; }
+        public virtual DbSet<Disease> Diseases { get; set; }
+        public virtual DbSet<Customer> Customers { get; set; }
+        public virtual DbSet<Contract> Contracts { get; set; }
         public virtual DbSet<Animal> Animals { get; set; }
         public virtual DbSet<AnimalRequest> AnimalRequests { get; set; }
 
@@ -39,24 +44,24 @@ namespace Apha.FPS.DataAccess.Data
                 entity.ToTable("tblusers", "fps");
 
                 entity.HasIndex(e => e.Username, "dbo_tblusers_username")
-                    .IsUnique()
-                    .UseCollation(new[] { "latin1_general_ci_as" });
+                .IsUnique()
+                .UseCollation(new[] { "latin1_general_ci_as" });
 
                 entity.Property(e => e.UserId).HasColumnName("user_id");
                 entity.Property(e => e.AgencyId).HasColumnName("agencyid");
                 entity.Property(e => e.Comments)
-                    .HasMaxLength(255)
-                    .UseCollation("latin1_general_ci_as")
-                    .HasColumnName("comments");
+                .HasMaxLength(255)
+                .UseCollation("latin1_general_ci_as")
+                .HasColumnName("comments");
                 entity.Property(e => e.Dt2Username)
-                    .HasMaxLength(50)
-                    .UseCollation("latin1_general_ci_as")
-                    .HasColumnName("dt2username");
+                .HasMaxLength(50)
+                .UseCollation("latin1_general_ci_as")
+                .HasColumnName("dt2username");
                 entity.Property(e => e.FrmWarning).HasColumnName("frmwarning");
                 entity.Property(e => e.Username)
-                    .HasMaxLength(50)
-                    .UseCollation("latin1_general_ci_as")
-                    .HasColumnName("username");
+                .HasMaxLength(50)
+                .UseCollation("latin1_general_ci_as")
+                .HasColumnName("username");
             });
 
             modelBuilder.Entity<UserProgram>(entity =>
@@ -518,6 +523,97 @@ namespace Apha.FPS.DataAccess.Data
 
             });
 
+            modelBuilder.Entity<JobCode>(entity =>
+            {
+                entity.HasKey(e => e.JobCodeId).HasName("tlkpjobcode_pk_tlkpjobcode_new_1__15");
+
+                entity.ToTable("tlkpjobcode", "fps");
+
+                entity.Property(e => e.JobCodeId)
+                    .HasMaxLength(50)
+                    .HasColumnName("jobcode");
+                entity.Property(e => e.Fpscalyear).HasColumnName("fpsyear");
+                entity.Property(e => e.Jobcodename)
+                    .HasMaxLength(255)
+                    .HasColumnName("jobcodename");
+                entity.Property(e => e.Jobcodeworkgroup)
+                    .HasMaxLength(50)
+                    .HasColumnName("jobcodeworkgroup");
+                entity.Property(e => e.Newprog)
+                    .HasMaxLength(20)
+                    .HasColumnName("newprog");
+                entity.Property(e => e.Parentproject)
+                    .HasMaxLength(20)
+                    .HasColumnName("parentproject");
+                entity.Property(e => e.Type)
+                    .HasMaxLength(15)
+                    .HasColumnName("type");
+                entity.HasQueryFilter(e => e.Fpscalyear == _fPSYearContext.FPSYear);
+            });
+
+            modelBuilder.Entity<Status>(entity =>
+            {
+                entity.HasKey(e => e.StatusValue).HasName("tblstatus_pk___3__10");
+
+                entity.ToTable("tblstatus", "fps");
+
+                entity.Property(e => e.StatusValue)
+                    .HasMaxLength(50)
+                    .HasColumnName("status");
+            });
+
+            modelBuilder.Entity<Disease>(entity =>
+            {
+                entity.HasKey(e => e.DiseaseName).HasName("tbldisease_pk___4__10");
+
+                entity.ToTable("tbldisease", "fps");
+
+                entity.Property(e => e.DiseaseName)
+                    .HasMaxLength(50)
+                    .HasColumnName("disease");
+            });
+
+            modelBuilder.Entity<Customer>(entity =>
+            {
+                entity.HasKey(e => e.CustomerName).HasName("tlkpcustomer_pk___1__15");
+
+                entity.ToTable("tlkpcustomer", "fps");
+
+                entity.Property(e => e.CustomerName)
+                    .HasMaxLength(50)
+                    .HasColumnName("customer");
+            });
+
+            modelBuilder.Entity<Contract>(entity =>
+            {
+                entity.HasKey(e => e.Contractno).HasName("tblcontract_pk___2__10");
+
+                entity.ToTable("tblcontract", "fps");
+
+                entity.Property(e => e.Contractno)
+                    .HasMaxLength(10)
+                    .HasColumnName("contractno");
+                entity.Property(e => e.Category)
+                    .HasMaxLength(20)
+                    .HasColumnName("category");
+                entity.Property(e => e.Contractdoc).HasColumnName("contractdoc");
+                entity.Property(e => e.Customer)
+                    .HasMaxLength(50)
+                    .HasColumnName("customer");
+                entity.Property(e => e.Duration).HasColumnName("duration");
+                entity.Property(e => e.Enddate).HasColumnName("enddate");
+                entity.Property(e => e.Fpscalyear).HasColumnName("fpsyear");
+                entity.Property(e => e.Manager)
+                    .HasMaxLength(50)
+                    .HasColumnName("manager");
+                entity.Property(e => e.Registereddate).HasColumnName("registereddate");
+                entity.Property(e => e.Startdate).HasColumnName("startdate");
+                entity.Property(e => e.Title)
+                    .HasMaxLength(100)
+                    .HasColumnName("title");
+                entity.HasQueryFilter(e => e.Fpscalyear == _fPSYearContext.FPSYear);
+            });
+
             modelBuilder.Entity<Animal>(entity =>
             {
                 entity.HasKey(e => e.AnimalType).HasName("tblanimals_pk__tblanimals__18ebb532");
@@ -553,7 +649,7 @@ namespace Apha.FPS.DataAccess.Data
                 entity.ToTable("tblanimalreq", "fps");
 
                 entity.Property(e => e.IndCounter).HasColumnName("indcounter");
-                entity.Property(e => e.AnimalType)  
+                entity.Property(e => e.AnimalType)
                     .HasMaxLength(50)
                     .HasColumnName("animaltype");
                 entity.Property(e => e.FpsCalYear).HasColumnName("fpsyear");
