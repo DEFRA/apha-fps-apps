@@ -5,6 +5,7 @@ using Apha.FPS.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using System.Dynamic;
+using System.Linq.Expressions;
 
 namespace Apha.FPS.DataAccess.Repositories
 {
@@ -92,6 +93,8 @@ namespace Apha.FPS.DataAccess.Repositories
                     }
                 }
             }
+
+            queryStaffJob = (IQueryable<StaffJobView>)ApplySorting(queryStaffJob, query.SortBy, query.Descending);
 
             var result = await queryStaffJob.ToListAsync();
 
@@ -230,6 +233,34 @@ namespace Apha.FPS.DataAccess.Repositories
                 await transaction.RollbackAsync();
                 throw;
             }
+        }
+
+        private static IQueryable ApplySorting(IQueryable<StaffJobView> query, string? sortBy, bool descending)
+        {
+            if (string.IsNullOrEmpty(sortBy))
+            {
+                return query;
+            }
+
+            return ApplySortingByProperty(query, sortBy.ToLower(), descending);
+        }
+
+        private static IQueryable ApplySortingByProperty(IQueryable<StaffJobView> query, string property, bool descending)
+        {
+            return property switch
+            {
+                "name" => ApplyOrder(query, i => i.Name, descending),
+                "chargerate" => ApplyOrder(query, i => i.ChargeRate, descending),
+                "plannedhours" => ApplyOrder(query, i => i.PlannedHours, descending),
+                "days" => ApplyOrder(query, i => i.Days, descending),
+                "staffcost" => ApplyOrder(query, i => i.StaffCost, descending),
+                _ => query
+            };
+        }
+
+        private static IQueryable ApplyOrder<T>(IQueryable<StaffJobView> query, Expression<Func<StaffJobView, T>> keySelector, bool descending)
+        {
+            return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
         }
 
         private PagedData<T> ApplyPaging<T>(

@@ -1,4 +1,5 @@
-﻿using Apha.FPS.Application.Dtos;
+﻿using Apha.Common.Contracts.FPS;
+using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Pagination;
@@ -20,6 +21,9 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<StaffWorkgroupLookup, StaffWorkgroupLookupDto>().ReverseMap();
             CreateMap<StaffJob, StaffJobDto>().ReverseMap();
             CreateMap<FpsSetting, FpsSettingDto>().ReverseMap();
+            CreateMap<AnimalCostView, AnimalCostViewDto>().ReverseMap();
+            CreateMap<Animal, AnimalDto>().ReverseMap();
+            CreateMap<AnimalRequest, AnimalRequestDto>().ReverseMap();
         }
     }
 }
