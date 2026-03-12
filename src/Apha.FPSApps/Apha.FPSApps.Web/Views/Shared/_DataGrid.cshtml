@@ -219,8 +219,7 @@
 
     @if (Model.ShowPagination)
     {
-        <div class="grid-footer">
-            <div class="record-navigation">
+       
                 @await Component.InvokeAsync("Pagination", Model.Pagination)
                   <span class="record-info sup_display_none">
                     Page @Model.Pagination.PageNumber of @Model.Pagination.TotalPages
@@ -230,8 +229,7 @@
                     @(Math.Min(Model.Pagination.PageSize * Model.Pagination.PageNumber, Model.Pagination.TotalRecords))
                     of @Model.Pagination.TotalRecords
                 </span>
-            </div>
-        </div>
+          
     }
     </div>
     </div>
