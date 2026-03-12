@@ -1,6 +1,7 @@
-﻿using Apha.FPS.Core.Interfaces;
-using Apha.FPS.Core.Entities;
+﻿using Apha.FPS.Core.Entities;
+using Apha.FPS.Core.Interfaces;
 using Apha.FPS.DataAccess.Data;
+using Microsoft.EntityFrameworkCore;
 
 
 namespace Apha.FPS.DataAccess.Repositories
@@ -24,6 +25,11 @@ namespace Apha.FPS.DataAccess.Repositories
                         select p).AsQueryable();
 
             return data;
+        }
+
+        public async Task<IEnumerable<Program>> GetAllProgramsAsync()
+        {
+            return await Get().ToListAsync();
         }
     }
 }

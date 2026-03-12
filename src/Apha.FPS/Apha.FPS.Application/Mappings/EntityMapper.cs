@@ -21,6 +21,10 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<StaffWorkgroupLookup, StaffWorkgroupLookupDto>().ReverseMap();
             CreateMap<StaffJob, StaffJobDto>().ReverseMap();
             CreateMap<FpsSetting, FpsSettingDto>().ReverseMap();
+            CreateMap<Program, ProgramDto>().ReverseMap();
+            CreateMap<Project, ProjectDto>().ReverseMap();
+            CreateMap<JobCode, JobCodeDto>().ReverseMap();
+            CreateMap<Contract, ContractDto>().ReverseMap();
             CreateMap<AnimalCostView, AnimalCostViewDto>().ReverseMap();
             CreateMap<Animal, AnimalDto>().ReverseMap();
             CreateMap<AnimalRequest, AnimalRequestDto>().ReverseMap();

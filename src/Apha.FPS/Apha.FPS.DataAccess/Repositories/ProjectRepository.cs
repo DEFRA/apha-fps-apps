@@ -1,6 +1,7 @@
 ﻿using Apha.FPS.Core.Interfaces;
 using Apha.FPS.DataAccess.Data;
 using Apha.FPS.Core.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace Apha.FPS.DataAccess.Repositories
 {
@@ -23,6 +24,18 @@ namespace Apha.FPS.DataAccess.Repositories
                             on p.Program equals ap.ProgramNo                          
                           select p).AsQueryable();
 
+        }
+
+        public async Task<IEnumerable<Project>> GetAllProjectsAsync()
+        {
+            return await Get().ToListAsync();
+        }
+
+        public async Task<Project?> GetProjectByIdAsync(string parentProject)
+        {
+            return await _dbContext.Projects
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.ParentProject == parentProject);
         }
     }
 }
