@@ -1,6 +1,7 @@
 ﻿using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
+using Apha.FPS.Core.Enities;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Pagination;
 using AutoMapper;
@@ -28,6 +29,9 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<AnimalCostView, AnimalCostViewDto>().ReverseMap();
             CreateMap<Animal, AnimalDto>().ReverseMap();
             CreateMap<AnimalRequest, AnimalRequestDto>().ReverseMap();
+            CreateMap<AccountCode, AccountCodeDto>().ReverseMap();
+            CreateMap<SubAccount, SubAccountDto>().ReverseMap();
+            CreateMap<ProjectGroup, ProjectGroupDto>().ReverseMap();
         }
     }
 }
