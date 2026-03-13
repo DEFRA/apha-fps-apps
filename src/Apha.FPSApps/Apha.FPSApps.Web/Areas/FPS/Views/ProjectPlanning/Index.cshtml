@@ -363,6 +363,7 @@
                 <h1 style="padding: 10px 0 0px 17px; font-weight: 700; font-size:16px;
                                 margin-bottom: 10px; ">
                     Project Planning : <span class="projectcode_color">@Model.ProjectCode</span>
+                    <input id="hdnProjectCode" type="hidden" value="@Model.ProjectCode" />
                 </h1>
             </div>
 
@@ -834,9 +835,11 @@
             }
         }
 
-            function backToSearchGrid() {
-                window.location.href = "project_maintenance_five.three.html";
-            }
+        function getStaffJobExtraFilters() {
+            return {
+                jobCode: $('#hdnProjectCode').val()                
+            };
+        }            
     </script>
     <script src="~/js/bootstrap.bundle.min.js"></script>
     <fps-year-script></fps-year-script>

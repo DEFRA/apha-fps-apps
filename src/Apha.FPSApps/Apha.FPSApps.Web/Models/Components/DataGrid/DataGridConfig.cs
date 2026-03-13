@@ -14,7 +14,8 @@
         public string AddFunction { get; set; }
         public string EditFunction { get; set; }
         public string DeleteFunction { get; set; }
-        public string BindGridUrl { get; set; }        
+        public string BindGridUrl { get; set; }
+        public string ExtraFilterMethod { get; set; }
         public PaginationModel Pagination { get; set; }
         public string? CurrentSearch { get; set; }
         public Dictionary<string, string>? CurrentFilters { get; set; } = null;
