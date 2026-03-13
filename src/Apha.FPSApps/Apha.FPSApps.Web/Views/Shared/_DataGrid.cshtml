@@ -236,21 +236,91 @@
 </div>
 
 <script type="text/javascript">
-
-    $(function(){
+    (function() {
         var gridId = '@Model.GridId';
-        var gridContainerSelector = '#gridContainer_' + gridId;              
+        var gridContainerSelector = '#gridContainer_' + gridId;
         var bindGridUrl = '@Model.BindGridUrl';
 
-        function closeEditModal() {
-            $('#editModal').hide();
-        }
-       
-        // Track changes for saving
-        $(document).ready(function() {
+        // Get extra filters once at initialization
+        var extraFilters = typeof window['@Model.ExtraFilterMethod'] === "function"
+            ? window['@Model.ExtraFilterMethod']()
+            : {};
+
+        // Core grid manager - attached to this specific grid
+        var gridManager = {
+            getFilterModel: function() {
+                var filterModel = {};
+                $(gridContainerSelector + ' .grid-filter').each(function () {
+                    var prop = $(this).data('filter');
+                    var val = $(this).val();
+                    if (val !== undefined && val !== null && val !== '') {
+                        filterModel[prop] = val;
+                    }
+                });
+                return filterModel;
+            },
+
+            getAjaxParams: function(customParams) {
+                var params = {
+                    page: customParams.page || 1,
+                    pageSize: customParams.pageSize || $('#' + gridId + '_pageSize').val() || 10,
+                    sortBy: customParams.sortBy || '@Model.Pagination.SortColumn',
+                    descending: customParams.descending || '@Model.Pagination.SortDirection',
+                    filter: JSON.stringify(this.getFilterModel())
+                };
+
+                // Merge extra filters
+                for (var key in extraFilters) {
+                    if (extraFilters.hasOwnProperty(key)) {
+                        params[key] = extraFilters[key];
+                    }
+                }
+
+                return params;
+            },
+
+            reloadGrid: function(params) {
+                var self = this;
+                $.post(bindGridUrl, self.getAjaxParams(params))
+                    .done(function (htmlData) {
+                        $(gridContainerSelector).html(htmlData);
+                        self.applyGridColumnWidths();
+                        self.deselectAllCheckboxes();
+                    });
+            },
+
+            deselectAllCheckboxes: function() {
+                $('#' + gridId + '_selectAll').prop('checked', false);
+                $('#tbl_' + gridId + ' .row-checkbox').prop('checked', false);
+            },
+
+            saveGridColumnWidths: function() {
+                var widths = {};
+                $('#tbl_' + gridId + ' th[data-column]').each(function () {
+                    var col = $(this).data('column');
+                    if (col) widths[col] = $(this).outerWidth();
+                });
+                localStorage.setItem(gridId + '_colWidths', JSON.stringify(widths));
+            },
+
+            applyGridColumnWidths: function() {
+                var widths = {};
+                try {
+                    widths = JSON.parse(localStorage.getItem(gridId + '_colWidths') || '{}');
+                } catch {}
+                $('#tbl_' + gridId + ' th[data-column]').each(function () {
+                    var col = $(this).data('column');
+                    if (col && widths[col]) $(this).css('width', widths[col] + 'px');
+                });
+            }
+        };
+
+        // Initialize grid on document ready
+        $(function() {
+            // Track changes for saving
             var changedRows = {};
 
-            $('.grid-input').on('change', function() {
+            $(gridContainerSelector).on('change', '.grid-input', function() {
                 var $row = $(this).closest('tr');
                 var rowIndex = $row.data('row-index');
                 var property = $(this).closest('td').data('property');
@@ -260,221 +330,120 @@
                     changedRows[rowIndex] = {};
                 }
                 changedRows[rowIndex][property] = value;
-
-                // Visual indicator of change
                 $row.css('background-color', '#ffffcc');
             });
 
-            // You can add a save button that sends changedRows to the server
             window.getChangedRows = function() {
                 return changedRows;
             };
-        });
 
-        $(gridContainerSelector).off('click', '.sortable-header').on('click', '.sortable-header', function (e) {
-            if (resizing) {
-                e.stopImmediatePropagation();
-                return; // Don't sort if resizing just happened
-            }
-            var column = $(this).data('column');
-            var sortDir = $(this).data('sortdir');
-            var pageSize = $('#' + gridId + '_pageSize').val() || 10;
-            // Always reset to page 1 on sort
-            $.post(bindGridUrl, {
-                page: 1,
-                pageSize: pageSize,
-                sortBy: column,
-                descending: sortDir,
-                filter: JSON.stringify(getFilterModel())
-            }).done(function (htmlData) {
-                $(gridContainerSelector).html(htmlData);
-                applyGridColumnWidths(gridId);
-                deselectAllCheckboxes();
-            });
-        });
-
-        // Update pagination AJAX to include sort params
-        $(gridContainerSelector).off('click', '.pagination a, .pagination span').on('click', '.pagination a, .pagination span', function (e) {
-            e.preventDefault();
-            var $btn = $(this);
-            var pageNo = $btn.data('pageno');
-            var pageSize = $('#' + gridId + '_pageSize').val() || 10;
-            if ($btn.prop('disabled') || !pageNo || isNaN(pageNo) || pageNo < 1) return;
-            // Get current sort from a global or hidden field, or from Model.Pagination
-            var column = '@Model.Pagination.SortColumn';
-            var sortOrder = '@Model.Pagination.SortDirection';
-            debugger;
-            $.post(bindGridUrl, {
-                page: pageNo,
-                pageSize: pageSize,
-                sortBy: column,
-                descending: sortOrder,
-                filter: JSON.stringify(getFilterModel())
-            }).done(function (htmlData) {
-                $(gridContainerSelector).html(htmlData);
-                applyGridColumnWidths(gridId);
-                deselectAllCheckboxes();
-            });
-        });
-
-        $('#' + gridId + '_pageSize').on('change', function () {
-            var pageSize = $(this).val();
-            // Always reset to page 1 on page size change
-            $.post(bindGridUrl, {
-                page: 1,
-                pageSize: pageSize,
-                filter: JSON.stringify(getFilterModel())
-            }).done(function (htmlData) {
-                $(gridContainerSelector).html(htmlData);
-                applyGridColumnWidths(gridId);
-                deselectAllCheckboxes();
-            });
-        });
-
-        // Handle filter changes (textboxes and dropdowns)
-        $(gridContainerSelector).on('change', '.grid-filter', function () {
-            var pageSize = $('#' + gridId + '_pageSize').val() || 10;
-            // Always reset to page 1 on filter change
-            $.post(bindGridUrl, {
-                page: 1,
-                pageSize: pageSize,
-                filter: JSON.stringify(getFilterModel())
-            }).done(function (htmlData) {
-                $(gridContainerSelector).html(htmlData);
-                applyGridColumnWidths(gridId);
-                deselectAllCheckboxes();
-            });
-        });
-
-        // "Select All" checkbox logic
-        $('#' + gridId + '_selectAll').on('change', function() {
-            var checked = $(this).is(':checked');
-            $('#tbl_' + gridId + ' .row-checkbox').prop('checked', checked);
-        });
-
-        // Deselect "Select All" if any row checkbox is unchecked
-        $(gridContainerSelector).off('change', '.row-checkbox').on('change', '.row-checkbox', function() {
-            var allChecked = $('.row-checkbox').length === $('.row-checkbox:checked').length;
-            $('#' + gridId + '_selectAll').prop('checked', allChecked);
-        });
-
-        //Add button click
-        $('#' + gridId + '_addRowBtn').on('click', function () {
-             var customAddFn = $(this).data('add-function');
-
-              // If a custom delete function is specified and exists globally
-            if (customAddFn && typeof window[customAddFn] === 'function') {
-                window[customAddFn](this);
-            }            
-        });
-
-        //Edit button click
-         $(gridContainerSelector).off('click', '.edit-row-btn').on('click', '.edit-row-btn', function() {
-             var customEditFn = $(this).data('edit-function');
-
-              // If a custom delete function is specified and exists globally
-            if (customEditFn && typeof window[customEditFn] === 'function') {
-                window[customEditFn](this);
-            }           
-        });
-
-        //Delete button click
-        $(gridContainerSelector).off('click', '.delete-row-btn').on('click', '.delete-row-btn', function() {
-            var customDeleteFn = $(this).data('delete-function');
-
-            // If a custom delete function is specified and exists globally
-            if (customDeleteFn && typeof window[customDeleteFn] === 'function') {
-                window[customDeleteFn](this);
-            }
-        });
-
-        // Deselect all on page/filter change
-        function deselectAllCheckboxes() {
-            $('#' + gridId + '_selectAll').prop('checked', false);
-            $('#tbl_' + gridId + ' .row-checkbox').prop('checked', false);
-        }
-
-        function getFilterModel() {
-            var filterModel = {};
-            $('.grid-filter').each(function () {
-                var prop = $(this).data('filter');
-                var val = $(this).val();
-                if (val !== undefined && val !== null && val !== '') {
-                    filterModel[prop] = val;
+            // Sort header click
+            $(gridContainerSelector).off('click', '.sortable-header').on('click', '.sortable-header', function (e) {
+                if (resizing) {
+                    e.stopImmediatePropagation();
+                    return;
                 }
-            });
-            return filterModel;
-        }
 
-        function triggerGridSearch(isUnfilter) {
-            var pageSize = $('#' + gridId + '_pageSize').val() || 10;
-            // Always reset to page 1 on search/unfilter
-            $.post(bindGridUrl, {
-                page: 1,
-                pageSize: pageSize,
-                filter: JSON.stringify(getFilterModel())
-            }).done(function (htmlData) {
-                $(gridContainerSelector).html(htmlData);
-                applyGridColumnWidths(gridId);
-                deselectAllCheckboxes();
-            });
-        }
-
-        function saveGridColumnWidths(gridId) {
-            var widths = {};
-            $('#tbl_' + gridId + ' th[data-column]').each(function () {
-                var col = $(this).data('column');
-                if (col) widths[col] = $(this).outerWidth();
-            });
-            localStorage.setItem(gridId + '_colWidths', JSON.stringify(widths));
-        }
-
-        function applyGridColumnWidths(gridId) {
-            var widths = {};
-            try { widths = JSON.parse(localStorage.getItem(gridId + '_colWidths') || '{}'); } catch {}
-            $('#tbl_' + gridId + ' th[data-column]').each(function () {
-                var col = $(this).data('column');
-                if (col && widths[col]) $(this).css('width', widths[col] + 'px');
-            });
-        }
-
-        // JavaScript for resizing columns
-        const table = document.getElementById('tbl_' + gridId);
-        let pressed = false;
-        let startX, startWidth, th;
-        let resizing = false;
-
-        if (table) {
-            table.querySelectorAll('.column-resizer').forEach(function (resizer) {
-                resizer.addEventListener('mousedown', function (e) {
-                    pressed = true;
-                    resizing = false;
-                    th = resizer.parentElement;
-                    startX = e.pageX;
-                    startWidth = th.offsetWidth;
-                    document.body.style.cursor = 'col-resize';
-                    e.preventDefault(); // Only here!
+                gridManager.reloadGrid({
+                    page: 1,
+                    sortBy: $(this).data('column'),
+                    descending: $(this).data('sortdir')
                 });
             });
 
-            document.addEventListener('mousemove', function (e) {
-                if (!pressed) return;
-                const diff = e.pageX - startX;
-                if (Math.abs(diff) > 2) resizing = true;
-                th.style.width = (startWidth + diff) + 'px';
+            // Pagination click
+            $(gridContainerSelector).off('click', '.pagination a, .pagination span').on('click', '.pagination a, .pagination span', function (e) {
+                e.preventDefault();
+                var pageNo = $(this).data('pageno');
+                if ($(this).prop('disabled') || !pageNo || isNaN(pageNo) || pageNo < 1) return;
+
+                gridManager.reloadGrid({ page: pageNo });
             });
 
-            // Use window here for best cross-browser support
-            window.addEventListener('mouseup', function (e) {
-                if (pressed) {
-                    pressed = false;
-                    setTimeout(() => { resizing = false; }, 100);
-                    document.body.style.cursor = '';
-                    saveGridColumnWidths(gridId);
+            // Page size change
+            $('#' + gridId + '_pageSize').on('change', function () {
+                gridManager.reloadGrid({
+                    page: 1,
+                    pageSize: $(this).val()
+                });
+            });
+
+            // Filter change
+            $(gridContainerSelector).on('change', '.grid-filter', function () {
+                gridManager.reloadGrid({ page: 1 });
+            });
+
+            // Select All checkbox
+            $('#' + gridId + '_selectAll').on('change', function() {
+                var checked = $(this).is(':checked');
+                $('#tbl_' + gridId + ' .row-checkbox').prop('checked', checked);
+            });
+
+            // Row checkbox change
+            $(gridContainerSelector).off('change', '.row-checkbox').on('change', '.row-checkbox', function() {
+                var allChecked = $('.row-checkbox').length === $('.row-checkbox:checked').length;
+                $('#' + gridId + '_selectAll').prop('checked', allChecked);
+            });
+
+            // Add button click
+            $('#' + gridId + '_addRowBtn').on('click', function () {
+                var customAddFn = $(this).data('add-function');
+                if (customAddFn && typeof window[customAddFn] === 'function') {
+                    window[customAddFn](this);
                 }
             });
-        }
-        //End JavaScript for resizing
-    });
 
+            // Edit button click
+            $(gridContainerSelector).off('click', '.edit-row-btn').on('click', '.edit-row-btn', function() {
+                var customEditFn = $(this).data('edit-function');
+                if (customEditFn && typeof window[customEditFn] === 'function') {
+                    window[customEditFn](this);
+                }
+            });
+
+            // Delete button click
+            $(gridContainerSelector).off('click', '.delete-row-btn').on('click', '.delete-row-btn', function() {
+                var customDeleteFn = $(this).data('delete-function');
+                if (customDeleteFn && typeof window[customDeleteFn] === 'function') {
+                    window[customDeleteFn](this);
+                }
+            });
+
+            // Column resizing
+            const table = document.getElementById('tbl_' + gridId);
+            let pressed = false;
+            let startX, startWidth, th;
+            let resizing = false;
+
+            if (table) {
+                table.querySelectorAll('.column-resizer').forEach(function (resizer) {
+                    resizer.addEventListener('mousedown', function (e) {
+                        pressed = true;
+                        resizing = false;
+                        th = resizer.parentElement;
+                        startX = e.pageX;
+                        startWidth = th.offsetWidth;
+                        document.body.style.cursor = 'col-resize';
+                        e.preventDefault();
+                    });
+                });
+
+                document.addEventListener('mousemove', function (e) {
+                    if (!pressed) return;
+                    const diff = e.pageX - startX;
+                    if (Math.abs(diff) > 2) resizing = true;
+                    th.style.width = (startWidth + diff) + 'px';
+                });
+
+                window.addEventListener('mouseup', function (e) {
+                    if (pressed) {
+                        pressed = false;
+                        setTimeout(() => { resizing = false; }, 100);
+                        document.body.style.cursor = '';
+                        gridManager.saveGridColumnWidths();
+                    }
+                });
+            }
+        });
+    })();
 </script>

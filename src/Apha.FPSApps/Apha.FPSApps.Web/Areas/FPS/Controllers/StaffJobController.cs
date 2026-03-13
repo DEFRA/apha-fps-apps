@@ -30,7 +30,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> LoadStaffJobGrid(PaginationFilter<string> request)
+        public async Task<IActionResult> LoadStaffJobGrid(PaginationFilter<string> request, string? jobCode = null)
         {
             if (!ModelState.IsValid)
             {
@@ -64,6 +64,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 AddFunction = "addStaffJob",
                 EditFunction = "editStaffJob",
                 DeleteFunction = "deleteStaffJob",
+                ExtraFilterMethod = "getStaffJobExtraFilters",
                 BindGridUrl = "/FPS/StaffJob/LoadStaffJobGrid",
                 Data = staffJobItems,
                 Columns = GridDataProvider.GetColumnsDefination<StaffJobItem>(null),
