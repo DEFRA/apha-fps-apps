@@ -1,6 +1,7 @@
 ﻿using Apha.FPS.Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Apha.FPS.Core.Entities;
+using Apha.FPS.Core.Enities;
 
 namespace Apha.FPS.DataAccess.Data
 {
@@ -34,7 +35,9 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<Contract> Contracts { get; set; }
         public virtual DbSet<Animal> Animals { get; set; }
         public virtual DbSet<AnimalRequest> AnimalRequests { get; set; }
-
+        public virtual DbSet<ProjectGroup> ProjectGroups { get; set; }
+        public virtual DbSet<AccountCode> AccountCodes { get; set; }
+        public virtual DbSet<SubAccount> SubAccounts { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<User>(entity =>
@@ -661,9 +664,44 @@ namespace Apha.FPS.DataAccess.Data
                 entity.HasQueryFilter(e => e.FpsCalYear == _fPSYearContext.FPSYear);
             });
 
-            OnModelCreatingPartial(modelBuilder);
-        }
+            modelBuilder.Entity<ProjectGroup>(entity =>
+            {
+                entity.HasKey(e => e.ProjectGroupName).HasName("tlkpprojectgroup_pk_tlkpprojectgroup");
 
-        partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
+                entity.ToTable("tlkpprojectgroup", "fps");
+
+                entity.Property(e => e.ProjectGroupName)
+                    .HasMaxLength(50)
+                    .HasColumnName("projectgroup");
+            });
+
+            modelBuilder.Entity<AccountCode>(entity =>
+            {
+                entity.HasKey(e => e.Code).HasName("tlkpaccountcode_pk_tlkpaccountcode");
+
+                entity.ToTable("tlkpaccountcode", "fps");
+
+                entity.Property(e => e.Code)
+                    .HasMaxLength(50)
+                    .HasColumnName("code");
+                entity.Property(e => e.Description)
+                    .HasMaxLength(50)
+                    .HasColumnName("description");
+            });
+
+            modelBuilder.Entity<SubAccount>(entity =>
+            {
+                entity.HasKey(e => e.SubAccountCode).HasName("tlkpsubaccount_pk_tlkpsubaccount");
+
+                entity.ToTable("tlkpsubaccount", "fps");
+
+                entity.Property(e => e.SubAccountCode)
+                    .HasMaxLength(50)
+                    .HasColumnName("subaccountcode");
+                entity.Property(e => e.SubAccountName)
+                    .HasMaxLength(50)
+                    .HasColumnName("subaccount");
+            });
+        }
     }
 }
