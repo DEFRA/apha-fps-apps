@@ -32,7 +32,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [Display(Name = "Days")]
         [Range(0, double.MaxValue, ErrorMessage = "Days must be a positive value")]
         [DisplayFormat(DataFormatString = "{0:N2}", ApplyFormatInEditMode = false)]
-        [GridColumn(Width = 81, Type = GridColumnType.Number)]
+        [GridColumn(Width = 81, Type = GridColumnType.DecimalNumber)]
         public decimal Days { get; set; }
         
         [Required(ErrorMessage = "Staff cost is required")]

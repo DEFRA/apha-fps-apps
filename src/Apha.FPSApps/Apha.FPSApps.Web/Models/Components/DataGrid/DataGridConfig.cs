@@ -11,9 +11,9 @@
         public string KeyProperty { get; set; }
         public bool AllowAdd { get; set; }
         public bool AllowDelete { get; set; }
-        public string AddUrl { get; set; }
-        public string UpdateUrl { get; set; }
-        public string DeleteUrl { get; set; }
+        public string AddFunction { get; set; }
+        public string EditFunction { get; set; }
+        public string DeleteFunction { get; set; }
         public string BindGridUrl { get; set; }        
         public PaginationModel Pagination { get; set; }
         public string? CurrentSearch { get; set; }

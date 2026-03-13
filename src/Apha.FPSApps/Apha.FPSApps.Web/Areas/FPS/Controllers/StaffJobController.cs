@@ -4,10 +4,8 @@ using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
-using DocumentFormat.OpenXml.Office2010.Excel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Identity.Web;
 using Newtonsoft.Json;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Controllers
@@ -62,10 +60,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 Title = "Staff Booked",
                 ShowCheckboxColumn = true,
                 ShowPagination = true,
-                KeyProperty = "StaffId",
-                AddUrl = "/FPS/StaffJob/Create",
-                UpdateUrl = "/FPS/StaffJob/Edit",
-                DeleteUrl = "/FPS/StaffJob/Delete",
+                KeyProperty = "StaffID",
+                AddFunction = "addStaffJob",
+                EditFunction = "editStaffJob",
+                DeleteFunction = "deleteStaffJob",
                 BindGridUrl = "/FPS/StaffJob/LoadStaffJobGrid",
                 Data = staffJobItems,
                 Columns = GridDataProvider.GetColumnsDefination<StaffJobItem>(null),
@@ -73,13 +71,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 CurrentFilters = filterDict
             };
 
-            return View("_DataGrid", staffJobGridConfig);
+            return PartialView("_DataGrid", staffJobGridConfig);
         }
 
         [HttpGet]
         public IActionResult Create()
         {
-            return View("_AddStaffJob");
+            return PartialView("_AddStaffJob");
         }
 
         [HttpPost]
@@ -108,19 +106,17 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         [HttpGet]
         public async Task<IActionResult> Edit(string staffId)
         {
-            var result = await _staffJobService.GetStaffJobByIdAsync(staffId);
+            //var result = await _staffJobService.GetStaffJobByIdAsync(staffId);
 
-            if (result.Success)
-            {
-                var staffJobItem = _mapper.Map<StaffJobItem>(result.Data);
-                return View("_EditStaffJob", staffJobItem);
-            }
-            else
-            {
-                // Handle the case where the staff job could not be retrieved
-                // For example, you could redirect to an error page or return a not found result
-                return NotFound($"Staff job with ID {staffId} not found.");
-            }
+            //if (result.Success)
+            //{
+            //    var staffJobItem = _mapper.Map<StaffJobItem>(result.Data);
+                return PartialView("_EditStaffJob");
+            //}
+            //else
+            //{
+            //    return NotFound($"Staff job with ID {staffId} not found.");
+            //}
         }          
        
         [HttpPost]
@@ -160,14 +156,14 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 return Json(new { success = false, message = "Job code is required" });
             }
 
-            var result = await _staffJobService.DeleteStaffJobAsync(staffId, jobCode);
+            //var result = await _staffJobService.DeleteStaffJobAsync(staffId, jobCode);
 
-            if (result.Success)
-            {
-                return Json(new { success = true, message = "Staff job deleted successfully" });
-            }
+            //if (result.Success)
+            //{
+            //    return Json(new { success = true, message = "Staff job deleted successfully" });
+            //}
 
-            return Json(new { success = false, errors = result.Errors });
+            return Json(new { success = false, errors = "" });
         }
     }
 }
