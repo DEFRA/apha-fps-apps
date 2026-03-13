@@ -40,6 +40,10 @@
 
             switch (column.ColumnType)
             {
+                case GridColumnType.DecimalNumber:
+                    if (value is decimal decValue)
+                        return decValue.ToString("F2");                    
+                    break;
                 case GridColumnType.Date:
                     if (value is DateTime dateValue)
                         return dateValue.ToString(column.DateFormat ?? "yyyy-MM-dd");
@@ -54,7 +58,7 @@
                     break;
                 case GridColumnType.GbpValue:
                     if (value is decimal gbpValue)
-                        return gbpValue.ToString("C", new System.Globalization.CultureInfo("en-GB"));
+                        return gbpValue.ToString("£#,##0;-£#,##0");
                     break;
                 // case GridColumnType.Decimal:
                 //     if (value is decimal decValue)

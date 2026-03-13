@@ -4,6 +4,7 @@
     {
         Text,
         Number,
+        DecimalNumber,
         Dropdown,
         Checkbox,
         Date,
