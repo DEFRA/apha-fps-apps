@@ -15,9 +15,14 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<IEnumerable<Contract>> GetAllContractsAsync()
         {
-            return await _dbContext.Contracts
-                .AsNoTracking()
-                .ToListAsync();
+            return await (from contract in _dbContext.Contracts
+                        join userCategory in _dbContext.UserCategories
+                            on contract.Category equals userCategory.Category
+                        join user in _dbContext.Users
+                            on userCategory.UserId equals user.UserId
+                          where user.Username == "dbo"
+                          select contract).AsNoTracking()
+                .ToListAsync(); 
         }
     }
 }
