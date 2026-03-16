@@ -1,0 +1,24 @@
+﻿@using Apha.FPSApps.Web.Areas.FPS.Models
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model DataGridConfig<ProgramViewModel>
+
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">Program Maintenance</h1>
+        <div class="card mb-4">
+            <div class="card-body">
+                <p class="mb-0">This page is under construction.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="column-12">
+            <div id="@($"gridContainer_{Model.GridId}")">
+                @await Html.PartialAsync("_DataGrid", Model)
+            </div>
+        </div>
+    </div>
+</div>

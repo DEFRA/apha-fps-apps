@@ -4,5 +4,6 @@
     {
         IFpsWeatherForecastApiClient FpsWeatherForecast { get; }
         IFpsStaffJobApiClient FpsStaffJob { get; }
+        IFpsProgramApiClient FpsProgram { get; }
     }
 }
