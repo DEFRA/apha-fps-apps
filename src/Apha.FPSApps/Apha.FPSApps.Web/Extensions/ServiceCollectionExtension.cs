@@ -19,6 +19,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IStaffJobService, StaffJobService>();
             services.AddTransient<RequestHeadersHandler>();
             services.AddScoped<IFPSYearContext, FPSYearContext>();
+            services.AddScoped<IProgramService, ProgramService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)

@@ -27,7 +27,10 @@ namespace Apha.FPS.Api.Mappings
             CreateMap<AnimalCostViewDto, AnimalCostViewRes>().ReverseMap();
             CreateMap<AnimalDto, AnimalRes>().ReverseMap();
             CreateMap<AnimalRequestDto, AnimalRequestReq>().ReverseMap();
-            CreateMap<AnimalRequestDto, AnimalRequestRes>().ReverseMap();   
+            CreateMap<AnimalRequestDto, AnimalRequestRes>().ReverseMap();  
+            
+            CreateMap<ProgramReq, ProgramDto>().ReverseMap();
+            CreateMap<ProgramRes, ProgramDto>().ReverseMap();
         }
     }
 }

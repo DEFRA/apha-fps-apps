@@ -18,6 +18,8 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<PaginationDto, Pagination>().ReverseMap();
             CreateMap<WeatherForecastDto, WeatherForecastRes>().ReverseMap();      
             CreateMap<StaffJobViewDto, StaffJobViewRes>().ReverseMap();
+            CreateMap<ProgramDto,ProgramReq>().ReverseMap();
+            CreateMap<ProgramDto, ProgramRes>().ReverseMap();
         }
     }
 }
