@@ -26,6 +26,7 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IStaffJobService, StaffJobService>();
             services.AddScoped<IFpsSettingService, FpsSettingService>();
             services.AddScoped<IAnimalService, AnimalService>();
+            services.AddScoped<IEmployeeService, EmployeeService>();
             services.AddScoped<IProgramService, ProgramService>();
             return services;
         }
@@ -38,7 +39,8 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IProjectRepository, ProjectRepository>();
             services.AddScoped<IStaffJobRepository, StaffJobRepository>();
             services.AddScoped<IFpsSettingRepository, FpsSettingRepository>(); 
-            services.AddScoped<IAnimalRepository, AnimalRepository>();            
+            services.AddScoped<IAnimalRepository, AnimalRepository>();
+            services.AddScoped<IEmployeeRepository, EmployeeRepository>();
             return services;
         }
     }

@@ -32,6 +32,8 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<AccountCode, AccountCodeDto>().ReverseMap();
             CreateMap<SubAccount, SubAccountDto>().ReverseMap();
             CreateMap<ProjectGroup, ProjectGroupDto>().ReverseMap();
+            CreateMap<Employee, EmployeeDto>().ReverseMap();
+            CreateMap<Manager, ManagerDto>().ReverseMap();
         }
     }
 }
