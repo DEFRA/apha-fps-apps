@@ -38,6 +38,9 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<ProjectGroup> ProjectGroups { get; set; }
         public virtual DbSet<AccountCode> AccountCodes { get; set; }
         public virtual DbSet<SubAccount> SubAccounts { get; set; }
+        public virtual DbSet<UserCategory> UserCategories { get; set; }
+        public virtual DbSet<StaffActiveView> StaffActiveView { get; set; }
+        public virtual DbSet<WorkgroupGradeGeneralView> WorkgroupGradeGeneralView { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<User>(entity =>
@@ -702,6 +705,61 @@ namespace Apha.FPS.DataAccess.Data
                     .HasMaxLength(50)
                     .HasColumnName("subaccount");
             });
+
+            modelBuilder.Entity<UserCategory>(entity =>
+            {
+                entity.HasKey(e => new { e.UserId, e.Category }).HasName("tbluser_category_pk___6__10");
+
+                entity.ToTable("tbluser_category", "fps");
+
+                entity.Property(e => e.UserId).HasColumnName("user_id");
+                entity.Property(e => e.Category)
+                    .HasMaxLength(20)
+                    .HasColumnName("category");
+                entity.Property(e => e.FpsCalYear).HasColumnName("fpsyear");
+                entity.HasQueryFilter(e => e.FpsCalYear == _fPSYearContext.FPSYear);
+            });
+
+            modelBuilder.Entity<StaffActiveView>(entity =>
+            {
+                entity
+                    .HasNoKey()
+                    .ToView("vtblstaffactive", "fps");
+
+                entity.Property(e => e.Name).HasColumnName("name");
+                entity.Property(e => e.StaffID)
+                    .HasMaxLength(50)
+                    .HasColumnName("staffid");
+                entity.Property(e => e.WorkgroupGrade)
+                    .HasMaxLength(50)
+                    .HasColumnName("workgroupgrade");
+                entity.Property(e => e.FpsCalYear).HasColumnName("fpsyear");
+                entity.HasQueryFilter(e => e.FpsCalYear == _fPSYearContext.FPSYear);
+            });
+
+            modelBuilder.Entity<WorkgroupGradeGeneralView>(entity =>
+            {
+                entity
+                    .HasNoKey()
+                    .ToView("vworkgroupgrade_general", "fps");
+
+                entity.Property(e => e.GradeCode)
+                    .HasMaxLength(50)
+                    .UseCollation("latin1_general_ci_as")
+                    .HasColumnName("gradecode");
+                entity.Property(e => e.ProfitCentreGrade)
+                    .HasMaxLength(20)
+                    .HasColumnName("profitcentregrade");
+                entity.Property(e => e.WgGrade)
+                    .HasMaxLength(50)
+                    .HasColumnName("wggrade");
+                entity.Property(e => e.WorkGroup)
+                    .HasMaxLength(50)
+                    .HasColumnName("workgroup");
+                entity.Property(e => e.FpsCalYear).HasColumnName("fpsyear");
+                entity.HasQueryFilter(e => e.FpsCalYear == _fPSYearContext.FPSYear);
+            });
+
         }
     }
 }
