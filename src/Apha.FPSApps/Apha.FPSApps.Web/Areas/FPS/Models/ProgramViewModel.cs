@@ -1,4 +1,5 @@
 ﻿using Apha.FPSApps.Web.Models.Components.DataGrid;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.ComponentModel.DataAnnotations;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Models
@@ -31,12 +32,19 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [StringLength(50, ErrorMessage = "Directorate cannot exceed 50 characters")]       
         [Display(Name = "Directorate")]
         public required string Directorate { get; set; }
+        
+        [GridColumn(IsVisible = false)]
+        public List<SelectListItem> DirectorateOptions { get; set; }
+        [GridColumn(IsVisible = false)]
+        public List<SelectListItem>  ManagerList { get; set; }
 
         public ProgramViewModel()
         {
             ProgramNo = string.Empty;
             ProgramName = string.Empty;
             Directorate = string.Empty;
+            DirectorateOptions = new List<SelectListItem>();
+            ManagerList = new List<SelectListItem>();
         }
     }
 }
