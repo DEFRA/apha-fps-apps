@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Remove="Areas\FPS\Views\_ViewImports.cshtml" />
+  </ItemGroup>
+
+  <ItemGroup>
 	<PackageReference Include="Microsoft.Identity.Web" Version="3.9.2" />
 	<PackageReference Include="Microsoft.Identity.Web.UI" Version="3.9.2" />
 	<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />

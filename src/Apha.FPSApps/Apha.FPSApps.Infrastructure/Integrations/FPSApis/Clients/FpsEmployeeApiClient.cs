@@ -21,11 +21,11 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             _mapper = mapper;
         }
 
-        public async Task<ApiResponseDto<List<EmployeeDto>>> GetFilteredEmployeesAsync(QueryParameters<string> criteria)
+        public async Task<ApiResponseDto<List<EmployeeDto>>> GetFilteredEmployeesAsync(QueryParameters<string> criteria, int filterOption)
         {
             try
             {
-                var url = QueryStringHelper.AddQueryString("api/employee/paginated", criteria);
+                var url = QueryStringHelper.AddQueryString($"api/employee/paginated?filterOption={filterOption}", criteria);
                 var response = await _http.GetAsync<List<EmployeeRes>>(url);
 
                 if (response.Success)

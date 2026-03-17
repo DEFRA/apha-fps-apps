@@ -1,0 +1,323 @@
+﻿@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.FPS.Models.StaffMaintenanceViewModel
+
+@{
+    ViewData["Title"] = "2025-2026 : Staff Maintenance";
+}
+
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<main id="main-content">
+    <div class="container-fluid">
+        <!-- Breadcrumb section -->
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full">
+                <div style="padding: 5px 5px; border-bottom: 1px solid #b4b4b4" class="row">
+                    <div style="display: flex; font-size: 14px; align-items: center; justify-content: space-between;">
+                        <div class="col-md-6">
+                            <nav aria-label="Breadcrumb">
+                                <a class="" href="@Url.Action("Index", "Home", new { area = "FPS" })">Home</a> &gt; Programme Management &gt; Plan Projects &gt; Plan STAFF for Entire Programme
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Title section -->
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full">
+                <div class="row" style="display:flex; align-items: center;">
+                    <div class="col-sm-12" style="padding:0px;">
+                        <div style="border-bottom: 2px solid #1d70b8; height:48px;">
+                            <h1 style="padding: 15px 0 5px 17px; font-size:16px; width: 50%; font-weight: 700; float:left; margin: 0;">
+                                Staff Maintenance
+                            </h1>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter and Grid section -->
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full mt-2">
+                <div class="" style="border-radius: 5px; justify-content: flex-start; margin-bottom: 10px; padding: 4px;">
+                    <div class="row">
+                        <div class="col-lg-7 align-items-center">
+                            <div class="row">
+                                <div class="col-lg-2">
+                                    <div class="govuk-radios govuk-radios--small" data-module="govuk-radios">
+                                        <div class="govuk-radios__item">
+                                            <input class="govuk-radios__input govuk-radios--small"
+                                                   id="staff-filter-all"
+                                                   name="staffFilter"
+                                                   type="radio"
+                                                   value="1"
+                                                   @(Model.FilterOption == 1 ? "checked" : "")
+                                                   onchange="filterStaffs(this)">
+                                            <label class="govuk-label govuk-radios__label" for="staff-filter-all">
+                                                All
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-lg-4">
+                                    <div class="govuk-radios govuk-radios--small" data-module="govuk-radios">
+                                        <div class="govuk-radios__item">
+                                            <input class="govuk-radios__input"
+                                                   id="staff-filter-temp"
+                                                   name="staffFilter"
+                                                   type="radio"
+                                                   value="2"
+                                                   @(Model.FilterOption == 2 ? "checked" : "")
+                                                   onchange="filterStaffs(this)">
+                                            <label class="govuk-label govuk-radios__label" for="staff-filter-temp">
+                                                Temp Sp No.s only
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-lg-5 text-AlignRight">
+                                    <div class="govuk-radios govuk-radios--small" data-module="govuk-radios">
+                                        <div class="govuk-radios__item">
+                                            <input class="govuk-radios__input"
+                                                   id="staff-filter-grades"
+                                                   name="staffFilter"
+                                                   type="radio"
+                                                   value="3"
+                                                   @(Model.FilterOption == 3 ? "checked" : "")
+                                                   onchange="filterStaffs(this)">
+                                            <label class="govuk-label govuk-radios__label" for="staff-filter-grades">
+                                                Generic Grades Only
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-5" style="text-align: right;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grid Container -->
+                <div id="@($"gridContainer_{Model.StaffGrid.GridId}")">
+                    @await Html.PartialAsync("_DataGrid", Model.StaffGrid)
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+@section Scripts {
+    <script>
+        var staffGridId = '@Model.StaffGrid.GridId';       
+
+        // Get reference to the grid manager
+        function getGridManager() {
+            return window['gridManager_' + staffGridId];
+        }
+
+        // Filter employees when radio button changes
+        function filterStaffs(filterOption) {
+            // Get the grid manager and call reloadGrid
+            var gridManager = getGridManager();
+            if (gridManager) {
+                gridManager.reloadGrid({ page: 1 });
+            } else {
+                console.error('Grid manager not found for grid:', staffGridId);
+            }
+        }
+
+        // Get extra filters including radio button selection
+        function getStaffExtraFilters() {
+            const radios = document.querySelectorAll('input[name="staffFilter"]');
+            let filterOption = 1; // Default
+            radios.forEach(radio => {
+                if (radio.checked) {
+                    filterOption = parseInt(radio.value);
+                }
+            });
+            return {
+                filterOption: filterOption
+            };
+        }
+
+        function addStaff() {
+            $.get('/FPS/StaffMaintenance/Create', function(html) {
+                $('#modaPopupBody').html(html);
+                $('#modalPopup').addClass("show");
+                // Re-parse unobtrusive validation for the new content
+                var form = $('#staffForm');
+                $.validator.unobtrusive.parse(form);
+            });
+        }
+
+        function editStaff(btn) {
+            var spNumber = $(btn).data('id');
+            $.get('/FPS/StaffMaintenance/Edit', { spNumber: spNumber }, function(html) {
+                $('#modaPopupBody').html(html);
+                $('#modalPopup').addClass("show");
+                // Re-parse unobtrusive validation for the new content
+                var form = $('#staffForm');
+                $.validator.unobtrusive.parse(form);
+            });
+        }
+
+        function deleteStaff(btn) {
+            var spNumber = $(btn).data('id');
+            if (confirm('Are you sure you want to delete this employee?')) {
+                $.ajax({
+                    url: '/FPS/StaffMaintenance/Delete',
+                    type: 'DELETE',
+                    data: { spNumber: spNumber },
+                    success: function(response) {
+                        if (response.success) {
+                            alert('Employee deleted successfully');
+                            window.location.reload();
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function() {
+                        alert('An error occurred while deleting');
+                    }
+                });
+            }
+        }
+
+        // Save staff plan (from modal)
+        function savestaffplan() {
+            var form = $('#staffForm');
+
+            // Clear previous errors
+            $('.govuk-error-summary').hide();
+            $('.govuk-error-message').hide();
+            $('.govuk-form-group').removeClass('govuk-form-group--error');
+            $('.govuk-input, .govuk-select').removeClass('govuk-input--error');
+
+            // Validate form
+            if (!form.valid()) {
+                displayClientValidationErrors();
+                return;
+            }
+
+            var employeeData = {
+                SPNumber: $('#SPNumber').val(),  
+                LastName: $('#LastName').val(),  
+                FirstName: $('#FirstName').val(),
+                Title: $('#Title').val()         
+            };
+
+            // Check if it's edit mode using the hidden field
+            var isEdit = $('#isEditMode').val() === 'true';
+            var url = isEdit ? '/FPS/StaffMaintenance/Edit' : '/FPS/StaffMaintenance/Create';
+
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: JSON.stringify(employeeData),
+                contentType: 'application/json',
+                success: function(response) {
+                    debugger;
+                    if (response.success) {
+                        alert(response.message);
+                        closeModal();
+                        window.location.reload();
+                    } else {
+                        // Show validation errors from server
+                        displayServerValidationErrors(response.errors);
+                    }
+                },
+                error: function(xhr) {
+                    if (xhr.status === 400 && xhr.responseJSON) {
+                        displayServerValidationErrors(xhr.responseJSON.errors);
+                    } else {
+                        alert('An error occurred while saving');
+                    }
+                }
+            });
+        }
+
+        // Display client-side validation errors
+        function displayClientValidationErrors() {
+            var errorSummary = $('.govuk-error-summary');
+            var errorList = errorSummary.find('.govuk-error-summary__list');
+            errorList.empty();
+
+            var hasErrors = false;
+
+            // Check each field for validation errors
+            $('#staffForm input, #staffForm select').each(function() {
+                var $field = $(this);
+                var fieldName = $field.attr('name');
+                var validationSpan = $field.siblings('span[data-valmsg-for="' + fieldName + '"]');
+
+                if (validationSpan.length && validationSpan.text()) {
+                    hasErrors = true;
+                    var errorMessage = validationSpan.text();
+                    var formGroup = $field.closest('.govuk-form-group');
+
+                    // Add to summary
+                    errorList.append('<li><a href="#modal-' + fieldName.toLowerCase() + '">' + errorMessage + '</a></li>');
+
+                    // Highlight field
+                    formGroup.addClass('govuk-form-group--error');
+                    $field.addClass('govuk-input--error');
+                    $field.siblings('.govuk-error-message').text(errorMessage).show();
+                }
+            });
+
+            if (hasErrors) {
+                errorSummary.show();
+                errorSummary.focus();
+            }
+        }
+
+        // Display server-side validation errors
+        function displayServerValidationErrors(errors) {
+            var errorSummary = $('.govuk-error-summary');
+            var errorList = errorSummary.find('.govuk-error-summary__list');
+            errorList.empty();
+
+            if (errors && errors.length > 0) {
+                errorSummary.show();
+
+                errors.forEach(function(error) {
+                    var fieldName = error.field || error.Field || '';
+                    var message = error.message || error.Message || 'Validation error';
+
+                    // Add to summary list
+                    errorList.append('<li><a href="#modal-' + fieldName.toLowerCase() + '">' + message + '</a></li>');
+
+                    // Highlight field
+                    var field = $('#modal-' + fieldName.toLowerCase());
+                    if (field.length) {
+                        var formGroup = field.closest('.govuk-form-group');
+                        var errorSpan = field.siblings('.govuk-error-message');
+
+                        formGroup.addClass('govuk-form-group--error');
+                        field.addClass('govuk-input--error');
+                        errorSpan.text(message).show();
+                    }
+                });
+
+                errorSummary.focus();
+            } else {
+                errorSummary.hide();
+            }
+        }
+
+        // Close modal
+        function closeModal() {
+            $('#modaPopupBody').html("");
+            $('#modalPopup').removeClass("show");
+        }
+    </script>
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -17,13 +17,7 @@ namespace Apha.FPS.Application.Services
         {
             _employeeRepository = employeeRepository;
             _mapper = mapper;
-        }
-
-        public async Task<IEnumerable<EmployeeDto>> GetAllEmployeesAsync()
-        {
-            var employees = await _employeeRepository.GetAllEmployeesAsync();
-            return _mapper.Map<IEnumerable<EmployeeDto>>(employees);
-        }
+        }       
 
         public async Task<PaginatedResult<EmployeeDto>> GetFilteredEmployeesAsync(QueryParameters<string> queryFilter, int filterOption)
         {

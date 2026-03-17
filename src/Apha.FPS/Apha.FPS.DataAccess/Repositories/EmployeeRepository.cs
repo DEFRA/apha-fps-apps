@@ -12,10 +12,12 @@ namespace Apha.FPS.DataAccess.Repositories
     public class EmployeeRepository : BaseRepository, IEmployeeRepository
     {
         private readonly FpsDbContext _dbContext;
+        private readonly IFpsYearContext _fpsYearContext;
 
-        public EmployeeRepository(FpsDbContext dbContext) : base(dbContext)
+        public EmployeeRepository(FpsDbContext dbContext, IFpsYearContext fpsYearContext) : base(dbContext)
         {
             _dbContext = dbContext;
+            _fpsYearContext = fpsYearContext;
         }
 
         public async Task<IEnumerable<Employee>> GetAllEmployeesAsync()
@@ -60,11 +62,6 @@ namespace Apha.FPS.DataAccess.Repositories
                     {
                         queryEmployees = queryEmployees.Where(x => x.Title!.Contains(dict["Title"].ToString()!));
                     }
-
-                    if (dict.ContainsKey("FPSCalYear") && dict["FPSCalYear"] != null)
-                    {
-                        queryEmployees = queryEmployees.Where(x => x.FPSCalYear.ToString() == dict["FPSCalYear"].ToString());
-                    }
                 }
             }
 
@@ -96,6 +93,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<Employee> AddEmployeeAsync(Employee employee)
         {
+            employee.FPSCalYear = _fpsYearContext.FPSYear;
             await _dbContext.Employees.AddAsync(employee);
             await _dbContext.SaveChangesAsync();
 
@@ -104,6 +102,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<Employee> UpdateEmployeeAsync(Employee employee)
         {
+            employee.FPSCalYear = _fpsYearContext.FPSYear;
             _dbContext.Entry(employee).State = EntityState.Modified;
             await _dbContext.SaveChangesAsync();
 
@@ -112,7 +111,9 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<bool> DeleteEmployeeAsync(string spNumber)
         {  
-            var employee = await _dbContext.Employees.FindAsync(spNumber);
+            var employee = await _dbContext.Employees
+                .Where(e => e.SPNumber == spNumber && e.FPSCalYear == _fpsYearContext.FPSYear)
+                .FirstOrDefaultAsync();
 
             if (employee == null)
             {
