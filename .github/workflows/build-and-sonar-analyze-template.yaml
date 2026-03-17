@@ -28,9 +28,9 @@ on:
          default: true
        run_web_tests:
          description: "Run Web/UI layer unit tests (requires <SolutionName>.<web_layer_suffix>.UnitTests project)"
-         required: false
+         required: true
          type: boolean
-         default: false
+         default: true
        web_layer_suffix:
          description: >
            The folder/namespace suffix for the web/api layer unit tests.

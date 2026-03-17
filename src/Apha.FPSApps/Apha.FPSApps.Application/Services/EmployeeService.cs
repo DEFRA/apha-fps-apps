@@ -15,9 +15,9 @@ namespace Apha.FPSApps.Application.Services
             _fpsClient = fpsClient;
         }
 
-        public async Task<ApiResponseDto<List<EmployeeDto>>> GetFilteredEmployeesAsync(QueryParameters<string> criteria)
+        public async Task<ApiResponseDto<List<EmployeeDto>>> GetFilteredEmployeesAsync(QueryParameters<string> criteria, int filterOption)
         {
-            var employees = await _fpsClient.FpsEmployee.GetFilteredEmployeesAsync(criteria);
+            var employees = await _fpsClient.FpsEmployee.GetFilteredEmployeesAsync(criteria, filterOption);
             return employees;
         }
 

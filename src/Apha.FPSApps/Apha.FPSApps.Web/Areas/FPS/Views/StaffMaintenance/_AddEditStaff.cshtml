@@ -1,0 +1,54 @@
+﻿@model Apha.FPSApps.Web.Areas.FPS.Models.EmployeeViewModel
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+<div class="modal-header">
+    <h5 class="modal-title" id="projectModalTitle">@(string.IsNullOrEmpty(Model?.SPNumber) ? "Add" : "Edit") Staff Plan</h5>
+    <button type="button" class="btn-close btn-red" onclick="closeModal()">X</button>
+</div>
+
+<div class="modal-body">
+    <div asp-validation-summary="ModelOnly" class="govuk-error-summary" role="alert" aria-labelledby="error-summary-title" tabindex="-1" style="display:none;">
+        <h2 class="govuk-error-summary__title" id="error-summary-title">
+            There is a problem
+        </h2>
+        <div class="govuk-error-summary__body">
+            <ul class="govuk-list govuk-error-summary__list">
+            </ul>
+        </div>
+    </div>
+
+    <form id="staffForm">
+        <!-- Hidden field to track if it's edit mode -->
+        <input type="hidden" id="isEditMode" value="@(!string.IsNullOrEmpty(Model?.SPNumber) ? "true" : "false")" />
+        <div class="row g-3">
+            <div class="govuk-form-group sup_margin_0">
+                <label class="govuk-label" asp-for="SPNumber">SP Number</label>
+                <input type="text" class="govuk-input" asp-for="SPNumber" />
+                <span asp-validation-for="SPNumber" class="govuk-error-message" style="display:none;"></span>
+            </div>
+
+            <div class="govuk-form-group sup_margin_0">
+                <label class="govuk-label" asp-for="LastName">Last Name</label>
+                <input type="text" class="govuk-input" asp-for="LastName" />
+                <span asp-validation-for="LastName" class="govuk-error-message" style="display:none;"></span>
+            </div>
+
+            <div class="govuk-form-group sup_margin_0">
+                <label class="govuk-label" asp-for="FirstName">First Name</label>
+                <input type="text" class="govuk-input" asp-for="FirstName" />
+                <span asp-validation-for="FirstName" class="govuk-error-message" style="display:none;"></span>
+            </div>
+
+            <div class="govuk-form-group sup_margin_0">
+                <label class="govuk-label" asp-for="Title">Title</label>
+                <input type="text" class="govuk-input" asp-for="Title" />
+                <span asp-validation-for="Title" class="govuk-error-message" style="display:none;"></span>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="modal-footer">
+    <button class="govuk-button govuk-button--secondary sup_margin_0" data-module="govuk-button" onclick="closeModal()">Cancel</button>
+    <button class="govuk-button sup_margin_0" data-module="govuk-button" onclick="savestaffplan()">Save</button>
+</div>

@@ -4,11 +4,14 @@ using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 {
+    [Area("FPS")]
+    [AllowAnonymous]
     public class StaffMaintenanceController : Controller
     {
         private readonly IMapper _mapper;
@@ -20,13 +23,25 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             _employeeService = employeeService;
         }
 
-        public IActionResult Index()
-        {
-            return View();
+        public async Task<IActionResult> Index()
+        {            
+            var defaultRequest = new PaginationFilter<string> {         
+                Filter = "{}"
+            };
+            
+            var staffGridConfig = await GetEmployeeGridConfigAsync(defaultRequest, 1);
+
+            // Create view model
+            var viewModel = new StaffMaintenanceViewModel
+            {
+                StaffGrid = staffGridConfig                
+            };
+
+            return View(viewModel);
         }
 
         [HttpPost]
-        public async Task<IActionResult> LoadEmployeeGrid(PaginationFilter<string> request)
+        public async Task<IActionResult> LoadStaffGrid(PaginationFilter<string> request, int filterOption)
         {
             if (!ModelState.IsValid)
             {
@@ -38,17 +53,17 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 });
             }
 
-            var staffGridConfig = await GetEmployeeGridConfigAsync(request);
+            var staffGridConfig = await GetEmployeeGridConfigAsync(request, filterOption);
             return PartialView("_DataGrid", staffGridConfig);
         }
 
-        private async Task<DataGridConfig<EmployeeViewModel>> GetEmployeeGridConfigAsync(PaginationFilter<string> request)
+        private async Task<DataGridConfig<EmployeeViewModel>> GetEmployeeGridConfigAsync(PaginationFilter<string> request, int filterOption)
         {
             var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}")
                 ?? new Dictionary<string, string>();
 
             var queryParameters = _mapper.Map<QueryParameters<string>>(request);
-            var employeePagedData = await _employeeService.GetFilteredEmployeesAsync(queryParameters);
+            var employeePagedData = await _employeeService.GetFilteredEmployeesAsync(queryParameters, filterOption);
 
             List<EmployeeViewModel> employeeItems = new List<EmployeeViewModel>();
             if (employeePagedData.Data != null)
@@ -56,7 +71,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 employeeItems = _mapper.Map<List<EmployeeViewModel>>(employeePagedData.Data.ToList());
             }
 
-            PaginationModel paginationModel = _mapper.Map<PaginationModel>(employeePagedData.Pagination);
+            PaginationModel paginationModel = employeePagedData.Pagination == null ? new PaginationModel() : _mapper.Map<PaginationModel>(employeePagedData.Pagination);
             paginationModel.SortColumn = request.SortBy;
             paginationModel.SortDirection = request.Descending;
 
@@ -67,10 +82,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ShowCheckboxColumn = true,
                 ShowPagination = true,
                 KeyProperty = "SPNumber",
-                AddFunction = "addEmployee",
-                EditFunction = "editEmployee",
-                DeleteFunction = "deleteEmployee",
-                BindGridUrl = "/FPS/StaffMaintenance/LoadEmployeeGrid",
+                AddFunction = "addStaff",
+                EditFunction = "editStaff",
+                DeleteFunction = "deleteStaff",
+                ExtraFilterMethod = "getStaffExtraFilters",
+                BindGridUrl = "/FPS/StaffMaintenance/LoadStaffGrid",
                 Data = employeeItems,
                 Columns = GridDataProvider.GetColumnsDefination<EmployeeViewModel>(null),
                 Pagination = paginationModel,
@@ -81,11 +97,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         [HttpGet]
         public IActionResult Create()
         {
-            return PartialView("_AddEmployee");
+            return PartialView("_AddEditStaff");
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(EmployeeViewModel employeeViewModel)
+        public async Task<IActionResult> Create([FromBody] EmployeeViewModel employeeViewModel)
         {
             if (!ModelState.IsValid)
             {
@@ -121,7 +137,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             if (result.Success)
             {
                 var employeeViewModel = _mapper.Map<EmployeeViewModel>(result.Data);
-                return PartialView("_EditEmployee", employeeViewModel);
+                return PartialView("_AddEditStaff", employeeViewModel);
             }
             else
             {

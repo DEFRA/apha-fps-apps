@@ -35,17 +35,6 @@ namespace Apha.FPS.Api.Controllers
         }
 
         /// <summary>
-        /// Gets all employees.
-        /// </summary>
-        /// <returns>A list of all employees.</returns>
-        [HttpGet]
-        public async Task<IActionResult> GetFilteredEmployeesAsync()
-        {
-            var result = await _employeeService.GetAllEmployeesAsync();
-            return Ok(_mapper.Map<List<EmployeeRes>>(result));
-        }
-
-        /// <summary>
         /// Gets a paginated and filtered list of employees based on filter option.
         /// </summary>
         /// <param name="query">Pagination and filter parameters.</param>

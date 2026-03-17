@@ -4,8 +4,7 @@ using Apha.FPS.Application.Pagination;
 namespace Apha.FPS.Application.Interfaces
 {
     public interface IEmployeeService
-    {
-        Task<IEnumerable<EmployeeDto>> GetAllEmployeesAsync();
+    {        
         Task<PaginatedResult<EmployeeDto>> GetFilteredEmployeesAsync(QueryParameters<string> queryFilter, int filterOption);
         Task<IEnumerable<EmployeeDto>> GetFilteredEmployeesAsync(int filterOption);
         Task<EmployeeDto?> GetEmployeeByIdAsync(string spNumber);
