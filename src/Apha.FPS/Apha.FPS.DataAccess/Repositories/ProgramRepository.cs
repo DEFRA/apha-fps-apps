@@ -11,9 +11,11 @@ namespace Apha.FPS.DataAccess.Repositories
     public class ProgramRepository : BaseRepository, IProgramRepository
     {       
         private readonly FpsDbContext _dbContext;
-        public ProgramRepository(FpsDbContext dbContext) : base(dbContext)
+        private readonly IFpsYearContext _yearContext;
+        public ProgramRepository(FpsDbContext dbContext, IFpsYearContext yearContext) : base(dbContext)
         {          
             _dbContext = dbContext;
+            _yearContext = yearContext;
         }
 
         public IQueryable<Program> Get()
@@ -74,8 +76,22 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<Program> AddProgramAsync(Program entity)
         {
             ArgumentNullException.ThrowIfNull(entity);
-          
+            entity.FpsCalYear = _yearContext.FPSYear;
+
             _dbContext.Programs.Add(entity);
+
+            var dboUser = await _dbContext.Users.FirstOrDefaultAsync(u => u.Username == "dbo");
+            if (dboUser != null)
+            {
+                var userProgram = new UserProgram
+                {
+                    ProgramNo = entity.ProgramNo,
+                    UserID = dboUser.UserId,
+                    FpsCalYear = _yearContext.FPSYear
+                };
+                _dbContext.UserPrograms.Add(userProgram);
+            }
+
             await _dbContext.SaveChangesAsync();
             return entity;          
         }
@@ -86,6 +102,25 @@ namespace Apha.FPS.DataAccess.Repositories
             ArgumentNullException.ThrowIfNull(entity);
 
             _dbContext.Programs.Update(entity);
+            var dboUser = await _dbContext.Users.FirstOrDefaultAsync(u => u.Username == "dbo");
+
+            if (dboUser != null)
+            {
+                var userProgramExists = await _dbContext.UserPrograms
+                    .AnyAsync(up => up.ProgramNo == entity.ProgramNo && up.UserID == dboUser.UserId);
+
+                if (!userProgramExists)
+                {
+                    var userProgram = new UserProgram
+                    {
+                        ProgramNo = entity.ProgramNo,
+                        UserID = dboUser.UserId,
+                        FpsCalYear = _yearContext.FPSYear
+                    };
+                    _dbContext.UserPrograms.Add(userProgram);
+                }
+            }
+
             await _dbContext.SaveChangesAsync();
             return entity;
 
@@ -95,13 +130,17 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(id);
             
+            await _dbContext.UserPrograms
+                .Where(up => up.ProgramNo == id)
+                .ExecuteDeleteAsync();
+           
             var rowsAffected = await _dbContext.Programs
                 .Where(p => p.ProgramNo == id)
                 .ExecuteDeleteAsync();
 
             return rowsAffected > 0;
 
-            
+
         }
 
         private static IQueryable ApplySorting(IQueryable<Program> query, string? sortBy, bool descending)

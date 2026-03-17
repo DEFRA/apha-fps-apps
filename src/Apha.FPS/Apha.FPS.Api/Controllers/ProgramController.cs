@@ -93,7 +93,7 @@ namespace Apha.FPS.Api.Controllers
         }
 
 
-        [HttpDelete]
+        [HttpDelete("{programNo}")]
         public async Task<IActionResult> DeleteProgram(
             string programNo)
         {
