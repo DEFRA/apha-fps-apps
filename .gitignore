@@ -96,3 +96,6 @@ web.*.config
 
 # git ignored files backup
 *.orig
+
+# exclude files which shouldnt be git ignored
+!*.slnLaunch.user
