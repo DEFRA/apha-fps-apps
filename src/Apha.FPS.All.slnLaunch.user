@@ -1,0 +1,92 @@
+[
+  {
+    "Name": "FPS",
+    "Projects": [
+      {
+        "Path": "Apha.FPSApps\\Apha.FPSApps.Web\\Apha.FPSApps.Web.csproj",
+        "Action": "Start",
+        "DebugTarget": "https"
+      },
+      {
+        "Path": "Apha.FPS\\Apha.FPS.Api\\Apha.FPS.Api.csproj",
+        "Action": "Start",
+        "DebugTarget": "https"
+      }
+    ]
+  },
+  {
+    "Name": "PACT",
+    "Projects": [
+      {
+        "Path": "Apha.FPSApps\\Apha.FPSApps.Web\\Apha.FPSApps.Web.csproj",
+        "Action": "Start",
+        "DebugTarget": "https"
+      },
+      {
+        "Path": "Apha.PACT\\Apha.PACT.Api\\Apha.PACT.Api.csproj",
+        "Action": "Start",
+        "DebugTarget": "https"
+      }
+    ]
+  },
+  {
+    "Name": "Costbook",
+    "Projects": [
+      {
+        "Path": "Apha.FPSApps\\Apha.FPSApps.Web\\Apha.FPSApps.Web.csproj",
+        "Action": "Start",
+        "DebugTarget": "https"
+      },
+      {
+        "Path": "Apha.Costbook\\Apha.Costbook.Api\\Apha.Costbook.Api.csproj",
+        "Action": "Start",
+        "DebugTarget": "https"
+      }
+    ]
+  },
+  {
+    "Name": "PIMS",
+    "Projects": [
+      {
+        "Path": "Apha.FPSApps\\Apha.FPSApps.Web\\Apha.FPSApps.Web.csproj",
+        "Action": "Start",
+        "DebugTarget": "https"
+      },
+      {
+        "Path": "Apha.PIMS\\Apha.PIMS.Api\\Apha.PIMS.Api.csproj",
+        "Action": "Start",
+        "DebugTarget": "https"
+      }
+    ]
+  },
+  {
+    "Name": "All",
+    "Projects": [
+      {
+        "Path": "Apha.FPSApps\\Apha.FPSApps.Web\\Apha.FPSApps.Web.csproj",
+        "Action": "Start",
+        "DebugTarget": "https"
+      },
+      {
+        "Path": "Apha.FPS\\Apha.FPS.Api\\Apha.FPS.Api.csproj",
+        "Action": "Start",
+        "DebugTarget": "https"
+      },
+      {
+        "Path": "Apha.Costbook\\Apha.Costbook.Api\\Apha.Costbook.Api.csproj",
+        "Action": "Start",
+        "DebugTarget": "https"
+      },
+      {
+        "Path": "Apha.PACT\\Apha.PACT.Api\\Apha.PACT.Api.csproj",
+        "Action": "Start",
+        "DebugTarget": "https"
+      },
+      {
+        "Path": "Apha.PIMS\\Apha.PIMS.Api\\Apha.PIMS.Api.csproj",
+        "Action": "Start",
+        "DebugTarget": "https"
+      }
+    ]
+  }
+]
