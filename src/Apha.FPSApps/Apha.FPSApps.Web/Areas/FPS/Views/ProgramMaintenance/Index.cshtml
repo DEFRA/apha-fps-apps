@@ -2,23 +2,207 @@
 @using Apha.FPSApps.Web.Models.Components.DataGrid
 @model DataGridConfig<ProgramViewModel>
 
-<div class="row">
-    <div class="col-12">
-        <h1 class="mb-4">Program Maintenance</h1>
-        <div class="card mb-4">
-            <div class="card-body">
-                <p class="mb-0">This page is under construction.</p>
-            </div>
-        </div>
-    </div>
-</div>
 
-<div class="container">
-    <div class="row">
+
+ <div class="row">
         <div class="column-12">
             <div id="@($"gridContainer_{Model.GridId}")">
                 @await Html.PartialAsync("_DataGrid", Model)
             </div>
         </div>
+ </div>
+
+
+<div class="modal fade" id="programModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" id="modalbody">
+        </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+         function addProgram(btn) {
+            $.ajax({
+                url: '/FPS/ProgramMaintenance/Create',
+                type: 'GET',
+                success: function (html) {
+                    $('#modalbody').html(html);
+                    $('#programModal').addClass("show");
+                },
+                error: function () {
+                    alert('An error occurred while deleting');
+                }
+            });
+        }
+
+        function addProgrambtn() {
+                debugger;
+                 var form = $('#addProgramForm');
+                 if (!form.valid()) {
+                    displayClientValidationErrors();
+                    return;
+                 }
+                 var data = {
+                    ProgramNo: form.find('[name="ProgramNo"]').val(),
+                    ProgramName: form.find('[name="ProgramName"]').val(),
+                    Directorate: form.find('[name="Directorate"]').val(),
+                    Target: form.find('[name="Target"]').val(),
+                    Manager: form.find('[name="Manager"]').val()
+                };
+                       
+                $.ajax({
+                    url: '@Url.Action("Create", "ProgramMaintenance", new { area = "FPS" })',
+                    type: 'POST',
+                    data: JSON.stringify(data),
+                    contentType: 'application/json; charset=utf-8',
+                    success: function (result) {
+                        alert('Updated successfully');
+                        window.location.reload();
+                    },
+                    error: function (xhr) {
+                    }
+                });
+            }
+
+               function editProgrambtn() {                
+                var form = $('#editProgramForm');               
+                   var data = {
+                    ProgramNo: form.find('[name="ProgramNo"]').val(),
+                    ProgramName: form.find('[name="ProgramName"]').val(),
+                    Directorate: form.find('[name="Directorate"]').val(),
+                    Target: form.find('[name="Target"]').val(),
+                    Manager: form.find('[name="Manager"]').val()
+                };
+                $.ajax({
+                    url: '@Url.Action("Edit", "ProgramMaintenance", new { area = "FPS" })',
+                    type: 'POST',
+                    data: JSON.stringify(data),
+                    contentType: 'application/json; charset=utf-8',
+                    success: function (result) {
+                        alert('Updated successfully');
+                        window.location.reload();
+                    },
+                    error: function (xhr) {                      
+                    }
+                });
+            }
+        
+
+         function editProgram(btn){
+           var ProgramNo = $(btn).data('id');
+            $.ajax({
+                url: '/FPS/ProgramMaintenance/Edit',
+                type: 'GET',
+                data: { programNo: ProgramNo },
+                success: function (html) {
+                    $('#modalbody').html(html);
+                    $('#programModal').addClass("show");
+                },
+                error: function () {
+                    alert('An error occurred while deleting');
+                }
+            });
+        }
+
+        function deleteProgram(btn){
+           var ProgramNo = $(btn).data('id');
+            if (confirm('Are you sure you want to delete this record?')) {
+                $.ajax({
+                    url: '/FPS/ProgramMaintenance/Delete',
+                    type: 'Delete',
+                    data: { programNo: ProgramNo },
+                    success: function (response) {
+                        if (response.success) {
+                            alert('Deleted successfully');
+                             window.location.reload();
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function () {
+                        alert('An error occurred while deleting');
+                    }
+                });
+            }
+        }
+
+        function closeModal() {
+              $('#modalbody').html("");
+              $('#programModal').removeClass("show");
+        }
+
+         // Display client-side validation errors
+        function displayClientValidationErrors() {
+            var errorSummary = $('.govuk-error-summary');
+            var errorList = errorSummary.find('.govuk-error-summary__list');
+            errorList.empty();
+
+            var hasErrors = false;
+
+            // Check each field for validation errors
+            $('#staffForm input, #staffForm select').each(function() {
+                var $field = $(this);
+                var fieldName = $field.attr('name');
+                var validationSpan = $field.siblings('span[data-valmsg-for="' + fieldName + '"]');
+
+                if (validationSpan.length && validationSpan.text()) {
+                    hasErrors = true;
+                    var errorMessage = validationSpan.text();
+                    var formGroup = $field.closest('.govuk-form-group');
+
+                    // Add to summary
+                    errorList.append('<li><a href="#modal-' + fieldName.toLowerCase() + '">' + errorMessage + '</a></li>');
+
+                    // Highlight field
+                    formGroup.addClass('govuk-form-group--error');
+                    $field.addClass('govuk-input--error');
+                    $field.siblings('.govuk-error-message').text(errorMessage).show();
+                }
+            });
+
+            if (hasErrors) {
+                errorSummary.show();
+                errorSummary.focus();
+            }
+        }
+
+        // Display server-side validation errors
+        function displayServerValidationErrors(errors) {
+            var errorSummary = $('.govuk-error-summary');
+            var errorList = errorSummary.find('.govuk-error-summary__list');
+            errorList.empty();
+
+            if (errors && errors.length > 0) {
+                errorSummary.show();
+
+                errors.forEach(function(error) {
+                    var fieldName = error.field || error.Field || '';
+                    var message = error.message || error.Message || 'Validation error';
+
+                    // Add to summary list
+                    errorList.append('<li><a href="#modal-' + fieldName.toLowerCase() + '">' + message + '</a></li>');
+
+                    // Highlight field
+                    var field = $('#modal-' + fieldName.toLowerCase());
+                    if (field.length) {
+                        var formGroup = field.closest('.govuk-form-group');
+                        var errorSpan = field.siblings('.govuk-error-message');
+
+                        formGroup.addClass('govuk-form-group--error');
+                        field.addClass('govuk-input--error');
+                        errorSpan.text(message).show();
+                    }
+                });
+
+                errorSummary.focus();
+            } else {
+                errorSummary.hide();
+            }
+        }
+
+        @{
+            await Html.RenderPartialAsync("_ValidationScriptsPartial");
+        }        
+    </script>
+}
