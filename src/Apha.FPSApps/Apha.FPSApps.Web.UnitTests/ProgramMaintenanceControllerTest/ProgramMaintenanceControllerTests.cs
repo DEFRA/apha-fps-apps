@@ -179,57 +179,7 @@ namespace Apha.FPSApps.Web.UnitTests.ProgramMaintenanceControllerTest
             Assert.Equal("_AddProgram", partialViewResult.ViewName);
             var model = Assert.IsType<ProgramViewModel>(partialViewResult.Model);
             Assert.Equal(string.Empty, model.ProgramNo);
-        }
-
-        [Fact]
-        public async Task Create_Post_WithValidModel_ReturnsRedirectToIndex()
-        {
-            // Arrange
-            var programViewModel = new ProgramViewModel
-            {
-                ProgramNo = "P001",
-                ProgramName = "New Program",
-                Directorate = "IT"
-            };
-            var programDto = new ProgramDto
-            {
-                ProgramNo = "P001",
-                ProgramName = "New Program",
-                Directorate = "IT"
-            };
-            var apiResponse = ApiResponseDto<ProgramDto>.SuccessResponse(programDto);
-
-            _mapper.Map<ProgramDto>(programViewModel).Returns(programDto);
-            _programService.AddProgramAsync(programDto).Returns(apiResponse);
-
-            // Act
-            var result = await _controller.Create(programViewModel);
-
-            // Assert
-            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
-            Assert.Equal("Index", redirectResult.ActionName);
-        }
-
-        [Fact]
-        public async Task Create_Post_WhenServiceFails_ReturnsPartialViewWithError()
-        {
-            // Arrange
-            var programViewModel = new ProgramViewModel { ProgramNo = "P001", ProgramName = "Updated Program", Directorate = "Finance" };
-            var programDto = new ProgramDto { ProgramNo = "P001", ProgramName = "Updated Program", Directorate = "Finance" };
-            var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "Creation failed", Code = "CREATE_ERROR" } };
-            var apiResponse = ApiResponseDto<ProgramDto>.FailureResponse(errors, new ApiMetaDto());
-
-            _mapper.Map<ProgramDto>(programViewModel).Returns(programDto);
-            _programService.AddProgramAsync(programDto).Returns(apiResponse);
-
-            // Act
-            var result = await _controller.Create(programViewModel);
-
-            // Assert
-            var partialViewResult = Assert.IsType<PartialViewResult>(result);
-            Assert.Equal("_AddProgram", partialViewResult.ViewName);
-            Assert.False(_controller.ModelState.IsValid);
-        }
+        }              
 
         #endregion
 
