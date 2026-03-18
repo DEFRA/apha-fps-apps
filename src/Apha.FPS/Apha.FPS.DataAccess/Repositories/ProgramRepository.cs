@@ -59,13 +59,13 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             var hardcoded = new List<string> { "CSG", "Surveillance", "Lab Services" };
 
-            var dbDirectorates = await Get()
-                .Select(p => p.Directorate)
+            var dbDirectorates =  Get().AsQueryable();
+            var directorates = await dbDirectorates.Select(p => p.Directorate)
                 .Where(d => !string.IsNullOrEmpty(d))               
                 .ToListAsync();
            
             var allDirectorates = hardcoded
-                .Union(dbDirectorates, StringComparer.OrdinalIgnoreCase)
+                .Union(directorates, StringComparer.OrdinalIgnoreCase)
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .OrderBy(d => d)
                 .ToList();

@@ -23,6 +23,7 @@
 @section Scripts {
     <script>
          function addProgram(btn) {
+            debugger;
             $.ajax({
                 url: '/FPS/ProgramMaintenance/Create',
                 type: 'GET',
@@ -36,13 +37,16 @@
             });
         }
 
-        function addProgrambtn() {
+        function saveProgram() {
                 debugger;
                  var form = $('#addProgramForm');
+
+
                  if (!form.valid()) {
                     displayClientValidationErrors();
                     return;
                  }
+
                  var data = {
                     ProgramNo: form.find('[name="ProgramNo"]').val(),
                     ProgramName: form.find('[name="ProgramName"]').val(),
@@ -57,15 +61,26 @@
                     data: JSON.stringify(data),
                     contentType: 'application/json; charset=utf-8',
                     success: function (result) {
-                        alert('Updated successfully');
-                        window.location.reload();
+                         if (result.success) {
+                                alert(result.message);
+                                closeModal();
+                                window.location.reload();
+                          } else {
+                             // Show validation errors from server
+                               displayServerValidationErrors(result.errors);
+                         }                       
                     },
                     error: function (xhr) {
+                         if (xhr.status === 400 && xhr.responseJSON) {
+                             displayServerValidationErrors(xhr.responseJSON.errors);
+                            } else {
+                            alert('An error occurred while saving');
+                        }
                     }
                 });
             }
 
-               function editProgrambtn() {                
+            function updateProgram() {
                 var form = $('#editProgramForm');               
                    var data = {
                     ProgramNo: form.find('[name="ProgramNo"]').val(),
@@ -79,11 +94,22 @@
                     type: 'POST',
                     data: JSON.stringify(data),
                     contentType: 'application/json; charset=utf-8',
-                    success: function (result) {
-                        alert('Updated successfully');
-                        window.location.reload();
+                     success: function (result) {
+                         if (result.success) {
+                                alert(result.message);
+                                closeModal();
+                                window.location.reload();
+                          } else {
+                             // Show validation errors from server
+                               displayServerValidationErrors(result.errors);
+                         }
                     },
-                    error: function (xhr) {                      
+                    error: function (xhr) {
+                         if (xhr.status === 400 && xhr.responseJSON) {
+                             displayServerValidationErrors(xhr.responseJSON.errors);
+                            } else {
+                            alert('An error occurred while saving');
+                        }
                     }
                 });
             }
@@ -132,7 +158,6 @@
               $('#programModal').removeClass("show");
         }
 
-         // Display client-side validation errors
         function displayClientValidationErrors() {
             var errorSummary = $('.govuk-error-summary');
             var errorList = errorSummary.find('.govuk-error-summary__list');
@@ -141,7 +166,7 @@
             var hasErrors = false;
 
             // Check each field for validation errors
-            $('#staffForm input, #staffForm select').each(function() {
+            $('#addProgramForm input, #addProgramForm select').each(function() {
                 var $field = $(this);
                 var fieldName = $field.attr('name');
                 var validationSpan = $field.siblings('span[data-valmsg-for="' + fieldName + '"]');
@@ -200,9 +225,10 @@
                 errorSummary.hide();
             }
         }
-
-        @{
-            await Html.RenderPartialAsync("_ValidationScriptsPartial");
-        }        
+            
     </script>
+
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }
