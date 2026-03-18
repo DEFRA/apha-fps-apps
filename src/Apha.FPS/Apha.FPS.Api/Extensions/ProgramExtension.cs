@@ -29,7 +29,7 @@ namespace Apha.FPS.Api.Extensions
             });
 
 
-            // AutoMapper
+            // AutoMapper            
             services.AddAutoMapper(typeof(EntityMapper).Assembly);
             services.AddAutoMapper(typeof(RequestMapper));
 
