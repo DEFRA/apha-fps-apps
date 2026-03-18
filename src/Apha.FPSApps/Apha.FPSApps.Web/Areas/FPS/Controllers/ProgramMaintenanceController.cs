@@ -74,15 +74,24 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         [HttpPost]        
         public async Task<IActionResult> Create([FromBody] ProgramViewModel model)
         {
+           
             if (!ModelState.IsValid)
-                return PartialView("_AddProgram", model);
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Invalid employee data",
+                    errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
+                });
+            }
 
             var dto = _mapper.Map<ProgramDto>(model);
             var response = await _programService.AddProgramAsync(dto);
             if (response.Success)
-                return RedirectToAction(nameof(Index));
-            ModelState.AddModelError("", "Failed to add program.");
-            return PartialView("_AddProgram", model);
+            {
+                return Json(new { success = true, data = response.Data, message = "Employee created successfully" });
+            }
+            return Json(new { success = false, errors = response.Errors });
         }
 
         // GET: Edit
@@ -101,7 +110,14 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         public async Task<IActionResult> Edit([FromBody]ProgramViewModel model)
         {
             if (!ModelState.IsValid)
-                return PartialView("_EditProgram", model);
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Invalid program data",
+                    errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
+                });
+            }
 
             var dto = _mapper.Map<ProgramDto>(model);
             var response = await _programService.UpdateProgramAsync(dto);

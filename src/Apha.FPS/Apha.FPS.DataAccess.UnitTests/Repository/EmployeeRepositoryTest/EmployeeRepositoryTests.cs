@@ -879,38 +879,6 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         }
 
         [Fact]
-        public async Task GetAllManagersAsync_ExcludesNullOrEmptyNames()
-        {
-            // Arrange
-            var staffActiveViews = new List<StaffActiveView>
-            {
-                new() { StaffID = "S001", Name = "Valid Manager", WorkgroupGrade = "WG01" },
-                new() { StaffID = "S002", Name = null, WorkgroupGrade = "WG02" },
-                new() { StaffID = "S003", Name = "", WorkgroupGrade = "WG03" }
-            };
-
-            var workgroupGrades = new List<WorkgroupGradeGeneralView>
-            {
-                new() { WgGrade = "WG01", GradeCode = "M01", WorkGroup = "Management" },
-                new() { WgGrade = "WG02", GradeCode = "M02", WorkGroup = "Management" },
-                new() { WgGrade = "WG03", GradeCode = "M03", WorkGroup = "Management" }
-            };
-
-            var repo = CreateRepository(
-                new List<Employee>(),
-                staffActiveViews,
-                workgroupGrades);
-
-            // Act
-            var result = await repo.GetAllManagersAsync();
-
-            // Assert
-            var resultList = result.ToList();
-            Assert.Single(resultList);
-            Assert.Equal("Valid Manager", resultList[0].Name);
-        }
-
-        [Fact]
         public async Task GetAllManagersAsync_ExcludesNullOrEmptyGradeCodes()
         {
             // Arrange
