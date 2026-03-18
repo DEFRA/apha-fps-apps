@@ -36,34 +36,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 .AsQueryable();
 
             // Apply filtering
-            if (!string.IsNullOrEmpty(query.Filter))
-            {
-                dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(query.Filter);
-                if (filterModel != null)
-                {
-                    var dict = (IDictionary<string, object>)filterModel;
-
-                    if (dict.ContainsKey("SPNumber") && dict["SPNumber"] != null)
-                    {
-                        queryEmployees = queryEmployees.Where(x => x.SPNumber.Contains(dict["SPNumber"].ToString()!));
-                    }
-
-                    if (dict.ContainsKey("FirstName") && dict["FirstName"] != null)
-                    {
-                        queryEmployees = queryEmployees.Where(x => x.FirstName!.Contains(dict["FirstName"].ToString()!));
-                    }
-
-                    if (dict.ContainsKey("LastName") && dict["LastName"] != null)
-                    {
-                        queryEmployees = queryEmployees.Where(x => x.LastName!.Contains(dict["LastName"].ToString()!));
-                    }
-
-                    if (dict.ContainsKey("Title") && dict["Title"] != null)
-                    {
-                        queryEmployees = queryEmployees.Where(x => x.Title!.Contains(dict["Title"].ToString()!));
-                    }
-                }
-            }
+            queryEmployees = ApplyEmployeeFilter(queryEmployees, query.Filter);
 
             // Apply sorting
             queryEmployees = (IQueryable<Employee>)ApplySorting(queryEmployees, query.SortBy, query.Descending);
@@ -151,6 +124,44 @@ namespace Apha.FPS.DataAccess.Repositories
             
             var managers = await query.ToListAsync();
             return managers;
+        }
+
+        private static IQueryable<Employee> ApplyEmployeeFilter(IQueryable<Employee> queryEmployees, string? filter)
+        {
+            if (string.IsNullOrEmpty(filter))
+            {
+                return queryEmployees;
+            }
+
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            if (filterModel == null)
+            {
+                return queryEmployees;
+            }
+
+            var dict = (IDictionary<string, object>)filterModel;
+
+            if (dict.TryGetValue("SPNumber", out var spNumber) && spNumber != null)
+            {
+                queryEmployees = queryEmployees.Where(x => x.SPNumber.Contains(spNumber.ToString()!));
+            }
+
+            if (dict.TryGetValue("FirstName", out var firstName) && firstName != null)
+            {
+                queryEmployees = queryEmployees.Where(x => x.FirstName!.Contains(firstName.ToString()!));
+            }
+
+            if (dict.TryGetValue("LastName", out var lastName) && lastName != null)
+            {
+                queryEmployees = queryEmployees.Where(x => x.LastName!.Contains(lastName.ToString()!));
+            }
+
+            if (dict.TryGetValue("Title", out var title) && title != null)
+            {
+                queryEmployees = queryEmployees.Where(x => x.Title!.Contains(title.ToString()!));
+            }
+
+            return queryEmployees;
         }
 
         private static IQueryable ApplySorting(IQueryable<Employee> query, string? sortBy, bool descending)
