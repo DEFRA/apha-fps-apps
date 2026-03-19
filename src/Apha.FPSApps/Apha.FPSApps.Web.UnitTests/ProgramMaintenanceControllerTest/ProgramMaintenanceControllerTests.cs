@@ -159,16 +159,13 @@ namespace Apha.FPSApps.Web.UnitTests.ProgramMaintenanceControllerTest
         [Fact]
         public async Task Create_Get_ReturnsPartialViewWithModel()
         {
-            // Arrange
-            var directorates = new List<string?> { "IT", "Finance" };
+            // Arrange           
             var managers = new List<ManagerDto>
             {
                 new ManagerDto { Name = "John Manager" }
             };
-            var directorateResponse = ApiResponseDto<List<string?>>.SuccessResponse(directorates);
             var managerResponse = ApiResponseDto<List<ManagerDto>>.SuccessResponse(managers);
-
-            _programService.GetAllDirectoratesAsync().Returns(directorateResponse);
+                      
             _employeeService.GetAllManagersAsync().Returns(managerResponse);
 
             // Act
@@ -192,14 +189,12 @@ namespace Apha.FPSApps.Web.UnitTests.ProgramMaintenanceControllerTest
             var programNo = "P001";
             var program = new ProgramDto { ProgramNo = programNo, ProgramName = "Test Program", Directorate = "Finance" };
             var programViewModel = new ProgramViewModel { ProgramNo = programNo, ProgramName = "Test Program", Directorate = "Finance" };
-            var directorates = new List<string?> { "IT", "Finance" };
+            
             var managers = new List<ManagerDto> { new ManagerDto { Name = "John Manager" } };
-            var programResponse = ApiResponseDto<ProgramDto?>.SuccessResponse(program);
-            var directorateResponse = ApiResponseDto<List<string?>>.SuccessResponse(directorates);
+            var programResponse = ApiResponseDto<ProgramDto?>.SuccessResponse(program);           
             var managerResponse = ApiResponseDto<List<ManagerDto>>.SuccessResponse(managers);
 
-            _programService.GetProgramByIdAsync(programNo).Returns(programResponse);
-            _programService.GetAllDirectoratesAsync().Returns(directorateResponse);
+            _programService.GetProgramByIdAsync(programNo).Returns(programResponse);            
             _employeeService.GetAllManagersAsync().Returns(managerResponse);
             _mapper.Map<ProgramViewModel>(program).Returns(programViewModel);
 

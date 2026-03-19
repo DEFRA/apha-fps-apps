@@ -7,6 +7,7 @@ using Apha.FPS.Core.Pagination;
 using AutoMapper;
 using FluentAssertions;
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 
 namespace Apha.FPS.Application.UnitTests.Services.ProgramServiceTest
 {
@@ -164,6 +165,6 @@ namespace Apha.FPS.Application.UnitTests.Services.ProgramServiceTest
             _mockRepository.GetProgramByIdAsync("P2").Returns((Program?)null);
 
             await Assert.ThrowsAsync<KeyNotFoundException>(() => _sut.DeleteProgramAsync("P2"));
-        }
+        }       
     }
 }

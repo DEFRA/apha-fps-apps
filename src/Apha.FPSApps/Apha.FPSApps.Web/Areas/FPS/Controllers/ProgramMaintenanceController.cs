@@ -20,6 +20,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         private readonly IProgramService _programService;
         private readonly IEmployeeService _employeeService;
 
+        private static readonly List<string> DefaultDirectorates =
+          new List<string> { "CSG", "Surveillance", "Lab Services" };
+
         public ProgramMaintenanceController(IMapper mapper, IProgramService programService,
             IEmployeeService employeeService)
         {
@@ -170,20 +173,22 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         private async Task PopulateDropdownsAsync(ProgramViewModel model)
         {
             // Directorate dropdown
-            var directorateResponse = await _programService.GetAllDirectoratesAsync();
-            var directorates = (directorateResponse.Data ?? new List<string?>())
-                .Where(x => !string.IsNullOrWhiteSpace(x))
-                .Select(x => x!) // Use null-forgiving operator since we filtered out nulls/whitespace
-                .ToList();
-
-             model.DirectorateOptions = directorates
-            .Select(d => new SelectListItem
+            var directorates = new List<string>(DefaultDirectorates);
+          
+            if (!string.IsNullOrWhiteSpace(model.Directorate) &&
+                !directorates.Any(d => string.Equals(d, model.Directorate, StringComparison.OrdinalIgnoreCase)))
             {
-                Value = d,
-                Text = d,
-                Selected = string.Equals(model.Directorate, d, StringComparison.OrdinalIgnoreCase)
-            })
-            .ToList();
+                directorates.Add(model.Directorate);
+            }
+
+            model.DirectorateOptions = directorates
+                .Select(d => new SelectListItem
+                {
+                    Value = d,
+                    Text = d,
+                    Selected = string.Equals(model.Directorate, d, StringComparison.OrdinalIgnoreCase)
+                })
+                .ToList();
 
             // Manager dropdown
             var managerResponse = await _employeeService.GetAllManagersAsync();

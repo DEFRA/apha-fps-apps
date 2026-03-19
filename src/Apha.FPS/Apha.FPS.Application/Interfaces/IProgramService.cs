@@ -7,8 +7,7 @@ namespace Apha.FPS.Application.Interfaces
     {
         Task<IEnumerable<ProgramDto>> GetAllProgramsAsync();
         Task<PaginatedResult<ProgramDto>> GetAllProgramsAsync(QueryParameters<string> query);
-        Task<ProgramDto?> GetProgramByIdAsync(string programNo);
-        Task<List<string?>> GetAllDirectoratesAsync();
+        Task<ProgramDto?> GetProgramByIdAsync(string programNo);        
         Task<ProgramDto> AddProgramAsync(ProgramDto programDto);        
         Task<ProgramDto> UpdateProgramAsync( ProgramDto programDto);        
         Task<bool> DeleteProgramAsync(string programNo);

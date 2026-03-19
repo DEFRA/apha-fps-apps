@@ -29,12 +29,6 @@ namespace Apha.FPSApps.Application.Services
         {
             return await _fpsApiClient.FpsProgram.GetProgramByIdAsync(programNo);
         }
-
-        public async Task<ApiResponseDto<List<string?>>> GetAllDirectoratesAsync()
-        {
-            return await _fpsApiClient.FpsProgram.GetAllDirectoratesAsync();
-        }
-
         public async Task<ApiResponseDto<ProgramDto>> AddProgramAsync(ProgramDto programDto)
         {
             return await _fpsApiClient.FpsProgram.AddProgramAsync(programDto);

@@ -107,34 +107,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        public async Task<ApiResponseDto<List<string?>>> GetAllDirectoratesAsync()
-        {
-            try
-            {
-                var response = await _http.GetAsync<List<string?>>($"{programApiEndpoint}/directorates");
-                if (response.Success)
-                {
-                    return _mapper.Map<ApiResponseDto<List<string?>>>(response);
-                }
-                else
-                {
-                    var responseDto = _mapper.Map<ApiResponseDto<List<string?>>>(response);
-                    return ApiResponseDto<List<string?>>.FailureResponse(responseDto.Errors, responseDto.Meta);
-                }
-            }
-            catch (Exception)
-            {
-                var apiErrorsDto = new List<ApiErrorDto> {
-                        new ApiErrorDto {
-                            Message = "Failed to retrieve directorates",
-                            Code = internalCodeError,
-                            Details = null
-                        }
-                    };
-                return ApiResponseDto<List<string?>>.FailureResponse(apiErrorsDto, new ApiMetaDto());
-            }
-        }
-
         public async Task<ApiResponseDto<ProgramDto>> AddProgramAsync(ProgramDto programDto)
         {
             try

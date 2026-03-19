@@ -452,69 +452,7 @@ namespace Apha.FPSApps.Application.UnitTests.ProgramServiceTest
             await _fpsProgramApiClient.Received(1).DeleteProgramAsync(programNo);
         }
 
-        #endregion
-
-        #region GetAllDirectoratesAsync Tests
-
-        [Fact]
-        public async Task GetAllDirectoratesAsync_ReturnsListOfDirectorates()
-        {
-            // Arrange
-            var directorates = new List<string?> { "IT", "Finance", "HR", "Operations" };
-            var expectedResponse = ApiResponseDto<List<string?>>.SuccessResponse(directorates);
-
-            _fpsProgramApiClient.GetAllDirectoratesAsync().Returns(expectedResponse);
-
-            // Act
-            var result = await _programService.GetAllDirectoratesAsync();
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.True(result.Success);
-            Assert.NotNull(result.Data);
-            Assert.Equal(4, result.Data.Count);
-            await _fpsProgramApiClient.Received(1).GetAllDirectoratesAsync();
-        }
-
-        [Fact]
-        public async Task GetAllDirectoratesAsync_WithEmptyResult_ReturnsEmptyList()
-        {
-            // Arrange
-            var expectedResponse = ApiResponseDto<List<string?>>.SuccessResponse(new List<string?>());
-
-            _fpsProgramApiClient.GetAllDirectoratesAsync().Returns(expectedResponse);
-
-            // Act
-            var result = await _programService.GetAllDirectoratesAsync();
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.True(result.Success);
-            Assert.Empty(result.Data!);
-        }
-
-        [Fact]
-        public async Task GetAllDirectoratesAsync_WhenApiFails_ReturnsFailureResponse()
-        {
-            // Arrange
-            var errors = new List<ApiErrorDto>
-            {
-                new ApiErrorDto { Message = "API Error", Code = "API_ERROR" }
-            };
-            var expectedResponse = ApiResponseDto<List<string?>>.FailureResponse(errors, new ApiMetaDto());
-
-            _fpsProgramApiClient.GetAllDirectoratesAsync().Returns(expectedResponse);
-
-            // Act
-            var result = await _programService.GetAllDirectoratesAsync();
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-        }
-
-        #endregion
+        #endregion       
 
         #region Edge Cases and Integration Tests
 

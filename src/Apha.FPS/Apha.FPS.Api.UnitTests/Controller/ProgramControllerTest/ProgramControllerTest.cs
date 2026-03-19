@@ -1,8 +1,11 @@
-﻿using Apha.Common.Contracts.FPS;
+﻿using Apha.Common.Contracts;
+using Apha.Common.Contracts.FPS;
 using Apha.FPS.Api.Controllers;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
+using Apha.FPS.Application.Pagination;
 using AutoMapper;
+using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -22,6 +25,8 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProgramControllerTest
             _mapperMock = Substitute.For<IMapper>();
             _controller = new ProgramController(_serviceMock, _mapperMock);
         }
+
+        #region GetAllProgramsAsync
 
         [Fact]
         public async Task GetAllProgramsAsync_HappyPath_ReturnsOk()
@@ -46,51 +51,36 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProgramControllerTest
             await Assert.ThrowsAsync<ArgumentException>(() => _controller.GetAllProgramsAsync());
         }
 
+        #endregion
+
+        #region GetAllProgramsPagedAsync
+
         [Fact]
         public async Task GetAllProgramsPagedAsync_HappyPath_ReturnsOk()
         {
-            // Arrange
-            var query = new Apha.FPS.Application.Pagination.QueryParameters<string>
-            {
-                Page = 1,
-                PageSize = 10
-            };
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
 
             var programDtos = new List<ProgramDto>
             {
                 new ProgramDto { ProgramNo = "P1", ProgramName = "Test Program" }
             };
-            var paginationData = new Apha.FPS.Application.Pagination.PaginationDto
+            var paginationData = new PaginationDto
             {
-                PageNumber = 1,
-                PageSize = 10,
-                TotalRecords = 1,
-                TotalPages = 1
+                PageNumber = 1, PageSize = 10, TotalRecords = 1, TotalPages = 1
             };
-            var serviceResult = new Apha.FPS.Application.Pagination.PaginatedResult<ProgramDto>(programDtos, paginationData);
+            var serviceResult = new PaginatedResult<ProgramDto>(programDtos, paginationData);
 
-            var expectedApiResponse = new Apha.Common.Contracts.PaginationRes<ProgramRes>
+            var expectedApiResponse = new PaginationRes<ProgramRes>
             {
-                Data = new List<ProgramRes>
-                        {
-                            new ProgramRes { ProgramNo = "P1", ProgramName = "Test Program" }
-                        },
-                PaginationData = new Apha.Common.Contracts.Pagination
-                {
-                    PageNumber = 1,
-                    PageSize = 10,
-                    TotalRecords = 1,
-                    TotalPages = 1
-                }
+                Data = new List<ProgramRes> { new ProgramRes { ProgramNo = "P1", ProgramName = "Test Program" } },
+                PaginationData = new Pagination { PageNumber = 1, PageSize = 10, TotalRecords = 1, TotalPages = 1 }
             };
 
             _serviceMock.GetAllProgramsAsync(query).Returns(serviceResult);
-            _mapperMock.Map<Apha.Common.Contracts.PaginationRes<ProgramRes>>(serviceResult).Returns(expectedApiResponse);
+            _mapperMock.Map<PaginationRes<ProgramRes>>(serviceResult).Returns(expectedApiResponse);
 
-            // Act
             var result = await _controller.GetAllProgramsPagedAsync(query);
 
-            // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(expectedApiResponse, okResult.Value);
         }
@@ -98,11 +88,15 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProgramControllerTest
         [Fact]
         public async Task GetAllProgramsPagedAsync_NullResult_ThrowsArgumentException()
         {
-            var query = new Apha.FPS.Application.Pagination.QueryParameters<string>();
-            _serviceMock.GetAllProgramsAsync(query).Returns((Apha.FPS.Application.Pagination.PaginatedResult<ProgramDto>?)null);
+            var query = new QueryParameters<string>();
+            _serviceMock.GetAllProgramsAsync(query).Returns((PaginatedResult<ProgramDto>?)null);
 
             await Assert.ThrowsAsync<ArgumentException>(() => _controller.GetAllProgramsPagedAsync(query));
         }
+
+        #endregion
+
+        #region GetProgramById
 
         [Fact]
         public async Task GetProgramById_HappyPath_ReturnsOk()
@@ -126,6 +120,10 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProgramControllerTest
 
             await Assert.ThrowsAsync<ArgumentException>(() => _controller.GetProgramById("P2"));
         }
+
+        #endregion
+
+        #region CreateProgram
 
         [Fact]
         public async Task CreateProgram_HappyPath_ReturnsOk()
@@ -157,6 +155,10 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProgramControllerTest
             await Assert.ThrowsAsync<Exception>(() => _controller.CreateProgram(req));
         }
 
+        #endregion
+
+        #region UpdateProgram
+
         [Fact]
         public async Task UpdateProgram_HappyPath_ReturnsOk()
         {
@@ -187,6 +189,10 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProgramControllerTest
             await Assert.ThrowsAsync<Exception>(() => _controller.UpdateProgram(req));
         }
 
+        #endregion
+
+        #region DeleteProgram
+
         [Fact]
         public async Task DeleteProgram_HappyPath_ReturnsOk()
         {
@@ -211,5 +217,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProgramControllerTest
 
             await Assert.ThrowsAsync<ArgumentException>(() => _controller.DeleteProgram("P2"));
         }
+
+        #endregion
     }
 }
