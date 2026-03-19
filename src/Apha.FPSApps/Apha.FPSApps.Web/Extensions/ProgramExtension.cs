@@ -30,9 +30,12 @@ namespace Apha.FPSApps.Web.Extensions
                 options.Cookie.SameSite = SameSiteMode.Lax;
             });
 
-            // AutoMapper            
-            services.AddAutoMapper(typeof(ViewModelMapper));
-            services.AddAutoMapper(typeof(ApiDtoMapper).Assembly);
+            // AutoMapper  
+            services.AddAutoMapper(config =>
+            {
+                config.AddMaps(typeof(ApiDtoMapper).Assembly);
+                config.AddMaps(typeof(ViewModelMapper));
+            });
 
             // HTTP Context
             services.AddHttpContextAccessor();
