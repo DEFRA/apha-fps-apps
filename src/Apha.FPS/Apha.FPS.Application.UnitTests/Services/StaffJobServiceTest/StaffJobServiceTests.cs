@@ -11,13 +11,13 @@ using NSubstitute.ExceptionExtensions;
 
 namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
 {
-    public class StaffJobServiceTest
+    public class StaffJobServiceTests
     {
         private readonly IStaffJobRepository _mockRepository;
         private readonly IMapper _mockMapper;
         private readonly StaffJobService _sut;
 
-        public StaffJobServiceTest()
+        public StaffJobServiceTests()
         {
             _mockRepository = Substitute.For<IStaffJobRepository>();
             _mockMapper = Substitute.For<IMapper>();
