@@ -1,25 +1,39 @@
-﻿using Apha.FPS.Core.Enities;
-using Apha.FPS.Core.Entities; // Fixed: was "Enities" (typo)
+﻿using Apha.Common.Helpers.Repository;
+using Apha.FPS.Core.Enities;
+using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
 using Apha.FPS.DataAccess.Repositories;
-using Apha.FPS.DataAccess.UnitTests.Repository.Helpers;
-using Microsoft.EntityFrameworkCore;
 using Moq;
 
 namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
 {
     public class EmployeeRepositoryTests
     {
+        /// <summary>
+        /// Default test FPS year used across repository tests.
+        /// </summary>
+        private const int DefaultTestFpsYear = 2024;
+
+        /// <summary>
+        /// Creates a mocked IFpsYearContext with specified year.
+        /// </summary>
+        private static Mock<IFpsYearContext> CreateMockFpsYearContext(int year = DefaultTestFpsYear)
+        {
+            var mockFpsYearContext = new Mock<IFpsYearContext>();
+            mockFpsYearContext.Setup(x => x.FPSYear).Returns(year);
+            return mockFpsYearContext;
+        }
+
         private static EmployeeRepository CreateRepository(
             IEnumerable<Employee> employees,
             IEnumerable<StaffActiveView>? staffActiveViews = null,
             IEnumerable<WorkgroupGradeGeneralView>? workgroupGrades = null,
-            int fpsYear = RepositoryTestHelper.DefaultTestFpsYear)
+            int fpsYear = DefaultTestFpsYear)
         {
-            var mockFpsYearContext = RepositoryTestHelper.CreateMockFpsYearContext(fpsYear);
-            var mockContext = RepositoryTestHelper.CreateMockFpsDbContext(mockFpsYearContext.Object);
+            var mockFpsYearContext = CreateMockFpsYearContext(fpsYear);
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(mockFpsYearContext.Object);
 
             // Setup Employees DbSet
             var employeesMockSet = RepositoryTestHelper.CreateMockDbSet(employees);
@@ -477,8 +491,12 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         public async Task AddEmployeeAsync_AddsEmployee_WithFpsYear()
         {
             // Arrange
-            var (mockContext, mockFpsYearContext, employeesMockSet) = 
-                RepositoryTestHelper.CreateRepositoryContext<Employee>(new List<Employee>(), 2025);
+            var mockFpsYearContext = CreateMockFpsYearContext(2025);
+            var (mockContext, employeesMockSet) = 
+                RepositoryTestHelper.CreateRepositoryContext<FpsDbContext, Employee>(
+                    new List<Employee>(), 
+                    mockFpsYearContext.Object);
+            
             mockContext.Setup(x => x.Employees).Returns(employeesMockSet.Object);
 
             var repo = new EmployeeRepository(mockContext.Object, mockFpsYearContext.Object);
@@ -505,8 +523,12 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         public async Task AddEmployeeAsync_OverwritesFpsYear_WithContextYear()
         {
             // Arrange
-            var (mockContext, mockFpsYearContext, employeesMockSet) = 
-                RepositoryTestHelper.CreateRepositoryContext<Employee>(new List<Employee>(), 2026);
+            var mockFpsYearContext = CreateMockFpsYearContext(2026);
+            var (mockContext, employeesMockSet) = 
+                RepositoryTestHelper.CreateRepositoryContext<FpsDbContext, Employee>(
+                    new List<Employee>(), 
+                    mockFpsYearContext.Object);
+            
             mockContext.Setup(x => x.Employees).Returns(employeesMockSet.Object);
 
             var repo = new EmployeeRepository(mockContext.Object, mockFpsYearContext.Object);
@@ -543,8 +565,13 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
                 FPSCalYear = 2023
             };
             var employees = new List<Employee> { existingEmployee };
-            var (mockContext, mockFpsYearContext, employeesMockSet) = 
-                RepositoryTestHelper.CreateRepositoryContext<Employee>(employees, 2025);
+            
+            var mockFpsYearContext = CreateMockFpsYearContext(2025);
+            var (mockContext, employeesMockSet) = 
+                RepositoryTestHelper.CreateRepositoryContext<FpsDbContext, Employee>(
+                    employees, 
+                    mockFpsYearContext.Object);
+            
             mockContext.Setup(x => x.Employees).Returns(employeesMockSet.Object);
 
             // Don't setup Entry - just verify it gets called and handle the exception
@@ -583,10 +610,15 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
                 SPNumber = "SP001",
                 FirstName = "Alice",
                 LastName = "Smith",
-                FPSCalYear = RepositoryTestHelper.DefaultTestFpsYear
+                FPSCalYear = DefaultTestFpsYear
             };
-            var (mockContext, mockFpsYearContext, employeesMockSet) = 
-                RepositoryTestHelper.CreateRepositoryContext<Employee>(new List<Employee> { employee });
+            
+            var mockFpsYearContext = CreateMockFpsYearContext(DefaultTestFpsYear);
+            var (mockContext, employeesMockSet) = 
+                RepositoryTestHelper.CreateRepositoryContext<FpsDbContext, Employee>(
+                    new List<Employee> { employee }, 
+                    mockFpsYearContext.Object);
+            
             mockContext.Setup(x => x.Employees).Returns(employeesMockSet.Object);
 
             var repo = new EmployeeRepository(mockContext.Object, mockFpsYearContext.Object);
