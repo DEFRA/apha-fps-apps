@@ -61,18 +61,7 @@ namespace Apha.FPS.Api.Controllers
                 throw new ArgumentException("Program record with ID: {ProgramId} not found for deletion", programNo);
             }            
             return Ok(_mapper.Map<ProgramRes>(programDto));
-        }
-
-        [HttpGet("directorates")] 
-        public async Task<ActionResult<List<string?>>> GetAllDirectoratesAsync()
-        {
-            var directorates = await _programService.GetAllDirectoratesAsync();
-            if (directorates == null || !directorates.Any())
-            {
-                throw new ArgumentException("No directorate records found");
-            }
-            return Ok(directorates);
-        }
+        }        
 
         [HttpPost]
         public async Task<ActionResult<ProgramRes>> CreateProgram(

@@ -53,25 +53,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return await _dbContext.Programs
                 .AsNoTracking()
                 .FirstOrDefaultAsync(p => p.ProgramNo == id);
-        }        
-
-        public async Task<List<string?>> GetAllDirectoratesAsync()
-        {
-            var hardcoded = new List<string> { "CSG", "Surveillance", "Lab Services" };
-
-            var dbDirectorates =  Get().AsQueryable();
-            var directorates = await dbDirectorates.Select(p => p.Directorate)
-                .Where(d => !string.IsNullOrEmpty(d))               
-                .ToListAsync();
-           
-            var allDirectorates = hardcoded
-                .Union(directorates, StringComparer.OrdinalIgnoreCase)
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .OrderBy(d => d)
-                .ToList();
-
-            return allDirectorates;
-        }
+        }  
 
         public async Task<Program> AddProgramAsync(Program entity)
         {

@@ -37,11 +37,6 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<ProgramDto?>(program);
         }
 
-        public async Task<List<string?>> GetAllDirectoratesAsync()
-        {
-            return await _programRepository.GetAllDirectoratesAsync();
-        }
-
         public async Task<ProgramDto> AddProgramAsync(ProgramDto programDto)
         {
             if (string.IsNullOrWhiteSpace(programDto.ProgramNo))
