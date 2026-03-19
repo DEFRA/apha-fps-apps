@@ -29,13 +29,13 @@
                 GridColumnType.Text => GridReadonlyCssClass,
                 GridColumnType.Dropdown => GridReadonlyCssClass,
                 GridColumnType.Checkbox => "grid-input grid-checkbox",
-                _ => ""
+                _ => string.Empty
             };
         }
 
-        public static string FormatValue(object value, DataGridColumn column)
+        public static string FormatValue(object? value, DataGridColumn column)
         {
-            if (value == null) return "";
+            if (value == null) return string.Empty;
 
             switch (column.ColumnType)
             {
@@ -59,10 +59,9 @@
                     if (value is decimal gbpValue)
                         return gbpValue.ToString("£#,##0;-£#,##0");
                     break;
-                default:
-                    return value?.ToString() ?? string.Empty;
             }
-            return value?.ToString() ?? string.Empty;
+            
+            return value.ToString() ?? string.Empty;
         }
     }
 }
