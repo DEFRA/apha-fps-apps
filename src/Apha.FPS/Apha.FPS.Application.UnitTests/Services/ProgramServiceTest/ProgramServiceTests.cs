@@ -10,13 +10,13 @@ using NSubstitute;
 
 namespace Apha.FPS.Application.UnitTests.Services.ProgramServiceTest
 {
-    public class ProgramServiceTest
+    public class ProgramServiceTests
     {
         private readonly IProgramRepository _mockRepository;
         private readonly IMapper _mockMapper;
         private readonly ProgramService _sut;
 
-        public ProgramServiceTest()
+        public ProgramServiceTests()
         {
             _mockRepository = Substitute.For<IProgramRepository>();
             _mockMapper = Substitute.For<IMapper>();

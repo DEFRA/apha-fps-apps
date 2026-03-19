@@ -1,10 +1,6 @@
-﻿using Apha.FPS.Application.Dtos;
-using Apha.FPS.Application.Pagination;
-using Apha.FPS.Application.Services;
+﻿using Apha.FPS.Application.Services;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
-using Apha.FPS.Core.Pagination;
-using AutoMapper;
 using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -12,12 +8,12 @@ using NSubstitute.ExceptionExtensions;
 
 namespace Apha.FPS.Application.UnitTests.Services.FpsSettingServiceTest
 {
-    public class FpsSettingServiceTest
+    public class FpsSettingServiceTests
     {
         private readonly IFpsSettingRepository _mockRepository;
         private readonly FpsSettingService _sut;
 
-        public FpsSettingServiceTest()
+        public FpsSettingServiceTests()
         {
             _mockRepository = Substitute.For<IFpsSettingRepository>();
             _sut = new FpsSettingService(_mockRepository);
