@@ -133,7 +133,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var response = await _programService.DeleteProgramAsync(programNo);
             if (response.Success)
                 return RedirectToAction(nameof(Index));
-            var viewModel = _mapper.Map<ProgramViewModel>(response.Data);
             return RedirectToAction(nameof(Index));
         }
 
@@ -172,8 +171,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         {
             // Directorate dropdown
             var directorateResponse = await _programService.GetAllDirectoratesAsync();
-            var directorates = (directorateResponse.Data ?? new List<string>())
-            .Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
+            var directorates = (directorateResponse.Data ?? new List<string?>())
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => x!) // Use null-forgiving operator since we filtered out nulls/whitespace
+                .ToList();
 
              model.DirectorateOptions = directorates
             .Select(d => new SelectListItem

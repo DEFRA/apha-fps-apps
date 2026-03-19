@@ -25,7 +25,6 @@
             {
                 GridColumnType.Date => GridReadonlyCssClass,
                 GridColumnType.DateTime => GridReadonlyCssClass,
-                //GridColumnType.Decimal => GridReadonlyCssClass,
                 GridColumnType.Number => GridReadonlyCssClass,
                 GridColumnType.Text => GridReadonlyCssClass,
                 GridColumnType.Dropdown => GridReadonlyCssClass,
@@ -60,20 +59,6 @@
                     if (value is decimal gbpValue)
                         return gbpValue.ToString("£#,##0;-£#,##0");
                     break;
-                // case GridColumnType.Decimal:
-                //     if (value is decimal decValue)
-                //         return decValue.ToString(column.DecimalFormat ?? "F2");
-                //     break;
-                // case GridColumnType.Number:
-                //     if (value is double dblValue)
-                //         return dblValue.ToString(column.DecimalFormat ?? "F2");
-                //     else if (value is float fltValue)
-                //         return fltValue.ToString(column.DecimalFormat ?? "F2");
-                //     else if (value is int intValue)
-                //         return intValue.ToString();
-                //     break;
-                // case GridColumnType.Checkbox:
-                //     return Convert.ToBoolean(value) ? "☑" : "☐";
                 default:
                     return value?.ToString() ?? string.Empty;
             }

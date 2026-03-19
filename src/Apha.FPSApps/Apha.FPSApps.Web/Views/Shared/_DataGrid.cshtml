@@ -67,7 +67,7 @@
                                 <th scope="col" style="width: @column.Width px; cursor:pointer;"
                                     class="sortable-header"
                                     data-column="@column.PropertyName"
-                                    data-sortdir="@(isSorted ? !Model.Pagination.SortDirection : false)">
+                                    data-sortdir="@(!Model.Pagination.SortDirection)">
                                     @column.DisplayName <span class="sort-icon">@sortIcon</span>
                                     <div class="column-resizer"></div>
                                 </th>

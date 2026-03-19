@@ -107,17 +107,17 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         [HttpGet]
         public async Task<IActionResult> Edit(string staffId)
         {
-            //var result = await _staffJobService.GetStaffJobByIdAsync(staffId);
+            var result = await _staffJobService.GetStaffJobByIdAsync(staffId);
 
-            //if (result.Success)
-            //{
-            //    var staffJobItem = _mapper.Map<StaffJobItem>(result.Data);
-                return PartialView("_EditStaffJob");
-            //}
-            //else
-            //{
-            //    return NotFound($"Staff job with ID {staffId} not found.");
-            //}
+            if (result.Success)
+            {
+                var staffJobItem = _mapper.Map<StaffJobItem>(result.Data);
+                return PartialView("_EditStaffJob", staffJobItem);
+            }
+            else
+            {
+                return NotFound($"Staff job with ID {staffId} not found.");
+            }
         }          
        
         [HttpPost]
@@ -157,12 +157,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 return Json(new { success = false, message = "Job code is required" });
             }
 
-            //var result = await _staffJobService.DeleteStaffJobAsync(staffId, jobCode);
+            var result = await _staffJobService.DeleteStaffJobAsync(staffId, jobCode);
 
-            //if (result.Success)
-            //{
-            //    return Json(new { success = true, message = "Staff job deleted successfully" });
-            //}
+            if (result.Success)
+            {
+                return Json(new { success = true, message = "Staff job deleted successfully" });
+            }
 
             return Json(new { success = false, errors = "" });
         }
