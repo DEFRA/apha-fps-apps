@@ -99,9 +99,9 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.FpsProgramApiClientTest
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-            Assert.Equal("Failed to retrieve programs", result.Errors[0].Message);
+            var error = Assert.Single(result.Errors);
+            Assert.Equal("INTERNAL_ERROR", error.Code);
+            Assert.Equal("Failed to retrieve programs", error.Message);
         }
 
         #endregion
@@ -154,9 +154,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.FpsProgramApiClientTest
             // Assert
             Assert.NotNull(result);
             Assert.False(result.Success);
-            Assert.Single(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-            Assert.Equal("Failed to retrieve paginated programs", result.Errors[0].Message);
+            Assert.NotNull(result.Errors);
+            var error = Assert.Single(result.Errors);
+            Assert.Equal("INTERNAL_ERROR", error.Code);
+            Assert.Equal("Failed to retrieve paginated programs", error.Message);
         }
 
         #endregion
@@ -232,9 +233,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.FpsProgramApiClientTest
             // Assert
             Assert.NotNull(result);
             Assert.False(result.Success);
-            Assert.Single(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-            Assert.Equal("Failed to retrieve program", result.Errors[0].Message);
+            Assert.NotNull(result.Errors);
+            var error = Assert.Single(result.Errors);
+            Assert.Equal("INTERNAL_ERROR", error.Code);
+            Assert.Equal("Failed to retrieve program", error.Message);
         }
 
         #endregion
@@ -315,9 +317,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.FpsProgramApiClientTest
             // Assert
             Assert.NotNull(result);
             Assert.False(result.Success);
-            Assert.Single(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-            Assert.Equal("Failed to add program", result.Errors[0].Message);
+            Assert.NotNull(result.Errors);
+            var error = Assert.Single(result.Errors);
+            Assert.Equal("INTERNAL_ERROR", error.Code);
+            Assert.Equal("Failed to add program", error.Message);
         }
 
         #endregion
@@ -368,9 +371,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.FpsProgramApiClientTest
             // Assert
             Assert.NotNull(result);
             Assert.False(result.Success);
-            Assert.Single(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-            Assert.Equal("Failed to update program", result.Errors[0].Message);
+            Assert.NotNull(result.Errors);
+            var error = Assert.Single(result.Errors);
+            Assert.Equal("INTERNAL_ERROR", error.Code);
+            Assert.Equal("Failed to update program", error.Message);
         }
 
         #endregion
@@ -415,9 +419,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.FpsProgramApiClientTest
             // Assert
             Assert.NotNull(result);
             Assert.False(result.Success);
-            Assert.Single(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-            Assert.Equal("Failed to delete program", result.Errors[0].Message);
+            Assert.NotNull(result.Errors);
+            var error = Assert.Single(result.Errors);
+            Assert.Equal("INTERNAL_ERROR", error.Code);
+            Assert.Equal("Failed to delete program", error.Message);
         }
 
         [Theory]
@@ -505,9 +510,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.FpsProgramApiClientTest
             // Assert
             Assert.NotNull(result);
             Assert.False(result.Success);
-            Assert.Single(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-            Assert.Equal("Failed to retrieve directorates", result.Errors[0].Message);
+            Assert.NotNull(result.Errors);
+            var error = Assert.Single(result.Errors);
+            Assert.Equal("INTERNAL_ERROR", error.Code);
+            Assert.Equal("Failed to retrieve directorates", error.Message);
         }
 
         #endregion
