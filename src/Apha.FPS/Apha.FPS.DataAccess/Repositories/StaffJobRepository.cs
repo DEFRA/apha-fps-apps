@@ -76,23 +76,9 @@ namespace Apha.FPS.DataAccess.Repositories
                                     Days = dutyHours != null ? sj.PlannedHours / Convert.ToDouble(dutyHours) : 0
                                 }).OrderBy(e => e.Name).AsQueryable();
 
-            
-            if (!String.IsNullOrEmpty(query.Filter))
-            {
-                dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(query.Filter);
-                if (filterModel != null)
-                {
-                    var dict = (IDictionary<string, object>)filterModel;
-                    if (dict.ContainsKey("Name") && dict["Name"] != null)
-                    {
-                        queryStaffJob = queryStaffJob.Where(x => x.Name!.Contains(dict["Name"].ToString()!));
-                    }
-                    if (dict.ContainsKey("PlannedHours") && dict["PlannedHours"] != null)
-                    {
-                        queryStaffJob = queryStaffJob.Where(x => x.PlannedHours.ToString().Contains(dict["PlannedHours"].ToString()!));
-                    }
-                }
-            }
+
+            // Apply filtering
+            queryStaffJob = ApplyStaffJobFilter(queryStaffJob, query.Filter);
 
             queryStaffJob = (IQueryable<StaffJobView>)ApplySorting(queryStaffJob, query.SortBy, query.Descending);
 
@@ -261,6 +247,34 @@ namespace Apha.FPS.DataAccess.Repositories
         private static IQueryable ApplyOrder<T>(IQueryable<StaffJobView> query, Expression<Func<StaffJobView, T>> keySelector, bool descending)
         {
             return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
-        }               
+        }
+
+        private static IQueryable<StaffJobView> ApplyStaffJobFilter(IQueryable<StaffJobView> queryStaffJob, string? filter)
+        {
+            if (string.IsNullOrEmpty(filter))
+            {
+                return queryStaffJob;
+            }
+
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            if (filterModel == null)
+            {
+                return queryStaffJob;
+            }
+
+            var dict = (IDictionary<string, object>)filterModel;
+
+            if (dict.TryGetValue("Name", out var name) && name != null)
+            {
+                queryStaffJob = queryStaffJob.Where(x => x.Name!.Contains(name.ToString()!));
+            }
+
+            if (dict.TryGetValue("PlannedHours", out var plannedHours) && plannedHours != null)
+            {
+                queryStaffJob = queryStaffJob.Where(x => x.PlannedHours.ToString().Contains(plannedHours.ToString()!));
+            }
+
+            return queryStaffJob;
+        }
     }
 }
