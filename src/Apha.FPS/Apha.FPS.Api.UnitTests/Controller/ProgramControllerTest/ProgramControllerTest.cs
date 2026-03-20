@@ -43,10 +43,10 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProgramControllerTest
             Assert.Equal(mappedResult, okResult.Value);
         }
 
-        [Fact]
+        [Fact]      
         public async Task GetAllProgramsAsync_NullResult_ThrowsArgumentException()
         {
-            _serviceMock.GetAllProgramsAsync().Returns((List<ProgramDto>?)null);
+            _serviceMock.GetAllProgramsAsync().Returns((List<ProgramDto>)null!);
 
             await Assert.ThrowsAsync<ArgumentException>(() => _controller.GetAllProgramsAsync());
         }
@@ -89,7 +89,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProgramControllerTest
         public async Task GetAllProgramsPagedAsync_NullResult_ThrowsArgumentException()
         {
             var query = new QueryParameters<string>();
-            _serviceMock.GetAllProgramsAsync(query).Returns((PaginatedResult<ProgramDto>?)null);
+            _serviceMock.GetAllProgramsAsync(query).Returns((PaginatedResult<ProgramDto>)null!);            
 
             await Assert.ThrowsAsync<ArgumentException>(() => _controller.GetAllProgramsPagedAsync(query));
         }

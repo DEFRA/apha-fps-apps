@@ -77,7 +77,7 @@ namespace Apha.FPS.Application.UnitTests.Services.DiseaseServiceTest
             var result = await _sut.GetAllDiseasesAsync();
 
             // Assert
-            result.Should().BeEquivalentTo(new[] { "Avian Influenza", "African Swine Fever" });
+            result.Should().BeEquivalentTo("Avian Influenza", "African Swine Fever");
 
             await _mockRepository.Received(1).GetAllDiseasesAsync();
         }

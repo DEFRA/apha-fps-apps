@@ -76,7 +76,7 @@ namespace Apha.FPS.Application.UnitTests.Services.CustomerServiceTest
             var result = await _sut.GetAllCustomersAsync();
 
             // Assert
-            result.Should().BeEquivalentTo(new[] { "DEFRA", "APHA" });
+            result.Should().BeEquivalentTo("DEFRA", "APHA");
 
             await _mockRepository.Received(1).GetAllCustomersAsync();
         }

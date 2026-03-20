@@ -521,14 +521,15 @@ namespace Apha.FPS.Application.UnitTests.Services.EmployeeServiceTest
         }
 
         [Fact]
-        public async Task AddEmployeeAsync_WithNullEmployee_ThrowsArgumentNullException()
+        public async Task AddEmployeeAsync_WithNullEmployee_ThrowsArgumentException()
         {
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<ArgumentNullException>(
+            var exception = await Assert.ThrowsAsync<ArgumentException>(
                 async () => await _sut.AddEmployeeAsync(null!)
             );
 
             exception.ParamName.Should().Be("employeeDto");
+            exception.Message.Should().Contain("EmployeeDto cannot be null or empty.");
 
             await _mockRepository.DidNotReceive().AddEmployeeAsync(Arg.Any<Employee>());
         }
@@ -607,14 +608,15 @@ namespace Apha.FPS.Application.UnitTests.Services.EmployeeServiceTest
         }
 
         [Fact]
-        public async Task UpdateEmployeeAsync_WithNullEmployee_ThrowsArgumentNullException()
+        public async Task UpdateEmployeeAsync_WithNullEmployee_ThrowsArgumentException()
         {
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<ArgumentNullException>(
+            var exception = await Assert.ThrowsAsync<ArgumentException>(
                 async () => await _sut.UpdateEmployeeAsync(null!)
             );
 
             exception.ParamName.Should().Be("employeeDto");
+            exception.Message.Should().Contain("EmployeeDto cannot be null or empty.");
 
             await _mockRepository.DidNotReceive().UpdateEmployeeAsync(Arg.Any<Employee>());
         }

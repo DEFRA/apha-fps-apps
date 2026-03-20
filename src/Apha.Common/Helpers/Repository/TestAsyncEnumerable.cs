@@ -2,75 +2,77 @@ using Microsoft.EntityFrameworkCore;
 using Moq;
 using System.Linq.Expressions;
 
-namespace Apha.Common.Helpers.Repository;
-
-/// <summary>
-/// Provides test infrastructure for mocking IQueryable and IAsyncEnumerable
-/// to enable Entity Framework Core DbSet mocking without database dependencies.
-/// </summary>
-/// <typeparam name="T">The entity type.</typeparam>
-public class TestAsyncEnumerable<T> : IOrderedQueryable<T>, IAsyncEnumerable<T> where T : class
+namespace Apha.Common.Helpers.Repository
 {
-    private readonly IQueryable<T> _inner;
-
-    public TestAsyncEnumerable(IEnumerable<T> enumerable)
-    {
-        _inner = enumerable.AsQueryable();
-    }
-
-    internal TestAsyncEnumerable(IQueryable<T> queryable)
-    {
-        _inner = queryable;
-    }
-
-    public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)
-    {
-        return new TestAsyncEnumerator<T>(_inner.GetEnumerator());
-    }
-
-    public IEnumerator<T> GetEnumerator()
-    {
-        return _inner.GetEnumerator();
-    }
-
-    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
-    {
-        return GetEnumerator();
-    }
-
-    public Type ElementType => _inner.ElementType;
-
-    public Expression Expression => _inner.Expression;
-
-    public IQueryProvider Provider => new TestAsyncQueryProvider<T>(_inner.Provider);
 
     /// <summary>
-    /// Creates a mocked DbSet from the current test data.
+    /// Provides test infrastructure for mocking IQueryable and IAsyncEnumerable
+    /// to enable Entity Framework Core DbSet mocking without database dependencies.
     /// </summary>
-    public Mock<DbSet<T>> AsDbSetMock()
+    /// <typeparam name="T">The entity type.</typeparam>
+    public class TestAsyncEnumerable<T> : IOrderedQueryable<T>, IAsyncEnumerable<T> where T : class
     {
-        var mockSet = new Mock<DbSet<T>>();
+        private readonly IQueryable<T> _inner;
 
-        mockSet.As<IQueryable<T>>()
-            .Setup(m => m.Provider)
-            .Returns(Provider);
+        public TestAsyncEnumerable(IEnumerable<T> enumerable)
+        {
+            _inner = enumerable.AsQueryable();
+        }
 
-        mockSet.As<IQueryable<T>>()
-            .Setup(m => m.Expression)
-            .Returns(Expression);
+        internal TestAsyncEnumerable(IQueryable<T> queryable)
+        {
+            _inner = queryable;
+        }
 
-        mockSet.As<IQueryable<T>>()
-            .Setup(m => m.ElementType)
-            .Returns(ElementType);
+        public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)
+        {
+            return new TestAsyncEnumerator<T>(_inner.GetEnumerator());
+        }
 
-        mockSet.As<IQueryable<T>>()
-            .Setup(m => m.GetEnumerator())
-            .Returns(GetEnumerator());
+        public IEnumerator<T> GetEnumerator()
+        {
+            return _inner.GetEnumerator();
+        }
 
-        mockSet.As<IAsyncEnumerable<T>>()
-            .Setup(m => m.GetAsyncEnumerator(It.IsAny<CancellationToken>()))
-            .Returns(GetAsyncEnumerator());
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
 
-        return mockSet;
+        public Type ElementType => _inner.ElementType;
+
+        public Expression Expression => _inner.Expression;
+
+        public IQueryProvider Provider => new TestAsyncQueryProvider<T>(_inner.Provider);
+
+        /// <summary>
+        /// Creates a mocked DbSet from the current test data.
+        /// </summary>
+        public Mock<DbSet<T>> AsDbSetMock()
+        {
+            var mockSet = new Mock<DbSet<T>>();
+
+            mockSet.As<IQueryable<T>>()
+                .Setup(m => m.Provider)
+                .Returns(Provider);
+
+            mockSet.As<IQueryable<T>>()
+                .Setup(m => m.Expression)
+                .Returns(Expression);
+
+            mockSet.As<IQueryable<T>>()
+                .Setup(m => m.ElementType)
+                .Returns(ElementType);
+
+            mockSet.As<IQueryable<T>>()
+                .Setup(m => m.GetEnumerator())
+                .Returns(GetEnumerator());
+
+            mockSet.As<IAsyncEnumerable<T>>()
+                .Setup(m => m.GetAsyncEnumerator(It.IsAny<CancellationToken>()))
+                .Returns(GetAsyncEnumerator());
+
+            return mockSet;
+        }
     }
 }

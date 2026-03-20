@@ -15,8 +15,7 @@ namespace Apha.FPS.Api.Extensions
     {
         public static void ConfigureServices(this WebApplicationBuilder builder)
         {
-            var services = builder.Services;
-            var configuration = builder.Configuration;
+            var services = builder.Services;            
 
             services.AddDbContext<FpsDbContext>(options =>
                     options.UseNpgsql(
