@@ -105,11 +105,13 @@ namespace Apha.FPS.DataAccess.Repositories
                  from staff in _dbContext.StaffActiveView
                  join grade in _dbContext.WorkgroupGradeGeneralView
                      on staff.WorkgroupGrade equals grade.WgGrade
-                 where                     
-                     !staff.Name.ToLower().Contains("general") &&
-                     !staff.Name.ToLower().Contains("vacancy") &&
-                     !string.IsNullOrEmpty(grade.GradeCode) &&
-                     !grade.GradeCode.StartsWith("G")
+                 where
+                    staff.Name != null &&
+                    !staff.Name.ToLower().Contains("general") &&
+                    !staff.Name.ToLower().Contains("vacancy") &&
+                    grade.GradeCode != null &&
+                    grade.GradeCode.Length > 0 &&
+                    grade.GradeCode.Substring(0, 1) != "G"
                  select new Manager
                  {
                      Name = staff.Name,

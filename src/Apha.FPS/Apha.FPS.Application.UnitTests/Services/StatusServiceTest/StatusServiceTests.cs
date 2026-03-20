@@ -75,7 +75,7 @@ namespace Apha.FPS.Application.UnitTests.Services.StatusServiceTest
             var result = await _sut.GetAllStatusesAsync();
 
             // Assert
-            result.Should().BeEquivalentTo(new[] { "Pending", "Closed" });
+            result.Should().BeEquivalentTo("Pending", "Closed");
 
             await _mockRepository.Received(1).GetAllStatusesAsync();
         }

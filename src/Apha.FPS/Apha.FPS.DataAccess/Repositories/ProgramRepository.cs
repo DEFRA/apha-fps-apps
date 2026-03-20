@@ -3,6 +3,8 @@ using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using System.Dynamic;
 using System.Linq.Expressions;
 
 
@@ -40,6 +42,8 @@ namespace Apha.FPS.DataAccess.Repositories
         {
 
             var programQuery = Get();
+
+            programQuery = ApplyProgramFilter(programQuery, query.Filter);
             programQuery = (IQueryable<Program>)ApplySorting(programQuery, query.SortBy, query.Descending);
 
             var result = await programQuery.ToListAsync();
@@ -151,6 +155,32 @@ namespace Apha.FPS.DataAccess.Repositories
         private static IQueryable ApplyOrder<T>(IQueryable<Program> query, Expression<Func<Program, T>> keySelector, bool descending)
         {
             return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
+        }
+
+        private static IQueryable<Program> ApplyProgramFilter(IQueryable<Program> query, string? filter)
+        {
+            if (string.IsNullOrEmpty(filter))
+                return query;
+
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            if (filterModel == null)
+                return query;
+
+            var dict = (IDictionary<string, object>)filterModel;
+
+            if (dict.TryGetValue("ProgramNo", out var programNo) && programNo != null)
+                query = query.Where(x => x.ProgramNo.Contains(programNo.ToString()!));
+
+            if (dict.TryGetValue("ProgramName", out var programName) && programName != null)
+                query = query.Where(x => x.ProgramName!.Contains(programName.ToString()!));
+
+            if (dict.TryGetValue("Directorate", out var directorate) && directorate != null)
+                query = query.Where(x => x.Directorate!.Contains(directorate.ToString()!));
+
+            if (dict.TryGetValue("Manager", out var manager) && manager != null)
+                query = query.Where(x => x.Manager!.Contains(manager.ToString()!));
+
+            return query;
         }
 
     }
