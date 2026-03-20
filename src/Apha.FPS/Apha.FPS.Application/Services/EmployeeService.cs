@@ -70,7 +70,7 @@ namespace Apha.FPS.Application.Services
         {
             if (employeeDto == null)
             {
-                throw new ArgumentNullException(nameof(employeeDto));
+                throw new ArgumentException("EmployeeDto cannot be null or empty.", nameof(employeeDto));
             }
 
             var employee = _mapper.Map<Employee>(employeeDto);
@@ -82,7 +82,7 @@ namespace Apha.FPS.Application.Services
         {
             if (employeeDto == null)
             {
-                throw new ArgumentNullException(nameof(employeeDto));
+                throw new ArgumentException("EmployeeDto cannot be null or empty.", nameof(employeeDto));
             }
 
             var employee = _mapper.Map<Employee>(employeeDto);

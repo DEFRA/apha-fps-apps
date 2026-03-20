@@ -699,7 +699,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             Assert.NotNull(result);
             var resultList = result.ToList();
             Assert.Equal(2, resultList.Count); // Excludes 'general' name and 'G' grade
-            Assert.DoesNotContain(resultList, m => m.Name!.ToLower().Contains("general"));
+            Assert.DoesNotContain(resultList, m => m.Name!.Contains("general", StringComparison.OrdinalIgnoreCase));
             Assert.DoesNotContain(resultList, m => m.GradeCode!.StartsWith('G'));
         }
 

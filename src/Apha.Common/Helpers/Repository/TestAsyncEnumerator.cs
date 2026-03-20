@@ -1,28 +1,30 @@
-namespace Apha.Common.Helpers.Repository;
-
-/// <summary>
-/// Test implementation of IAsyncEnumerator for mocking async enumeration.
-/// </summary>
-/// <typeparam name="T">The entity type.</typeparam>
-public class TestAsyncEnumerator<T> : IAsyncEnumerator<T>
+namespace Apha.Common.Helpers.Repository
 {
-    private readonly IEnumerator<T> _inner;
-
-    public TestAsyncEnumerator(IEnumerator<T> inner)
+    /// <summary>
+    /// Test implementation of IAsyncEnumerator for mocking async enumeration.
+    /// </summary>
+    /// <typeparam name="T">The entity type.</typeparam>
+    public class TestAsyncEnumerator<T> : IAsyncEnumerator<T>
     {
-        _inner = inner;
-    }
+        private readonly IEnumerator<T> _inner;
 
-    public ValueTask<bool> MoveNextAsync()
-    {
-        return new ValueTask<bool>(_inner.MoveNext());
-    }
+        public TestAsyncEnumerator(IEnumerator<T> inner)
+        {
+            _inner = inner;
+        }
 
-    public T Current => _inner.Current;
+        public ValueTask<bool> MoveNextAsync()
+        {
+            return new ValueTask<bool>(_inner.MoveNext());
+        }
 
-    public ValueTask DisposeAsync()
-    {
-        _inner.Dispose();
-        return new ValueTask();
+        public T Current => _inner.Current;
+
+        public ValueTask DisposeAsync()
+        {
+            _inner.Dispose();
+            GC.SuppressFinalize(this);
+            return new ValueTask();
+        }
     }
 }
