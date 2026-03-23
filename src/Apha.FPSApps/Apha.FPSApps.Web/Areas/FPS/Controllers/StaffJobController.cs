@@ -6,13 +6,14 @@ using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Identity.Web;
 using Newtonsoft.Json;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 {
     [Area("FPS")]
-    [AllowAnonymous]//[Authorize(Roles = "FPSAdmin,FPSUser")]
-    //[AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")]
+    [Authorize(Roles = "FPSAdmin,FPSUser")]
+    [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")]
     public class StaffJobController : Controller
     {
         private readonly IMapper _mapper;

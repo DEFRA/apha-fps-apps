@@ -20,7 +20,6 @@ namespace Apha.FPS.Api.Extensions
         public static IServiceCollection AddServices(this IServiceCollection services)
         {
             // Add your application services here
-            services.AddScoped<IWeatherForecastService, WeatherForecastService>();
             services.AddScoped<IAppStateService, AppStateService>();
             services.AddScoped<IExcelExportService, ExcelExportService>();
             services.AddScoped<IStaffJobService, StaffJobService>();
@@ -34,7 +33,6 @@ namespace Apha.FPS.Api.Extensions
         {
             // Add your data access services here
             services.AddScoped<IFpsYearContext, FpsYearContext>();
-            services.AddScoped<IWeatherForecastRepository, WeatherForecastRepository>();
             services.AddScoped<IProgramRepository, ProgramRepository>();
             services.AddScoped<IProjectRepository, ProjectRepository>();
             services.AddScoped<IStaffJobRepository, StaffJobRepository>();

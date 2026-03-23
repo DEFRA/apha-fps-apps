@@ -15,8 +15,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<ApiErrorDto, ApiError>().ReverseMap();
             CreateMap<ApiMetaDto, ApiMeta>().ReverseMap();
             CreateMap(typeof(PaginationRes<>), typeof(PaginatedResult<>)).ReverseMap();
-            CreateMap<PaginationDto, Pagination>().ReverseMap();
-            CreateMap<WeatherForecastDto, WeatherForecastRes>().ReverseMap();      
+            CreateMap<PaginationDto, Pagination>().ReverseMap();             
             CreateMap<StaffJobViewDto, StaffJobViewRes>().ReverseMap();
             CreateMap<ProgramDto,ProgramReq>().ReverseMap();
             CreateMap<ProgramDto, ProgramRes>().ReverseMap();

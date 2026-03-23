@@ -107,8 +107,8 @@ namespace Apha.FPS.DataAccess.Repositories
                      on staff.WorkgroupGrade equals grade.WgGrade
                  where
                     staff.Name != null &&
-                    !staff.Name.ToLower().Contains("general") &&
-                    !staff.Name.ToLower().Contains("vacancy") &&
+                    !EF.Functions.ILike(staff.Name, "%general%") &&
+                    !EF.Functions.ILike(staff.Name, "%vacancy%") &&
                     grade.GradeCode != null &&
                     grade.GradeCode.Length > 0 &&
                     grade.GradeCode.Substring(0, 1) != "G"

@@ -15,8 +15,6 @@ namespace Apha.FPS.Application.Mappings
             CreateMap(typeof(PaginationParameters<>), typeof(QueryParameters<>)).ReverseMap();
             CreateMap(typeof(PagedData<>), typeof(PaginatedResult<>)).ReverseMap();
 
-            CreateMap<WeatherForecast, WeatherForecastDto>().ReverseMap();
-            CreateMap<WeatherForecastCriteria, WeatherForecastCriteriaDto>().ReverseMap();
             CreateMap<PaginationData, PaginationDto>().ReverseMap();
             CreateMap<StaffJobView, StaffJobViewDto>().ReverseMap();  
             CreateMap<StaffWorkgroupLookup, StaffWorkgroupLookupDto>().ReverseMap();
