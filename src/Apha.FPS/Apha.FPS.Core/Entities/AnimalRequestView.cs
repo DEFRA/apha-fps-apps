@@ -1,6 +1,6 @@
 ﻿namespace Apha.FPS.Core.Entities
 {
-    public partial class AnimalRequest
+    public partial class AnimalRequestView
     {
         public string JobCode { get; set; } = null!;
 
@@ -13,6 +13,11 @@
         public int IndCounter { get; set; }
 
         public int? FpsCalYear { get; set; }
+        public int? UserId { get; set; }
+
+        public string? Dt2Username { get; set; }
+
+        public string? UserEmail { get; set; }
 
     }
 }
