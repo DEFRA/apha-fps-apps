@@ -3,37 +3,252 @@ using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.DataAccess.Data;
 using Apha.FPS.DataAccess.Repositories;
-using NSubstitute;
+using Moq;
 
 namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
 {
     public class ProjectRepositoryTests
     {
-        private const int DefaultTestFpsYear = 2024;
-
         /// <summary>
-        /// Creates a ProjectRepository with in-memory Projects data.
-        /// IFpsYearContext and IProgramRepository are substituted via NSubstitute.
-        /// Get() / GetAllProjectsAsync() JOIN logic across Projects/Programs is covered
-        /// by integration tests — only GetProjectByIdAsync is unit-testable here.
+        /// Creates a ProjectRepository with in-memory Projects and ProjectViews data.
+        /// GetAllProjectsAsync() view/join logic with UserId = 42 filtering is covered by integration tests.
         /// </summary>
-        private static ProjectRepository CreateRepository(IEnumerable<Project> projects)
+        private static ProjectRepository CreateRepository(
+            IEnumerable<Project>? projects = null,
+            IEnumerable<ProjectView>? projectViews = null)
         {
-            var fpsYearContext = Substitute.For<IFpsYearContext>();
-            fpsYearContext.FPSYear.Returns(DefaultTestFpsYear);
+            var mockFpsYearContext = new Mock<IFpsYearContext>();
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(mockFpsYearContext.Object);
 
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);
+            if (projects != null)
+            {
+                var projectsMockSet = RepositoryTestHelper.CreateMockDbSet(projects);
+                mockContext.Setup(x => x.Projects).Returns(projectsMockSet.Object);
+            }
 
-            var projectsMockSet = RepositoryTestHelper.CreateMockDbSet(projects);
-            mockContext.Setup(x => x.Projects).Returns(projectsMockSet.Object);
+            if (projectViews != null)
+            {
+                var projectViewsMockSet = RepositoryTestHelper.CreateMockDbSet(projectViews);
+                mockContext.Setup(x => x.ProjectViews).Returns(projectViewsMockSet.Object);
+            }
 
-            var programRepo = Substitute.For<IProgramRepository>();
-            programRepo.Get().Returns(Enumerable.Empty<Core.Entities.Program>().AsQueryable());
-
-            return new ProjectRepository(mockContext.Object, programRepo);
+            return new ProjectRepository(mockContext.Object);
         }
 
-        #region GetProjectByIdAsync
+        #region GetAllProjectsAsync Tests
+
+        [Fact]
+        public async Task GetAllProjectsAsync_ReturnsProjects_ForUserId42()
+        {
+            // Arrange
+            var projectViews = new List<ProjectView>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Project One",   Program = "P001", Customer = "DEFRA", UserId = 42 },
+                new() { ParentProject = "PP002", ProjectTitle = "Project Two",   Program = "P002", Customer = "APHA",  UserId = 42 },
+                new() { ParentProject = "PP003", ProjectTitle = "Project Three", Program = "P003", Customer = "DEFRA", UserId = 99 } // different user — excluded
+            };
+            var repo = CreateRepository(projectViews: projectViews);
+
+            // Act
+            var result = await repo.GetAllProjectsAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            var resultList = result.ToList();
+            Assert.Equal(2, resultList.Count);
+            Assert.All(resultList, p => Assert.NotNull(p.ParentProject));
+        }
+
+        [Fact]
+        public async Task GetAllProjectsAsync_ReturnsEmptyList_WhenNoProjectViews()
+        {
+            // Arrange
+            var repo = CreateRepository(projectViews: []);
+
+            // Act
+            var result = await repo.GetAllProjectsAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetAllProjectsAsync_ReturnsEmptyList_WhenNoMatchingUserId()
+        {
+            // Arrange — all views belong to a different user
+            var projectViews = new List<ProjectView>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Project One", UserId = 99 },
+                new() { ParentProject = "PP002", ProjectTitle = "Project Two", UserId = 99 }
+            };
+            var repo = CreateRepository(projectViews: projectViews);
+
+            // Act
+            var result = await repo.GetAllProjectsAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetAllProjectsAsync_MapsProgramViewFieldsCorrectly()
+        {
+            // Arrange
+            var dateCreated  = new DateTime(2024, 1, 15);
+            var dateCosted   = new DateTime(2024, 3, 10);
+            var projectViews = new List<ProjectView>
+            {
+                new()
+                {
+                    ParentProject     = "PP001",
+                    ProjectTitle      = "Alpha Project",
+                    Program           = "P001",
+                    Customer          = "DEFRA",
+                    Manager           = "Alice",
+                    TransferIncome    = 1000m,
+                    CustIncome        = 2000m,
+                    WipEoy            = 500m,
+                    WipLimit          = 600m,
+                    WipCurrent        = 450m,
+                    ProjectStatus     = "Active",
+                    CostBookNo        = "CB001",
+                    DateCreated       = dateCreated,
+                    FecCost           = 3000m,
+                    Profit            = 100m,
+                    BudgetCvl         = 200m,
+                    DateCosted        = dateCosted,
+                    Disease           = "D001",
+                    Contract          = "C001",
+                    ProjectParent     = "ROOT",
+                    ShortTitle        = "Alpha",
+                    CaseWorkSub       = 10m,
+                    PvsIncome         = 50m,
+                    PlanCaseWorkDebit = 20m,
+                    Finished          = 0,
+                    OwningRc          = "RC01",
+                    Comments          = "Test comment",
+                    CarryOver         = 300m,
+                    CarryOverSeed     = 150m,
+                    IsDefraProject    = 1,
+                    CostCentre        = 9001.0,
+                    OracleProjectCode = "ORA001",
+                    SubAccountCode    = "SUB001",
+                    ProjectGroup      = "GRP001",
+                    IncomeAccountCode = "INC001",
+                    FpsCalYear        = 2024,
+                    UserId            = 42
+                }
+            };
+            var repo = CreateRepository(projectViews: projectViews);
+
+            // Act
+            var result = await repo.GetAllProjectsAsync();
+
+            // Assert
+            var project = Assert.Single(result);
+            Assert.Equal("PP001",        project.ParentProject);
+            Assert.Equal("Alpha Project", project.ProjectTitle);
+            Assert.Equal("P001",         project.Program);
+            Assert.Equal("DEFRA",        project.Customer);
+            Assert.Equal("Alice",        project.Manager);
+            Assert.Equal(1000m,          project.TransferIncome);
+            Assert.Equal(2000m,          project.CustIncome);
+            Assert.Equal(500m,           project.WipEoy);
+            Assert.Equal(600m,           project.WipLimit);
+            Assert.Equal(450m,           project.WipCurrent);
+            Assert.Equal("Active",       project.ProjectStatus);
+            Assert.Equal("CB001",        project.CostBookNo);
+            Assert.Equal(dateCreated,    project.DateCreated);
+            Assert.Equal(3000m,          project.FecCost);
+            Assert.Equal(100m,           project.Profit);
+            Assert.Equal(200m,           project.BudgetCvl);
+            Assert.Equal(dateCosted,     project.DateCosted);
+            Assert.Equal("D001",         project.Disease);
+            Assert.Equal("C001",         project.Contract);
+            Assert.Equal("ROOT",         project.ProjectParent);
+            Assert.Equal("Alpha",        project.ShortTitle);
+            Assert.Equal(10m,            project.CaseWorkSub);
+            Assert.Equal(50m,            project.PvsIncome);
+            Assert.Equal(20m,            project.PlanCaseWorkDebit);
+            Assert.Equal((short)0,       project.Finished);
+            Assert.Equal("RC01",         project.OwningRc);
+            Assert.Equal("Test comment", project.Comments);
+            Assert.Equal(300m,           project.CarryOver);
+            Assert.Equal(150m,           project.CarryOverSeed);
+            Assert.Equal((short)1,       project.IsDefraProject);
+            Assert.Equal(9001.0,         project.CostCentre);
+            Assert.Equal("ORA001",       project.OracleProjectCode);
+            Assert.Equal("SUB001",       project.SubAccountCode);
+            Assert.Equal("GRP001",       project.ProjectGroup);
+            Assert.Equal("INC001",       project.IncomeAccountCode);
+            Assert.Equal(2024,           project.FpsCalYear);
+        }
+
+        [Fact]
+        public async Task GetAllProjectsAsync_AppliesNullCoalescing_ForRequiredStringFields()
+        {
+            // Arrange — all nullable string fields are null on the view
+            var projectViews = new List<ProjectView>
+            {
+                new()
+                {
+                    ParentProject     = null,
+                    ProjectTitle      = null,
+                    Program           = null,
+                    Customer          = null,
+                    Disease           = null,
+                    Contract          = null,
+                    IncomeAccountCode = null,
+                    TransferIncome    = null,
+                    CustIncome        = null,
+                    IsDefraProject    = null,
+                    UserId            = 42
+                }
+            };
+            var repo = CreateRepository(projectViews: projectViews);
+
+            // Act
+            var result = await repo.GetAllProjectsAsync();
+
+            // Assert — null-coalescing in the repository ensures no null reference on required fields
+            var project = Assert.Single(result);
+            Assert.Equal(string.Empty, project.ParentProject);
+            Assert.Equal(string.Empty, project.ProjectTitle);
+            Assert.Equal(string.Empty, project.Program);
+            Assert.Equal(string.Empty, project.Customer);
+            Assert.Equal(string.Empty, project.Disease);
+            Assert.Equal(string.Empty, project.Contract);
+            Assert.Equal(string.Empty, project.IncomeAccountCode);
+            Assert.Equal(0m,           project.TransferIncome);
+            Assert.Equal(0m,           project.CustIncome);
+            Assert.Equal((short)0,     project.IsDefraProject);
+        }
+
+        [Fact]
+        public async Task GetAllProjectsAsync_ReturnsMultipleProjects_AllBelongingToUserId42()
+        {
+            // Arrange
+            var projectViews = new List<ProjectView>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Project One",   Program = "P001", Customer = "DEFRA", UserId = 42 },
+                new() { ParentProject = "PP002", ProjectTitle = "Project Two",   Program = "P002", Customer = "APHA",  UserId = 42 },
+                new() { ParentProject = "PP003", ProjectTitle = "Project Three", Program = "P001", Customer = "DEFRA", UserId = 42 }
+            };
+            var repo = CreateRepository(projectViews: projectViews);
+
+            // Act
+            var result = await repo.GetAllProjectsAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(3, result.Count());
+        }
+
+        #endregion
+
+        #region GetProjectByIdAsync Tests
 
         [Fact]
         public async Task GetProjectByIdAsync_ReturnsProject_WhenFound()
@@ -41,26 +256,20 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             // Arrange
             var projects = new List<Project>
             {
-                new() { ParentProject = "P001", ProjectTitle = "Project One",
-                        Program = "PRG001", Customer = "Cust A",
-                        ProjectStatus = "Active", Disease = "None",
-                        Contract = "C001", IncomeAccountCode = "IAC001",
-                        FpsCalYear = DefaultTestFpsYear },
-                new() { ParentProject = "P002", ProjectTitle = "Project Two",
-                        Program = "PRG002", Customer = "Cust B",
-                        ProjectStatus = "Active", Disease = "None",
-                        Contract = "C002", IncomeAccountCode = "IAC002",
-                        FpsCalYear = DefaultTestFpsYear }
+                new() { ParentProject = "PP001", ProjectTitle = "Project One",   Program = "P001", Customer = "DEFRA", ProjectStatus = "Active",   Disease = "D001", Contract = "C001", IncomeAccountCode = "INC001" },
+                new() { ParentProject = "PP002", ProjectTitle = "Project Two",   Program = "P002", Customer = "APHA",  ProjectStatus = "Inactive", Disease = "D002", Contract = "C002", IncomeAccountCode = "INC002" }
             };
-            var repo = CreateRepository(projects);
+            var repo = CreateRepository(projects: projects);
 
             // Act
-            var result = await repo.GetProjectByIdAsync("P001");
+            var result = await repo.GetProjectByIdAsync("PP001");
 
             // Assert
             Assert.NotNull(result);
-            Assert.Equal("P001", result.ParentProject);
+            Assert.Equal("PP001",       result.ParentProject);
             Assert.Equal("Project One", result.ProjectTitle);
+            Assert.Equal("P001",        result.Program);
+            Assert.Equal("DEFRA",       result.Customer);
         }
 
         [Fact]
@@ -69,16 +278,12 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             // Arrange
             var projects = new List<Project>
             {
-                new() { ParentProject = "P001", ProjectTitle = "Project One",
-                        Program = "PRG001", Customer = "Cust A",
-                        ProjectStatus = "Active", Disease = "None",
-                        Contract = "C001", IncomeAccountCode = "IAC001",
-                        FpsCalYear = DefaultTestFpsYear }
+                new() { ParentProject = "PP001", ProjectTitle = "Project One", Program = "P001", Customer = "DEFRA", ProjectStatus = "Active", Disease = "D001", Contract = "C001", IncomeAccountCode = "INC001" }
             };
-            var repo = CreateRepository(projects);
+            var repo = CreateRepository(projects: projects);
 
             // Act
-            var result = await repo.GetProjectByIdAsync("P999");
+            var result = await repo.GetProjectByIdAsync("PP999");
 
             // Assert
             Assert.Null(result);
@@ -88,35 +293,51 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         public async Task GetProjectByIdAsync_ReturnsNull_WhenProjectsIsEmpty()
         {
             // Arrange
-            var repo = CreateRepository(new List<Project>());
+            var repo = CreateRepository(projects: []);
 
             // Act
-            var result = await repo.GetProjectByIdAsync("P001");
+            var result = await repo.GetProjectByIdAsync("PP001");
 
             // Assert
             Assert.Null(result);
         }
 
-        [Theory]
-        [InlineData("p001")]  // case-sensitive — "p001" does not match "P001"
-        [InlineData("P001 ")] // trailing space — does not match "P001"
-        public async Task GetProjectByIdAsync_ReturnsNull_WhenIdDoesNotExactlyMatch(string parentProject)
+        [Fact]
+        public async Task GetProjectByIdAsync_IsCaseSensitive()
+        {
+            // Arrange — match is on exact ParentProject string
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Project One", Program = "P001", Customer = "DEFRA", ProjectStatus = "Active", Disease = "D001", Contract = "C001", IncomeAccountCode = "INC001" }
+            };
+            var repo = CreateRepository(projects: projects);
+
+            // Act
+            var result = await repo.GetProjectByIdAsync("pp001");
+
+            // Assert
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public async Task GetProjectByIdAsync_ReturnsFirstMatch_WhenMultipleProjectsExist()
         {
             // Arrange
             var projects = new List<Project>
             {
-                new() { ParentProject = "P001", Program = "PRG001", Customer = "Cust A",
-                        ProjectStatus = "Active", Disease = "None", Contract = "C001",
-                        ProjectTitle = "Project One", IncomeAccountCode = "IAC001",
-                        FpsCalYear = DefaultTestFpsYear }
+                new() { ParentProject = "PP001", ProjectTitle = "Project One",   Program = "P001", Customer = "DEFRA", ProjectStatus = "Active",   Disease = "D001", Contract = "C001", IncomeAccountCode = "INC001" },
+                new() { ParentProject = "PP002", ProjectTitle = "Project Two",   Program = "P002", Customer = "APHA",  ProjectStatus = "Inactive", Disease = "D002", Contract = "C002", IncomeAccountCode = "INC002" },
+                new() { ParentProject = "PP003", ProjectTitle = "Project Three", Program = "P003", Customer = "DEFRA", ProjectStatus = "Active",   Disease = "D003", Contract = "C003", IncomeAccountCode = "INC003" }
             };
-            var repo = CreateRepository(projects);
+            var repo = CreateRepository(projects: projects);
 
             // Act
-            var result = await repo.GetProjectByIdAsync(parentProject);
+            var result = await repo.GetProjectByIdAsync("PP002");
 
             // Assert
-            Assert.Null(result);
+            Assert.NotNull(result);
+            Assert.Equal("PP002",       result.ParentProject);
+            Assert.Equal("Project Two", result.ProjectTitle);
         }
 
         #endregion
