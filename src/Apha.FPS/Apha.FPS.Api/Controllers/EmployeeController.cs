@@ -11,9 +11,8 @@ namespace Apha.FPS.Api.Controllers
 {
     /// <summary>
     /// Controller for managing employee-related operations.
-    /// </summary>
-    [AllowAnonymous]
-    //[Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
+    /// </summary>    
+    [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
     [ApiController]
     [Route("api/employee")]
     public class EmployeeController : ControllerBase

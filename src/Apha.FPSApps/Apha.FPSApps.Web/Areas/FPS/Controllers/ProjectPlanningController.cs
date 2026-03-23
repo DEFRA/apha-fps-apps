@@ -11,8 +11,8 @@ using System.Collections.Generic;
 namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 {    
     [Area("FPS")]
-    [AllowAnonymous]//[Authorize(Roles = "FPSAdmin,FPSUser")]
-    //[AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")]
+    [Authorize(Roles = "FPSAdmin,FPSUser")]
+    [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")]
     public class ProjectPlanningController : Controller
     {
         private readonly IMapper _mapper;

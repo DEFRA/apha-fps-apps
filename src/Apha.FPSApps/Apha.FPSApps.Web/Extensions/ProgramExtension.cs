@@ -12,11 +12,12 @@ namespace Apha.FPSApps.Web.Extensions
     {
         public static void ConfigureServices(this WebApplicationBuilder builder)
         {
-            var services = builder.Services;                        
+            var services = builder.Services;
+            var configuration = builder.Configuration;
 
             services.AddStackExchangeRedisCache(options =>
             {
-                options.Configuration = builder.Configuration.GetConnectionString("RedisConnectionString");
+                options.Configuration = configuration.GetConnectionString("RedisConnectionString");
                 options.InstanceName = "RedisInstance";
             });
 
@@ -44,13 +45,13 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddControllersWithViews();
 
             // Authentication
-            //services.AddAuthenticationServices(configuration);
+            services.AddAuthenticationServices(configuration);
 
             // Save tokens in cookie
-            //services.Configure<OpenIdConnectOptions>(OpenIdConnectDefaults.AuthenticationScheme, options =>
-            //{
-            //    options.SaveTokens = true;
-            //});
+            services.Configure<OpenIdConnectOptions>(OpenIdConnectDefaults.AuthenticationScheme, options =>
+            {
+                options.SaveTokens = true;
+            });
 
             // Configure cookie expiration
             services.ConfigureApplicationCookie(options =>
@@ -63,10 +64,6 @@ namespace Apha.FPSApps.Web.Extensions
 
             // Application services
             services.AddApplicationServices();
-
-           
-
-           
 
             // Health checks
             services.AddHealthChecks();
@@ -111,7 +108,7 @@ namespace Apha.FPSApps.Web.Extensions
 
             app.UseSession();
             app.UseMiddleware<ExceptionMiddleware>();
-            app.UseMiddleware<FPSYearMiddleware>();
+            app.UseMiddleware<FpsYearMiddleware>();
 
             app.UseAuthentication();
             app.UseAuthorization();

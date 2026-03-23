@@ -11,7 +11,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Apha.FPS.Api.Controllers
 {
-    [AllowAnonymous]
+    [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
     [Route("api/program")]
     [ApiController]
     public class ProgramController : ControllerBase

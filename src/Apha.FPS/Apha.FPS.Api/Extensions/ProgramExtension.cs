@@ -15,15 +15,23 @@ namespace Apha.FPS.Api.Extensions
     {
         public static void ConfigureServices(this WebApplicationBuilder builder)
         {
-            var services = builder.Services;            
+            var services = builder.Services;
+            var configuration = builder.Configuration;
 
             services.AddDbContext<FpsDbContext>(options =>
                     options.UseNpgsql(
-                        builder.Configuration.GetConnectionString("DefaultConnection")));
+                        configuration.GetConnectionString("DefaultConnection"),
+                        npgsqlOptions =>
+                        {
+                            npgsqlOptions.EnableRetryOnFailure(
+                                maxRetryCount: 5,
+                                maxRetryDelay: TimeSpan.FromSeconds(10),
+                                errorCodesToAdd: null);
+                        }));
                        
             services.AddStackExchangeRedisCache(options =>
             {
-                options.Configuration = builder.Configuration.GetConnectionString("RedisConnectionString");
+                options.Configuration = configuration.GetConnectionString("RedisConnectionString");
                 options.InstanceName = "RedisInstance";
             });
 
@@ -45,7 +53,7 @@ namespace Apha.FPS.Api.Extensions
             services.AddApplicationServices();
 
             // Authentication
-            //services.AddAuthenticationServices(configuration);
+            services.AddAuthenticationServices(configuration);
 
             // HTTP Context
             services.AddHttpContextAccessor();
