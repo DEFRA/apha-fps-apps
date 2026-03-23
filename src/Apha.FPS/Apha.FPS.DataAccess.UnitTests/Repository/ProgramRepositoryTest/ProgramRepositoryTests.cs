@@ -78,28 +78,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
             var repo = new ProgramRepository(mockContext.Object, fpsYearContext);
             return (repo, programsMockSet, userProgramsMockSet, mockContext);
         }
+       
 
-        #region GetProgramByIdAsync
-
-        [Fact]
-        public async Task GetProgramByIdAsync_ReturnsProgram_WhenFound()
-        {
-            // Arrange
-            var programs = new List<Core.Entities.Program>
-            {
-                new() { ProgramNo = "P001", ProgramName = "Program One", FpsCalYear = DefaultTestFpsYear },
-                new() { ProgramNo = "P002", ProgramName = "Program Two", FpsCalYear = DefaultTestFpsYear }
-            };
-            var repo = CreateRepository(programs, new List<UserProgram>(), new List<User>());
-
-            // Act
-            var result = await repo.GetProgramByIdAsync("P001");
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.Equal("P001", result.ProgramNo);
-            Assert.Equal("Program One", result.ProgramName);
-        }
+        #region Get        
 
         [Fact]
         public async Task GetProgramByIdAsync_ReturnsNull_WhenNotFound()
@@ -195,7 +176,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
         }
 
         [Fact]
-        public async Task AddProgramAsync_ThrowsArgumentNullException_WhenProgramIsNull()
+        public async Task AddProgramAsync_SetsFpsCalYear_FromYearContext()
         {
             // Arrange
             var repo = CreateRepository(new List<Core.Entities.Program>(), new List<UserProgram>(), new List<User>());

@@ -1,6 +1,7 @@
 ﻿using Apha.Common.Helpers.Repository;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
+using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
 using Apha.FPS.DataAccess.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -20,7 +21,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AnimalRepositoryTest
         /// </summary>
         private static AnimalRepository CreateRepository(
             IEnumerable<Animal> animals,
-            IEnumerable<AnimalRequest> animalRequests)
+            IEnumerable<AnimalRequest> animalRequests,
+            IEnumerable<Project>? projects = null)
         {
             var fpsYearContext = Substitute.For<IFpsYearContext>();
             fpsYearContext.FPSYear.Returns(DefaultTestFpsYear);
@@ -37,7 +39,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AnimalRepositoryTest
             mockContext.Setup(x => x.AnimalRequests).Returns(animalRequestsMockSet.Object);
 
             var projectRepo = Substitute.For<IProjectRepository>();
-            projectRepo.Get().Returns(Enumerable.Empty<Project>().AsQueryable());
+            projectRepo.Get().Returns((projects ?? Enumerable.Empty<Project>()).AsQueryable());
 
             return new AnimalRepository(mockContext.Object, projectRepo);
         }
@@ -82,6 +84,19 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AnimalRepositoryTest
             return (repo, animalRequestsMockSet, mockContext);
         }
 
+        /// <summary>
+        /// Creates an AnimalRepository wired with joined Animals, AnimalRequests and Projects
+        /// so that GetAnimalCostAsync and GetAnimalRateByIdAsync can be exercised end-to-end
+        /// in-memory.
+        /// </summary>
+        private static AnimalRepository CreateRepositoryWithJoinData(
+            IEnumerable<Animal> animals,
+            IEnumerable<AnimalRequest> animalRequests,
+            IEnumerable<Project> projects)
+        {
+            return CreateRepository(animals, animalRequests, projects);
+        }
+
         #region Constructor
 
         [Fact]
@@ -106,6 +121,53 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AnimalRepositoryTest
             // Act & Assert
             Assert.Throws<ArgumentNullException>(() =>
                 new AnimalRepository(mockContext.Object, null!));
+        }
+
+        #endregion
+
+        #region Get
+
+        [Fact]
+        public void Get_ReturnsQueryable_WhenProjectsJoinIsEmpty()
+        {
+            // Arrange — no matching projects so join yields no rows
+            var animalRequests = new List<AnimalRequest>
+            {
+                new() { IndCounter = 1, JobCode = "JOB001", AnimalType = "Cat" }
+            };
+            var repo = CreateRepository(new List<Animal>(), animalRequests);
+
+            // Act
+            var result = repo.Get();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.IsAssignableFrom<IQueryable<AnimalRequest>>(result);
+        }
+
+        [Fact]
+        public void Get_ReturnsMatchingRequests_WhenProjectsMatch()
+        {
+            // Arrange
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "JOB001", ProjectTitle = "T", Program = "P",
+                        Customer = "C", Disease = "D", Contract = "CT",
+                        ProjectStatus = "A", IncomeAccountCode = "I", IsDefraProject = 0 }
+            };
+            var animalRequests = new List<AnimalRequest>
+            {
+                new() { IndCounter = 1, JobCode = "JOB001", AnimalType = "Cat" },
+                new() { IndCounter = 2, JobCode = "JOB002", AnimalType = "Dog" }
+            };
+            var repo = CreateRepository(new List<Animal>(), animalRequests, projects);
+
+            // Act
+            var result = repo.Get().ToList();
+
+            // Assert — only the request whose JobCode matches a ParentProject is returned
+            Assert.Single(result);
+            Assert.Equal("JOB001", result[0].JobCode);
         }
 
         #endregion
@@ -146,6 +208,212 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AnimalRepositoryTest
         }
 
         #endregion
+
+        #region GetAnimalCostAsync
+
+        [Fact]
+        public async Task GetAnimalCostAsync_ReturnsPagedResults_WhenDataExists()
+        {
+            // Arrange
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "JOB001", Program = "PRG01", ProjectTitle = "T",
+                        Customer = "C", Disease = "D", Contract = "CT",
+                        ProjectStatus = "A", IncomeAccountCode = "I", IsDefraProject = 0 }
+            };
+            var animals = new List<Animal>
+            {
+                new() { AnimalType = "Cat", DailyRate = 10m, DefraDailyRate = 20m }
+            };
+            var animalRequests = new List<AnimalRequest>
+            {
+                new() { IndCounter = 1, JobCode = "JOB001", AnimalType = "Cat",
+                        NumberOfDays = 3, NumberOfAnimals = 2 }
+            };
+
+            var repo = CreateRepositoryWithJoinData(animals, animalRequests, projects);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetAnimalCostAsync(query, "JOB001");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Single(result.Data);
+            Assert.Equal(1, result.PaginationData.TotalRecords);
+
+            var row = result.Data.First();
+            Assert.Equal("Cat", row.AnimalType);
+            Assert.Equal(3, row.NumberOfDays);
+            Assert.Equal(2, row.NumberOfAnimals);
+            Assert.Equal(6, row.TotalDays);                 // NumberOfAnimals * NumberOfDays
+            Assert.Equal(10m, row.DailyRate);               // non-Defra rate
+            Assert.Equal(60m, row.AnimalCost);              // 3 * 2 * 10
+        }
+
+        [Fact]
+        public async Task GetAnimalCostAsync_UsesDefraDailyRate_WhenProjectIsDefra()
+        {
+            // Arrange
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "JOB001", Program = "PRG01", ProjectTitle = "T",
+                        Customer = "C", Disease = "D", Contract = "CT",
+                        ProjectStatus = "A", IncomeAccountCode = "I", IsDefraProject = -1 }
+            };
+            var animals = new List<Animal>
+            {
+                new() { AnimalType = "Cat", DailyRate = 10m, DefraDailyRate = 25m }
+            };
+            var animalRequests = new List<AnimalRequest>
+            {
+                new() { IndCounter = 1, JobCode = "JOB001", AnimalType = "Cat",
+                        NumberOfDays = 2, NumberOfAnimals = 3 }
+            };
+
+            var repo = CreateRepositoryWithJoinData(animals, animalRequests, projects);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetAnimalCostAsync(query, "JOB001");
+
+            // Assert
+            var row = result.Data.First();
+            Assert.Equal(25m, row.DailyRate);               // Defra rate applied
+            Assert.Equal(150m, row.AnimalCost);             // 2 * 3 * 25
+        }
+
+        [Fact]
+        public async Task GetAnimalCostAsync_ReturnsEmptyPagedResult_WhenNoMatchingJobCode()
+        {
+            // Arrange
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "JOB001", Program = "PRG01", ProjectTitle = "T",
+                        Customer = "C", Disease = "D", Contract = "CT",
+                        ProjectStatus = "A", IncomeAccountCode = "I", IsDefraProject = 0 }
+            };
+            var animals = new List<Animal>
+            {
+                new() { AnimalType = "Cat", DailyRate = 10m }
+            };
+            var animalRequests = new List<AnimalRequest>
+            {
+                new() { IndCounter = 1, JobCode = "JOB001", AnimalType = "Cat" }
+            };
+
+            var repo = CreateRepositoryWithJoinData(animals, animalRequests, projects);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetAnimalCostAsync(query, "JOB999");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Empty(result.Data);
+            Assert.Equal(0, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetAnimalCostAsync_AppliesPaging_WhenMultipleRecordsExist()
+        {
+            // Arrange
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "JOB001", Program = "PRG01", ProjectTitle = "T",
+                        Customer = "C", Disease = "D", Contract = "CT",
+                        ProjectStatus = "A", IncomeAccountCode = "I", IsDefraProject = 0 }
+            };
+            var animals = new List<Animal>
+            {
+                new() { AnimalType = "Cat", DailyRate = 10m },
+                new() { AnimalType = "Dog", DailyRate = 15m },
+                new() { AnimalType = "Pig", DailyRate = 20m }
+            };
+            var animalRequests = new List<AnimalRequest>
+            {
+                new() { IndCounter = 1, JobCode = "JOB001", AnimalType = "Cat",  NumberOfDays = 1, NumberOfAnimals = 1 },
+                new() { IndCounter = 2, JobCode = "JOB001", AnimalType = "Dog",  NumberOfDays = 1, NumberOfAnimals = 1 },
+                new() { IndCounter = 3, JobCode = "JOB001", AnimalType = "Pig",  NumberOfDays = 1, NumberOfAnimals = 1 }
+            };
+
+            var repo = CreateRepositoryWithJoinData(animals, animalRequests, projects);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 2 };
+
+            // Act
+            var result = await repo.GetAnimalCostAsync(query, "JOB001");
+
+            // Assert
+            Assert.Equal(2, result.Data.Count());            // page size respected
+            Assert.Equal(3, result.PaginationData.TotalRecords);
+            Assert.Equal(2, result.PaginationData.TotalPages);
+        }
+
+        [Fact]
+        public async Task GetAnimalCostAsync_AppliesSortByAnimalType_Ascending()
+        {
+            // Arrange
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "JOB001", Program = "PRG01", ProjectTitle = "T",
+                        Customer = "C", Disease = "D", Contract = "CT",
+                        ProjectStatus = "A", IncomeAccountCode = "I", IsDefraProject = 0 }
+            };
+            var animals = new List<Animal>
+            {
+                new() { AnimalType = "Dog", DailyRate = 15m },
+                new() { AnimalType = "Cat", DailyRate = 10m }
+            };
+            var animalRequests = new List<AnimalRequest>
+            {
+                new() { IndCounter = 1, JobCode = "JOB001", AnimalType = "Dog", NumberOfDays = 1, NumberOfAnimals = 1 },
+                new() { IndCounter = 2, JobCode = "JOB001", AnimalType = "Cat", NumberOfDays = 1, NumberOfAnimals = 1 }
+            };
+
+            var repo = CreateRepositoryWithJoinData(animals, animalRequests, projects);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "animaltype", Descending = false };
+
+            // Act
+            var result = await repo.GetAnimalCostAsync(query, "JOB001");
+
+            // Assert
+            Assert.Equal("Cat", result.Data.First().AnimalType);
+            Assert.Equal("Dog", result.Data.Skip(1).First().AnimalType);
+        }
+
+        [Fact]
+        public async Task GetAnimalCostAsync_AppliesSortByAnimalType_Descending()
+        {
+            // Arrange
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "JOB001", Program = "PRG01", ProjectTitle = "T",
+                        Customer = "C", Disease = "D", Contract = "CT",
+                        ProjectStatus = "A", IncomeAccountCode = "I", IsDefraProject = 0 }
+            };
+            var animals = new List<Animal>
+            {
+                new() { AnimalType = "Cat", DailyRate = 10m },
+                new() { AnimalType = "Dog", DailyRate = 15m }
+            };
+            var animalRequests = new List<AnimalRequest>
+            {
+                new() { IndCounter = 1, JobCode = "JOB001", AnimalType = "Cat", NumberOfDays = 1, NumberOfAnimals = 1 },
+                new() { IndCounter = 2, JobCode = "JOB001", AnimalType = "Dog", NumberOfDays = 1, NumberOfAnimals = 1 }
+            };
+
+            var repo = CreateRepositoryWithJoinData(animals, animalRequests, projects);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "animaltype", Descending = true };
+
+            // Act
+            var result = await repo.GetAnimalCostAsync(query, "JOB001");
+
+            // Assert
+            Assert.Equal("Dog", result.Data.ElementAt(0).AnimalType);
+            Assert.Equal("Cat", result.Data.ElementAt(1).AnimalType);
+        }
+
+        #endregion        
 
         #region AddAnimalCostAsync
 
