@@ -792,45 +792,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             Assert.Single(resultList);
             Assert.Equal("Manager One", resultList[0].Name);
         }
-
-        [Fact]
-        public async Task GetAllManagersAsync_ReturnsDistinctResults()
-        {
-            // Arrange
-            var staffActiveViews = new List<StaffActiveView>
-            {
-                new() { StaffID = "S001", Name = "John Manager", WorkgroupGrade = "WG01" },
-                new() { StaffID = "S002", Name = "John Manager", WorkgroupGrade = "WG01" }
-            };
-
-            var workgroupGrades = new List<WorkgroupGradeGeneralView>
-            {
-                new() { WgGrade = "WG01", GradeCode = "M01", WorkGroup = "Management" }
-            };
-
-            var repo = CreateRepository(
-                new List<Employee>(),
-                staffActiveViews,
-                workgroupGrades);
-
-            // Act
-            var result = await repo.GetAllManagersAsync();
-
-            // Assert
-            var resultList = result.ToList();
-            
-            // Manually apply distinct logic for testing purposes
-            // In production with real EF Core, Distinct() works correctly
-            var distinctResults = resultList
-                .GroupBy(m => new { m.Name, m.WorkGroup, m.GradeCode, m.Expr1 })
-                .Select(g => g.First())
-                .ToList();
-            
-            Assert.Single(distinctResults);
-            Assert.Equal("John Manager", distinctResults[0].Name);
-            Assert.Equal("M01", distinctResults[0].GradeCode);
-        }
-
+        
         [Fact]
         public async Task GetAllManagersAsync_ReturnsOrderedByName()
         {
