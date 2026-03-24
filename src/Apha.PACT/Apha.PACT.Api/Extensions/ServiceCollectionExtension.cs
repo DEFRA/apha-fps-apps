@@ -1,10 +1,7 @@
-﻿using Apha.Common.Utilities.StateManagement;
-using Apha.Common.Utilities.ExcelExport;
-using Apha.PACT.Application.Interfaces;
-using Apha.PACT.Application.Services;
+﻿using Apha.Common.Utilities.ExcelExport;
+using Apha.Common.Utilities.StateManagement;
 using Apha.PACT.Core.Interfaces;
 using Apha.PACT.DataAccess.Context;
-using Apha.PACT.DataAccess.Repositories;
 
 namespace Apha.PACT.Api.Extensions
 {
@@ -19,7 +16,6 @@ namespace Apha.PACT.Api.Extensions
         public static IServiceCollection AddServices(this IServiceCollection services)
         {
             // Add your application services here
-            services.AddScoped<IWeatherForecastService, WeatherForecastService>();
             services.AddScoped<IAppStateService, AppStateService>();
             services.AddScoped<IExcelExportService, ExcelExportService>();
             return services;
@@ -28,7 +24,6 @@ namespace Apha.PACT.Api.Extensions
         {
             // Add your data access services here
             services.AddScoped<IFPSYearContext, FPSYearContext>();
-            services.AddScoped<IWeatherForecastRepository, WeatherForecastRepository>();
             return services;
         }
     }

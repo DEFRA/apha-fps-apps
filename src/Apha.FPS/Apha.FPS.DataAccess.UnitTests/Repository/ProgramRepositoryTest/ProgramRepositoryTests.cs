@@ -17,6 +17,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
         /// Creates a ProgramRepository with in-memory Programs, UserPrograms, and Users data.
         /// IFpsYearContext is substituted via NSubstitute.
         /// Get() JOIN logic across Programs/UserPrograms/Users is covered by integration tests.
+        /// ExecuteDeleteAsync() used in DeleteProgramAsync is not mockable and is covered by integration tests.
         /// </summary>
         private static ProgramRepository CreateRepository(
             IEnumerable<Core.Entities.Program> programs,
@@ -78,9 +79,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
             var repo = new ProgramRepository(mockContext.Object, fpsYearContext);
             return (repo, programsMockSet, userProgramsMockSet, mockContext);
         }
-       
 
-        #region Get        
+        #region GetProgramByIdAsync
 
         [Fact]
         public async Task GetProgramByIdAsync_ReturnsNull_WhenNotFound()
@@ -90,7 +90,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
             {
                 new() { ProgramNo = "P001", FpsCalYear = DefaultTestFpsYear }
             };
-            var repo = CreateRepository(programs, new List<UserProgram>(), new List<User>());
+            var repo = CreateRepository(programs, [], []);
 
             // Act
             var result = await repo.GetProgramByIdAsync("P999");
@@ -103,7 +103,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
         public async Task GetProgramByIdAsync_ReturnsNull_WhenProgramsIsEmpty()
         {
             // Arrange
-            var repo = CreateRepository(new List<Core.Entities.Program>(), new List<UserProgram>(), new List<User>());
+            var repo = CreateRepository([], [], []);
 
             // Act
             var result = await repo.GetProgramByIdAsync("P001");
@@ -112,13 +112,32 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
             Assert.Null(result);
         }
 
+        [Fact]
+        public async Task GetProgramByIdAsync_ReturnsProgram_WhenFound()
+        {
+            // Arrange
+            var programs = new List<Core.Entities.Program>
+            {
+                new() { ProgramNo = "P001", ProgramName = "Program One", FpsCalYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(programs, [], []);
+
+            // Act
+            var result = await repo.GetProgramByIdAsync("P001");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("P001", result.ProgramNo);
+            Assert.Equal("Program One", result.ProgramName);
+        }
+
         [Theory]
         [InlineData("")]
         [InlineData("   ")]
         public async Task GetProgramByIdAsync_ThrowsArgumentException_WhenIdIsNullOrWhiteSpace(string id)
         {
             // Arrange
-            var repo = CreateRepository(new List<Core.Entities.Program>(), new List<UserProgram>(), new List<User>());
+            var repo = CreateRepository([], [], []);
 
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentException>(() => repo.GetProgramByIdAsync(id));
@@ -129,15 +148,22 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
         #region AddProgramAsync
 
         [Fact]
+        public async Task AddProgramAsync_ThrowsArgumentNullException_WhenProgramIsNull()
+        {
+            // Arrange
+            var repo = CreateRepository([], [], []);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentNullException>(() => repo.AddProgramAsync(null!));
+        }
+
+        [Fact]
         public async Task AddProgramAsync_AddsProgram_AndSetsYearAndUserProgram_WhenDboUserExists()
         {
             // Arrange
             var dboUser = new User { UserId = 1, Username = "dbo" };
             var (repo, programsMockSet, userProgramsMockSet, mockContext) =
-                CreateRepositoryWithMocks(
-                    new List<Core.Entities.Program>(),
-                    new List<UserProgram>(),
-                    new List<User> { dboUser });
+                CreateRepositoryWithMocks([], [], [dboUser]);
 
             var newProgram = new Core.Entities.Program { ProgramNo = "P001", ProgramName = "Program One" };
 
@@ -154,14 +180,36 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
         }
 
         [Fact]
+        public async Task AddProgramAsync_SetsCorrectUserProgramFields_WhenDboUserExists()
+        {
+            // Arrange
+            var dboUser = new User { UserId = 7, Username = "dbo" };
+            UserProgram? capturedUserProgram = null;
+            var (repo, _, userProgramsMockSet, _) =
+                CreateRepositoryWithMocks([], [], [dboUser]);
+
+            userProgramsMockSet
+                .Setup(x => x.Add(It.IsAny<UserProgram>()))
+                .Callback<UserProgram>(up => capturedUserProgram = up);
+
+            var newProgram = new Core.Entities.Program { ProgramNo = "P001", ProgramName = "Program One" };
+
+            // Act
+            await repo.AddProgramAsync(newProgram);
+
+            // Assert
+            Assert.NotNull(capturedUserProgram);
+            Assert.Equal("P001", capturedUserProgram!.ProgramNo);
+            Assert.Equal(7, capturedUserProgram.UserID);
+            Assert.Equal(DefaultTestFpsYear, capturedUserProgram.FpsCalYear);
+        }
+
+        [Fact]
         public async Task AddProgramAsync_AddsProgramOnly_WhenNoDboUserExists()
         {
             // Arrange — no "dbo" user means UserProgram should NOT be added
             var (repo, programsMockSet, userProgramsMockSet, mockContext) =
-                CreateRepositoryWithMocks(
-                    new List<Core.Entities.Program>(),
-                    new List<UserProgram>(),
-                    new List<User>());
+                CreateRepositoryWithMocks([], [], []);
 
             var newProgram = new Core.Entities.Program { ProgramNo = "P001", ProgramName = "Program One" };
 
@@ -179,10 +227,15 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
         public async Task AddProgramAsync_SetsFpsCalYear_FromYearContext()
         {
             // Arrange
-            var repo = CreateRepository(new List<Core.Entities.Program>(), new List<UserProgram>(), new List<User>());
+            const int customYear = 2025;
+            var (repo, _, _, _) = CreateRepositoryWithMocks([], [], [], fpsYear: customYear);
+            var newProgram = new Core.Entities.Program { ProgramNo = "P001" };
 
-            // Act & Assert
-            await Assert.ThrowsAsync<ArgumentNullException>(() => repo.AddProgramAsync(null!));
+            // Act
+            var result = await repo.AddProgramAsync(newProgram);
+
+            // Assert
+            Assert.Equal(customYear, result.FpsCalYear);
         }
 
         #endregion
@@ -190,15 +243,22 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
         #region UpdateProgramAsync
 
         [Fact]
+        public async Task UpdateProgramAsync_ThrowsArgumentNullException_WhenProgramIsNull()
+        {
+            // Arrange
+            var repo = CreateRepository([], [], []);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentNullException>(() => repo.UpdateProgramAsync(null!));
+        }
+
+        [Fact]
         public async Task UpdateProgramAsync_UpdatesProgram_AndAddsUserProgram_WhenDboUserExistsAndLinkIsMissing()
         {
             // Arrange — dbo user exists but no UserProgram link yet → link should be created
             var dboUser = new User { UserId = 1, Username = "dbo" };
             var (repo, programsMockSet, userProgramsMockSet, mockContext) =
-                CreateRepositoryWithMocks(
-                    new List<Core.Entities.Program>(),
-                    new List<UserProgram>(),
-                    new List<User> { dboUser });
+                CreateRepositoryWithMocks([], [], [dboUser]);
 
             var program = new Core.Entities.Program { ProgramNo = "P001", ProgramName = "Updated Name" };
 
@@ -220,10 +280,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
             var dboUser = new User { UserId = 1, Username = "dbo" };
             var existingLink = new UserProgram { ProgramNo = "P001", UserID = 1, FpsCalYear = DefaultTestFpsYear };
             var (repo, programsMockSet, userProgramsMockSet, mockContext) =
-                CreateRepositoryWithMocks(
-                    new List<Core.Entities.Program>(),
-                    new List<UserProgram> { existingLink },
-                    new List<User> { dboUser });
+                CreateRepositoryWithMocks([], [existingLink], [dboUser]);
 
             var program = new Core.Entities.Program { ProgramNo = "P001", ProgramName = "Updated Name" };
 
@@ -238,13 +295,22 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
         }
 
         [Fact]
-        public async Task UpdateProgramAsync_ThrowsArgumentNullException_WhenProgramIsNull()
+        public async Task UpdateProgramAsync_UpdatesProgramOnly_WhenNoDboUserExists()
         {
-            // Arrange
-            var repo = CreateRepository(new List<Core.Entities.Program>(), new List<UserProgram>(), new List<User>());
+            // Arrange — no "dbo" user means UserProgram should NOT be touched
+            var (repo, programsMockSet, userProgramsMockSet, mockContext) =
+                CreateRepositoryWithMocks([], [], []);
 
-            // Act & Assert
-            await Assert.ThrowsAsync<ArgumentNullException>(() => repo.UpdateProgramAsync(null!));
+            var program = new Core.Entities.Program { ProgramNo = "P001", ProgramName = "Updated Name" };
+
+            // Act
+            var result = await repo.UpdateProgramAsync(program);
+
+            // Assert
+            Assert.NotNull(result);
+            programsMockSet.Verify(x => x.Update(It.IsAny<Core.Entities.Program>()), Times.Once);
+            userProgramsMockSet.Verify(x => x.Add(It.IsAny<UserProgram>()), Times.Never);
+            RepositoryTestHelper.VerifySaveChanges(mockContext);
         }
 
         #endregion
@@ -257,8 +323,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
         public async Task DeleteProgramAsync_ThrowsArgumentException_WhenIdIsNullOrWhiteSpace(string id)
         {
             // Arrange
-            var repo = CreateRepository(new List<Core.Entities.Program>(), new List<UserProgram>(), new List<User>());
-            
+            var repo = CreateRepository([], [], []);
+
+            // Act & Assert
+            // ExecuteDeleteAsync() is not mockable with Moq; full delete logic is covered by integration tests.
             await Assert.ThrowsAsync<ArgumentException>(() => repo.DeleteProgramAsync(id));
         }
 

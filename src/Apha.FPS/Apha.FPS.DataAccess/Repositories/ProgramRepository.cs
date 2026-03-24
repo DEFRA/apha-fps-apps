@@ -11,37 +11,42 @@ using System.Linq.Expressions;
 namespace Apha.FPS.DataAccess.Repositories
 {
     public class ProgramRepository : BaseRepository, IProgramRepository
-    {       
+    {
         private readonly FpsDbContext _dbContext;
         private readonly IFpsYearContext _yearContext;
+        private readonly int userId = 42;
         public ProgramRepository(FpsDbContext dbContext, IFpsYearContext yearContext) : base(dbContext)
-        {          
+        {
             _dbContext = dbContext;
             _yearContext = yearContext;
         }
-
-        public IQueryable<Program> Get()
-        {           
-            var data = (from p in _dbContext.Programs
-                    join up in _dbContext.UserPrograms
-                        on p.ProgramNo equals up.ProgramNo                       
-                    join u in _dbContext.Users
-                        on up.UserID equals u.UserId
-                    where u.Username == "dbo"
-                        select p).AsQueryable();
-
-            return data;
-        }
-
+              
         public async Task<IEnumerable<Program>> GetAllProgramsAsync()
         {
-            return await Get().ToListAsync();
+            return await _dbContext.ProgramViews.Where(p => p.UserId == userId)
+                .Select(p => new Program
+                {
+                    ProgramNo = p.ProgramNo ?? "",
+                    ProgramName = p.ProgramName,
+                    Directorate = p.Directorate,
+                    Target = p.Target,
+                    Manager = p.Manager
+                }).ToListAsync();
         }
 
         public async Task<PagedData<Program>> GetAllProgramsAsync(PaginationParameters<string> query)
         {
 
-            var programQuery = Get();
+            var programQuery =  _dbContext.ProgramViews.Where(p => p.UserId == userId)
+                                .Select(p => new Program
+                                {
+                                    ProgramNo = p.ProgramNo ?? "",
+                                    ProgramName = p.ProgramName,
+                                    Directorate = p.Directorate,
+                                    Target = p.Target,
+                                    Manager = p.Manager
+                                }).AsQueryable();
+        
 
             programQuery = ApplyProgramFilter(programQuery, query.Filter);
             programQuery = (IQueryable<Program>)ApplySorting(programQuery, query.SortBy, query.Descending);
@@ -57,7 +62,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return await _dbContext.Programs
                 .AsNoTracking()
                 .FirstOrDefaultAsync(p => p.ProgramNo == id);
-        }  
+        }
 
         public async Task<Program> AddProgramAsync(Program entity)
         {
@@ -79,13 +84,14 @@ namespace Apha.FPS.DataAccess.Repositories
             }
 
             await _dbContext.SaveChangesAsync();
-            return entity;          
+            return entity;
         }
 
         public async Task<Program> UpdateProgramAsync(Program entity)
         {
-           
+
             ArgumentNullException.ThrowIfNull(entity);
+            entity.FpsCalYear = _yearContext.FPSYear;
 
             _dbContext.Programs.Update(entity);
             var dboUser = await _dbContext.Users.FirstOrDefaultAsync(u => u.Username == "dbo");
@@ -115,11 +121,11 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<bool> DeleteProgramAsync(string id)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(id);
-            
+
             await _dbContext.UserPrograms
                 .Where(up => up.ProgramNo == id)
                 .ExecuteDeleteAsync();
-           
+
             var rowsAffected = await _dbContext.Programs
                 .Where(p => p.ProgramNo == id)
                 .ExecuteDeleteAsync();

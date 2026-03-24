@@ -226,7 +226,7 @@ namespace Apha.FPSApps.Web.UnitTests.ProgramMaintenanceControllerTest
         }
 
         [Fact]
-        public async Task Edit_Post_WithValidModel_ReturnsRedirectToIndex()
+        public async Task Edit_Post_WithValidModel_ReturnsSuccessJson()
         {
             // Arrange
             var programViewModel = new ProgramViewModel
@@ -250,12 +250,15 @@ namespace Apha.FPSApps.Web.UnitTests.ProgramMaintenanceControllerTest
             var result = await _controller.Edit(programViewModel);
 
             // Assert
-            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
-            Assert.Equal("Index", redirectResult.ActionName);
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultValue<JsonResponse>(jsonResult);
+            Assert.NotNull(value);
+            Assert.True(value.success);
+            Assert.Equal("Program updated successfully.", value.message);
         }
 
         [Fact]
-        public async Task Edit_Post_WhenServiceFails_ReturnsPartialViewWithError()
+        public async Task Edit_Post_WhenServiceFails_ReturnsJsonError()
         {
             // Arrange
             var programViewModel = new ProgramViewModel { ProgramNo = "P001", ProgramName = "Updated Program", Directorate = "Finance" };
@@ -270,9 +273,10 @@ namespace Apha.FPSApps.Web.UnitTests.ProgramMaintenanceControllerTest
             var result = await _controller.Edit(programViewModel);
 
             // Assert
-            var partialViewResult = Assert.IsType<PartialViewResult>(result);
-            Assert.Equal("_EditProgram", partialViewResult.ViewName);
-            Assert.False(_controller.ModelState.IsValid);
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultValue<JsonResponse>(jsonResult);
+            Assert.NotNull(value);
+            Assert.False(value.success);
         }
 
         #endregion
@@ -280,7 +284,7 @@ namespace Apha.FPSApps.Web.UnitTests.ProgramMaintenanceControllerTest
         #region Delete Tests
 
         [Fact]
-        public async Task Delete_WithValidProgramNo_ReturnsRedirectToIndex()
+        public async Task Delete_WithValidProgramNo_ReturnsSuccessJson()
         {
             // Arrange
             var programNo = "P001";
@@ -292,12 +296,15 @@ namespace Apha.FPSApps.Web.UnitTests.ProgramMaintenanceControllerTest
             var result = await _controller.Delete(programNo);
 
             // Assert
-            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
-            Assert.Equal("Index", redirectResult.ActionName);
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultValue<JsonResponse>(jsonResult);
+            Assert.NotNull(value);
+            Assert.True(value.success);
+            Assert.Equal("Program deleted successfully.", value.message);
         }
 
         [Fact]
-        public async Task Delete_WhenServiceFails_ReturnsRedirectToIndex()
+        public async Task Delete_WhenServiceFails_ReturnsJsonError()
         {
             // Arrange
             var programNo = "P001";
@@ -310,8 +317,10 @@ namespace Apha.FPSApps.Web.UnitTests.ProgramMaintenanceControllerTest
             var result = await _controller.Delete(programNo);
 
             // Assert
-            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
-            Assert.Equal("Index", redirectResult.ActionName);
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultValue<JsonResponse>(jsonResult);
+            Assert.NotNull(value);
+            Assert.False(value.success);
         }
 
         #endregion

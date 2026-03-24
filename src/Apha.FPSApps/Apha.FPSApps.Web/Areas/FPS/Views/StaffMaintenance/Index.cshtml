@@ -194,16 +194,16 @@
             var form = $('#staffForm');
 
             // Clear previous errors
-            $('.govuk-error-summary').hide();
-            $('.govuk-error-message').hide();
-            $('.govuk-form-group').removeClass('govuk-form-group--error');
-            $('.govuk-input, .govuk-select').removeClass('govuk-input--error');
+            // $('.govuk-error-summary').hide();
+            // $('.govuk-error-message').hide();
+            // $('.govuk-form-group').removeClass('govuk-form-group--error');
+            // $('.govuk-input, .govuk-select').removeClass('govuk-input--error');
 
             // Validate form
-            if (!form.valid()) {
-                displayClientValidationErrors();
+             if (!isFormValid(form)) {
+                displayClientValidationErrors(form);
                 return;
-            }
+             }
 
             var employeeData = {
                 SPNumber: $('#SPNumber').val(),  
@@ -229,90 +229,127 @@
                         window.location.reload();
                     } else {
                         // Show validation errors from server
-                        displayServerValidationErrors(response.errors);
+                        displayServerValidationErrors(result.errors, result.message);
                     }
                 },
                 error: function(xhr) {
                     if (xhr.status === 400 && xhr.responseJSON) {
-                        displayServerValidationErrors(xhr.responseJSON.errors);
+                        displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message);
                     } else {
-                        alert('An error occurred while saving');
+                        alert('An error occurred while saving.');
                     }
                 }
             });
         }
 
         // Display client-side validation errors
-        function displayClientValidationErrors() {
-            var errorSummary = $('.govuk-error-summary');
-            var errorList = errorSummary.find('.govuk-error-summary__list');
-            errorList.empty();
-
-            var hasErrors = false;
-
-            // Check each field for validation errors
-            $('#staffForm input, #staffForm select').each(function() {
-                var $field = $(this);
-                var fieldName = $field.attr('name');
-                var validationSpan = $field.siblings('span[data-valmsg-for="' + fieldName + '"]');
-
-                if (validationSpan.length && validationSpan.text()) {
-                    hasErrors = true;
-                    var errorMessage = validationSpan.text();
-                    var formGroup = $field.closest('.govuk-form-group');
-
-                    // Add to summary
-                    errorList.append('<li><a href="#modal-' + fieldName.toLowerCase() + '">' + errorMessage + '</a></li>');
-
-                    // Highlight field
-                    formGroup.addClass('govuk-form-group--error');
-                    $field.addClass('govuk-input--error');
-                    $field.siblings('.govuk-error-message').text(errorMessage).show();
+          // Returns true if all required fields in the form have values
+        function isFormValid(form) {
+            var isValid = true;
+            form.find('[required]').each(function () {
+                if (!$(this).val() || $(this).val().trim() === '') {
+                    isValid = false;
+                    return false; // break
                 }
             });
-
-            if (hasErrors) {
-                errorSummary.show();
-                errorSummary.focus();
-            }
+            return isValid;
         }
 
-        // Display server-side validation errors
-        function displayServerValidationErrors(errors) {
-            var errorSummary = $('.govuk-error-summary');
-            var errorList = errorSummary.find('.govuk-error-summary__list');
-            errorList.empty();
+        // Clears all validation highlighting and the error summary inside the modal
+        function clearValidationErrors() {
+            var errorSummary = $('.govuk-error-summary', '#modaPopupBody');
+            errorSummary.hide();
+            errorSummary.find('.govuk-error-summary__list').empty();
 
-            if (errors && errors.length > 0) {
-                errorSummary.show();
-
-                errors.forEach(function(error) {
-                    var fieldName = error.field || error.Field || '';
-                    var message = error.message || error.Message || 'Validation error';
-
-                    // Add to summary list
-                    errorList.append('<li><a href="#modal-' + fieldName.toLowerCase() + '">' + message + '</a></li>');
-
-                    // Highlight field
-                    var field = $('#modal-' + fieldName.toLowerCase());
-                    if (field.length) {
-                        var formGroup = field.closest('.govuk-form-group');
-                        var errorSpan = field.siblings('.govuk-error-message');
-
-                        formGroup.addClass('govuk-form-group--error');
-                        field.addClass('govuk-input--error');
-                        errorSpan.text(message).show();
-                    }
-                });
-
-                errorSummary.focus();
-            } else {
-                errorSummary.hide();
-            }
+            $('[name]', '#modaPopupBody').each(function () {
+                var $field = $(this);
+                $field.closest('.govuk-form-group').removeClass('govuk-form-group--error');
+                $field.removeClass('govuk-input--error');
+                $field.siblings('span[data-valmsg-for]').text('').hide();
+            });
         }
 
-        // Close modal
+        // Client-side validation errors — reads from [required] fields inside the form        
+         function displayClientValidationErrors(form) {
+             var errorSummary = $('.govuk-error-summary', '#modaPopupBody');
+             var errorList = errorSummary.find('.govuk-error-summary__list');
+             var summaryTitle = errorSummary.find('.govuk-error-summary__title');
+
+             errorList.empty();
+             summaryTitle.text('There is a problem');
+             clearValidationErrors();
+
+             var errors = [];
+
+             form.find('[required]').each(function () {
+                 var $field = $(this);
+                 if (!$field.val() || $field.val().trim() === '') {
+                     var fieldName = $field.attr('name') || '';
+                     var label = $('label[for="' + fieldName + '"]', '#modaPopupBody').text().trim()
+                                 || fieldName;
+                     errors.push({ field: fieldName, message: label + ' is required' });
+                 }
+             });
+
+             if (errors.length > 0) {
+                 errors.forEach(function (error) {
+                     // Add to summary list
+                     errorList.append(
+                         '<li><a href="#' + error.field + '">' + error.message + '</a></li>'
+                     );
+
+                     // Highlight the matching field inside the modal
+                     var $field = $('[name="' + error.field + '"]', '#modaPopupBody');
+                     if ($field.length) {
+                         $field.closest('.govuk-form-group').addClass('govuk-form-group--error');
+                         $field.addClass('govuk-input--error');
+                         $field.siblings('span[data-valmsg-for]').text(error.message).show();
+                     }
+                 });
+
+                 errorSummary.show().focus();
+             } else {
+                 errorSummary.hide();
+             }
+         }
+
+         // Server-side validation errors — expects [{ field, message }]
+         function displayServerValidationErrors(errors, summaryMessage) {
+             var errorSummary = $('.govuk-error-summary', '#modaPopupBody');
+             var errorList = errorSummary.find('.govuk-error-summary__list');
+             var summaryTitle = errorSummary.find('.govuk-error-summary__title');
+
+             errorList.empty();
+             summaryTitle.text(summaryMessage || 'There is a problem');
+
+             if (errors && errors.length > 0) {
+                 errors.forEach(function (error) {
+                     var fieldName = error.field || '';
+                     var message   = error.message || 'Validation error';
+
+                     // Add to summary list
+                     errorList.append(
+                         '<li><a href="#' + fieldName + '">' + message + '</a></li>'
+                     );
+
+                     // Highlight the matching field inside the modal
+                     var $field = $('[name="' + fieldName + '"]', '#modaPopupBody');
+                     if ($field.length) {
+                         $field.closest('.govuk-form-group').addClass('govuk-form-group--error');
+                         $field.addClass('govuk-input--error');
+                         $field.siblings('span[data-valmsg-for]').text(message).show();
+                     }
+                 });
+
+                 errorSummary.show().focus();
+             } else {
+                 errorSummary.hide();
+             }
+         }
+        
+         // Close modal
         function closeModal() {
+            clearValidationErrors();
             $('#modaPopupBody').html("");
             $('#modalPopup').removeClass("show");
         }
