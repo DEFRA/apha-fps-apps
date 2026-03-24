@@ -1,13 +1,11 @@
-﻿using System.Globalization;
-using Apha.PACT.Api.Extensions;
-using Apha.PACT.Api.Filters;
+﻿using Apha.PACT.Api.Filters;
 using Apha.PACT.Api.Mappings;
 using Apha.PACT.Api.Middleware;
 using Apha.PACT.Application.Mappings;
-using Apha.PACT.DataAccess.Data;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
 namespace Apha.PACT.Api.Extensions
 {
@@ -19,10 +17,7 @@ namespace Apha.PACT.Api.Extensions
             var configuration = builder.Configuration;
 
             // Add database context
-            services.AddDbContext<WeatherForecastDbContext>(options =>
-             options.UseSqlServer(builder.Configuration.GetConnectionString("WeatherForecastConnectionString")
-             ?? throw new InvalidOperationException("Connection string 'WeatherForecastConnectionString' not found.")));
-
+            
             services.AddStackExchangeRedisCache(options =>
             {
                 options.Configuration = builder.Configuration.GetConnectionString("RedisConnectionString");
@@ -31,8 +26,11 @@ namespace Apha.PACT.Api.Extensions
 
 
             // AutoMapper
-            services.AddAutoMapper(typeof(EntityMapper).Assembly);
-            services.AddAutoMapper(typeof(RequestMapper));
+            services.AddAutoMapper(config =>
+            {
+                config.AddMaps(typeof(EntityMapper).Assembly);
+                config.AddMaps(typeof(RequestMapper));
+            });
 
             // MVC API
             services.AddControllers(options =>

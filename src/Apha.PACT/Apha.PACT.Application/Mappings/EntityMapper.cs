@@ -1,6 +1,4 @@
-﻿using Apha.PACT.Application.Dtos;
-using Apha.PACT.Application.Pagination;
-using Apha.PACT.Core.Entities;
+﻿using Apha.PACT.Application.Pagination;
 using Apha.PACT.Core.Pagination;
 using AutoMapper;
 
@@ -13,8 +11,6 @@ namespace Apha.PACT.Application.Mappings
             CreateMap(typeof(PaginationParameters<>), typeof(QueryParameters<>)).ReverseMap();
             CreateMap(typeof(PagedData<>), typeof(PaginatedResult<>)).ReverseMap();
 
-            CreateMap<WeatherForecast, WeatherForecastDto>().ReverseMap();
-            CreateMap<WeatherForecastCriteria, WeatherForecastCriteriaDto>().ReverseMap();
             CreateMap<PaginationData, PaginationDto>().ReverseMap();
         }
     }
