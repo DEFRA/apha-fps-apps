@@ -91,6 +91,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
 
             ArgumentNullException.ThrowIfNull(entity);
+            entity.FpsCalYear = _yearContext.FPSYear;
 
             _dbContext.Programs.Update(entity);
             var dboUser = await _dbContext.Users.FirstOrDefaultAsync(u => u.Username == "dbo");

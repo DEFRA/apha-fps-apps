@@ -1,4 +1,5 @@
-﻿using Apha.FPSApps.Application.Dtos.FPS;
+﻿using Apha.FPSApps.Application.Dtos;
+using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
@@ -16,6 +17,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
     [Area("FPS")]
     [Authorize(Roles = "FPSAdmin,FPSUser")]
     [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")]
+
     public class ProgramMaintenanceController : Controller
     {
         private readonly IMapper _mapper;
@@ -79,14 +81,20 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         [HttpPost]        
         public async Task<IActionResult> Create([FromBody] ProgramViewModel model)
         {
-           
+
             if (!ModelState.IsValid)
             {
                 return Json(new
                 {
                     success = false,
-                    message = "Invalid employee data",
-                    errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
+                    message = "Please correct the errors below.",
+                    errors = ModelState
+                        .Where(kvp => kvp.Value!.Errors.Any())
+                        .SelectMany(kvp => kvp.Value!.Errors.Select(e => new
+                        {
+                            field = kvp.Key,
+                            message = e.ErrorMessage
+                        }))
                 });
             }
 
@@ -96,7 +104,17 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             {
                 return Json(new { success = true, data = response.Data, message = "Employee created successfully" });
             }
-            return Json(new { success = false, errors = response.Errors });
+
+            return Json(new
+            {
+                success = false,
+                message = "Failed to create program.",
+                errors = (response.Errors ?? new List<ApiErrorDto>()).Select(e => new
+                {
+                    field = e.Code ?? string.Empty,
+                    message = e.Message ?? "An unexpected error occurred."
+                })
+            });
         }
 
         // GET: Edit
@@ -119,17 +137,39 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 return Json(new
                 {
                     success = false,
-                    message = "Invalid program data",
-                    errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
+                    message = "Please correct the errors below.",
+                    errors = ModelState
+                        .Where(kvp => kvp.Value!.Errors.Any())
+                        .SelectMany(kvp => kvp.Value!.Errors.Select(e => new
+                        {
+                            field = kvp.Key,
+                            message = e.ErrorMessage
+                        }))
                 });
             }
 
             var dto = _mapper.Map<ProgramDto>(model);
             var response = await _programService.UpdateProgramAsync(dto);
             if (response.Success)
-                return RedirectToAction(nameof(Index));
-            ModelState.AddModelError("", "Failed to update program.");
-            return PartialView("_EditProgram", model);
+            {
+                return Json(new
+                {
+                    success = true,
+                    message = "Program updated successfully.",
+                    data = response.Data
+                });
+            }
+
+            return Json(new
+            {
+                success = false,
+                message = "Failed to update program.",
+                errors = (response.Errors ?? new List<ApiErrorDto>()).Select(e => new
+                {
+                    field = e.Code ?? string.Empty,
+                    message = e.Message ?? "An unexpected error occurred."
+                })
+            });
         }
 
         // GET: Delete
@@ -137,8 +177,25 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         {
             var response = await _programService.DeleteProgramAsync(programNo);
             if (response.Success)
-                return RedirectToAction(nameof(Index));
-            return RedirectToAction(nameof(Index));
+            {
+                return Json(new
+                {
+                    success = true,
+                    message = "Program deleted successfully.",
+                    data = response.Data
+                });
+            }
+
+            return Json(new
+            {
+                success = false,
+                message = "Failed to delete program.",
+                errors = (response.Errors ?? new List<ApiErrorDto>()).Select(e => new
+                {
+                    field = e.Code ?? string.Empty,
+                    message = e.Message ?? "An unexpected error occurred."
+                })
+            });
         }
 
         private async Task<DataGridConfig<ProgramViewModel>> GetProgramGridConfig(QueryParameters<string>? query = null, Dictionary<string, string>? filterDict = null)
