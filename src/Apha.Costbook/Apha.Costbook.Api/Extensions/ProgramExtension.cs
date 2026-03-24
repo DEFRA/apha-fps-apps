@@ -1,13 +1,11 @@
-﻿using System.Globalization;
-using Apha.Costbook.Api.Extensions;
-using Apha.Costbook.Api.Filters;
+﻿using Apha.Costbook.Api.Filters;
 using Apha.Costbook.Api.Mappings;
 using Apha.Costbook.Api.Middleware;
 using Apha.Costbook.Application.Mappings;
-using Apha.Costbook.DataAccess.Data;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
 namespace Apha.Costbook.Api.Extensions
 {
@@ -18,10 +16,8 @@ namespace Apha.Costbook.Api.Extensions
             var services = builder.Services;
             var configuration = builder.Configuration;
 
-            // Add database context
-            services.AddDbContext<WeatherForecastDbContext>(options =>
-             options.UseSqlServer(builder.Configuration.GetConnectionString("WeatherForecastConnectionString")
-             ?? throw new InvalidOperationException("Connection string 'WeatherForecastConnectionString' not found.")));
+            // Add database context          
+
 
             services.AddStackExchangeRedisCache(options =>
             {
@@ -31,8 +27,11 @@ namespace Apha.Costbook.Api.Extensions
 
 
             // AutoMapper
-            services.AddAutoMapper(typeof(EntityMapper).Assembly);
-            services.AddAutoMapper(typeof(RequestMapper));
+            services.AddAutoMapper(config =>
+            {
+                config.AddMaps(typeof(EntityMapper).Assembly);
+                config.AddMaps(typeof(RequestMapper));
+            });
 
             // MVC API
             services.AddControllers(options =>
