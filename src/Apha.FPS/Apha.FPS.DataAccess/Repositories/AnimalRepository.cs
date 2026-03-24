@@ -9,37 +9,23 @@ namespace Apha.FPS.DataAccess.Repositories
 {
     public class AnimalRepository : BaseRepository, IAnimalRepository 
     {
-        private readonly FpsDbContext _dbContext;      
-        private readonly IProjectRepository _projectRepository;
-        public AnimalRepository(FpsDbContext dbContext,
-            IProjectRepository projectRepository) : base(dbContext)
+        private readonly FpsDbContext _dbContext;
+        private readonly int userId = 42;      
+        public AnimalRepository(FpsDbContext dbContext) : base(dbContext)
         {
-            _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
-            _projectRepository = projectRepository ?? throw new ArgumentNullException(nameof(projectRepository));
-        }
-
-        public IQueryable<AnimalRequest> Get()
-        {
-            var projects = _projectRepository.Get();
-
-            return (from p in _dbContext.AnimalRequests
-                    join ap in projects
-                        on p.JobCode equals ap.ParentProject
-                    select p).AsQueryable();
+            _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));            
         }
 
         public async Task<List<Animal>> GetAnimalLookup() => await _dbContext.Animals.ToListAsync();
 
         public async Task<PagedData<AnimalCostView>> GetAnimalCostAsync(PaginationParameters<string> query, string jobCode)
-        {           
-            var projects = _projectRepository.Get();
-            var animalRequest = Get();            
-
-            var queryAnimalCost = from animalReq in animalRequest
+        { 
+            var queryAnimalCost = from animalReq in _dbContext.AnimalRequestViews
                                     join animal in _dbContext.Animals on animalReq.AnimalType equals animal.AnimalType
-                                    join project in projects on animalReq.JobCode equals project.ParentProject
+                                    join project in _dbContext.ProjectViews on 
+                                           new { animalReq.JobCode, animalReq.UserId } equals new { JobCode = project.ParentProject, project.UserId }
                                     let dailyRate = (project.IsDefraProject == -1 ? animal.DefraDailyRate : animal.DailyRate)
-                                    where animalReq.JobCode == jobCode
+                                    where animalReq.JobCode == jobCode && animalReq.UserId == userId
                                     select new AnimalCostView
                                     {
                                         IndCounter = animalReq.IndCounter,
@@ -67,14 +53,12 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<decimal?> GetAnimalRateByIdAsync(string animalType)
         {
-            var projects = _projectRepository.Get();
-            var animalRequest = Get();
-
-            var queryAnimalCost = from animalReq in animalRequest
+            var queryAnimalCost = from animalReq in _dbContext.AnimalRequestViews
                                   join animal in _dbContext.Animals on animalReq.AnimalType equals animal.AnimalType
-                                  join project in projects on animalReq.JobCode equals project.ParentProject
-                                  let dailyRate = project.IsDefraProject == -1 ? animal.DefraDailyRate : animal.DailyRate
-                                  where animal.AnimalType == animalType
+                                  join project in _dbContext.ProjectViews on
+                                         new { animalReq.JobCode, animalReq.UserId } equals new { JobCode = project.ParentProject, project.UserId }
+                                  let dailyRate = (project.IsDefraProject == -1 ? animal.DefraDailyRate : animal.DailyRate)
+                                  where animal.AnimalType == animalType && animalReq.UserId == userId
                                   select dailyRate;
 
             return await queryAnimalCost.FirstOrDefaultAsync();

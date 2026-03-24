@@ -10,17 +10,17 @@
         <form id="editProgramForm">
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label" asp-for="ProgramNo">Program</label>
-                <input type="text" asp-for="ProgramNo" class="govuk-input">
+                <input type="text" asp-for="ProgramNo" required class="govuk-input">
                 <span asp-validation-for="ProgramNo" class="text-danger" style="display:none;"></span>
             </div>
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label" asp-for="ProgramName">Program Name</label>
-                <input type="text" asp-for="ProgramName" class="govuk-input">
+                <input type="text" asp-for="ProgramName" required class="govuk-input">
                 <span asp-validation-for="ProgramName" class="text-danger" style="display:none;"></span>
             </div>
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label" asp-for="Directorate">Directorate</label>
-                <select id="Directorate" asp-for="Directorate" asp-items="@Model.DirectorateOptions" class="govuk-select">
+                <select id="Directorate" asp-for="Directorate" required asp-items="@Model.DirectorateOptions" class="govuk-select">
                 </select>
                 <span asp-validation-for="Directorate" class="text-danger" style="display:none;"></span>
             </div>
@@ -31,7 +31,7 @@
             </div>
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label" asp-for="Manager">Manager</label>
-                <select asp-for="Manager" asp-items="@Model.ManagerList" class="govuk-select">
+                <select asp-for="Manager" asp-items="@Model.ManagerList" required class="govuk-select">
                 </select>
                 <span asp-validation-for="Manager" class="text-danger" style="display:none;"></span>
             </div>

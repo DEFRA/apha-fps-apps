@@ -20,8 +20,8 @@ jobs:
       dotnet_application_solution_name: Apha.FPSApps
       sonar_project_key: DEFRA_apha-fps-apps
       solution_file: Apha.FPSApps.Web
-      run_application_tests: false
-      run_web_tests: false
+      run_application_tests: true
+      run_web_tests: true
       web_layer_suffix: 'Web'
       run_dataaccess_tests: false
     secrets:

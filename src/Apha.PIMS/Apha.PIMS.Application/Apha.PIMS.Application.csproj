@@ -1,19 +1,25 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AutoMapper" Version="14.0.0" />
-    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="8.1.1" />
+    <PackageReference Include="AutoMapper" Version="16.1.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="10.1.5" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\Apha.Common\Apha.Common.csproj" />
     <ProjectReference Include="..\Apha.PIMS.Core\Apha.PIMS.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Dtos\" />
+    <Folder Include="Interfaces\" />
+    <Folder Include="Services\" />
   </ItemGroup>
 
 </Project>

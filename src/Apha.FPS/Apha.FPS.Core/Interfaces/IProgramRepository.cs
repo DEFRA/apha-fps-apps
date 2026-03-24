@@ -5,7 +5,6 @@ namespace Apha.FPS.Core.Interfaces
 {
     public interface IProgramRepository
     {
-        IQueryable<Program> Get();
         Task<IEnumerable<Program>> GetAllProgramsAsync();
         Task<PagedData<Program>> GetAllProgramsAsync(PaginationParameters<string> query);
         Task<Program?> GetProgramByIdAsync(string id);       

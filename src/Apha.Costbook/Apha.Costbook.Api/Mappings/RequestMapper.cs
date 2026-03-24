@@ -1,6 +1,4 @@
 ﻿using Apha.Common.Contracts;
-using Apha.Common.Contracts.FPS;
-using Apha.Costbook.Application.Dtos;
 using Apha.Costbook.Application.Pagination;
 using AutoMapper;
 
@@ -12,9 +10,7 @@ namespace Apha.Costbook.Api.Mappings
         {
             CreateMap(typeof(PaginationReq<>), typeof(QueryParameters<>)).ReverseMap();
             CreateMap(typeof(PaginationRes<>), typeof(PaginatedResult<>)).ReverseMap();
-
-            CreateMap<WeatherForecastRes, WeatherForecastDto>().ReverseMap();           
-            CreateMap<WeatherForecastCriteriaReq, WeatherForecastCriteriaDto>().ReverseMap();
+            
             CreateMap<Pagination, PaginationDto>().ReverseMap();
         }
     }

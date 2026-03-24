@@ -209,7 +209,7 @@ namespace Apha.FPSApps.Web.UnitTests.StaffMaintenanceControllerTest
             var value = GetJsonResultValue<JsonResponse>(jsonResult);
             Assert.NotNull(value);
             Assert.True(value.success);
-            Assert.Equal("Employee created successfully", value.message);
+            Assert.Equal("Staff created successfully", value.message);
         }
 
         [Fact]
@@ -227,7 +227,7 @@ namespace Apha.FPSApps.Web.UnitTests.StaffMaintenanceControllerTest
             var value = GetJsonResultValue<JsonResponse>(jsonResult);
             Assert.NotNull(value);
             Assert.False(value.success);
-            Assert.Equal("Invalid employee data", value.message);
+            Assert.Equal("Please correct the errors below.", value.message);
         }
 
         [Fact]
@@ -279,29 +279,35 @@ namespace Apha.FPSApps.Web.UnitTests.StaffMaintenanceControllerTest
         }
 
         [Fact]
-        public async Task Edit_Get_WithNullSPNumber_ReturnsBadRequest()
+        public async Task Edit_Get_WithNullSPNumber_ReturnsJsonError()
         {
             // Act
             var result = await _controller.Edit(" ");
 
             // Assert
-            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-            Assert.Equal("SP Number is required", badRequestResult.Value);
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultValue<JsonResponse>(jsonResult);
+            Assert.NotNull(value);
+            Assert.False(value.success);
+            Assert.Equal("SP Number is required", value.message);
         }
 
         [Fact]
-        public async Task Edit_Get_WithEmptySPNumber_ReturnsBadRequest()
+        public async Task Edit_Get_WithEmptySPNumber_ReturnsJsonError()
         {
             // Act
             var result = await _controller.Edit("");
 
             // Assert
-            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-            Assert.Equal("SP Number is required", badRequestResult.Value);
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultValue<JsonResponse>(jsonResult);
+            Assert.NotNull(value);
+            Assert.False(value.success);
+            Assert.Equal("SP Number is required", value.message);
         }
 
         [Fact]
-        public async Task Edit_Get_WhenEmployeeNotFound_ReturnsNotFound()
+        public async Task Edit_Get_WhenEmployeeNotFound_ReturnsJsonError()
         {
             // Arrange
             var spNumber = "000001";
@@ -314,8 +320,11 @@ namespace Apha.FPSApps.Web.UnitTests.StaffMaintenanceControllerTest
             var result = await _controller.Edit(spNumber);
 
             // Assert
-            var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
-            Assert.Equal($"Employee with SP Number {spNumber} not found.", notFoundResult.Value);
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultValue<JsonResponse>(jsonResult);
+            Assert.NotNull(value);
+            Assert.False(value.success);
+            Assert.Equal($"Staff with SP Number {spNumber} not found.", value.message);
         }
 
         [Fact]
@@ -367,7 +376,7 @@ namespace Apha.FPSApps.Web.UnitTests.StaffMaintenanceControllerTest
             var value = GetJsonResultValue<JsonResponse>(jsonResult);
             Assert.NotNull(value);
             Assert.False(value.success);
-            Assert.Equal("Invalid employee data", value.message);
+            Assert.Equal("Please correct the errors below.", value.message);
         }
 
         [Fact]

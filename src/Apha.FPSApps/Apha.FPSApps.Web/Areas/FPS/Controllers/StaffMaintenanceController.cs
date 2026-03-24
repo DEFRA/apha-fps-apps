@@ -1,9 +1,11 @@
-﻿using Apha.FPSApps.Application.Dtos.FPS;
+﻿using Apha.FPSApps.Application.Dtos;
+using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
+using Azure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Identity.Web;
@@ -14,6 +16,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
     [Area("FPS")]
     [Authorize(Roles = "FPSAdmin,FPSUser")]
     [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")]
+
     public class StaffMaintenanceController : Controller
     {
         private readonly IMapper _mapper;
@@ -110,8 +113,14 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 return Json(new
                 {
                     success = false,
-                    message = "Invalid employee data",
-                    errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
+                    message = "Please correct the errors below.",
+                    errors = ModelState
+                        .Where(kvp => kvp.Value!.Errors.Any())
+                        .SelectMany(kvp => kvp.Value!.Errors.Select(e => new
+                        {
+                            field = kvp.Key,
+                            message = e.ErrorMessage
+                        }))
                 });
             }
 
@@ -120,10 +129,19 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             if (result.Success)
             {
-                return Json(new { success = true, data = result.Data, message = "Employee created successfully" });
+                return Json(new { success = true, data = result.Data, message = "Staff created successfully" });
             }
 
-            return Json(new { success = false, errors = result.Errors });
+            return Json(new
+            {
+                success = false,
+                message = "Failed to create staff.",
+                errors = (result.Errors ?? new List<ApiErrorDto>()).Select(e => new
+                {
+                    field = e.Code ?? string.Empty,
+                    message = e.Message ?? "An unexpected error occurred."
+                })
+            });
         }
 
         [HttpGet]
@@ -131,7 +149,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         {
             if (string.IsNullOrWhiteSpace(spNumber))
             {
-                return BadRequest("SP Number is required");
+                return Json(new { success = false, message = "SP Number is required" });
             }
 
             var result = await _employeeService.GetEmployeeByIdAsync(spNumber);
@@ -143,7 +161,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             }
             else
             {
-                return NotFound($"Employee with SP Number {spNumber} not found.");
+                return Json(new { success = false, message = $"Staff with SP Number {spNumber} not found." });                
             }
         }
 
@@ -155,8 +173,14 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 return Json(new
                 {
                     success = false,
-                    message = "Invalid employee data",
-                    errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
+                    message = "Please correct the errors below.",
+                    errors = ModelState
+                        .Where(kvp => kvp.Value!.Errors.Any())
+                        .SelectMany(kvp => kvp.Value!.Errors.Select(e => new
+                        {
+                            field = kvp.Key,
+                            message = e.ErrorMessage
+                        }))
                 });
             }
 
@@ -168,7 +192,16 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 return Json(new { success = true, data = result.Data, message = "Employee updated successfully" });
             }
 
-            return Json(new { success = false, errors = result.Errors });
+            return Json(new
+            {
+                success = false,
+                message = "Failed to update staff.",
+                errors = (result.Errors ?? new List<ApiErrorDto>()).Select(e => new
+                {
+                    field = e.Code ?? string.Empty,
+                    message = e.Message ?? "An unexpected error occurred."
+                })
+            });
         }
 
         [HttpDelete]
@@ -186,7 +219,16 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 return Json(new { success = true, message = "Employee deleted successfully" });
             }
 
-            return Json(new { success = false, errors = result.Errors });
+            return Json(new
+            {
+                success = false,
+                message = "Failed to delete staff.",
+                errors = (result.Errors ?? new List<ApiErrorDto>()).Select(e => new
+                {
+                    field = e.Code ?? string.Empty,
+                    message = e.Message ?? "An unexpected error occurred."
+                })
+            });
         }
 
         [HttpGet]
