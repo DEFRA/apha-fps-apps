@@ -1,0 +1,310 @@
+﻿@using Apha.FPSApps.Web.Areas.FPS.Models
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model DataGridConfig<ProgramViewModel>
+
+<main id="main-content">
+    <div class="container-fluid">
+        <!-- Breadcrumb section -->
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full">
+                <div style="padding: 5px 5px; border-bottom: 1px solid #b4b4b4" class="row">
+                    <div style="display: flex; font-size: 14px; align-items: center; justify-content: space-between;">
+                        <div class="col-md-6">
+                            <nav aria-label="Breadcrumb">
+                                <a class="" href="@Url.Action("Index", "Home", new { area = "FPS" })">Home</a> &gt; MAB &gt; Maintenance Menu &gt;  Maintain Program
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Title section -->
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full">
+                <div class="row" style="display:flex; align-items: center;">
+                    <div class="col-sm-12" style="padding:0px;">
+                        <div style="border-bottom: 2px solid #1d70b8; height:48px;">
+                            <h1 style="padding: 15px 0 5px 17px; font-size:16px; width: 50%; font-weight: 700; float:left; margin: 0;">
+                                Program Maintenance
+                            </h1>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full mt-2">
+                <div id="@($"gridContainer_{Model.GridId}")">
+                    @await Html.PartialAsync("_DataGrid", Model)
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+   
+
+
+<div class="modal fade" id="programModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" id="modalbody">
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+         function addProgram(btn) {
+            debugger;
+            $.ajax({
+                url: '/FPS/ProgramMaintenance/Create',
+                type: 'GET',
+                success: function (html) {
+                    $('#modalbody').html(html);
+                    $('#programModal').addClass("show");
+                },
+                error: function () {
+                    alert('An error occurred while deleting');
+                }
+            });
+        }
+
+        function saveProgram() {
+                 var form = $('#addProgramForm');
+
+                  if (!isFormValid(form)) {
+                    displayClientValidationErrors(form);
+                    return;
+                 }
+
+                 var data = {
+                    ProgramNo: form.find('[name="ProgramNo"]').val(),
+                    ProgramName: form.find('[name="ProgramName"]').val(),
+                    Directorate: form.find('[name="Directorate"]').val(),
+                    Target: form.find('[name="Target"]').val(),
+                    Manager: form.find('[name="Manager"]').val()
+                };
+                       
+                $.ajax({
+                    url: '@Url.Action("Create", "ProgramMaintenance", new { area = "FPS" })',
+                    type: 'POST',
+                    data: JSON.stringify(data),
+                    contentType: 'application/json; charset=utf-8',
+                    success: function (result) {
+                         if (result.success) {
+                                alert(result.message);
+                                closeModal();
+                                window.location.reload();
+                          } else {
+                             // Show validation errors from server
+                              displayServerValidationErrors(result.errors, result.message);
+                         }
+                    },
+                    error: function (xhr) {
+                         if (xhr.status === 400 && xhr.responseJSON) {
+                                displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message);
+                            } else {
+                            alert('An error occurred while saving');
+                        }
+                    }
+                });
+            }
+
+            function updateProgram() {
+                var form = $('#editProgramForm');
+
+                 if (!isFormValid(form)) {
+                        displayClientValidationErrors(form);
+                        return;
+                 }
+
+                var data = {
+                    ProgramNo: form.find('[name="ProgramNo"]').val(),
+                    ProgramName: form.find('[name="ProgramName"]').val(),
+                    Directorate: form.find('[name="Directorate"]').val(),
+                    Target: form.find('[name="Target"]').val(),
+                    Manager: form.find('[name="Manager"]').val()
+                };
+
+                $.ajax({
+                    url: '@Url.Action("Edit", "ProgramMaintenance", new { area = "FPS" })',
+                    type: 'POST',
+                    data: JSON.stringify(data),
+                    contentType: 'application/json; charset=utf-8',
+                     success: function (result) {
+                         if (result.success) {
+                                alert(result.message);
+                                closeModal();
+                                window.location.reload();
+                          } else {
+                              displayServerValidationErrors(result.errors, result.message);
+                         }
+                    },
+                    error: function (xhr) {
+                        if (xhr.status === 400 && xhr.responseJSON) {
+                            displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message);
+                        } else {
+                            alert('An error occurred while saving.');
+                        }
+                    }
+                });
+            }
+        
+
+         function editProgram(btn){
+           var ProgramNo = $(btn).data('id');
+            $.ajax({
+                url: '/FPS/ProgramMaintenance/Edit',
+                type: 'GET',
+                data: { programNo: ProgramNo },
+                success: function (html) {
+                    $('#modalbody').html(html);
+                    $('#programModal').addClass("show");
+                },
+                error: function () {
+                    alert('An error occurred while deleting');
+                }
+            });
+        }
+
+        function deleteProgram(btn){
+           var ProgramNo = $(btn).data('id');
+            if (confirm('Are you sure you want to delete this record?')) {
+                $.ajax({
+                    url: '/FPS/ProgramMaintenance/Delete',
+                    type: 'DELETE',
+                    data: { programNo: ProgramNo },
+                    success: function (response) {
+                        if (response.success) {
+                            alert('Deleted successfully');
+                             window.location.reload();
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function () {
+                        alert('An error occurred while deleting');
+                    }
+                });
+            }
+        }
+
+        function closeModal() {
+              clearValidationErrors();
+              $('#modalbody').html("");
+              $('#programModal').removeClass("show");
+        }
+
+          // Returns true if all required fields in the form have values
+        function isFormValid(form) {
+            var isValid = true;
+            form.find('[required]').each(function () {
+                if (!$(this).val() || $(this).val().trim() === '') {
+                    isValid = false;
+                    return false; // break
+                }
+            });
+            return isValid;
+        }
+
+        // Clears all validation highlighting and the error summary inside the modal
+        function clearValidationErrors() {
+            var errorSummary = $('.govuk-error-summary', '#modalbody');
+            errorSummary.hide();
+            errorSummary.find('.govuk-error-summary__list').empty();
+
+            $('[name]', '#modalbody').each(function () {
+                var $field = $(this);
+                $field.closest('.govuk-form-group').removeClass('govuk-form-group--error');
+                $field.removeClass('govuk-input--error');
+                $field.siblings('span[data-valmsg-for]').text('').hide();
+            });
+        }
+
+        // Client-side validation errors — reads from [required] fields inside the form
+         // Mirrors the same summary/field-highlight pattern as displayServerValidationErrors
+         function displayClientValidationErrors(form) {
+             var errorSummary = $('.govuk-error-summary', '#modalbody');
+             var errorList = errorSummary.find('.govuk-error-summary__list');
+             var summaryTitle = errorSummary.find('.govuk-error-summary__title');
+
+             errorList.empty();
+             summaryTitle.text('There is a problem');
+             clearValidationErrors();
+
+             var errors = [];
+
+             form.find('[required]').each(function () {
+                 var $field = $(this);
+                 if (!$field.val() || $field.val().trim() === '') {
+                     var fieldName = $field.attr('name') || '';
+                     var label = $('label[for="' + fieldName + '"]', '#modalbody').text().trim()
+                                 || fieldName;
+                     errors.push({ field: fieldName, message: label + ' is required' });
+                 }
+             });
+
+             if (errors.length > 0) {
+                 errors.forEach(function (error) {
+                     // Add to summary list
+                     errorList.append(
+                         '<li><a href="#' + error.field + '">' + error.message + '</a></li>'
+                     );
+
+                     // Highlight the matching field inside the modal
+                     var $field = $('[name="' + error.field + '"]', '#modalbody');
+                     if ($field.length) {
+                         $field.closest('.govuk-form-group').addClass('govuk-form-group--error');
+                         $field.addClass('govuk-input--error');
+                         $field.siblings('span[data-valmsg-for]').text(error.message).show();
+                     }
+                 });
+
+                 errorSummary.show().focus();
+             } else {
+                 errorSummary.hide();
+             }
+         }
+
+         // Server-side validation errors — expects [{ field, message }]
+         function displayServerValidationErrors(errors, summaryMessage) {
+             var errorSummary = $('.govuk-error-summary', '#modalbody');
+             var errorList = errorSummary.find('.govuk-error-summary__list');
+             var summaryTitle = errorSummary.find('.govuk-error-summary__title');
+
+             errorList.empty();
+             summaryTitle.text(summaryMessage || 'There is a problem');
+
+             if (errors && errors.length > 0) {
+                 errors.forEach(function (error) {
+                     var fieldName = error.field || '';
+                     var message   = error.message || 'Validation error';
+
+                     // Add to summary list
+                     errorList.append(
+                         '<li><a href="#' + fieldName + '">' + message + '</a></li>'
+                     );
+
+                     // Highlight the matching field inside the modal
+                     var $field = $('[name="' + fieldName + '"]', '#modalbody');
+                     if ($field.length) {
+                         $field.closest('.govuk-form-group').addClass('govuk-form-group--error');
+                         $field.addClass('govuk-input--error');
+                         $field.siblings('span[data-valmsg-for]').text(message).show();
+                     }
+                 });
+
+                 errorSummary.show().focus();
+             } else {
+                 errorSummary.hide();
+             }
+         }
+            
+    </script>
+
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

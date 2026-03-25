@@ -1,10 +1,7 @@
-﻿using Apha.Common.Utilities.StateManagement;
-using Apha.Common.Utilities.ExcelExport;
-using Apha.Costbook.Application.Interfaces;
-using Apha.Costbook.Application.Services;
+﻿using Apha.Common.Utilities.ExcelExport;
+using Apha.Common.Utilities.StateManagement;
 using Apha.Costbook.Core.Interfaces;
 using Apha.Costbook.DataAccess.Context;
-using Apha.Costbook.DataAccess.Repositories;
 
 namespace Apha.Costbook.Api.Extensions
 {
@@ -19,7 +16,6 @@ namespace Apha.Costbook.Api.Extensions
         public static IServiceCollection AddServices(this IServiceCollection services)
         {
             // Add your application services here
-            services.AddScoped<IWeatherForecastService, WeatherForecastService>();
             services.AddScoped<IAppStateService, AppStateService>();
             services.AddScoped<IExcelExportService, ExcelExportService>();
             return services;
@@ -28,7 +24,6 @@ namespace Apha.Costbook.Api.Extensions
         {
             // Add your data access services here
             services.AddScoped<IFPSYearContext, FPSYearContext>();
-            services.AddScoped<IWeatherForecastRepository, WeatherForecastRepository>();
             return services;
         }
     }

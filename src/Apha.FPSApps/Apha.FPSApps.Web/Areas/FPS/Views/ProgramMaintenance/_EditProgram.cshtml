@@ -1,0 +1,43 @@
+﻿@model Apha.FPSApps.Web.Areas.FPS.Models.ProgramViewModel
+
+<div class="modal-header">
+    <h5 class="modal-title" id="programModalTitle">Edit Program</h5>
+    <button type="button" class="btn-close btn-red" onclick="closeModal()" data-bs-dismiss="modal">X</button>
+</div>
+<div class="modal-body">
+    <div class="row g-3">
+        <form id="editProgramForm">
+            <div class="govuk-form-group sup_margin_0">
+                <label class="govuk-label" asp-for="ProgramNo">Program</label>
+                <input type="text" asp-for="ProgramNo" required class="govuk-input">
+                <span asp-validation-for="ProgramNo" class="text-danger" style="display:none;"></span>
+            </div>
+            <div class="govuk-form-group sup_margin_0">
+                <label class="govuk-label" asp-for="ProgramName">Program Name</label>
+                <input type="text" asp-for="ProgramName" required class="govuk-input">
+                <span asp-validation-for="ProgramName" class="text-danger" style="display:none;"></span>
+            </div>
+            <div class="govuk-form-group sup_margin_0">
+                <label class="govuk-label" asp-for="Directorate">Directorate</label>
+                <select id="Directorate" asp-for="Directorate" required asp-items="@Model.DirectorateOptions" class="govuk-select">
+                </select>
+                <span asp-validation-for="Directorate" class="text-danger" style="display:none;"></span>
+            </div>
+            <div class="govuk-form-group sup_margin_0">
+                <label class="govuk-label" asp-for="Target">Target</label>
+                <input type="text" asp-for="Target" class="govuk-input" value="@Model.Target">
+                <span asp-validation-for="Target" class="text-danger" style="display:none;"></span>
+            </div>
+            <div class="govuk-form-group sup_margin_0">
+                <label class="govuk-label" asp-for="Manager">Manager</label>
+                <select asp-for="Manager" asp-items="@Model.ManagerList" required class="govuk-select">
+                </select>
+                <span asp-validation-for="Manager" class="text-danger" style="display:none;"></span>
+            </div>
+        </form>
+    </div>    
+</div>
+<div class="modal-footer">
+    <button class="govuk-button govuk-button--secondary sup_margin_0" data-module="govuk-button" data-bs-dismiss="modal" onclick="closeModal()">Cancel</button>
+    <button class="govuk-button sup_margin_0" data-module="govuk-button" type="button" onclick="updateProgram()">Update</button>
+</div>

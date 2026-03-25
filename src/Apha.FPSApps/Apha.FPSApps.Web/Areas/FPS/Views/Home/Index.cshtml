@@ -1,46 +1,6 @@
 ﻿@using Apha.FPSApps.Application.Dtos.FPS
 
-@{
-	Layout = "~/Views/Shared/_Layout.cshtml";
-    var list = ViewBag.Weather as List<WeatherForecastDto>;
-}
-
 <!-- Main header outside the table -->
 <div class="d-flex flex-column align-items-center justify-content-center">
-    <h2 class="mb-4">Weather Forecast</h2>
-    <div class=row>
-        <div class="col-12">
-            <a class="btn btn-primary m-2" href="FPS/Home/ExportToExcel">Excel Report</a>
-        </div>
-    </div>
-    <div class="w-100" style="max-width: 600px;">      
-        @if (list != null && list.Any())
-        {
-            <div class="table-responsive" style="max-height:500px; overflow-y:auto;">
-                <table class="table table-bordered table-striped text-center align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Date</th>
-                            <th>Temperature (°C)</th>
-                            <th>Summary</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var w in list)
-                        {
-                            <tr>
-                                <td>@w.Date.ToShortDateString()</td>
-                                <td>@w.TemperatureC</td>
-                                <td>@w.Summary</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        }
-        else
-        {
-            <div class="text-center text-muted">No data available.</div>
-        }
-    </div>
+    
 </div>
