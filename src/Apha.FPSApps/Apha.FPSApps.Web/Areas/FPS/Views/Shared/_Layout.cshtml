@@ -59,8 +59,8 @@
                         <option class="pims-log" style="border:0; margin-left: 0px;" value="2021-2022">2021-2022</option>
                         <option class="pims-log" style="border:0; margin-left: 0px;" value="2022-2023">2022-2023</option>
                         <option class="pims-log" style="border:0; margin-left: 0px;" value="2023-2024">2023-2024</option>
-                        <option class="pims-log" style="border:0; margin-left: 0px;" value="2024-2025">2024-2025</option>
-                        <option class="pims-log" style="border:0; margin-left: 0px;" value="2025-2026">2025-2026</option>
+                        <option class="pims-log" style="border:0; margin-left: 0px;" value="2024">2024-2025</option>
+                        <option class="pims-log" style="border:0; margin-left: 0px;" value="2025" action="active">2025-2026</option>
                     </select>
                 </div>
             </div>
@@ -355,7 +355,7 @@
         $('#yearSelector').val(selectedYear);
         $('#yearSelector').change(function () {
             selectedYear = this.value;
-            window.location.href = '/Home/Index?year=' + selectedYear;
+            window.location.href = '/FPS/Home/Index?year=' + selectedYear;
         });       
 
     </script>
