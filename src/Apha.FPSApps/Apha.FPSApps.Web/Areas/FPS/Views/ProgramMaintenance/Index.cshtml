@@ -2,15 +2,49 @@
 @using Apha.FPSApps.Web.Models.Components.DataGrid
 @model DataGridConfig<ProgramViewModel>
 
-
-
- <div class="row">
-        <div class="column-12">
-            <div id="@($"gridContainer_{Model.GridId}")">
-                @await Html.PartialAsync("_DataGrid", Model)
+<main id="main-content">
+    <div class="container-fluid">
+        <!-- Breadcrumb section -->
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full">
+                <div style="padding: 5px 5px; border-bottom: 1px solid #b4b4b4" class="row">
+                    <div style="display: flex; font-size: 14px; align-items: center; justify-content: space-between;">
+                        <div class="col-md-6">
+                            <nav aria-label="Breadcrumb">
+                                <a class="" href="@Url.Action("Index", "Home", new { area = "FPS" })">Home</a> &gt; MAB &gt; Maintenance Menu &gt;  Maintain Program
+                            </nav>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
- </div>
+
+        <!-- Title section -->
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full">
+                <div class="row" style="display:flex; align-items: center;">
+                    <div class="col-sm-12" style="padding:0px;">
+                        <div style="border-bottom: 2px solid #1d70b8; height:48px;">
+                            <h1 style="padding: 15px 0 5px 17px; font-size:16px; width: 50%; font-weight: 700; float:left; margin: 0;">
+                                Program Maintenance
+                            </h1>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full mt-2">
+                <div id="@($"gridContainer_{Model.GridId}")">
+                    @await Html.PartialAsync("_DataGrid", Model)
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+   
 
 
 <div class="modal fade" id="programModal" tabindex="-1">
@@ -37,7 +71,7 @@
             });
         }
 
-        function saveProgram() {                
+        function saveProgram() {
                  var form = $('#addProgramForm');
 
                   if (!isFormValid(form)) {
@@ -66,7 +100,7 @@
                           } else {
                              // Show validation errors from server
                               displayServerValidationErrors(result.errors, result.message);
-                         }                       
+                         }
                     },
                     error: function (xhr) {
                          if (xhr.status === 400 && xhr.responseJSON) {
