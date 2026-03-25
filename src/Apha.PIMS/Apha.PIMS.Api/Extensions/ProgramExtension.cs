@@ -1,13 +1,11 @@
-﻿using System.Globalization;
-using Apha.PIMS.Api.Extensions;
-using Apha.PIMS.Api.Filters;
+﻿using Apha.PIMS.Api.Filters;
 using Apha.PIMS.Api.Mappings;
 using Apha.PIMS.Api.Middleware;
 using Apha.PIMS.Application.Mappings;
-using Apha.PIMS.DataAccess.Data;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
 namespace Apha.PIMS.Api.Extensions
 {
@@ -19,9 +17,6 @@ namespace Apha.PIMS.Api.Extensions
             var configuration = builder.Configuration;
 
             // Add database context
-            services.AddDbContext<WeatherForecastDbContext>(options =>
-             options.UseSqlServer(builder.Configuration.GetConnectionString("WeatherForecastConnectionString")
-             ?? throw new InvalidOperationException("Connection string 'WeatherForecastConnectionString' not found.")));
 
             services.AddStackExchangeRedisCache(options =>
             {
@@ -31,8 +26,11 @@ namespace Apha.PIMS.Api.Extensions
 
 
             // AutoMapper
-            services.AddAutoMapper(typeof(EntityMapper).Assembly);
-            services.AddAutoMapper(typeof(RequestMapper));
+            services.AddAutoMapper(config =>
+            {
+                config.AddMaps(typeof(EntityMapper).Assembly);
+                config.AddMaps(typeof(RequestMapper));
+            });
 
             // MVC API
             services.AddControllers(options =>

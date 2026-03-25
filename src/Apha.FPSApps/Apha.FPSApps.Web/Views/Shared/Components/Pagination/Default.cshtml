@@ -1,0 +1,50 @@
+﻿@model Apha.FPSApps.Web.Models.Components.DataGrid.PaginationModel
+
+<nav class="pagination govuk-pagination sup_margin_top_bottom_5_10" aria-label="Pagination">
+    @* <span>Record:</span> *@
+    <!-- First Page -->
+    <ul class="govuk-pagination__list" id="pagination">
+        <li class="govuk-pagination__item">
+    <a class="govuk-link govuk-pagination__link" data-pageno="1" @(Model.PageNumber == 1 ? "disabled" : "") title="First">
+        <svg class="govuk-pagination__icon govuk-pagination__icon--prev" xmlns="http://www.w3.org/2000/svg" height="13" width="15" focusable="false" viewBox="0 0 15 13">
+            <path d="m6.5938-0.0078125-6.7266 6.7266 6.7441 6.4062 1.377-1.449-4.1856-3.9768h12.896v-2h-12.984l4.2931-4.293-1.414-1.414z"></path>
+        </svg>
+    </a>
+    </li>
+    <!-- Previous Page -->
+      <li class="govuk-pagination__item">
+    <a class="govuk-link govuk-pagination__link" data-pageno="@(Model.PageNumber - 1)" @(Model.PageNumber == 1 ? "disabled" : "") title="Previous">
+       Previous
+    </a></li>
+    <!-- Current Page Number -->
+    @* <span class="record-info govuk-pagination__item govuk-pagination__item--current" data-pageno="@(Model.PageNumber)">@Model.PageNumber</span> *@
+    @for (int i = Model.StartPage; i <= Model.EndPage; i++)
+    {
+        if (i == Model.PageNumber)
+        {
+                <li class="govuk-pagination__item govuk-pagination__item--current">
+                    <a class="record-info govuk-link govuk-pagination__link" title="@i" data-pageno="@i">@i</a>
+            </li>
+        }
+        else
+        {    <li class="govuk-pagination__item">
+                    <a  class="record-info govuk-link govuk-pagination__link" title="@i" data-pageno="@i">@i</a>
+            </li>
+        }
+    }
+    <!-- Next Page -->
+        <li class="govuk-pagination__item">
+    <a class="govuk-link govuk-pagination__link" data-pageno="@(Model.PageNumber + 1)" @(Model.PageNumber == Model.TotalPages ? "disabled" : "") title="Next">
+        Next
+    </a>
+    </li>
+    <!-- Last Page -->
+        <li class="govuk-pagination__item">
+    <a class="govuk-link govuk-pagination__link" data-pageno="@Model.TotalPages" @(Model.PageNumber == Model.TotalPages ? "disabled" : "") title="Last">
+        <svg class="govuk-pagination__icon govuk-pagination__icon--next" xmlns="http://www.w3.org/2000/svg" height="13" width="15" focusable="false" viewBox="0 0 15 13">
+            <path d="m8.107-0.0078125-1.4136 1.414 4.2926 4.293h-12.986v2h12.896l-4.1855 3.9766 1.377 1.4492 6.7441-6.4062-6.7246-6.7266z"></path>
+        </svg>
+    </a>
+    </li>
+    </ul>
+</nav>

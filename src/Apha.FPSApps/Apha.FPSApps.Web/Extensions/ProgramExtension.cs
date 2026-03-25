@@ -13,11 +13,11 @@ namespace Apha.FPSApps.Web.Extensions
         public static void ConfigureServices(this WebApplicationBuilder builder)
         {
             var services = builder.Services;
-            var configuration = builder.Configuration;            
+            var configuration = builder.Configuration;
 
             services.AddStackExchangeRedisCache(options =>
             {
-                options.Configuration = builder.Configuration.GetConnectionString("RedisConnectionString");
+                options.Configuration = configuration.GetConnectionString("RedisConnectionString");
                 options.InstanceName = "RedisInstance";
             });
 
@@ -31,9 +31,12 @@ namespace Apha.FPSApps.Web.Extensions
                 options.Cookie.SameSite = SameSiteMode.Lax;
             });
 
-            // AutoMapper            
-            services.AddAutoMapper(typeof(ViewModelMapper));
-            services.AddAutoMapper(typeof(ApiDtoMapper).Assembly);
+            // AutoMapper  
+            services.AddAutoMapper(config =>
+            {
+                config.AddMaps(typeof(ApiDtoMapper).Assembly);
+                config.AddMaps(typeof(ViewModelMapper));
+            });
 
             // HTTP Context
             services.AddHttpContextAccessor();
@@ -61,10 +64,6 @@ namespace Apha.FPSApps.Web.Extensions
 
             // Application services
             services.AddApplicationServices();
-
-           
-
-           
 
             // Health checks
             services.AddHealthChecks();
@@ -109,7 +108,7 @@ namespace Apha.FPSApps.Web.Extensions
 
             app.UseSession();
             app.UseMiddleware<ExceptionMiddleware>();
-            app.UseMiddleware<FPSYearMiddleware>();
+            app.UseMiddleware<FpsYearMiddleware>();
 
             app.UseAuthentication();
             app.UseAuthorization();

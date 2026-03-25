@@ -14,6 +14,9 @@ namespace Apha.FPSApps.Web.Extensions
 {
     public static class ApiClientExtension
     {
+        private const string AcceptHeader = "Accept";
+        private const string ApplicationJson = "application/json";
+
         public static IServiceCollection AddApiClient(this IServiceCollection services, IConfiguration configuration)
         {
             // FPS
@@ -21,9 +24,10 @@ namespace Apha.FPSApps.Web.Extensions
             {
                 client.BaseAddress = new Uri(
                     configuration["FPSApiSettings:BaseUrl"]
-                        ?? throw new InvalidOperationException("FPS base URL not configured"));                                
-                client.DefaultRequestHeaders.Add("Accept", "application/json");
-            }).AddHttpMessageHandler(sp =>
+                        ?? throw new InvalidOperationException("FPS base URL not configured"));
+                client.DefaultRequestHeaders.Add(AcceptHeader, ApplicationJson);
+            })
+            .AddHttpMessageHandler(sp =>
             {
                 var scopes = configuration["FPSApiSettings:Scope"]!
                     .Split(' ', StringSplitOptions.RemoveEmptyEntries);
@@ -32,8 +36,8 @@ namespace Apha.FPSApps.Web.Extensions
                     sp.GetRequiredService<ITokenAcquisition>(),
                     sp.GetRequiredService<IHttpContextAccessor>(),
                     scopes);
-            }).AddHttpMessageHandler<RequestHeadersHandler>(); 
-
+            })
+            .AddHttpMessageHandler<RequestHeadersHandler>();
 
             services.AddScoped<IFpsHttpExecutor>(sp =>
             {
@@ -48,7 +52,7 @@ namespace Apha.FPSApps.Web.Extensions
             {
                 client.BaseAddress = new Uri(configuration["PACTApiSettings:BaseUrl"]
                     ?? throw new InvalidOperationException("PACT base URL not configured"));
-                client.DefaultRequestHeaders.Add("Accept", "application/json");
+                client.DefaultRequestHeaders.Add(AcceptHeader, ApplicationJson);
             }).AddHttpMessageHandler<RequestHeadersHandler>();
 
             services.AddScoped<IPactHttpExecutor>(sp =>
@@ -64,7 +68,7 @@ namespace Apha.FPSApps.Web.Extensions
             {
                 client.BaseAddress = new Uri(configuration["PIMSApiSettings:BaseUrl"]
                     ?? throw new InvalidOperationException("PIMS base URL not configured"));
-                client.DefaultRequestHeaders.Add("Accept", "application/json");
+                client.DefaultRequestHeaders.Add(AcceptHeader, ApplicationJson);
             }).AddHttpMessageHandler<RequestHeadersHandler>();
 
             services.AddScoped<IPimsHttpExecutor>(sp =>
@@ -80,7 +84,7 @@ namespace Apha.FPSApps.Web.Extensions
             {
                 client.BaseAddress = new Uri(configuration["CostBookApiSettings:BaseUrl"]
                     ?? throw new InvalidOperationException("CostBook base URL not configured"));
-                client.DefaultRequestHeaders.Add("Accept", "application/json");
+                client.DefaultRequestHeaders.Add(AcceptHeader, ApplicationJson);
             }).AddHttpMessageHandler<RequestHeadersHandler>();
 
             services.AddScoped<ICostBookHttpExecutor>(sp =>

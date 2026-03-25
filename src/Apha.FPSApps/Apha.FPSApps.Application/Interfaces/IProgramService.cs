@@ -1,0 +1,21 @@
+﻿using Apha.FPSApps.Application.Dtos.FPS;
+using Apha.FPSApps.Application.Dtos;
+using Apha.FPSApps.Application.Pagination;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Apha.FPSApps.Application.Interfaces
+{
+    public interface IProgramService
+    {
+        Task<ApiResponseDto<IEnumerable<ProgramDto>>> GetAllProgramsAsync();
+        Task<ApiResponseDto<List<ProgramDto>>> GetAllProgramsAsync(QueryParameters<string> query);
+        Task<ApiResponseDto<ProgramDto?>> GetProgramByIdAsync(string programNo);      
+        Task<ApiResponseDto<ProgramDto>> AddProgramAsync(ProgramDto programDto);
+        Task<ApiResponseDto<ProgramDto>> UpdateProgramAsync(ProgramDto programDto);
+        Task<ApiResponseDto<bool>> DeleteProgramAsync(string programNo);
+    }
+}
