@@ -60,7 +60,7 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
     <fps-year-script></fps-year-script>
     <script>
-        let selectedYear = @Fy.Year
+        let selectedYear = @Fy.Year        
         $('#yearSelector').val(selectedYear);
         $('#yearSelector').change(function () {
             selectedYear = this.value;

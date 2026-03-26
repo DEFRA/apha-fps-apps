@@ -1,4 +1,5 @@
 ﻿using Apha.FPS.Core.Entities;
+using Apha.FPS.Core.Pagination;
 
 namespace Apha.FPS.Core.Interfaces
 {
@@ -6,5 +7,6 @@ namespace Apha.FPS.Core.Interfaces
     {
         Task<IEnumerable<Project>> GetAllProjectsAsync();
         Task<Project?> GetProjectByIdAsync(string parentProject);
+        Task<PagedData<Project>> GetProjectsByProgramAsync(PaginationParameters<string> query, string programNo);
     }
 }

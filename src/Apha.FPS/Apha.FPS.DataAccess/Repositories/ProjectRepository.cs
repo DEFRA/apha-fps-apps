@@ -1,16 +1,19 @@
-﻿using Apha.FPS.Core.Interfaces;
+﻿using Apha.FPS.Core.Entities;
+using Apha.FPS.Core.Interfaces;
+using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
-using Apha.FPS.Core.Entities;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using System.Dynamic;
 
 namespace Apha.FPS.DataAccess.Repositories
 {
-    public class ProjectRepository : IProjectRepository
+    public class ProjectRepository : BaseRepository, IProjectRepository
     {       
         private readonly FpsDbContext _dbContext;
         private readonly int userId = 42;
        
-        public ProjectRepository(FpsDbContext dbContext)
+        public ProjectRepository(FpsDbContext dbContext) : base(dbContext)
         {
             _dbContext = dbContext;           
         }
@@ -65,6 +68,59 @@ namespace Apha.FPS.DataAccess.Repositories
             return await _dbContext.Projects
                 .AsNoTracking()
                 .FirstOrDefaultAsync(p => p.ParentProject == parentProject);
+        }
+
+        public async Task<PagedData<Project>> GetProjectsByProgramAsync(PaginationParameters<string> query, string programNo)
+        {
+            var projectQuery = _dbContext.ProjectViews
+                .Where(p => p.UserId == userId && p.Program == programNo)
+                .Select(pv => new Project
+                {
+                    ParentProject = pv.ParentProject ?? string.Empty,
+                    ProjectTitle  = pv.ProjectTitle  ?? string.Empty,
+                    Program       = pv.Program       ?? string.Empty,
+                    BudgetCvl     = pv.BudgetCvl,
+                    IsDefraProject = pv.IsDefraProject ?? 0
+                })
+                .AsQueryable();
+
+            projectQuery = ApplyProjectFilter(projectQuery, query.Filter);
+
+            projectQuery = !string.IsNullOrWhiteSpace(query.SortBy)
+                ? query.SortBy switch
+                {
+                    nameof(Project.ParentProject) => query.Descending
+                        ? projectQuery.OrderByDescending(p => p.ParentProject)
+                        : projectQuery.OrderBy(p => p.ParentProject),
+                    nameof(Project.ProjectTitle) => query.Descending
+                        ? projectQuery.OrderByDescending(p => p.ProjectTitle)
+                        : projectQuery.OrderBy(p => p.ProjectTitle),
+                    _ => projectQuery.OrderBy(p => p.ParentProject)
+                }
+                : projectQuery.OrderBy(p => p.ParentProject);
+
+            var result = await projectQuery.ToListAsync();
+            return base.ApplyPaging(result, query.Page, query.PageSize);
+        }
+
+        private static IQueryable<Project> ApplyProjectFilter(IQueryable<Project> query, string? filter)
+        {
+            if (string.IsNullOrEmpty(filter))
+                return query;
+
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            if (filterModel == null)
+                return query;
+
+            var dict = (IDictionary<string, object>)filterModel;
+
+            if (dict.TryGetValue("JobCode", out var jobCode) && jobCode != null)
+                query = query.Where(x => x.ParentProject.Contains(jobCode.ToString()!));
+
+            if (dict.TryGetValue("JobDescription", out var jobDescription) && jobDescription != null)
+                query = query.Where(x => x.ProjectTitle!.Contains(jobDescription.ToString()!));
+
+            return query;
         }
     }
 }
