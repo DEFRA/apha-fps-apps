@@ -1,0 +1,458 @@
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.FPS.Models.ProgramStaffPlanViewModel
+@{
+    ViewData["Title"] = "Programme Staff Plan";
+}
+
+<div style="padding: 5px; border-bottom: 1px solid #b4b4b4;" class="row">
+    <div style="font-size: 14px; display: flex; align-items: center;">
+        <a href="#">Home</a> &gt; Programme Management &gt; Programme Staff Plan
+    </div>
+</div>
+
+<div class="row mt-2 mb-2 align-items-center" style="padding: 0 10px;">
+    <div class="col-md-12 d-flex align-items-center gap-3 flex-wrap">
+        <label class="fw-bold mb-0" for="programmeSelect">Programme:</label>
+        <select id="programmeSelect" asp-items="Model.ProgrammeList" asp-for="SelectedProgramNo"
+                class="form-select form-select-sm" style="width: auto; min-width: 260px;">
+            <option value="">-- Select Programme --</option>
+        </select>
+        <div class="d-flex align-items-center gap-4 ms-2" style="font-size: 14px;">
+            <span>Manager: <strong id="lblManager">@Model.Manager</strong></span>
+            <span>Target: <strong id="lblTarget">@Model.Target.ToString("C")</strong></span>
+        </div>
+    </div>
+</div>
+
+<div class="row" style="border-top: 2px solid #1d70b8; margin: 0;">
+    <!-- Left panel: Projects -->
+    <div class="col-lg-6" style="padding: 0; border-right: 1px solid #cbcbcb;">
+        <div style="background: #d4ebff; padding: 7px 17px; border-bottom: 1px solid #1d70b8; display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="font-weight: 700; font-size: 15px; margin: 0;">Projects</h2>
+        </div>
+        <div id="gridContainer_@Model.ProjectsGrid.GridId" style="padding: 5px;">
+            @await Html.PartialAsync("_DataGrid", Model.ProjectsGrid)
+        </div>
+    </div>
+
+    <!-- Right panel: Staff Booked -->
+    <div class="col-lg-6" style="padding: 0;">
+        <div style="background: #d4ebff; padding: 7px 17px; border-bottom: 1px solid #1d70b8; display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="font-weight: 700; font-size: 15px; margin: 0;">
+                Staff Booked:
+                <span id="lblSelectedProject" style="color: #1d70b8; font-weight: 600;">--</span>
+            </h2>
+        </div>
+        <input type="hidden" id="hdnJobCode" value="" />
+        <div id="gridContainer_@Model.StaffCostGrid.GridId" style="padding: 5px;">
+            @await Html.PartialAsync("_DataGrid", Model.StaffCostGrid)
+        </div>
+
+        <!-- Financial Summary -->
+        <div style="border: 1px solid #1d70b8; border-radius: 0 0 8px 8px; padding: 10px 15px; background: #f8f9fa; margin: 0 5px 5px 5px;">
+            <div class="d-flex flex-wrap gap-3 justify-content-between align-items-end">
+                <div>
+                    <label style="display: block; font-size: 12px; margin-bottom: 2px;" for="for_project">For Project:</label>
+                    <input type="text" id="for_project" class="form-control form-control-sm" readonly style="width: 120px;" />
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; margin-bottom: 2px;" for="External_Income">Staff Cost:</label>
+                    <input type="text" id="External_Income" class="form-control form-control-sm" readonly style="width: 120px;" value="@Model.StaffCost.ToString("C")" />
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; margin-bottom: 2px;" for="BudgetCVL">Budget CVL:</label>
+                    <input type="text" id="BudgetCVL" class="form-control form-control-sm" readonly style="width: 120px;" />
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; margin-bottom: 2px;" for="Total_Costs">Remainder:</label>
+                    <input type="text" id="Total_Costs" class="form-control form-control-sm" readonly style="width: 120px;" />
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Popup -->
+<div id="modalPopup" class="modal">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background: #1d70b8; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center;">
+                <h5 class="modal-title" style="color: #fff; margin: 0; font-size: 15px;">Staff Job</h5>
+                <button type="button" aria-label="Close modal" onclick="closeModal()"
+                        style="background: none; border: none; color: #fff; font-size: 22px; cursor: pointer; line-height: 1;">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 15px;">
+                <div id="modaPopupBody"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var currentProgramNo = '@Html.Raw(Model.SelectedProgramNo)';
+        var currentJobCode = '';
+
+        // Trigger initial project grid load on page ready
+        $(document).ready(function () {
+            if (currentProgramNo) {
+                window['gridManager_@Model.ProjectsGrid.GridId'].reloadGrid({ page: 1 });
+            }
+
+            // Recalculate External_Income whenever the staff grid content is replaced
+            var staffGridContainer = document.getElementById('gridContainer_@Model.StaffCostGrid.GridId');
+            if (staffGridContainer) {
+                new MutationObserver(function () {
+                    calculateExternalIncome();
+                }).observe(staffGridContainer, { childList: true });
+            }
+        });
+
+        // Programme selector change handler
+        $('#programmeSelect').on('change', function () {
+            currentProgramNo = $(this).val();
+            currentJobCode = '';
+            $('#hdnJobCode').val('');
+            $('#lblSelectedProject').text('--');
+            $('#for_project').val('');
+            $('#External_Income').val('');
+            $('#BudgetCVL').val('');
+            $('#Total_Costs').val('');
+
+            if (currentProgramNo) {
+                $.get('@Url.Action("GetProgramInfo", "ProgramStaffPlan", new { area = "FPS" })',
+                    { programNo: currentProgramNo },
+                    function (result) {
+                        if (result.success) {
+                            $('#lblManager').text(result.manager);
+                            $('#lblTarget').text(formatCurrency(result.target));
+                        }
+                    }
+                );
+            }
+
+            window['gridManager_@Model.ProjectsGrid.GridId'].reloadGrid({ page: 1 });
+        });
+
+        // Called when a project row's select button is clicked
+        function selectProject(btn) {
+            var jobCode = $(btn).data('id');
+            var row = $(btn).closest('tr');
+            var budgetText = row.find('td[data-property="Budget_cvl"] span').text().replace(/[£,\s]/g, '');
+            var budget = parseFloat(budgetText) || 0;
+
+            currentJobCode = jobCode;
+            $('#hdnJobCode').val(jobCode);
+            $('#lblSelectedProject').text(jobCode);
+            $('#for_project').val(jobCode);
+            $('#BudgetCVL').val(formatCurrency(budget));
+            $('#External_Income').val(formatCurrency(0));
+            $('#Total_Costs').val(formatCurrency(budget));
+
+            $('#tbl_@Model.ProjectsGrid.GridId tbody tr').removeClass('selected-row');
+            row.addClass('selected-row');
+
+            window['gridManager_@Model.StaffCostGrid.GridId'].reloadGrid({ page: 1 });
+        }
+
+        // Extra filters provided to the project grid on every reload
+        function getProjectExtraFilters() {
+            return { programNo: currentProgramNo };
+        }
+
+        // Extra filters provided to the staff booked grid on every reload
+        function getStaffJobExtraFilters() {
+            return { jobCode: currentJobCode };
+        }
+
+        // ---- Staff Job CRUD ----
+
+        function addStaffJob(btn) {
+            if (!currentJobCode) {
+                alert('Please select a project first.');
+                return;
+            }
+            $.ajax({
+                url: '/FPS/StaffJob/Create',
+                type: 'GET',
+                success: function (html) {
+                    $('#modaPopupBody').html(html);
+                    $('#modalPopup').addClass('show');
+                },
+                error: function (xhr) {
+                    if (xhr.status === 400 && xhr.responseJSON) {
+                        displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message);
+                    } else {
+                        alert('An error occurred while opening the form.');
+                    }
+                }
+            });
+        }
+
+        function saveStaffJob() {
+            var form = $('#formAddStaff');
+            if (!isFormValid(form)) {
+                displayClientValidationErrors(form);
+                return;
+            }
+            var staffId = $('#StaffID').val();
+            var staffName = $('#StaffDropdown option:selected').text();
+            var data = {
+                StaffID: staffId,
+                JobCode: currentJobCode,
+                Name: staffName,
+                ChargeRate: parseFloat($('#ChargeRate').val()) || 0,
+                PlannedHours: parseFloat($('#PlannedHours').val()) || 0,
+                Days: parseFloat($('#Days').val()) || 0,
+                StaffCost: parseFloat($('#StaffCost').val()) || 0
+            };
+            $.ajax({
+                url: '@Url.Action("Create", "StaffJob", new { area = "FPS" })',
+                type: 'POST',
+                data: JSON.stringify(data),
+                contentType: 'application/json; charset=utf-8',
+                success: function (result) {
+                    if (result.success) {
+                        alert(result.message);
+                        closeModal();
+                        window['gridManager_@Model.StaffCostGrid.GridId'].reloadGrid({ page: 1 });
+                    } else {
+                        displayServerValidationErrors(result.errors, result.message);
+                    }
+                },
+                error: function (xhr) {
+                    if (xhr.status === 400 && xhr.responseJSON) {
+                        displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message);
+                    } else {
+                        alert('An error occurred while saving.');
+                    }
+                }
+            });
+        }
+
+        function editStaffJob(btn) {
+            var staffJobId = $(btn).data('id');
+            $.ajax({
+                url: '/FPS/StaffJob/Edit',
+                type: 'GET',
+                data: { staffId: staffJobId, jobCode: currentJobCode },
+                success: function (html) {
+                    $('#modaPopupBody').html(html);
+                    $('#modalPopup').addClass('show');
+                },
+                error: function (xhr) {
+                    if (xhr.status === 400 && xhr.responseJSON) {
+                        displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message);
+                    } else {
+                        alert('An error occurred while fetching the record.');
+                    }
+                }
+            });
+        }
+
+        function updateStaffJob() {
+            var form = $('#formEditStaff');
+            if (!isFormValid(form)) {
+                displayClientValidationErrors(form);
+                return;
+            }
+            var staffId = $('#StaffID').val();
+            var jobCode = form.find('[name="JobCode"]').val();
+            var staffName = $('#StaffDropdown option:selected').text();
+            var data = {
+                StaffID: staffId,
+                JobCode: jobCode,
+                Name: staffName,
+                ChargeRate: parseFloat($('#ChargeRate').val()) || 0,
+                PlannedHours: parseFloat($('#PlannedHours').val()) || 0,
+                Days: parseFloat($('#Days').val()) || 0,
+                StaffCost: parseFloat($('#StaffCost').val()) || 0
+            };
+            $.ajax({
+                url: '@Url.Action("Edit", "StaffJob", new { area = "FPS" })' + '?staffId=' + staffId,
+                type: 'POST',
+                data: JSON.stringify(data),
+                contentType: 'application/json; charset=utf-8',
+                success: function (result) {
+                    if (result.success) {
+                        alert(result.message);
+                        closeModal();
+                        window['gridManager_@Model.StaffCostGrid.GridId'].reloadGrid({ page: 1 });
+                    } else {
+                        displayServerValidationErrors(result.errors, result.message);
+                    }
+                },
+                error: function (xhr) {
+                    if (xhr.status === 400 && xhr.responseJSON) {
+                        displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message);
+                    } else {
+                        alert('An error occurred while saving.');
+                    }
+                }
+            });
+        }
+
+        function deleteStaffJob(btn) {
+            var staffJobId = $(btn).data('id');
+            if (confirm('Are you sure you want to delete this record?')) {
+                $.ajax({
+                    url: '/FPS/StaffJob/Delete',
+                    type: 'DELETE',
+                    data: { staffId: staffJobId, jobCode: currentJobCode },
+                    success: function (response) {
+                        if (response.success) {
+                            alert('Deleted successfully.');
+                            window['gridManager_@Model.StaffCostGrid.GridId'].reloadGrid({ page: 1 });
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function () {
+                        alert('An error occurred while deleting.');
+                    }
+                });
+            }
+        }
+
+        // ---- Charge rate calculation ----
+
+        function onStaffSelected(selectElement) {
+            var staffId = $(selectElement).val();
+            $('#StaffID').val(staffId);
+            if (staffId) { fetchChargeRate(staffId); }
+        }
+
+        function fetchChargeRate(staffId) {
+            if (!staffId || !currentJobCode) { return; }
+            var chargeRateField = $('#ChargeRate');
+            chargeRateField.prop('disabled', true).val('');
+            $.ajax({
+                url: '@Url.Action("GetChargeRate", "StaffJob", new { area = "FPS" })',
+                type: 'GET',
+                data: { staffId: staffId, jobCode: currentJobCode },
+                success: function (result) {
+                    chargeRateField.prop('disabled', false);
+                    chargeRateField.val(result.success ? result.chargeRate.toFixed(2) : '0.00');
+                    calculateStaffCost();
+                },
+                error: function () {
+                    chargeRateField.prop('disabled', false).val('0.00');
+                }
+            });
+        }
+
+        function calculateStaffCost() {
+            var rate = parseFloat($('#ChargeRate').val()) || 0;
+            var hours = parseFloat($('#PlannedHours').val()) || 0;
+            $('#StaffCost').val((rate * hours).toFixed(2));
+            $('#Days').val((hours / 8).toFixed(2));
+        }
+
+        $(document).on('change', '#PlannedHours, #ChargeRate', function () {
+            calculateStaffCost();
+        });
+
+        // ---- Modal helpers ----
+
+        function closeModal() {
+            clearValidationErrors();
+            $('#modaPopupBody').html('');
+            $('#modalPopup').removeClass('show');
+        }
+
+        function isFormValid(form) {
+            var isValid = true;
+            form.find('[required]').each(function () {
+                if (!$(this).val() || $(this).val().trim() === '') {
+                    isValid = false;
+                    return false;
+                }
+            });
+            return isValid;
+        }
+
+        function clearValidationErrors() {
+            var errorSummary = $('.govuk-error-summary', '#modaPopupBody');
+            errorSummary.hide().find('.govuk-error-summary__list').empty();
+            $('[name]', '#modaPopupBody').each(function () {
+                $(this).closest('.govuk-form-group').removeClass('govuk-form-group--error');
+                $(this).removeClass('govuk-input--error');
+                $(this).siblings('span[data-valmsg-for]').text('').hide();
+            });
+        }
+
+        function displayClientValidationErrors(form) {
+            var errorSummary = $('.govuk-error-summary', '#modaPopupBody');
+            var errorList = errorSummary.find('.govuk-error-summary__list');
+            errorList.empty();
+            errorSummary.find('.govuk-error-summary__title').text('There is a problem');
+            clearValidationErrors();
+            var errors = [];
+            form.find('[required]').each(function () {
+                var $field = $(this);
+                if (!$field.val() || $field.val().trim() === '') {
+                    var fieldName = $field.attr('name') || '';
+                    var label = $('label[for="' + fieldName + '"]', '#modaPopupBody').text().trim() || fieldName;
+                    errors.push({ field: fieldName, message: label + ' is required' });
+                }
+            });
+            if (errors.length > 0) {
+                errors.forEach(function (error) {
+                    errorList.append('<li><a href="#' + error.field + '">' + error.message + '</a></li>');
+                    var $field = $('[name="' + error.field + '"]', '#modaPopupBody');
+                    $field.closest('.govuk-form-group').addClass('govuk-form-group--error');
+                    $field.addClass('govuk-input--error');
+                    $field.siblings('span[data-valmsg-for]').text(error.message).show();
+                });
+                errorSummary.show().focus();
+            }
+        }
+
+        function displayServerValidationErrors(errors, message) {
+            var errorSummary = $('.govuk-error-summary', '#modaPopupBody');
+            var errorList = errorSummary.find('.govuk-error-summary__list');
+            errorList.empty();
+            errorSummary.find('.govuk-error-summary__title').text('There is a problem');
+            clearValidationErrors();
+            if (errors && errors.length > 0) {
+                errors.forEach(function (error) {
+                    var fieldName = error.field || '';
+                    var errorMessage = error.message || message || 'Validation error';
+                    errorList.append('<li><a href="#' + fieldName + '">' + errorMessage + '</a></li>');
+                    if (fieldName) {
+                        var $field = $('[name="' + fieldName + '"]', '#modaPopupBody');
+                        if ($field.length) {
+                            $field.closest('.govuk-form-group').addClass('govuk-form-group--error');
+                            $field.addClass('govuk-input--error');
+                            $field.siblings('span[data-valmsg-for]').text(errorMessage).show();
+                        }
+                    }
+                });
+                errorSummary.show().focus();
+            } else if (message) {
+                errorList.append('<li>' + message + '</li>');
+                errorSummary.show().focus();
+            }
+        }
+
+        // Sums StaffCost column and updates External_Income and Total_Costs (Remainder)
+        function calculateExternalIncome() {
+            if (!currentJobCode) { return; }
+
+            var total = 0;
+            $('#gridContainer_@Model.StaffCostGrid.GridId td[data-property="StaffCost"] span').each(function () {
+                var value = parseFloat($(this).text().replace(/[£,\s]/g, '')) || 0;
+                total += value;
+            });
+
+            $('#External_Income').val(formatCurrency(total));
+
+            var budget = parseFloat($('#BudgetCVL').val().replace(/[£,\s]/g, '')) || 0;
+            $('#Total_Costs').val(formatCurrency(budget - total));
+        }
+
+        function formatCurrency(value) {
+            return '\u00A3' + parseFloat(value || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+    </script>
+}
