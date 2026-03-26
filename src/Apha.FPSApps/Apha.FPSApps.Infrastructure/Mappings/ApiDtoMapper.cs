@@ -17,6 +17,9 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap(typeof(PaginationRes<>), typeof(PaginatedResult<>)).ReverseMap();
             CreateMap<PaginationDto, Pagination>().ReverseMap();             
             CreateMap<StaffJobViewDto, StaffJobViewRes>().ReverseMap();
+            CreateMap<StaffWorkgroupLookupDto, StaffWorkgroupLookupRes>().ReverseMap();
+            CreateMap<StaffJobDto, StaffJobReq>().ReverseMap();
+            CreateMap<StaffJobDto, StaffJobRes>().ReverseMap();
             CreateMap<ProgramDto,ProgramReq>().ReverseMap();
             CreateMap<ProgramDto, ProgramRes>().ReverseMap();
             CreateMap<ManagerDto, ManagerRes>().ReverseMap();

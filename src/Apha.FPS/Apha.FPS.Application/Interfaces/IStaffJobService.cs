@@ -10,6 +10,7 @@ namespace Apha.FPS.Application.Interfaces
         Task<List<StaffWorkgroupLookupDto>> GetStaffWorkgroupLookup();
         Task<decimal?> GetStaffChargeRate(string staffId, string jobcode);
         Task<StaffJobDto?> GetByIdAsync(string staffId, string jobCode);
+        Task<StaffJobViewDto?> GetViewByStaffIdAsync(string staffId, string jobCode);
         Task<StaffJobDto> AddAsync(StaffJobDto staffJob);
         Task<StaffJobDto> UpdateAsync(StaffJobDto staffJob);
         Task<bool> DeleteAsync(string staffId, string jobCode);

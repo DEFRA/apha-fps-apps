@@ -1,4 +1,5 @@
 ﻿using Apha.FPSApps.Web.Models.Components.DataGrid;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.ComponentModel.DataAnnotations;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Models
@@ -6,7 +7,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
     public class StaffJobItem
     {
         [GridColumn(Type = GridColumnType.ReadOnly, IsVisible = false)]
-        public int StaffID { get; set; }   
+        public string? StaffID { get; set; }
+
+        [GridColumn(Type = GridColumnType.ReadOnly, IsVisible = false)]
+        public string JobCode { get; set; } = null!;
 
         [Required(ErrorMessage = "Staff name is required")]
         [Display(Name = "Staff Name")]
@@ -42,5 +46,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [DisplayFormat(DataFormatString = "{0:C}", ApplyFormatInEditMode = false)]
         [GridColumn(Width = 104, Type = GridColumnType.GbpValue)]
         public decimal StaffCost { get; set; }
+
+        [GridColumn(IsVisible = false)]
+        public List<SelectListItem> StaffList { get; set; } = new List<SelectListItem>();
     }
 }

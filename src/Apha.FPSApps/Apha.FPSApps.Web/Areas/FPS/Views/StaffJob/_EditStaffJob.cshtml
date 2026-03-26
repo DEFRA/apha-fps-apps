@@ -1,41 +1,71 @@
-﻿<div class="modal-header flex-space-center">
+﻿@model Apha.FPSApps.Web.Areas.FPS.Models.StaffJobItem
+
+<div class="modal-header flex-space-center">
     <h3 class="modal-title" style="margin: 0;" id="exampleModalLabel">Update Staff Booked</h3>
     <button type="button" class="btn-close btn-red" onclick="closeModal()">X</button>
 </div>
 <div class="modal-body" style="padding-top: 5px;">
-    <form class="row" id="formAddStaff">
+    <div asp-validation-summary="ModelOnly" class="govuk-error-summary" role="alert" aria-labelledby="error-summary-title" tabindex="-1" style="display:none;">
+        <h2 class="govuk-error-summary__title" id="error-summary-title">
+            There is a problem
+        </h2>
+        <div class="govuk-error-summary__body">
+            <ul class="govuk-list govuk-error-summary__list">
+            </ul>
+        </div>
+    </div>
+    <form class="row" id="formEditStaff">
+        <input type="hidden" asp-for="StaffID" id="StaffID" />
+        <input type="hidden" asp-for="JobCode" />
+
         <div class="col-12">
-            <label for="modal-staffname" class="form-label p-0">Staff Name:</label>
-            <select id="modal-staffname" name="" class="form-select" aria-label="StaffName">
-                <option value=""></option>
-                <option value="Staff_001,General">Staff_001,General | Staff_001 | 0</option>
-                <option value="Staff_002,General">Staff_002,General | Staff_002 | 0</option>
-                <option value="Staff_003,General">Staff_003,General | Staff_003 | 0</option>
-                <option value="Staff_004,General">Staff_004,General | Staff_004 | 0</option>
-                <option value="Staff_005,General">Staff_005,General | Staff_005 | 0</option>
-                <option value="Staff_006,General">Staff_006,General | Staff_006 </option>
-            </select>
+            <div class="govuk-form-group sup_margin_0">
+                <label for="StaffDropdown" class="govuk-label p-0">Staff Name:</label>
+                <select id="StaffDropdown" name="StaffDropdown" required class="govuk-select" onchange="onStaffSelected(this)">
+                    <option value="">-- Select Staff --</option>
+                    @if (Model.StaffList != null)
+                    {
+                        foreach (var staff in Model.StaffList)
+                        {
+                            var isSelected = staff.Value == Model.StaffID;
+                            <option value="@staff.Value" data-name="@staff.Text" selected="@isSelected">@staff.Text</option>
+                        }
+                    }
+                </select>
+                <span asp-validation-for="StaffID" class="text-danger" style="display:none;"></span>
+            </div>
         </div>
         <div class="col-12">
-            <label for="modal-rate" class="form-label">Rate:</label>
-            <input type="text" class="form-control" id="modal-rate">
+            <div class="govuk-form-group sup_margin_0">
+                <label for="ChargeRate" class="govuk-label" asp-for="ChargeRate">Rate:</label>
+                <input type="number" step="0.01" asp-for="ChargeRate" required class="govuk-input" id="ChargeRate">
+                <span asp-validation-for="ChargeRate" class="text-danger" style="display:none;"></span>
+            </div>
         </div>
         <div class="col-12">
-            <label for="modal-hrs" class="form-label">Hrs</label>
-            <input type="text" class="form-control" id="modal-hrs">
+            <div class="govuk-form-group sup_margin_0">
+                <label for="PlannedHours" class="govuk-label" asp-for="PlannedHours">Hrs</label>
+                <input type="number" step="0.01" asp-for="PlannedHours" required class="govuk-input" id="PlannedHours">
+                <span asp-validation-for="PlannedHours" class="text-danger" style="display:none;"></span>
+            </div>
         </div>
         <div class="col-12">
-            <label for="modal-days" class="form-label">Days</label>
-            <input type="text" class="form-control" id="modal-days">
+            <div class="govuk-form-group sup_margin_0">
+                <label for="Days" class="govuk-label" asp-for="Days">Days</label>
+                <input type="number" step="0.01" asp-for="Days" required class="govuk-input" id="Days">
+                <span asp-validation-for="Days" class="text-danger" style="display:none;"></span>
+            </div>
         </div>
         <div class="col-12">
-            <label for="modal-staffcost" class="form-label">Staff Cost</label>
-            <input type="text" class="form-control" id="modal-staffcost">
+            <div class="govuk-form-group sup_margin_0">
+                <label for="StaffCost" class="govuk-label" asp-for="StaffCost">Staff Cost</label>
+                <input type="number" step="0.01" asp-for="StaffCost" required class="govuk-input" id="StaffCost">
+                <span asp-validation-for="StaffCost" class="text-danger" style="display:none;"></span>
+            </div>
         </div>
     </form>
 </div>
 <div class="modal-footer">
-    <button class="btnCancel" onclick="closeModal()">Cancel</button>
-    <button class="btnBlue" id="modalsaveBtn">Save</button>
-    <button class="btnBlue" id="updateBtn" style="display: none;">Update</button>
+    <button class="govuk-button govuk-button--secondary sup_margin_0" data-module="govuk-button" onclick="closeModal()">Cancel</button>
+    <button class="govuk-button sup_margin_0" data-module="govuk-button" type="button" onclick="updateStaffJob()">Update</button>
 </div>

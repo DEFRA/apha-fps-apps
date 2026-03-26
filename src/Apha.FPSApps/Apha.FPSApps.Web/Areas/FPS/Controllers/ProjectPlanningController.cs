@@ -35,7 +35,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 SelectedYear = "2025-2026",
                 UserName = "Ken Rod",
                 BudgetCVL = 5000,
-                StaffBookedGrid =  await GetStaffBookedDataGrid(),
+                StaffBookedGrid =  await GetStaffBookedDataGrid("FZ2000"),
 
                 // AnimalsBookedList - Sample animal resources
                 AnimalsBookedList = new List<AnimalBookedItem>
@@ -131,9 +131,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return View(model);
         }
 
-        private async Task<DataGridConfig<StaffJobItem>> GetStaffBookedDataGrid()
+        private async Task<DataGridConfig<StaffJobItem>> GetStaffBookedDataGrid(string jobcode)
         {
-            var staffJobPagedData = await _staffJobService.GetAllStaffJobsAsync(new QueryParameters<string>());
+            var staffJobPagedData = await _staffJobService.GetAllStaffJobsAsync(new QueryParameters<string>(), jobcode);
             List<StaffJobItem> staffJobItems = new List<StaffJobItem>();
             if (staffJobPagedData.Data != null)
             {
