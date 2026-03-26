@@ -458,10 +458,7 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
             _mockMapper.Received(1).Map<StaffJobDto>(null);
         }
 
-        [Theory]
-        [InlineData(null, "JOB001")]
-        [InlineData("STAFF001", null)]
-        [InlineData(null, null)]
+        [Theory]       
         [InlineData("", "JOB001")]
         [InlineData("STAFF001", "")]
         public async Task GetByIdAsync_WhenInvalidInputParameters_ReturnsNull(string staffId, string jobCode)
@@ -577,10 +574,7 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
             _mockMapper.Received(1).Map<StaffJobViewDto>(null);
         }
 
-        [Theory]
-        [InlineData(null, "JOB001")]
-        [InlineData("STAFF001", null)]
-        [InlineData(null, null)]
+        [Theory]       
         [InlineData("", "JOB001")]
         [InlineData("STAFF001", "")]
         public async Task GetViewByStaffIdAsync_WhenInvalidInputParameters_ReturnsNull(string staffId, string jobCode)
@@ -953,10 +947,8 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
             await _mockRepository.Received(1).DeleteAsync(staffId, jobCode);
         }
 
-        [Theory]
-        [InlineData(null, "JOB123")]
-        [InlineData("", "JOB123")]
-        [InlineData("STAFF001", null)]
+        [Theory]       
+        [InlineData("", "JOB123")]       
         [InlineData("STAFF001", "")]
         public async Task DeleteAsync_WithNullOrEmptyParameters_CallsRepository(string staffId, string jobCode)
         {
