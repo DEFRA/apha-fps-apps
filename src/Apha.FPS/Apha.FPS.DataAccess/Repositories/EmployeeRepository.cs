@@ -66,7 +66,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<Employee> AddEmployeeAsync(Employee employee)
         {
-            employee.FPSCalYear = _fpsYearContext.FPSYear;
+            employee.FpsYear = _fpsYearContext.FpsYear;
             await _dbContext.Employees.AddAsync(employee);
             await _dbContext.SaveChangesAsync();
 
@@ -75,7 +75,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<Employee> UpdateEmployeeAsync(Employee employee)
         {
-            employee.FPSCalYear = _fpsYearContext.FPSYear;
+            employee.FpsYear = _fpsYearContext.FpsYear;
             _dbContext.Entry(employee).State = EntityState.Modified;
             await _dbContext.SaveChangesAsync();
 
@@ -85,7 +85,7 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<bool> DeleteEmployeeAsync(string spNumber)
         {  
             var employee = await _dbContext.Employees
-                .Where(e => e.SPNumber == spNumber && e.FPSCalYear == _fpsYearContext.FPSYear)
+                .Where(e => e.SPNumber == spNumber && e.FpsYear == _fpsYearContext.FpsYear)
                 .FirstOrDefaultAsync();
 
             if (employee == null)
@@ -183,7 +183,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 "firstname" => ApplyOrder(query, i => i.FirstName, descending),
                 "lastname" => ApplyOrder(query, i => i.LastName, descending),
                 "title" => ApplyOrder(query, i => i.Title, descending),
-                "fpscalyear" => ApplyOrder(query, i => i.FPSCalYear, descending),
+                "fpscalyear" => ApplyOrder(query, i => i.FpsYear, descending),
                 _ => query.OrderBy(e => e.SPNumber)
             };
         }

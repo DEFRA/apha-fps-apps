@@ -55,7 +55,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     SubAccountCode    = pv.SubAccountCode,
                     ProjectGroup      = pv.ProjectGroup,
                     IncomeAccountCode = pv.IncomeAccountCode ?? string.Empty,
-                    FpsCalYear        = pv.FpsCalYear
+                    FpsYear        = pv.FpsYear
                 })
                 .ToListAsync();
         }

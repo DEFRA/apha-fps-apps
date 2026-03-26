@@ -39,7 +39,7 @@ namespace Apha.FPS.Api.Middleware
 
             SetCorrelationId(context, CorrelationIdHeader);
 
-            ((FpsYearContext)yearContext).FPSYear = fpsYear;
+            ((FpsYearContext)yearContext).FpsYear = fpsYear;
 
             await _next(context);
         }

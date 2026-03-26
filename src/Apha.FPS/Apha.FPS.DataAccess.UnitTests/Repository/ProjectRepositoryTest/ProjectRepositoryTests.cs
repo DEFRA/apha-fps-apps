@@ -137,7 +137,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
                     SubAccountCode    = "SUB001",
                     ProjectGroup      = "GRP001",
                     IncomeAccountCode = "INC001",
-                    FpsCalYear        = 2024,
+                    FpsYear        = 2024,
                     UserId            = 42
                 }
             };
@@ -183,7 +183,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             Assert.Equal("SUB001",       project.SubAccountCode);
             Assert.Equal("GRP001",       project.ProjectGroup);
             Assert.Equal("INC001",       project.IncomeAccountCode);
-            Assert.Equal(2024,           project.FpsCalYear);
+            Assert.Equal(2024,           project.FpsYear);
         }
 
         [Fact]

@@ -228,20 +228,17 @@ namespace Apha.FPS.Api.UnitTests.Controller.StaffJobControllerTest
                 ChargeRate = 150.00m
             };
 
-            var mappedResult = new List<StaffJobViewRes>
+            var mappedResult = new StaffJobViewRes
             {
-                new StaffJobViewRes
-                {
-                    StaffID = staffId,
-                    JobCode = jobCode,
-                    Name = "John Doe",
-                    PlannedHours = 40,
-                    ChargeRate = 150.00m
-                }
+                StaffID = staffId,
+                JobCode = jobCode,
+                Name = "John Doe",
+                PlannedHours = 40,
+                ChargeRate = 150.00m
             };
 
             _serviceMock.GetViewByStaffIdAsync(staffId, jobCode).Returns(serviceResult);
-            _mapperMock.Map<List<StaffJobViewRes>>(serviceResult).Returns(mappedResult);
+            _mapperMock.Map<StaffJobViewRes>(serviceResult).Returns(mappedResult);
 
             // Act
             var result = await _controller.GetViewByStaffIdAsync(staffId, jobCode);
@@ -252,7 +249,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.StaffJobControllerTest
             Assert.Equal(mappedResult, okResult.Value);
 
             await _serviceMock.Received(1).GetViewByStaffIdAsync(staffId, jobCode);
-            _mapperMock.Received(1).Map<List<StaffJobViewRes>>(serviceResult);
+            _mapperMock.Received(1).Map<StaffJobViewRes>(serviceResult);
         }
 
         [Fact]
@@ -263,7 +260,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.StaffJobControllerTest
             var jobCode = "JOB999";
 
             _serviceMock.GetViewByStaffIdAsync(staffId, jobCode).Returns((StaffJobViewDto?)null);
-            _mapperMock.Map<List<StaffJobViewRes>>(null).Returns((List<StaffJobViewRes>?)null);
+            _mapperMock.Map<StaffJobViewRes>(null).Returns((StaffJobViewRes?)null);
 
             // Act
             var result = await _controller.GetViewByStaffIdAsync(staffId, jobCode);
@@ -274,7 +271,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.StaffJobControllerTest
             Assert.Null(okResult.Value);
 
             await _serviceMock.Received(1).GetViewByStaffIdAsync(staffId, jobCode);
-            _mapperMock.Received(1).Map<List<StaffJobViewRes>>(null);
+            _mapperMock.Received(1).Map<StaffJobViewRes>(null);
         }
 
         [Theory]
@@ -285,10 +282,10 @@ namespace Apha.FPS.Api.UnitTests.Controller.StaffJobControllerTest
         {
             // Arrange
             var serviceResult = new StaffJobViewDto();
-            var mappedResult = new List<StaffJobViewRes>();
+            var mappedResult = new StaffJobViewRes();
 
             _serviceMock.GetViewByStaffIdAsync(staffId, jobCode).Returns(serviceResult);
-            _mapperMock.Map<List<StaffJobViewRes>>(serviceResult).Returns(mappedResult);
+            _mapperMock.Map<StaffJobViewRes>(serviceResult).Returns(mappedResult);
 
             // Act
             var result = await _controller.GetViewByStaffIdAsync(staffId, jobCode);
@@ -299,17 +296,17 @@ namespace Apha.FPS.Api.UnitTests.Controller.StaffJobControllerTest
         }
 
         [Fact]
-        public async Task GetViewByStaffIdAsync_EdgeCase_EmptyList_ReturnsOkWithEmptyList()
+        public async Task GetViewByStaffIdAsync_EdgeCase_EmptyObject_ReturnsOkWithEmptyObject()
         {
             // Arrange
             var staffId = "STAFF001";
             var jobCode = "JOB001";
 
             var serviceResult = new StaffJobViewDto { StaffID = staffId, JobCode = jobCode };
-            var emptyMappedResult = new List<StaffJobViewRes>();
+            var emptyMappedResult = new StaffJobViewRes();
 
             _serviceMock.GetViewByStaffIdAsync(staffId, jobCode).Returns(serviceResult);
-            _mapperMock.Map<List<StaffJobViewRes>>(serviceResult).Returns(emptyMappedResult);
+            _mapperMock.Map<StaffJobViewRes>(serviceResult).Returns(emptyMappedResult);
 
             // Act
             var result = await _controller.GetViewByStaffIdAsync(staffId, jobCode);
@@ -317,13 +314,12 @@ namespace Apha.FPS.Api.UnitTests.Controller.StaffJobControllerTest
             // Assert
             Assert.IsType<OkObjectResult>(result);
             var okResult = (OkObjectResult)result;
-            var resultList = okResult.Value as List<StaffJobViewRes>;
-            Assert.NotNull(resultList);
-            Assert.Empty(resultList);
+            var resultObj = okResult.Value as StaffJobViewRes;
+            Assert.NotNull(resultObj);
         }
 
         [Fact]
-        public async Task GetViewByStaffIdAsync_WithCompleteData_ReturnsMappedList()
+        public async Task GetViewByStaffIdAsync_WithCompleteData_ReturnsMappedObject()
         {
             // Arrange
             var staffId = "STAFF002";
@@ -344,26 +340,23 @@ namespace Apha.FPS.Api.UnitTests.Controller.StaffJobControllerTest
                 Days = 10
             };
 
-            var mappedResult = new List<StaffJobViewRes>
+            var mappedResult = new StaffJobViewRes
             {
-                new StaffJobViewRes
-                {
-                    StaffID = staffId,
-                    JobCode = jobCode,
-                    Name = "Jane Smith",
-                    PlannedHours = 80,
-                    ChargeRate = 200.00m,
-                    StaffCost = 16000.00m,
-                    WorkGroupGrade = "WG01",
-                    GradeCode = "G01",
-                    WorkGroup = "Engineering",
-                    SectorName = "charge",
-                    Days = 10
-                }
+                StaffID = staffId,
+                JobCode = jobCode,
+                Name = "Jane Smith",
+                PlannedHours = 80,
+                ChargeRate = 200.00m,
+                StaffCost = 16000.00m,
+                WorkGroupGrade = "WG01",
+                GradeCode = "G01",
+                WorkGroup = "Engineering",
+                SectorName = "charge",
+                Days = 10
             };
 
             _serviceMock.GetViewByStaffIdAsync(staffId, jobCode).Returns(serviceResult);
-            _mapperMock.Map<List<StaffJobViewRes>>(serviceResult).Returns(mappedResult);
+            _mapperMock.Map<StaffJobViewRes>(serviceResult).Returns(mappedResult);
 
             // Act
             var result = await _controller.GetViewByStaffIdAsync(staffId, jobCode);
@@ -371,12 +364,11 @@ namespace Apha.FPS.Api.UnitTests.Controller.StaffJobControllerTest
             // Assert
             Assert.IsType<OkObjectResult>(result);
             var okResult = (OkObjectResult)result;
-            var resultList = okResult.Value as List<StaffJobViewRes>;
-            Assert.NotNull(resultList);
-            Assert.Single(resultList);
-            Assert.Equal(staffId, resultList[0].StaffID);
-            Assert.Equal(jobCode, resultList[0].JobCode);
-            Assert.Equal("Jane Smith", resultList[0].Name);
+            var resultObj = okResult.Value as StaffJobViewRes;
+            Assert.NotNull(resultObj);
+            Assert.Equal(staffId, resultObj.StaffID);
+            Assert.Equal(jobCode, resultObj.JobCode);
+            Assert.Equal("Jane Smith", resultObj.Name);
         }
 
         [Fact]
@@ -394,7 +386,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.StaffJobControllerTest
                 _controller.GetViewByStaffIdAsync(staffId, jobCode));
 
             await _serviceMock.Received(1).GetViewByStaffIdAsync(staffId, jobCode);
-            _mapperMock.DidNotReceive().Map<List<StaffJobViewRes>>(Arg.Any<StaffJobViewDto>());
+            _mapperMock.DidNotReceive().Map<StaffJobViewRes>(Arg.Any<StaffJobViewDto>());
         }
 
         [Fact]
@@ -407,7 +399,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.StaffJobControllerTest
             var serviceResult = new StaffJobViewDto { StaffID = staffId, JobCode = jobCode };
 
             _serviceMock.GetViewByStaffIdAsync(staffId, jobCode).Returns(serviceResult);
-            _mapperMock.Map<List<StaffJobViewRes>>(serviceResult)
+            _mapperMock.Map<StaffJobViewRes>(serviceResult)
                 .Throws(new Exception("Mapping error"));
 
             // Act & Assert
