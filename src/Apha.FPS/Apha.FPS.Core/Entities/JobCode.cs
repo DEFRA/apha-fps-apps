@@ -4,16 +4,16 @@
     {
         public string JobCodeId { get; set; } = null!;
 
-        public string? Parentproject { get; set; }
+        public string? ParentProject { get; set; }
 
-        public string? Jobcodeworkgroup { get; set; }
+        public string? JobCodeWorkGroup { get; set; }
 
-        public string? Newprog { get; set; }
+        public string? NewProg { get; set; }
 
         public string? Type { get; set; }
 
-        public string? Jobcodename { get; set; }
+        public string? JobCodeName { get; set; }
 
-        public int? Fpscalyear { get; set; }
+        public int? FpsYear { get; set; }
     }
 }

@@ -108,7 +108,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 StaffId = staffJob.StaffId,
                 JobCode = staffJob.JobCode,
                 PlannedHours = staffJob.PlannedHours,
-                FpsCalYear = _yearContext.FPSYear
+                FpsYear = _yearContext.FpsYear
             };
 
             _dbContext.StaffJobs.Add(newStaffJob);
@@ -131,7 +131,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     $"Staff job with StaffId {staffJob.StaffId} and JobCode {staffJob.JobCode} not found");
 
             existingStaffJob.PlannedHours = staffJob.PlannedHours;
-            existingStaffJob.FpsCalYear = _yearContext.FPSYear;
+            existingStaffJob.FpsYear = _yearContext.FpsYear;
 
             await _dbContext.SaveChangesAsync();
 

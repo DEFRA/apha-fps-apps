@@ -2,7 +2,7 @@
 {
     public partial class Contract
     {
-        public string Contractno { get; set; } = null!;
+        public string ContractNo { get; set; } = null!;
 
         public string Category { get; set; } = null!;
 
@@ -12,16 +12,16 @@
 
         public string? Title { get; set; }
 
-        public DateOnly? Registereddate { get; set; }
+        public DateOnly? RegisteredDate { get; set; }
 
-        public DateOnly? Startdate { get; set; }
+        public DateOnly? StartDate { get; set; }
 
-        public DateOnly? Enddate { get; set; }
+        public DateOnly? EndDate { get; set; }
 
-        public byte[]? Contractdoc { get; set; }
+        public byte[]? ContractDoc { get; set; }
 
         public int? Duration { get; set; }
 
-        public int? Fpscalyear { get; set; }
+        public int? FpsYear { get; set; }
     }
 }

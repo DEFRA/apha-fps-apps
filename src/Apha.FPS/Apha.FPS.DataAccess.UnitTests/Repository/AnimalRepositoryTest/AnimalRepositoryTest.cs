@@ -90,7 +90,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AnimalRepositoryTest
                     DailyRate      = 10.50m,
                     DefraDailyRate = 13.00m,
                     PlanByWeek     = true,
-                    FpsCalYear     = 2024
+                    FpsYear     = 2024
                 }
             };
             var repo = CreateRepository(animals: animals);
@@ -106,7 +106,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AnimalRepositoryTest
             Assert.Equal(10.50m,        animal.DailyRate);
             Assert.Equal(13.00m,        animal.DefraDailyRate);
             Assert.True(animal.PlanByWeek);
-            Assert.Equal(2024,          animal.FpsCalYear);
+            Assert.Equal(2024,          animal.FpsYear);
         }
 
         
@@ -162,7 +162,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AnimalRepositoryTest
                 AnimalType      = "DOG",
                 NumberOfDays    = 2.0,
                 NumberOfAnimals = 1.0,
-                FpsCalYear      = 2024
+                FpsYear      = 2024
             };
 
             // Act

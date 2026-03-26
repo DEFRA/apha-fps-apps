@@ -16,7 +16,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
         private static Mock<IFpsYearContext> CreateMockFpsYearContext(int year = DefaultTestFpsYear)
         {
             var mockFpsYearContext = new Mock<IFpsYearContext>();
-            mockFpsYearContext.Setup(x => x.FPSYear).Returns(year);
+            mockFpsYearContext.Setup(x => x.FpsYear).Returns(year);
             return mockFpsYearContext;
         }
 
@@ -585,7 +585,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
             Assert.NotNull(result);
             Assert.Equal("S001", result.StaffId);
             Assert.Equal("JOB001", result.JobCode);
-            Assert.Equal(2025, result.FpsCalYear);
+            Assert.Equal(2025, result.FpsYear);
             RepositoryTestHelper.VerifySaveChanges(mockContext);
         }
 
@@ -649,7 +649,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
                 StaffId = "S001",
                 JobCode = "JOB001",
                 PlannedHours = 40,
-                FpsCalYear = 2024
+                FpsYear = 2024
             };
             var mockFpsYearContext = CreateMockFpsYearContext(2025);
             var (mockContext, staffJobMockSet) =
@@ -673,7 +673,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
             // Assert
             Assert.NotNull(result);
             Assert.Equal(50, result.PlannedHours);
-            Assert.Equal(2025, result.FpsCalYear);
+            Assert.Equal(2025, result.FpsYear);
             RepositoryTestHelper.VerifySaveChanges(mockContext);
         }
 

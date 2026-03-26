@@ -24,9 +24,9 @@ namespace Apha.FPS.Application.UnitTests.Services.FpsSettingServiceTest
         {
             // Arrange
             var settings = new List<FpsSetting>{
-                new FpsSetting { Id = "1", Setting = "MaxFPS", Notes = "Maximum FPS limit", TestSetting = "Test1", FpsCalYear = 2024 },
-                new FpsSetting { Id = "2", Setting = "MinFPS", Notes = "Minimum FPS limit", TestSetting = "Test2", FpsCalYear = 2023 },
-                new FpsSetting { Id = "3", Setting = "AvgFPS", Notes = "Average FPS target", TestSetting = "Test3", FpsCalYear = 2024 }
+                new FpsSetting { Id = "1", Setting = "MaxFPS", Notes = "Maximum FPS limit", TestSetting = "Test1", FpsYear = 2024 },
+                new FpsSetting { Id = "2", Setting = "MinFPS", Notes = "Minimum FPS limit", TestSetting = "Test2", FpsYear = 2023 },
+                new FpsSetting { Id = "3", Setting = "AvgFPS", Notes = "Average FPS target", TestSetting = "Test3", FpsYear = 2024 }
             };
             _mockRepository.GetAllAsync().Returns(settings);
 
@@ -76,7 +76,7 @@ namespace Apha.FPS.Application.UnitTests.Services.FpsSettingServiceTest
             // Arrange
             var settings = new List<FpsSetting>
             {
-            new FpsSetting { Id = "1", Setting = "DefaultFPS", Notes = "Default setting", TestSetting = "TestDefault", FpsCalYear = 2024 }
+            new FpsSetting { Id = "1", Setting = "DefaultFPS", Notes = "Default setting", TestSetting = "TestDefault", FpsYear = 2024 }
             };
             _mockRepository.GetAllAsync().Returns(settings);
 

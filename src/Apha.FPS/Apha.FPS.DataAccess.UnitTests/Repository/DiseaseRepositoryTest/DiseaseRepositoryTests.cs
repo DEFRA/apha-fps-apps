@@ -19,7 +19,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.DiseaseRepositoryTest
         private static DiseaseRepository CreateRepository(IEnumerable<Disease> diseases)
         {
             var fpsYearContext = Substitute.For<IFpsYearContext>();
-            fpsYearContext.FPSYear.Returns(DefaultTestFpsYear);
+            fpsYearContext.FpsYear.Returns(DefaultTestFpsYear);
 
             var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);
 

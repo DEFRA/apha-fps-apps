@@ -6,7 +6,7 @@
 
         public string Category { get; set; } = null!;
 
-        public int? FpsCalYear { get; set; }
+        public int? FpsYear { get; set; }
     }
 }
 

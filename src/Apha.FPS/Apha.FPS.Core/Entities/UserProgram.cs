@@ -6,7 +6,7 @@
 
         public string ProgramNo { get; set; } = null!;
 
-        public int? FpsCalYear { get; set; }
+        public int? FpsYear { get; set; }
     }
 }
 

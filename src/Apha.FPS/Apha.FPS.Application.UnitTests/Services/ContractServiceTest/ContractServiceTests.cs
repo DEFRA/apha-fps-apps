@@ -27,8 +27,8 @@ namespace Apha.FPS.Application.UnitTests.Services.ContractServiceTest
             // Arrange
             var contractEntities = new List<Contract>
             {
-                new Contract { Contractno = "CON001", Category = "A", Manager = "Alice", Customer = "CustomerA" },
-                new Contract { Contractno = "CON002", Category = "B", Manager = "Bob",   Customer = "CustomerB" }
+                new Contract { ContractNo = "CON001", Category = "A", Manager = "Alice", Customer = "CustomerA" },
+                new Contract { ContractNo = "CON002", Category = "B", Manager = "Bob",   Customer = "CustomerB" }
             };
 
             var expectedDtos = new List<ContractDto>
