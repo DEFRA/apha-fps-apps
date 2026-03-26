@@ -74,7 +74,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 Directorate = string.Empty
             };
             await PopulateDropdownsAsync(model);
-            return PartialView("_AddProgram", model);
+            return PartialView("_AddEditProgram", model);
         }
 
         // POST: Create
@@ -125,7 +125,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 return NotFound();
             var model = _mapper.Map<ProgramViewModel>(response.Data);
             await PopulateDropdownsAsync(model);
-            return PartialView("_EditProgram", model);
+            return PartialView("_AddEditProgram", model);
         }
 
         // POST: Edit
