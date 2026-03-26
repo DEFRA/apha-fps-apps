@@ -16,6 +16,7 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<PaginationModel, PaginationDto>().ReverseMap(); 
             CreateMap<ProgramViewModel, ProgramDto>().ReverseMap(); 
             CreateMap<EmployeeViewModel, EmployeeDto>().ReverseMap();
+            CreateMap<StaffJobViewDto, StaffJobDto>().ReverseMap();
         }
     }
 }

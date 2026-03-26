@@ -40,6 +40,12 @@ namespace Apha.FPS.Application.Services
             return chargeRate;
         }
 
+        public async Task<StaffJobViewDto?> GetViewByStaffIdAsync(string staffId, string jobCode)
+        {
+            var staffWorkgroups = await _staffJobRepository.GetViewByStaffIdAsync(staffId, jobCode);
+            return _mapper.Map<StaffJobViewDto>(staffWorkgroups);
+        }
+
         public async Task<StaffJobDto?> GetByIdAsync(string staffId, string jobCode)
         {
             var staffWorkgroup = await _staffJobRepository.GetByIdAsync(staffId, jobCode);
@@ -65,5 +71,6 @@ namespace Apha.FPS.Application.Services
             var isDeleted = await _staffJobRepository.DeleteAsync(staffId, jobCode);
             return isDeleted;
         }
+
     }
 }
