@@ -572,5 +572,56 @@ namespace Apha.FPS.Api.UnitTests.Controller.StaffJobControllerTest
         }     
 
         #endregion
+
+        #region GetTotalStaffCostAsync
+
+        [Fact]
+        public async Task GetTotalStaffCostAsync_HappyPath_ReturnsOkWithTotal()
+        {
+            var jobCode = "JOB001";
+            var total = 4500m;
+            _serviceMock.GetTotalStaffCostAsync(jobCode).Returns(total);
+
+            var result = await _controller.GetTotalStaffCostAsync(jobCode);
+
+            Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(total, ((OkObjectResult)result).Value);
+        }
+
+        [Fact]
+        public async Task GetTotalStaffCostAsync_ReturnsZero_WhenNoStaffCost()
+        {
+            var jobCode = "JOB001";
+            _serviceMock.GetTotalStaffCostAsync(jobCode).Returns(0m);
+
+            var result = await _controller.GetTotalStaffCostAsync(jobCode);
+
+            Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(0m, ((OkObjectResult)result).Value);
+        }
+
+        [Fact]
+        public async Task GetTotalStaffCostAsync_Error_ServiceThrows()
+        {
+            _serviceMock.GetTotalStaffCostAsync("JOB001").Throws(new Exception("Service error"));
+
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetTotalStaffCostAsync("JOB001"));
+        }
+
+        [Theory]
+        [InlineData("JOB001")]
+        [InlineData("FZ2000")]
+        [InlineData("PROJ123")]
+        public async Task GetTotalStaffCostAsync_WithVariousJobCodes_CallsService(string jobCode)
+        {
+            _serviceMock.GetTotalStaffCostAsync(jobCode).Returns(100m);
+
+            var result = await _controller.GetTotalStaffCostAsync(jobCode);
+
+            Assert.IsType<OkObjectResult>(result);
+            await _serviceMock.Received(1).GetTotalStaffCostAsync(jobCode);
+        }
+
+        #endregion
     }
 }
