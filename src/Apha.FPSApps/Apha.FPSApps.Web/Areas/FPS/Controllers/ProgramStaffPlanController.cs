@@ -44,7 +44,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 Pagination = new PaginationModel()
             };
 
-            var staffCostGrid = new DataGridConfig<StaffJobItem>
+            var staffCostGrid = new DataGridConfig<StaffJobItemViewModel>
             {
                 GridId = "staffBookedGrid",
                 Title = "Staff Booked",
@@ -58,8 +58,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 DeleteFunction = "deleteStaffJob",
                 ExtraFilterMethod = "getStaffJobExtraFilters",
                 BindGridUrl = "/FPS/StaffJob/LoadStaffJobGrid",
-                Data = new List<StaffJobItem>(),
-                Columns = GridDataProvider.GetColumnsDefination<StaffJobItem>(),
+                Data = new List<StaffJobItemViewModel>(),
+                Columns = GridDataProvider.GetColumnsDefination<StaffJobItemViewModel>(),
                 Pagination = new PaginationModel()
             };
 

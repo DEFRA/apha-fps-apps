@@ -24,7 +24,7 @@
         {
             Columns = new List<DataGridColumn>();
             Data = new List<T>();
-            ShowCheckboxColumn = true;
+            ShowCheckboxColumn = false;
             ShowPagination = true;
             AllowAdd = true;
             AllowDelete = true;

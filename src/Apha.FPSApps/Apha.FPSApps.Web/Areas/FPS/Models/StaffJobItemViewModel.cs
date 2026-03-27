@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Models
 {
-    public class StaffJobItem
+    public class StaffJobItemViewModel
     {
         [GridColumn(Type = GridColumnType.ReadOnly, IsVisible = false)]
         public string? StaffID { get; set; }
