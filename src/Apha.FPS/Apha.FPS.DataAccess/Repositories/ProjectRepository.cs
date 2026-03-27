@@ -5,6 +5,7 @@ using Apha.FPS.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using System.Dynamic;
+using System.Linq.Expressions;
 
 namespace Apha.FPS.DataAccess.Repositories
 {
@@ -85,22 +86,35 @@ namespace Apha.FPS.DataAccess.Repositories
                 .AsQueryable();
 
             projectQuery = ApplyProjectFilter(projectQuery, query.Filter);
-
-            projectQuery = !string.IsNullOrWhiteSpace(query.SortBy)
-                ? query.SortBy switch
-                {
-                    nameof(Project.ParentProject) => query.Descending
-                        ? projectQuery.OrderByDescending(p => p.ParentProject)
-                        : projectQuery.OrderBy(p => p.ParentProject),
-                    nameof(Project.ProjectTitle) => query.Descending
-                        ? projectQuery.OrderByDescending(p => p.ProjectTitle)
-                        : projectQuery.OrderBy(p => p.ProjectTitle),
-                    _ => projectQuery.OrderBy(p => p.ParentProject)
-                }
-                : projectQuery.OrderBy(p => p.ParentProject);
+            projectQuery = (IQueryable<Project>)ApplySorting(projectQuery, query.SortBy, query.Descending);
 
             var result = await projectQuery.ToListAsync();
             return base.ApplyPaging(result, query.Page, query.PageSize);
+        }
+
+        private static IQueryable ApplySorting(IQueryable<Project> query, string? sortBy, bool descending)
+        {
+            if (string.IsNullOrEmpty(sortBy))
+                return query.OrderBy(p => p.ParentProject);
+
+            return ApplySortingByProperty(query, sortBy.ToLower(), descending);
+        }
+
+        private static IQueryable ApplySortingByProperty(IQueryable<Project> query, string property, bool descending)
+        {
+            return property switch
+            {
+                "parentproject" => ApplyOrder(query, p => p.ParentProject, descending),
+                "projecttitle"  => ApplyOrder(query, p => p.ProjectTitle,  descending),
+                "program"       => ApplyOrder(query, p => p.Program,       descending),
+                "budgetcvl"     => ApplyOrder(query, p => p.BudgetCvl,     descending),
+                _               => query.OrderBy(p => p.ParentProject)
+            };
+        }
+
+        private static IQueryable ApplyOrder<T>(IQueryable<Project> query, Expression<Func<Project, T>> keySelector, bool descending)
+        {
+            return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
         }
 
         private static IQueryable<Project> ApplyProjectFilter(IQueryable<Project> query, string? filter)
