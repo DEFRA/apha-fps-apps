@@ -95,8 +95,8 @@ namespace Apha.FPS.DataAccess.Data
                     .HasMaxLength(10)
                     .HasColumnName("programno");
                 entity.Property(e => e.UserID).HasColumnName("user_id");
-                entity.Property(e => e.FpsCalYear).HasColumnName(FpsYear);
-                entity.HasQueryFilter(e => e.FpsCalYear == _fPSYearContext.FPSYear);
+                entity.Property(e => e.FpsYear).HasColumnName(FpsYear);
+                entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
             });
 
             modelBuilder.Entity<Program>(entity =>
@@ -116,7 +116,7 @@ namespace Apha.FPS.DataAccess.Data
                 entity.Property(e => e.Directorate)
                     .HasMaxLength(15)
                     .HasColumnName("directorate");
-                entity.Property(e => e.FpsCalYear).HasColumnName(FpsYear);
+                entity.Property(e => e.FpsYear).HasColumnName(FpsYear);
                 entity.Property(e => e.Manager)
                     .HasMaxLength(50)
                     .HasColumnName("manager");
@@ -134,7 +134,7 @@ namespace Apha.FPS.DataAccess.Data
                     .HasDefaultValueSql("0")
                     .HasColumnType("money")
                     .HasColumnName("target");
-                entity.HasQueryFilter(e => e.FpsCalYear == _fPSYearContext.FPSYear);
+                entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
             });
 
             modelBuilder.Entity<Project>(entity =>
@@ -192,7 +192,7 @@ namespace Apha.FPS.DataAccess.Data
                 entity.Property(e => e.Finished)
                     .HasDefaultValue((short)0)
                     .HasColumnName("finished");
-                entity.Property(e => e.FpsCalYear).HasColumnName(FpsYear);
+                entity.Property(e => e.FpsYear).HasColumnName(FpsYear);
                 entity.Property(e => e.IncomeAccountCode)
                     .HasMaxLength(50)
                     .HasColumnName("incomeaccountcode");
@@ -250,7 +250,7 @@ namespace Apha.FPS.DataAccess.Data
                 entity.Property(e => e.WipLimit)
                     .HasColumnType("money")
                     .HasColumnName("wip_limit");
-                entity.HasQueryFilter(e => e.FpsCalYear == _fPSYearContext.FPSYear);
+                entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
             });
 
             modelBuilder.Entity<StaffJob>(entity =>
@@ -265,9 +265,9 @@ namespace Apha.FPS.DataAccess.Data
                 entity.Property(e => e.JobCode)
                     .HasMaxLength(20)
                     .HasColumnName("jobcode");
-                entity.Property(e => e.FpsCalYear).HasColumnName(FpsYear);
+                entity.Property(e => e.FpsYear).HasColumnName(FpsYear);
                 entity.Property(e => e.PlannedHours).HasColumnName("plannedhours");
-                entity.HasQueryFilter(e => e.FpsCalYear == _fPSYearContext.FPSYear);
+                entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
             });
 
             modelBuilder.Entity<WgEmployee>(entity =>
@@ -280,7 +280,7 @@ namespace Apha.FPS.DataAccess.Data
                     .HasMaxLength(50)
                     .HasColumnName("pactid");
                 entity.Property(e => e.EndDate).HasColumnName("enddate");
-                entity.Property(e => e.FpsCalYear).HasColumnName(FpsYear);
+                entity.Property(e => e.FpsYear).HasColumnName(FpsYear);
                 entity.Property(e => e.HoursPerWeek).HasColumnName("hoursperweek");
                 entity.Property(e => e.HrsAvail).HasColumnName("hrsavail");
                 entity.Property(e => e.HrsPaid).HasColumnName("hrspaid");
@@ -306,7 +306,7 @@ namespace Apha.FPS.DataAccess.Data
                 entity.Property(e => e.WorkGroupGrade)
                     .HasMaxLength(50)
                     .HasColumnName("workgroupgrade");
-                entity.HasQueryFilter(e => e.FpsCalYear == _fPSYearContext.FPSYear);
+                entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
             });
 
             modelBuilder.Entity<Employee>(entity =>
@@ -321,14 +321,14 @@ namespace Apha.FPS.DataAccess.Data
                 entity.Property(e => e.FirstName)
                     .HasMaxLength(20)
                     .HasColumnName("firstname");
-                entity.Property(e => e.FPSCalYear).HasColumnName(FpsYear);
+                entity.Property(e => e.FpsYear).HasColumnName(FpsYear);
                 entity.Property(e => e.LastName)
                     .HasMaxLength(20)
                     .HasColumnName("lastname");
                 entity.Property(e => e.Title)
                     .HasMaxLength(4)
                     .HasColumnName("title");
-                entity.HasQueryFilter(e => e.FPSCalYear == _fPSYearContext.FPSYear);
+                entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
             });
 
             modelBuilder.Entity<FpsSetting>(entity =>
@@ -340,7 +340,7 @@ namespace Apha.FPS.DataAccess.Data
                 entity.Property(e => e.Id)
                     .HasMaxLength(50)
                     .HasColumnName("id");
-                entity.Property(e => e.FpsCalYear).HasColumnName(FpsYear);
+                entity.Property(e => e.FpsYear).HasColumnName(FpsYear);
                 entity.Property(e => e.Notes)
                     .HasMaxLength(255)
                     .HasColumnName("notes");
@@ -350,7 +350,7 @@ namespace Apha.FPS.DataAccess.Data
                 entity.Property(e => e.TestSetting)
                     .HasMaxLength(255)
                     .HasColumnName("testsetting");
-                entity.HasQueryFilter(e => e.FpsCalYear == _fPSYearContext.FPSYear);
+                entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
             });
 
             modelBuilder.Entity<Workgroup>(entity =>
@@ -377,7 +377,7 @@ namespace Apha.FPS.DataAccess.Data
                 entity.Property(e => e.EmailRecipient)
                     .HasMaxLength(50)
                     .HasColumnName("email_recipient");
-                entity.Property(e => e.FpsCalYear).HasColumnName(FpsYear);
+                entity.Property(e => e.FpsYear).HasColumnName(FpsYear);
                 entity.Property(e => e.Owner)
                     .HasMaxLength(50)
                     .HasColumnName("owner");
@@ -388,7 +388,7 @@ namespace Apha.FPS.DataAccess.Data
                 entity.Property(e => e.SysTimestamp)
                     .HasColumnType("timestamp without time zone")
                     .HasColumnName("systimestamp");
-                entity.HasQueryFilter(e => e.FpsCalYear == _fPSYearContext.FPSYear);
+                entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
             });
 
             modelBuilder.Entity<WorkgroupGrade>(entity =>
@@ -411,7 +411,7 @@ namespace Apha.FPS.DataAccess.Data
                     .HasDefaultValueSql("0")
                     .HasColumnType("money")
                     .HasColumnName("directratewg");
-                entity.Property(e => e.FpsCalYear).HasColumnName(FpsYear);
+                entity.Property(e => e.FpsYear).HasColumnName(FpsYear);
                 entity.Property(e => e.GradeCode)
                     .HasMaxLength(50)
                     .UseCollation(Latin1GeneralCiAs)
@@ -437,7 +437,7 @@ namespace Apha.FPS.DataAccess.Data
                 entity.Property(e => e.Workgroup)
                     .HasMaxLength(50)
                     .HasColumnName("workgroup");
-                entity.HasQueryFilter(e => e.FpsCalYear == _fPSYearContext.FPSYear);
+                entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
             });
 
             modelBuilder.Entity<ProfitCentreGrade>(entity =>
@@ -459,7 +459,7 @@ namespace Apha.FPS.DataAccess.Data
                     .HasMaxLength(50)
                     .UseCollation(Latin1GeneralCiAs)
                     .HasColumnName("divisiongrade");
-                entity.Property(e => e.FPSCalYear).HasColumnName(FpsYear);
+                entity.Property(e => e.FpsYear).HasColumnName(FpsYear);
                 entity.Property(e => e.GradeCode)
                     .HasMaxLength(50)
                     .UseCollation(Latin1GeneralCiAs)
@@ -483,7 +483,7 @@ namespace Apha.FPS.DataAccess.Data
                 entity.Property(e => e.ProfitCentre)
                     .HasMaxLength(50)
                     .HasColumnName("profitcentre");
-                entity.HasQueryFilter(e => e.FPSCalYear == _fPSYearContext.FPSYear);
+                entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
             });
 
             modelBuilder.Entity<UserProfitcentre>(entity =>
@@ -500,19 +500,19 @@ namespace Apha.FPS.DataAccess.Data
                     .HasMaxLength(50)
                     .HasColumnName("profitcentre");
                 entity.Property(e => e.UserId).HasColumnName(UserId);
-                entity.Property(e => e.FpsCalYear).HasColumnName(FpsYear);
-                entity.HasQueryFilter(e => e.FpsCalYear == _fPSYearContext.FPSYear);
+                entity.Property(e => e.FpsYear).HasColumnName(FpsYear);
+                entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
             });
 
             modelBuilder.Entity<ProfitCentre>(entity =>
             {
-                entity.HasKey(e => e.Profitcentre).HasName("tblkpprofitcentre_pk__tblkpprofitcentr__1db06a4f");
+                entity.HasKey(e => e.ProfitCentreId).HasName("tblkpprofitcentre_pk__tblkpprofitcentr__1db06a4f");
 
                 entity.ToTable("tblkpprofitcentre", "fps");
 
                 entity.HasIndex(e => e.Division, "dbo_tblkpprofitcentre_division");
 
-                entity.Property(e => e.Profitcentre)
+                entity.Property(e => e.ProfitCentreId)
                     .HasMaxLength(50)
                     .HasColumnName("profitcentre");
                 entity.Property(e => e.ContTarget)
@@ -550,23 +550,23 @@ namespace Apha.FPS.DataAccess.Data
                 entity.Property(e => e.JobCodeId)
                     .HasMaxLength(50)
                     .HasColumnName("jobcode");
-                entity.Property(e => e.Fpscalyear).HasColumnName(FpsYear);
-                entity.Property(e => e.Jobcodename)
+                entity.Property(e => e.FpsYear).HasColumnName(FpsYear);
+                entity.Property(e => e.JobCodeName)
                     .HasMaxLength(255)
                     .HasColumnName("jobcodename");
-                entity.Property(e => e.Jobcodeworkgroup)
+                entity.Property(e => e.JobCodeWorkGroup)
                     .HasMaxLength(50)
                     .HasColumnName("jobcodeworkgroup");
-                entity.Property(e => e.Newprog)
+                entity.Property(e => e.NewProg)
                     .HasMaxLength(20)
                     .HasColumnName("newprog");
-                entity.Property(e => e.Parentproject)
+                entity.Property(e => e.ParentProject)
                     .HasMaxLength(20)
                     .HasColumnName("parentproject");
                 entity.Property(e => e.Type)
                     .HasMaxLength(15)
                     .HasColumnName("type");
-                entity.HasQueryFilter(e => e.Fpscalyear == _fPSYearContext.FPSYear);
+                entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
             });
 
             modelBuilder.Entity<Status>(entity =>
@@ -604,32 +604,32 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.Entity<Contract>(entity =>
             {
-                entity.HasKey(e => e.Contractno).HasName("tblcontract_pk___2__10");
+                entity.HasKey(e => e.ContractNo).HasName("tblcontract_pk___2__10");
 
                 entity.ToTable("tblcontract", "fps");
 
-                entity.Property(e => e.Contractno)
+                entity.Property(e => e.ContractNo)
                     .HasMaxLength(10)
                     .HasColumnName("contractno");
                 entity.Property(e => e.Category)
                     .HasMaxLength(20)
                     .HasColumnName("category");
-                entity.Property(e => e.Contractdoc).HasColumnName("contractdoc");
+                entity.Property(e => e.ContractDoc).HasColumnName("contractdoc");
                 entity.Property(e => e.Customer)
                     .HasMaxLength(50)
                     .HasColumnName("customer");
                 entity.Property(e => e.Duration).HasColumnName("duration");
-                entity.Property(e => e.Enddate).HasColumnName("enddate");
-                entity.Property(e => e.Fpscalyear).HasColumnName(FpsYear);
+                entity.Property(e => e.EndDate).HasColumnName("enddate");
+                entity.Property(e => e.FpsYear).HasColumnName(FpsYear);
                 entity.Property(e => e.Manager)
                     .HasMaxLength(50)
                     .HasColumnName("manager");
-                entity.Property(e => e.Registereddate).HasColumnName("registereddate");
-                entity.Property(e => e.Startdate).HasColumnName("startdate");
+                entity.Property(e => e.RegisteredDate).HasColumnName("registereddate");
+                entity.Property(e => e.StartDate).HasColumnName("startdate");
                 entity.Property(e => e.Title)
                     .HasMaxLength(100)
                     .HasColumnName("title");
-                entity.HasQueryFilter(e => e.Fpscalyear == _fPSYearContext.FPSYear);
+                entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
             });
 
             modelBuilder.Entity<Animal>(entity =>
@@ -647,7 +647,7 @@ namespace Apha.FPS.DataAccess.Data
                 entity.Property(e => e.DefraDailyRate)
                     .HasColumnType("money")
                     .HasColumnName("defradailyrate");
-                entity.Property(e => e.FpsCalYear).HasColumnName(FpsYear);
+                entity.Property(e => e.FpsYear).HasColumnName(FpsYear);
                 entity.Property(e => e.PlanByWeek)
                     .HasDefaultValue(false)
                     .HasColumnName("planbyweek");
@@ -657,7 +657,7 @@ namespace Apha.FPS.DataAccess.Data
                 entity.Property(e => e.Species)
                     .HasMaxLength(50)
                     .HasColumnName("species");
-                entity.HasQueryFilter(e => e.FpsCalYear == _fPSYearContext.FPSYear);
+                entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
             });
 
             modelBuilder.Entity<AnimalRequest>(entity =>
@@ -670,13 +670,13 @@ namespace Apha.FPS.DataAccess.Data
                 entity.Property(e => e.AnimalType)
                     .HasMaxLength(50)
                     .HasColumnName("animaltype");
-                entity.Property(e => e.FpsCalYear).HasColumnName(FpsYear);
+                entity.Property(e => e.FpsYear).HasColumnName(FpsYear);
                 entity.Property(e => e.JobCode)
                     .HasMaxLength(20)
                     .HasColumnName("jobcode");
                 entity.Property(e => e.NumberOfAnimals).HasColumnName("numberofanimals");
                 entity.Property(e => e.NumberOfDays).HasColumnName("numberofdays");
-                entity.HasQueryFilter(e => e.FpsCalYear == _fPSYearContext.FPSYear);
+                entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
             });
 
             modelBuilder.Entity<ProjectGroup>(entity =>
@@ -728,8 +728,8 @@ namespace Apha.FPS.DataAccess.Data
                 entity.Property(e => e.Category)
                     .HasMaxLength(20)
                     .HasColumnName("category");
-                entity.Property(e => e.FpsCalYear).HasColumnName(FpsYear);
-                entity.HasQueryFilter(e => e.FpsCalYear == _fPSYearContext.FPSYear);
+                entity.Property(e => e.FpsYear).HasColumnName(FpsYear);
+                entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
             });
 
             modelBuilder.Entity<StaffActiveView>(entity =>
@@ -745,8 +745,8 @@ namespace Apha.FPS.DataAccess.Data
                 entity.Property(e => e.WorkgroupGrade)
                     .HasMaxLength(50)
                     .HasColumnName("workgroupgrade");
-                entity.Property(e => e.FpsCalYear).HasColumnName(FpsYear);
-                entity.HasQueryFilter(e => e.FpsCalYear == _fPSYearContext.FPSYear);
+                entity.Property(e => e.FpsYear).HasColumnName(FpsYear);
+                entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
             });
 
             modelBuilder.Entity<WorkgroupGradeGeneralView>(entity =>
@@ -768,8 +768,8 @@ namespace Apha.FPS.DataAccess.Data
                 entity.Property(e => e.WorkGroup)
                     .HasMaxLength(50)
                     .HasColumnName("workgroup");
-                entity.Property(e => e.FpsCalYear).HasColumnName(FpsYear);
-                entity.HasQueryFilter(e => e.FpsCalYear == _fPSYearContext.FPSYear);
+                entity.Property(e => e.FpsYear).HasColumnName(FpsYear);
+                entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
             });
 
             modelBuilder.Entity<ProgramView>(entity =>
@@ -788,7 +788,7 @@ namespace Apha.FPS.DataAccess.Data
                     .HasMaxLength(50)
                     .UseCollation("latin1_general_ci_as")
                     .HasColumnName("dt2username");
-                entity.Property(e => e.FpsCalYear).HasColumnName("fpsyear");
+                entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
                 entity.Property(e => e.Manager)
                     .HasMaxLength(50)
                     .HasColumnName("manager");
@@ -812,7 +812,7 @@ namespace Apha.FPS.DataAccess.Data
                     .HasMaxLength(255)
                     .UseCollation("latin1_general_ci_as")
                     .HasColumnName("useremail");
-                entity.HasQueryFilter(e => e.FpsCalYear == _fPSYearContext.FPSYear);
+                entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
             });
 
             modelBuilder.Entity<ProjectView>(entity =>
@@ -864,7 +864,7 @@ namespace Apha.FPS.DataAccess.Data
                     .HasColumnType("money")
                     .HasColumnName("feccost");
                 entity.Property(e => e.Finished).HasColumnName("finished");
-                entity.Property(e => e.FpsCalYear).HasColumnName("fpsyear");
+                entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
                 entity.Property(e => e.IncomeAccountCode)
                     .HasColumnType("citext")
                     .HasColumnName("incomeaccountcode");
@@ -928,7 +928,7 @@ namespace Apha.FPS.DataAccess.Data
                 entity.Property(e => e.WipLimit)
                     .HasColumnType("money")
                     .HasColumnName("wip_limit");
-                entity.HasQueryFilter(e => e.FpsCalYear == _fPSYearContext.FPSYear);
+                entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
             });
 
 
@@ -942,7 +942,7 @@ namespace Apha.FPS.DataAccess.Data
                     .HasMaxLength(50)
                     .UseCollation("latin1_general_ci_as")
                     .HasColumnName("dt2username");
-                entity.Property(e => e.FpsCalYear).HasColumnName("fpsyear");
+                entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
                 entity.Property(e => e.JobCode)
                     .HasColumnType("citext")
                     .HasColumnName("jobcode");
@@ -955,7 +955,7 @@ namespace Apha.FPS.DataAccess.Data
                     .HasMaxLength(255)
                     .UseCollation("latin1_general_ci_as")
                     .HasColumnName("useremail");
-                entity.HasQueryFilter(e => e.FpsCalYear == _fPSYearContext.FPSYear);
+                entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
             });
 
             modelBuilder.Entity<StaffGeneralView>(entity =>
@@ -964,7 +964,7 @@ namespace Apha.FPS.DataAccess.Data
                     .HasNoKey()
                     .ToView("vtblstaff_general", "fps");
 
-                entity.Property(e => e.FpsCalYear).HasColumnName("fpsyear");
+                entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
                 entity.Property(e => e.Name).HasColumnName("name");
                 entity.Property(e => e.StaffId)
                     .HasColumnType("citext")
@@ -972,7 +972,7 @@ namespace Apha.FPS.DataAccess.Data
                 entity.Property(e => e.WorkGroupGrade)
                     .HasColumnType("citext")
                     .HasColumnName("workgroupgrade");
-                entity.HasQueryFilter(e => e.FpsCalYear == _fPSYearContext.FPSYear);
+                entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
             });
 
             modelBuilder.Entity<StaffView>(entity =>
@@ -985,7 +985,7 @@ namespace Apha.FPS.DataAccess.Data
                     .HasMaxLength(50)
                     .UseCollation("latin1_general_ci_as")
                     .HasColumnName("dt2username");
-                entity.Property(e => e.FpsCalYear).HasColumnName("fpsyear");
+                entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
                 entity.Property(e => e.HrsAvail).HasColumnName("hrsavail");
                 entity.Property(e => e.HrsPaid).HasColumnName("hrspaid");
                 entity.Property(e => e.Leave).HasColumnName("leave");
@@ -1012,7 +1012,7 @@ namespace Apha.FPS.DataAccess.Data
                 entity.Property(e => e.WorkgroupGrade)
                     .HasColumnType("citext")
                     .HasColumnName("workgroupgrade");
-                entity.HasQueryFilter(e => e.FpsCalYear == _fPSYearContext.FPSYear);
+                entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
             });
 
             modelBuilder.Entity<StaffPickView>(entity =>
@@ -1021,7 +1021,7 @@ namespace Apha.FPS.DataAccess.Data
                     .HasNoKey()
                     .ToView("vtblstaff_pick", "fps");
 
-                entity.Property(e => e.FpsCalYear).HasColumnName("fpsyear");
+                entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
                 entity.Property(e => e.Name).HasColumnName("name");
                 entity.Property(e => e.StaffId)
                     .HasColumnType("citext")
@@ -1029,7 +1029,7 @@ namespace Apha.FPS.DataAccess.Data
                 entity.Property(e => e.WorkgroupGrade)
                     .HasColumnType("citext")
                     .HasColumnName("workgroupgrade");
-                entity.HasQueryFilter(e => e.FpsCalYear == _fPSYearContext.FPSYear);
+                entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
             });
 
             modelBuilder.Entity<AnimalRequestView>(entity =>
@@ -1045,7 +1045,7 @@ namespace Apha.FPS.DataAccess.Data
                     .HasMaxLength(50)
                     .UseCollation("latin1_general_ci_as")
                     .HasColumnName("dt2username");
-                entity.Property(e => e.FpsCalYear).HasColumnName("fpsyear");
+                entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
                 entity.Property(e => e.IndCounter).HasColumnName("indcounter");
                 entity.Property(e => e.JobCode)
                     .HasColumnType("citext")
@@ -1057,7 +1057,7 @@ namespace Apha.FPS.DataAccess.Data
                     .HasMaxLength(255)
                     .UseCollation("latin1_general_ci_as")
                     .HasColumnName("useremail");
-                entity.HasQueryFilter(e => e.FpsCalYear == _fPSYearContext.FPSYear);
+                entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
             });
         }
     }

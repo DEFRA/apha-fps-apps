@@ -39,7 +39,12 @@ on:
          type: string
          default: 'Web'
        run_dataaccess_tests:
-         description: "Run DataAccess layer unit tests (requires <SolutionName>.DataAccess.UnitTests project)"
+         description: "Run DataAccess layer unit tests for Backend Services Only (requires <SolutionName>.DataAccess.UnitTests project)"
+         required: false
+         type: boolean
+         default: false
+       run_infrastructure_tests:
+         description: "Run Infrastructure layer unit tests for FrontEnd Only (requires <SolutionName>.Infrastructure.UnitTests project)"
          required: false
          type: boolean
          default: false
@@ -195,6 +200,20 @@ jobs:
             -p:CoverletOutputFormat=opencover \
             -p:Deterministic=true \
             --logger "trx;LogFileName=$(pwd)/src/TestResults/$APP_SOLUTION_NAME.DataAccess.test_results.trx"
+
+      - name: Run Infrastructure Unit Tests with Coverage
+        if: ${{ inputs.run_infrastructure_tests }}
+        shell: bash
+        env:
+          APP_SOLUTION_NAME: ${{ inputs.dotnet_application_solution_name }}
+        run: |
+          dotnet test src/$APP_SOLUTION_NAME/$APP_SOLUTION_NAME.Infrastructure.UnitTests/$APP_SOLUTION_NAME.Infrastructure.UnitTests.csproj \
+            --no-build --configuration Release \
+            -p:CollectCoverage=true \
+            -p:CoverletOutput=$(pwd)/src/TestResults/$APP_SOLUTION_NAME.Infrastructure.coverage.opencover.xml \
+            -p:CoverletOutputFormat=opencover \
+            -p:Deterministic=true \
+            --logger "trx;LogFileName=$(pwd)/src/TestResults/$APP_SOLUTION_NAME.Infrastructure.test_results.trx"
 
       - name: List coverage files
         shell: bash

@@ -7,8 +7,10 @@ namespace Apha.FPSApps.Application.Interfaces
     public interface IStaffJobService
     {
         Task<ApiResponseDto<IEnumerable<StaffWorkgroupLookupDto>>> GetStaffWorkgroupLookupAsync();
-        Task<ApiResponseDto<List<StaffJobViewDto>>> GetAllStaffJobsAsync(QueryParameters<string> staffJobReq);
-        Task<ApiResponseDto<StaffJobDto>> GetStaffJobByIdAsync(string staffId);
+        Task<ApiResponseDto<List<StaffJobViewDto>>> GetAllStaffJobsAsync(QueryParameters<string> staffJobReq, string jobCode);
+        Task<ApiResponseDto<StaffJobDto>> GetStaffJobByIdAsync(string staffId, string jobCode);
+        Task<ApiResponseDto<StaffJobViewDto?>> GetViewByStaffIdAsync(string staffId, string jobCode);
+        Task<ApiResponseDto<decimal?>> GetStaffChargeRate(string staffId, string jobcode);
         Task<ApiResponseDto<StaffJobDto>> CreateStaffJobAsync(StaffJobDto staffJob);
         Task<ApiResponseDto<StaffJobDto>> UpdateStaffJobAsync(string staffId, StaffJobDto staffJob);
         Task<ApiResponseDto<bool>> DeleteStaffJobAsync(string staffId, string jobCode);

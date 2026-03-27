@@ -5,6 +5,7 @@ using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Apha.FPS.Api.Controllers
@@ -84,6 +85,13 @@ namespace Apha.FPS.Api.Controllers
             if (result == null)
                 throw new KeyNotFoundException("Data not found.");
             return Ok(_mapper.Map<StaffJobRes>(result));
+        }
+
+        [HttpGet("view")]
+        public async Task<IActionResult> GetViewByStaffIdAsync([FromQuery] string staffId, [FromQuery] string jobcode)
+        {
+            var staffRecord = await _staffJobService.GetViewByStaffIdAsync(staffId, jobcode);
+            return Ok(_mapper.Map<StaffJobViewRes>(staffRecord));
         }
 
         /// <summary>

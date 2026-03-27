@@ -22,7 +22,7 @@ namespace Apha.FPS.Application.Services
                 Setting = s.Setting,
                 Notes = s.Notes,
                 TestSetting = s.TestSetting,
-                FpsCalYear = s.FpsCalYear
+                FpsCalYear = s.FpsYear
             }).ToList();
         }
     }
