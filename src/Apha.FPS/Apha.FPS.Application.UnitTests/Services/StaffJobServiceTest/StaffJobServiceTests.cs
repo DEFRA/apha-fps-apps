@@ -978,6 +978,72 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
             await _mockRepository.Received(1).DeleteAsync(staffId, jobCode);
         }
 
+        #region GetTotalStaffCostAsync Tests
+
+        [Fact]
+        public async Task GetTotalStaffCostAsync_WithValidJobCode_ReturnsTotalFromRepository()
+        {
+            // Arrange
+            var jobCode = "JOB001";
+            var expectedTotal = 4500m;
+            _mockRepository.GetTotalStaffCostAsync(jobCode).Returns(expectedTotal);
+
+            // Act
+            var result = await _sut.GetTotalStaffCostAsync(jobCode);
+
+            // Assert
+            result.Should().Be(expectedTotal);
+            await _mockRepository.Received(1).GetTotalStaffCostAsync(jobCode);
+        }
+
+        [Fact]
+        public async Task GetTotalStaffCostAsync_WhenRepositoryReturnsZero_ReturnsZero()
+        {
+            // Arrange
+            var jobCode = "JOB001";
+            _mockRepository.GetTotalStaffCostAsync(jobCode).Returns(0m);
+
+            // Act
+            var result = await _sut.GetTotalStaffCostAsync(jobCode);
+
+            // Assert
+            result.Should().Be(0m);
+            await _mockRepository.Received(1).GetTotalStaffCostAsync(jobCode);
+        }
+
+        [Fact]
+        public async Task GetTotalStaffCostAsync_WithEmptyJobCode_PassesToRepository()
+        {
+            // Arrange
+            var jobCode = string.Empty;
+            _mockRepository.GetTotalStaffCostAsync(jobCode).Returns(0m);
+
+            // Act
+            var result = await _sut.GetTotalStaffCostAsync(jobCode);
+
+            // Assert
+            result.Should().Be(0m);
+            await _mockRepository.Received(1).GetTotalStaffCostAsync(jobCode);
+        }
+
+        [Fact]
+        public async Task GetTotalStaffCostAsync_WhenRepositoryThrowsException_PropagatesException()
+        {
+            // Arrange
+            var jobCode = "JOB001";
+            _mockRepository.GetTotalStaffCostAsync(jobCode)
+                .Throws(new InvalidOperationException("Database connection failed"));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+                () => _sut.GetTotalStaffCostAsync(jobCode));
+
+            exception.Message.Should().Be("Database connection failed");
+            await _mockRepository.Received(1).GetTotalStaffCostAsync(jobCode);
+        }
+
+        #endregion
+
     }
 }
 

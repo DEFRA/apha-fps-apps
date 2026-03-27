@@ -45,6 +45,11 @@ namespace Apha.FPSApps.Application.Services
             return staffJob;
         }
 
+        public async Task<ApiResponseDto<decimal>> GetTotalStaffCostAsync(string jobCode)
+        {
+            return await _fpsClient.FpsStaffJob.GetTotalStaffCostAsync(jobCode);
+        }
+
         public async Task<ApiResponseDto<StaffJobDto>> CreateStaffJobAsync(StaffJobDto staffJob)
         {
             var result = await _fpsClient.FpsStaffJob.CreateStaffJobAsync(staffJob);

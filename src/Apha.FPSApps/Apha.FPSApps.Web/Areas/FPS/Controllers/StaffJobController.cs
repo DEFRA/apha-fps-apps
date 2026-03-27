@@ -257,6 +257,34 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             });
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetTotalStaffCost(string jobCode)
+        {
+            if (string.IsNullOrWhiteSpace(jobCode))
+            {
+                return Json(new { success = false, message = "Job Code is required", totalStaffCost = 0 });
+            }
+
+            var result = await _staffJobService.GetTotalStaffCostAsync(jobCode);
+
+            if (result.Success)
+            {
+                return Json(new { success = true, totalStaffCost = result.Data });
+            }
+
+            return Json(new
+            {
+                success = false,
+                message = "Failed to retrieve total staff cost.",
+                totalStaffCost = 0,
+                errors = (result.Errors ?? new List<ApiErrorDto>()).Select(e => new
+                {
+                    field = e.Code ?? string.Empty,
+                    message = e.Message ?? "An unexpected error occurred."
+                })
+            });
+        }
+
         private async Task PopulateDropdownsAsync(StaffJobItemViewModel model)
         {
             // Manager dropdown

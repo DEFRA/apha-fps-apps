@@ -188,6 +188,18 @@
             $('#tbl_@Model.ProjectsGrid.GridId tbody tr').removeClass('selected-row');
             row.addClass('selected-row');
 
+            // Fetch the total staff cost for the selected project (all records, not just current page)
+            $.get('@Url.Action("GetTotalStaffCost", "StaffJob", new { area = "FPS" })',
+                { jobCode: jobCode },
+                function (result) {
+                    if (result.success) {
+                        var total = parseFloat(result.totalStaffCost) || 0;
+                        $('#External_Income').val(formatCurrency(total));
+                        $('#Total_Costs').val(formatCurrency(budget - total));
+                    }
+                }
+            );
+
             window['gridManager_@Model.StaffCostGrid.GridId'].reloadGrid({ page: 1 });
         }
 
