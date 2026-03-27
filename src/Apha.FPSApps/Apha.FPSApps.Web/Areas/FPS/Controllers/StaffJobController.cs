@@ -85,7 +85,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         {
             StaffJobItem model = new StaffJobItem();
             await PopulateDropdownsAsync(model);
-            return PartialView("_AddStaffJob", model);
+            return PartialView("_AddEditStaffJob", model);
         }
 
         [HttpPost]
@@ -141,7 +141,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             {
                 var staffJobItem = _mapper.Map<StaffJobItem>(result.Data);
                 await PopulateDropdownsAsync(staffJobItem);
-                return PartialView("_EditStaffJob", staffJobItem);
+                return PartialView("_AddEditStaffJob", staffJobItem);
             }
             else
             {

@@ -173,7 +173,7 @@ namespace Apha.FPSApps.Web.UnitTests.ProgramMaintenanceControllerTest
 
             // Assert
             var partialViewResult = Assert.IsType<PartialViewResult>(result);
-            Assert.Equal("_AddProgram", partialViewResult.ViewName);
+            Assert.Equal("_AddEditProgram", partialViewResult.ViewName);
             var model = Assert.IsType<ProgramViewModel>(partialViewResult.Model);
             Assert.Equal(string.Empty, model.ProgramNo);
         }              
@@ -203,7 +203,7 @@ namespace Apha.FPSApps.Web.UnitTests.ProgramMaintenanceControllerTest
 
             // Assert
             var partialViewResult = Assert.IsType<PartialViewResult>(result);
-            Assert.Equal("_EditProgram", partialViewResult.ViewName);
+            Assert.Equal("_AddEditProgram", partialViewResult.ViewName);
             var model = Assert.IsType<ProgramViewModel>(partialViewResult.Model);
             Assert.Equal(programNo, model.ProgramNo);
         }

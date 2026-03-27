@@ -1,12 +1,29 @@
-﻿@model Apha.FPSApps.Web.Areas.FPS.Models.ProgramViewModel
+@model Apha.FPSApps.Web.Areas.FPS.Models.ProgramViewModel
+@{
+    var isEditMode = !string.IsNullOrEmpty(Model.ProgramNo);
+    var title      = isEditMode ? "Edit Program"    : "Add Program";
+    var formId     = isEditMode ? "editProgramForm" : "addProgramForm";
+    var saveLabel  = isEditMode ? "Update"          : "Save";
+    var saveAction = isEditMode ? "updateProgram()" : "saveProgram()";
+}
 
 <div class="modal-header">
-    <h5 class="modal-title" id="programModalTitle">Edit Program</h5>
+    <h5 class="modal-title" id="programModalTitle">@title</h5>
     <button type="button" class="btn-close btn-red" onclick="closeModal()" data-bs-dismiss="modal">X</button>
 </div>
 <div class="modal-body">
+    <div asp-validation-summary="ModelOnly" class="govuk-error-summary" role="alert"
+         aria-labelledby="error-summary-title" tabindex="-1" style="display:none;">
+        <h2 class="govuk-error-summary__title" id="error-summary-title">
+            There is a problem
+        </h2>
+        <div class="govuk-error-summary__body">
+            <ul class="govuk-list govuk-error-summary__list">
+            </ul>
+        </div>
+    </div>
     <div class="row g-3">
-        <form id="editProgramForm">
+        <form id="@formId">
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label" asp-for="ProgramNo">Program</label>
                 <input type="text" asp-for="ProgramNo" required class="govuk-input">
@@ -30,14 +47,14 @@
             </div>
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label" asp-for="Manager">Manager</label>
-                <select asp-for="Manager" asp-items="@Model.ManagerList" required class="govuk-select">
+                <select asp-for="Manager" required asp-items="@Model.ManagerList" class="govuk-select">
                 </select>
                 <span asp-validation-for="Manager" class="text-danger" style="display:none;"></span>
             </div>
         </form>
-    </div>    
+    </div>
 </div>
 <div class="modal-footer">
     <button class="govuk-button govuk-button--secondary sup_margin_0" data-module="govuk-button" data-bs-dismiss="modal" onclick="closeModal()">Cancel</button>
-    <button class="govuk-button sup_margin_0" data-module="govuk-button" type="button" onclick="updateProgram()">Update</button>
+    <button class="govuk-button sup_margin_0" data-module="govuk-button" type="button" onclick="@saveAction">@saveLabel</button>
 </div>
