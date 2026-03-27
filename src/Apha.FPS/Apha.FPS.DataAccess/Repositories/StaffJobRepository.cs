@@ -13,46 +13,18 @@ namespace Apha.FPS.DataAccess.Repositories
     public class StaffJobRepository : BaseRepository, IStaffJobRepository
     {
         private readonly FpsDbContext _dbContext;
-        private readonly int userId = 42;       
+        private readonly IFpsYearContext _yearContext;
+        private readonly int userId = 42;
 
-        public StaffJobRepository(FpsDbContext dbContext,
-            IProjectRepository projectRepository, IProgramRepository programRepository) : base(dbContext)
+        public StaffJobRepository(FpsDbContext dbContext, IFpsYearContext fpsYearContext) : base(dbContext)
         {
-            _dbContext = dbContext;            
+            _dbContext = dbContext;
+            _yearContext = fpsYearContext;
         }
 
         public async Task<PagedData<StaffJobView>> GetJobStaffCostAsync(PaginationParameters<string> query, string jobCode)
         {
-            var dutyHours = await _dbContext.TblSettings.Where(e => e.Id == "HoursInDay").Select(e => e.Setting).FirstOrDefaultAsync();
-            var queryStaffJob = (from sj in _dbContext.StaffJobTblViews
-                                       join s in _dbContext.StaffGeneralViews on sj.StaffId equals s.StaffId
-                                       join wg in _dbContext.WorkgroupGrades on s.WorkGroupGrade equals wg.WgGrade
-                                       join pc in _dbContext.ProfitcentreGrades on wg.ProfitCentreGrade equals pc.PcGrade
-                                       join p in _dbContext.ProjectViews on
-                                           new { sj.JobCode, sj.UserId } equals new { JobCode = p.ParentProject, p.UserId }
-                                       join prg in _dbContext.ProgramViews on 
-                                            new {p.Program, sj.UserId } equals new { Program = prg.ProgramNo, prg.UserId }
-                                       where sj.JobCode == jobCode && p.UserId == userId
-                                       select new StaffJobView
-                                       {
-                                           StaffID = sj.StaffId,
-                                           JobCode = sj.JobCode,
-                                           PlannedHours = sj.PlannedHours ?? 0,
-                                           Name = s.Name,
-                                           WorkGroupGrade = s.WorkGroupGrade,
-                                           ChargeRate = p.IsDefraProject == -1
-                                                              ? pc.DefraChargeRate
-                                                              : pc.ChargeRate,
-                                           StaffCost =
-                                                      (decimal)(sj.PlannedHours ?? 0) *
-                                                      (p.IsDefraProject == -1 ? pc.DefraChargeRate : pc.ChargeRate) *
-                                                      (prg.SectorName == "charge" ? 1m : 0m),
-                                           GradeCode = wg.GradeCode,
-                                           WorkGroup = wg.Workgroup,
-                                           SectorName = prg.SectorName,
-                                           Days = dutyHours != null ? (sj.PlannedHours ?? 0) / Convert.ToDouble(dutyHours) : 0
-                                       }).Distinct().OrderBy(e => e.Name).AsQueryable();
-
+            var queryStaffJob = await BuildJobStaffCostQueryAsync(jobCode);
             // Apply filtering
             queryStaffJob = ApplyStaffJobFilter(queryStaffJob, query.Filter);
 
@@ -61,10 +33,10 @@ namespace Apha.FPS.DataAccess.Repositories
             var result = await queryStaffJob.ToListAsync();
 
             return base.ApplyPaging(result, query.Page, query.PageSize);
-        }
+        }       
 
         public async Task<List<StaffWorkgroupLookup>> GetStaffWorkgroupLookup()
-        {           
+        {
             var query = (from s in _dbContext.StaffViews
                          join sp in _dbContext.StaffPickViews on s.StaffId equals sp.StaffId
                          where s.UserId == userId
@@ -76,7 +48,7 @@ namespace Apha.FPS.DataAccess.Repositories
                              HrsAvail = s.HrsAvail ?? 0
                          }).OrderBy(e => e.Name);
 
-            return await query.ToListAsync();           
+            return await query.ToListAsync();
         }
 
         public async Task<decimal?> GetStaffChargeRate(string staffId, string jobcode)
@@ -112,6 +84,12 @@ namespace Apha.FPS.DataAccess.Repositories
             return query;
         }
 
+        public async Task<StaffJobView?> GetViewByStaffIdAsync(string staffId, string jobCode)
+        {
+            var queryStaffJob = await BuildJobStaffCostQueryAsync(jobCode);
+            return await queryStaffJob.Where(e => e.StaffID == staffId).FirstOrDefaultAsync();
+        }
+
         public async Task<StaffJob> AddAsync(StaffJob staffJob)
         {
             ArgumentNullException.ThrowIfNull(staffJob);
@@ -129,7 +107,8 @@ namespace Apha.FPS.DataAccess.Repositories
             {
                 StaffId = staffJob.StaffId,
                 JobCode = staffJob.JobCode,
-                PlannedHours = staffJob.PlannedHours
+                PlannedHours = staffJob.PlannedHours,
+                FpsYear = _yearContext.FpsYear
             };
 
             _dbContext.StaffJobs.Add(newStaffJob);
@@ -152,6 +131,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     $"Staff job with StaffId {staffJob.StaffId} and JobCode {staffJob.JobCode} not found");
 
             existingStaffJob.PlannedHours = staffJob.PlannedHours;
+            existingStaffJob.FpsYear = _yearContext.FpsYear;
 
             await _dbContext.SaveChangesAsync();
 
@@ -162,27 +142,52 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(jobCode);
 
-            using var transaction = await _dbContext.Database.BeginTransactionAsync();
+            var staffJob = await _dbContext.StaffJobs
+                   .FirstOrDefaultAsync(sj => sj.StaffId == staffId && sj.JobCode == jobCode);
 
-            try
-            {
-                var staffJob = await _dbContext.StaffJobs
-                    .FirstOrDefaultAsync(sj => sj.StaffId == staffId && sj.JobCode == jobCode);
+            if (staffJob is null)
+                return false;
 
-                if (staffJob is null)
-                    return false;
+            _dbContext.StaffJobs.Remove(staffJob);
+            await _dbContext.SaveChangesAsync();            
 
-                _dbContext.StaffJobs.Remove(staffJob);
-                await _dbContext.SaveChangesAsync();
-                await transaction.CommitAsync();
+            return true;
+        }
 
-                return true;
-            }
-            catch
-            {
-                await transaction.RollbackAsync();
-                throw;
-            }
+        private async Task<IQueryable<StaffJobView>> BuildJobStaffCostQueryAsync(string jobCode)
+        {
+            var dutyHours = await _dbContext.TblSettings
+                .Where(e => e.Id == "HoursInDay")
+                .Select(e => e.Setting)
+                .FirstOrDefaultAsync();
+
+            return (from sj in _dbContext.StaffJobTblViews
+                    join s in _dbContext.StaffGeneralViews on sj.StaffId equals s.StaffId
+                    join wg in _dbContext.WorkgroupGrades on s.WorkGroupGrade equals wg.WgGrade
+                    join pc in _dbContext.ProfitcentreGrades on wg.ProfitCentreGrade equals pc.PcGrade
+                    join p in _dbContext.ProjectViews on
+                        new { sj.JobCode, sj.UserId } equals new { JobCode = p.ParentProject, p.UserId }
+                    join prg in _dbContext.ProgramViews on
+                        new { p.Program, sj.UserId } equals new { Program = prg.ProgramNo, prg.UserId }
+                    let dailyRate = (p.IsDefraProject == -1 ? pc.DefraChargeRate : pc.ChargeRate)
+                    where sj.JobCode == jobCode && p.UserId == userId
+                    select new StaffJobView
+                    {
+                        StaffID = sj.StaffId,
+                        JobCode = sj.JobCode,
+                        PlannedHours = sj.PlannedHours ?? 0,
+                        Name = s.Name,
+                        WorkGroupGrade = s.WorkGroupGrade,
+                        ChargeRate = dailyRate,
+                        StaffCost =
+                                   (decimal)(sj.PlannedHours ?? 0) *
+                                   (dailyRate) *
+                                   ((prg.SectorName ?? "").ToLower().Trim() == "charge" ? 1m : 0m),
+                        GradeCode = wg.GradeCode,
+                        WorkGroup = wg.Workgroup,
+                        SectorName = prg.SectorName,
+                        Days = dutyHours != null ? (sj.PlannedHours ?? 0) / Convert.ToDouble(dutyHours) : 0
+                    }).Distinct().OrderBy(e => e.Name).AsQueryable();
         }
 
         private static IQueryable ApplySorting(IQueryable<StaffJobView> query, string? sortBy, bool descending)

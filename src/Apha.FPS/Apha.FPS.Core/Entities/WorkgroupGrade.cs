@@ -25,6 +25,6 @@ namespace Apha.FPS.Core.Entities
 
         public string? HrsChangedBy { get; set; }
 
-        public int? FpsCalYear { get; set; }
+        public int? FpsYear { get; set; }
     }
 }

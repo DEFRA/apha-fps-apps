@@ -72,7 +72,7 @@
 
         public string? IncomeAccountCode { get; set; }
 
-        public int? FpsCalYear { get; set; }
+        public int? FpsYear { get; set; }
 
         public int? UserId { get; set; }
 

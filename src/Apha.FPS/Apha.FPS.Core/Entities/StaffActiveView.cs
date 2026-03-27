@@ -5,7 +5,7 @@
         public string? StaffID { get; set; }
         public string? Name { get; set; }
         public string? WorkgroupGrade { get; set; }
-        public int? FpsCalYear { get; set; }
+        public int? FpsYear { get; set; }
     }
 }
 

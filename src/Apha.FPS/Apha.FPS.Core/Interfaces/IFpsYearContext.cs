@@ -2,6 +2,6 @@
 {
     public interface IFpsYearContext
     {
-        int FPSYear { get; }
+        int FpsYear { get; }
     }
 }

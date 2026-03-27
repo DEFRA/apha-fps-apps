@@ -210,6 +210,225 @@ namespace Apha.FPS.Api.UnitTests.Controller.StaffJobControllerTest
 
         #endregion
 
+        #region GetViewByStaffIdAsync
+
+        [Fact]
+        public async Task GetViewByStaffIdAsync_HappyPath_ReturnsOk()
+        {
+            // Arrange
+            var staffId = "STAFF001";
+            var jobCode = "JOB001";
+
+            var serviceResult = new StaffJobViewDto
+            {
+                StaffID = staffId,
+                JobCode = jobCode,
+                Name = "John Doe",
+                PlannedHours = 40,
+                ChargeRate = 150.00m
+            };
+
+            var mappedResult = new StaffJobViewRes
+            {
+                StaffID = staffId,
+                JobCode = jobCode,
+                Name = "John Doe",
+                PlannedHours = 40,
+                ChargeRate = 150.00m
+            };
+
+            _serviceMock.GetViewByStaffIdAsync(staffId, jobCode).Returns(serviceResult);
+            _mapperMock.Map<StaffJobViewRes>(serviceResult).Returns(mappedResult);
+
+            // Act
+            var result = await _controller.GetViewByStaffIdAsync(staffId, jobCode);
+
+            // Assert
+            Assert.IsType<OkObjectResult>(result);
+            var okResult = (OkObjectResult)result;
+            Assert.Equal(mappedResult, okResult.Value);
+
+            await _serviceMock.Received(1).GetViewByStaffIdAsync(staffId, jobCode);
+            _mapperMock.Received(1).Map<StaffJobViewRes>(serviceResult);
+        }
+
+        [Fact]
+        public async Task GetViewByStaffIdAsync_EdgeCase_NullResult_ReturnsOkWithNull()
+        {
+            // Arrange
+            var staffId = "STAFF999";
+            var jobCode = "JOB999";
+
+            _serviceMock.GetViewByStaffIdAsync(staffId, jobCode).Returns((StaffJobViewDto?)null);
+            _mapperMock.Map<StaffJobViewRes>(null).Returns((StaffJobViewRes?)null);
+
+            // Act
+            var result = await _controller.GetViewByStaffIdAsync(staffId, jobCode);
+
+            // Assert
+            Assert.IsType<OkObjectResult>(result);
+            var okResult = (OkObjectResult)result;
+            Assert.Null(okResult.Value);
+
+            await _serviceMock.Received(1).GetViewByStaffIdAsync(staffId, jobCode);
+            _mapperMock.Received(1).Map<StaffJobViewRes>(null);
+        }
+
+        [Theory]
+        [InlineData("", "JOB001")]
+        [InlineData("STAFF001", "")]
+        [InlineData("", "")]
+        public async Task GetViewByStaffIdAsync_EdgeCase_EmptyParameters_CallsService(string staffId, string jobCode)
+        {
+            // Arrange
+            var serviceResult = new StaffJobViewDto();
+            var mappedResult = new StaffJobViewRes();
+
+            _serviceMock.GetViewByStaffIdAsync(staffId, jobCode).Returns(serviceResult);
+            _mapperMock.Map<StaffJobViewRes>(serviceResult).Returns(mappedResult);
+
+            // Act
+            var result = await _controller.GetViewByStaffIdAsync(staffId, jobCode);
+
+            // Assert
+            Assert.IsType<OkObjectResult>(result);
+            await _serviceMock.Received(1).GetViewByStaffIdAsync(staffId, jobCode);
+        }
+
+        [Fact]
+        public async Task GetViewByStaffIdAsync_EdgeCase_EmptyObject_ReturnsOkWithEmptyObject()
+        {
+            // Arrange
+            var staffId = "STAFF001";
+            var jobCode = "JOB001";
+
+            var serviceResult = new StaffJobViewDto { StaffID = staffId, JobCode = jobCode };
+            var emptyMappedResult = new StaffJobViewRes();
+
+            _serviceMock.GetViewByStaffIdAsync(staffId, jobCode).Returns(serviceResult);
+            _mapperMock.Map<StaffJobViewRes>(serviceResult).Returns(emptyMappedResult);
+
+            // Act
+            var result = await _controller.GetViewByStaffIdAsync(staffId, jobCode);
+
+            // Assert
+            Assert.IsType<OkObjectResult>(result);
+            var okResult = (OkObjectResult)result;
+            var resultObj = okResult.Value as StaffJobViewRes;
+            Assert.NotNull(resultObj);
+        }
+
+        [Fact]
+        public async Task GetViewByStaffIdAsync_WithCompleteData_ReturnsMappedObject()
+        {
+            // Arrange
+            var staffId = "STAFF002";
+            var jobCode = "JOB002";
+
+            var serviceResult = new StaffJobViewDto
+            {
+                StaffID = staffId,
+                JobCode = jobCode,
+                Name = "Jane Smith",
+                PlannedHours = 80,
+                ChargeRate = 200.00m,
+                StaffCost = 16000.00m,
+                WorkGroupGrade = "WG01",
+                GradeCode = "G01",
+                WorkGroup = "Engineering",
+                SectorName = "charge",
+                Days = 10
+            };
+
+            var mappedResult = new StaffJobViewRes
+            {
+                StaffID = staffId,
+                JobCode = jobCode,
+                Name = "Jane Smith",
+                PlannedHours = 80,
+                ChargeRate = 200.00m,
+                StaffCost = 16000.00m,
+                WorkGroupGrade = "WG01",
+                GradeCode = "G01",
+                WorkGroup = "Engineering",
+                SectorName = "charge",
+                Days = 10
+            };
+
+            _serviceMock.GetViewByStaffIdAsync(staffId, jobCode).Returns(serviceResult);
+            _mapperMock.Map<StaffJobViewRes>(serviceResult).Returns(mappedResult);
+
+            // Act
+            var result = await _controller.GetViewByStaffIdAsync(staffId, jobCode);
+
+            // Assert
+            Assert.IsType<OkObjectResult>(result);
+            var okResult = (OkObjectResult)result;
+            var resultObj = okResult.Value as StaffJobViewRes;
+            Assert.NotNull(resultObj);
+            Assert.Equal(staffId, resultObj.StaffID);
+            Assert.Equal(jobCode, resultObj.JobCode);
+            Assert.Equal("Jane Smith", resultObj.Name);
+        }
+
+        [Fact]
+        public async Task GetViewByStaffIdAsync_Error_ServiceThrows()
+        {
+            // Arrange
+            var staffId = "STAFF001";
+            var jobCode = "JOB001";
+
+            _serviceMock.GetViewByStaffIdAsync(staffId, jobCode)
+                .Throws(new Exception("Service error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => 
+                _controller.GetViewByStaffIdAsync(staffId, jobCode));
+
+            await _serviceMock.Received(1).GetViewByStaffIdAsync(staffId, jobCode);
+            _mapperMock.DidNotReceive().Map<StaffJobViewRes>(Arg.Any<StaffJobViewDto>());
+        }
+
+        [Fact]
+        public async Task GetViewByStaffIdAsync_Error_MapperThrows()
+        {
+            // Arrange
+            var staffId = "STAFF001";
+            var jobCode = "JOB001";
+
+            var serviceResult = new StaffJobViewDto { StaffID = staffId, JobCode = jobCode };
+
+            _serviceMock.GetViewByStaffIdAsync(staffId, jobCode).Returns(serviceResult);
+            _mapperMock.Map<StaffJobViewRes>(serviceResult)
+                .Throws(new Exception("Mapping error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => 
+                _controller.GetViewByStaffIdAsync(staffId, jobCode));
+
+            await _serviceMock.Received(1).GetViewByStaffIdAsync(staffId, jobCode);
+        }
+
+        [Fact]
+        public async Task GetViewByStaffIdAsync_Error_InvalidOperationException()
+        {
+            // Arrange
+            var staffId = "STAFF001";
+            var jobCode = "JOB001";
+
+            _serviceMock.GetViewByStaffIdAsync(staffId, jobCode)
+                .Throws(new InvalidOperationException("Invalid operation"));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => 
+                _controller.GetViewByStaffIdAsync(staffId, jobCode));
+
+            Assert.Equal("Invalid operation", exception.Message);
+            await _serviceMock.Received(1).GetViewByStaffIdAsync(staffId, jobCode);
+        }
+
+        #endregion
+
         #region AddAsync
 
         [Fact]

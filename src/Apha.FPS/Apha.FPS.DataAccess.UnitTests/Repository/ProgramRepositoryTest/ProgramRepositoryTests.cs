@@ -26,7 +26,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
             int fpsYear = DefaultTestFpsYear)
         {
             var fpsYearContext = Substitute.For<IFpsYearContext>();
-            fpsYearContext.FPSYear.Returns(fpsYear);
+            fpsYearContext.FpsYear.Returns(fpsYear);
 
             var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);
 
@@ -60,7 +60,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
                 int fpsYear = DefaultTestFpsYear)
         {
             var fpsYearContext = Substitute.For<IFpsYearContext>();
-            fpsYearContext.FPSYear.Returns(fpsYear);
+            fpsYearContext.FpsYear.Returns(fpsYear);
 
             var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);
 
@@ -88,7 +88,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
             // Arrange
             var programs = new List<Core.Entities.Program>
             {
-                new() { ProgramNo = "P001", FpsCalYear = DefaultTestFpsYear }
+                new() { ProgramNo = "P001", FpsYear = DefaultTestFpsYear }
             };
             var repo = CreateRepository(programs, [], []);
 
@@ -118,7 +118,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
             // Arrange
             var programs = new List<Core.Entities.Program>
             {
-                new() { ProgramNo = "P001", ProgramName = "Program One", FpsCalYear = DefaultTestFpsYear }
+                new() { ProgramNo = "P001", ProgramName = "Program One", FpsYear = DefaultTestFpsYear }
             };
             var repo = CreateRepository(programs, [], []);
 
@@ -173,7 +173,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
             // Assert
             Assert.NotNull(result);
             Assert.Equal("P001", result.ProgramNo);
-            Assert.Equal(DefaultTestFpsYear, result.FpsCalYear);
+            Assert.Equal(DefaultTestFpsYear, result.FpsYear);
             programsMockSet.Verify(x => x.Add(It.IsAny<Core.Entities.Program>()), Times.Once);
             userProgramsMockSet.Verify(x => x.Add(It.IsAny<UserProgram>()), Times.Once);
             RepositoryTestHelper.VerifySaveChanges(mockContext);
@@ -201,7 +201,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
             Assert.NotNull(capturedUserProgram);
             Assert.Equal("P001", capturedUserProgram!.ProgramNo);
             Assert.Equal(7, capturedUserProgram.UserID);
-            Assert.Equal(DefaultTestFpsYear, capturedUserProgram.FpsCalYear);
+            Assert.Equal(DefaultTestFpsYear, capturedUserProgram.FpsYear);
         }
 
         [Fact]
@@ -235,7 +235,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
             var result = await repo.AddProgramAsync(newProgram);
 
             // Assert
-            Assert.Equal(customYear, result.FpsCalYear);
+            Assert.Equal(customYear, result.FpsYear);
         }
 
         #endregion
@@ -278,7 +278,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
         {
             // Arrange — UserProgram link already exists → should NOT add a duplicate
             var dboUser = new User { UserId = 1, Username = "dbo" };
-            var existingLink = new UserProgram { ProgramNo = "P001", UserID = 1, FpsCalYear = DefaultTestFpsYear };
+            var existingLink = new UserProgram { ProgramNo = "P001", UserID = 1, FpsYear = DefaultTestFpsYear };
             var (repo, programsMockSet, userProgramsMockSet, mockContext) =
                 CreateRepositoryWithMocks([], [existingLink], [dboUser]);
 

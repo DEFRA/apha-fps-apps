@@ -21,15 +21,27 @@ namespace Apha.FPSApps.Application.Services
             return workgroups;
         }
 
-        public async Task<ApiResponseDto<List<StaffJobViewDto>>> GetAllStaffJobsAsync(QueryParameters<string> staffJobReq)
+        public async Task<ApiResponseDto<List<StaffJobViewDto>>> GetAllStaffJobsAsync(QueryParameters<string> staffJobReq, string jobCode)
         {
-            var staffJobs = await _fpsClient.FpsStaffJob.GetAllStaffJobAsync(staffJobReq);
+            var staffJobs = await _fpsClient.FpsStaffJob.GetAllStaffJobAsync(staffJobReq, jobCode);
             return staffJobs;
         }
 
-        public async Task<ApiResponseDto<StaffJobDto>> GetStaffJobByIdAsync(string staffId)
+        public async Task<ApiResponseDto<StaffJobDto>> GetStaffJobByIdAsync(string staffId, string jobCode)
         {
-            var staffJob = await _fpsClient.FpsStaffJob.GetStaffJobByIdAsync(staffId);
+            var staffJob = await _fpsClient.FpsStaffJob.GetStaffJobByIdAsync(staffId, jobCode);
+            return staffJob;
+        }
+
+        public async Task<ApiResponseDto<StaffJobViewDto?>> GetViewByStaffIdAsync(string staffId, string jobCode)
+        {
+            var staffJobView = await _fpsClient.FpsStaffJob.GetViewByStaffIdAsync(staffId, jobCode);
+            return staffJobView;
+        }
+
+        public async Task<ApiResponseDto<decimal?>> GetStaffChargeRate(string staffId, string jobcode)
+        {
+            var staffJob = await _fpsClient.FpsStaffJob.GetStaffChargeRate(staffId, jobcode);
             return staffJob;
         }
 

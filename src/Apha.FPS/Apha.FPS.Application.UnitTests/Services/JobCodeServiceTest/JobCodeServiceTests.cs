@@ -29,8 +29,8 @@ namespace Apha.FPS.Application.UnitTests.Services.JobCodeServiceTest
             // Arrange
             var jobCodeEntities = new List<JobCode>
             {
-                new JobCode { JobCodeId = "JC001", Jobcodename = "Field Operations", Type = "A", Fpscalyear = 2024 },
-                new JobCode { JobCodeId = "JC002", Jobcodename = "Lab Analysis",     Type = "B", Fpscalyear = 2024 }
+                new JobCode { JobCodeId = "JC001", JobCodeName = "Field Operations", Type = "A", FpsYear = 2024 },
+                new JobCode { JobCodeId = "JC002", JobCodeName = "Lab Analysis",     Type = "B", FpsYear = 2024 }
             };
 
             var expectedDtos = new List<JobCodeDto>
