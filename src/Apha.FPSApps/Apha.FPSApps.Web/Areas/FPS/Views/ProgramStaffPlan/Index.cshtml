@@ -4,86 +4,122 @@
     ViewData["Title"] = "Programme Staff Plan";
 }
 
-<div style="padding: 5px; border-bottom: 1px solid #b4b4b4;" class="row">
-    <div style="font-size: 14px; display: flex; align-items: center;">
-        <a href="#">Home</a> &gt; Programme Management &gt; Programme Staff Plan
-    </div>
-</div>
+<style type="text/css">
+    #gridContainer_staffBookedGrid .grid-wrapper {
+        height: 270px;
+        max-height: 270px;
+    }
+</style>
 
-<div class="row mt-2 mb-2 align-items-center" style="padding: 0 10px;">
-    <div class="col-md-12 d-flex align-items-center gap-3 flex-wrap">
-        <label class="fw-bold mb-0" for="programmeSelect">Programme:</label>
-        <select id="programmeSelect" asp-items="Model.ProgrammeList" asp-for="SelectedProgramNo"
-                class="form-select form-select-sm" style="width: auto; min-width: 260px;">
-            <option value="">-- Select Programme --</option>
-        </select>
-        <div class="d-flex align-items-center gap-4 ms-2" style="font-size: 14px;">
-            <span>Manager: <strong id="lblManager">@Model.Manager</strong></span>
-            <span>Target: <strong id="lblTarget">@Model.Target.ToString("C")</strong></span>
-        </div>
-    </div>
-</div>
-
-<div class="row" style="border-top: 2px solid #1d70b8; margin: 0;">
-    <!-- Left panel: Projects -->
-    <div class="col-lg-6" style="padding: 0; border-right: 1px solid #cbcbcb;">
-        <div style="background: #d4ebff; padding: 7px 17px; border-bottom: 1px solid #1d70b8; display: flex; justify-content: space-between; align-items: center;">
-            <h2 style="font-weight: 700; font-size: 15px; margin: 0;">Projects</h2>
-        </div>
-        <div id="gridContainer_@Model.ProjectsGrid.GridId" style="padding: 5px;">
-            @await Html.PartialAsync("_DataGrid", Model.ProjectsGrid)
-        </div>
-    </div>
-
-    <!-- Right panel: Staff Booked -->
-    <div class="col-lg-6" style="padding: 0;">
-        <div style="background: #d4ebff; padding: 7px 17px; border-bottom: 1px solid #1d70b8; display: flex; justify-content: space-between; align-items: center;">
-            <h2 style="font-weight: 700; font-size: 15px; margin: 0;">
-                Staff Booked:
-                <span id="lblSelectedProject" style="color: #1d70b8; font-weight: 600;">--</span>
-            </h2>
-        </div>
-        <input type="hidden" id="hdnJobCode" value="" />
-        <div id="gridContainer_@Model.StaffCostGrid.GridId" style="padding: 5px;">
-            @await Html.PartialAsync("_DataGrid", Model.StaffCostGrid)
-        </div>
-
-        <!-- Financial Summary -->
-        <div style="border: 1px solid #1d70b8; border-radius: 0 0 8px 8px; padding: 10px 15px; background: #f8f9fa; margin: 0 5px 5px 5px;">
-            <div class="d-flex flex-wrap gap-3 justify-content-between align-items-end">
-                <div>
-                    <label style="display: block; font-size: 12px; margin-bottom: 2px;" for="for_project">For Project:</label>
-                    <input type="text" id="for_project" class="form-control form-control-sm" readonly style="width: 120px;" />
-                </div>
-                <div>
-                    <label style="display: block; font-size: 12px; margin-bottom: 2px;" for="External_Income">Staff Cost:</label>
-                    <input type="text" id="External_Income" class="form-control form-control-sm" readonly style="width: 120px;" value="@Model.StaffCost.ToString("C")" />
-                </div>
-                <div>
-                    <label style="display: block; font-size: 12px; margin-bottom: 2px;" for="BudgetCVL">Budget CVL:</label>
-                    <input type="text" id="BudgetCVL" class="form-control form-control-sm" readonly style="width: 120px;" />
-                </div>
-                <div>
-                    <label style="display: block; font-size: 12px; margin-bottom: 2px;" for="Total_Costs">Remainder:</label>
-                    <input type="text" id="Total_Costs" class="form-control form-control-sm" readonly style="width: 120px;" />
+<div class="container-fluid">
+    <!-- Breadcrumb section -->
+    <div class="govuk-grid-row">
+        <div class="govuk-grid-column-full">
+            <div style="padding: 5px 5px; border-bottom: 1px solid #b4b4b4" class="row">
+                <div style="display: flex; font-size: 14px; align-items: center; justify-content: space-between;">
+                    <div class="col-md-6">
+                        <nav aria-label="Breadcrumb">
+                            <a class="" href="@Url.Action("Index", "Home", new { area = "FPS" })">Home</a> &gt; Programme Management &gt; Programme Staff Plan
+                        </nav>
+                    </div>
+                    <div style="display: flex; justify-content: flex-end;" class="col-md-6">
+                        <label class="fw-bold mt-2" for="programmeSelect">Programme:</label>
+                        <select id="programmeSelect" asp-items="Model.ProgrammeList" asp-for="SelectedProgramNo"
+                                class="form-select form-select-sm" style="width: auto; min-width: 260px;">
+                            <option value="">-- Select Programme --</option>
+                        </select>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+    <!-- Title section -->
+    <div class="govuk-grid-row">
+        <div class="govuk-grid-column-full">
+            <div class="row" style="display:flex; align-items: center;">
+                <div class="col-sm-12" style="padding:0px;">
+                    <div style="border-bottom: 2px solid #1d70b8; height:48px;">
+                        <h1 style="padding: 15px 0 5px 17px; font-size:16px; width: 50%; font-weight: 700; float:left; margin: 0;">
+                            Plan All Staff Cost for Programme
+                        </h1>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="govuk-grid-row">
+        <div class="govuk-grid-column-one-half mt-2">
+            <div class="" style=" border-radius: 5px;justify-content: flex-start; margin-bottom:10px;background-color: #edf4ff;border: 1px solid #1d70b8;padding: 4px;">
+                <div class="row">
+                    <div class="col-lg-7">
+                        <label class="govuk-label--s" for="managerName"  style="color:#3e3e3e">Programme Manager </label>
+                        <input type="text" value="@Model.Manager" id="managerName" class="projectplan-code govuk-input">
+			
+                    </div>
+                    <div class="col-lg-5">
+                        <label class="govuk-label--s" for="Target" style="color:#3e3e3e">Target </label>
+                        <input type="text" value="@Model.Target.ToString("C")" id="Target" class="projectplan-code govuk-input">
+			
+                    </div>
+                </div>
+            </div>
+            <div class="govuk-grid-row">
+                <div class="govuk-grid-column-full mt-2">
+                    <div id="gridContainer_@Model.ProjectsGrid.GridId" style="padding: 5px;">
+                        @await Html.PartialAsync("_DataGrid", Model.ProjectsGrid)
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="govuk-grid-column-one-half mt-2">
+            <div class="" style=" border-radius: 5px;justify-content: flex-start;margin-bottom: 10px;background-color: #edf4ff;border: 1px solid #1d70b8;padding: 4px;">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <label class="govuk-label--s" for="txtSelectedProject" style="color:#3e3e3e">Staff Resource Plan for </label>
+                        <input type="text" id="txtSelectedProject" value="" class="projectplan-code govuk-input">
+                        <input type="hidden" id="hdnJobCode" value="" />
+                    </div>
+                </div>
+            </div>
+            <div class="govuk-grid-row">
+                <div class="govuk-grid-column-full mt-2">
+                    <div id="gridContainer_@Model.StaffCostGrid.GridId" style="padding: 5px;">
+                        @await Html.PartialAsync("_DataGrid", Model.StaffCostGrid)
+                    </div>
+                </div>
+                <div class="govuk-grid-column-full mt-2">
+                    <div class="financial-summary mt-2"> 
+                        <div class="summary-row">
+                            <div class="summary-item">
+                                <label class="govuk-label--s" for="for_project">For Project:</label>
+                                <input type="text" aria-label="for_project" id="for_project" readonly class="govuk-input ">
+                            </div>
+                            <div class="summary-item">
+                                <label class="govuk-label--s" for="External_Income">Staff Cost:</label>
+                                <input type="text" aria-label="External_Income" id="External_Income" readonly class="govuk-input text-AlignRight" value="@Model.StaffCost.ToString("C")">
+                            </div>
+                            <div class="summary-item">
+                                <label class="govuk-label--s" for="BudgetCVL">Budget:</label>
+                                <input type="text" value="£0" aria-label="BudgetCVL" id="BudgetCVL" readonly class="govuk-input text-AlignRight">
+                            </div>
+                            <div class="summary-item">
+                                <label class="govuk-label--s" for="Total_Costs">Remainder:</label>
+                                <input type="text" value="£0" aria-label="Total_Costs" id="Total_Costs" readonly class="govuk-input text-AlignRight">
+                 
+                            </div>				
+                        </div>	
+                    </div>
+                </div>
+            </div>
+        </div>
+</div>
 </div>
 
 <!-- Modal Popup -->
 <div id="modalPopup" class="modal">
     <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header" style="background: #1d70b8; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center;">
-                <h5 class="modal-title" style="color: #fff; margin: 0; font-size: 15px;">Staff Job</h5>
-                <button type="button" aria-label="Close modal" onclick="closeModal()"
-                        style="background: none; border: none; color: #fff; font-size: 22px; cursor: pointer; line-height: 1;">&times;</button>
-            </div>
-            <div class="modal-body" style="padding: 15px;">
-                <div id="modaPopupBody"></div>
-            </div>
+        <div class="modal-content" id="modaPopupBody">            
         </div>
     </div>
 </div>
@@ -113,7 +149,7 @@
             currentProgramNo = $(this).val();
             currentJobCode = '';
             $('#hdnJobCode').val('');
-            $('#lblSelectedProject').text('--');
+            $('#txtSelectedProject').val('');
             $('#for_project').val('');
             $('#External_Income').val('');
             $('#BudgetCVL').val('');
@@ -143,7 +179,7 @@
 
             currentJobCode = jobCode;
             $('#hdnJobCode').val(jobCode);
-            $('#lblSelectedProject').text(jobCode);
+            $('#txtSelectedProject').val(jobCode);
             $('#for_project').val(jobCode);
             $('#BudgetCVL').val(formatCurrency(budget));
             $('#External_Income').val(formatCurrency(0));

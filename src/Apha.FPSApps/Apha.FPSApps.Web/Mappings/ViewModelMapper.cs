@@ -12,7 +12,7 @@ namespace Apha.FPSApps.Web.Mappings
         public ViewModelMapper()
         {
             CreateMap(typeof(PaginationFilter<>), typeof(QueryParameters<>)).ReverseMap();            
-            CreateMap<StaffJobItem, StaffJobViewDto>().ReverseMap();
+            CreateMap<StaffJobItemViewModel, StaffJobViewDto>().ReverseMap();
             CreateMap<PaginationModel, PaginationDto>().ReverseMap(); 
             CreateMap<ProgramViewModel, ProgramDto>().ReverseMap(); 
             CreateMap<EmployeeViewModel, EmployeeDto>().ReverseMap();

@@ -21,6 +21,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
 
         public DataGridConfig<ProjectViewModel> ProjectsGrid { get; set; } = new DataGridConfig<ProjectViewModel>();
 
-        public DataGridConfig<StaffJobItem> StaffCostGrid { get; set; } = new DataGridConfig<StaffJobItem>();
+        public DataGridConfig<StaffJobItemViewModel> StaffCostGrid { get; set; } = new DataGridConfig<StaffJobItemViewModel>();
     }
 }

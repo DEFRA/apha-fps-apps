@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.4.11612.150 stable
+VisualStudioVersion = 18.4.11612.150
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Apha.FPSApps.Infrastructure", "Apha.FPSApps\Apha.FPSApps.Infrastructure\Apha.FPSApps.Infrastructure.csproj", "{103738C8-210B-89D3-E02F-11AFE1845E2B}"
 EndProject
@@ -36,19 +36,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Apha.FPSApps.Web.UnitTests", "Apha.FPSApps\Apha.FPSApps.Web.UnitTests\Apha.FPSApps.Web.UnitTests.csproj", "{05ED23C0-0078-F4B6-197B-BFC7D8AED0A2}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Apha.FPSApps.Infrastructure.UnitTests", "Apha.FPSApps\Apha.FPSApps.Infrastructure.UnitTests\Apha.FPSApps.Infrastructure.UnitTests.csproj", "{2EFDD49A-8B80-556E-F656-D5636E6EC599}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "MetaData", "MetaData", "{50ADE1C5-28C7-4594-B3AF-4808FADC3C6A}"
-	ProjectSection(SolutionItems) = preProject
-		..\..\Rohit_\FPS_Screen\Tech-Details\ProgramStaffPlan\frmProgramStaffPlan.frm = ..\..\Rohit_\FPS_Screen\Tech-Details\ProgramStaffPlan\frmProgramStaffPlan.frm
-		..\..\Rohit_\FPS_Screen\Tech-Details\ProgramStaffPlan\frmProgramStaffPlan.msaccfrm = ..\..\Rohit_\FPS_Screen\Tech-Details\ProgramStaffPlan\frmProgramStaffPlan.msaccfrm
-		..\..\Rohit_\FPS_Screen\Tech-Details\ProgramStaffPlan\fsubJobStaffCosts.frm = ..\..\Rohit_\FPS_Screen\Tech-Details\ProgramStaffPlan\fsubJobStaffCosts.frm
-		..\..\Rohit_\FPS_Screen\Tech-Details\ProgramStaffPlan\fsubJobStaffCosts.msaccfrm = ..\..\Rohit_\FPS_Screen\Tech-Details\ProgramStaffPlan\fsubJobStaffCosts.msaccfrm
-		..\..\Rohit_\FPS_Screen\Tech-Details\ProgramStaffPlan\fsubProgramProjects2.frm = ..\..\Rohit_\FPS_Screen\Tech-Details\ProgramStaffPlan\fsubProgramProjects2.frm
-		..\..\Rohit_\FPS_Screen\Tech-Details\ProgramStaffPlan\fsubProgramProjects2.msaccfrm = ..\..\Rohit_\FPS_Screen\Tech-Details\ProgramStaffPlan\fsubProgramProjects2.msaccfrm
-		..\..\Rohit_\FPS_Screen\Tech-Details\ProgramStaffPlan\planstaff_entireprogram.html = ..\..\Rohit_\FPS_Screen\Tech-Details\ProgramStaffPlan\planstaff_entireprogram.html
-		..\..\Rohit_\FPS_Screen\Tech-Details\ProgramStaffPlan\tlkpProgram.sql = ..\..\Rohit_\FPS_Screen\Tech-Details\ProgramStaffPlan\tlkpProgram.sql
-		..\..\Rohit_\FPS_Screen\Tech-Details\ProgramStaffPlan\tlkpProject.sql = ..\..\Rohit_\FPS_Screen\Tech-Details\ProgramStaffPlan\tlkpProject.sql
-	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
