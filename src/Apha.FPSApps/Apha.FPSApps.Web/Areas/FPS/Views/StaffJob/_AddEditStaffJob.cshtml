@@ -1,11 +1,19 @@
-﻿@model Apha.FPSApps.Web.Areas.FPS.Models.StaffJobItem
+@model Apha.FPSApps.Web.Areas.FPS.Models.StaffJobItem
+@{
+    var isEditMode = !string.IsNullOrEmpty(Model.StaffID);
+    var title      = isEditMode ? "Update Staff Booked" : "Add Staff Booked";
+    var formId     = isEditMode ? "formEditStaff"       : "formAddStaff";
+    var saveLabel  = isEditMode ? "Update"              : "Save";
+    var saveAction = isEditMode ? "updateStaffJob()"    : "saveStaffJob()";
+}
 
 <div class="modal-header flex-space-center">
-    <h3 class="modal-title" style="margin: 0;" id="exampleModalLabel">Add Staff Booked</h3>
+    <h3 class="modal-title" style="margin: 0;" id="exampleModalLabel">@title</h3>
     <button type="button" class="btn-close btn-red" onclick="closeModal()">X</button>
 </div>
 <div class="modal-body" style="padding-top: 5px;">
-    <div asp-validation-summary="ModelOnly" class="govuk-error-summary" role="alert" aria-labelledby="error-summary-title" tabindex="-1">
+    <div asp-validation-summary="ModelOnly" class="govuk-error-summary" role="alert"
+         aria-labelledby="error-summary-title" tabindex="-1" style="display:none;">
         <h2 class="govuk-error-summary__title" id="error-summary-title">
             There is a problem
         </h2>
@@ -14,8 +22,12 @@
             </ul>
         </div>
     </div>
-    <form class="row" id="formAddStaff">
+    <form class="row" id="@formId">
         <input type="hidden" asp-for="StaffID" id="StaffID" />
+        @if (isEditMode)
+        {
+            <input type="hidden" asp-for="JobCode" />
+        }
         <div class="col-12">
             <div class="govuk-form-group sup_margin_0">
                 <label for="StaffDropdown" class="govuk-label p-0">Staff Name:</label>
@@ -25,7 +37,9 @@
                     {
                         foreach (var staff in Model.StaffList)
                         {
-                            <option value="@staff.Value" data-name="@staff.Text">@staff.Text</option>
+                            var isSelected = isEditMode && staff.Value == Model.StaffID;
+                            <option value="@staff.Value" data-name="@staff.Text"
+                                    selected="@(isSelected ? "selected" : null)">@staff.Text</option>
                         }
                     }
                 </select>
@@ -64,5 +78,5 @@
 </div>
 <div class="modal-footer">
     <button class="govuk-button govuk-button--secondary sup_margin_0" data-module="govuk-button" onclick="closeModal()">Cancel</button>
-    <button class="govuk-button sup_margin_0" data-module="govuk-button" onclick="saveStaffJob()">Save</button>
+    <button class="govuk-button sup_margin_0" data-module="govuk-button" type="button" onclick="@saveAction">@saveLabel</button>
 </div>
