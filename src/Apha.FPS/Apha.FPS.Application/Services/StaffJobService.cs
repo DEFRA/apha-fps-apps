@@ -28,6 +28,11 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<PaginatedResult<StaffJobViewDto>>(staffJobViews);
         }
 
+        public async Task<decimal> GetTotalStaffCostAsync(string jobCode)
+        {
+            return await _staffJobRepository.GetTotalStaffCostAsync(jobCode);
+        }
+
         public async Task<List<StaffWorkgroupLookupDto>> GetStaffWorkgroupLookup()
         {
             var staffWorkgroupLookup =  await _staffJobRepository.GetStaffWorkgroupLookup();

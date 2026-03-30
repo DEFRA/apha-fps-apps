@@ -6,6 +6,7 @@ namespace Apha.FPS.Core.Interfaces
     public interface IStaffJobRepository
     { 
         Task<PagedData<StaffJobView>> GetJobStaffCostAsync(PaginationParameters<string> query, string jobCode);
+        Task<decimal> GetTotalStaffCostAsync(string jobCode);
         Task<List<StaffWorkgroupLookup>> GetStaffWorkgroupLookup();
         Task<decimal?> GetStaffChargeRate(string staffId, string jobcode);
         Task<StaffJob?> GetByIdAsync(string staffId, string jobCode);

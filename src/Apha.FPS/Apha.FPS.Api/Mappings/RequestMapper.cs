@@ -31,6 +31,7 @@ namespace Apha.FPS.Api.Mappings
             CreateMap<ManagerDto, ManagerRes>().ReverseMap();
             CreateMap<ProgramReq, ProgramDto>().ReverseMap();
             CreateMap<ProgramRes, ProgramDto>().ReverseMap();
+            CreateMap<ProjectDto, ProjectRes>().ReverseMap();
         }
     }
 }

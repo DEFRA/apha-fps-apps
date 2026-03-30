@@ -921,5 +921,103 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.FpsStaffJobApiClientTest
         }
 
         #endregion
+
+        #region GetTotalStaffCostAsync Tests
+
+        [Fact]
+        public async Task GetTotalStaffCostAsync_WithSuccessResponse_ReturnsTotalStaffCost()
+        {
+            // Arrange
+            var jobCode = "JOB001";
+            var total = 4500m;
+            var apiResponse = new ApiResponse<decimal>
+            {
+                Success = true,
+                Data = total
+            };
+            var expectedDto = ApiResponseDto<decimal>.SuccessResponse(total);
+
+            _http.GetAsync<decimal>($"api/staffjob/totalstaffcost?jobCode={jobCode}").Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<decimal>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.GetTotalStaffCostAsync(jobCode);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(total, result.Data);
+            await _http.Received(1).GetAsync<decimal>($"api/staffjob/totalstaffcost?jobCode={jobCode}");
+        }
+
+        [Fact]
+        public async Task GetTotalStaffCostAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var jobCode = "JOB001";
+            var errors = new List<ApiError> { new ApiError { Message = "Not Found", Code = "NOT_FOUND" } };
+            var apiResponse = new ApiResponse<decimal>
+            {
+                Success = false,
+                Errors = errors
+            };
+            var mappedResponse = new ApiResponseDto<decimal>
+            {
+                Success = false,
+                Errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "Not Found", Code = "NOT_FOUND" } },
+                Meta = new ApiMetaDto()
+            };
+
+            _http.GetAsync<decimal>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<decimal>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.GetTotalStaffCostAsync(jobCode);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+        }
+
+        [Fact]
+        public async Task GetTotalStaffCostAsync_WhenExceptionThrown_ReturnsInternalError()
+        {
+            // Arrange
+            _http.GetAsync<decimal>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
+
+            // Act
+            var result = await _client.GetTotalStaffCostAsync("JOB001");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            var error = Assert.Single(result.Errors);
+            Assert.Equal("INTERNAL_ERROR", error.Code);
+            Assert.Equal("Failed to retrieve total staff cost", error.Message);
+        }
+
+        [Theory]
+        [InlineData("JOB001")]
+        [InlineData("FZ2000")]
+        [InlineData("TEST_JOB")]
+        public async Task GetTotalStaffCostAsync_WithVariousJobCodes_ConstructsUrlWithJobCode(string jobCode)
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<decimal> { Success = true, Data = 100m };
+            var expectedDto = ApiResponseDto<decimal>.SuccessResponse(100m);
+
+            _http.GetAsync<decimal>($"api/staffjob/totalstaffcost?jobCode={jobCode}").Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<decimal>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            await _client.GetTotalStaffCostAsync(jobCode);
+
+            // Assert
+            await _http.Received(1).GetAsync<decimal>($"api/staffjob/totalstaffcost?jobCode={jobCode}");
+        }
+
+        #endregion
     }
 }

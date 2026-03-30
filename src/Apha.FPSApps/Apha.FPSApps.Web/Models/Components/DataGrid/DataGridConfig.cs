@@ -10,7 +10,10 @@
         public bool ShowPagination { get; set; }
         public string KeyProperty { get; set; } = string.Empty;
         public bool AllowAdd { get; set; }
+        public bool AllowEdit { get; set; }
         public bool AllowDelete { get; set; }
+        public bool AllowRowSelection { get; set; }
+        public string RowSelectFunction { get; set; } = string.Empty;
         public string AddFunction { get; set; } = string.Empty;
         public string EditFunction { get; set; } = string.Empty;
         public string DeleteFunction { get; set; } = string.Empty;
@@ -24,10 +27,12 @@
         {
             Columns = new List<DataGridColumn>();
             Data = new List<T>();
-            ShowCheckboxColumn = true;
+            ShowCheckboxColumn = false;
             ShowPagination = true;
             AllowAdd = true;
+            AllowEdit = true;
             AllowDelete = true;
+            AllowRowSelection = false;
         }
     }
 }

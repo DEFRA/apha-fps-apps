@@ -27,6 +27,7 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IAnimalService, AnimalService>();
             services.AddScoped<IEmployeeService, EmployeeService>();
             services.AddScoped<IProgramService, ProgramService>();
+            services.AddScoped<IProjectService, ProjectService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
