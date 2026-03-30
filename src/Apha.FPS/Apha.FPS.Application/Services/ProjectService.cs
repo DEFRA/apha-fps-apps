@@ -70,5 +70,14 @@ namespace Apha.FPS.Application.Services
         {
             return await _projectRepository.DeleteProjectAsync(parentProject);
         }        
+            return _mapper.Map<ProjectDto>(project);
+        }
+
+        public async Task<PaginatedResult<ProjectDto>> GetProjectsByProgramAsync(QueryParameters<string> query, string programNo)
+        {
+            var filter = _mapper.Map<PaginationParameters<string>>(query);
+            var projects = await _projectRepository.GetProjectsByProgramAsync(filter, programNo);
+            return _mapper.Map<PaginatedResult<ProjectDto>>(projects);
+        }
     }
 }

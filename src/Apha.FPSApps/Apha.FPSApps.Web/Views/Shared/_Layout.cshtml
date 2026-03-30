@@ -30,7 +30,7 @@
                         </li>
                         <li>
                             <div class="d-flex align-items-center gap-2">
-                                <label class="fw-bold">Year</label>                               
+                                <label class="fw-bold" for="yearSelector">Year</label>
                                 <select id="yearSelector" class="form-control">
                                     <option value="2023">2023-2024</option>
                                     <option value="2024">2024-2025</option>
@@ -60,7 +60,7 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
     <fps-year-script></fps-year-script>
     <script>
-        let selectedYear = @Fy.Year
+        let selectedYear = @Fy.Year        
         $('#yearSelector').val(selectedYear);
         $('#yearSelector').change(function () {
             selectedYear = this.value;

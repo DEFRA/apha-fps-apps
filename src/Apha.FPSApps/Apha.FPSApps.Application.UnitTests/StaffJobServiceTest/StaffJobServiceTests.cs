@@ -714,5 +714,69 @@ namespace Apha.FPSApps.Application.UnitTests.StaffJobServiceTest
         }
 
         #endregion
+
+        #region GetTotalStaffCostAsync Tests
+
+        [Fact]
+        public async Task GetTotalStaffCostAsync_WithValidJobCode_ReturnsSuccessResponse()
+        {
+            // Arrange
+            var jobCode = "JOB001";
+            var expectedTotal = 4500m;
+            var expectedResponse = ApiResponseDto<decimal>.SuccessResponse(expectedTotal);
+
+            _fpsStaffJobApiClient.GetTotalStaffCostAsync(jobCode).Returns(expectedResponse);
+
+            // Act
+            var result = await _staffJobService.GetTotalStaffCostAsync(jobCode);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(expectedTotal, result.Data);
+            await _fpsStaffJobApiClient.Received(1).GetTotalStaffCostAsync(jobCode);
+        }
+
+        [Fact]
+        public async Task GetTotalStaffCostAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var jobCode = "JOB001";
+            var errors = new List<ApiErrorDto>
+            {
+                new ApiErrorDto { Message = "Failed to retrieve total staff cost", Code = "INTERNAL_ERROR" }
+            };
+            var expectedResponse = ApiResponseDto<decimal>.FailureResponse(errors, new ApiMetaDto());
+
+            _fpsStaffJobApiClient.GetTotalStaffCostAsync(jobCode).Returns(expectedResponse);
+
+            // Act
+            var result = await _staffJobService.GetTotalStaffCostAsync(jobCode);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            await _fpsStaffJobApiClient.Received(1).GetTotalStaffCostAsync(jobCode);
+        }
+
+        [Theory]
+        [InlineData("JOB001")]
+        [InlineData("FZ2000")]
+        [InlineData("PROJ123")]
+        public async Task GetTotalStaffCostAsync_WithVariousJobCodes_CallsApiClient(string jobCode)
+        {
+            // Arrange
+            var expectedResponse = ApiResponseDto<decimal>.SuccessResponse(100m);
+            _fpsStaffJobApiClient.GetTotalStaffCostAsync(jobCode).Returns(expectedResponse);
+
+            // Act
+            await _staffJobService.GetTotalStaffCostAsync(jobCode);
+
+            // Assert
+            await _fpsStaffJobApiClient.Received(1).GetTotalStaffCostAsync(jobCode);
+        }
+
+        #endregion
     }
 }

@@ -33,7 +33,14 @@ namespace Apha.FPS.DataAccess.Repositories
             var result = await queryStaffJob.ToListAsync();
 
             return base.ApplyPaging(result, query.Page, query.PageSize);
-        }       
+        }
+
+        public async Task<decimal> GetTotalStaffCostAsync(string jobCode)
+        {
+            var query = await BuildJobStaffCostQueryAsync(jobCode);
+            var result = await query.ToListAsync();
+            return result != null ? ((result.Sum(x => x.StaffCost)) ?? 0m) : 0m;
+        }
 
         public async Task<List<StaffWorkgroupLookup>> GetStaffWorkgroupLookup()
         {
