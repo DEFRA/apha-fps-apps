@@ -23,6 +23,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IProjectMaintenanceService, ProjectMaintenanceService>();
             services.AddScoped<IProjectJobCodeService, ProjectJobCodeService>();
             services.AddScoped<IPactTimeCodeValidService, PactTimeCodeValidService>();
+            services.AddScoped<IProjectService, ProjectService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)

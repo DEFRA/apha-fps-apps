@@ -1,6 +1,4 @@
 ﻿using Apha.FPS.Application.Dtos;
-using Apha.FPS.Application.Pagination;
-using Apha.FPS.Core.Entities;
 
 namespace Apha.FPS.Application.Interfaces
 {
@@ -13,6 +11,7 @@ namespace Apha.FPS.Application.Interfaces
         Task<ProjectDto> CreateProjectAsync(ProjectDto projectDto);
         Task<ProjectDto> UpdateProjectAsync(ProjectDto projectDto);
         Task<ProjectDto?> UpdatePactProjectDetailsAsync(ProjectDto projectDto);
-        Task<bool> DeleteProjectAsync(string parentProject);        
+        Task<bool> DeleteProjectAsync(string parentProject);
+        Task<PaginatedResult<ProjectDto>> GetProjectsByProgramAsync(QueryParameters<string> query, string programNo);       
     }
 }

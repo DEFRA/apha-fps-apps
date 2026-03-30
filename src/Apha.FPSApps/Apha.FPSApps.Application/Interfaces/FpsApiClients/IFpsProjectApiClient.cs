@@ -14,5 +14,6 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         Task<ApiResponseDto<ProjectDto>> UpdateProjectAsync(ProjectDto project);
         Task<ApiResponseDto<ProjectDto>> UpdatePactProjectAsync(ProjectDto project);
         Task<ApiResponseDto<bool>> DeleteProjectAsync(string parentProject);
+        Task<ApiResponseDto<List<ProjectDto>>> GetProjectsByProgramAsync(QueryParameters<string> query, string programNo);
     }
 }

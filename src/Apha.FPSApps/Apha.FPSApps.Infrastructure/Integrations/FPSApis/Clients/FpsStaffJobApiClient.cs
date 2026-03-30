@@ -110,6 +110,35 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
+        public async Task<ApiResponseDto<decimal>> GetTotalStaffCostAsync(string jobCode)
+        {
+            try
+            {
+                var response = await _http.GetAsync<decimal>($"api/staffjob/totalstaffcost?jobCode={jobCode}");
+
+                if (response.Success)
+                {
+                    return _mapper.Map<ApiResponseDto<decimal>>(response);
+                }
+                else
+                {
+                    var responseDto = _mapper.Map<ApiResponseDto<decimal>>(response);
+                    return ApiResponseDto<decimal>.FailureResponse(responseDto.Errors, responseDto.Meta);
+                }
+            }
+            catch (Exception)
+            {
+                var apiErrosDto = new List<ApiErrorDto> {
+                   new ApiErrorDto {
+                        Message = "Failed to retrieve total staff cost",
+                        Code = internalCodeError,
+                        Details = null
+                    }
+                };
+                return ApiResponseDto<decimal>.FailureResponse(apiErrosDto, new ApiMetaDto());
+            }
+        }
+
         public async Task<ApiResponseDto<StaffJobDto>> GetStaffJobByIdAsync(string staffId, string jobCode)
         {
             try

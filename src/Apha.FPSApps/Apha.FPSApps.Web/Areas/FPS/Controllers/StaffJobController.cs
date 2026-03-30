@@ -50,20 +50,21 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter!);
             var queryParameters = _mapper.Map<QueryParameters<string>>(request);
             var staffJobPagedData = await _staffJobService.GetAllStaffJobsAsync(queryParameters, jobCode ?? string.Empty);
-            List<StaffJobItem> staffJobItems = new List<StaffJobItem>();
+            List<StaffJobItemViewModel> staffJobItems = new List<StaffJobItemViewModel>();
             if (staffJobPagedData.Data != null)
             {
-                staffJobItems = _mapper.Map<List<StaffJobItem>>(staffJobPagedData.Data.ToList());
+                staffJobItems = _mapper.Map<List<StaffJobItemViewModel>>(staffJobPagedData.Data.ToList());
             }
-            PaginationModel paginationModel = _mapper.Map<PaginationModel>(staffJobPagedData.Pagination);
+            var paginationModel = _mapper.Map<PaginationModel>(staffJobPagedData.Pagination)
+                 ?? new PaginationModel();
             paginationModel.SortColumn = request.SortBy;
             paginationModel.SortDirection = request.Descending;
 
-            var staffJobGridConfig = new DataGridConfig<StaffJobItem>
+            var staffJobGridConfig = new DataGridConfig<StaffJobItemViewModel>
             {
                 GridId = "staffBookedGrid",
                 Title = "Staff Booked",
-                ShowCheckboxColumn = true,
+                ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "StaffID",
                 AddFunction = "addStaffJob",
@@ -72,7 +73,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ExtraFilterMethod = "getStaffJobExtraFilters",
                 BindGridUrl = "/FPS/StaffJob/LoadStaffJobGrid",
                 Data = staffJobItems,
-                Columns = GridDataProvider.GetColumnsDefination<StaffJobItem>(null),
+                Columns = GridDataProvider.GetColumnsDefination<StaffJobItemViewModel>(null),
                 Pagination = paginationModel,
                 CurrentFilters = filterDict
             };
@@ -83,13 +84,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         [HttpGet]
         public async Task<IActionResult> Create()
         {
-            StaffJobItem model = new StaffJobItem();
+            StaffJobItemViewModel model = new StaffJobItemViewModel();
             await PopulateDropdownsAsync(model);
             return PartialView("_AddEditStaffJob", model);
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] StaffJobItem staffJobItem)
+        public async Task<IActionResult> Create([FromBody] StaffJobItemViewModel staffJobItem)
         {
             if (!ModelState.IsValid)
             {
@@ -139,7 +140,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             if (result.Success && result.Data != null)
             {
-                var staffJobItem = _mapper.Map<StaffJobItem>(result.Data);
+                var staffJobItem = _mapper.Map<StaffJobItemViewModel>(result.Data);
                 await PopulateDropdownsAsync(staffJobItem);
                 return PartialView("_AddEditStaffJob", staffJobItem);
             }
@@ -159,7 +160,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
        
         [HttpPost]
-        public async Task<IActionResult> Edit(string staffId, [FromBody] StaffJobItem staffJobItem)
+        public async Task<IActionResult> Edit(string staffId, [FromBody] StaffJobItemViewModel staffJobItem)
         {
             if (!ModelState.IsValid)
             {
@@ -256,7 +257,35 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             });
         }
 
-        private async Task PopulateDropdownsAsync(StaffJobItem model)
+        [HttpGet]
+        public async Task<IActionResult> GetTotalStaffCost(string jobCode)
+        {
+            if (string.IsNullOrWhiteSpace(jobCode))
+            {
+                return Json(new { success = false, message = "Job Code is required", totalStaffCost = 0 });
+            }
+
+            var result = await _staffJobService.GetTotalStaffCostAsync(jobCode);
+
+            if (result.Success)
+            {
+                return Json(new { success = true, totalStaffCost = result.Data });
+            }
+
+            return Json(new
+            {
+                success = false,
+                message = "Failed to retrieve total staff cost.",
+                totalStaffCost = 0,
+                errors = (result.Errors ?? new List<ApiErrorDto>()).Select(e => new
+                {
+                    field = e.Code ?? string.Empty,
+                    message = e.Message ?? "An unexpected error occurred."
+                })
+            });
+        }
+
+        private async Task PopulateDropdownsAsync(StaffJobItemViewModel model)
         {
             // Manager dropdown
             var staffResponse = await _staffJobService.GetStaffWorkgroupLookupAsync();

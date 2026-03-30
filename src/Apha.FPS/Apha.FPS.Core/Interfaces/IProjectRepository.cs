@@ -13,5 +13,6 @@ namespace Apha.FPS.Core.Interfaces
         Task<Project> UpdateProjectAsync(Project project);
         Task<Project?> UpdatePactProjectDetailsAsync(Project project);
         Task<bool> DeleteProjectAsync(string parentProject);        
+        Task<PagedData<Project>> GetProjectsByProgramAsync(PaginationParameters<string> query, string programNo);
     }
 }
