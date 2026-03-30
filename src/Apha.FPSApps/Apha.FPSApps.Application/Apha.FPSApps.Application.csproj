@@ -13,7 +13,6 @@
   <ItemGroup>
     <Folder Include="Dtos\CostBook\" />
     <Folder Include="Dtos\PIMS\" />
-    <Folder Include="Dtos\PACT\" />
   </ItemGroup>
 
 </Project>

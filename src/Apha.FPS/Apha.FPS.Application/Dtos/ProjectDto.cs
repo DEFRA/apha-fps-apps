@@ -34,6 +34,8 @@
 
         public decimal? BudgetCvl { get; set; }
 
+        public decimal? BudgetExt { get; set; }
+
         public DateTime? DateCosted { get; set; }
 
         public string Disease { get; set; } = null!;

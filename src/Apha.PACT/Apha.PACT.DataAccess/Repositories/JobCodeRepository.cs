@@ -1,0 +1,152 @@
+using Apha.PACT.Core.Entities;
+using Apha.PACT.Core.Interfaces;
+using Apha.PACT.Core.Pagination;
+using Apha.PACT.DataAccess.Data;
+using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using System.Dynamic;
+using System.Linq.Expressions;
+
+namespace Apha.PACT.DataAccess.Repositories
+{
+    public class JobCodeRepository : BaseRepository, IJobCodeRepository
+    {
+        private readonly IFpsYearContext _fpsYearContext;
+
+        public JobCodeRepository(FpsDbContext context, IFpsYearContext fpsYearContext) : base(context)
+        {
+            _fpsYearContext = fpsYearContext;
+        }
+
+        public async Task<IEnumerable<JobCode>> GetJobCodesByProjectAsync(string parentProject)
+        {
+            return await _context.JobCodes
+                .AsNoTracking()
+                .Where(j => j.ParentProject == parentProject)
+                .OrderBy(j => j.JobCodeId)
+                .ToListAsync();
+        }
+
+        public async Task<PagedData<JobCode>> GetPagedJobCodesAsync(
+            PaginationParameters<string> query, string? parentProject)
+        {
+            var queryJobcodes = _context.JobCodes.AsNoTracking().AsQueryable();
+
+            // Apply filtering
+            queryJobcodes = ApplyJobCodeFilter(queryJobcodes, query.Filter);
+
+            // Apply sorting
+            queryJobcodes = (IQueryable<JobCode>)ApplySorting(queryJobcodes, query.SortBy, query.Descending);
+
+            // Execute query
+            var result = await queryJobcodes.ToListAsync();
+
+            // Apply paging
+            return ApplyPaging(result, query.Page, query.PageSize);
+        }        
+
+        public async Task<JobCode?> GetJobCodeByIdAsync(string jobCodeId)
+        {
+            return await _context.JobCodes
+                .AsNoTracking()
+                .FirstOrDefaultAsync(j => j.JobCodeId == jobCodeId);
+        }
+
+        public async Task<JobCode> CreateJobCodeAsync(JobCode jobCode)
+        {
+            jobCode.FpsYear = _fpsYearContext.FPSYear;
+            await _context.JobCodes.AddAsync(jobCode);
+            await _context.SaveChangesAsync();
+            return jobCode;
+        }
+
+        public async Task<JobCode> UpdateJobCodeAsync(JobCode jobCode)
+        {
+            jobCode.FpsYear = _fpsYearContext.FPSYear;
+            _context.Entry(jobCode).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+            return jobCode;
+        }
+
+        public async Task<bool> DeleteJobCodeAsync(string jobCodeId)
+        {
+            var jobCode = await _context.JobCodes
+                .FirstOrDefaultAsync(j => j.JobCodeId == jobCodeId && j.FpsYear == _fpsYearContext.FPSYear);
+            if (jobCode == null) return false;
+            _context.JobCodes.Remove(jobCode);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        private static IQueryable<JobCode> ApplyJobCodeFilter(IQueryable<JobCode> queryJobCode, string? filter)
+        {
+            if (string.IsNullOrEmpty(filter))
+            {
+                return queryJobCode;
+            }
+
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            if (filterModel == null)
+            {
+                return queryJobCode;
+            }
+
+            var dict = (IDictionary<string, object>)filterModel;
+
+            if (dict.TryGetValue("JobCodeId", out var jobCodeId) && jobCodeId != null)
+            {
+                queryJobCode = queryJobCode.Where(x => x.JobCodeId.Contains(jobCodeId.ToString()!));
+            }
+
+            if (dict.TryGetValue("ParentProject", out var parentProject) && parentProject != null)
+            {
+                queryJobCode = queryJobCode.Where(x => x.ParentProject!.Contains(parentProject.ToString()!));
+            }
+
+            if (dict.TryGetValue("JobCodeWorkGroup", out var workGroup) && workGroup != null)
+            {
+                queryJobCode = queryJobCode.Where(x => x.JobCodeWorkGroup!.Contains(workGroup.ToString()!));
+            }
+
+            if (dict.TryGetValue("Type", out var type) && type != null)
+            {
+                queryJobCode = queryJobCode.Where(x => x.Type!.Contains(type.ToString()!));
+            }
+
+            if (dict.TryGetValue("JobCodeName", out var jobCodeName) && jobCodeName != null)
+            {
+                queryJobCode = queryJobCode.Where(x => x.Type!.Contains(jobCodeName.ToString()!));
+            }
+
+            return queryJobCode;
+        }
+
+        private static IQueryable ApplySorting(IQueryable<JobCode> query, string? sortBy, bool descending)
+        {
+            if (string.IsNullOrEmpty(sortBy))
+            {
+                return query.OrderBy(e => e.JobCodeId);
+            }
+
+            return ApplySortingByProperty(query, sortBy.ToLower(), descending);
+        }
+
+        private static IQueryable ApplySortingByProperty(IQueryable<JobCode> query, string property, bool descending)
+        {
+            return property switch
+            {
+                "jobcodeid" => ApplyOrder(query, i => i.JobCodeId, descending),
+                "parentproject" => ApplyOrder(query, i => i.ParentProject, descending),
+                "jobcodeworkgroup" => ApplyOrder(query, i => i.JobCodeWorkGroup, descending),
+                "type" => ApplyOrder(query, i => i.Type, descending),
+                "jobcodename" => ApplyOrder(query, i => i.JobCodeName, descending),
+                _ => query.OrderBy(e => e.JobCodeId)
+            };
+        }
+
+        private static IQueryable ApplyOrder<T>(IQueryable<JobCode> query, Expression<Func<JobCode, T>> keySelector, bool descending)
+        {
+            return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
+        }
+    }
+}

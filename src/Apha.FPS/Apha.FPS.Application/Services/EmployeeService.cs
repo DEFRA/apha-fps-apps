@@ -105,5 +105,11 @@ namespace Apha.FPS.Application.Services
             var managers = await _employeeRepository.GetAllManagersAsync();
             return _mapper.Map<IEnumerable<ManagerDto>>(managers);
         }
+
+        public async Task<IEnumerable<ManagerDto>> GetAllPactManagersAsync()
+        {
+            var managers = await _employeeRepository.GetAllPactManagersAsync();
+            return _mapper.Map<IEnumerable<ManagerDto>>(managers);
+        }
     }
 }

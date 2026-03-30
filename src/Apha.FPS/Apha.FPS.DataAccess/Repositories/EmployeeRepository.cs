@@ -127,6 +127,32 @@ namespace Apha.FPS.DataAccess.Repositories
             return managers;
         }
 
+        public async Task<IEnumerable<Manager>> GetAllPactManagersAsync()
+        {
+            var query = (
+                from grade in _dbContext.PactWorkGroupGradeViews
+                join staff in _dbContext.StaffGeneralViews
+                    on grade.WgGrade equals staff.WorkGroupGrade
+                where
+                    staff.Name != null &&
+                    !EF.Functions.ILike(staff.Name, "%gen%") &&
+                    !EF.Functions.ILike(staff.Name, "%vacancy%") &&
+                    grade.GradeCode != null &&
+                    (string.Compare(grade.GradeCode, "E") <= 0 || grade.GradeCode == "GD5")
+                select new Manager
+                {
+                    Name = staff.Name,
+                    WorkGroup = grade.WorkGroup,
+                    GradeCode = grade.GradeCode,
+                    Expr1 = grade.GradeCode!.Substring(0, 1)
+                }
+            )
+            .Distinct()
+            .OrderBy(x => x.Name);
+
+            return await query.ToListAsync();
+        }
+
         private static IQueryable<Employee> ApplyEmployeeFilter(IQueryable<Employee> queryEmployees, string? filter)
         {
             if (string.IsNullOrEmpty(filter))

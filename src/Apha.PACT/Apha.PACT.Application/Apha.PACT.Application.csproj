@@ -16,10 +16,4 @@
     <ProjectReference Include="..\Apha.PACT.Core\Apha.PACT.Core.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Dtos\" />
-    <Folder Include="Interfaces\" />
-    <Folder Include="Services\" />
-  </ItemGroup>
-
 </Project>

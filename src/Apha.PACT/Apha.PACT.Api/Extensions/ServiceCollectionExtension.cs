@@ -1,7 +1,10 @@
 ﻿using Apha.Common.Utilities.ExcelExport;
 using Apha.Common.Utilities.StateManagement;
+using Apha.PACT.Application.Interfaces;
+using Apha.PACT.Application.Services;
 using Apha.PACT.Core.Interfaces;
 using Apha.PACT.DataAccess.Context;
+using Apha.PACT.DataAccess.Repositories;
 
 namespace Apha.PACT.Api.Extensions
 {
@@ -15,15 +18,19 @@ namespace Apha.PACT.Api.Extensions
         }
         public static IServiceCollection AddServices(this IServiceCollection services)
         {
-            // Add your application services here
             services.AddScoped<IAppStateService, AppStateService>();
             services.AddScoped<IExcelExportService, ExcelExportService>();
+            services.AddScoped<IJobCodeService, JobCodeService>();
+            services.AddScoped<ITimeCodeValidService, TimeCodeValidService>();
+            services.AddScoped<IWorkGroupService, WorkGroupService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
         {
-            // Add your data access services here
-            services.AddScoped<IFPSYearContext, FPSYearContext>();
+            services.AddScoped<IFpsYearContext, FpsYearContext>();
+            services.AddScoped<IJobCodeRepository, JobCodeRepository>();
+            services.AddScoped<ITimeCodeValidRepository, TimeCodeValidRepository>();
+            services.AddScoped<IWorkGroupRepository, WorkGroupRepository>();
             return services;
         }
     }
