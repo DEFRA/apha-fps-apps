@@ -1,0 +1,258 @@
+@using Apha.FPSApps.Web.Handler
+@inject IFPSYearContext Fy
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>@ViewData["Title"]</title>
+
+    <!-- Shared stylesheets -->  
+    <link rel="stylesheet" href="~/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/pact_styles/govuk-frontend-6.0.0.min.css" /> 
+    <link rel="stylesheet" href="~/css/pact_styles/custom_style.css" />    
+    <link rel="stylesheet" href="~/css/pact_styles/navstyle.css" />    
+    <link rel="stylesheet" href="~/css/pact_styles/style.css" /> 
+    <link rel="stylesheet" href="~/css/pact_styles/suppliement_style_over_gov.uk_style.css" />
+    <link rel="stylesheet" href="~/DataGrid/editable-grid.css" />
+    <link href="~/css/suppliement_style_over_gov.uk_style.css" rel="stylesheet" />
+    <!-- jQuery (required before any scripts) -->
+    <script src="~/lib/jquery/dist/jquery.js"></script>
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    <!-- ── Top Header ─────────────────────────────────────────────────── -->
+    <header>
+        <div class="header-nav">
+            <div class="pims-log-wrapper">
+                <div>
+                    <img src="~/images/defra_logo.png" width="80px" alt="Animal & Plant Health Agency" />
+                </div>                
+                <div class="pims-log">
+                    <span>PACT</span>
+                </div>               
+                 <div class="pims-log" style="width: 160px;font-size: 16px;">
+                 <select aria-label="Select year" class="pims-log" style="border: 0;border-radius: 0;margin-left: 0px;width: 150px;outline: 0;">
+				    <option>2017-2018</option>
+					<option>2018-2019</option>
+				 	<option>2019-2020</option>
+				 	<option>2020-2021</option>
+				 	<option>2021-2022</option>
+				 	<option>2022-2023</option>
+					<option>2023-2024</option>
+					<option>2024-2025</option>
+					<option selected>2025-2026</option>
+					</select>					
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ── Main Navigation ───────────────────────────────────────────── -->
+    <div id="header">
+        <div style="display: flex; flex-direction: row;">
+            <button class="userdropdownbtn" style="border: 0; margin-right: 20px;" id="userdropdownbtn">Meg Ved &nbsp; <img src="~/images/circle-user-regular-full.svg" alt="user icon" width="24" /></button>
+        </div>
+        <div class="userdropdown" id="userdropdowndp">
+            <ul>                   
+                <li>
+                    <a href="/" style="display: flex; align-items: center;" type="button">
+                        <img src="~/images/house-user-solid-full.svg" alt="dropdown home icon" width="22px">
+                        Home
+                    </a>
+                </li>
+            </ul>          
+        </div>
+        
+        <nav class="main-nav">
+            <!-- Project & Programme Dropdown -->
+            <div class="nav-item dropdown">
+                <button class="nav-button dropdown-toggle" data-dropdown="project-management">
+                    <div class="align-menu-text">
+                        <span>Project & Programme</span>
+                    </div>
+                    <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow for dropdown menu" width="12px"></span>
+                </button>
+                <div class="dropdown-menu" id="project-management">
+                    <a class="dropdown-item" href="#">Program Maintenance</a>                    
+                    <a class="dropdown-item" href="project_management_five.three.html">Project Maintenance</a>
+                    <a class="dropdown-item" style="display: flex;    justify-content: space-between;"
+                       href="portfolio_management.html">Portfolio Maintenance</a>
+                </div>
+            </div>
+
+            <!-- Monthly Project Dropdown -->
+            <div class="nav-item dropdown">
+                <button class="nav-button dropdown-toggle" data-dropdown="monthly-data">
+                    <div class="align-menu-text">
+                        <span>Monthly Project Data </span>
+                    </div>
+                    <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow for dropdown menu" width="12px"></span>
+                </button>
+                <div class="dropdown-menu" id="monthly-data">
+                    <a class="dropdown-item" href="#">Project Invoices (Manual)</a>
+                    <a class="dropdown-item" href="#">OM, OG, FT & UT Invoices (Batch Mode from RMS)</a>
+
+                    <a class="dropdown-item" href="invoicebymonth.html">Invoices by Month</a>
+                    <a class="dropdown-item" href="#">FT & UT Project Work In Progress (WIP Over-ride)</a>
+
+                    <a class="dropdown-item" href="#">SubContracts (Exceptional Costs) (Manual)</a>
+                    <a class="dropdown-item" href="#">SubContracts (Exceptional Costs) (Batch mode from RMS)</a>
+                    <a class="dropdown-item" href="#">SubContracts By Month</a>
+                </div>
+            </div>
+
+            <!-- Work Group Dropdown -->
+            <div class="nav-item dropdown">
+                <button class="nav-button dropdown-toggle" data-dropdown="work-group">
+                    <div class="align-menu-text">
+                        <span> Work Group Static Data </span>
+                    </div>
+                    <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow for dropdown menu" width="12px"></span>
+                </button>
+                <div class="dropdown-menu" id="work-group">
+                    <a href="#" class="dropdown-item">Work Group People</a>
+                    <a href="workgroup_management.html" class="dropdown-item">Test Capabilities</a>
+                    <a href="#" class="dropdown-item">Test Maintenance List</a>
+                </div>
+            </div>
+		
+            <!-- Bosworth Interface Dropdown -->
+            <div class="nav-item dropdown">
+                <button class="nav-button dropdown-toggle" data-dropdown="bosworth-interface">
+                    <div class="align-menu-text">
+                        <span> Bosworth Interface </span>
+                    </div>
+                    <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow for dropdown menu" width="12px"></span>
+                </button>
+                <div class="dropdown-menu" id="bosworth-interface">
+                    <a href="#" class="dropdown-item">Resource Management</a>
+                    <a href="#" class="dropdown-item">Time Purchase Pivot Wizard</a>
+                    <a href="#" class="dropdown-item">Time Sales Pivot Wizard</a>
+                    <a href="#" class="dropdown-item">Test Sale Pivot Wizard</a>
+                </div>
+            </div>
+
+            <!-- Time & Output Dropdown -->
+            <div class="nav-item dropdown">
+                <button class="nav-button dropdown-toggle" data-dropdown="time-data">
+                    <div class="align-menu-text">
+                        <span> Time & Output Data </span>
+                    </div>
+                    <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow for dropdown menu" width="12px"></span>
+                </button>
+                <div class="dropdown-menu" id="time-data">
+                    <a href="timerecording.html" class="dropdown-item">Time record data entry</a>
+                    <a href="output_record_dataentry.html" class="dropdown-item">Output record data entry</a>
+                    <a href="create_email_time_output_summary.html" class="dropdown-item">Create & email time & output summaries</a>
+                    <a href="create_print_individual_cos90s.html" class="dropdown-item">Create & print individual COS90s</a>
+                    <a href="#" class="dropdown-item">Search Audit Log for Monthly Output Change</a>
+                    <a href="#" class="dropdown-item">Search Audit Log for Monthly Time Change</a>
+                </div>
+            </div>
+            <div class="nav-item">
+                <button class="nav-button">
+                    Reports
+                </button>
+            </div>
+        </nav>
+    </div>
+
+    <!-- ── Page Body ─────────────────────────────────────────────────── -->
+    <div>
+        @RenderBody()
+    </div>    
+
+    <div class="govuk-footer sup_p_0 sup_margin_left_right_0">
+        <div class="govuk-width-container sup_p_8 sup_text_center">
+            <span>
+                &copy; copyright Defra 2025
+            </span>
+        </div>
+    </div>
+
+   
+
+    <!-- ── Footer ────────────────────────────────────────────────────── -->
+    <footer class="pact-footer" role="contentinfo">
+        &copy; Copyright Defra @DateTime.UtcNow.Year
+    </footer>
+
+    <!-- ── Shared modal popup (for add/edit forms) ───────────────────── -->
+    <div id="modalPopup"
+         tabindex="-1"
+         aria-labelledby="modalPopupLabel"
+         aria-modal="true"
+         role="dialog"
+         style="display:none; position:fixed; inset:0; z-index:1050;
+                background:rgba(0,0,0,0.5); align-items:center; justify-content:center;">
+        <div class="modal-dialog modal-lg" style="margin:auto; width:100%; max-width:700px;">
+            <div id="modaPopupBody" class="modal-content" style="border-radius:4px;">
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Scripts ───────────────────────────────────────────────────── -->    
+    <script src="~/js/pact_js/bootstrap.bundle.min.js"></script>
+    <fps-year-script></fps-year-script>
+
+    <script>
+        // ── Year selector ────────────────────────────────────────────────
+        (function () {
+            var currentYear = @Fy.Year;
+            var sel = document.getElementById('pactYearSelector');
+            if (sel) {
+                sel.value = String(currentYear);
+                sel.addEventListener('change', function () {
+                    window.location.href = '/Home/Index?year=' + this.value;
+                });
+            }
+        })();
+
+        // ── Modal open / close helpers ────────────────────────────────────
+        (function () {
+            var modal = document.getElementById('modalPopup');
+            if (!modal) return;
+
+            // MutationObserver watches for class changes made by jQuery
+            // (.addClass('show') / .removeClass('show'))
+            var observer = new MutationObserver(function () {
+                if (modal.classList.contains('show')) {
+                    modal.style.display = 'flex';
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    modal.style.display = 'none';
+                    document.body.style.overflow = '';
+                }
+            });
+            observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
+
+            // Close on backdrop click
+            modal.addEventListener('click', function (e) {
+                if (e.target === modal) {
+                    modal.classList.remove('show');
+                }
+            });
+
+            // Close on Escape key
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && modal.classList.contains('show')) {
+                    modal.classList.remove('show');
+                }
+            });
+        })();
+
+        // ── jQuery.fn.serializeObject helper ─────────────────────────────
+        $.fn.serializeObject = function () {
+            var obj = {};
+            this.serializeArray().forEach(function (item) {
+                obj[item.name] = item.value;
+            });
+            return obj;
+        };
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

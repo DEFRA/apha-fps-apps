@@ -127,5 +127,16 @@ namespace Apha.FPS.Api.Controllers
             var result = await _employeeService.GetAllManagersAsync();
             return Ok(_mapper.Map<List<ManagerRes>>(result));
         }
+
+        /// <summary>
+        /// Gets a lookup list of all managers for pact
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("pactmanagers")]
+        public async Task<IActionResult> GetAllPactManagersAsync()
+        {
+            var result = await _employeeService.GetAllPactManagersAsync();
+            return Ok(_mapper.Map<List<ManagerRes>>(result));
+        }
     }
 }

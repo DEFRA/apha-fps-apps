@@ -32,7 +32,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
                 mockContext.Setup(x => x.ProjectViews).Returns(projectViewsMockSet.Object);
             }
 
-            return new ProjectRepository(mockContext.Object);
+            return new ProjectRepository(mockContext.Object, mockFpsYearContext.Object);
         }
 
         #region GetAllProjectsAsync Tests

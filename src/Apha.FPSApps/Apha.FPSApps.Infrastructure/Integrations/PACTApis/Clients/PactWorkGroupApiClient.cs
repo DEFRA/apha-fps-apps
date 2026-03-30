@@ -1,0 +1,41 @@
+using Apha.Common.Contracts.PACT;
+using Apha.FPSApps.Application.Dtos;
+using Apha.FPSApps.Application.Dtos.PACT;
+using Apha.FPSApps.Application.Interfaces.PactApiClients;
+using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
+using AutoMapper;
+
+namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
+{
+    public class PactWorkGroupApiClient : IPactWorkGroupApiClient
+    {
+        private readonly IPactHttpExecutor _http;
+        private readonly IMapper _mapper;
+        private const string InternalCodeError = "INTERNAL_ERROR";
+
+        public PactWorkGroupApiClient(IPactHttpExecutor http, IMapper mapper)
+        {
+            _http = http;
+            _mapper = mapper;
+        }
+
+        public async Task<ApiResponseDto<List<WorkGroupDto>>> GetAllWorkGroupsAsync()
+        {
+            try
+            {
+                var response = await _http.GetAsync<List<WorkGroupRes>>("api/workgroup");
+                if (response.Success)
+                    return _mapper.Map<ApiResponseDto<List<WorkGroupDto>>>(response);
+
+                var dto = _mapper.Map<ApiResponseDto<List<WorkGroupDto>>>(response);
+                return ApiResponseDto<List<WorkGroupDto>>.FailureResponse(dto.Errors, dto.Meta);
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<List<WorkGroupDto>>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to retrieve work groups", Code = InternalCodeError }],
+                    new ApiMetaDto());
+            }
+        }
+    }
+}

@@ -1,7 +1,9 @@
 ﻿using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
+using Apha.FPS.Application.Pagination;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
+using Apha.FPS.Core.Pagination;
 using AutoMapper;
 
 namespace Apha.FPS.Application.Services
@@ -20,13 +22,53 @@ namespace Apha.FPS.Application.Services
         public async Task<IEnumerable<ProjectDto>> GetAllProjectsAsync()
         {
             var projects = await _projectRepository.GetAllProjectsAsync();
-            return _mapper.Map<IEnumerable<ProjectDto>>(projects);            
+            return _mapper.Map<IEnumerable<ProjectDto>>(projects);
         }
 
-        public async Task<ProjectDto> GetProjectByIdAsync(string parentProject)
+        public async Task<PaginatedResult<ProjectDto>> GetPagedProjectsAsync(QueryParameters<string> query)
+        {
+            var pagedProjects = await _projectRepository.GetPagedProjectsAsync(
+                _mapper.Map<PaginationParameters<string>>(query));
+            return _mapper.Map<PaginatedResult<ProjectDto>>(pagedProjects);
+        }
+
+        public async Task<PaginatedResult<ProjectDto>> GetPagedPactProjectsAsync(QueryParameters<string> query)
+        {
+            var pagedProjects = await _projectRepository.GetPagedPactProjectsAsync(
+                _mapper.Map<PaginationParameters<string>>(query));
+            return _mapper.Map<PaginatedResult<ProjectDto>>(pagedProjects);
+        }
+
+        public async Task<ProjectDto?> GetProjectByIdAsync(string parentProject)
         {
             var project = await _projectRepository.GetProjectByIdAsync(parentProject);
-            return _mapper.Map<ProjectDto>(project);
+            return project == null ? null : _mapper.Map<ProjectDto>(project);
         }
+
+        public async Task<ProjectDto> CreateProjectAsync(ProjectDto projectDto)
+        {
+            var project = _mapper.Map<Project>(projectDto);
+            var created = await _projectRepository.CreateProjectAsync(project);
+            return _mapper.Map<ProjectDto>(created);
+        }
+
+        public async Task<ProjectDto> UpdateProjectAsync(ProjectDto projectDto)
+        {
+            var project = _mapper.Map<Project>(projectDto);
+            var updated = await _projectRepository.UpdateProjectAsync(project);
+            return _mapper.Map<ProjectDto>(updated);
+        }
+
+        public async Task<ProjectDto?> UpdatePactProjectDetailsAsync(ProjectDto projectDto)
+        {
+            var project = _mapper.Map<Project>(projectDto);
+            var updated = await _projectRepository.UpdatePactProjectDetailsAsync(project);
+            return updated == null ? null : _mapper.Map<ProjectDto>(updated);
+        }
+
+        public async Task<bool> DeleteProjectAsync(string parentProject)
+        {
+            return await _projectRepository.DeleteProjectAsync(parentProject);
+        }        
     }
 }
