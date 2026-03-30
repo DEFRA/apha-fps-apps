@@ -20,7 +20,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IFPSYearContext, FPSYearContext>();
             services.AddScoped<IProgramService, ProgramService>();
             services.AddScoped<IEmployeeService, EmployeeService>();
-            services.AddScoped<IProjectMaintenanceService, ProjectMaintenanceService>();
+            services.AddScoped<IProjectService, ProjectService>();
             services.AddScoped<IProjectJobCodeService, ProjectJobCodeService>();
             services.AddScoped<IPactTimeCodeValidService, PactTimeCodeValidService>();
             services.AddScoped<IProjectService, ProjectService>();

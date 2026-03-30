@@ -19,7 +19,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
     public class ProjectMaintenanceController : Controller
     {
         private readonly IMapper _mapper;
-        private readonly IProjectMaintenanceService _projectService;
+        private readonly IProjectService _projectService;
         private readonly IProjectJobCodeService _jobCodeService;
         private readonly IPactTimeCodeValidService _timeCodeService;
         private readonly IProgramService _programService;
@@ -27,7 +27,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
         public ProjectMaintenanceController(
             IMapper mapper,
-            IProjectMaintenanceService projectService,
+            IProjectService projectService,
             IProjectJobCodeService jobCodeService,
             IPactTimeCodeValidService timeCodeService,
             IProgramService programService,
@@ -67,7 +67,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             }            
         }
 
-        private async Task<DataGridConfig<ProjectViewModel>> BuildPactProjectCodeGridAsync(PaginationFilter<string> request)
+        private async Task<DataGridConfig<PactProjectViewModel>> BuildPactProjectCodeGridAsync(PaginationFilter<string> request)
         {
             var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}")
                              ?? new Dictionary<string, string>();
@@ -76,8 +76,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var response = await _projectService.GetPagedPactProjectsAsync(query);
 
             var items = response.Data != null
-                ? _mapper.Map<List<ProjectViewModel>>(response.Data)
-                : new List<ProjectViewModel>();
+                ? _mapper.Map<List<PactProjectViewModel>>(response.Data)
+                : new List<PactProjectViewModel>();
 
             var pagination = response.Pagination != null
                 ? _mapper.Map<PaginationModel>(response.Pagination)
@@ -85,7 +85,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             pagination.SortColumn = request.SortBy;
             pagination.SortDirection = request.Descending;
 
-            return new DataGridConfig<ProjectViewModel>
+            return new DataGridConfig<PactProjectViewModel>
             {
                 GridId = "projectGrid",
                 Title = "Project Maintenance",
@@ -95,7 +95,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 ExtraFilterMethod = "getProjectMaintenanceExtraFilters",
                 BindGridUrl = "/PACT/ProjectMaintenance/LoadProjectGrid",
                 Data = items,
-                Columns = GridDataProvider.GetColumnsDefination<ProjectViewModel>(),
+                Columns = GridDataProvider.GetColumnsDefination<PactProjectViewModel>(),
                 Pagination = pagination,
                 CurrentFilters = filterDict
             };
@@ -155,7 +155,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
             var viewModel = new ProjectMaintenanceViewModel
             {
-                Project = _mapper.Map<ProjectViewModel>(projectResponse.Data),
+                Project = _mapper.Map<PactProjectViewModel>(projectResponse.Data),
                 JobCodeGrid = jobCodeGrid,
                 TimeCodeGrid = BuildEmptyTimeCodeGrid(parentProject),
                 Statuses = statuses.Data?.Select(s => new SelectListItem(s.Status, s.Status)).ToList() ?? [],
@@ -266,10 +266,10 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         // ── PROJECT CRUD ─────────────────────────────────────────────────────
 
         [HttpGet]
-        public IActionResult Create() => PartialView("_AddEditProject", new ProjectViewModel());
+        public IActionResult Create() => PartialView("_AddEditProject", new PactProjectViewModel());
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] ProjectViewModel model)
+        public async Task<IActionResult> Create([FromBody] PactProjectViewModel model)
         {
             if (!ModelState.IsValid)
                 return Json(new { success = false, errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)) });
@@ -288,11 +288,11 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         {
             var result = await _projectService.GetProjectByIdAsync(parentProject);
             if (!result.Success || result.Data == null) return NotFound();
-            return PartialView("_AddEditProject", _mapper.Map<ProjectViewModel>(result.Data));
+            return PartialView("_AddEditProject", _mapper.Map<PactProjectViewModel>(result.Data));
         }
 
         [HttpPost]
-        public async Task<IActionResult> Edit([FromBody] ProjectViewModel model)
+        public async Task<IActionResult> Edit([FromBody] PactProjectViewModel model)
         {
             if (!ModelState.IsValid)
                 return Json(new
