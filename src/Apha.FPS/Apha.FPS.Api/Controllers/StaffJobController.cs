@@ -72,6 +72,18 @@ namespace Apha.FPS.Api.Controllers
         }
 
         /// <summary>
+        /// Returns the total staff cost (all records, unpaged) for a given job code.
+        /// </summary>
+        /// <param name="jobCode">The job code.</param>
+        /// <returns>Total staff cost as a decimal.</returns>
+        [HttpGet("totalstaffcost")]
+        public async Task<IActionResult> GetTotalStaffCostAsync([FromQuery] string jobCode)
+        {
+            var total = await _staffJobService.GetTotalStaffCostAsync(jobCode);
+            return Ok(total);
+        }
+
+        /// <summary>
         /// Retrieves a staff job assignment by staff ID and job code.
         /// </summary>
         /// <param name="staffId">The staff member's identifier.</param>

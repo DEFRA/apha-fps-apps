@@ -354,7 +354,7 @@ namespace Apha.FPSApps.Web.UnitTests.ProgramMaintenanceControllerTest
 
             Assert.Equal("programGrid", gridConfig.GridId);
             Assert.Equal("Programs", gridConfig.Title);
-            Assert.True(gridConfig.ShowCheckboxColumn);
+            Assert.False(gridConfig.ShowCheckboxColumn);
             Assert.True(gridConfig.ShowPagination);
             Assert.Equal("ProgramNo", gridConfig.KeyProperty);
             Assert.Equal("addProgram", gridConfig.AddFunction);

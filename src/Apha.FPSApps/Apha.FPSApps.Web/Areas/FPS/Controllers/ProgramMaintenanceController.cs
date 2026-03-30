@@ -206,13 +206,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             {
                 programItems = _mapper.Map<List<ProgramViewModel>>(response.Data.ToList());
             }
-            PaginationModel paginationModel = _mapper.Map<PaginationModel>(response.Pagination);
+            PaginationModel paginationModel = _mapper.Map<PaginationModel>(response.Pagination) ?? new PaginationModel();
 
             var programGridConfig = new DataGridConfig<ProgramViewModel>
             {
                 GridId = "programGrid",
                 Title = "Programs",
-                ShowCheckboxColumn = true,
+                ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "ProgramNo",
                 AddFunction = "addProgram",

@@ -11,11 +11,13 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public IFpsEmployeeApiClient FpsEmployee { get; }
 
         public IFpsProgramApiClient FpsProgram { get; }
+        public IFpsProjectApiClient FpsProject { get; }
         public FpsApiClient(IFpsHttpExecutor http, IMapper mapper)
         {            
             FpsStaffJob = new FpsStaffJobApiClient(http, mapper);
             FpsEmployee = new FpsEmployeeApiClient(http, mapper);
             FpsProgram = new FpsProgramApiClient(http, mapper);
+            FpsProject = new FpsProjectApiClient(http, mapper);
         }
     }
 }
