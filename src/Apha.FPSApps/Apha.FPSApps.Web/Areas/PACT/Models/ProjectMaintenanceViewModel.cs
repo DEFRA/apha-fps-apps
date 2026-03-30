@@ -5,14 +5,14 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
 {
     public class ProjectListViewModel
     {
-        public DataGridConfig<ProjectViewModel> ProjectGrid { get; set; } = new DataGridConfig<ProjectViewModel>();
+        public DataGridConfig<PactProjectViewModel> ProjectGrid { get; set; } = new DataGridConfig<PactProjectViewModel>();
         public DataGridConfig<ProjectJobCodeViewModel> ProjectJobCodeGrid { get; set; } = new DataGridConfig<ProjectJobCodeViewModel>();
         public int? ViewBy { get; set; } = 1;
     }
 
     public class ProjectMaintenanceViewModel
     {
-        public ProjectViewModel Project { get; set; } = new ProjectViewModel();
+        public PactProjectViewModel Project { get; set; } = new PactProjectViewModel();
         public DataGridConfig<JobCodeViewModel> JobCodeGrid { get; set; } = new DataGridConfig<JobCodeViewModel>();
         public DataGridConfig<TimeCodeViewModel> TimeCodeGrid { get; set; } = new DataGridConfig<TimeCodeViewModel>();
         public List<SelectListItem> Statuses { get; set; } = [];

@@ -69,9 +69,7 @@ namespace Apha.FPS.Application.Services
         public async Task<bool> DeleteProjectAsync(string parentProject)
         {
             return await _projectRepository.DeleteProjectAsync(parentProject);
-        }        
-            return _mapper.Map<ProjectDto>(project);
-        }
+        }   
 
         public async Task<PaginatedResult<ProjectDto>> GetProjectsByProgramAsync(QueryParameters<string> query, string programNo)
         {

@@ -27,6 +27,26 @@ namespace Apha.FPS.DataAccess.Repositories
                 .Where(p => p.UserId == userId).ToListAsync();
         }
 
+        public async Task<PagedData<Project>> GetProjectsByProgramAsync(PaginationParameters<string> query, string programNo)
+        {
+            var projectQuery = _dbContext.ProjectViews
+                .Where(p => p.UserId == userId && p.Program == programNo)
+                .Select(pv => new Project
+                {
+                    ParentProject = pv.ParentProject ?? string.Empty,
+                    ProjectTitle = pv.ProjectTitle ?? string.Empty,
+                    Program = pv.Program ?? string.Empty,
+                    BudgetCvl = pv.BudgetCvl,
+                    IsDefraProject = pv.IsDefraProject ?? 0
+                }).AsQueryable();
+
+            projectQuery = ApplyProjectFilter(projectQuery, query.Filter);
+            projectQuery = (IQueryable<Project>)ApplySorting(projectQuery, query.SortBy, query.Descending);
+
+            var result = await projectQuery.ToListAsync();
+            return base.ApplyPaging(result, query.Page, query.PageSize);
+        }
+
         public async Task<Project?> GetProjectByIdAsync(string parentProject)
         {
             return await _dbContext.Projects
@@ -66,10 +86,10 @@ namespace Apha.FPS.DataAccess.Repositories
             var querProjects = _dbContext.PactProjectViews.AsNoTracking().AsQueryable();
 
             // Apply filtering
-            querProjects = ApplyProjectFilter(querProjects, query.Filter);
+            querProjects = ApplyPactProjectFilter(querProjects, query.Filter);
 
             // Apply sorting
-            querProjects = (IQueryable<PactProjectView>)ApplySorting(querProjects, query.SortBy, query.Descending);
+            querProjects = (IQueryable<PactProjectView>)ApplyPactProjectSorting(querProjects, query.SortBy, query.Descending);
 
             // Execute query
             var result = await querProjects.ToListAsync();
@@ -95,7 +115,7 @@ namespace Apha.FPS.DataAccess.Repositories
         }
 
         public async Task<Project?> UpdatePactProjectDetailsAsync(Project project)
-        {            
+        {
             var entity = await _dbContext.Projects
                 .FirstOrDefaultAsync(p => p.ParentProject == project.ParentProject
                     && p.FpsYear == _fpsYearContext.FpsYear);
@@ -135,7 +155,55 @@ namespace Apha.FPS.DataAccess.Repositories
             return true;
         }
 
-        private static IQueryable<PactProjectView> ApplyProjectFilter(IQueryable<PactProjectView> queryProjects, string? filter)
+        private static IQueryable ApplyOrder<T>(IQueryable<Project> query, Expression<Func<Project, T>> keySelector, bool descending)
+        {
+            return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
+        }
+
+
+        private static IQueryable<Project> ApplyProjectFilter(IQueryable<Project> query, string? filter)
+        {
+            if (string.IsNullOrEmpty(filter))
+                return query;
+
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            if (filterModel == null)
+                return query;
+
+            var dict = (IDictionary<string, object>)filterModel;
+
+            if (dict.TryGetValue("JobCode", out var jobCode) && jobCode != null)
+                query = query.Where(x => x.ParentProject.Contains(jobCode.ToString()!));
+
+            if (dict.TryGetValue("JobDescription", out var jobDescription) && jobDescription != null)
+                query = query.Where(x => x.ProjectTitle!.Contains(jobDescription.ToString()!));
+
+            return query;
+        }
+
+        private static IQueryable ApplySorting(IQueryable<Project> query, string? sortBy, bool descending)
+        {
+            if (string.IsNullOrEmpty(sortBy))
+                return query.OrderBy(p => p.ParentProject);
+
+            return ApplySortingByProperty(query, sortBy.ToLower(), descending);
+        }
+
+
+        private static IQueryable ApplySortingByProperty(IQueryable<Project> query, string property, bool descending)
+        {
+            return property switch
+            {
+                "parentproject" => ApplyOrder(query, p => p.ParentProject, descending),
+                "projecttitle" => ApplyOrder(query, p => p.ProjectTitle, descending),
+                "program" => ApplyOrder(query, p => p.Program, descending),
+                "budgetcvl" => ApplyOrder(query, p => p.BudgetCvl, descending),
+                _ => query.OrderBy(p => p.ParentProject)
+            };
+        }
+
+
+        private static IQueryable<PactProjectView> ApplyPactProjectFilter(IQueryable<PactProjectView> queryProjects, string? filter)
         {
             if (string.IsNullOrEmpty(filter))
             {
@@ -163,27 +231,27 @@ namespace Apha.FPS.DataAccess.Repositories
             return queryProjects;
         }
 
-        private static IQueryable ApplySorting(IQueryable<PactProjectView> query, string? sortBy, bool descending)
+        private static IQueryable ApplyPactProjectSorting(IQueryable<PactProjectView> query, string? sortBy, bool descending)
         {
             if (string.IsNullOrEmpty(sortBy))
             {
                 return query.OrderBy(e => e.ParentProject);
             }
 
-            return ApplySortingByProperty(query, sortBy.ToLower(), descending);
+            return ApplyPactSortingByProperty(query, sortBy.ToLower(), descending);
         }
 
-        private static IQueryable ApplySortingByProperty(IQueryable<PactProjectView> query, string property, bool descending)
+        private static IQueryable ApplyPactSortingByProperty(IQueryable<PactProjectView> query, string property, bool descending)
         {
             return property switch
             {
-                "parentproject" => ApplyOrder(query, i => i.ParentProject, descending),
-                "projecttitle" => ApplyOrder(query, i => i.ProjectTitle, descending),               
+                "parentproject" => ApplyPactProjectOrder(query, i => i.ParentProject, descending),
+                "projecttitle" => ApplyPactProjectOrder(query, i => i.ProjectTitle, descending),
                 _ => query.OrderBy(e => e.ParentProject)
             };
         }
 
-        private static IQueryable ApplyOrder<T>(IQueryable<PactProjectView> query, Expression<Func<PactProjectView, T>> keySelector, bool descending)
+        private static IQueryable ApplyPactProjectOrder<T>(IQueryable<PactProjectView> query, Expression<Func<PactProjectView, T>> keySelector, bool descending)
         {
             return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
         }

@@ -38,7 +38,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 AllowDelete = false,
                 AllowRowSelection = true,
                 RowSelectFunction = "selectProject",
-                KeyProperty = "JobCode",
+                KeyProperty = "ParentProject",
                 ExtraFilterMethod = "getProjectExtraFilters",
                 BindGridUrl = "/FPS/ProgramProject/LoadProjectGrid",
                 Data = new List<ProjectViewModel>(),

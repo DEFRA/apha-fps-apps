@@ -18,20 +18,11 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<PaginationModel, PaginationDto>().ReverseMap(); 
             CreateMap<ProgramViewModel, ProgramDto>().ReverseMap(); 
             CreateMap<EmployeeViewModel, EmployeeDto>().ReverseMap();
-            CreateMap<ProjectViewModel, ProjectDto>().ReverseMap();
+            CreateMap<PactProjectViewModel, ProjectDto>().ReverseMap();
             CreateMap<ProjectJobCodeViewModel, JobCodeDto>().ReverseMap();
             CreateMap<JobCodeViewModel, JobCodeDto>().ReverseMap();
             CreateMap<StaffJobViewDto, StaffJobDto>().ReverseMap();
-            CreateMap<ProjectDto, ProjectViewModel>()
-                .ForMember(d => d.JobCode, o => o.MapFrom(s => s.ParentProject))
-                .ForMember(d => d.JobDescription, o => o.MapFrom(s => s.ProjectTitle))
-                .ForMember(d => d.Programme, o => o.MapFrom(s => s.Program))
-                .ForMember(d => d.Budget_cvl, o => o.MapFrom(s => s.BudgetCvl))
-                .ReverseMap()
-                .ForMember(d => d.ParentProject, o => o.MapFrom(s => s.JobCode))
-                .ForMember(d => d.ProjectTitle, o => o.MapFrom(s => s.JobDescription))
-                .ForMember(d => d.Program, o => o.MapFrom(s => s.Programme))
-                .ForMember(d => d.BudgetCvl, o => o.MapFrom(s => s.Budget_cvl));
+            CreateMap<ProjectDto, ProjectViewModel>().ReverseMap();
         }
     }
 }

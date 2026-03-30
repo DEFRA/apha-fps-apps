@@ -61,7 +61,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             {
                 GridId = "projectGrid",
                 Title = "Projects",
-                KeyProperty = "JobCode",
+                KeyProperty = "ParentProject",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 AllowAdd = false,

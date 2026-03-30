@@ -181,9 +181,6 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
             _mockRepository.GetProjectByIdAsync(parentProject)
                 .Returns(Task.FromResult<Project?>(null));
 
-            _mockMapper.Map<ProjectDto>(Arg.Any<Project?>())
-                .Returns((ProjectDto?)null);
-
             // Act
             var result = await _sut.GetProjectByIdAsync(parentProject);
 
@@ -191,7 +188,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
             result.Should().BeNull();
 
             await _mockRepository.Received(1).GetProjectByIdAsync(parentProject);
-            _mockMapper.Received(1).Map<ProjectDto>(null);
+            _mockMapper.DidNotReceive().Map<ProjectDto>(Arg.Any<Project>());
         }
 
         [Theory]

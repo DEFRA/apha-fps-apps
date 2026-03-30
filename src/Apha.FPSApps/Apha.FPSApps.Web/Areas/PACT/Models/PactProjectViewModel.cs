@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Apha.FPSApps.Web.Areas.PACT.Models
 {
-    public class ProjectViewModel
+    public class PactProjectViewModel
     {
         [Display(Name = "Project Code")]
         [Required]
