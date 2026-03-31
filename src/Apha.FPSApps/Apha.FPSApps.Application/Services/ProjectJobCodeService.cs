@@ -24,6 +24,9 @@ namespace Apha.FPSApps.Application.Services
         public async Task<ApiResponseDto<JobCodeDto>> GetJobCodeByIdAsync(string jobCodeId)
             => await _pactClient.PactJobCode.GetJobCodeByIdAsync(jobCodeId);
 
+        public async Task<ApiResponseDto<List<string>>> GetTypesAsync()
+            => await _pactClient.PactJobCode.GetTypesAsync();
+
         public async Task<ApiResponseDto<JobCodeDto>> CreateJobCodeAsync(JobCodeDto jobCode)
             => await _pactClient.PactJobCode.CreateJobCodeAsync(jobCode);
 

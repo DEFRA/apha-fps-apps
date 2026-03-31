@@ -1,9 +1,13 @@
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.PACT;
 using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Interfaces;
 using Apha.PACT.Application.Pagination;
+using Apha.PACT.Core.Entities;
 using AutoMapper;
+using DocumentFormat.OpenXml.Wordprocessing;
 using Microsoft.AspNetCore.Mvc;
+using System.Reflection.Emit;
 
 namespace Apha.PACT.Api.Controllers
 {
@@ -30,9 +34,8 @@ namespace Apha.PACT.Api.Controllers
         [HttpGet("paged")]
         public async Task<IActionResult> GetPaged([FromQuery] QueryParameters<string> query, [FromQuery] string? jobCode, [FromQuery] string? parentProject)
         {
-            var pagedResult = await _service.GetPagedTimeCodesAsync(query, jobCode, parentProject);
-            var mapped = _mapper.Map<IEnumerable<TimeCodeValidRes>>(pagedResult.Data);
-            return Ok(new { data = mapped, pagination = pagedResult.PaginationData });
+            var pagedResult = await _service.GetPagedTimeCodesAsync(query, jobCode, parentProject);            
+            return Ok(_mapper.Map<PaginationRes<TimeCodeValidRes>>(pagedResult));
         }
 
         [HttpGet("{workGroup}/{timeCode}/{parentProject}")]
@@ -62,16 +65,23 @@ namespace Apha.PACT.Api.Controllers
         [HttpDelete("{workGroup}/{timeCode}/{parentProject}")]
         public async Task<IActionResult> Delete(string workGroup, string timeCode, string parentProject)
         {
-            var deleted = await _service.DeleteTimeCodeValidAsync(workGroup, timeCode, parentProject);
-            if (!deleted) return NotFound();
-            return NoContent();
+            var isDeleted = await _service.DeleteTimeCodeValidAsync(workGroup, timeCode, parentProject);
+            if (!isDeleted)
+            {
+                throw new ArgumentException("TimeCode record with ID: {timeCode} not found for deletion", timeCode);
+            }
+            return Ok(isDeleted);
         }
 
         [HttpDelete("jobcode/{jobCode}/project/{parentProject}")]
         public async Task<IActionResult> DeleteAllByJobCode(string jobCode, string parentProject)
         {
-            await _service.DeleteAllByJobCodeAsync(jobCode, parentProject);
-            return NoContent();
+           var isDeleted = await _service.DeleteAllByJobCodeAsync(jobCode, parentProject);
+            if (!isDeleted)
+            {
+                throw new ArgumentException("JobCode record with ID: {jobCode} not found for deletion", jobCode);
+            }
+            return Ok(isDeleted);
         }
 
         [HttpPost("copy")]
