@@ -23,6 +23,7 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<JobCodeViewModel, JobCodeDto>().ReverseMap();
             CreateMap<StaffJobViewDto, StaffJobDto>().ReverseMap();
             CreateMap<ProjectDto, ProjectViewModel>().ReverseMap();
+            CreateMap<TimeCodeValidDto, TimeCodeViewModel>().ReverseMap();
         }
     }
 }

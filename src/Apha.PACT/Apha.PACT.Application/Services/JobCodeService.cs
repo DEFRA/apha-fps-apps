@@ -38,6 +38,11 @@ namespace Apha.PACT.Application.Services
             return item == null ? null : _mapper.Map<JobCodeDto>(item);
         }
 
+        public async Task<IEnumerable<string>> GetTypesAsync()
+        {
+            return await _repository.GetTypesAsync();
+        }
+
         public async Task<JobCodeDto> CreateJobCodeAsync(JobCodeDto jobCode)
         {
             var entity = _mapper.Map<JobCode>(jobCode);

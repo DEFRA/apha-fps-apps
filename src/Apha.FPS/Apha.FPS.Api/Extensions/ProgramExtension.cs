@@ -21,13 +21,13 @@ namespace Apha.FPS.Api.Extensions
             services.AddDbContext<FpsDbContext>(options =>
                     options.UseNpgsql(
                         configuration.GetConnectionString("DefaultConnection")
-                        //,npgsqlOptions =>
-                        //{
-                        //    npgsqlOptions.EnableRetryOnFailure(
-                        //        maxRetryCount: 5,
-                        //        maxRetryDelay: TimeSpan.FromSeconds(10),
-                        //        errorCodesToAdd: null);
-                        //}
+                        , npgsqlOptions =>
+                        {
+                            npgsqlOptions.EnableRetryOnFailure(
+                                maxRetryCount: 5,
+                                maxRetryDelay: TimeSpan.FromSeconds(10),
+                                errorCodesToAdd: null);
+                        }
                         ), ServiceLifetime.Scoped);
                        
             services.AddStackExchangeRedisCache(options =>

@@ -5,6 +5,7 @@ using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Interfaces;
 using Apha.PACT.Application.Pagination;
 using AutoMapper;
+using DocumentFormat.OpenXml.Drawing.Charts;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Apha.PACT.Api.Controllers
@@ -45,6 +46,13 @@ namespace Apha.PACT.Api.Controllers
             return Ok(_mapper.Map<JobCodeRes>(item));
         }
 
+        [HttpGet("types")]
+        public async Task<IActionResult> GetTypes()
+        {
+            var types = await _service.GetTypesAsync();
+            return Ok(types);
+        }
+
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] JobCodeReq request)
         {
@@ -64,9 +72,12 @@ namespace Apha.PACT.Api.Controllers
         [HttpDelete("{jobCodeId}")]
         public async Task<IActionResult> Delete(string jobCodeId)
         {
-            var deleted = await _service.DeleteJobCodeAsync(jobCodeId);
-            if (!deleted) return NotFound();
-            return NoContent();
+            var deleted = await _service.DeleteJobCodeAsync(jobCodeId);            
+            if (!deleted)
+            {
+                throw new ArgumentException("JobCode record with ID: {jobCodeId} not found for deletion", jobCodeId);
+            }
+            return Ok(deleted);
         }
     }
 }

@@ -196,7 +196,7 @@
                                 }
                             }
                             <!-- Edit / Delete Buttons -->
-                            @if (Model.AllowEdit || Model.AllowDelete)
+                            @if (Model.AllowEdit || Model.AllowDelete || Model.AllowCopy)
                             {
                                 <td class="govuk-table__cell">
                                     @if (Model.AllowEdit)
@@ -205,7 +205,16 @@
                                                 class="btn btn-sm btn-info edit-row-btn"
                                                 data-id="@GridHelpers.GetPropertyValue(row, Model.KeyProperty)"
                                                 data-edit-function="@Model.EditFunction">
-                                            <img src="../images/edit_gridicon.svg" alt="Edit icon" width="20" height="20" title="Edit">
+                                            <img src="~/images/edit_gridicon.svg" alt="Edit icon" width="20" height="20" title="Edit">
+                                        </button>
+                                    }
+                                    @if (Model.AllowCopy)
+                                    {
+                                        <button type="button"
+                                                class="btn btn-sm btn-secondary copy-row-btn"
+                                                data-id="@GridHelpers.GetPropertyValue(row, Model.KeyProperty)"
+                                                data-copy-function="@Model.CopyFunction">
+                                                <img src="~/images/copy-regular-full.svg" alt="Copy icon" width="20" height="20" title="Copy">
                                         </button>
                                     }
                                     @if (Model.AllowDelete)
@@ -214,7 +223,7 @@
                                                 class="btn btn-sm btn-danger delete-row-btn"
                                                 data-id="@GridHelpers.GetPropertyValue(row, Model.KeyProperty)"
                                                 data-delete-function="@Model.DeleteFunction">
-                                            <img src="../images/delete_gridicon.svg" alt="Delete icon" width="20" height="20" title="Delete">
+                                            <img src="~/images/delete_gridicon.svg" alt="Delete icon" width="20" height="20" title="Delete">
                                         </button>
                                     }
                                 </td>
@@ -436,6 +445,14 @@
                 var customEditFn = $(this).data('edit-function');
                 if (customEditFn && typeof window[customEditFn] === 'function') {
                     window[customEditFn](this);
+                }
+            });
+
+            // Copy button click
+            $(gridContainerSelector).off('click', '.copy-row-btn').on('click', '.copy-row-btn', function() {
+                var customCopyFn = $(this).data('copy-function');
+                if (customCopyFn && typeof window[customCopyFn] === 'function') {
+                window[customCopyFn](this);
                 }
             });
 

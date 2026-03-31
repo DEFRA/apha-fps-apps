@@ -43,13 +43,24 @@ namespace Apha.PACT.DataAccess.Repositories
 
             // Apply paging
             return ApplyPaging(result, query.Page, query.PageSize);
-        }        
+        }
 
         public async Task<JobCode?> GetJobCodeByIdAsync(string jobCodeId)
         {
             return await _context.JobCodes
                 .AsNoTracking()
                 .FirstOrDefaultAsync(j => j.JobCodeId == jobCodeId);
+        }
+
+        public async Task<IEnumerable<string>> GetTypesAsync()
+        {
+            return await _context.JobCodes
+                .AsNoTracking()
+                .Where(j => j.Type != null)
+                .Select(j => j.Type!)
+                .Distinct()
+                .OrderBy(t => t)
+                .ToListAsync();
         }
 
         public async Task<JobCode> CreateJobCodeAsync(JobCode jobCode)

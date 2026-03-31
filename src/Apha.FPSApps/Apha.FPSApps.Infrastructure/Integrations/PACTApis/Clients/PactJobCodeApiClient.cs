@@ -83,6 +83,25 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             }
         }
 
+        public async Task<ApiResponseDto<List<string>>> GetTypesAsync()
+        {
+            try
+            {
+                var response = await _http.GetAsync<List<string>>($"{BaseEndpoint}/types");
+                if (response.Success)
+                    return _mapper.Map<ApiResponseDto<List<string>>>(response);
+
+                var dto = _mapper.Map<ApiResponseDto<List<string>>>(response);
+                return ApiResponseDto<List<string>>.FailureResponse(dto.Errors, dto.Meta);
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<List<string>>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to retrieve job code types", Code = InternalCodeError }],
+                    new ApiMetaDto());
+            }
+        }
+
         public async Task<ApiResponseDto<JobCodeDto>> CreateJobCodeAsync(JobCodeDto jobCode)
         {
             try

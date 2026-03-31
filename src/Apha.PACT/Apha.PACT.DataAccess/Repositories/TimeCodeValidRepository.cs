@@ -102,9 +102,11 @@ namespace Apha.PACT.DataAccess.Repositories
                             t.ParentProject == parentProject &&
                             t.FpsYear == _fpsYearContext.FPSYear)
                 .ToListAsync();
-            if (!entities.Any()) return false;
-            _context.TimeCodeValids.RemoveRange(entities);
-            await _context.SaveChangesAsync();
+            if (entities.Any())
+            {
+                _context.TimeCodeValids.RemoveRange(entities);
+                await _context.SaveChangesAsync();
+            }            
             return true;
         }
 

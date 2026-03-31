@@ -204,10 +204,14 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 GridId = "jobCodeGrid",
                 Title = "Job Codes",
                 ShowPagination = true,
+                AllowRowSelection = true,
+                AllowCopy = true,
+                CopyFunction = "copyJobCode",
                 KeyProperty = "JobCodeId",
                 AddFunction = "addJobCode",
                 EditFunction = "editJobCode",
                 DeleteFunction = "deleteJobCode",
+                RowSelectFunction = "selectJobCode",
                 BindGridUrl = $"/PACT/ProjectMaintenance/LoadJobCodeGrid?parentProject={Uri.EscapeDataString(parentProject)}",
                 Data = items,
                 Columns = GridDataProvider.GetColumnsDefination<JobCodeViewModel>(),
@@ -328,7 +332,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         public async Task<IActionResult> CreateJobCode(string parentProject)
         {
             var workGroups = await _jobCodeService.GetAllWorkGroupsAsync();
+            var types = await _jobCodeService.GetTypesAsync();
             ViewBag.WorkGroups = workGroups.Data?.Select(w => new SelectListItem(w.WorkGroupName, w.WorkGroupName)).ToList() ?? [];
+            ViewBag.Types = types.Data?.Select(t => new SelectListItem(t, t)).ToList() ?? [];
             return PartialView("_AddEditJobCode", new JobCodeViewModel { ParentProject = parentProject });
         }
 
@@ -354,7 +360,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             if (!result.Success || result.Data == null) return NotFound();
 
             var workGroups = await _jobCodeService.GetAllWorkGroupsAsync();
+            var types = await _jobCodeService.GetTypesAsync();
             ViewBag.WorkGroups = workGroups.Data?.Select(w => new SelectListItem(w.WorkGroupName, w.WorkGroupName)).ToList() ?? [];
+            ViewBag.Types = types.Data?.Select(t => new SelectListItem(t, t)).ToList() ?? [];
             return PartialView("_AddEditJobCode", _mapper.Map<JobCodeViewModel>(result.Data));
         }
 
@@ -411,10 +419,12 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> EditTimeCode(string workGroup, string timeCode, string parentProject)
+        public async Task<IActionResult> EditTimeCode(string? workGroup, string timeCode, string jobCodeId, string parentProject)
         {
-            var result = await _timeCodeService.GetByJobCodeAsync(timeCode, parentProject);
-            var item = result.Data?.FirstOrDefault(t => t.WorkGroup == workGroup && t.TimeCode == timeCode);
+            var result = await _timeCodeService.GetByJobCodeAsync(jobCodeId, parentProject);
+            var item = string.IsNullOrEmpty(workGroup)
+                ? result.Data?.FirstOrDefault(t => t.TimeCode == timeCode)
+                : result.Data?.FirstOrDefault(t => t.WorkGroup == workGroup && t.TimeCode == timeCode);
             if (item == null) return NotFound();
 
             var workGroups = await _jobCodeService.GetAllWorkGroupsAsync();
@@ -448,23 +458,43 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> CopyTimeCode(string parentProject, string jobCodeId)
+        public async Task<IActionResult> CopyProjectJobCode(string parentProject, string jobCodeId)
         {
-            var jobCodes = await _jobCodeService.GetJobCodesByProjectAsync(parentProject);
-            ViewBag.JobCodes = jobCodes.Data?.Select(j => new SelectListItem(j.JobCodeId, j.JobCodeId)).ToList() ?? [];
-            ViewBag.TargetJobCodeId = jobCodeId;
-            ViewBag.ParentProject = parentProject;
-            return PartialView("_CopyTimeCode");
+            var result = await _jobCodeService.GetJobCodeByIdAsync(jobCodeId);
+            if (!result.Success || result.Data == null) return NotFound();
+
+            var workGroups = await _jobCodeService.GetAllWorkGroupsAsync();
+            var types = await _jobCodeService.GetTypesAsync();
+            ViewBag.SourceJobCodeId = jobCodeId;
+            ViewBag.WorkGroups = workGroups.Data?.Select(w => new SelectListItem(w.WorkGroupName, w.WorkGroupName)).ToList() ?? [];
+            ViewBag.Types = types.Data?.Select(t => new SelectListItem(t, t)).ToList() ?? [];
+            return PartialView("_CopyJobCode", _mapper.Map<JobCodeViewModel>(result.Data));
         }
 
         [HttpPost]
-        public async Task<IActionResult> CopyTimeCode(string sourceJobCode, string targetJobCode, string parentProject)
+        public async Task<IActionResult> CopyProjectJobCode([FromBody] CopyJobCodeRequest model)
         {
-            var result = await _timeCodeService.CopyWorkGroupAsync(sourceJobCode, targetJobCode, parentProject);
-            if (result.Success)
-                return Json(new { success = true });
+            var dto = new JobCodeDto
+            {
+                JobCodeId = model.JobCodeId,
+                JobCodeName = model.JobCodeName,
+                Type = model.Type,
+                JobCodeWorkGroup = model.JobCodeWorkGroup,
+                ParentProject = model.ParentProject
+            };
 
-            return Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Copy failed" });
+            var createResult = await _jobCodeService.CreateJobCodeAsync(dto);
+            if (!createResult.Success)
+                return Json(new { success = false, message = createResult.Errors?.FirstOrDefault()?.Message ?? "Create failed" });
+
+            if (model.CopyWorkGroup)
+            {
+                var copyResult = await _timeCodeService.CopyWorkGroupAsync(model.SourceJobCode, model.JobCodeId, model.ParentProject);
+                if (!copyResult.Success)
+                    return Json(new { success = false, message = copyResult.Errors?.FirstOrDefault()?.Message ?? "Copy time codes failed" });
+            }
+
+            return Json(new { success = true });
         }
     }
 }
