@@ -6,11 +6,11 @@ using Apha.FPSApps.Application.Pagination;
 
 namespace Apha.FPSApps.Application.Services
 {
-    public class ProgramAnimalPlanService : IProgramAnimalPlanService
+    public class AnimalPlanService : IAnimalPlanService
     {
         private readonly IFpsApiClient _fpsClient;
 
-        public ProgramAnimalPlanService(IFpsApiClient fpsClient)
+        public AnimalPlanService(IFpsApiClient fpsClient)
         {
             _fpsClient = fpsClient;
         }

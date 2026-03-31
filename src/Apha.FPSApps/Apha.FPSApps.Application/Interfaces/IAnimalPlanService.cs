@@ -4,7 +4,7 @@ using Apha.FPSApps.Application.Pagination;
 
 namespace Apha.FPSApps.Application.Interfaces
 {
-    public interface IProgramAnimalPlanService
+    public interface IAnimalPlanService
     {
         Task<ApiResponseDto<List<AnimalCostViewDto>>> GetAllAnimalCostAsync(QueryParameters<string> query, string jobCode);
         Task<ApiResponseDto<List<AnimalDto>>> GetAnimalLookupAsync();

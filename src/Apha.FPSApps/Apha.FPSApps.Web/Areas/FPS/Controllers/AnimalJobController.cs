@@ -19,9 +19,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
     public class AnimalJobController : Controller
     {
         private readonly IMapper _mapper;
-        private readonly IProgramAnimalPlanService _animalPlanService;
+        private readonly IAnimalPlanService _animalPlanService;
 
-        public AnimalJobController(IMapper mapper, IProgramAnimalPlanService animalPlanService)
+        public AnimalJobController(IMapper mapper, IAnimalPlanService animalPlanService)
         {
             _mapper = mapper;
             _animalPlanService = animalPlanService;

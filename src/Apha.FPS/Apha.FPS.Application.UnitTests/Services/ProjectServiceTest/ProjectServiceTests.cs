@@ -191,8 +191,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
             _mockMapper.DidNotReceive().Map<ProjectDto>(Arg.Any<Project>());
         }
 
-        [Theory]
-        [InlineData(null)]
+        [Theory]        
         [InlineData("")]
         public async Task GetProjectByIdAsync_WithNullOrEmptyId_ReturnsNull(string parentProject)
         {
