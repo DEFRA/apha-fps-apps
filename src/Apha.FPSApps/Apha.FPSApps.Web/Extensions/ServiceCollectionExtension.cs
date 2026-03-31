@@ -1,7 +1,6 @@
 ﻿using Apha.FPSApps.Application.Interfaces;
 using Apha.FPSApps.Application.Services;
 using Apha.FPSApps.Web.Handler;
-
 namespace Apha.FPSApps.Web.Extensions
 {
     public static class ServiceCollectionExtension
@@ -24,6 +23,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IProjectJobCodeService, ProjectJobCodeService>();
             services.AddScoped<IPactTimeCodeValidService, PactTimeCodeValidService>();
             services.AddScoped<IProjectService, ProjectService>();
+            services.AddScoped<IProgramAnimalPlanService, ProgramAnimalPlanService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)

@@ -101,6 +101,33 @@ namespace Apha.FPS.Api.Controllers
         }
 
         /// <summary>
+        /// Returns the total animal cost (all records, unpaged) for a given job code.
+        /// </summary>
+        /// <param name="jobCode">The job code.</param>
+        /// <returns>Total animal cost as a decimal.</returns>
+        [HttpGet("totalanimalcost")]
+        public async Task<IActionResult> GetTotalAnimalCostAsync([FromQuery] string jobCode)
+        {
+            var total = await _animalService.GetTotalAnimalCostAsync(jobCode);
+            return Ok(total);
+        }
+
+        /// <summary>
+        /// Gets a single animal cost view record by index counter and job code.
+        /// </summary>
+        /// <param name="indCounter">The index counter of the animal cost entry.</param>
+        /// <param name="jobCode">The job code.</param>
+        /// <returns>The animal cost view record, or NotFound if not found.</returns>
+        [HttpGet("view")]
+        public async Task<IActionResult> GetAnimalCostViewByIdAsync([FromQuery] int indCounter, [FromQuery] string jobCode)
+        {
+            var result = await _animalService.GetAnimalCostViewByIdAsync(indCounter, jobCode);
+            if (result == null)
+                throw new KeyNotFoundException("Data not found.");
+            return Ok(_mapper.Map<AnimalCostViewRes>(result));
+        }
+
+        /// <summary>
         /// Deletes an animal cost entry by its index counter.
         /// </summary>
         /// <param name="indCounter">The index counter of the animal cost entry to delete.</param>

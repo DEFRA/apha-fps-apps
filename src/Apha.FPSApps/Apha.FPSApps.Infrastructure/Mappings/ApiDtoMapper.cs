@@ -6,7 +6,6 @@ using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Pagination;
 using AutoMapper;
-
 namespace Apha.FPSApps.Infrastructure.Mappings
 {
     public class ApiDtoMapper : Profile
@@ -45,6 +44,12 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<TimeCodeValidDto, TimeCodeValidReq>().ReverseMap();
             CreateMap<TimeCodeValidDto, TimeCodeValidRes>().ReverseMap();
             CreateMap<WorkGroupDto, WorkGroupRes>().ReverseMap();
+
+            // FPS Animal Plan
+            CreateMap<AnimalCostViewDto, AnimalCostViewRes>().ReverseMap();
+            CreateMap<AnimalDto, AnimalRes>().ReverseMap();
+            CreateMap<AnimalRequestDto, AnimalRequestReq>().ReverseMap();
+            CreateMap<AnimalRequestDto, AnimalRequestRes>().ReverseMap();
         }
     }
 }
