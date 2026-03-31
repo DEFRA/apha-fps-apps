@@ -6,7 +6,6 @@ using Apha.FPSApps.Web.Areas.FPS.Models;
 using Apha.FPSApps.Web.Areas.PACT.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
-
 namespace Apha.FPSApps.Web.Mappings
 {
     public class ViewModelMapper : Profile
@@ -23,6 +22,14 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<JobCodeViewModel, JobCodeDto>().ReverseMap();
             CreateMap<StaffJobViewDto, StaffJobDto>().ReverseMap();
             CreateMap<ProjectDto, ProjectViewModel>().ReverseMap();
+            CreateMap<AnimalPlanItem, AnimalCostViewDto>().ReverseMap();
+            CreateMap<AnimalPlanItem, AnimalRequestDto>()
+                .ForMember(d => d.IndCounter, o => o.MapFrom(s => s.IndCounter))
+                .ForMember(d => d.JobCode, o => o.MapFrom(s => s.JobCode))
+                .ForMember(d => d.AnimalType, o => o.MapFrom(s => s.AnimalType))
+                .ForMember(d => d.NumberOfDays, o => o.MapFrom(s => s.NumberOfDays))
+                .ForMember(d => d.NumberOfAnimals, o => o.MapFrom(s => s.NumberOfAnimals))
+                .ReverseMap();
         }
     }
 }
