@@ -23,13 +23,7 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<StaffJobViewDto, StaffJobDto>().ReverseMap();
             CreateMap<ProjectDto, ProjectViewModel>().ReverseMap();
             CreateMap<AnimalPlanItem, AnimalCostViewDto>().ReverseMap();
-            CreateMap<AnimalPlanItem, AnimalRequestDto>()
-                .ForMember(d => d.IndCounter, o => o.MapFrom(s => s.IndCounter))
-                .ForMember(d => d.JobCode, o => o.MapFrom(s => s.JobCode))
-                .ForMember(d => d.AnimalType, o => o.MapFrom(s => s.AnimalType))
-                .ForMember(d => d.NumberOfDays, o => o.MapFrom(s => s.NumberOfDays))
-                .ForMember(d => d.NumberOfAnimals, o => o.MapFrom(s => s.NumberOfAnimals))
-                .ReverseMap();
+            CreateMap<AnimalPlanItem, AnimalRequestDto>().ReverseMap();
         }
     }
 }
