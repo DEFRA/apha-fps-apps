@@ -33,7 +33,7 @@ namespace Apha.FPSApps.Web.Middleware
     }
     else
     {
-                year = 2025; //GetCurrentFPSYear();
+                year = GetCurrentFPSYear();
     }
 
     fyContext.Year = year;
