@@ -32,8 +32,8 @@ namespace Apha.FPSApps.Web.Middleware
         year = int.Parse(f!);
     }
     else
-    {                
-        year = GetCurrentFPSYear();
+    {
+                year = GetCurrentFPSYear();
     }
 
     fyContext.Year = year;

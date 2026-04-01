@@ -62,8 +62,8 @@ namespace Apha.FPS.DataAccess.Repositories
             {
                 var search = query.Search.ToLower();
                 queryable = queryable.Where(p =>
-                    p.ParentProject.ToLower().Contains(search) ||
-                    p.ProjectTitle.ToLower().Contains(search));
+                    p.ParentProject.Contains(search, StringComparison.CurrentCultureIgnoreCase) ||
+                    p.ProjectTitle.Contains(search, StringComparison.CurrentCultureIgnoreCase));
             }
 
             queryable = query.SortBy?.ToLower() switch
