@@ -1,6 +1,8 @@
 // StaffJob.js - Shared staff job CRUD, charge rate calculation, and modal/validation helpers.
 // Each page must configure StaffJobConfig before this script runs its event bindings.
 
+var _hoursPerDay = 8;
+
 var StaffJobConfig = {
     getJobCode: function () { return ''; },
     requireJobCodeForAdd: false,
@@ -196,15 +198,31 @@ function fetchChargeRate(staffId) {
     });
 }
 
+function fetchHoursPerDay() {
+    $.ajax({
+        url: '/FPS/Setting/GetHoursPerDay',
+        type: 'GET',
+        success: function (result) {
+            if (result.success && result.hoursPerDay) {
+                _hoursPerDay = result.hoursPerDay;
+            }
+        }
+    });
+}
+
 function calculateStaffCost() {
     var rate = parseFloat($('#ChargeRate').val()) || 0;
     var hours = parseFloat($('#PlannedHours').val()) || 0;
     $('#StaffCost').val((rate * hours).toFixed(2));
-    $('#Days').val((hours / 8).toFixed(2));
+    $('#Days').val((hours / _hoursPerDay).toFixed(2));
 }
 
 $(document).on('change', '#PlannedHours, #ChargeRate', function () {
     calculateStaffCost();
+});
+
+$(document).ready(function () {
+    fetchHoursPerDay();
 });
 
 // ---- Modal helpers ----

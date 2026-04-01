@@ -6,7 +6,6 @@ using Apha.FPSApps.Web.Areas.FPS.Models;
 using Apha.FPSApps.Web.Areas.PACT.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
-
 namespace Apha.FPSApps.Web.Mappings
 {
     public class ViewModelMapper : Profile
@@ -24,6 +23,8 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<StaffJobViewDto, StaffJobDto>().ReverseMap();
             CreateMap<ProjectDto, ProjectViewModel>().ReverseMap();
             CreateMap<TimeCodeValidDto, TimeCodeViewModel>().ReverseMap();
+            CreateMap<AnimalPlanItem, AnimalCostViewDto>().ReverseMap();
+            CreateMap<AnimalPlanItem, AnimalRequestDto>().ReverseMap();
         }
     }
 }

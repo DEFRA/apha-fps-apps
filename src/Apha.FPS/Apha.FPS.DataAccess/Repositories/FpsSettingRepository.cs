@@ -18,5 +18,10 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return await _dbContext.TblSettings.ToListAsync();
         }
+
+        public async Task<FpsSetting?> GetByKeyAsync(string key)
+        {
+            return await _dbContext.TblSettings.FirstOrDefaultAsync(s => s.Id == key);
+        }
     }
 }

@@ -41,5 +41,16 @@ namespace Apha.FPS.Api.Controllers
             var result = await _fpsSettingService.GetAllSettingsAsync();
             return Ok(_mapper.Map<List<FpsSettingRes>>(result));
         }
+
+        /// <summary>
+        /// Gets the configured number of working hours per day.
+        /// </summary>
+        /// <returns>The hours per day value.</returns>
+        [HttpGet("hoursperday")]
+        public async Task<IActionResult> GetHoursPerDayAsync()
+        {
+            var result = await _fpsSettingService.GetHoursPerDayAsync();
+            return Ok(result);
+        }
     }
 }

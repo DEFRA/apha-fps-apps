@@ -80,6 +80,15 @@ namespace Apha.FPS.Application.Services
             var isDeleted = await _animalRepository.DeleteJobAnimalCostAsync(indCounter);
             return isDeleted;
         }
-        
+
+        public async Task<decimal> GetTotalAnimalCostAsync(string jobCode)
+            => await _animalRepository.GetTotalAnimalCostAsync(jobCode);
+
+        public async Task<AnimalCostViewDto?> GetAnimalCostViewByIdAsync(int indCounter, string jobCode)
+        {
+            var result = await _animalRepository.GetAnimalCostViewByIdAsync(indCounter, jobCode);
+            return result == null ? null : _mapper.Map<AnimalCostViewDto>(result);
+        }
+
     }
 }

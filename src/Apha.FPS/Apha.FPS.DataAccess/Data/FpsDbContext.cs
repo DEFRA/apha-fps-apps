@@ -335,23 +335,32 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.Entity<FpsSetting>(entity =>
             {
-                entity.HasKey(e => e.Id).HasName("tblsettings_pk_tblsettings");
+                entity.HasKey(e => new { e.Id, e.FpsYear }).HasName("pk_tblsettings");
 
-                entity.ToTable("tblsettings", "fps");
+                entity.ToTable("tblsettings", "fps", tb => tb.HasComment("Application-level configuration settings. Only business-logic constants belong here; infrastructure config moves to appsettings.json."));
 
                 entity.Property(e => e.Id)
                     .HasMaxLength(50)
+                    .HasComment("Unique setting key referenced by application code.")
                     .HasColumnName("id");
-                entity.Property(e => e.FpsYear).HasColumnName(FpsYear);
+                entity.Property(e => e.FpsYear)
+                    .HasComment("Fiscal year scope. NULL = not year-specific.")
+                    .HasColumnName("fpsyear");
                 entity.Property(e => e.Notes)
-                    .HasMaxLength(255)
+                    .HasComment("Free-text description of purpose, origin, and usage.")
                     .HasColumnName("notes");
                 entity.Property(e => e.Setting)
                     .HasMaxLength(255)
+                    .HasComment("The setting value as text.")
                     .HasColumnName("setting");
-                entity.Property(e => e.TestSetting)
-                    .HasMaxLength(255)
-                    .HasColumnName("testsetting");
+                entity.Property(e => e.UpdatedAt)
+                    .HasDefaultValueSql("now()")
+                    .HasComment("Timestamp of last modification (auto-set on insert).")
+                    .HasColumnName("updated_at");
+                entity.Property(e => e.UpdatedBy)
+                    .HasMaxLength(100)
+                    .HasComment("User or service account that last modified the row.")
+                    .HasColumnName("updated_by");               
                 entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
             });
 
