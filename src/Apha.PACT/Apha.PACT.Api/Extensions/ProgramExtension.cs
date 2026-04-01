@@ -27,6 +27,8 @@ namespace Apha.PACT.Api.Extensions
                                  maxRetryCount: 5,
                                  maxRetryDelay: TimeSpan.FromSeconds(10),
                                  errorCodesToAdd: null);
+                             // Structural safeguard: avoid hanging commands under load
+                             npgsqlOptions.CommandTimeout(30);                             
                          }
                         ), ServiceLifetime.Scoped);
 
