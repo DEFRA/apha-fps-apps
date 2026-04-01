@@ -20,7 +20,7 @@ namespace Apha.FPS.Api.Extensions
             services.AddDbContext<FpsDbContext>(options =>
                     options.UseNpgsql(
                         configuration.GetConnectionString("DefaultConnection")
-                        , npgsqlOptions =>
+                        ,npgsqlOptions =>
                         {
                             npgsqlOptions.EnableRetryOnFailure(
                                 maxRetryCount: 5,
