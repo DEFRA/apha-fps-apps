@@ -12,6 +12,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public IFpsProjectApiClient FpsProject { get; }
         public IFpsLookupApiClient FpsLookup { get; }
         public IFpsAnimalPlanApiClient FpsAnimalPlan { get; }
+        public IFpsSettingApiClient FpsSetting { get; }
 
         public FpsApiClient(IFpsHttpExecutor http, IMapper mapper)
         {
@@ -21,6 +22,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             FpsProject = new FpsProjectApiClient(http, mapper);
             FpsLookup = new FpsLookupApiClient(http, mapper);
             FpsAnimalPlan = new FpsAnimalPlanApiClient(http, mapper);
+            FpsSetting = new FpsSettingApiClient(http, mapper);
         }
     }
 }
