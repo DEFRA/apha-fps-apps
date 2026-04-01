@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 using System.Dynamic;
 using System.Linq.Expressions;
 
-namespace Apha.PACT.DataAccess.Repositories
+namespace Apha.PACT.DataAccess.Repository
 {
     public class JobCodeRepository : BaseRepository, IJobCodeRepository
     {
@@ -32,6 +32,11 @@ namespace Apha.PACT.DataAccess.Repositories
         {
             var queryJobcodes = _context.JobCodes.AsNoTracking().AsQueryable();
 
+            if(!string.IsNullOrEmpty(parentProject))
+            {
+                queryJobcodes = queryJobcodes.Where(j => j.ParentProject == parentProject);
+            }
+
             // Apply filtering
             queryJobcodes = ApplyJobCodeFilter(queryJobcodes, query.Filter);
 
@@ -43,13 +48,24 @@ namespace Apha.PACT.DataAccess.Repositories
 
             // Apply paging
             return ApplyPaging(result, query.Page, query.PageSize);
-        }        
+        }
 
         public async Task<JobCode?> GetJobCodeByIdAsync(string jobCodeId)
         {
             return await _context.JobCodes
                 .AsNoTracking()
                 .FirstOrDefaultAsync(j => j.JobCodeId == jobCodeId);
+        }
+
+        public async Task<IEnumerable<string>> GetTypesAsync()
+        {
+            return await _context.JobCodes
+                .AsNoTracking()
+                .Where(j => j.Type != null)
+                .Select(j => j.Type!)
+                .Distinct()
+                .OrderBy(t => t)
+                .ToListAsync();
         }
 
         public async Task<JobCode> CreateJobCodeAsync(JobCode jobCode)

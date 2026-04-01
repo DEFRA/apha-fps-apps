@@ -1,0 +1,87 @@
+@model Apha.FPSApps.Web.Areas.PACT.Models.TimeCodeViewModel
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    var isEdit = !string.IsNullOrEmpty(Model.TimeCode);
+}
+
+<div class="modal-header flex-space-center">
+    <h3 class="govuk-heading-s" style="margin:0;">@(isEdit ? "Edit Time Code" : "Add Work Group")</h3>
+    <button type="button" class="btn-close" onclick="$('#modalPopup').removeClass('show')">×</button>
+</div>
+
+<div class="modal-body" style="overflow:hidden; padding:8px 16px 0 16px;">
+    <form id="timeCodeForm" class="govuk-grid-column-full">
+
+        <input type="hidden" name="isEdit" value="@isEdit.ToString().ToLower()" />
+        <input type="hidden" asp-for="ParentProject" />
+        @if (isEdit)
+        {
+            <!-- Key fields submitted as hidden on edit; displayed readonly below -->
+            <input type="hidden" asp-for="WorkGroup" />
+            <input type="hidden" asp-for="TimeCode" />
+        }
+        <!-- JobCode always hidden — pre-filled from the selected job code context -->
+        <input type="hidden" asp-for="JobCode" />
+
+        <!-- Work Group -->
+        <div class="govuk-form-group sup_margin_bottom_10">
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="WorkGroup">Work Group:</label>
+            @if (isEdit)
+            {
+                <input class="govuk-input govuk-!-font-size-16" value="@Model.WorkGroup" readonly />
+            }
+            else
+            {
+                <select class="govuk-select govuk-!-font-size-16" asp-for="WorkGroup"
+                        asp-items="@(ViewBag.WorkGroups as List<SelectListItem>)">
+                    <option value="">--select--</option>
+                </select>
+                <span asp-validation-for="WorkGroup" class="govuk-error-message"></span>
+            }
+        </div>
+
+        <!-- Active -->
+        <div class="govuk-form-group sup_margin_bottom_10">
+            <div class="govuk-checkboxes govuk-checkboxes--small sup_margin_0" data-module="govuk-checkboxes">
+                <div class="govuk-checkboxes__item">
+                    <input class="govuk-checkboxes__input govuk-!-font-size-16"
+                           id="Active" name="Active" type="checkbox"
+                           value="true" @(Model.Active ? "checked" : "") />
+                    <label class="govuk-label govuk-checkboxes__label sup_label_auto_width" for="Active">
+                        Active
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Time Code -->
+        <div class="govuk-form-group sup_margin_bottom_10">
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="TimeCode">Time Code:</label>
+            @if (isEdit)
+            {
+                <input class="govuk-input govuk-!-font-size-16" value="@Model.TimeCode" readonly />
+            }
+            else
+            {
+                <input class="govuk-input govuk-!-font-size-16" asp-for="TimeCode" />
+                <span asp-validation-for="TimeCode" class="govuk-error-message"></span>
+            }
+        </div>
+
+        <!-- Job Code (display only — value carried via hidden input above) -->
+        <div class="govuk-form-group sup_margin_bottom_10">
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="JobCode">Job Code:</label>
+            <input class="govuk-input govuk-!-font-size-16" asp-for="JobCode" readonly />
+        </div>
+
+    </form>
+</div>
+
+<div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center;">
+    <button type="button" class="govuk-button govuk-button--secondary sup_margin_0"
+            onclick="$('#modalPopup').removeClass('show')">Cancel</button>
+    <button type="button" class="govuk-button sup_margin_0" onclick="saveTimeCode()">
+        @(isEdit ? "Update" : "Save")
+    </button>
+</div>

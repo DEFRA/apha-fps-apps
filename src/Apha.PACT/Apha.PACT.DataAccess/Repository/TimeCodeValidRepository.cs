@@ -3,8 +3,11 @@ using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
 using Apha.PACT.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using System.Dynamic;
+using System.Linq.Expressions;
 
-namespace Apha.PACT.DataAccess.Repositories
+namespace Apha.PACT.DataAccess.Repository
 {
     public class TimeCodeValidRepository : BaseRepository, ITimeCodeValidRepository
     {
@@ -27,31 +30,27 @@ namespace Apha.PACT.DataAccess.Repositories
         public async Task<PagedData<TimeCodeValid>> GetPagedTimeCodesAsync(
             PaginationParameters<string> query, string? jobCode, string? parentProject)
         {
-            var queryable = _context.TimeCodeValids.AsNoTracking().AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(jobCode))
-                queryable = queryable.Where(t => t.JobCode == jobCode);
-
-            if (!string.IsNullOrWhiteSpace(parentProject))
-                queryable = queryable.Where(t => t.ParentProject == parentProject);
-
-            if (!string.IsNullOrWhiteSpace(query.Search))
+            var queryTimeCode = _context.TimeCodeValids.AsNoTracking().AsQueryable();
+            if (!string.IsNullOrEmpty(jobCode))
             {
-                var search = query.Search.ToLower();
-                queryable = queryable.Where(t =>
-                    t.WorkGroup.ToLower().Contains(search) ||
-                    (t.JobCode != null && t.JobCode.ToLower().Contains(search)));
+                queryTimeCode = queryTimeCode.Where(t => t.JobCode == jobCode);
             }
 
-            queryable = query.SortBy?.ToLower() switch
+            if(!string.IsNullOrEmpty(parentProject))
             {
-                "workgroup" => query.Descending
-                    ? queryable.OrderByDescending(t => t.WorkGroup)
-                    : queryable.OrderBy(t => t.WorkGroup),
-                _ => queryable.OrderBy(t => t.WorkGroup)
-            };
+                queryTimeCode = queryTimeCode.Where(t => t.ParentProject == parentProject);
+            }
 
-            var result = await queryable.ToListAsync();
+            // Apply filtering
+            queryTimeCode = ApplyTimeCodeFilter(queryTimeCode, query.Filter);
+
+            // Apply sorting
+            queryTimeCode = (IQueryable<TimeCodeValid>)ApplySorting(queryTimeCode, query.SortBy, query.Descending);
+
+            // Execute query
+            var result = await queryTimeCode.ToListAsync();
+
+            // Apply paging
             return ApplyPaging(result, query.Page, query.PageSize);
         }
 
@@ -102,9 +101,11 @@ namespace Apha.PACT.DataAccess.Repositories
                             t.ParentProject == parentProject &&
                             t.FpsYear == _fpsYearContext.FPSYear)
                 .ToListAsync();
-            if (!entities.Any()) return false;
-            _context.TimeCodeValids.RemoveRange(entities);
-            await _context.SaveChangesAsync();
+            if (entities.Any())
+            {
+                _context.TimeCodeValids.RemoveRange(entities);
+                await _context.SaveChangesAsync();
+            }            
             return true;
         }
 
@@ -129,6 +130,72 @@ namespace Apha.PACT.DataAccess.Repositories
             await _context.TimeCodeValids.AddRangeAsync(copies);
             await _context.SaveChangesAsync();
             return copies;
+        }
+
+        private static IQueryable<TimeCodeValid> ApplyTimeCodeFilter(IQueryable<TimeCodeValid> queryTimeCode, string? filter)
+        {
+            if (string.IsNullOrEmpty(filter))
+            {
+                return queryTimeCode;
+            }
+
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            if (filterModel == null)
+            {
+                return queryTimeCode;
+            }
+
+            var dict = (IDictionary<string, object>)filterModel;
+
+            if (dict.TryGetValue("TimeCode", out var timeCode) && timeCode != null)
+            {
+                queryTimeCode = queryTimeCode.Where(x => x.TimeCode.Contains(timeCode.ToString()!));
+            }
+
+            if (dict.TryGetValue("ParentProject", out var parentProject) && parentProject != null)
+            {
+                queryTimeCode = queryTimeCode.Where(x => x.ParentProject!.Contains(parentProject.ToString()!));
+            }
+
+            if (dict.TryGetValue("WorkGroup", out var workGroup) && workGroup != null)
+            {
+                queryTimeCode = queryTimeCode.Where(x => x.WorkGroup!.Contains(workGroup.ToString()!));
+            }
+
+            if (dict.TryGetValue("JobCode", out var jobCode) && jobCode != null)
+            {
+                queryTimeCode = queryTimeCode.Where(x => x.JobCode!.Contains(jobCode.ToString()!));
+            }
+
+            return queryTimeCode;
+        }
+
+        private static IQueryable ApplySorting(IQueryable<TimeCodeValid> query, string? sortBy, bool descending)
+        {
+            if (string.IsNullOrEmpty(sortBy))
+            {
+                return query.OrderBy(e => e.TimeCode);
+            }
+
+            return ApplySortingByProperty(query, sortBy.ToLower(), descending);
+        }
+
+        private static IQueryable ApplySortingByProperty(IQueryable<TimeCodeValid> query, string property, bool descending)
+        {
+            return property switch
+            {
+                "timecode" => ApplyOrder(query, i => i.TimeCode, descending),
+                "workgroup" => ApplyOrder(query, i => i.WorkGroup, descending),
+                "parentproject" => ApplyOrder(query, i => i.ParentProject, descending),
+                "jobcode" => ApplyOrder(query, i => i.JobCode, descending),
+                "active" => ApplyOrder(query, i => i.Active, descending),
+                _ => query.OrderBy(e => e.TimeCode)
+            };
+        }
+
+        private static IQueryable ApplyOrder<T>(IQueryable<TimeCodeValid> query, Expression<Func<TimeCodeValid, T>> keySelector, bool descending)
+        {
+            return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
         }
     }
 }

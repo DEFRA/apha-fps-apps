@@ -10,11 +10,13 @@
         public bool ShowPagination { get; set; }
         public string KeyProperty { get; set; } = string.Empty;
         public bool AllowAdd { get; set; }
+        public bool AllowCopy { get; set; }
         public bool AllowEdit { get; set; }
         public bool AllowDelete { get; set; }
         public bool AllowRowSelection { get; set; }
         public string RowSelectFunction { get; set; } = string.Empty;
         public string AddFunction { get; set; } = string.Empty;
+        public string CopyFunction { get; set; } = string.Empty;
         public string EditFunction { get; set; } = string.Empty;
         public string DeleteFunction { get; set; } = string.Empty;
         public string BindGridUrl { get; set; } = string.Empty;
@@ -30,6 +32,7 @@
             ShowCheckboxColumn = false;
             ShowPagination = true;
             AllowAdd = true;
+            AllowCopy = false;
             AllowEdit = true;
             AllowDelete = true;
             AllowRowSelection = false;

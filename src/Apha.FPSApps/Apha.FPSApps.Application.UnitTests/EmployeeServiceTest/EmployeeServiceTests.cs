@@ -475,6 +475,72 @@ namespace Apha.FPSApps.Application.UnitTests.EmployeeServiceTest
 
         #endregion
 
+        #region GetAllPactManagersAsync Tests
+
+        [Fact]
+        public async Task GetAllPactManagersAsync_ReturnsListOfManagers()
+        {
+            // Arrange
+            var managers = new List<ManagerDto>
+            {
+                new ManagerDto { Name = "John Pact Manager", WorkGroup = "Operations", GradeCode = "M1" },
+                new ManagerDto { Name = "Jane Pact Director", WorkGroup = "Finance", GradeCode = "D1" }
+            };
+            var expectedResponse = ApiResponseDto<List<ManagerDto>>.SuccessResponse(managers);
+
+            _fpsEmployeeApiClient.GetAllPactManagerAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _employeeService.GetAllPactManagersAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.NotNull(result.Data);
+            Assert.Equal(2, result.Data.Count);
+            await _fpsEmployeeApiClient.Received(1).GetAllPactManagerAsync();
+        }
+
+        [Fact]
+        public async Task GetAllPactManagersAsync_WithEmptyResult_ReturnsEmptyList()
+        {
+            // Arrange
+            var expectedResponse = ApiResponseDto<List<ManagerDto>>.SuccessResponse(new List<ManagerDto>());
+
+            _fpsEmployeeApiClient.GetAllPactManagerAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _employeeService.GetAllPactManagersAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!);
+        }
+
+        [Fact]
+        public async Task GetAllPactManagersAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var errors = new List<ApiErrorDto>
+            {
+                new ApiErrorDto { Message = "API Error", Code = "API_ERROR" }
+            };
+            var expectedResponse = ApiResponseDto<List<ManagerDto>>.FailureResponse(errors, new ApiMetaDto());
+
+            _fpsEmployeeApiClient.GetAllPactManagerAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _employeeService.GetAllPactManagersAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+        }
+
+        #endregion
+
         #region Edge Cases and Integration Tests
 
         [Fact]

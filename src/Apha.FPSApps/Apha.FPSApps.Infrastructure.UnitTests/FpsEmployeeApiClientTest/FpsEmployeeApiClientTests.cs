@@ -707,6 +707,103 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.FpsEmployeeApiClientTest
 
         #endregion
 
+        #region GetAllPactManagerAsync Tests
+
+        [Fact]
+        public async Task GetAllPactManagerAsync_WithSuccessResponse_ReturnsPactManagerList()
+        {
+            // Arrange
+            var managerResList = new List<ManagerRes>
+            {
+                new ManagerRes { Name = "PACT Manager One", WorkGroup = "Operations", GradeCode = "M1" },
+                new ManagerRes { Name = "PACT Manager Two", WorkGroup = "Finance", GradeCode = "M2" }
+            };
+            var apiResponse = new ApiResponse<List<ManagerRes>> { Success = true, Data = managerResList };
+            var expectedDto = ApiResponseDto<List<ManagerDto>>.SuccessResponse(
+                new List<ManagerDto>
+                {
+                    new ManagerDto { Name = "PACT Manager One", WorkGroup = "Operations", GradeCode = "M1" },
+                    new ManagerDto { Name = "PACT Manager Two", WorkGroup = "Finance", GradeCode = "M2" }
+                }
+            );
+
+            _httpExecutor.GetAsync<List<ManagerRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ManagerDto>>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.GetAllPactManagerAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data?.Count);
+            await _httpExecutor.Received(1).GetAsync<List<ManagerRes>>("api/employee/pactmanagers");
+        }
+
+        [Fact]
+        public async Task GetAllPactManagerAsync_WithEmptyResult_ReturnsEmptyList()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<List<ManagerRes>> { Success = true, Data = new List<ManagerRes>() };
+            var expectedDto = ApiResponseDto<List<ManagerDto>>.SuccessResponse(new List<ManagerDto>());
+
+            _httpExecutor.GetAsync<List<ManagerRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ManagerDto>>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.GetAllPactManagerAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!);
+        }
+
+        [Fact]
+        public async Task GetAllPactManagerAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var errors = new List<ApiError> { new ApiError { Message = "API Error", Code = "ERROR" } };
+            var apiResponse = new ApiResponse<List<ManagerRes>> { Success = false, Errors = errors };
+            var mappedResponse = new ApiResponseDto<List<ManagerDto>>
+            {
+                Success = false,
+                Errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "API Error", Code = "ERROR" } },
+                Meta = new ApiMetaDto()
+            };
+
+            _httpExecutor.GetAsync<List<ManagerRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ManagerDto>>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.GetAllPactManagerAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+        }
+
+        [Fact]
+        public async Task GetAllPactManagerAsync_WhenExceptionThrown_ReturnsInternalError()
+        {
+            // Arrange
+            _httpExecutor.GetAsync<List<ManagerRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
+
+            // Act
+            var result = await _client.GetAllPactManagerAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            Assert.Equal("Failed to retrieve managers", result.Errors[0].Message);
+        }
+
+        #endregion
+
         #region Edge Cases and Integration Tests
 
         [Fact]
