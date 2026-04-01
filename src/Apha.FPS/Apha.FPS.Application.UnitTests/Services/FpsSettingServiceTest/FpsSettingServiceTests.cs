@@ -123,87 +123,87 @@ namespace Apha.FPS.Application.UnitTests.Services.FpsSettingServiceTest
         public async Task GetHoursPerDayAsync_WhenSettingExistsWithValidValue_ReturnsParsedDecimal()
         {
             // Arrange
-            var setting = new FpsSetting { Id = "HOURS_PER_DAY", Setting = "7.5", FpsYear = 2024 };
-            _mockRepository.GetByKeyAsync("HOURS_PER_DAY").Returns(setting);
+            var setting = new FpsSetting { Id = "HoursInDay", Setting = "7.5", FpsYear = 2024 };
+            _mockRepository.GetByKeyAsync("HoursInDay").Returns(setting);
 
             // Act
             var result = await _sut.GetHoursPerDayAsync();
 
             // Assert
             result.Should().Be(7.5m);
-            await _mockRepository.Received(1).GetByKeyAsync("HOURS_PER_DAY");
+            await _mockRepository.Received(1).GetByKeyAsync("HoursInDay");
         }
 
         [Fact]
         public async Task GetHoursPerDayAsync_WhenSettingExistsWithIntegerValue_ReturnsParsedDecimal()
         {
             // Arrange
-            var setting = new FpsSetting { Id = "HOURS_PER_DAY", Setting = "8", FpsYear = 2024 };
-            _mockRepository.GetByKeyAsync("HOURS_PER_DAY").Returns(setting);
+            var setting = new FpsSetting { Id = "HoursInDay", Setting = "8", FpsYear = 2024 };
+            _mockRepository.GetByKeyAsync("HoursInDay").Returns(setting);
 
             // Act
             var result = await _sut.GetHoursPerDayAsync();
 
             // Assert
             result.Should().Be(8m);
-            await _mockRepository.Received(1).GetByKeyAsync("HOURS_PER_DAY");
+            await _mockRepository.Received(1).GetByKeyAsync("HoursInDay");
         }
 
         [Fact]
         public async Task GetHoursPerDayAsync_WhenSettingDoesNotExist_ReturnsDefaultEight()
         {
             // Arrange
-            _mockRepository.GetByKeyAsync("HOURS_PER_DAY").Returns((FpsSetting?)null);
+            _mockRepository.GetByKeyAsync("HoursInDay").Returns((FpsSetting?)null);
 
             // Act
             var result = await _sut.GetHoursPerDayAsync();
 
             // Assert
             result.Should().Be(8m);
-            await _mockRepository.Received(1).GetByKeyAsync("HOURS_PER_DAY");
+            await _mockRepository.Received(1).GetByKeyAsync("HoursInDay");
         }
 
         [Fact]
         public async Task GetHoursPerDayAsync_WhenSettingValueIsNotNumeric_ReturnsDefaultEight()
         {
             // Arrange
-            var setting = new FpsSetting { Id = "HOURS_PER_DAY", Setting = "not-a-number", FpsYear = 2024 };
-            _mockRepository.GetByKeyAsync("HOURS_PER_DAY").Returns(setting);
+            var setting = new FpsSetting { Id = "HoursInDay", Setting = "not-a-number", FpsYear = 2024 };
+            _mockRepository.GetByKeyAsync("HoursInDay").Returns(setting);
 
             // Act
             var result = await _sut.GetHoursPerDayAsync();
 
             // Assert
             result.Should().Be(8m);
-            await _mockRepository.Received(1).GetByKeyAsync("HOURS_PER_DAY");
+            await _mockRepository.Received(1).GetByKeyAsync("HoursInDay");
         }
 
         [Fact]
         public async Task GetHoursPerDayAsync_WhenSettingValueIsNull_ReturnsDefaultEight()
         {
             // Arrange
-            var setting = new FpsSetting { Id = "HOURS_PER_DAY", Setting = null, FpsYear = 2024 };
-            _mockRepository.GetByKeyAsync("HOURS_PER_DAY").Returns(setting);
+            var setting = new FpsSetting { Id = "HoursInDay", Setting = null, FpsYear = 2024 };
+            _mockRepository.GetByKeyAsync("HoursInDay").Returns(setting);
 
             // Act
             var result = await _sut.GetHoursPerDayAsync();
 
             // Assert
             result.Should().Be(8m);
-            await _mockRepository.Received(1).GetByKeyAsync("HOURS_PER_DAY");
+            await _mockRepository.Received(1).GetByKeyAsync("HoursInDay");
         }
 
         [Fact]
         public async Task GetHoursPerDayAsync_WhenRepositoryThrowsException_PropagatesException()
         {
             // Arrange
-            _mockRepository.GetByKeyAsync("HOURS_PER_DAY").Throws(new Exception("Database connection failed"));
+            _mockRepository.GetByKeyAsync("HoursInDay").Throws(new Exception("Database connection failed"));
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<Exception>(() => _sut.GetHoursPerDayAsync());
             exception.Message.Should().Be("Database connection failed");
 
-            await _mockRepository.Received(1).GetByKeyAsync("HOURS_PER_DAY");
+            await _mockRepository.Received(1).GetByKeyAsync("HoursInDay");
         }
 
         #endregion

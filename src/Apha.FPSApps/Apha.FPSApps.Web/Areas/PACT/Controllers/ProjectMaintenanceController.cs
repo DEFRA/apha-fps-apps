@@ -90,6 +90,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 GridId = "projectGrid",
                 Title = "Project Maintenance",
                 ShowPagination = true,
+                AllowAdd = false,
+                AllowDelete = false,
                 KeyProperty = "ParentProject",
                 EditFunction = "editProject",
                 ExtraFilterMethod = "getProjectMaintenanceExtraFilters",
@@ -124,6 +126,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 GridId = "projectGrid",
                 Title = "Project Maintenance",
                 ShowPagination = true,
+                AllowAdd = false,
+                AllowDelete = false,
                 KeyProperty = "ParentProject",
                 EditFunction = "editProject",
                 ExtraFilterMethod = "getProjectMaintenanceExtraFilters",
@@ -173,6 +177,12 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpPost]
         public async Task<IActionResult> LoadJobCodeGrid(PaginationFilter<string> request, string parentProject)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (String.IsNullOrEmpty(parentProject))
+                return BadRequest("Parent project is required");
+
             var gridConfig = await BuildJobCodeGridAsync(request, parentProject);
             return PartialView("_DataGrid", gridConfig);
         }
@@ -180,6 +190,12 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpPost]
         public async Task<IActionResult> LoadTimeCodeGrid(PaginationFilter<string> request, string parentProject, string jobCodeId)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (String.IsNullOrEmpty(parentProject) || String.IsNullOrEmpty(jobCodeId))
+                return BadRequest("Parent project and job code are required");
+
             var gridConfig = await BuildTimeCodeGridAsync(request, parentProject, jobCodeId);
             return PartialView("_DataGrid", gridConfig);
         }
@@ -199,19 +215,27 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             pagination.SortColumn = request.SortBy;
             pagination.SortDirection = request.Descending;
 
+            var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}")
+                ?? new Dictionary<string, string>();
+
             return new DataGridConfig<JobCodeViewModel>
             {
                 GridId = "jobCodeGrid",
                 Title = "Job Codes",
                 ShowPagination = true,
+                AllowRowSelection = true,
+                AllowCopy = true,
+                CopyFunction = "copyJobCode",
                 KeyProperty = "JobCodeId",
                 AddFunction = "addJobCode",
                 EditFunction = "editJobCode",
                 DeleteFunction = "deleteJobCode",
+                RowSelectFunction = "selectJobCode",
                 BindGridUrl = $"/PACT/ProjectMaintenance/LoadJobCodeGrid?parentProject={Uri.EscapeDataString(parentProject)}",
                 Data = items,
                 Columns = GridDataProvider.GetColumnsDefination<JobCodeViewModel>(),
-                Pagination = pagination
+                Pagination = pagination,
+                CurrentFilters = filterDict
             };
         }
 
@@ -228,6 +252,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 ? _mapper.Map<PaginationModel>(response.Pagination)
                 : new PaginationModel();
 
+            var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}")
+                ?? new Dictionary<string, string>();
+
             return new DataGridConfig<TimeCodeViewModel>
             {
                 GridId = "timeCodeGrid",
@@ -241,7 +268,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 BindGridUrl = $"/PACT/ProjectMaintenance/LoadTimeCodeGrid?parentProject={Uri.EscapeDataString(parentProject)}",
                 Data = items,
                 Columns = GridDataProvider.GetColumnsDefination<TimeCodeViewModel>(),
-                Pagination = pagination
+                Pagination = pagination,
+                CurrentFilters = filterDict
             };
         }
 
@@ -300,7 +328,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                     success = false,
                     errors = ModelState
                         .Where(x => x.Value?.Errors.Count > 0)
-                        .ToDictionary(x => x.Key, x => x.Value!.Errors.First().ErrorMessage)
+                        .ToDictionary(x => x.Key, x => x.Value!.Errors[0].ErrorMessage)
                 });
 
             var projectdto = _mapper.Map<ProjectDto>(model);
@@ -328,7 +356,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         public async Task<IActionResult> CreateJobCode(string parentProject)
         {
             var workGroups = await _jobCodeService.GetAllWorkGroupsAsync();
+            var types = await _jobCodeService.GetTypesAsync();
             ViewBag.WorkGroups = workGroups.Data?.Select(w => new SelectListItem(w.WorkGroupName, w.WorkGroupName)).ToList() ?? [];
+            ViewBag.Types = types.Data?.Select(t => new SelectListItem(t, t)).ToList() ?? [];
             return PartialView("_AddEditJobCode", new JobCodeViewModel { ParentProject = parentProject });
         }
 
@@ -354,7 +384,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             if (!result.Success || result.Data == null) return NotFound();
 
             var workGroups = await _jobCodeService.GetAllWorkGroupsAsync();
+            var types = await _jobCodeService.GetTypesAsync();
             ViewBag.WorkGroups = workGroups.Data?.Select(w => new SelectListItem(w.WorkGroupName, w.WorkGroupName)).ToList() ?? [];
+            ViewBag.Types = types.Data?.Select(t => new SelectListItem(t, t)).ToList() ?? [];
             return PartialView("_AddEditJobCode", _mapper.Map<JobCodeViewModel>(result.Data));
         }
 
@@ -411,10 +443,12 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> EditTimeCode(string workGroup, string timeCode, string parentProject)
+        public async Task<IActionResult> EditTimeCode(string? workGroup, string timeCode, string jobCodeId, string parentProject)
         {
-            var result = await _timeCodeService.GetByJobCodeAsync(timeCode, parentProject);
-            var item = result.Data?.FirstOrDefault(t => t.WorkGroup == workGroup && t.TimeCode == timeCode);
+            var result = await _timeCodeService.GetByJobCodeAsync(jobCodeId, parentProject);
+            var item = string.IsNullOrEmpty(workGroup)
+                ? result.Data?.FirstOrDefault(t => t.TimeCode == timeCode)
+                : result.Data?.FirstOrDefault(t => t.WorkGroup == workGroup && t.TimeCode == timeCode);
             if (item == null) return NotFound();
 
             var workGroups = await _jobCodeService.GetAllWorkGroupsAsync();
@@ -448,23 +482,46 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> CopyTimeCode(string parentProject, string jobCodeId)
+        public async Task<IActionResult> CopyProjectJobCode(string parentProject, string jobCodeId)
         {
-            var jobCodes = await _jobCodeService.GetJobCodesByProjectAsync(parentProject);
-            ViewBag.JobCodes = jobCodes.Data?.Select(j => new SelectListItem(j.JobCodeId, j.JobCodeId)).ToList() ?? [];
-            ViewBag.TargetJobCodeId = jobCodeId;
-            ViewBag.ParentProject = parentProject;
-            return PartialView("_CopyTimeCode");
+            var result = await _jobCodeService.GetJobCodeByIdAsync(jobCodeId);
+            if (!result.Success || result.Data == null) return NotFound();
+
+            var workGroups = await _jobCodeService.GetAllWorkGroupsAsync();
+            var types = await _jobCodeService.GetTypesAsync();
+            ViewBag.SourceJobCodeId = jobCodeId;
+            ViewBag.WorkGroups = workGroups.Data?.Select(w => new SelectListItem(w.WorkGroupName, w.WorkGroupName)).ToList() ?? [];
+            ViewBag.Types = types.Data?.Select(t => new SelectListItem(t, t)).ToList() ?? [];
+            return PartialView("_CopyJobCode", _mapper.Map<JobCodeViewModel>(result.Data));
         }
 
         [HttpPost]
-        public async Task<IActionResult> CopyTimeCode(string sourceJobCode, string targetJobCode, string parentProject)
+        public async Task<IActionResult> CopyProjectJobCode([FromBody] CopyJobCodeRequest model)
         {
-            var result = await _timeCodeService.CopyWorkGroupAsync(sourceJobCode, targetJobCode, parentProject);
-            if (result.Success)
-                return Json(new { success = true });
+            if(!ModelState.IsValid)
+                return Json(new { success = false, errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)) });
 
-            return Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Copy failed" });
+            var dto = new JobCodeDto
+            {
+                JobCodeId = model.JobCodeId,
+                JobCodeName = model.JobCodeName,
+                Type = model.Type,
+                JobCodeWorkGroup = model.JobCodeWorkGroup,
+                ParentProject = model.ParentProject
+            };
+
+            var createResult = await _jobCodeService.CreateJobCodeAsync(dto);
+            if (!createResult.Success)
+                return Json(new { success = false, message = createResult.Errors?.FirstOrDefault()?.Message ?? "Create failed" });
+
+            if (model.CopyWorkGroup)
+            {
+                var copyResult = await _timeCodeService.CopyWorkGroupAsync(model.SourceJobCode, model.JobCodeId, model.ParentProject);
+                if (!copyResult.Success)
+                    return Json(new { success = false, message = copyResult.Errors?.FirstOrDefault()?.Message ?? "Copy time codes failed" });
+            }
+
+            return Json(new { success = true });
         }
     }
 }

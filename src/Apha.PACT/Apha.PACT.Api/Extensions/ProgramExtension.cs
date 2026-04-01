@@ -20,7 +20,15 @@ namespace Apha.PACT.Api.Extensions
             // Add database context
             services.AddDbContext<FpsDbContext>(options =>
                     options.UseNpgsql(
-                        configuration.GetConnectionString("DefaultConnection")), ServiceLifetime.Scoped);
+                        configuration.GetConnectionString("DefaultConnection")
+                         , npgsqlOptions =>
+                         {
+                             npgsqlOptions.EnableRetryOnFailure(
+                                 maxRetryCount: 5,
+                                 maxRetryDelay: TimeSpan.FromSeconds(10),
+                                 errorCodesToAdd: null);
+                         }
+                        ), ServiceLifetime.Scoped);
 
             services.AddStackExchangeRedisCache(options =>
             {

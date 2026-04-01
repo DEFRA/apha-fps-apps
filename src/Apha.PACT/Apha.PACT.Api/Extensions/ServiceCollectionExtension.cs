@@ -4,7 +4,7 @@ using Apha.PACT.Application.Interfaces;
 using Apha.PACT.Application.Services;
 using Apha.PACT.Core.Interfaces;
 using Apha.PACT.DataAccess.Context;
-using Apha.PACT.DataAccess.Repositories;
+using Apha.PACT.DataAccess.Repository;
 
 namespace Apha.PACT.Api.Extensions
 {

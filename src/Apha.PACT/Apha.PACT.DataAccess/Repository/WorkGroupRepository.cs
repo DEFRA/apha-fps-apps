@@ -3,7 +3,7 @@ using Apha.PACT.Core.Interfaces;
 using Apha.PACT.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
 
-namespace Apha.PACT.DataAccess.Repositories
+namespace Apha.PACT.DataAccess.Repository
 {
     public class WorkGroupRepository : BaseRepository, IWorkGroupRepository
     {

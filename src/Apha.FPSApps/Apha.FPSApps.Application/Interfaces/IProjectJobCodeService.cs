@@ -9,6 +9,7 @@ namespace Apha.FPSApps.Application.Interfaces
         Task<ApiResponseDto<List<JobCodeDto>>> GetJobCodesByProjectAsync(string parentProject);
         Task<ApiResponseDto<List<JobCodeDto>>> GetPagedJobCodesAsync(QueryParameters<string> query, string? parentProject);
         Task<ApiResponseDto<JobCodeDto>> GetJobCodeByIdAsync(string jobCodeId);
+        Task<ApiResponseDto<List<string>>> GetTypesAsync();
         Task<ApiResponseDto<JobCodeDto>> CreateJobCodeAsync(JobCodeDto jobCode);
         Task<ApiResponseDto<JobCodeDto>> UpdateJobCodeAsync(JobCodeDto jobCode);
         Task<ApiResponseDto<bool>> DeleteJobCodeAsync(string jobCodeId);
