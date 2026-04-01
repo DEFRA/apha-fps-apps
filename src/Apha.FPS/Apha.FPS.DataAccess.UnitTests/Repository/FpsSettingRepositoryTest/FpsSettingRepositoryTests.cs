@@ -125,5 +125,97 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.FpsSettingRepositoryTest
         }
 
         #endregion
+
+        #region GetByKeyAsync
+
+        [Fact]
+        public async Task GetByKeyAsync_WhenKeyExists_ReturnsSetting()
+        {
+            // Arrange
+            var settings = new List<FpsSetting>
+            {
+                new() { Id = "HOURS_PER_DAY", Setting = "8",  FpsYear = DefaultTestFpsYear },
+                new() { Id = "DAYS_IN_YEAR",  Setting = "365", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(settings);
+
+            // Act
+            var result = await repo.GetByKeyAsync("HOURS_PER_DAY");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("HOURS_PER_DAY", result.Id);
+            Assert.Equal("8", result.Setting);
+        }
+
+        [Fact]
+        public async Task GetByKeyAsync_WhenKeyDoesNotExist_ReturnsNull()
+        {
+            // Arrange
+            var settings = new List<FpsSetting>
+            {
+                new() { Id = "DAYS_IN_YEAR", Setting = "365", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(settings);
+
+            // Act
+            var result = await repo.GetByKeyAsync("HOURS_PER_DAY");
+
+            // Assert
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public async Task GetByKeyAsync_WhenNoSettingsExist_ReturnsNull()
+        {
+            // Arrange
+            var repo = CreateRepository(new List<FpsSetting>());
+
+            // Act
+            var result = await repo.GetByKeyAsync("HOURS_PER_DAY");
+
+            // Assert
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public async Task GetByKeyAsync_WhenMultipleSettingsExist_ReturnsOnlyMatchingKey()
+        {
+            // Arrange
+            var settings = new List<FpsSetting>
+            {
+                new() { Id = "HOURS_PER_DAY", Setting = "8",   FpsYear = DefaultTestFpsYear },
+                new() { Id = "DAYS_IN_YEAR",  Setting = "365", FpsYear = DefaultTestFpsYear },
+                new() { Id = "WEEKS_IN_YEAR", Setting = "52",  FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(settings);
+
+            // Act
+            var result = await repo.GetByKeyAsync("DAYS_IN_YEAR");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("DAYS_IN_YEAR", result.Id);
+            Assert.Equal("365", result.Setting);
+        }
+
+        [Fact]
+        public async Task GetByKeyAsync_IsCaseSensitive_ReturnsNullForDifferentCase()
+        {
+            // Arrange
+            var settings = new List<FpsSetting>
+            {
+                new() { Id = "HOURS_PER_DAY", Setting = "8", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(settings);
+
+            // Act
+            var result = await repo.GetByKeyAsync("hours_per_day");
+
+            // Assert
+            Assert.Null(result);
+        }
+
+        #endregion
     }
 }

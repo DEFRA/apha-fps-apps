@@ -8,5 +8,6 @@
         IFpsProjectApiClient FpsProject { get; }
         IFpsLookupApiClient FpsLookup { get; }
         IFpsAnimalPlanApiClient FpsAnimalPlan { get; }
+        IFpsSettingApiClient FpsSetting { get; }
     }
 }

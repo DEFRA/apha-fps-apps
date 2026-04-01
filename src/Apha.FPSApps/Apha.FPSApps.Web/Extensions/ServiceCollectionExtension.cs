@@ -24,6 +24,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IPactTimeCodeValidService, PactTimeCodeValidService>();
             services.AddScoped<IProjectService, ProjectService>();
             services.AddScoped<IAnimalPlanService, AnimalPlanService>();
+            services.AddScoped<ISettingService, SettingService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
