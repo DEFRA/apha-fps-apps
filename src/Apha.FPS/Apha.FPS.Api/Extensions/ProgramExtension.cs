@@ -1,6 +1,4 @@
-﻿using System.Globalization;
-using Apha.FPS.Api.Extensions;
-using Apha.FPS.Api.Filters;
+﻿using Apha.FPS.Api.Filters;
 using Apha.FPS.Api.Mappings;
 using Apha.FPS.Api.Middleware;
 using Apha.FPS.Application.Mappings;
@@ -8,6 +6,7 @@ using Apha.FPS.DataAccess.Data;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
 namespace Apha.FPS.Api.Extensions
 {
@@ -27,6 +26,8 @@ namespace Apha.FPS.Api.Extensions
                                 maxRetryCount: 5,
                                 maxRetryDelay: TimeSpan.FromSeconds(10),
                                 errorCodesToAdd: null);
+                            // Structural safeguard: avoid hanging commands under load
+                            npgsqlOptions.CommandTimeout(30);
                         }
                         ), ServiceLifetime.Scoped);
                        

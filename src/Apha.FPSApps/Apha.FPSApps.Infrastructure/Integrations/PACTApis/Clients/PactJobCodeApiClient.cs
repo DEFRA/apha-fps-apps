@@ -56,7 +56,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
                 var dto = _mapper.Map<ApiResponseDto<List<JobCodeDto>>>(response);
                 return ApiResponseDto<List<JobCodeDto>>.FailureResponse(dto.Errors, dto.Meta);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return ApiResponseDto<List<JobCodeDto>>.FailureResponse(
                     [new ApiErrorDto { Message = "Failed to retrieve paged job codes", Code = InternalCodeError }],
