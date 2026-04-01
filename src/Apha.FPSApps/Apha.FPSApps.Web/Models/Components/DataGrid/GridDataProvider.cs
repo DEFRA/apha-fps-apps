@@ -10,7 +10,8 @@ namespace Apha.FPSApps.Web.Models.Components.DataGrid
             Dictionary<string, List<SelectListItem>>? filterOptionsSource = null)
         {
             var columns = new List<DataGridColumn>();
-            foreach (var prop in typeof(T).GetProperties())
+            foreach (var prop in typeof(T).GetProperties()
+                         .OrderBy(p => p.GetCustomAttribute<GridColumnAttribute>()?.Order ?? int.MaxValue))
             {
                 var displayAttr = prop.GetCustomAttribute<DisplayAttribute>();
                 var columnAttr = prop.GetCustomAttribute<GridColumnAttribute>();

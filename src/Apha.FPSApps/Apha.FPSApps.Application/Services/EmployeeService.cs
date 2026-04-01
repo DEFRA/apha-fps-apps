@@ -50,5 +50,11 @@ namespace Apha.FPSApps.Application.Services
             var managers = await _fpsClient.FpsEmployee.GetAllManagerAsync();
             return managers;
         }
+
+        public async Task<ApiResponseDto<List<ManagerDto>>> GetAllPactManagersAsync()
+        {
+            var managers = await _fpsClient.FpsEmployee.GetAllPactManagerAsync();
+            return managers;
+        }
     }
 }

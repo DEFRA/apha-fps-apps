@@ -33,7 +33,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
                 mockContext.Setup(x => x.ProjectViews).Returns(projectViewsMockSet.Object);
             }
 
-            return new ProjectRepository(mockContext.Object);
+            return new ProjectRepository(mockContext.Object, mockFpsYearContext.Object);
         }
 
         #region GetAllProjectsAsync Tests
@@ -188,9 +188,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         }
 
         [Fact]
-        public async Task GetAllProjectsAsync_AppliesNullCoalescing_ForRequiredStringFields()
+        public async Task GetAllProjectsAsync_PreservesNullValues_ForNullableFields()
         {
-            // Arrange — all nullable string fields are null on the view
+            // Arrange — all nullable fields are null; GetAllProjectsAsync returns ProjectView as-is (no projection)
             var projectViews = new List<ProjectView>
             {
                 new()
@@ -213,18 +213,18 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             // Act
             var result = await repo.GetAllProjectsAsync();
 
-            // Assert — null-coalescing in the repository ensures no null reference on required fields
+            // Assert — ProjectView is returned as-is; null values are preserved
             var project = Assert.Single(result);
-            Assert.Equal(string.Empty, project.ParentProject);
-            Assert.Equal(string.Empty, project.ProjectTitle);
-            Assert.Equal(string.Empty, project.Program);
-            Assert.Equal(string.Empty, project.Customer);
-            Assert.Equal(string.Empty, project.Disease);
-            Assert.Equal(string.Empty, project.Contract);
-            Assert.Equal(string.Empty, project.IncomeAccountCode);
-            Assert.Equal(0m,           project.TransferIncome);
-            Assert.Equal(0m,           project.CustIncome);
-            Assert.Equal((short)0,     project.IsDefraProject);
+            Assert.Null(project.ParentProject);
+            Assert.Null(project.ProjectTitle);
+            Assert.Null(project.Program);
+            Assert.Null(project.Customer);
+            Assert.Null(project.Disease);
+            Assert.Null(project.Contract);
+            Assert.Null(project.IncomeAccountCode);
+            Assert.Null(project.TransferIncome);
+            Assert.Null(project.CustIncome);
+            Assert.Null(project.IsDefraProject);
         }
 
         [Fact]

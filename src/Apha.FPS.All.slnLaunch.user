@@ -11,6 +11,11 @@
         "Path": "Apha.FPS\\Apha.FPS.Api\\Apha.FPS.Api.csproj",
         "Action": "Start",
         "DebugTarget": "https"
+      },
+      {
+        "Path": "Apha.PACT\\Apha.PACT.Api\\Apha.PACT.Api.csproj",
+        "Action": "Start",
+        "DebugTarget": "https"
       }
     ]
   },

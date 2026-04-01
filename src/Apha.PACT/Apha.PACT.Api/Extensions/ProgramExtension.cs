@@ -2,6 +2,7 @@
 using Apha.PACT.Api.Mappings;
 using Apha.PACT.Api.Middleware;
 using Apha.PACT.Application.Mappings;
+using Apha.PACT.DataAccess.Data;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
@@ -17,10 +18,23 @@ namespace Apha.PACT.Api.Extensions
             var configuration = builder.Configuration;
 
             // Add database context
-            
+            services.AddDbContext<FpsDbContext>(options =>
+                    options.UseNpgsql(
+                        configuration.GetConnectionString("DefaultConnection")
+                         , npgsqlOptions =>
+                         {
+                             npgsqlOptions.EnableRetryOnFailure(
+                                 maxRetryCount: 5,
+                                 maxRetryDelay: TimeSpan.FromSeconds(10),
+                                 errorCodesToAdd: null);
+                             // Structural safeguard: avoid hanging commands under load
+                             npgsqlOptions.CommandTimeout(30);                             
+                         }
+                        ), ServiceLifetime.Scoped);
+
             services.AddStackExchangeRedisCache(options =>
             {
-                options.Configuration = builder.Configuration.GetConnectionString("RedisConnectionString");
+                options.Configuration = configuration.GetConnectionString("RedisConnectionString");
                 options.InstanceName = "RedisInstance";
             });
 

@@ -341,5 +341,125 @@ namespace Apha.FPS.Api.UnitTests.Controller.AnimalControllerTest
         }
 
         #endregion
+
+        #region GetTotalAnimalCostAsync
+
+        [Fact]
+        public async Task GetTotalAnimalCostAsync_HappyPath_ReturnsOkWithTotal()
+        {
+            // Arrange
+            _serviceMock.GetTotalAnimalCostAsync("JOB001").Returns(Task.FromResult(250.00m));
+
+            // Act
+            var result = await _controller.GetTotalAnimalCostAsync("JOB001");
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(250.00m, okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetTotalAnimalCostAsync_EdgeCase_ReturnsOkWithZero()
+        {
+            // Arrange
+            _serviceMock.GetTotalAnimalCostAsync("EMPTY").Returns(Task.FromResult(0m));
+
+            // Act
+            var result = await _controller.GetTotalAnimalCostAsync("EMPTY");
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(0m, okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetTotalAnimalCostAsync_ServiceThrows_PropagatesException()
+        {
+            // Arrange
+            _serviceMock.GetTotalAnimalCostAsync("JOB001")
+                .Throws(new Exception("Service error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetTotalAnimalCostAsync("JOB001"));
+        }
+
+        #endregion
+
+        #region GetAnimalCostViewByIdAsync
+
+        [Fact]
+        public async Task GetAnimalCostViewByIdAsync_HappyPath_ReturnsOk()
+        {
+            // Arrange
+            var serviceResult = new AnimalCostViewDto
+            {
+                IndCounter     = 1,
+                JobCode        = "JOB001",
+                AnimalType     = "CAT",
+                NumberOfDays   = 5,
+                NumberOfAnimals = 2,
+                AnimalCost     = 100m
+            };
+            var mappedResult = new AnimalCostViewRes
+            {
+                IndCounter     = 1,
+                JobCode        = "JOB001",
+                AnimalType     = "CAT",
+                NumberOfDays   = 5,
+                NumberOfAnimals = 2,
+                AnimalCost     = 100m
+            };
+
+            _serviceMock.GetAnimalCostViewByIdAsync(1, "JOB001").Returns(serviceResult);
+            _mapperMock.Map<AnimalCostViewRes>(serviceResult).Returns(mappedResult);
+
+            // Act
+            var result = await _controller.GetAnimalCostViewByIdAsync(1, "JOB001");
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(mappedResult, okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetAnimalCostViewByIdAsync_NullResult_ThrowsKeyNotFoundException()
+        {
+            // Arrange
+            _serviceMock.GetAnimalCostViewByIdAsync(999, "JOB001")
+                .Returns(Task.FromResult<AnimalCostViewDto?>(null));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<KeyNotFoundException>(
+                () => _controller.GetAnimalCostViewByIdAsync(999, "JOB001"));
+        }
+
+        [Fact]
+        public async Task GetAnimalCostViewByIdAsync_ServiceThrows_PropagatesException()
+        {
+            // Arrange
+            _serviceMock.GetAnimalCostViewByIdAsync(1, "JOB001")
+                .Throws(new Exception("Service error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(
+                () => _controller.GetAnimalCostViewByIdAsync(1, "JOB001"));
+        }
+
+        [Fact]
+        public async Task GetAnimalCostViewByIdAsync_MapperThrows_PropagatesException()
+        {
+            // Arrange
+            var serviceResult = new AnimalCostViewDto { IndCounter = 1, JobCode = "JOB001" };
+
+            _serviceMock.GetAnimalCostViewByIdAsync(1, "JOB001").Returns(serviceResult);
+            _mapperMock.Map<AnimalCostViewRes>(serviceResult)
+                .Throws(new Exception("Mapping error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(
+                () => _controller.GetAnimalCostViewByIdAsync(1, "JOB001"));
+        }
+
+        #endregion
     }
 }
