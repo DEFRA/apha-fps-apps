@@ -303,9 +303,7 @@
                          style="padding-left:0; padding-right:0; margin-top:10px; margin-bottom:10px;">
                         <h2 class="sup_border-bottom sup_text_color sup_heading_bg_color govuk-heading-s sup_align_flexheading sup_decrease_font_size_s">
                             Time Code Validity for Project's Job Code &nbsp;
-                            <div style="display:flex; flex-direction:row;">
-                                <span id="timeCodeGridSubtitle"></span>
-                            </div>
+                            <span id="timeCodeGridSubtitle"></span>
                         </h2>
                         
                         <div id="@($"gridContainer_{Model.TimeCodeGrid.GridId}")">
@@ -558,7 +556,7 @@
             var data = {
                 SourceJobCode: $('#sourceJobCode').val(),
                 JobCodeId: jobCodeId,
-                JobCodeName: $('#modal-name').val(),
+                JobCodeName: $('#JobCodeName').val(),
                 Type: $('#Type').val(),
                 JobCodeWorkGroup: $('#JobCodeWorkGroup').val(),
                 ParentProject: decodeURIComponent(parentProject),
