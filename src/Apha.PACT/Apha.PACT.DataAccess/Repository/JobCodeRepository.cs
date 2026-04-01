@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 using System.Dynamic;
 using System.Linq.Expressions;
 
-namespace Apha.PACT.DataAccess.Repositories
+namespace Apha.PACT.DataAccess.Repository
 {
     public class JobCodeRepository : BaseRepository, IJobCodeRepository
     {
@@ -31,6 +31,11 @@ namespace Apha.PACT.DataAccess.Repositories
             PaginationParameters<string> query, string? parentProject)
         {
             var queryJobcodes = _context.JobCodes.AsNoTracking().AsQueryable();
+
+            if(!string.IsNullOrEmpty(parentProject))
+            {
+                queryJobcodes = queryJobcodes.Where(j => j.ParentProject == parentProject);
+            }
 
             // Apply filtering
             queryJobcodes = ApplyJobCodeFilter(queryJobcodes, query.Filter);

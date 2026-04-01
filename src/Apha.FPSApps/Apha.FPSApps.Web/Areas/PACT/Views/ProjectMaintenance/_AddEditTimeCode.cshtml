@@ -71,8 +71,8 @@
 
         <!-- Job Code (display only — value carried via hidden input above) -->
         <div class="govuk-form-group sup_margin_bottom_10">
-            <label class="govuk-label govuk-!-font-weight-bold">Job Code:</label>
-            <input class="govuk-input govuk-!-font-size-16" value="@Model.JobCode" readonly />
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="JobCode">Job Code:</label>
+            <input class="govuk-input govuk-!-font-size-16" asp-for="JobCode" readonly />
         </div>
 
     </form>

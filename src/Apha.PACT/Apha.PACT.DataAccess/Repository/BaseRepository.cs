@@ -1,7 +1,7 @@
 using Apha.PACT.Core.Pagination;
 using Apha.PACT.DataAccess.Data;
 
-namespace Apha.PACT.DataAccess.Repositories
+namespace Apha.PACT.DataAccess.Repository
 {
     public abstract class BaseRepository
     {

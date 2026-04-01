@@ -90,6 +90,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 GridId = "projectGrid",
                 Title = "Project Maintenance",
                 ShowPagination = true,
+                AllowAdd = false,
+                AllowDelete = false,
                 KeyProperty = "ParentProject",
                 EditFunction = "editProject",
                 ExtraFilterMethod = "getProjectMaintenanceExtraFilters",
@@ -124,6 +126,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 GridId = "projectGrid",
                 Title = "Project Maintenance",
                 ShowPagination = true,
+                AllowAdd = false,
+                AllowDelete = false,
                 KeyProperty = "ParentProject",
                 EditFunction = "editProject",
                 ExtraFilterMethod = "getProjectMaintenanceExtraFilters",
@@ -173,6 +177,12 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpPost]
         public async Task<IActionResult> LoadJobCodeGrid(PaginationFilter<string> request, string parentProject)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (String.IsNullOrEmpty(parentProject))
+                return BadRequest("Parent project is required");
+
             var gridConfig = await BuildJobCodeGridAsync(request, parentProject);
             return PartialView("_DataGrid", gridConfig);
         }
@@ -180,6 +190,12 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpPost]
         public async Task<IActionResult> LoadTimeCodeGrid(PaginationFilter<string> request, string parentProject, string jobCodeId)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (String.IsNullOrEmpty(parentProject) || String.IsNullOrEmpty(jobCodeId))
+                return BadRequest("Parent project and job code are required");
+
             var gridConfig = await BuildTimeCodeGridAsync(request, parentProject, jobCodeId);
             return PartialView("_DataGrid", gridConfig);
         }
@@ -199,6 +215,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             pagination.SortColumn = request.SortBy;
             pagination.SortDirection = request.Descending;
 
+            var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}")
+                ?? new Dictionary<string, string>();
+
             return new DataGridConfig<JobCodeViewModel>
             {
                 GridId = "jobCodeGrid",
@@ -215,7 +234,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 BindGridUrl = $"/PACT/ProjectMaintenance/LoadJobCodeGrid?parentProject={Uri.EscapeDataString(parentProject)}",
                 Data = items,
                 Columns = GridDataProvider.GetColumnsDefination<JobCodeViewModel>(),
-                Pagination = pagination
+                Pagination = pagination,
+                CurrentFilters = filterDict
             };
         }
 
@@ -232,6 +252,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 ? _mapper.Map<PaginationModel>(response.Pagination)
                 : new PaginationModel();
 
+            var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}")
+                ?? new Dictionary<string, string>();
+
             return new DataGridConfig<TimeCodeViewModel>
             {
                 GridId = "timeCodeGrid",
@@ -245,7 +268,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 BindGridUrl = $"/PACT/ProjectMaintenance/LoadTimeCodeGrid?parentProject={Uri.EscapeDataString(parentProject)}",
                 Data = items,
                 Columns = GridDataProvider.GetColumnsDefination<TimeCodeViewModel>(),
-                Pagination = pagination
+                Pagination = pagination,
+                CurrentFilters = filterDict
             };
         }
 
@@ -304,7 +328,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                     success = false,
                     errors = ModelState
                         .Where(x => x.Value?.Errors.Count > 0)
-                        .ToDictionary(x => x.Key, x => x.Value!.Errors.First().ErrorMessage)
+                        .ToDictionary(x => x.Key, x => x.Value!.Errors[0].ErrorMessage)
                 });
 
             var projectdto = _mapper.Map<ProjectDto>(model);
@@ -474,6 +498,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpPost]
         public async Task<IActionResult> CopyProjectJobCode([FromBody] CopyJobCodeRequest model)
         {
+            if(!ModelState.IsValid)
+                return Json(new { success = false, errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)) });
+
             var dto = new JobCodeDto
             {
                 JobCodeId = model.JobCodeId,
