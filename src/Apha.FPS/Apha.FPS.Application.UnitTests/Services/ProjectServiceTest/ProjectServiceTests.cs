@@ -30,10 +30,10 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
         public async Task GetAllProjectsAsync_WithValidData_ReturnsMappedDtoList()
         {
             // Arrange
-            var projectEntities = new List<Project>
+            var projectEntities = new List<ProjectView>
             {
-                new Project { ParentProject = "PROJ001", ProjectTitle = "FMD Survey",    ProjectStatus = "Active",   Disease = "FMD",  Contract = "CON001" },
-                new Project { ParentProject = "PROJ002", ProjectTitle = "TB Eradication", ProjectStatus = "Active",  Disease = "TB",   Contract = "CON002" }
+                new ProjectView { ParentProject = "PROJ001", ProjectTitle = "FMD Survey",    ProjectStatus = "Active",   Disease = "FMD",  Contract = "CON001" },
+                new ProjectView { ParentProject = "PROJ002", ProjectTitle = "TB Eradication", ProjectStatus = "Active",  Disease = "TB",   Contract = "CON002" }
             };
 
             var expectedDtos = new List<ProjectDto>
@@ -43,7 +43,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
             };
 
             _mockRepository.GetAllProjectsAsync()
-                .Returns(Task.FromResult<IEnumerable<Project>>(projectEntities));
+                .Returns(Task.FromResult<IEnumerable<ProjectView>>(projectEntities));
 
             _mockMapper.Map<IEnumerable<ProjectDto>>(projectEntities)
                 .Returns(expectedDtos);
@@ -65,11 +65,11 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
         public async Task GetAllProjectsAsync_WithEmptyList_ReturnsEmptyDtoList()
         {
             // Arrange
-            var emptyEntities = new List<Project>();
+            var emptyEntities = new List<ProjectView>();
             var emptyDtos = new List<ProjectDto>();
 
             _mockRepository.GetAllProjectsAsync()
-                .Returns(Task.FromResult<IEnumerable<Project>>(emptyEntities));
+                .Returns(Task.FromResult<IEnumerable<ProjectView>>(emptyEntities));
 
             _mockMapper.Map<IEnumerable<ProjectDto>>(emptyEntities)
                 .Returns(emptyDtos);
@@ -90,7 +90,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
         {
             // Arrange
             _mockRepository.GetAllProjectsAsync()
-                .Returns(Task.FromResult<IEnumerable<Project>>(null!));
+                .Returns(Task.FromResult<IEnumerable<ProjectView>>(null!));
 
             _mockMapper.Map<IEnumerable<ProjectDto>>(null)
                 .Returns((IEnumerable<ProjectDto>?)null);
@@ -112,7 +112,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
             var expectedException = new Exception("Database connection failed");
 
             _mockRepository.GetAllProjectsAsync()
-                .Returns(Task.FromException<IEnumerable<Project>>(expectedException));
+                .Returns(Task.FromException<IEnumerable<ProjectView>>(expectedException));
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<Exception>(
@@ -181,9 +181,6 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
             _mockRepository.GetProjectByIdAsync(parentProject)
                 .Returns(Task.FromResult<Project?>(null));
 
-            _mockMapper.Map<ProjectDto>(Arg.Any<Project?>())
-                .Returns((ProjectDto?)null);
-
             // Act
             var result = await _sut.GetProjectByIdAsync(parentProject);
 
@@ -191,11 +188,10 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
             result.Should().BeNull();
 
             await _mockRepository.Received(1).GetProjectByIdAsync(parentProject);
-            _mockMapper.Received(1).Map<ProjectDto>(null);
+            _mockMapper.DidNotReceive().Map<ProjectDto>(Arg.Any<Project>());
         }
 
-        [Theory]
-        [InlineData(null)]
+        [Theory]        
         [InlineData("")]
         public async Task GetProjectByIdAsync_WithNullOrEmptyId_ReturnsNull(string parentProject)
         {

@@ -1,0 +1,527 @@
+using Apha.FPSApps.Application.Dtos.FPS;
+using Apha.FPSApps.Application.Dtos.PACT;
+using Apha.FPSApps.Application.Interfaces;
+using Apha.FPSApps.Application.Pagination;
+using Apha.FPSApps.Web.Areas.PACT.Models;
+using Apha.FPSApps.Web.Models.Components.DataGrid;
+using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Identity.Web;
+using Newtonsoft.Json;
+
+namespace Apha.FPSApps.Web.Areas.PACT.Controllers
+{
+    [Area("PACT")]
+    [Authorize(Roles = "FPSAdmin,FPSUser")]
+    [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")]
+    public class ProjectMaintenanceController : Controller
+    {
+        private readonly IMapper _mapper;
+        private readonly IProjectService _projectService;
+        private readonly IProjectJobCodeService _jobCodeService;
+        private readonly IPactTimeCodeValidService _timeCodeService;
+        private readonly IProgramService _programService;
+        private readonly IEmployeeService _employeeService;
+
+        public ProjectMaintenanceController(
+            IMapper mapper,
+            IProjectService projectService,
+            IProjectJobCodeService jobCodeService,
+            IPactTimeCodeValidService timeCodeService,
+            IProgramService programService,
+            IEmployeeService empployeeService)
+        {
+            _mapper = mapper;
+            _projectService = projectService;
+            _jobCodeService = jobCodeService;
+            _timeCodeService = timeCodeService;
+            _programService = programService;
+            _employeeService = empployeeService;
+        }
+
+        // ── INDEX ────────────────────────────────────────────────────────────
+
+        public async Task<IActionResult> Index()
+        {
+            var defaultRequest = new PaginationFilter<string> { Filter = "{}" };
+            var gridConfig = await BuildPactProjectCodeGridAsync(defaultRequest);
+            return View(new ProjectListViewModel { ProjectGrid = gridConfig });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> LoadProjectGrid(PaginationFilter<string> request, int viewBy)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+            if(viewBy == 1)
+            {
+                var projectCodeGridConfig = await BuildPactProjectCodeGridAsync(request);
+                return PartialView("_DataGrid", projectCodeGridConfig);
+            }
+            else
+            {
+                var jobCodeGridConfig = await BuildPactJobCodeGridAsync(request);
+                return PartialView("_DataGrid", jobCodeGridConfig);
+            }            
+        }
+
+        private async Task<DataGridConfig<PactProjectViewModel>> BuildPactProjectCodeGridAsync(PaginationFilter<string> request)
+        {
+            var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}")
+                             ?? new Dictionary<string, string>();
+
+            var query = _mapper.Map<QueryParameters<string>>(request);
+            var response = await _projectService.GetPagedPactProjectsAsync(query);
+
+            var items = response.Data != null
+                ? _mapper.Map<List<PactProjectViewModel>>(response.Data)
+                : new List<PactProjectViewModel>();
+
+            var pagination = response.Pagination != null
+                ? _mapper.Map<PaginationModel>(response.Pagination)
+                : new PaginationModel();
+            pagination.SortColumn = request.SortBy;
+            pagination.SortDirection = request.Descending;
+
+            return new DataGridConfig<PactProjectViewModel>
+            {
+                GridId = "projectGrid",
+                Title = "Project Maintenance",
+                ShowPagination = true,
+                AllowAdd = false,
+                AllowDelete = false,
+                KeyProperty = "ParentProject",
+                EditFunction = "editProject",
+                ExtraFilterMethod = "getProjectMaintenanceExtraFilters",
+                BindGridUrl = "/PACT/ProjectMaintenance/LoadProjectGrid",
+                Data = items,
+                Columns = GridDataProvider.GetColumnsDefination<PactProjectViewModel>(),
+                Pagination = pagination,
+                CurrentFilters = filterDict
+            };
+        }
+
+        private async Task<DataGridConfig<ProjectJobCodeViewModel>> BuildPactJobCodeGridAsync(PaginationFilter<string> request)
+        {
+            var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}")
+                             ?? new Dictionary<string, string>();
+
+            var query = _mapper.Map<QueryParameters<string>>(request);
+            var response = await _jobCodeService.GetPagedJobCodesAsync(query, null);
+
+            var items = response.Data != null
+                ? _mapper.Map<List<ProjectJobCodeViewModel>>(response.Data)
+                : new List<ProjectJobCodeViewModel>();
+
+            var pagination = response.Pagination != null
+                ? _mapper.Map<PaginationModel>(response.Pagination)
+                : new PaginationModel();
+            pagination.SortColumn = request.SortBy;
+            pagination.SortDirection = request.Descending;
+
+            return new DataGridConfig<ProjectJobCodeViewModel>
+            {
+                GridId = "projectGrid",
+                Title = "Project Maintenance",
+                ShowPagination = true,
+                AllowAdd = false,
+                AllowDelete = false,
+                KeyProperty = "ParentProject",
+                EditFunction = "editProject",
+                ExtraFilterMethod = "getProjectMaintenanceExtraFilters",
+                BindGridUrl = "/PACT/ProjectMaintenance/LoadProjectGrid",
+                Data = items,
+                Columns = GridDataProvider.GetColumnsDefination<ProjectJobCodeViewModel>(),
+                Pagination = pagination,
+                CurrentFilters = filterDict
+            };
+        }
+
+        // ── DETAILS ──────────────────────────────────────────────────────────
+        public async Task<IActionResult> Details([FromRoute(Name = "id")] string parentProject)
+        {
+            var projectResponse = await _projectService.GetProjectByIdAsync(parentProject);
+            if (!projectResponse.Success || projectResponse.Data == null)
+                return NotFound();
+
+            var defaultRequest = new PaginationFilter<string> { Filter = "{}" };
+            var jobCodeGrid = await BuildJobCodeGridAsync(defaultRequest, parentProject);
+
+            var workGroups = await _jobCodeService.GetAllWorkGroupsAsync();
+            var programs = await _programService.GetAllProgramsAsync();
+            var statuses = await _projectService.GetAllStatusesAsync();
+            var diseases = await _projectService.GetAllDiseasesAsync();
+            var customers = await _projectService.GetAllCustomersAsync();
+            var contracts = await _projectService.GetAllContractsAsync();
+            var managers = await _employeeService.GetAllPactManagersAsync();
+
+            var viewModel = new ProjectMaintenanceViewModel
+            {
+                Project = _mapper.Map<PactProjectViewModel>(projectResponse.Data),
+                JobCodeGrid = jobCodeGrid,
+                TimeCodeGrid = BuildEmptyTimeCodeGrid(parentProject),
+                Statuses = statuses.Data?.Select(s => new SelectListItem(s.Status, s.Status)).ToList() ?? [],
+                Diseases = diseases.Data?.Select(d => new SelectListItem(d.Disease, d.Disease)).ToList() ?? [],
+                Customers = customers.Data?.Select(c => new SelectListItem(c.Customer, c.Customer)).ToList() ?? [],
+                Contracts = contracts.Data?.Select(c => new SelectListItem(c.ContractNo, c.ContractNo)).ToList() ?? [],
+                Programs = programs.Data?.Select(p => new SelectListItem(p.ProgramName ?? p.ProgramNo, p.ProgramNo)).ToList() ?? [],
+                WorkGroups = workGroups.Data?.Select(w => new SelectListItem(w.WorkGroupName, w.WorkGroupName)).ToList() ?? [],
+                Managers = managers.Data?.Select(w => new SelectListItem(w.Name, w.Name)).ToList() ?? []
+            };
+
+            return View(viewModel);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> LoadJobCodeGrid(PaginationFilter<string> request, string parentProject)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (String.IsNullOrEmpty(parentProject))
+                return BadRequest("Parent project is required");
+
+            var gridConfig = await BuildJobCodeGridAsync(request, parentProject);
+            return PartialView("_DataGrid", gridConfig);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> LoadTimeCodeGrid(PaginationFilter<string> request, string parentProject, string jobCodeId)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (String.IsNullOrEmpty(parentProject) || String.IsNullOrEmpty(jobCodeId))
+                return BadRequest("Parent project and job code are required");
+
+            var gridConfig = await BuildTimeCodeGridAsync(request, parentProject, jobCodeId);
+            return PartialView("_DataGrid", gridConfig);
+        }
+
+        private async Task<DataGridConfig<JobCodeViewModel>> BuildJobCodeGridAsync(PaginationFilter<string> request, string parentProject)
+        {
+            var query = _mapper.Map<QueryParameters<string>>(request);
+            var response = await _jobCodeService.GetPagedJobCodesAsync(query, parentProject);
+
+            var items = response.Data != null
+                ? _mapper.Map<List<JobCodeViewModel>>(response.Data)
+                : new List<JobCodeViewModel>();
+
+            var pagination = response.Pagination != null
+                ? _mapper.Map<PaginationModel>(response.Pagination)
+                : new PaginationModel();
+            pagination.SortColumn = request.SortBy;
+            pagination.SortDirection = request.Descending;
+
+            var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}")
+                ?? new Dictionary<string, string>();
+
+            return new DataGridConfig<JobCodeViewModel>
+            {
+                GridId = "jobCodeGrid",
+                Title = "Job Codes",
+                ShowPagination = true,
+                AllowRowSelection = true,
+                AllowCopy = true,
+                CopyFunction = "copyJobCode",
+                KeyProperty = "JobCodeId",
+                AddFunction = "addJobCode",
+                EditFunction = "editJobCode",
+                DeleteFunction = "deleteJobCode",
+                RowSelectFunction = "selectJobCode",
+                BindGridUrl = $"/PACT/ProjectMaintenance/LoadJobCodeGrid?parentProject={Uri.EscapeDataString(parentProject)}",
+                Data = items,
+                Columns = GridDataProvider.GetColumnsDefination<JobCodeViewModel>(),
+                Pagination = pagination,
+                CurrentFilters = filterDict
+            };
+        }
+
+        private async Task<DataGridConfig<TimeCodeViewModel>> BuildTimeCodeGridAsync(PaginationFilter<string> request, string parentProject, string jobCodeId)
+        {
+            var query = _mapper.Map<QueryParameters<string>>(request);
+            var response = await _timeCodeService.GetPagedTimeCodesAsync(query, jobCodeId, parentProject);
+
+            var items = response.Data != null
+                ? _mapper.Map<List<TimeCodeViewModel>>(response.Data)
+                : new List<TimeCodeViewModel>();
+
+            var pagination = response.Pagination != null
+                ? _mapper.Map<PaginationModel>(response.Pagination)
+                : new PaginationModel();
+
+            var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}")
+                ?? new Dictionary<string, string>();
+
+            return new DataGridConfig<TimeCodeViewModel>
+            {
+                GridId = "timeCodeGrid",
+                Title = "Time Code Validity",
+                ShowPagination = true,
+                KeyProperty = "TimeCode",
+                AddFunction = "addTimeCode",
+                EditFunction = "editTimeCode",
+                DeleteFunction = "deleteTimeCode",
+                ExtraFilterMethod = "getTimeCodeExtraFilters",
+                BindGridUrl = $"/PACT/ProjectMaintenance/LoadTimeCodeGrid?parentProject={Uri.EscapeDataString(parentProject)}",
+                Data = items,
+                Columns = GridDataProvider.GetColumnsDefination<TimeCodeViewModel>(),
+                Pagination = pagination,
+                CurrentFilters = filterDict
+            };
+        }
+
+        private static DataGridConfig<TimeCodeViewModel> BuildEmptyTimeCodeGrid(string parentProject)
+        {
+            return new DataGridConfig<TimeCodeViewModel>
+            {
+                GridId = "timeCodeGrid",
+                Title = "Time Code Validity",
+                ShowPagination = true,
+                KeyProperty = "TimeCode",
+                AddFunction = "addTimeCode",
+                EditFunction = "editTimeCode",
+                DeleteFunction = "deleteTimeCode",
+                ExtraFilterMethod = "getTimeCodeExtraFilters",
+                BindGridUrl = $"/PACT/ProjectMaintenance/LoadTimeCodeGrid?parentProject={Uri.EscapeDataString(parentProject)}",
+                Data = [],
+                Columns = GridDataProvider.GetColumnsDefination<TimeCodeViewModel>()
+            };
+        }
+
+        // ── PROJECT CRUD ─────────────────────────────────────────────────────
+
+        [HttpGet]
+        public IActionResult Create() => PartialView("_AddEditProject", new PactProjectViewModel());
+
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] PactProjectViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return Json(new { success = false, errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)) });
+
+            var dto = _mapper.Map<ProjectDto>(model);
+            var result = await _projectService.CreateProjectAsync(dto);
+
+            if (result.Success)
+                return Json(new { success = true });
+
+            return Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Create failed" });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Edit(string parentProject)
+        {
+            var result = await _projectService.GetProjectByIdAsync(parentProject);
+            if (!result.Success || result.Data == null) return NotFound();
+            return PartialView("_AddEditProject", _mapper.Map<PactProjectViewModel>(result.Data));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Edit([FromBody] PactProjectViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return Json(new
+                {
+                    success = false,
+                    errors = ModelState
+                        .Where(x => x.Value?.Errors.Count > 0)
+                        .ToDictionary(x => x.Key, x => x.Value!.Errors[0].ErrorMessage)
+                });
+
+            var projectdto = _mapper.Map<ProjectDto>(model);
+            var result = await _projectService.UpdatePactProjectAsync(projectdto);
+
+            if (result.Success)
+                return Json(new { success = true });
+
+            return Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Update failed" });
+        }
+
+        [HttpDelete]
+        public async Task<IActionResult> Delete(string parentProject)
+        {
+            var result = await _projectService.DeleteProjectAsync(parentProject);
+            if (result.Success)
+                return Json(new { success = true });
+
+            return Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Delete failed" });
+        }
+
+        // ── JOB CODE CRUD ─────────────────────────────────────────────────────
+
+        [HttpGet]
+        public async Task<IActionResult> CreateJobCode(string parentProject)
+        {
+            var workGroups = await _jobCodeService.GetAllWorkGroupsAsync();
+            var types = await _jobCodeService.GetTypesAsync();
+            ViewBag.WorkGroups = workGroups.Data?.Select(w => new SelectListItem(w.WorkGroupName, w.WorkGroupName)).ToList() ?? [];
+            ViewBag.Types = types.Data?.Select(t => new SelectListItem(t, t)).ToList() ?? [];
+            return PartialView("_AddEditJobCode", new JobCodeViewModel { ParentProject = parentProject });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateJobCode([FromBody] JobCodeViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return Json(new { success = false, errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)) });
+
+            var dto = _mapper.Map<JobCodeDto>(model);
+            var result = await _jobCodeService.CreateJobCodeAsync(dto);
+
+            if (result.Success)
+                return Json(new { success = true });
+
+            return Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Create failed" });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditJobCode(string jobCodeId)
+        {
+            var result = await _jobCodeService.GetJobCodeByIdAsync(jobCodeId);
+            if (!result.Success || result.Data == null) return NotFound();
+
+            var workGroups = await _jobCodeService.GetAllWorkGroupsAsync();
+            var types = await _jobCodeService.GetTypesAsync();
+            ViewBag.WorkGroups = workGroups.Data?.Select(w => new SelectListItem(w.WorkGroupName, w.WorkGroupName)).ToList() ?? [];
+            ViewBag.Types = types.Data?.Select(t => new SelectListItem(t, t)).ToList() ?? [];
+            return PartialView("_AddEditJobCode", _mapper.Map<JobCodeViewModel>(result.Data));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> EditJobCode([FromBody] JobCodeViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return Json(new { success = false, errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)) });
+
+            var dto = _mapper.Map<JobCodeDto>(model);
+            var result = await _jobCodeService.UpdateJobCodeAsync(dto);
+
+            if (result.Success)
+                return Json(new { success = true });
+
+            return Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Update failed" });
+        }
+
+        [HttpDelete]
+        public async Task<IActionResult> DeleteJobCode(string jobCodeId, string parentProject)
+        {
+            await _timeCodeService.DeleteAllByJobCodeAsync(jobCodeId, parentProject);
+            var result = await _jobCodeService.DeleteJobCodeAsync(jobCodeId);
+
+            if (result.Success)
+                return Json(new { success = true });
+
+            return Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Delete failed" });
+        }
+
+        // ── TIME CODE CRUD ────────────────────────────────────────────────────
+
+        [HttpGet]
+        public async Task<IActionResult> CreateTimeCode(string parentProject, string jobCodeId)
+        {
+            var workGroups = await _jobCodeService.GetAllWorkGroupsAsync();
+            ViewBag.WorkGroups = workGroups.Data?.Select(w => new SelectListItem(w.WorkGroupName, w.WorkGroupName)).ToList() ?? [];
+            return PartialView("_AddEditTimeCode", new TimeCodeViewModel { ParentProject = parentProject, JobCode = jobCodeId });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateTimeCode([FromBody] TimeCodeViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return Json(new { success = false, errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)) });
+
+            var dto = _mapper.Map<TimeCodeValidDto>(model);
+            var result = await _timeCodeService.CreateTimeCodeValidAsync(dto);
+
+            if (result.Success)
+                return Json(new { success = true });
+
+            return Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Create failed" });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditTimeCode(string? workGroup, string timeCode, string jobCodeId, string parentProject)
+        {
+            var result = await _timeCodeService.GetByJobCodeAsync(jobCodeId, parentProject);
+            var item = string.IsNullOrEmpty(workGroup)
+                ? result.Data?.FirstOrDefault(t => t.TimeCode == timeCode)
+                : result.Data?.FirstOrDefault(t => t.WorkGroup == workGroup && t.TimeCode == timeCode);
+            if (item == null) return NotFound();
+
+            var workGroups = await _jobCodeService.GetAllWorkGroupsAsync();
+            ViewBag.WorkGroups = workGroups.Data?.Select(w => new SelectListItem(w.WorkGroupName, w.WorkGroupName)).ToList() ?? [];
+            return PartialView("_AddEditTimeCode", _mapper.Map<TimeCodeViewModel>(item));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> EditTimeCode([FromBody] TimeCodeViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return Json(new { success = false, errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)) });
+
+            var dto = _mapper.Map<TimeCodeValidDto>(model);
+            var result = await _timeCodeService.UpdateTimeCodeValidAsync(dto);
+
+            if (result.Success)
+                return Json(new { success = true });
+
+            return Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Update failed" });
+        }
+
+        [HttpDelete]
+        public async Task<IActionResult> DeleteTimeCode(string workGroup, string timeCode, string parentProject)
+        {
+            var result = await _timeCodeService.DeleteTimeCodeValidAsync(workGroup, timeCode, parentProject);
+            if (result.Success)
+                return Json(new { success = true });
+
+            return Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Delete failed" });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> CopyProjectJobCode(string parentProject, string jobCodeId)
+        {
+            var result = await _jobCodeService.GetJobCodeByIdAsync(jobCodeId);
+            if (!result.Success || result.Data == null) return NotFound();
+
+            var workGroups = await _jobCodeService.GetAllWorkGroupsAsync();
+            var types = await _jobCodeService.GetTypesAsync();
+            ViewBag.SourceJobCodeId = jobCodeId;
+            ViewBag.WorkGroups = workGroups.Data?.Select(w => new SelectListItem(w.WorkGroupName, w.WorkGroupName)).ToList() ?? [];
+            ViewBag.Types = types.Data?.Select(t => new SelectListItem(t, t)).ToList() ?? [];
+            return PartialView("_CopyJobCode", _mapper.Map<JobCodeViewModel>(result.Data));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CopyProjectJobCode([FromBody] CopyJobCodeRequest model)
+        {
+            if(!ModelState.IsValid)
+                return Json(new { success = false, errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)) });
+
+            var dto = new JobCodeDto
+            {
+                JobCodeId = model.JobCodeId,
+                JobCodeName = model.JobCodeName,
+                Type = model.Type,
+                JobCodeWorkGroup = model.JobCodeWorkGroup,
+                ParentProject = model.ParentProject
+            };
+
+            var createResult = await _jobCodeService.CreateJobCodeAsync(dto);
+            if (!createResult.Success)
+                return Json(new { success = false, message = createResult.Errors?.FirstOrDefault()?.Message ?? "Create failed" });
+
+            if (model.CopyWorkGroup)
+            {
+                var copyResult = await _timeCodeService.CopyWorkGroupAsync(model.SourceJobCode, model.JobCodeId, model.ParentProject);
+                if (!copyResult.Success)
+                    return Json(new { success = false, message = copyResult.Errors?.FirstOrDefault()?.Message ?? "Copy time codes failed" });
+            }
+
+            return Json(new { success = true });
+        }
+    }
+}

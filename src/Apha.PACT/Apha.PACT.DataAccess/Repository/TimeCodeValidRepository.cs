@@ -1,0 +1,201 @@
+using Apha.PACT.Core.Entities;
+using Apha.PACT.Core.Interfaces;
+using Apha.PACT.Core.Pagination;
+using Apha.PACT.DataAccess.Data;
+using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using System.Dynamic;
+using System.Linq.Expressions;
+
+namespace Apha.PACT.DataAccess.Repository
+{
+    public class TimeCodeValidRepository : BaseRepository, ITimeCodeValidRepository
+    {
+        private readonly IFpsYearContext _fpsYearContext;
+
+        public TimeCodeValidRepository(FpsDbContext context, IFpsYearContext fpsYearContext) : base(context)
+        {
+            _fpsYearContext = fpsYearContext;
+        }
+
+        public async Task<IEnumerable<TimeCodeValid>> GetByJobCodeAsync(string jobCode, string parentProject)
+        {
+            return await _context.TimeCodeValids
+                .AsNoTracking()
+                .Where(t => t.JobCode == jobCode && t.ParentProject == parentProject)
+                .OrderBy(t => t.WorkGroup)
+                .ToListAsync();
+        }
+
+        public async Task<PagedData<TimeCodeValid>> GetPagedTimeCodesAsync(
+            PaginationParameters<string> query, string? jobCode, string? parentProject)
+        {
+            var queryTimeCode = _context.TimeCodeValids.AsNoTracking().AsQueryable();
+            if (!string.IsNullOrEmpty(jobCode))
+            {
+                queryTimeCode = queryTimeCode.Where(t => t.JobCode == jobCode);
+            }
+
+            if(!string.IsNullOrEmpty(parentProject))
+            {
+                queryTimeCode = queryTimeCode.Where(t => t.ParentProject == parentProject);
+            }
+
+            // Apply filtering
+            queryTimeCode = ApplyTimeCodeFilter(queryTimeCode, query.Filter);
+
+            // Apply sorting
+            queryTimeCode = (IQueryable<TimeCodeValid>)ApplySorting(queryTimeCode, query.SortBy, query.Descending);
+
+            // Execute query
+            var result = await queryTimeCode.ToListAsync();
+
+            // Apply paging
+            return ApplyPaging(result, query.Page, query.PageSize);
+        }
+
+        public async Task<TimeCodeValid?> GetTimeCodeValidAsync(string workGroup, string timeCode, string parentProject)
+        {
+            return await _context.TimeCodeValids
+                .AsNoTracking()
+                .FirstOrDefaultAsync(t =>
+                    t.WorkGroup == workGroup &&
+                    t.TimeCode == timeCode &&
+                    t.ParentProject == parentProject);
+        }
+
+        public async Task<TimeCodeValid> CreateTimeCodeValidAsync(TimeCodeValid timeCodeValid)
+        {
+            timeCodeValid.FpsYear = _fpsYearContext.FPSYear;
+            await _context.TimeCodeValids.AddAsync(timeCodeValid);
+            await _context.SaveChangesAsync();
+            return timeCodeValid;
+        }
+
+        public async Task<TimeCodeValid> UpdateTimeCodeValidAsync(TimeCodeValid timeCodeValid)
+        {
+            timeCodeValid.FpsYear = _fpsYearContext.FPSYear;
+            _context.Entry(timeCodeValid).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+            return timeCodeValid;
+        }
+
+        public async Task<bool> DeleteTimeCodeValidAsync(string workGroup, string timeCode, string parentProject)
+        {
+            var entity = await _context.TimeCodeValids
+                .FirstOrDefaultAsync(t =>
+                    t.WorkGroup == workGroup &&
+                    t.TimeCode == timeCode &&
+                    t.ParentProject == parentProject &&
+                    t.FpsYear == _fpsYearContext.FPSYear);
+            if (entity == null) return false;
+            _context.TimeCodeValids.Remove(entity);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> DeleteAllByJobCodeAsync(string jobCode, string parentProject)
+        {
+            var entities = await _context.TimeCodeValids
+                .Where(t => t.JobCode == jobCode &&
+                            t.ParentProject == parentProject &&
+                            t.FpsYear == _fpsYearContext.FPSYear)
+                .ToListAsync();
+            if (entities.Any())
+            {
+                _context.TimeCodeValids.RemoveRange(entities);
+                await _context.SaveChangesAsync();
+            }            
+            return true;
+        }
+
+        public async Task<IEnumerable<TimeCodeValid>> CopyWorkGroupAsync(
+            string sourceJobCode, string targetJobCode, string parentProject)
+        {
+            var sourceEntries = await _context.TimeCodeValids
+                .AsNoTracking()
+                .Where(t => t.JobCode == sourceJobCode && t.ParentProject == parentProject)
+                .ToListAsync();
+
+            var copies = sourceEntries.Select(s => new TimeCodeValid
+            {
+                TimeCode = targetJobCode,
+                WorkGroup = s.WorkGroup,
+                ParentProject = parentProject,
+                JobCode = targetJobCode,
+                Active = s.Active,
+                FpsYear = _fpsYearContext.FPSYear
+            }).ToList();
+
+            await _context.TimeCodeValids.AddRangeAsync(copies);
+            await _context.SaveChangesAsync();
+            return copies;
+        }
+
+        private static IQueryable<TimeCodeValid> ApplyTimeCodeFilter(IQueryable<TimeCodeValid> queryTimeCode, string? filter)
+        {
+            if (string.IsNullOrEmpty(filter))
+            {
+                return queryTimeCode;
+            }
+
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            if (filterModel == null)
+            {
+                return queryTimeCode;
+            }
+
+            var dict = (IDictionary<string, object>)filterModel;
+
+            if (dict.TryGetValue("TimeCode", out var timeCode) && timeCode != null)
+            {
+                queryTimeCode = queryTimeCode.Where(x => x.TimeCode.Contains(timeCode.ToString()!));
+            }
+
+            if (dict.TryGetValue("ParentProject", out var parentProject) && parentProject != null)
+            {
+                queryTimeCode = queryTimeCode.Where(x => x.ParentProject!.Contains(parentProject.ToString()!));
+            }
+
+            if (dict.TryGetValue("WorkGroup", out var workGroup) && workGroup != null)
+            {
+                queryTimeCode = queryTimeCode.Where(x => x.WorkGroup!.Contains(workGroup.ToString()!));
+            }
+
+            if (dict.TryGetValue("JobCode", out var jobCode) && jobCode != null)
+            {
+                queryTimeCode = queryTimeCode.Where(x => x.JobCode!.Contains(jobCode.ToString()!));
+            }
+
+            return queryTimeCode;
+        }
+
+        private static IQueryable ApplySorting(IQueryable<TimeCodeValid> query, string? sortBy, bool descending)
+        {
+            if (string.IsNullOrEmpty(sortBy))
+            {
+                return query.OrderBy(e => e.TimeCode);
+            }
+
+            return ApplySortingByProperty(query, sortBy.ToLower(), descending);
+        }
+
+        private static IQueryable ApplySortingByProperty(IQueryable<TimeCodeValid> query, string property, bool descending)
+        {
+            return property switch
+            {
+                "timecode" => ApplyOrder(query, i => i.TimeCode, descending),
+                "workgroup" => ApplyOrder(query, i => i.WorkGroup, descending),
+                "parentproject" => ApplyOrder(query, i => i.ParentProject, descending),
+                "jobcode" => ApplyOrder(query, i => i.JobCode, descending),
+                "active" => ApplyOrder(query, i => i.Active, descending),
+                _ => query.OrderBy(e => e.TimeCode)
+            };
+        }
+
+        private static IQueryable ApplyOrder<T>(IQueryable<TimeCodeValid> query, Expression<Func<TimeCodeValid, T>> keySelector, bool descending)
+        {
+            return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
+        }
+    }
+}

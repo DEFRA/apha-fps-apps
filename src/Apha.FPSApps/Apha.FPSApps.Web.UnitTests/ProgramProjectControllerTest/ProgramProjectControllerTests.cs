@@ -49,7 +49,7 @@ namespace Apha.FPSApps.Web.UnitTests.ProgramProjectControllerTest
             var serviceResponse = ApiResponseDto<List<ProjectDto>>.SuccessResponse(projects, paginationDto);
             var projectViewModels = new List<ProjectViewModel>
             {
-                new() { JobCode = "PP001", JobDescription = "Alpha Project" }
+                new() { ParentProject = "PP001", ProjectTitle = "Alpha Project" }
             };
             var paginationModel = new PaginationModel { PageNumber = 1, PageSize = 10, TotalRecords = 1 };
 
@@ -67,7 +67,7 @@ namespace Apha.FPSApps.Web.UnitTests.ProgramProjectControllerTest
             var gridConfig = Assert.IsType<DataGridConfig<ProjectViewModel>>(partialView.Model);
             Assert.Equal("projectGrid", gridConfig.GridId);
             Assert.Equal("Projects",    gridConfig.Title);
-            Assert.Equal("JobCode",     gridConfig.KeyProperty);
+            Assert.Equal("ParentProject",     gridConfig.KeyProperty);
             Assert.Single(gridConfig.Data);
             Assert.False(gridConfig.AllowAdd);
             Assert.False(gridConfig.AllowEdit);

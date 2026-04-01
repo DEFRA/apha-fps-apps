@@ -1,7 +1,7 @@
-﻿using Apha.FPS.Core.Interfaces;
-using Microsoft.EntityFrameworkCore;
+﻿using Apha.FPS.Core.Enities;
 using Apha.FPS.Core.Entities;
-using Apha.FPS.Core.Enities;
+using Apha.FPS.Core.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace Apha.FPS.DataAccess.Data
 {
@@ -53,6 +53,8 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<StaffView> StaffViews { get; set; }
         public virtual DbSet<StaffPickView> StaffPickViews { get; set; }
         public virtual DbSet<AnimalRequestView> AnimalRequestViews { get; set; }
+        public virtual DbSet<PactProjectView> PactProjectViews { get; set; }
+        public virtual DbSet<PactWorkGroupGradeView> PactWorkGroupGradeViews { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -333,23 +335,32 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.Entity<FpsSetting>(entity =>
             {
-                entity.HasKey(e => e.Id).HasName("tblsettings_pk_tblsettings");
+                entity.HasKey(e => new { e.Id, e.FpsYear }).HasName("pk_tblsettings");
 
-                entity.ToTable("tblsettings", "fps");
+                entity.ToTable("tblsettings", "fps", tb => tb.HasComment("Application-level configuration settings. Only business-logic constants belong here; infrastructure config moves to appsettings.json."));
 
                 entity.Property(e => e.Id)
                     .HasMaxLength(50)
+                    .HasComment("Unique setting key referenced by application code.")
                     .HasColumnName("id");
-                entity.Property(e => e.FpsYear).HasColumnName(FpsYear);
+                entity.Property(e => e.FpsYear)
+                    .HasComment("Fiscal year scope. NULL = not year-specific.")
+                    .HasColumnName("fpsyear");
                 entity.Property(e => e.Notes)
-                    .HasMaxLength(255)
+                    .HasComment("Free-text description of purpose, origin, and usage.")
                     .HasColumnName("notes");
                 entity.Property(e => e.Setting)
                     .HasMaxLength(255)
+                    .HasComment("The setting value as text.")
                     .HasColumnName("setting");
-                entity.Property(e => e.TestSetting)
-                    .HasMaxLength(255)
-                    .HasColumnName("testsetting");
+                entity.Property(e => e.UpdatedAt)
+                    .HasDefaultValueSql("now()")
+                    .HasComment("Timestamp of last modification (auto-set on insert).")
+                    .HasColumnName("updated_at");
+                entity.Property(e => e.UpdatedBy)
+                    .HasMaxLength(100)
+                    .HasComment("User or service account that last modified the row.")
+                    .HasColumnName("updated_by");               
                 entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
             });
 
@@ -1057,6 +1068,123 @@ namespace Apha.FPS.DataAccess.Data
                     .HasMaxLength(255)
                     .UseCollation("latin1_general_ci_as")
                     .HasColumnName("useremail");
+                entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
+            });
+
+            modelBuilder.Entity<PactProjectView>(entity =>
+            {
+                entity
+                    .HasNoKey()
+                    .ToView("vpactproject", "fps");
+
+                entity.Property(e => e.BudgetCvl)
+                    .HasColumnType("money")
+                    .HasColumnName("budget_cvl");
+                entity.Property(e => e.BudgetExt)
+                    .HasColumnType("money")
+                    .HasColumnName("budget_ext");
+                entity.Property(e => e.Comments).HasColumnName("comments");
+                entity.Property(e => e.Contract)
+                    .HasColumnType("citext")
+                    .HasColumnName("contract");
+                entity.Property(e => e.CostCentre).HasColumnName("costcentre");
+                entity.Property(e => e.Customer)
+                    .HasColumnType("citext")
+                    .HasColumnName("customer");
+                entity.Property(e => e.Disease)
+                    .HasColumnType("citext")
+                    .HasColumnName("disease");
+                entity.Property(e => e.Finished).HasColumnName("finished");
+                entity.Property(e => e.ForecastCost)
+                    .HasColumnType("money")
+                    .HasColumnName("forecastcost");
+                entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
+                entity.Property(e => e.IsDefraProject).HasColumnName("isdefraproject");
+                entity.Property(e => e.Manager)
+                    .HasMaxLength(50)
+                    .HasColumnName("manager");
+                entity.Property(e => e.OracleProjectCode)
+                    .HasMaxLength(50)
+                    .HasColumnName("oracleprojectcode");
+                entity.Property(e => e.ParentProject)
+                    .HasColumnType("citext")
+                    .HasColumnName("parentproject");
+                entity.Property(e => e.Program)
+                    .HasColumnType("citext")
+                    .HasColumnName("program");
+                entity.Property(e => e.ProjectGroup)
+                    .HasColumnType("citext")
+                    .HasColumnName("projectgroup");
+                entity.Property(e => e.ProjectParent)
+                    .HasMaxLength(50)
+                    .HasColumnName("projectparent");
+                entity.Property(e => e.ProjectStatus)
+                    .HasColumnType("citext")
+                    .HasColumnName("projectstatus");
+                entity.Property(e => e.ProjectTitle)
+                    .HasMaxLength(200)
+                    .HasColumnName("projecttitle");
+                entity.Property(e => e.PvsIncome)
+                    .HasColumnType("money")
+                    .HasColumnName("pvsincome");
+                entity.Property(e => e.SubAccountCode)
+                    .HasColumnType("citext")
+                    .HasColumnName("subaccountcode");
+                entity.Property(e => e.TransferIncome)
+                    .HasColumnType("money")
+                    .HasColumnName("transferincome");
+                entity.Property(e => e.WipCurrent)
+                    .HasColumnType("money")
+                    .HasColumnName("wip_current");
+                entity.Property(e => e.WipEoy)
+                    .HasColumnType("money")
+                    .HasColumnName("wip_eoy");
+                entity.Property(e => e.WipLimit)
+                    .HasColumnType("money")
+                    .HasColumnName("wip_limit");
+                entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
+            });
+
+            modelBuilder.Entity<PactWorkGroupGradeView>(entity =>
+            {
+                entity
+                    .HasNoKey()
+                    .ToView("vpactworkgroupgrade", "fps");
+
+                entity.Property(e => e.AvSalary)
+                    .HasColumnType("money")
+                    .HasColumnName("avsalary");
+                entity.Property(e => e.ChargeRateWg)
+                    .HasColumnType("money")
+                    .HasColumnName("chargerate_wg");
+                entity.Property(e => e.DirectRateWg)
+                    .HasColumnType("money")
+                    .HasColumnName("directrate_wg");
+                entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
+                entity.Property(e => e.GradeCode)
+                    .HasColumnType("citext")
+                    .HasColumnName("gradecode");
+                entity.Property(e => e.HrsChangedBy)
+                    .HasMaxLength(50)
+                    .HasColumnName("hrschangedby");
+                entity.Property(e => e.NprWg)
+                    .HasColumnType("money")
+                    .HasColumnName("npr_wg");
+                entity.Property(e => e.OhrWg)
+                    .HasColumnType("money")
+                    .HasColumnName("ohr_wg");
+                entity.Property(e => e.PayRateWg)
+                    .HasColumnType("money")
+                    .HasColumnName("payrate_wg");
+                entity.Property(e => e.ProfitCentreGrade)
+                    .HasColumnType("citext")
+                    .HasColumnName("profitcentregrade");
+                entity.Property(e => e.WgGrade)
+                    .HasColumnType("citext")
+                    .HasColumnName("wg_grade");
+                entity.Property(e => e.WorkGroup)
+                    .HasColumnType("citext")
+                    .HasColumnName("workgroup");
                 entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
             });
         }

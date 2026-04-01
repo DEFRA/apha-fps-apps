@@ -28,6 +28,10 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IEmployeeService, EmployeeService>();
             services.AddScoped<IProgramService, ProgramService>();
             services.AddScoped<IProjectService, ProjectService>();
+            services.AddScoped<IStatusService, StatusService>();
+            services.AddScoped<IDiseaseService, DiseaseService>();
+            services.AddScoped<ICustomerService, CustomerService>();
+            services.AddScoped<IContractService, ContractService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
@@ -40,6 +44,10 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IFpsSettingRepository, FpsSettingRepository>(); 
             services.AddScoped<IAnimalRepository, AnimalRepository>();
             services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+            services.AddScoped<IStatusRepository, StatusRepository>();
+            services.AddScoped<IDiseaseRepository, DiseaseRepository>();
+            services.AddScoped<ICustomerRepository, CustomerRepository>();
+            services.AddScoped<IContractRepository, ContractRepository>();
             return services;
         }
     }
