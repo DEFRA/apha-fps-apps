@@ -91,7 +91,7 @@ namespace Apha.FPSApps.Application.UnitTests.SettingServiceTest
 
             // Assert — verify delegation to the correct sub-client
             await _fpsSettingApiClient.Received(1).GetHoursPerDayAsync();
-            _fpsClient.Received(1).FpsSetting.GetHoursPerDayAsync();
+            await _fpsClient.Received(1).FpsSetting.GetHoursPerDayAsync();
         }
 
         [Fact]
