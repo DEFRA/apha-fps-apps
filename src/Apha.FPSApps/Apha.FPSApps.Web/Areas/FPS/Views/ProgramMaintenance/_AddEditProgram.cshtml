@@ -27,29 +27,29 @@
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label" asp-for="ProgramNo">Program</label>
                 <input type="text" asp-for="ProgramNo" required class="govuk-input">
-                <span asp-validation-for="ProgramNo" class="text-danger" style="display:none;"></span>
+                    <span asp-validation-for="ProgramNo" class="govuk-error-message" style="display:none;"></span>
             </div>
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label" asp-for="ProgramName">Program Name</label>
                 <input type="text" asp-for="ProgramName" class="govuk-input">
-                <span asp-validation-for="ProgramName" class="text-danger" style="display:none;"></span>
+                        <span asp-validation-for="ProgramName" class="govuk-error-message" style="display:none;"></span>
             </div>
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label" asp-for="Directorate">Directorate</label>
                 <select id="Directorate" asp-for="Directorate" asp-items="@Model.DirectorateOptions" class="govuk-select">
                 </select>
-                <span asp-validation-for="Directorate" class="text-danger" style="display:none;"></span>
+                        <span asp-validation-for="Directorate" class="govuk-error-message" style="display:none;"></span>
             </div>
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label" asp-for="Target">Target</label>
                 <input type="text" asp-for="Target" class="govuk-input" value="@Model.Target">
-                <span asp-validation-for="Target" class="text-danger" style="display:none;"></span>
+                            <span asp-validation-for="Target" class="govuk-error-message" style="display:none;"></span>
             </div>
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label" asp-for="Manager">Manager</label>
                 <select asp-for="Manager" asp-items="@Model.ManagerList" class="govuk-select">
                 </select>
-                <span asp-validation-for="Manager" class="text-danger" style="display:none;"></span>
+                            <span asp-validation-for="Manager" class="govuk-error-message" style="display:none;"></span>
             </div>
         </form>
     </div>
