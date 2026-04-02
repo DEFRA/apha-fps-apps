@@ -6,25 +6,25 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
     public class PactProjectViewModel
     {
         [Display(Name = "Project Code")]
-        [Required]
+        [Required(ErrorMessage = "Project code is required")]
         [StringLength(50)]
         [GridColumn(Width = 296, Type = GridColumnType.Text, IsFilterable = true)]
         public string ParentProject { get; set; } = null!;
 
         [Display(Name = "Title")]
-        [Required]
+        [Required(ErrorMessage = "Project title is required")]
         [StringLength(255)]
         [GridColumn(Width = 923, Type = GridColumnType.Text, IsFilterable = true)]
         public string ProjectTitle { get; set; } = null!;
 
         [Display(Name = "Programme")]
-        [Required]
+        [Required(ErrorMessage = "Programme is required")]
         [StringLength(50)]
         [GridColumn(IsVisible = false)]
         public string Program { get; set; } = null!;
 
         [Display(Name = "Customer")]
-        [Required]
+        [Required(ErrorMessage = "Customer is required")]
         [StringLength(100)]
         [GridColumn(IsVisible = false)]
         public string Customer { get; set; } = null!;
@@ -35,7 +35,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         public string? Manager { get; set; }
 
         [Display(Name = "Status")]
-        [Required]
+        [Required(ErrorMessage = "Status is required")]
         [StringLength(50)]
         [GridColumn(IsVisible = false)]
         public string ProjectStatus { get; set; } = null!;
@@ -73,13 +73,13 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         public decimal? FecCost { get; set; }
 
         [Display(Name = "Disease")]
-        [Required]
+        [Required(ErrorMessage = "Disease is required")]
         [StringLength(100)]
         [GridColumn(IsVisible = false)]
         public string Disease { get; set; } = null!;
 
         [Display(Name = "Contract")]
-        [Required]
+        [Required(ErrorMessage = "Contract is required")]
         [StringLength(50)]
         [GridColumn(IsVisible = false)]
         public string Contract { get; set; } = null!;

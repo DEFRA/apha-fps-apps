@@ -437,6 +437,7 @@
             var url = data.isEdit === 'true'
                 ? '/PACT/ProjectMaintenance/EditJobCode'
                 : '/PACT/ProjectMaintenance/CreateJobCode';
+            clearValidationErrors('#jobCodeForm');
             $.ajax({
                 url: url, type: 'POST',
                 contentType: 'application/json',
@@ -447,7 +448,7 @@
                         $('#modalPopup').removeClass('show');
                         getJobCodeGridManager()?.reloadGrid({ page: 1 });
                     } else {
-                        alert(response.message || 'Save failed.');
+                        displayServerValidationErrors(response.errors, response.message, '#jobCodeForm');
                     }
                 },
                 error: function() { alert('An error occurred while saving.'); }
@@ -528,6 +529,7 @@
             var url = data.isEdit === 'true'
                 ? '/PACT/ProjectMaintenance/EditTimeCode'
                 : '/PACT/ProjectMaintenance/CreateTimeCode';
+            clearValidationErrors('#timeCodeForm');
             $.ajax({
                 url: url, type: 'POST', contentType: 'application/json',
                 data: JSON.stringify(data),
@@ -537,15 +539,14 @@
                         $('#modalPopup').removeClass('show');
                         reloadTimeCodeGrid(selectedJobCodeId);
                     } else {
-                        alert(response.message || 'Save failed.');
+                        displayServerValidationErrors(response.errors, response.message, '#timeCodeForm');
                     }
                 },
                 error: function() { alert('An error occurred while saving.'); }
             });
         }
 
-        function executeCopyJobCode() {
-            debugger;
+        function executeCopyJobCode() {            
             var jobCodeId = $('#JobCodeId').val();
             if (!jobCodeId) { alert('Please enter a Job Code.'); return; }
             var data = {
@@ -583,7 +584,7 @@
         function copyBulkWorkGroup(selection) {
             if (!selectedJobCodeId) { alert('Please select a job code first.'); return; }
             if (!selection || !selection.ids || selection.ids.length === 0) {
-                alert('Please select at least one time code row to copy.'); return;
+                alert('Please select at least one work group to copy.'); return;
             }
 
             $.get('/PACT/ProjectMaintenance/CopyWorkGroupPartial',
