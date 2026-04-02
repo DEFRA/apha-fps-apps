@@ -20,7 +20,7 @@ namespace Apha.PACT.Api.Extensions
             // Add database context
             services.AddDbContext<FpsDbContext>(options =>
                     options.UseNpgsql(
-                        configuration.GetConnectionString("DefaultConnection")
+                        configuration.GetConnectionString("FPSConnectionString")
                          , npgsqlOptions =>
                          {
                              npgsqlOptions.EnableRetryOnFailure(

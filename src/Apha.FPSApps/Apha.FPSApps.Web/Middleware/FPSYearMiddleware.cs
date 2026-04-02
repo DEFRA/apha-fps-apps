@@ -14,7 +14,7 @@ namespace Apha.FPSApps.Web.Middleware
 
         public async Task Invoke(
     HttpContext context,
-    IFPSYearContext fyContext)
+    IFpsYearContext fyContext)
 {
     int year;
 
