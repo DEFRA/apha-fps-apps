@@ -279,5 +279,133 @@ namespace Apha.PACT.Application.UnitTests.Services.TimeCodeValidServiceTest
         }
 
         #endregion
+
+        #region DeleteBulkAsync
+
+        [Fact]
+        public async Task DeleteBulkAsync_WithValidItems_DelegatesToRepositoryAndReturnsTrue()
+        {
+            // Arrange
+            var items = new List<(string WorkGroup, string TimeCode)> { ("WG1", "TC1"), ("WG2", "TC2") };
+
+            _mockRepository
+                .DeleteBulkAsync(items, "PRJ1")
+                .Returns(true);
+
+            // Act
+            var result = await _sut.DeleteBulkAsync(items, "PRJ1");
+
+            // Assert
+            result.Should().BeTrue();
+            await _mockRepository.Received(1).DeleteBulkAsync(items, "PRJ1");
+        }
+
+        [Fact]
+        public async Task DeleteBulkAsync_WithEmptyItems_ReturnsTrue()
+        {
+            // Arrange — repository always returns true even for an empty list
+            var items = Enumerable.Empty<(string WorkGroup, string TimeCode)>();
+
+            _mockRepository
+                .DeleteBulkAsync(
+                    Arg.Any<IEnumerable<(string WorkGroup, string TimeCode)>>(),
+                    "PRJ1")
+                .Returns(true);
+
+            // Act
+            var result = await _sut.DeleteBulkAsync(items, "PRJ1");
+
+            // Assert
+            result.Should().BeTrue();
+        }
+
+        [Fact]
+        public async Task DeleteBulkAsync_RepositoryThrows_PropagatesException()
+        {
+            // Arrange
+            var items = new List<(string WorkGroup, string TimeCode)> { ("WG1", "TC1") };
+
+            _mockRepository
+                .DeleteBulkAsync(
+                    Arg.Any<IEnumerable<(string WorkGroup, string TimeCode)>>(),
+                    Arg.Any<string>())
+                .Throws(new Exception("DB error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _sut.DeleteBulkAsync(items, "PRJ1"));
+        }
+
+        #endregion
+
+        #region CopySelectedWorkGroupsAsync
+
+        [Fact]
+        public async Task CopySelectedWorkGroupsAsync_WithValidWorkGroups_ReturnsMappedDtos()
+        {
+            // Arrange
+            var workGroups = new List<string> { "WG1", "WG2" };
+            var entities = new List<TimeCodeValid>
+            {
+                new() { TimeCode = "JC_TGT", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC_TGT" },
+                new() { TimeCode = "JC_TGT", WorkGroup = "WG2", ParentProject = "PRJ1", JobCode = "JC_TGT" }
+            };
+            var dtos = new List<TimeCodeValidDto>
+            {
+                new() { TimeCode = "JC_TGT", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC_TGT" },
+                new() { TimeCode = "JC_TGT", WorkGroup = "WG2", ParentProject = "PRJ1", JobCode = "JC_TGT" }
+            };
+
+            _mockRepository
+                .CopySelectedWorkGroupsAsync(workGroups, "JC_SRC", "JC_TGT", "PRJ1")
+                .Returns(entities);
+            _mockMapper.Map<IEnumerable<TimeCodeValidDto>>(entities).Returns(dtos);
+
+            // Act
+            var result = await _sut.CopySelectedWorkGroupsAsync(workGroups, "JC_SRC", "JC_TGT", "PRJ1");
+
+            // Assert
+            result.Should().BeEquivalentTo(dtos);
+            await _mockRepository.Received(1).CopySelectedWorkGroupsAsync(workGroups, "JC_SRC", "JC_TGT", "PRJ1");
+            _mockMapper.Received(1).Map<IEnumerable<TimeCodeValidDto>>(entities);
+        }
+
+        [Fact]
+        public async Task CopySelectedWorkGroupsAsync_WithEmptyWorkGroups_ReturnsEmptyCollection()
+        {
+            // Arrange — no work groups selected; repository returns empty, mapper returns empty
+            var workGroups = new List<string>();
+            var entities = new List<TimeCodeValid>();
+            var dtos = new List<TimeCodeValidDto>();
+
+            _mockRepository
+                .CopySelectedWorkGroupsAsync(workGroups, "JC_SRC", "JC_TGT", "PRJ1")
+                .Returns(entities);
+            _mockMapper.Map<IEnumerable<TimeCodeValidDto>>(entities).Returns(dtos);
+
+            // Act
+            var result = await _sut.CopySelectedWorkGroupsAsync(workGroups, "JC_SRC", "JC_TGT", "PRJ1");
+
+            // Assert
+            result.Should().BeEmpty();
+        }
+
+        [Fact]
+        public async Task CopySelectedWorkGroupsAsync_RepositoryThrows_PropagatesException()
+        {
+            // Arrange
+            var workGroups = new List<string> { "WG1" };
+
+            _mockRepository
+                .CopySelectedWorkGroupsAsync(
+                    Arg.Any<IEnumerable<string>>(),
+                    Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
+                .Throws(new Exception("DB error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() =>
+                _sut.CopySelectedWorkGroupsAsync(workGroups, "JC_SRC", "JC_TGT", "PRJ1"));
+        }
+
+        #endregion
     }
 }
