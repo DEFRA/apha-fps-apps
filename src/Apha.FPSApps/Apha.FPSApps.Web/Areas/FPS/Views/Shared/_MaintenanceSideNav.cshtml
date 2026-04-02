@@ -1,0 +1,99 @@
+@model string
+@* activeItem: controller name of the currently active page (e.g. "StaffMaintenance", "ProgramMaintenance") *@
+<style>
+    .sidenav {
+        margin-bottom: 0;
+        align-self: flex-start;
+    }
+</style>
+<script>
+    function toggleSidebar() {
+        const sidebar = document.querySelector('.sidenav');
+        sidebar.classList.toggle('collapsed');
+    }
+</script>
+<nav class="sidenav flex-column flex-shrink-0" id="shortnav">
+    <button class="toggle-btn" onclick="toggleSidebar()" style="right: -8px; top: 30px;">
+        <img src="../images/chevron-left-solid-full.svg" alt="side nav menu arrow" width="24">
+    </button>
+    <ul>
+        <li><a class="dropdown-item">Maintain Divisions</a></li>
+        <li>
+            <a class="dropdown-item" href="#">
+                Maintain Resource Centres
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item" href="#">
+                Maintain Workgroups
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item" href="#">
+                Maintain Grades
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item" href="#">
+                Maintain Total Buisness Overheads
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item" href="#">
+                Maintain Divison Grades
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item" href="#">
+                Maintain RC Grades (Defra)
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item" href="#">
+                Maintain RC Grades (Non Defra)
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item" href="#">
+                Maintain WG Grades
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item" href="#">
+                Maintain WG Staff
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item@(Model == "StaffMaintenance" ? " sidenav-title" : "")"
+               asp-area="FPS" asp-controller="StaffMaintenance" asp-action="Index">
+                Maintain Staff
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item@(Model == "ProgramMaintenance" ? " sidenav-title" : "")"
+               asp-area="FPS" asp-controller="ProgramMaintenance" asp-action="Index">
+                Maintain Programs
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item" href="#">
+                Maintain Cost Centres
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item" href="#">
+                Maintain Account Cats
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item" href="#">
+                Maintain Animals
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item" href="#">
+                Maintain User Permissions
+            </a>
+        </li>
+    </ul>
+</nav>

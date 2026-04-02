@@ -22,7 +22,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ContractRepositoryTest
             IEnumerable<User> users)
         {
             var fpsYearContext = Substitute.For<IFpsYearContext>();
-            fpsYearContext.FPSYear.Returns(DefaultTestFpsYear);
+            fpsYearContext.FpsYear.Returns(DefaultTestFpsYear);
 
             var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);
 
@@ -45,8 +45,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ContractRepositoryTest
             // Arrange
             var contracts = new List<Contract>
             {
-                new() { Contractno = "C001", Category = "CAT_A" },
-                new() { Contractno = "C002", Category = "CAT_B" }
+                new() { ContractNo = "C001", Category = "CAT_A" },
+                new() { ContractNo = "C002", Category = "CAT_B" }
             };
             var userCategories = new List<UserCategory>
             {
@@ -73,7 +73,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ContractRepositoryTest
             // Arrange — user exists but Username is not "dbo", so JOIN filter excludes all
             var contracts = new List<Contract>
             {
-                new() { Contractno = "C001", Category = "CAT_A" }
+                new() { ContractNo = "C001", Category = "CAT_A" }
             };
             var userCategories = new List<UserCategory>
             {
@@ -99,7 +99,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ContractRepositoryTest
             // Arrange — contract category has no matching UserCategory row, JOIN produces nothing
             var contracts = new List<Contract>
             {
-                new() { Contractno = "C001", Category = "CAT_UNMATCHED" }
+                new() { ContractNo = "C001", Category = "CAT_UNMATCHED" }
             };
             var userCategories = new List<UserCategory>
             {
@@ -147,8 +147,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ContractRepositoryTest
             // Arrange — two users share a category, only the "dbo" user should produce results
             var contracts = new List<Contract>
             {
-                new() { Contractno = "C001", Category = "CAT_A" },
-                new() { Contractno = "C002", Category = "CAT_B" }
+                new() { ContractNo = "C001", Category = "CAT_A" },
+                new() { ContractNo = "C002", Category = "CAT_B" }
             };
             var userCategories = new List<UserCategory>
             {
@@ -168,7 +168,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ContractRepositoryTest
             // Assert
             var list = result.ToList();
             Assert.Single(list);
-            Assert.Equal("C001", list[0].Contractno);
+            Assert.Equal("C001", list[0].ContractNo);
         }
 
         #endregion

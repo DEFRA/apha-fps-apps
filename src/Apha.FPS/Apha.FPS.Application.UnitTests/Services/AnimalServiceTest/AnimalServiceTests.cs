@@ -506,5 +506,150 @@ namespace Apha.FPS.Application.UnitTests.Services.AnimalServiceTest
         }
 
         #endregion
+
+        #region GetTotalAnimalCostAsync
+
+        [Fact]
+        public async Task GetTotalAnimalCostAsync_WithValidJobCode_ReturnsTotalFromRepository()
+        {
+            // Arrange
+            var jobCode = "JOB001";
+            var expectedTotal = 220m;
+
+            _mockRepository.GetTotalAnimalCostAsync(jobCode)
+                .Returns(Task.FromResult(expectedTotal));
+
+            // Act
+            var result = await _sut.GetTotalAnimalCostAsync(jobCode);
+
+            // Assert
+            result.Should().Be(expectedTotal);
+            await _mockRepository.Received(1).GetTotalAnimalCostAsync(jobCode);
+        }
+
+        [Fact]
+        public async Task GetTotalAnimalCostAsync_WithNoMatchingRecords_ReturnsZero()
+        {
+            // Arrange
+            var jobCode = "NONEXISTENT";
+
+            _mockRepository.GetTotalAnimalCostAsync(jobCode)
+                .Returns(Task.FromResult(0m));
+
+            // Act
+            var result = await _sut.GetTotalAnimalCostAsync(jobCode);
+
+            // Assert
+            result.Should().Be(0m);
+            await _mockRepository.Received(1).GetTotalAnimalCostAsync(jobCode);
+        }
+
+        [Fact]
+        public async Task GetTotalAnimalCostAsync_WhenRepositoryThrowsException_PropagatesException()
+        {
+            // Arrange
+            var jobCode = "JOB001";
+
+            _mockRepository.GetTotalAnimalCostAsync(jobCode)
+                .ThrowsAsync(new Exception("Database connection failed"));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(
+                () => _sut.GetTotalAnimalCostAsync(jobCode)
+            );
+
+            exception.Message.Should().Be("Database connection failed");
+            await _mockRepository.Received(1).GetTotalAnimalCostAsync(jobCode);
+        }
+
+        #endregion
+
+        #region GetAnimalCostViewByIdAsync
+
+        [Fact]
+        public async Task GetAnimalCostViewByIdAsync_WithValidParameters_ReturnsMappedDto()
+        {
+            // Arrange
+            var indCounter = 1;
+            var jobCode = "JOB001";
+
+            var entity = new AnimalCostView
+            {
+                IndCounter     = indCounter,
+                JobCode        = jobCode,
+                AnimalType     = "CAT",
+                NumberOfDays   = 5,
+                NumberOfAnimals = 2,
+                AnimalCost     = 100m
+            };
+            var expectedDto = new AnimalCostViewDto
+            {
+                IndCounter     = indCounter,
+                JobCode        = jobCode,
+                AnimalType     = "CAT",
+                NumberOfDays   = 5,
+                NumberOfAnimals = 2,
+                AnimalCost     = 100m
+            };
+
+            _mockRepository.GetAnimalCostViewByIdAsync(indCounter, jobCode)
+                .Returns(Task.FromResult<AnimalCostView?>(entity));
+            _mockMapper.Map<AnimalCostViewDto>(entity).Returns(expectedDto);
+
+            // Act
+            var result = await _sut.GetAnimalCostViewByIdAsync(indCounter, jobCode);
+
+            // Assert
+            result.Should().NotBeNull();
+            result!.IndCounter.Should().Be(indCounter);
+            result.JobCode.Should().Be(jobCode);
+            result.AnimalCost.Should().Be(100m);
+
+            await _mockRepository.Received(1).GetAnimalCostViewByIdAsync(indCounter, jobCode);
+            _mockMapper.Received(1).Map<AnimalCostViewDto>(entity);
+        }
+
+        [Fact]
+        public async Task GetAnimalCostViewByIdAsync_WhenRepositoryReturnsNull_ReturnsNull()
+        {
+            // Arrange
+            var indCounter = 999;
+            var jobCode = "JOB001";
+
+            _mockRepository.GetAnimalCostViewByIdAsync(indCounter, jobCode)
+                .Returns(Task.FromResult<AnimalCostView?>(null));
+
+            // Act
+            var result = await _sut.GetAnimalCostViewByIdAsync(indCounter, jobCode);
+
+            // Assert
+            result.Should().BeNull();
+
+            await _mockRepository.Received(1).GetAnimalCostViewByIdAsync(indCounter, jobCode);
+            _mockMapper.DidNotReceive().Map<AnimalCostViewDto>(Arg.Any<AnimalCostView>());
+        }
+
+        [Fact]
+        public async Task GetAnimalCostViewByIdAsync_WhenRepositoryThrowsException_PropagatesException()
+        {
+            // Arrange
+            var indCounter = 1;
+            var jobCode = "JOB001";
+
+            _mockRepository.GetAnimalCostViewByIdAsync(indCounter, jobCode)
+                .ThrowsAsync(new Exception("Database connection failed"));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(
+                () => _sut.GetAnimalCostViewByIdAsync(indCounter, jobCode)
+            );
+
+            exception.Message.Should().Be("Database connection failed");
+
+            await _mockRepository.Received(1).GetAnimalCostViewByIdAsync(indCounter, jobCode);
+            _mockMapper.DidNotReceive().Map<AnimalCostViewDto>(Arg.Any<AnimalCostView>());
+        }
+
+        #endregion
     }
 }

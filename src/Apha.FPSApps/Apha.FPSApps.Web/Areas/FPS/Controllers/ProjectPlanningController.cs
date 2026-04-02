@@ -1,4 +1,4 @@
-﻿using Apha.FPSApps.Application.Interfaces;
+﻿using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
@@ -6,7 +6,6 @@ using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Identity.Web;
-using System.Collections.Generic;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 {    
@@ -35,7 +34,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 SelectedYear = "2025-2026",
                 UserName = "Ken Rod",
                 BudgetCVL = 5000,
-                StaffBookedGrid =  await GetStaffBookedDataGrid(),
+                StaffBookedGrid =  await GetStaffBookedDataGrid("FZ2000"),
 
                 // AnimalsBookedList - Sample animal resources
                 AnimalsBookedList = new List<AnimalBookedItem>
@@ -131,21 +130,21 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return View(model);
         }
 
-        private async Task<DataGridConfig<StaffJobItem>> GetStaffBookedDataGrid()
+        private async Task<DataGridConfig<StaffJobItemViewModel>> GetStaffBookedDataGrid(string jobcode)
         {
-            var staffJobPagedData = await _staffJobService.GetAllStaffJobsAsync(new QueryParameters<string>());
-            List<StaffJobItem> staffJobItems = new List<StaffJobItem>();
+            var staffJobPagedData = await _staffJobService.GetAllStaffJobsAsync(new QueryParameters<string>(), jobcode);
+            List<StaffJobItemViewModel> staffJobItems = new List<StaffJobItemViewModel>();
             if (staffJobPagedData.Data != null)
             {
-                staffJobItems = _mapper.Map<List<StaffJobItem>>(staffJobPagedData.Data.ToList());
+                staffJobItems = _mapper.Map<List<StaffJobItemViewModel>>(staffJobPagedData.Data.ToList());
             }
-            PaginationModel paginationModel = _mapper.Map<PaginationModel>(staffJobPagedData.Pagination);            
+            PaginationModel paginationModel = _mapper.Map<PaginationModel>(staffJobPagedData.Pagination) ?? new PaginationModel();            
 
-            var staffJobGridConfig = new DataGridConfig<StaffJobItem>
+            var staffJobGridConfig = new DataGridConfig<StaffJobItemViewModel>
             {
                 GridId = "staffBookedGrid",
                 Title = "Staff Booked",
-                ShowCheckboxColumn = true,
+                ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "StaffID",
                 AddFunction = "addStaffJob",
@@ -154,7 +153,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ExtraFilterMethod = "getStaffJobExtraFilters",
                 BindGridUrl = "/FPS/StaffJob/LoadStaffJobGrid",                
                 Data = staffJobItems,
-                Columns = GridDataProvider.GetColumnsDefination<StaffJobItem>(null),
+                Columns = GridDataProvider.GetColumnsDefination<StaffJobItemViewModel>(null),
                 Pagination = paginationModel
             };
 

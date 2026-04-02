@@ -5,10 +5,30 @@
     <div class="sup_border sup_border_bottom_0">
         <h2 class="sup_border-bottom sup_text_color sup_heading_bg_color govuk-heading-s sup_margin_0 sup_align_heading">
             <div class="sup_flex_space_between">
-                @Model.Title  <button type="button" class="govuk-button sup_margin_0 sup_p_8"
-                                      id="@($"{Model.GridId}_addRowBtn")" data-add-function="@Model.AddFunction">
-                    <i class="fa fa-plus"></i> Add
-                </button>
+                @Model.Title
+                <div style="display:flex; gap:4px; align-items:center;">
+                    @if (Model.AllowAdd)
+                    {
+                        <button type="button" class="govuk-button sup_margin_0 sup_p_8"
+                                              id="@($"{Model.GridId}_addRowBtn")" data-add-function="@Model.AddFunction">
+                            <i class="fa fa-plus"></i> Add
+                        </button>
+                    }
+                    @if (Model.AllowBulkCopy)
+                    {
+                        <button type="button" class="govuk-button sup_margin_0 sup_p_8"
+                                              id="@($"{Model.GridId}_bulkCopyBtn")" data-bulkcopy-function="@Model.BulkCopyFunction">
+                            <i class="fa fa-copy"></i> @Model.BulkCopyButtonText
+                        </button>
+                    }
+                    @if (Model.AllowBulkDelete)
+                    {
+                        <button type="button" class="govuk-button govuk-button--warning sup_margin_0 sup_p_8"
+                                              id="@($"{Model.GridId}_bulkDeleteBtn")" data-bulkdelete-function="@Model.BulkDeleteFunction">
+                            <i class="fa fa-trash"></i> Delete All
+                        </button>
+                    }
+                </div>
             </div>
         </h2>
         <div class="grid-toolbar">
@@ -66,15 +86,18 @@
                                 if (isSorted)
                                     sortIcon = Model.Pagination.SortDirection ? "▲" : "▼";
                                 <th scope="col" style="width: @column.Width px; cursor:pointer;"
-                                    class="sortable-header"
-                                    data-column="@column.PropertyName"
-                                    data-sortdir="@(!Model.Pagination.SortDirection)">
-                                    @column.DisplayName <span class="sort-icon">@sortIcon</span>
-                                    <div class="column-resizer"></div>
-                                </th>
-                            }
-                        }
-                        <th scope="col" class="row-number-header govuk-table__header" style="width: 80px;">Action</th>
+                                            class="sortable-header"
+                                            data-column="@column.PropertyName"
+                                            data-sortdir="@(!Model.Pagination.SortDirection)">
+                                            @column.DisplayName <span class="sort-icon">@sortIcon</span>
+                                            <div class="column-resizer"></div>
+                                        </th>
+                                    }
+                                }
+                                @if (Model.AllowEdit || Model.AllowDelete)
+                                {
+                                    <th scope="col" class="row-number-header govuk-table__header" style="width: 80px;">Action</th>
+                                }
                     </tr>
                     <!-- Filter Row -->
                     <tr class="filter-row govuk-table__row">
@@ -123,20 +146,29 @@
                                         {
                                             <input type="text" class="grid-filter govuk-input govuk-!-font-size-16" data-filter="@column.PropertyName" value="@filterValue" placeholder="Filter..." />
                                         }
-                                    }
-                                </th>
-                            }
-                        }
-                        <th scope="col"></th>
-                    </tr>
+                                        }
+                                    </th>
+                                            }
+                                        }
+                                        @if (Model.AllowEdit || Model.AllowDelete)
+                                        {
+                                            <th scope="col"></th>
+                                        }
+                                    </tr>
                 </thead>
                 <tbody class="govuk-table__body">
                     @{
                         var rowIndex = 0;
+                        string selectFnForRow = string.IsNullOrEmpty((string)Model.RowSelectFunction)
+                            ? (string)Model.EditFunction
+                            : (string)Model.RowSelectFunction;
                     }
                     @foreach (var row in Model.Data)
                     {
-                        <tr data-row-index="@rowIndex">
+                        <tr data-row-index="@rowIndex"
+                            data-id="@GridHelpers.GetPropertyValue(row, Model.KeyProperty)"
+                            class="@(Model.AllowRowSelection ? "selectable-row" : null)"
+                            data-select-function="@(Model.AllowRowSelection ? selectFnForRow : null)">
                             @if (Model.ShowCheckboxColumn)
                             {
                                 <td class="checkbox-cell govuk-table__cell">
@@ -179,21 +211,39 @@
                                     }
                                 }
                             }
-                            <!-- Edit Button -->
-                            <td class="govuk-table__cell">
-                                <button type="button"
-                                        class="btn btn-sm btn-info edit-row-btn"
-                                        data-id="@GridHelpers.GetPropertyValue(row, Model.KeyProperty)"                                       
-                                        data-edit-function="@Model.EditFunction">
-                                    <img src="../images/edit_gridicon.svg" alt="Edit icon" width="20" height="20" title="Edit">
-                                </button>
-                                <button type="button"
-                                        class="btn btn-sm btn-danger delete-row-btn"
-                                        data-id="@GridHelpers.GetPropertyValue(row, Model.KeyProperty)"
-                                        data-delete-function="@Model.DeleteFunction">
-                                    <img src="../images/delete_gridicon.svg" alt="Delete icon" width="20" height="20" title="Delete">
-                                </button>
-                            </td>
+                            <!-- Edit / Delete Buttons -->
+                            @if (Model.AllowEdit || Model.AllowDelete || Model.AllowCopy)
+                            {
+                                <td class="govuk-table__cell">
+                                    @if (Model.AllowEdit)
+                                    {
+                                        <button type="button"
+                                                class="btn btn-sm btn-info edit-row-btn"
+                                                data-id="@GridHelpers.GetPropertyValue(row, Model.KeyProperty)"
+                                                data-edit-function="@Model.EditFunction">
+                                            <img src="~/images/edit_gridicon.svg" alt="Edit icon" width="20" height="20" title="Edit">
+                                        </button>
+                                    }
+                                    @if (Model.AllowCopy)
+                                    {
+                                        <button type="button"
+                                                class="btn btn-sm btn-secondary copy-row-btn"
+                                                data-id="@GridHelpers.GetPropertyValue(row, Model.KeyProperty)"
+                                                data-copy-function="@Model.CopyFunction">
+                                                <img src="~/images/copy-regular-full.svg" alt="Copy icon" width="20" height="20" title="Copy">
+                                        </button>
+                                    }
+                                    @if (Model.AllowDelete)
+                                    {
+                                        <button type="button"
+                                                class="btn btn-sm btn-danger delete-row-btn"
+                                                data-id="@GridHelpers.GetPropertyValue(row, Model.KeyProperty)"
+                                                data-delete-function="@Model.DeleteFunction">
+                                            <img src="~/images/delete_gridicon.svg" alt="Delete icon" width="20" height="20" title="Delete">
+                                        </button>
+                                    }
+                                </td>
+                            }
                         </tr>
                         rowIndex++;
                     }
@@ -406,6 +456,53 @@
                 }
             });
 
+            // Helper: returns { ids: [...], isAll: bool }
+            // - If no checkbox column exists, treats every row as selected (isAll = true).
+            // - If the select-all checkbox is checked, or every individual checkbox is
+            //   checked, isAll = true and all row IDs are returned.
+            // - Otherwise only the IDs of checked rows are returned.
+            function getSelectedIds() {
+                var $checkboxes = $('#tbl_' + gridId + ' .row-checkbox');
+                var ids = [];
+
+                if ($checkboxes.length === 0) {
+                    $('#tbl_' + gridId + ' tbody tr').each(function () {
+                        ids.push($(this).data('id'));
+                    });
+                    return { ids: ids, isAll: true };
+                }
+
+                var $checked = $checkboxes.filter(':checked');
+                var isAll = $checkboxes.length === $checked.length;
+
+                if (isAll) {
+                    $('#tbl_' + gridId + ' tbody tr').each(function () {
+                        ids.push($(this).data('id'));
+                    });
+                } else {
+                    $checked.each(function () {
+                        ids.push($(this).closest('tr').data('id'));
+                    });
+                }
+                return { ids: ids, isAll: isAll };
+            }
+
+            // Bulk Copy button click
+            $('#' + gridId + '_bulkCopyBtn').on('click', function () {
+                var fn = $(this).data('bulkcopy-function');
+                if (fn && typeof window[fn] === 'function') {
+                    window[fn](getSelectedIds());
+                }
+            });
+
+            // Bulk Delete button click
+            $('#' + gridId + '_bulkDeleteBtn').on('click', function () {
+                var fn = $(this).data('bulkdelete-function');
+                if (fn && typeof window[fn] === 'function') {
+                    window[fn](getSelectedIds());
+                }
+            });
+
             // Edit button click
             $(gridContainerSelector).off('click', '.edit-row-btn').on('click', '.edit-row-btn', function() {
                 var customEditFn = $(this).data('edit-function');
@@ -414,11 +511,32 @@
                 }
             });
 
+            // Copy button click
+            $(gridContainerSelector).off('click', '.copy-row-btn').on('click', '.copy-row-btn', function() {
+                var customCopyFn = $(this).data('copy-function');
+                if (customCopyFn && typeof window[customCopyFn] === 'function') {
+                window[customCopyFn](this);
+                }
+            });
+
             // Delete button click
             $(gridContainerSelector).off('click', '.delete-row-btn').on('click', '.delete-row-btn', function() {
                 var customDeleteFn = $(this).data('delete-function');
                 if (customDeleteFn && typeof window[customDeleteFn] === 'function') {
                     window[customDeleteFn](this);
+                }
+            });
+
+            // Row selection click
+            $(gridContainerSelector).off('click', '.selectable-row').on('click', '.selectable-row', function (e) {
+                if ($(e.target).closest('button, a, input').length) return;
+
+                $('#tbl_' + gridId + ' tbody tr').removeClass('selected-row');
+                $(this).addClass('selected-row');
+
+                var selectFn = $(this).data('select-function');
+                if (selectFn && typeof window[selectFn] === 'function') {
+                    window[selectFn](this);
                 }
             });
 

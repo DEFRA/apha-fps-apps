@@ -1,0 +1,82 @@
+@model Apha.FPSApps.Web.Areas.FPS.Models.AnimalPlanItem
+@{
+    var isEditMode = Model.IndCounter > 0;
+    var title = isEditMode ? "Update Animal Cost" : "Add Animal Cost";
+    var formId = isEditMode ? "formEditAnimalPlan" : "formAddAnimalPlan";
+    var saveLabel = isEditMode ? "Update" : "Save";
+    var saveAction = isEditMode ? "updateAnimalPlan()" : "saveAnimalPlan()";
+}
+
+<div class="modal-header flex-space-center">
+    <h3 class="modal-title" style="margin: 0;" id="exampleModalLabel">@title</h3>
+    <button type="button" class="btn-close btn-red" onclick="closeModal()">X</button>
+</div>
+<div class="modal-body" style="padding-top: 5px;">
+    <div asp-validation-summary="ModelOnly" class="govuk-error-summary" role="alert"
+         aria-labelledby="error-summary-title" tabindex="-1" style="display:none;">
+        <h2 class="govuk-error-summary__title" id="error-summary-title">
+            There is a problem
+        </h2>
+        <div class="govuk-error-summary__body">
+            <ul class="govuk-list govuk-error-summary__list">
+            </ul>
+        </div>
+    </div>
+    <form class="row" id="@formId">
+        <input type="hidden" asp-for="IndCounter" id="IndCounter" />
+        @if (isEditMode)
+        {
+            <input type="hidden" asp-for="JobCode" />
+        }
+        <div class="col-12">
+            <div class="govuk-form-group sup_margin_0">
+                <label for="AnimalType" class="govuk-label p-0">Animal Type:</label>
+                <select id="AnimalType" name="AnimalType" required class="govuk-select"
+                        onchange="onAnimalTypeSelected(this)">
+                    <option value="">-- Select Animal Type --</option>
+                    @if (Model.AnimalTypeList != null)
+                    {
+                        foreach (var animal in Model.AnimalTypeList)
+                        {
+                            var isSelected = isEditMode && string.Equals(animal.Value, Model.AnimalType, StringComparison.OrdinalIgnoreCase);
+                            <option value="@animal.Value" selected="@(isSelected ? "selected" : null)">@animal.Text</option>
+                        }
+                    }
+                </select>
+                <span asp-validation-for="AnimalType" class="govuk-error-message" style="display:none;"></span>
+            </div>
+        </div>
+        <div class="col-12">
+            <div class="govuk-form-group sup_margin_0">
+                <label for="DailyRate" class="govuk-label" asp-for="DailyRate">Daily Rate:</label>
+                <input type="number" step="0.01" asp-for="DailyRate" class="govuk-input" id="DailyRate" readonly>
+            </div>
+        </div>
+        <div class="col-12">
+            <div class="govuk-form-group sup_margin_0">
+                <label for="NumberOfDays" class="govuk-label" asp-for="NumberOfDays">Days:</label>
+                <input type="number" step="0.01" asp-for="NumberOfDays" required class="govuk-input" id="NumberOfDays"
+                       onchange="calculateAnimalCost()">
+                <span asp-validation-for="NumberOfDays" class="govuk-error-message" style="display:none;"></span>
+            </div>
+        </div>
+        <div class="col-12">
+            <div class="govuk-form-group sup_margin_0">
+                <label for="NumberOfAnimals" class="govuk-label" asp-for="NumberOfAnimals">No. Required:</label>
+                <input type="number" step="0.01" asp-for="NumberOfAnimals" required class="govuk-input" id="NumberOfAnimals"
+                       onchange="calculateAnimalCost()">
+                <span asp-validation-for="NumberOfAnimals" class="govuk-error-message" style="display:none;"></span>
+            </div>
+        </div>
+        <div class="col-12">
+            <div class="govuk-form-group sup_margin_0">
+                <label for="AnimalCost" class="govuk-label" asp-for="AnimalCost">Animal Cost:</label>
+                <input type="number" step="0.01" asp-for="AnimalCost" class="govuk-input" id="AnimalCost" readonly>
+            </div>
+        </div>
+    </form>
+</div>
+<div class="modal-footer">
+    <button class="govuk-button govuk-button--secondary sup_margin_0" data-module="govuk-button" onclick="closeModal()">Cancel</button>
+    <button class="govuk-button sup_margin_0" data-module="govuk-button" onclick="@saveAction">@saveLabel</button>
+</div>

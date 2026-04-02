@@ -104,5 +104,54 @@ namespace Apha.FPS.Api.UnitTests.Controller.FpsSettingControllerTest
             await _fpsSettingService.Received(1).GetAllSettingsAsync();
             _mapper.DidNotReceive().Map<List<FpsSettingRes>>(Arg.Any<object>());
         }
+
+        #region GetHoursPerDayAsync
+
+        [Fact]
+        public async Task GetHoursPerDayAsync_WhenServiceReturnsValue_ReturnsOkWithDecimal()
+        {
+            // Arrange
+            _fpsSettingService.GetHoursPerDayAsync().Returns(Task.FromResult(7.5m));
+
+            // Act
+            var result = await _sut.GetHoursPerDayAsync();
+
+            // Assert
+            result.Should().BeOfType<OkObjectResult>();
+            var okResult = result as OkObjectResult;
+            okResult!.StatusCode.Should().Be(200);
+            okResult.Value.Should().Be(7.5m);
+            await _fpsSettingService.Received(1).GetHoursPerDayAsync();
+        }
+
+        [Fact]
+        public async Task GetHoursPerDayAsync_WhenServiceReturnsDefaultValue_ReturnsOkWithEight()
+        {
+            // Arrange
+            _fpsSettingService.GetHoursPerDayAsync().Returns(Task.FromResult(8m));
+
+            // Act
+            var result = await _sut.GetHoursPerDayAsync();
+
+            // Assert
+            result.Should().BeOfType<OkObjectResult>();
+            var okResult = result as OkObjectResult;
+            okResult!.Value.Should().Be(8m);
+            await _fpsSettingService.Received(1).GetHoursPerDayAsync();
+        }
+
+        [Fact]
+        public async Task GetHoursPerDayAsync_WhenServiceThrowsException_PropagatesException()
+        {
+            // Arrange
+            _fpsSettingService.GetHoursPerDayAsync().Throws(new Exception("Database connection failed"));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(() => _sut.GetHoursPerDayAsync());
+            exception.Message.Should().Be("Database connection failed");
+            await _fpsSettingService.Received(1).GetHoursPerDayAsync();
+        }
+
+        #endregion
     }
 }

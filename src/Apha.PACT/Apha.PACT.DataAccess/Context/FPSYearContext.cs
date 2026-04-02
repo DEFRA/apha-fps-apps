@@ -2,7 +2,7 @@
 
 namespace Apha.PACT.DataAccess.Context
 {
-    public class FPSYearContext : IFPSYearContext
+    public class FpsYearContext : IFpsYearContext
     {
         public int FPSYear { get; set; }
     }

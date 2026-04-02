@@ -22,6 +22,7 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<FpsSetting, FpsSettingDto>().ReverseMap();
             CreateMap<Program, ProgramDto>().ReverseMap();
             CreateMap<Project, ProjectDto>().ReverseMap();
+            CreateMap<ProjectView, Project>().ReverseMap();
             CreateMap<JobCode, JobCodeDto>().ReverseMap();
             CreateMap<Contract, ContractDto>().ReverseMap();
             CreateMap<AnimalCostView, AnimalCostViewDto>().ReverseMap();
@@ -31,7 +32,11 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<SubAccount, SubAccountDto>().ReverseMap();
             CreateMap<ProjectGroup, ProjectGroupDto>().ReverseMap();
             CreateMap<Employee, EmployeeDto>().ReverseMap();
-            CreateMap<Manager, ManagerDto>().ReverseMap();
+            CreateMap<Manager, ManagerDto>().ReverseMap();           
+            CreateMap<PactProjectView, ProjectDto>()
+                .ForMember(d => d.FpsCalYear, o => o.MapFrom(s => s.FpsYear))
+                .ReverseMap()
+                .ForMember(d => d.FpsYear, o => o.MapFrom(s => s.FpsCalYear));
         }
     }
 }
