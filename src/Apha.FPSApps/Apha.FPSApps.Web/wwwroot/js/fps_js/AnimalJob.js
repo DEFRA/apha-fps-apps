@@ -1,4 +1,5 @@
-// AnimalJob.js - Shared animal plan CRUD, rate calculation, and modal/validation helpers.
+// AnimalJob.js - Shared animal plan CRUD and rate calculation.
+// Requires ajax-form-validation.js to be loaded before this script.
 // Each page must configure AnimalJobConfig before this script runs its event bindings.
 
 var AnimalJobConfig = {
@@ -25,7 +26,7 @@ function addAnimalPlan(btn) {
         },
         error: function (xhr) {
             if (xhr.status === 400 && xhr.responseJSON) {
-                displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message);
+                displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
                 alert('An error occurred while opening the form.');
             }
@@ -36,13 +37,13 @@ function addAnimalPlan(btn) {
 function saveAnimalPlan() {
     var form = $('#formAddAnimalPlan');
     if (!isFormValid(form)) {
-        displayClientValidationErrors(form);
+        displayClientValidationErrors(form, '#modaPopupBody');
         return;
     }
     var data = {
         IndCounter: 0,
         JobCode: AnimalJobConfig.getJobCode(),
-        AnimalType: $('#AnimalTypeDropdown').val(),
+        AnimalType: $('#AnimalType').val(),
         NumberOfDays: parseFloat($('#NumberOfDays').val()) || 0,
         NumberOfAnimals: parseFloat($('#NumberOfAnimals').val()) || 0,
         DailyRate: parseFloat($('#DailyRate').val()) || 0,
@@ -59,12 +60,12 @@ function saveAnimalPlan() {
                 closeModal();
                 AnimalJobConfig.onSaved();
             } else {
-                displayServerValidationErrors(result.errors, result.message);
+                displayServerValidationErrors(result.errors, result.message, '#modaPopupBody');
             }
         },
         error: function (xhr) {
             if (xhr.status === 400 && xhr.responseJSON) {
-                displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message);
+                displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
                 alert('An error occurred while saving.');
             }
@@ -84,7 +85,7 @@ function editAnimalPlan(btn) {
         },
         error: function (xhr) {
             if (xhr.status === 400 && xhr.responseJSON) {
-                displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message);
+                displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
                 alert('An error occurred while fetching the record.');
             }
@@ -95,7 +96,7 @@ function editAnimalPlan(btn) {
 function updateAnimalPlan() {
     var form = $('#formEditAnimalPlan');
     if (!isFormValid(form)) {
-        displayClientValidationErrors(form);
+        displayClientValidationErrors(form, '#modaPopupBody');
         return;
     }
     var indCounter = $('#IndCounter').val();
@@ -103,7 +104,7 @@ function updateAnimalPlan() {
     var data = {
         IndCounter: parseInt(indCounter) || 0,
         JobCode: jobCode,
-        AnimalType: $('#AnimalTypeDropdown').val(),
+        AnimalType: $('#AnimalType').val(),
         NumberOfDays: parseFloat($('#NumberOfDays').val()) || 0,
         NumberOfAnimals: parseFloat($('#NumberOfAnimals').val()) || 0,
         DailyRate: parseFloat($('#DailyRate').val()) || 0,
@@ -120,12 +121,12 @@ function updateAnimalPlan() {
                 closeModal();
                 AnimalJobConfig.onUpdated();
             } else {
-                displayServerValidationErrors(result.errors, result.message);
+                displayServerValidationErrors(result.errors, result.message, '#modaPopupBody');
             }
         },
         error: function (xhr) {
             if (xhr.status === 400 && xhr.responseJSON) {
-                displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message);
+                displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
                 alert('An error occurred while saving.');
             }
@@ -199,82 +200,7 @@ $(document).on('change', '#NumberOfDays, #NumberOfAnimals', function () {
 // ---- Modal helpers ----
 
 function closeModal() {
-    clearValidationErrors();
+    clearValidationErrors('#modaPopupBody');
     $('#modaPopupBody').html('');
     $('#modalPopup').removeClass('show');
-}
-
-function isFormValid(form) {
-    var isValid = true;
-    form.find('[required]').each(function () {
-        if (!$(this).val() || $(this).val().trim() === '') {
-            isValid = false;
-            return false;
-        }
-    });
-    return isValid;
-}
-
-function clearValidationErrors() {
-    var errorSummary = $('.govuk-error-summary', '#modaPopupBody');
-    errorSummary.hide().find('.govuk-error-summary__list').empty();
-    $('[name]', '#modaPopupBody').each(function () {
-        $(this).closest('.govuk-form-group').removeClass('govuk-form-group--error');
-        $(this).removeClass('govuk-input--error');
-        $(this).siblings('span[data-valmsg-for]').text('').hide();
-    });
-}
-
-function displayClientValidationErrors(form) {
-    var errorSummary = $('.govuk-error-summary', '#modaPopupBody');
-    var errorList = errorSummary.find('.govuk-error-summary__list');
-    errorList.empty();
-    errorSummary.find('.govuk-error-summary__title').text('There is a problem');
-    clearValidationErrors();
-    var errors = [];
-    form.find('[required]').each(function () {
-        var $field = $(this);
-        if (!$field.val() || $field.val().trim() === '') {
-            var fieldName = $field.attr('name') || '';
-            var label = $('label[for="' + fieldName + '"]', '#modaPopupBody').text().trim() || fieldName;
-            errors.push({ field: fieldName, message: label + ' is required' });
-        }
-    });
-    if (errors.length > 0) {
-        errors.forEach(function (error) {
-            errorList.append('<li><a href="#' + error.field + '">' + error.message + '</a></li>');
-            var $field = $('[name="' + error.field + '"]', '#modaPopupBody');
-            $field.closest('.govuk-form-group').addClass('govuk-form-group--error');
-            $field.addClass('govuk-input--error');
-            $field.siblings('span[data-valmsg-for]').text(error.message).show();
-        });
-        errorSummary.show().focus();
-    }
-}
-
-function displayServerValidationErrors(errors, message) {
-    var errorSummary = $('.govuk-error-summary', '#modaPopupBody');
-    var errorList = errorSummary.find('.govuk-error-summary__list');
-    errorList.empty();
-    errorSummary.find('.govuk-error-summary__title').text('There is a problem');
-    clearValidationErrors();
-    if (errors && errors.length > 0) {
-        errors.forEach(function (error) {
-            var fieldName = error.field || '';
-            var errorMessage = error.message || message || 'Validation error';
-            errorList.append('<li><a href="#' + fieldName + '">' + errorMessage + '</a></li>');
-            if (fieldName) {
-                var $field = $('[name="' + fieldName + '"]', '#modaPopupBody');
-                if ($field.length) {
-                    $field.closest('.govuk-form-group').addClass('govuk-form-group--error');
-                    $field.addClass('govuk-input--error');
-                    $field.siblings('span[data-valmsg-for]').text(errorMessage).show();
-                }
-            }
-        });
-        errorSummary.show().focus();
-    } else if (message) {
-        errorList.append('<li>' + message + '</li>');
-        errorSummary.show().focus();
-    }
 }
