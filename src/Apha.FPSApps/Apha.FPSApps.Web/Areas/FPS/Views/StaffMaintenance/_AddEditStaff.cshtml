@@ -22,7 +22,7 @@
         <div class="row g-3">
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label" asp-for="SPNumber">SP Number</label>
-                <input type="text" class="govuk-input" required asp-for="SPNumber" />
+                <input type="text" class="govuk-input" maxlength="10" required asp-for="SPNumber" />
                 <span asp-validation-for="SPNumber" class="govuk-error-message" style="display:none;"></span>
             </div>
 

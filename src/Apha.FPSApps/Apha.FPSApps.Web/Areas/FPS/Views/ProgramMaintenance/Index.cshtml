@@ -31,34 +31,47 @@
                         </div>
                     </div>
                 </div>
+               
             </div>
         </div>
 
-        <div class="govuk-grid-row">
-            <div class="govuk-grid-column-full mt-2">
-                <div id="@($"gridContainer_{Model.GridId}")">
-                    @await Html.PartialAsync("_DataGrid", Model)
-                </div>
+        <div class="row">
+            <div class="col-lg-12">
+                <main class="main-content" style="padding:0;">
+                    <div class="container-fluid " style="padding: 0;">
+                        <div class="row">
+                            <div class="container-fluid" style="padding-left:0px;">
+                                <div style="display: flex; flex-direction: row; align-items: flex-start;">
+                                    <!-- Side nav -->
+                                    @await Html.PartialAsync("_MaintenanceSideNav", "ProgramMaintenance")
+                                    <div style="display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; margin: 0 0px 5px 8px;">
+                                        <!-- Filter and Grid section -->
+                                        <div class="govuk-grid-row">
+                                            <div class="govuk-grid-column-full mt-2">
+                                                <!-- Grid Container -->
+                                                <div id="@($"gridContainer_{Model.GridId}")">
+                                                    @await Html.PartialAsync("_DataGrid", Model)
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
             </div>
         </div>
+
+
     </div>
 </main>
 
-   
-
-@* 
-<div class="modal fade" id="modalPopup" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content" id="modaPopupBody">
-        </div>
-    </div>
-</div> *@
 
 @section Scripts {
     <script src="~/js/ajax-form-validation.js"></script>
     <script>
-        function addProgram(btn) {
-            debugger;
+        function addProgram(btn) {            
             $.ajax({
                 url: '/FPS/ProgramMaintenance/Create',
                 type: 'GET',
@@ -67,7 +80,7 @@
                     $('#modalPopup').addClass("show");
                 },
                 error: function () {
-                    alert('An error occurred while deleting');
+                    alert('An error occurred while loading the form');
                 }
             });
         }
@@ -81,11 +94,14 @@
                 return;
             }
 
+            var rawTarget = form.find('[name="Target"]').val().replace(/[£,]/g, '').trim();
+
             var data = {
                 ProgramNo: form.find('[name="ProgramNo"]').val(),
                 ProgramName: form.find('[name="ProgramName"]').val(),
                 Directorate: form.find('[name="Directorate"]').val(),
-                Target: form.find('[name="Target"]').val(),
+                // Parse to number so decimal? model binding succeeds
+                Target: rawTarget !== '' ? parseFloat(rawTarget) : null,
                 Manager: form.find('[name="Manager"]').val()
             };
 
@@ -100,7 +116,7 @@
                         closeModal();
                         window.location.reload();
                     } else {
-                        displayServerValidationErrors(result.errors, result.message, '#modaPopupBody');
+                        displayServerValidationErrors(result.errors, result.message, '#modaPopupBody')
                     }
                 },
                 error: function (xhr) {
@@ -114,6 +130,7 @@
         }
 
         function updateProgram() {
+            clearValidationErrors('#modaPopupBody');
             var form = $('#editProgramForm');
 
             if (!isFormValid(form)) {
@@ -121,11 +138,14 @@
                 return;
             }
 
+            var rawTarget = form.find('[name="Target"]').val().replace(/[£,]/g, '').trim();
+
             var data = {
                 ProgramNo: form.find('[name="ProgramNo"]').val(),
                 ProgramName: form.find('[name="ProgramName"]').val(),
                 Directorate: form.find('[name="Directorate"]').val(),
-                Target: form.find('[name="Target"]').val(),
+                // Parse to number so decimal? model binding succeeds
+                Target: rawTarget !== '' ? parseFloat(rawTarget) : null,
                 Manager: form.find('[name="Manager"]').val()
             };
 
@@ -140,7 +160,7 @@
                         closeModal();
                         window.location.reload();
                     } else {
-                        displayServerValidationErrors(result.errors, result.message, '#modaPopupBody');
+                        displayServerValidationErrors(result.errors, result.message, '#modaPopupBody')
                     }
                 },
                 error: function (xhr) {
@@ -196,6 +216,18 @@
             $('#modaPopupBody').html("");
             $('#modalPopup').removeClass("show");
         }
+
+          // Returns true if all required fields in the form have values
+        function isFormValid(form) {
+            var isValid = true;
+            form.find('[required]').each(function () {
+                if (!$(this).val() || $(this).val().trim() === '') {
+                    isValid = false;
+                    return false; // break
+                }
+            });
+            return isValid;
+        } 
     </script>
 
     @{
