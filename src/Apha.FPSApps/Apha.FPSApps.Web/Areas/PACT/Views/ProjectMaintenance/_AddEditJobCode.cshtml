@@ -16,6 +16,17 @@
         <input type="hidden" name="isEdit" value="@isEdit.ToString().ToLower()" />
         <input type="hidden" asp-for="ParentProject" />
 
+        <!-- Validation error summary -->
+        <div class="govuk-error-summary" role="alert"
+             aria-labelledby="error-summary-title" tabindex="-1" style="display:none;">
+            <h2 class="govuk-error-summary__title" id="error-summary-title">
+                There is a problem
+            </h2>
+            <div class="govuk-error-summary__body">
+                <ul class="govuk-list govuk-error-summary__list"></ul>
+            </div>
+        </div>
+
         <!-- Job Code -->
         <div class="govuk-form-group">
             <label class="govuk-label govuk-!-font-weight-bold" asp-for="JobCodeId">Job Code:</label>

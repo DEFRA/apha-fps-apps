@@ -6,18 +6,19 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
     public class TimeCodeViewModel
     {
         [Display(Name = "Time Code")]
-        [Required]
+        [Required(ErrorMessage = "Time Code is required")]
         [StringLength(50)]
         [GridColumn(IsVisible = false)]
         public string TimeCode { get; set; } = null!;
 
         [Display(Name = "Work Group")]
-        [Required]
+        [Required(ErrorMessage = "Work Group is required")]
         [StringLength(50)]
         [GridColumn(Order = 1, Width = 160, Type = GridColumnType.Text, IsFilterable = true)]
         public string WorkGroup { get; set; } = null!;
 
         [Display(Name = "Parent Project")]
+        [Required(ErrorMessage = "Parent Project is required")]
         [StringLength(50)]
         [GridColumn(IsVisible = false)]
         public string ParentProject { get; set; } = null!;
