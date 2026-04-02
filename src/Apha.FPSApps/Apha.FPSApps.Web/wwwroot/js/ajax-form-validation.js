@@ -1,0 +1,199 @@
+/**
+ * ajax-form-validation.js
+ *
+ * Generic helpers for showing and clearing client-side and server-side
+ * validation errors inside AJAX-driven forms (modal or inline).
+ *
+ * All functions accept an optional `container` argument (a CSS selector string
+ * or jQuery object) that scopes every DOM query.  When omitted the scope
+ * defaults to the whole document.
+ *
+ * Supported error formats for displayServerValidationErrors:
+ *   - Array  : [{ field: 'FieldName', message: 'Error text' }, ...]
+ *   - Object : { 'FieldName': 'Error text', ... }  (plain-object / dictionary)
+ *
+ * Public API
+ * ----------
+ *   isFormValid(form)
+ *   clearValidationErrors([container])
+ *   displayClientValidationErrors(form [, container])
+ *   displayServerValidationErrors(errors, summaryMessage [, container])
+ */
+(function ($) {
+    'use strict';
+
+    // ── Private helpers ──────────────────────────────────────────────────────
+
+    /** Resolve the optional container argument into a jQuery object. */
+    function resolveContainer(container) {
+        if (container == null) return $(document);
+        return container instanceof $ ? container : $(container);
+    }
+
+    /**
+     * Normalise errors into a uniform array: [{ field, message }].
+     * Accepts either an array or a plain-object dictionary.
+     */
+    function normaliseErrors(errors) {
+        if (!errors) return [];
+        if (Array.isArray(errors)) return errors;
+        return Object.keys(errors).map(function (key) {
+            return { field: key, message: errors[key] };
+        });
+    }
+
+    // ── Public API ───────────────────────────────────────────────────────────
+
+    /**
+     * Returns true when every [required] field inside `form` has a non-blank value.
+     * @param {jQuery} form - The form element to validate.
+     * @returns {boolean}
+     */
+    window.isFormValid = function (form) {
+        var valid = true;
+        form.find('[required]').each(function () {
+            var v = $(this).val();
+            if (!v || v.trim() === '') {
+                valid = false;
+                return false; // break $.each
+            }
+        });
+        return valid;
+    };
+
+    /**
+     * Clears all validation errors inside `container`:
+     *   - Hides and empties the govuk-error-summary.
+     *   - Removes govuk-form-group--error / govuk-input--error classes.
+     *   - Empties and hides every validation-message span (data-valmsg-for).
+     *
+     * @param {string|jQuery} [container] - Scope element (defaults to document).
+     */
+    window.clearValidationErrors = function (container) {
+        var $c = resolveContainer(container);
+
+        $c.find('.govuk-error-summary').hide();
+        $c.find('.govuk-error-summary__list').empty();
+
+        $c.find('.govuk-form-group--error').removeClass('govuk-form-group--error');
+        $c.find('.govuk-input--error').removeClass('govuk-input--error');
+
+        $c.find('[data-valmsg-for]').each(function () {
+            $(this)
+                .text('')
+                .hide()
+                .removeClass('field-validation-error')
+                .addClass('field-validation-valid');
+        });
+    };
+
+    /**
+     * Validates required fields client-side and displays errors.
+     * Highlights each invalid field inline and populates the govuk-error-summary.
+     *
+     * @param {jQuery}        form        - The <form> element to validate.
+     * @param {string|jQuery} [container] - Scope element (defaults to `form`).
+     */
+    window.displayClientValidationErrors = function (form, container) {
+        var $c = resolveContainer(container != null ? container : form);
+        clearValidationErrors($c);
+
+        var errors = [];
+        form.find('[required]').each(function () {
+            var $field = $(this);
+            if (!$field.val() || $field.val().trim() === '') {
+                var name  = $field.attr('name') || '';
+                var label = $('label[for="' + name + '"]', $c).text().trim() || name;
+                errors.push({ field: name, message: label + ' is required' });
+            }
+        });
+
+        if (!errors.length) return;
+
+            var $summary = $c.find('.govuk-error-summary');
+            $summary.find('.govuk-error-summary__title').text('There is a problem');
+            var $list = $summary.find('.govuk-error-summary__list').empty();
+
+            var hasSummaryErrors = false;
+
+            errors.forEach(function (error) {
+                var $field = $('[name="' + error.field + '"]', $c);
+
+                if ($field.length) {
+                    // Field found in the form — highlight inline only
+                    $field.closest('.govuk-form-group').addClass('govuk-form-group--error');
+                    $field.addClass('govuk-input--error');
+                    $field.siblings('[data-valmsg-for="' + error.field + '"]')
+                          .text(error.message)
+                          .show()
+                          .removeClass('field-validation-valid')
+                          .addClass('field-validation-error');
+                } else {
+                    // No matching field — show in summary only
+                    $list.append(
+                        '<li><a href="#' + error.field + '">' + error.message + '</a></li>'
+                    );
+                    hasSummaryErrors = true;
+                }
+            });
+
+            if (hasSummaryErrors) {
+                $summary.show().focus();
+            } else if ($summary.length) {
+                $summary.hide();
+            }
+        };
+
+    /**
+     * Displays server-side validation errors.
+     *
+     * - When a matching named field is found in `container`:
+     *   highlights it inline only (not added to the summary).
+     * - When no matching field is found:
+     *   adds the message to the govuk-error-summary.
+     *
+     * @param {Array|Object}   errors           - Array or dictionary of errors.
+     * @param {string}        [summaryMessage]  - Heading text for the error summary.
+     * @param {string|jQuery} [container]       - Scope element (defaults to document).
+     */
+    window.displayServerValidationErrors = function (errors, summaryMessage, container) {
+        var $c       = resolveContainer(container);
+        var $summary = $c.find('.govuk-error-summary');
+        var $list    = $summary.find('.govuk-error-summary__list').empty();
+
+        $summary.find('.govuk-error-summary__title').text(summaryMessage || 'There is a problem');
+
+        var items            = normaliseErrors(errors);
+        var hasSummaryErrors = false;
+
+        items.forEach(function (error) {
+            var fieldName = error.field   || '';
+            var message   = error.message || 'Validation error';
+            var $field    = $('[name="' + fieldName + '"]', $c);
+
+            if ($field.length) {
+                // Field found in the form — highlight inline only
+                $field.closest('.govuk-form-group').addClass('govuk-form-group--error');
+                $field.addClass('govuk-input--error');
+                $field.siblings('[data-valmsg-for="' + fieldName + '"]')
+                      .text(message)
+                      .show()
+                      .removeClass('field-validation-valid')
+                      .addClass('field-validation-error');
+            } else {
+                // No matching field — show in summary only
+                $list.append(
+                    '<li><a href="#' + fieldName + '">' + message + '</a></li>'
+                );
+                hasSummaryErrors = true;
+            }
+        });
+
+        if (hasSummaryErrors) {
+            $summary.show().focus();
+        } else if ($summary.length) {
+            $summary.hide();
+        }
+    };
+
+}(jQuery));
