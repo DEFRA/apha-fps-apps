@@ -1,5 +1,7 @@
-﻿using Apha.FPSApps.Application.Interfaces;
-using Apha.FPSApps.Application.Services;
+﻿using Apha.FPSApps.Application.Interfaces.FPS;
+using Apha.FPSApps.Application.Interfaces.PACT;
+using Apha.FPSApps.Application.Services.FPS;
+using Apha.FPSApps.Application.Services.PACT;
 using Apha.FPSApps.Web.Handler;
 namespace Apha.FPSApps.Web.Extensions
 {
@@ -16,7 +18,7 @@ namespace Apha.FPSApps.Web.Extensions
             // Add your application services here
             services.AddScoped<IStaffJobService, StaffJobService>();
             services.AddTransient<RequestHeadersHandler>();
-            services.AddScoped<IFPSYearContext, FPSYearContext>();
+            services.AddScoped<IFpsYearContext, FpsYearContext>();
             services.AddScoped<IProgramService, ProgramService>();
             services.AddScoped<IEmployeeService, EmployeeService>();
             services.AddScoped<IProjectService, ProjectService>();

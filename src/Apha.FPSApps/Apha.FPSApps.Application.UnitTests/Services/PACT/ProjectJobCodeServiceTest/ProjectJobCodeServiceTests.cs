@@ -2,7 +2,7 @@
 using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.PactApiClients;
 using Apha.FPSApps.Application.Pagination;
-using Apha.FPSApps.Application.Services;
+using Apha.FPSApps.Application.Services.PACT;
 using NSubstitute;
 using Xunit;
 

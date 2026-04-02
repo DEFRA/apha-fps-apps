@@ -1,4 +1,4 @@
-﻿using Apha.FPSApps.Application.Interfaces;
+﻿using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
@@ -6,7 +6,6 @@ using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Identity.Web;
-using System.Collections.Generic;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 {    
