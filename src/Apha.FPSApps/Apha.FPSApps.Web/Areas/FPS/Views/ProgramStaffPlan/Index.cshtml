@@ -116,13 +116,6 @@
 </div>
 </div>
 
-<!-- Modal Popup -->
-<div id="modalPopup" class="modal">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content" id="modaPopupBody">            
-        </div>
-    </div>
-</div>
 
 @section Scripts {
     <script src="~/js/fps_js/StaffJob.js"></script>
@@ -164,9 +157,9 @@
                     { programNo: currentProgramNo },
                     function (result) {
                         if (result.success) {
-                            $('#lblManager').text(result.manager);
-                            $('#lblTarget').text(formatCurrency(result.target));
-                        }
+                                $('#managerName').val(result.manager);
+                                $('#Target').val(formatCurrency(result.target));
+                            }
                     }
                 );
             }
