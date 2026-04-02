@@ -1,3 +1,4 @@
+using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces;
@@ -5,6 +6,7 @@ using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.PACT.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
+using Azure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -312,7 +314,11 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                     message = "Please correct the errors below.",
                     errors = ModelState
                         .Where(x => x.Value?.Errors.Count > 0)
-                        .ToDictionary(x => x.Key, x => x.Value!.Errors[0].ErrorMessage)
+                        .SelectMany(x => x.Value!.Errors.Select(e => new
+                        {
+                            field = "Project." + x.Key,
+                            message = e.ErrorMessage
+                        }))
                 });
 
             var projectdto = _mapper.Map<ProjectDto>(model);
@@ -321,7 +327,16 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             if (result.Success)
                 return Json(new { success = true });
 
-            return Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Update failed" });
+            return Json(new
+            {
+                success = false,
+                message = "Failed to update project.",
+                errors = (result.Errors ?? new List<ApiErrorDto>()).Select(e => new
+                {
+                    field = e.Code ?? string.Empty,
+                    message = e.Message ?? "An unexpected error occurred."
+                })
+            });
         }
 
         [HttpDelete]
