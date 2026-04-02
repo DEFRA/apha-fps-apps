@@ -155,7 +155,7 @@ namespace Apha.PACT.Application.UnitTests.Services.TimeCodeValidServiceTest
             var entity = new TimeCodeValid { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1" };
 
             _mockMapper.Map<TimeCodeValid>(dto).Returns(entity);
-            _mockRepository.CreateTimeCodeValidAsync(entity).Throws(new Exception("DB error"));
+            _mockRepository.CreateTimeCodeValidAsync(entity).ThrowsAsync(new Exception("DB error"));
 
             await Assert.ThrowsAsync<Exception>(() => _sut.CreateTimeCodeValidAsync(dto));
         }
@@ -190,7 +190,7 @@ namespace Apha.PACT.Application.UnitTests.Services.TimeCodeValidServiceTest
             var entity = new TimeCodeValid { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1" };
 
             _mockMapper.Map<TimeCodeValid>(dto).Returns(entity);
-            _mockRepository.UpdateTimeCodeValidAsync(entity).Throws(new Exception("DB error"));
+            _mockRepository.UpdateTimeCodeValidAsync(entity).ThrowsAsync(new Exception("DB error"));
 
             await Assert.ThrowsAsync<Exception>(() => _sut.UpdateTimeCodeValidAsync(dto));
         }
@@ -329,7 +329,7 @@ namespace Apha.PACT.Application.UnitTests.Services.TimeCodeValidServiceTest
                 .DeleteBulkAsync(
                     Arg.Any<IEnumerable<(string WorkGroup, string TimeCode)>>(),
                     Arg.Any<string>())
-                .Throws(new Exception("DB error"));
+                .ThrowsAsync(new Exception("DB error"));
 
             // Act & Assert
             await Assert.ThrowsAsync<Exception>(() => _sut.DeleteBulkAsync(items, "PRJ1"));
@@ -399,7 +399,7 @@ namespace Apha.PACT.Application.UnitTests.Services.TimeCodeValidServiceTest
                 .CopySelectedWorkGroupsAsync(
                     Arg.Any<IEnumerable<string>>(),
                     Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
-                .Throws(new Exception("DB error"));
+                .ThrowsAsync(new Exception("DB error"));
 
             // Act & Assert
             await Assert.ThrowsAsync<Exception>(() =>

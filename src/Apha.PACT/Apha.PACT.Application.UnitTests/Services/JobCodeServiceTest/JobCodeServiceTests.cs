@@ -58,7 +58,7 @@ namespace Apha.PACT.Application.UnitTests.Services.JobCodeServiceTest
         [Fact]
         public async Task GetJobCodesByProjectAsync_RepositoryThrows_PropagatesException()
         {
-            _mockRepository.GetJobCodesByProjectAsync("PRJ1").Throws(new Exception("DB error"));
+            _mockRepository.GetJobCodesByProjectAsync("PRJ1").ThrowsAsync(new Exception("DB error"));
 
             await Assert.ThrowsAsync<Exception>(() => _sut.GetJobCodesByProjectAsync("PRJ1"));
         }
@@ -179,7 +179,7 @@ namespace Apha.PACT.Application.UnitTests.Services.JobCodeServiceTest
             var entity = new JobCode { JobCodeId = "JC1" };
 
             _mockMapper.Map<JobCode>(dto).Returns(entity);
-            _mockRepository.CreateJobCodeAsync(entity).Throws(new Exception("DB error"));
+            _mockRepository.CreateJobCodeAsync(entity).ThrowsAsync(new Exception("DB error"));
 
             await Assert.ThrowsAsync<Exception>(() => _sut.CreateJobCodeAsync(dto));
         }
@@ -214,7 +214,7 @@ namespace Apha.PACT.Application.UnitTests.Services.JobCodeServiceTest
             var entity = new JobCode { JobCodeId = "JC1" };
 
             _mockMapper.Map<JobCode>(dto).Returns(entity);
-            _mockRepository.UpdateJobCodeAsync(entity).Throws(new Exception("DB error"));
+            _mockRepository.UpdateJobCodeAsync(entity).ThrowsAsync(new Exception("DB error"));
 
             await Assert.ThrowsAsync<Exception>(() => _sut.UpdateJobCodeAsync(dto));
         }

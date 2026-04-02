@@ -44,7 +44,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.TimeCodeValidControllerTest
         [Fact]
         public async Task GetByJobCode_ServiceThrows_PropagatesException()
         {
-            _serviceMock.GetByJobCodeAsync("JC1", "PRJ1").Throws(new Exception("Service error"));
+            _serviceMock.GetByJobCodeAsync("JC1", "PRJ1").ThrowsAsync(new Exception("Service error"));
 
             await Assert.ThrowsAsync<Exception>(() => _controller.GetByJobCode("JC1", "PRJ1"));
         }
@@ -149,7 +149,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.TimeCodeValidControllerTest
             var dto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1" };
 
             _mapperMock.Map<TimeCodeValidDto>(req).Returns(dto);
-            _serviceMock.CreateTimeCodeValidAsync(dto).Throws(new Exception("Service error"));
+            _serviceMock.CreateTimeCodeValidAsync(dto).ThrowsAsync(new Exception("Service error"));
 
             await Assert.ThrowsAsync<Exception>(() => _controller.Create(req));
         }
@@ -183,7 +183,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.TimeCodeValidControllerTest
             var dto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1" };
 
             _mapperMock.Map<TimeCodeValidDto>(req).Returns(dto);
-            _serviceMock.UpdateTimeCodeValidAsync(dto).Throws(new Exception("Service error"));
+            _serviceMock.UpdateTimeCodeValidAsync(dto).ThrowsAsync(new Exception("Service error"));
 
             await Assert.ThrowsAsync<Exception>(() => _controller.Update(req));
         }
@@ -256,7 +256,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.TimeCodeValidControllerTest
         [Fact]
         public async Task CopyWorkGroup_ServiceThrows_PropagatesException()
         {
-            _serviceMock.CopyWorkGroupAsync("JC_SRC", "JC_TGT", "PRJ1").Throws(new Exception("Service error"));
+            _serviceMock.CopyWorkGroupAsync("JC_SRC", "JC_TGT", "PRJ1").ThrowsAsync(new Exception("Service error"));
 
             await Assert.ThrowsAsync<Exception>(() => _controller.CopyWorkGroup("JC_SRC", "JC_TGT", "PRJ1"));
         }
@@ -323,7 +323,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.TimeCodeValidControllerTest
                 .DeleteBulkAsync(
                     Arg.Any<IEnumerable<(string WorkGroup, string TimeCode)>>(),
                     Arg.Any<string>())
-                .Throws(new Exception("Service error"));
+                .ThrowsAsync(new Exception("Service error"));
 
             // Act & Assert
             await Assert.ThrowsAsync<Exception>(() => _controller.DeleteBulk(request));
@@ -417,7 +417,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.TimeCodeValidControllerTest
                 .CopySelectedWorkGroupsAsync(
                     Arg.Any<IEnumerable<string>>(),
                     Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
-                .Throws(new Exception("Service error"));
+                .ThrowsAsync(new Exception("Service error"));
 
             // Act & Assert
             await Assert.ThrowsAsync<Exception>(() => _controller.CopyBulkWorkGroups(request));

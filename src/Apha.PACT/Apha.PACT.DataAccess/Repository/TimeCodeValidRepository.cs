@@ -101,7 +101,7 @@ namespace Apha.PACT.DataAccess.Repository
                             t.ParentProject == parentProject &&
                             t.FpsYear == _fpsYearContext.FPSYear)
                 .ToListAsync();
-            if (entities.Any())
+            if (entities.Count > 0)
             {
                 _context.TimeCodeValids.RemoveRange(entities);
                 await _context.SaveChangesAsync();

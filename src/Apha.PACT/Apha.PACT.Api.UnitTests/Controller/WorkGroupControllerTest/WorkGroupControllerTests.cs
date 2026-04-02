@@ -57,7 +57,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.WorkGroupControllerTest
         [Fact]
         public async Task GetAll_ServiceThrows_PropagatesException()
         {
-            _serviceMock.GetAllWorkGroupsAsync().Throws(new Exception("Service error"));
+            _serviceMock.GetAllWorkGroupsAsync().ThrowsAsync(new Exception("Service error"));
 
             await Assert.ThrowsAsync<Exception>(() => _controller.GetAll());
         }
