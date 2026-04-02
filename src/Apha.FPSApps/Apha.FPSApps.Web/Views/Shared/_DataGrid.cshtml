@@ -6,13 +6,29 @@
         <h2 class="sup_border-bottom sup_text_color sup_heading_bg_color govuk-heading-s sup_margin_0 sup_align_heading">
             <div class="sup_flex_space_between">
                 @Model.Title
-                @if (Model.AllowAdd)
-                {
-                    <button type="button" class="govuk-button sup_margin_0 sup_p_8"
-                                          id="@($"{Model.GridId}_addRowBtn")" data-add-function="@Model.AddFunction">
-                        <i class="fa fa-plus"></i> Add
-                    </button>
-                }
+                <div style="display:flex; gap:4px; align-items:center;">
+                    @if (Model.AllowAdd)
+                    {
+                        <button type="button" class="govuk-button sup_margin_0 sup_p_8"
+                                              id="@($"{Model.GridId}_addRowBtn")" data-add-function="@Model.AddFunction">
+                            <i class="fa fa-plus"></i> Add
+                        </button>
+                    }
+                    @if (Model.AllowBulkCopy)
+                    {
+                        <button type="button" class="govuk-button sup_margin_0 sup_p_8"
+                                              id="@($"{Model.GridId}_bulkCopyBtn")" data-bulkcopy-function="@Model.BulkCopyFunction">
+                            <i class="fa fa-copy"></i> @Model.BulkCopyButtonText
+                        </button>
+                    }
+                    @if (Model.AllowBulkDelete)
+                    {
+                        <button type="button" class="govuk-button govuk-button--warning sup_margin_0 sup_p_8"
+                                              id="@($"{Model.GridId}_bulkDeleteBtn")" data-bulkdelete-function="@Model.BulkDeleteFunction">
+                            <i class="fa fa-trash"></i> Delete All
+                        </button>
+                    }
+                </div>
             </div>
         </h2>
         <div class="grid-toolbar">
@@ -437,6 +453,53 @@
                 var customAddFn = $(this).data('add-function');
                 if (customAddFn && typeof window[customAddFn] === 'function') {
                     window[customAddFn](this);
+                }
+            });
+
+            // Helper: returns { ids: [...], isAll: bool }
+            // - If no checkbox column exists, treats every row as selected (isAll = true).
+            // - If the select-all checkbox is checked, or every individual checkbox is
+            //   checked, isAll = true and all row IDs are returned.
+            // - Otherwise only the IDs of checked rows are returned.
+            function getSelectedIds() {
+                var $checkboxes = $('#tbl_' + gridId + ' .row-checkbox');
+                var ids = [];
+
+                if ($checkboxes.length === 0) {
+                    $('#tbl_' + gridId + ' tbody tr').each(function () {
+                        ids.push($(this).data('id'));
+                    });
+                    return { ids: ids, isAll: true };
+                }
+
+                var $checked = $checkboxes.filter(':checked');
+                var isAll = $checkboxes.length === $checked.length;
+
+                if (isAll) {
+                    $('#tbl_' + gridId + ' tbody tr').each(function () {
+                        ids.push($(this).data('id'));
+                    });
+                } else {
+                    $checked.each(function () {
+                        ids.push($(this).closest('tr').data('id'));
+                    });
+                }
+                return { ids: ids, isAll: isAll };
+            }
+
+            // Bulk Copy button click
+            $('#' + gridId + '_bulkCopyBtn').on('click', function () {
+                var fn = $(this).data('bulkcopy-function');
+                if (fn && typeof window[fn] === 'function') {
+                    window[fn](getSelectedIds());
+                }
+            });
+
+            // Bulk Delete button click
+            $('#' + gridId + '_bulkDeleteBtn').on('click', function () {
+                var fn = $(this).data('bulkdelete-function');
+                if (fn && typeof window[fn] === 'function') {
+                    window[fn](getSelectedIds());
                 }
             });
 
