@@ -4,11 +4,11 @@ using Microsoft.AspNetCore.Razor.TagHelpers;
 namespace Apha.FPSApps.Web.TagHelpers
 {
     [HtmlTargetElement("fps-year-script")]
-    public class FPSYearScriptTagHelper : ITagHelper
+    public class FpsYearScriptTagHelper : ITagHelper
     {
-        private readonly IFPSYearContext _fy;
+        private readonly IFpsYearContext _fy;
 
-        public FPSYearScriptTagHelper(IFPSYearContext fy)
+        public FpsYearScriptTagHelper(IFpsYearContext fy)
         {
             _fy = fy;
         }

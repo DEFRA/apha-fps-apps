@@ -37,82 +37,102 @@
             </div>
         </div>
 
-        <!-- Filter and Grid section -->
-        <div class="govuk-grid-row">
-            <div class="govuk-grid-column-full mt-2">
-                <div class="" style="border-radius: 5px; justify-content: flex-start; margin-bottom: 10px; padding: 4px;">
-                    <div class="row">
-                        <div class="col-lg-7 align-items-center">
-                            <div class="row">
-                                <div class="col-lg-2">
-                                    <div class="govuk-radios govuk-radios--small" data-module="govuk-radios">
-                                        <div class="govuk-radios__item">
-                                            <input class="govuk-radios__input govuk-radios--small"
-                                                   id="staff-filter-all"
-                                                   name="staffFilter"
-                                                   type="radio"
-                                                   value="1"
-                                                   @(Model.FilterOption == 1 ? "checked" : "")
-                                                   onchange="filterStaffs(this)">
-                                            <label class="govuk-label govuk-radios__label" for="staff-filter-all">
-                                                All
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
+        <div class="row">
+            <div class="col-lg-12">
+                <main class="main-content" style="padding:0;">
+                    <div class="container-fluid " style="padding: 0;">
+                        <div class="row">
+                            <div class="container-fluid" style="padding-left:0px;">
+                                <div style="display: flex; flex-direction: row; align-items: flex-start;">
+                                    <!-- Side nav -->
+                                    @await Html.PartialAsync("_MaintenanceSideNav", "StaffMaintenance")
+                                    <div style="display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; margin: 0 0px 5px 8px;">                         
+                                        <!-- Filter and Grid section -->
+                                        <div class="govuk-grid-row">
+                                            <div class="govuk-grid-column-full mt-2">
+                                                <div class="" style="border-radius: 5px; justify-content: flex-start; margin-bottom: 10px; padding: 4px;">
+                                                    <div class="row">
+                                                        <div class="col-lg-7 align-items-center">
+                                                            <div class="row">
+                                                                <div class="col-lg-2">
+                                                                    <div class="govuk-radios govuk-radios--small" data-module="govuk-radios">
+                                                                        <div class="govuk-radios__item">
+                                                                            <input class="govuk-radios__input govuk-radios--small"
+                                                                                   id="staff-filter-all"
+                                                                                   name="staffFilter"
+                                                                                   type="radio"
+                                                                                   value="1"
+                                                                            @(Model.FilterOption == 1 ? "checked" : "")
+                                                                                   onchange="filterStaffs(this)">
+                                                                            <label class="govuk-label govuk-radios__label" for="staff-filter-all">
+                                                                                All
+                                                                            </label>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
 
-                                <div class="col-lg-4">
-                                    <div class="govuk-radios govuk-radios--small" data-module="govuk-radios">
-                                        <div class="govuk-radios__item">
-                                            <input class="govuk-radios__input"
-                                                   id="staff-filter-temp"
-                                                   name="staffFilter"
-                                                   type="radio"
-                                                   value="2"
-                                                   @(Model.FilterOption == 2 ? "checked" : "")
-                                                   onchange="filterStaffs(this)">
-                                            <label class="govuk-label govuk-radios__label" for="staff-filter-temp">
-                                                Temp Sp No.s only
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
+                                                                <div class="col-lg-4">
+                                                                    <div class="govuk-radios govuk-radios--small" data-module="govuk-radios">
+                                                                        <div class="govuk-radios__item">
+                                                                            <input class="govuk-radios__input"
+                                                                                   id="staff-filter-temp"
+                                                                                   name="staffFilter"
+                                                                                   type="radio"
+                                                                                   value="2"
+                                                                            @(Model.FilterOption == 2 ? "checked" : "")
+                                                                                   onchange="filterStaffs(this)">
+                                                                            <label class="govuk-label govuk-radios__label" for="staff-filter-temp">
+                                                                                Temp SP No.s only
+                                                                            </label>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
 
-                                <div class="col-lg-5 text-AlignRight">
-                                    <div class="govuk-radios govuk-radios--small" data-module="govuk-radios">
-                                        <div class="govuk-radios__item">
-                                            <input class="govuk-radios__input"
-                                                   id="staff-filter-grades"
-                                                   name="staffFilter"
-                                                   type="radio"
-                                                   value="3"
-                                                   @(Model.FilterOption == 3 ? "checked" : "")
-                                                   onchange="filterStaffs(this)">
-                                            <label class="govuk-label govuk-radios__label" for="staff-filter-grades">
-                                                Generic Grades Only
-                                            </label>
+                                                                <div class="col-lg-5 text-AlignRight">
+                                                                    <div class="govuk-radios govuk-radios--small" data-module="govuk-radios">
+                                                                        <div class="govuk-radios__item">
+                                                                            <input class="govuk-radios__input"
+                                                                                   id="staff-filter-grades"
+                                                                                   name="staffFilter"
+                                                                                   type="radio"
+                                                                                   value="3"
+                                                                            @(Model.FilterOption == 3 ? "checked" : "")
+                                                                                   onchange="filterStaffs(this)">
+                                                                            <label class="govuk-label govuk-radios__label" for="staff-filter-grades">
+                                                                                Generic Grades Only
+                                                                            </label>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-lg-5" style="text-align: right;">
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Grid Container -->
+                                                <div id="@($"gridContainer_{Model.StaffGrid.GridId}")">
+                                                    @await Html.PartialAsync("_DataGrid", Model.StaffGrid)
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-lg-5" style="text-align: right;">
-                        </div>
                     </div>
-                </div>
-
-                <!-- Grid Container -->
-                <div id="@($"gridContainer_{Model.StaffGrid.GridId}")">
-                    @await Html.PartialAsync("_DataGrid", Model.StaffGrid)
-                </div>
+                </main>
             </div>
-        </div>
+        </div>       
+
     </div>
 </main>
 
 @section Scripts {
+    <script src="~/js/ajax-form-validation.js"></script>
     <script>
-        var staffGridId = '@Model.StaffGrid.GridId';       
+        var staffGridId = '@Model.StaffGrid.GridId';
 
         // Get reference to the grid manager
         function getGridManager() {
@@ -189,25 +209,20 @@
 
         // Save staff plan (from modal)
         function savestaffplan() {
+            clearValidationErrors('#modaPopupBody');
             var form = $('#staffForm');
-
-            // Clear previous errors
-            // $('.govuk-error-summary').hide();
-            // $('.govuk-error-message').hide();
-            // $('.govuk-form-group').removeClass('govuk-form-group--error');
-            // $('.govuk-input, .govuk-select').removeClass('govuk-input--error');
 
             // Validate form
              if (!isFormValid(form)) {
-                displayClientValidationErrors(form);
+                 displayClientValidationErrors(form, '#modaPopupBody');
                 return;
              }
 
             var employeeData = {
-                SPNumber: $('#SPNumber').val(),  
-                LastName: $('#LastName').val(),  
+                SPNumber: $('#SPNumber').val(),
+                LastName: $('#LastName').val(),
                 FirstName: $('#FirstName').val(),
-                Title: $('#Title').val()         
+                Title: $('#Title').val()
             };
 
             // Check if it's edit mode using the hidden field
@@ -220,27 +235,25 @@
                 data: JSON.stringify(employeeData),
                 contentType: 'application/json',
                 success: function(response) {
-                    debugger;
                     if (response.success) {
                         alert(response.message);
                         closeModal();
                         window.location.reload();
                     } else {
                         // Show validation errors from server
-                        displayServerValidationErrors(result.errors, result.message);
+                        displayServerValidationErrors(response.errors, response.message, '#modaPopupBody')
                     }
                 },
                 error: function(xhr) {
                     if (xhr.status === 400 && xhr.responseJSON) {
-                        displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message);
+                        displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
                     } else {
                         alert('An error occurred while saving.');
                     }
                 }
             });
         }
-
-        // Display client-side validation errors
+        
           // Returns true if all required fields in the form have values
         function isFormValid(form) {
             var isValid = true;
@@ -252,98 +265,6 @@
             });
             return isValid;
         }
-
-        // Clears all validation highlighting and the error summary inside the modal
-        function clearValidationErrors() {
-            var errorSummary = $('.govuk-error-summary', '#modaPopupBody');
-            errorSummary.hide();
-            errorSummary.find('.govuk-error-summary__list').empty();
-
-            $('[name]', '#modaPopupBody').each(function () {
-                var $field = $(this);
-                $field.closest('.govuk-form-group').removeClass('govuk-form-group--error');
-                $field.removeClass('govuk-input--error');
-                $field.siblings('span[data-valmsg-for]').text('').hide();
-            });
-        }
-
-        // Client-side validation errors — reads from [required] fields inside the form        
-         function displayClientValidationErrors(form) {
-             var errorSummary = $('.govuk-error-summary', '#modaPopupBody');
-             var errorList = errorSummary.find('.govuk-error-summary__list');
-             var summaryTitle = errorSummary.find('.govuk-error-summary__title');
-
-             errorList.empty();
-             summaryTitle.text('There is a problem');
-             clearValidationErrors();
-
-             var errors = [];
-
-             form.find('[required]').each(function () {
-                 var $field = $(this);
-                 if (!$field.val() || $field.val().trim() === '') {
-                     var fieldName = $field.attr('name') || '';
-                     var label = $('label[for="' + fieldName + '"]', '#modaPopupBody').text().trim()
-                                 || fieldName;
-                     errors.push({ field: fieldName, message: label + ' is required' });
-                 }
-             });
-
-             if (errors.length > 0) {
-                 errors.forEach(function (error) {
-                     // Add to summary list
-                     errorList.append(
-                         '<li><a href="#' + error.field + '">' + error.message + '</a></li>'
-                     );
-
-                     // Highlight the matching field inside the modal
-                     var $field = $('[name="' + error.field + '"]', '#modaPopupBody');
-                     if ($field.length) {
-                         $field.closest('.govuk-form-group').addClass('govuk-form-group--error');
-                         $field.addClass('govuk-input--error');
-                         $field.siblings('span[data-valmsg-for]').text(error.message).show();
-                     }
-                 });
-
-                 errorSummary.show().focus();
-             } else {
-                 errorSummary.hide();
-             }
-         }
-
-         // Server-side validation errors — expects [{ field, message }]
-         function displayServerValidationErrors(errors, summaryMessage) {
-             var errorSummary = $('.govuk-error-summary', '#modaPopupBody');
-             var errorList = errorSummary.find('.govuk-error-summary__list');
-             var summaryTitle = errorSummary.find('.govuk-error-summary__title');
-
-             errorList.empty();
-             summaryTitle.text(summaryMessage || 'There is a problem');
-
-             if (errors && errors.length > 0) {
-                 errors.forEach(function (error) {
-                     var fieldName = error.field || '';
-                     var message   = error.message || 'Validation error';
-
-                     // Add to summary list
-                     errorList.append(
-                         '<li><a href="#' + fieldName + '">' + message + '</a></li>'
-                     );
-
-                     // Highlight the matching field inside the modal
-                     var $field = $('[name="' + fieldName + '"]', '#modaPopupBody');
-                     if ($field.length) {
-                         $field.closest('.govuk-form-group').addClass('govuk-form-group--error');
-                         $field.addClass('govuk-input--error');
-                         $field.siblings('span[data-valmsg-for]').text(message).show();
-                     }
-                 });
-
-                 errorSummary.show().focus();
-             } else {
-                 errorSummary.hide();
-             }
-         }
         
          // Close modal
         function closeModal() {

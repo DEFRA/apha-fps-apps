@@ -27,6 +27,6 @@ namespace Apha.FPS.Core.Entities
 
         public string? EmailRecipient { get; set; }
 
-        public int? FpsCalYear { get; set; }
+        public int? FpsYear { get; set; }
     }
 }

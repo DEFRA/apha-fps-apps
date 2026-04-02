@@ -1,0 +1,76 @@
+@model Apha.FPSApps.Web.Areas.PACT.Models.JobCodeViewModel
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    var sourceJobCodeId = ViewBag.SourceJobCodeId as string ?? string.Empty;
+}
+
+<div class="modal-header flex-space-center">
+    <h3 class="govuk-heading-s" style="margin:0;" id="exampleModalLabel">Copy Project's Job Code</h3>
+    <button type="button" class="btn-close" onclick="$('#modalPopup').removeClass('show')">x</button>
+</div>
+
+<div class="modal-body" style="overflow:hidden; padding:0;">
+    <form id="formAddJobcode" class="govuk-grid-column-full">
+        <input type="hidden" id="sourceJobCode" name="sourceJobCode" value="@sourceJobCodeId" />
+
+        <!-- Job Code -->
+        <div class="govuk-form-group">
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="JobCodeId">Job code:</label>
+            <input type="text" class="govuk-input govuk-!-font-size-16" asp-for="JobCodeId" />
+            <span asp-validation-for="JobCodeId" class="govuk-error-message"></span>
+        </div>
+
+        <!-- Name / Description -->
+        <div class="govuk-form-group">
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="JobCodeName">Name:</label>
+            <textarea class="govuk-textarea govuk-!-font-size-16 sup_margin_0"
+                      asp-for="JobCodeName" rows="3"></textarea>
+        </div>
+
+        <!-- Type -->
+        <div class="govuk-form-group">
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="Type">Type:</label>
+            <select asp-for="Type" asp-items="ViewBag.Types"
+                    class="govuk-select govuk-!-font-size-16">
+                <option value="">--select--</option>
+            </select>
+        </div>
+
+        <!-- Work Group -->
+        <div class="govuk-form-group">
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="JobCodeWorkGroup">Work Group:</label>
+            <select asp-for="JobCodeWorkGroup"
+                    asp-items="@(ViewBag.WorkGroups as List<SelectListItem>)"
+                    class="govuk-select govuk-!-font-size-16">
+                <option value="">--select--</option>
+            </select>
+        </div>
+
+        <!-- Copy with Work group -->
+        <div class="govuk-checkboxes govuk-checkboxes--small" id="divCopywithworkgroup"
+             data-module="govuk-checkboxes">
+            <div class="govuk-checkboxes__item">
+                <input class="govuk-checkboxes__input govuk-!-font-size-16"
+                       id="chkcopywithworkgroup" name="chkcopywithworkgroup"
+                       type="checkbox" value="" checked
+                       aria-label="Checkbox for copy with Work group" />
+                <label class="govuk-label govuk-checkboxes__label sup_label_auto_width"
+                       for="chkcopywithworkgroup">
+                    Copy with Work group
+                </label>
+            </div>
+        </div>
+
+    </form>
+</div>
+
+<div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center; flex-direction:row;">
+    <button type="button" class="govuk-button govuk-button--secondary sup_margin_0"
+            data-module="govuk-button"
+            onclick="$('#modalPopup').removeClass('show')">Cancel</button>
+    <button type="button" class="govuk-button sup_margin_0"
+            data-module="govuk-button" id="modalcopySaveBtn"
+            onclick="executeCopyJobCode()">Save Copy
+    </button>
+</div>

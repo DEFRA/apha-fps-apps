@@ -13,5 +13,6 @@ namespace Apha.FPS.Core.Interfaces
         Task<Employee> UpdateEmployeeAsync(Employee employee);
         Task<bool> DeleteEmployeeAsync(string spNumber);
         Task<IEnumerable<Manager>> GetAllManagersAsync();
+        Task<IEnumerable<Manager>> GetAllPactManagersAsync();
     }
 }

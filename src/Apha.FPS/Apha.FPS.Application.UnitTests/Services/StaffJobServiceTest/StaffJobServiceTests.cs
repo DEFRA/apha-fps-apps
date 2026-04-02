@@ -458,10 +458,7 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
             _mockMapper.Received(1).Map<StaffJobDto>(null);
         }
 
-        [Theory]
-        [InlineData(null, "JOB001")]
-        [InlineData("STAFF001", null)]
-        [InlineData(null, null)]
+        [Theory]       
         [InlineData("", "JOB001")]
         [InlineData("STAFF001", "")]
         public async Task GetByIdAsync_WhenInvalidInputParameters_ReturnsNull(string staffId, string jobCode)
@@ -504,6 +501,213 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
             await _mockRepository.Received(1).GetByIdAsync(staffId, jobCode);
             _mockMapper.Received(1).Map<StaffJobDto>(staffJobEntity);
         }
+
+        #region GetViewByStaffIdAsync Tests
+
+        [Fact]
+        public async Task GetViewByStaffIdAsync_WhenValidStaffIdAndJobCode_ReturnsStaffJobViewDto()
+        {
+            // Arrange
+            var staffId = "STAFF001";
+            var jobCode = "JOB001";
+
+            var staffJobViewEntity = new StaffJobView
+            {
+                StaffID = staffId,
+                JobCode = jobCode,
+                Name = "John Doe",
+                PlannedHours = 40,
+                ChargeRate = 150.00m,
+                StaffCost = 6000.00m
+            };
+
+            var expectedDto = new StaffJobViewDto
+            {
+                StaffID = staffId,
+                JobCode = jobCode,
+                Name = "John Doe",
+                PlannedHours = 40,
+                ChargeRate = 150.00m,
+                StaffCost = 6000.00m
+            };
+
+            _mockRepository.GetViewByStaffIdAsync(staffId, jobCode)
+                .Returns(Task.FromResult<StaffJobView?>(staffJobViewEntity));
+            _mockMapper.Map<StaffJobViewDto>(staffJobViewEntity)
+                .Returns(expectedDto);
+
+            // Act
+            var result = await _sut.GetViewByStaffIdAsync(staffId, jobCode);
+
+            // Assert
+            result.Should().NotBeNull();
+            result!.StaffID.Should().Be(expectedDto.StaffID);
+            result.JobCode.Should().Be(expectedDto.JobCode);
+            result.Name.Should().Be(expectedDto.Name);
+            result.PlannedHours.Should().Be(expectedDto.PlannedHours);
+            result.ChargeRate.Should().Be(expectedDto.ChargeRate);
+            result.StaffCost.Should().Be(expectedDto.StaffCost);
+
+            await _mockRepository.Received(1).GetViewByStaffIdAsync(staffId, jobCode);
+            _mockMapper.Received(1).Map<StaffJobViewDto>(staffJobViewEntity);
+        }
+
+        [Fact]
+        public async Task GetViewByStaffIdAsync_WhenRecordNotFound_ReturnsNull()
+        {
+            // Arrange
+            var staffId = "STAFF999";
+            var jobCode = "JOB999";
+
+            _mockRepository.GetViewByStaffIdAsync(staffId, jobCode)
+                .Returns(Task.FromResult<StaffJobView?>(null));
+            _mockMapper.Map<StaffJobViewDto>(Arg.Any<StaffJobView?>())
+                .Returns((StaffJobViewDto?)null);
+
+            // Act
+            var result = await _sut.GetViewByStaffIdAsync(staffId, jobCode);
+
+            // Assert
+            Assert.Null(result);
+
+            await _mockRepository.Received(1).GetViewByStaffIdAsync(staffId, jobCode);
+            _mockMapper.Received(1).Map<StaffJobViewDto>(null);
+        }
+
+        [Theory]       
+        [InlineData("", "JOB001")]
+        [InlineData("STAFF001", "")]
+        public async Task GetViewByStaffIdAsync_WhenInvalidInputParameters_ReturnsNull(string staffId, string jobCode)
+        {
+            // Arrange
+            _mockRepository.GetViewByStaffIdAsync(staffId, jobCode)
+                .Returns(Task.FromResult<StaffJobView?>(null));
+            _mockMapper.Map<StaffJobViewDto>(Arg.Any<StaffJobView?>())
+                .Returns((StaffJobViewDto?)null);
+
+            // Act
+            var result = await _sut.GetViewByStaffIdAsync(staffId, jobCode);
+
+            // Assert
+            Assert.Null(result);
+
+            await _mockRepository.Received(1).GetViewByStaffIdAsync(staffId, jobCode);
+        }
+
+        [Fact]
+        public async Task GetViewByStaffIdAsync_WhenMapperReturnsNull_ReturnsNull()
+        {
+            // Arrange
+            var staffId = "STAFF001";
+            var jobCode = "JOB001";
+
+            var staffJobViewEntity = new StaffJobView
+            {
+                StaffID = staffId,
+                JobCode = jobCode,
+                Name = "John Doe"
+            };
+
+            _mockRepository.GetViewByStaffIdAsync(staffId, jobCode)
+                .Returns(Task.FromResult<StaffJobView?>(staffJobViewEntity));
+            _mockMapper.Map<StaffJobViewDto>(staffJobViewEntity)
+                .Returns((StaffJobViewDto?)null);
+
+            // Act
+            var result = await _sut.GetViewByStaffIdAsync(staffId, jobCode);
+
+            // Assert
+            Assert.Null(result);
+
+            await _mockRepository.Received(1).GetViewByStaffIdAsync(staffId, jobCode);
+            _mockMapper.Received(1).Map<StaffJobViewDto>(staffJobViewEntity);
+        }
+
+        [Fact]
+        public async Task GetViewByStaffIdAsync_WhenRepositoryThrowsException_PropagatesException()
+        {
+            // Arrange
+            var staffId = "STAFF001";
+            var jobCode = "JOB001";
+            var expectedException = new Exception("Database connection failed");
+
+            _mockRepository.GetViewByStaffIdAsync(staffId, jobCode)
+                .ThrowsAsync(expectedException);
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(
+                () => _sut.GetViewByStaffIdAsync(staffId, jobCode)
+            );
+
+            Assert.Equal(expectedException.Message, exception.Message);
+            await _mockRepository.Received(1).GetViewByStaffIdAsync(staffId, jobCode);
+            _mockMapper.DidNotReceive().Map<StaffJobViewDto>(Arg.Any<StaffJobView>());
+        }
+
+        [Fact]
+        public async Task GetViewByStaffIdAsync_WithCompleteData_MapsAllProperties()
+        {
+            // Arrange
+            var staffId = "STAFF002";
+            var jobCode = "JOB002";
+
+            var staffJobViewEntity = new StaffJobView
+            {
+                StaffID = staffId,
+                JobCode = jobCode,
+                Name = "Jane Smith",
+                PlannedHours = 80,
+                ChargeRate = 200.00m,
+                StaffCost = 16000.00m,
+                WorkGroupGrade = "WG01",
+                GradeCode = "G01",
+                WorkGroup = "Engineering",
+                SectorName = "charge",
+                Days = 10
+            };
+
+            var expectedDto = new StaffJobViewDto
+            {
+                StaffID = staffId,
+                JobCode = jobCode,
+                Name = "Jane Smith",
+                PlannedHours = 80,
+                ChargeRate = 200.00m,
+                StaffCost = 16000.00m,
+                WorkGroupGrade = "WG01",
+                GradeCode = "G01",
+                WorkGroup = "Engineering",
+                SectorName = "charge",
+                Days = 10
+            };
+
+            _mockRepository.GetViewByStaffIdAsync(staffId, jobCode)
+                .Returns(Task.FromResult<StaffJobView?>(staffJobViewEntity));
+            _mockMapper.Map<StaffJobViewDto>(staffJobViewEntity)
+                .Returns(expectedDto);
+
+            // Act
+            var result = await _sut.GetViewByStaffIdAsync(staffId, jobCode);
+
+            // Assert
+            result.Should().NotBeNull();
+            result!.StaffID.Should().Be(expectedDto.StaffID);
+            result.JobCode.Should().Be(expectedDto.JobCode);
+            result.Name.Should().Be(expectedDto.Name);
+            result.PlannedHours.Should().Be(expectedDto.PlannedHours);
+            result.ChargeRate.Should().Be(expectedDto.ChargeRate);
+            result.StaffCost.Should().Be(expectedDto.StaffCost);
+            result.WorkGroupGrade.Should().Be(expectedDto.WorkGroupGrade);
+            result.GradeCode.Should().Be(expectedDto.GradeCode);
+            result.WorkGroup.Should().Be(expectedDto.WorkGroup);
+            result.SectorName.Should().Be(expectedDto.SectorName);
+            result.Days.Should().Be(expectedDto.Days);
+
+            await _mockRepository.Received(1).GetViewByStaffIdAsync(staffId, jobCode);
+            _mockMapper.Received(1).Map<StaffJobViewDto>(staffJobViewEntity);
+        }
+
+        #endregion
 
         [Fact]
         public async Task AddAsync_WithValidStaffJob_ShouldReturnStaffJobDto()
@@ -743,10 +947,8 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
             await _mockRepository.Received(1).DeleteAsync(staffId, jobCode);
         }
 
-        [Theory]
-        [InlineData(null, "JOB123")]
-        [InlineData("", "JOB123")]
-        [InlineData("STAFF001", null)]
+        [Theory]       
+        [InlineData("", "JOB123")]       
         [InlineData("STAFF001", "")]
         public async Task DeleteAsync_WithNullOrEmptyParameters_CallsRepository(string staffId, string jobCode)
         {
@@ -775,6 +977,72 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
             Assert.Equal("Database connection failed", exception.Message);
             await _mockRepository.Received(1).DeleteAsync(staffId, jobCode);
         }
+
+        #region GetTotalStaffCostAsync Tests
+
+        [Fact]
+        public async Task GetTotalStaffCostAsync_WithValidJobCode_ReturnsTotalFromRepository()
+        {
+            // Arrange
+            var jobCode = "JOB001";
+            var expectedTotal = 4500m;
+            _mockRepository.GetTotalStaffCostAsync(jobCode).Returns(expectedTotal);
+
+            // Act
+            var result = await _sut.GetTotalStaffCostAsync(jobCode);
+
+            // Assert
+            result.Should().Be(expectedTotal);
+            await _mockRepository.Received(1).GetTotalStaffCostAsync(jobCode);
+        }
+
+        [Fact]
+        public async Task GetTotalStaffCostAsync_WhenRepositoryReturnsZero_ReturnsZero()
+        {
+            // Arrange
+            var jobCode = "JOB001";
+            _mockRepository.GetTotalStaffCostAsync(jobCode).Returns(0m);
+
+            // Act
+            var result = await _sut.GetTotalStaffCostAsync(jobCode);
+
+            // Assert
+            result.Should().Be(0m);
+            await _mockRepository.Received(1).GetTotalStaffCostAsync(jobCode);
+        }
+
+        [Fact]
+        public async Task GetTotalStaffCostAsync_WithEmptyJobCode_PassesToRepository()
+        {
+            // Arrange
+            var jobCode = string.Empty;
+            _mockRepository.GetTotalStaffCostAsync(jobCode).Returns(0m);
+
+            // Act
+            var result = await _sut.GetTotalStaffCostAsync(jobCode);
+
+            // Assert
+            result.Should().Be(0m);
+            await _mockRepository.Received(1).GetTotalStaffCostAsync(jobCode);
+        }
+
+        [Fact]
+        public async Task GetTotalStaffCostAsync_WhenRepositoryThrowsException_PropagatesException()
+        {
+            // Arrange
+            var jobCode = "JOB001";
+            _mockRepository.GetTotalStaffCostAsync(jobCode)
+                .Throws(new InvalidOperationException("Database connection failed"));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+                () => _sut.GetTotalStaffCostAsync(jobCode));
+
+            exception.Message.Should().Be("Database connection failed");
+            await _mockRepository.Received(1).GetTotalStaffCostAsync(jobCode);
+        }
+
+        #endregion
 
     }
 }

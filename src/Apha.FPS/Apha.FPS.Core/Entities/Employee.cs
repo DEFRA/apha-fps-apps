@@ -10,6 +10,6 @@
 
         public string? Title { get; set; }
 
-        public int? FPSCalYear { get; set; }
+        public int? FpsYear { get; set; }
     }
 }
