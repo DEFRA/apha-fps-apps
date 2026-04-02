@@ -14,6 +14,11 @@
         public bool AllowEdit { get; set; }
         public bool AllowDelete { get; set; }
         public bool AllowRowSelection { get; set; }
+        public bool AllowBulkCopy { get; set; }
+        public bool AllowBulkDelete { get; set; }
+        public string BulkCopyButtonText { get; set; } = "Copy";
+        public string BulkCopyFunction { get; set; } = string.Empty;
+        public string BulkDeleteFunction { get; set; } = string.Empty;
         public string RowSelectFunction { get; set; } = string.Empty;
         public string AddFunction { get; set; } = string.Empty;
         public string CopyFunction { get; set; } = string.Empty;
@@ -36,6 +41,8 @@
             AllowEdit = true;
             AllowDelete = true;
             AllowRowSelection = false;
+            AllowBulkCopy = false;
+            AllowBulkDelete = false;
         }
     }
 }

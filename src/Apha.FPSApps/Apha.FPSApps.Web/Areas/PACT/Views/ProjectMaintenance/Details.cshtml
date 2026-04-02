@@ -551,6 +551,7 @@
         }       
 
         function executeCopyJobCode() {
+            debugger;
             var jobCodeId = $('#JobCodeId').val();
             if (!jobCodeId) { alert('Please enter a Job Code.'); return; }
             var data = {
@@ -581,6 +582,170 @@
                 },
                 error: function () { alert('An error occurred while copying.'); }
             });
+        }
+
+        // ── Bulk Copy Work Group ──────────────────────────────────────────────
+
+        function copyBulkWorkGroup(selection) {
+            if (!selectedJobCodeId) { alert('Please select a job code first.'); return; }
+            if (!selection || !selection.ids || selection.ids.length === 0) {
+                alert('Please select at least one time code row to copy.'); return;
+            }
+
+            $.get('/PACT/ProjectMaintenance/CopyWorkGroupPartial',
+                { parentProject: decodeURIComponent(parentProject), sourceJobCodeId: selectedJobCodeId },
+                function (html) {
+                    $('#modaPopupBody').html(html);
+
+                    if (selection.isAll) {
+                        // All pages selected — backend will copy every work group
+                        $('#cwg_isAll').val('true');
+                        $('#cwg_workGroupsHidden').empty();
+                    } else {
+                        // Only the checked rows on the current page
+                        $('#cwg_isAll').val('false');
+                        var container = $('#cwg_workGroupsHidden').empty();
+                        $('#tbl_' + timeCodeGridId + ' tbody tr').each(function () {
+                            if ($(this).find('.row-checkbox').is(':checked')) {
+                                var wg = $(this).find('[data-property="WorkGroup"] span').text().trim();
+                                if (wg) {
+                                    container.append(
+                                        '<input type="hidden" class="cwg-wg" value="' +
+                                        $('<div>').text(wg).html() + '" />'
+                                    );
+                                }
+                            }
+                        });
+
+                        if (container.find('.cwg-wg').length === 0) {
+                            alert('No work groups found in selected rows.');
+                            $('#modalPopup').removeClass('show');
+                            return;
+                        }
+                    }
+
+                    $('#modalPopup').addClass('show');
+                });
+        }
+
+        function executeCopyBulkWorkGroup() {
+            var targetJobCode = $('#dpTargetJobcode').val();
+            var sourceJobCode = $('#cwg_sourceJobCode').val();
+            var pp            = $('#cwg_parentProject').val();
+            var isAll         = $('#cwg_isAll').val() === 'true';
+
+            if (!targetJobCode) { alert('Please select a target job code.'); return; }
+
+            if (isAll) {
+                // Copy every work group across all pages using the simple copy endpoint
+                $.ajax({
+                    url: '/PACT/ProjectMaintenance/CopyAllJobCodeWorkGroups',
+                    type: 'POST',
+                    data: { parentProject: pp, sourceJobCodeId: sourceJobCode, targetJobCodeId: targetJobCode },
+                    success: function (response) {
+                        if (response.success) {
+                            alert('All work groups copied successfully.');
+                            $('#modalPopup').removeClass('show');
+                            reloadTimeCodeGrid(selectedJobCodeId);
+                        } else {
+                            alert('Error: ' + (response.message || 'Copy failed.'));
+                        }
+                    },
+                    error: function () { alert('An error occurred while copying.'); }
+                });
+            } else {
+                // Copy only the selected work groups
+                var workGroups = [];
+                $('#cwg_workGroupsHidden .cwg-wg').each(function () {
+                    workGroups.push($(this).val());
+                });
+
+                if (workGroups.length === 0) { alert('No work groups to copy.'); return; }
+
+                $.ajax({
+                    url: '/PACT/ProjectMaintenance/CopyBulkWorkGroup',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        parentProject:   pp,
+                        sourceJobCodeId: sourceJobCode,
+                        targetJobCodeId: targetJobCode,
+                        workGroups:      workGroups
+                    }),
+                    success: function (response) {
+                        if (response.success) {
+                            alert('Work group(s) copied successfully.');
+                            $('#modalPopup').removeClass('show');
+                            reloadTimeCodeGrid(selectedJobCodeId);
+                        } else {
+                            alert('Error: ' + (response.message || 'Copy failed.'));
+                        }
+                    },
+                    error: function () { alert('An error occurred while copying.'); }
+                });
+            }
+        }
+
+        // ── Bulk Delete Time Codes ────────────────────────────────────────────
+
+        function deleteBulkTimeCode(selection) {
+            if (!selectedJobCodeId) { alert('Please select a job code first.'); return; }
+            if (!selection || !selection.ids || selection.ids.length === 0) {
+                alert('Please select at least one time code row to delete.'); return;
+            }
+
+            if (selection.isAll) {
+                // Select-all across pages — delete every time code for this job code
+                if (!confirm('Delete ALL time codes for job code "' + selectedJobCodeId + '"?')) return;
+
+                $.ajax({
+                    url: '/PACT/ProjectMaintenance/DeleteAllJobCodeTimeCodes',
+                    type: 'POST',
+                    data: { parentProject: decodeURIComponent(parentProject), jobCodeId: selectedJobCodeId },
+                    success: function (response) {
+                        if (response.success) {
+                            alert('All time codes deleted successfully.');
+                            reloadTimeCodeGrid(selectedJobCodeId);
+                        } else {
+                            alert('Error: ' + (response.message || 'Delete failed.'));
+                        }
+                    },
+                    error: function () { alert('An error occurred while deleting.'); }
+                });
+            } else {
+                // Delete only the checked rows on the current page
+                var items = [];
+                $('#tbl_' + timeCodeGridId + ' tbody tr').each(function () {
+                    if ($(this).find('.row-checkbox').is(':checked')) {
+                        var timeCode = String($(this).data('id'));
+                        var wg       = $(this).find('[data-property="WorkGroup"] span').text().trim();
+                        if (wg && timeCode) items.push({ workGroup: wg, timeCode: timeCode });
+                    }
+                });
+
+                if (items.length === 0) { alert('No rows selected for deletion.'); return; }
+
+                if (!confirm('Delete ' + items.length + ' selected time code(s)?')) return;
+
+                $.ajax({
+                    url: '/PACT/ProjectMaintenance/DeleteBulkTimeCode',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        parentProject: decodeURIComponent(parentProject),
+                        items: items
+                    }),
+                    success: function (response) {
+                        if (response.success) {
+                            alert(items.length + ' time code(s) deleted successfully.');
+                            reloadTimeCodeGrid(selectedJobCodeId);
+                        } else {
+                            alert('Error: ' + (response.message || 'Delete failed.'));
+                        }
+                    },
+                    error: function () { alert('An error occurred while deleting.'); }
+                });
+            }
         }
     </script>
 }

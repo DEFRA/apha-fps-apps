@@ -90,5 +90,21 @@ namespace Apha.PACT.Api.Controllers
             var items = await _service.CopyWorkGroupAsync(sourceJobCode, targetJobCode, parentProject);
             return Ok(_mapper.Map<IEnumerable<TimeCodeValidRes>>(items));
         }
+
+        [HttpPost("deletebulk")]
+        public async Task<IActionResult> DeleteBulk([FromBody] BulkDeleteTimeCodeReq request)
+        {
+            var items = request.Items.Select(i => (i.WorkGroup, i.TimeCode));
+            var result = await _service.DeleteBulkAsync(items, request.ParentProject);
+            return Ok(result);
+        }
+
+        [HttpPost("copybulkworkgroups")]
+        public async Task<IActionResult> CopyBulkWorkGroups([FromBody] BulkCopyWorkGroupReq request)
+        {
+            var items = await _service.CopySelectedWorkGroupsAsync(
+                request.WorkGroups, request.SourceJobCode, request.TargetJobCode, request.ParentProject);
+            return Ok(_mapper.Map<IEnumerable<TimeCodeValidRes>>(items));
+        }
     }
 }

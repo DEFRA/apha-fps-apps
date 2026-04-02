@@ -132,6 +132,58 @@ namespace Apha.PACT.DataAccess.Repository
             return copies;
         }
 
+        public async Task<bool> DeleteBulkAsync(IEnumerable<(string WorkGroup, string TimeCode)> items, string parentProject)
+        {
+            var itemList = items.ToList();
+            var workGroups = itemList.Select(i => i.WorkGroup).ToList();
+            var timeCodes = itemList.Select(i => i.TimeCode).ToList();
+
+            var entities = await _context.TimeCodeValids
+                .Where(t => t.ParentProject == parentProject &&
+                            t.FpsYear == _fpsYearContext.FPSYear &&
+                            workGroups.Contains(t.WorkGroup) &&
+                            timeCodes.Contains(t.TimeCode))
+                .ToListAsync();
+
+            // Filter to exact (WorkGroup, TimeCode) pairs
+            var toDelete = entities
+                .Where(e => itemList.Any(i => i.WorkGroup == e.WorkGroup && i.TimeCode == e.TimeCode))
+                .ToList();
+
+            if (toDelete.Count != 0)
+            {
+                _context.TimeCodeValids.RemoveRange(toDelete);
+                await _context.SaveChangesAsync();
+            }
+            return true;
+        }
+
+        public async Task<IEnumerable<TimeCodeValid>> CopySelectedWorkGroupsAsync(
+            IEnumerable<string> workGroups, string sourceJobCode, string targetJobCode, string parentProject)
+        {
+            var workGroupList = workGroups.ToList();
+            var sourceEntries = await _context.TimeCodeValids
+                .AsNoTracking()
+                .Where(t => t.JobCode == sourceJobCode &&
+                            t.ParentProject == parentProject &&
+                            workGroupList.Contains(t.WorkGroup))
+                .ToListAsync();
+
+            var copies = sourceEntries.Select(s => new TimeCodeValid
+            {
+                TimeCode = targetJobCode,
+                WorkGroup = s.WorkGroup,
+                ParentProject = parentProject,
+                JobCode = targetJobCode,
+                Active = s.Active,
+                FpsYear = _fpsYearContext.FPSYear
+            }).ToList();
+
+            await _context.TimeCodeValids.AddRangeAsync(copies);
+            await _context.SaveChangesAsync();
+            return copies;
+        }
+
         private static IQueryable<TimeCodeValid> ApplyTimeCodeFilter(IQueryable<TimeCodeValid> queryTimeCode, string? filter)
         {
             if (string.IsNullOrEmpty(filter))

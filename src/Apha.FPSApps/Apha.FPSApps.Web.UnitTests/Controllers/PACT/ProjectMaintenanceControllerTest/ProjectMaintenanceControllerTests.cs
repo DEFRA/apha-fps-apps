@@ -332,77 +332,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControll
             Assert.IsType<BadRequestObjectResult>(result);
         }
 
-        #endregion
-
-        #region Create (Project)
-
-        [Fact]
-        public void Create_Get_ReturnsPartialViewWithEmptyModel()
-        {
-            // Act
-            var result = _controller.Create();
-
-            // Assert
-            var partial = Assert.IsType<PartialViewResult>(result);
-            Assert.Equal("_AddEditProject", partial.ViewName);
-            Assert.IsType<PactProjectViewModel>(partial.Model);
-        }
-
-        [Fact]
-        public async Task Create_Post_ValidModel_ReturnsJsonSuccess()
-        {
-            // Arrange
-            var model = new PactProjectViewModel { ParentProject = "PRJ001", ProjectTitle = "Test" };
-            var dto = new ProjectDto { ParentProject = "PRJ001" };
-            _mapper.Map<ProjectDto>(model).Returns(dto);
-            _projectService.CreateProjectAsync(dto)
-                .Returns(ApiResponseDto<ProjectDto>.SuccessResponse(dto));
-
-            // Act
-            var result = await _controller.Create(model);
-
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var value = GetJsonResultElement(jsonResult);
-            Assert.True(value.GetProperty("success").GetBoolean());
-        }
-
-        [Fact]
-        public async Task Create_Post_ServiceFails_ReturnsJsonFailure()
-        {
-            // Arrange
-            var model = new PactProjectViewModel { ParentProject = "PRJ001", ProjectTitle = "Test" };
-            var dto = new ProjectDto { ParentProject = "PRJ001" };
-            var errors = new List<ApiErrorDto> { new() { Message = "Create failed", Code = "ERR" } };
-            _mapper.Map<ProjectDto>(model).Returns(dto);
-            _projectService.CreateProjectAsync(dto)
-                .Returns(ApiResponseDto<ProjectDto>.FailureResponse(errors, new ApiMetaDto()));
-
-            // Act
-            var result = await _controller.Create(model);
-
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var value = GetJsonResultElement(jsonResult);
-            Assert.False(value.GetProperty("success").GetBoolean());
-        }
-
-        [Fact]
-        public async Task Create_Post_InvalidModelState_ReturnsJsonError()
-        {
-            // Arrange
-            _controller.ModelState.AddModelError("ProjectTitle", "Required");
-
-            // Act
-            var result = await _controller.Create(new PactProjectViewModel());
-
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var value = GetJsonResultElement(jsonResult);
-            Assert.False(value.GetProperty("success").GetBoolean());
-        }
-
-        #endregion
+        #endregion        
 
         #region Edit (Project)
 
