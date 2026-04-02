@@ -189,13 +189,7 @@
 
         // Save staff plan (from modal)
         function savestaffplan() {
-            var form = $('#staffForm');
-
-            // Clear previous errors
-            // $('.govuk-error-summary').hide();
-            // $('.govuk-error-message').hide();
-            // $('.govuk-form-group').removeClass('govuk-form-group--error');
-            // $('.govuk-input, .govuk-select').removeClass('govuk-input--error');
+            var form = $('#staffForm');           
 
             // Validate form
              if (!isFormValid(form)) {
@@ -219,8 +213,7 @@
                 type: 'POST',
                 data: JSON.stringify(employeeData),
                 contentType: 'application/json',
-                success: function(response) {
-                    debugger;
+                success: function(response) {                   
                     if (response.success) {
                         alert(response.message);
                         closeModal();
