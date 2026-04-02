@@ -13,5 +13,7 @@ namespace Apha.FPSApps.Application.Interfaces
         Task<ApiResponseDto<bool>> DeleteTimeCodeValidAsync(string workGroup, string timeCode, string parentProject);
         Task<ApiResponseDto<bool>> DeleteAllByJobCodeAsync(string jobCode, string parentProject);
         Task<ApiResponseDto<List<TimeCodeValidDto>>> CopyWorkGroupAsync(string sourceJobCode, string targetJobCode, string parentProject);
+        Task<ApiResponseDto<bool>> DeleteBulkAsync(BulkDeleteTimeCodeRequestDto request);
+        Task<ApiResponseDto<List<TimeCodeValidDto>>> CopySelectedWorkGroupsAsync(BulkCopyWorkGroupRequestDto request);
     }
 }

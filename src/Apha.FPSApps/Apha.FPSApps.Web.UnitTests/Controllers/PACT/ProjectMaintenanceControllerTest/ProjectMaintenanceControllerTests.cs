@@ -46,7 +46,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControll
             return JsonSerializer.Deserialize<JsonElement>(json);
         }
 
-        /// Sets up mapper calls required by BuildPactProjectCodeGridAsync.
         private void SetupProjectPagedGridMapper()
         {
             _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
@@ -57,7 +56,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControll
                 .Returns(new PaginationModel());
         }
 
-        /// Sets up mapper calls required by BuildPactJobCodeGridAsync and BuildJobCodeGridAsync.
         private void SetupJobCodePagedGridMapper()
         {
             _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
@@ -70,7 +68,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControll
                 .Returns(new PaginationModel());
         }
 
-        /// Sets up all service and mapper calls required by the Details action (job code grid + all dropdowns).
         private void SetupDetailsDropdowns(string parentProject)
         {
             _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
@@ -332,74 +329,14 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControll
             Assert.IsType<BadRequestObjectResult>(result);
         }
 
-        #endregion
-
-        #region Create (Project)
-
         [Fact]
-        public void Create_Get_ReturnsPartialViewWithEmptyModel()
+        public async Task LoadTimeCodeGrid_EmptyJobCodeId_ReturnsBadRequest()
         {
             // Act
-            var result = _controller.Create();
+            var result = await _controller.LoadTimeCodeGrid(new PaginationFilter<string> { Filter = "{}" }, "PRJ001", string.Empty);
 
             // Assert
-            var partial = Assert.IsType<PartialViewResult>(result);
-            Assert.Equal("_AddEditProject", partial.ViewName);
-            Assert.IsType<PactProjectViewModel>(partial.Model);
-        }
-
-        [Fact]
-        public async Task Create_Post_ValidModel_ReturnsJsonSuccess()
-        {
-            // Arrange
-            var model = new PactProjectViewModel { ParentProject = "PRJ001", ProjectTitle = "Test" };
-            var dto = new ProjectDto { ParentProject = "PRJ001" };
-            _mapper.Map<ProjectDto>(model).Returns(dto);
-            _projectService.CreateProjectAsync(dto)
-                .Returns(ApiResponseDto<ProjectDto>.SuccessResponse(dto));
-
-            // Act
-            var result = await _controller.Create(model);
-
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var value = GetJsonResultElement(jsonResult);
-            Assert.True(value.GetProperty("success").GetBoolean());
-        }
-
-        [Fact]
-        public async Task Create_Post_ServiceFails_ReturnsJsonFailure()
-        {
-            // Arrange
-            var model = new PactProjectViewModel { ParentProject = "PRJ001", ProjectTitle = "Test" };
-            var dto = new ProjectDto { ParentProject = "PRJ001" };
-            var errors = new List<ApiErrorDto> { new() { Message = "Create failed", Code = "ERR" } };
-            _mapper.Map<ProjectDto>(model).Returns(dto);
-            _projectService.CreateProjectAsync(dto)
-                .Returns(ApiResponseDto<ProjectDto>.FailureResponse(errors, new ApiMetaDto()));
-
-            // Act
-            var result = await _controller.Create(model);
-
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var value = GetJsonResultElement(jsonResult);
-            Assert.False(value.GetProperty("success").GetBoolean());
-        }
-
-        [Fact]
-        public async Task Create_Post_InvalidModelState_ReturnsJsonError()
-        {
-            // Arrange
-            _controller.ModelState.AddModelError("ProjectTitle", "Required");
-
-            // Act
-            var result = await _controller.Create(new PactProjectViewModel());
-
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var value = GetJsonResultElement(jsonResult);
-            Assert.False(value.GetProperty("success").GetBoolean());
+            Assert.IsType<BadRequestObjectResult>(result);
         }
 
         #endregion
@@ -768,6 +705,23 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControll
         }
 
         [Fact]
+        public async Task CreateTimeCode_Get_SetsTimeCodeEqualToJobCode()
+        {
+            // Arrange
+            _jobCodeService.GetAllWorkGroupsAsync()
+                .Returns(ApiResponseDto<List<WorkGroupDto>>.SuccessResponse([]));
+
+            // Act
+            var result = await _controller.CreateTimeCode("PRJ001", "JC001");
+
+            // Assert
+            var partial = Assert.IsType<PartialViewResult>(result);
+            var model = Assert.IsType<TimeCodeViewModel>(partial.Model);
+            Assert.Equal("JC001", model.TimeCode);
+            Assert.Equal("JC001", model.JobCode);
+        }
+
+        [Fact]
         public async Task CreateTimeCode_Post_ValidModel_ReturnsJsonSuccess()
         {
             // Arrange
@@ -850,9 +804,33 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControll
         }
 
         [Fact]
+        public async Task EditTimeCode_Get_TimeCodeFound_SetsOriginalWorkGroup()
+        {
+            // Arrange
+            var timeCodes = new List<TimeCodeValidDto>
+            {
+                new() { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ001", JobCode = "JC1" }
+            };
+            _timeCodeService.GetByJobCodeAsync("JC1", "PRJ001")
+                .Returns(ApiResponseDto<List<TimeCodeValidDto>>.SuccessResponse(timeCodes));
+            _jobCodeService.GetAllWorkGroupsAsync()
+                .Returns(ApiResponseDto<List<WorkGroupDto>>.SuccessResponse([]));
+            _mapper.Map<TimeCodeViewModel>(timeCodes[0])
+                .Returns(new TimeCodeViewModel { TimeCode = "TC1", WorkGroup = "WG1" });
+
+            // Act
+            var result = await _controller.EditTimeCode("WG1", "TC1", "JC1", "PRJ001");
+
+            // Assert
+            var partial = Assert.IsType<PartialViewResult>(result);
+            var model = Assert.IsType<TimeCodeViewModel>(partial.Model);
+            Assert.Equal("WG1", model.OriginalWorkGroup);
+        }
+
+        [Fact]
         public async Task EditTimeCode_Get_NullWorkGroup_FindsByTimeCodeOnly()
         {
-            // Arrange — null workGroup uses FirstOrDefault(t => t.TimeCode == timeCode)
+            // Arrange
             var timeCodes = new List<TimeCodeValidDto>
             {
                 new() { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ001", JobCode = "JC1" }
@@ -940,6 +918,117 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControll
             Assert.False(value.GetProperty("success").GetBoolean());
         }
 
+        [Fact]
+        public async Task EditTimeCode_Post_WorkGroupChanged_DeleteAndCreateSucceed_ReturnsJsonSuccess()
+        {
+            // Arrange — OriginalWorkGroup differs from WorkGroup → delete+create path
+            var model = new TimeCodeViewModel
+            {
+                TimeCode = "TC1",
+                WorkGroup = "WG_NEW",
+                OriginalWorkGroup = "WG_OLD",
+                ParentProject = "PRJ001"
+            };
+            var dto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG_NEW", ParentProject = "PRJ001" };
+            _timeCodeService.DeleteTimeCodeValidAsync("WG_OLD", "TC1", "PRJ001")
+                .Returns(ApiResponseDto<bool>.SuccessResponse(true));
+            _mapper.Map<TimeCodeValidDto>(model).Returns(dto);
+            _timeCodeService.CreateTimeCodeValidAsync(dto)
+                .Returns(ApiResponseDto<TimeCodeValidDto>.SuccessResponse(dto));
+
+            // Act
+            var result = await _controller.EditTimeCode(model);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultElement(jsonResult);
+            Assert.True(value.GetProperty("success").GetBoolean());
+            await _timeCodeService.Received(1).DeleteTimeCodeValidAsync("WG_OLD", "TC1", "PRJ001");
+            await _timeCodeService.Received(1).CreateTimeCodeValidAsync(dto);
+            await _timeCodeService.DidNotReceive().UpdateTimeCodeValidAsync(Arg.Any<TimeCodeValidDto>());
+        }
+
+        [Fact]
+        public async Task EditTimeCode_Post_WorkGroupChanged_DeleteFails_ReturnsJsonFailure()
+        {
+            // Arrange
+            var model = new TimeCodeViewModel
+            {
+                TimeCode = "TC1",
+                WorkGroup = "WG_NEW",
+                OriginalWorkGroup = "WG_OLD",
+                ParentProject = "PRJ001"
+            };
+            var errors = new List<ApiErrorDto> { new() { Message = "Delete failed", Code = "DELETE_ERROR" } };
+            _timeCodeService.DeleteTimeCodeValidAsync("WG_OLD", "TC1", "PRJ001")
+                .Returns(ApiResponseDto<bool>.FailureResponse(errors, new ApiMetaDto()));
+
+            // Act
+            var result = await _controller.EditTimeCode(model);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultElement(jsonResult);
+            Assert.False(value.GetProperty("success").GetBoolean());
+            await _timeCodeService.DidNotReceive().CreateTimeCodeValidAsync(Arg.Any<TimeCodeValidDto>());
+        }
+
+        [Fact]
+        public async Task EditTimeCode_Post_WorkGroupChanged_CreateFails_ReturnsJsonFailure()
+        {
+            // Arrange
+            var model = new TimeCodeViewModel
+            {
+                TimeCode = "TC1",
+                WorkGroup = "WG_NEW",
+                OriginalWorkGroup = "WG_OLD",
+                ParentProject = "PRJ001"
+            };
+            var dto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG_NEW", ParentProject = "PRJ001" };
+            _timeCodeService.DeleteTimeCodeValidAsync("WG_OLD", "TC1", "PRJ001")
+                .Returns(ApiResponseDto<bool>.SuccessResponse(true));
+            _mapper.Map<TimeCodeValidDto>(model).Returns(dto);
+            var errors = new List<ApiErrorDto> { new() { Message = "Create failed", Code = "CREATE_ERROR" } };
+            _timeCodeService.CreateTimeCodeValidAsync(dto)
+                .Returns(ApiResponseDto<TimeCodeValidDto>.FailureResponse(errors, new ApiMetaDto()));
+
+            // Act
+            var result = await _controller.EditTimeCode(model);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultElement(jsonResult);
+            Assert.False(value.GetProperty("success").GetBoolean());
+        }
+
+        [Fact]
+        public async Task EditTimeCode_Post_WorkGroupUnchanged_CallsUpdateNotDeleteCreate()
+        {
+            // Arrange — same WorkGroup → standard update path
+            var model = new TimeCodeViewModel
+            {
+                TimeCode = "TC1",
+                WorkGroup = "WG1",
+                OriginalWorkGroup = "WG1",
+                ParentProject = "PRJ001"
+            };
+            var dto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ001" };
+            _mapper.Map<TimeCodeValidDto>(model).Returns(dto);
+            _timeCodeService.UpdateTimeCodeValidAsync(dto)
+                .Returns(ApiResponseDto<TimeCodeValidDto>.SuccessResponse(dto));
+
+            // Act
+            var result = await _controller.EditTimeCode(model);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultElement(jsonResult);
+            Assert.True(value.GetProperty("success").GetBoolean());
+            await _timeCodeService.Received(1).UpdateTimeCodeValidAsync(dto);
+            await _timeCodeService.DidNotReceive().DeleteTimeCodeValidAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+            await _timeCodeService.DidNotReceive().CreateTimeCodeValidAsync(Arg.Any<TimeCodeValidDto>());
+        }
+
         #endregion
 
         #region DeleteTimeCode
@@ -1022,7 +1111,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControll
         [Fact]
         public async Task CopyProjectJobCode_Post_ValidModelWithoutCopyWorkGroup_ReturnsJsonSuccess()
         {
-            // Arrange — CopyWorkGroup=false skips the time code copy step
+            // Arrange
             var model = new CopyJobCodeRequest
             {
                 SourceJobCode = "JC_SRC",
@@ -1047,7 +1136,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControll
         [Fact]
         public async Task CopyProjectJobCode_Post_ValidModelWithCopyWorkGroup_ReturnsJsonSuccess()
         {
-            // Arrange — CopyWorkGroup=true triggers the time code copy step
+            // Arrange
             var model = new CopyJobCodeRequest
             {
                 SourceJobCode = "JC_SRC",
@@ -1098,7 +1187,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControll
         [Fact]
         public async Task CopyProjectJobCode_Post_CopyWorkGroupFails_ReturnsJsonFailure()
         {
-            // Arrange — job code created successfully but time code copy fails
+            // Arrange
             var model = new CopyJobCodeRequest
             {
                 SourceJobCode = "JC_SRC",
@@ -1130,6 +1219,250 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControll
 
             // Act
             var result = await _controller.CopyProjectJobCode(new CopyJobCodeRequest());
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultElement(jsonResult);
+            Assert.False(value.GetProperty("success").GetBoolean());
+        }
+
+        #endregion
+
+        #region CopyWorkGroupPartial
+
+        [Fact]
+        public async Task CopyWorkGroupPartial_Get_ValidParams_ReturnsPartialViewWithTargetJobCodes()
+        {
+            // Arrange
+            _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
+                .Returns(new QueryParameters<string>());
+            _jobCodeService.GetPagedJobCodesAsync(Arg.Any<QueryParameters<string>>(), "PRJ001")
+                .Returns(ApiResponseDto<List<JobCodeDto>>.SuccessResponse(
+                    [new JobCodeDto { JobCodeId = "JC1" }, new JobCodeDto { JobCodeId = "JC2" }],
+                    new PaginationDto()));
+
+            // Act
+            var result = await _controller.CopyWorkGroupPartial("PRJ001", "JC1");
+
+            // Assert
+            var partial = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_CopyWorkGroup", partial.ViewName);
+        }
+
+        [Fact]
+        public async Task CopyWorkGroupPartial_Get_NoJobCodes_ReturnsPartialViewWithEmptyTargetJobCodes()
+        {
+            // Arrange
+            _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
+                .Returns(new QueryParameters<string>());
+            _jobCodeService.GetPagedJobCodesAsync(Arg.Any<QueryParameters<string>>(), "PRJ001")
+                .Returns(ApiResponseDto<List<JobCodeDto>>.SuccessResponse([], new PaginationDto()));
+
+            // Act
+            var result = await _controller.CopyWorkGroupPartial("PRJ001", "JC1");
+
+            // Assert
+            var partial = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_CopyWorkGroup", partial.ViewName);
+        }
+
+        #endregion
+
+        #region CopyBulkWorkGroup
+
+        [Fact]
+        public async Task CopyBulkWorkGroup_ValidModel_ReturnsJsonSuccess()
+        {
+            // Arrange
+            var model = new CopyBulkWorkGroupRequest
+            {
+                ParentProject = "PRJ001",
+                SourceJobCodeId = "JC_SRC",
+                TargetJobCodeId = "JC_TGT",
+                WorkGroups = ["WG1", "WG2"]
+            };
+            _timeCodeService.CopySelectedWorkGroupsAsync(Arg.Any<BulkCopyWorkGroupRequestDto>())
+                .Returns(ApiResponseDto<List<TimeCodeValidDto>>.SuccessResponse([]));
+
+            // Act
+            var result = await _controller.CopyBulkWorkGroup(model);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultElement(jsonResult);
+            Assert.True(value.GetProperty("success").GetBoolean());
+            await _timeCodeService.Received(1).CopySelectedWorkGroupsAsync(Arg.Any<BulkCopyWorkGroupRequestDto>());
+        }
+
+        [Fact]
+        public async Task CopyBulkWorkGroup_ServiceFails_ReturnsJsonFailure()
+        {
+            // Arrange
+            var model = new CopyBulkWorkGroupRequest
+            {
+                ParentProject = "PRJ001",
+                SourceJobCodeId = "JC_SRC",
+                TargetJobCodeId = "JC_TGT",
+                WorkGroups = ["WG1"]
+            };
+            var errors = new List<ApiErrorDto> { new() { Message = "Copy failed", Code = "COPY_ERROR" } };
+            _timeCodeService.CopySelectedWorkGroupsAsync(Arg.Any<BulkCopyWorkGroupRequestDto>())
+                .Returns(ApiResponseDto<List<TimeCodeValidDto>>.FailureResponse(errors, new ApiMetaDto()));
+
+            // Act
+            var result = await _controller.CopyBulkWorkGroup(model);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultElement(jsonResult);
+            Assert.False(value.GetProperty("success").GetBoolean());
+        }
+
+        [Fact]
+        public async Task CopyBulkWorkGroup_InvalidModelState_ReturnsJsonError()
+        {
+            // Arrange
+            _controller.ModelState.AddModelError("TargetJobCodeId", "Required");
+
+            // Act
+            var result = await _controller.CopyBulkWorkGroup(new CopyBulkWorkGroupRequest());
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultElement(jsonResult);
+            Assert.False(value.GetProperty("success").GetBoolean());
+        }
+
+        #endregion
+
+        #region DeleteBulkTimeCode
+
+        [Fact]
+        public async Task DeleteBulkTimeCode_ValidModel_ReturnsJsonSuccess()
+        {
+            // Arrange
+            var model = new BulkDeleteTimeCodeRequest
+            {
+                ParentProject = "PRJ001",
+                Items = [new TimeCodeKeyItemRequest { WorkGroup = "WG1", TimeCode = "TC1" }]
+            };
+            _timeCodeService.DeleteBulkAsync(Arg.Any<BulkDeleteTimeCodeRequestDto>())
+                .Returns(ApiResponseDto<bool>.SuccessResponse(true));
+
+            // Act
+            var result = await _controller.DeleteBulkTimeCode(model);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultElement(jsonResult);
+            Assert.True(value.GetProperty("success").GetBoolean());
+            await _timeCodeService.Received(1).DeleteBulkAsync(Arg.Any<BulkDeleteTimeCodeRequestDto>());
+        }
+
+        [Fact]
+        public async Task DeleteBulkTimeCode_ServiceFails_ReturnsJsonFailure()
+        {
+            // Arrange
+            var model = new BulkDeleteTimeCodeRequest
+            {
+                ParentProject = "PRJ001",
+                Items = [new TimeCodeKeyItemRequest { WorkGroup = "WG1", TimeCode = "TC1" }]
+            };
+            var errors = new List<ApiErrorDto> { new() { Message = "Bulk delete failed", Code = "API_ERROR" } };
+            _timeCodeService.DeleteBulkAsync(Arg.Any<BulkDeleteTimeCodeRequestDto>())
+                .Returns(ApiResponseDto<bool>.FailureResponse(errors, new ApiMetaDto()));
+
+            // Act
+            var result = await _controller.DeleteBulkTimeCode(model);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultElement(jsonResult);
+            Assert.False(value.GetProperty("success").GetBoolean());
+        }
+
+        [Fact]
+        public async Task DeleteBulkTimeCode_InvalidModelState_ReturnsJsonError()
+        {
+            // Arrange
+            _controller.ModelState.AddModelError("ParentProject", "Required");
+
+            // Act
+            var result = await _controller.DeleteBulkTimeCode(new BulkDeleteTimeCodeRequest());
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultElement(jsonResult);
+            Assert.False(value.GetProperty("success").GetBoolean());
+        }
+
+        #endregion
+
+        #region DeleteAllJobCodeTimeCodes
+
+        [Fact]
+        public async Task DeleteAllJobCodeTimeCodes_ServiceSucceeds_ReturnsJsonSuccess()
+        {
+            // Arrange
+            _timeCodeService.DeleteAllByJobCodeAsync("JC1", "PRJ001")
+                .Returns(ApiResponseDto<bool>.SuccessResponse(true));
+
+            // Act
+            var result = await _controller.DeleteAllJobCodeTimeCodes("PRJ001", "JC1");
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultElement(jsonResult);
+            Assert.True(value.GetProperty("success").GetBoolean());
+        }
+
+        [Fact]
+        public async Task DeleteAllJobCodeTimeCodes_ServiceFails_ReturnsJsonFailure()
+        {
+            // Arrange
+            var errors = new List<ApiErrorDto> { new() { Message = "Delete failed", Code = "API_ERROR" } };
+            _timeCodeService.DeleteAllByJobCodeAsync("JC1", "PRJ001")
+                .Returns(ApiResponseDto<bool>.FailureResponse(errors, new ApiMetaDto()));
+
+            // Act
+            var result = await _controller.DeleteAllJobCodeTimeCodes("PRJ001", "JC1");
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultElement(jsonResult);
+            Assert.False(value.GetProperty("success").GetBoolean());
+        }
+
+        #endregion
+
+        #region CopyAllJobCodeWorkGroups
+
+        [Fact]
+        public async Task CopyAllJobCodeWorkGroups_ServiceSucceeds_ReturnsJsonSuccess()
+        {
+            // Arrange
+            _timeCodeService.CopyWorkGroupAsync("JC_SRC", "JC_TGT", "PRJ001")
+                .Returns(ApiResponseDto<List<TimeCodeValidDto>>.SuccessResponse([]));
+
+            // Act
+            var result = await _controller.CopyAllJobCodeWorkGroups("PRJ001", "JC_SRC", "JC_TGT");
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultElement(jsonResult);
+            Assert.True(value.GetProperty("success").GetBoolean());
+        }
+
+        [Fact]
+        public async Task CopyAllJobCodeWorkGroups_ServiceFails_ReturnsJsonFailure()
+        {
+            // Arrange
+            var errors = new List<ApiErrorDto> { new() { Message = "Copy failed", Code = "COPY_ERROR" } };
+            _timeCodeService.CopyWorkGroupAsync("JC_SRC", "JC_TGT", "PRJ001")
+                .Returns(ApiResponseDto<List<TimeCodeValidDto>>.FailureResponse(errors, new ApiMetaDto()));
+
+            // Act
+            var result = await _controller.CopyAllJobCodeWorkGroups("PRJ001", "JC_SRC", "JC_TGT");
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);

@@ -35,5 +35,11 @@ namespace Apha.FPSApps.Application.Services
 
         public async Task<ApiResponseDto<List<TimeCodeValidDto>>> CopyWorkGroupAsync(string sourceJobCode, string targetJobCode, string parentProject)
             => await _pactClient.PactTimeCodeValid.CopyWorkGroupAsync(sourceJobCode, targetJobCode, parentProject);
+
+        public async Task<ApiResponseDto<bool>> DeleteBulkAsync(BulkDeleteTimeCodeRequestDto request)
+            => await _pactClient.PactTimeCodeValid.DeleteBulkAsync(request);
+
+        public async Task<ApiResponseDto<List<TimeCodeValidDto>>> CopySelectedWorkGroupsAsync(BulkCopyWorkGroupRequestDto request)
+            => await _pactClient.PactTimeCodeValid.CopySelectedWorkGroupsAsync(request);
     }
 }

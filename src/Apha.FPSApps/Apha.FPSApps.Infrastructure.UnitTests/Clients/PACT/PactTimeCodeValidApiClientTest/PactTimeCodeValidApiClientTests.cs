@@ -556,5 +556,185 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
         }
 
         #endregion
+
+        #region DeleteBulkAsync Tests
+
+        [Fact]
+        public async Task DeleteBulkAsync_WithValidRequest_PostsToBulkDeleteEndpointAndReturnsSuccess()
+        {
+            // Arrange
+            var requestDto = new BulkDeleteTimeCodeRequestDto
+            {
+                ParentProject = "PP001",
+                Items = [new TimeCodeKeyItemDto { WorkGroup = "WG001", TimeCode = "TC001" }]
+            };
+            var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
+            var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
+
+            _http.PostAsync<BulkDeleteTimeCodeReq, bool>("api/timecodevalid/deletebulk", Arg.Any<BulkDeleteTimeCodeReq>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.DeleteBulkAsync(requestDto);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.True(result.Data);
+            await _http.Received(1).PostAsync<BulkDeleteTimeCodeReq, bool>(
+                "api/timecodevalid/deletebulk", Arg.Any<BulkDeleteTimeCodeReq>());
+        }
+
+        [Fact]
+        public async Task DeleteBulkAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var requestDto = new BulkDeleteTimeCodeRequestDto
+            {
+                ParentProject = "PP001",
+                Items = [new TimeCodeKeyItemDto { WorkGroup = "WG001", TimeCode = "TC001" }]
+            };
+            var errors = new List<ApiError> { new() { Message = "Bulk delete failed", Code = "API_ERROR" } };
+            var apiResponse = new ApiResponse<bool> { Success = false, Errors = errors };
+            var mappedResponse = new ApiResponseDto<bool>
+            {
+                Success = false,
+                Errors = new List<ApiErrorDto> { new() { Message = "Bulk delete failed", Code = "API_ERROR" } },
+                Meta = new ApiMetaDto()
+            };
+
+            _http.PostAsync<BulkDeleteTimeCodeReq, bool>(Arg.Any<string>(), Arg.Any<BulkDeleteTimeCodeReq>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.DeleteBulkAsync(requestDto);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+        }
+
+        [Fact]
+        public async Task DeleteBulkAsync_WhenExceptionThrown_ReturnsInternalError()
+        {
+            // Arrange
+            var requestDto = new BulkDeleteTimeCodeRequestDto { ParentProject = "PP001", Items = [] };
+            _http.PostAsync<BulkDeleteTimeCodeReq, bool>(Arg.Any<string>(), Arg.Any<BulkDeleteTimeCodeReq>())
+                .ThrowsAsync(new Exception("Network error"));
+
+            // Act
+            var result = await _client.DeleteBulkAsync(requestDto);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            var error = Assert.Single(result.Errors!);
+            Assert.Equal("INTERNAL_ERROR", error.Code);
+            Assert.Equal("Failed to bulk delete time codes", error.Message);
+        }
+
+        #endregion
+
+        #region CopySelectedWorkGroupsAsync Tests
+
+        [Fact]
+        public async Task CopySelectedWorkGroupsAsync_WithValidRequest_PostsToCopyBulkEndpointAndReturnsCopiedItems()
+        {
+            // Arrange
+            var requestDto = new BulkCopyWorkGroupRequestDto
+            {
+                ParentProject = "PP001",
+                SourceJobCode = "JC001",
+                TargetJobCode = "JC002",
+                WorkGroups = ["WG001", "WG002"]
+            };
+            var timeCodeList = new List<TimeCodeValidRes>
+            {
+                new() { TimeCode = "JC002", WorkGroup = "WG001", ParentProject = "PP001", JobCode = "JC002" },
+                new() { TimeCode = "JC002", WorkGroup = "WG002", ParentProject = "PP001", JobCode = "JC002" }
+            };
+            var apiResponse = new ApiResponse<List<TimeCodeValidRes>> { Success = true, Data = timeCodeList };
+            var expectedDto = ApiResponseDto<List<TimeCodeValidDto>>.SuccessResponse(
+                new List<TimeCodeValidDto>
+                {
+                    new() { TimeCode = "JC002", WorkGroup = "WG001", ParentProject = "PP001" },
+                    new() { TimeCode = "JC002", WorkGroup = "WG002", ParentProject = "PP001" }
+                }
+            );
+
+            _http.PostAsync<BulkCopyWorkGroupReq, List<TimeCodeValidRes>>(
+                "api/timecodevalid/copybulkworkgroups", Arg.Any<BulkCopyWorkGroupReq>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<TimeCodeValidDto>>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.CopySelectedWorkGroupsAsync(requestDto);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data?.Count);
+            await _http.Received(1).PostAsync<BulkCopyWorkGroupReq, List<TimeCodeValidRes>>(
+                "api/timecodevalid/copybulkworkgroups", Arg.Any<BulkCopyWorkGroupReq>());
+        }
+
+        [Fact]
+        public async Task CopySelectedWorkGroupsAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var requestDto = new BulkCopyWorkGroupRequestDto
+            {
+                ParentProject = "PP001",
+                SourceJobCode = "JC001",
+                TargetJobCode = "JC002",
+                WorkGroups = ["WG001"]
+            };
+            var errors = new List<ApiError> { new() { Message = "Copy failed", Code = "COPY_ERROR" } };
+            var apiResponse = new ApiResponse<List<TimeCodeValidRes>> { Success = false, Errors = errors };
+            var mappedResponse = new ApiResponseDto<List<TimeCodeValidDto>>
+            {
+                Success = false,
+                Errors = new List<ApiErrorDto> { new() { Message = "Copy failed", Code = "COPY_ERROR" } },
+                Meta = new ApiMetaDto()
+            };
+
+            _http.PostAsync<BulkCopyWorkGroupReq, List<TimeCodeValidRes>>(Arg.Any<string>(), Arg.Any<BulkCopyWorkGroupReq>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<TimeCodeValidDto>>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.CopySelectedWorkGroupsAsync(requestDto);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+        }
+
+        [Fact]
+        public async Task CopySelectedWorkGroupsAsync_WhenExceptionThrown_ReturnsInternalError()
+        {
+            // Arrange
+            var requestDto = new BulkCopyWorkGroupRequestDto
+            {
+                ParentProject = "PP001",
+                SourceJobCode = "JC001",
+                TargetJobCode = "JC002",
+                WorkGroups = []
+            };
+            _http.PostAsync<BulkCopyWorkGroupReq, List<TimeCodeValidRes>>(Arg.Any<string>(), Arg.Any<BulkCopyWorkGroupReq>())
+                .ThrowsAsync(new Exception("Network error"));
+
+            // Act
+            var result = await _client.CopySelectedWorkGroupsAsync(requestDto);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            var error = Assert.Single(result.Errors!);
+            Assert.Equal("INTERNAL_ERROR", error.Code);
+            Assert.Equal("Failed to copy selected work group time codes", error.Message);
+        }
+
+        #endregion
     }
 }

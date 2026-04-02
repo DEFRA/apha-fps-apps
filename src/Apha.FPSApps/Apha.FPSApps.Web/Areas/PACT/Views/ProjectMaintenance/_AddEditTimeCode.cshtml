@@ -2,11 +2,12 @@
 @using Microsoft.AspNetCore.Mvc.Rendering
 
 @{
-    var isEdit = !string.IsNullOrEmpty(Model.TimeCode);
+    // isEdit is true when the controller has populated OriginalWorkGroup
+    var isEdit = !string.IsNullOrEmpty(Model.OriginalWorkGroup);
 }
 
 <div class="modal-header flex-space-center">
-    <h3 class="govuk-heading-s" style="margin:0;">@(isEdit ? "Edit Time Code" : "Add Work Group")</h3>
+    <h3 class="govuk-heading-s" style="margin:0;">@(isEdit ? "Edit Work Group" : "Add Work Group")</h3>
     <button type="button" class="btn-close" onclick="$('#modalPopup').removeClass('show')">×</button>
 </div>
 
@@ -15,30 +16,32 @@
 
         <input type="hidden" name="isEdit" value="@isEdit.ToString().ToLower()" />
         <input type="hidden" asp-for="ParentProject" />
+
+        @*
+            TimeCode is always set to the JobCode value by the controller.
+            It is carried as a hidden field so the composite key is preserved
+            on both create and update without the user needing to type it.
+        *@
+        <input type="hidden" asp-for="TimeCode" />
+
         @if (isEdit)
         {
-            <!-- Key fields submitted as hidden on edit; displayed readonly below -->
-            <input type="hidden" asp-for="WorkGroup" />
-            <input type="hidden" asp-for="TimeCode" />
+            @*
+                OriginalWorkGroup carries the WorkGroup value that was loaded from the database.
+                The controller uses (OriginalWorkGroup + TimeCode + ParentProject) to locate
+                the existing composite-key record before applying the update.
+            *@
+            <input type="hidden" asp-for="OriginalWorkGroup" />
         }
-        <!-- JobCode always hidden — pre-filled from the selected job code context -->
-        <input type="hidden" asp-for="JobCode" />
 
-        <!-- Work Group -->
+        <!-- Work Group — always an editable dropdown for both add and edit -->
         <div class="govuk-form-group sup_margin_bottom_10">
             <label class="govuk-label govuk-!-font-weight-bold" asp-for="WorkGroup">Work Group:</label>
-            @if (isEdit)
-            {
-                <input class="govuk-input govuk-!-font-size-16" value="@Model.WorkGroup" readonly />
-            }
-            else
-            {
-                <select class="govuk-select govuk-!-font-size-16" asp-for="WorkGroup"
-                        asp-items="@(ViewBag.WorkGroups as List<SelectListItem>)">
-                    <option value="">--select--</option>
-                </select>
-                <span asp-validation-for="WorkGroup" class="govuk-error-message"></span>
-            }
+            <select class="govuk-select govuk-!-font-size-16" asp-for="WorkGroup"
+                    asp-items="@(ViewBag.WorkGroups as List<SelectListItem>)">
+                <option value="">--select--</option>
+            </select>
+            <span asp-validation-for="WorkGroup" class="govuk-error-message"></span>
         </div>
 
         <!-- Active -->
@@ -55,21 +58,7 @@
             </div>
         </div>
 
-        <!-- Time Code -->
-        <div class="govuk-form-group sup_margin_bottom_10">
-            <label class="govuk-label govuk-!-font-weight-bold" asp-for="TimeCode">Time Code:</label>
-            @if (isEdit)
-            {
-                <input class="govuk-input govuk-!-font-size-16" value="@Model.TimeCode" readonly />
-            }
-            else
-            {
-                <input class="govuk-input govuk-!-font-size-16" asp-for="TimeCode" />
-                <span asp-validation-for="TimeCode" class="govuk-error-message"></span>
-            }
-        </div>
-
-        <!-- Job Code (display only — value carried via hidden input above) -->
+        <!-- Job Code — readonly; its value is also the TimeCode (carried in the hidden input above) -->
         <div class="govuk-form-group sup_margin_bottom_10">
             <label class="govuk-label govuk-!-font-weight-bold" asp-for="JobCode">Job Code:</label>
             <input class="govuk-input govuk-!-font-size-16" asp-for="JobCode" readonly />

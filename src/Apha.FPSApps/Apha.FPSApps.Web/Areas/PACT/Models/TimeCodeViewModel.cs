@@ -30,5 +30,14 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         [Display(Name = "Active")]
         [GridColumn(Order = 2, Width = 80, Type = GridColumnType.Checkbox, IsFilterable = false)]
         public bool Active { get; set; }
+
+        /// <summary>
+        /// Holds the WorkGroup value as it existed before editing.
+        /// Required to locate and replace the old composite key record
+        /// (ParentProject + OriginalWorkGroup + TimeCode) when WorkGroup changes.
+        /// Not rendered in the grid.
+        /// </summary>
+        [GridColumn(IsVisible = false)]
+        public string? OriginalWorkGroup { get; set; }
     }
 }

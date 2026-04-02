@@ -171,5 +171,57 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
                     new ApiMetaDto());
             }
         }
+
+        public async Task<ApiResponseDto<bool>> DeleteBulkAsync(BulkDeleteTimeCodeRequestDto request)
+        {
+            try
+            {
+                var body = new BulkDeleteTimeCodeReq
+                {
+                    ParentProject = request.ParentProject,
+                    Items = request.Items
+                        .Select(i => new TimeCodeKeyItem { WorkGroup = i.WorkGroup, TimeCode = i.TimeCode })
+                        .ToList()
+                };
+                var response = await _http.PostAsync<BulkDeleteTimeCodeReq, bool>($"{BaseEndpoint}/deletebulk", body);
+                if (response.Success)
+                    return _mapper.Map<ApiResponseDto<bool>>(response);
+
+                var dto = _mapper.Map<ApiResponseDto<bool>>(response);
+                return ApiResponseDto<bool>.FailureResponse(dto.Errors, dto.Meta);
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<bool>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to bulk delete time codes", Code = InternalCodeError }],
+                    new ApiMetaDto());
+            }
+        }
+
+        public async Task<ApiResponseDto<List<TimeCodeValidDto>>> CopySelectedWorkGroupsAsync(BulkCopyWorkGroupRequestDto request)
+        {
+            try
+            {
+                var body = new BulkCopyWorkGroupReq
+                {
+                    ParentProject = request.ParentProject,
+                    SourceJobCode = request.SourceJobCode,
+                    TargetJobCode = request.TargetJobCode,
+                    WorkGroups = request.WorkGroups
+                };
+                var response = await _http.PostAsync<BulkCopyWorkGroupReq, List<TimeCodeValidRes>>($"{BaseEndpoint}/copybulkworkgroups", body);
+                if (response.Success)
+                    return _mapper.Map<ApiResponseDto<List<TimeCodeValidDto>>>(response);
+
+                var dto = _mapper.Map<ApiResponseDto<List<TimeCodeValidDto>>>(response);
+                return ApiResponseDto<List<TimeCodeValidDto>>.FailureResponse(dto.Errors, dto.Meta);
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<List<TimeCodeValidDto>>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to copy selected work group time codes", Code = InternalCodeError }],
+                    new ApiMetaDto());
+            }
+        }
     }
 }
