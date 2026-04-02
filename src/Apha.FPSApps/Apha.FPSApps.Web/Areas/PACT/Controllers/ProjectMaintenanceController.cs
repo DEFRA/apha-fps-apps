@@ -1,3 +1,4 @@
+using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces;
@@ -5,6 +6,7 @@ using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.PACT.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
+using Azure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -55,7 +57,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            if(viewBy == 1)
+            if (viewBy == 1)
             {
                 var projectCodeGridConfig = await BuildPactProjectCodeGridAsync(request);
                 return PartialView("_DataGrid", projectCodeGridConfig);
@@ -64,7 +66,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             {
                 var jobCodeGridConfig = await BuildPactJobCodeGridAsync(request);
                 return PartialView("_DataGrid", jobCodeGridConfig);
-            }            
+            }
         }
 
         private async Task<DataGridConfig<PactProjectViewModel>> BuildPactProjectCodeGridAsync(PaginationFilter<string> request)
@@ -89,7 +91,6 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             {
                 GridId = "projectGrid",
                 Title = "Project Maintenance",
-                ShowPagination = true,
                 AllowAdd = false,
                 AllowDelete = false,
                 KeyProperty = "ParentProject",
@@ -125,7 +126,6 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             {
                 GridId = "projectGrid",
                 Title = "Project Maintenance",
-                ShowPagination = true,
                 AllowAdd = false,
                 AllowDelete = false,
                 KeyProperty = "ParentProject",
@@ -222,7 +222,6 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             {
                 GridId = "jobCodeGrid",
                 Title = "Job Codes",
-                ShowPagination = true,
                 AllowRowSelection = true,
                 AllowCopy = true,
                 CopyFunction = "copyJobCode",
@@ -259,11 +258,16 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             {
                 GridId = "timeCodeGrid",
                 Title = "Time Code Validity",
-                ShowPagination = true,
                 KeyProperty = "TimeCode",
+                ShowCheckboxColumn = true,
+                AllowBulkCopy = true,
+                AllowBulkDelete = true,
+                BulkCopyButtonText = "Copy Work Group",
                 AddFunction = "addTimeCode",
                 EditFunction = "editTimeCode",
                 DeleteFunction = "deleteTimeCode",
+                BulkCopyFunction = "copyBulkWorkGroup",
+                BulkDeleteFunction = "deleteBulkTimeCode",
                 ExtraFilterMethod = "getTimeCodeExtraFilters",
                 BindGridUrl = $"/PACT/ProjectMaintenance/LoadTimeCodeGrid?parentProject={Uri.EscapeDataString(parentProject)}",
                 Data = items,
@@ -291,26 +295,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             };
         }
 
-        // ── PROJECT CRUD ─────────────────────────────────────────────────────
-
-        [HttpGet]
-        public IActionResult Create() => PartialView("_AddEditProject", new PactProjectViewModel());
-
-        [HttpPost]
-        public async Task<IActionResult> Create([FromBody] PactProjectViewModel model)
-        {
-            if (!ModelState.IsValid)
-                return Json(new { success = false, errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)) });
-
-            var dto = _mapper.Map<ProjectDto>(model);
-            var result = await _projectService.CreateProjectAsync(dto);
-
-            if (result.Success)
-                return Json(new { success = true });
-
-            return Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Create failed" });
-        }
-
+        // ── PROJECT UPDATE ─────────────────────────────────────────────────────
         [HttpGet]
         public async Task<IActionResult> Edit(string parentProject)
         {
@@ -326,9 +311,14 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 return Json(new
                 {
                     success = false,
+                    message = "Please correct the errors below.",
                     errors = ModelState
                         .Where(x => x.Value?.Errors.Count > 0)
-                        .ToDictionary(x => x.Key, x => x.Value!.Errors[0].ErrorMessage)
+                        .SelectMany(x => x.Value!.Errors.Select(e => new
+                        {
+                            field = "Project." + x.Key,
+                            message = e.ErrorMessage
+                        }))
                 });
 
             var projectdto = _mapper.Map<ProjectDto>(model);
@@ -337,7 +327,16 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             if (result.Success)
                 return Json(new { success = true });
 
-            return Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Update failed" });
+            return Json(new
+            {
+                success = false,
+                message = "Failed to update project.",
+                errors = (result.Errors ?? new List<ApiErrorDto>()).Select(e => new
+                {
+                    field = e.Code ?? string.Empty,
+                    message = e.Message ?? "An unexpected error occurred."
+                })
+            });
         }
 
         [HttpDelete]
@@ -424,7 +423,14 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         {
             var workGroups = await _jobCodeService.GetAllWorkGroupsAsync();
             ViewBag.WorkGroups = workGroups.Data?.Select(w => new SelectListItem(w.WorkGroupName, w.WorkGroupName)).ToList() ?? [];
-            return PartialView("_AddEditTimeCode", new TimeCodeViewModel { ParentProject = parentProject, JobCode = jobCodeId });
+
+            // TimeCode is set equal to JobCode — the user selects only WorkGroup and Active
+            return PartialView("_AddEditTimeCode", new TimeCodeViewModel
+            {
+                ParentProject = parentProject,
+                JobCode = jobCodeId,
+                TimeCode = jobCodeId
+            });
         }
 
         [HttpPost]
@@ -449,11 +455,19 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var item = string.IsNullOrEmpty(workGroup)
                 ? result.Data?.FirstOrDefault(t => t.TimeCode == timeCode)
                 : result.Data?.FirstOrDefault(t => t.WorkGroup == workGroup && t.TimeCode == timeCode);
+
             if (item == null) return NotFound();
 
             var workGroups = await _jobCodeService.GetAllWorkGroupsAsync();
             ViewBag.WorkGroups = workGroups.Data?.Select(w => new SelectListItem(w.WorkGroupName, w.WorkGroupName)).ToList() ?? [];
-            return PartialView("_AddEditTimeCode", _mapper.Map<TimeCodeViewModel>(item));
+
+            var model = _mapper.Map<TimeCodeViewModel>(item);
+
+            // Store the original WorkGroup so the POST action can detect key changes
+            // and locate the existing composite-key record (ParentProject + WorkGroup + TimeCode)
+            model.OriginalWorkGroup = item.WorkGroup;
+
+            return PartialView("_AddEditTimeCode", model);
         }
 
         [HttpPost]
@@ -462,13 +476,44 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             if (!ModelState.IsValid)
                 return Json(new { success = false, errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)) });
 
-            var dto = _mapper.Map<TimeCodeValidDto>(model);
-            var result = await _timeCodeService.UpdateTimeCodeValidAsync(dto);
+            // Detect whether the user changed the WorkGroup value.
+            // Because WorkGroup forms part of the composite key
+            // (ParentProject + WorkGroup + TimeCode), a change cannot be done
+            // via a simple UPDATE — the old record must be removed and a new
+            // one inserted with the updated WorkGroup.
+            bool workGroupChanged = !string.IsNullOrEmpty(model.OriginalWorkGroup)
+                && !string.Equals(model.OriginalWorkGroup, model.WorkGroup, StringComparison.OrdinalIgnoreCase);
 
-            if (result.Success)
+            if (workGroupChanged)
+            {
+                var deleteResult = await _timeCodeService.DeleteTimeCodeValidAsync(
+                    model.OriginalWorkGroup!, model.TimeCode, model.ParentProject);
+
+                if (!deleteResult.Success)
+                    return Json(new
+                    {
+                        success = false,
+                        message = deleteResult.Errors?.FirstOrDefault()?.Message
+                                  ?? "Failed to remove the previous work group record."
+                    });
+
+                var dto = _mapper.Map<TimeCodeValidDto>(model);
+                var createResult = await _timeCodeService.CreateTimeCodeValidAsync(dto);
+
+                if (createResult.Success)
+                    return Json(new { success = true });
+
+                return Json(new { success = false, message = createResult.Errors?.FirstOrDefault()?.Message ?? "Create failed" });
+            }
+
+            // WorkGroup unchanged — standard update path
+            var updateDto = _mapper.Map<TimeCodeValidDto>(model);
+            var updateResult = await _timeCodeService.UpdateTimeCodeValidAsync(updateDto);
+
+            if (updateResult.Success)
                 return Json(new { success = true });
 
-            return Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Update failed" });
+            return Json(new { success = false, message = updateResult.Errors?.FirstOrDefault()?.Message ?? "Update failed" });
         }
 
         [HttpDelete]
@@ -498,7 +543,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpPost]
         public async Task<IActionResult> CopyProjectJobCode([FromBody] CopyJobCodeRequest model)
         {
-            if(!ModelState.IsValid)
+            if (!ModelState.IsValid)
                 return Json(new { success = false, errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)) });
 
             var dto = new JobCodeDto
@@ -522,6 +567,91 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             }
 
             return Json(new { success = true });
+        }
+
+        // ── BULK TIME CODE OPERATIONS ─────────────────────────────────────────
+
+        /// <summary>Loads the Copy Work Group modal partial, populating the target job code dropdown.</summary>
+        [HttpGet]
+        public async Task<IActionResult> CopyWorkGroupPartial(string parentProject, string sourceJobCodeId)
+        {
+            var defaultRequest = new PaginationFilter<string> { Filter = "{}", Page = 1, PageSize = 1000 };
+            var query = _mapper.Map<QueryParameters<string>>(defaultRequest);
+            var jobCodesResult = await _jobCodeService.GetPagedJobCodesAsync(query, parentProject);
+
+            var targetJobCodes = jobCodesResult.Data?
+                .Where(j => j.JobCodeId != sourceJobCodeId)
+                .Select(j => new SelectListItem(j.JobCodeId, j.JobCodeId))
+                .ToList() ?? [];
+
+            ViewBag.TargetJobCodes = targetJobCodes;
+            ViewBag.SourceJobCodeId = sourceJobCodeId;
+            ViewBag.ParentProject = parentProject;
+            return PartialView("_CopyWorkGroup");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CopyBulkWorkGroup([FromBody] CopyBulkWorkGroupRequest model)
+        {
+            if (!ModelState.IsValid)
+                return Json(new { success = false, errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)) });
+
+            var dto = new BulkCopyWorkGroupRequestDto
+            {
+                ParentProject = model.ParentProject,
+                SourceJobCode = model.SourceJobCodeId,
+                TargetJobCode = model.TargetJobCodeId,
+                WorkGroups = model.WorkGroups
+            };
+
+            var result = await _timeCodeService.CopySelectedWorkGroupsAsync(dto);
+            if (result.Success)
+                return Json(new { success = true });
+
+            return Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Copy failed" });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteBulkTimeCode([FromBody] BulkDeleteTimeCodeRequest model)
+        {
+            if (!ModelState.IsValid)
+                return Json(new { success = false, errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)) });
+
+            var dto = new BulkDeleteTimeCodeRequestDto
+            {
+                ParentProject = model.ParentProject,
+                Items = model.Items
+                    .Select(i => new TimeCodeKeyItemDto { WorkGroup = i.WorkGroup, TimeCode = i.TimeCode })
+                    .ToList()
+            };
+
+            var result = await _timeCodeService.DeleteBulkAsync(dto);
+            if (result.Success)
+                return Json(new { success = true });
+
+            return Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Delete failed" });
+        }
+
+        /// <summary>Deletes ALL time codes for a job code (used when select-all spans pages).</summary>
+        [HttpPost]
+        public async Task<IActionResult> DeleteAllJobCodeTimeCodes(string parentProject, string jobCodeId)
+        {
+            var result = await _timeCodeService.DeleteAllByJobCodeAsync(jobCodeId, parentProject);
+            if (result.Success)
+                return Json(new { success = true });
+
+            return Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Delete failed" });
+        }
+
+        /// <summary>Copies ALL work groups from source to target job code (used when select-all spans pages).</summary>
+        [HttpPost]
+        public async Task<IActionResult> CopyAllJobCodeWorkGroups(string parentProject, string sourceJobCodeId, string targetJobCodeId)
+        {
+            var result = await _timeCodeService.CopyWorkGroupAsync(sourceJobCodeId, targetJobCodeId, parentProject);
+            if (result.Success)
+                return Json(new { success = true });
+
+            return Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Copy failed" });
         }
     }
 }

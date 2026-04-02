@@ -55,7 +55,18 @@
 
                     <!-- Hidden fields -->
                     <input type="hidden" asp-for="Project.ParentProject" />
-                   
+
+                    <!-- Validation error summary -->
+                    <div class="govuk-error-summary" role="alert"
+                         aria-labelledby="error-summary-title" tabindex="-1" style="display:none;">
+                        <h2 class="govuk-error-summary__title" id="error-summary-title">
+                            There is a problem
+                        </h2>
+                        <div class="govuk-error-summary__body">
+                            <ul class="govuk-list govuk-error-summary__list"></ul>
+                        </div>
+                    </div>
+
                     <!-- ── Project Code + Title ── -->
                     <div class="sup_border govuk-grid-column-full sup_p_0"
                          style="display:flex; flex-direction:row; padding-top:10px; border-bottom:0;">
@@ -292,7 +303,7 @@
                     <div class="sup_border">
                         <h2 class="sup_border-bottom sup_text_color sup_heading_bg_color govuk-heading-s sup_align_heading">
                             Project's Job Code
-                        </h2>                        
+                        </h2>
                         <div id="@($"gridContainer_{Model.JobCodeGrid.GridId}")">
                             @await Html.PartialAsync("_DataGrid", Model.JobCodeGrid)
                         </div>
@@ -318,6 +329,7 @@
 </div>
 
 @section Scripts {
+    <script src="~/js/ajax-form-validation.js"></script>
     <script>
         var parentProject = '@Html.Raw(Uri.EscapeDataString(parentProject))';
         var jobCodeGridId = '@Model.JobCodeGrid.GridId';
@@ -335,19 +347,11 @@
         function getJobCodeGridManager() { return window['gridManager_' + jobCodeGridId]; }
         function getTimeCodeGridManager() { return window['gridManager_' + timeCodeGridId]; }
 
-        function clearProjectValidationErrors() {
-            $('#projectDetailForm .govuk-error-message')
-                .text('')
-                .removeClass('field-validation-error')
-                .addClass('field-validation-valid');
-            $('#projectDetailForm .govuk-form-group--error').removeClass('govuk-form-group--error');
-        }
-
         function saveProjectDetail() {
             var form = $('#projectDetailForm');
             var data = {};
             var decimalFields = ['BudgetCvl', 'TransferIncome', 'BudgetExt', 'PvsIncome', 'WipEoy', 'WipLimit', 'WipCurrent', 'FecCost'];
-            form.serializeArray().forEach(function (item) {
+            form.serializeArray().forEach(function(item) {
                 var key = item.name.startsWith('Project.') ? item.name.substring('Project.'.length) : item.name;
                 if (decimalFields.indexOf(key) !== -1) {
                     var parsed = parseFloat(item.value);
@@ -358,35 +362,25 @@
             });
             data.IsDefraProject = $('#IsDefraProject').is(':checked') ? 1 : 0;
             data.Finished = $('#Finished').is(':checked') ? 1 : 0;
-            clearProjectValidationErrors();
+            clearValidationErrors('#projectDetailForm');
             $.ajax({
                 url: '/PACT/ProjectMaintenance/Edit',
                 type: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify(data),
-                success: function (response) {
+                success: function(response) {
                     if (response.success) {
                         alert('Project updated successfully.');
-                    } else if (response.errors && typeof response.errors === 'object') {
-                        $.each(response.errors, function (field, message) {
-                            var span = $('[data-valmsg-for="Project.' + field + '"]');
-                            if (span.length) {
-                                span.text(message)
-                                    .removeClass('field-validation-valid')
-                                    .addClass('field-validation-error');
-                                span.closest('.govuk-form-group').addClass('govuk-form-group--error');
-                            }
-                        });
                     } else {
-                        alert('Error: ' + (response.message || 'Save failed.'));
+                        displayServerValidationErrors(response.errors, response.message, '#projectDetailForm');
                     }
                 },
-                error: function () { alert('An error occurred while saving.'); }
+                error: function() { alert('An error occurred while saving.'); }
             });
         }
 
         function addJobCode() {
-            $.get('/PACT/ProjectMaintenance/CreateJobCode', { parentProject: decodeURIComponent(parentProject) }, function (html) {
+            $.get('/PACT/ProjectMaintenance/CreateJobCode', { parentProject: decodeURIComponent(parentProject) }, function(html) {
                 $('#modaPopupBody').html(html);
                 $('#modalPopup').addClass('show');
             });
@@ -395,7 +389,7 @@
         function editJobCode(btn) {
             var jobCodeId = $(btn).data('id');
             selectedJobCodeId = jobCodeId;
-            $.get('/PACT/ProjectMaintenance/EditJobCode', { jobCodeId: jobCodeId }, function (html) {
+            $.get('/PACT/ProjectMaintenance/EditJobCode', { jobCodeId: jobCodeId }, function(html) {
                 $('#modaPopupBody').html(html);
                 $('#modalPopup').addClass('show');
             });
@@ -408,7 +402,7 @@
                     url: '/PACT/ProjectMaintenance/DeleteJobCode',
                     type: 'DELETE',
                     data: { jobCodeId: jobCodeId, parentProject: decodeURIComponent(parentProject) },
-                    success: function (response) {
+                    success: function(response) {
                         if (response.success) {
                             alert('JobCode deleted successfully.');
                             getJobCodeGridManager()?.reloadGrid({ page: 1 });
@@ -417,7 +411,7 @@
                             alert('Error: ' + response.message);
                         }
                     },
-                    error: function () { alert('An error occurred while deleting.'); }
+                    error: function() { alert('An error occurred while deleting.'); }
                 });
             }
         }
@@ -427,7 +421,7 @@
             selectedJobCodeId = jobCodeId;
             $.get('/PACT/ProjectMaintenance/CopyProjectJobCode',
                 { jobCodeId: selectedJobCodeId },
-                function (html) {
+                function(html) {
                     $('#modaPopupBody').html(html);
                     $('#modalPopup').addClass('show');
                 });
@@ -444,10 +438,10 @@
                 ? '/PACT/ProjectMaintenance/EditJobCode'
                 : '/PACT/ProjectMaintenance/CreateJobCode';
             $.ajax({
-                url: url, type: 'POST', 
+                url: url, type: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify(data),
-                success: function (response) {
+                success: function(response) {
                     if (response.success) {
                         alert(successMsg);
                         $('#modalPopup').removeClass('show');
@@ -456,7 +450,7 @@
                         alert(response.message || 'Save failed.');
                     }
                 },
-                error: function () { alert('An error occurred while saving.'); }
+                error: function() { alert('An error occurred while saving.'); }
             });
         }
 
@@ -476,7 +470,7 @@
         function reloadTimeCodeGrid(jobCodeId) {
             selectedJobCodeId = jobCodeId;
             var params = { parentProject: decodeURIComponent(parentProject), jobCodeId: jobCodeId || '' };
-            $.post('/PACT/ProjectMaintenance/LoadTimeCodeGrid', params, function (html) {
+            $.post('/PACT/ProjectMaintenance/LoadTimeCodeGrid', params, function(html) {
                 $('#gridContainer_' + timeCodeGridId).html(html);
             });
         }
@@ -489,18 +483,18 @@
             if (!selectedJobCodeId) { alert('Please select a job code first.'); return; }
             $.get('/PACT/ProjectMaintenance/CreateTimeCode',
                 { parentProject: decodeURIComponent(parentProject), jobCodeId: selectedJobCodeId },
-                function (html) {
+                function(html) {
                     $('#modaPopupBody').html(html);
                     $('#modalPopup').addClass('show');
                 });
-        }       
+        }
 
         function editTimeCode(btn) {
             var timeCode = $(btn).data('id');
             var workGroup = $(btn).closest('tr').find('[data-property="WorkGroup"] span').text();
             $.get('/PACT/ProjectMaintenance/EditTimeCode',
                 { workGroup: workGroup, timeCode: timeCode, jobCodeId: selectedJobCodeId, parentProject: decodeURIComponent(parentProject) },
-                function (html) {
+                function(html) {
                     $('#modaPopupBody').html(html);
                     $('#modalPopup').addClass('show');
                 });
@@ -514,11 +508,11 @@
                     url: '/PACT/ProjectMaintenance/DeleteTimeCode',
                     type: 'DELETE',
                     data: { workGroup: workGroup, timeCode: timeCode, parentProject: decodeURIComponent(parentProject) },
-                    success: function (response) {
+                    success: function(response) {
                         if (response.success) reloadTimeCodeGrid(selectedJobCodeId);
                         else alert('Error: ' + response.message);
                     },
-                    error: function () { alert('An error occurred while deleting.'); }
+                    error: function() { alert('An error occurred while deleting.'); }
                 });
             }
         }
@@ -537,7 +531,7 @@
             $.ajax({
                 url: url, type: 'POST', contentType: 'application/json',
                 data: JSON.stringify(data),
-                success: function (response) {
+                success: function(response) {
                     if (response.success) {
                         alert(successMsg);
                         $('#modalPopup').removeClass('show');
@@ -546,11 +540,12 @@
                         alert(response.message || 'Save failed.');
                     }
                 },
-                error: function () { alert('An error occurred while saving.'); }
+                error: function() { alert('An error occurred while saving.'); }
             });
-        }       
+        }
 
         function executeCopyJobCode() {
+            debugger;
             var jobCodeId = $('#JobCodeId').val();
             if (!jobCodeId) { alert('Please enter a Job Code.'); return; }
             var data = {
@@ -567,7 +562,7 @@
                 type: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify(data),
-                success: function (response) {
+                success: function(response) {
                     if (response.success) {
                         alert('JobCode copied successfully.');
                         $('#modalPopup').removeClass('show');
@@ -579,8 +574,175 @@
                         alert('Error: ' + response.message);
                     }
                 },
-                error: function () { alert('An error occurred while copying.'); }
+                error: function() { alert('An error occurred while copying.'); }
             });
         }
+
+        // ── Bulk Copy Work Group ──────────────────────────────────────────────
+
+        function copyBulkWorkGroup(selection) {
+            if (!selectedJobCodeId) { alert('Please select a job code first.'); return; }
+            if (!selection || !selection.ids || selection.ids.length === 0) {
+                alert('Please select at least one time code row to copy.'); return;
+            }
+
+            $.get('/PACT/ProjectMaintenance/CopyWorkGroupPartial',
+                { parentProject: decodeURIComponent(parentProject), sourceJobCodeId: selectedJobCodeId },
+                function(html) {
+                    $('#modaPopupBody').html(html);
+
+                    if (selection.isAll) {
+                        // All pages selected — backend will copy every work group
+                        $('#cwg_isAll').val('true');
+                        $('#cwg_workGroupsHidden').empty();
+                    } else {
+                        // Only the checked rows on the current page
+                        $('#cwg_isAll').val('false');
+                        var container = $('#cwg_workGroupsHidden').empty();
+                        $('#tbl_' + timeCodeGridId + ' tbody tr').each(function() {
+                            if ($(this).find('.row-checkbox').is(':checked')) {
+                                var wg = $(this).find('[data-property="WorkGroup"] span').text().trim();
+                                if (wg) {
+                                    container.append(
+                                        '<input type="hidden" class="cwg-wg" value="' +
+                                        $('<div>').text(wg).html() + '" />'
+                                    );
+                                }
+                            }
+                        });
+
+                        if (container.find('.cwg-wg').length === 0) {
+                            alert('No work groups found in selected rows.');
+                            $('#modalPopup').removeClass('show');
+                            return;
+                        }
+                    }
+
+                    $('#modalPopup').addClass('show');
+                });
+        }
+
+        function executeCopyBulkWorkGroup() {
+            var targetJobCode = $('#dpTargetJobcode').val();
+            var sourceJobCode = $('#cwg_sourceJobCode').val();
+            var pp = $('#cwg_parentProject').val();
+            var isAll = $('#cwg_isAll').val() === 'true';
+
+            if (!targetJobCode) { alert('Please select a target job code.'); return; }
+
+            if (isAll) {
+                // Copy every work group across all pages using the simple copy endpoint
+                $.ajax({
+                    url: '/PACT/ProjectMaintenance/CopyAllJobCodeWorkGroups',
+                    type: 'POST',
+                    data: { parentProject: pp, sourceJobCodeId: sourceJobCode, targetJobCodeId: targetJobCode },
+                    success: function(response) {
+                        if (response.success) {
+                            alert('All work groups copied successfully.');
+                            $('#modalPopup').removeClass('show');
+                            reloadTimeCodeGrid(selectedJobCodeId);
+                        } else {
+                            alert('Error: ' + (response.message || 'Copy failed.'));
+                        }
+                    },
+                    error: function() { alert('An error occurred while copying.'); }
+                });
+            } else {
+                // Copy only the selected work groups
+                var workGroups = [];
+                $('#cwg_workGroupsHidden .cwg-wg').each(function() {
+                    workGroups.push($(this).val());
+                });
+
+                if (workGroups.length === 0) { alert('No work groups to copy.'); return; }
+
+                $.ajax({
+                    url: '/PACT/ProjectMaintenance/CopyBulkWorkGroup',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        parentProject: pp,
+                        sourceJobCodeId: sourceJobCode,
+                        targetJobCodeId: targetJobCode,
+                        workGroups: workGroups
+                    }),
+                    success: function(response) {
+                        if (response.success) {
+                            alert('Work group(s) copied successfully.');
+                            $('#modalPopup').removeClass('show');
+                            reloadTimeCodeGrid(selectedJobCodeId);
+                        } else {
+                            alert('Error: ' + (response.message || 'Copy failed.'));
+                        }
+                    },
+                    error: function() { alert('An error occurred while copying.'); }
+                });
+            }
+        }
+
+        // ── Bulk Delete Time Codes ────────────────────────────────────────────
+
+        function deleteBulkTimeCode(selection) {
+            if (!selectedJobCodeId) { alert('Please select a job code first.'); return; }
+            if (!selection || !selection.ids || selection.ids.length === 0) {
+                alert('Please select at least one time code row to delete.'); return;
+            }
+
+            if (selection.isAll) {
+                // Select-all across pages — delete every time code for this job code
+                if (!confirm('Delete ALL time codes for job code "' + selectedJobCodeId + '"?')) return;
+
+                $.ajax({
+                    url: '/PACT/ProjectMaintenance/DeleteAllJobCodeTimeCodes',
+                    type: 'POST',
+                    data: { parentProject: decodeURIComponent(parentProject), jobCodeId: selectedJobCodeId },
+                    success: function(response) {
+                        if (response.success) {
+                            alert('All time codes deleted successfully.');
+                            reloadTimeCodeGrid(selectedJobCodeId);
+                        } else {
+                            alert('Error: ' + (response.message || 'Delete failed.'));
+                        }
+                    },
+                    error: function() { alert('An error occurred while deleting.'); }
+                });
+            } else {
+                // Delete only the checked rows on the current page
+                var items = [];
+                $('#tbl_' + timeCodeGridId + ' tbody tr').each(function() {
+                    if ($(this).find('.row-checkbox').is(':checked')) {
+                        var timeCode = String($(this).data('id'));
+                        var wg = $(this).find('[data-property="WorkGroup"] span').text().trim();
+                        if (wg && timeCode) items.push({ workGroup: wg, timeCode: timeCode });
+                    }
+                });
+
+                if (items.length === 0) { alert('No rows selected for deletion.'); return; }
+
+                if (!confirm('Delete ' + items.length + ' selected time code(s)?')) return;
+
+                $.ajax({
+                    url: '/PACT/ProjectMaintenance/DeleteBulkTimeCode',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        parentProject: decodeURIComponent(parentProject),
+                        items: items
+                    }),
+                    success: function(response) {
+                        if (response.success) {
+                            alert(items.length + ' time code(s) deleted successfully.');
+                            reloadTimeCodeGrid(selectedJobCodeId);
+                        } else {
+                            alert('Error: ' + (response.message || 'Delete failed.'));
+                        }
+                    },
+                    error: function() { alert('An error occurred while deleting.'); }
+                });
+            }
+        }
     </script>
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

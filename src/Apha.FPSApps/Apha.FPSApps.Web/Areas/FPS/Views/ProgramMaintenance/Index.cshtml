@@ -69,8 +69,9 @@
 
 
 @section Scripts {
+    <script src="~/js/ajax-form-validation.js"></script>
     <script>
-        function addProgram(btn) {
+        function addProgram(btn) {            
             $.ajax({
                 url: '/FPS/ProgramMaintenance/Create',
                 type: 'GET',
@@ -85,10 +86,11 @@
         }
 
         function saveProgram() {
+            clearValidationErrors('#modaPopupBody');
             var form = $('#addProgramForm');
 
             if (!isFormValid(form)) {
-                displayClientValidationErrors(form);
+                displayClientValidationErrors(form, '#modaPopupBody');
                 return;
             }
 
@@ -114,12 +116,12 @@
                         closeModal();
                         window.location.reload();
                     } else {
-                        displayServerValidationErrors(result.errors, result.message);
+                        displayServerValidationErrors(result.errors, result.message, '#modaPopupBody')
                     }
                 },
                 error: function (xhr) {
                     if (xhr.status === 400 && xhr.responseJSON) {
-                        displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message);
+                        displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
                     } else {
                         alert('An error occurred while saving');
                     }
@@ -128,10 +130,11 @@
         }
 
         function updateProgram() {
+            clearValidationErrors('#modaPopupBody');
             var form = $('#editProgramForm');
 
             if (!isFormValid(form)) {
-                displayClientValidationErrors(form);
+                displayClientValidationErrors(form, '#modaPopupBody');
                 return;
             }
 
@@ -157,12 +160,12 @@
                         closeModal();
                         window.location.reload();
                     } else {
-                        displayServerValidationErrors(result.errors, result.message);
+                        displayServerValidationErrors(result.errors, result.message, '#modaPopupBody')
                     }
                 },
                 error: function (xhr) {
                     if (xhr.status === 400 && xhr.responseJSON) {
-                        displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message);
+                        displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
                     } else {
                         alert('An error occurred while saving.');
                     }
@@ -209,123 +212,22 @@
         }
 
         function closeModal() {
-              clearValidationErrors();
-              $('#modaPopupBody').html("");
-              $('#modalPopup').removeClass("show");
+            clearValidationErrors('#modaPopupBody');
+            $('#modaPopupBody').html("");
+            $('#modalPopup').removeClass("show");
         }
 
+          // Returns true if all required fields in the form have values
         function isFormValid(form) {
             var isValid = true;
             form.find('[required]').each(function () {
                 if (!$(this).val() || $(this).val().trim() === '') {
                     isValid = false;
-                    return false;
+                    return false; // break
                 }
             });
             return isValid;
-        }
-
-        function clearValidationErrors() {
-            var errorSummary = $('.govuk-error-summary', '#modaPopupBody');
-            errorSummary.hide();
-            errorSummary.find('.govuk-error-summary__list').empty();
-
-            $('[name]', '#modaPopupBody').each(function () {
-                var $field = $(this);
-                $field.closest('.govuk-form-group').removeClass('govuk-form-group--error');
-                $field.removeClass('govuk-input--error');
-                $field.siblings('span[data-valmsg-for]').text('').hide();
-            });
-        }
-
-        // Client-side validation errors — reads from [required] fields inside the form
-         // Mirrors the same summary/field-highlight pattern as displayServerValidationErrors
-         function displayClientValidationErrors(form) {
-             var errorSummary = $('.govuk-error-summary', '#modaPopupBody');
-             var errorList = errorSummary.find('.govuk-error-summary__list');
-             var summaryTitle = errorSummary.find('.govuk-error-summary__title');
-
-            clearValidationErrors();
-
-            var errors = [];
-
-             form.find('[required]').each(function () {
-                 var $field = $(this);
-                 if (!$field.val() || $field.val().trim() === '') {
-                     var fieldName = $field.attr('name') || '';
-                     var label = $('label[for="' + fieldName + '"]', '#modaPopupBody').text().trim()
-                                 || fieldName;
-                     errors.push({ field: fieldName, message: label + ' is required' });
-                 }
-             });
-
-            if (errors.length > 0) {
-                errorList.empty();
-                summaryTitle.text('There is a problem');
-
-                errors.forEach(function (error) {
-                    errorList.append(
-                        '<li><a href="#' + error.field + '">' + error.message + '</a></li>'
-                    );
-
-                     // Highlight the matching field inside the modal
-                     var $field = $('[name="' + error.field + '"]', '#modaPopupBody');
-                     if ($field.length) {
-                         $field.closest('.govuk-form-group').addClass('govuk-form-group--error');
-                         $field.addClass('govuk-input--error');
-                         $field.siblings('span[data-valmsg-for]').text(error.message).show();
-                     }
-                 });
-
-                errorSummary.show().focus();
-            } else {
-                errorSummary.hide();
-            }
-        }
-
-         // Server-side validation errors — expects [{ field, message }]
-         // - If the error field matches a form field: highlight it inline only (not in summary)
-         // - If the error field is not part of the form: show it in the summary only
-         function displayServerValidationErrors(errors, summaryMessage) {
-             var errorSummary = $('.govuk-error-summary', '#modaPopupBody');
-             var errorList = errorSummary.find('.govuk-error-summary__list');
-             var summaryTitle = errorSummary.find('.govuk-error-summary__title');
-
-            summaryTitle.text(summaryMessage || 'There is a problem');
-
-             var hasSummaryErrors = false;
-
-             if (errors && errors.length > 0) {
-                 errors.forEach(function (error) {
-                     var fieldName = error.field || '';
-                     var message   = error.message || 'Validation error';
-
-                     var $field = $('[name="' + fieldName + '"]', '#modaPopupBody');
-
-                     if ($field.length) {
-                         // Field exists in the form — show inline under the field only
-                         $field.closest('.govuk-form-group').addClass('govuk-form-group--error');
-                         $field.addClass('govuk-input--error');
-                         $field.siblings('span[data-valmsg-for]').text(message).show();
-                     } else {
-                         // Field not part of the form — show in summary only
-                         errorList.append(
-                             '<li><a href="#' + fieldName + '">' + message + '</a></li>'
-                         );
-                         hasSummaryErrors = true;
-                     }
-                 });
-
-                 if (hasSummaryErrors) {
-                     errorSummary.show().focus();
-                 } else {
-                     errorSummary.hide();
-                 }
-             } else {
-                 errorSummary.hide();
-             }
-         }
-            
+        } 
     </script>
 
     @{

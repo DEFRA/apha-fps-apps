@@ -67,5 +67,16 @@ namespace Apha.PACT.Application.Services
             var items = await _repository.CopyWorkGroupAsync(sourceJobCode, targetJobCode, parentProject);
             return _mapper.Map<IEnumerable<TimeCodeValidDto>>(items);
         }
+
+        public async Task<bool> DeleteBulkAsync(IEnumerable<(string WorkGroup, string TimeCode)> items, string parentProject)
+        {
+            return await _repository.DeleteBulkAsync(items, parentProject);
+        }
+
+        public async Task<IEnumerable<TimeCodeValidDto>> CopySelectedWorkGroupsAsync(IEnumerable<string> workGroups, string sourceJobCode, string targetJobCode, string parentProject)
+        {
+            var result = await _repository.CopySelectedWorkGroupsAsync(workGroups, sourceJobCode, targetJobCode, parentProject);
+            return _mapper.Map<IEnumerable<TimeCodeValidDto>>(result);
+        }
     }
 }
