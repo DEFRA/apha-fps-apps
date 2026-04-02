@@ -364,5 +364,149 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.PactTimeCodeValidServ
         }
 
         #endregion
+
+        #region DeleteBulkAsync Tests
+
+        [Fact]
+        public async Task DeleteBulkAsync_WithValidRequest_ReturnsSuccessResponse()
+        {
+            // Arrange
+            var request = new BulkDeleteTimeCodeRequestDto
+            {
+                ParentProject = "PP001",
+                Items = [new TimeCodeKeyItemDto { WorkGroup = "WG001", TimeCode = "TC001" }]
+            };
+            var expectedResponse = ApiResponseDto<bool>.SuccessResponse(true);
+            _pactTimeCodeValidApiClient.DeleteBulkAsync(request).Returns(expectedResponse);
+
+            // Act
+            var result = await _service.DeleteBulkAsync(request);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.True(result.Data);
+            await _pactTimeCodeValidApiClient.Received(1).DeleteBulkAsync(request);
+        }
+
+        [Fact]
+        public async Task DeleteBulkAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var request = new BulkDeleteTimeCodeRequestDto
+            {
+                ParentProject = "PP001",
+                Items = [new TimeCodeKeyItemDto { WorkGroup = "WG001", TimeCode = "TC001" }]
+            };
+            var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "Bulk delete failed", Code = "API_ERROR" } };
+            var expectedResponse = ApiResponseDto<bool>.FailureResponse(errors, new ApiMetaDto());
+            _pactTimeCodeValidApiClient.DeleteBulkAsync(request).Returns(expectedResponse);
+
+            // Act
+            var result = await _service.DeleteBulkAsync(request);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+        }
+
+        [Fact]
+        public async Task DeleteBulkAsync_WithEmptyItems_ReturnsSuccessResponse()
+        {
+            // Arrange
+            var request = new BulkDeleteTimeCodeRequestDto { ParentProject = "PP001", Items = [] };
+            var expectedResponse = ApiResponseDto<bool>.SuccessResponse(true);
+            _pactTimeCodeValidApiClient.DeleteBulkAsync(request).Returns(expectedResponse);
+
+            // Act
+            var result = await _service.DeleteBulkAsync(request);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+        }
+
+        #endregion
+
+        #region CopySelectedWorkGroupsAsync Tests
+
+        [Fact]
+        public async Task CopySelectedWorkGroupsAsync_WithValidRequest_ReturnsCopiedItems()
+        {
+            // Arrange
+            var request = new BulkCopyWorkGroupRequestDto
+            {
+                ParentProject = "PP001",
+                SourceJobCode = "JC001",
+                TargetJobCode = "JC002",
+                WorkGroups = ["WG001", "WG002"]
+            };
+            var copiedItems = new List<TimeCodeValidDto>
+            {
+                new TimeCodeValidDto { TimeCode = "JC002", WorkGroup = "WG001", ParentProject = "PP001", JobCode = "JC002" },
+                new TimeCodeValidDto { TimeCode = "JC002", WorkGroup = "WG002", ParentProject = "PP001", JobCode = "JC002" }
+            };
+            var expectedResponse = ApiResponseDto<List<TimeCodeValidDto>>.SuccessResponse(copiedItems);
+            _pactTimeCodeValidApiClient.CopySelectedWorkGroupsAsync(request).Returns(expectedResponse);
+
+            // Act
+            var result = await _service.CopySelectedWorkGroupsAsync(request);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data?.Count);
+            await _pactTimeCodeValidApiClient.Received(1).CopySelectedWorkGroupsAsync(request);
+        }
+
+        [Fact]
+        public async Task CopySelectedWorkGroupsAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var request = new BulkCopyWorkGroupRequestDto
+            {
+                ParentProject = "PP001",
+                SourceJobCode = "JC001",
+                TargetJobCode = "JC002",
+                WorkGroups = ["WG001"]
+            };
+            var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "Copy failed", Code = "COPY_ERROR" } };
+            var expectedResponse = ApiResponseDto<List<TimeCodeValidDto>>.FailureResponse(errors, new ApiMetaDto());
+            _pactTimeCodeValidApiClient.CopySelectedWorkGroupsAsync(request).Returns(expectedResponse);
+
+            // Act
+            var result = await _service.CopySelectedWorkGroupsAsync(request);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+        }
+
+        [Fact]
+        public async Task CopySelectedWorkGroupsAsync_WithEmptyWorkGroups_ReturnsEmptyList()
+        {
+            // Arrange
+            var request = new BulkCopyWorkGroupRequestDto
+            {
+                ParentProject = "PP001",
+                SourceJobCode = "JC001",
+                TargetJobCode = "JC002",
+                WorkGroups = []
+            };
+            var expectedResponse = ApiResponseDto<List<TimeCodeValidDto>>.SuccessResponse([]);
+            _pactTimeCodeValidApiClient.CopySelectedWorkGroupsAsync(request).Returns(expectedResponse);
+
+            // Act
+            var result = await _service.CopySelectedWorkGroupsAsync(request);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!);
+        }
+
+        #endregion
     }
 }

@@ -262,5 +262,167 @@ namespace Apha.PACT.Api.UnitTests.Controller.TimeCodeValidControllerTest
         }
 
         #endregion
+
+        #region DeleteBulk
+
+        [Fact]
+        public async Task DeleteBulk_HappyPath_ReturnsOk()
+        {
+            // Arrange
+            var request = new BulkDeleteTimeCodeReq
+            {
+                ParentProject = "PRJ1",
+                Items = [new TimeCodeKeyItem { WorkGroup = "WG1", TimeCode = "TC1" }]
+            };
+            _serviceMock
+                .DeleteBulkAsync(
+                    Arg.Any<IEnumerable<(string WorkGroup, string TimeCode)>>(),
+                    "PRJ1")
+                .Returns(true);
+
+            // Act
+            var result = await _controller.DeleteBulk(request);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.True((bool)okResult.Value!);
+            await _serviceMock.Received(1).DeleteBulkAsync(
+                Arg.Any<IEnumerable<(string WorkGroup, string TimeCode)>>(),
+                "PRJ1");
+        }
+
+        [Fact]
+        public async Task DeleteBulk_WithEmptyItems_ReturnsOk()
+        {
+            // Arrange — empty items list; service still returns true
+            var request = new BulkDeleteTimeCodeReq { ParentProject = "PRJ1", Items = [] };
+            _serviceMock
+                .DeleteBulkAsync(
+                    Arg.Any<IEnumerable<(string WorkGroup, string TimeCode)>>(),
+                    "PRJ1")
+                .Returns(true);
+
+            // Act
+            var result = await _controller.DeleteBulk(request);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.True((bool)okResult.Value!);
+        }
+
+        [Fact]
+        public async Task DeleteBulk_ServiceThrows_PropagatesException()
+        {
+            // Arrange
+            var request = new BulkDeleteTimeCodeReq
+            {
+                ParentProject = "PRJ1",
+                Items = [new TimeCodeKeyItem { WorkGroup = "WG1", TimeCode = "TC1" }]
+            };
+            _serviceMock
+                .DeleteBulkAsync(
+                    Arg.Any<IEnumerable<(string WorkGroup, string TimeCode)>>(),
+                    Arg.Any<string>())
+                .Throws(new Exception("Service error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.DeleteBulk(request));
+        }
+
+        #endregion
+
+        #region CopyBulkWorkGroups
+
+        [Fact]
+        public async Task CopyBulkWorkGroups_HappyPath_ReturnsOk()
+        {
+            // Arrange
+            var request = new BulkCopyWorkGroupReq
+            {
+                ParentProject = "PRJ1",
+                SourceJobCode = "JC_SRC",
+                TargetJobCode = "JC_TGT",
+                WorkGroups = ["WG1", "WG2"]
+            };
+            var dtos = new List<TimeCodeValidDto>
+            {
+                new() { TimeCode = "JC_TGT", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC_TGT" },
+                new() { TimeCode = "JC_TGT", WorkGroup = "WG2", ParentProject = "PRJ1", JobCode = "JC_TGT" }
+            };
+            var mapped = new List<TimeCodeValidRes>
+            {
+                new() { TimeCode = "JC_TGT", WorkGroup = "WG1", ParentProject = "PRJ1" },
+                new() { TimeCode = "JC_TGT", WorkGroup = "WG2", ParentProject = "PRJ1" }
+            };
+
+            _serviceMock
+                .CopySelectedWorkGroupsAsync(
+                    Arg.Any<IEnumerable<string>>(),
+                    "JC_SRC", "JC_TGT", "PRJ1")
+                .Returns(dtos);
+            _mapperMock.Map<IEnumerable<TimeCodeValidRes>>(dtos).Returns(mapped);
+
+            // Act
+            var result = await _controller.CopyBulkWorkGroups(request);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(mapped, okResult.Value);
+            await _serviceMock.Received(1).CopySelectedWorkGroupsAsync(
+                Arg.Any<IEnumerable<string>>(),
+                "JC_SRC", "JC_TGT", "PRJ1");
+        }
+
+        [Fact]
+        public async Task CopyBulkWorkGroups_WithEmptyWorkGroups_ReturnsOkWithEmptyList()
+        {
+            // Arrange — no work groups selected; service returns empty collection
+            var request = new BulkCopyWorkGroupReq
+            {
+                ParentProject = "PRJ1",
+                SourceJobCode = "JC_SRC",
+                TargetJobCode = "JC_TGT",
+                WorkGroups = []
+            };
+            var emptyDtos = Enumerable.Empty<TimeCodeValidDto>();
+            var emptyMapped = Enumerable.Empty<TimeCodeValidRes>();
+
+            _serviceMock
+                .CopySelectedWorkGroupsAsync(
+                    Arg.Any<IEnumerable<string>>(),
+                    "JC_SRC", "JC_TGT", "PRJ1")
+                .Returns(emptyDtos);
+            _mapperMock.Map<IEnumerable<TimeCodeValidRes>>(emptyDtos).Returns(emptyMapped);
+
+            // Act
+            var result = await _controller.CopyBulkWorkGroups(request);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Empty((IEnumerable<TimeCodeValidRes>)okResult.Value!);
+        }
+
+        [Fact]
+        public async Task CopyBulkWorkGroups_ServiceThrows_PropagatesException()
+        {
+            // Arrange
+            var request = new BulkCopyWorkGroupReq
+            {
+                ParentProject = "PRJ1",
+                SourceJobCode = "JC_SRC",
+                TargetJobCode = "JC_TGT",
+                WorkGroups = ["WG1"]
+            };
+            _serviceMock
+                .CopySelectedWorkGroupsAsync(
+                    Arg.Any<IEnumerable<string>>(),
+                    Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
+                .Throws(new Exception("Service error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.CopyBulkWorkGroups(request));
+        }
+
+        #endregion
     }
 }
