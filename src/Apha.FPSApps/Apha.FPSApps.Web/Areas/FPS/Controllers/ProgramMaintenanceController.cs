@@ -231,9 +231,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         private async Task PopulateDropdownsAsync(ProgramViewModel model)
         {
-            // Directorate dropdown
+            // Directorate dropdown — blank first item
             var directorates = new List<string>(DefaultDirectorates);
-          
+
             if (!string.IsNullOrWhiteSpace(model.Directorate) &&
                 !directorates.Any(d => string.Equals(d, model.Directorate, StringComparison.OrdinalIgnoreCase)))
             {
@@ -247,17 +247,19 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     Text = d,
                     Selected = string.Equals(model.Directorate, d, StringComparison.OrdinalIgnoreCase)
                 })
+                .Prepend(new SelectListItem { Value = string.Empty, Text = string.Empty, Selected = string.IsNullOrEmpty(model.Directorate) })
                 .ToList();
 
-            // Manager dropdown
+            // Manager dropdown — blank first item
             var managerResponse = await _employeeService.GetAllManagersAsync();
             model.ManagerList = (managerResponse.Data ?? new List<ManagerDto>())
                 .Select(m => new SelectListItem
                 {
-                    Value = m.Name, 
+                    Value = m.Name,
                     Text = m.Name,
                     Selected = string.Equals(model.Manager, m.Name, StringComparison.OrdinalIgnoreCase)
                 })
+                .Prepend(new SelectListItem { Value = string.Empty, Text = string.Empty, Selected = string.IsNullOrEmpty(model.Manager) })
                 .ToList();
         }
     }
