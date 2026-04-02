@@ -61,11 +61,11 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
             result.Should().BeEmpty();
             await _mockRepository.Received(1).GetAllWorkGroupsAsync();
         }
-
+    
         [Fact]
         public async Task GetAllWorkGroupsAsync_RepositoryThrows_PropagatesException()
         {
-            _mockRepository.GetAllWorkGroupsAsync().Throws(new Exception("DB error"));
+            _mockRepository.GetAllWorkGroupsAsync().ThrowsAsync(new Exception("DB error"));
 
             await Assert.ThrowsAsync<Exception>(() => _sut.GetAllWorkGroupsAsync());
         }

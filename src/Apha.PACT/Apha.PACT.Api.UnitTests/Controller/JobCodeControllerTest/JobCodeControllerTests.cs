@@ -44,7 +44,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.JobCodeControllerTest
         [Fact]
         public async Task GetByProject_ServiceThrows_PropagatesException()
         {
-            _serviceMock.GetJobCodesByProjectAsync("PRJ1").Throws(new Exception("Service error"));
+            _serviceMock.GetJobCodesByProjectAsync("PRJ1").ThrowsAsync(new Exception("Service error"));
 
             await Assert.ThrowsAsync<Exception>(() => _controller.GetByProject("PRJ1"));
         }
@@ -166,7 +166,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.JobCodeControllerTest
             var dto = new JobCodeDto { JobCodeId = "JC1" };
 
             _mapperMock.Map<JobCodeDto>(req).Returns(dto);
-            _serviceMock.CreateJobCodeAsync(dto).Throws(new Exception("Service error"));
+            _serviceMock.CreateJobCodeAsync(dto).ThrowsAsync(new Exception("Service error"));
 
             await Assert.ThrowsAsync<Exception>(() => _controller.Create(req));
         }
@@ -200,7 +200,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.JobCodeControllerTest
             var dto = new JobCodeDto { JobCodeId = "JC1" };
 
             _mapperMock.Map<JobCodeDto>(req).Returns(dto);
-            _serviceMock.UpdateJobCodeAsync(dto).Throws(new Exception("Service error"));
+            _serviceMock.UpdateJobCodeAsync(dto).ThrowsAsync(new Exception("Service error"));
 
             await Assert.ThrowsAsync<Exception>(() => _controller.Update(req));
         }
