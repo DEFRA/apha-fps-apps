@@ -1,4 +1,5 @@
-// StaffJob.js - Shared staff job CRUD, charge rate calculation, and modal/validation helpers.
+// StaffJob.js - Shared staff job CRUD and charge rate calculation.
+// Requires ajax-form-validation.js to be loaded before this script.
 // Each page must configure StaffJobConfig before this script runs its event bindings.
 
 var _hoursPerDay = 8;
@@ -27,7 +28,7 @@ function addStaffJob(btn) {
         },
         error: function (xhr) {
             if (xhr.status === 400 && xhr.responseJSON) {
-                displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message);
+                displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
                 alert('An error occurred while opening the form.');
             }
@@ -38,11 +39,11 @@ function addStaffJob(btn) {
 function saveStaffJob() {
     var form = $('#formAddStaff');
     if (!isFormValid(form)) {
-        displayClientValidationErrors(form);
+        displayClientValidationErrors(form, '#modaPopupBody');
         return;
     }
     var staffId = $('#StaffID').val();
-    var staffName = $('#StaffDropdown option:selected').text();
+    var staffName = $('#Name option:selected').val();
     var data = {
         StaffID: staffId,
         JobCode: StaffJobConfig.getJobCode(),
@@ -63,12 +64,12 @@ function saveStaffJob() {
                 closeModal();
                 StaffJobConfig.onSaved();
             } else {
-                displayServerValidationErrors(result.errors, result.message);
+                displayServerValidationErrors(result.errors, result.message, '#modaPopupBody');
             }
         },
         error: function (xhr) {
             if (xhr.status === 400 && xhr.responseJSON) {
-                displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message);
+                displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
                 alert('An error occurred while saving.');
             }
@@ -88,7 +89,7 @@ function editStaffJob(btn) {
         },
         error: function (xhr) {
             if (xhr.status === 400 && xhr.responseJSON) {
-                displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message);
+                displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
                 alert('An error occurred while fetching the record.');
             }
@@ -99,12 +100,12 @@ function editStaffJob(btn) {
 function updateStaffJob() {
     var form = $('#formEditStaff');
     if (!isFormValid(form)) {
-        displayClientValidationErrors(form);
+        displayClientValidationErrors(form, '#modaPopupBody');
         return;
     }
     var staffId = $('#StaffID').val();
     var jobCode = form.find('[name="JobCode"]').val();
-    var staffName = $('#StaffDropdown option:selected').text();
+    var staffName = $('#Name option:selected').val();
     var data = {
         StaffID: staffId,
         JobCode: jobCode,
@@ -125,12 +126,12 @@ function updateStaffJob() {
                 closeModal();
                 StaffJobConfig.onUpdated();
             } else {
-                displayServerValidationErrors(result.errors, result.message);
+                displayServerValidationErrors(result.errors, result.message, '#modaPopupBody');
             }
         },
         error: function (xhr) {
             if (xhr.status === 400 && xhr.responseJSON) {
-                displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message);
+                displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
                 alert('An error occurred while saving.');
             }
@@ -228,82 +229,7 @@ $(document).ready(function () {
 // ---- Modal helpers ----
 
 function closeModal() {
-    clearValidationErrors();
+    clearValidationErrors('#modaPopupBody');
     $('#modaPopupBody').html('');
     $('#modalPopup').removeClass('show');
-}
-
-function isFormValid(form) {
-    var isValid = true;
-    form.find('[required]').each(function () {
-        if (!$(this).val() || $(this).val().trim() === '') {
-            isValid = false;
-            return false;
-        }
-    });
-    return isValid;
-}
-
-function clearValidationErrors() {
-    var errorSummary = $('.govuk-error-summary', '#modaPopupBody');
-    errorSummary.hide().find('.govuk-error-summary__list').empty();
-    $('[name]', '#modaPopupBody').each(function () {
-        $(this).closest('.govuk-form-group').removeClass('govuk-form-group--error');
-        $(this).removeClass('govuk-input--error');
-        $(this).siblings('span[data-valmsg-for]').text('').hide();
-    });
-}
-
-function displayClientValidationErrors(form) {
-    var errorSummary = $('.govuk-error-summary', '#modaPopupBody');
-    var errorList = errorSummary.find('.govuk-error-summary__list');
-    errorList.empty();
-    errorSummary.find('.govuk-error-summary__title').text('There is a problem');
-    clearValidationErrors();
-    var errors = [];
-    form.find('[required]').each(function () {
-        var $field = $(this);
-        if (!$field.val() || $field.val().trim() === '') {
-            var fieldName = $field.attr('name') || '';
-            var label = $('label[for="' + fieldName + '"]', '#modaPopupBody').text().trim() || fieldName;
-            errors.push({ field: fieldName, message: label + ' is required' });
-        }
-    });
-    if (errors.length > 0) {
-        errors.forEach(function (error) {
-            errorList.append('<li><a href="#' + error.field + '">' + error.message + '</a></li>');
-            var $field = $('[name="' + error.field + '"]', '#modaPopupBody');
-            $field.closest('.govuk-form-group').addClass('govuk-form-group--error');
-            $field.addClass('govuk-input--error');
-            $field.siblings('span[data-valmsg-for]').text(error.message).show();
-        });
-        errorSummary.show().focus();
-    }
-}
-
-function displayServerValidationErrors(errors, message) {
-    var errorSummary = $('.govuk-error-summary', '#modaPopupBody');
-    var errorList = errorSummary.find('.govuk-error-summary__list');
-    errorList.empty();
-    errorSummary.find('.govuk-error-summary__title').text('There is a problem');
-    clearValidationErrors();
-    if (errors && errors.length > 0) {
-        errors.forEach(function (error) {
-            var fieldName = error.field || '';
-            var errorMessage = error.message || message || 'Validation error';
-            errorList.append('<li><a href="#' + fieldName + '">' + errorMessage + '</a></li>');
-            if (fieldName) {
-                var $field = $('[name="' + fieldName + '"]', '#modaPopupBody');
-                if ($field.length) {
-                    $field.closest('.govuk-form-group').addClass('govuk-form-group--error');
-                    $field.addClass('govuk-input--error');
-                    $field.siblings('span[data-valmsg-for]').text(errorMessage).show();
-                }
-            }
-        });
-        errorSummary.show().focus();
-    } else if (message) {
-        errorList.append('<li>' + message + '</li>');
-        errorSummary.show().focus();
-    }
 }

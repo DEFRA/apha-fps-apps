@@ -30,8 +30,8 @@
         }
         <div class="col-12">
             <div class="govuk-form-group sup_margin_0">
-                <label for="AnimalTypeDropdown" class="govuk-label p-0">Animal Type:</label>
-                <select id="AnimalTypeDropdown" name="AnimalTypeDropdown" required class="govuk-select"
+                <label for="AnimalType" class="govuk-label p-0">Animal Type:</label>
+                <select id="AnimalType" name="AnimalType" required class="govuk-select"
                         onchange="onAnimalTypeSelected(this)">
                     <option value="">-- Select Animal Type --</option>
                     @if (Model.AnimalTypeList != null)
@@ -43,7 +43,7 @@
                         }
                     }
                 </select>
-                <span asp-validation-for="AnimalType" class="text-danger" style="display:none;"></span>
+                <span asp-validation-for="AnimalType" class="govuk-error-message" style="display:none;"></span>
             </div>
         </div>
         <div class="col-12">
@@ -57,7 +57,7 @@
                 <label for="NumberOfDays" class="govuk-label" asp-for="NumberOfDays">Days:</label>
                 <input type="number" step="0.01" asp-for="NumberOfDays" required class="govuk-input" id="NumberOfDays"
                        onchange="calculateAnimalCost()">
-                <span asp-validation-for="NumberOfDays" class="text-danger" style="display:none;"></span>
+                <span asp-validation-for="NumberOfDays" class="govuk-error-message" style="display:none;"></span>
             </div>
         </div>
         <div class="col-12">
@@ -65,7 +65,7 @@
                 <label for="NumberOfAnimals" class="govuk-label" asp-for="NumberOfAnimals">No. Required:</label>
                 <input type="number" step="0.01" asp-for="NumberOfAnimals" required class="govuk-input" id="NumberOfAnimals"
                        onchange="calculateAnimalCost()">
-                <span asp-validation-for="NumberOfAnimals" class="text-danger" style="display:none;"></span>
+                <span asp-validation-for="NumberOfAnimals" class="govuk-error-message" style="display:none;"></span>
             </div>
         </div>
         <div class="col-12">
