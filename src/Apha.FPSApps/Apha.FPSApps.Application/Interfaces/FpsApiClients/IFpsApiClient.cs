@@ -5,5 +5,6 @@
         IFpsStaffJobApiClient FpsStaffJob { get; }
         IFpsEmployeeApiClient FpsEmployee { get; }
         IFpsProgramApiClient FpsProgram { get; }
+        IFpsYearMasterApiClient FpsYearMaster { get; }
     }
 }

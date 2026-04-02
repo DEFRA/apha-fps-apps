@@ -22,6 +22,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<ManagerDto, ManagerRes>().ReverseMap();
             CreateMap<EmployeeDto, EmployeeReq>().ReverseMap();
             CreateMap<EmployeeDto, EmployeeRes>().ReverseMap();
+            CreateMap<YearMasterDto, YearMasterRes>().ReverseMap();
         }
     }
 }

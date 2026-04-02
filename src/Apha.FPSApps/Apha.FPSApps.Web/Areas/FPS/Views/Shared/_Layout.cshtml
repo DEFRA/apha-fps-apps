@@ -52,15 +52,7 @@
                 </div>
                 <div class="pims-log">
                     <select class="pims-log" style="border:0; margin-left: 0px;" aria-label="Year" id="yearSelector">
-                        <option class="pims-log" style="border:0; margin-left: 0px;" value="2017-2018">2017-2018</option>
-                        <option class="pims-log" style="border:0; margin-left: 0px;" value="2018-2019">2018-2019</option>
-                        <option class="pims-log" style="border:0; margin-left: 0px;" value="2019-2020">2019-2020</option>
-                        <option class="pims-log" style="border:0; margin-left: 0px;" value="2020-2021">2020-2021</option>
-                        <option class="pims-log" style="border:0; margin-left: 0px;" value="2021-2022">2021-2022</option>
-                        <option class="pims-log" style="border:0; margin-left: 0px;" value="2022-2023">2022-2023</option>
-                        <option class="pims-log" style="border:0; margin-left: 0px;" value="2023-2024">2023-2024</option>
-                        <option class="pims-log" style="border:0; margin-left: 0px;" value="2024">2024-2025</option>
-                        <option class="pims-log" style="border:0; margin-left: 0px;" value="2025" action="active">2025-2026</option>
+                        <option value="@Fy.Year" selected>@Fy.Year</option>
                     </select>
                 </div>
             </div>
@@ -351,13 +343,83 @@
     <script src="~/js/bootstrap.bundle.min.js"></script>
     <fps-year-script></fps-year-script>
     <script>
-        let selectedYear = @Fy.Year
-        $('#yearSelector').val(selectedYear);
-        $('#yearSelector').change(function () {
-            selectedYear = this.value;
-            window.location.href = '/FPS/Home/Index?year=' + selectedYear;
-        });       
+        // Initialize year selector with API data
+        $(document).ready(function () {
+            loadYearMasterDropdown();
+        });
 
+        function loadYearMasterDropdown() {
+            $.ajax({
+                url: '@Url.Action("GetYearMasterDropdown", "YearMaster", new { area = "FPS" })',
+                type: 'GET',
+                success: function (response) {
+                    if (response.success && response.data) {
+                        var $select = $('#yearSelector');
+                        $select.empty();
+
+                        // Get the year from query string (if present) or from context
+                        var urlParams = new URLSearchParams(window.location.search);
+                        var yearFromUrl = urlParams.get('year');
+                        var currentYear = @Fy.Year;
+
+                        // Determine which year to select
+                        var defaultYear;
+                        if (yearFromUrl) {
+                            // If year is in URL, use that
+                            defaultYear = parseInt(yearFromUrl);
+                        } else {
+                            // Otherwise, find the year with status "Open"
+                            var openYear = response.data.find(function(item) {
+                                return item.yearStatus && item.yearStatus.toLowerCase() === 'open';
+                            });
+                            // Fallback to current year from context if no open year found
+                            defaultYear = openYear ? openYear.value : currentYear;
+                        }
+
+                        var yearFound = false;
+
+                        $.each(response.data, function (index, item) {
+                            var $option = $('<option></option>')
+                                .addClass('pims-log')
+                                .css({
+                                    'border': '0',
+                                    'margin-left': '0px'
+                                })
+                                .val(item.value)
+                                .text(item.text);
+
+                            // Set selected year based on URL parameter or Open status
+                            if (item.value == defaultYear) {
+                                $option.attr('selected', 'selected');
+                                yearFound = true;
+                            }
+
+                            $select.append($option);
+                        });
+
+                        // If default year not found, select first item
+                        if (!yearFound && response.data.length > 0) {
+                            $select.val(response.data[0].value);
+                        }
+                    } else {
+                        console.error('Failed to load year master dropdown');
+                        $('#yearSelector').html('<option value="">Error loading years</option>');
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error loading year master dropdown:', error);
+                    $('#yearSelector').html('<option value="">Error loading years</option>');
+                }
+            });
+        }
+
+        // Handle year change event
+        $('#yearSelector').on('change', function () {
+            var selectedYear = $(this).val();
+            if (selectedYear) {
+                window.location.href = '/FPS/Home/Index?year=' + selectedYear;
+            }
+        });
     </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

@@ -3,13 +3,13 @@
     public interface IFPSYearContext
     {
         int Year { get; set; }
-        bool IsReadOnly { get; }
+        bool IsReadOnly { get; set; }
     }
 
 
     public class FPSYearContext : IFPSYearContext
     {
         public int Year { get; set; }
-        public bool IsReadOnly => Year < DateTime.UtcNow.Year;
+        public bool IsReadOnly { get; set; }
     }
 }
