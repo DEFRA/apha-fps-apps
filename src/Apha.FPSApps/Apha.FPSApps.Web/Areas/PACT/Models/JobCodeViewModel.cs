@@ -7,7 +7,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
     public class JobCodeViewModel
     {
         [Display(Name = "Job Code")]
-        [Required]
+        [Required(ErrorMessage = "Job Code is required")]
         [StringLength(50)]       
         [GridColumn(Order = 1, Width = 296, Type = GridColumnType.Text, IsFilterable = true)]
         public string JobCodeId { get; set; } = null!;

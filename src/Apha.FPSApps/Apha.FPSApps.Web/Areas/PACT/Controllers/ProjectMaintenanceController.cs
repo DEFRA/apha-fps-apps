@@ -8,6 +8,7 @@ using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Azure;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Identity.Web;
@@ -365,7 +366,18 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         public async Task<IActionResult> CreateJobCode([FromBody] JobCodeViewModel model)
         {
             if (!ModelState.IsValid)
-                return Json(new { success = false, errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)) });
+                return Json(new
+                {
+                    success = false,
+                    message = "Please correct the errors below.",
+                    errors = ModelState
+                        .Where(kvp => kvp.Value!.Errors.Any())
+                        .SelectMany(kvp => kvp.Value!.Errors.Select(e => new
+                        {
+                            field = kvp.Key,
+                            message = e.ErrorMessage
+                        }))
+                });
 
             var dto = _mapper.Map<JobCodeDto>(model);
             var result = await _jobCodeService.CreateJobCodeAsync(dto);
@@ -373,7 +385,16 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             if (result.Success)
                 return Json(new { success = true });
 
-            return Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Create failed" });
+            return Json(new
+            {
+                success = false,
+                message = "Failed to create project job code.",
+                errors = (result.Errors ?? new List<ApiErrorDto>()).Select(e => new
+                {
+                    field = e.Code ?? string.Empty,
+                    message = e.Message ?? "An unexpected error occurred."
+                })
+            });
         }
 
         [HttpGet]
@@ -393,7 +414,17 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         public async Task<IActionResult> EditJobCode([FromBody] JobCodeViewModel model)
         {
             if (!ModelState.IsValid)
-                return Json(new { success = false, errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)) });
+                return Json(new
+                {
+                    success = false,
+                    message = "Please correct the errors below.",
+                    errors = ModelState
+                   .Where(kvp => kvp.Value!.Errors.Any())
+                   .SelectMany(kvp => kvp.Value!.Errors.Select(e => new {
+                       field = kvp.Key,
+                       message = e.ErrorMessage
+                   }))
+                });
 
             var dto = _mapper.Map<JobCodeDto>(model);
             var result = await _jobCodeService.UpdateJobCodeAsync(dto);
@@ -401,7 +432,16 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             if (result.Success)
                 return Json(new { success = true });
 
-            return Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Update failed" });
+            return Json(new
+            {
+                success = false,
+                message = "Failed to update project job code.",
+                errors = (result.Errors ?? new List<ApiErrorDto>()).Select(e => new
+                {
+                    field = e.Code ?? string.Empty,
+                    message = e.Message ?? "An unexpected error occurred."
+                })
+            });
         }
 
         [HttpDelete]
@@ -437,7 +477,17 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         public async Task<IActionResult> CreateTimeCode([FromBody] TimeCodeViewModel model)
         {
             if (!ModelState.IsValid)
-                return Json(new { success = false, errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)) });
+                return Json(new
+                {
+                    success = false,
+                    message = "Please correct the errors below.",
+                    errors = ModelState
+                    .Where(kvp => kvp.Value!.Errors.Any())
+                    .SelectMany(kvp => kvp.Value!.Errors.Select(e => new {
+                        field = kvp.Key,
+                        message = e.ErrorMessage
+                    }))
+                });
 
             var dto = _mapper.Map<TimeCodeValidDto>(model);
             var result = await _timeCodeService.CreateTimeCodeValidAsync(dto);
@@ -445,7 +495,15 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             if (result.Success)
                 return Json(new { success = true });
 
-            return Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Create failed" });
+            return Json(new
+            {
+                success = false,
+                message = "Failed to create time code.",
+                errors = (result.Errors ?? new List<ApiErrorDto>()).Select(e => new {
+                    field = e.Code ?? string.Empty,
+                    message = e.Message ?? "An unexpected error occurred."
+                })
+            });
         }
 
         [HttpGet]
@@ -474,7 +532,17 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         public async Task<IActionResult> EditTimeCode([FromBody] TimeCodeViewModel model)
         {
             if (!ModelState.IsValid)
-                return Json(new { success = false, errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)) });
+                return Json(new
+                {
+                    success = false,
+                    message = "Please correct the errors below.",
+                    errors = ModelState
+                    .Where(kvp => kvp.Value!.Errors.Any())
+                    .SelectMany(kvp => kvp.Value!.Errors.Select(e => new {
+                        field = kvp.Key,
+                        message = e.ErrorMessage
+                    }))
+                });
 
             // Detect whether the user changed the WorkGroup value.
             // Because WorkGroup forms part of the composite key
@@ -513,7 +581,15 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             if (updateResult.Success)
                 return Json(new { success = true });
 
-            return Json(new { success = false, message = updateResult.Errors?.FirstOrDefault()?.Message ?? "Update failed" });
+            return Json(new
+            {
+                success = false,
+                message = "Failed to update time code.",
+                errors = (updateResult.Errors ?? new List<ApiErrorDto>()).Select(e => new {
+                    field = e.Code ?? string.Empty,
+                    message = e.Message ?? "An unexpected error occurred."
+                })
+            });
         }
 
         [HttpDelete]
@@ -544,7 +620,17 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         public async Task<IActionResult> CopyProjectJobCode([FromBody] CopyJobCodeRequest model)
         {
             if (!ModelState.IsValid)
-                return Json(new { success = false, errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)) });
+                return Json(new
+                {
+                    success = false,
+                    message = "Please correct the errors below.",
+                    errors = ModelState
+                    .Where(kvp => kvp.Value!.Errors.Any())
+                    .SelectMany(kvp => kvp.Value!.Errors.Select(e => new {
+                        field = kvp.Key,
+                        message = e.ErrorMessage
+                    }))
+                });
 
             var dto = new JobCodeDto
             {
@@ -557,7 +643,15 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
             var createResult = await _jobCodeService.CreateJobCodeAsync(dto);
             if (!createResult.Success)
-                return Json(new { success = false, message = createResult.Errors?.FirstOrDefault()?.Message ?? "Create failed" });
+                return Json(new
+                {
+                    success = false,
+                    message = "Failed to create project job code.",
+                    errors = (createResult.Errors ?? new List<ApiErrorDto>()).Select(e => new {
+                        field = e.Code ?? string.Empty,
+                        message = e.Message ?? "An unexpected error occurred."
+                    })
+                });
 
             if (model.CopyWorkGroup)
             {
