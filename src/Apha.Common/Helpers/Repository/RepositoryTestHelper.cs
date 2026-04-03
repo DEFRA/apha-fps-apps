@@ -60,6 +60,9 @@ namespace Apha.Common.Helpers.Repository
             mockDatabase
                 .Setup(d => d.BeginTransactionAsync(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(mockTransaction.Object);
+            mockDatabase
+                .Setup(d => d.CreateExecutionStrategy())
+                .Returns(new PassThroughExecutionStrategy());
 
             mockContext.Setup(c => c.Database).Returns(mockDatabase.Object);
         }
@@ -188,6 +191,30 @@ namespace Apha.Common.Helpers.Repository
                     mockEntry.SetupAllProperties();
                     return mockEntry.Object;
                 });
+        }
+
+        /// <summary>
+        /// An execution strategy that executes operations directly without any retry logic.
+        /// Used in unit tests as a stand-in for provider-specific strategies (e.g. NpgsqlRetryingExecutionStrategy)
+        /// so that repositories wrapping transactions in CreateExecutionStrategy().ExecuteAsync() work correctly
+        /// without a real database connection.
+        /// </summary>
+        private sealed class PassThroughExecutionStrategy : IExecutionStrategy
+        {
+            public bool RetriesOnFailure => false;
+
+            public TResult Execute<TState, TResult>(
+                TState state,
+                Func<DbContext, TState, TResult> operation,
+                Func<DbContext, TState, ExecutionResult<TResult>>? verifySucceeded)
+                => operation(null!, state);
+
+            public Task<TResult> ExecuteAsync<TState, TResult>(
+                TState state,
+                Func<DbContext, TState, CancellationToken, Task<TResult>> operation,
+                Func<DbContext, TState, CancellationToken, Task<ExecutionResult<TResult>>>? verifySucceeded,
+                CancellationToken cancellationToken = default)
+                => operation(null!, state, cancellationToken);
         }
     }
 }

@@ -54,7 +54,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
             );
 
             _http.GetAsync<List<ProjectRes>>(Arg.Is<string>(url =>
-                    url.Contains("api/project/paged") && url.Contains("programNo=P001")))
+                    url.Contains("api/v1/project/paged") && url.Contains("programNo=P001")))
                 .Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<ProjectDto>>>(apiResponse).Returns(expectedDto);
 
@@ -66,7 +66,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
             Assert.True(result.Success);
             Assert.Equal(2, result.Data?.Count);
             await _http.Received(1).GetAsync<List<ProjectRes>>(
-                Arg.Is<string>(url => url.Contains("api/project/paged") && url.Contains("programNo=P001")));
+                Arg.Is<string>(url => url.Contains("api/v1/project/paged") && url.Contains("programNo=P001")));
             _mapper.Received(1).Map<ApiResponseDto<List<ProjectDto>>>(apiResponse);
         }
 
@@ -165,7 +165,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
                 }
             );
 
-            _http.GetAsync<List<ProjectRes>>("api/project").Returns(apiResponse);
+            _http.GetAsync<List<ProjectRes>>("api/v1/project").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<ProjectDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -175,7 +175,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(2, result.Data?.Count);
-            await _http.Received(1).GetAsync<List<ProjectRes>>("api/project");
+            await _http.Received(1).GetAsync<List<ProjectRes>>("api/v1/project");
         }
 
         [Fact]
@@ -241,7 +241,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
                 new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1 }
             );
 
-            _http.GetAsync<List<ProjectRes>>(Arg.Is<string>(url => url.Contains("api/project/paged"))).Returns(apiResponse);
+            _http.GetAsync<List<ProjectRes>>(Arg.Is<string>(url => url.Contains("api/v1/project/paged"))).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<ProjectDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -251,7 +251,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Single(result.Data!);
-            await _http.Received(1).GetAsync<List<ProjectRes>>(Arg.Is<string>(url => url.Contains("api/project/paged")));
+            await _http.Received(1).GetAsync<List<ProjectRes>>(Arg.Is<string>(url => url.Contains("api/v1/project/paged")));
         }
 
         [Fact]
@@ -313,7 +313,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
                 new List<ProjectDto> { new() { ParentProject = "PP001" } }
             );
 
-            _http.GetAsync<List<ProjectRes>>(Arg.Is<string>(url => url.Contains("api/project/pactview"))).Returns(apiResponse);
+            _http.GetAsync<List<ProjectRes>>(Arg.Is<string>(url => url.Contains("api/v1/project/pactview"))).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<ProjectDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -323,7 +323,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Single(result.Data!);
-            await _http.Received(1).GetAsync<List<ProjectRes>>(Arg.Is<string>(url => url.Contains("api/project/pactview")));
+            await _http.Received(1).GetAsync<List<ProjectRes>>(Arg.Is<string>(url => url.Contains("api/v1/project/pactview")));
         }
 
         [Fact]
@@ -395,7 +395,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(parentProject, result.Data?.ParentProject);
-            await _http.Received(1).GetAsync<ProjectRes>(Arg.Is<string>(url => url.Contains($"api/project/{Uri.EscapeDataString(parentProject)}")));
+            await _http.Received(1).GetAsync<ProjectRes>(Arg.Is<string>(url => url.Contains($"api/v1/project/{Uri.EscapeDataString(parentProject)}")));
         }
 
         [Fact]
@@ -456,7 +456,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
             var expectedDto = ApiResponseDto<ProjectDto>.SuccessResponse(projectDto);
 
             _mapper.Map<ProjectReq>(projectDto).Returns(projectReq);
-            _http.PostAsync<ProjectReq, ProjectRes>("api/project", projectReq).Returns(apiResponse);
+            _http.PostAsync<ProjectReq, ProjectRes>("api/v1/project", projectReq).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<ProjectDto>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -466,7 +466,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal("PP001", result.Data?.ParentProject);
-            await _http.Received(1).PostAsync<ProjectReq, ProjectRes>("api/project", projectReq);
+            await _http.Received(1).PostAsync<ProjectReq, ProjectRes>("api/v1/project", projectReq);
         }
 
         [Fact]
@@ -532,7 +532,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
             var expectedDto = ApiResponseDto<ProjectDto>.SuccessResponse(projectDto);
 
             _mapper.Map<ProjectReq>(projectDto).Returns(projectReq);
-            _http.PutAsync<ProjectReq, ProjectRes>("api/project", projectReq).Returns(apiResponse);
+            _http.PutAsync<ProjectReq, ProjectRes>("api/v1/project", projectReq).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<ProjectDto>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -542,7 +542,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal("Updated Project", result.Data?.ProjectTitle);
-            await _http.Received(1).PutAsync<ProjectReq, ProjectRes>("api/project", projectReq);
+            await _http.Received(1).PutAsync<ProjectReq, ProjectRes>("api/v1/project", projectReq);
         }
 
         [Fact]
@@ -608,7 +608,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
             var expectedDto = ApiResponseDto<ProjectDto>.SuccessResponse(projectDto);
 
             _mapper.Map<ProjectReq>(projectDto).Returns(projectReq);
-            _http.PatchAsync<ProjectReq, ProjectRes>("api/project/external/pact", projectReq).Returns(apiResponse);
+            _http.PatchAsync<ProjectReq, ProjectRes>("api/v1/project/external/pact", projectReq).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<ProjectDto>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -618,7 +618,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal("PP001", result.Data?.ParentProject);
-            await _http.Received(1).PatchAsync<ProjectReq, ProjectRes>("api/project/external/pact", projectReq);
+            await _http.Received(1).PatchAsync<ProjectReq, ProjectRes>("api/v1/project/external/pact", projectReq);
         }
 
         [Fact]
@@ -678,10 +678,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
         {
             // Arrange
             var parentProject = "PP001";
-            var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
+            var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
             var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
 
-            _http.DeleteAsync<bool>(Arg.Is<string>(url => url.Contains(Uri.EscapeDataString(parentProject)))).Returns(apiResponse);
+            _http.DeleteAsync<bool?>(Arg.Is<string>(url => url.Contains(Uri.EscapeDataString(parentProject)))).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -691,7 +691,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.True(result.Data);
-            await _http.Received(1).DeleteAsync<bool>(Arg.Is<string>(url => url.Contains($"api/project/{Uri.EscapeDataString(parentProject)}")));
+            await _http.Received(1).DeleteAsync<bool?>(Arg.Is<string>(url => url.Contains($"api/v1/project/{Uri.EscapeDataString(parentProject)}")));
         }
 
         [Fact]
@@ -700,7 +700,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
             // Arrange
             var parentProject = "NONEXISTENT";
             var errors = new List<ApiError> { new() { Message = "Not Found", Code = "NOT_FOUND" } };
-            var apiResponse = new ApiResponse<bool> { Success = false, Errors = errors };
+            var apiResponse = new ApiResponse<bool?> { Success = false, Errors = errors };
             var mappedResponse = new ApiResponseDto<bool>
             {
                 Success = false,
@@ -708,7 +708,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
                 Meta = new ApiMetaDto()
             };
 
-            _http.DeleteAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
+            _http.DeleteAsync<bool?>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedResponse);
 
             // Act
@@ -724,7 +724,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
         public async Task DeleteProjectAsync_WhenExceptionThrown_ReturnsInternalError()
         {
             // Arrange
-            _http.DeleteAsync<bool>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
+            _http.DeleteAsync<bool?>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
 
             // Act
             var result = await _client.DeleteProjectAsync("PP001");

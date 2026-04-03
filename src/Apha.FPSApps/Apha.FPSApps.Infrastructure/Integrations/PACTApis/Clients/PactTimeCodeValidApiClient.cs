@@ -1,3 +1,4 @@
+using Apha.Common.Constants;
 using Apha.Common.Contracts.PACT;
 using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
@@ -14,7 +15,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
         private readonly IPactHttpExecutor _http;
         private readonly IMapper _mapper;
         private const string InternalCodeError = "INTERNAL_ERROR";
-        private const string BaseEndpoint = "api/timecodevalid";
 
         public PactTimeCodeValidApiClient(IPactHttpExecutor http, IMapper mapper)
         {
@@ -27,7 +27,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             try
             {
                 var response = await _http.GetAsync<List<TimeCodeValidRes>>(
-                    $"{BaseEndpoint}/jobcode/{Uri.EscapeDataString(jobCode)}/project/{Uri.EscapeDataString(parentProject)}");
+                    string.Format(PactApiEndpoints.GetTimeCodesByJobCode, Uri.EscapeDataString(jobCode), Uri.EscapeDataString(parentProject)));
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<List<TimeCodeValidDto>>>(response);
 
@@ -46,15 +46,15 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
         {
             try
             {
-                var baseUrl = $"{BaseEndpoint}/paged";
-                var sep = "?";
-                if (!string.IsNullOrWhiteSpace(jobCode))
-                {
-                    baseUrl += $"{sep}jobCode={Uri.EscapeDataString(jobCode)}";
-                    sep = "&";
-                }
-                if (!string.IsNullOrWhiteSpace(parentProject))
-                    baseUrl += $"{sep}parentProject={Uri.EscapeDataString(parentProject)}";
+                string baseUrl;
+                if (!string.IsNullOrWhiteSpace(jobCode) && !string.IsNullOrWhiteSpace(parentProject))
+                    baseUrl = string.Format(PactApiEndpoints.GetPagedTimeCodesByJobCodeAndProject, Uri.EscapeDataString(jobCode), Uri.EscapeDataString(parentProject));
+                else if (!string.IsNullOrWhiteSpace(jobCode))
+                    baseUrl = string.Format(PactApiEndpoints.GetPagedTimeCodesByJobCode, Uri.EscapeDataString(jobCode));
+                else if (!string.IsNullOrWhiteSpace(parentProject))
+                    baseUrl = string.Format(PactApiEndpoints.GetPagedTimeCodesByProject, Uri.EscapeDataString(parentProject));
+                else
+                    baseUrl = PactApiEndpoints.GetPagedTimeCodes;
 
                 var url = QueryStringHelper.AddQueryString(baseUrl, query);
                 var response = await _http.GetAsync<List<TimeCodeValidRes>>(url);
@@ -77,7 +77,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             try
             {
                 var request = _mapper.Map<TimeCodeValidReq>(item);
-                var response = await _http.PostAsync<TimeCodeValidReq, TimeCodeValidRes>(BaseEndpoint, request);
+                var response = await _http.PostAsync<TimeCodeValidReq, TimeCodeValidRes>(PactApiEndpoints.CreateTimeCodeValid, request);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<TimeCodeValidDto>>(response);
 
@@ -97,7 +97,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             try
             {
                 var request = _mapper.Map<TimeCodeValidReq>(item);
-                var response = await _http.PutAsync<TimeCodeValidReq, TimeCodeValidRes>(BaseEndpoint, request);
+                var response = await _http.PutAsync<TimeCodeValidReq, TimeCodeValidRes>(PactApiEndpoints.UpdateTimeCodeValid, request);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<TimeCodeValidDto>>(response);
 
@@ -116,7 +116,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
         {
             try
             {
-                var url = $"{BaseEndpoint}/{Uri.EscapeDataString(workGroup)}/{Uri.EscapeDataString(timeCode)}/{Uri.EscapeDataString(parentProject)}";
+                var url = string.Format(PactApiEndpoints.DeleteTimeCodeValid, Uri.EscapeDataString(workGroup), Uri.EscapeDataString(timeCode), Uri.EscapeDataString(parentProject));
                 var response = await _http.DeleteAsync<bool>(url);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<bool>>(response);
@@ -136,7 +136,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
         {
             try
             {
-                var url = $"{BaseEndpoint}/jobcode/{Uri.EscapeDataString(jobCode)}/project/{Uri.EscapeDataString(parentProject)}";
+                var url = string.Format(PactApiEndpoints.DeleteTimeCodesByJobCode, Uri.EscapeDataString(jobCode), Uri.EscapeDataString(parentProject));
                 var response = await _http.DeleteAsync<bool>(url);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<bool>>(response);
@@ -156,7 +156,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
         {
             try
             {
-                var url = $"{BaseEndpoint}/copy?sourceJobCode={Uri.EscapeDataString(sourceJobCode)}&targetJobCode={Uri.EscapeDataString(targetJobCode)}&parentProject={Uri.EscapeDataString(parentProject)}";
+                var url = string.Format(PactApiEndpoints.CopyWorkGroup, Uri.EscapeDataString(sourceJobCode), Uri.EscapeDataString(targetJobCode), Uri.EscapeDataString(parentProject));
                 var response = await _http.PostAsync<object, List<TimeCodeValidRes>>(url, new { });
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<List<TimeCodeValidDto>>>(response);
@@ -183,7 +183,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
                         .Select(i => new TimeCodeKeyItem { WorkGroup = i.WorkGroup, TimeCode = i.TimeCode })
                         .ToList()
                 };
-                var response = await _http.PostAsync<BulkDeleteTimeCodeReq, bool>($"{BaseEndpoint}/deletebulk", body);
+                var response = await _http.PostAsync<BulkDeleteTimeCodeReq, bool>(PactApiEndpoints.DeleteBulkTimeCodes, body);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<bool>>(response);
 
@@ -209,7 +209,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
                     TargetJobCode = request.TargetJobCode,
                     WorkGroups = request.WorkGroups
                 };
-                var response = await _http.PostAsync<BulkCopyWorkGroupReq, List<TimeCodeValidRes>>($"{BaseEndpoint}/copybulkworkgroups", body);
+                var response = await _http.PostAsync<BulkCopyWorkGroupReq, List<TimeCodeValidRes>>(PactApiEndpoints.CopySelectedWorkGroups, body);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<List<TimeCodeValidDto>>>(response);
 
