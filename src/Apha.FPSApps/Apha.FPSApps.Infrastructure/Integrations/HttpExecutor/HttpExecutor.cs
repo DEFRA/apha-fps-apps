@@ -40,6 +40,14 @@ namespace Apha.FPSApps.Infrastructure.Integrations.HttpExecutor
             return await response.ToApiResponse<T>();
         }
 
+        public async Task<ApiResponse<T>> PatchAsync<TRequest, T>(
+            string url,
+            TRequest body)
+        {
+            var response = await _http.PatchAsJsonAsync(url, body);
+            return await response.ToApiResponse<T>();
+        }
+
         public async Task<ApiResponse<T>> DeleteAsync<T>(string url)
         {
             var response = await _http.DeleteAsync(url);

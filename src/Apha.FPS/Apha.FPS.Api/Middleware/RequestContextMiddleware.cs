@@ -39,12 +39,12 @@ namespace Apha.FPS.Api.Middleware
 
             SetCorrelationId(context, CorrelationIdHeader);
 
-            ((FpsYearContext)yearContext).FPSYear = fpsYear;
+            ((FpsYearContext)yearContext).FpsYear = fpsYear;
 
             await _next(context);
         }
 
-        private void SetCorrelationId(HttpContext context, string CorrelationIdHeader)
+        private static void SetCorrelationId(HttpContext context, string CorrelationIdHeader)
         {
             // OPTIONAL HEADER (generate if missing)
             if (!context.Request.Headers.TryGetValue(CorrelationIdHeader, out var correlationId)

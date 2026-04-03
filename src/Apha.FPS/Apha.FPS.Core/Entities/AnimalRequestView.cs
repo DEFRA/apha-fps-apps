@@ -12,7 +12,7 @@
 
         public int IndCounter { get; set; }
 
-        public int? FpsCalYear { get; set; }
+        public int? FpsYear { get; set; }
         public int? UserId { get; set; }
 
         public string? Dt2Username { get; set; }

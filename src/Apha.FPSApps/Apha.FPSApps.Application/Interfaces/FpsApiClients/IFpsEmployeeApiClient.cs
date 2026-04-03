@@ -12,5 +12,6 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         Task<ApiResponseDto<EmployeeDto>> UpdateEmployeeAsync(EmployeeDto employee);
         Task<ApiResponseDto<bool>> DeleteEmployeeAsync(string spNumber);
         Task<ApiResponseDto<List<ManagerDto>>> GetAllManagerAsync();
+        Task<ApiResponseDto<List<ManagerDto>>> GetAllPactManagerAsync();
     }
 }

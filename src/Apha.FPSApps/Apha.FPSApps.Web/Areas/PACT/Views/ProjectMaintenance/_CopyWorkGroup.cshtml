@@ -1,0 +1,39 @@
+@using Microsoft.AspNetCore.Mvc.Rendering
+@{
+    var targetJobCodes = ViewBag.TargetJobCodes as List<SelectListItem> ?? new List<SelectListItem>();
+    var sourceJobCodeId = ViewBag.SourceJobCodeId as string ?? string.Empty;
+    var parentProject   = ViewBag.ParentProject  as string ?? string.Empty;
+}
+<div class="modal-header flex-space-center">
+    <h3 class="modal-title m-0" id="transfertimecodeModalLabel">Copy work group to selected job code</h3>
+    <button type="button" class="btn-close btn-red" onclick="$('#modalPopup').removeClass('show')">X</button>
+</div>
+
+<div class="modal-body">
+    @* hidden state used by executeCopyBulkWorkGroup() *@
+    <input type="hidden" id="cwg_sourceJobCode" value="@sourceJobCodeId" />
+    <input type="hidden" id="cwg_parentProject"  value="@parentProject" />
+    <input type="hidden" id="cwg_isAll"          value="false" />
+    <div id="cwg_workGroupsHidden"></div>
+
+    <div style="padding-bottom:0; padding:0;">
+        <div class="govuk-form-group sup_margin_bottom_10">
+            <label class="govuk-label" for="dpTargetJobcode">Select target Job code</label>
+            <select class="govuk-select sup_select_option_width_100 govuk-!-font-size-16"
+                    id="dpTargetJobcode" name="dpTargetJobcode">
+                <option value="">-- Select --</option>
+                @foreach (var item in targetJobCodes)
+                {
+                    <option value="@item.Value">@item.Text</option>
+                }
+            </select>
+        </div>
+    </div>
+</div>
+
+<div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center; flex-direction:row;">
+    <button class="govuk-button govuk-button--secondary sup_margin_0" aria-label="Cancel"
+            onclick="$('#modalPopup').removeClass('show')">Cancel</button>
+    <button class="govuk-button sup_margin_0" aria-label="Save" id="modalCopyTCsaveBtn"
+            onclick="executeCopyBulkWorkGroup()">Save</button>
+</div>

@@ -1,0 +1,137 @@
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.PACT.Models.ProjectListViewModel
+
+@{
+    ViewData["Title"] = "Project Maintenance";
+}
+
+<div style="min-height: 533px;">
+    <div class="govuk-grid-row sup_margin_left_right_0">
+        <div class="govuk-grid-column-full">
+            <h1 class="govuk-grid-row sup_border-bottom" style="padding:10px 0 10px 10px">
+                Project Maintenance (not portfolios)
+            </h1>
+        </div>
+    </div>
+
+    <div class="align-items-start m-10" id="search-grid">       
+        <div class="row">
+            <div class="col-lg-7 align-items-center">
+                <div class="row">
+                    <div class="col-lg-3">
+                        <div class="govuk-radios govuk-radios--small" data-module="govuk-radios">
+                            <div class="govuk-radios__item">
+                                <input class="govuk-radios__input govuk-radios--small"
+                                       id="viewby-projectcode-filter"
+                                       name="viewByFilter"
+                                       type="radio"
+                                       value="1"
+                                @(Model.ViewBy == 1 ? "checked" : "")
+                                       onchange="filterGridViewBy(this)">
+                                <label class="govuk-label govuk-radios__label" for="viewby-projectcode-filter">
+                                    Project code
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-3">
+                        <div class="govuk-radios govuk-radios--small" data-module="govuk-radios">
+                            <div class="govuk-radios__item">
+                                <input class="govuk-radios__input"
+                                       id="viewby-jobcode-filter"
+                                       name="viewByFilter"
+                                       type="radio"
+                                       value="2"
+                                @(Model.ViewBy == 2 ? "checked" : "")
+                                       onchange="filterGridViewBy(this)">
+                                <label class="govuk-label govuk-radios__label" for="viewby-jobcode-filter">
+                                    Job code
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-5" style="text-align: right;">
+            </div>
+        </div>
+
+        <!-- Grid Container -->
+        <div id="@($"gridContainer_{Model.ProjectGrid.GridId}")">
+            @if(Model.ViewBy == 1)
+            {
+                @await Html.PartialAsync("_DataGrid", Model.ProjectGrid)
+            }
+            else
+            {
+                @await Html.PartialAsync("_DataGrid", Model.ProjectJobCodeGrid)
+            }
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts {
+    <script>
+        var projectGridId = '@Model.ProjectGrid.GridId';
+
+        function getGridManager() {
+            return window['gridManager_' + projectGridId];
+        }
+
+        // Filter grid when radio button changes
+        function filterGridViewBy(filterOption) {
+            // Get the grid manager and call reloadGrid
+            var gridManager = getGridManager();
+            if (gridManager) {
+                gridManager.reloadGrid({ page: 1 });
+            } else {
+                console.error('Grid manager not found for grid:', projectGridId);
+            }
+        }
+
+        // Get extra filters including radio button selection
+        function getProjectMaintenanceExtraFilters() {
+            const radios = document.querySelectorAll('input[name="viewByFilter"]');
+            let viewByOption = 1; // Default
+            radios.forEach(radio => {
+                if (radio.checked) {
+                    viewByOption = parseInt(radio.value);
+                }
+            });
+            return {
+                ViewBy: viewByOption
+            };
+        }
+
+        function editProject(btn) {
+            var parentProject = $(btn).data('id');
+            debugger;
+            window.location.href = '/PACT/ProjectMaintenance/Details/' + encodeURIComponent(parentProject);
+        }
+
+        function saveProject() {
+            var form = $('#projectForm');
+            if (!form.valid()) return;
+
+            $.ajax({
+                url: '/PACT/ProjectMaintenance/Create',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(form.serializeObject()),
+                success: function (response) {
+                    if (response.success) {
+                        $('#modalPopup').removeClass('show');
+                        var gm = getGridManager();
+                        if (gm) gm.reloadGrid({ page: 1 });
+                    } else {
+                        alert(response.message || 'Save failed.');
+                    }
+                },
+                error: function () { alert('An error occurred while saving.'); }
+            });
+        }
+    </script>
+}
