@@ -13,9 +13,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AnimalRepositoryTest
         private const int DefaultFpsYear = 2024;
         private const int DefaultUserId  = 42;
 
-        private static Mock<IFpsYearContext> CreateMockFpsYearContext(int year = DefaultFpsYear)
+        private static Mock<IFpsRequestContext> CreateMockFpsYearContext(int year = DefaultFpsYear)
         {
-            var mock = new Mock<IFpsYearContext>();
+            var mock = new Mock<IFpsRequestContext>();
             mock.Setup(x => x.FpsYear).Returns(year);
             return mock;
         }
@@ -75,7 +75,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AnimalRepositoryTest
             AnimalRepository Repo,
             Mock<DbSet<AnimalRequest>> AnimalRequestsDbSet,
             Mock<FpsDbContext> Context,
-            Mock<IFpsYearContext> YearContext)
+            Mock<IFpsRequestContext> YearContext)
             CreateRepositoryWithMocks(IEnumerable<AnimalRequest>? animalRequests = null, int fpsYear = DefaultFpsYear)
         {
             var mockFpsYearContext = CreateMockFpsYearContext(fpsYear);
@@ -302,7 +302,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AnimalRepositoryTest
         public async Task DeleteJobAnimalCostAsync_ReturnsFalse_WhenNotFound()
         {
             // Arrange — FindAsync returns null because no matching entity
-            var mockFpsYearContext = new Mock<IFpsYearContext>();
+            var mockFpsYearContext = new Mock<IFpsRequestContext>();
             var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(mockFpsYearContext.Object);
 
             var animalRequestsMockSet = RepositoryTestHelper.CreateMockDbSet<AnimalRequest>([]);
@@ -327,7 +327,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AnimalRepositoryTest
         public async Task DeleteJobAnimalCostAsync_DoesNotCallRemove_WhenNotFound()
         {
             // Arrange
-            var mockFpsYearContext = new Mock<IFpsYearContext>();
+            var mockFpsYearContext = new Mock<IFpsRequestContext>();
             var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(mockFpsYearContext.Object);
 
             var animalRequestsMockSet = RepositoryTestHelper.CreateMockDbSet<AnimalRequest>([]);

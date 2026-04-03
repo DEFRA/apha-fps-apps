@@ -18,7 +18,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             IEnumerable<Project>? projects = null,
             IEnumerable<ProjectView>? projectViews = null)
         {
-            var mockFpsYearContext = new Mock<IFpsYearContext>();
+            var mockFpsYearContext = new Mock<IFpsRequestContext>();
             var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(mockFpsYearContext.Object);
 
             if (projects != null)

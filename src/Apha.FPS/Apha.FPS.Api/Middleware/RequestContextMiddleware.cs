@@ -16,7 +16,7 @@ namespace Apha.FPS.Api.Middleware
             _next = next;            
         }
 
-        public async Task InvokeAsync(HttpContext context, IFpsYearContext yearContext)
+        public async Task InvokeAsync(HttpContext context, IFpsRequestContext yearContext)
         {
             var path = context.Request.Path.Value?.ToLower();
 
@@ -39,7 +39,7 @@ namespace Apha.FPS.Api.Middleware
 
             SetCorrelationId(context, CorrelationIdHeader);
 
-            ((FpsYearContext)yearContext).FpsYear = fpsYear;
+            ((FpsRequestContext)yearContext).FpsYear = fpsYear;
 
             await _next(context);
         }

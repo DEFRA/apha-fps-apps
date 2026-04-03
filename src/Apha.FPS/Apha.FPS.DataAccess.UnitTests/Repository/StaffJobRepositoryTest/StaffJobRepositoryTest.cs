@@ -13,9 +13,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
         private const int DefaultTestFpsYear = 2024;
         private const int DefaultUserId = 42;
 
-        private static Mock<IFpsYearContext> CreateMockFpsYearContext(int year = DefaultTestFpsYear)
+        private static Mock<IFpsRequestContext> CreateMockFpsYearContext(int year = DefaultTestFpsYear)
         {
-            var mockFpsYearContext = new Mock<IFpsYearContext>();
+            var mockFpsYearContext = new Mock<IFpsRequestContext>();
             mockFpsYearContext.Setup(x => x.FpsYear).Returns(year);
             return mockFpsYearContext;
         }

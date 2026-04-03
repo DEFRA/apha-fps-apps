@@ -21,7 +21,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.FpsSettingRepositoryTest
             IEnumerable<FpsSetting> settings,
             int fpsYear = DefaultTestFpsYear)
         {
-            var fpsYearContext = Substitute.For<IFpsYearContext>();
+            var fpsYearContext = Substitute.For<IFpsRequestContext>();
             fpsYearContext.FpsYear.Returns(fpsYear);
 
             var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);
