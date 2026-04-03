@@ -31,7 +31,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsSettingApiClientT
             var apiResponse = new ApiResponse<decimal> { Success = true, Data = 7.5m };
             var expectedDto = ApiResponseDto<decimal>.SuccessResponse(7.5m);
 
-            _http.GetAsync<decimal>("api/setting/hoursperday").Returns(apiResponse);
+            _http.GetAsync<decimal>("api/v1/setting/hoursperday").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<decimal>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -41,7 +41,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsSettingApiClientT
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(7.5m, result.Data);
-            await _http.Received(1).GetAsync<decimal>("api/setting/hoursperday");
+            await _http.Received(1).GetAsync<decimal>("api/v1/setting/hoursperday");
             _mapper.Received(1).Map<ApiResponseDto<decimal>>(apiResponse);
         }
 
@@ -52,7 +52,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsSettingApiClientT
             var apiResponse = new ApiResponse<decimal> { Success = true, Data = 8m };
             var expectedDto = ApiResponseDto<decimal>.SuccessResponse(8m);
 
-            _http.GetAsync<decimal>("api/setting/hoursperday").Returns(apiResponse);
+            _http.GetAsync<decimal>("api/v1/setting/hoursperday").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<decimal>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -77,7 +77,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsSettingApiClientT
                 Meta = new ApiMetaDto()
             };
 
-            _http.GetAsync<decimal>("api/setting/hoursperday").Returns(apiResponse);
+            _http.GetAsync<decimal>("api/v1/setting/hoursperday").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<decimal>>(apiResponse).Returns(mappedResponse);
 
             // Act
@@ -89,14 +89,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsSettingApiClientT
             Assert.NotNull(result.Errors);
             var error = Assert.Single(result.Errors);
             Assert.Equal("NOT_FOUND", error.Code);
-            await _http.Received(1).GetAsync<decimal>("api/setting/hoursperday");
+            await _http.Received(1).GetAsync<decimal>("api/v1/setting/hoursperday");
         }
 
         [Fact]
         public async Task GetHoursPerDayAsync_WhenExceptionThrown_ReturnsInternalError()
         {
             // Arrange
-            _http.GetAsync<decimal>("api/setting/hoursperday")
+            _http.GetAsync<decimal>("api/v1/setting/hoursperday")
                 .ThrowsAsync(new Exception("Network error"));
 
             // Act
@@ -124,7 +124,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsSettingApiClientT
             await _client.GetHoursPerDayAsync();
 
             // Assert
-            await _http.Received(1).GetAsync<decimal>("api/setting/hoursperday");
+            await _http.Received(1).GetAsync<decimal>("api/v1/setting/hoursperday");
         }
 
         #endregion
