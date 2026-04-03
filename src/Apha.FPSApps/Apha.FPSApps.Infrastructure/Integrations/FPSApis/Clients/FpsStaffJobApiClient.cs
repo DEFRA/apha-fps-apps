@@ -1,4 +1,5 @@
-﻿using Apha.Common.Contracts.FPS;
+﻿using Apha.Common.Constants;
+using Apha.Common.Contracts.FPS;
 using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
@@ -6,7 +7,6 @@ using Apha.FPSApps.Application.Interfaces.FpsApiClients;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
-using System.Reflection.Emit;
 
 namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 {
@@ -26,7 +26,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var url = QueryStringHelper.AddQueryString($"api/staffjob?jobCode={jobCode}", staffJob);
+                var url = QueryStringHelper.AddQueryString(string.Format(FpsApiEndpoints.GetAllStaffJobs, jobCode), staffJob);
                 var response = await _http.GetAsync<List<StaffJobViewRes>>(url);
 
                 if (response.Success)
@@ -56,7 +56,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var response = await _http.GetAsync<IEnumerable<StaffWorkgroupLookupRes>>("api/staffjob/workgrouplookup");
+                var response = await _http.GetAsync<IEnumerable<StaffWorkgroupLookupRes>>(FpsApiEndpoints.GetStaffWorkgroupLookup);
 
                 if (response.Success)
                 {
@@ -85,7 +85,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var response = await _http.GetAsync<decimal?>($"api/staffjob/chargerate?staffId={staffId}&jobcode={jobcode}");
+                var response = await _http.GetAsync<decimal?>(string.Format(FpsApiEndpoints.GetStaffChargeRate, staffId, jobcode));
 
                 if (response.Success)
                 {
@@ -114,7 +114,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var response = await _http.GetAsync<decimal>($"api/staffjob/totalstaffcost?jobCode={jobCode}");
+                var response = await _http.GetAsync<decimal>(string.Format(FpsApiEndpoints.GetTotalStaffCost, jobCode));
 
                 if (response.Success)
                 {
@@ -143,7 +143,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var response = await _http.GetAsync<StaffJobRes>($"api/staffjob/{staffId}/{jobCode}");
+                var response = await _http.GetAsync<StaffJobRes>(string.Format(FpsApiEndpoints.GetStaffJobById, staffId, jobCode));
 
                 if (response.Success)
                 {
@@ -173,7 +173,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             try
             {
                 var staffJobReq = _mapper.Map<StaffJobReq>(staffJob);
-                var response = await _http.PostAsync<StaffJobReq, StaffJobRes>("api/staffjob", staffJobReq);
+                var response = await _http.PostAsync<StaffJobReq, StaffJobRes>(FpsApiEndpoints.CreateStaffJob, staffJobReq);
 
                 if (response.Success)
                 {
@@ -203,7 +203,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             try
             {
                 var staffJobReq = _mapper.Map<StaffJobReq>(staffJob);
-                var response = await _http.PutAsync<StaffJobReq, StaffJobRes>("api/staffjob", staffJobReq);
+                var response = await _http.PutAsync<StaffJobReq, StaffJobRes>(FpsApiEndpoints.UpdateStaffJob, staffJobReq);
 
                 if (response.Success)
                 {
@@ -232,7 +232,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var response = await _http.DeleteAsync<bool>($"api/staffjob?staffId={staffId}&jobcode={jobCode}");
+                var response = await _http.DeleteAsync<bool>(string.Format(FpsApiEndpoints.DeleteStaffJob, staffId, jobCode));
 
                 if (response.Success)
                 {
@@ -261,7 +261,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var response = await _http.GetAsync<StaffJobViewRes>($"api/staffjob/view?staffId={staffId}&jobcode={jobCode}");
+                var response = await _http.GetAsync<StaffJobViewRes>(string.Format(FpsApiEndpoints.GetStaffJobViewById, staffId, jobCode));
 
                 if (response.Success)
                 {

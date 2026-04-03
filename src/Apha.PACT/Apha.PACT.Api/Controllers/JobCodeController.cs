@@ -1,17 +1,19 @@
 using Apha.Common.Contracts;
-using Apha.Common.Contracts.FPS;
 using Apha.Common.Contracts.PACT;
 using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Interfaces;
 using Apha.PACT.Application.Pagination;
+using Asp.Versioning;
 using AutoMapper;
-using DocumentFormat.OpenXml.Drawing.Charts;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Apha.PACT.Api.Controllers
 {
+    [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
     [ApiController]
-    [Route("api/jobcode")]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/jobcode")]
     public class JobCodeController : ControllerBase
     {
         private readonly IJobCodeService _service;

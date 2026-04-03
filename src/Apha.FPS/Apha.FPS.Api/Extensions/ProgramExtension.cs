@@ -3,9 +3,11 @@ using Apha.FPS.Api.Mappings;
 using Apha.FPS.Api.Middleware;
 using Apha.FPS.Application.Mappings;
 using Apha.FPS.DataAccess.Data;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi;
 using System.Globalization;
 
 namespace Apha.FPS.Api.Extensions
@@ -51,6 +53,20 @@ namespace Apha.FPS.Api.Extensions
                 options.Filters.Add<ApiResponseActionFilter>();
             });
 
+            // API Versioning
+            services.AddApiVersioning(options =>
+            {
+                options.DefaultApiVersion = new ApiVersion(1, 0);
+                options.AssumeDefaultVersionWhenUnspecified = true;
+                options.ReportApiVersions = true;
+                options.ApiVersionReader = new UrlSegmentApiVersionReader();
+            })
+            .AddApiExplorer(options =>
+            {
+                options.GroupNameFormat = "'v'VVV";
+                options.SubstituteApiVersionInUrl = true;
+            });
+
             // Application services
             services.AddApplicationServices();
 
@@ -63,8 +79,16 @@ namespace Apha.FPS.Api.Extensions
             // Health checks
             services.AddHealthChecks();
 
-            //Swagger
-            services.AddSwaggerGen();    
+            // Swagger
+            services.AddSwaggerGen(options =>
+            {
+                options.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Title = "FPS API",
+                    Version = "v1",
+                    Description = "Field Productive System (FPS) Web API"
+                });
+            });
         }
 
         public static void ConfigureMiddleware(this WebApplication app)
@@ -94,7 +118,10 @@ namespace Apha.FPS.Api.Extensions
             {
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();
-                app.UseSwaggerUI();
+                app.UseSwaggerUI(options =>
+                {
+                    options.SwaggerEndpoint("/swagger/v1/swagger.json", "FPS API v1");
+                });
             }            
 
             app.UseHsts();

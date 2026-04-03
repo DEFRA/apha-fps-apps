@@ -1,3 +1,4 @@
+using Apha.Common.Constants;
 using Apha.Common.Contracts.PACT;
 using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
@@ -14,7 +15,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
         private readonly IPactHttpExecutor _http;
         private readonly IMapper _mapper;
         private const string InternalCodeError = "INTERNAL_ERROR";
-        private const string BaseEndpoint = "api/jobcode";
 
         public PactJobCodeApiClient(IPactHttpExecutor http, IMapper mapper)
         {
@@ -26,7 +26,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
         {
             try
             {
-                var response = await _http.GetAsync<List<JobCodeRes>>($"{BaseEndpoint}/project/{Uri.EscapeDataString(parentProject)}");
+                var response = await _http.GetAsync<List<JobCodeRes>>(string.Format(PactApiEndpoints.GetJobCodesByProject, Uri.EscapeDataString(parentProject)));
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<List<JobCodeDto>>>(response);
 
@@ -46,8 +46,8 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             try
             {
                 var baseUrl = string.IsNullOrWhiteSpace(parentProject)
-                    ? $"{BaseEndpoint}/paged"
-                    : $"{BaseEndpoint}/paged?parentProject={Uri.EscapeDataString(parentProject)}";
+                    ? PactApiEndpoints.GetPagedJobCodes
+                    : string.Format(PactApiEndpoints.GetPagedJobCodesByProject, Uri.EscapeDataString(parentProject));
                 var url = QueryStringHelper.AddQueryString(baseUrl, query);
                 var response = await _http.GetAsync<List<JobCodeRes>>(url);
                 if (response.Success)
@@ -68,7 +68,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
         {
             try
             {
-                var response = await _http.GetAsync<JobCodeRes>($"{BaseEndpoint}/{Uri.EscapeDataString(jobCodeId)}");
+                var response = await _http.GetAsync<JobCodeRes>(string.Format(PactApiEndpoints.GetJobCodeById, Uri.EscapeDataString(jobCodeId)));
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<JobCodeDto>>(response);
 
@@ -87,7 +87,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
         {
             try
             {
-                var response = await _http.GetAsync<List<string>>($"{BaseEndpoint}/types");
+                var response = await _http.GetAsync<List<string>>(PactApiEndpoints.GetJobCodeTypes);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<List<string>>>(response);
 
@@ -107,7 +107,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             try
             {
                 var request = _mapper.Map<JobCodeReq>(jobCode);
-                var response = await _http.PostAsync<JobCodeReq, JobCodeRes>(BaseEndpoint, request);
+                var response = await _http.PostAsync<JobCodeReq, JobCodeRes>(PactApiEndpoints.CreateJobCode, request);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<JobCodeDto>>(response);
 
@@ -127,7 +127,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             try
             {
                 var request = _mapper.Map<JobCodeReq>(jobCode);
-                var response = await _http.PutAsync<JobCodeReq, JobCodeRes>(BaseEndpoint, request);
+                var response = await _http.PutAsync<JobCodeReq, JobCodeRes>(PactApiEndpoints.UpdateJobCode, request);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<JobCodeDto>>(response);
 
@@ -146,7 +146,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
         {
             try
             {
-                var response = await _http.DeleteAsync<bool>($"{BaseEndpoint}/{Uri.EscapeDataString(jobCodeId)}");
+                var response = await _http.DeleteAsync<bool>(string.Format(PactApiEndpoints.DeleteJobCode, Uri.EscapeDataString(jobCodeId)));
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<bool>>(response);
 
