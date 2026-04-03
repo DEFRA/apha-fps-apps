@@ -2,7 +2,7 @@
 {
     public interface IFpsRequestContext
     {
-        int FpsYear { get; }
-
+        int FpsYear { get; set; }
+        string UserEmailId { get; set; }
     }
 }
