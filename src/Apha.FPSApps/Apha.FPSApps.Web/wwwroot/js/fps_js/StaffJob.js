@@ -168,12 +168,11 @@ function getStaffJobExtraFilters() {
 // ---- Charge rate calculation ----
 
 function onStaffSelected(selectElement) {
+    debugger;
     var staffId = $(selectElement).val();
     var staffName = $(selectElement).find('option:selected').data('name');
     $('#StaffID').val(staffId);
-    if ($('#Name').length) {
-        $('#Name').val(staffName);
-    }
+   
     if (staffId) {
         fetchChargeRate(staffId);
     }

@@ -614,14 +614,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
             // Arrange
             var staffId = "S001";
             var jobCode = "JOB001";
-            var apiResponse = new ApiResponse<bool>
+            var apiResponse = new ApiResponse<bool?>
             {
                 Success = true,
                 Data = true
             };
             var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
 
-            _http.DeleteAsync<bool>($"api/v1/staffjob?staffId={staffId}&jobcode={jobCode}").Returns(apiResponse);
+            _http.DeleteAsync<bool?>($"api/v1/staffjob?staffId={staffId}&jobcode={jobCode}").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -631,7 +631,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.True(result.Data);
-            await _http.Received(1).DeleteAsync<bool>($"api/v1/staffjob?staffId={staffId}&jobcode={jobCode}");
+            await _http.Received(1).DeleteAsync<bool?>($"api/v1/staffjob?staffId={staffId}&jobcode={jobCode}");
         }
 
         [Fact]
@@ -641,7 +641,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
             var staffId = "S001";
             var jobCode = "JOB001";
             var errors = new List<ApiError> { new ApiError { Message = "Not Found", Code = "NOT_FOUND" } };
-            var apiResponse = new ApiResponse<bool>
+            var apiResponse = new ApiResponse<bool?>
             {
                 Success = false,
                 Errors = errors
@@ -653,7 +653,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
                 Meta = new ApiMetaDto()
             };
 
-            _http.DeleteAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
+            _http.DeleteAsync<bool?>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedResponse);
 
             // Act
@@ -669,7 +669,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
         public async Task DeleteStaffJobAsync_WhenExceptionThrown_ReturnsInternalError()
         {
             // Arrange
-            _http.DeleteAsync<bool>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
+            _http.DeleteAsync<bool?>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
 
             // Act
             var result = await _client.DeleteStaffJobAsync("S001", "JOB001");
@@ -690,17 +690,17 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
         public async Task DeleteStaffJobAsync_WithVariousIds_CallsCorrectUrl(string staffId, string jobCode)
         {
             // Arrange
-            var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
+            var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
             var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
 
-            _http.DeleteAsync<bool>($"api/v1/staffjob?staffId={staffId}&jobcode={jobCode}").Returns(apiResponse);
+            _http.DeleteAsync<bool?>($"api/v1/staffjob?staffId={staffId}&jobcode={jobCode}").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
 
             // Act
             await _client.DeleteStaffJobAsync(staffId, jobCode);
 
             // Assert
-            await _http.Received(1).DeleteAsync<bool>($"api/v1/staffjob?staffId={staffId}&jobcode={jobCode}");
+            await _http.Received(1).DeleteAsync<bool?>($"api/v1/staffjob?staffId={staffId}&jobcode={jobCode}");
         }
 
         #endregion

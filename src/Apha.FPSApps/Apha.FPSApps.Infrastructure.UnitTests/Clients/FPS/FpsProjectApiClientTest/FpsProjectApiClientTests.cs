@@ -678,10 +678,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
         {
             // Arrange
             var parentProject = "PP001";
-            var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
+            var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
             var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
 
-            _http.DeleteAsync<bool>(Arg.Is<string>(url => url.Contains(Uri.EscapeDataString(parentProject)))).Returns(apiResponse);
+            _http.DeleteAsync<bool?>(Arg.Is<string>(url => url.Contains(Uri.EscapeDataString(parentProject)))).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -691,7 +691,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.True(result.Data);
-            await _http.Received(1).DeleteAsync<bool>(Arg.Is<string>(url => url.Contains($"api/v1/project/{Uri.EscapeDataString(parentProject)}")));
+            await _http.Received(1).DeleteAsync<bool?>(Arg.Is<string>(url => url.Contains($"api/v1/project/{Uri.EscapeDataString(parentProject)}")));
         }
 
         [Fact]
@@ -700,7 +700,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
             // Arrange
             var parentProject = "NONEXISTENT";
             var errors = new List<ApiError> { new() { Message = "Not Found", Code = "NOT_FOUND" } };
-            var apiResponse = new ApiResponse<bool> { Success = false, Errors = errors };
+            var apiResponse = new ApiResponse<bool?> { Success = false, Errors = errors };
             var mappedResponse = new ApiResponseDto<bool>
             {
                 Success = false,
@@ -708,7 +708,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
                 Meta = new ApiMetaDto()
             };
 
-            _http.DeleteAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
+            _http.DeleteAsync<bool?>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedResponse);
 
             // Act
@@ -724,7 +724,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
         public async Task DeleteProjectAsync_WhenExceptionThrown_ReturnsInternalError()
         {
             // Arrange
-            _http.DeleteAsync<bool>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
+            _http.DeleteAsync<bool?>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
 
             // Act
             var result = await _client.DeleteProjectAsync("PP001");

@@ -386,14 +386,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProgramApiClientT
         {
             // Arrange
             var programNo = "P001";
-            var apiResponse = new ApiResponse<bool>
+            var apiResponse = new ApiResponse<bool?>
             {
                 Success = true,
                 Data = true
             };
             var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
 
-            _http.DeleteAsync<bool>($"api/v1/program/{programNo}").Returns(apiResponse);
+            _http.DeleteAsync<bool?>($"api/v1/program/{programNo}").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -403,7 +403,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProgramApiClientT
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.True(result.Data);
-            await _http.Received(1).DeleteAsync<bool>($"api/v1/program/{programNo}");
+            await _http.Received(1).DeleteAsync<bool?>($"api/v1/program/{programNo}");
         }
 
         [Fact]
@@ -411,7 +411,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProgramApiClientT
         {
             // Arrange
             var programNo = "P001";
-            _http.DeleteAsync<bool>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
+            _http.DeleteAsync<bool?>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
 
             // Act
             var result = await _client.DeleteProgramAsync(programNo);
@@ -432,17 +432,17 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProgramApiClientT
         public async Task DeleteProgramAsync_WithVariousProgramNos_CallsCorrectUrl(string programNo)
         {
             // Arrange
-            var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
+            var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
             var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
 
-            _http.DeleteAsync<bool>($"api/v1/program/{programNo}").Returns(apiResponse);
+            _http.DeleteAsync<bool?>($"api/v1/program/{programNo}").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
 
             // Act
             await _client.DeleteProgramAsync(programNo);
 
             // Assert
-            await _http.Received(1).DeleteAsync<bool>($"api/v1/program/{programNo}");
+            await _http.Received(1).DeleteAsync<bool?>($"api/v1/program/{programNo}");
         }
 
         #endregion
