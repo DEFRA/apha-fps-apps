@@ -12,10 +12,10 @@ namespace Apha.FPS.DataAccess.Repositories
     public class ProjectRepository : BaseRepository, IProjectRepository
     {
         private readonly FpsDbContext _dbContext;
-        private readonly IFpsYearContext _fpsYearContext;
+        private readonly IFpsRequestContext _fpsYearContext;
         private readonly int userId = 42;
 
-        public ProjectRepository(FpsDbContext dbContext, IFpsYearContext fpsYearContext) : base(dbContext)
+        public ProjectRepository(FpsDbContext dbContext, IFpsRequestContext fpsYearContext) : base(dbContext)
         {
             _dbContext = dbContext;
             _fpsYearContext = fpsYearContext;

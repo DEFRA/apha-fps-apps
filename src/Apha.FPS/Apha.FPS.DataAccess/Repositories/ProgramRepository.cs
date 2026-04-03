@@ -13,9 +13,9 @@ namespace Apha.FPS.DataAccess.Repositories
     public class ProgramRepository : BaseRepository, IProgramRepository
     {
         private readonly FpsDbContext _dbContext;
-        private readonly IFpsYearContext _yearContext;
+        private readonly IFpsRequestContext _yearContext;
         private readonly int userId = 42;
-        public ProgramRepository(FpsDbContext dbContext, IFpsYearContext yearContext) : base(dbContext)
+        public ProgramRepository(FpsDbContext dbContext, IFpsRequestContext yearContext) : base(dbContext)
         {
             _dbContext = dbContext;
             _yearContext = yearContext;

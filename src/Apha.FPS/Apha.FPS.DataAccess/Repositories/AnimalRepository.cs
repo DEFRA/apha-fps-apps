@@ -11,9 +11,9 @@ namespace Apha.FPS.DataAccess.Repositories
     public class AnimalRepository : BaseRepository, IAnimalRepository 
     {
         private readonly FpsDbContext _dbContext;
-        private readonly IFpsYearContext _yearContext;
+        private readonly IFpsRequestContext _yearContext;
         private readonly int userId = 42;      
-        public AnimalRepository(FpsDbContext dbContext, IFpsYearContext yearContext) : base(dbContext)
+        public AnimalRepository(FpsDbContext dbContext, IFpsRequestContext yearContext) : base(dbContext)
         {
             _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));     
             _yearContext = yearContext ?? throw new ArgumentNullException(nameof(yearContext));
