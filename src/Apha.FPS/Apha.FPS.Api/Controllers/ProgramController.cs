@@ -4,6 +4,7 @@ using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Application.Services;
+using Asp.Versioning;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,8 +13,9 @@ using System.ComponentModel.DataAnnotations;
 namespace Apha.FPS.Api.Controllers
 {
     [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
-    [Route("api/program")]
+    [Route("api/v{version:apiVersion}/program")]
     [ApiController]
+    [ApiVersion("1.0")]
     public class ProgramController : ControllerBase
     {
         private readonly IProgramService _programService;       

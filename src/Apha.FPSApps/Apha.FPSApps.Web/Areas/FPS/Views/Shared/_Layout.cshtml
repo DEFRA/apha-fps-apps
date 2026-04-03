@@ -116,7 +116,7 @@
                                                 </a>
                                             </li>
                                             <li>
-                                                <a class="dropdown-item" href="#">
+                                                <a class="dropdown-item" asp-area="FPS" asp-controller="ProgramAnimalPlan" asp-action="Index">
                                                     Plan Animals for Entire Programme
                                                 </a>
                                             </li>
@@ -190,11 +190,11 @@
                                    data-bs-toggle="dropdown"
                                    aria-expanded="false"
                                    aria-current="page"
-                                   href="#">MAB <span class="arrow"><img src="~/images/arrow-down.svg" alt="dropdown arrow for Programme Management Menu" width="12px"></span></a>
+                                   href="#">MAB <span class="arrow"><img src="~/images/arrow-down.svg" alt="dropdown arrow for Programme Management Menu" width="12"></span></a>
                                 <div class="dropdown-menu my-flex-dropdown" style="border: 1px solid #000; left: -70px; ">
                                     <ul>
                                         <li>
-                                            <a class="dropdown-item" href="wgstaff.html">
+                                            <a class="dropdown-item" asp-area="FPS" asp-controller="StaffMaintenance" asp-action="Index">
                                                 Maintenance Menu
                                             </a>
                                         </li>

@@ -3,6 +3,7 @@ using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
+using Asp.Versioning;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,8 +11,9 @@ using Microsoft.AspNetCore.Mvc;
 namespace Apha.FPS.Api.Controllers
 {
     [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
-    [Route("api/project")]
+    [Route("api/v{version:apiVersion}/project")]
     [ApiController]
+    [ApiVersion("1.0")]
     public class ProjectMaintenanceController : ControllerBase
     {
         private readonly IProjectService _projectService;
