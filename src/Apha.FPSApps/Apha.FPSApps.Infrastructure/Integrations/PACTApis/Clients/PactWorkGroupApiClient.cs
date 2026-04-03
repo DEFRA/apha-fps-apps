@@ -1,3 +1,4 @@
+using Apha.Common.Constants;
 using Apha.Common.Contracts.PACT;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PACT;
@@ -23,7 +24,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
         {
             try
             {
-                var response = await _http.GetAsync<List<WorkGroupRes>>("api/workgroup");
+                var response = await _http.GetAsync<List<WorkGroupRes>>(PactApiEndpoints.GetAllWorkGroups);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<List<WorkGroupDto>>>(response);
 

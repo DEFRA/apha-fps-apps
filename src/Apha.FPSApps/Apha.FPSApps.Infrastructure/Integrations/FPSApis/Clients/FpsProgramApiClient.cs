@@ -1,4 +1,5 @@
-﻿using Apha.Common.Utilities.Query;
+﻿using Apha.Common.Constants;
+using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FpsApiClients;
@@ -14,7 +15,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         private readonly IFpsHttpExecutor _http;
         private readonly IMapper _mapper;
         private const string internalCodeError = "INTERNAL_ERROR";
-        private const string programApiEndpoint = "api/program";
 
         public FpsProgramApiClient(IFpsHttpExecutor http, IMapper mapper)
         {
@@ -26,7 +26,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var response = await _http.GetAsync<IEnumerable<ProgramDto>>(programApiEndpoint);
+                var response = await _http.GetAsync<IEnumerable<ProgramDto>>(FpsApiEndpoints.GetAllPrograms);
                 if (response.Success)
                 {
                     return _mapper.Map<ApiResponseDto<IEnumerable<ProgramDto>>>(response);
@@ -54,7 +54,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var url = QueryStringHelper.AddQueryString(programApiEndpoint+"/paged", query);
+                var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetPagedPrograms, query);
                 var response = await _http.GetAsync<List<ProgramDto>>(url);
                 if (response.Success)
                 {
@@ -83,7 +83,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var response = await _http.GetAsync<ProgramDto>($"{programApiEndpoint}/{programNo}");
+                var response = await _http.GetAsync<ProgramDto>(string.Format(FpsApiEndpoints.GetProgramById, programNo));
                 if (response.Success)
                 {
                     return _mapper.Map<ApiResponseDto<ProgramDto?>>(response);
@@ -111,7 +111,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var response = await _http.PostAsync<ProgramDto, ProgramDto>(programApiEndpoint, programDto);
+                var response = await _http.PostAsync<ProgramDto, ProgramDto>(FpsApiEndpoints.CreateProgram, programDto);
                 if (response.Success)
                 {
                     return _mapper.Map<ApiResponseDto<ProgramDto>>(response);
@@ -139,7 +139,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var response = await _http.PutAsync<ProgramDto, ProgramDto>(programApiEndpoint, programDto);
+                var response = await _http.PutAsync<ProgramDto, ProgramDto>(FpsApiEndpoints.UpdateProgram, programDto);
                 if (response.Success)
                 {
                     return _mapper.Map<ApiResponseDto<ProgramDto>>(response);
@@ -167,7 +167,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var response = await _http.DeleteAsync<bool>($"{programApiEndpoint}/{programNo}");
+                var response = await _http.DeleteAsync<bool>(string.Format(FpsApiEndpoints.DeleteProgram, programNo));
                 if (response.Success)
                 {
                     return _mapper.Map<ApiResponseDto<bool>>(response);
