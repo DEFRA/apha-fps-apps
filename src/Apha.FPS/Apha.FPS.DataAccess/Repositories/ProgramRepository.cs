@@ -13,17 +13,18 @@ namespace Apha.FPS.DataAccess.Repositories
     public class ProgramRepository : BaseRepository, IProgramRepository
     {
         private readonly FpsDbContext _dbContext;
-        private readonly IFpsRequestContext _yearContext;
-        private readonly int userId = 42;
-        public ProgramRepository(FpsDbContext dbContext, IFpsRequestContext yearContext) : base(dbContext)
+        private readonly IFpsRequestContext _requestContext;
+
+        public ProgramRepository(FpsDbContext dbContext, IFpsRequestContext requestContext) : base(dbContext)
         {
             _dbContext = dbContext;
-            _yearContext = yearContext;
+            _requestContext = requestContext;
         }
               
         public async Task<IEnumerable<Program>> GetAllProgramsAsync()
         {
-            return await _dbContext.ProgramViews.Where(p => p.UserId == userId)
+            return await _dbContext.ProgramViews
+                .Where(p => p.UserEmail != null && p.UserEmail.ToLower() == _requestContext.UserEmailId)
                 .Select(p => new Program
                 {
                     ProgramNo = p.ProgramNo ?? "",
@@ -37,7 +38,8 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<PagedData<Program>> GetAllProgramsAsync(PaginationParameters<string> query)
         {
 
-            var programQuery =  _dbContext.ProgramViews.Where(p => p.UserId == userId)
+            var programQuery = _dbContext.ProgramViews
+                .Where(p => p.UserEmail != null && p.UserEmail.ToLower() == _requestContext.UserEmailId)
                                 .Select(p => new Program
                                 {
                                     ProgramNo = p.ProgramNo ?? "",
@@ -67,7 +69,7 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<Program> AddProgramAsync(Program entity)
         {
             ArgumentNullException.ThrowIfNull(entity);
-            entity.FpsYear = _yearContext.FpsYear;
+            entity.FpsYear = _requestContext.FpsYear;
 
             var strategy = _dbContext.Database.CreateExecutionStrategy();
             return await strategy.ExecuteAsync(async () =>
@@ -84,7 +86,7 @@ namespace Apha.FPS.DataAccess.Repositories
                         {
                             ProgramNo = entity.ProgramNo,
                             UserID = dboUser.UserId,
-                            FpsYear = _yearContext.FpsYear
+                            FpsYear = _requestContext.FpsYear
                         };
                         _dbContext.UserPrograms.Add(userProgram);
                     }
@@ -104,7 +106,7 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<Program> UpdateProgramAsync(Program entity)
         {
             ArgumentNullException.ThrowIfNull(entity);
-            entity.FpsYear = _yearContext.FpsYear;
+            entity.FpsYear = _requestContext.FpsYear;
 
             var strategy = _dbContext.Database.CreateExecutionStrategy();
             return await strategy.ExecuteAsync(async () =>
@@ -126,7 +128,7 @@ namespace Apha.FPS.DataAccess.Repositories
                             {
                                 ProgramNo = entity.ProgramNo,
                                 UserID = dboUser.UserId,
-                                FpsYear = _yearContext.FpsYear
+                                FpsYear = _requestContext.FpsYear
                             };
                             _dbContext.UserPrograms.Add(userProgram);
                         }

@@ -1,4 +1,4 @@
-﻿using Apha.Common.Helpers.Repository;
+using Apha.Common.Helpers.Repository;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.DataAccess.Data;
@@ -12,11 +12,13 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AnimalRepositoryTest
     {
         private const int DefaultFpsYear = 2024;
         private const int DefaultUserId  = 42;
+        private const string DefaultUserEmail = "test@example.com";
 
         private static Mock<IFpsRequestContext> CreateMockFpsYearContext(int year = DefaultFpsYear)
         {
             var mock = new Mock<IFpsRequestContext>();
             mock.Setup(x => x.FpsYear).Returns(year);
+            mock.Setup(x => x.UserEmailId).Returns(DefaultUserEmail);
             return mock;
         }
 
@@ -431,8 +433,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AnimalRepositoryTest
             // Record 2: 3 days * 4 animals * 10/day = 120  →  total = 220
             var animalRequestViews = new List<AnimalRequestView>
             {
-                new() { IndCounter = 1, JobCode = "JOB001", AnimalType = "CAT", NumberOfDays = 5.0, NumberOfAnimals = 2.0, UserId = DefaultUserId },
-                new() { IndCounter = 2, JobCode = "JOB001", AnimalType = "CAT", NumberOfDays = 3.0, NumberOfAnimals = 4.0, UserId = DefaultUserId }
+                new() { IndCounter = 1, JobCode = "JOB001", AnimalType = "CAT", NumberOfDays = 5.0, NumberOfAnimals = 2.0, UserId = DefaultUserId, UserEmail = DefaultUserEmail },
+                new() { IndCounter = 2, JobCode = "JOB001", AnimalType = "CAT", NumberOfDays = 3.0, NumberOfAnimals = 4.0, UserId = DefaultUserId, UserEmail = DefaultUserEmail }
             };
             var animals = new List<Animal>
             {
@@ -462,7 +464,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AnimalRepositoryTest
             // 4 days * 3 animals * 15/day = 180
             var animalRequestViews = new List<AnimalRequestView>
             {
-                new() { IndCounter = 1, JobCode = "JOB001", AnimalType = "DOG", NumberOfDays = 4.0, NumberOfAnimals = 3.0, UserId = DefaultUserId }
+                new() { IndCounter = 1, JobCode = "JOB001", AnimalType = "DOG", NumberOfDays = 4.0, NumberOfAnimals = 3.0, UserId = DefaultUserId, UserEmail = DefaultUserEmail }
             };
             var animals = new List<Animal>
             {
@@ -491,7 +493,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AnimalRepositoryTest
             // Arrange — records exist but for a different JobCode
             var animalRequestViews = new List<AnimalRequestView>
             {
-                new() { IndCounter = 1, JobCode = "OTHER", AnimalType = "CAT", NumberOfDays = 5.0, NumberOfAnimals = 2.0, UserId = DefaultUserId }
+                new() { IndCounter = 1, JobCode = "OTHER", AnimalType = "CAT", NumberOfDays = 5.0, NumberOfAnimals = 2.0, UserId = DefaultUserId, UserEmail = DefaultUserEmail }
             };
             var animals = new List<Animal>
             {
@@ -540,7 +542,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AnimalRepositoryTest
             // Arrange — 5 days * 2 animals * 10/day = AnimalCost 100
             var animalRequestViews = new List<AnimalRequestView>
             {
-                new() { IndCounter = 1, JobCode = "JOB001", AnimalType = "CAT", NumberOfDays = 5.0, NumberOfAnimals = 2.0, UserId = DefaultUserId }
+                new() { IndCounter = 1, JobCode = "JOB001", AnimalType = "CAT", NumberOfDays = 5.0, NumberOfAnimals = 2.0, UserId = DefaultUserId, UserEmail = DefaultUserEmail }
             };
             var animals = new List<Animal>
             {
@@ -575,7 +577,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AnimalRepositoryTest
             // Arrange — record exists but IndCounter differs
             var animalRequestViews = new List<AnimalRequestView>
             {
-                new() { IndCounter = 1, JobCode = "JOB001", AnimalType = "CAT", NumberOfDays = 5.0, NumberOfAnimals = 2.0, UserId = DefaultUserId }
+                new() { IndCounter = 1, JobCode = "JOB001", AnimalType = "CAT", NumberOfDays = 5.0, NumberOfAnimals = 2.0, UserId = DefaultUserId, UserEmail = DefaultUserEmail }
             };
             var animals = new List<Animal>
             {

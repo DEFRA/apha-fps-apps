@@ -1,7 +1,6 @@
 ﻿using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
-using Apha.FPS.DataAccess.Context;
 using Apha.FPS.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
@@ -11,12 +10,12 @@ namespace Apha.FPS.DataAccess.Repositories
     public class AnimalRepository : BaseRepository, IAnimalRepository 
     {
         private readonly FpsDbContext _dbContext;
-        private readonly IFpsRequestContext _yearContext;
-        private readonly int userId = 42;      
-        public AnimalRepository(FpsDbContext dbContext, IFpsRequestContext yearContext) : base(dbContext)
+        private readonly IFpsRequestContext _requestContext;
+
+        public AnimalRepository(FpsDbContext dbContext, IFpsRequestContext requestContext) : base(dbContext)
         {
-            _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));     
-            _yearContext = yearContext ?? throw new ArgumentNullException(nameof(yearContext));
+            _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
+            _requestContext = requestContext ?? throw new ArgumentNullException(nameof(requestContext));
         }
 
         public async Task<List<Animal>> GetAnimalLookup() => await _dbContext.Animals.ToListAsync();
@@ -61,7 +60,9 @@ namespace Apha.FPS.DataAccess.Repositories
                                   join project in _dbContext.ProjectViews on
                                          new { animalReq.JobCode, animalReq.UserId } equals new { JobCode = project.ParentProject, project.UserId }
                                   let dailyRate = (project.IsDefraProject == -1 ? animal.DefraDailyRate : animal.DailyRate)
-                                  where animal.AnimalType == animalType && animalReq.UserId == userId
+                                  where animal.AnimalType == animalType
+                                      && animalReq.UserEmail != null
+                                      && animalReq.UserEmail.ToLower() == _requestContext.UserEmailId
                                   select dailyRate;
 
             return await queryAnimalCost.FirstOrDefaultAsync();
@@ -70,7 +71,7 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<AnimalRequest> AddAnimalCostAsync(AnimalRequest animalReq)
         {
             ArgumentNullException.ThrowIfNull(animalReq);
-            animalReq.FpsYear = _yearContext.FpsYear;
+            animalReq.FpsYear = _requestContext.FpsYear;
 
             _dbContext.AnimalRequests.Add(animalReq);
             await _dbContext.SaveChangesAsync();
@@ -93,7 +94,7 @@ namespace Apha.FPS.DataAccess.Repositories
             existingEntity.AnimalType = animalReq.AnimalType;
             existingEntity.NumberOfDays = animalReq.NumberOfDays;
             existingEntity.NumberOfAnimals = animalReq.NumberOfAnimals;
-            existingEntity.FpsYear = _yearContext.FpsYear;
+            existingEntity.FpsYear = _requestContext.FpsYear;
 
             await _dbContext.SaveChangesAsync();
 
@@ -123,7 +124,9 @@ namespace Apha.FPS.DataAccess.Repositories
                    join project in _dbContext.ProjectViews on
                           new { animalReq.JobCode, animalReq.UserId } equals new { JobCode = project.ParentProject, project.UserId }
                    let dailyRate = (project.IsDefraProject == -1 ? animal.DefraDailyRate : animal.DailyRate)
-                   where animalReq.JobCode == jobCode && animalReq.UserId == userId
+                   where animalReq.JobCode == jobCode
+                       && animalReq.UserEmail != null
+                       && animalReq.UserEmail.ToLower() == _requestContext.UserEmailId
                    select new AnimalCostView
                    {
                        IndCounter = animalReq.IndCounter,

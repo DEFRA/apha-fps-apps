@@ -1,11 +1,11 @@
 ﻿using Apha.FPS.Core.Interfaces;
-using Apha.FPS.DataAccess.Context;
 
 namespace Apha.FPS.Api.Middleware
 {
     public class RequestContextMiddleware
     {
-        private readonly RequestDelegate _next;        
+        private readonly RequestDelegate _next;
+        private readonly ILogger<RequestContextMiddleware> _logger;
         private const string FpsYearHeader = "X-FPS-Year";
         private const string CorrelationIdHeader = "X-Correlation-ID";
 
@@ -13,10 +13,11 @@ namespace Apha.FPS.Api.Middleware
                 RequestDelegate next,
                 ILogger<RequestContextMiddleware> logger)
         {
-            _next = next;            
+            _next = next;
+            _logger = logger;
         }
 
-        public async Task InvokeAsync(HttpContext context, IFpsRequestContext yearContext)
+        public async Task InvokeAsync(HttpContext context, IFpsRequestContext requestContext)
         {
             var path = context.Request.Path.Value?.ToLower();
 
@@ -34,12 +35,16 @@ namespace Apha.FPS.Api.Middleware
             if (!context.Request.Headers.TryGetValue(FpsYearHeader, out var header)
                             || !int.TryParse(header, out int fpsYear))
             {
-                throw new ArgumentException($"Required request header '{FpsYearHeader}' is missing or empty.");               
+                throw new ArgumentException($"Required request header '{FpsYearHeader}' is missing or empty.");
             }
 
             SetCorrelationId(context, CorrelationIdHeader);
 
-            ((FpsRequestContext)yearContext).FpsYear = fpsYear;
+            requestContext.FpsYear = fpsYear;
+            requestContext.UserEmailId = ("Rohit.Agarwal@defradev.onmicrosoft.com").ToLowerInvariant(); //(context.User?.Identity?.Name ?? string.Empty).ToLowerInvariant();
+
+            _logger.LogDebug("Request context set: FpsYear={FpsYear}, UserEmailId={UserEmailId}",
+                fpsYear, requestContext.UserEmailId);
 
             await _next(context);
         }
