@@ -43,7 +43,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProgramApiClientT
             };
             var expectedDto = ApiResponseDto<IEnumerable<ProgramDto>>.SuccessResponse(programList);
 
-            _http.GetAsync<IEnumerable<ProgramDto>>("api/program").Returns(apiResponse);
+            _http.GetAsync<IEnumerable<ProgramDto>>("api/v1/program").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<IEnumerable<ProgramDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -53,7 +53,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProgramApiClientT
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(2, result.Data?.Count());
-            await _http.Received(1).GetAsync<IEnumerable<ProgramDto>>("api/program");
+            await _http.Received(1).GetAsync<IEnumerable<ProgramDto>>("api/v1/program");
             _mapper.Received(1).Map<ApiResponseDto<IEnumerable<ProgramDto>>>(apiResponse);
         }
 
@@ -74,7 +74,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProgramApiClientT
                 Meta = new ApiMetaDto()
             };
 
-            _http.GetAsync<IEnumerable<ProgramDto>>("api/program").Returns(apiResponse);
+            _http.GetAsync<IEnumerable<ProgramDto>>("api/v1/program").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<IEnumerable<ProgramDto>>>(apiResponse).Returns(mappedResponse);
 
             // Act
@@ -90,7 +90,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProgramApiClientT
         public async Task GetAllProgramsAsync_WhenExceptionThrown_ReturnsInternalError()
         {
             // Arrange
-            _http.GetAsync<IEnumerable<ProgramDto>>("api/program").ThrowsAsync(new Exception("Network error"));
+            _http.GetAsync<IEnumerable<ProgramDto>>("api/v1/program").ThrowsAsync(new Exception("Network error"));
 
             // Act
             var result = await _client.GetAllProgramsAsync();
@@ -128,7 +128,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProgramApiClientT
                 new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1 }
             );
 
-            _http.GetAsync<List<ProgramDto>>(Arg.Is<string>(url => url.Contains("api/program/paged"))).Returns(apiResponse);
+            _http.GetAsync<List<ProgramDto>>(Arg.Is<string>(url => url.Contains("api/v1/program/paged"))).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<ProgramDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -138,7 +138,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProgramApiClientT
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Single(result.Data!);
-            await _http.Received(1).GetAsync<List<ProgramDto>>(Arg.Is<string>(url => url.Contains("api/program/paged")));
+            await _http.Received(1).GetAsync<List<ProgramDto>>(Arg.Is<string>(url => url.Contains("api/v1/program/paged")));
         }
 
         [Fact]
@@ -182,7 +182,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProgramApiClientT
             };
             var expectedDto = ApiResponseDto<ProgramDto?>.SuccessResponse(program);
 
-            _http.GetAsync<ProgramDto>($"api/program/{programNo}").Returns(apiResponse);
+            _http.GetAsync<ProgramDto>($"api/v1/program/{programNo}").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<ProgramDto?>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -193,7 +193,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProgramApiClientT
             Assert.True(result.Success);
             Assert.NotNull(result.Data);
             Assert.Equal(programNo, result.Data.ProgramNo);
-            await _http.Received(1).GetAsync<ProgramDto>($"api/program/{programNo}");
+            await _http.Received(1).GetAsync<ProgramDto>($"api/v1/program/{programNo}");
         }
 
         [Theory]
@@ -210,14 +210,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProgramApiClientT
             };
             var expectedDto = ApiResponseDto<ProgramDto?>.SuccessResponse(apiResponse.Data);
 
-            _http.GetAsync<ProgramDto>($"api/program/{programNo}").Returns(apiResponse);
+            _http.GetAsync<ProgramDto>($"api/v1/program/{programNo}").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<ProgramDto?>>(apiResponse).Returns(expectedDto);
 
             // Act
             await _client.GetProgramByIdAsync(programNo);
 
             // Assert
-            await _http.Received(1).GetAsync<ProgramDto>($"api/program/{programNo}");
+            await _http.Received(1).GetAsync<ProgramDto>($"api/v1/program/{programNo}");
         }
 
         [Fact]
@@ -260,7 +260,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProgramApiClientT
             };
             var expectedDto = ApiResponseDto<ProgramDto>.SuccessResponse(programDto);
 
-            _http.PostAsync<ProgramDto, ProgramDto>("api/program", programDto).Returns(apiResponse);
+            _http.PostAsync<ProgramDto, ProgramDto>("api/v1/program", programDto).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<ProgramDto>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -271,7 +271,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProgramApiClientT
             Assert.True(result.Success);
             Assert.NotNull(result.Data);
             Assert.Equal("P001", result.Data.ProgramNo);
-            await _http.Received(1).PostAsync<ProgramDto, ProgramDto>("api/program", programDto);
+            await _http.Received(1).PostAsync<ProgramDto, ProgramDto>("api/v1/program", programDto);
         }
 
         [Fact]
@@ -292,7 +292,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProgramApiClientT
                 Meta = new ApiMetaDto()
             };
 
-            _http.PostAsync<ProgramDto, ProgramDto>("api/program", programDto).Returns(apiResponse);
+            _http.PostAsync<ProgramDto, ProgramDto>("api/v1/program", programDto).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<ProgramDto>>(apiResponse).Returns(mappedResponse);
 
             // Act
@@ -309,7 +309,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProgramApiClientT
         {
             // Arrange
             var programDto = new ProgramDto { ProgramNo = "P001" };
-            _http.PostAsync<ProgramDto, ProgramDto>("api/program", programDto).ThrowsAsync(new Exception("Network error"));
+            _http.PostAsync<ProgramDto, ProgramDto>("api/v1/program", programDto).ThrowsAsync(new Exception("Network error"));
 
             // Act
             var result = await _client.AddProgramAsync(programDto);
@@ -344,7 +344,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProgramApiClientT
             };
             var expectedDto = ApiResponseDto<ProgramDto>.SuccessResponse(programDto);
 
-            _http.PutAsync<ProgramDto, ProgramDto>("api/program", programDto).Returns(apiResponse);
+            _http.PutAsync<ProgramDto, ProgramDto>("api/v1/program", programDto).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<ProgramDto>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -355,7 +355,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProgramApiClientT
             Assert.True(result.Success);
             Assert.NotNull(result.Data);
             Assert.Equal("Updated Program", result.Data.ProgramName);
-            await _http.Received(1).PutAsync<ProgramDto, ProgramDto>("api/program", programDto);
+            await _http.Received(1).PutAsync<ProgramDto, ProgramDto>("api/v1/program", programDto);
         }
 
         [Fact]
@@ -363,7 +363,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProgramApiClientT
         {
             // Arrange
             var programDto = new ProgramDto { ProgramNo = "P001" };
-            _http.PutAsync<ProgramDto, ProgramDto>("api/program", programDto).ThrowsAsync(new Exception("Network error"));
+            _http.PutAsync<ProgramDto, ProgramDto>("api/v1/program", programDto).ThrowsAsync(new Exception("Network error"));
 
             // Act
             var result = await _client.UpdateProgramAsync(programDto);
@@ -393,7 +393,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProgramApiClientT
             };
             var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
 
-            _http.DeleteAsync<bool>($"api/program/{programNo}").Returns(apiResponse);
+            _http.DeleteAsync<bool>($"api/v1/program/{programNo}").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -403,7 +403,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProgramApiClientT
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.True(result.Data);
-            await _http.Received(1).DeleteAsync<bool>($"api/program/{programNo}");
+            await _http.Received(1).DeleteAsync<bool>($"api/v1/program/{programNo}");
         }
 
         [Fact]
@@ -435,14 +435,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProgramApiClientT
             var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
             var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
 
-            _http.DeleteAsync<bool>($"api/program/{programNo}").Returns(apiResponse);
+            _http.DeleteAsync<bool>($"api/v1/program/{programNo}").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
 
             // Act
             await _client.DeleteProgramAsync(programNo);
 
             // Assert
-            await _http.Received(1).DeleteAsync<bool>($"api/program/{programNo}");
+            await _http.Received(1).DeleteAsync<bool>($"api/v1/program/{programNo}");
         }
 
         #endregion
@@ -472,7 +472,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProgramApiClientT
 
             // Assert
             await _http.Received(1).GetAsync<List<ProgramDto>>(Arg.Is<string>(url =>
-                url.Contains("api/program/paged")
+                url.Contains("api/v1/program/paged")
             ));
         }
 

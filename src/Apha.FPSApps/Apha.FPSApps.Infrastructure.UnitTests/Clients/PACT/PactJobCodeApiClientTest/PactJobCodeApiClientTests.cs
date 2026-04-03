@@ -46,7 +46,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactJobCodeApiClien
                 }
             );
 
-            _http.GetAsync<List<JobCodeRes>>(Arg.Is<string>(url => url.Contains($"api/jobcode/project/{Uri.EscapeDataString(parentProject)}")))
+            _http.GetAsync<List<JobCodeRes>>(Arg.Is<string>(url => url.Contains($"api/v1/jobcode/project/{Uri.EscapeDataString(parentProject)}")))
                 .Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<JobCodeDto>>>(apiResponse).Returns(expectedDto);
 
@@ -58,7 +58,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactJobCodeApiClien
             Assert.True(result.Success);
             Assert.Equal(2, result.Data?.Count);
             await _http.Received(1).GetAsync<List<JobCodeRes>>(
-                Arg.Is<string>(url => url.Contains($"api/jobcode/project/{Uri.EscapeDataString(parentProject)}")));
+                Arg.Is<string>(url => url.Contains($"api/v1/jobcode/project/{Uri.EscapeDataString(parentProject)}")));
         }
 
         [Fact]
@@ -126,7 +126,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactJobCodeApiClien
             );
 
             _http.GetAsync<List<JobCodeRes>>(Arg.Is<string>(url =>
-                url.Contains("api/jobcode/paged") && url.Contains($"parentProject={Uri.EscapeDataString(parentProject)}")))
+                url.Contains("api/v1/jobcode/paged") && url.Contains($"parentProject={Uri.EscapeDataString(parentProject)}")))
                 .Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<JobCodeDto>>>(apiResponse).Returns(expectedDto);
 
@@ -138,7 +138,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactJobCodeApiClien
             Assert.True(result.Success);
             Assert.Single(result.Data!);
             await _http.Received(1).GetAsync<List<JobCodeRes>>(
-                Arg.Is<string>(url => url.Contains("api/jobcode/paged") && url.Contains($"parentProject={Uri.EscapeDataString(parentProject)}")));
+                Arg.Is<string>(url => url.Contains("api/v1/jobcode/paged") && url.Contains($"parentProject={Uri.EscapeDataString(parentProject)}")));
         }
 
         [Fact]
@@ -149,7 +149,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactJobCodeApiClien
             var apiResponse = new ApiResponse<List<JobCodeRes>> { Success = true, Data = new List<JobCodeRes>() };
             var expectedDto = ApiResponseDto<List<JobCodeDto>>.SuccessResponse(new List<JobCodeDto>(), new PaginationDto());
 
-            _http.GetAsync<List<JobCodeRes>>(Arg.Is<string>(url => url.Contains("api/jobcode/paged"))).Returns(apiResponse);
+            _http.GetAsync<List<JobCodeRes>>(Arg.Is<string>(url => url.Contains("api/v1/jobcode/paged"))).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<JobCodeDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -158,7 +158,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactJobCodeApiClien
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
-            await _http.Received(1).GetAsync<List<JobCodeRes>>(Arg.Is<string>(url => url.Contains("api/jobcode/paged")));
+            await _http.Received(1).GetAsync<List<JobCodeRes>>(Arg.Is<string>(url => url.Contains("api/v1/jobcode/paged")));
         }
 
         [Fact]
@@ -194,7 +194,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactJobCodeApiClien
                 new JobCodeDto { JobCodeId = jobCodeId, JobCodeName = "Test Job Code" }
             );
 
-            _http.GetAsync<JobCodeRes>($"api/jobcode/{Uri.EscapeDataString(jobCodeId)}").Returns(apiResponse);
+            _http.GetAsync<JobCodeRes>($"api/v1/jobcode/{Uri.EscapeDataString(jobCodeId)}").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<JobCodeDto>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -204,7 +204,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactJobCodeApiClien
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(jobCodeId, result.Data?.JobCodeId);
-            await _http.Received(1).GetAsync<JobCodeRes>($"api/jobcode/{Uri.EscapeDataString(jobCodeId)}");
+            await _http.Received(1).GetAsync<JobCodeRes>($"api/v1/jobcode/{Uri.EscapeDataString(jobCodeId)}");
         }
 
         [Fact]
@@ -261,7 +261,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactJobCodeApiClien
             var apiResponse = new ApiResponse<List<string>> { Success = true, Data = types };
             var expectedDto = ApiResponseDto<List<string>>.SuccessResponse(types);
 
-            _http.GetAsync<List<string>>("api/jobcode/types").Returns(apiResponse);
+            _http.GetAsync<List<string>>("api/v1/jobcode/types").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<string>>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -271,7 +271,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactJobCodeApiClien
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(3, result.Data?.Count);
-            await _http.Received(1).GetAsync<List<string>>("api/jobcode/types");
+            await _http.Received(1).GetAsync<List<string>>("api/v1/jobcode/types");
         }
 
         [Fact]
@@ -331,7 +331,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactJobCodeApiClien
             var expectedDto = ApiResponseDto<JobCodeDto>.SuccessResponse(jobCodeDto);
 
             _mapper.Map<JobCodeReq>(jobCodeDto).Returns(jobCodeReq);
-            _http.PostAsync<JobCodeReq, JobCodeRes>("api/jobcode", jobCodeReq).Returns(apiResponse);
+            _http.PostAsync<JobCodeReq, JobCodeRes>("api/v1/jobcode", jobCodeReq).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<JobCodeDto>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -341,7 +341,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactJobCodeApiClien
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal("JC001", result.Data?.JobCodeId);
-            await _http.Received(1).PostAsync<JobCodeReq, JobCodeRes>("api/jobcode", jobCodeReq);
+            await _http.Received(1).PostAsync<JobCodeReq, JobCodeRes>("api/v1/jobcode", jobCodeReq);
         }
 
         [Fact]
@@ -407,7 +407,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactJobCodeApiClien
             var expectedDto = ApiResponseDto<JobCodeDto>.SuccessResponse(jobCodeDto);
 
             _mapper.Map<JobCodeReq>(jobCodeDto).Returns(jobCodeReq);
-            _http.PutAsync<JobCodeReq, JobCodeRes>("api/jobcode", jobCodeReq).Returns(apiResponse);
+            _http.PutAsync<JobCodeReq, JobCodeRes>("api/v1/jobcode", jobCodeReq).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<JobCodeDto>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -417,7 +417,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactJobCodeApiClien
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal("Updated Job Code", result.Data?.JobCodeName);
-            await _http.Received(1).PutAsync<JobCodeReq, JobCodeRes>("api/jobcode", jobCodeReq);
+            await _http.Received(1).PutAsync<JobCodeReq, JobCodeRes>("api/v1/jobcode", jobCodeReq);
         }
 
         [Fact]
@@ -480,7 +480,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactJobCodeApiClien
             var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
             var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
 
-            _http.DeleteAsync<bool>($"api/jobcode/{Uri.EscapeDataString(jobCodeId)}").Returns(apiResponse);
+            _http.DeleteAsync<bool>($"api/v1/jobcode/{Uri.EscapeDataString(jobCodeId)}").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -490,7 +490,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactJobCodeApiClien
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.True(result.Data);
-            await _http.Received(1).DeleteAsync<bool>($"api/jobcode/{Uri.EscapeDataString(jobCodeId)}");
+            await _http.Received(1).DeleteAsync<bool>($"api/v1/jobcode/{Uri.EscapeDataString(jobCodeId)}");
         }
 
         [Fact]

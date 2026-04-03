@@ -179,7 +179,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsEmployeeApiClient
             Assert.True(result.Success);
             Assert.NotNull(result.Data);
             Assert.Equal(spNumber, result.Data.SPNumber);
-            await _httpExecutor.Received(1).GetAsync<EmployeeRes>($"api/employee/{spNumber}");
+            await _httpExecutor.Received(1).GetAsync<EmployeeRes>($"api/v1/employee/{spNumber}");
         }
 
         [Fact]
@@ -252,7 +252,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsEmployeeApiClient
             await _client.GetEmployeeIdAsync(spNumber);
 
             // Assert
-            await _httpExecutor.Received(1).GetAsync<EmployeeRes>($"api/employee/{spNumber}");
+            await _httpExecutor.Received(1).GetAsync<EmployeeRes>($"api/v1/employee/{spNumber}");
         }
 
         #endregion
@@ -303,7 +303,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsEmployeeApiClient
             Assert.True(result.Success);
             Assert.NotNull(result.Data);
             Assert.Equal("000001", result.Data.SPNumber);
-            await _httpExecutor.Received(1).PostAsync<EmployeeReq, EmployeeRes>("api/employee", employeeReq);
+            await _httpExecutor.Received(1).PostAsync<EmployeeReq, EmployeeRes>("api/v1/employee", employeeReq);
         }
 
         [Fact]
@@ -439,7 +439,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsEmployeeApiClient
             Assert.True(result.Success);
             Assert.NotNull(result.Data);
             Assert.Equal("Jane", result.Data.FirstName);
-            await _httpExecutor.Received(1).PutAsync<EmployeeReq, EmployeeRes>("api/employee", employeeReq);
+            await _httpExecutor.Received(1).PutAsync<EmployeeReq, EmployeeRes>("api/v1/employee", employeeReq);
         }
 
         [Fact]
@@ -523,7 +523,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsEmployeeApiClient
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.True(result.Data);
-            await _httpExecutor.Received(1).DeleteAsync<bool>($"api/employee/{spNumber}");
+            await _httpExecutor.Received(1).DeleteAsync<bool>($"api/v1/employee/{spNumber}");
         }
 
         [Fact]
@@ -592,7 +592,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsEmployeeApiClient
             await _client.DeleteEmployeeAsync(spNumber);
 
             // Assert
-            await _httpExecutor.Received(1).DeleteAsync<bool>($"api/employee/{spNumber}");
+            await _httpExecutor.Received(1).DeleteAsync<bool>($"api/v1/employee/{spNumber}");
         }
 
         #endregion
@@ -632,7 +632,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsEmployeeApiClient
             Assert.True(result.Success);
             Assert.NotNull(result.Data);
             Assert.Equal(2, result.Data.Count);
-            await _httpExecutor.Received(1).GetAsync<List<ManagerRes>>("api/employee/managers");
+            await _httpExecutor.Received(1).GetAsync<List<ManagerRes>>("api/v1/employee/managers");
         }
 
         [Fact]
@@ -737,7 +737,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsEmployeeApiClient
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(2, result.Data?.Count);
-            await _httpExecutor.Received(1).GetAsync<List<ManagerRes>>("api/employee/pactmanagers");
+            await _httpExecutor.Received(1).GetAsync<List<ManagerRes>>("api/v1/employee/pactmanagers");
         }
 
         [Fact]
@@ -829,7 +829,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsEmployeeApiClient
 
             // Assert
             await _httpExecutor.Received(1).GetAsync<List<EmployeeRes>>(Arg.Is<string>(url =>
-                url.Contains("api/employee/paginated") &&
+                url.Contains("api/v1/employee/paginated") &&
                 url.Contains("filterOption=1")
             ));
         }
@@ -854,7 +854,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsEmployeeApiClient
             Received.InOrder(() =>
             {
                 _mapper.Map<EmployeeReq>(employeeDto);
-                _httpExecutor.PostAsync<EmployeeReq, EmployeeRes>("api/employee", employeeReq);
+                _httpExecutor.PostAsync<EmployeeReq, EmployeeRes>("api/v1/employee", employeeReq);
             });
         }
 
@@ -878,7 +878,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsEmployeeApiClient
             Received.InOrder(() =>
             {
                 _mapper.Map<EmployeeReq>(employeeDto);
-                _httpExecutor.PutAsync<EmployeeReq, EmployeeRes>("api/employee", employeeReq);
+                _httpExecutor.PutAsync<EmployeeReq, EmployeeRes>("api/v1/employee", employeeReq);
             });
         }
 

@@ -53,7 +53,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalPlanApiClie
             );
 
             _http.GetAsync<List<AnimalCostViewRes>>(
-                    Arg.Is<string>(url => url.Contains("api/animal") && url.Contains($"jobCode={jobCode}")))
+                    Arg.Is<string>(url => url.Contains("api/v1/animal") && url.Contains($"jobCode={jobCode}")))
                 .Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<AnimalCostViewDto>>>(apiResponse).Returns(expectedDto);
 
@@ -65,7 +65,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalPlanApiClie
             Assert.True(result.Success);
             Assert.Equal(2, result.Data?.Count);
             await _http.Received(1).GetAsync<List<AnimalCostViewRes>>(
-                Arg.Is<string>(url => url.Contains("api/animal") && url.Contains($"jobCode={jobCode}")));
+                Arg.Is<string>(url => url.Contains("api/v1/animal") && url.Contains($"jobCode={jobCode}")));
             _mapper.Received(1).Map<ApiResponseDto<List<AnimalCostViewDto>>>(apiResponse);
         }
 
@@ -136,7 +136,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalPlanApiClie
                 }
             );
 
-            _http.GetAsync<List<AnimalRes>>("api/animal/lookup").Returns(apiResponse);
+            _http.GetAsync<List<AnimalRes>>("api/v1/animal/lookup").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<AnimalDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -146,7 +146,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalPlanApiClie
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(2, result.Data?.Count);
-            await _http.Received(1).GetAsync<List<AnimalRes>>("api/animal/lookup");
+            await _http.Received(1).GetAsync<List<AnimalRes>>("api/v1/animal/lookup");
         }
 
         [Fact]
@@ -165,7 +165,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalPlanApiClie
                 Meta = new ApiMetaDto()
             };
 
-            _http.GetAsync<List<AnimalRes>>("api/animal/lookup").Returns(apiResponse);
+            _http.GetAsync<List<AnimalRes>>("api/v1/animal/lookup").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<AnimalDto>>>(apiResponse).Returns(mappedResponse);
 
             // Act
@@ -180,7 +180,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalPlanApiClie
         public async Task GetAnimalLookupAsync_WhenExceptionThrown_ReturnsInternalError()
         {
             // Arrange
-            _http.GetAsync<List<AnimalRes>>("api/animal/lookup")
+            _http.GetAsync<List<AnimalRes>>("api/v1/animal/lookup")
                 .ThrowsAsync(new Exception("Network error"));
 
             // Act
@@ -206,7 +206,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalPlanApiClie
             var apiResponse = new ApiResponse<decimal?> { Success = true, Data = 25.50m };
             var expectedDto = ApiResponseDto<decimal?>.SuccessResponse(25.50m);
 
-            _http.GetAsync<decimal?>($"api/animal/rate?animalType={animalType}").Returns(apiResponse);
+            _http.GetAsync<decimal?>($"api/v1/animal/rate?animalType={animalType}").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<decimal?>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -235,7 +235,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalPlanApiClie
                 Meta = new ApiMetaDto()
             };
 
-            _http.GetAsync<decimal?>($"api/animal/rate?animalType={animalType}").Returns(apiResponse);
+            _http.GetAsync<decimal?>($"api/v1/animal/rate?animalType={animalType}").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<decimal?>>(apiResponse).Returns(mappedResponse);
 
             // Act
@@ -280,7 +280,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalPlanApiClie
             var expectedDto = ApiResponseDto<AnimalRequestDto>.SuccessResponse(animalRequestDto);
 
             _mapper.Map<AnimalRequestReq>(animalRequestDto).Returns(animalRequestReq);
-            _http.PostAsync<AnimalRequestReq, AnimalRequestRes>("api/animal", animalRequestReq).Returns(apiResponse);
+            _http.PostAsync<AnimalRequestReq, AnimalRequestRes>("api/v1/animal", animalRequestReq).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<AnimalRequestDto>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -290,7 +290,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalPlanApiClie
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal("JOB001", result.Data?.JobCode);
-            await _http.Received(1).PostAsync<AnimalRequestReq, AnimalRequestRes>("api/animal", animalRequestReq);
+            await _http.Received(1).PostAsync<AnimalRequestReq, AnimalRequestRes>("api/v1/animal", animalRequestReq);
         }
 
         [Fact]
@@ -312,7 +312,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalPlanApiClie
             };
 
             _mapper.Map<AnimalRequestReq>(animalRequestDto).Returns(animalRequestReq);
-            _http.PostAsync<AnimalRequestReq, AnimalRequestRes>("api/animal", animalRequestReq).Returns(apiResponse);
+            _http.PostAsync<AnimalRequestReq, AnimalRequestRes>("api/v1/animal", animalRequestReq).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<AnimalRequestDto>>(apiResponse).Returns(mappedResponse);
 
             // Act
@@ -362,7 +362,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalPlanApiClie
             var expectedDto = ApiResponseDto<AnimalRequestDto>.SuccessResponse(animalRequestDto);
 
             _mapper.Map<AnimalRequestReq>(animalRequestDto).Returns(animalRequestReq);
-            _http.PutAsync<AnimalRequestReq, AnimalRequestRes>("api/animal", animalRequestReq).Returns(apiResponse);
+            _http.PutAsync<AnimalRequestReq, AnimalRequestRes>("api/v1/animal", animalRequestReq).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<AnimalRequestDto>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -372,7 +372,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalPlanApiClie
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(1, result.Data?.IndCounter);
-            await _http.Received(1).PutAsync<AnimalRequestReq, AnimalRequestRes>("api/animal", animalRequestReq);
+            await _http.Received(1).PutAsync<AnimalRequestReq, AnimalRequestRes>("api/v1/animal", animalRequestReq);
         }
 
         [Fact]
@@ -394,7 +394,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalPlanApiClie
             };
 
             _mapper.Map<AnimalRequestReq>(animalRequestDto).Returns(animalRequestReq);
-            _http.PutAsync<AnimalRequestReq, AnimalRequestRes>("api/animal", animalRequestReq).Returns(apiResponse);
+            _http.PutAsync<AnimalRequestReq, AnimalRequestRes>("api/v1/animal", animalRequestReq).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<AnimalRequestDto>>(apiResponse).Returns(mappedResponse);
 
             // Act
@@ -439,7 +439,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalPlanApiClie
             var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
             var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
 
-            _http.DeleteAsync<bool>($"api/animal?indCounter={indCounter}").Returns(apiResponse);
+            _http.DeleteAsync<bool>($"api/v1/animal?indCounter={indCounter}").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -449,7 +449,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalPlanApiClie
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.True(result.Data);
-            await _http.Received(1).DeleteAsync<bool>($"api/animal?indCounter={indCounter}");
+            await _http.Received(1).DeleteAsync<bool>($"api/v1/animal?indCounter={indCounter}");
         }
 
         [Fact]
@@ -469,7 +469,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalPlanApiClie
                 Meta = new ApiMetaDto()
             };
 
-            _http.DeleteAsync<bool>($"api/animal?indCounter={indCounter}").Returns(apiResponse);
+            _http.DeleteAsync<bool>($"api/v1/animal?indCounter={indCounter}").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedResponse);
 
             // Act
@@ -509,7 +509,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalPlanApiClie
             var apiResponse = new ApiResponse<decimal> { Success = true, Data = 1250.75m };
             var expectedDto = ApiResponseDto<decimal>.SuccessResponse(1250.75m);
 
-            _http.GetAsync<decimal>($"api/animal/totalanimalcost?jobCode={jobCode}").Returns(apiResponse);
+            _http.GetAsync<decimal>($"api/v1/animal/totalanimalcost?jobCode={jobCode}").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<decimal>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -519,7 +519,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalPlanApiClie
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(1250.75m, result.Data);
-            await _http.Received(1).GetAsync<decimal>($"api/animal/totalanimalcost?jobCode={jobCode}");
+            await _http.Received(1).GetAsync<decimal>($"api/v1/animal/totalanimalcost?jobCode={jobCode}");
         }
 
         [Fact]
@@ -539,7 +539,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalPlanApiClie
                 Meta = new ApiMetaDto()
             };
 
-            _http.GetAsync<decimal>($"api/animal/totalanimalcost?jobCode={jobCode}").Returns(apiResponse);
+            _http.GetAsync<decimal>($"api/v1/animal/totalanimalcost?jobCode={jobCode}").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<decimal>>(apiResponse).Returns(mappedResponse);
 
             // Act
@@ -584,7 +584,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalPlanApiClie
             var apiResponse = new ApiResponse<AnimalCostViewRes> { Success = true, Data = costViewRes };
             var expectedDto = new AnimalCostViewDto { IndCounter = 1, AnimalType = "Cattle", JobCode = jobCode };
 
-            _http.GetAsync<AnimalCostViewRes>($"api/animal/view?indCounter={indCounter}&jobCode={jobCode}")
+            _http.GetAsync<AnimalCostViewRes>($"api/v1/animal/view?indCounter={indCounter}&jobCode={jobCode}")
                 .Returns(apiResponse);
             _mapper.Map<AnimalCostViewDto>(costViewRes).Returns(expectedDto);
 
@@ -607,7 +607,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalPlanApiClie
             var jobCode = "JOB001";
             var apiResponse = new ApiResponse<AnimalCostViewRes> { Success = true, Data = null };
 
-            _http.GetAsync<AnimalCostViewRes>($"api/animal/view?indCounter={indCounter}&jobCode={jobCode}")
+            _http.GetAsync<AnimalCostViewRes>($"api/v1/animal/view?indCounter={indCounter}&jobCode={jobCode}")
                 .Returns(apiResponse);
 
             // Act
@@ -638,7 +638,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalPlanApiClie
                 Meta = new ApiMetaDto()
             };
 
-            _http.GetAsync<AnimalCostViewRes>($"api/animal/view?indCounter={indCounter}&jobCode={jobCode}")
+            _http.GetAsync<AnimalCostViewRes>($"api/v1/animal/view?indCounter={indCounter}&jobCode={jobCode}")
                 .Returns(apiResponse);
             _mapper.Map<ApiResponseDto<AnimalCostViewDto?>>(apiResponse).Returns(mappedResponse);
 

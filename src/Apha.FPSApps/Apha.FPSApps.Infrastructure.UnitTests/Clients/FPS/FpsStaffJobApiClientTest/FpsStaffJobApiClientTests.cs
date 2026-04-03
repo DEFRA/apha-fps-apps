@@ -164,7 +164,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
                 }
             );
 
-            _http.GetAsync<IEnumerable<StaffWorkgroupLookupRes>>("api/staffjob/workgrouplookup").Returns(apiResponse);
+            _http.GetAsync<IEnumerable<StaffWorkgroupLookupRes>>("api/v1/staffjob/workgrouplookup").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<IEnumerable<StaffWorkgroupLookupDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -174,7 +174,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(2, result.Data?.Count());
-            await _http.Received(1).GetAsync<IEnumerable<StaffWorkgroupLookupRes>>("api/staffjob/workgrouplookup");
+            await _http.Received(1).GetAsync<IEnumerable<StaffWorkgroupLookupRes>>("api/v1/staffjob/workgrouplookup");
             _mapper.Received(1).Map<ApiResponseDto<IEnumerable<StaffWorkgroupLookupDto>>>(apiResponse);
         }
 
@@ -195,7 +195,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
                 Meta = new ApiMetaDto()
             };
 
-            _http.GetAsync<IEnumerable<StaffWorkgroupLookupRes>>("api/staffjob/workgrouplookup").Returns(apiResponse);
+            _http.GetAsync<IEnumerable<StaffWorkgroupLookupRes>>("api/v1/staffjob/workgrouplookup").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<IEnumerable<StaffWorkgroupLookupDto>>>(apiResponse).Returns(mappedResponse);
 
             // Act
@@ -243,7 +243,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
             };
             var expectedDto = ApiResponseDto<decimal?>.SuccessResponse(chargeRate);
 
-            _http.GetAsync<decimal?>($"api/staffjob/chargerate?staffId={staffId}&jobcode={jobCode}").Returns(apiResponse);
+            _http.GetAsync<decimal?>($"api/v1/staffjob/chargerate?staffId={staffId}&jobcode={jobCode}").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<decimal?>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -253,7 +253,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(chargeRate, result.Data);
-            await _http.Received(1).GetAsync<decimal?>($"api/staffjob/chargerate?staffId={staffId}&jobcode={jobCode}");
+            await _http.Received(1).GetAsync<decimal?>($"api/v1/staffjob/chargerate?staffId={staffId}&jobcode={jobCode}");
         }
 
         [Fact]
@@ -315,14 +315,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
             var apiResponse = new ApiResponse<decimal?> { Success = true, Data = 100m };
             var expectedDto = ApiResponseDto<decimal?>.SuccessResponse(100m);
 
-            _http.GetAsync<decimal?>($"api/staffjob/chargerate?staffId={staffId}&jobcode={jobCode}").Returns(apiResponse);
+            _http.GetAsync<decimal?>($"api/v1/staffjob/chargerate?staffId={staffId}&jobcode={jobCode}").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<decimal?>>(apiResponse).Returns(expectedDto);
 
             // Act
             await _client.GetStaffChargeRate(staffId, jobCode);
 
             // Assert
-            await _http.Received(1).GetAsync<decimal?>($"api/staffjob/chargerate?staffId={staffId}&jobcode={jobCode}");
+            await _http.Received(1).GetAsync<decimal?>($"api/v1/staffjob/chargerate?staffId={staffId}&jobcode={jobCode}");
         }
 
         #endregion
@@ -345,7 +345,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
                 new StaffJobDto { StaffId = staffId, JobCode = jobCode, PlannedHours = 8 }
             );
 
-            _http.GetAsync<StaffJobRes>($"api/staffjob/{staffId}/{jobCode}").Returns(apiResponse);
+            _http.GetAsync<StaffJobRes>($"api/v1/staffjob/{staffId}/{jobCode}").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<StaffJobDto>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -357,7 +357,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
             Assert.NotNull(result.Data);
             Assert.Equal(staffId, result.Data.StaffId);
             Assert.Equal(jobCode, result.Data.JobCode);
-            await _http.Received(1).GetAsync<StaffJobRes>($"api/staffjob/{staffId}/{jobCode}");
+            await _http.Received(1).GetAsync<StaffJobRes>($"api/v1/staffjob/{staffId}/{jobCode}");
         }
 
         [Fact]
@@ -421,14 +421,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
             };
             var expectedDto = ApiResponseDto<StaffJobDto>.SuccessResponse(new StaffJobDto { StaffId = staffId, JobCode = jobCode });
 
-            _http.GetAsync<StaffJobRes>($"api/staffjob/{staffId}/{jobCode}").Returns(apiResponse);
+            _http.GetAsync<StaffJobRes>($"api/v1/staffjob/{staffId}/{jobCode}").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<StaffJobDto>>(apiResponse).Returns(expectedDto);
 
             // Act
             await _client.GetStaffJobByIdAsync(staffId, jobCode);
 
             // Assert
-            await _http.Received(1).GetAsync<StaffJobRes>($"api/staffjob/{staffId}/{jobCode}");
+            await _http.Received(1).GetAsync<StaffJobRes>($"api/v1/staffjob/{staffId}/{jobCode}");
         }
 
         #endregion
@@ -449,7 +449,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
             var expectedDto = ApiResponseDto<StaffJobDto>.SuccessResponse(staffJobDto);
 
             _mapper.Map<StaffJobReq>(staffJobDto).Returns(staffJobReq);
-            _http.PostAsync<StaffJobReq, StaffJobRes>("api/staffjob", staffJobReq).Returns(apiResponse);
+            _http.PostAsync<StaffJobReq, StaffJobRes>("api/v1/staffjob", staffJobReq).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<StaffJobDto>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -461,7 +461,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
             Assert.NotNull(result.Data);
             Assert.Equal("S001", result.Data.StaffId);
             Assert.Equal("JOB001", result.Data.JobCode);
-            await _http.Received(1).PostAsync<StaffJobReq, StaffJobRes>("api/staffjob", staffJobReq);
+            await _http.Received(1).PostAsync<StaffJobReq, StaffJobRes>("api/v1/staffjob", staffJobReq);
         }
 
         [Fact]
@@ -484,7 +484,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
             };
 
             _mapper.Map<StaffJobReq>(staffJobDto).Returns(staffJobReq);
-            _http.PostAsync<StaffJobReq, StaffJobRes>("api/staffjob", staffJobReq).Returns(apiResponse);
+            _http.PostAsync<StaffJobReq, StaffJobRes>("api/v1/staffjob", staffJobReq).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<StaffJobDto>>(apiResponse).Returns(mappedResponse);
 
             // Act
@@ -504,7 +504,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
             var staffJobReq = new StaffJobReq { StaffId = "S001", JobCode = "JOB001" };
 
             _mapper.Map<StaffJobReq>(staffJobDto).Returns(staffJobReq);
-            _http.PostAsync<StaffJobReq, StaffJobRes>("api/staffjob", staffJobReq).ThrowsAsync(new Exception("Network error"));
+            _http.PostAsync<StaffJobReq, StaffJobRes>("api/v1/staffjob", staffJobReq).ThrowsAsync(new Exception("Network error"));
 
             // Act
             var result = await _client.CreateStaffJobAsync(staffJobDto);
@@ -536,7 +536,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
             var expectedDto = ApiResponseDto<StaffJobDto>.SuccessResponse(staffJobDto);
 
             _mapper.Map<StaffJobReq>(staffJobDto).Returns(staffJobReq);
-            _http.PutAsync<StaffJobReq, StaffJobRes>("api/staffjob", staffJobReq).Returns(apiResponse);
+            _http.PutAsync<StaffJobReq, StaffJobRes>("api/v1/staffjob", staffJobReq).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<StaffJobDto>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -547,7 +547,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
             Assert.True(result.Success);
             Assert.NotNull(result.Data);
             Assert.Equal(10, result.Data.PlannedHours);
-            await _http.Received(1).PutAsync<StaffJobReq, StaffJobRes>("api/staffjob", staffJobReq);
+            await _http.Received(1).PutAsync<StaffJobReq, StaffJobRes>("api/v1/staffjob", staffJobReq);
         }
 
         [Fact]
@@ -570,7 +570,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
             };
 
             _mapper.Map<StaffJobReq>(staffJobDto).Returns(staffJobReq);
-            _http.PutAsync<StaffJobReq, StaffJobRes>("api/staffjob", staffJobReq).Returns(apiResponse);
+            _http.PutAsync<StaffJobReq, StaffJobRes>("api/v1/staffjob", staffJobReq).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<StaffJobDto>>(apiResponse).Returns(mappedResponse);
 
             // Act
@@ -590,7 +590,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
             var staffJobReq = new StaffJobReq { StaffId = "S001", JobCode = "JOB001" };
 
             _mapper.Map<StaffJobReq>(staffJobDto).Returns(staffJobReq);
-            _http.PutAsync<StaffJobReq, StaffJobRes>("api/staffjob", staffJobReq).ThrowsAsync(new Exception("Network error"));
+            _http.PutAsync<StaffJobReq, StaffJobRes>("api/v1/staffjob", staffJobReq).ThrowsAsync(new Exception("Network error"));
 
             // Act
             var result = await _client.UpdateStaffJobAsync(staffJobDto);
@@ -621,7 +621,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
             };
             var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
 
-            _http.DeleteAsync<bool>($"api/staffjob?staffId={staffId}&jobcode={jobCode}").Returns(apiResponse);
+            _http.DeleteAsync<bool>($"api/v1/staffjob?staffId={staffId}&jobcode={jobCode}").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -631,7 +631,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.True(result.Data);
-            await _http.Received(1).DeleteAsync<bool>($"api/staffjob?staffId={staffId}&jobcode={jobCode}");
+            await _http.Received(1).DeleteAsync<bool>($"api/v1/staffjob?staffId={staffId}&jobcode={jobCode}");
         }
 
         [Fact]
@@ -693,14 +693,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
             var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
             var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
 
-            _http.DeleteAsync<bool>($"api/staffjob?staffId={staffId}&jobcode={jobCode}").Returns(apiResponse);
+            _http.DeleteAsync<bool>($"api/v1/staffjob?staffId={staffId}&jobcode={jobCode}").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
 
             // Act
             await _client.DeleteStaffJobAsync(staffId, jobCode);
 
             // Assert
-            await _http.Received(1).DeleteAsync<bool>($"api/staffjob?staffId={staffId}&jobcode={jobCode}");
+            await _http.Received(1).DeleteAsync<bool>($"api/v1/staffjob?staffId={staffId}&jobcode={jobCode}");
         }
 
         #endregion
@@ -737,7 +737,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
                 ChargeRate = 125.50m
             };
 
-            _http.GetAsync<StaffJobViewRes>($"api/staffjob/view?staffId={staffId}&jobcode={jobCode}").Returns(apiResponse);
+            _http.GetAsync<StaffJobViewRes>($"api/v1/staffjob/view?staffId={staffId}&jobcode={jobCode}").Returns(apiResponse);
             _mapper.Map<StaffJobViewDto>(staffJobViewRes).Returns(mappedDto);
 
             // Act
@@ -753,7 +753,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
             Assert.Equal("John Doe", result.Data.Name);
             Assert.Equal("Grade A", result.Data.WorkGroupGrade);
             Assert.Equal(125.50m, result.Data.ChargeRate);
-            await _http.Received(1).GetAsync<StaffJobViewRes>($"api/staffjob/view?staffId={staffId}&jobcode={jobCode}");
+            await _http.Received(1).GetAsync<StaffJobViewRes>($"api/v1/staffjob/view?staffId={staffId}&jobcode={jobCode}");
             _mapper.Received(1).Map<StaffJobViewDto>(staffJobViewRes);
         }
 
@@ -801,7 +801,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
                 Data = null
             };
 
-            _http.GetAsync<StaffJobViewRes>($"api/staffjob/view?staffId={staffId}&jobcode={jobCode}").Returns(apiResponse);
+            _http.GetAsync<StaffJobViewRes>($"api/v1/staffjob/view?staffId={staffId}&jobcode={jobCode}").Returns(apiResponse);
 
             // Act
             var result = await _client.GetViewByStaffIdAsync(staffId, jobCode);
@@ -847,14 +847,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
             };
             var expectedDto = new StaffJobViewDto { StaffID = staffId, JobCode = jobCode };
 
-            _http.GetAsync<StaffJobViewRes>($"api/staffjob/view?staffId={staffId}&jobcode={jobCode}").Returns(apiResponse);
+            _http.GetAsync<StaffJobViewRes>($"api/v1/staffjob/view?staffId={staffId}&jobcode={jobCode}").Returns(apiResponse);
             _mapper.Map<StaffJobViewDto>(staffJobViewRes).Returns(expectedDto);
 
             // Act
             await _client.GetViewByStaffIdAsync(staffId, jobCode);
 
             // Assert
-            await _http.Received(1).GetAsync<StaffJobViewRes>($"api/staffjob/view?staffId={staffId}&jobcode={jobCode}");
+            await _http.Received(1).GetAsync<StaffJobViewRes>($"api/v1/staffjob/view?staffId={staffId}&jobcode={jobCode}");
         }
 
         [Fact]
@@ -897,7 +897,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
                 Days = 5
             };
 
-            _http.GetAsync<StaffJobViewRes>($"api/staffjob/view?staffId={staffId}&jobcode={jobCode}").Returns(apiResponse);
+            _http.GetAsync<StaffJobViewRes>($"api/v1/staffjob/view?staffId={staffId}&jobcode={jobCode}").Returns(apiResponse);
             _mapper.Map<StaffJobViewDto>(staffJobViewRes).Returns(expectedDto);
 
             // Act
@@ -937,7 +937,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
             };
             var expectedDto = ApiResponseDto<decimal>.SuccessResponse(total);
 
-            _http.GetAsync<decimal>($"api/staffjob/totalstaffcost?jobCode={jobCode}").Returns(apiResponse);
+            _http.GetAsync<decimal>($"api/v1/staffjob/totalstaffcost?jobCode={jobCode}").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<decimal>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -947,7 +947,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(total, result.Data);
-            await _http.Received(1).GetAsync<decimal>($"api/staffjob/totalstaffcost?jobCode={jobCode}");
+            await _http.Received(1).GetAsync<decimal>($"api/v1/staffjob/totalstaffcost?jobCode={jobCode}");
         }
 
         [Fact]
@@ -1008,14 +1008,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
             var apiResponse = new ApiResponse<decimal> { Success = true, Data = 100m };
             var expectedDto = ApiResponseDto<decimal>.SuccessResponse(100m);
 
-            _http.GetAsync<decimal>($"api/staffjob/totalstaffcost?jobCode={jobCode}").Returns(apiResponse);
+            _http.GetAsync<decimal>($"api/v1/staffjob/totalstaffcost?jobCode={jobCode}").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<decimal>>(apiResponse).Returns(expectedDto);
 
             // Act
             await _client.GetTotalStaffCostAsync(jobCode);
 
             // Assert
-            await _http.Received(1).GetAsync<decimal>($"api/staffjob/totalstaffcost?jobCode={jobCode}");
+            await _http.Received(1).GetAsync<decimal>($"api/v1/staffjob/totalstaffcost?jobCode={jobCode}");
         }
 
         #endregion
