@@ -1,3 +1,4 @@
+using Apha.Common.Constants;
 using Apha.Common.Contracts.FPS;
 using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
@@ -14,7 +15,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         private readonly IFpsHttpExecutor _http;
         private readonly IMapper _mapper;
         private const string InternalCodeError = "INTERNAL_ERROR";
-        private const string BaseEndpoint = "api/project";
 
         public FpsProjectApiClient(IFpsHttpExecutor http, IMapper mapper)
         {
@@ -26,7 +26,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var response = await _http.GetAsync<List<ProjectRes>>(BaseEndpoint);
+                var response = await _http.GetAsync<List<ProjectRes>>(FpsApiEndpoints.GetAllProjects);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
 
@@ -45,7 +45,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var url = QueryStringHelper.AddQueryString($"{BaseEndpoint}/paged", query);
+                var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetPagedProjects, query);
                 var response = await _http.GetAsync<List<ProjectRes>>(url);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
@@ -65,7 +65,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var url = QueryStringHelper.AddQueryString($"{BaseEndpoint}/pactview", query);
+                var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetPagedPactProjects, query);
                 var response = await _http.GetAsync<List<ProjectRes>>(url);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
@@ -85,7 +85,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var response = await _http.GetAsync<ProjectRes>($"{BaseEndpoint}/{Uri.EscapeDataString(parentProject)}");
+                var response = await _http.GetAsync<ProjectRes>(string.Format(FpsApiEndpoints.GetProjectById, Uri.EscapeDataString(parentProject)));
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<ProjectDto>>(response);
 
@@ -105,7 +105,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             try
             {
                 var request = _mapper.Map<ProjectReq>(project);
-                var response = await _http.PostAsync<ProjectReq, ProjectRes>(BaseEndpoint, request);
+                var response = await _http.PostAsync<ProjectReq, ProjectRes>(FpsApiEndpoints.CreateProject, request);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<ProjectDto>>(response);
 
@@ -125,7 +125,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             try
             {
                 var request = _mapper.Map<ProjectReq>(project);
-                var response = await _http.PutAsync<ProjectReq, ProjectRes>(BaseEndpoint, request);
+                var response = await _http.PutAsync<ProjectReq, ProjectRes>(FpsApiEndpoints.UpdateProject, request);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<ProjectDto>>(response);
 
@@ -145,7 +145,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             try
             {
                 var request = _mapper.Map<ProjectReq>(project);
-                var response = await _http.PatchAsync<ProjectReq, ProjectRes>($"{BaseEndpoint}/external/pact", request);
+                var response = await _http.PatchAsync<ProjectReq, ProjectRes>(FpsApiEndpoints.UpdatePactProject, request);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<ProjectDto>>(response);
 
@@ -164,7 +164,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var response = await _http.DeleteAsync<bool>($"{BaseEndpoint}/{Uri.EscapeDataString(parentProject)}");
+                var response = await _http.DeleteAsync<bool?>(string.Format(FpsApiEndpoints.DeleteProject, Uri.EscapeDataString(parentProject)));
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<bool>>(response);
 
@@ -185,7 +185,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             try
             {
                 var url = QueryStringHelper.AddQueryString(
-                    $"api/project/paged?programNo={Uri.EscapeDataString(programNo)}", query);
+                    string.Format(FpsApiEndpoints.GetProjectsByProgram, Uri.EscapeDataString(programNo)), query);
 
                 var response = await _http.GetAsync<List<ProjectRes>>(url);
 

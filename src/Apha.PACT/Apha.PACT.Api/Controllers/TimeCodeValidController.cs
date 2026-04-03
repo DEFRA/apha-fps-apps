@@ -3,16 +3,17 @@ using Apha.Common.Contracts.PACT;
 using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Interfaces;
 using Apha.PACT.Application.Pagination;
-using Apha.PACT.Core.Entities;
+using Asp.Versioning;
 using AutoMapper;
-using DocumentFormat.OpenXml.Wordprocessing;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Reflection.Emit;
 
 namespace Apha.PACT.Api.Controllers
 {
+    [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
     [ApiController]
-    [Route("api/timecodevalid")]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/timecodevalid")]
     public class TimeCodeValidController : ControllerBase
     {
         private readonly ITimeCodeValidService _service;

@@ -48,7 +48,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
             );
 
             _http.GetAsync<List<TimeCodeValidRes>>(Arg.Is<string>(url =>
-                url.Contains($"api/timecodevalid/jobcode/{Uri.EscapeDataString(jobCode)}/project/{Uri.EscapeDataString(parentProject)}")))
+                url.Contains($"api/v1/timecodevalid/jobcode/{Uri.EscapeDataString(jobCode)}/project/{Uri.EscapeDataString(parentProject)}")))
                 .Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<TimeCodeValidDto>>>(apiResponse).Returns(expectedDto);
 
@@ -60,7 +60,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
             Assert.True(result.Success);
             Assert.Equal(2, result.Data?.Count);
             await _http.Received(1).GetAsync<List<TimeCodeValidRes>>(
-                Arg.Is<string>(url => url.Contains($"api/timecodevalid/jobcode/{Uri.EscapeDataString(jobCode)}/project/{Uri.EscapeDataString(parentProject)}")));
+                Arg.Is<string>(url => url.Contains($"api/v1/timecodevalid/jobcode/{Uri.EscapeDataString(jobCode)}/project/{Uri.EscapeDataString(parentProject)}")));
         }
 
         [Fact]
@@ -132,7 +132,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
             );
 
             _http.GetAsync<List<TimeCodeValidRes>>(Arg.Is<string>(url =>
-                url.Contains("api/timecodevalid/paged") &&
+                url.Contains("api/v1/timecodevalid/paged") &&
                 url.Contains($"jobCode={Uri.EscapeDataString(jobCode)}") &&
                 url.Contains($"parentProject={Uri.EscapeDataString(parentProject)}")))
                 .Returns(apiResponse);
@@ -155,7 +155,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
             var apiResponse = new ApiResponse<List<TimeCodeValidRes>> { Success = true, Data = new List<TimeCodeValidRes>() };
             var expectedDto = ApiResponseDto<List<TimeCodeValidDto>>.SuccessResponse(new List<TimeCodeValidDto>(), new PaginationDto());
 
-            _http.GetAsync<List<TimeCodeValidRes>>(Arg.Is<string>(url => url.Contains("api/timecodevalid/paged"))).Returns(apiResponse);
+            _http.GetAsync<List<TimeCodeValidRes>>(Arg.Is<string>(url => url.Contains("api/v1/timecodevalid/paged"))).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<TimeCodeValidDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -199,7 +199,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
             var expectedDto = ApiResponseDto<TimeCodeValidDto>.SuccessResponse(itemDto);
 
             _mapper.Map<TimeCodeValidReq>(itemDto).Returns(itemReq);
-            _http.PostAsync<TimeCodeValidReq, TimeCodeValidRes>("api/timecodevalid", itemReq).Returns(apiResponse);
+            _http.PostAsync<TimeCodeValidReq, TimeCodeValidRes>("api/v1/timecodevalid", itemReq).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<TimeCodeValidDto>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -209,7 +209,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal("TC001", result.Data?.TimeCode);
-            await _http.Received(1).PostAsync<TimeCodeValidReq, TimeCodeValidRes>("api/timecodevalid", itemReq);
+            await _http.Received(1).PostAsync<TimeCodeValidReq, TimeCodeValidRes>("api/v1/timecodevalid", itemReq);
         }
 
         [Fact]
@@ -274,7 +274,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
             var expectedDto = ApiResponseDto<TimeCodeValidDto>.SuccessResponse(itemDto);
 
             _mapper.Map<TimeCodeValidReq>(itemDto).Returns(itemReq);
-            _http.PutAsync<TimeCodeValidReq, TimeCodeValidRes>("api/timecodevalid", itemReq).Returns(apiResponse);
+            _http.PutAsync<TimeCodeValidReq, TimeCodeValidRes>("api/v1/timecodevalid", itemReq).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<TimeCodeValidDto>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -284,7 +284,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal("TC001", result.Data?.TimeCode);
-            await _http.Received(1).PutAsync<TimeCodeValidReq, TimeCodeValidRes>("api/timecodevalid", itemReq);
+            await _http.Received(1).PutAsync<TimeCodeValidReq, TimeCodeValidRes>("api/v1/timecodevalid", itemReq);
         }
 
         [Fact]
@@ -345,7 +345,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
             var workGroup = "WG001";
             var timeCode = "TC001";
             var parentProject = "PP001";
-            var expectedUrl = $"api/timecodevalid/{Uri.EscapeDataString(workGroup)}/{Uri.EscapeDataString(timeCode)}/{Uri.EscapeDataString(parentProject)}";
+            var expectedUrl = $"api/v1/timecodevalid/{Uri.EscapeDataString(workGroup)}/{Uri.EscapeDataString(timeCode)}/{Uri.EscapeDataString(parentProject)}";
             var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
             var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
 
@@ -414,7 +414,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
             // Arrange
             var jobCode = "JC001";
             var parentProject = "PP001";
-            var expectedUrl = $"api/timecodevalid/jobcode/{Uri.EscapeDataString(jobCode)}/project/{Uri.EscapeDataString(parentProject)}";
+            var expectedUrl = $"api/v1/timecodevalid/jobcode/{Uri.EscapeDataString(jobCode)}/project/{Uri.EscapeDataString(parentProject)}";
             var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
             var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
 
@@ -484,7 +484,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
             var sourceJobCode = "JC001";
             var targetJobCode = "JC002";
             var parentProject = "PP001";
-            var expectedUrl = $"api/timecodevalid/copy?sourceJobCode={Uri.EscapeDataString(sourceJobCode)}&targetJobCode={Uri.EscapeDataString(targetJobCode)}&parentProject={Uri.EscapeDataString(parentProject)}";
+            var expectedUrl = $"api/v1/timecodevalid/copy?sourceJobCode={Uri.EscapeDataString(sourceJobCode)}&targetJobCode={Uri.EscapeDataString(targetJobCode)}&parentProject={Uri.EscapeDataString(parentProject)}";
             var timeCodeList = new List<TimeCodeValidRes>
             {
                 new() { TimeCode = "TC001", WorkGroup = "WG001", ParentProject = parentProject, JobCode = targetJobCode },
@@ -571,7 +571,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
             var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
             var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
 
-            _http.PostAsync<BulkDeleteTimeCodeReq, bool>("api/timecodevalid/deletebulk", Arg.Any<BulkDeleteTimeCodeReq>()).Returns(apiResponse);
+            _http.PostAsync<BulkDeleteTimeCodeReq, bool>("api/v1/timecodevalid/deletebulk", Arg.Any<BulkDeleteTimeCodeReq>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -582,7 +582,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
             Assert.True(result.Success);
             Assert.True(result.Data);
             await _http.Received(1).PostAsync<BulkDeleteTimeCodeReq, bool>(
-                "api/timecodevalid/deletebulk", Arg.Any<BulkDeleteTimeCodeReq>());
+                "api/v1/timecodevalid/deletebulk", Arg.Any<BulkDeleteTimeCodeReq>());
         }
 
         [Fact]
@@ -664,7 +664,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
             );
 
             _http.PostAsync<BulkCopyWorkGroupReq, List<TimeCodeValidRes>>(
-                "api/timecodevalid/copybulkworkgroups", Arg.Any<BulkCopyWorkGroupReq>()).Returns(apiResponse);
+                "api/v1/timecodevalid/copybulkworkgroups", Arg.Any<BulkCopyWorkGroupReq>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<TimeCodeValidDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -675,7 +675,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
             Assert.True(result.Success);
             Assert.Equal(2, result.Data?.Count);
             await _http.Received(1).PostAsync<BulkCopyWorkGroupReq, List<TimeCodeValidRes>>(
-                "api/timecodevalid/copybulkworkgroups", Arg.Any<BulkCopyWorkGroupReq>());
+                "api/v1/timecodevalid/copybulkworkgroups", Arg.Any<BulkCopyWorkGroupReq>());
         }
 
         [Fact]

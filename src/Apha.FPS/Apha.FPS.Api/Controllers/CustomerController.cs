@@ -1,13 +1,15 @@
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Interfaces;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Apha.FPS.Api.Controllers
 {
     [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
-    [Route("api/customer")]
+    [Route("api/v{version:apiVersion}/customer")]
     [ApiController]
+    [ApiVersion("1.0")]
     public class CustomerController : ControllerBase
     {
         private readonly ICustomerService _customerService;

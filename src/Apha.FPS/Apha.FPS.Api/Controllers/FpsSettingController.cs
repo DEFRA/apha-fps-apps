@@ -1,8 +1,8 @@
 ﻿using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Interfaces;
+using Asp.Versioning;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Apha.FPS.Api.Controllers
@@ -12,7 +12,8 @@ namespace Apha.FPS.Api.Controllers
     /// </summary>
     [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
     [ApiController]
-    [Route("api/setting")]    
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/setting")]
     public class FpsSettingController : ControllerBase
     {
         private readonly IFpsSettingService _fpsSettingService;

@@ -1,3 +1,4 @@
+using Apha.Common.Constants;
 using Apha.Common.Contracts.FPS;
 using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
@@ -25,7 +26,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var url = QueryStringHelper.AddQueryString($"api/animal?jobCode={jobCode}", query);
+                var url = QueryStringHelper.AddQueryString(string.Format(FpsApiEndpoints.GetAnimalCosts, jobCode), query);
                 var response = await _http.GetAsync<List<AnimalCostViewRes>>(url);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<List<AnimalCostViewDto>>>(response);
@@ -45,7 +46,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var response = await _http.GetAsync<List<AnimalRes>>("api/animal/lookup");
+                var response = await _http.GetAsync<List<AnimalRes>>(FpsApiEndpoints.GetAnimalLookup);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<List<AnimalDto>>>(response);
 
@@ -64,7 +65,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var response = await _http.GetAsync<decimal?>($"api/animal/rate?animalType={animalType}");
+                var response = await _http.GetAsync<decimal?>(string.Format(FpsApiEndpoints.GetAnimalRate, animalType));
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<decimal?>>(response);
 
@@ -84,7 +85,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             try
             {
                 AnimalRequestReq req = _mapper.Map<AnimalRequestReq>(animalRequest);
-                var response = await _http.PostAsync<AnimalRequestReq, AnimalRequestRes>("api/animal", req);
+                var response = await _http.PostAsync<AnimalRequestReq, AnimalRequestRes>(FpsApiEndpoints.CreateAnimalCost, req);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<AnimalRequestDto>>(response);
 
@@ -104,7 +105,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             try
             {
                 AnimalRequestReq req = _mapper.Map<AnimalRequestReq>(animalRequest);
-                var response = await _http.PutAsync<AnimalRequestReq, AnimalRequestRes>("api/animal", req);
+                var response = await _http.PutAsync<AnimalRequestReq, AnimalRequestRes>(FpsApiEndpoints.UpdateAnimalCost, req);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<AnimalRequestDto>>(response);
 
@@ -123,7 +124,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var response = await _http.DeleteAsync<bool>($"api/animal?indCounter={indCounter}");
+                var response = await _http.DeleteAsync<bool?>(string.Format(FpsApiEndpoints.DeleteAnimalCost, indCounter));
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<bool>>(response);
 
@@ -142,7 +143,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var response = await _http.GetAsync<decimal>($"api/animal/totalanimalcost?jobCode={jobCode}");
+                var response = await _http.GetAsync<decimal>(string.Format(FpsApiEndpoints.GetTotalAnimalCost, jobCode));
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<decimal>>(response);
 
@@ -161,7 +162,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var response = await _http.GetAsync<AnimalCostViewRes>($"api/animal/view?indCounter={indCounter}&jobCode={jobCode}");
+                var response = await _http.GetAsync<AnimalCostViewRes>(string.Format(FpsApiEndpoints.GetAnimalCostViewById, indCounter, jobCode));
                 if (response.Success)
                 {
                     var mappedData = response.Data != null ? _mapper.Map<AnimalCostViewDto>(response.Data) : null;

@@ -1,3 +1,4 @@
+using Apha.Common.Constants;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Interfaces.FpsApiClients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
@@ -21,7 +22,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var response = await _http.GetAsync<decimal>("api/setting/hoursperday");
+                var response = await _http.GetAsync<decimal>(FpsApiEndpoints.GetHoursPerDay);
 
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<decimal>>(response);

@@ -1,12 +1,16 @@
 using Apha.Common.Contracts.PACT;
 using Apha.PACT.Application.Interfaces;
+using Asp.Versioning;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Apha.PACT.Api.Controllers
 {
+    [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
     [ApiController]
-    [Route("api/workgroup")]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/workgroup")]
     public class WorkGroupController : ControllerBase
     {
         private readonly IWorkGroupService _service;

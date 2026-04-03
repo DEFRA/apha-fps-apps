@@ -44,7 +44,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactWorkGroupApiCli
                 }
             );
 
-            _http.GetAsync<List<WorkGroupRes>>("api/workgroup").Returns(apiResponse);
+            _http.GetAsync<List<WorkGroupRes>>("api/v1/workgroup").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<WorkGroupDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -54,7 +54,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactWorkGroupApiCli
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(2, result.Data?.Count);
-            await _http.Received(1).GetAsync<List<WorkGroupRes>>("api/workgroup");
+            await _http.Received(1).GetAsync<List<WorkGroupRes>>("api/v1/workgroup");
         }
 
         [Fact]

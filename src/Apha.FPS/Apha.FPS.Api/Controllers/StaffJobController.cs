@@ -3,6 +3,7 @@ using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
+using Asp.Versioning;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -16,7 +17,8 @@ namespace Apha.FPS.Api.Controllers
     /// 
     [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]    
     [ApiController]
-    [Route("api/staffjob")]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/staffjob")]
     public class StaffJobController : ControllerBase
     {
         private readonly IStaffJobService _staffJobService;
