@@ -3,9 +3,11 @@ using Apha.PACT.Api.Mappings;
 using Apha.PACT.Api.Middleware;
 using Apha.PACT.Application.Mappings;
 using Apha.PACT.DataAccess.Data;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi;
 using System.Globalization;
 
 namespace Apha.PACT.Api.Extensions
@@ -52,6 +54,20 @@ namespace Apha.PACT.Api.Extensions
                 options.Filters.Add<ApiResponseActionFilter>();
             });
 
+            // API Versioning
+            services.AddApiVersioning(options =>
+            {
+                options.DefaultApiVersion = new ApiVersion(1, 0);
+                options.AssumeDefaultVersionWhenUnspecified = true;
+                options.ReportApiVersions = true;
+                options.ApiVersionReader = new UrlSegmentApiVersionReader();
+            })
+            .AddApiExplorer(options =>
+            {
+                options.GroupNameFormat = "'v'VVV";
+                options.SubstituteApiVersionInUrl = true;
+            });
+
             // Application services
             services.AddApplicationServices();
 
@@ -64,8 +80,16 @@ namespace Apha.PACT.Api.Extensions
             // Health checks
             services.AddHealthChecks();
 
-            //Swagger
-            services.AddSwaggerGen();    
+            // Swagger
+            services.AddSwaggerGen(options =>
+            {
+                options.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Title = "PACT API",
+                    Version = "v1",
+                    Description = "PACT Web API"
+                });
+            });
         }
 
         public static void ConfigureMiddleware(this WebApplication app)
@@ -95,7 +119,10 @@ namespace Apha.PACT.Api.Extensions
             {
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();
-                app.UseSwaggerUI();
+                app.UseSwaggerUI(options =>
+                {
+                    options.SwaggerEndpoint("/swagger/v1/swagger.json", "PACT API v1");
+                });
             }            
 
             app.UseHsts();

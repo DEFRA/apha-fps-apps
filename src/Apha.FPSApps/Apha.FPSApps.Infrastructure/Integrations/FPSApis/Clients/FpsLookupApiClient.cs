@@ -1,3 +1,4 @@
+using Apha.Common.Constants;
 using Apha.Common.Contracts.FPS;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
@@ -23,7 +24,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var response = await _http.GetAsync<List<StatusRes>>("api/status");
+                var response = await _http.GetAsync<List<StatusRes>>(FpsApiEndpoints.GetAllStatuses);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<List<StatusDto>>>(response);
 
@@ -42,7 +43,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var response = await _http.GetAsync<List<DiseaseRes>>("api/disease");
+                var response = await _http.GetAsync<List<DiseaseRes>>(FpsApiEndpoints.GetAllDiseases);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<List<DiseaseDto>>>(response);
 
@@ -61,7 +62,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var response = await _http.GetAsync<List<CustomerRes>>("api/customer");
+                var response = await _http.GetAsync<List<CustomerRes>>(FpsApiEndpoints.GetAllCustomers);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<List<CustomerDto>>>(response);
 
@@ -80,7 +81,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var response = await _http.GetAsync<List<ContractRes>>("api/contract");
+                var response = await _http.GetAsync<List<ContractRes>>(FpsApiEndpoints.GetAllContracts);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<List<ContractDto>>>(response);
 

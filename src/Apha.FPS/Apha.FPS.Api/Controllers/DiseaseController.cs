@@ -1,13 +1,15 @@
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Interfaces;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Apha.FPS.Api.Controllers
 {
     [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
-    [Route("api/disease")]
+    [Route("api/v{version:apiVersion}/disease")]
     [ApiController]
+    [ApiVersion("1.0")]
     public class DiseaseController : ControllerBase
     {
         private readonly IDiseaseService _diseaseService;

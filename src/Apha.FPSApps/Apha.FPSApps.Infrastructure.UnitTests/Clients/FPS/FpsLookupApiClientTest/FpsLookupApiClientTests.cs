@@ -36,7 +36,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsLookupApiClientTe
                 new List<StatusDto> { new() { Status = "Active" }, new() { Status = "Inactive" } }
             );
 
-            _http.GetAsync<List<StatusRes>>("api/status").Returns(apiResponse);
+            _http.GetAsync<List<StatusRes>>("api/v1/status").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<StatusDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -46,7 +46,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsLookupApiClientTe
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(2, result.Data?.Count);
-            await _http.Received(1).GetAsync<List<StatusRes>>("api/status");
+            await _http.Received(1).GetAsync<List<StatusRes>>("api/v1/status");
         }
 
         [Fact]
@@ -105,7 +105,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsLookupApiClientTe
                 new List<DiseaseDto> { new() { Disease = "Foot and Mouth" }, new() { Disease = "Avian Flu" } }
             );
 
-            _http.GetAsync<List<DiseaseRes>>("api/disease").Returns(apiResponse);
+            _http.GetAsync<List<DiseaseRes>>("api/v1/disease").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<DiseaseDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -115,7 +115,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsLookupApiClientTe
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(2, result.Data?.Count);
-            await _http.Received(1).GetAsync<List<DiseaseRes>>("api/disease");
+            await _http.Received(1).GetAsync<List<DiseaseRes>>("api/v1/disease");
         }
 
         [Fact]
@@ -174,7 +174,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsLookupApiClientTe
                 new List<CustomerDto> { new() { Customer = "DEFRA" }, new() { Customer = "APHA" } }
             );
 
-            _http.GetAsync<List<CustomerRes>>("api/customer").Returns(apiResponse);
+            _http.GetAsync<List<CustomerRes>>("api/v1/customer").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<CustomerDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -184,7 +184,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsLookupApiClientTe
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(2, result.Data?.Count);
-            await _http.Received(1).GetAsync<List<CustomerRes>>("api/customer");
+            await _http.Received(1).GetAsync<List<CustomerRes>>("api/v1/customer");
         }
 
         [Fact]
@@ -243,7 +243,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsLookupApiClientTe
                 new List<ContractDto> { new() { ContractNo = "C001" }, new() { ContractNo = "C002" } }
             );
 
-            _http.GetAsync<List<ContractRes>>("api/contract").Returns(apiResponse);
+            _http.GetAsync<List<ContractRes>>("api/v1/contract").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<ContractDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -253,7 +253,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsLookupApiClientTe
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(2, result.Data?.Count);
-            await _http.Received(1).GetAsync<List<ContractRes>>("api/contract");
+            await _http.Received(1).GetAsync<List<ContractRes>>("api/v1/contract");
         }
 
         [Fact]
