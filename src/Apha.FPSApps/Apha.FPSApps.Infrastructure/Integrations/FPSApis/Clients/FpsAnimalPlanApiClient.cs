@@ -124,7 +124,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var response = await _http.DeleteAsync<bool>(string.Format(FpsApiEndpoints.DeleteAnimalCost, indCounter));
+                var response = await _http.DeleteAsync<bool?>(string.Format(FpsApiEndpoints.DeleteAnimalCost, indCounter));
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<bool>>(response);
 

@@ -232,7 +232,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var response = await _http.DeleteAsync<bool>(string.Format(FpsApiEndpoints.DeleteStaffJob, staffId, jobCode));
+                var response = await _http.DeleteAsync<bool?>(string.Format(FpsApiEndpoints.DeleteStaffJob, staffId, jobCode));
 
                 if (response.Success)
                 {

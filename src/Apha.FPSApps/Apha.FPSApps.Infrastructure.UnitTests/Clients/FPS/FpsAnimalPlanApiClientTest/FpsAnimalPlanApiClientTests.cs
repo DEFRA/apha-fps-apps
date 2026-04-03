@@ -436,10 +436,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalPlanApiClie
         {
             // Arrange
             var indCounter = 1;
-            var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
+            var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
             var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
 
-            _http.DeleteAsync<bool>($"api/v1/animal?indCounter={indCounter}").Returns(apiResponse);
+            _http.DeleteAsync<bool?>($"api/v1/animal?indCounter={indCounter}").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -449,7 +449,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalPlanApiClie
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.True(result.Data);
-            await _http.Received(1).DeleteAsync<bool>($"api/v1/animal?indCounter={indCounter}");
+            await _http.Received(1).DeleteAsync<bool?>($"api/v1/animal?indCounter={indCounter}");
         }
 
         [Fact]
@@ -457,7 +457,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalPlanApiClie
         {
             // Arrange
             var indCounter = 999;
-            var apiResponse = new ApiResponse<bool>
+            var apiResponse = new ApiResponse<bool?>
             {
                 Success = false,
                 Errors = new List<ApiError> { new() { Message = "Not found", Code = "NOT_FOUND" } }
@@ -469,7 +469,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalPlanApiClie
                 Meta = new ApiMetaDto()
             };
 
-            _http.DeleteAsync<bool>($"api/v1/animal?indCounter={indCounter}").Returns(apiResponse);
+            _http.DeleteAsync<bool?>($"api/v1/animal?indCounter={indCounter}").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedResponse);
 
             // Act

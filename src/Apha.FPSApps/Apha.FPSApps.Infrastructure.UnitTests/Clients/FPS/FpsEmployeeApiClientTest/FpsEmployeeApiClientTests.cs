@@ -506,14 +506,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsEmployeeApiClient
         {
             // Arrange
             var spNumber = "000001";
-            var apiResponse = new ApiResponse<bool>
+            var apiResponse = new ApiResponse<bool?>
             {
                 Success = true,
                 Data = true
             };
             var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
 
-            _httpExecutor.DeleteAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
+            _httpExecutor.DeleteAsync<bool?>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -523,7 +523,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsEmployeeApiClient
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.True(result.Data);
-            await _httpExecutor.Received(1).DeleteAsync<bool>($"api/v1/employee/{spNumber}");
+            await _httpExecutor.Received(1).DeleteAsync<bool?>($"api/v1/employee/{spNumber}");
         }
 
         [Fact]
@@ -532,7 +532,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsEmployeeApiClient
             // Arrange
             var spNumber = "999999";
             var errors = new List<ApiError> { new ApiError { Message = "Not found", Code = "NOT_FOUND" } };
-            var apiResponse = new ApiResponse<bool>
+            var apiResponse = new ApiResponse<bool?>
             {
                 Success = false,
                 Errors = errors
@@ -544,7 +544,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsEmployeeApiClient
                 Meta = new ApiMetaDto()
             };
 
-            _httpExecutor.DeleteAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
+            _httpExecutor.DeleteAsync<bool?>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedResponse);
 
             // Act
@@ -561,7 +561,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsEmployeeApiClient
         {
             // Arrange
             var spNumber = "000001";
-            _httpExecutor.DeleteAsync<bool>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
+            _httpExecutor.DeleteAsync<bool?>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
 
             // Act
             var result = await _client.DeleteEmployeeAsync(spNumber);
@@ -582,17 +582,17 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsEmployeeApiClient
         public async Task DeleteEmployeeAsync_WithVariousSPNumbers_CallsCorrectUrl(string spNumber)
         {
             // Arrange
-            var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
+            var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
             var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
 
-            _httpExecutor.DeleteAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
+            _httpExecutor.DeleteAsync<bool?>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
 
             // Act
             await _client.DeleteEmployeeAsync(spNumber);
 
             // Assert
-            await _httpExecutor.Received(1).DeleteAsync<bool>($"api/v1/employee/{spNumber}");
+            await _httpExecutor.Received(1).DeleteAsync<bool?>($"api/v1/employee/{spNumber}");
         }
 
         #endregion

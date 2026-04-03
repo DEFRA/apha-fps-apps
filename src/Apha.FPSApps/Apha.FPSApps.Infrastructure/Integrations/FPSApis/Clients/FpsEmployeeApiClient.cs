@@ -145,7 +145,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var response = await _http.DeleteAsync<bool>(string.Format(FpsApiEndpoints.DeleteEmployee, spNumber));
+                var response = await _http.DeleteAsync<bool?>(string.Format(FpsApiEndpoints.DeleteEmployee, spNumber));
 
                 if (response.Success)
                 {

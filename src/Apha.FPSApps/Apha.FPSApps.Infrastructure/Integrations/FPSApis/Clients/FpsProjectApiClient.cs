@@ -164,7 +164,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var response = await _http.DeleteAsync<bool>(string.Format(FpsApiEndpoints.DeleteProject, Uri.EscapeDataString(parentProject)));
+                var response = await _http.DeleteAsync<bool?>(string.Format(FpsApiEndpoints.DeleteProject, Uri.EscapeDataString(parentProject)));
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<bool>>(response);
 
