@@ -5,16 +5,14 @@ namespace Apha.FPS.Api.Middleware
     public class RequestContextMiddleware
     {
         private readonly RequestDelegate _next;
-        private readonly ILogger<RequestContextMiddleware> _logger;
+       
         private const string FpsYearHeader = "X-FPS-Year";
         private const string CorrelationIdHeader = "X-Correlation-ID";
 
         public RequestContextMiddleware(
-                RequestDelegate next,
-                ILogger<RequestContextMiddleware> logger)
+                RequestDelegate next)
         {
-            _next = next;
-            _logger = logger;
+            _next = next;            
         }
 
         public async Task InvokeAsync(HttpContext context, IFpsRequestContext requestContext)
@@ -42,10 +40,7 @@ namespace Apha.FPS.Api.Middleware
 
             requestContext.FpsYear = fpsYear;
             requestContext.UserEmailId = ("Rohit.Agarwal@defradev.onmicrosoft.com").ToLowerInvariant(); //(context.User?.Identity?.Name ?? string.Empty).ToLowerInvariant();
-
-            _logger.LogDebug("Request context set: FpsYear={FpsYear}, UserEmailId={UserEmailId}",
-                fpsYear, requestContext.UserEmailId);
-
+            
             await _next(context);
         }
 
