@@ -62,7 +62,7 @@ namespace Apha.FPS.DataAccess.Repositories
                                   let dailyRate = (project.IsDefraProject == -1 ? animal.DefraDailyRate : animal.DailyRate)
                                   where animal.AnimalType == animalType
                                       && animalReq.UserEmail != null
-                                      && animalReq.UserEmail.ToLower() == _requestContext.UserEmailId
+                                      && string.Equals(animalReq.UserEmail, _requestContext.UserEmailId, StringComparison.OrdinalIgnoreCase)
                                   select dailyRate;
 
             return await queryAnimalCost.FirstOrDefaultAsync();
@@ -126,7 +126,7 @@ namespace Apha.FPS.DataAccess.Repositories
                    let dailyRate = (project.IsDefraProject == -1 ? animal.DefraDailyRate : animal.DailyRate)
                    where animalReq.JobCode == jobCode
                        && animalReq.UserEmail != null
-                       && animalReq.UserEmail.ToLower() == _requestContext.UserEmailId
+                       && animalReq.UserEmail.Equals(_requestContext.UserEmailId, StringComparison.CurrentCultureIgnoreCase)
                    select new AnimalCostView
                    {
                        IndCounter = animalReq.IndCounter,
