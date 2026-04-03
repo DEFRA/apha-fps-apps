@@ -26,7 +26,7 @@
 
         public decimal? DefraChargeRate { get; set; }
 
-        public int? FPSCalYear { get; set; }
+        public int? FpsYear { get; set; }
     }
 }
 

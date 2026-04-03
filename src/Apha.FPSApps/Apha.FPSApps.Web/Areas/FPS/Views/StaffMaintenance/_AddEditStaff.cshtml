@@ -6,7 +6,7 @@
 </div>
 
 <div class="modal-body">
-    <div asp-validation-summary="ModelOnly" class="govuk-error-summary" role="alert" aria-labelledby="error-summary-title" tabindex="-1" style="display:none;">
+    <div class="govuk-error-summary" role="alert" aria-labelledby="error-summary-title" tabindex="-1" style="display:none;">
         <h2 class="govuk-error-summary__title" id="error-summary-title">
             There is a problem
         </h2>
@@ -22,7 +22,7 @@
         <div class="row g-3">
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label" asp-for="SPNumber">SP Number</label>
-                <input type="text" class="govuk-input" required asp-for="SPNumber" />
+                <input type="text" class="govuk-input" maxlength="10" required asp-for="SPNumber" />
                 <span asp-validation-for="SPNumber" class="govuk-error-message" style="display:none;"></span>
             </div>
 

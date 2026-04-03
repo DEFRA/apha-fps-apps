@@ -1,6 +1,6 @@
 ﻿using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
-using Apha.FPSApps.Application.Interfaces;
+using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
@@ -74,7 +74,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 Directorate = string.Empty
             };
             await PopulateDropdownsAsync(model);
-            return PartialView("_AddProgram", model);
+            return PartialView("_AddEditProgram", model);
         }
 
         // POST: Create
@@ -125,7 +125,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 return NotFound();
             var model = _mapper.Map<ProgramViewModel>(response.Data);
             await PopulateDropdownsAsync(model);
-            return PartialView("_EditProgram", model);
+            return PartialView("_AddEditProgram", model);
         }
 
         // POST: Edit
@@ -206,13 +206,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             {
                 programItems = _mapper.Map<List<ProgramViewModel>>(response.Data.ToList());
             }
-            PaginationModel paginationModel = _mapper.Map<PaginationModel>(response.Pagination);
+            PaginationModel paginationModel = _mapper.Map<PaginationModel>(response.Pagination) ?? new PaginationModel();
 
             var programGridConfig = new DataGridConfig<ProgramViewModel>
             {
                 GridId = "programGrid",
                 Title = "Programs",
-                ShowCheckboxColumn = true,
+                ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "ProgramNo",
                 AddFunction = "addProgram",
@@ -231,9 +231,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         private async Task PopulateDropdownsAsync(ProgramViewModel model)
         {
-            // Directorate dropdown
+            // Directorate dropdown — blank first item
             var directorates = new List<string>(DefaultDirectorates);
-          
+
             if (!string.IsNullOrWhiteSpace(model.Directorate) &&
                 !directorates.Any(d => string.Equals(d, model.Directorate, StringComparison.OrdinalIgnoreCase)))
             {
@@ -247,17 +247,19 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     Text = d,
                     Selected = string.Equals(model.Directorate, d, StringComparison.OrdinalIgnoreCase)
                 })
+                .Prepend(new SelectListItem { Value = string.Empty, Text = string.Empty, Selected = string.IsNullOrEmpty(model.Directorate) })
                 .ToList();
 
-            // Manager dropdown
+            // Manager dropdown — blank first item
             var managerResponse = await _employeeService.GetAllManagersAsync();
             model.ManagerList = (managerResponse.Data ?? new List<ManagerDto>())
                 .Select(m => new SelectListItem
                 {
-                    Value = m.Name, 
+                    Value = m.Name,
                     Text = m.Name,
                     Selected = string.Equals(model.Manager, m.Name, StringComparison.OrdinalIgnoreCase)
                 })
+                .Prepend(new SelectListItem { Value = string.Empty, Text = string.Empty, Selected = string.IsNullOrEmpty(model.Manager) })
                 .ToList();
         }
     }

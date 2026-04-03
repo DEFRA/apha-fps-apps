@@ -55,7 +55,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         /// Contains all staff resources allocated to the project.
         /// </summary>
         [Display(Name = "Staff Booked")]
-        public DataGridConfig<StaffJobItem> StaffBookedGrid { get; set; } = new DataGridConfig<StaffJobItem>();
+        public DataGridConfig<StaffJobItemViewModel> StaffBookedGrid { get; set; } = new DataGridConfig<StaffJobItemViewModel>();
 
         /// <summary>
         /// Gets or sets the list of animals booked records with AnimalType, Day, NoReq, DailyRt, and Cost fields.

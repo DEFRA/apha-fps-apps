@@ -42,12 +42,7 @@ namespace Apha.FPS.Application.Services
             if (string.IsNullOrWhiteSpace(programDto.ProgramNo))
             {
                 throw new ArgumentException("Program number is required.");
-            }
-
-            if (string.IsNullOrWhiteSpace(programDto.ProgramName))
-            {
-                throw new ArgumentException("Program name is required.");
-            }
+            }           
 
             var program = _mapper.Map<Core.Entities.Program>(programDto);
             var addedProgram = await _programRepository.AddProgramAsync(program);
@@ -61,12 +56,7 @@ namespace Apha.FPS.Application.Services
             if (string.IsNullOrWhiteSpace(programDto.ProgramNo))
             {
                 throw new ArgumentException("Program number is required.");
-            }
-
-            if (string.IsNullOrWhiteSpace(programDto.ProgramName))
-            {
-                throw new ArgumentException("Program name is required.");
-            }
+            }            
            
             var existingProgram = await _programRepository.GetProgramByIdAsync(programDto.ProgramNo);
             if (existingProgram == null)

@@ -16,7 +16,7 @@ namespace Apha.PACT.Api.Middleware
             _next = next;            
         }
 
-        public async Task InvokeAsync(HttpContext context, IFPSYearContext yearContext)
+        public async Task InvokeAsync(HttpContext context, IFpsYearContext yearContext)
         {
             var path = context.Request.Path.Value?.ToLower();
 
@@ -39,12 +39,12 @@ namespace Apha.PACT.Api.Middleware
 
             SetCorrelationId(context, CorrelationIdHeader);
 
-            ((FPSYearContext)yearContext).FPSYear = fpsYear;
+            ((FpsYearContext)yearContext).FPSYear = fpsYear;
 
             await _next(context);
         }
 
-        private void SetCorrelationId(HttpContext context, string CorrelationIdHeader)
+        private static void SetCorrelationId(HttpContext context, string CorrelationIdHeader)
         {
             // OPTIONAL HEADER (generate if missing)
             if (!context.Request.Headers.TryGetValue(CorrelationIdHeader, out var correlationId)

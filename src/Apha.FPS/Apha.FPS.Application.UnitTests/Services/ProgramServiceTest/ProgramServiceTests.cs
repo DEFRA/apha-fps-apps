@@ -109,14 +109,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ProgramServiceTest
         {
             var dto = new ProgramDto { ProgramNo = "", ProgramName = "Test" };
             await Assert.ThrowsAsync<ArgumentException>(() => _sut.AddProgramAsync(dto));
-        }
-
-        [Fact]
-        public async Task AddProgramAsync_MissingProgramName_Throws()
-        {
-            var dto = new ProgramDto { ProgramNo = "P1", ProgramName = "" };
-            await Assert.ThrowsAsync<ArgumentException>(() => _sut.AddProgramAsync(dto));
-        }
+        }       
 
         [Fact]
         public async Task UpdateProgramAsync_ValidInput_ReturnsMappedDto()

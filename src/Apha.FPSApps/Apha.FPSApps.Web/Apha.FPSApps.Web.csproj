@@ -25,7 +25,6 @@
 
   <ItemGroup>
     <Folder Include="Areas\CostBook\Models\" />
-    <Folder Include="Areas\PACT\Models\" />
     <Folder Include="Areas\PIMS\Models\" />
     <Folder Include="Utilities\" />
   </ItemGroup>

@@ -1,0 +1,78 @@
+@model Apha.FPSApps.Web.Areas.PACT.Models.JobCodeViewModel
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    var isEdit = !string.IsNullOrEmpty(Model.JobCodeId);
+}
+
+<div class="modal-header flex-space-center">
+    <h3 class="govuk-heading-s" style="margin:0;">@(isEdit ? "Edit Job Code" : "Add Job Code")</h3>
+    <button type="button" class="btn-close" onclick="$('#modalPopup').removeClass('show')">×</button>
+</div>
+
+<div class="modal-body" style="overflow:hidden; padding:8px 16px 0 16px;">
+    <form id="jobCodeForm" class="govuk-grid-column-full">
+
+        <input type="hidden" name="isEdit" value="@isEdit.ToString().ToLower()" />
+        <input type="hidden" asp-for="ParentProject" />
+
+        <!-- Validation error summary -->
+        <div class="govuk-error-summary" role="alert"
+             aria-labelledby="error-summary-title" tabindex="-1" style="display:none;">
+            <h2 class="govuk-error-summary__title" id="error-summary-title">
+                There is a problem
+            </h2>
+            <div class="govuk-error-summary__body">
+                <ul class="govuk-list govuk-error-summary__list"></ul>
+            </div>
+        </div>
+
+        <!-- Job Code -->
+        <div class="govuk-form-group">
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="JobCodeId">Job Code:</label>
+            @if (isEdit)
+            {
+                <input type="hidden" asp-for="JobCodeId" />
+                <input class="govuk-input govuk-!-font-size-16" value="@Model.JobCodeId" readonly />
+            }
+            else
+            {
+                <input class="govuk-input govuk-!-font-size-16" asp-for="JobCodeId" />
+                <span asp-validation-for="JobCodeId" class="govuk-error-message"></span>
+            }
+        </div>
+
+        <!-- Name / Description -->
+        <div class="govuk-form-group">
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="JobCodeName">Name:</label>
+            <textarea class="govuk-textarea govuk-!-font-size-16 sup_margin_0"
+                      asp-for="JobCodeName" rows="3"></textarea>
+        </div>
+
+        <!-- Type -->
+        <div class="govuk-form-group">
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="Type">Type:</label>            
+            <select asp-for="Type" asp-items="ViewBag.Types" class="govuk-select govuk-!-font-size-16">
+                <option value="">--select type--</option>
+            </select>
+        </div>
+
+        <!-- Work Group -->
+        <div class="govuk-form-group">
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="JobCodeWorkGroup">Work Group:</label>
+            <select class="govuk-select govuk-!-font-size-16" asp-for="JobCodeWorkGroup"
+                    asp-items="@(ViewBag.WorkGroups as List<SelectListItem>)">
+                <option value="">--select--</option>
+            </select>
+        </div>
+
+    </form>
+</div>
+
+<div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center;">
+    <button type="button" class="govuk-button govuk-button--secondary sup_margin_0"
+            onclick="$('#modalPopup').removeClass('show')">Cancel</button>
+    <button type="button" class="govuk-button sup_margin_0" onclick="saveJobCode()">
+        @(isEdit ? "Update" : "Save")
+    </button>
+</div>

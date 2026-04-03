@@ -6,7 +6,7 @@
         public string? ProfitCentreGrade { get; set; }
         public string? GradeCode { get; set; }
         public string? WorkGroup { get; set; }
-        public int? FpsCalYear { get; set; }
+        public int? FpsYear { get; set; }
     }
 }
 

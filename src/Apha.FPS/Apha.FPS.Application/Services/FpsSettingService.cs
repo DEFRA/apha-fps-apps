@@ -6,6 +6,9 @@ namespace Apha.FPS.Application.Services
 {
     public class FpsSettingService : IFpsSettingService
     {
+        private const string HoursPerDayKey = "HoursInDay";
+        private const decimal DefaultHoursPerDay = 8m;
+
         private readonly IFpsSettingRepository _repository;
 
         public FpsSettingService(IFpsSettingRepository repository)
@@ -21,9 +24,19 @@ namespace Apha.FPS.Application.Services
                 Id = s.Id,
                 Setting = s.Setting,
                 Notes = s.Notes,
-                TestSetting = s.TestSetting,
-                FpsCalYear = s.FpsCalYear
+                FpsCalYear = s.FpsYear,
+                UpdatedBy = s.UpdatedBy,
+                UpdatedAt = s.UpdatedAt
             }).ToList();
+        }
+
+        public async Task<decimal> GetHoursPerDayAsync()
+        {
+            var setting = await _repository.GetByKeyAsync(HoursPerDayKey);
+            if (setting != null && decimal.TryParse(setting.Setting, out var hours))
+                return hours;
+
+            return DefaultHoursPerDay;
         }
     }
 }

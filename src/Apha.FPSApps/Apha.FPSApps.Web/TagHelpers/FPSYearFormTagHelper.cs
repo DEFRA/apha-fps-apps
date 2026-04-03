@@ -4,11 +4,11 @@ using Microsoft.AspNetCore.Razor.TagHelpers;
 namespace Apha.FPSApps.Web.TagHelpers
 {
     [HtmlTargetElement("form")]
-    public class FPSYearFormTagHelper : ITagHelper
+    public class FpsYearFormTagHelper : ITagHelper
     {
-        private readonly IFPSYearContext _fy;
+        private readonly IFpsYearContext _fy;
 
-        public FPSYearFormTagHelper(IFPSYearContext fy)
+        public FpsYearFormTagHelper(IFpsYearContext fy)
         {
             _fy = fy;
         }

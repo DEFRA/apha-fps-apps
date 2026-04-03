@@ -196,5 +196,33 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                 return ApiResponseDto<List<ManagerDto>>.FailureResponse(apiErrosDto, new ApiMetaDto());
             }
         }
+
+        public async Task<ApiResponseDto<List<ManagerDto>>> GetAllPactManagerAsync()
+        {
+            try
+            {
+                var response = await _http.GetAsync<List<ManagerRes>>("api/employee/pactmanagers");
+                if (response.Success)
+                {
+                    return _mapper.Map<ApiResponseDto<List<ManagerDto>>>(response);
+                }
+                else
+                {
+                    var responseDto = _mapper.Map<ApiResponseDto<List<ManagerDto>>>(response);
+                    return ApiResponseDto<List<ManagerDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+                }
+            }
+            catch (Exception)
+            {
+                var apiErrosDto = new List<ApiErrorDto> {
+                    new ApiErrorDto {
+                        Message = "Failed to retrieve managers",
+                        Code = internalCodeError,
+                        Details = null
+                    }
+                };
+                return ApiResponseDto<List<ManagerDto>>.FailureResponse(apiErrosDto, new ApiMetaDto());
+            }
+        }
     }
 }

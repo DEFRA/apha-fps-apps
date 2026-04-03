@@ -22,8 +22,4 @@
     <ProjectReference Include="..\Apha.PACT.DataAccess\Apha.PACT.DataAccess.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Controllers\" />
-  </ItemGroup>
-
 </Project>

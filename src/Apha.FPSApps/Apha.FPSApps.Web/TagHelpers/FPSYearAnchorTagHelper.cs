@@ -6,13 +6,13 @@ using Microsoft.AspNetCore.Razor.TagHelpers;
 namespace Apha.FPSApps.Web.TagHelpers
 {
     [HtmlTargetElement("a", Attributes = "asp-action")]
-    public class FPSYearAnchorTagHelper : AnchorTagHelper
+    public class FpsYearAnchorTagHelper : AnchorTagHelper
     {
-        private readonly IFPSYearContext _fy;
+        private readonly IFpsYearContext _fy;
 
-        public FPSYearAnchorTagHelper(
+        public FpsYearAnchorTagHelper(
             IHtmlGenerator generator,
-            IFPSYearContext fy)
+            IFpsYearContext fy)
             : base(generator)
         {
             _fy = fy;

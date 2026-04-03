@@ -22,7 +22,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         private static Mock<IFpsYearContext> CreateMockFpsYearContext(int year = DefaultTestFpsYear)
         {
             var mockFpsYearContext = new Mock<IFpsYearContext>();
-            mockFpsYearContext.Setup(x => x.FPSYear).Returns(year);
+            mockFpsYearContext.Setup(x => x.FpsYear).Returns(year);
             return mockFpsYearContext;
         }
 
@@ -514,7 +514,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             // Assert
             Assert.NotNull(result);
             Assert.Equal("SP100", result.SPNumber);
-            Assert.Equal(2025, result.FPSCalYear);
+            Assert.Equal(2025, result.FpsYear);
             RepositoryTestHelper.VerifyAdd(employeesMockSet);
             RepositoryTestHelper.VerifySaveChanges(mockContext);
         }
@@ -538,14 +538,14 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
                 FirstName = "Jane",
                 LastName = "Doe",
                 Title = "Manager",
-                FPSCalYear = 2020 // Should be overwritten
+                FpsYear = 2020 // Should be overwritten
             };
 
             // Act
             var result = await repo.AddEmployeeAsync(newEmployee);
 
             // Assert
-            Assert.Equal(2026, result.FPSCalYear);
+            Assert.Equal(2026, result.FpsYear);
         }
 
         #endregion
@@ -562,7 +562,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
                 FirstName = "Alice",
                 LastName = "Smith",
                 Title = "Developer",
-                FPSCalYear = 2023
+                FpsYear = 2023
             };
             var employees = new List<Employee> { existingEmployee };
             
@@ -593,7 +593,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             await Assert.ThrowsAsync<NotSupportedException>(() => repo.UpdateEmployeeAsync(updatedEmployee));
             
             // Verify the FPS year was set before Entry was called
-            Assert.Equal(2025, updatedEmployee.FPSCalYear);
+            Assert.Equal(2025, updatedEmployee.FpsYear);
             Assert.True(entryWasCalled);
         }
 
@@ -610,7 +610,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
                 SPNumber = "SP001",
                 FirstName = "Alice",
                 LastName = "Smith",
-                FPSCalYear = DefaultTestFpsYear
+                FpsYear = DefaultTestFpsYear
             };
             
             var mockFpsYearContext = CreateMockFpsYearContext(DefaultTestFpsYear);
@@ -654,7 +654,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
                 SPNumber = "SP001",
                 FirstName = "Alice",
                 LastName = "Smith",
-                FPSCalYear = 2020 // Different year
+                FpsYear = 2020 // Different year
             };
             var repo = CreateRepository(new List<Employee> { employee }, fpsYear: 2024);
 

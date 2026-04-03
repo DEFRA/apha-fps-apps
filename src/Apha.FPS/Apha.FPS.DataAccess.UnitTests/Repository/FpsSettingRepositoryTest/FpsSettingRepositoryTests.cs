@@ -22,7 +22,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.FpsSettingRepositoryTest
             int fpsYear = DefaultTestFpsYear)
         {
             var fpsYearContext = Substitute.For<IFpsYearContext>();
-            fpsYearContext.FPSYear.Returns(fpsYear);
+            fpsYearContext.FpsYear.Returns(fpsYear);
 
             var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);
 
@@ -40,9 +40,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.FpsSettingRepositoryTest
             // Arrange
             var settings = new List<FpsSetting>
             {
-                new() { Id = "HoursInDay",   Setting = "8",  FpsCalYear = DefaultTestFpsYear },
-                new() { Id = "DaysInYear",   Setting = "365", FpsCalYear = DefaultTestFpsYear },
-                new() { Id = "WeeksInYear",  Setting = "52",  FpsCalYear = DefaultTestFpsYear }
+                new() { Id = "HoursInDay",   Setting = "8",  FpsYear = DefaultTestFpsYear },
+                new() { Id = "DaysInYear",   Setting = "365", FpsYear = DefaultTestFpsYear },
+                new() { Id = "WeeksInYear",  Setting = "52",  FpsYear = DefaultTestFpsYear }
             };
             var repo = CreateRepository(settings);
 
@@ -74,7 +74,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.FpsSettingRepositoryTest
             // Arrange
             var settings = new List<FpsSetting>
             {
-                new() { Id = "HoursInDay", Setting = "8", FpsCalYear = DefaultTestFpsYear }
+                new() { Id = "HoursInDay", Setting = "8", FpsYear = DefaultTestFpsYear }
             };
             var repo = CreateRepository(settings);
 
@@ -107,13 +107,13 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.FpsSettingRepositoryTest
             // means only records matching the substituted FPSYear should be returned
             var settings = new List<FpsSetting>
             {
-                new() { Id = "HoursInDay", Setting = "8",  FpsCalYear = 2024 },
-                new() { Id = "HoursInDay", Setting = "7",  FpsCalYear = 2023 }
+                new() { Id = "HoursInDay", Setting = "8",  FpsYear = 2024 },
+                new() { Id = "HoursInDay", Setting = "7",  FpsYear = 2023 }
             };
 
             // Only 2024 records should be visible when FPSYear is set to 2024
             var repo = CreateRepository(
-                settings.Where(s => s.FpsCalYear == DefaultTestFpsYear),
+                settings.Where(s => s.FpsYear == DefaultTestFpsYear),
                 fpsYear: DefaultTestFpsYear);
 
             // Act
@@ -122,6 +122,98 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.FpsSettingRepositoryTest
             // Assert
             Assert.Single(result);
             Assert.Equal("8", result[0].Setting);
+        }
+
+        #endregion
+
+        #region GetByKeyAsync
+
+        [Fact]
+        public async Task GetByKeyAsync_WhenKeyExists_ReturnsSetting()
+        {
+            // Arrange
+            var settings = new List<FpsSetting>
+            {
+                new() { Id = "HOURS_PER_DAY", Setting = "8",  FpsYear = DefaultTestFpsYear },
+                new() { Id = "DAYS_IN_YEAR",  Setting = "365", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(settings);
+
+            // Act
+            var result = await repo.GetByKeyAsync("HOURS_PER_DAY");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("HOURS_PER_DAY", result.Id);
+            Assert.Equal("8", result.Setting);
+        }
+
+        [Fact]
+        public async Task GetByKeyAsync_WhenKeyDoesNotExist_ReturnsNull()
+        {
+            // Arrange
+            var settings = new List<FpsSetting>
+            {
+                new() { Id = "DAYS_IN_YEAR", Setting = "365", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(settings);
+
+            // Act
+            var result = await repo.GetByKeyAsync("HOURS_PER_DAY");
+
+            // Assert
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public async Task GetByKeyAsync_WhenNoSettingsExist_ReturnsNull()
+        {
+            // Arrange
+            var repo = CreateRepository(new List<FpsSetting>());
+
+            // Act
+            var result = await repo.GetByKeyAsync("HOURS_PER_DAY");
+
+            // Assert
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public async Task GetByKeyAsync_WhenMultipleSettingsExist_ReturnsOnlyMatchingKey()
+        {
+            // Arrange
+            var settings = new List<FpsSetting>
+            {
+                new() { Id = "HOURS_PER_DAY", Setting = "8",   FpsYear = DefaultTestFpsYear },
+                new() { Id = "DAYS_IN_YEAR",  Setting = "365", FpsYear = DefaultTestFpsYear },
+                new() { Id = "WEEKS_IN_YEAR", Setting = "52",  FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(settings);
+
+            // Act
+            var result = await repo.GetByKeyAsync("DAYS_IN_YEAR");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("DAYS_IN_YEAR", result.Id);
+            Assert.Equal("365", result.Setting);
+        }
+
+        [Fact]
+        public async Task GetByKeyAsync_IsCaseSensitive_ReturnsNullForDifferentCase()
+        {
+            // Arrange
+            var settings = new List<FpsSetting>
+            {
+                new() { Id = "HOURS_PER_DAY", Setting = "8", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(settings);
+
+            // Act
+            var result = await repo.GetByKeyAsync("hours_per_day");
+
+            // Assert
+            Assert.Null(result);
         }
 
         #endregion

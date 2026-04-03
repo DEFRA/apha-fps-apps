@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.13.35931.197
+# Visual Studio Version 18
+VisualStudioVersion = 18.4.11620.152 stable
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Apha.Common", "..\Apha.Common\Apha.Common.csproj", "{6DDA45D5-FE28-4BC2-A547-EDD8C6FCD3E2}"
 EndProject
@@ -12,6 +12,12 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Apha.PACT.Core", "Apha.PACT.Core\Apha.PACT.Core.csproj", "{08062EF7-43F5-AC3A-6207-BF9B955C6D75}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Apha.PACT.DataAccess", "Apha.PACT.DataAccess\Apha.PACT.DataAccess.csproj", "{0E09CD6D-04BB-3A50-6DC9-B171DEEBB997}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Apha.PACT.Api.UnitTests", "Apha.PACT.Api.UnitTests\Apha.PACT.Api.UnitTests.csproj", "{D2D78740-ABA5-4CF7-8CA5-C5EC92507C02}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Apha.PACT.Application.UnitTests", "Apha.PACT.Application.UnitTests\Apha.PACT.Application.UnitTests.csproj", "{58F11A6B-6B8B-418B-B98A-2E4277AFD9E1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Apha.PACT.DataAccess.UnitTests", "Apha.PACT.DataAccess.UnitTests\Apha.PACT.DataAccess.UnitTests.csproj", "{81A6DB61-289A-409F-81DA-81DDCBA738E1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +45,18 @@ Global
 		{0E09CD6D-04BB-3A50-6DC9-B171DEEBB997}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0E09CD6D-04BB-3A50-6DC9-B171DEEBB997}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0E09CD6D-04BB-3A50-6DC9-B171DEEBB997}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D2D78740-ABA5-4CF7-8CA5-C5EC92507C02}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D2D78740-ABA5-4CF7-8CA5-C5EC92507C02}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D2D78740-ABA5-4CF7-8CA5-C5EC92507C02}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D2D78740-ABA5-4CF7-8CA5-C5EC92507C02}.Release|Any CPU.Build.0 = Release|Any CPU
+		{58F11A6B-6B8B-418B-B98A-2E4277AFD9E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{58F11A6B-6B8B-418B-B98A-2E4277AFD9E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{58F11A6B-6B8B-418B-B98A-2E4277AFD9E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{58F11A6B-6B8B-418B-B98A-2E4277AFD9E1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{81A6DB61-289A-409F-81DA-81DDCBA738E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{81A6DB61-289A-409F-81DA-81DDCBA738E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{81A6DB61-289A-409F-81DA-81DDCBA738E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{81A6DB61-289A-409F-81DA-81DDCBA738E1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

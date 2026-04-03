@@ -1,0 +1,19 @@
+using Apha.PACT.Core.Entities;
+using Apha.PACT.Core.Pagination;
+
+namespace Apha.PACT.Core.Interfaces
+{
+    public interface ITimeCodeValidRepository
+    {
+        Task<IEnumerable<TimeCodeValid>> GetByJobCodeAsync(string jobCode, string parentProject);
+        Task<PagedData<TimeCodeValid>> GetPagedTimeCodesAsync(PaginationParameters<string> query, string? jobCode, string? parentProject);
+        Task<TimeCodeValid?> GetTimeCodeValidAsync(string workGroup, string timeCode, string parentProject);
+        Task<TimeCodeValid> CreateTimeCodeValidAsync(TimeCodeValid timeCodeValid);
+        Task<TimeCodeValid> UpdateTimeCodeValidAsync(TimeCodeValid timeCodeValid);
+        Task<bool> DeleteTimeCodeValidAsync(string workGroup, string timeCode, string parentProject);
+        Task<bool> DeleteAllByJobCodeAsync(string jobCode, string parentProject);
+        Task<IEnumerable<TimeCodeValid>> CopyWorkGroupAsync(string sourceJobCode, string targetJobCode, string parentProject);
+        Task<bool> DeleteBulkAsync(IEnumerable<(string WorkGroup, string TimeCode)> items, string parentProject);
+        Task<IEnumerable<TimeCodeValid>> CopySelectedWorkGroupsAsync(IEnumerable<string> workGroups, string sourceJobCode, string targetJobCode, string parentProject);
+    }
+}
