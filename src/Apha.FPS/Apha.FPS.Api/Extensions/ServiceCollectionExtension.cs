@@ -37,7 +37,7 @@ namespace Apha.FPS.Api.Extensions
         public static IServiceCollection AddRepositories(this IServiceCollection services)
         {
             // Add your data access services here
-            services.AddScoped<IFpsYearContext, FpsYearContext>();
+            services.AddScoped<IFpsRequestContext, FpsRequestContext>();
             services.AddScoped<IProgramRepository, ProgramRepository>();
             services.AddScoped<IProjectRepository, ProjectRepository>();
             services.AddScoped<IStaffJobRepository, StaffJobRepository>();

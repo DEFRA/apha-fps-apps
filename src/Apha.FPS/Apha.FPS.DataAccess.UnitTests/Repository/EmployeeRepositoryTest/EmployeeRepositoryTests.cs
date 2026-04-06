@@ -19,9 +19,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         /// <summary>
         /// Creates a mocked IFpsYearContext with specified year.
         /// </summary>
-        private static Mock<IFpsYearContext> CreateMockFpsYearContext(int year = DefaultTestFpsYear)
+        private static Mock<IFpsRequestContext> CreateMockFpsYearContext(int year = DefaultTestFpsYear)
         {
-            var mockFpsYearContext = new Mock<IFpsYearContext>();
+            var mockFpsYearContext = new Mock<IFpsRequestContext>();
             mockFpsYearContext.Setup(x => x.FpsYear).Returns(year);
             return mockFpsYearContext;
         }

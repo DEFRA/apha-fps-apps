@@ -21,7 +21,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ContractRepositoryTest
             IEnumerable<UserCategory> userCategories,
             IEnumerable<User> users)
         {
-            var fpsYearContext = Substitute.For<IFpsYearContext>();
+            var fpsYearContext = Substitute.For<IFpsRequestContext>();
             fpsYearContext.FpsYear.Returns(DefaultTestFpsYear);
 
             var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);

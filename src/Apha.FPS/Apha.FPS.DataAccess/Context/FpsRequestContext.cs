@@ -2,8 +2,9 @@
 
 namespace Apha.FPS.DataAccess.Context
 {
-    public class FpsYearContext : IFpsYearContext
+    public class FpsRequestContext : IFpsRequestContext
     {
         public int FpsYear { get; set; }
+        public string UserEmailId { get; set; } = string.Empty;
     }
 }
