@@ -23,13 +23,13 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<IEnumerable<ProjectView>> GetAllProjectsAsync()
         {
             return await _dbContext.ProjectViews
-                .Where(p => p.UserEmail != null && p.UserEmail.Equals(_requestContext.UserEmailId, StringComparison.CurrentCultureIgnoreCase)).ToListAsync();
+                .Where(p => p.UserEmail != null && p.UserEmail.ToLower() == _requestContext.UserEmailId).ToListAsync();
         }
 
         public async Task<PagedData<Project>> GetProjectsByProgramAsync(PaginationParameters<string> query, string programNo)
         {
             var projectQuery = _dbContext.ProjectViews
-                .Where(p => p.UserEmail != null && p.UserEmail.Equals(_requestContext.UserEmailId, StringComparison.CurrentCultureIgnoreCase) && p.Program == programNo)
+                .Where(p => p.UserEmail != null && p.UserEmail.ToLower() == _requestContext.UserEmailId && p.Program == programNo)
                 .Select(pv => new Project
                 {
                     ParentProject = pv.ParentProject ?? string.Empty,
