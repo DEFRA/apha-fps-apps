@@ -1,7 +1,7 @@
-﻿using Apha.FPSApps.Application.Interfaces;
-using Apha.FPSApps.Web.Handler;
+﻿using Apha.FPSApps.Web.Handler;
 using Apha.FPSApps.Web.Enums;
 using System.Linq;
+using Apha.FPSApps.Application.Interfaces.FPS;
 
 namespace Apha.FPSApps.Web.Middleware
 {
