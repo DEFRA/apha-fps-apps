@@ -7,7 +7,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
     {
         [Display(Name = "SP Number")]
         [Required]
-        [StringLength(50, ErrorMessage = "SP Number cannot exceed 50 characters")]
+        [StringLength(10, ErrorMessage = "SP Number cannot exceed 10 characters")]
         [GridColumn(Width = 271, Type = GridColumnType.Text, IsFilterable = true)]
         public string? SPNumber { get; set; }
 

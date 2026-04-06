@@ -1,86 +1,434 @@
-﻿using Apha.Common.Helpers.Repository;
+using Apha.Common.Helpers.Repository;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
 using Apha.FPS.DataAccess.Repositories;
-using Microsoft.EntityFrameworkCore;
 using Moq;
 
 namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
 {
-    public class StaffJobRepositoryTest
+    public class StaffJobRepositoryTests
     {
-        /// <summary>
-        /// Creates a StaffJobRepository with the specified in-memory DbSets.
-        /// GetJobStaffCostAsync() and GetStaffChargeRate() use multi-table JOINs across 5+ DbSets
-        /// and are covered by integration tests.
-        /// GetStaffWorkgroupLookup() JOIN logic is also covered by integration tests.
-        /// </summary>
+        private const int DefaultTestFpsYear = 2024;
+        private const int DefaultUserId = 42;
+        private const string DefaultUserEmail = "test@example.com";
+
+        private static Mock<IFpsRequestContext> CreateMockFpsYearContext(int year = DefaultTestFpsYear)
+        {
+            var mockFpsYearContext = new Mock<IFpsRequestContext>();
+            mockFpsYearContext.Setup(x => x.FpsYear).Returns(year);
+            mockFpsYearContext.Setup(x => x.UserEmailId).Returns(DefaultUserEmail);
+            return mockFpsYearContext;
+        }
+
         private static StaffJobRepository CreateRepository(
             IEnumerable<StaffJob>? staffJobs = null,
+            IEnumerable<StaffJobTblView>? staffJobTblViews = null,
+            IEnumerable<StaffGeneralView>? staffGeneralViews = null,
+            IEnumerable<WorkgroupGrade>? workgroupGrades = null,
+            IEnumerable<ProfitCentreGrade>? profitCentreGrades = null,
+            IEnumerable<ProjectView>? projectViews = null,
+            IEnumerable<ProgramView>? programViews = null,
             IEnumerable<StaffView>? staffViews = null,
             IEnumerable<StaffPickView>? staffPickViews = null,
-            IEnumerable<FpsSetting>? settings = null)
+            IEnumerable<FpsSetting>? settings = null,
+            IEnumerable<WgEmployee>? wgEmployees = null,
+            IEnumerable<Employee>? employees = null,
+            IEnumerable<Project>? projects = null,
+            int fpsYear = DefaultTestFpsYear)
         {
-            var mockFpsYearContext = new Mock<IFpsYearContext>();
-            var mockProjectRepo   = new Mock<IProjectRepository>();
-            var mockProgramRepo   = new Mock<IProgramRepository>();
+            var mockFpsYearContext = CreateMockFpsYearContext(fpsYear);
             var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(mockFpsYearContext.Object);
 
             if (staffJobs != null)
             {
-                var staffJobsMockSet = RepositoryTestHelper.CreateMockDbSet(staffJobs);
-                RepositoryTestHelper.SetupDbSetOperations(staffJobsMockSet);
-                mockContext.Setup(x => x.StaffJobs).Returns(staffJobsMockSet.Object);
+                var mockSet = RepositoryTestHelper.CreateMockDbSet(staffJobs);
+                mockContext.Setup(x => x.StaffJobs).Returns(mockSet.Object);
+            }
+
+            if (staffJobTblViews != null)
+            {
+                var mockSet = RepositoryTestHelper.CreateMockDbSet(staffJobTblViews);
+                mockContext.Setup(x => x.StaffJobTblViews).Returns(mockSet.Object);
+            }
+
+            if (staffGeneralViews != null)
+            {
+                var mockSet = RepositoryTestHelper.CreateMockDbSet(staffGeneralViews);
+                mockContext.Setup(x => x.StaffGeneralViews).Returns(mockSet.Object);
+            }
+
+            if (workgroupGrades != null)
+            {
+                var mockSet = RepositoryTestHelper.CreateMockDbSet(workgroupGrades);
+                mockContext.Setup(x => x.WorkgroupGrades).Returns(mockSet.Object);
+            }
+
+            if (profitCentreGrades != null)
+            {
+                var mockSet = RepositoryTestHelper.CreateMockDbSet(profitCentreGrades);
+                mockContext.Setup(x => x.ProfitcentreGrades).Returns(mockSet.Object);
+            }
+
+            if (projectViews != null)
+            {
+                var mockSet = RepositoryTestHelper.CreateMockDbSet(projectViews);
+                mockContext.Setup(x => x.ProjectViews).Returns(mockSet.Object);
+            }
+
+            if (programViews != null)
+            {
+                var mockSet = RepositoryTestHelper.CreateMockDbSet(programViews);
+                mockContext.Setup(x => x.ProgramViews).Returns(mockSet.Object);
             }
 
             if (staffViews != null)
             {
-                var staffViewsMockSet = RepositoryTestHelper.CreateMockDbSet(staffViews);
-                mockContext.Setup(x => x.StaffViews).Returns(staffViewsMockSet.Object);
+                var mockSet = RepositoryTestHelper.CreateMockDbSet(staffViews);
+                mockContext.Setup(x => x.StaffViews).Returns(mockSet.Object);
             }
 
             if (staffPickViews != null)
             {
-                var staffPickViewsMockSet = RepositoryTestHelper.CreateMockDbSet(staffPickViews);
-                mockContext.Setup(x => x.StaffPickViews).Returns(staffPickViewsMockSet.Object);
+                var mockSet = RepositoryTestHelper.CreateMockDbSet(staffPickViews);
+                mockContext.Setup(x => x.StaffPickViews).Returns(mockSet.Object);
             }
 
             if (settings != null)
             {
-                var settingsMockSet = RepositoryTestHelper.CreateMockDbSet(settings);
-                mockContext.Setup(x => x.TblSettings).Returns(settingsMockSet.Object);
+                var mockSet = RepositoryTestHelper.CreateMockDbSet(settings);
+                mockContext.Setup(x => x.TblSettings).Returns(mockSet.Object);
             }
 
-            RepositoryTestHelper.SetupSaveChanges(mockContext);
+            if (wgEmployees != null)
+            {
+                var mockSet = RepositoryTestHelper.CreateMockDbSet(wgEmployees);
+                mockContext.Setup(x => x.WgEmployees).Returns(mockSet.Object);
+            }
 
-            return new StaffJobRepository(mockContext.Object, mockProjectRepo.Object, mockProgramRepo.Object);
+            if (employees != null)
+            {
+                var mockSet = RepositoryTestHelper.CreateMockDbSet(employees);
+                mockContext.Setup(x => x.Employees).Returns(mockSet.Object);
+            }
+
+            if (projects != null)
+            {
+                var mockSet = RepositoryTestHelper.CreateMockDbSet(projects);
+                mockContext.Setup(x => x.Projects).Returns(mockSet.Object);
+            }
+
+            return new StaffJobRepository(mockContext.Object, mockFpsYearContext.Object);
         }
 
-        /// <summary>
-        /// Returns the mocked StaffJobs DbSet and context alongside the repository for tests
-        /// that need to verify calls.
-        /// </summary>
-        private static (
-            StaffJobRepository Repo,
-            Mock<DbSet<StaffJob>> StaffJobsDbSet,
-            Mock<FpsDbContext> Context)
-            CreateRepositoryWithMocks(IEnumerable<StaffJob>? staffJobs = null)
+        #region GetJobStaffCostAsync Tests
+
+        [Fact]
+        public async Task GetJobStaffCostAsync_ReturnsPagedData_WithValidJobCode()
         {
-            var mockFpsYearContext = new Mock<IFpsYearContext>();
-            var mockProjectRepo   = new Mock<IProjectRepository>();
-            var mockProgramRepo   = new Mock<IProgramRepository>();
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(mockFpsYearContext.Object);
+            // Arrange
+            var settings = new List<FpsSetting> { new() { Id = "HoursInDay", Setting = "8" } };
+            var staffJobTblViews = new List<StaffJobTblView>
+            {
+                new() { StaffId = "S001", JobCode = "JOB001", PlannedHours = 40, UserId = DefaultUserId }
+            };
+            var staffGeneralViews = new List<StaffGeneralView>
+            {
+                new() { StaffId = "S001", Name = "John Doe", WorkGroupGrade = "WG01" }
+            };
+            var workgroupGrades = new List<WorkgroupGrade>
+            {
+                new() { WgGrade = "WG01", ProfitCentreGrade = "PC01", GradeCode = "G01", Workgroup = "IT" }
+            };
+            var profitCentreGrades = new List<ProfitCentreGrade>
+            {
+                new() { PcGrade = "PC01", ChargeRate = 100, DefraChargeRate = 120 }
+            };
+            var projectViews = new List<ProjectView>
+            {
+                new() { ParentProject = "JOB001", UserId = DefaultUserId, IsDefraProject = 0, Program = "PROG01", UserEmail = DefaultUserEmail }
+            };
+            var programViews = new List<ProgramView>
+            {
+                new() { ProgramNo = "PROG01", UserId = DefaultUserId, SectorName = "charge" }
+            };
 
-            var staffJobsMockSet = RepositoryTestHelper.CreateMockDbSet(staffJobs ?? []);
-            RepositoryTestHelper.SetupDbSetOperations(staffJobsMockSet);
-            mockContext.Setup(x => x.StaffJobs).Returns(staffJobsMockSet.Object);
-            RepositoryTestHelper.SetupSaveChanges(mockContext);
+            var repo = CreateRepository(
+                staffJobTblViews: staffJobTblViews,
+                staffGeneralViews: staffGeneralViews,
+                workgroupGrades: workgroupGrades,
+                profitCentreGrades: profitCentreGrades,
+                projectViews: projectViews,
+                programViews: programViews,
+                settings: settings);
 
-            var repo = new StaffJobRepository(mockContext.Object, mockProjectRepo.Object, mockProgramRepo.Object);
-            return (repo, staffJobsMockSet, mockContext);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetJobStaffCostAsync(query, "JOB001");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.NotEmpty(result.Data);
+            Assert.Equal(1, result.PaginationData.TotalRecords);
         }
+
+        [Fact]
+        public async Task GetJobStaffCostAsync_AppliesFilter_ByName()
+        {
+            // Arrange
+            var settings = new List<FpsSetting> { new() { Id = "HoursInDay", Setting = "8" } };
+            var staffJobTblViews = new List<StaffJobTblView>
+            {
+                new() { StaffId = "S001", JobCode = "JOB001", PlannedHours = 40, UserId = DefaultUserId },
+                new() { StaffId = "S002", JobCode = "JOB001", PlannedHours = 30, UserId = DefaultUserId }
+            };
+            var staffGeneralViews = new List<StaffGeneralView>
+            {
+                new() { StaffId = "S001", Name = "Alice", WorkGroupGrade = "WG01" },
+                new() { StaffId = "S002", Name = "Bob", WorkGroupGrade = "WG01" }
+            };
+            var workgroupGrades = new List<WorkgroupGrade>
+            {
+                new() { WgGrade = "WG01", ProfitCentreGrade = "PC01", GradeCode = "G01", Workgroup = "IT" }
+            };
+            var profitCentreGrades = new List<ProfitCentreGrade>
+            {
+                new() { PcGrade = "PC01", ChargeRate = 100, DefraChargeRate = 120 }
+            };
+            var projectViews = new List<ProjectView>
+            {
+                new() { ParentProject = "JOB001", UserId = DefaultUserId, IsDefraProject = 0, Program = "PROG01", UserEmail = DefaultUserEmail }
+            };
+            var programViews = new List<ProgramView>
+            {
+                new() { ProgramNo = "PROG01", UserId = DefaultUserId, SectorName = "charge" }
+            };
+
+            var repo = CreateRepository(
+                staffJobTblViews: staffJobTblViews,
+                staffGeneralViews: staffGeneralViews,
+                workgroupGrades: workgroupGrades,
+                profitCentreGrades: profitCentreGrades,
+                projectViews: projectViews,
+                programViews: programViews,
+                settings: settings);
+
+            var query = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = "{\"Name\":\"Alice\"}"
+            };
+
+            // Act
+            var result = await repo.GetJobStaffCostAsync(query, "JOB001");
+
+            // Assert
+            Assert.Single(result.Data);
+            Assert.Contains("Alice", result.Data.First().Name);
+        }
+
+        [Theory]
+        [InlineData("name", false, "Alice")]
+        [InlineData("name", true, "Charlie")]
+        [InlineData("plannedhours", false, 20.0)]
+        [InlineData("plannedhours", true, 40.0)]
+        public async Task GetJobStaffCostAsync_AppliesSorting_Correctly(string sortBy, bool descending, object expectedFirstValue)
+        {
+            // Arrange
+            var settings = new List<FpsSetting> { new() { Id = "HoursInDay", Setting = "8" } };
+            var staffJobTblViews = new List<StaffJobTblView>
+            {
+                new() { StaffId = "S001", JobCode = "JOB001", PlannedHours = 30, UserId = DefaultUserId },
+                new() { StaffId = "S002", JobCode = "JOB001", PlannedHours = 40, UserId = DefaultUserId },
+                new() { StaffId = "S003", JobCode = "JOB001", PlannedHours = 20, UserId = DefaultUserId }
+            };
+            var staffGeneralViews = new List<StaffGeneralView>
+            {
+                new() { StaffId = "S001", Name = "Bob", WorkGroupGrade = "WG01" },
+                new() { StaffId = "S002", Name = "Charlie", WorkGroupGrade = "WG01" },
+                new() { StaffId = "S003", Name = "Alice", WorkGroupGrade = "WG01" }
+            };
+            var workgroupGrades = new List<WorkgroupGrade>
+            {
+                new() { WgGrade = "WG01", ProfitCentreGrade = "PC01", GradeCode = "G01", Workgroup = "IT" }
+            };
+            var profitCentreGrades = new List<ProfitCentreGrade>
+            {
+                new() { PcGrade = "PC01", ChargeRate = 100, DefraChargeRate = 120 }
+            };
+            var projectViews = new List<ProjectView>
+            {
+                new() { ParentProject = "JOB001", UserId = DefaultUserId, IsDefraProject = 0, Program = "PROG01", UserEmail = DefaultUserEmail }
+            };
+            var programViews = new List<ProgramView>
+            {
+                new() { ProgramNo = "PROG01", UserId = DefaultUserId, SectorName = "charge" }
+            };
+
+            var repo = CreateRepository(
+                staffJobTblViews: staffJobTblViews,
+                staffGeneralViews: staffGeneralViews,
+                workgroupGrades: workgroupGrades,
+                profitCentreGrades: profitCentreGrades,
+                projectViews: projectViews,
+                programViews: programViews,
+                settings: settings);
+
+            var query = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                SortBy = sortBy,
+                Descending = descending
+            };
+
+            // Act
+            var result = await repo.GetJobStaffCostAsync(query, "JOB001");
+
+            // Assert
+            var firstItem = result.Data.First();
+            var actualValue = sortBy.ToLower() switch
+            {
+                "name" => (object?)firstItem.Name,
+                "plannedhours" => (object)firstItem.PlannedHours,
+                _ => (object?)firstItem.Name
+            };
+            Assert.Equal(expectedFirstValue.ToString(), actualValue?.ToString());
+        }
+
+        [Fact]
+        public async Task GetJobStaffCostAsync_CalculatesStaffCost_ForChargeableSector()
+        {
+            // Arrange
+            var settings = new List<FpsSetting> { new() { Id = "HoursInDay", Setting = "8" } };
+            var staffJobTblViews = new List<StaffJobTblView>
+            {
+                new() { StaffId = "S001", JobCode = "JOB001", PlannedHours = 40, UserId = DefaultUserId }
+            };
+            var staffGeneralViews = new List<StaffGeneralView>
+            {
+                new() { StaffId = "S001", Name = "John", WorkGroupGrade = "WG01" }
+            };
+            var workgroupGrades = new List<WorkgroupGrade>
+            {
+                new() { WgGrade = "WG01", ProfitCentreGrade = "PC01", GradeCode = "G01", Workgroup = "IT" }
+            };
+            var profitCentreGrades = new List<ProfitCentreGrade>
+            {
+                new() { PcGrade = "PC01", ChargeRate = 100, DefraChargeRate = 120 }
+            };
+            var projectViews = new List<ProjectView>
+            {
+                new() { ParentProject = "JOB001", UserId = DefaultUserId, IsDefraProject = 0, Program = "PROG01", UserEmail = DefaultUserEmail }
+            };
+            var programViews = new List<ProgramView>
+            {
+                new() { ProgramNo = "PROG01", UserId = DefaultUserId, SectorName = "charge" }
+            };
+
+            var repo = CreateRepository(
+                staffJobTblViews: staffJobTblViews,
+                staffGeneralViews: staffGeneralViews,
+                workgroupGrades: workgroupGrades,
+                profitCentreGrades: profitCentreGrades,
+                projectViews: projectViews,
+                programViews: programViews,
+                settings: settings);
+
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetJobStaffCostAsync(query, "JOB001");
+
+            // Assert
+            var staffJobView = result.Data.First();
+            Assert.Equal(4000m, staffJobView.StaffCost); // 40 hours * 100 rate * 1 (charge)
+        }
+
+        [Fact]
+        public async Task GetJobStaffCostAsync_ReturnsEmptyList_WhenNoDataFound()
+        {
+            // Arrange
+            var settings = new List<FpsSetting> { new() { Id = "HoursInDay", Setting = "8" } };
+            var repo = CreateRepository(
+                staffJobTblViews: new List<StaffJobTblView>(),
+                staffGeneralViews: new List<StaffGeneralView>(),
+                workgroupGrades: new List<WorkgroupGrade>(),
+                profitCentreGrades: new List<ProfitCentreGrade>(),
+                projectViews: new List<ProjectView>(),
+                programViews: new List<ProgramView>(),
+                settings: settings);
+
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetJobStaffCostAsync(query, "NONEXISTENT");
+
+            // Assert
+            Assert.Empty(result.Data);
+        }
+
+        #endregion
+
+        #region GetStaffWorkgroupLookup Tests
+
+        [Fact]
+        public async Task GetStaffWorkgroupLookup_ReturnsStaffList_OrderedByName()
+        {
+            // Arrange
+            var staffViews = new List<StaffView>
+            {
+                new() { StaffId = "S003", Name = "Charlie", WorkgroupGrade = "WG01", HrsAvail = 40, UserId = DefaultUserId, UserEmail = DefaultUserEmail },
+                new() { StaffId = "S001", Name = "Alice", WorkgroupGrade = "WG02", HrsAvail = 35, UserId = DefaultUserId, UserEmail = DefaultUserEmail },
+                new() { StaffId = "S002", Name = "Bob", WorkgroupGrade = "WG03", HrsAvail = 38, UserId = DefaultUserId, UserEmail = DefaultUserEmail }
+            };
+            var staffPickViews = new List<StaffPickView>
+            {
+                new() { StaffId = "S001" },
+                new() { StaffId = "S002" },
+                new() { StaffId = "S003" }
+            };
+
+            var repo = CreateRepository(staffViews: staffViews, staffPickViews: staffPickViews);
+
+            // Act
+            var result = await repo.GetStaffWorkgroupLookup();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(3, result.Count);
+            Assert.Equal("Alice", result[0].Name);
+            Assert.Equal("Bob", result[1].Name);
+            Assert.Equal("Charlie", result[2].Name);
+        }      
+
+        [Fact]
+        public async Task GetStaffWorkgroupLookup_ReturnsEmpty_WhenNoMatches()
+        {
+            // Arrange
+            var staffViews = new List<StaffView>
+            {
+                new() { StaffId = "S001", Name = "John", UserId = 999 }
+            };
+            var staffPickViews = new List<StaffPickView>
+            {
+                new() { StaffId = "S002" }
+            };
+
+            var repo = CreateRepository(staffViews: staffViews, staffPickViews: staffPickViews);
+
+            // Act
+            var result = await repo.GetStaffWorkgroupLookup();
+
+            // Assert
+            Assert.Empty(result);
+        }
+
+        #endregion
+    
 
         #region GetByIdAsync Tests
 
@@ -90,81 +438,119 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
             // Arrange
             var staffJobs = new List<StaffJob>
             {
-                new() { StaffId = "S001", JobCode = "JC001", PlannedHours = 8.0 },
-                new() { StaffId = "S002", JobCode = "JC001", PlannedHours = 4.0 }
+                new() { StaffId = "S001", JobCode = "JOB001", PlannedHours = 40 },
+                new() { StaffId = "S002", JobCode = "JOB002", PlannedHours = 35 }
             };
             var repo = CreateRepository(staffJobs: staffJobs);
 
             // Act
-            var result = await repo.GetByIdAsync("S001", "JC001");
+            var result = await repo.GetByIdAsync("S001", "JOB001");
 
             // Assert
             Assert.NotNull(result);
-            Assert.Equal("S001",  result.StaffId);
-            Assert.Equal("JC001", result.JobCode);
-            Assert.Equal(8.0,     result.PlannedHours);
+            Assert.Equal("S001", result.StaffId);
+            Assert.Equal("JOB001", result.JobCode);
+            Assert.Equal(40, result.PlannedHours);
         }
 
         [Fact]
-        public async Task GetByIdAsync_ReturnsNull_WhenStaffIdDoesNotMatch()
+        public async Task GetByIdAsync_ReturnsNull_WhenNotFound()
         {
             // Arrange
             var staffJobs = new List<StaffJob>
             {
-                new() { StaffId = "S001", JobCode = "JC001", PlannedHours = 8.0 }
+                new() { StaffId = "S001", JobCode = "JOB001", PlannedHours = 40 }
             };
             var repo = CreateRepository(staffJobs: staffJobs);
 
             // Act
-            var result = await repo.GetByIdAsync("S999", "JC001");
+            var result = await repo.GetByIdAsync("S999", "JOB999");
 
             // Assert
             Assert.Null(result);
         }
 
         [Fact]
-        public async Task GetByIdAsync_ReturnsNull_WhenJobCodeDoesNotMatch()
+        public async Task GetByIdAsync_ReturnsNull_WhenEmptyList()
         {
             // Arrange
-            var staffJobs = new List<StaffJob>
-            {
-                new() { StaffId = "S001", JobCode = "JC001", PlannedHours = 8.0 }
-            };
-            var repo = CreateRepository(staffJobs: staffJobs);
+            var repo = CreateRepository(staffJobs: new List<StaffJob>());
 
             // Act
-            var result = await repo.GetByIdAsync("S001", "JC999");
+            var result = await repo.GetByIdAsync("S001", "JOB001");
 
             // Assert
             Assert.Null(result);
         }
 
+        #endregion
+
+        #region GetViewByStaffIdAsync Tests
+
         [Fact]
-        public async Task GetByIdAsync_ReturnsNull_WhenStaffJobsIsEmpty()
+        public async Task GetViewByStaffIdAsync_ReturnsView_WhenFound()
         {
             // Arrange
-            var repo = CreateRepository(staffJobs: []);
+            var settings = new List<FpsSetting> { new() { Id = "HoursInDay", Setting = "8" } };
+            var staffJobTblViews = new List<StaffJobTblView>
+            {
+                new() { StaffId = "S001", JobCode = "JOB001", PlannedHours = 40, UserId = DefaultUserId }
+            };
+            var staffGeneralViews = new List<StaffGeneralView>
+            {
+                new() { StaffId = "S001", Name = "John", WorkGroupGrade = "WG01" }
+            };
+            var workgroupGrades = new List<WorkgroupGrade>
+            {
+                new() { WgGrade = "WG01", ProfitCentreGrade = "PC01", GradeCode = "G01", Workgroup = "IT" }
+            };
+            var profitCentreGrades = new List<ProfitCentreGrade>
+            {
+                new() { PcGrade = "PC01", ChargeRate = 100, DefraChargeRate = 120 }
+            };
+            var projectViews = new List<ProjectView>
+            {
+                new() { ParentProject = "JOB001", UserId = DefaultUserId, IsDefraProject = 0, Program = "PROG01", UserEmail = DefaultUserEmail }
+            };
+            var programViews = new List<ProgramView>
+            {
+                new() { ProgramNo = "PROG01", UserId = DefaultUserId, SectorName = "charge" }
+            };
+
+            var repo = CreateRepository(
+                staffJobTblViews: staffJobTblViews,
+                staffGeneralViews: staffGeneralViews,
+                workgroupGrades: workgroupGrades,
+                profitCentreGrades: profitCentreGrades,
+                projectViews: projectViews,
+                programViews: programViews,
+                settings: settings);
 
             // Act
-            var result = await repo.GetByIdAsync("S001", "JC001");
+            var result = await repo.GetViewByStaffIdAsync("S001", "JOB001");
 
             // Assert
-            Assert.Null(result);
+            Assert.NotNull(result);
+            Assert.Equal("S001", result.StaffID);
+            Assert.Equal("JOB001", result.JobCode);
         }
 
         [Fact]
-        public async Task GetByIdAsync_RequiresBothKeysToMatch()
+        public async Task GetViewByStaffIdAsync_ReturnsNull_WhenNotFound()
         {
-            // Arrange — same StaffId, different JobCode; same JobCode, different StaffId
-            var staffJobs = new List<StaffJob>
-            {
-                new() { StaffId = "S001", JobCode = "JC002", PlannedHours = 6.0 },
-                new() { StaffId = "S002", JobCode = "JC001", PlannedHours = 6.0 }
-            };
-            var repo = CreateRepository(staffJobs: staffJobs);
+            // Arrange
+            var settings = new List<FpsSetting> { new() { Id = "HoursInDay", Setting = "8" } };
+            var repo = CreateRepository(
+                staffJobTblViews: new List<StaffJobTblView>(),
+                staffGeneralViews: new List<StaffGeneralView>(),
+                workgroupGrades: new List<WorkgroupGrade>(),
+                profitCentreGrades: new List<ProfitCentreGrade>(),
+                projectViews: new List<ProjectView>(),
+                programViews: new List<ProgramView>(),
+                settings: settings);
 
             // Act
-            var result = await repo.GetByIdAsync("S001", "JC001");
+            var result = await repo.GetViewByStaffIdAsync("S999", "JOB999");
 
             // Assert
             Assert.Null(result);
@@ -175,10 +561,41 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
         #region AddAsync Tests
 
         [Fact]
+        public async Task AddAsync_AddsStaffJob_WithFpsYear()
+        {
+            // Arrange
+            var mockFpsYearContext = CreateMockFpsYearContext(2025);
+            var (mockContext, staffJobMockSet) =
+                RepositoryTestHelper.CreateRepositoryContext<FpsDbContext, StaffJob>(
+                    new List<StaffJob>(),
+                    mockFpsYearContext.Object);
+
+            mockContext.Setup(x => x.StaffJobs).Returns(staffJobMockSet.Object);
+
+            var repo = new StaffJobRepository(mockContext.Object, mockFpsYearContext.Object);
+            var newStaffJob = new StaffJob
+            {
+                StaffId = "S001",
+                JobCode = "JOB001",
+                PlannedHours = 40
+            };
+
+            // Act
+            var result = await repo.AddAsync(newStaffJob);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("S001", result.StaffId);
+            Assert.Equal("JOB001", result.JobCode);
+            Assert.Equal(2025, result.FpsYear);
+            RepositoryTestHelper.VerifySaveChanges(mockContext);
+        }
+
+        [Fact]
         public async Task AddAsync_ThrowsArgumentNullException_WhenStaffJobIsNull()
         {
             // Arrange
-            var repo = CreateRepository(staffJobs: []);
+            var repo = CreateRepository(staffJobs: new List<StaffJob>());
 
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentNullException>(() => repo.AddAsync(null!));
@@ -188,8 +605,13 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
         public async Task AddAsync_ThrowsArgumentOutOfRangeException_WhenPlannedHoursIsNegative()
         {
             // Arrange
-            var repo = CreateRepository(staffJobs: []);
-            var staffJob = new StaffJob { StaffId = "S001", JobCode = "JC001", PlannedHours = -1.0 };
+            var repo = CreateRepository(staffJobs: new List<StaffJob>());
+            var staffJob = new StaffJob
+            {
+                StaffId = "S001",
+                JobCode = "JOB001",
+                PlannedHours = -10
+            };
 
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => repo.AddAsync(staffJob));
@@ -198,72 +620,22 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
         [Fact]
         public async Task AddAsync_ThrowsInvalidOperationException_WhenDuplicateExists()
         {
-            // Arrange — a StaffJob with the same StaffId + JobCode already exists
-            var existingStaffJob = new StaffJob { StaffId = "S001", JobCode = "JC001", PlannedHours = 8.0 };
-            var repo = CreateRepository(staffJobs: [existingStaffJob]);
-            var duplicate = new StaffJob { StaffId = "S001", JobCode = "JC001", PlannedHours = 4.0 };
+            // Arrange
+            var existingStaffJobs = new List<StaffJob>
+            {
+                new() { StaffId = "S001", JobCode = "JOB001", PlannedHours = 40 }
+            };
+            var repo = CreateRepository(staffJobs: existingStaffJobs);
+            var duplicateStaffJob = new StaffJob
+            {
+                StaffId = "S001",
+                JobCode = "JOB001",
+                PlannedHours = 50
+            };
 
             // Act & Assert
-            await Assert.ThrowsAsync<InvalidOperationException>(() => repo.AddAsync(duplicate));
-        }
-
-        [Fact]
-        public async Task AddAsync_AddsStaffJob_WhenValid()
-        {
-            // Arrange
-            var (repo, staffJobsMockSet, mockContext) = CreateRepositoryWithMocks([]);
-            var newStaffJob = new StaffJob { StaffId = "S001", JobCode = "JC001", PlannedHours = 8.0 };
-
-            // Act
-            var result = await repo.AddAsync(newStaffJob);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.Equal("S001",  result.StaffId);
-            Assert.Equal("JC001", result.JobCode);
-            Assert.Equal(8.0,     result.PlannedHours);
-            staffJobsMockSet.Verify(x => x.Add(It.IsAny<StaffJob>()), Times.Once);
-            RepositoryTestHelper.VerifySaveChanges(mockContext);
-        }
-
-        [Fact]
-        public async Task AddAsync_AllowsZeroPlannedHours()
-        {
-            // Arrange
-            var (repo, staffJobsMockSet, mockContext) = CreateRepositoryWithMocks([]);
-            var staffJob = new StaffJob { StaffId = "S001", JobCode = "JC001", PlannedHours = 0.0 };
-
-            // Act
-            var result = await repo.AddAsync(staffJob);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.Equal(0.0, result.PlannedHours);
-            staffJobsMockSet.Verify(x => x.Add(It.IsAny<StaffJob>()), Times.Once);
-            RepositoryTestHelper.VerifySaveChanges(mockContext);
-        }
-
-        [Fact]
-        public async Task AddAsync_SetsCorrectFields_OnCreatedStaffJob()
-        {
-            // Arrange — verifies only StaffId/JobCode/PlannedHours are mapped (not FpsCalYear)
-            StaffJob? capturedStaffJob = null;
-            var (repo, staffJobsMockSet, _) = CreateRepositoryWithMocks([]);
-
-            staffJobsMockSet
-                .Setup(x => x.Add(It.IsAny<StaffJob>()))
-                .Callback<StaffJob>(sj => capturedStaffJob = sj);
-
-            var input = new StaffJob { StaffId = "S001", JobCode = "JC001", PlannedHours = 7.5 };
-
-            // Act
-            await repo.AddAsync(input);
-
-            // Assert
-            Assert.NotNull(capturedStaffJob);
-            Assert.Equal("S001",  capturedStaffJob!.StaffId);
-            Assert.Equal("JC001", capturedStaffJob.JobCode);
-            Assert.Equal(7.5,     capturedStaffJob.PlannedHours);
+            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => repo.AddAsync(duplicateStaffJob));
+            Assert.Contains("already exists", exception.Message);
         }
 
         #endregion
@@ -271,10 +643,47 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
         #region UpdateAsync Tests
 
         [Fact]
+        public async Task UpdateAsync_UpdatesStaffJob_WithFpsYear()
+        {
+            // Arrange
+            var existingStaffJob = new StaffJob
+            {
+                StaffId = "S001",
+                JobCode = "JOB001",
+                PlannedHours = 40,
+                FpsYear = 2024
+            };
+            var mockFpsYearContext = CreateMockFpsYearContext(2025);
+            var (mockContext, staffJobMockSet) =
+                RepositoryTestHelper.CreateRepositoryContext<FpsDbContext, StaffJob>(
+                    new List<StaffJob> { existingStaffJob },
+                    mockFpsYearContext.Object);
+
+            mockContext.Setup(x => x.StaffJobs).Returns(staffJobMockSet.Object);
+
+            var repo = new StaffJobRepository(mockContext.Object, mockFpsYearContext.Object);
+            var updatedStaffJob = new StaffJob
+            {
+                StaffId = "S001",
+                JobCode = "JOB001",
+                PlannedHours = 50
+            };
+
+            // Act
+            var result = await repo.UpdateAsync(updatedStaffJob);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(50, result.PlannedHours);
+            Assert.Equal(2025, result.FpsYear);
+            RepositoryTestHelper.VerifySaveChanges(mockContext);
+        }
+
+        [Fact]
         public async Task UpdateAsync_ThrowsArgumentNullException_WhenStaffJobIsNull()
         {
             // Arrange
-            var repo = CreateRepository(staffJobs: []);
+            var repo = CreateRepository(staffJobs: new List<StaffJob>());
 
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentNullException>(() => repo.UpdateAsync(null!));
@@ -284,252 +693,197 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
         public async Task UpdateAsync_ThrowsArgumentOutOfRangeException_WhenPlannedHoursIsNegative()
         {
             // Arrange
-            var repo = CreateRepository(staffJobs: []);
-            var staffJob = new StaffJob { StaffId = "S001", JobCode = "JC001", PlannedHours = -5.0 };
+            var repo = CreateRepository(staffJobs: new List<StaffJob>());
+            var staffJob = new StaffJob
+            {
+                StaffId = "S001",
+                JobCode = "JOB001",
+                PlannedHours = -10
+            };
 
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => repo.UpdateAsync(staffJob));
         }
 
         [Fact]
-        public async Task UpdateAsync_ThrowsInvalidOperationException_WhenStaffJobNotFound()
+        public async Task UpdateAsync_ThrowsInvalidOperationException_WhenNotFound()
         {
-            // Arrange — no matching StaffId + JobCode in the store
-            var repo = CreateRepository(staffJobs: []);
-            var staffJob = new StaffJob { StaffId = "S001", JobCode = "JC001", PlannedHours = 8.0 };
+            // Arrange
+            var repo = CreateRepository(staffJobs: new List<StaffJob>());
+            var staffJob = new StaffJob
+            {
+                StaffId = "S999",
+                JobCode = "JOB999",
+                PlannedHours = 50
+            };
 
             // Act & Assert
-            await Assert.ThrowsAsync<InvalidOperationException>(() => repo.UpdateAsync(staffJob));
-        }
-
-        [Fact]
-        public async Task UpdateAsync_UpdatesPlannedHours_WhenStaffJobExists()
-        {
-            // Arrange
-            var existing = new StaffJob { StaffId = "S001", JobCode = "JC001", PlannedHours = 4.0 };
-            var (repo, _, mockContext) = CreateRepositoryWithMocks([existing]);
-
-            var update = new StaffJob { StaffId = "S001", JobCode = "JC001", PlannedHours = 10.0 };
-
-            // Act
-            var result = await repo.UpdateAsync(update);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.Equal("S001",  result.StaffId);
-            Assert.Equal("JC001", result.JobCode);
-            Assert.Equal(10.0,    result.PlannedHours);
-            RepositoryTestHelper.VerifySaveChanges(mockContext);
-        }
-
-        [Fact]
-        public async Task UpdateAsync_AllowsZeroPlannedHours()
-        {
-            // Arrange
-            var existing = new StaffJob { StaffId = "S001", JobCode = "JC001", PlannedHours = 8.0 };
-            var (repo, _, mockContext) = CreateRepositoryWithMocks([existing]);
-
-            var update = new StaffJob { StaffId = "S001", JobCode = "JC001", PlannedHours = 0.0 };
-
-            // Act
-            var result = await repo.UpdateAsync(update);
-
-            // Assert
-            Assert.Equal(0.0, result.PlannedHours);
-            RepositoryTestHelper.VerifySaveChanges(mockContext);
+            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => repo.UpdateAsync(staffJob));
+            Assert.Contains("not found", exception.Message);
         }
 
         #endregion
 
         #region DeleteAsync Tests
 
-        [Theory]
-        [InlineData("")]
-        [InlineData("   ")]
-        public async Task DeleteAsync_ThrowsArgumentException_WhenJobCodeIsNullOrWhiteSpace(string jobCode)
-        {
-            // Arrange
-            var repo = CreateRepository(staffJobs: []);
-
-            // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => repo.DeleteAsync("S001", jobCode));
-        }
-
         [Fact]
-        public async Task DeleteAsync_ReturnsFalse_WhenStaffJobNotFound()
+        public async Task DeleteAsync_DeletesStaffJob_WhenFound()
         {
             // Arrange
-            var repo = CreateRepository(staffJobs: []);
-
-            // Act
-            var result = await repo.DeleteAsync("S999", "JC999");
-
-            // Assert
-            Assert.False(result);
-        }
-
-        [Fact]
-        public async Task DeleteAsync_ReturnsFalse_WhenJobCodeMatchesButStaffIdDoesNot()
-        {
-            // Arrange
-            var staffJobs = new List<StaffJob>
+            var existingStaffJob = new StaffJob
             {
-                new() { StaffId = "S001", JobCode = "JC001", PlannedHours = 8.0 }
+                StaffId = "S001",
+                JobCode = "JOB001",
+                PlannedHours = 40
             };
-            var repo = CreateRepository(staffJobs: staffJobs);
+            var mockFpsYearContext = CreateMockFpsYearContext();
+            var (mockContext, staffJobMockSet) =
+                RepositoryTestHelper.CreateRepositoryContext<FpsDbContext, StaffJob>(
+                    new List<StaffJob> { existingStaffJob },
+                    mockFpsYearContext.Object);
+
+            mockContext.Setup(x => x.StaffJobs).Returns(staffJobMockSet.Object);
+
+            var repo = new StaffJobRepository(mockContext.Object, mockFpsYearContext.Object);
 
             // Act
-            var result = await repo.DeleteAsync("S999", "JC001");
-
-            // Assert
-            Assert.False(result);
-        }
-
-        [Fact]
-        public async Task DeleteAsync_ReturnsTrue_AndRemovesStaffJob_WhenFound()
-        {
-            // Arrange
-            var existing = new StaffJob { StaffId = "S001", JobCode = "JC001", PlannedHours = 8.0 };
-            var (repo, staffJobsMockSet, mockContext) = CreateRepositoryWithMocks([existing]);
-
-            // Act
-            var result = await repo.DeleteAsync("S001", "JC001");
+            var result = await repo.DeleteAsync("S001", "JOB001");
 
             // Assert
             Assert.True(result);
-            staffJobsMockSet.Verify(x => x.Remove(It.IsAny<StaffJob>()), Times.Once);
+            RepositoryTestHelper.VerifyRemove(staffJobMockSet);
             RepositoryTestHelper.VerifySaveChanges(mockContext);
         }
 
         [Fact]
-        public async Task DeleteAsync_CommitsTransaction_WhenDeleteSucceeds()
+        public async Task DeleteAsync_ReturnsFalse_WhenNotFound()
         {
-            // Arrange — transaction setup is provided by RepositoryTestHelper.SetupTransaction
-            var existing = new StaffJob { StaffId = "S001", JobCode = "JC001", PlannedHours = 8.0 };
-            var (repo, _, _) = CreateRepositoryWithMocks([existing]);
+            // Arrange
+            var repo = CreateRepository(staffJobs: new List<StaffJob>());
 
-            // Act & Assert — no exception means CommitAsync was reachable
-            var result = await repo.DeleteAsync("S001", "JC001");
+            // Act
+            var result = await repo.DeleteAsync("S999", "JOB999");
 
-            Assert.True(result);
+            // Assert
+            Assert.False(result);
         }
-
         #endregion
 
-        #region GetStaffWorkgroupLookup Tests
+        #region GetTotalStaffCostAsync Tests
 
         [Fact]
-        public async Task GetStaffWorkgroupLookup_ReturnsEmpty_WhenNoStaffViews()
+        public async Task GetTotalStaffCostAsync_ReturnsSumOfStaffCosts_ForSingleRecord()
         {
             // Arrange
+            var settings = new List<FpsSetting> { new() { Id = "HoursInDay", Setting = "8" } };
+            var staffJobTblViews = new List<StaffJobTblView>
+            {
+                new() { StaffId = "S001", JobCode = "JOB001", PlannedHours = 40, UserId = DefaultUserId }
+            };
+            var staffGeneralViews = new List<StaffGeneralView>
+            {
+                new() { StaffId = "S001", Name = "John", WorkGroupGrade = "WG01" }
+            };
+            var workgroupGrades = new List<WorkgroupGrade>
+            {
+                new() { WgGrade = "WG01", ProfitCentreGrade = "PC01", GradeCode = "G01", Workgroup = "IT" }
+            };
+            var profitCentreGrades = new List<ProfitCentreGrade>
+            {
+                new() { PcGrade = "PC01", ChargeRate = 100, DefraChargeRate = 120 }
+            };
+            var projectViews = new List<ProjectView>
+            {
+                new() { ParentProject = "JOB001", UserId = DefaultUserId, IsDefraProject = 0, Program = "PROG01", UserEmail = DefaultUserEmail }
+            };
+            var programViews = new List<ProgramView>
+            {
+                new() { ProgramNo = "PROG01", UserId = DefaultUserId, SectorName = "charge" }
+            };
+
             var repo = CreateRepository(
-                staffViews:     [],
-                staffPickViews: []);
+                staffJobTblViews: staffJobTblViews,
+                staffGeneralViews: staffGeneralViews,
+                workgroupGrades: workgroupGrades,
+                profitCentreGrades: profitCentreGrades,
+                projectViews: projectViews,
+                programViews: programViews,
+                settings: settings);
 
             // Act
-            var result = await repo.GetStaffWorkgroupLookup();
+            var result = await repo.GetTotalStaffCostAsync("JOB001");
 
             // Assert
-            Assert.NotNull(result);
-            Assert.Empty(result);
+            Assert.Equal(4000m, result); // 40 hours * 100 rate
         }
 
         [Fact]
-        public async Task GetStaffWorkgroupLookup_ReturnsEmpty_WhenNoMatchingStaffPickViews()
+        public async Task GetTotalStaffCostAsync_ReturnsSumOfStaffCosts_ForMultipleRecords()
         {
-            // Arrange — StaffView exists but no matching StaffPickView join partner
-            var staffViews = new List<StaffView>
+            // Arrange
+            var settings = new List<FpsSetting> { new() { Id = "HoursInDay", Setting = "8" } };
+            var staffJobTblViews = new List<StaffJobTblView>
             {
-                new() { StaffId = "S001", Name = "Alice", WorkgroupGrade = "WG01", HrsAvail = 37.5, UserId = 42 }
+                new() { StaffId = "S001", JobCode = "JOB001", PlannedHours = 40, UserId = DefaultUserId },
+                new() { StaffId = "S002", JobCode = "JOB001", PlannedHours = 20, UserId = DefaultUserId }
             };
+            var staffGeneralViews = new List<StaffGeneralView>
+            {
+                new() { StaffId = "S001", Name = "Alice", WorkGroupGrade = "WG01" },
+                new() { StaffId = "S002", Name = "Bob", WorkGroupGrade = "WG01" }
+            };
+            var workgroupGrades = new List<WorkgroupGrade>
+            {
+                new() { WgGrade = "WG01", ProfitCentreGrade = "PC01", GradeCode = "G01", Workgroup = "IT" }
+            };
+            var profitCentreGrades = new List<ProfitCentreGrade>
+            {
+                new() { PcGrade = "PC01", ChargeRate = 100, DefraChargeRate = 120 }
+            };
+            var projectViews = new List<ProjectView>
+            {
+                new() { ParentProject = "JOB001", UserId = DefaultUserId, IsDefraProject = 0, Program = "PROG01", UserEmail = DefaultUserEmail }
+            };
+            var programViews = new List<ProgramView>
+            {
+                new() { ProgramNo = "PROG01", UserId = DefaultUserId, SectorName = "charge" }
+            };
+
             var repo = CreateRepository(
-                staffViews:     staffViews,
-                staffPickViews: []);
+                staffJobTblViews: staffJobTblViews,
+                staffGeneralViews: staffGeneralViews,
+                workgroupGrades: workgroupGrades,
+                profitCentreGrades: profitCentreGrades,
+                projectViews: projectViews,
+                programViews: programViews,
+                settings: settings);
 
             // Act
-            var result = await repo.GetStaffWorkgroupLookup();
+            var result = await repo.GetTotalStaffCostAsync("JOB001");
 
             // Assert
-            Assert.NotNull(result);
-            Assert.Empty(result);
+            Assert.Equal(6000m, result); // (40 + 20) hours * 100 rate
         }
 
         [Fact]
-        public async Task GetStaffWorkgroupLookup_ReturnsOrderedByName()
+        public async Task GetTotalStaffCostAsync_ReturnsZero_WhenNoRecordsFound()
         {
             // Arrange
-            var staffViews = new List<StaffView>
-            {
-                new() { StaffId = "S001", Name = "Charlie", WorkgroupGrade = "WG01", HrsAvail = 37.5, UserId = 42 },
-                new() { StaffId = "S002", Name = "Alice",   WorkgroupGrade = "WG02", HrsAvail = 30.0, UserId = 42 },
-                new() { StaffId = "S003", Name = "Bob",     WorkgroupGrade = "WG03", HrsAvail = 25.0, UserId = 42 }
-            };
-            var staffPickViews = new List<StaffPickView>
-            {
-                new() { StaffId = "S001", Name = "Charlie", WorkgroupGrade = "WG01" },
-                new() { StaffId = "S002", Name = "Alice",   WorkgroupGrade = "WG02" },
-                new() { StaffId = "S003", Name = "Bob",     WorkgroupGrade = "WG03" }
-            };
-            var repo = CreateRepository(staffViews: staffViews, staffPickViews: staffPickViews);
+            var settings = new List<FpsSetting> { new() { Id = "HoursInDay", Setting = "8" } };
+            var repo = CreateRepository(
+                staffJobTblViews: new List<StaffJobTblView>(),
+                staffGeneralViews: new List<StaffGeneralView>(),
+                workgroupGrades: new List<WorkgroupGrade>(),
+                profitCentreGrades: new List<ProfitCentreGrade>(),
+                projectViews: new List<ProjectView>(),
+                programViews: new List<ProgramView>(),
+                settings: settings);
 
             // Act
-            var result = await repo.GetStaffWorkgroupLookup();
+            var result = await repo.GetTotalStaffCostAsync("NONEXISTENT");
 
             // Assert
-            Assert.Equal(3,         result.Count);
-            Assert.Equal("Alice",   result[0].Name);
-            Assert.Equal("Bob",     result[1].Name);
-            Assert.Equal("Charlie", result[2].Name);
-        }
-
-        [Fact]
-        public async Task GetStaffWorkgroupLookup_MapsFieldsCorrectly()
-        {
-            // Arrange
-            var staffViews = new List<StaffView>
-            {
-                new() { StaffId = "S001", Name = "Alice Smith", WorkgroupGrade = "WG01", HrsAvail = 37.5, UserId = 42 }
-            };
-            var staffPickViews = new List<StaffPickView>
-            {
-                new() { StaffId = "S001", Name = "Alice Smith", WorkgroupGrade = "WG01" }
-            };
-            var repo = CreateRepository(staffViews: staffViews, staffPickViews: staffPickViews);
-
-            // Act
-            var result = await repo.GetStaffWorkgroupLookup();
-
-            // Assert
-            var item = Assert.Single(result);
-            Assert.Equal("S001",       item.StaffID);
-            Assert.Equal("Alice Smith", item.Name);
-            Assert.Equal("WG01",       item.WorkGroupGrade);
-            Assert.Equal(37.5,         item.HrsAvail);
-        }
-        
-
-        [Fact]
-        public async Task GetStaffWorkgroupLookup_ExcludesStaffViews_NotBelongingToUserId42()
-        {
-            // Arrange
-            var staffViews = new List<StaffView>
-            {
-                new() { StaffId = "S001", Name = "Alice", WorkgroupGrade = "WG01", HrsAvail = 37.5, UserId = 42 },
-                new() { StaffId = "S002", Name = "Bob",   WorkgroupGrade = "WG02", HrsAvail = 30.0, UserId = 99 } // excluded
-            };
-            var staffPickViews = new List<StaffPickView>
-            {
-                new() { StaffId = "S001", Name = "Alice", WorkgroupGrade = "WG01" },
-                new() { StaffId = "S002", Name = "Bob",   WorkgroupGrade = "WG02" }
-            };
-            var repo = CreateRepository(staffViews: staffViews, staffPickViews: staffPickViews);
-
-            // Act
-            var result = await repo.GetStaffWorkgroupLookup();
-
-            // Assert
-            Assert.Single(result);
-            Assert.Equal("Alice", result[0].Name);
+            Assert.Equal(0m, result);
         }
 
         #endregion

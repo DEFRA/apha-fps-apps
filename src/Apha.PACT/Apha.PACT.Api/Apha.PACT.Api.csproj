@@ -7,6 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+	<PackageReference Include="Asp.Versioning.Mvc" Version="8.1.0" />
+	<PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" Version="8.1.0" />
 	<PackageReference Include="Microsoft.Identity.Web" Version="4.6.0" />
 	<PackageReference Include="Microsoft.Identity.Web.UI" Version="4.6.0" />
     <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
@@ -20,10 +22,6 @@
     <ProjectReference Include="..\..\Apha.Common\Apha.Common.csproj" />    
     <ProjectReference Include="..\Apha.PACT.Application\Apha.PACT.Application.csproj" />
     <ProjectReference Include="..\Apha.PACT.DataAccess\Apha.PACT.DataAccess.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Controllers\" />
   </ItemGroup>
 
 </Project>

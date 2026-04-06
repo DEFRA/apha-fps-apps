@@ -10,34 +10,19 @@ namespace Apha.FPS.DataAccess.Repositories
     public class AnimalRepository : BaseRepository, IAnimalRepository 
     {
         private readonly FpsDbContext _dbContext;
-        private readonly int userId = 42;      
-        public AnimalRepository(FpsDbContext dbContext) : base(dbContext)
+        private readonly IFpsRequestContext _requestContext;
+
+        public AnimalRepository(FpsDbContext dbContext, IFpsRequestContext requestContext) : base(dbContext)
         {
-            _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));            
+            _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
+            _requestContext = requestContext ?? throw new ArgumentNullException(nameof(requestContext));
         }
 
         public async Task<List<Animal>> GetAnimalLookup() => await _dbContext.Animals.ToListAsync();
 
         public async Task<PagedData<AnimalCostView>> GetAnimalCostAsync(PaginationParameters<string> query, string jobCode)
-        { 
-            var queryAnimalCost = from animalReq in _dbContext.AnimalRequestViews
-                                    join animal in _dbContext.Animals on animalReq.AnimalType equals animal.AnimalType
-                                    join project in _dbContext.ProjectViews on 
-                                           new { animalReq.JobCode, animalReq.UserId } equals new { JobCode = project.ParentProject, project.UserId }
-                                    let dailyRate = (project.IsDefraProject == -1 ? animal.DefraDailyRate : animal.DailyRate)
-                                    where animalReq.JobCode == jobCode && animalReq.UserId == userId
-                                    select new AnimalCostView
-                                    {
-                                        IndCounter = animalReq.IndCounter,
-                                        Programme = project.Program,
-                                        AnimalType = animalReq.AnimalType,
-                                        JobCode = animalReq.JobCode,
-                                        NumberOfDays = animalReq.NumberOfDays,
-                                        NumberOfAnimals = animalReq.NumberOfAnimals,
-                                        DailyRate = dailyRate,                                        
-                                        TotalDays = animalReq.NumberOfAnimals * animalReq.NumberOfDays
-                                    };
-           
+        {
+            var queryAnimalCost = BuildAnimalCostQuery(jobCode);
 
             queryAnimalCost = (IQueryable<AnimalCostView>)ApplySorting(queryAnimalCost, query.SortBy, query.Descending);
 
@@ -51,6 +36,23 @@ namespace Apha.FPS.DataAccess.Repositories
             return base.ApplyPaging(animalCostViews, query.Page, query.PageSize);
         }
 
+        public async Task<decimal> GetTotalAnimalCostAsync(string jobCode)
+        {
+            var result = await BuildAnimalCostQuery(jobCode).ToListAsync();
+            return result.Sum(e => (decimal)e.NumberOfDays * (decimal)e.NumberOfAnimals * (e.DailyRate ?? 0m));
+        }
+
+        public async Task<AnimalCostView?> GetAnimalCostViewByIdAsync(int indCounter, string jobCode)
+        {
+            var record = await BuildAnimalCostQuery(jobCode)
+                .Where(e => e.IndCounter == indCounter)
+                .FirstOrDefaultAsync();
+
+            if (record == null) return null;
+            record.AnimalCost = (decimal)record.NumberOfDays * (decimal)record.NumberOfAnimals * (record.DailyRate ?? 0m);
+            return record;
+        }
+
         public async Task<decimal?> GetAnimalRateByIdAsync(string animalType)
         {
             var queryAnimalCost = from animalReq in _dbContext.AnimalRequestViews
@@ -58,7 +60,9 @@ namespace Apha.FPS.DataAccess.Repositories
                                   join project in _dbContext.ProjectViews on
                                          new { animalReq.JobCode, animalReq.UserId } equals new { JobCode = project.ParentProject, project.UserId }
                                   let dailyRate = (project.IsDefraProject == -1 ? animal.DefraDailyRate : animal.DailyRate)
-                                  where animal.AnimalType == animalType && animalReq.UserId == userId
+                                  where animal.AnimalType == animalType
+                                      && animalReq.UserEmail != null
+                                      && string.Equals(animalReq.UserEmail, _requestContext.UserEmailId, StringComparison.OrdinalIgnoreCase)
                                   select dailyRate;
 
             return await queryAnimalCost.FirstOrDefaultAsync();
@@ -67,6 +71,8 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<AnimalRequest> AddAnimalCostAsync(AnimalRequest animalReq)
         {
             ArgumentNullException.ThrowIfNull(animalReq);
+            animalReq.FpsYear = _requestContext.FpsYear;
+
             _dbContext.AnimalRequests.Add(animalReq);
             await _dbContext.SaveChangesAsync();
             return animalReq;
@@ -88,7 +94,8 @@ namespace Apha.FPS.DataAccess.Repositories
             existingEntity.AnimalType = animalReq.AnimalType;
             existingEntity.NumberOfDays = animalReq.NumberOfDays;
             existingEntity.NumberOfAnimals = animalReq.NumberOfAnimals;
-        
+            existingEntity.FpsYear = _requestContext.FpsYear;
+
             await _dbContext.SaveChangesAsync();
 
             return existingEntity;
@@ -108,6 +115,29 @@ namespace Apha.FPS.DataAccess.Repositories
             await _dbContext.SaveChangesAsync();
 
             return true;
+        }
+
+        private IQueryable<AnimalCostView> BuildAnimalCostQuery(string jobCode)
+        {
+            return from animalReq in _dbContext.AnimalRequestViews
+                   join animal in _dbContext.Animals on animalReq.AnimalType equals animal.AnimalType
+                   join project in _dbContext.ProjectViews on
+                          new { animalReq.JobCode, animalReq.UserId } equals new { JobCode = project.ParentProject, project.UserId }
+                   let dailyRate = (project.IsDefraProject == -1 ? animal.DefraDailyRate : animal.DailyRate)
+                   where animalReq.JobCode == jobCode
+                       && animalReq.UserEmail != null
+                       && animalReq.UserEmail.ToLower() == _requestContext.UserEmailId
+                   select new AnimalCostView
+                   {
+                       IndCounter = animalReq.IndCounter,
+                       Programme = project.Program,
+                       AnimalType = animalReq.AnimalType,
+                       JobCode = animalReq.JobCode,
+                       NumberOfDays = animalReq.NumberOfDays,
+                       NumberOfAnimals = animalReq.NumberOfAnimals,
+                       DailyRate = dailyRate,
+                       TotalDays = animalReq.NumberOfAnimals * animalReq.NumberOfDays
+                   };
         }
 
         private static IQueryable ApplySorting(IQueryable<AnimalCostView> query, string? sortBy, bool descending)

@@ -3,6 +3,7 @@ using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
+using Asp.Versioning;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,7 +15,8 @@ namespace Apha.FPS.Api.Controllers
     /// </summary>    
     [ApiController]
     [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
-    [Route("api/animal")]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/animal")]
     public class AnimalController : ControllerBase
     {
         private readonly IAnimalService _animalService;
@@ -98,6 +100,33 @@ namespace Apha.FPS.Api.Controllers
             var mapAnimalReq = _mapper.Map<AnimalRequestDto>(animalReq);
             var result = await _animalService.UpdateAnimalCostAsync(mapAnimalReq);
             return Ok(_mapper.Map<AnimalRequestRes>(result));
+        }
+
+        /// <summary>
+        /// Returns the total animal cost (all records, unpaged) for a given job code.
+        /// </summary>
+        /// <param name="jobCode">The job code.</param>
+        /// <returns>Total animal cost as a decimal.</returns>
+        [HttpGet("totalanimalcost")]
+        public async Task<IActionResult> GetTotalAnimalCostAsync([FromQuery] string jobCode)
+        {
+            var total = await _animalService.GetTotalAnimalCostAsync(jobCode);
+            return Ok(total);
+        }
+
+        /// <summary>
+        /// Gets a single animal cost view record by index counter and job code.
+        /// </summary>
+        /// <param name="indCounter">The index counter of the animal cost entry.</param>
+        /// <param name="jobCode">The job code.</param>
+        /// <returns>The animal cost view record, or NotFound if not found.</returns>
+        [HttpGet("view")]
+        public async Task<IActionResult> GetAnimalCostViewByIdAsync([FromQuery] int indCounter, [FromQuery] string jobCode)
+        {
+            var result = await _animalService.GetAnimalCostViewByIdAsync(indCounter, jobCode);
+            if (result == null)
+                throw new KeyNotFoundException("Data not found.");
+            return Ok(_mapper.Map<AnimalCostViewRes>(result));
         }
 
         /// <summary>

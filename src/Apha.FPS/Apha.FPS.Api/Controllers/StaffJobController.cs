@@ -3,8 +3,10 @@ using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
+using Asp.Versioning;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Apha.FPS.Api.Controllers
@@ -15,7 +17,8 @@ namespace Apha.FPS.Api.Controllers
     /// 
     [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]    
     [ApiController]
-    [Route("api/staffjob")]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/staffjob")]
     public class StaffJobController : ControllerBase
     {
         private readonly IStaffJobService _staffJobService;
@@ -71,6 +74,18 @@ namespace Apha.FPS.Api.Controllers
         }
 
         /// <summary>
+        /// Returns the total staff cost (all records, unpaged) for a given job code.
+        /// </summary>
+        /// <param name="jobCode">The job code.</param>
+        /// <returns>Total staff cost as a decimal.</returns>
+        [HttpGet("totalstaffcost")]
+        public async Task<IActionResult> GetTotalStaffCostAsync([FromQuery] string jobCode)
+        {
+            var total = await _staffJobService.GetTotalStaffCostAsync(jobCode);
+            return Ok(total);
+        }
+
+        /// <summary>
         /// Retrieves a staff job assignment by staff ID and job code.
         /// </summary>
         /// <param name="staffId">The staff member's identifier.</param>
@@ -84,6 +99,13 @@ namespace Apha.FPS.Api.Controllers
             if (result == null)
                 throw new KeyNotFoundException("Data not found.");
             return Ok(_mapper.Map<StaffJobRes>(result));
+        }
+
+        [HttpGet("view")]
+        public async Task<IActionResult> GetViewByStaffIdAsync([FromQuery] string staffId, [FromQuery] string jobcode)
+        {
+            var staffRecord = await _staffJobService.GetViewByStaffIdAsync(staffId, jobcode);
+            return Ok(_mapper.Map<StaffJobViewRes>(staffRecord));
         }
 
         /// <summary>

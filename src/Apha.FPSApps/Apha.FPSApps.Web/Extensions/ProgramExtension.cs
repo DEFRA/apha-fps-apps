@@ -34,8 +34,10 @@ namespace Apha.FPSApps.Web.Extensions
             // AutoMapper  
             services.AddAutoMapper(config =>
             {
-                config.AddMaps(typeof(ApiDtoMapper).Assembly);
-                config.AddMaps(typeof(ViewModelMapper));
+                config.AddMaps(typeof(FpsApiDtoMapper).Assembly);
+                config.AddMaps(typeof(PactApiDtoMapper).Assembly);
+                config.AddMaps(typeof(FpsViewModelMapper));
+                config.AddMaps(typeof(PactViewModelMapper));
             });
 
             // HTTP Context

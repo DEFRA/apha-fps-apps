@@ -1,4 +1,5 @@
-﻿using Apha.Common.Contracts.FPS;
+﻿using Apha.Common.Constants;
+using Apha.Common.Contracts.FPS;
 using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
@@ -25,7 +26,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var url = QueryStringHelper.AddQueryString($"api/employee/paginated?filterOption={filterOption}", criteria);
+                var url = QueryStringHelper.AddQueryString(string.Format(FpsApiEndpoints.GetFilteredEmployees, filterOption), criteria);
                 var response = await _http.GetAsync<List<EmployeeRes>>(url);
 
                 if (response.Success)
@@ -55,7 +56,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var response = await _http.GetAsync<EmployeeRes>($"api/employee/{spNumber}");
+                var response = await _http.GetAsync<EmployeeRes>(string.Format(FpsApiEndpoints.GetEmployeeById, spNumber));
 
                 if (response.Success)
                 {
@@ -85,7 +86,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             try
             {
                 var employeeReq = _mapper.Map<EmployeeReq>(employee);
-                var response = await _http.PostAsync<EmployeeReq, EmployeeRes>("api/employee", employeeReq);
+                var response = await _http.PostAsync<EmployeeReq, EmployeeRes>(FpsApiEndpoints.CreateEmployee, employeeReq);
 
                 if (response.Success)
                 {
@@ -115,7 +116,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             try
             {
                 var employeeReq = _mapper.Map<EmployeeReq>(employee);
-                var response = await _http.PutAsync<EmployeeReq, EmployeeRes>("api/employee", employeeReq);
+                var response = await _http.PutAsync<EmployeeReq, EmployeeRes>(FpsApiEndpoints.UpdateEmployee, employeeReq);
 
                 if (response.Success)
                 {
@@ -144,7 +145,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var response = await _http.DeleteAsync<bool>($"api/employee/{spNumber}");
+                var response = await _http.DeleteAsync<bool?>(string.Format(FpsApiEndpoints.DeleteEmployee, spNumber));
 
                 if (response.Success)
                 {
@@ -173,7 +174,35 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var response = await _http.GetAsync<List<ManagerRes>>("api/employee/managers");
+                var response = await _http.GetAsync<List<ManagerRes>>(FpsApiEndpoints.GetAllManagers);
+                if (response.Success)
+                {
+                    return _mapper.Map<ApiResponseDto<List<ManagerDto>>>(response);
+                }
+                else
+                {
+                    var responseDto = _mapper.Map<ApiResponseDto<List<ManagerDto>>>(response);
+                    return ApiResponseDto<List<ManagerDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+                }
+            }
+            catch (Exception)
+            {
+                var apiErrosDto = new List<ApiErrorDto> {
+                    new ApiErrorDto {
+                        Message = "Failed to retrieve managers",
+                        Code = internalCodeError,
+                        Details = null
+                    }
+                };
+                return ApiResponseDto<List<ManagerDto>>.FailureResponse(apiErrosDto, new ApiMetaDto());
+            }
+        }
+
+        public async Task<ApiResponseDto<List<ManagerDto>>> GetAllPactManagerAsync()
+        {
+            try
+            {
+                var response = await _http.GetAsync<List<ManagerRes>>(FpsApiEndpoints.GetAllPactManagers);
                 if (response.Success)
                 {
                     return _mapper.Map<ApiResponseDto<List<ManagerDto>>>(response);

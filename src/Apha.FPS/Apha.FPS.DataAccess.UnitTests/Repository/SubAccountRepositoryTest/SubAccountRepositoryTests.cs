@@ -18,8 +18,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.SubAccountRepositoryTest
         /// </summary>
         private static SubAccountRepository CreateRepository(IEnumerable<SubAccount> subAccounts)
         {
-            var fpsYearContext = Substitute.For<IFpsYearContext>();
-            fpsYearContext.FPSYear.Returns(DefaultTestFpsYear);
+            var fpsYearContext = Substitute.For<IFpsRequestContext>();
+            fpsYearContext.FpsYear.Returns(DefaultTestFpsYear);
 
             var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);
 

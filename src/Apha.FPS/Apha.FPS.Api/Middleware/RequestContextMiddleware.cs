@@ -1,22 +1,21 @@
 ﻿using Apha.FPS.Core.Interfaces;
-using Apha.FPS.DataAccess.Context;
 
 namespace Apha.FPS.Api.Middleware
 {
     public class RequestContextMiddleware
     {
-        private readonly RequestDelegate _next;        
+        private readonly RequestDelegate _next;
+       
         private const string FpsYearHeader = "X-FPS-Year";
         private const string CorrelationIdHeader = "X-Correlation-ID";
 
         public RequestContextMiddleware(
-                RequestDelegate next,
-                ILogger<RequestContextMiddleware> logger)
+                RequestDelegate next)
         {
             _next = next;            
         }
 
-        public async Task InvokeAsync(HttpContext context, IFpsYearContext yearContext)
+        public async Task InvokeAsync(HttpContext context, IFpsRequestContext requestContext)
         {
             var path = context.Request.Path.Value?.ToLower();
 
@@ -34,17 +33,18 @@ namespace Apha.FPS.Api.Middleware
             if (!context.Request.Headers.TryGetValue(FpsYearHeader, out var header)
                             || !int.TryParse(header, out int fpsYear))
             {
-                throw new ArgumentException($"Required request header '{FpsYearHeader}' is missing or empty.");               
+                throw new ArgumentException($"Required request header '{FpsYearHeader}' is missing or empty.");
             }
 
             SetCorrelationId(context, CorrelationIdHeader);
 
-            ((FpsYearContext)yearContext).FPSYear = fpsYear;
-
+            requestContext.FpsYear = fpsYear;
+            requestContext.UserEmailId = ("Rohit.Agarwal@defradev.onmicrosoft.com").ToLowerInvariant(); //(context.User?.Identity?.Name ?? string.Empty).ToLowerInvariant();
+            
             await _next(context);
         }
 
-        private void SetCorrelationId(HttpContext context, string CorrelationIdHeader)
+        private static void SetCorrelationId(HttpContext context, string CorrelationIdHeader)
         {
             // OPTIONAL HEADER (generate if missing)
             if (!context.Request.Headers.TryGetValue(CorrelationIdHeader, out var correlationId)

@@ -3,6 +3,7 @@ using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
+using Asp.Versioning;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,7 +15,8 @@ namespace Apha.FPS.Api.Controllers
     /// </summary>    
     [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
     [ApiController]
-    [Route("api/employee")]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/employee")]
     public class EmployeeController : ControllerBase
     {
         private readonly IEmployeeService _employeeService;
@@ -125,6 +127,17 @@ namespace Apha.FPS.Api.Controllers
         public async Task<IActionResult> GetAllManagersAsync()
         {
             var result = await _employeeService.GetAllManagersAsync();
+            return Ok(_mapper.Map<List<ManagerRes>>(result));
+        }
+
+        /// <summary>
+        /// Gets a lookup list of all managers for pact
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("pactmanagers")]
+        public async Task<IActionResult> GetAllPactManagersAsync()
+        {
+            var result = await _employeeService.GetAllPactManagersAsync();
             return Ok(_mapper.Map<List<ManagerRes>>(result));
         }
     }

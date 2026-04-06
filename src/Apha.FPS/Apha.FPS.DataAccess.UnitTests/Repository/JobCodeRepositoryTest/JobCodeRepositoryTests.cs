@@ -21,8 +21,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.JobCodeRepositoryTest
             IEnumerable<JobCode> jobCodes,
             int fpsYear = DefaultTestFpsYear)
         {
-            var fpsYearContext = Substitute.For<IFpsYearContext>();
-            fpsYearContext.FPSYear.Returns(fpsYear);
+            var fpsYearContext = Substitute.For<IFpsRequestContext>();
+            fpsYearContext.FpsYear.Returns(fpsYear);
 
             var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);
 
@@ -40,9 +40,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.JobCodeRepositoryTest
             // Arrange
             var jobCodes = new List<JobCode>
             {
-                new() { JobCodeId = "JC001", Jobcodename = "Job Code 1", Fpscalyear = DefaultTestFpsYear },
-                new() { JobCodeId = "JC002", Jobcodename = "Job Code 2", Fpscalyear = DefaultTestFpsYear },
-                new() { JobCodeId = "JC003", Jobcodename = "Job Code 3", Fpscalyear = DefaultTestFpsYear }
+                new() { JobCodeId = "JC001", JobCodeName = "Job Code 1", FpsYear = DefaultTestFpsYear },
+                new() { JobCodeId = "JC002", JobCodeName = "Job Code 2", FpsYear = DefaultTestFpsYear },
+                new() { JobCodeId = "JC003", JobCodeName = "Job Code 3", FpsYear = DefaultTestFpsYear }
             };
             var repo = CreateRepository(jobCodes);
 
@@ -74,7 +74,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.JobCodeRepositoryTest
             // Arrange
             var jobCodes = new List<JobCode>
             {
-                new() { JobCodeId = "JC001", Jobcodename = "Job Code 1", Fpscalyear = DefaultTestFpsYear }
+                new() { JobCodeId = "JC001", JobCodeName = "Job Code 1", FpsYear = DefaultTestFpsYear }
             };
             var repo = CreateRepository(jobCodes);
 
@@ -84,7 +84,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.JobCodeRepositoryTest
             // Assert
             var single = Assert.Single(result);
             Assert.Equal("JC001", single.JobCodeId);
-            Assert.Equal("Job Code 1", single.Jobcodename);
+            Assert.Equal("Job Code 1", single.JobCodeName);
         }
 
         [Fact]
@@ -93,9 +93,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.JobCodeRepositoryTest
             // Arrange — seed data intentionally out of order to verify OrderBy(j => j.JobCodeId)
             var jobCodes = new List<JobCode>
             {
-                new() { JobCodeId = "JC003", Fpscalyear = DefaultTestFpsYear },
-                new() { JobCodeId = "JC001", Fpscalyear = DefaultTestFpsYear },
-                new() { JobCodeId = "JC002", Fpscalyear = DefaultTestFpsYear }
+                new() { JobCodeId = "JC003", FpsYear = DefaultTestFpsYear },
+                new() { JobCodeId = "JC001", FpsYear = DefaultTestFpsYear },
+                new() { JobCodeId = "JC002", FpsYear = DefaultTestFpsYear }
             };
             var repo = CreateRepository(jobCodes);
 
@@ -116,12 +116,12 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.JobCodeRepositoryTest
             // the Fpscalyear query filter on FpsDbContext ensures only current-year records are visible
             var jobCodes = new List<JobCode>
             {
-                new() { JobCodeId = "JC001", Fpscalyear = DefaultTestFpsYear },
-                new() { JobCodeId = "JC002", Fpscalyear = DefaultTestFpsYear }
+                new() { JobCodeId = "JC001", FpsYear = DefaultTestFpsYear },
+                new() { JobCodeId = "JC002", FpsYear = DefaultTestFpsYear }
             };
 
             var repo = CreateRepository(
-                jobCodes.Where(j => j.Fpscalyear == DefaultTestFpsYear),
+                jobCodes.Where(j => j.FpsYear == DefaultTestFpsYear),
                 fpsYear: DefaultTestFpsYear);
 
             // Act
@@ -129,7 +129,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.JobCodeRepositoryTest
 
             // Assert
             Assert.Equal(2, result.Count());
-            Assert.All(result, j => Assert.Equal(DefaultTestFpsYear, j.Fpscalyear));
+            Assert.All(result, j => Assert.Equal(DefaultTestFpsYear, j.FpsYear));
         }
 
         #endregion

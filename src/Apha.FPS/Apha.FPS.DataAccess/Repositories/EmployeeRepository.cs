@@ -12,9 +12,9 @@ namespace Apha.FPS.DataAccess.Repositories
     public class EmployeeRepository : BaseRepository, IEmployeeRepository
     {
         private readonly FpsDbContext _dbContext;
-        private readonly IFpsYearContext _fpsYearContext;
+        private readonly IFpsRequestContext _fpsYearContext;
 
-        public EmployeeRepository(FpsDbContext dbContext, IFpsYearContext fpsYearContext) : base(dbContext)
+        public EmployeeRepository(FpsDbContext dbContext, IFpsRequestContext fpsYearContext) : base(dbContext)
         {
             _dbContext = dbContext;
             _fpsYearContext = fpsYearContext;
@@ -66,7 +66,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<Employee> AddEmployeeAsync(Employee employee)
         {
-            employee.FPSCalYear = _fpsYearContext.FPSYear;
+            employee.FpsYear = _fpsYearContext.FpsYear;
             await _dbContext.Employees.AddAsync(employee);
             await _dbContext.SaveChangesAsync();
 
@@ -75,7 +75,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<Employee> UpdateEmployeeAsync(Employee employee)
         {
-            employee.FPSCalYear = _fpsYearContext.FPSYear;
+            employee.FpsYear = _fpsYearContext.FpsYear;
             _dbContext.Entry(employee).State = EntityState.Modified;
             await _dbContext.SaveChangesAsync();
 
@@ -85,7 +85,7 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<bool> DeleteEmployeeAsync(string spNumber)
         {  
             var employee = await _dbContext.Employees
-                .Where(e => e.SPNumber == spNumber && e.FPSCalYear == _fpsYearContext.FPSYear)
+                .Where(e => e.SPNumber == spNumber && e.FpsYear == _fpsYearContext.FpsYear)
                 .FirstOrDefaultAsync();
 
             if (employee == null)
@@ -125,6 +125,32 @@ namespace Apha.FPS.DataAccess.Repositories
             
             var managers = await query.ToListAsync();
             return managers;
+        }
+
+        public async Task<IEnumerable<Manager>> GetAllPactManagersAsync()
+        {
+            var query = (
+                from grade in _dbContext.PactWorkGroupGradeViews
+                join staff in _dbContext.StaffGeneralViews
+                    on grade.WgGrade equals staff.WorkGroupGrade
+                where
+                    staff.Name != null &&
+                    !EF.Functions.ILike(staff.Name, "%gen%") &&
+                    !EF.Functions.ILike(staff.Name, "%vacancy%") &&
+                    grade.GradeCode != null &&
+                    (string.Compare(grade.GradeCode, "E") <= 0 || grade.GradeCode == "GD5")
+                select new Manager
+                {
+                    Name = staff.Name,
+                    WorkGroup = grade.WorkGroup,
+                    GradeCode = grade.GradeCode,
+                    Expr1 = grade.GradeCode!.Substring(0, 1)
+                }
+            )
+            .Distinct()
+            .OrderBy(x => x.Name);
+
+            return await query.ToListAsync();
         }
 
         private static IQueryable<Employee> ApplyEmployeeFilter(IQueryable<Employee> queryEmployees, string? filter)
@@ -183,7 +209,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 "firstname" => ApplyOrder(query, i => i.FirstName, descending),
                 "lastname" => ApplyOrder(query, i => i.LastName, descending),
                 "title" => ApplyOrder(query, i => i.Title, descending),
-                "fpscalyear" => ApplyOrder(query, i => i.FPSCalYear, descending),
+                "fpscalyear" => ApplyOrder(query, i => i.FpsYear, descending),
                 _ => query.OrderBy(e => e.SPNumber)
             };
         }

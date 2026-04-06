@@ -17,8 +17,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository
         /// </summary>
         private static BaseRepository CreateRepository()
         {
-            var fpsYearContext = Substitute.For<IFpsYearContext>();
-            fpsYearContext.FPSYear.Returns(DefaultTestFpsYear);
+            var fpsYearContext = Substitute.For<IFpsRequestContext>();
+            fpsYearContext.FpsYear.Returns(DefaultTestFpsYear);
 
             var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);
             return new BaseRepository(mockContext.Object);

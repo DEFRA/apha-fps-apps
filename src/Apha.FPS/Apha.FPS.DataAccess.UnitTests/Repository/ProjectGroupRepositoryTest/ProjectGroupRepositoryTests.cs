@@ -18,8 +18,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectGroupRepositoryTest
         /// </summary>
         private static ProjectGroupRepository CreateRepository(IEnumerable<ProjectGroup> projectGroups)
         {
-            var fpsYearContext = Substitute.For<IFpsYearContext>();
-            fpsYearContext.FPSYear.Returns(DefaultTestFpsYear);
+            var fpsYearContext = Substitute.For<IFpsRequestContext>();
+            fpsYearContext.FpsYear.Returns(DefaultTestFpsYear);
 
             var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);
 

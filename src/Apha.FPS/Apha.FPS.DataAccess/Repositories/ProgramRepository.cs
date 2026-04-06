@@ -13,17 +13,18 @@ namespace Apha.FPS.DataAccess.Repositories
     public class ProgramRepository : BaseRepository, IProgramRepository
     {
         private readonly FpsDbContext _dbContext;
-        private readonly IFpsYearContext _yearContext;
-        private readonly int userId = 42;
-        public ProgramRepository(FpsDbContext dbContext, IFpsYearContext yearContext) : base(dbContext)
+        private readonly IFpsRequestContext _requestContext;
+
+        public ProgramRepository(FpsDbContext dbContext, IFpsRequestContext requestContext) : base(dbContext)
         {
             _dbContext = dbContext;
-            _yearContext = yearContext;
+            _requestContext = requestContext;
         }
               
         public async Task<IEnumerable<Program>> GetAllProgramsAsync()
         {
-            return await _dbContext.ProgramViews.Where(p => p.UserId == userId)
+            return await _dbContext.ProgramViews
+                .Where(p => p.UserEmail != null && p.UserEmail.ToLower() == _requestContext.UserEmailId)
                 .Select(p => new Program
                 {
                     ProgramNo = p.ProgramNo ?? "",
@@ -37,7 +38,8 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<PagedData<Program>> GetAllProgramsAsync(PaginationParameters<string> query)
         {
 
-            var programQuery =  _dbContext.ProgramViews.Where(p => p.UserId == userId)
+            var programQuery = _dbContext.ProgramViews
+                .Where(p => p.UserEmail != null && p.UserEmail.ToLower() == _requestContext.UserEmailId)
                                 .Select(p => new Program
                                 {
                                     ProgramNo = p.ProgramNo ?? "",
@@ -67,72 +69,110 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<Program> AddProgramAsync(Program entity)
         {
             ArgumentNullException.ThrowIfNull(entity);
-            entity.FpsCalYear = _yearContext.FPSYear;
+            entity.FpsYear = _requestContext.FpsYear;
 
-            _dbContext.Programs.Add(entity);
-
-            var dboUser = await _dbContext.Users.FirstOrDefaultAsync(u => u.Username == "dbo");
-            if (dboUser != null)
+            var strategy = _dbContext.Database.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(async () =>
             {
-                var userProgram = new UserProgram
+                await using var transaction = await _dbContext.Database.BeginTransactionAsync();
+                try
                 {
-                    ProgramNo = entity.ProgramNo,
-                    UserID = dboUser.UserId,
-                    FpsCalYear = _yearContext.FPSYear
-                };
-                _dbContext.UserPrograms.Add(userProgram);
-            }
+                    _dbContext.Programs.Add(entity);
 
-            await _dbContext.SaveChangesAsync();
-            return entity;
+                    var dboUser = await _dbContext.Users.FirstOrDefaultAsync(u => u.Username == "dbo");
+                    if (dboUser != null)
+                    {
+                        var userProgram = new UserProgram
+                        {
+                            ProgramNo = entity.ProgramNo,
+                            UserID = dboUser.UserId,
+                            FpsYear = _requestContext.FpsYear
+                        };
+                        _dbContext.UserPrograms.Add(userProgram);
+                    }
+
+                    await _dbContext.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                    return entity;
+                }
+                catch
+                {
+                    await transaction.RollbackAsync();
+                    throw;
+                }
+            });
         }
 
         public async Task<Program> UpdateProgramAsync(Program entity)
         {
-
             ArgumentNullException.ThrowIfNull(entity);
-            entity.FpsCalYear = _yearContext.FPSYear;
+            entity.FpsYear = _requestContext.FpsYear;
 
-            _dbContext.Programs.Update(entity);
-            var dboUser = await _dbContext.Users.FirstOrDefaultAsync(u => u.Username == "dbo");
-
-            if (dboUser != null)
+            var strategy = _dbContext.Database.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(async () =>
             {
-                var userProgramExists = await _dbContext.UserPrograms
-                    .AnyAsync(up => up.ProgramNo == entity.ProgramNo && up.UserID == dboUser.UserId);
-
-                if (!userProgramExists)
+                await using var transaction = await _dbContext.Database.BeginTransactionAsync();
+                try
                 {
-                    var userProgram = new UserProgram
+                    _dbContext.Programs.Update(entity);
+                    var dboUser = await _dbContext.Users.FirstOrDefaultAsync(u => u.Username == "dbo");
+
+                    if (dboUser != null)
                     {
-                        ProgramNo = entity.ProgramNo,
-                        UserID = dboUser.UserId,
-                        FpsCalYear = _yearContext.FPSYear
-                    };
-                    _dbContext.UserPrograms.Add(userProgram);
+                        var userProgramExists = await _dbContext.UserPrograms
+                            .AnyAsync(up => up.ProgramNo == entity.ProgramNo && up.UserID == dboUser.UserId);
+
+                        if (!userProgramExists)
+                        {
+                            var userProgram = new UserProgram
+                            {
+                                ProgramNo = entity.ProgramNo,
+                                UserID = dboUser.UserId,
+                                FpsYear = _requestContext.FpsYear
+                            };
+                            _dbContext.UserPrograms.Add(userProgram);
+                        }
+                    }
+
+                    await _dbContext.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                    return entity;
                 }
-            }
-
-            await _dbContext.SaveChangesAsync();
-            return entity;
-
+                catch
+                {
+                    await transaction.RollbackAsync();
+                    throw;
+                }
+            });
         }
 
         public async Task<bool> DeleteProgramAsync(string id)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(id);
 
-            await _dbContext.UserPrograms
-                .Where(up => up.ProgramNo == id)
-                .ExecuteDeleteAsync();
+            var strategy = _dbContext.Database.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(async () =>
+            {
+                await using var transaction = await _dbContext.Database.BeginTransactionAsync();
+                try
+                {
+                    await _dbContext.UserPrograms
+                        .Where(up => up.ProgramNo == id)
+                        .ExecuteDeleteAsync();
 
-            var rowsAffected = await _dbContext.Programs
-                .Where(p => p.ProgramNo == id)
-                .ExecuteDeleteAsync();
+                    var rowsAffected = await _dbContext.Programs
+                        .Where(p => p.ProgramNo == id)
+                        .ExecuteDeleteAsync();
 
-            return rowsAffected > 0;
-
-
+                    await transaction.CommitAsync();
+                    return rowsAffected > 0;
+                }
+                catch
+                {
+                    await transaction.RollbackAsync();
+                    throw;
+                }
+            });
         }
 
         private static IQueryable ApplySorting(IQueryable<Program> query, string? sortBy, bool descending)

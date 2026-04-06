@@ -1,8 +1,8 @@
 ﻿using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Interfaces;
+using Asp.Versioning;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Apha.FPS.Api.Controllers
@@ -12,7 +12,8 @@ namespace Apha.FPS.Api.Controllers
     /// </summary>
     [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
     [ApiController]
-    [Route("api/setting")]    
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/setting")]
     public class FpsSettingController : ControllerBase
     {
         private readonly IFpsSettingService _fpsSettingService;
@@ -40,6 +41,17 @@ namespace Apha.FPS.Api.Controllers
         {
             var result = await _fpsSettingService.GetAllSettingsAsync();
             return Ok(_mapper.Map<List<FpsSettingRes>>(result));
+        }
+
+        /// <summary>
+        /// Gets the configured number of working hours per day.
+        /// </summary>
+        /// <returns>The hours per day value.</returns>
+        [HttpGet("hoursperday")]
+        public async Task<IActionResult> GetHoursPerDayAsync()
+        {
+            var result = await _fpsSettingService.GetHoursPerDayAsync();
+            return Ok(result);
         }
     }
 }

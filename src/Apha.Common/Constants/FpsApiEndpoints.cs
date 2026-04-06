@@ -1,0 +1,63 @@
+namespace Apha.Common.Constants
+{
+    public static class FpsApiEndpoints
+    {
+        // Animal
+        public const string GetAnimalCosts = "api/v1/animal?jobCode={0}";
+        public const string GetAnimalLookup = "api/v1/animal/lookup";
+        public const string GetAnimalRate = "api/v1/animal/rate?animalType={0}";
+        public const string CreateAnimalCost = "api/v1/animal";
+        public const string UpdateAnimalCost = "api/v1/animal";
+        public const string DeleteAnimalCost = "api/v1/animal?indCounter={0}";
+        public const string GetTotalAnimalCost = "api/v1/animal/totalanimalcost?jobCode={0}";
+        public const string GetAnimalCostViewById = "api/v1/animal/view?indCounter={0}&jobCode={1}";
+
+        // Employee
+        public const string GetFilteredEmployees = "api/v1/employee/paginated?filterOption={0}";
+        public const string GetEmployeeById = "api/v1/employee/{0}";
+        public const string CreateEmployee = "api/v1/employee";
+        public const string UpdateEmployee = "api/v1/employee";
+        public const string DeleteEmployee = "api/v1/employee/{0}";
+        public const string GetAllManagers = "api/v1/employee/managers";
+        public const string GetAllPactManagers = "api/v1/employee/pactmanagers";
+
+        // Lookup
+        public const string GetAllStatuses = "api/v1/status";
+        public const string GetAllDiseases = "api/v1/disease";
+        public const string GetAllCustomers = "api/v1/customer";
+        public const string GetAllContracts = "api/v1/contract";
+
+        // Program
+        public const string GetAllPrograms = "api/v1/program";
+        public const string GetPagedPrograms = "api/v1/program/paged";
+        public const string GetProgramById = "api/v1/program/{0}";
+        public const string CreateProgram = "api/v1/program";
+        public const string UpdateProgram = "api/v1/program";
+        public const string DeleteProgram = "api/v1/program/{0}";
+
+        // Project
+        public const string GetAllProjects = "api/v1/project";
+        public const string GetPagedProjects = "api/v1/project/paged";
+        public const string GetPagedPactProjects = "api/v1/project/pactview";
+        public const string GetProjectById = "api/v1/project/{0}";
+        public const string CreateProject = "api/v1/project";
+        public const string UpdateProject = "api/v1/project";
+        public const string UpdatePactProject = "api/v1/project/external/pact";
+        public const string DeleteProject = "api/v1/project/{0}";
+        public const string GetProjectsByProgram = "api/v1/project/paged?programNo={0}";
+
+        // Setting
+        public const string GetHoursPerDay = "api/v1/setting/hoursperday";
+
+        // Staff Job
+        public const string GetAllStaffJobs = "api/v1/staffjob?jobCode={0}";
+        public const string GetStaffWorkgroupLookup = "api/v1/staffjob/workgrouplookup";
+        public const string GetStaffChargeRate = "api/v1/staffjob/chargerate?staffId={0}&jobcode={1}";
+        public const string GetTotalStaffCost = "api/v1/staffjob/totalstaffcost?jobCode={0}";
+        public const string GetStaffJobById = "api/v1/staffjob/{0}/{1}";
+        public const string CreateStaffJob = "api/v1/staffjob";
+        public const string UpdateStaffJob = "api/v1/staffjob";
+        public const string DeleteStaffJob = "api/v1/staffjob?staffId={0}&jobcode={1}";
+        public const string GetStaffJobViewById = "api/v1/staffjob/view?staffId={0}&jobcode={1}";
+    }
+}

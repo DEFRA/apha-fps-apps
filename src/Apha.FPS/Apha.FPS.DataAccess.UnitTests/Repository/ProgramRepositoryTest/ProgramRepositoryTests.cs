@@ -15,7 +15,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
 
         /// <summary>
         /// Creates a ProgramRepository with in-memory Programs, UserPrograms, and Users data.
-        /// IFpsYearContext is substituted via NSubstitute.
+        /// IFpsRequestContext is substituted via NSubstitute.
         /// Get() JOIN logic across Programs/UserPrograms/Users is covered by integration tests.
         /// ExecuteDeleteAsync() used in DeleteProgramAsync is not mockable and is covered by integration tests.
         /// </summary>
@@ -23,16 +23,20 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
             IEnumerable<Core.Entities.Program> programs,
             IEnumerable<UserProgram> userPrograms,
             IEnumerable<User> users,
-            int fpsYear = DefaultTestFpsYear)
+            int fpsYear = DefaultTestFpsYear,
+            string userEmailId = "test@example.com", // always lowercase — matches middleware ToLowerInvariant()
+            IEnumerable<ProgramView>? programViews = null)
         {
-            var fpsYearContext = Substitute.For<IFpsYearContext>();
-            fpsYearContext.FPSYear.Returns(fpsYear);
+            var requestContext = Substitute.For<IFpsRequestContext>();
+            requestContext.FpsYear.Returns(fpsYear);
+            requestContext.UserEmailId.Returns(userEmailId);
 
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestContext);
 
             var programsMockSet = RepositoryTestHelper.CreateMockDbSet(programs);
             var userProgramsMockSet = RepositoryTestHelper.CreateMockDbSet(userPrograms);
             var usersMockSet = RepositoryTestHelper.CreateMockDbSet(users);
+            var programViewsMockSet = RepositoryTestHelper.CreateMockDbSet(programViews ?? []);
 
             RepositoryTestHelper.SetupDbSetOperations(programsMockSet);
             RepositoryTestHelper.SetupDbSetOperations(userProgramsMockSet);
@@ -41,13 +45,11 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
             mockContext.Setup(x => x.Programs).Returns(programsMockSet.Object);
             mockContext.Setup(x => x.UserPrograms).Returns(userProgramsMockSet.Object);
             mockContext.Setup(x => x.Users).Returns(usersMockSet.Object);
+            mockContext.Setup(x => x.ProgramViews).Returns(programViewsMockSet.Object);
 
-            return new ProgramRepository(mockContext.Object, fpsYearContext);
+            return new ProgramRepository(mockContext.Object, requestContext);
         }
 
-        /// <summary>
-        /// Returns the mocked DbSets alongside the repository for tests that need to verify calls.
-        /// </summary>
         private static (
             ProgramRepository Repo,
             Mock<DbSet<Core.Entities.Program>> ProgramsDbSet,
@@ -57,12 +59,14 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
                 IEnumerable<Core.Entities.Program> programs,
                 IEnumerable<UserProgram> userPrograms,
                 IEnumerable<User> users,
-                int fpsYear = DefaultTestFpsYear)
+                int fpsYear = DefaultTestFpsYear,
+                string userEmailId = "test@example.com")
         {
-            var fpsYearContext = Substitute.For<IFpsYearContext>();
-            fpsYearContext.FPSYear.Returns(fpsYear);
+            var requestContext = Substitute.For<IFpsRequestContext>();
+            requestContext.FpsYear.Returns(fpsYear);
+            requestContext.UserEmailId.Returns(userEmailId);
 
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestContext);
 
             var programsMockSet = RepositoryTestHelper.CreateMockDbSet(programs);
             var userProgramsMockSet = RepositoryTestHelper.CreateMockDbSet(userPrograms);
@@ -76,9 +80,93 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
             mockContext.Setup(x => x.UserPrograms).Returns(userProgramsMockSet.Object);
             mockContext.Setup(x => x.Users).Returns(usersMockSet.Object);
 
-            var repo = new ProgramRepository(mockContext.Object, fpsYearContext);
+            var repo = new ProgramRepository(mockContext.Object, requestContext);
             return (repo, programsMockSet, userProgramsMockSet, mockContext);
         }
+
+        #region GetAllProgramsAsync
+
+        [Fact]
+        public async Task GetAllProgramsAsync_ReturnsPrograms_WhenUserEmailMatchesExactly()
+        {
+            // Arrange — DB email already lowercase, matches the normalised UserEmailId
+            var views = new List<ProgramView>
+            {
+                new() { ProgramNo = "P001", ProgramName = "Alpha", UserEmail = "test@example.com" },
+                new() { ProgramNo = "P002", ProgramName = "Beta",  UserEmail = "test@example.com" }
+            };
+            var repo = CreateRepository([], [], [], programViews: views);
+
+            // Act
+            var result = (await repo.GetAllProgramsAsync()).ToList();
+
+            // Assert
+            Assert.Equal(2, result.Count);
+        }
+
+        [Theory]
+        [InlineData("Test@Example.COM")]
+        [InlineData("TEST@EXAMPLE.COM")]
+        [InlineData("Test@example.com")]
+        public async Task GetAllProgramsAsync_ReturnsPrograms_WhenDbEmailIsMixedCase(string dbEmail)
+        {
+            // Arrange — DB stores mixed-case email; middleware normalises incoming to lowercase.
+            // The query must use LOWER(UserEmail) so the comparison still matches.
+            var views = new List<ProgramView>
+            {
+                new() { ProgramNo = "P001", ProgramName = "Alpha", UserEmail = dbEmail }
+            };
+            var repo = CreateRepository([], [], [],
+                userEmailId: "test@example.com", // lowercase — as set by middleware
+                programViews: views);
+
+            // Act
+            var result = (await repo.GetAllProgramsAsync()).ToList();
+
+            // Assert — must find the record despite casing mismatch in DB
+            Assert.Single(result);
+            Assert.Equal("P001", result[0].ProgramNo);
+        }
+
+        [Fact]
+        public async Task GetAllProgramsAsync_ExcludesPrograms_WhenEmailBelongsToDifferentUser()
+        {
+            // Arrange — two records with different emails; only the matching one should be returned
+            var views = new List<ProgramView>
+            {
+                new() { ProgramNo = "P001", UserEmail = "test@example.com" },
+                new() { ProgramNo = "P002", UserEmail = "other@example.com" }
+            };
+            var repo = CreateRepository([], [], [],
+                userEmailId: "test@example.com",
+                programViews: views);
+
+            // Act
+            var result = (await repo.GetAllProgramsAsync()).ToList();
+
+            // Assert
+            Assert.Single(result);
+            Assert.Equal("P001", result[0].ProgramNo);
+        }
+
+        [Fact]
+        public async Task GetAllProgramsAsync_ExcludesPrograms_WhenDbEmailIsNull()
+        {
+            // Arrange — null UserEmail in DB must not match any user
+            var views = new List<ProgramView>
+            {
+                new() { ProgramNo = "P001", UserEmail = null }
+            };
+            var repo = CreateRepository([], [], [], programViews: views);
+
+            // Act
+            var result = (await repo.GetAllProgramsAsync()).ToList();
+
+            // Assert
+            Assert.Empty(result);
+        }
+
+        #endregion
 
         #region GetProgramByIdAsync
 
@@ -88,7 +176,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
             // Arrange
             var programs = new List<Core.Entities.Program>
             {
-                new() { ProgramNo = "P001", FpsCalYear = DefaultTestFpsYear }
+                new() { ProgramNo = "P001", FpsYear = DefaultTestFpsYear }
             };
             var repo = CreateRepository(programs, [], []);
 
@@ -118,7 +206,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
             // Arrange
             var programs = new List<Core.Entities.Program>
             {
-                new() { ProgramNo = "P001", ProgramName = "Program One", FpsCalYear = DefaultTestFpsYear }
+                new() { ProgramNo = "P001", ProgramName = "Program One", FpsYear = DefaultTestFpsYear }
             };
             var repo = CreateRepository(programs, [], []);
 
@@ -173,7 +261,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
             // Assert
             Assert.NotNull(result);
             Assert.Equal("P001", result.ProgramNo);
-            Assert.Equal(DefaultTestFpsYear, result.FpsCalYear);
+            Assert.Equal(DefaultTestFpsYear, result.FpsYear);
             programsMockSet.Verify(x => x.Add(It.IsAny<Core.Entities.Program>()), Times.Once);
             userProgramsMockSet.Verify(x => x.Add(It.IsAny<UserProgram>()), Times.Once);
             RepositoryTestHelper.VerifySaveChanges(mockContext);
@@ -201,7 +289,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
             Assert.NotNull(capturedUserProgram);
             Assert.Equal("P001", capturedUserProgram!.ProgramNo);
             Assert.Equal(7, capturedUserProgram.UserID);
-            Assert.Equal(DefaultTestFpsYear, capturedUserProgram.FpsCalYear);
+            Assert.Equal(DefaultTestFpsYear, capturedUserProgram.FpsYear);
         }
 
         [Fact]
@@ -235,7 +323,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
             var result = await repo.AddProgramAsync(newProgram);
 
             // Assert
-            Assert.Equal(customYear, result.FpsCalYear);
+            Assert.Equal(customYear, result.FpsYear);
         }
 
         #endregion
@@ -278,7 +366,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
         {
             // Arrange — UserProgram link already exists → should NOT add a duplicate
             var dboUser = new User { UserId = 1, Username = "dbo" };
-            var existingLink = new UserProgram { ProgramNo = "P001", UserID = 1, FpsCalYear = DefaultTestFpsYear };
+            var existingLink = new UserProgram { ProgramNo = "P001", UserID = 1, FpsYear = DefaultTestFpsYear };
             var (repo, programsMockSet, userProgramsMockSet, mockContext) =
                 CreateRepositoryWithMocks([], [existingLink], [dboUser]);
 
