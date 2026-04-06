@@ -12,9 +12,9 @@ namespace Apha.FPS.DataAccess.Repositories
     public class EmployeeRepository : BaseRepository, IEmployeeRepository
     {
         private readonly FpsDbContext _dbContext;
-        private readonly IFpsYearContext _fpsYearContext;
+        private readonly IFpsRequestContext _fpsYearContext;
 
-        public EmployeeRepository(FpsDbContext dbContext, IFpsYearContext fpsYearContext) : base(dbContext)
+        public EmployeeRepository(FpsDbContext dbContext, IFpsRequestContext fpsYearContext) : base(dbContext)
         {
             _dbContext = dbContext;
             _fpsYearContext = fpsYearContext;
