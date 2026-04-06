@@ -11,9 +11,9 @@ namespace Apha.FPS.DataAccess.Data
         private const string UserId = "user_id";
         private const string FpsYear = "fpsyear";
 
-        private readonly IFpsYearContext _fPSYearContext;
+        private readonly IFpsRequestContext _fPSYearContext;
 
-        public FpsDbContext(DbContextOptions<FpsDbContext> options, IFpsYearContext fPSYearContext)
+        public FpsDbContext(DbContextOptions<FpsDbContext> options, IFpsRequestContext fPSYearContext)
             : base(options)
         {
             _fPSYearContext = fPSYearContext;
