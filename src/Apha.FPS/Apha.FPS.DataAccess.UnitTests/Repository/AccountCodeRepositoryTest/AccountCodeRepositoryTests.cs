@@ -16,7 +16,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AccountCodeRepositoryTest
         /// </summary>
         private static AccountCodeRepository CreateRepository(IEnumerable<AccountCode> accountCodes)
         {
-            var fpsYearContext = Substitute.For<IFpsYearContext>();
+            var fpsYearContext = Substitute.For<IFpsRequestContext>();
             fpsYearContext.FpsYear.Returns(2024);
 
             var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);
