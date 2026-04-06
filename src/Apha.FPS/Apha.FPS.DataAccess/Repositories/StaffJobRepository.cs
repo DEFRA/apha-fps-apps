@@ -45,7 +45,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             var query = (from s in _dbContext.StaffViews
                          join sp in _dbContext.StaffPickViews on s.StaffId equals sp.StaffId
-                         where s.UserEmail != null && s.UserEmail.Equals(_requestContext.UserEmailId, StringComparison.CurrentCultureIgnoreCase)
+                         where s.UserEmail != null && s.UserEmail.ToLower() == _requestContext.UserEmailId
                          select new StaffWorkgroupLookup
                          {
                              StaffID = s.StaffId ?? "",
@@ -178,7 +178,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     let dailyRate = (p.IsDefraProject == -1 ? pc.DefraChargeRate : pc.ChargeRate)
                     where sj.JobCode == jobCode
                         && p.UserEmail != null
-                        && p.UserEmail.Equals(_requestContext.UserEmailId, StringComparison.CurrentCultureIgnoreCase)
+                        && p.UserEmail.ToLower() == _requestContext.UserEmailId
                     select new StaffJobView
                     {
                         StaffID = sj.StaffId,
