@@ -1,7 +1,12 @@
 ﻿using Apha.Costbook.Api.Filters;
 using Apha.Costbook.Api.Mappings;
 using Apha.Costbook.Api.Middleware;
+using Apha.Costbook.Application.Interfaces;
 using Apha.Costbook.Application.Mappings;
+using Apha.Costbook.Application.Services;
+using Apha.Costbook.Core.Interfaces;
+using Apha.Costbook.DataAccess.Data;
+using Apha.Costbook.DataAccess.Repositories;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
@@ -16,8 +21,22 @@ namespace Apha.Costbook.Api.Extensions
             var services = builder.Services;
             var configuration = builder.Configuration;
 
-            // Add database context          
+            // Add database context
+            services.AddDbContext<CostbookDbContext>(options =>
+            {
+                var connectionString = builder.Configuration.GetConnectionString("FPSConnectionString")
+                    ?? throw new InvalidOperationException("Connection string 'FPSConnectionString' not found.");
 
+                options.UseNpgsql(connectionString, npgsqlOptions =>
+                {
+                    npgsqlOptions.EnableRetryOnFailure(
+                        maxRetryCount: 5,
+                        maxRetryDelay: TimeSpan.FromSeconds(10),
+                        errorCodesToAdd: null);
+
+                    npgsqlOptions.CommandTimeout(60);
+                });
+            });
 
             services.AddStackExchangeRedisCache(options =>
             {
@@ -25,8 +44,11 @@ namespace Apha.Costbook.Api.Extensions
                 options.InstanceName = "RedisInstance";
             });
 
+            
+           
 
-            // AutoMapper
+
+            // AutoMapper            
             services.AddAutoMapper(config =>
             {
                 config.AddMaps(typeof(EntityMapper).Assembly);
