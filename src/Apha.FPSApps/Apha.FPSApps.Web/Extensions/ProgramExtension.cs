@@ -110,10 +110,12 @@ namespace Apha.FPSApps.Web.Extensions
 
             app.UseSession();
             app.UseMiddleware<ExceptionMiddleware>();
-            app.UseMiddleware<FpsYearMiddleware>();
 
             app.UseAuthentication();
             app.UseAuthorization();
+
+            // FpsYearMiddleware must run after authentication to access API with bearer token
+            app.UseMiddleware<FpsYearMiddleware>();
 
             // Default route
             app.MapControllerRoute(
