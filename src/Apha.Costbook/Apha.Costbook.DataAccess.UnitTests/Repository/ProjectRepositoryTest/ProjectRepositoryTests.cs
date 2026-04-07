@@ -361,7 +361,7 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         [Theory]
         [InlineData(null)]
         [InlineData("")]
-        public async Task GetProjectByIdAsync_ReturnsNull_WhenIdIsNullOrEmpty(string id)
+        public async Task GetProjectByIdAsync_ReturnsNull_WhenIdIsNullOrEmpty(string? id)
         {
             // Arrange
             var projects = new List<Project>
@@ -371,7 +371,7 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             var repo = CreateRepository(projects);
 
             // Act
-            var result = await repo.GetProjectByIdAsync(id);
+            var result = await repo.GetProjectByIdAsync(id!);
 
             // Assert
             Assert.Null(result);
@@ -548,7 +548,7 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         [Theory]
         [InlineData(null)]
         [InlineData("")]
-        public async Task DeleteProjectAsync_ReturnsFalse_WhenIdIsNullOrEmpty(string id)
+        public async Task DeleteProjectAsync_ReturnsFalse_WhenIdIsNullOrEmpty(string? id)
         {
             // Arrange
             var projects = new List<Project>
@@ -558,7 +558,7 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             var repo = CreateRepository(projects);
 
             // Act
-            var result = await repo.DeleteProjectAsync(id);
+            var result = await repo.DeleteProjectAsync(id!);
 
             // Assert
             Assert.False(result);
@@ -733,7 +733,7 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         #region GetCurrentFinancialYear
 
         [Fact]
-        public void GetCurrentFinancialYear_ReturnsCurrentYear_WhenAfterMarch()
+        public async Task GetCurrentFinancialYear_ReturnsCurrentYear_WhenAfterMarch()
         {
             // This test validates the financial year logic
             // Note: Since GetCurrentFinancialYear is private, we test it indirectly through GetNextProjectNumberAsync
@@ -743,7 +743,7 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             var repo = CreateRepository(projects);
 
             // Act
-            var result = repo.GetNextProjectNumberAsync(null).Result;
+            var result = await repo.GetNextProjectNumberAsync(null);
 
             // Assert
             var expectedYear = DateTime.Now.Month <= 3 ? DateTime.Now.Year - 1 : DateTime.Now.Year;

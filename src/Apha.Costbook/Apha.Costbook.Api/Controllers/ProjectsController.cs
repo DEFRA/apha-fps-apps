@@ -101,7 +101,7 @@ namespace Apha.Costbook.Api.Controllers
                     
                 }
             }
-            catch (Exception ex)
+            catch 
             {
                 return StatusCode(500, false); // Return false for errors
             }
