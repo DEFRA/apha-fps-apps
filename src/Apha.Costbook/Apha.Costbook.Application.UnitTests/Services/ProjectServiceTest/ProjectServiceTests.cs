@@ -443,7 +443,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             // Arrange
             var projectDto = new ProjectDto
             {
-                ProjectId = null,
+                ProjectId = null!,
                 Projecttitle = "Test Project",
                 PreparedBy = "John Doe",
                 Startdate = new DateOnly(2024, 4, 1),
