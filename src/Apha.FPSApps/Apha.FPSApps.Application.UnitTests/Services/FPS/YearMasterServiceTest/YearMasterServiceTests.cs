@@ -36,16 +36,16 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.YearMasterServiceTest
             };
             var expectedResponse = ApiResponseDto<IEnumerable<YearMasterDto>>.SuccessResponse(yearMasters);
 
-            _fpsYearMasterApiClient.GetAllYearMastersAsync().Returns(expectedResponse);
+            _fpsYearMasterApiClient.GetAllFpsYearsAsync().Returns(expectedResponse);
 
             // Act
-            var result = await _yearMasterService.GetAllYearMastersAsync();
+            var result = await _yearMasterService.GetAllFpsYearsAsync();
 
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(3, result.Data?.Count());
-            await _fpsYearMasterApiClient.Received(1).GetAllYearMastersAsync();
+            await _fpsYearMasterApiClient.Received(1).GetAllFpsYearsAsync();
         }
 
         [Fact]
@@ -56,10 +56,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.YearMasterServiceTest
                 new List<YearMasterDto>()
             );
 
-            _fpsYearMasterApiClient.GetAllYearMastersAsync().Returns(expectedResponse);
+            _fpsYearMasterApiClient.GetAllFpsYearsAsync().Returns(expectedResponse);
 
             // Act
-            var result = await _yearMasterService.GetAllYearMastersAsync();
+            var result = await _yearMasterService.GetAllFpsYearsAsync();
 
             // Assert
             Assert.NotNull(result);
@@ -77,10 +77,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.YearMasterServiceTest
             };
             var expectedResponse = ApiResponseDto<IEnumerable<YearMasterDto>>.SuccessResponse(yearMasters);
 
-            _fpsYearMasterApiClient.GetAllYearMastersAsync().Returns(expectedResponse);
+            _fpsYearMasterApiClient.GetAllFpsYearsAsync().Returns(expectedResponse);
 
             // Act
-            var result = await _yearMasterService.GetAllYearMastersAsync();
+            var result = await _yearMasterService.GetAllFpsYearsAsync();
 
             // Assert
             Assert.NotNull(result);
@@ -102,10 +102,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.YearMasterServiceTest
                 new ApiMetaDto()
             );
 
-            _fpsYearMasterApiClient.GetAllYearMastersAsync().Returns(expectedResponse);
+            _fpsYearMasterApiClient.GetAllFpsYearsAsync().Returns(expectedResponse);
 
             // Act
-            var result = await _yearMasterService.GetAllYearMastersAsync();
+            var result = await _yearMasterService.GetAllFpsYearsAsync();
 
             // Assert
             Assert.NotNull(result);
@@ -122,13 +122,13 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.YearMasterServiceTest
                 new List<YearMasterDto>()
             );
 
-            _fpsYearMasterApiClient.GetAllYearMastersAsync().Returns(expectedResponse);
+            _fpsYearMasterApiClient.GetAllFpsYearsAsync().Returns(expectedResponse);
 
             // Act
-            await _yearMasterService.GetAllYearMastersAsync();
+            await _yearMasterService.GetAllFpsYearsAsync();
 
             // Assert
-            await _fpsYearMasterApiClient.Received(1).GetAllYearMastersAsync();
+            await _fpsYearMasterApiClient.Received(1).GetAllFpsYearsAsync();
         }
 
         [Fact]
@@ -143,10 +143,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.YearMasterServiceTest
             };
             var expectedResponse = ApiResponseDto<IEnumerable<YearMasterDto>>.SuccessResponse(yearMasters);
 
-            _fpsYearMasterApiClient.GetAllYearMastersAsync().Returns(expectedResponse);
+            _fpsYearMasterApiClient.GetAllFpsYearsAsync().Returns(expectedResponse);
 
             // Act
-            var result = await _yearMasterService.GetAllYearMastersAsync();
+            var result = await _yearMasterService.GetAllFpsYearsAsync();
 
             // Assert
             Assert.NotNull(result);
@@ -179,17 +179,17 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.YearMasterServiceTest
                 new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1 }
             );
 
-            _fpsYearMasterApiClient.GetAllYearMastersPagedAsync(queryParameters).Returns(expectedResponse);
+            _fpsYearMasterApiClient.GetAllFpsYearsPagedAsync(queryParameters).Returns(expectedResponse);
 
             // Act
-            var result = await _yearMasterService.GetAllYearMastersPagedAsync(queryParameters);
+            var result = await _yearMasterService.GetAllFpsYearsPagedAsync(queryParameters);
 
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Single(result.Data!);
             Assert.Equal(2024, result.Data![0].FpsYear);
-            await _fpsYearMasterApiClient.Received(1).GetAllYearMastersPagedAsync(queryParameters);
+            await _fpsYearMasterApiClient.Received(1).GetAllFpsYearsPagedAsync(queryParameters);
         }
 
         [Fact]
@@ -206,10 +206,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.YearMasterServiceTest
                 new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 0 }
             );
 
-            _fpsYearMasterApiClient.GetAllYearMastersPagedAsync(queryParameters).Returns(expectedResponse);
+            _fpsYearMasterApiClient.GetAllFpsYearsPagedAsync(queryParameters).Returns(expectedResponse);
 
             // Act
-            var result = await _yearMasterService.GetAllYearMastersPagedAsync(queryParameters);
+            var result = await _yearMasterService.GetAllFpsYearsPagedAsync(queryParameters);
 
             // Assert
             Assert.NotNull(result);
@@ -242,10 +242,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.YearMasterServiceTest
                 }
             );
 
-            _fpsYearMasterApiClient.GetAllYearMastersPagedAsync(queryParameters).Returns(expectedResponse);
+            _fpsYearMasterApiClient.GetAllFpsYearsPagedAsync(queryParameters).Returns(expectedResponse);
 
             // Act
-            var result = await _yearMasterService.GetAllYearMastersPagedAsync(queryParameters);
+            var result = await _yearMasterService.GetAllFpsYearsPagedAsync(queryParameters);
 
             // Assert
             Assert.NotNull(result);
@@ -271,13 +271,13 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.YearMasterServiceTest
                 new PaginationDto()
             );
 
-            _fpsYearMasterApiClient.GetAllYearMastersPagedAsync(queryParameters).Returns(expectedResponse);
+            _fpsYearMasterApiClient.GetAllFpsYearsPagedAsync(queryParameters).Returns(expectedResponse);
 
             // Act
-            await _yearMasterService.GetAllYearMastersPagedAsync(queryParameters);
+            await _yearMasterService.GetAllFpsYearsPagedAsync(queryParameters);
 
             // Assert
-            await _fpsYearMasterApiClient.Received(1).GetAllYearMastersPagedAsync(queryParameters);
+            await _fpsYearMasterApiClient.Received(1).GetAllFpsYearsPagedAsync(queryParameters);
         }
 
         [Fact]
@@ -294,10 +294,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.YearMasterServiceTest
                 new ApiMetaDto()
             );
 
-            _fpsYearMasterApiClient.GetAllYearMastersPagedAsync(queryParameters).Returns(expectedResponse);
+            _fpsYearMasterApiClient.GetAllFpsYearsPagedAsync(queryParameters).Returns(expectedResponse);
 
             // Act
-            var result = await _yearMasterService.GetAllYearMastersPagedAsync(queryParameters);
+            var result = await _yearMasterService.GetAllFpsYearsPagedAsync(queryParameters);
 
             // Assert
             Assert.NotNull(result);
@@ -322,13 +322,13 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.YearMasterServiceTest
                 new PaginationDto()
             );
 
-            _fpsYearMasterApiClient.GetAllYearMastersPagedAsync(queryParameters).Returns(expectedResponse);
+            _fpsYearMasterApiClient.GetAllFpsYearsPagedAsync(queryParameters).Returns(expectedResponse);
 
             // Act
-            await _yearMasterService.GetAllYearMastersPagedAsync(queryParameters);
+            await _yearMasterService.GetAllFpsYearsPagedAsync(queryParameters);
 
             // Assert
-            await _fpsYearMasterApiClient.Received(1).GetAllYearMastersPagedAsync(Arg.Is<QueryParameters<int>>(q =>
+            await _fpsYearMasterApiClient.Received(1).GetAllFpsYearsPagedAsync(Arg.Is<QueryParameters<int>>(q =>
                 q.SortBy == "FpsYear" &&
                 q.Descending == true
             ));
@@ -353,10 +353,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.YearMasterServiceTest
             };
             var expectedResponse = ApiResponseDto<YearMasterDto>.SuccessResponse(yearMaster);
 
-            _fpsYearMasterApiClient.GetYearMasterByIdAsync(fpsYear).Returns(expectedResponse);
+            _fpsYearMasterApiClient.GetFpsYearByIdAsync(fpsYear).Returns(expectedResponse);
 
             // Act
-            var result = await _yearMasterService.GetYearMasterByIdAsync(fpsYear);
+            var result = await _yearMasterService.GetFpsYearByIdAsync(fpsYear);
 
             // Assert
             Assert.NotNull(result);
@@ -364,7 +364,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.YearMasterServiceTest
             Assert.NotNull(result.Data);
             Assert.Equal(fpsYear, result.Data.FpsYear);
             Assert.Equal("Open", result.Data.YearStatus);
-            await _fpsYearMasterApiClient.Received(1).GetYearMasterByIdAsync(fpsYear);
+            await _fpsYearMasterApiClient.Received(1).GetFpsYearByIdAsync(fpsYear);
         }
 
         [Fact]
@@ -378,10 +378,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.YearMasterServiceTest
             };
             var expectedResponse = ApiResponseDto<YearMasterDto>.FailureResponse(errors, new ApiMetaDto());
 
-            _fpsYearMasterApiClient.GetYearMasterByIdAsync(fpsYear).Returns(expectedResponse);
+            _fpsYearMasterApiClient.GetFpsYearByIdAsync(fpsYear).Returns(expectedResponse);
 
             // Act
-            var result = await _yearMasterService.GetYearMasterByIdAsync(fpsYear);
+            var result = await _yearMasterService.GetFpsYearByIdAsync(fpsYear);
 
             // Assert
             Assert.NotNull(result);
@@ -399,13 +399,13 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.YearMasterServiceTest
             var expectedResponse = ApiResponseDto<YearMasterDto>.SuccessResponse(
                 new YearMasterDto { FpsYear = fpsYear }
             );
-            _fpsYearMasterApiClient.GetYearMasterByIdAsync(fpsYear).Returns(expectedResponse);
+            _fpsYearMasterApiClient.GetFpsYearByIdAsync(fpsYear).Returns(expectedResponse);
 
             // Act
-            await _yearMasterService.GetYearMasterByIdAsync(fpsYear);
+            await _yearMasterService.GetFpsYearByIdAsync(fpsYear);
 
             // Assert
-            await _fpsYearMasterApiClient.Received(1).GetYearMasterByIdAsync(fpsYear);
+            await _fpsYearMasterApiClient.Received(1).GetFpsYearByIdAsync(fpsYear);
         }
 
         [Fact]
@@ -422,10 +422,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.YearMasterServiceTest
             };
             var expectedResponse = ApiResponseDto<YearMasterDto>.SuccessResponse(yearMaster);
 
-            _fpsYearMasterApiClient.GetYearMasterByIdAsync(fpsYear).Returns(expectedResponse);
+            _fpsYearMasterApiClient.GetFpsYearByIdAsync(fpsYear).Returns(expectedResponse);
 
             // Act
-            var result = await _yearMasterService.GetYearMasterByIdAsync(fpsYear);
+            var result = await _yearMasterService.GetFpsYearByIdAsync(fpsYear);
 
             // Assert
             Assert.NotNull(result);
@@ -447,10 +447,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.YearMasterServiceTest
             };
             var expectedResponse = ApiResponseDto<YearMasterDto>.SuccessResponse(yearMaster);
 
-            _fpsYearMasterApiClient.GetYearMasterByIdAsync(fpsYear).Returns(expectedResponse);
+            _fpsYearMasterApiClient.GetFpsYearByIdAsync(fpsYear).Returns(expectedResponse);
 
             // Act
-            var result = await _yearMasterService.GetYearMasterByIdAsync(fpsYear);
+            var result = await _yearMasterService.GetFpsYearByIdAsync(fpsYear);
 
             // Assert
             Assert.NotNull(result);
@@ -469,10 +469,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.YearMasterServiceTest
             };
             var expectedResponse = ApiResponseDto<YearMasterDto>.FailureResponse(errors, new ApiMetaDto());
 
-            _fpsYearMasterApiClient.GetYearMasterByIdAsync(fpsYear).Returns(expectedResponse);
+            _fpsYearMasterApiClient.GetFpsYearByIdAsync(fpsYear).Returns(expectedResponse);
 
             // Act
-            var result = await _yearMasterService.GetYearMasterByIdAsync(fpsYear);
+            var result = await _yearMasterService.GetFpsYearByIdAsync(fpsYear);
 
             // Assert
             Assert.NotNull(result);
@@ -500,10 +500,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.YearMasterServiceTest
             };
             var expectedResponse = ApiResponseDto<IEnumerable<YearMasterDto>>.SuccessResponse(yearMasters);
 
-            _fpsYearMasterApiClient.GetAllYearMastersAsync().Returns(expectedResponse);
+            _fpsYearMasterApiClient.GetAllFpsYearsAsync().Returns(expectedResponse);
 
             // Act
-            var result = await _yearMasterService.GetAllYearMastersAsync();
+            var result = await _yearMasterService.GetAllFpsYearsAsync();
 
             // Assert
             Assert.NotNull(result);
@@ -527,13 +527,13 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.YearMasterServiceTest
                 new PaginationDto()
             );
 
-            _fpsYearMasterApiClient.GetAllYearMastersPagedAsync(queryParameters).Returns(expectedResponse);
+            _fpsYearMasterApiClient.GetAllFpsYearsPagedAsync(queryParameters).Returns(expectedResponse);
 
             // Act
-            await _yearMasterService.GetAllYearMastersPagedAsync(queryParameters);
+            await _yearMasterService.GetAllFpsYearsPagedAsync(queryParameters);
 
             // Assert
-            await _fpsYearMasterApiClient.Received(1).GetAllYearMastersPagedAsync(Arg.Is<QueryParameters<int>>(q =>
+            await _fpsYearMasterApiClient.Received(1).GetAllFpsYearsPagedAsync(Arg.Is<QueryParameters<int>>(q =>
                 q.Page == 1 &&
                 q.PageSize == 10 &&
                 q.Filter == 2024 &&
@@ -550,13 +550,13 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.YearMasterServiceTest
             var yearMaster = new YearMasterDto { FpsYear = fpsYear };
             var expectedResponse = ApiResponseDto<YearMasterDto>.SuccessResponse(yearMaster);
 
-            _fpsYearMasterApiClient.GetYearMasterByIdAsync(fpsYear).Returns(expectedResponse);
+            _fpsYearMasterApiClient.GetFpsYearByIdAsync(fpsYear).Returns(expectedResponse);
 
             // Act
-            await _yearMasterService.GetYearMasterByIdAsync(fpsYear);
+            await _yearMasterService.GetFpsYearByIdAsync(fpsYear);
 
             // Assert
-            await _fpsYearMasterApiClient.Received(1).GetYearMasterByIdAsync(Arg.Is<int>(y => y == fpsYear));
+            await _fpsYearMasterApiClient.Received(1).GetFpsYearByIdAsync(Arg.Is<int>(y => y == fpsYear));
         }
 
         [Fact]
@@ -569,13 +569,13 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.YearMasterServiceTest
                 new PaginationDto()
             );
 
-            _fpsYearMasterApiClient.GetAllYearMastersPagedAsync(queryParameters).Returns(expectedResponse);
+            _fpsYearMasterApiClient.GetAllFpsYearsPagedAsync(queryParameters).Returns(expectedResponse);
 
             // Act
-            await _yearMasterService.GetAllYearMastersPagedAsync(queryParameters);
+            await _yearMasterService.GetAllFpsYearsPagedAsync(queryParameters);
 
             // Assert
-            await _fpsYearMasterApiClient.Received(1).GetAllYearMastersPagedAsync(Arg.Any<QueryParameters<int>>());
+            await _fpsYearMasterApiClient.Received(1).GetAllFpsYearsPagedAsync(Arg.Any<QueryParameters<int>>());
         }
 
         #endregion

@@ -40,7 +40,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearMasterControllerTest
             };
 
             var serviceResponse = ApiResponseDto<IEnumerable<YearMasterDto>>.SuccessResponse(yearMasterDtos);
-            _yearMasterService.GetAllYearMastersAsync().Returns(serviceResponse);
+            _yearMasterService.GetAllFpsYearsAsync().Returns(serviceResponse);
 
             // Act
             var result = await _controller.GetYearMasterDropdown();
@@ -63,7 +63,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearMasterControllerTest
             var lastItem = data[2];
             Assert.Equal(2023, lastItem.GetProperty("value").GetInt32());
 
-            await _yearMasterService.Received(1).GetAllYearMastersAsync();
+            await _yearMasterService.Received(1).GetAllFpsYearsAsync();
         }
 
         [Fact]
@@ -78,7 +78,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearMasterControllerTest
             };
 
             var serviceResponse = ApiResponseDto<IEnumerable<YearMasterDto>>.SuccessResponse(yearMasterDtos);
-            _yearMasterService.GetAllYearMastersAsync().Returns(serviceResponse);
+            _yearMasterService.GetAllFpsYearsAsync().Returns(serviceResponse);
 
             // Act
             var result = await _controller.GetYearMasterDropdown();
@@ -108,7 +108,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearMasterControllerTest
             };
 
             var serviceResponse = ApiResponseDto<IEnumerable<YearMasterDto>>.SuccessResponse(yearMasterDtos);
-            _yearMasterService.GetAllYearMastersAsync().Returns(serviceResponse);
+            _yearMasterService.GetAllFpsYearsAsync().Returns(serviceResponse);
 
             // Act
             var result = await _controller.GetYearMasterDropdown();
@@ -130,7 +130,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearMasterControllerTest
             var emptyYearMasters = new List<YearMasterDto>();
             var serviceResponse = ApiResponseDto<IEnumerable<YearMasterDto>>.SuccessResponse(emptyYearMasters);
 
-            _yearMasterService.GetAllYearMastersAsync().Returns(serviceResponse);
+            _yearMasterService.GetAllFpsYearsAsync().Returns(serviceResponse);
 
             // Act
             var result = await _controller.GetYearMasterDropdown();
@@ -143,7 +143,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearMasterControllerTest
             var data = value.GetProperty("data");
             Assert.Equal(0, data.GetArrayLength());
 
-            await _yearMasterService.Received(1).GetAllYearMastersAsync();
+            await _yearMasterService.Received(1).GetAllFpsYearsAsync();
         }
 
         [Fact]
@@ -157,7 +157,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearMasterControllerTest
             };
 
             var serviceResponse = ApiResponseDto<IEnumerable<YearMasterDto>>.SuccessResponse(yearMasterDtos);
-            _yearMasterService.GetAllYearMastersAsync().Returns(serviceResponse);
+            _yearMasterService.GetAllFpsYearsAsync().Returns(serviceResponse);
 
             // Act
             var result = await _controller.GetYearMasterDropdown();
@@ -176,7 +176,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearMasterControllerTest
         {
             // Arrange
             var serviceResponse = ApiResponseDto<IEnumerable<YearMasterDto>>.SuccessResponse((IEnumerable<YearMasterDto>)null!);
-            _yearMasterService.GetAllYearMastersAsync().Returns(serviceResponse);
+            _yearMasterService.GetAllFpsYearsAsync().Returns(serviceResponse);
 
             // Act
             var result = await _controller.GetYearMasterDropdown();
@@ -188,7 +188,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearMasterControllerTest
             Assert.False(value.GetProperty("success").GetBoolean());
             Assert.Equal("Failed to retrieve year masters", value.GetProperty("message").GetString());
 
-            await _yearMasterService.Received(1).GetAllYearMastersAsync();
+            await _yearMasterService.Received(1).GetAllFpsYearsAsync();
         }
 
         [Fact]
@@ -201,7 +201,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearMasterControllerTest
             };
             var serviceResponse = ApiResponseDto<IEnumerable<YearMasterDto>>.FailureResponse(errors, new ApiMetaDto());
 
-            _yearMasterService.GetAllYearMastersAsync().Returns(serviceResponse);
+            _yearMasterService.GetAllFpsYearsAsync().Returns(serviceResponse);
 
             // Act
             var result = await _controller.GetYearMasterDropdown();
@@ -213,7 +213,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearMasterControllerTest
             Assert.False(value.GetProperty("success").GetBoolean());
             Assert.Equal("Failed to retrieve year masters", value.GetProperty("message").GetString());
 
-            await _yearMasterService.Received(1).GetAllYearMastersAsync();
+            await _yearMasterService.Received(1).GetAllFpsYearsAsync();
         }
 
         [Fact]
@@ -226,7 +226,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearMasterControllerTest
             };
 
             var serviceResponse = ApiResponseDto<IEnumerable<YearMasterDto>>.SuccessResponse(yearMasterDtos);
-            _yearMasterService.GetAllYearMastersAsync().Returns(serviceResponse);
+            _yearMasterService.GetAllFpsYearsAsync().Returns(serviceResponse);
 
             // Act
             var result = await _controller.GetYearMasterDropdown();
@@ -253,7 +253,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearMasterControllerTest
             };
 
             var serviceResponse = ApiResponseDto<IEnumerable<YearMasterDto>>.SuccessResponse(yearMasterDtos);
-            _yearMasterService.GetAllYearMastersAsync().Returns(serviceResponse);
+            _yearMasterService.GetAllFpsYearsAsync().Returns(serviceResponse);
 
             // Act
             var result = await _controller.GetYearMasterDropdown();
@@ -290,7 +290,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearMasterControllerTest
             };
 
             var serviceResponse = ApiResponseDto<IEnumerable<YearMasterDto>>.SuccessResponse(yearMasterDtos);
-            _yearMasterService.GetAllYearMastersAsync().Returns(serviceResponse);
+            _yearMasterService.GetAllFpsYearsAsync().Returns(serviceResponse);
 
             // Act
             var result = await _controller.GetYearMasterDropdown();
@@ -325,7 +325,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearMasterControllerTest
             };
 
             var serviceResponse = ApiResponseDto<IEnumerable<YearMasterDto>>.SuccessResponse(yearMasterDtos);
-            _yearMasterService.GetAllYearMastersAsync().Returns(serviceResponse);
+            _yearMasterService.GetAllFpsYearsAsync().Returns(serviceResponse);
 
             // Act
             var result = await _controller.GetYearMasterDropdown();
@@ -362,7 +362,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearMasterControllerTest
             }
 
             var serviceResponse = ApiResponseDto<IEnumerable<YearMasterDto>>.SuccessResponse(yearMasterDtos);
-            _yearMasterService.GetAllYearMastersAsync().Returns(serviceResponse);
+            _yearMasterService.GetAllFpsYearsAsync().Returns(serviceResponse);
 
             // Act
             var result = await _controller.GetYearMasterDropdown();
@@ -384,7 +384,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearMasterControllerTest
         {
             // Arrange
             var serviceResponse = ApiResponseDto<IEnumerable<YearMasterDto>>.SuccessResponse((IEnumerable<YearMasterDto>)null!);
-            _yearMasterService.GetAllYearMastersAsync().Returns(serviceResponse);
+            _yearMasterService.GetAllFpsYearsAsync().Returns(serviceResponse);
 
             // Act
             var result = await _controller.GetYearMasterDropdown();
@@ -396,7 +396,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearMasterControllerTest
             Assert.False(value.GetProperty("success").GetBoolean());
             Assert.Equal("Failed to retrieve year masters", value.GetProperty("message").GetString());
 
-            await _yearMasterService.Received(1).GetAllYearMastersAsync();
+            await _yearMasterService.Received(1).GetAllFpsYearsAsync();
         }
 
         [Fact]
@@ -409,7 +409,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearMasterControllerTest
             };
             var serviceResponse = ApiResponseDto<IEnumerable<YearMasterDto>>.FailureResponse(errors, new ApiMetaDto());
 
-            _yearMasterService.GetAllYearMastersAsync().Returns(serviceResponse);
+            _yearMasterService.GetAllFpsYearsAsync().Returns(serviceResponse);
 
             // Act
             var result = await _controller.GetYearMasterDropdown();
@@ -421,14 +421,14 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearMasterControllerTest
             Assert.False(value.GetProperty("success").GetBoolean());
             Assert.Equal("Failed to retrieve year masters", value.GetProperty("message").GetString());
 
-            await _yearMasterService.Received(1).GetAllYearMastersAsync();
+            await _yearMasterService.Received(1).GetAllFpsYearsAsync();
         }
 
         [Fact]
         public async Task GetYearMasterDropdown_Error_ServiceThrows()
         {
             // Arrange
-            _yearMasterService.GetAllYearMastersAsync()
+            _yearMasterService.GetAllFpsYearsAsync()
                 .Throws(new InvalidOperationException("Service error"));
 
             // Act & Assert
@@ -437,7 +437,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearMasterControllerTest
             );
 
             Assert.Equal("Service error", exception.Message);
-            await _yearMasterService.Received(1).GetAllYearMastersAsync();
+            await _yearMasterService.Received(1).GetAllFpsYearsAsync();
         }
 
         [Fact]
@@ -453,7 +453,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearMasterControllerTest
             };
 
             var serviceResponse = ApiResponseDto<IEnumerable<YearMasterDto>>.SuccessResponse(yearMasterDtos);
-            _yearMasterService.GetAllYearMastersAsync().Returns(serviceResponse);
+            _yearMasterService.GetAllFpsYearsAsync().Returns(serviceResponse);
 
             // Act
             var result = await _controller.GetYearMasterDropdown();
@@ -482,7 +482,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearMasterControllerTest
             var emptyList = new List<YearMasterDto>();
             var serviceResponse = ApiResponseDto<IEnumerable<YearMasterDto>>.SuccessResponse(emptyList);
 
-            _yearMasterService.GetAllYearMastersAsync().Returns(serviceResponse);
+            _yearMasterService.GetAllFpsYearsAsync().Returns(serviceResponse);
 
             // Act
             var result = await _controller.GetYearMasterDropdown();

@@ -63,17 +63,17 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearMasterControllerTest
             };
             var mappedResult = new List<YearMasterRes>();
 
-            _serviceMock.GetAllYearMastersAsync().Returns(serviceResult);
+            _serviceMock.GetAllFpsYearsAsync().Returns(serviceResult);
             _mapperMock.Map<List<YearMasterRes>>(serviceResult).Returns(mappedResult);
 
             // Act
-            var result = await _controller.GetAllYearMastersAsync();
+            var result = await _controller.GetAllFpsYearsAsync();
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(mappedResult, okResult.Value);
 
-            await _serviceMock.Received(1).GetAllYearMastersAsync();
+            await _serviceMock.Received(1).GetAllFpsYearsAsync();
             _mapperMock.Received(1).Map<List<YearMasterRes>>(serviceResult);
         }
 
@@ -84,11 +84,11 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearMasterControllerTest
             var serviceResult = new List<YearMasterDto>();
             var mappedResult = new List<YearMasterRes>();
 
-            _serviceMock.GetAllYearMastersAsync().Returns(serviceResult);
+            _serviceMock.GetAllFpsYearsAsync().Returns(serviceResult);
             _mapperMock.Map<List<YearMasterRes>>(serviceResult).Returns(mappedResult);
 
             // Act
-            var result = await _controller.GetAllYearMastersAsync();
+            var result = await _controller.GetAllFpsYearsAsync();
 
             // Assert
             Assert.IsType<OkObjectResult>(result);
@@ -98,16 +98,16 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearMasterControllerTest
         public async Task GetAllYearMastersAsync_EdgeCase_NullResult_ReturnsNotFound()
         {
             // Arrange
-            _serviceMock.GetAllYearMastersAsync().Returns((IEnumerable<YearMasterDto>)null!);
+            _serviceMock.GetAllFpsYearsAsync().Returns((IEnumerable<YearMasterDto>)null!);
 
             // Act
-            var result = await _controller.GetAllYearMastersAsync();
+            var result = await _controller.GetAllFpsYearsAsync();
 
             // Assert
             var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
             Assert.Equal("Year Master records not found", notFoundResult.Value);
 
-            await _serviceMock.Received(1).GetAllYearMastersAsync();
+            await _serviceMock.Received(1).GetAllFpsYearsAsync();
             _mapperMock.DidNotReceive().Map<List<YearMasterRes>>(Arg.Any<IEnumerable<YearMasterDto>>());
         }
 
@@ -115,10 +115,10 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearMasterControllerTest
         public async Task GetAllYearMastersAsync_Error_ServiceThrows()
         {
             // Arrange
-            _serviceMock.GetAllYearMastersAsync().Throws(new Exception("Service error"));
+            _serviceMock.GetAllFpsYearsAsync().Throws(new Exception("Service error"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _controller.GetAllYearMastersAsync());
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetAllFpsYearsAsync());
         }
 
         [Fact]
@@ -126,11 +126,11 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearMasterControllerTest
         {
             // Arrange
             var serviceResult = new List<YearMasterDto>();
-            _serviceMock.GetAllYearMastersAsync().Returns(serviceResult);
+            _serviceMock.GetAllFpsYearsAsync().Returns(serviceResult);
             _mapperMock.Map<List<YearMasterRes>>(serviceResult).Throws(new Exception("Mapping error"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _controller.GetAllYearMastersAsync());
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetAllFpsYearsAsync());
         }
 
         #endregion
@@ -165,17 +165,17 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearMasterControllerTest
 
             var mappedResult = new PaginationRes<YearMasterRes>();
 
-            _serviceMock.GetAllYearMastersAsync(query).Returns(serviceResult);
+            _serviceMock.GetAllFpsYearsPagedAsync(query).Returns(serviceResult);
             _mapperMock.Map<PaginationRes<YearMasterRes>>(serviceResult).Returns(mappedResult);
 
             // Act
-            var result = await _controller.GetAllYearMastersPagedAsync(query);
+            var result = await _controller.GetAllFpsYearsPagedAsync(query);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(mappedResult, okResult.Value);
 
-            await _serviceMock.Received(1).GetAllYearMastersAsync(query);
+            await _serviceMock.Received(1).GetAllFpsYearsPagedAsync(query);
             _mapperMock.Received(1).Map<PaginationRes<YearMasterRes>>(serviceResult);
         }
 
@@ -191,11 +191,11 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearMasterControllerTest
             };
             var mappedResult = new PaginationRes<YearMasterRes>();
 
-            _serviceMock.GetAllYearMastersAsync(query).Returns(serviceResult);
+            _serviceMock.GetAllFpsYearsPagedAsync(query).Returns(serviceResult);
             _mapperMock.Map<PaginationRes<YearMasterRes>>(serviceResult).Returns(mappedResult);
 
             // Act
-            var result = await _controller.GetAllYearMastersPagedAsync(query);
+            var result = await _controller.GetAllFpsYearsPagedAsync(query);
 
             // Assert
             Assert.IsType<OkObjectResult>(result);
@@ -206,16 +206,16 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearMasterControllerTest
         {
             // Arrange
             var query = new QueryParameters<int> { Page = 1, PageSize = 10 };
-            _serviceMock.GetAllYearMastersAsync(query).Returns((PaginatedResult<YearMasterDto>)null!);
+            _serviceMock.GetAllFpsYearsPagedAsync(query).Returns((PaginatedResult<YearMasterDto>)null!);
 
             // Act
-            var result = await _controller.GetAllYearMastersPagedAsync(query);
+            var result = await _controller.GetAllFpsYearsPagedAsync(query);
 
             // Assert
             var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
             Assert.Equal("Year Master records not found", notFoundResult.Value);
 
-            await _serviceMock.Received(1).GetAllYearMastersAsync(query);
+            await _serviceMock.Received(1).GetAllFpsYearsPagedAsync(query);
             _mapperMock.DidNotReceive().Map<PaginationRes<YearMasterRes>>(Arg.Any<PaginatedResult<YearMasterDto>>());
         }
 
@@ -239,11 +239,11 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearMasterControllerTest
             };
             var mappedResult = new PaginationRes<YearMasterRes>();
 
-            _serviceMock.GetAllYearMastersAsync(query).Returns(serviceResult);
+            _serviceMock.GetAllFpsYearsPagedAsync(query).Returns(serviceResult);
             _mapperMock.Map<PaginationRes<YearMasterRes>>(serviceResult).Returns(mappedResult);
 
             // Act
-            var result = await _controller.GetAllYearMastersPagedAsync(query);
+            var result = await _controller.GetAllFpsYearsPagedAsync(query);
 
             // Assert
             Assert.IsType<OkObjectResult>(result);
@@ -276,11 +276,11 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearMasterControllerTest
             };
             var mappedResult = new PaginationRes<YearMasterRes>();
 
-            _serviceMock.GetAllYearMastersAsync(query).Returns(serviceResult);
+            _serviceMock.GetAllFpsYearsPagedAsync(query).Returns(serviceResult);
             _mapperMock.Map<PaginationRes<YearMasterRes>>(serviceResult).Returns(mappedResult);
 
             // Act
-            var result = await _controller.GetAllYearMastersPagedAsync(query);
+            var result = await _controller.GetAllFpsYearsPagedAsync(query);
 
             // Assert
             Assert.IsType<OkObjectResult>(result);
@@ -291,10 +291,10 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearMasterControllerTest
         {
             // Arrange
             var query = new QueryParameters<int> { Page = 1, PageSize = 10 };
-            _serviceMock.GetAllYearMastersAsync(query).Throws(new Exception("Service error"));
+            _serviceMock.GetAllFpsYearsPagedAsync(query).Throws(new Exception("Service error"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _controller.GetAllYearMastersPagedAsync(query));
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetAllFpsYearsPagedAsync(query));
         }
 
         [Fact]
@@ -304,11 +304,11 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearMasterControllerTest
             var query = new QueryParameters<int> { Page = 1, PageSize = 10 };
             var serviceResult = new PaginatedResult<YearMasterDto>();
 
-            _serviceMock.GetAllYearMastersAsync(query).Returns(serviceResult);
+            _serviceMock.GetAllFpsYearsPagedAsync(query).Returns(serviceResult);
             _mapperMock.Map<PaginationRes<YearMasterRes>>(serviceResult).Throws(new Exception("Mapping error"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _controller.GetAllYearMastersPagedAsync(query));
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetAllFpsYearsPagedAsync(query));
         }
 
         #endregion
@@ -329,17 +329,17 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearMasterControllerTest
             };
             var mapped = new YearMasterRes();
 
-            _serviceMock.GetYearMasterByIdAsync(fpsYear).Returns(dto);
+            _serviceMock.GetFpsYearByIdAsync(fpsYear).Returns(dto);
             _mapperMock.Map<YearMasterRes>(dto).Returns(mapped);
 
             // Act
-            var result = await _controller.GetYearMasterById(fpsYear);
+            var result = await _controller.GetFpsYearById(fpsYear);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result.Result);
             Assert.Equal(mapped, okResult.Value);
 
-            await _serviceMock.Received(1).GetYearMasterByIdAsync(fpsYear);
+            await _serviceMock.Received(1).GetFpsYearByIdAsync(fpsYear);
             _mapperMock.Received(1).Map<YearMasterRes>(dto);
         }
 
@@ -357,11 +357,11 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearMasterControllerTest
             };
             var mapped = new YearMasterRes();
 
-            _serviceMock.GetYearMasterByIdAsync(fpsYear).Returns(dto);
+            _serviceMock.GetFpsYearByIdAsync(fpsYear).Returns(dto);
             _mapperMock.Map<YearMasterRes>(dto).Returns(mapped);
 
             // Act
-            var result = await _controller.GetYearMasterById(fpsYear);
+            var result = await _controller.GetFpsYearById(fpsYear);
 
             // Assert
             Assert.IsType<OkObjectResult>(result.Result);
@@ -381,11 +381,11 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearMasterControllerTest
             };
             var mapped = new YearMasterRes();
 
-            _serviceMock.GetYearMasterByIdAsync(fpsYear).Returns(dto);
+            _serviceMock.GetFpsYearByIdAsync(fpsYear).Returns(dto);
             _mapperMock.Map<YearMasterRes>(dto).Returns(mapped);
 
             // Act
-            var result = await _controller.GetYearMasterById(fpsYear);
+            var result = await _controller.GetFpsYearById(fpsYear);
 
             // Assert
             Assert.IsType<OkObjectResult>(result.Result);
@@ -396,16 +396,16 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearMasterControllerTest
         {
             // Arrange
             var fpsYear = 9999;
-            _serviceMock.GetYearMasterByIdAsync(fpsYear).Returns((YearMasterDto?)null);
+            _serviceMock.GetFpsYearByIdAsync(fpsYear).Returns((YearMasterDto?)null);
 
             // Act
-            var result = await _controller.GetYearMasterById(fpsYear);
+            var result = await _controller.GetFpsYearById(fpsYear);
 
             // Assert
             var notFoundResult = Assert.IsType<NotFoundObjectResult>(result.Result);
             Assert.Equal($"Year Master record with FPS Year: {fpsYear} not found", notFoundResult.Value);
 
-            await _serviceMock.Received(1).GetYearMasterByIdAsync(fpsYear);
+            await _serviceMock.Received(1).GetFpsYearByIdAsync(fpsYear);
             _mapperMock.DidNotReceive().Map<YearMasterRes>(Arg.Any<YearMasterDto>());
         }
 
@@ -416,15 +416,15 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearMasterControllerTest
         public async Task GetYearMasterById_EdgeCase_InvalidYear_ReturnsNotFound(int invalidYear)
         {
             // Arrange
-            _serviceMock.GetYearMasterByIdAsync(invalidYear).Returns((YearMasterDto?)null);
+            _serviceMock.GetFpsYearByIdAsync(invalidYear).Returns((YearMasterDto?)null);
 
             // Act
-            var result = await _controller.GetYearMasterById(invalidYear);
+            var result = await _controller.GetFpsYearById(invalidYear);
 
             // Assert
             Assert.IsType<NotFoundObjectResult>(result.Result);
 
-            await _serviceMock.Received(1).GetYearMasterByIdAsync(invalidYear);
+            await _serviceMock.Received(1).GetFpsYearByIdAsync(invalidYear);
         }
 
         [Fact]
@@ -432,12 +432,12 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearMasterControllerTest
         {
             // Arrange
             var fpsYear = 2024;
-            _serviceMock.GetYearMasterByIdAsync(fpsYear).Throws(new Exception("Service error"));
+            _serviceMock.GetFpsYearByIdAsync(fpsYear).Throws(new Exception("Service error"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _controller.GetYearMasterById(fpsYear));
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetFpsYearById(fpsYear));
 
-            await _serviceMock.Received(1).GetYearMasterByIdAsync(fpsYear);
+            await _serviceMock.Received(1).GetFpsYearByIdAsync(fpsYear);
         }
 
         [Fact]
@@ -447,13 +447,13 @@ namespace Apha.FPS.Api.UnitTests.Controller.YearMasterControllerTest
             var fpsYear = 2024;
             var dto = new YearMasterDto { FpsYear = 2024 };
 
-            _serviceMock.GetYearMasterByIdAsync(fpsYear).Returns(dto);
+            _serviceMock.GetFpsYearByIdAsync(fpsYear).Returns(dto);
             _mapperMock.Map<YearMasterRes>(dto).Throws(new Exception("Mapping error"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _controller.GetYearMasterById(fpsYear));
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetFpsYearById(fpsYear));
 
-            await _serviceMock.Received(1).GetYearMasterByIdAsync(fpsYear);
+            await _serviceMock.Received(1).GetFpsYearByIdAsync(fpsYear);
         }
 
         #endregion

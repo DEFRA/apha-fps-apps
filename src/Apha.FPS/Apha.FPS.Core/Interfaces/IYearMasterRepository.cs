@@ -5,8 +5,8 @@ namespace Apha.FPS.Core.Interfaces
 {
     public interface IYearMasterRepository
     {
-        Task<IEnumerable<YearMaster>> GetAllYearMastersAsync();
-        Task<PagedData<YearMaster>> GetAllYearMastersAsync(PaginationParameters<int> query);
-        Task<YearMaster?> GetYearMasterByIdAsync(int fpsYear);
+        Task<IEnumerable<YearMaster>> GetAllFpsYearsAsync();
+        Task<PagedData<YearMaster>> GetAllFpsYearsPagedAsync(PaginationParameters<int> query);
+        Task<YearMaster?> GetFpsYearByIdAsync(int fpsYear);
     }
 }

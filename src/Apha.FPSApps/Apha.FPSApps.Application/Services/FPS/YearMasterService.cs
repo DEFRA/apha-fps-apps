@@ -15,21 +15,21 @@ namespace Apha.FPSApps.Application.Services.FPS
             _fpsClient = fpsClient;
         }
 
-        public async Task<ApiResponseDto<IEnumerable<YearMasterDto>>> GetAllYearMastersAsync()
+        public async Task<ApiResponseDto<IEnumerable<YearMasterDto>>> GetAllFpsYearsAsync()
         {
-            var yearMasters = await _fpsClient.FpsYearMaster.GetAllYearMastersAsync();
+            var yearMasters = await _fpsClient.FpsYearMaster.GetAllFpsYearsAsync();
             return yearMasters;
         }
 
-        public async Task<ApiResponseDto<List<YearMasterDto>>> GetAllYearMastersPagedAsync(QueryParameters<int> query)
+        public async Task<ApiResponseDto<List<YearMasterDto>>> GetAllFpsYearsPagedAsync(QueryParameters<int> query)
         {
-            var yearMasters = await _fpsClient.FpsYearMaster.GetAllYearMastersPagedAsync(query);
+            var yearMasters = await _fpsClient.FpsYearMaster.GetAllFpsYearsPagedAsync(query);
             return yearMasters;
         }
 
-        public async Task<ApiResponseDto<YearMasterDto>> GetYearMasterByIdAsync(int fpsYear)
+        public async Task<ApiResponseDto<YearMasterDto>> GetFpsYearByIdAsync(int fpsYear)
         {
-            var yearMaster = await _fpsClient.FpsYearMaster.GetYearMasterByIdAsync(fpsYear);
+            var yearMaster = await _fpsClient.FpsYearMaster.GetFpsYearByIdAsync(fpsYear);
             return yearMaster;
         }
     }

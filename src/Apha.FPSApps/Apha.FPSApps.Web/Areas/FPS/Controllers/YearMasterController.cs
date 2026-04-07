@@ -23,7 +23,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         [HttpGet]
         public async Task<JsonResult> GetYearMasterDropdown()
         {
-            var result = await _yearMasterService.GetAllYearMastersAsync();
+            var result = await _yearMasterService.GetAllFpsYearsAsync();
 
             if (result.Success && result.Data != null)
             {

@@ -42,11 +42,11 @@ namespace Apha.FPS.Application.UnitTests.Services.YearMasterServiceTest
                 new YearMasterDto { FpsYear = 2025, FpsYearCode = "2025", YearStatus = "Planned", Active = true }
             };
 
-            _mockRepository.GetAllYearMastersAsync().Returns(yearMasters);
+            _mockRepository.GetAllFpsYearsAsync().Returns(yearMasters);
             _mockMapper.Map<IEnumerable<YearMasterDto>>(yearMasters).Returns(expectedDtos);
 
             // Act
-            var result = await _sut.GetAllYearMastersAsync();
+            var result = await _sut.GetAllFpsYearsAsync();
 
             // Assert
             result.Should().NotBeNull();
@@ -55,7 +55,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearMasterServiceTest
             result.First().YearStatus.Should().Be("Open");
             result.Last().FpsYear.Should().Be(2025);
 
-            await _mockRepository.Received(1).GetAllYearMastersAsync();
+            await _mockRepository.Received(1).GetAllFpsYearsAsync();
             _mockMapper.Received(1).Map<IEnumerable<YearMasterDto>>(yearMasters);
         }
 
@@ -66,17 +66,17 @@ namespace Apha.FPS.Application.UnitTests.Services.YearMasterServiceTest
             var emptyYearMasters = new List<YearMaster>();
             var emptyDtos = new List<YearMasterDto>();
 
-            _mockRepository.GetAllYearMastersAsync().Returns(emptyYearMasters);
+            _mockRepository.GetAllFpsYearsAsync().Returns(emptyYearMasters);
             _mockMapper.Map<IEnumerable<YearMasterDto>>(emptyYearMasters).Returns(emptyDtos);
 
             // Act
-            var result = await _sut.GetAllYearMastersAsync();
+            var result = await _sut.GetAllFpsYearsAsync();
 
             // Assert
             result.Should().NotBeNull();
             result.Should().BeEmpty();
 
-            await _mockRepository.Received(1).GetAllYearMastersAsync();
+            await _mockRepository.Received(1).GetAllFpsYearsAsync();
             _mockMapper.Received(1).Map<IEnumerable<YearMasterDto>>(emptyYearMasters);
         }
 
@@ -94,11 +94,11 @@ namespace Apha.FPS.Application.UnitTests.Services.YearMasterServiceTest
                 new YearMasterDto { FpsYear = 2024, FpsYearCode = "2024", YearStatus = "Open", Active = true }
             };
 
-            _mockRepository.GetAllYearMastersAsync().Returns(yearMasters);
+            _mockRepository.GetAllFpsYearsAsync().Returns(yearMasters);
             _mockMapper.Map<IEnumerable<YearMasterDto>>(yearMasters).Returns(expectedDtos);
 
             // Act
-            var result = await _sut.GetAllYearMastersAsync();
+            var result = await _sut.GetAllFpsYearsAsync();
 
             // Assert
             result.Should().NotBeNull();
@@ -110,16 +110,16 @@ namespace Apha.FPS.Application.UnitTests.Services.YearMasterServiceTest
         public async Task GetAllYearMastersAsync_WhenRepositoryThrowsException_PropagatesException()
         {
             // Arrange
-            _mockRepository.GetAllYearMastersAsync()
+            _mockRepository.GetAllFpsYearsAsync()
                 .Throws(new InvalidOperationException("Database connection failed"));
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-                async () => await _sut.GetAllYearMastersAsync()
+                async () => await _sut.GetAllFpsYearsAsync()
             );
 
             exception.Message.Should().Be("Database connection failed");
-            await _mockRepository.Received(1).GetAllYearMastersAsync();
+            await _mockRepository.Received(1).GetAllFpsYearsAsync();
             _mockMapper.DidNotReceive().Map<IEnumerable<YearMasterDto>>(Arg.Any<IEnumerable<YearMaster>>());
         }
 
@@ -141,11 +141,11 @@ namespace Apha.FPS.Application.UnitTests.Services.YearMasterServiceTest
                 new YearMasterDto { FpsYear = 2025, YearStatus = "Planned" }
             };
 
-            _mockRepository.GetAllYearMastersAsync().Returns(yearMasters);
+            _mockRepository.GetAllFpsYearsAsync().Returns(yearMasters);
             _mockMapper.Map<IEnumerable<YearMasterDto>>(yearMasters).Returns(expectedDtos);
 
             // Act
-            var result = await _sut.GetAllYearMastersAsync();
+            var result = await _sut.GetAllFpsYearsAsync();
 
             // Assert
             result.Should().HaveCount(3);
@@ -207,11 +207,11 @@ namespace Apha.FPS.Application.UnitTests.Services.YearMasterServiceTest
             };
 
             _mockMapper.Map<PaginationParameters<int>>(query).Returns(mappedPaginationParams);
-            _mockRepository.GetAllYearMastersAsync(mappedPaginationParams).Returns(repositoryResult);
+            _mockRepository.GetAllFpsYearsPagedAsync(mappedPaginationParams).Returns(repositoryResult);
             _mockMapper.Map<PaginatedResult<YearMasterDto>>(repositoryResult).Returns(expectedResult);
 
             // Act
-            var result = await _sut.GetAllYearMastersAsync(query);
+            var result = await _sut.GetAllFpsYearsPagedAsync(query);
 
             // Assert
             result.Should().NotBeNull();
@@ -221,7 +221,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearMasterServiceTest
             result.PaginationData.PageNumber.Should().Be(1);
 
             _mockMapper.Received(1).Map<PaginationParameters<int>>(query);
-            await _mockRepository.Received(1).GetAllYearMastersAsync(mappedPaginationParams);
+            await _mockRepository.Received(1).GetAllFpsYearsPagedAsync(mappedPaginationParams);
             _mockMapper.Received(1).Map<PaginatedResult<YearMasterDto>>(repositoryResult);
         }
 
@@ -274,11 +274,11 @@ namespace Apha.FPS.Application.UnitTests.Services.YearMasterServiceTest
             };
 
             _mockMapper.Map<PaginationParameters<int>>(query).Returns(mappedPaginationParams);
-            _mockRepository.GetAllYearMastersAsync(mappedPaginationParams).Returns(repositoryResult);
+            _mockRepository.GetAllFpsYearsPagedAsync(mappedPaginationParams).Returns(repositoryResult);
             _mockMapper.Map<PaginatedResult<YearMasterDto>>(repositoryResult).Returns(expectedResult);
 
             // Act
-            var result = await _sut.GetAllYearMastersAsync(query);
+            var result = await _sut.GetAllFpsYearsPagedAsync(query);
 
             // Assert
             result.Should().NotBeNull();
@@ -337,11 +337,11 @@ namespace Apha.FPS.Application.UnitTests.Services.YearMasterServiceTest
             };
 
             _mockMapper.Map<PaginationParameters<int>>(query).Returns(mappedPaginationParams);
-            _mockRepository.GetAllYearMastersAsync(mappedPaginationParams).Returns(repositoryResult);
+            _mockRepository.GetAllFpsYearsPagedAsync(mappedPaginationParams).Returns(repositoryResult);
             _mockMapper.Map<PaginatedResult<YearMasterDto>>(repositoryResult).Returns(expectedResult);
 
             // Act
-            var result = await _sut.GetAllYearMastersAsync(query);
+            var result = await _sut.GetAllFpsYearsPagedAsync(query);
 
             // Assert
             result.Should().NotBeNull();
@@ -392,11 +392,11 @@ namespace Apha.FPS.Application.UnitTests.Services.YearMasterServiceTest
             };
 
             _mockMapper.Map<PaginationParameters<int>>(query).Returns(mappedPaginationParams);
-            _mockRepository.GetAllYearMastersAsync(mappedPaginationParams).Returns(emptyRepositoryResult);
+            _mockRepository.GetAllFpsYearsPagedAsync(mappedPaginationParams).Returns(emptyRepositoryResult);
             _mockMapper.Map<PaginatedResult<YearMasterDto>>(emptyRepositoryResult).Returns(emptyExpectedResult);
 
             // Act
-            var result = await _sut.GetAllYearMastersAsync(query);
+            var result = await _sut.GetAllFpsYearsPagedAsync(query);
 
             // Assert
             result.Should().NotBeNull();
@@ -413,12 +413,12 @@ namespace Apha.FPS.Application.UnitTests.Services.YearMasterServiceTest
             var mappedPaginationParams = new PaginationParameters<int> { Page = 1, PageSize = 10 };
 
             _mockMapper.Map<PaginationParameters<int>>(query).Returns(mappedPaginationParams);
-            _mockRepository.GetAllYearMastersAsync(mappedPaginationParams)
+            _mockRepository.GetAllFpsYearsPagedAsync(mappedPaginationParams)
                 .Throws(new InvalidOperationException("Database error"));
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-                async () => await _sut.GetAllYearMastersAsync(query)
+                async () => await _sut.GetAllFpsYearsPagedAsync(query)
             );
 
             exception.Message.Should().Be("Database error");
@@ -480,11 +480,11 @@ namespace Apha.FPS.Application.UnitTests.Services.YearMasterServiceTest
             };
 
             _mockMapper.Map<PaginationParameters<int>>(query).Returns(mappedPaginationParams);
-            _mockRepository.GetAllYearMastersAsync(mappedPaginationParams).Returns(repositoryResult);
+            _mockRepository.GetAllFpsYearsPagedAsync(mappedPaginationParams).Returns(repositoryResult);
             _mockMapper.Map<PaginatedResult<YearMasterDto>>(repositoryResult).Returns(expectedResult);
 
             // Act
-            var result = await _sut.GetAllYearMastersAsync(query);
+            var result = await _sut.GetAllFpsYearsPagedAsync(query);
 
             // Assert
             result.Should().NotBeNull();
@@ -518,11 +518,11 @@ namespace Apha.FPS.Application.UnitTests.Services.YearMasterServiceTest
                 Active = true
             };
 
-            _mockRepository.GetYearMasterByIdAsync(fpsYear).Returns(yearMaster);
+            _mockRepository.GetFpsYearByIdAsync(fpsYear).Returns(yearMaster);
             _mockMapper.Map<YearMasterDto?>(yearMaster).Returns(expectedDto);
 
             // Act
-            var result = await _sut.GetYearMasterByIdAsync(fpsYear);
+            var result = await _sut.GetFpsYearByIdAsync(fpsYear);
 
             // Assert
             result.Should().NotBeNull();
@@ -531,7 +531,7 @@ namespace Apha.FPS.Application.UnitTests.Services.YearMasterServiceTest
             result.YearStatus.Should().Be("Open");
             result.Active.Should().BeTrue();
 
-            await _mockRepository.Received(1).GetYearMasterByIdAsync(fpsYear);
+            await _mockRepository.Received(1).GetFpsYearByIdAsync(fpsYear);
             _mockMapper.Received(1).Map<YearMasterDto?>(yearMaster);
         }
 
@@ -541,16 +541,16 @@ namespace Apha.FPS.Application.UnitTests.Services.YearMasterServiceTest
             // Arrange
             var fpsYear = 9999;
 
-            _mockRepository.GetYearMasterByIdAsync(fpsYear).Returns((YearMaster?)null);
+            _mockRepository.GetFpsYearByIdAsync(fpsYear).Returns((YearMaster?)null);
             _mockMapper.Map<YearMasterDto?>((YearMaster?)null).Returns((YearMasterDto?)null);
 
             // Act
-            var result = await _sut.GetYearMasterByIdAsync(fpsYear);
+            var result = await _sut.GetFpsYearByIdAsync(fpsYear);
 
             // Assert
             result.Should().BeNull();
 
-            await _mockRepository.Received(1).GetYearMasterByIdAsync(fpsYear);
+            await _mockRepository.Received(1).GetFpsYearByIdAsync(fpsYear);
             _mockMapper.Received(1).Map<YearMasterDto?>((YearMaster?)null);
         }
 
@@ -561,16 +561,16 @@ namespace Apha.FPS.Application.UnitTests.Services.YearMasterServiceTest
         public async Task GetYearMasterByIdAsync_WithInvalidYear_ReturnsNull(int invalidYear)
         {
             // Arrange
-            _mockRepository.GetYearMasterByIdAsync(invalidYear).Returns((YearMaster?)null);
+            _mockRepository.GetFpsYearByIdAsync(invalidYear).Returns((YearMaster?)null);
             _mockMapper.Map<YearMasterDto?>((YearMaster?)null).Returns((YearMasterDto?)null);
 
             // Act
-            var result = await _sut.GetYearMasterByIdAsync(invalidYear);
+            var result = await _sut.GetFpsYearByIdAsync(invalidYear);
 
             // Assert
             result.Should().BeNull();
 
-            await _mockRepository.Received(1).GetYearMasterByIdAsync(invalidYear);
+            await _mockRepository.Received(1).GetFpsYearByIdAsync(invalidYear);
         }
 
         [Fact]
@@ -594,11 +594,11 @@ namespace Apha.FPS.Application.UnitTests.Services.YearMasterServiceTest
                 Active = true
             };
 
-            _mockRepository.GetYearMasterByIdAsync(fpsYear).Returns(yearMaster);
+            _mockRepository.GetFpsYearByIdAsync(fpsYear).Returns(yearMaster);
             _mockMapper.Map<YearMasterDto?>(yearMaster).Returns(expectedDto);
 
             // Act
-            var result = await _sut.GetYearMasterByIdAsync(fpsYear);
+            var result = await _sut.GetFpsYearByIdAsync(fpsYear);
 
             // Assert
             result.Should().NotBeNull();
@@ -626,11 +626,11 @@ namespace Apha.FPS.Application.UnitTests.Services.YearMasterServiceTest
                 Active = true
             };
 
-            _mockRepository.GetYearMasterByIdAsync(fpsYear).Returns(yearMaster);
+            _mockRepository.GetFpsYearByIdAsync(fpsYear).Returns(yearMaster);
             _mockMapper.Map<YearMasterDto?>(yearMaster).Returns(expectedDto);
 
             // Act
-            var result = await _sut.GetYearMasterByIdAsync(fpsYear);
+            var result = await _sut.GetFpsYearByIdAsync(fpsYear);
 
             // Assert
             result.Should().NotBeNull();
@@ -658,11 +658,11 @@ namespace Apha.FPS.Application.UnitTests.Services.YearMasterServiceTest
                 Active = false
             };
 
-            _mockRepository.GetYearMasterByIdAsync(fpsYear).Returns(yearMaster);
+            _mockRepository.GetFpsYearByIdAsync(fpsYear).Returns(yearMaster);
             _mockMapper.Map<YearMasterDto?>(yearMaster).Returns(expectedDto);
 
             // Act
-            var result = await _sut.GetYearMasterByIdAsync(fpsYear);
+            var result = await _sut.GetFpsYearByIdAsync(fpsYear);
 
             // Assert
             result.Should().NotBeNull();
@@ -674,16 +674,16 @@ namespace Apha.FPS.Application.UnitTests.Services.YearMasterServiceTest
         {
             // Arrange
             var fpsYear = 2024;
-            _mockRepository.GetYearMasterByIdAsync(fpsYear)
+            _mockRepository.GetFpsYearByIdAsync(fpsYear)
                 .Throws(new InvalidOperationException("Database connection failed"));
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-                async () => await _sut.GetYearMasterByIdAsync(fpsYear)
+                async () => await _sut.GetFpsYearByIdAsync(fpsYear)
             );
 
             exception.Message.Should().Be("Database connection failed");
-            await _mockRepository.Received(1).GetYearMasterByIdAsync(fpsYear);
+            await _mockRepository.Received(1).GetFpsYearByIdAsync(fpsYear);
             _mockMapper.DidNotReceive().Map<YearMasterDto?>(Arg.Any<YearMaster?>());
         }
 
@@ -694,17 +694,17 @@ namespace Apha.FPS.Application.UnitTests.Services.YearMasterServiceTest
             var fpsYear = 2024;
             var yearMaster = new YearMaster { FpsYear = 2024 };
 
-            _mockRepository.GetYearMasterByIdAsync(fpsYear).Returns(yearMaster);
+            _mockRepository.GetFpsYearByIdAsync(fpsYear).Returns(yearMaster);
             _mockMapper.Map<YearMasterDto?>(yearMaster)
                 .Throws(new AutoMapperMappingException("Mapping failed"));
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<AutoMapperMappingException>(
-                async () => await _sut.GetYearMasterByIdAsync(fpsYear)
+                async () => await _sut.GetFpsYearByIdAsync(fpsYear)
             );
 
             exception.Message.Should().Be("Mapping failed");
-            await _mockRepository.Received(1).GetYearMasterByIdAsync(fpsYear);
+            await _mockRepository.Received(1).GetFpsYearByIdAsync(fpsYear);
         }
 
         #endregion

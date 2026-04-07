@@ -6,8 +6,8 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
 {
     public interface IFpsYearMasterApiClient
     {
-        Task<ApiResponseDto<IEnumerable<YearMasterDto>>> GetAllYearMastersAsync();
-        Task<ApiResponseDto<List<YearMasterDto>>> GetAllYearMastersPagedAsync(QueryParameters<int> query);
-        Task<ApiResponseDto<YearMasterDto>> GetYearMasterByIdAsync(int fpsYear);
+        Task<ApiResponseDto<IEnumerable<YearMasterDto>>> GetAllFpsYearsAsync();
+        Task<ApiResponseDto<List<YearMasterDto>>> GetAllFpsYearsPagedAsync(QueryParameters<int> query);
+        Task<ApiResponseDto<YearMasterDto>> GetFpsYearByIdAsync(int fpsYear);
     }
 }

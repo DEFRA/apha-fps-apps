@@ -32,7 +32,7 @@ namespace Apha.FPSApps.Web.Middleware
     // Get all year masters once - single DB call
     try
     {
-        var allYearsResponse = await yearMasterService.GetAllYearMastersAsync();
+        var allYearsResponse = await yearMasterService.GetAllFpsYearsAsync();
         var allYears = allYearsResponse?.Data;
 
         if (allYears != null)

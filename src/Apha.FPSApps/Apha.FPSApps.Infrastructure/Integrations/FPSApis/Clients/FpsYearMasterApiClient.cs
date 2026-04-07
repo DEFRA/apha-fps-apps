@@ -21,7 +21,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             _mapper = mapper;
         }
 
-        public async Task<ApiResponseDto<IEnumerable<YearMasterDto>>> GetAllYearMastersAsync()
+        public async Task<ApiResponseDto<IEnumerable<YearMasterDto>>> GetAllFpsYearsAsync()
         {
             try
             {
@@ -52,7 +52,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        public async Task<ApiResponseDto<List<YearMasterDto>>> GetAllYearMastersPagedAsync(QueryParameters<int> query)
+        public async Task<ApiResponseDto<List<YearMasterDto>>> GetAllFpsYearsPagedAsync(QueryParameters<int> query)
         {
             try
             {
@@ -84,7 +84,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        public async Task<ApiResponseDto<YearMasterDto>> GetYearMasterByIdAsync(int fpsYear)
+        public async Task<ApiResponseDto<YearMasterDto>> GetFpsYearByIdAsync(int fpsYear)
         {
             try
             {

@@ -56,7 +56,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearMasterApiClie
             _mapper.Map<ApiResponseDto<IEnumerable<YearMasterDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
-            var result = await _client.GetAllYearMastersAsync();
+            var result = await _client.GetAllFpsYearsAsync();
 
             // Assert
             Assert.NotNull(result);
@@ -82,7 +82,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearMasterApiClie
             _mapper.Map<ApiResponseDto<IEnumerable<YearMasterDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
-            var result = await _client.GetAllYearMastersAsync();
+            var result = await _client.GetAllFpsYearsAsync();
 
             // Assert
             Assert.NotNull(result);
@@ -114,7 +114,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearMasterApiClie
             _mapper.Map<ApiResponseDto<IEnumerable<YearMasterDto>>>(apiResponse).Returns(mappedResponse);
 
             // Act
-            var result = await _client.GetAllYearMastersAsync();
+            var result = await _client.GetAllFpsYearsAsync();
 
             // Assert
             Assert.NotNull(result);
@@ -131,7 +131,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearMasterApiClie
                 .ThrowsAsync(new Exception("Network error"));
 
             // Act
-            var result = await _client.GetAllYearMastersAsync();
+            var result = await _client.GetAllFpsYearsAsync();
 
             // Assert
             Assert.NotNull(result);
@@ -157,7 +157,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearMasterApiClie
             _mapper.Map<ApiResponseDto<IEnumerable<YearMasterDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
-            await _client.GetAllYearMastersAsync();
+            await _client.GetAllFpsYearsAsync();
 
             // Assert
             await _httpExecutor.Received(1).GetAsync<List<YearMasterRes>>("api/yearmaster");
@@ -202,7 +202,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearMasterApiClie
             _mapper.Map<ApiResponseDto<List<YearMasterDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
-            var result = await _client.GetAllYearMastersPagedAsync(queryParameters);
+            var result = await _client.GetAllFpsYearsPagedAsync(queryParameters);
 
             // Assert
             Assert.NotNull(result);
@@ -237,7 +237,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearMasterApiClie
             _mapper.Map<ApiResponseDto<List<YearMasterDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
-            await _client.GetAllYearMastersPagedAsync(queryParameters);
+            await _client.GetAllFpsYearsPagedAsync(queryParameters);
 
             // Assert
             await _httpExecutor.Received(1).GetAsync<List<YearMasterRes>>(Arg.Is<string>(url =>
@@ -287,7 +287,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearMasterApiClie
             _mapper.Map<ApiResponseDto<List<YearMasterDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
-            var result = await _client.GetAllYearMastersPagedAsync(queryParameters);
+            var result = await _client.GetAllFpsYearsPagedAsync(queryParameters);
 
             // Assert
             Assert.NotNull(result);
@@ -314,7 +314,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearMasterApiClie
             _mapper.Map<ApiResponseDto<List<YearMasterDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
-            var result = await _client.GetAllYearMastersPagedAsync(queryParameters);
+            var result = await _client.GetAllFpsYearsPagedAsync(queryParameters);
 
             // Assert
             Assert.NotNull(result);
@@ -347,7 +347,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearMasterApiClie
             _mapper.Map<ApiResponseDto<List<YearMasterDto>>>(apiResponse).Returns(mappedResponse);
 
             // Act
-            var result = await _client.GetAllYearMastersPagedAsync(queryParameters);
+            var result = await _client.GetAllFpsYearsPagedAsync(queryParameters);
 
             // Assert
             Assert.NotNull(result);
@@ -364,7 +364,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearMasterApiClie
                 .ThrowsAsync(new Exception("Network error"));
 
             // Act
-            var result = await _client.GetAllYearMastersPagedAsync(queryParameters);
+            var result = await _client.GetAllFpsYearsPagedAsync(queryParameters);
 
             // Assert
             Assert.NotNull(result);
@@ -402,7 +402,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearMasterApiClie
             _mapper.Map<ApiResponseDto<List<YearMasterDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
-            await _client.GetAllYearMastersPagedAsync(queryParameters);
+            await _client.GetAllFpsYearsPagedAsync(queryParameters);
 
             // Assert
             await _httpExecutor.Received(1).GetAsync<List<YearMasterRes>>(Arg.Is<string>(url =>
@@ -447,7 +447,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearMasterApiClie
             _mapper.Map<ApiResponseDto<YearMasterDto>>(apiResponse).Returns(expectedDto);
 
             // Act
-            var result = await _client.GetYearMasterByIdAsync(fpsYear);
+            var result = await _client.GetFpsYearByIdAsync(fpsYear);
 
             // Assert
             Assert.NotNull(result);
@@ -479,7 +479,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearMasterApiClie
             _mapper.Map<ApiResponseDto<YearMasterDto>>(apiResponse).Returns(expectedDto);
 
             // Act
-            await _client.GetYearMasterByIdAsync(fpsYear);
+            await _client.GetFpsYearByIdAsync(fpsYear);
 
             // Assert
             await _httpExecutor.Received(1).GetAsync<YearMasterRes>($"api/yearmaster/{fpsYear}");
@@ -510,7 +510,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearMasterApiClie
             _mapper.Map<ApiResponseDto<YearMasterDto>>(apiResponse).Returns(expectedDto);
 
             // Act
-            var result = await _client.GetYearMasterByIdAsync(fpsYear);
+            var result = await _client.GetFpsYearByIdAsync(fpsYear);
 
             // Assert
             Assert.NotNull(result);
@@ -543,7 +543,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearMasterApiClie
             _mapper.Map<ApiResponseDto<YearMasterDto>>(apiResponse).Returns(expectedDto);
 
             // Act
-            var result = await _client.GetYearMasterByIdAsync(fpsYear);
+            var result = await _client.GetFpsYearByIdAsync(fpsYear);
 
             // Assert
             Assert.NotNull(result);
@@ -576,7 +576,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearMasterApiClie
             _mapper.Map<ApiResponseDto<YearMasterDto>>(apiResponse).Returns(mappedResponse);
 
             // Act
-            var result = await _client.GetYearMasterByIdAsync(fpsYear);
+            var result = await _client.GetFpsYearByIdAsync(fpsYear);
 
             // Assert
             Assert.NotNull(result);
@@ -593,7 +593,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearMasterApiClie
                 .ThrowsAsync(new Exception("Network error"));
 
             // Act
-            var result = await _client.GetYearMasterByIdAsync(fpsYear);
+            var result = await _client.GetFpsYearByIdAsync(fpsYear);
 
             // Assert
             Assert.NotNull(result);
@@ -615,7 +615,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearMasterApiClie
                 .ThrowsAsync(new Exception("Invalid year"));
 
             // Act
-            var result = await _client.GetYearMasterByIdAsync(invalidYear);
+            var result = await _client.GetFpsYearByIdAsync(invalidYear);
 
             // Assert
             Assert.NotNull(result);
@@ -636,7 +636,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearMasterApiClie
                 .ThrowsAsync(new TimeoutException("Request timed out"));
 
             // Act
-            var result = await _client.GetAllYearMastersAsync();
+            var result = await _client.GetAllFpsYearsAsync();
 
             // Assert
             Assert.NotNull(result);
@@ -654,7 +654,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearMasterApiClie
                 .ThrowsAsync(new TimeoutException("Request timed out"));
 
             // Act
-            var result = await _client.GetAllYearMastersPagedAsync(queryParameters);
+            var result = await _client.GetAllFpsYearsPagedAsync(queryParameters);
 
             // Assert
             Assert.NotNull(result);
@@ -672,7 +672,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearMasterApiClie
                 .ThrowsAsync(new TimeoutException("Request timed out"));
 
             // Act
-            var result = await _client.GetYearMasterByIdAsync(fpsYear);
+            var result = await _client.GetFpsYearByIdAsync(fpsYear);
 
             // Assert
             Assert.NotNull(result);
@@ -701,7 +701,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearMasterApiClie
             _mapper.Map<ApiResponseDto<IEnumerable<YearMasterDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
-            await _client.GetAllYearMastersAsync();
+            await _client.GetAllFpsYearsAsync();
 
             // Assert
             _mapper.Received(1).Map<ApiResponseDto<IEnumerable<YearMasterDto>>>(apiResponse);
@@ -726,7 +726,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearMasterApiClie
             _mapper.Map<ApiResponseDto<List<YearMasterDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
-            await _client.GetAllYearMastersPagedAsync(queryParameters);
+            await _client.GetAllFpsYearsPagedAsync(queryParameters);
 
             // Assert
             _mapper.Received(1).Map<ApiResponseDto<List<YearMasterDto>>>(apiResponse);
@@ -750,7 +750,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearMasterApiClie
             _mapper.Map<ApiResponseDto<YearMasterDto>>(apiResponse).Returns(expectedDto);
 
             // Act
-            await _client.GetYearMasterByIdAsync(fpsYear);
+            await _client.GetFpsYearByIdAsync(fpsYear);
 
             // Assert
             _mapper.Received(1).Map<ApiResponseDto<YearMasterDto>>(apiResponse);

@@ -16,7 +16,7 @@ namespace Apha.FPS.DataAccess.Repositories
             _dbContext = dbContext;
         }
 
-        public async Task<IEnumerable<YearMaster>> GetAllYearMastersAsync()
+        public async Task<IEnumerable<YearMaster>> GetAllFpsYearsAsync()
         {
             return await _dbContext.YearMasters
                 .AsNoTracking()
@@ -25,7 +25,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 .ToListAsync();
         }
 
-        public async Task<PagedData<YearMaster>> GetAllYearMastersAsync(PaginationParameters<int> query)
+        public async Task<PagedData<YearMaster>> GetAllFpsYearsPagedAsync(PaginationParameters<int> query)
         {
             var yearMasterQuery = _dbContext.YearMasters
                 .AsNoTracking()
@@ -39,7 +39,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return base.ApplyPaging(result, query.Page, query.PageSize);
         }
 
-        public async Task<YearMaster?> GetYearMasterByIdAsync(int fpsYear)
+        public async Task<YearMaster?> GetFpsYearByIdAsync(int fpsYear)
         {
             return await _dbContext.YearMasters
                 .AsNoTracking()

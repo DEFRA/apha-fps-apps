@@ -44,7 +44,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearMasterRepositoryTest
             var repo = CreateRepository(yearMasters);
 
             // Act
-            var result = await repo.GetAllYearMastersAsync();
+            var result = await repo.GetAllFpsYearsAsync();
 
             // Assert
             Assert.NotNull(result);
@@ -68,7 +68,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearMasterRepositoryTest
             var repo = CreateRepository(yearMasters);
 
             // Act
-            var result = await repo.GetAllYearMastersAsync();
+            var result = await repo.GetAllFpsYearsAsync();
 
             // Assert
             Assert.NotNull(result);
@@ -90,7 +90,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearMasterRepositoryTest
             var repo = CreateRepository(yearMasters);
 
             // Act
-            var result = await repo.GetAllYearMastersAsync();
+            var result = await repo.GetAllFpsYearsAsync();
 
             // Assert
             Assert.NotNull(result);
@@ -104,7 +104,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearMasterRepositoryTest
             var repo = CreateRepository(new List<YearMaster>());
 
             // Act
-            var result = await repo.GetAllYearMastersAsync();
+            var result = await repo.GetAllFpsYearsAsync();
 
             // Assert
             Assert.NotNull(result);
@@ -124,7 +124,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearMasterRepositoryTest
             var repo = CreateRepository(yearMasters);
 
             // Act
-            var result = await repo.GetAllYearMastersAsync();
+            var result = await repo.GetAllFpsYearsAsync();
 
             // Assert
             Assert.NotNull(result);
@@ -159,7 +159,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearMasterRepositoryTest
             };
 
             // Act
-            var result = await repo.GetAllYearMastersAsync(query);
+            var result = await repo.GetAllFpsYearsPagedAsync(query);
 
             // Assert
             Assert.NotNull(result);
@@ -189,7 +189,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearMasterRepositoryTest
             };
 
             // Act
-            var result = await repo.GetAllYearMastersAsync(query);
+            var result = await repo.GetAllFpsYearsPagedAsync(query);
 
             // Assert
             Assert.NotNull(result);
@@ -218,7 +218,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearMasterRepositoryTest
             };
 
             // Act
-            var result = await repo.GetAllYearMastersAsync(query);
+            var result = await repo.GetAllFpsYearsPagedAsync(query);
 
             // Assert
             Assert.NotNull(result);
@@ -245,7 +245,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearMasterRepositoryTest
             };
 
             // Act
-            var result = await repo.GetAllYearMastersAsync(query);
+            var result = await repo.GetAllFpsYearsPagedAsync(query);
 
             // Assert
             Assert.NotNull(result);
@@ -270,7 +270,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearMasterRepositoryTest
             };
 
             // Act
-            var result = await repo.GetAllYearMastersAsync(query);
+            var result = await repo.GetAllFpsYearsPagedAsync(query);
 
             // Assert
             Assert.NotNull(result);
@@ -295,7 +295,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearMasterRepositoryTest
             };
 
             // Act
-            var result = await repo.GetAllYearMastersAsync(query);
+            var result = await repo.GetAllFpsYearsPagedAsync(query);
 
             // Assert
             Assert.NotNull(result);
@@ -331,7 +331,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearMasterRepositoryTest
             };
 
             // Act
-            var result = await repo.GetAllYearMastersAsync(query);
+            var result = await repo.GetAllFpsYearsPagedAsync(query);
 
             // Assert
             Assert.NotNull(result);
@@ -366,7 +366,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearMasterRepositoryTest
             };
 
             // Act
-            var result = await repo.GetAllYearMastersAsync(query);
+            var result = await repo.GetAllFpsYearsPagedAsync(query);
 
             // Assert
             Assert.NotNull(result);
@@ -391,7 +391,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearMasterRepositoryTest
             };
 
             // Act
-            var result = await repo.GetAllYearMastersAsync(query);
+            var result = await repo.GetAllFpsYearsPagedAsync(query);
 
             // Assert
             Assert.NotNull(result);
@@ -416,7 +416,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearMasterRepositoryTest
             };
 
             // Act
-            var result = await repo.GetAllYearMastersAsync(query);
+            var result = await repo.GetAllFpsYearsPagedAsync(query);
 
             // Assert
             Assert.NotNull(result);
@@ -445,7 +445,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearMasterRepositoryTest
             };
 
             // Act
-            var result = await repo.GetAllYearMastersAsync(query);
+            var result = await repo.GetAllFpsYearsPagedAsync(query);
 
             // Assert
             Assert.NotNull(result);
@@ -475,7 +475,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearMasterRepositoryTest
             };
 
             // Act
-            var result = await repo.GetAllYearMastersAsync(query);
+            var result = await repo.GetAllFpsYearsPagedAsync(query);
 
             // Assert
             Assert.NotNull(result);
@@ -500,7 +500,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearMasterRepositoryTest
             var repo = CreateRepository(yearMasters);
 
             // Act
-            var result = await repo.GetYearMasterByIdAsync(2024);
+            var result = await repo.GetFpsYearByIdAsync(2024);
 
             // Assert
             Assert.NotNull(result);
@@ -521,7 +521,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearMasterRepositoryTest
             var repo = CreateRepository(yearMasters);
 
             // Act
-            var result = await repo.GetYearMasterByIdAsync(2025);
+            var result = await repo.GetFpsYearByIdAsync(2025);
 
             // Assert
             Assert.Null(result);
@@ -539,7 +539,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearMasterRepositoryTest
             var repo = CreateRepository(yearMasters);
 
             // Act
-            var result = await repo.GetYearMasterByIdAsync(2023);
+            var result = await repo.GetFpsYearByIdAsync(2023);
 
             // Assert
             Assert.NotNull(result);
@@ -554,7 +554,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearMasterRepositoryTest
             var repo = CreateRepository(new List<YearMaster>());
 
             // Act
-            var result = await repo.GetYearMasterByIdAsync(2024);
+            var result = await repo.GetFpsYearByIdAsync(2024);
 
             // Assert
             Assert.Null(result);
@@ -575,7 +575,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearMasterRepositoryTest
             var repo = CreateRepository(yearMasters);
 
             // Act
-            var result = await repo.GetYearMasterByIdAsync(2023);
+            var result = await repo.GetFpsYearByIdAsync(2023);
 
             // Assert
             Assert.NotNull(result);
@@ -599,7 +599,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearMasterRepositoryTest
             var repo = CreateRepository(yearMasters);
 
             // Act
-            var result = await repo.GetYearMasterByIdAsync(invalidYear);
+            var result = await repo.GetFpsYearByIdAsync(invalidYear);
 
             // Assert
             Assert.Null(result);
@@ -621,7 +621,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearMasterRepositoryTest
             };
 
             // Act
-            var result = await repo.GetAllYearMastersAsync(query);
+            var result = await repo.GetAllFpsYearsPagedAsync(query);
 
             // Assert
             Assert.NotNull(result);
@@ -648,7 +648,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearMasterRepositoryTest
             };
 
             // Act
-            var result = await repo.GetAllYearMastersAsync(query);
+            var result = await repo.GetAllFpsYearsPagedAsync(query);
 
             // Assert
             Assert.NotNull(result);
@@ -674,7 +674,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearMasterRepositoryTest
             };
 
             // Act
-            var result = await repo.GetAllYearMastersAsync(query);
+            var result = await repo.GetAllFpsYearsPagedAsync(query);
 
             // Assert
             Assert.NotNull(result);
@@ -699,7 +699,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearMasterRepositoryTest
             };
 
             // Act
-            var result = await repo.GetAllYearMastersAsync(query);
+            var result = await repo.GetAllFpsYearsPagedAsync(query);
 
             // Assert
             Assert.NotNull(result);

@@ -26,9 +26,9 @@ namespace Apha.FPS.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult> GetAllYearMastersAsync()
+        public async Task<ActionResult> GetAllFpsYearsAsync()
         {
-            var yearMasterDto = await _yearMasterService.GetAllYearMastersAsync();
+            var yearMasterDto = await _yearMasterService.GetAllFpsYearsAsync();
             if (yearMasterDto == null)
             {
                 return NotFound("Year Master records not found");
@@ -37,10 +37,10 @@ namespace Apha.FPS.Api.Controllers
         }
 
         [HttpGet("paged")]
-        public async Task<ActionResult> GetAllYearMastersPagedAsync(
+        public async Task<ActionResult> GetAllFpsYearsPagedAsync(
             [FromQuery] QueryParameters<int> query)
         {
-            var yearMasterDto = await _yearMasterService.GetAllYearMastersAsync(query);
+            var yearMasterDto = await _yearMasterService.GetAllFpsYearsPagedAsync(query);
             if (yearMasterDto == null)
             {
                 return NotFound("Year Master records not found");
@@ -49,9 +49,9 @@ namespace Apha.FPS.Api.Controllers
         }
 
         [HttpGet("{fpsYear}")]
-        public async Task<ActionResult<YearMasterRes>> GetYearMasterById(int fpsYear)
+        public async Task<ActionResult<YearMasterRes>> GetFpsYearById(int fpsYear)
         {
-            var yearMasterDto = await _yearMasterService.GetYearMasterByIdAsync(fpsYear);
+            var yearMasterDto = await _yearMasterService.GetFpsYearByIdAsync(fpsYear);
             if (yearMasterDto == null)
             {
                 return NotFound($"Year Master record with FPS Year: {fpsYear} not found");
