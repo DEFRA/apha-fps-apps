@@ -27,6 +27,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IProjectService, ProjectService>();
             services.AddScoped<IAnimalPlanService, AnimalPlanService>();
             services.AddScoped<ISettingService, SettingService>();
+            services.AddScoped<IYearMasterService, YearMasterService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
