@@ -1,0 +1,94 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>@ViewData["Title"] - Costbook</title>
+ 
+
+    <!-- CSS References in exact order as per legacy implementation -->
+    <link rel="stylesheet" href="~/css/govuk-frontend-6.0.0.min.css"/>
+    <link rel="stylesheet" href="~/css/bootstrap.min.css">
+    <link rel="stylesheet" href="~/css/costbook_styles/styles.css">
+    <link rel="stylesheet" href="~/css/main_style.css">
+    <link rel="stylesheet" href="`~/css/costbook_styles/suppliement_style_costbook.css" /> 
+    <link rel="stylesheet" href="~/css/costbook_styles/layout_style.css" />
+
+            <link rel="stylesheet" href="~/DataGrid/editable-grid.css" />
+            <script src="~/lib/jquery/dist/jquery.js"></script>
+            @await RenderSectionAsync("Styles", required: false)
+</head>
+        <body class="govuk-template__body costbook-home-page">
+            <header class="govuk-header" role="banner">
+                <div class="header-nav">
+
+                    <div class="pims-log-wrapper">
+
+                        <div>
+                            <img src="~/images/defra_logo.png" alt="Defra logo" width="80px">
+                        </div>
+              
+                        <div class="pims-log">
+                            <span>Costbook</span>
+                        </div>
+           
+                    </div>
+			
+			
+		
+          
+			
+                    <div class="btn-group home-user-menu">
+                        Ken Rod <button type="button" aria-label="user dropdown arrow to go home page" class="btn btn-secondary dropdown-toggle user-menu home-user-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                        <img src="~/images/circle-user-regular-full.svg" alt="user icon" width="24"> <img src="~/images/down-arrow.png" alt="dropdown arrow for logout of application" width="30px" height="30px">
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                    
+                        <li>
+                            <a href="../index.html" class="dropdown-item" type="button" aria-hidden="true">
+                                <img src="~/images/house-user-solid-full.svg" alt="dropdown home icon" width="22px">  Home
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+        <div id="header"></div>
+        <script src="~/js/costbook_nav_menu.js"></script>
+        <script>
+            document.getElementById('header').innerHTML = htmlmenu;
+            initMenu();
+            btn();
+        </script>
+
+    
+
+    <!-- Body Content Container -->
+        <main class="govuk-main-wrapper govuk-!-padding-top-0" id="main-content" role="main">
+    <div class="container-fluid" style="min-height: 415px;">
+        @RenderBody()
+    </div>
+   
+    <!-- Footer Section -->
+   
+            <div class="govuk-footer sup_p_0 sup_margin_left_right_0 fps-sr-page-footer">
+                <div class="govuk-width-container sup_p_8 sup_text_center fps-sr-page-footer-inner">
+                    <span class="fps-sr-page-footer-text">
+                        © copyright Defra 2025
+                    </span>
+                </div>
+            </div>
+   
+
+    <!-- Bootstrap JS Reference -->
+    <script src="~/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Scripts Section for page-specific JavaScript -->
+    @RenderSection("Scripts", required: false)
+        </main>
+</body>
+</html>
