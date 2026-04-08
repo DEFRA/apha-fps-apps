@@ -1,0 +1,333 @@
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.PACT.Models.ProjectInvoiceSubContractViewModel
+
+@{
+    ViewData["Title"] = "Project Invoices & Sub-Contracts";
+}
+
+<div class="govuk-grid-row sup_margin_left_right_0">
+    <div class="govuk-grid-column-full">
+        <h1 class="heading_with_txtbox govuk-heading-s sup_border-bottom">
+            <span class="sup_flex_left_center">
+                Project Invoices &amp; Sub-Contract Cost for:
+                <label class="sup_hidden_label" for="sp-projectcode">&nbsp;project code&nbsp;</label>
+                <input type="text" id="sp-projectcode"
+                       class="govuk-input govuk-!-font-size-16 govuk-input--width-10"
+                       value="@Model.ParentProject"                       
+                       onchange="navigateToProjectCode(this.value)" />
+            </span>
+            <span>
+                <a href="@Url.Action("Index", "ProjectMaintenance", new { area = "PACT" })"
+                   class="govuk-back-link">Back</a>
+            </span>
+        </h1>
+    </div>
+</div>
+
+<div class="govuk-grid-row sup_flex_row sup_margin_left_right_0 sup_margin_bottom_10">
+
+    <nav class="sidenav flex-column flex-shrink-0 sup_margin_bottom_10" id="shortnav">
+        <button class="toggle-btn toggle-btn-position" onclick="toggleSidebar()">
+            <img src="~/images/chevron-left-solid-full.svg" width="20"
+                 alt="side menu left arrow" class="toggle-btn-arrow" />
+        </button>
+        <ul>
+            <li class="sidebar-link-two side-nav-link-bg">
+                <a id="invoiecsubcontract">Invoices &amp; Subcontracted Costs</a>
+            </li>
+            <li class="sidebar-link-two side-nav-link-bg">
+                <a id="milestones">Milestones</a>
+            </li>
+            <li class="sidebar-link-two side-nav-link-bg">
+                <a id="testpurchasereq">Test Purchase Requirements</a>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="govuk-grid-column-full">
+
+        <!-- ── INVOICES SECTION ─────────────────────────────────────── -->
+        <div class="govuk-grid-row sup_margin_left_right_0">
+            <div class="sup_border">
+                <div id="gridContainer_invoicesGrid">
+                    @await Html.PartialAsync("_DataGrid", Model.InvoicesGrid)
+                </div>
+            </div>
+        </div>
+
+        <div id="amountBoxContainer" class="sup_surface_bg sup_position_relative ytd_total_div">
+            <label id="lbltotalamount" for="txtTotalAmount"
+                   class="govuk-label govuk-!-font-weight-bold">YTD Total Amount:</label>
+            <input type="text" id="txtTotalAmount"
+                   class="govuk-input govuk-!-font-size-16 sup_margin_tb_5 sup_text_align_right"
+                   readonly value="£@Model.TotalInvoiceAmount.ToString("N2")" />
+        </div>
+
+        <!-- ── SUB-CONTRACTS SECTION ─────────────────────────────────── -->
+        <div class="govuk-grid-row sup_margin_left_right_0 sup_margin_top_10">
+            <div class="sup_border">    
+                <div id="gridContainer_subContractsGrid">
+                    @await Html.PartialAsync("_DataGrid", Model.SubContractsGrid)
+                </div>
+            </div>
+        </div>
+
+        <div id="testDataAmountBoxContainer" class="sup_surface_bg sup_position_relative ytd_total_div">
+            <label id="lblTestDataTotalAmount" for="txtTestDataTotalAmount"
+                   class="govuk-label govuk-!-font-weight-bold">YTD Total Amount:</label>
+            <input type="text" id="txtTestDataTotalAmount"
+                   class="govuk-input govuk-!-font-size-16 sup_margin_tb_5 sup_text_align_right"
+                   readonly value="£@Model.TotalSubContractAmount.ToString("N2")" />
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/ajax-form-validation.js"></script>
+    <script>
+        var invoicesGridId = '@Model.InvoicesGrid.GridId';
+        var subContractsGridId = '@Model.SubContractsGrid.GridId';
+        var parentProject = '@Uri.EscapeDataString(Model.ParentProject ?? string.Empty)';
+
+        function navigateToProjectCode(code) {
+            code = (code || '').trim();
+            if (code) {
+                window.location.href = '/PACT/ProjectInvoiceSubContract/Index?parentProject=' + encodeURIComponent(code);
+            }
+        }
+
+        function getInvoicesGridManager() {
+            return window['gridManager_' + invoicesGridId];
+        }
+
+        function getSubContractsGridManager() {
+            return window['gridManager_' + subContractsGridId];
+        }
+
+        // ── Invoice CRUD ─────────────────────────────────────────────────
+
+        function addInvoice() {
+            $.get('/PACT/ProjectInvoiceSubContract/GetInvoice',
+                { id: 0, parentProject: decodeURIComponent(parentProject) },
+                function (html) {
+                    $('#modaPopupBody').html(html);
+                    $('#modalPopup').addClass('show');
+                });
+        }
+
+        function editInvoice(btn) {
+            var id = $(btn).data('id');
+            $.get('/PACT/ProjectInvoiceSubContract/GetInvoice', { id: id }, function (html) {
+                $('#modaPopupBody').html(html);
+                $('#modalPopup').addClass('show');
+            });
+        }
+
+        function deleteInvoice(btn) {
+            var id = $(btn).data('id');
+            if (confirm('Delete this invoice?')) {
+                $.ajax({
+                    url: '/PACT/ProjectInvoiceSubContract/DeleteInvoice',
+                    type: 'DELETE',
+                    data: { id: id },
+                    success: function (response) {
+                        if (response.success) {
+                            getInvoicesGridManager()?.reloadGrid({ page: 1 });
+                            refreshInvoiceTotalAmount();
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function () { alert('An error occurred while deleting.'); }
+                });
+            }
+        }
+
+        function saveInvoice() {
+            var form = $('#invoiceForm');
+
+            if (!isFormValid(form)) {
+                displayClientValidationErrors(form, '#invoiceForm');
+                return;
+            }
+            var data = form.serializeObject ? form.serializeObject() : Object.fromEntries(new FormData(form[0]));
+
+            // Convert empty strings to null for nullable numeric fields so that JSON
+            // deserialisation succeeds and [Required] data-annotation validation fires
+            // with plain property-name ModelState keys (e.g. "Month") instead of the
+            // JSON-path keys (e.g. "$.Month") that would be produced by a parse failure.
+            ['Month', 'Amount', 'CostOfWork', 'Wip', 'ProfitLoss'].forEach(function (f) {
+                if (data[f] === '' || data[f] === undefined) data[f] = null;
+            });
+
+            clearValidationErrors('#invoiceForm');
+            $.ajax({
+                url: '/PACT/ProjectInvoiceSubContract/SaveInvoice',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function (response) {
+                    if (response.success) {
+                        alert(response.message);
+                        $('#modalPopup').removeClass('show');
+                        getInvoicesGridManager()?.reloadGrid({ page: 1 });
+                        refreshInvoiceTotalAmount();
+                    } else {
+                        displayServerValidationErrors(response.errors, response.message, '#invoiceForm');
+                    }
+                },
+                error: function () { alert('An error occurred while saving.'); }
+            });
+        }
+
+        // ── Sub-Contract CRUD ─────────────────────────────────────────────
+
+        function addSubContract() {
+            $.get('/PACT/ProjectInvoiceSubContract/GetSubContract',
+                { id: 0, parentProject: decodeURIComponent(parentProject) },
+                function (html) {
+                    $('#modaPopupBody').html(html);
+                    $('#modalPopup').addClass('show');
+                });
+        }
+
+        function editSubContract(btn) {
+            var id = $(btn).data('id');
+            $.get('/PACT/ProjectInvoiceSubContract/GetSubContract', { id: id }, function (html) {
+                $('#modaPopupBody').html(html);
+                $('#modalPopup').addClass('show');
+            });
+        }
+
+        function deleteSubContract(btn) {
+            var id = $(btn).data('id');
+            if (confirm('Delete this sub-contract?')) {
+                $.ajax({
+                    url: '/PACT/ProjectInvoiceSubContract/DeleteSubContract',
+                    type: 'DELETE',
+                    data: { id: id },
+                    success: function (response) {
+                        if (response.success) {
+                            getSubContractsGridManager()?.reloadGrid({ page: 1 });
+                            refreshSubContractTotalAmount();
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function () { alert('An error occurred while deleting.'); }
+                });
+            }
+        }
+
+        function saveSubContract() {
+            var form = $('#subContractForm');
+
+            if (!isFormValid(form)) {
+                displayClientValidationErrors(form, '#subContractForm');
+                return;
+            }
+            var data = form.serializeObject ? form.serializeObject() : Object.fromEntries(new FormData(form[0]));
+
+            // Convert empty strings to null for nullable numeric fields so that JSON
+            // deserialisation succeeds and [Required] data-annotation validation fires
+            // with plain property-name ModelState keys (e.g. "Month") instead of the
+            // JSON-path keys (e.g. "$.Month") that would be produced by a parse failure.
+            ['Month', 'Amount'].forEach(function (f) {
+                if (data[f] === '' || data[f] === undefined) data[f] = null;
+            });
+
+            clearValidationErrors('#subContractForm');
+            $.ajax({
+                url: '/PACT/ProjectInvoiceSubContract/SaveSubContract',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function (response) {
+                    if (response.success) {
+                        alert(response.message);
+                        $('#modalPopup').removeClass('show');
+                        getSubContractsGridManager()?.reloadGrid({ page: 1 });
+                        refreshSubContractTotalAmount();
+                    } else {
+                        displayServerValidationErrors(response.errors, response.message, '#subContractForm');
+                    }
+                },
+                error: function () { alert('An error occurred while saving.'); }
+            });
+        }
+
+        // ── Search ───────────────────────────────────────────────────────
+
+        function filterInvoicesGrid(input) {
+            var gm = getInvoicesGridManager();
+            if (gm) gm.reloadGrid({ page: 1, search: input.value });
+        }
+
+        function filterSubContractsGrid(input) {
+            var gm = getSubContractsGridManager();
+            if (gm) gm.reloadGrid({ page: 1, search: input.value });
+        }
+
+        // ── YTD Totals ───────────────────────────────────────────────────────
+
+        function formatGbp(value) {
+            return '\u00a3' + parseFloat(value).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function refreshInvoiceTotalAmount() {
+            $.get('/PACT/ProjectInvoiceSubContract/GetInvoiceTotalAmount',
+                { parentProject: decodeURIComponent(parentProject) },
+                function (response) {
+                    $('#txtTotalAmount').val(formatGbp(response.total));
+                });
+        }
+
+        function refreshSubContractTotalAmount() {
+            $.get('/PACT/ProjectInvoiceSubContract/GetSubContractTotalAmount',
+                { parentProject: decodeURIComponent(parentProject) },
+                function (response) {
+                    $('#txtTestDataTotalAmount').val(formatGbp(response.total));
+                });
+        }
+
+        function alignAmountBox() {
+            var amountTh = document.querySelector('#tbl_invoicesGrid [data-column="Amount"]');
+            var gridContainer = document.getElementById('gridContainer_invoicesGrid');
+            var amountBox = document.getElementById('amountBoxContainer');
+            if (!amountTh || !gridContainer || !amountBox) return;
+            var thRect = amountTh.getBoundingClientRect();
+            var containerRect = gridContainer.getBoundingClientRect();
+            var paddingRight = Math.max(0, containerRect.right - thRect.right);
+            amountBox.style.paddingRight = paddingRight + 'px';
+            var txtTotal = document.getElementById('txtTotalAmount');
+            if (txtTotal) txtTotal.style.width = thRect.width + 'px';
+        }
+
+        function alignTestDataAmountBox() {
+            var amountTh = document.querySelector('#tbl_subContractsGrid [data-column="Amount"]');
+            var gridContainer = document.getElementById('gridContainer_subContractsGrid');
+            var amountBox = document.getElementById('testDataAmountBoxContainer');
+            if (!amountTh || !gridContainer || !amountBox) return;
+            var thRect = amountTh.getBoundingClientRect();
+            var containerRect = gridContainer.getBoundingClientRect();
+            var paddingRight = Math.max(0, containerRect.right - thRect.right);
+            amountBox.style.paddingRight = paddingRight + 'px';
+            var txtTotal = document.getElementById('txtTestDataTotalAmount');
+            if (txtTotal) txtTotal.style.width = thRect.width + 'px';
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            alignAmountBox();
+            alignTestDataAmountBox();
+        });
+
+        window.addEventListener('resize', function () {
+            alignAmountBox();
+            alignTestDataAmountBox();
+        });
+    </script>
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

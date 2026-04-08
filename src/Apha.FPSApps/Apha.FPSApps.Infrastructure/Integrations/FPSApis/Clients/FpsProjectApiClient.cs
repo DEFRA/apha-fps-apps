@@ -41,6 +41,25 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
+        public async Task<ApiResponseDto<List<ProjectDto>>> GetAllPactProjectsAsync()
+        {
+            try
+            {
+                var response = await _http.GetAsync<List<ProjectRes>>(FpsApiEndpoints.GetAllPactProjects);
+                if (response.Success)
+                    return _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
+
+                var dto = _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
+                return ApiResponseDto<List<ProjectDto>>.FailureResponse(dto.Errors, dto.Meta);
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<List<ProjectDto>>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to retrieve PACT projects", Code = InternalCodeError }],
+                    new ApiMetaDto());
+            }
+        }
+
         public async Task<ApiResponseDto<List<ProjectDto>>> GetPagedProjectsAsync(QueryParameters<string> query)
         {
             try
