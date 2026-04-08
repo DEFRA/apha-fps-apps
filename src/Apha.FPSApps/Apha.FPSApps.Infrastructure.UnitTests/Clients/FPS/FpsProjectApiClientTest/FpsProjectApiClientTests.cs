@@ -222,6 +222,83 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
 
         #endregion
 
+        #region GetAllPactProjectsAsync Tests
+
+        [Fact]
+        public async Task GetAllPactProjectsAsync_WithSuccessResponse_ReturnsMappedPactProjectList()
+        {
+            // Arrange
+            var projectList = new List<ProjectRes>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "PACT Project One" },
+                new() { ParentProject = "PP002", ProjectTitle = "PACT Project Two" }
+            };
+            var apiResponse = new ApiResponse<List<ProjectRes>> { Success = true, Data = projectList };
+            var expectedDto = ApiResponseDto<List<ProjectDto>>.SuccessResponse(
+                new List<ProjectDto>
+                {
+                    new() { ParentProject = "PP001", ProjectTitle = "PACT Project One" },
+                    new() { ParentProject = "PP002", ProjectTitle = "PACT Project Two" }
+                }
+            );
+
+            _http.GetAsync<List<ProjectRes>>("api/v1/project/pactview/all").Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProjectDto>>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.GetAllPactProjectsAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data?.Count);
+            await _http.Received(1).GetAsync<List<ProjectRes>>("api/v1/project/pactview/all");
+        }
+
+        [Fact]
+        public async Task GetAllPactProjectsAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var errors = new List<ApiError> { new() { Message = "API Error", Code = "API_ERROR" } };
+            var apiResponse = new ApiResponse<List<ProjectRes>> { Success = false, Errors = errors };
+            var mappedResponse = new ApiResponseDto<List<ProjectDto>>
+            {
+                Success = false,
+                Errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "API_ERROR" } },
+                Meta = new ApiMetaDto()
+            };
+
+            _http.GetAsync<List<ProjectRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProjectDto>>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.GetAllPactProjectsAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+        }
+
+        [Fact]
+        public async Task GetAllPactProjectsAsync_WhenExceptionThrown_ReturnsInternalError()
+        {
+            // Arrange
+            _http.GetAsync<List<ProjectRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
+
+            // Act
+            var result = await _client.GetAllPactProjectsAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            var error = Assert.Single(result.Errors!);
+            Assert.Equal("INTERNAL_ERROR", error.Code);
+            Assert.Equal("Failed to retrieve PACT projects", error.Message);
+        }
+
+        #endregion
+
         #region GetPagedProjectsAsync Tests
 
         [Fact]
