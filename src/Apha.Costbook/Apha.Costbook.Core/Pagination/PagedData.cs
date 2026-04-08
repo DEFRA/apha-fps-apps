@@ -2,12 +2,14 @@
 {
     public class PagedData<T>
     {
-        public IReadOnlyCollection<T> Data { get; }       
-        public PaginationData PaginationData { get; }
+        public IEnumerable<T> Data { get; set; } = Enumerable.Empty<T>();
+        public PaginationData PaginationData { get; set; } = new PaginationData();
 
-        public PagedData(IReadOnlyCollection<T> items, PaginationData paginationData)
+        public PagedData() { }
+
+        public PagedData(IEnumerable<T> items, PaginationData paginationData)
         {
-            Data = items;           
+            Data = items;
             PaginationData = paginationData;
         }
     }
@@ -15,7 +17,7 @@
     public class PaginationData
     {
         public int PageNumber { get; set; }
-        public int PageSize { get; set; } 
+        public int PageSize { get; set; }
         public int TotalPages { get; set; }
         public int TotalRecords { get; set; }
     }
