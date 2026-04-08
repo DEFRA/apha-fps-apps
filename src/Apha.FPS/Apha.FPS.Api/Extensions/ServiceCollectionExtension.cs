@@ -32,12 +32,13 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IDiseaseService, DiseaseService>();
             services.AddScoped<ICustomerService, CustomerService>();
             services.AddScoped<IContractService, ContractService>();
+            services.AddScoped<IYearMasterService, YearMasterService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
         {
             // Add your data access services here
-            services.AddScoped<IFpsYearContext, FpsYearContext>();
+            services.AddScoped<IFpsRequestContext, FpsRequestContext>();
             services.AddScoped<IProgramRepository, ProgramRepository>();
             services.AddScoped<IProjectRepository, ProjectRepository>();
             services.AddScoped<IStaffJobRepository, StaffJobRepository>();
@@ -48,6 +49,7 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IDiseaseRepository, DiseaseRepository>();
             services.AddScoped<ICustomerRepository, CustomerRepository>();
             services.AddScoped<IContractRepository, ContractRepository>();
+            services.AddScoped<IYearMasterRepository, YearMasterRepository>();
             return services;
         }
     }

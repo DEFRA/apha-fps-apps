@@ -13,13 +13,12 @@ namespace Apha.FPS.DataAccess.Repositories
     public class StaffJobRepository : BaseRepository, IStaffJobRepository
     {
         private readonly FpsDbContext _dbContext;
-        private readonly IFpsYearContext _yearContext;
-        private readonly int userId = 42;
+        private readonly IFpsRequestContext _requestContext;
 
-        public StaffJobRepository(FpsDbContext dbContext, IFpsYearContext fpsYearContext) : base(dbContext)
+        public StaffJobRepository(FpsDbContext dbContext, IFpsRequestContext requestContext) : base(dbContext)
         {
             _dbContext = dbContext;
-            _yearContext = fpsYearContext;
+            _requestContext = requestContext;
         }
 
         public async Task<PagedData<StaffJobView>> GetJobStaffCostAsync(PaginationParameters<string> query, string jobCode)
@@ -46,7 +45,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             var query = (from s in _dbContext.StaffViews
                          join sp in _dbContext.StaffPickViews on s.StaffId equals sp.StaffId
-                         where s.UserId == userId
+                         where s.UserEmail != null && s.UserEmail.ToLower() == _requestContext.UserEmailId
                          select new StaffWorkgroupLookup
                          {
                              StaffID = s.StaffId ?? "",
@@ -115,7 +114,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 StaffId = staffJob.StaffId,
                 JobCode = staffJob.JobCode,
                 PlannedHours = staffJob.PlannedHours,
-                FpsYear = _yearContext.FpsYear
+                FpsYear = _requestContext.FpsYear
             };
 
             _dbContext.StaffJobs.Add(newStaffJob);
@@ -138,7 +137,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     $"Staff job with StaffId {staffJob.StaffId} and JobCode {staffJob.JobCode} not found");
 
             existingStaffJob.PlannedHours = staffJob.PlannedHours;
-            existingStaffJob.FpsYear = _yearContext.FpsYear;
+            existingStaffJob.FpsYear = _requestContext.FpsYear;
 
             await _dbContext.SaveChangesAsync();
 
@@ -177,7 +176,9 @@ namespace Apha.FPS.DataAccess.Repositories
                     join prg in _dbContext.ProgramViews on
                         new { p.Program, sj.UserId } equals new { Program = prg.ProgramNo, prg.UserId }
                     let dailyRate = (p.IsDefraProject == -1 ? pc.DefraChargeRate : pc.ChargeRate)
-                    where sj.JobCode == jobCode && p.UserId == userId
+                    where sj.JobCode == jobCode
+                        && p.UserEmail != null
+                        && p.UserEmail.ToLower() == _requestContext.UserEmailId
                     select new StaffJobView
                     {
                         StaffID = sj.StaffId,

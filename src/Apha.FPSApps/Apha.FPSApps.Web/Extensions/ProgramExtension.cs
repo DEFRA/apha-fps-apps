@@ -36,8 +36,10 @@ namespace Apha.FPSApps.Web.Extensions
             {
                 config.AddMaps(typeof(FpsApiDtoMapper).Assembly);
                 config.AddMaps(typeof(PactApiDtoMapper).Assembly);
+                config.AddMaps(typeof(CostbookApiDtoMapper).Assembly);
                 config.AddMaps(typeof(FpsViewModelMapper));
                 config.AddMaps(typeof(PactViewModelMapper));
+                config.AddMaps(typeof(CostbookViewModelMapper));
             });
 
             // HTTP Context
@@ -110,10 +112,12 @@ namespace Apha.FPSApps.Web.Extensions
 
             app.UseSession();
             app.UseMiddleware<ExceptionMiddleware>();
-            app.UseMiddleware<FpsYearMiddleware>();
 
             app.UseAuthentication();
             app.UseAuthorization();
+
+            // FpsYearMiddleware must run after authentication to access API with bearer token
+            app.UseMiddleware<FpsYearMiddleware>();
 
             // Default route
             app.MapControllerRoute(
