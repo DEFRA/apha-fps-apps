@@ -37,6 +37,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<ICostBookProgramService, CostBookProgramService>();
             services.AddScoped<ICostBookStaffService, CostBookStaffService>();
             services.AddScoped<ICostBookContractService, CostBookContractService>();
+            services.AddScoped<IYearMasterService, YearMasterService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)

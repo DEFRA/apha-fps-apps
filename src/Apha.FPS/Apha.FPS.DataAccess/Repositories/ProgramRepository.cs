@@ -24,7 +24,7 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<IEnumerable<Program>> GetAllProgramsAsync()
         {
             return await _dbContext.ProgramViews
-                .Where(p => p.UserEmail != null && p.UserEmail.Equals(_requestContext.UserEmailId, StringComparison.CurrentCultureIgnoreCase))
+                .Where(p => p.UserEmail != null && p.UserEmail.ToLower() == _requestContext.UserEmailId)
                 .Select(p => new Program
                 {
                     ProgramNo = p.ProgramNo ?? "",
@@ -39,7 +39,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
 
             var programQuery = _dbContext.ProgramViews
-                .Where(p => p.UserEmail != null && p.UserEmail.Equals(_requestContext.UserEmailId, StringComparison.CurrentCultureIgnoreCase))
+                .Where(p => p.UserEmail != null && p.UserEmail.ToLower() == _requestContext.UserEmailId)
                                 .Select(p => new Program
                                 {
                                     ProgramNo = p.ProgramNo ?? "",

@@ -126,7 +126,7 @@ namespace Apha.FPS.DataAccess.Repositories
                    let dailyRate = (project.IsDefraProject == -1 ? animal.DefraDailyRate : animal.DailyRate)
                    where animalReq.JobCode == jobCode
                        && animalReq.UserEmail != null
-                       && animalReq.UserEmail.Equals(_requestContext.UserEmailId, StringComparison.CurrentCultureIgnoreCase)
+                       && animalReq.UserEmail.ToLower() == _requestContext.UserEmailId
                    select new AnimalCostView
                    {
                        IndCounter = animalReq.IndCounter,
