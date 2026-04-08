@@ -28,6 +28,7 @@
                             <i class="fa fa-trash"></i> Delete All
                         </button>
                     }
+                   
                 </div>
             </div>
         </h2>
@@ -94,7 +95,7 @@
                                         </th>
                                     }
                                 }
-                                @if (Model.AllowEdit || Model.AllowDelete)
+                                @if (Model.AllowEdit || Model.AllowDelete || Model.AllowView)
                                 {
                                     <th scope="col" class="row-number-header govuk-table__header" style="width: 80px;">Action</th>
                                 }
@@ -150,7 +151,7 @@
                                     </th>
                                             }
                                         }
-                                        @if (Model.AllowEdit || Model.AllowDelete)
+                                        @if (Model.AllowEdit || Model.AllowDelete || Model.AllowView)
                                         {
                                             <th scope="col"></th>
                                         }
@@ -211,8 +212,8 @@
                                     }
                                 }
                             }
-                            <!-- Edit / Delete Buttons -->
-                            @if (Model.AllowEdit || Model.AllowDelete || Model.AllowCopy)
+                            <!-- Edit / Delete / View Buttons -->
+                            @if (Model.AllowEdit || Model.AllowDelete || Model.AllowCopy || Model.AllowView)
                             {
                                 <td class="govuk-table__cell">
                                     @if (Model.AllowEdit)
@@ -242,6 +243,15 @@
                                             <img src="~/images/delete_gridicon.svg" alt="Delete icon" width="20" height="20" title="Delete">
                                         </button>
                                     }
+                                                @if (Model.AllowView)
+                                                {
+                                                    <button type="button"
+                                                            class="btn btn-sm btn-danger delete-row-btn"
+                                                            data-id="@GridHelpers.GetPropertyValue(row, Model.KeyProperty)"
+                                                            data-delete-function="@Model.ViewFunction">
+                                                        <img src="~/images/view_icon.png" alt="View icon" width="20" height="20" title="View">
+                                                        </button>
+                                                    }
                                 </td>
                             }
                         </tr>
