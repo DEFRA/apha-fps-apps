@@ -154,6 +154,38 @@ body {
 
 }
 
+/* Disabled tile state */
+.tile-disabled {
+  background-color: #e9ecef !important;
+  border-bottom: 8px solid #adb5bd !important;
+  border-left: 1px solid #adb5bd;
+  border-top: 1px solid #adb5bd;
+  border-right: 1px solid #adb5bd;
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.tile-disabled span,
+.tile-disabled a {
+  color: #6c757d !important;
+  text-shadow: none !important;
+  cursor: not-allowed;
+  pointer-events: none;
+  display: flex;
+  width: 200px;
+  height: 170px;
+  padding: 0px;
+  font-size: 27px;
+  align-items: center;
+  justify-content: center;
+}
+
+.tile-disabled:hover {
+  background-color: #e9ecef !important;
+  border-bottom: 8px solid #adb5bd !important;
+}
+
 .link-wrapper{
   display: flex;
   flex-direction: row;
