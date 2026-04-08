@@ -228,11 +228,7 @@
                 return;
             }
             var data = form.serializeObject ? form.serializeObject() : Object.fromEntries(new FormData(form[0]));
-
-            // Convert empty strings to null for nullable numeric fields so that JSON
-            // deserialisation succeeds and [Required] data-annotation validation fires
-            // with plain property-name ModelState keys (e.g. "Month") instead of the
-            // JSON-path keys (e.g. "$.Month") that would be produced by a parse failure.
+            
             ['Month', 'Amount'].forEach(function (f) {
                 if (data[f] === '' || data[f] === undefined) data[f] = null;
             });
