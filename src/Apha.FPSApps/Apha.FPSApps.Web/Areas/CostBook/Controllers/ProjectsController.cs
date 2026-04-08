@@ -140,7 +140,7 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
                     CurrentFilters = filterDict
                 };
             }
-            catch (Exception ex)
+            catch 
             {
                 // MS Access style error handling - return empty grid instead of crashing
                 return new DataGridConfig<ProjectItemViewModel>
