@@ -219,12 +219,6 @@
     justify-content: center;
     align-items: center;
 }
-.sup_flex_between_center {
-    justify-content: space-between;
-    display: flex;
-    width: 100%;
-    align-items: center;
-}
 
 .sup_flex_left_center {
     display: flex;
@@ -422,4 +416,9 @@
 
 .sup_surface_bg {
     background-color: var(--govuk-surface-background-colour, #f4f8fb);
+}
+
+.govuk-frontend-supported .govuk-tabs__panel {
+	
+	padding:10px 10px;
 }
