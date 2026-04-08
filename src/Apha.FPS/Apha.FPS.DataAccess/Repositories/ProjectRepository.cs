@@ -12,19 +12,18 @@ namespace Apha.FPS.DataAccess.Repositories
     public class ProjectRepository : BaseRepository, IProjectRepository
     {
         private readonly FpsDbContext _dbContext;
-        private readonly IFpsYearContext _fpsYearContext;
-        private readonly int userId = 42;
+        private readonly IFpsRequestContext _requestContext;
 
-        public ProjectRepository(FpsDbContext dbContext, IFpsYearContext fpsYearContext) : base(dbContext)
+        public ProjectRepository(FpsDbContext dbContext, IFpsRequestContext requestContext) : base(dbContext)
         {
             _dbContext = dbContext;
-            _fpsYearContext = fpsYearContext;
+            _requestContext = requestContext;
         }
 
         public async Task<IEnumerable<ProjectView>> GetAllProjectsAsync()
         {
             return await _dbContext.ProjectViews
-                .Where(p => p.UserId == userId).ToListAsync();
+                .Where(p => p.UserEmail != null && p.UserEmail.ToLower() == _requestContext.UserEmailId).ToListAsync();
         }
 
         public async Task<IEnumerable<PactProjectView>> GetAllPactProjectsAsync()
@@ -38,7 +37,7 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<PagedData<Project>> GetProjectsByProgramAsync(PaginationParameters<string> query, string programNo)
         {
             var projectQuery = _dbContext.ProjectViews
-                .Where(p => p.UserId == userId && p.Program == programNo)
+                .Where(p => p.UserEmail != null && p.UserEmail.ToLower() == _requestContext.UserEmailId && p.Program == programNo)
                 .Select(pv => new Project
                 {
                     ParentProject = pv.ParentProject ?? string.Empty,
@@ -108,7 +107,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<Project> CreateProjectAsync(Project project)
         {
-            project.FpsYear = _fpsYearContext.FpsYear;
+            project.FpsYear = _requestContext.FpsYear;
             await _dbContext.Projects.AddAsync(project);
             await _dbContext.SaveChangesAsync();
             return project;
@@ -116,7 +115,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<Project> UpdateProjectAsync(Project project)
         {
-            project.FpsYear = _fpsYearContext.FpsYear;
+            project.FpsYear = _requestContext.FpsYear;
             _dbContext.Entry(project).State = EntityState.Modified;
             await _dbContext.SaveChangesAsync();
             return project;
@@ -126,7 +125,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             var entity = await _dbContext.Projects
                 .FirstOrDefaultAsync(p => p.ParentProject == project.ParentProject
-                    && p.FpsYear == _fpsYearContext.FpsYear);
+                    && p.FpsYear == _requestContext.FpsYear);
 
             if (entity == null) return null;
 
@@ -156,7 +155,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             var project = await _dbContext.Projects
                 .FirstOrDefaultAsync(p => p.ParentProject == parentProject
-                    && p.FpsYear == _fpsYearContext.FpsYear);
+                    && p.FpsYear == _requestContext.FpsYear);
             if (project == null) return false;
             _dbContext.Projects.Remove(project);
             await _dbContext.SaveChangesAsync();

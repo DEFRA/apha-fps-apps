@@ -19,7 +19,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StoredProcRepositoryTest
         /// </summary>
         private static StoredProcRepository CreateRepository(IEnumerable<Workgroup> workgroups)
         {
-            var fpsYearContext = Substitute.For<IFpsYearContext>();
+            var fpsYearContext = Substitute.For<IFpsRequestContext>();
             fpsYearContext.FpsYear.Returns(DefaultTestFpsYear);
 
             var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);

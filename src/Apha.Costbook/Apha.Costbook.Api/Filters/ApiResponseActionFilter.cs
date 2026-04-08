@@ -17,6 +17,12 @@ namespace Apha.Costbook.Api.Filters
                 await next();
                 return;
             }
+           
+            if (IsApiResponse(objectResult.Value))
+            {
+                await next();
+                return;
+            }
 
             var correlationId = GetCorrelationId(context);
 
@@ -30,7 +36,16 @@ namespace Apha.Costbook.Api.Filters
             };
 
             await next();
-        }    
+        }      
+
+        private static bool IsApiResponse(object value)
+        {
+            var type = value.GetType();
+
+            return type.IsGenericType &&
+                   (type.GetGenericTypeDefinition() == typeof(ApiResponse<>) ||
+                    type.GetGenericTypeDefinition() == typeof(ApiResponse<>));
+        }
 
         private static bool IsPaginatedResult(object value)
         {

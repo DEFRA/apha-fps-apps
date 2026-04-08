@@ -113,7 +113,7 @@ namespace Apha.FPS.Api.Extensions
                 Predicate = _ => false
             });
 
-            // Error handling
+            // Error handling — must be first to catch exceptions from all downstream middleware
             if (env.IsDevelopment() || env.IsEnvironment("local"))
             {
                 app.UseDeveloperExceptionPage();
@@ -122,17 +122,17 @@ namespace Apha.FPS.Api.Extensions
                 {
                     options.SwaggerEndpoint("/swagger/v1/swagger.json", "FPS API v1");
                 });
-            }            
+            }
+
+            app.UseMiddleware<ExceptionMiddleware>();
 
             app.UseHsts();
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseRouting();
 
-            app.UseMiddleware<ExceptionMiddleware>();
-            app.UseMiddleware<RequestContextMiddleware>();
-
             app.UseAuthentication();
+            app.UseMiddleware<RequestContextMiddleware>();
             app.UseAuthorization();
 
             // Default route
