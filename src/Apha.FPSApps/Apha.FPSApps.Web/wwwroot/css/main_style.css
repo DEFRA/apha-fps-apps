@@ -51,6 +51,28 @@ body {
 .uklogo {
   background-color: #1d70b8;
   height: 65px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+}
+
+.uklogo img {
+  height: 40px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #fff;
+}
+
+.user-name {
+  font-family: "GDS Transport", HelveticaNeue, "Helvetica Neue", Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
 }
 
 .uklogofont{
