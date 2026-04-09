@@ -1,5 +1,6 @@
 ﻿using Apha.Common.Utilities.ExcelExport;
 using Apha.Common.Utilities.StateManagement;
+using Apha.PACT.Api.Context;
 using Apha.PACT.Application.Interfaces;
 using Apha.PACT.Application.Services;
 using Apha.PACT.Core.Interfaces;
@@ -23,14 +24,20 @@ namespace Apha.PACT.Api.Extensions
             services.AddScoped<IJobCodeService, JobCodeService>();
             services.AddScoped<ITimeCodeValidService, TimeCodeValidService>();
             services.AddScoped<IWorkGroupService, WorkGroupService>();
+            services.AddScoped<IWorkGroupTestCapabilityService, WorkGroupTestCapabilityService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
         {
             services.AddScoped<IFpsYearContext, FpsYearContext>();
+            services.AddScoped<ICurrentUserContext, CurrentUserContext>();
             services.AddScoped<IJobCodeRepository, JobCodeRepository>();
             services.AddScoped<ITimeCodeValidRepository, TimeCodeValidRepository>();
             services.AddScoped<IWorkGroupRepository, WorkGroupRepository>();
+            services.AddScoped<IProjectRepository, ProjectRepository>();
+            services.AddScoped<ITestCapabilityRepository, TestCapabilityRepository>();
+            services.AddScoped<ITestReqmtRepository, TestReqmtRepository>();
+            services.AddScoped<ITestorProductRepository, TestorProductRepository>();
             return services;
         }
     }
