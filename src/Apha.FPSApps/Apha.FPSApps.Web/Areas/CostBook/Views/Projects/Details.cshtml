@@ -1,0 +1,219 @@
+﻿@model Apha.FPSApps.Web.Areas.CostBook.Models.ProjectDetailViewModel
+
+@{
+    ViewData["Title"] = "Project Details";
+
+    string plancatDisplay = Model.Plancat switch
+    {
+        "Calendar" => "Calendar Year",
+        "Financial" => "Financial Year",
+        _ => Model.Plancat ?? "-"
+    };
+
+    string isDefraDisplay = Model.Isdefraproject switch
+    {
+        1 => "Yes",
+        0 => "No",
+        _ => "-"
+    };
+
+    string inflationDisplay = (Model.Inflation.HasValue && Model.Inflation.Value != 0) ? "Yes" : "No";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="govuk-grid-row">
+                <div class="govuk-grid-column-full">
+                    <h1 class="govuk-heading-s sup_border-bottom" style="padding:10px 0 10px 10px">
+                        Project Details
+                        <a asp-area="CostBook" asp-controller="Projects" asp-action="Index" class="govuk-back-link sup_align_right">Back</a>
+                    </h1>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-12">
+            <div class="main-content" style="padding-top: 0px;">
+                <div class="existing_project mt-2">
+
+                    @if (TempData["Success"] != null)
+                    {
+                        <div class="alert alert-success" role="alert">@TempData["Success"]</div>
+                    }
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger" role="alert">@TempData["Error"]</div>
+                    }
+
+                    <div style="max-width: 1200px; margin-bottom: 25px;">
+
+                        <!-- Action buttons -->
+                        <div class="d-flex gap-2 mb-3">
+                            <a asp-area="CostBook"
+                               asp-controller="Projects"
+                               asp-action="Edit"
+                               asp-route-id="@Model.ProjectId"
+                               class="govuk-button sup_margin_0">Edit</a>
+                        </div>
+
+                        <!-- Costing Book Code -->
+                        <div class="govuk-form-group d-flex align-items-start mb-2">
+                            <span class="govuk-label label_width mb-0 pt-1">Costing Book Code:</span>
+                            <div>
+                                <input type="text" class="govuk-input width-200 read-only" value="@Model.ProjectId" readonly>
+                            </div>
+                        </div>
+
+                        <!-- Contract Number -->
+                        <div class="govuk-form-group d-flex align-items-start mb-2">
+                            <span class="govuk-label label_width mb-0 pt-1">Contract Number:</span>
+                            <div>
+                                <input type="text" class="govuk-input width-200 read-only" value="@Model.ContractNumber" readonly>
+                            </div>
+                        </div>
+
+                        <!-- Title -->
+                        <div class="govuk-form-group d-flex align-items-start mb-2">
+                            <span class="govuk-label label_width mb-0 pt-1">Title:</span>
+                            <div style="width: 61%;">
+                                <textarea class="govuk-textarea w-100 sup_margin_0 read-only" readonly>@Model.Projecttitle</textarea>
+                            </div>
+                        </div>
+
+                        <!-- Year Type + Programme -->
+                        <div class="govuk-form-group d-flex align-items-start mb-2">
+                            <span class="govuk-label label_width mb-0 pt-1">Year Type:</span>
+                            <div class="me-4">
+                                <input type="text" class="govuk-input width-200 read-only" value="@plancatDisplay" readonly>
+                            </div>
+                            <span class="govuk-label label_width mb-0 pt-1">Programme:</span>
+                            <div>
+                                <input type="text" class="govuk-input width-200 read-only" value="@Model.Programme" readonly>
+                            </div>
+                        </div>
+
+                        <!-- Customer Name + Disease -->
+                        <div class="govuk-form-group d-flex align-items-start mb-2">
+                            <span class="govuk-label label_width mb-0 pt-1">Customer Name:</span>
+                            <div class="me-4">
+                                <input type="text" class="govuk-input width-200 read-only" value="@Model.CustomerName" readonly>
+                            </div>
+                            <span class="govuk-label label_width mb-0 pt-1">Disease:</span>
+                            <div>
+                                <input type="text" class="govuk-input width-200 read-only" value="@Model.Disease" readonly>
+                            </div>
+                        </div>
+
+                        <!-- Start Date + Is Defra Project -->
+                        <div class="govuk-form-group d-flex align-items-start mb-2">
+                            <span class="govuk-label label_width mb-0 pt-1">Start Date:</span>
+                            <div class="me-4">
+                                <input type="text" class="govuk-input width-200 read-only"
+                                       value="@Model.Startdate?.ToString("dd/MM/yyyy")" readonly>
+                            </div>
+                            <span class="govuk-label label_width mb-0 pt-1">Is Defra Project?:</span>
+                            <div>
+                                <input type="text" class="govuk-input read-only" style="min-width:80px;" value="@isDefraDisplay" readonly>
+                            </div>
+                        </div>
+
+                        <!-- Start Financial Year + Rate Used -->
+                        <div class="govuk-form-group d-flex align-items-start mb-2">
+                            <span class="govuk-label label_width mb-0 pt-1">Start (Financial) Year:</span>
+                            <div class="me-4">
+                                <input type="text" class="govuk-input width-200 read-only"
+                                       value="@Model.Startfyear?.ToString("0")" readonly>
+                            </div>
+                            <span class="govuk-label label_width mb-0 pt-1">Rate Used (£):</span>
+                            <div>
+                                <input type="text" class="govuk-input width-200 read-only" value="@Model.Euroconvrate" readonly>
+                            </div>
+                        </div>
+
+                        <!-- Submitted By Firstname + Prepared By -->
+                        <div class="govuk-form-group d-flex align-items-start mb-2">
+                            <span class="govuk-label label_width mb-0 pt-1" style="overflow-wrap: break-word;">Submitted By - Firstname:</span>
+                            <div class="me-4">
+                                <input type="text" class="govuk-input width-200 read-only" value="@Model.Submittedbyfname" readonly>
+                            </div>
+                            <span class="govuk-label label_width mb-0 pt-1">Prepared by:</span>
+                            <div>
+                                <input type="text" class="govuk-input inline-select read-only" value="@Model.PreparedBy" readonly>
+                            </div>
+                        </div>
+
+                        <!-- Submitted By Lastname + Include Inflation -->
+                        <div class="govuk-form-group d-flex align-items-start mb-2">
+                            <span class="govuk-label label_width mb-0 pt-1">Lastname:</span>
+                            <div class="me-4">
+                                <input type="text" class="govuk-input width-200 read-only" value="@Model.Submittedbylname" readonly>
+                            </div>
+                            <span class="govuk-label label_width mb-0 pt-1">Include Inflation?:</span>
+                            <div>
+                                <input type="text" class="govuk-input width-200 read-only" value="@inflationDisplay" readonly>
+                            </div>
+                        </div>
+
+                        <!-- Date of Submission -->
+                        <div class="govuk-form-group d-flex align-items-start mb-2">
+                            <span class="govuk-label label_width mb-0 pt-1">Date of Submission:</span>
+                            <div>
+                                <input type="text" class="govuk-input width-200 read-only"
+                                       value="@Model.DateOfSubmission?.ToString("dd/MM/yyyy")" readonly>
+                            </div>
+                        </div>
+
+                        <!-- Notes -->
+                        <div class="govuk-form-group d-flex align-items-start mb-2">
+                            <span class="govuk-label label_width mb-0 pt-1">Notes:</span>
+                            <div style="width: 61%;">
+                                <textarea class="govuk-textarea w-100 read-only" readonly>@Model.Notes</textarea>
+                            </div>
+                        </div>
+
+                        <!-- Status + Created By -->
+                        <div class="govuk-form-group d-flex align-items-start mb-2">
+                            <span class="govuk-label label_width mb-0 pt-1">Status:</span>
+                            <div class="me-4">
+                                <input type="text" class="govuk-input width-200 read-only" value="@Model.Status" readonly>
+                            </div>
+                            <span class="govuk-label label_width mb-0 pt-1">Created By:</span>
+                            <div>
+                                <input type="text" class="govuk-input width-200 read-only" value="@Model.CreatedBy" readonly>
+                            </div>
+                        </div>
+
+                        <!-- Created Date + Modified Date -->
+                        <div class="govuk-form-group d-flex align-items-start mb-2">
+                            <span class="govuk-label label_width mb-0 pt-1">Created Date:</span>
+                            <div class="me-4">
+                                <input type="text" class="govuk-input width-200 read-only"
+                                       value="@Model.CreatedDate.ToString("dd/MM/yyyy")" readonly>
+                            </div>
+                            <span class="govuk-label label_width mb-0 pt-1">Modified Date:</span>
+                            <div>
+                                <input type="text" class="govuk-input width-200 read-only"
+                                       value="@Model.ModifiedDate?.ToString("dd/MM/yyyy")" readonly>
+                            </div>
+                        </div>
+
+                        <!-- Edit / Back -->
+                        <div class="d-flex gap-2 mt-3">
+                            <a asp-area="CostBook"
+                               asp-controller="Projects"
+                               asp-action="Edit"
+                               asp-route-id="@Model.ProjectId"
+                               class="govuk-button">Edit</a>
+                            <a asp-area="CostBook"
+                               asp-controller="Projects"
+                               asp-action="Index"
+                               class="govuk-button govuk-button--secondary">Back to List</a>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

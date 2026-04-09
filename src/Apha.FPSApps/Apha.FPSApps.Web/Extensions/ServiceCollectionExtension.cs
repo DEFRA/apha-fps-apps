@@ -3,6 +3,9 @@ using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Services.FPS;
 using Apha.FPSApps.Application.Services.PACT;
+using Apha.FPSApps.Application.Services.Costbook;
+using Apha.FPSApps.Application.Interfaces.Costbook;
+
 using Apha.FPSApps.Web.Handler;
 namespace Apha.FPSApps.Web.Extensions
 {
@@ -27,6 +30,14 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IProjectService, ProjectService>();
             services.AddScoped<IAnimalPlanService, AnimalPlanService>();
             services.AddScoped<ISettingService, SettingService>();
+             // CostBook services - Following FPS pattern
+            services.AddScoped<ICostBookProjectService, CostBookProjectService>();
+            services.AddScoped<ICostBookCustomerService, CostBookCustomerService>();
+            services.AddScoped<ICostBookDiseaseService, CostBookDiseaseService>();
+            services.AddScoped<ICostBookProgramService, CostBookProgramService>();
+            services.AddScoped<ICostBookStaffService, CostBookStaffService>();
+            services.AddScoped<ICostBookContractService, CostBookContractService>();
+            services.AddScoped<IYearMasterService, YearMasterService>();
             services.AddScoped<IWorkGroupTestCapabilityService, WorkGroupTestCapabilityService>();
             services.AddScoped<IExcelExportService, ExcelExportService>();
             return services;
