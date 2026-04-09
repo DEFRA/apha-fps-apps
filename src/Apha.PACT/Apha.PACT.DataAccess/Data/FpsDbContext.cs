@@ -19,7 +19,11 @@ namespace Apha.PACT.DataAccess.Data
         public virtual DbSet<JobCode> JobCodes { get; set; }
         public virtual DbSet<TimeCodeValid> TimeCodeValids { get; set; }
         public virtual DbSet<WorkGroup> WorkGroups { get; set; }
-
+        public virtual DbSet<TestCapability> TestCapabilities { get; set; }
+        public virtual DbSet<TestReqmt> TestReqmts { get; set; }
+        public virtual DbSet<TestorProduct> TestorProducts { get; set; }
+        public virtual DbSet<TestReqLog> TestReqLogs { get; set; }
+        public virtual DbSet<MonthlyOutput> MonthlyOutputs { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Project>(entity =>
@@ -237,7 +241,208 @@ namespace Apha.PACT.DataAccess.Data
                 
                 entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FPSYear);
             });
-            
+
+            modelBuilder.Entity<TestCapability>(entity =>
+            {
+                entity.HasKey(e => new { e.TestCode, e.WorkGroup, e.FpsYear }).HasName("pk_tlkptestcapability");
+
+                entity.ToTable("tlkptestcapability", "fps");
+
+                entity.HasIndex(e => e.PlanPortfolio, "tlkptestcapability_planportfol");
+                entity.Property(e => e.TestCode)
+                    .HasColumnType("citext")
+                    .HasColumnName("testcode");
+                entity.Property(e => e.WorkGroup)
+                    .HasColumnType("citext")
+                    .HasColumnName("workgroup");
+                entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
+                entity.Property(e => e.PlanPortfolio)
+                    .HasColumnType("citext")
+                    .HasColumnName("planportfolio");
+                entity.Property(e => e.PredOutturn)
+                    .HasDefaultValueSql("0")
+                    .HasColumnName("predoutturn");
+                entity.Property(e => e.SmsCode)
+                    .HasMaxLength(50)
+                    .HasColumnName("smscode");
+                entity.Property(e => e.Sop)
+                    .HasMaxLength(50)
+                    .HasColumnName("sop");
+                entity.Property(e => e.UnitCost)
+                    .HasDefaultValueSql("0")
+                    .HasColumnType("money")
+                    .HasColumnName("unitcost");
+                entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FPSYear);
+            });
+
+            modelBuilder.Entity<TestReqmt>(entity =>
+            {
+                entity.HasKey(e => new { e.TestCode, e.Buyer, e.FpsYear }).HasName("pk_tlkptestreqmt");
+
+                entity.ToTable("tlkptestreqmt", "fps");
+
+                entity.HasIndex(e => e.TestBuyerCode, "reference10");
+                entity.HasIndex(e => e.ProjectBuyerCode, "reference19");
+
+                entity.HasIndex(e => e.TestCode, "reference31");
+
+                entity.Property(e => e.TestCode)
+                    .HasColumnType("citext")
+                    .HasColumnName("testcode");
+                entity.Property(e => e.Buyer)
+                    .HasColumnType("citext")
+                    .HasColumnName("buyer");
+                entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
+                entity.Property(e => e.Active)
+                    .HasDefaultValue((short)1)
+                    .HasColumnName("active");
+                entity.Property(e => e.DateCreated)
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                    .HasColumnType("timestamp without time zone")
+                    .HasColumnName("datecreated");
+                entity.Property(e => e.NoRequired).HasColumnName("norequired");
+                entity.Property(e => e.ProjectBuyerCode)
+                    .HasMaxLength(50)
+                    .HasColumnName("projectbuyercode");
+                entity.Property(e => e.TestBuyerCode)
+                    .HasMaxLength(50)
+                    .HasColumnName("testbuyercode");
+                entity.Property(e => e.UnitPrice)
+                    .HasColumnType("money")
+                    .HasColumnName("unitprice");
+                entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FPSYear);
+            });
+
+            modelBuilder.Entity<TestorProduct>(entity =>
+            {
+                entity.HasKey(e => new { e.ItemCode, e.FpsYear }).HasName("pk_testorproduct");
+
+                entity.ToTable("testorproduct", "fps");
+
+                entity.Property(e => e.ItemCode)
+                    .HasColumnType("citext")
+                    .HasColumnName("itemcode");
+                entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
+                entity.Property(e => e.ChargeMethod)
+                    .HasMaxLength(5)
+                    .HasColumnName("chargemethod");
+                entity.Property(e => e.DefraUnitPrice)
+                    .HasColumnType("money")
+                    .HasColumnName("defraunitprice");
+                entity.Property(e => e.ItemDescription)
+                    .HasMaxLength(200)
+                    .HasColumnName("itemdescription");
+                entity.Property(e => e.JobStatus)
+                    .HasMaxLength(2)
+                    .HasColumnName("jobstatus");
+                entity.Property(e => e.Owner)
+                    .HasMaxLength(2)
+                    .HasColumnName("owner");
+                entity.Property(e => e.PriceAhvg)
+                    .HasColumnType("money")
+                    .HasColumnName("priceahvg");
+                entity.Property(e => e.ShortDescription)
+                    .HasMaxLength(18)
+                    .IsFixedLength()
+                    .HasColumnName("shortdescription");
+                entity.Property(e => e.TestManager)
+                    .HasMaxLength(50)
+                    .HasColumnName("testmanager");
+                entity.Property(e => e.UnitPriceVla)
+                    .HasDefaultValueSql("0")
+                    .HasColumnType("money")
+                    .HasColumnName("unitpricevla");
+                entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FPSYear);
+            });
+
+            modelBuilder.Entity<TestReqLog>(entity =>
+            {
+                entity.HasKey(e => new { e.SequenceNo, e.FpsYear }).HasName("pk_testreq_log");
+
+                entity.ToTable("testreq_log", "fps");
+
+                entity.HasIndex(e => e.SequenceNo, "idx_testreqlog_sequenceno")
+                    .HasAnnotation("Npgsql:StorageParameter:deduplicate_items", "true")
+                    .HasAnnotation("Npgsql:StorageParameter:fillfactor", "100");
+
+                entity.HasIndex(e => e.DateTime, "testreq_log_ind_dt");
+
+                entity.HasIndex(e => e.JobCode, "testreq_log_ind_jc");
+
+                entity.Property(e => e.SequenceNo)
+                    .ValueGeneratedOnAdd()
+                    .HasColumnName("sequenceno");
+                entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
+                entity.Property(e => e.Active).HasColumnName("active");
+                entity.Property(e => e.Buyer)
+                    .HasMaxLength(20)
+                    .UseCollation("latin1_general_ci_as")
+                    .HasColumnName("buyer");
+                entity.Property(e => e.DateTime)
+                    .HasColumnType("timestamp without time zone")
+                    .HasColumnName("date_time");
+                entity.Property(e => e.InsertDelete)
+                    .HasMaxLength(2)
+                    .IsFixedLength()
+                    .UseCollation("latin1_general_ci_as")
+                    .HasColumnName("insert_delete");
+                entity.Property(e => e.JobCode)
+                    .HasMaxLength(50)
+                    .HasComment("Generated column based on projectbuyercode")
+                    .HasColumnName("jobcode");
+                entity.Property(e => e.NoRequired).HasColumnName("norequired");
+                entity.Property(e => e.ProjectBuyerCode)
+                    .HasMaxLength(50)
+                    .UseCollation("latin1_general_ci_as")
+                    .HasColumnName("projectbuyercode");
+                entity.Property(e => e.TestBuyerCode)
+                    .HasMaxLength(50)
+                    .UseCollation("latin1_general_ci_as")
+                    .HasColumnName("testbuyercode");
+                entity.Property(e => e.TestCode)
+                    .HasMaxLength(20)
+                    .HasColumnName("testcode");
+                entity.Property(e => e.UnitPrice).HasColumnName("unitprice");
+                entity.Property(e => e.UserId)
+                    .HasMaxLength(20)
+                    .UseCollation("latin1_general_ci_as")
+                    .HasColumnName("user_id");
+                entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FPSYear);
+            });
+
+            modelBuilder.Entity<MonthlyOutput>(entity =>
+            {
+                entity.HasKey(e => new { e.TestCode, e.Buyer, e.Month, e.WorkGroup, e.FpsYear }).HasName("pk_monthlyoutput");
+
+                entity.ToTable("monthlyoutput", "fps");
+
+                entity.HasIndex(e => e.Month, "month");
+
+                entity.HasIndex(e => e.WorkGroup, "monthlyoutput_workgroup");
+
+                entity.HasIndex(e => new { e.TestCode, e.Buyer }, "reference14");
+
+                entity.HasIndex(e => new { e.WorkGroup, e.TestCode }, "reference25");
+                entity.HasIndex(e => e.TestCode, "testcode");
+
+                entity.Property(e => e.TestCode)
+                    .HasColumnType("citext")
+                    .HasColumnName("testcode");
+                entity.Property(e => e.Buyer)
+                    .HasColumnType("citext")
+                    .HasColumnName("buyer");
+                entity.Property(e => e.Month).HasColumnName("month");
+                entity.Property(e => e.WorkGroup)
+                    .HasColumnType("citext")
+                    .HasColumnName("workgroup");
+                entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
+                entity.Property(e => e.Volume).HasColumnName("volume");
+                entity.Property(e => e.WgBuyer)
+                    .HasMaxLength(50)
+                    .HasColumnName("wgbuyer");
+                entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FPSYear);
+            });
+
         }
     }
 }

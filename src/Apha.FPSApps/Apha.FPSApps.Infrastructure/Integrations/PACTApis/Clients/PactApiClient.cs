@@ -9,12 +9,14 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
         public IPactJobCodeApiClient PactJobCode { get; }
         public IPactTimeCodeValidApiClient PactTimeCodeValid { get; }
         public IPactWorkGroupApiClient PactWorkGroup { get; }
+        public IPactWorkGroupTestCapabilityApiClient PactWorkGroupTestCapability { get; }
 
         public PactApiClient(IPactHttpExecutor http, IMapper mapper)
         {
             PactJobCode = new PactJobCodeApiClient(http, mapper);
             PactTimeCodeValid = new PactTimeCodeValidApiClient(http, mapper);
             PactWorkGroup = new PactWorkGroupApiClient(http, mapper);
+            PactWorkGroupTestCapability = new PactWorkGroupTestCapabilityApiClient(http, mapper);
         }
     }
 }

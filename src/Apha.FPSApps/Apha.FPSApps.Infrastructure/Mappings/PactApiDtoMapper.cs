@@ -14,6 +14,11 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<TimeCodeValidDto, TimeCodeValidReq>().ReverseMap();
             CreateMap<TimeCodeValidDto, TimeCodeValidRes>().ReverseMap();
             CreateMap<WorkGroupDto, WorkGroupRes>().ReverseMap();
+            CreateMap<TestCapabilityDto, TestCapabilityReq>().ReverseMap();
+            CreateMap<TestCapabilityDto, TestCapabilityRes>().ReverseMap();
+            CreateMap<TestReqmtDto, TestReqmtReq>().ReverseMap();
+            CreateMap<TestReqmtDto, TestReqmtRes>().ReverseMap();
+            CreateMap<TestorProductDto, TestorProductRes>().ReverseMap();
         }
     }
 }

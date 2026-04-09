@@ -18,6 +18,10 @@ namespace Apha.PACT.Application.Mappings
             CreateMap<JobCode, JobCodeDto>().ReverseMap();
             CreateMap<TimeCodeValid, TimeCodeValidDto>().ReverseMap();
             CreateMap<WorkGroup, WorkGroupDto>().ReverseMap();
+            CreateMap<TestCapability, TestCapabilityDto>().ReverseMap();
+            CreateMap<TestReqmt, TestReqmtDto>().ReverseMap();
+            CreateMap<TestReqmtDetail, TestReqmtDto>();
+            CreateMap<TestorProduct, TestorProductDto>().ReverseMap();
         }
     }
 }
