@@ -56,7 +56,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
         {
             _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string>());
-            _mapper.Map<List<TestReqmtItem>>(Arg.Any<List<TestReqmtDto>>())
+            _mapper.Map<List<TestRequirementItem>>(Arg.Any<List<TestRequirementDto>>())
                 .Returns([]);
             _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>())
                 .Returns(new PaginationModel());
@@ -233,7 +233,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
             // Arrange
             var request = new PaginationFilter<string> { Filter = "{}" };
             _service.GetPagedTestReqmtAsync(Arg.Any<QueryParameters<string>>(), "BLOOD")
-                .Returns(ApiResponseDto<List<TestReqmtDto>>.SuccessResponse([]));
+                .Returns(ApiResponseDto<List<TestRequirementDto>>.SuccessResponse([]));
             SetupTestReqmtGridMapper();
 
             // Act
@@ -242,7 +242,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
             Assert.Equal("_DataGrid", partial.ViewName);
-            Assert.IsType<DataGridConfig<TestReqmtItem>>(partial.Model);
+            Assert.IsType<DataGridConfig<TestRequirementItem>>(partial.Model);
         }
 
         [Fact]
@@ -267,7 +267,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
             var request = new PaginationFilter<string> { Filter = "{}" };
             var errors = new List<ApiErrorDto> { new() { Code = "ERR" } };
             _service.GetPagedTestReqmtAsync(Arg.Any<QueryParameters<string>>(), "BLOOD")
-                .Returns(ApiResponseDto<List<TestReqmtDto>>.FailureResponse(errors, new ApiMetaDto()));
+                .Returns(ApiResponseDto<List<TestRequirementDto>>.FailureResponse(errors, new ApiMetaDto()));
             SetupTestReqmtGridMapper();
 
             // Act
@@ -275,7 +275,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
-            var grid = Assert.IsType<DataGridConfig<TestReqmtItem>>(partial.Model);
+            var grid = Assert.IsType<DataGridConfig<TestRequirementItem>>(partial.Model);
             Assert.Empty(grid.Data);
         }
 
@@ -495,9 +495,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
         public async Task CreateTestReqmt_Get_WithTestCode_PreFillsPricingAndReturnsPartialView()
         {
             // Arrange
-            var pricing = new TestReqmtDto { TestCode = "BLOOD", RecUnitPrice = 15.75m };
+            var pricing = new TestRequirementDto { TestCode = "BLOOD", RecUnitPrice = 15.75m };
             _service.GetTestReqmtPricingAsync("BLOOD", null)
-                .Returns(ApiResponseDto<TestReqmtDto>.SuccessResponse(pricing));
+                .Returns(ApiResponseDto<TestRequirementDto>.SuccessResponse(pricing));
             SetupDropdowns();
 
             // Act
@@ -506,7 +506,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
             Assert.Equal("_AddEditTestReqmt", partial.ViewName);
-            var model = Assert.IsType<TestReqmtItem>(partial.Model);
+            var model = Assert.IsType<TestRequirementItem>(partial.Model);
             Assert.Equal("BLOOD", model.TestCode);
             Assert.Equal(15.75m, model.RecUnitPrice);
             Assert.Equal(15.75m, model.UnitPrice);
@@ -533,7 +533,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
             // Arrange
             var errors = new List<ApiErrorDto> { new() { Code = "NOT_FOUND" } };
             _service.GetTestReqmtPricingAsync("BLOOD", null)
-                .Returns(ApiResponseDto<TestReqmtDto>.FailureResponse(errors, new ApiMetaDto()));
+                .Returns(ApiResponseDto<TestRequirementDto>.FailureResponse(errors, new ApiMetaDto()));
             SetupDropdowns();
 
             // Act
@@ -541,7 +541,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
-            var model = Assert.IsType<TestReqmtItem>(partial.Model);
+            var model = Assert.IsType<TestRequirementItem>(partial.Model);
             Assert.Null(model.RecUnitPrice);
         }
 
@@ -553,10 +553,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
         public async Task CreateTestReqmt_Post_ValidModel_ReturnsJsonSuccess()
         {
             // Arrange
-            var model = new TestReqmtItem { TestCode = "BLOOD", Buyer = "PRJ1" };
-            var dto = new TestReqmtDto { TestCode = "BLOOD", Buyer = "PRJ1" };
-            _mapper.Map<TestReqmtDto>(model).Returns(dto);
-            _service.CreateTestReqmtAsync(dto).Returns(ApiResponseDto<TestReqmtDto>.SuccessResponse(dto));
+            var model = new TestRequirementItem { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var dto = new TestRequirementDto { TestCode = "BLOOD", Buyer = "PRJ1" };
+            _mapper.Map<TestRequirementDto>(model).Returns(dto);
+            _service.CreateTestReqmtAsync(dto).Returns(ApiResponseDto<TestRequirementDto>.SuccessResponse(dto));
 
             // Act
             var result = await _controller.CreateTestReqmt(model);
@@ -571,11 +571,11 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
         public async Task CreateTestReqmt_Post_ServiceFails_ReturnsJsonFailure()
         {
             // Arrange
-            var model = new TestReqmtItem { TestCode = "BLOOD", Buyer = "PRJ1" };
-            var dto = new TestReqmtDto { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var model = new TestRequirementItem { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var dto = new TestRequirementDto { TestCode = "BLOOD", Buyer = "PRJ1" };
             var errors = new List<ApiErrorDto> { new() { Code = "CONFLICT", Message = "Already exists" } };
-            _mapper.Map<TestReqmtDto>(model).Returns(dto);
-            _service.CreateTestReqmtAsync(dto).Returns(ApiResponseDto<TestReqmtDto>.FailureResponse(errors, new ApiMetaDto()));
+            _mapper.Map<TestRequirementDto>(model).Returns(dto);
+            _service.CreateTestReqmtAsync(dto).Returns(ApiResponseDto<TestRequirementDto>.FailureResponse(errors, new ApiMetaDto()));
 
             // Act
             var result = await _controller.CreateTestReqmt(model);
@@ -593,7 +593,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
             _controller.ModelState.AddModelError("Buyer", "Buyer is required.");
 
             // Act
-            var result = await _controller.CreateTestReqmt(new TestReqmtItem());
+            var result = await _controller.CreateTestReqmt(new TestRequirementItem());
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
@@ -609,11 +609,11 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
         public async Task EditTestReqmt_Get_ReqmtExists_ReturnsPartialViewWithModel()
         {
             // Arrange
-            var dto = new TestReqmtDto { TestCode = "BLOOD", Buyer = "PRJ1" };
-            var item = new TestReqmtItem { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var dto = new TestRequirementDto { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var item = new TestRequirementItem { TestCode = "BLOOD", Buyer = "PRJ1" };
             _service.GetTestReqmtByIdAsync("BLOOD", "PRJ1")
-                .Returns(ApiResponseDto<TestReqmtDto>.SuccessResponse(dto));
-            _mapper.Map<TestReqmtItem>(dto).Returns(item);
+                .Returns(ApiResponseDto<TestRequirementDto>.SuccessResponse(dto));
+            _mapper.Map<TestRequirementItem>(dto).Returns(item);
             _service.GetAllTestorProductsAsync().Returns(ApiResponseDto<List<TestorProductDto>>.SuccessResponse([]));
             _projectService.GetAllProjectsAsync().Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse([]));
 
@@ -623,7 +623,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
             Assert.Equal("_AddEditTestReqmt", partial.ViewName);
-            var model = Assert.IsType<TestReqmtItem>(partial.Model);
+            var model = Assert.IsType<TestRequirementItem>(partial.Model);
             Assert.Equal("BLOOD", model.TestCode);
         }
 
@@ -633,7 +633,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
             // Arrange
             var errors = new List<ApiErrorDto> { new() { Code = "NOT_FOUND", Message = "Not found" } };
             _service.GetTestReqmtByIdAsync("MISSING", "PRJ1")
-                .Returns(ApiResponseDto<TestReqmtDto>.FailureResponse(errors, new ApiMetaDto()));
+                .Returns(ApiResponseDto<TestRequirementDto>.FailureResponse(errors, new ApiMetaDto()));
 
             // Act
             var result = await _controller.EditTestReqmt("MISSING", "PRJ1");
@@ -650,10 +650,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
         public async Task EditTestReqmt_Post_ValidModel_ReturnsJsonSuccess()
         {
             // Arrange
-            var model = new TestReqmtItem { TestCode = "BLOOD", Buyer = "PRJ1" };
-            var dto = new TestReqmtDto { TestCode = "BLOOD", Buyer = "PRJ1" };
-            _mapper.Map<TestReqmtDto>(model).Returns(dto);
-            _service.UpdateTestReqmtAsync(dto).Returns(ApiResponseDto<TestReqmtDto>.SuccessResponse(dto));
+            var model = new TestRequirementItem { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var dto = new TestRequirementDto { TestCode = "BLOOD", Buyer = "PRJ1" };
+            _mapper.Map<TestRequirementDto>(model).Returns(dto);
+            _service.UpdateTestReqmtAsync(dto).Returns(ApiResponseDto<TestRequirementDto>.SuccessResponse(dto));
 
             // Act
             var result = await _controller.EditTestReqmt(model);
@@ -668,11 +668,11 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
         public async Task EditTestReqmt_Post_ServiceFails_ReturnsJsonFailure()
         {
             // Arrange
-            var model = new TestReqmtItem { TestCode = "BLOOD", Buyer = "PRJ1" };
-            var dto = new TestReqmtDto { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var model = new TestRequirementItem { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var dto = new TestRequirementDto { TestCode = "BLOOD", Buyer = "PRJ1" };
             var errors = new List<ApiErrorDto> { new() { Code = "ERR", Message = "Update failed" } };
-            _mapper.Map<TestReqmtDto>(model).Returns(dto);
-            _service.UpdateTestReqmtAsync(dto).Returns(ApiResponseDto<TestReqmtDto>.FailureResponse(errors, new ApiMetaDto()));
+            _mapper.Map<TestRequirementDto>(model).Returns(dto);
+            _service.UpdateTestReqmtAsync(dto).Returns(ApiResponseDto<TestRequirementDto>.FailureResponse(errors, new ApiMetaDto()));
 
             // Act
             var result = await _controller.EditTestReqmt(model);
@@ -690,7 +690,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
             _controller.ModelState.AddModelError("TestCode", "Test Code is required.");
 
             // Act
-            var result = await _controller.EditTestReqmt(new TestReqmtItem());
+            var result = await _controller.EditTestReqmt(new TestRequirementItem());
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
@@ -743,13 +743,13 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
         public async Task ExportTestReqmt_WithData_ReturnsFileContentResult()
         {
             // Arrange
-            var dtos = new List<TestReqmtDto> { new() { TestCode = "BLOOD", Buyer = "PRJ1" } };
-            var items = new List<TestReqmtItem> { new() { TestCode = "BLOOD", Buyer = "PRJ1" } };
+            var dtos = new List<TestRequirementDto> { new() { TestCode = "BLOOD", Buyer = "PRJ1" } };
+            var items = new List<TestRequirementItem> { new() { TestCode = "BLOOD", Buyer = "PRJ1" } };
             var fileBytes = new byte[] { 1, 2, 3 };
 
             _service.GetAllTestReqmtForExportAsync("BLOOD", null)
-                .Returns(ApiResponseDto<List<TestReqmtDto>>.SuccessResponse(dtos));
-            _mapper.Map<List<TestReqmtItem>>(dtos).Returns(items);
+                .Returns(ApiResponseDto<List<TestRequirementDto>>.SuccessResponse(dtos));
+            _mapper.Map<List<TestRequirementItem>>(dtos).Returns(items);
             _excelExportService.ExportToExcel(items, "Test Requirements").Returns(fileBytes);
 
             // Act
@@ -768,9 +768,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
             // Arrange
             var filter = "{\"Buyer\":\"PRJ1\"}";
             _service.GetAllTestReqmtForExportAsync("BLOOD", filter)
-                .Returns(ApiResponseDto<List<TestReqmtDto>>.SuccessResponse([]));
-            _mapper.Map<List<TestReqmtItem>>(Arg.Any<List<TestReqmtDto>>()).Returns([]);
-            _excelExportService.ExportToExcel(Arg.Any<List<TestReqmtItem>>(), "Test Requirements").Returns([]);
+                .Returns(ApiResponseDto<List<TestRequirementDto>>.SuccessResponse([]));
+            _mapper.Map<List<TestRequirementItem>>(Arg.Any<List<TestRequirementDto>>()).Returns([]);
+            _excelExportService.ExportToExcel(Arg.Any<List<TestRequirementItem>>(), "Test Requirements").Returns([]);
 
             // Act
             var result = await _controller.ExportTestReqmt("BLOOD", filter);
@@ -786,8 +786,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
             // Arrange
             var errors = new List<ApiErrorDto> { new() { Code = "ERR" } };
             _service.GetAllTestReqmtForExportAsync("BLOOD", null)
-                .Returns(ApiResponseDto<List<TestReqmtDto>>.FailureResponse(errors, new ApiMetaDto()));
-            _excelExportService.ExportToExcel(Arg.Any<List<TestReqmtItem>>(), "Test Requirements").Returns([]);
+                .Returns(ApiResponseDto<List<TestRequirementDto>>.FailureResponse(errors, new ApiMetaDto()));
+            _excelExportService.ExportToExcel(Arg.Any<List<TestRequirementItem>>(), "Test Requirements").Returns([]);
 
             // Act
             var result = await _controller.ExportTestReqmt("BLOOD", null);
@@ -795,7 +795,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
             // Assert
             Assert.IsType<FileContentResult>(result);
             _excelExportService.Received(1).ExportToExcel(
-                Arg.Is<List<TestReqmtItem>>(l => l.Count == 0), "Test Requirements");
+                Arg.Is<List<TestRequirementItem>>(l => l.Count == 0), "Test Requirements");
         }
 
         #endregion
@@ -821,7 +821,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
             // Arrange
             var errors = new List<ApiErrorDto> { new() { Code = "NOT_FOUND" } };
             _service.GetTestReqmtPricingAsync("BLOOD", null)
-                .Returns(ApiResponseDto<TestReqmtDto>.FailureResponse(errors, new ApiMetaDto()));
+                .Returns(ApiResponseDto<TestRequirementDto>.FailureResponse(errors, new ApiMetaDto()));
 
             // Act
             var result = await _controller.GetTestReqmtPricing("BLOOD");
@@ -836,9 +836,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
         public async Task GetTestReqmtPricing_WithTestCodeOnly_ReturnsRecUnitPriceAndNullIsDefraProject()
         {
             // Arrange
-            var pricing = new TestReqmtDto { TestCode = "BLOOD", RecUnitPrice = 12.50m, IsDefraProject = 1 };
+            var pricing = new TestRequirementDto { TestCode = "BLOOD", RecUnitPrice = 12.50m, IsDefraProject = 1 };
             _service.GetTestReqmtPricingAsync("BLOOD", null)
-                .Returns(ApiResponseDto<TestReqmtDto>.SuccessResponse(pricing));
+                .Returns(ApiResponseDto<TestRequirementDto>.SuccessResponse(pricing));
 
             // Act
             var result = await _controller.GetTestReqmtPricing("BLOOD");
@@ -855,9 +855,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
         public async Task GetTestReqmtPricing_WithProjectCode_ReturnsIsDefraProjectValue()
         {
             // Arrange
-            var pricing = new TestReqmtDto { TestCode = "BLOOD", RecUnitPrice = 10.0m, IsDefraProject = 1 };
+            var pricing = new TestRequirementDto { TestCode = "BLOOD", RecUnitPrice = 10.0m, IsDefraProject = 1 };
             _service.GetTestReqmtPricingAsync("BLOOD", "PRJ1")
-                .Returns(ApiResponseDto<TestReqmtDto>.SuccessResponse(pricing));
+                .Returns(ApiResponseDto<TestRequirementDto>.SuccessResponse(pricing));
 
             // Act
             var result = await _controller.GetTestReqmtPricing("BLOOD", "PRJ1");

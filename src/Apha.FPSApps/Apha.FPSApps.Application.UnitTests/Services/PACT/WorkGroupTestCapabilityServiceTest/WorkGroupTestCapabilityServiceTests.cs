@@ -194,7 +194,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupTestCapabili
         public async Task GetPagedTestReqmtAsync_DelegatesToApiClient_ReturnsResult()
         {
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var expected = ApiResponseDto<List<TestReqmtDto>>.SuccessResponse([new TestReqmtDto { TestCode = "BLOOD", Buyer = "PRJ1" }]);
+            var expected = ApiResponseDto<List<TestRequirementDto>>.SuccessResponse([new TestRequirementDto { TestCode = "BLOOD", Buyer = "PRJ1" }]);
             _apiClient.GetPagedTestReqmtAsync(query, "BLOOD").Returns(expected);
 
             var result = await _service.GetPagedTestReqmtAsync(query, "BLOOD");
@@ -210,7 +210,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupTestCapabili
         [Fact]
         public async Task GetAllTestReqmtForExportAsync_DelegatesToApiClient_ReturnsResult()
         {
-            var expected = ApiResponseDto<List<TestReqmtDto>>.SuccessResponse([new TestReqmtDto { TestCode = "BLOOD" }]);
+            var expected = ApiResponseDto<List<TestRequirementDto>>.SuccessResponse([new TestRequirementDto { TestCode = "BLOOD" }]);
             _apiClient.GetAllTestReqmtForExportAsync("BLOOD", "{}").Returns(expected);
 
             var result = await _service.GetAllTestReqmtForExportAsync("BLOOD", "{}");
@@ -222,7 +222,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupTestCapabili
         [Fact]
         public async Task GetAllTestReqmtForExportAsync_WithNullFilter_PassesNullToClient()
         {
-            var expected = ApiResponseDto<List<TestReqmtDto>>.SuccessResponse([]);
+            var expected = ApiResponseDto<List<TestRequirementDto>>.SuccessResponse([]);
             _apiClient.GetAllTestReqmtForExportAsync("BLOOD", null).Returns(expected);
 
             var result = await _service.GetAllTestReqmtForExportAsync("BLOOD", null);
@@ -238,7 +238,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupTestCapabili
         [Fact]
         public async Task GetTestReqmtByIdAsync_DelegatesToApiClient_ReturnsResult()
         {
-            var expected = ApiResponseDto<TestReqmtDto>.SuccessResponse(new TestReqmtDto { TestCode = "BLOOD", Buyer = "PRJ1" });
+            var expected = ApiResponseDto<TestRequirementDto>.SuccessResponse(new TestRequirementDto { TestCode = "BLOOD", Buyer = "PRJ1" });
             _apiClient.GetTestReqmtByIdAsync("BLOOD", "PRJ1").Returns(expected);
 
             var result = await _service.GetTestReqmtByIdAsync("BLOOD", "PRJ1");
@@ -251,7 +251,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupTestCapabili
         public async Task GetTestReqmtByIdAsync_WhenNotFound_ReturnsFailureResponse()
         {
             var errors = new List<ApiErrorDto> { new() { Code = "NOT_FOUND" } };
-            var expected = ApiResponseDto<TestReqmtDto>.FailureResponse(errors, new ApiMetaDto());
+            var expected = ApiResponseDto<TestRequirementDto>.FailureResponse(errors, new ApiMetaDto());
             _apiClient.GetTestReqmtByIdAsync("MISSING", "PRJ1").Returns(expected);
 
             var result = await _service.GetTestReqmtByIdAsync("MISSING", "PRJ1");
@@ -266,8 +266,8 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupTestCapabili
         [Fact]
         public async Task CreateTestReqmtAsync_DelegatesToApiClient_ReturnsCreatedDto()
         {
-            var dto = new TestReqmtDto { TestCode = "BLOOD", Buyer = "PRJ1" };
-            var expected = ApiResponseDto<TestReqmtDto>.SuccessResponse(dto);
+            var dto = new TestRequirementDto { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var expected = ApiResponseDto<TestRequirementDto>.SuccessResponse(dto);
             _apiClient.CreateTestReqmtAsync(dto).Returns(expected);
 
             var result = await _service.CreateTestReqmtAsync(dto);
@@ -279,9 +279,9 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupTestCapabili
         [Fact]
         public async Task CreateTestReqmtAsync_WhenApiFails_ReturnsFailureResponse()
         {
-            var dto = new TestReqmtDto { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var dto = new TestRequirementDto { TestCode = "BLOOD", Buyer = "PRJ1" };
             var errors = new List<ApiErrorDto> { new() { Code = "CONFLICT" } };
-            var expected = ApiResponseDto<TestReqmtDto>.FailureResponse(errors, new ApiMetaDto());
+            var expected = ApiResponseDto<TestRequirementDto>.FailureResponse(errors, new ApiMetaDto());
             _apiClient.CreateTestReqmtAsync(dto).Returns(expected);
 
             var result = await _service.CreateTestReqmtAsync(dto);
@@ -296,8 +296,8 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupTestCapabili
         [Fact]
         public async Task UpdateTestReqmtAsync_DelegatesToApiClient_ReturnsUpdatedDto()
         {
-            var dto = new TestReqmtDto { TestCode = "BLOOD", Buyer = "PRJ1" };
-            var expected = ApiResponseDto<TestReqmtDto>.SuccessResponse(dto);
+            var dto = new TestRequirementDto { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var expected = ApiResponseDto<TestRequirementDto>.SuccessResponse(dto);
             _apiClient.UpdateTestReqmtAsync(dto).Returns(expected);
 
             var result = await _service.UpdateTestReqmtAsync(dto);
@@ -406,7 +406,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupTestCapabili
         [Fact]
         public async Task GetTestReqmtPricingAsync_WithTestCodeOnly_DelegatesToApiClient()
         {
-            var expected = ApiResponseDto<TestReqmtDto>.SuccessResponse(new TestReqmtDto { TestCode = "BLOOD", RecUnitPrice = 10.5m });
+            var expected = ApiResponseDto<TestRequirementDto>.SuccessResponse(new TestRequirementDto { TestCode = "BLOOD", RecUnitPrice = 10.5m });
             _apiClient.GetTestReqmtPricingAsync("BLOOD", null).Returns(expected);
 
             var result = await _service.GetTestReqmtPricingAsync("BLOOD");
@@ -418,7 +418,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupTestCapabili
         [Fact]
         public async Task GetTestReqmtPricingAsync_WithProjectCode_PassesProjectCodeToClient()
         {
-            var expected = ApiResponseDto<TestReqmtDto>.SuccessResponse(new TestReqmtDto { TestCode = "BLOOD", RecUnitPrice = 5.0m });
+            var expected = ApiResponseDto<TestRequirementDto>.SuccessResponse(new TestRequirementDto { TestCode = "BLOOD", RecUnitPrice = 5.0m });
             _apiClient.GetTestReqmtPricingAsync("BLOOD", "PRJ1").Returns(expected);
 
             var result = await _service.GetTestReqmtPricingAsync("BLOOD", "PRJ1");
@@ -431,7 +431,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupTestCapabili
         public async Task GetTestReqmtPricingAsync_WhenNotFound_ReturnsFailureResponse()
         {
             var errors = new List<ApiErrorDto> { new() { Code = "NOT_FOUND" } };
-            var expected = ApiResponseDto<TestReqmtDto>.FailureResponse(errors, new ApiMetaDto());
+            var expected = ApiResponseDto<TestRequirementDto>.FailureResponse(errors, new ApiMetaDto());
             _apiClient.GetTestReqmtPricingAsync("MISSING", null).Returns(expected);
 
             var result = await _service.GetTestReqmtPricingAsync("MISSING");

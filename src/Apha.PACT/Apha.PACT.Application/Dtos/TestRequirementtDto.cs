@@ -1,6 +1,6 @@
-namespace Apha.PACT.Core.Entities
+namespace Apha.PACT.Application.Dtos
 {
-    public partial class TestReqmt
+    public class TestRequirementtDto
     {
         public string TestCode { get; set; } = null!;
         public string Buyer { get; set; } = null!;
@@ -11,5 +11,7 @@ namespace Apha.PACT.Core.Entities
         public DateTime? DateCreated { get; set; }
         public short? Active { get; set; }
         public int FpsYear { get; set; }
+        public short IsDefraProject { get; set; }
+        public decimal? RecUnitPrice { get; set; }
     }
 }

@@ -20,7 +20,7 @@ namespace Apha.PACT.DataAccess.Data
         public virtual DbSet<TimeCodeValid> TimeCodeValids { get; set; }
         public virtual DbSet<WorkGroup> WorkGroups { get; set; }
         public virtual DbSet<TestCapability> TestCapabilities { get; set; }
-        public virtual DbSet<TestReqmt> TestReqmts { get; set; }
+        public virtual DbSet<TestRequirement> TestReqmts { get; set; }
         public virtual DbSet<TestorProduct> TestorProducts { get; set; }
         public virtual DbSet<TestReqLog> TestReqLogs { get; set; }
         public virtual DbSet<MonthlyOutput> MonthlyOutputs { get; set; }
@@ -275,7 +275,7 @@ namespace Apha.PACT.DataAccess.Data
                 entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FPSYear);
             });
 
-            modelBuilder.Entity<TestReqmt>(entity =>
+            modelBuilder.Entity<TestRequirement>(entity =>
             {
                 entity.HasKey(e => new { e.TestCode, e.Buyer, e.FpsYear }).HasName("pk_tlkptestreqmt");
 

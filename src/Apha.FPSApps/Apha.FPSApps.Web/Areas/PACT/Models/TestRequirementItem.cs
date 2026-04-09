@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Apha.FPSApps.Web.Areas.PACT.Models
 {
-    public class TestReqmtItem
+    public class TestRequirementItem
     {
         // ── Key / hidden ──────────────────────────────────────────────────────
 

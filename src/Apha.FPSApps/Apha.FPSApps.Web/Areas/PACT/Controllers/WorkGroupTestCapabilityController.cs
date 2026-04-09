@@ -218,7 +218,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             ViewBag.Projects = await GetProjectsAsync();
             ViewBag.TestorProductOptions = await GetTestorProductSelectListAsync();
 
-            var model = new TestReqmtItem { TestCode = testCode, Active = 1, NoRequired = 0 };
+            var model = new TestRequirementItem { TestCode = testCode, Active = 1, NoRequired = 0 };
 
             if (!string.IsNullOrWhiteSpace(testCode))
             {
@@ -234,7 +234,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateTestReqmt([FromBody] TestReqmtItem model)
+        public async Task<IActionResult> CreateTestReqmt([FromBody] TestRequirementItem model)
         {
             if (!ModelState.IsValid)
                 return Json(new
@@ -250,7 +250,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                         }))
                 });
 
-            var dto = _mapper.Map<TestReqmtDto>(model);
+            var dto = _mapper.Map<TestRequirementDto>(model);
             var result = await _service.CreateTestReqmtAsync(dto);
 
             return result.Success
@@ -273,12 +273,12 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
             ViewBag.Projects = await GetProjectsAsync();
             ViewBag.TestorProductOptions = await GetTestorProductSelectListAsync();
-            var item = _mapper.Map<TestReqmtItem>(result.Data);
+            var item = _mapper.Map<TestRequirementItem>(result.Data);
             return PartialView("_AddEditTestReqmt", item);
         }
 
         [HttpPost]
-        public async Task<IActionResult> EditTestReqmt([FromBody] TestReqmtItem model)
+        public async Task<IActionResult> EditTestReqmt([FromBody] TestRequirementItem model)
         {
             if (!ModelState.IsValid)
                 return Json(new
@@ -294,7 +294,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                         }))
                 });
 
-            var dto = _mapper.Map<TestReqmtDto>(model);
+            var dto = _mapper.Map<TestRequirementDto>(model);
             var result = await _service.UpdateTestReqmtAsync(dto);
 
             return result.Success
@@ -329,8 +329,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var response = await _service.GetAllTestReqmtForExportAsync(testCode, filter);
 
             var items = response.Success && response.Data != null
-                ? _mapper.Map<List<TestReqmtItem>>(response.Data)
-                : new List<TestReqmtItem>();
+                ? _mapper.Map<List<TestRequirementItem>>(response.Data)
+                : new List<TestRequirementItem>();
 
             var bytes = _excelExportService.ExportToExcel(items, "Test Requirements");
             var fileName = $"TestRequirements_{testCode}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
@@ -400,7 +400,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             };
         }
 
-        private async Task<DataGridConfig<TestReqmtItem>> BuildTestReqmtGridAsync(
+        private async Task<DataGridConfig<TestRequirementItem>> BuildTestReqmtGridAsync(
             PaginationFilter<string> request, string testCode)
         {
             var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}")
@@ -410,8 +410,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var response = await _service.GetPagedTestReqmtAsync(query, testCode);
 
             var items = response.Success && response.Data != null
-                ? _mapper.Map<List<TestReqmtItem>>(response.Data)
-                : new List<TestReqmtItem>();
+                ? _mapper.Map<List<TestRequirementItem>>(response.Data)
+                : new List<TestRequirementItem>();
 
             var paginationModel = response.Pagination is null
                 ? new PaginationModel()
@@ -419,7 +419,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             paginationModel.SortColumn = request.SortBy;
             paginationModel.SortDirection = request.Descending;
 
-            return new DataGridConfig<TestReqmtItem>
+            return new DataGridConfig<TestRequirementItem>
             {
                 GridId = "testReqmtGrid",
                 Title = "Test Requirement Records for Test",
@@ -434,15 +434,15 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 ExtraFilterMethod = "getTestReqmtExtraFilters",
                 BindGridUrl = "/PACT/WorkGroupTestCapability/LoadTestReqmtGrid",
                 Data = items,
-                Columns = GridDataProvider.GetColumnsDefination<TestReqmtItem>(null),
+                Columns = GridDataProvider.GetColumnsDefination<TestRequirementItem>(null),
                 Pagination = paginationModel,
                 CurrentFilters = filterDict
             };
         }
 
-        private static DataGridConfig<TestReqmtItem> BuildEmptyTestReqmtGrid()
+        private static DataGridConfig<TestRequirementItem> BuildEmptyTestReqmtGrid()
         {
-            return new DataGridConfig<TestReqmtItem>
+            return new DataGridConfig<TestRequirementItem>
             {
                 GridId = "testReqmtGrid",
                 Title = "Test Requirement Records for Test",
@@ -456,8 +456,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 DeleteFunction = "deleteTestReqmt",
                 ExtraFilterMethod = "getTestReqmtExtraFilters",
                 BindGridUrl = "/PACT/WorkGroupTestCapability/LoadTestReqmtGrid",
-                Data = new List<TestReqmtItem>(),
-                Columns = GridDataProvider.GetColumnsDefination<TestReqmtItem>(null),
+                Data = new List<TestRequirementItem>(),
+                Columns = GridDataProvider.GetColumnsDefination<TestRequirementItem>(null),
                 Pagination = new PaginationModel()
             };
         }

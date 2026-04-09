@@ -17,11 +17,11 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestReqmtRepositoryTest
 
         private static (
             TestReqmtRepository Repo,
-            Mock<DbSet<TestReqmt>> TestReqmtsDbSet,
+            Mock<DbSet<TestRequirement>> TestReqmtsDbSet,
             Mock<DbSet<MonthlyOutput>> MonthlyOutputsDbSet,
             Mock<FpsDbContext> Context)
             CreateRepositoryWithMocks(
-                IEnumerable<TestReqmt>? testReqmts = null,
+                IEnumerable<TestRequirement>? testReqmts = null,
                 IEnumerable<MonthlyOutput>? monthlyOutputs = null,
                 int fpsYear = DefaultFpsYear)
         {
@@ -36,8 +36,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestReqmtRepositoryTest
             var testReqmtsMockSet = RepositoryTestHelper.CreateMockDbSet(testReqmts ?? []);
             RepositoryTestHelper.SetupDbSetOperations(testReqmtsMockSet);
             testReqmtsMockSet
-                .Setup(x => x.AddAsync(It.IsAny<TestReqmt>(), It.IsAny<CancellationToken>()))
-                .Returns((TestReqmt _, CancellationToken __) => new ValueTask<EntityEntry<TestReqmt>>());
+                .Setup(x => x.AddAsync(It.IsAny<TestRequirement>(), It.IsAny<CancellationToken>()))
+                .Returns((TestRequirement _, CancellationToken __) => new ValueTask<EntityEntry<TestRequirement>>());
 
             var monthlyOutputsMockSet = RepositoryTestHelper.CreateMockDbSet(monthlyOutputs ?? []);
 
@@ -62,7 +62,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestReqmtRepositoryTest
         [Fact]
         public async Task GetPagedByTestCodeAsync_MatchingTestCode_ReturnsMatchingRecords()
         {
-            var testReqmts = new List<TestReqmt>
+            var testReqmts = new List<TestRequirement>
             {
                 new() { TestCode = "BLOOD", Buyer = "PRJ1", FpsYear = DefaultFpsYear },
                 new() { TestCode = "URINE", Buyer = "PRJ2", FpsYear = DefaultFpsYear }
@@ -79,7 +79,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestReqmtRepositoryTest
         [Fact]
         public async Task GetPagedByTestCodeAsync_NoMatchingTestCode_ReturnsEmptyList()
         {
-            var testReqmts = new List<TestReqmt>
+            var testReqmts = new List<TestRequirement>
             {
                 new() { TestCode = "BLOOD", Buyer = "PRJ1", FpsYear = DefaultFpsYear }
             };
@@ -94,7 +94,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestReqmtRepositoryTest
         [Fact]
         public async Task GetPagedByTestCodeAsync_WithBuyerFilter_FiltersCorrectly()
         {
-            var testReqmts = new List<TestReqmt>
+            var testReqmts = new List<TestRequirement>
             {
                 new() { TestCode = "BLOOD", Buyer = "ALPHA", FpsYear = DefaultFpsYear },
                 new() { TestCode = "BLOOD", Buyer = "BETA",  FpsYear = DefaultFpsYear }
@@ -130,7 +130,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestReqmtRepositoryTest
         [Fact]
         public async Task GetByIdAsync_MatchingRecord_ReturnsEntity()
         {
-            var testReqmts = new List<TestReqmt>
+            var testReqmts = new List<TestRequirement>
             {
                 new() { TestCode = "BLOOD", Buyer = "PRJ1", FpsYear = DefaultFpsYear }
             };
@@ -146,7 +146,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestReqmtRepositoryTest
         [Fact]
         public async Task GetByIdAsync_TestCodeNotFound_ReturnsNull()
         {
-            var testReqmts = new List<TestReqmt>
+            var testReqmts = new List<TestRequirement>
             {
                 new() { TestCode = "BLOOD", Buyer = "PRJ1", FpsYear = DefaultFpsYear }
             };
@@ -160,7 +160,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestReqmtRepositoryTest
         [Fact]
         public async Task GetByIdAsync_BuyerNotFound_ReturnsNull()
         {
-            var testReqmts = new List<TestReqmt>
+            var testReqmts = new List<TestRequirement>
             {
                 new() { TestCode = "BLOOD", Buyer = "PRJ1", FpsYear = DefaultFpsYear }
             };
@@ -178,7 +178,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestReqmtRepositoryTest
         [Fact]
         public async Task ExistsByTestBuyerCodeAsync_CodeExists_ReturnsTrue()
         {
-            var testReqmts = new List<TestReqmt>
+            var testReqmts = new List<TestRequirement>
             {
                 new() { TestCode = "BLOOD", Buyer = "PRJ1", TestBuyerCode = "BLOOD-WG1", FpsYear = DefaultFpsYear }
             };
@@ -192,7 +192,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestReqmtRepositoryTest
         [Fact]
         public async Task ExistsByTestBuyerCodeAsync_CodeNotExists_ReturnsFalse()
         {
-            var testReqmts = new List<TestReqmt>
+            var testReqmts = new List<TestRequirement>
             {
                 new() { TestCode = "BLOOD", Buyer = "PRJ1", TestBuyerCode = "BLOOD-WG1", FpsYear = DefaultFpsYear }
             };
@@ -277,7 +277,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestReqmtRepositoryTest
         public async Task AddAsync_SetsEntityFpsYearFromContext()
         {
             var (repo, _, _, _) = CreateRepositoryWithMocks(fpsYear: 2025);
-            var entity = new TestReqmt { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var entity = new TestRequirement { TestCode = "BLOOD", Buyer = "PRJ1" };
 
             var result = await repo.AddAsync(entity);
 
@@ -288,7 +288,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestReqmtRepositoryTest
         public async Task AddAsync_SetsDateCreated()
         {
             var (repo, _, _, _) = CreateRepositoryWithMocks();
-            var entity = new TestReqmt { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var entity = new TestRequirement { TestCode = "BLOOD", Buyer = "PRJ1" };
 
             await repo.AddAsync(entity);
 
@@ -299,7 +299,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestReqmtRepositoryTest
         public async Task AddAsync_CallsSaveChanges()
         {
             var (repo, _, _, mockContext) = CreateRepositoryWithMocks();
-            var entity = new TestReqmt { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var entity = new TestRequirement { TestCode = "BLOOD", Buyer = "PRJ1" };
 
             await repo.AddAsync(entity);
 
@@ -313,7 +313,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestReqmtRepositoryTest
         [Fact]
         public async Task DeleteAsync_RecordExistsWithCorrectYear_RemovesAndReturnsTrue()
         {
-            var testReqmts = new List<TestReqmt>
+            var testReqmts = new List<TestRequirement>
             {
                 new() { TestCode = "BLOOD", Buyer = "PRJ1", FpsYear = DefaultFpsYear }
             };
@@ -322,13 +322,13 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestReqmtRepositoryTest
             var result = await repo.DeleteAsync("BLOOD", "PRJ1");
 
             Assert.True(result);
-            dbSetMock.Verify(x => x.Remove(It.IsAny<TestReqmt>()), Times.Once);
+            dbSetMock.Verify(x => x.Remove(It.IsAny<TestRequirement>()), Times.Once);
         }
 
         [Fact]
         public async Task DeleteAsync_RecordNotFound_ReturnsFalse()
         {
-            var testReqmts = new List<TestReqmt>
+            var testReqmts = new List<TestRequirement>
             {
                 new() { TestCode = "BLOOD", Buyer = "PRJ1", FpsYear = DefaultFpsYear }
             };
@@ -337,13 +337,13 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestReqmtRepositoryTest
             var result = await repo.DeleteAsync("MISSING", "PRJ1");
 
             Assert.False(result);
-            dbSetMock.Verify(x => x.Remove(It.IsAny<TestReqmt>()), Times.Never);
+            dbSetMock.Verify(x => x.Remove(It.IsAny<TestRequirement>()), Times.Never);
         }
 
         [Fact]
         public async Task DeleteAsync_RecordExistsButWrongFpsYear_ReturnsFalse()
         {
-            var testReqmts = new List<TestReqmt>
+            var testReqmts = new List<TestRequirement>
             {
                 new() { TestCode = "BLOOD", Buyer = "PRJ1", FpsYear = 2023 }
             };
@@ -352,7 +352,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestReqmtRepositoryTest
             var result = await repo.DeleteAsync("BLOOD", "PRJ1");
 
             Assert.False(result);
-            dbSetMock.Verify(x => x.Remove(It.IsAny<TestReqmt>()), Times.Never);
+            dbSetMock.Verify(x => x.Remove(It.IsAny<TestRequirement>()), Times.Never);
         }
 
         #endregion

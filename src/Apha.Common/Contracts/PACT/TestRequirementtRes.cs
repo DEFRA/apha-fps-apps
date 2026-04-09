@@ -1,6 +1,6 @@
 namespace Apha.Common.Contracts.PACT
 {
-    public class TestReqmtReq
+    public class TestRequirementtRes
     {
         public string TestCode { get; set; } = null!;
         public string Buyer { get; set; } = null!;
@@ -8,6 +8,10 @@ namespace Apha.Common.Contracts.PACT
         public double? NoRequired { get; set; }
         public string? ProjectBuyerCode { get; set; }
         public string? TestBuyerCode { get; set; }
+        public DateTime? DateCreated { get; set; }
         public short? Active { get; set; }
+        public int FpsYear { get; set; }
+        public short IsDefraProject { get; set; }
+        public decimal? RecUnitPrice { get; set; }
     }
 }

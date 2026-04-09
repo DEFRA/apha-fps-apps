@@ -87,34 +87,34 @@ namespace Apha.PACT.Application.Services
             return await _testCapabilityRepository.DeleteAsync(testCode, workGroup);
         }
 
-        public async Task<PaginatedResult<TestReqmtDto>> GetPagedTestReqmtAsync(QueryParameters<string> query, string testCode)
+        public async Task<PaginatedResult<TestRequirementtDto>> GetPagedTestReqmtAsync(QueryParameters<string> query, string testCode)
         {
             var parameters = _mapper.Map<PaginationParameters<string>>(query);
             var pagedData = await _testReqmtRepository.GetPagedWithDetailsAsync(parameters, testCode);
-            var dtos = _mapper.Map<List<TestReqmtDto>>(pagedData.Data);
+            var dtos = _mapper.Map<List<TestRequirementtDto>>(pagedData.Data);
             var paginationDto = _mapper.Map<PaginationDto>(pagedData.PaginationData);
-            return new PaginatedResult<TestReqmtDto>(dtos, paginationDto);
+            return new PaginatedResult<TestRequirementtDto>(dtos, paginationDto);
         }
 
-        public async Task<IEnumerable<TestReqmtDto>> GetAllTestReqmtForExportAsync(string testCode, string? filterJson)
+        public async Task<IEnumerable<TestRequirementtDto>> GetAllTestReqmtForExportAsync(string testCode, string? filterJson)
         {
             var items = await _testReqmtRepository.GetAllForExportAsync(testCode, filterJson);
-            return _mapper.Map<IEnumerable<TestReqmtDto>>(items);
+            return _mapper.Map<IEnumerable<TestRequirementtDto>>(items);
         }
 
-        public async Task<TestReqmtDto?> GetTestReqmtByIdAsync(string testCode, string buyer)
+        public async Task<TestRequirementtDto?> GetTestReqmtByIdAsync(string testCode, string buyer)
         {
             var detail = await _testReqmtRepository.GetDetailByIdAsync(testCode, buyer);
-            return detail is null ? null : _mapper.Map<TestReqmtDto>(detail);
+            return detail is null ? null : _mapper.Map<TestRequirementtDto>(detail);
         }
 
-        public async Task<TestReqmtDto?> GetTestReqmtPricingAsync(string testCode, string? projectCode = null)
+        public async Task<TestRequirementtDto?> GetTestReqmtPricingAsync(string testCode, string? projectCode = null)
         {
             var detail = await _testReqmtRepository.GetPricingAsync(testCode, projectCode);
-            return detail is null ? null : _mapper.Map<TestReqmtDto>(detail);
+            return detail is null ? null : _mapper.Map<TestRequirementtDto>(detail);
         }
 
-        public async Task<TestReqmtDto> AddTestReqmtAsync(TestReqmtDto dto)
+        public async Task<TestRequirementtDto> AddTestReqmtAsync(TestRequirementtDto dto)
         {
             // ITrig: both fields null
             if (string.IsNullOrWhiteSpace(dto.ProjectBuyerCode) && string.IsNullOrWhiteSpace(dto.TestBuyerCode))
@@ -136,12 +136,12 @@ namespace Apha.PACT.Application.Services
                     throw new InvalidOperationException("This workgroup is not setup to do this test.");
             }
 
-            var entity = _mapper.Map<TestReqmt>(dto);
+            var entity = _mapper.Map<TestRequirement>(dto);
             var created = await _testReqmtRepository.AddAsync(entity);
-            return _mapper.Map<TestReqmtDto>(created);
+            return _mapper.Map<TestRequirementtDto>(created);
         }
 
-        public async Task<TestReqmtDto> UpdateTestReqmtAsync(TestReqmtDto dto)
+        public async Task<TestRequirementtDto> UpdateTestReqmtAsync(TestRequirementtDto dto)
         {
             // UTrig: both fields null
             if (string.IsNullOrWhiteSpace(dto.ProjectBuyerCode) && string.IsNullOrWhiteSpace(dto.TestBuyerCode))
@@ -168,9 +168,9 @@ namespace Apha.PACT.Application.Services
                     throw new InvalidOperationException("Cannot update, project does not exist.");
             }
 
-            var entity = _mapper.Map<TestReqmt>(dto);
+            var entity = _mapper.Map<TestRequirement>(dto);
             var updated = await _testReqmtRepository.UpdateAsync(entity);
-            return _mapper.Map<TestReqmtDto>(updated);
+            return _mapper.Map<TestRequirementtDto>(updated);
         }
 
         public async Task<bool> DeleteTestReqmtAsync(string testCode, string buyer)

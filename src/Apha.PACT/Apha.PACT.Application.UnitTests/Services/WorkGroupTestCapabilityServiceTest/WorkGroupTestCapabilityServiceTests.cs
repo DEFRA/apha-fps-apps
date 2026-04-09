@@ -246,12 +246,12 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupTestCapabilityServic
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var mappedParams = new PaginationParameters<string>();
             var pagedData = new PagedData<TestReqmtDetail>([], new PaginationData());
-            var dtos = new List<TestReqmtDto>();
+            var dtos = new List<TestRequirementtDto>();
             var paginationDto = new PaginationDto();
 
             _mapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
             _testReqmtRepo.GetPagedWithDetailsAsync(mappedParams, "BLOOD").Returns(pagedData);
-            _mapper.Map<List<TestReqmtDto>>(pagedData.Data).Returns(dtos);
+            _mapper.Map<List<TestRequirementtDto>>(pagedData.Data).Returns(dtos);
             _mapper.Map<PaginationDto>(pagedData.PaginationData).Returns(paginationDto);
 
             var result = await _sut.GetPagedTestReqmtAsync(query, "BLOOD");
@@ -272,14 +272,14 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupTestCapabilityServic
                 new() { TestCode = "BLOOD", Buyer = "PRJ1" },
                 new() { TestCode = "BLOOD", Buyer = "PRJ2" }
             };
-            var dtos = new List<TestReqmtDto>
+            var dtos = new List<TestRequirementtDto>
             {
                 new() { TestCode = "BLOOD", Buyer = "PRJ1" },
                 new() { TestCode = "BLOOD", Buyer = "PRJ2" }
             };
 
             _testReqmtRepo.GetAllForExportAsync("BLOOD", "{}").Returns(details);
-            _mapper.Map<IEnumerable<TestReqmtDto>>(details).Returns(dtos);
+            _mapper.Map<IEnumerable<TestRequirementtDto>>(details).Returns(dtos);
 
             var result = await _sut.GetAllTestReqmtForExportAsync("BLOOD", "{}");
 
@@ -291,10 +291,10 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupTestCapabilityServic
         public async Task GetAllTestReqmtForExportAsync_NullFilter_PassesNullToRepository()
         {
             var details = new List<TestReqmtDetail>();
-            var dtos = new List<TestReqmtDto>();
+            var dtos = new List<TestRequirementtDto>();
 
             _testReqmtRepo.GetAllForExportAsync("BLOOD", null).Returns(details);
-            _mapper.Map<IEnumerable<TestReqmtDto>>(details).Returns(dtos);
+            _mapper.Map<IEnumerable<TestRequirementtDto>>(details).Returns(dtos);
 
             var result = await _sut.GetAllTestReqmtForExportAsync("BLOOD", null);
 
@@ -310,10 +310,10 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupTestCapabilityServic
         public async Task GetTestReqmtByIdAsync_RecordFound_ReturnsMappedDto()
         {
             var detail = new TestReqmtDetail { TestCode = "BLOOD", Buyer = "PRJ1" };
-            var dto = new TestReqmtDto { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var dto = new TestRequirementtDto { TestCode = "BLOOD", Buyer = "PRJ1" };
 
             _testReqmtRepo.GetDetailByIdAsync("BLOOD", "PRJ1").Returns(detail);
-            _mapper.Map<TestReqmtDto>(detail).Returns(dto);
+            _mapper.Map<TestRequirementtDto>(detail).Returns(dto);
 
             var result = await _sut.GetTestReqmtByIdAsync("BLOOD", "PRJ1");
 
@@ -338,10 +338,10 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupTestCapabilityServic
         public async Task GetTestReqmtPricingAsync_RecordFound_ReturnsMappedDto()
         {
             var detail = new TestReqmtDetail { TestCode = "BLOOD", RecUnitPrice = 10.5m };
-            var dto = new TestReqmtDto { TestCode = "BLOOD", RecUnitPrice = 10.5m };
+            var dto = new TestRequirementtDto { TestCode = "BLOOD", RecUnitPrice = 10.5m };
 
             _testReqmtRepo.GetPricingAsync("BLOOD", null).Returns(detail);
-            _mapper.Map<TestReqmtDto>(detail).Returns(dto);
+            _mapper.Map<TestRequirementtDto>(detail).Returns(dto);
 
             var result = await _sut.GetTestReqmtPricingAsync("BLOOD", null);
 
@@ -362,10 +362,10 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupTestCapabilityServic
         public async Task GetTestReqmtPricingAsync_WithProjectCode_PassesProjectCodeToRepository()
         {
             var detail = new TestReqmtDetail { TestCode = "BLOOD", RecUnitPrice = 5.0m, IsDefraProject = 1 };
-            var dto = new TestReqmtDto { TestCode = "BLOOD", RecUnitPrice = 5.0m };
+            var dto = new TestRequirementtDto { TestCode = "BLOOD", RecUnitPrice = 5.0m };
 
             _testReqmtRepo.GetPricingAsync("BLOOD", "PRJ1").Returns(detail);
-            _mapper.Map<TestReqmtDto>(detail).Returns(dto);
+            _mapper.Map<TestRequirementtDto>(detail).Returns(dto);
 
             var result = await _sut.GetTestReqmtPricingAsync("BLOOD", "PRJ1");
 
@@ -380,20 +380,20 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupTestCapabilityServic
         [Fact]
         public async Task AddTestReqmtAsync_BothFieldsNull_ThrowsInvalidOperationException()
         {
-            var dto = new TestReqmtDto
+            var dto = new TestRequirementtDto
             {
                 TestCode = "BLOOD", Buyer = "PRJ1",
                 ProjectBuyerCode = null, TestBuyerCode = null
             };
 
             await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.AddTestReqmtAsync(dto));
-            await _testReqmtRepo.DidNotReceive().AddAsync(Arg.Any<TestReqmt>());
+            await _testReqmtRepo.DidNotReceive().AddAsync(Arg.Any<TestRequirement>());
         }
 
         [Fact]
         public async Task AddTestReqmtAsync_ProjectCodeProvidedButNotFound_ThrowsInvalidOperationException()
         {
-            var dto = new TestReqmtDto { TestCode = "BLOOD", Buyer = "PRJ1", ProjectBuyerCode = "PRJ_X" };
+            var dto = new TestRequirementtDto { TestCode = "BLOOD", Buyer = "PRJ1", ProjectBuyerCode = "PRJ_X" };
             _projectRepo.ExistsAsync("PRJ_X").Returns(false);
 
             await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.AddTestReqmtAsync(dto));
@@ -402,7 +402,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupTestCapabilityServic
         [Fact]
         public async Task AddTestReqmtAsync_TestBuyerCodeCapabilityNotFound_ThrowsInvalidOperationException()
         {
-            var dto = new TestReqmtDto { TestCode = "BLOOD", Buyer = "PRJ1", TestBuyerCode = "BLOOD-WG1" };
+            var dto = new TestRequirementtDto { TestCode = "BLOOD", Buyer = "PRJ1", TestBuyerCode = "BLOOD-WG1" };
             _testReqmtRepo.ExistsByTestBuyerCodeAsync("BLOOD-WG1").Returns(false);
 
             await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.AddTestReqmtAsync(dto));
@@ -411,14 +411,14 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupTestCapabilityServic
         [Fact]
         public async Task AddTestReqmtAsync_ValidWithProjectCode_CreatesAndReturnsDto()
         {
-            var dto = new TestReqmtDto { TestCode = "BLOOD", Buyer = "PRJ1", ProjectBuyerCode = "PRJ_X" };
-            var entity = new TestReqmt { TestCode = "BLOOD", Buyer = "PRJ1" };
-            var created = new TestReqmtDto { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var dto = new TestRequirementtDto { TestCode = "BLOOD", Buyer = "PRJ1", ProjectBuyerCode = "PRJ_X" };
+            var entity = new TestRequirement { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var created = new TestRequirementtDto { TestCode = "BLOOD", Buyer = "PRJ1" };
 
             _projectRepo.ExistsAsync("PRJ_X").Returns(true);
-            _mapper.Map<TestReqmt>(dto).Returns(entity);
+            _mapper.Map<TestRequirement>(dto).Returns(entity);
             _testReqmtRepo.AddAsync(entity).Returns(entity);
-            _mapper.Map<TestReqmtDto>(entity).Returns(created);
+            _mapper.Map<TestRequirementtDto>(entity).Returns(created);
 
             var result = await _sut.AddTestReqmtAsync(dto);
 
@@ -429,14 +429,14 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupTestCapabilityServic
         [Fact]
         public async Task AddTestReqmtAsync_ValidWithTestBuyerCode_CreatesAndReturnsDto()
         {
-            var dto = new TestReqmtDto { TestCode = "BLOOD", Buyer = "PRJ1", TestBuyerCode = "BLOOD-WG1" };
-            var entity = new TestReqmt { TestCode = "BLOOD", Buyer = "PRJ1" };
-            var created = new TestReqmtDto { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var dto = new TestRequirementtDto { TestCode = "BLOOD", Buyer = "PRJ1", TestBuyerCode = "BLOOD-WG1" };
+            var entity = new TestRequirement { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var created = new TestRequirementtDto { TestCode = "BLOOD", Buyer = "PRJ1" };
 
             _testReqmtRepo.ExistsByTestBuyerCodeAsync("BLOOD-WG1").Returns(true);
-            _mapper.Map<TestReqmt>(dto).Returns(entity);
+            _mapper.Map<TestRequirement>(dto).Returns(entity);
             _testReqmtRepo.AddAsync(entity).Returns(entity);
-            _mapper.Map<TestReqmtDto>(entity).Returns(created);
+            _mapper.Map<TestRequirementtDto>(entity).Returns(created);
 
             var result = await _sut.AddTestReqmtAsync(dto);
 
@@ -450,7 +450,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupTestCapabilityServic
         [Fact]
         public async Task UpdateTestReqmtAsync_BothFieldsNull_ThrowsInvalidOperationException()
         {
-            var dto = new TestReqmtDto
+            var dto = new TestRequirementtDto
             {
                 TestCode = "BLOOD", Buyer = "PRJ1",
                 ProjectBuyerCode = null, TestBuyerCode = null
@@ -462,7 +462,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupTestCapabilityServic
         [Fact]
         public async Task UpdateTestReqmtAsync_TestBuyerCodeCapabilityNotFound_ThrowsInvalidOperationException()
         {
-            var dto = new TestReqmtDto { TestCode = "BLOOD", Buyer = "PRJ1", TestBuyerCode = "BLOOD-WG1" };
+            var dto = new TestRequirementtDto { TestCode = "BLOOD", Buyer = "PRJ1", TestBuyerCode = "BLOOD-WG1" };
             _testReqmtRepo.ExistsByTestBuyerCodeAsync("BLOOD-WG1").Returns(false);
 
             await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.UpdateTestReqmtAsync(dto));
@@ -471,7 +471,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupTestCapabilityServic
         [Fact]
         public async Task UpdateTestReqmtAsync_MonthlyOutputExists_ThrowsInvalidOperationException()
         {
-            var dto = new TestReqmtDto { TestCode = "BLOOD", Buyer = "PRJ1", TestBuyerCode = "BLOOD-WG1" };
+            var dto = new TestRequirementtDto { TestCode = "BLOOD", Buyer = "PRJ1", TestBuyerCode = "BLOOD-WG1" };
             _testReqmtRepo.ExistsByTestBuyerCodeAsync("BLOOD-WG1").Returns(true);
             _testReqmtRepo.ExistsByTestCodeAndBuyerInMonthlyOutputAsync("BLOOD", "PRJ1").Returns(true);
 
@@ -481,7 +481,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupTestCapabilityServic
         [Fact]
         public async Task UpdateTestReqmtAsync_ProjectCodeNotFound_ThrowsInvalidOperationException()
         {
-            var dto = new TestReqmtDto { TestCode = "BLOOD", Buyer = "PRJ1", ProjectBuyerCode = "PRJ_X" };
+            var dto = new TestRequirementtDto { TestCode = "BLOOD", Buyer = "PRJ1", ProjectBuyerCode = "PRJ_X" };
             _testReqmtRepo.ExistsByTestCodeAndBuyerInMonthlyOutputAsync("BLOOD", "PRJ1").Returns(false);
             _projectRepo.ExistsAsync("PRJ_X").Returns(false);
 
@@ -491,15 +491,15 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupTestCapabilityServic
         [Fact]
         public async Task UpdateTestReqmtAsync_ValidWithProjectCode_ReturnsUpdatedDto()
         {
-            var dto = new TestReqmtDto { TestCode = "BLOOD", Buyer = "PRJ1", ProjectBuyerCode = "PRJ_X" };
-            var entity = new TestReqmt { TestCode = "BLOOD", Buyer = "PRJ1" };
-            var updated = new TestReqmtDto { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var dto = new TestRequirementtDto { TestCode = "BLOOD", Buyer = "PRJ1", ProjectBuyerCode = "PRJ_X" };
+            var entity = new TestRequirement { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var updated = new TestRequirementtDto { TestCode = "BLOOD", Buyer = "PRJ1" };
 
             _testReqmtRepo.ExistsByTestCodeAndBuyerInMonthlyOutputAsync("BLOOD", "PRJ1").Returns(false);
             _projectRepo.ExistsAsync("PRJ_X").Returns(true);
-            _mapper.Map<TestReqmt>(dto).Returns(entity);
+            _mapper.Map<TestRequirement>(dto).Returns(entity);
             _testReqmtRepo.UpdateAsync(entity).Returns(entity);
-            _mapper.Map<TestReqmtDto>(entity).Returns(updated);
+            _mapper.Map<TestRequirementtDto>(entity).Returns(updated);
 
             var result = await _sut.UpdateTestReqmtAsync(dto);
 
