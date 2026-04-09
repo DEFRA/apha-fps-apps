@@ -3,7 +3,15 @@
 }
 @using System.Security.Claims
 @{
-    var username = User.FindFirst(ClaimTypes.Name)?.Value ?? "Unknown User";
+    // Get display name from claims (try multiple claim types)
+    var displayName = User.FindFirst("name")?.Value 
+                      ?? User.FindFirst(ClaimTypes.GivenName)?.Value 
+                      ?? User.FindFirst(ClaimTypes.Name)?.Value?.Split('@')[0] 
+                      ?? "Unknown User";
+
+    var email = User.FindFirst(ClaimTypes.Name)?.Value 
+                ?? User.FindFirst("preferred_username")?.Value;
+
     var rolename = User.FindFirst("rolename")?.Value;
 
     // Check user permissions for each application
@@ -14,7 +22,12 @@
 }
 
 <div class="parent">
-    <div class="uklogo"><img src="~/images/govuklog.png" alt="GOV.UK Logo" /></div>
+    <div class="uklogo">
+        <img src="~/images/govuklog.png" alt="GOV.UK Logo" />
+        <div class="user-info">
+            <span class="user-name">@displayName</span>
+        </div>
+    </div>
     <div class="tile-wrapper">
         <div class="defra-logo-div-wrapper">
 
