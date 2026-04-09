@@ -21,7 +21,7 @@ namespace Apha.PACT.DataAccess.Repository
             _currentUserContext = currentUserContext;
         }
 
-        public async Task<PagedData<TestReqmt>> GetPagedByTestCodeAsync(
+        public async Task<PagedData<TestRequirement>> GetPagedByTestCodeAsync(
             PaginationParameters<string> query, string testCode)
         {
             var baseQuery = _context.TestReqmts
@@ -123,7 +123,7 @@ namespace Apha.PACT.DataAccess.Repository
             return await query.OrderBy(t => t.Buyer).ToListAsync();
         }
 
-        public async Task<TestReqmt?> GetByIdAsync(string testCode, string buyer)
+        public async Task<TestRequirement?> GetByIdAsync(string testCode, string buyer)
         {
             return await _context.TestReqmts
                 .AsNoTracking()
@@ -200,7 +200,7 @@ namespace Apha.PACT.DataAccess.Repository
                 .AnyAsync(m => m.TestCode == testCode && m.Buyer == buyer);
         }
 
-        public async Task<TestReqmt> AddAsync(TestReqmt entity)
+        public async Task<TestRequirement> AddAsync(TestRequirement entity)
         {
             entity.FpsYear = _fpsYearContext.FPSYear;
             entity.DateCreated = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
@@ -210,7 +210,7 @@ namespace Apha.PACT.DataAccess.Repository
             return entity;
         }
 
-        public async Task<TestReqmt> UpdateAsync(TestReqmt entity)
+        public async Task<TestRequirement> UpdateAsync(TestRequirement entity)
         {
             entity.FpsYear = _fpsYearContext.FPSYear;
             _context.Entry(entity).State = EntityState.Modified;
@@ -235,8 +235,8 @@ namespace Apha.PACT.DataAccess.Repository
             return true;
         }
 
-        private static IQueryable<TestReqmt> ApplyTestReqmtFilter(
-            IQueryable<TestReqmt> query, string? filterJson)
+        private static IQueryable<TestRequirement> ApplyTestReqmtFilter(
+            IQueryable<TestRequirement> query, string? filterJson)
         {
             if (string.IsNullOrWhiteSpace(filterJson)) return query;
 
@@ -270,7 +270,7 @@ namespace Apha.PACT.DataAccess.Repository
         }
 
         // ── UITrig: INSERT/UPDATE → 'I'  |  DTrig: DELETE → 'D' ─────────────
-        private async Task WriteAuditLogAsync(TestReqmt entity, string insertDelete)
+        private async Task WriteAuditLogAsync(TestRequirement entity, string insertDelete)
         {
             var log = new TestReqLog
             {

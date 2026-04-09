@@ -13,14 +13,14 @@ namespace Apha.FPSApps.Application.Interfaces.PactApiClients
         Task<ApiResponseDto<TestCapabilityDto>> UpdateTestCapabilityAsync(TestCapabilityDto dto);
         Task<ApiResponseDto<bool>> DeleteTestCapabilityAsync(string testCode, string workGroup);
 
-        Task<ApiResponseDto<List<TestReqmtDto>>> GetPagedTestReqmtAsync(QueryParameters<string> query, string testCode);
-        Task<ApiResponseDto<List<TestReqmtDto>>> GetAllTestReqmtForExportAsync(string testCode, string? filter);
-        Task<ApiResponseDto<TestReqmtDto>> GetTestReqmtByIdAsync(string testCode, string buyer);
-        Task<ApiResponseDto<TestReqmtDto>> CreateTestReqmtAsync(TestReqmtDto dto);
-        Task<ApiResponseDto<TestReqmtDto>> UpdateTestReqmtAsync(TestReqmtDto dto);
+        Task<ApiResponseDto<List<TestRequirementDto>>> GetPagedTestReqmtAsync(QueryParameters<string> query, string testCode);
+        Task<ApiResponseDto<List<TestRequirementDto>>> GetAllTestReqmtForExportAsync(string testCode, string? filter);
+        Task<ApiResponseDto<TestRequirementDto>> GetTestReqmtByIdAsync(string testCode, string buyer);
+        Task<ApiResponseDto<TestRequirementDto>> CreateTestReqmtAsync(TestRequirementDto dto);
+        Task<ApiResponseDto<TestRequirementDto>> UpdateTestReqmtAsync(TestRequirementDto dto);
         Task<ApiResponseDto<bool>> DeleteTestReqmtAsync(string testCode, string buyer);
 
         Task<ApiResponseDto<List<TestorProductDto>>> GetAllTestorProductsAsync();
-        Task<ApiResponseDto<TestReqmtDto>> GetTestReqmtPricingAsync(string testCode, string? projectCode = null);
+        Task<ApiResponseDto<TestRequirementDto>> GetTestReqmtPricingAsync(string testCode, string? projectCode = null);
     }
 }

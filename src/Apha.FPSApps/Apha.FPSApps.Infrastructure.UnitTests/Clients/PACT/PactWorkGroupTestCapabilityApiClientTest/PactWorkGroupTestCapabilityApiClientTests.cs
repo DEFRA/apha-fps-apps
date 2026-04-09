@@ -349,19 +349,19 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactWorkGroupTestCa
         public async Task GetPagedTestReqmtAsync_WithValidParams_ReturnsMappedList()
         {
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var apiResponse = new ApiResponse<List<TestReqmtRes>> { Success = true, Data = [new TestReqmtRes { TestCode = "BLOOD", Buyer = "PRJ1" }] };
-            var expectedDto = ApiResponseDto<List<TestReqmtDto>>.SuccessResponse([new TestReqmtDto { TestCode = "BLOOD" }]);
+            var apiResponse = new ApiResponse<List<TestRequirementtRes>> { Success = true, Data = [new TestRequirementtRes { TestCode = "BLOOD", Buyer = "PRJ1" }] };
+            var expectedDto = ApiResponseDto<List<TestRequirementDto>>.SuccessResponse([new TestRequirementDto { TestCode = "BLOOD" }]);
 
-            _http.GetAsync<List<TestReqmtRes>>(Arg.Is<string>(url =>
+            _http.GetAsync<List<TestRequirementtRes>>(Arg.Is<string>(url =>
                 url.Contains("api/v1/workgrouptestcapability/testreqmt/paged/") &&
                 url.Contains(Uri.EscapeDataString("BLOOD"))))
                 .Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<TestReqmtDto>>>(apiResponse).Returns(expectedDto);
+            _mapper.Map<ApiResponseDto<List<TestRequirementDto>>>(apiResponse).Returns(expectedDto);
 
             var result = await _client.GetPagedTestReqmtAsync(query, "BLOOD");
 
             Assert.True(result.Success);
-            await _http.Received(1).GetAsync<List<TestReqmtRes>>(Arg.Is<string>(url =>
+            await _http.Received(1).GetAsync<List<TestRequirementtRes>>(Arg.Is<string>(url =>
                 url.Contains("api/v1/workgrouptestcapability/testreqmt/paged/")));
         }
 
@@ -369,11 +369,11 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactWorkGroupTestCa
         public async Task GetPagedTestReqmtAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
             var query = new QueryParameters<string>();
-            var apiResponse = new ApiResponse<List<TestReqmtRes>> { Success = false, Errors = [new ApiError { Code = "ERR" }] };
-            var mappedDto = new ApiResponseDto<List<TestReqmtDto>> { Success = false, Errors = [new ApiErrorDto { Code = "ERR" }], Meta = new ApiMetaDto() };
+            var apiResponse = new ApiResponse<List<TestRequirementtRes>> { Success = false, Errors = [new ApiError { Code = "ERR" }] };
+            var mappedDto = new ApiResponseDto<List<TestRequirementDto>> { Success = false, Errors = [new ApiErrorDto { Code = "ERR" }], Meta = new ApiMetaDto() };
 
-            _http.GetAsync<List<TestReqmtRes>>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<TestReqmtDto>>>(apiResponse).Returns(mappedDto);
+            _http.GetAsync<List<TestRequirementtRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<TestRequirementDto>>>(apiResponse).Returns(mappedDto);
 
             var result = await _client.GetPagedTestReqmtAsync(query, "BLOOD");
 
@@ -384,7 +384,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactWorkGroupTestCa
         public async Task GetPagedTestReqmtAsync_WhenExceptionThrown_ReturnsInternalError()
         {
             var query = new QueryParameters<string>();
-            _http.GetAsync<List<TestReqmtRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("error"));
+            _http.GetAsync<List<TestRequirementtRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("error"));
 
             var result = await _client.GetPagedTestReqmtAsync(query, "BLOOD");
 
@@ -401,14 +401,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactWorkGroupTestCa
         [Fact]
         public async Task GetAllTestReqmtForExportAsync_WithFilter_AppendsFilterToUrl()
         {
-            var apiResponse = new ApiResponse<List<TestReqmtRes>> { Success = true, Data = [new TestReqmtRes { TestCode = "BLOOD" }] };
-            var expectedDto = ApiResponseDto<List<TestReqmtDto>>.SuccessResponse([new TestReqmtDto { TestCode = "BLOOD" }]);
+            var apiResponse = new ApiResponse<List<TestRequirementtRes>> { Success = true, Data = [new TestRequirementtRes { TestCode = "BLOOD" }] };
+            var expectedDto = ApiResponseDto<List<TestRequirementDto>>.SuccessResponse([new TestRequirementDto { TestCode = "BLOOD" }]);
 
-            _http.GetAsync<List<TestReqmtRes>>(Arg.Is<string>(url =>
+            _http.GetAsync<List<TestRequirementtRes>>(Arg.Is<string>(url =>
                 url.Contains("api/v1/workgrouptestcapability/testreqmt/all/") &&
                 url.Contains("?filter=")))
                 .Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<TestReqmtDto>>>(apiResponse).Returns(expectedDto);
+            _mapper.Map<ApiResponseDto<List<TestRequirementDto>>>(apiResponse).Returns(expectedDto);
 
             var result = await _client.GetAllTestReqmtForExportAsync("BLOOD", "{\"key\":\"value\"}");
 
@@ -418,14 +418,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactWorkGroupTestCa
         [Fact]
         public async Task GetAllTestReqmtForExportAsync_WithNullFilter_DoesNotAppendFilter()
         {
-            var apiResponse = new ApiResponse<List<TestReqmtRes>> { Success = true, Data = [] };
-            var expectedDto = ApiResponseDto<List<TestReqmtDto>>.SuccessResponse([]);
+            var apiResponse = new ApiResponse<List<TestRequirementtRes>> { Success = true, Data = [] };
+            var expectedDto = ApiResponseDto<List<TestRequirementDto>>.SuccessResponse([]);
 
-            _http.GetAsync<List<TestReqmtRes>>(Arg.Is<string>(url =>
+            _http.GetAsync<List<TestRequirementtRes>>(Arg.Is<string>(url =>
                 url.Contains("api/v1/workgrouptestcapability/testreqmt/all/") &&
                 !url.Contains("filter")))
                 .Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<TestReqmtDto>>>(apiResponse).Returns(expectedDto);
+            _mapper.Map<ApiResponseDto<List<TestRequirementDto>>>(apiResponse).Returns(expectedDto);
 
             var result = await _client.GetAllTestReqmtForExportAsync("BLOOD", null);
 
@@ -435,7 +435,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactWorkGroupTestCa
         [Fact]
         public async Task GetAllTestReqmtForExportAsync_WhenExceptionThrown_ReturnsInternalError()
         {
-            _http.GetAsync<List<TestReqmtRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("error"));
+            _http.GetAsync<List<TestRequirementtRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("error"));
 
             var result = await _client.GetAllTestReqmtForExportAsync("BLOOD", null);
 
@@ -452,14 +452,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactWorkGroupTestCa
         [Fact]
         public async Task GetTestReqmtByIdAsync_WithValidKeys_ReturnsMappedDto()
         {
-            var apiResponse = new ApiResponse<TestReqmtRes> { Success = true, Data = new TestReqmtRes { TestCode = "BLOOD", Buyer = "PRJ1" } };
-            var expectedDto = ApiResponseDto<TestReqmtDto>.SuccessResponse(new TestReqmtDto { TestCode = "BLOOD", Buyer = "PRJ1" });
+            var apiResponse = new ApiResponse<TestRequirementtRes> { Success = true, Data = new TestRequirementtRes { TestCode = "BLOOD", Buyer = "PRJ1" } };
+            var expectedDto = ApiResponseDto<TestRequirementDto>.SuccessResponse(new TestRequirementDto { TestCode = "BLOOD", Buyer = "PRJ1" });
 
-            _http.GetAsync<TestReqmtRes>(Arg.Is<string>(url =>
+            _http.GetAsync<TestRequirementtRes>(Arg.Is<string>(url =>
                 url.Contains("api/v1/workgrouptestcapability/testreqmt/") &&
                 url.Contains(Uri.EscapeDataString("BLOOD")) && url.Contains(Uri.EscapeDataString("PRJ1"))))
                 .Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<TestReqmtDto>>(apiResponse).Returns(expectedDto);
+            _mapper.Map<ApiResponseDto<TestRequirementDto>>(apiResponse).Returns(expectedDto);
 
             var result = await _client.GetTestReqmtByIdAsync("BLOOD", "PRJ1");
 
@@ -470,11 +470,11 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactWorkGroupTestCa
         [Fact]
         public async Task GetTestReqmtByIdAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
-            var apiResponse = new ApiResponse<TestReqmtRes> { Success = false, Errors = [new ApiError { Code = "NOT_FOUND" }] };
-            var mappedDto = new ApiResponseDto<TestReqmtDto> { Success = false, Errors = [new ApiErrorDto { Code = "NOT_FOUND" }], Meta = new ApiMetaDto() };
+            var apiResponse = new ApiResponse<TestRequirementtRes> { Success = false, Errors = [new ApiError { Code = "NOT_FOUND" }] };
+            var mappedDto = new ApiResponseDto<TestRequirementDto> { Success = false, Errors = [new ApiErrorDto { Code = "NOT_FOUND" }], Meta = new ApiMetaDto() };
 
-            _http.GetAsync<TestReqmtRes>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<TestReqmtDto>>(apiResponse).Returns(mappedDto);
+            _http.GetAsync<TestRequirementtRes>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<TestRequirementDto>>(apiResponse).Returns(mappedDto);
 
             var result = await _client.GetTestReqmtByIdAsync("BLOOD", "PRJ1");
 
@@ -484,7 +484,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactWorkGroupTestCa
         [Fact]
         public async Task GetTestReqmtByIdAsync_WhenExceptionThrown_ReturnsInternalError()
         {
-            _http.GetAsync<TestReqmtRes>(Arg.Any<string>()).ThrowsAsync(new Exception("error"));
+            _http.GetAsync<TestRequirementtRes>(Arg.Any<string>()).ThrowsAsync(new Exception("error"));
 
             var result = await _client.GetTestReqmtByIdAsync("BLOOD", "PRJ1");
 
@@ -501,35 +501,35 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactWorkGroupTestCa
         [Fact]
         public async Task CreateTestReqmtAsync_WithValidDto_PostsAndReturnsMappedDto()
         {
-            var dto = new TestReqmtDto { TestCode = "BLOOD", Buyer = "PRJ1" };
-            var req = new TestReqmtReq { TestCode = "BLOOD", Buyer = "PRJ1" };
-            var apiResponse = new ApiResponse<TestReqmtRes> { Success = true, Data = new TestReqmtRes { TestCode = "BLOOD" } };
-            var expectedDto = ApiResponseDto<TestReqmtDto>.SuccessResponse(new TestReqmtDto { TestCode = "BLOOD" });
+            var dto = new TestRequirementDto { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var req = new TestRequirementReq { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var apiResponse = new ApiResponse<TestRequirementtRes> { Success = true, Data = new TestRequirementtRes { TestCode = "BLOOD" } };
+            var expectedDto = ApiResponseDto<TestRequirementDto>.SuccessResponse(new TestRequirementDto { TestCode = "BLOOD" });
 
-            _mapper.Map<TestReqmtReq>(dto).Returns(req);
-            _http.PostAsync<TestReqmtReq, TestReqmtRes>(
+            _mapper.Map<TestRequirementReq>(dto).Returns(req);
+            _http.PostAsync<TestRequirementReq, TestRequirementtRes>(
                 Arg.Is<string>(url => url.Contains("api/v1/workgrouptestcapability/testreqmt")), req)
                 .Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<TestReqmtDto>>(apiResponse).Returns(expectedDto);
+            _mapper.Map<ApiResponseDto<TestRequirementDto>>(apiResponse).Returns(expectedDto);
 
             var result = await _client.CreateTestReqmtAsync(dto);
 
             Assert.True(result.Success);
-            await _http.Received(1).PostAsync<TestReqmtReq, TestReqmtRes>(
+            await _http.Received(1).PostAsync<TestRequirementReq, TestRequirementtRes>(
                 Arg.Is<string>(url => url.Contains("api/v1/workgrouptestcapability/testreqmt")), req);
         }
 
         [Fact]
         public async Task CreateTestReqmtAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
-            var dto = new TestReqmtDto { TestCode = "BLOOD", Buyer = "PRJ1" };
-            var req = new TestReqmtReq();
-            var apiResponse = new ApiResponse<TestReqmtRes> { Success = false, Errors = [new ApiError { Code = "ERR" }] };
-            var mappedDto = new ApiResponseDto<TestReqmtDto> { Success = false, Errors = [new ApiErrorDto { Code = "ERR" }], Meta = new ApiMetaDto() };
+            var dto = new TestRequirementDto { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var req = new TestRequirementReq();
+            var apiResponse = new ApiResponse<TestRequirementtRes> { Success = false, Errors = [new ApiError { Code = "ERR" }] };
+            var mappedDto = new ApiResponseDto<TestRequirementDto> { Success = false, Errors = [new ApiErrorDto { Code = "ERR" }], Meta = new ApiMetaDto() };
 
-            _mapper.Map<TestReqmtReq>(dto).Returns(req);
-            _http.PostAsync<TestReqmtReq, TestReqmtRes>(Arg.Any<string>(), req).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<TestReqmtDto>>(apiResponse).Returns(mappedDto);
+            _mapper.Map<TestRequirementReq>(dto).Returns(req);
+            _http.PostAsync<TestRequirementReq, TestRequirementtRes>(Arg.Any<string>(), req).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<TestRequirementDto>>(apiResponse).Returns(mappedDto);
 
             var result = await _client.CreateTestReqmtAsync(dto);
 
@@ -539,9 +539,9 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactWorkGroupTestCa
         [Fact]
         public async Task CreateTestReqmtAsync_WhenExceptionThrown_ReturnsInternalError()
         {
-            var dto = new TestReqmtDto { TestCode = "BLOOD", Buyer = "PRJ1" };
-            _mapper.Map<TestReqmtReq>(dto).Returns(new TestReqmtReq());
-            _http.PostAsync<TestReqmtReq, TestReqmtRes>(Arg.Any<string>(), Arg.Any<TestReqmtReq>())
+            var dto = new TestRequirementDto { TestCode = "BLOOD", Buyer = "PRJ1" };
+            _mapper.Map<TestRequirementReq>(dto).Returns(new TestRequirementReq());
+            _http.PostAsync<TestRequirementReq, TestRequirementtRes>(Arg.Any<string>(), Arg.Any<TestRequirementReq>())
                 .ThrowsAsync(new Exception("error"));
 
             var result = await _client.CreateTestReqmtAsync(dto);
@@ -559,16 +559,16 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactWorkGroupTestCa
         [Fact]
         public async Task UpdateTestReqmtAsync_WithValidDto_PutsAndReturnsMappedDto()
         {
-            var dto = new TestReqmtDto { TestCode = "BLOOD", Buyer = "PRJ1" };
-            var req = new TestReqmtReq { TestCode = "BLOOD", Buyer = "PRJ1" };
-            var apiResponse = new ApiResponse<TestReqmtRes> { Success = true, Data = new TestReqmtRes { TestCode = "BLOOD" } };
-            var expectedDto = ApiResponseDto<TestReqmtDto>.SuccessResponse(new TestReqmtDto { TestCode = "BLOOD" });
+            var dto = new TestRequirementDto { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var req = new TestRequirementReq { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var apiResponse = new ApiResponse<TestRequirementtRes> { Success = true, Data = new TestRequirementtRes { TestCode = "BLOOD" } };
+            var expectedDto = ApiResponseDto<TestRequirementDto>.SuccessResponse(new TestRequirementDto { TestCode = "BLOOD" });
 
-            _mapper.Map<TestReqmtReq>(dto).Returns(req);
-            _http.PutAsync<TestReqmtReq, TestReqmtRes>(
+            _mapper.Map<TestRequirementReq>(dto).Returns(req);
+            _http.PutAsync<TestRequirementReq, TestRequirementtRes>(
                 Arg.Is<string>(url => url.Contains("api/v1/workgrouptestcapability/testreqmt")), req)
                 .Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<TestReqmtDto>>(apiResponse).Returns(expectedDto);
+            _mapper.Map<ApiResponseDto<TestRequirementDto>>(apiResponse).Returns(expectedDto);
 
             var result = await _client.UpdateTestReqmtAsync(dto);
 
@@ -578,14 +578,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactWorkGroupTestCa
         [Fact]
         public async Task UpdateTestReqmtAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
-            var dto = new TestReqmtDto { TestCode = "BLOOD", Buyer = "PRJ1" };
-            var req = new TestReqmtReq();
-            var apiResponse = new ApiResponse<TestReqmtRes> { Success = false, Errors = [new ApiError { Code = "ERR" }] };
-            var mappedDto = new ApiResponseDto<TestReqmtDto> { Success = false, Errors = [new ApiErrorDto { Code = "ERR" }], Meta = new ApiMetaDto() };
+            var dto = new TestRequirementDto { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var req = new TestRequirementReq();
+            var apiResponse = new ApiResponse<TestRequirementtRes> { Success = false, Errors = [new ApiError { Code = "ERR" }] };
+            var mappedDto = new ApiResponseDto<TestRequirementDto> { Success = false, Errors = [new ApiErrorDto { Code = "ERR" }], Meta = new ApiMetaDto() };
 
-            _mapper.Map<TestReqmtReq>(dto).Returns(req);
-            _http.PutAsync<TestReqmtReq, TestReqmtRes>(Arg.Any<string>(), req).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<TestReqmtDto>>(apiResponse).Returns(mappedDto);
+            _mapper.Map<TestRequirementReq>(dto).Returns(req);
+            _http.PutAsync<TestRequirementReq, TestRequirementtRes>(Arg.Any<string>(), req).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<TestRequirementDto>>(apiResponse).Returns(mappedDto);
 
             var result = await _client.UpdateTestReqmtAsync(dto);
 
@@ -595,9 +595,9 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactWorkGroupTestCa
         [Fact]
         public async Task UpdateTestReqmtAsync_WhenExceptionThrown_ReturnsInternalError()
         {
-            var dto = new TestReqmtDto { TestCode = "BLOOD", Buyer = "PRJ1" };
-            _mapper.Map<TestReqmtReq>(dto).Returns(new TestReqmtReq());
-            _http.PutAsync<TestReqmtReq, TestReqmtRes>(Arg.Any<string>(), Arg.Any<TestReqmtReq>())
+            var dto = new TestRequirementDto { TestCode = "BLOOD", Buyer = "PRJ1" };
+            _mapper.Map<TestRequirementReq>(dto).Returns(new TestRequirementReq());
+            _http.PutAsync<TestRequirementReq, TestRequirementtRes>(Arg.Any<string>(), Arg.Any<TestRequirementReq>())
                 .ThrowsAsync(new Exception("error"));
 
             var result = await _client.UpdateTestReqmtAsync(dto);
@@ -719,15 +719,15 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactWorkGroupTestCa
         [Fact]
         public async Task GetTestReqmtPricingAsync_WithTestCodeOnly_UsesCorrectUrl()
         {
-            var apiResponse = new ApiResponse<TestReqmtRes> { Success = true, Data = new TestReqmtRes { TestCode = "BLOOD", RecUnitPrice = 10.5m } };
-            var expectedDto = ApiResponseDto<TestReqmtDto>.SuccessResponse(new TestReqmtDto { TestCode = "BLOOD", RecUnitPrice = 10.5m });
+            var apiResponse = new ApiResponse<TestRequirementtRes> { Success = true, Data = new TestRequirementtRes { TestCode = "BLOOD", RecUnitPrice = 10.5m } };
+            var expectedDto = ApiResponseDto<TestRequirementDto>.SuccessResponse(new TestRequirementDto { TestCode = "BLOOD", RecUnitPrice = 10.5m });
 
-            _http.GetAsync<TestReqmtRes>(Arg.Is<string>(url =>
+            _http.GetAsync<TestRequirementtRes>(Arg.Is<string>(url =>
                 url.Contains("api/v1/workgrouptestcapability/testreqmt/pricing") &&
                 url.Contains("testCode=") && url.Contains(Uri.EscapeDataString("BLOOD")) &&
                 !url.Contains("projectCode")))
                 .Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<TestReqmtDto>>(apiResponse).Returns(expectedDto);
+            _mapper.Map<ApiResponseDto<TestRequirementDto>>(apiResponse).Returns(expectedDto);
 
             var result = await _client.GetTestReqmtPricingAsync("BLOOD");
 
@@ -738,15 +738,15 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactWorkGroupTestCa
         [Fact]
         public async Task GetTestReqmtPricingAsync_WithProjectCode_AppendsProjectCodeToUrl()
         {
-            var apiResponse = new ApiResponse<TestReqmtRes> { Success = true, Data = new TestReqmtRes { TestCode = "BLOOD", RecUnitPrice = 5.0m } };
-            var expectedDto = ApiResponseDto<TestReqmtDto>.SuccessResponse(new TestReqmtDto { TestCode = "BLOOD", RecUnitPrice = 5.0m });
+            var apiResponse = new ApiResponse<TestRequirementtRes> { Success = true, Data = new TestRequirementtRes { TestCode = "BLOOD", RecUnitPrice = 5.0m } };
+            var expectedDto = ApiResponseDto<TestRequirementDto>.SuccessResponse(new TestRequirementDto { TestCode = "BLOOD", RecUnitPrice = 5.0m });
 
-            _http.GetAsync<TestReqmtRes>(Arg.Is<string>(url =>
+            _http.GetAsync<TestRequirementtRes>(Arg.Is<string>(url =>
                 url.Contains("api/v1/workgrouptestcapability/testreqmt/pricing") &&
                 url.Contains("testCode=") && url.Contains("projectCode=") &&
                 url.Contains(Uri.EscapeDataString("PRJ1"))))
                 .Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<TestReqmtDto>>(apiResponse).Returns(expectedDto);
+            _mapper.Map<ApiResponseDto<TestRequirementDto>>(apiResponse).Returns(expectedDto);
 
             var result = await _client.GetTestReqmtPricingAsync("BLOOD", "PRJ1");
 
@@ -756,7 +756,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactWorkGroupTestCa
         [Fact]
         public async Task GetTestReqmtPricingAsync_WhenExceptionThrown_ReturnsInternalError()
         {
-            _http.GetAsync<TestReqmtRes>(Arg.Any<string>()).ThrowsAsync(new Exception("error"));
+            _http.GetAsync<TestRequirementtRes>(Arg.Any<string>()).ThrowsAsync(new Exception("error"));
 
             var result = await _client.GetTestReqmtPricingAsync("BLOOD");
 

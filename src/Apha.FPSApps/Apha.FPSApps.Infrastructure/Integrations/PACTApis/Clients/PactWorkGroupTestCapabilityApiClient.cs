@@ -154,29 +154,29 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             }
         }
 
-        public async Task<ApiResponseDto<List<TestReqmtDto>>> GetPagedTestReqmtAsync(
+        public async Task<ApiResponseDto<List<TestRequirementDto>>> GetPagedTestReqmtAsync(
             QueryParameters<string> query, string testCode)
         {
             try
             {
                 var baseUrl = string.Format(PactApiEndpoints.GetPagedTestReqmt, Uri.EscapeDataString(testCode));
                 var url = QueryStringHelper.AddQueryString(baseUrl, query);
-                var response = await _http.GetAsync<List<TestReqmtRes>>(url);
+                var response = await _http.GetAsync<List<TestRequirementtRes>>(url);
                 if (response.Success)
-                    return _mapper.Map<ApiResponseDto<List<TestReqmtDto>>>(response);
+                    return _mapper.Map<ApiResponseDto<List<TestRequirementDto>>>(response);
 
-                var dto = _mapper.Map<ApiResponseDto<List<TestReqmtDto>>>(response);
-                return ApiResponseDto<List<TestReqmtDto>>.FailureResponse(dto.Errors, dto.Meta);
+                var dto = _mapper.Map<ApiResponseDto<List<TestRequirementDto>>>(response);
+                return ApiResponseDto<List<TestRequirementDto>>.FailureResponse(dto.Errors, dto.Meta);
             }
             catch (Exception)
             {
-                return ApiResponseDto<List<TestReqmtDto>>.FailureResponse(
+                return ApiResponseDto<List<TestRequirementDto>>.FailureResponse(
                     [new ApiErrorDto { Message = "Failed to retrieve test requirements", Code = InternalCodeError }],
                     new ApiMetaDto());
             }
         }
 
-        public async Task<ApiResponseDto<List<TestReqmtDto>>> GetAllTestReqmtForExportAsync(
+        public async Task<ApiResponseDto<List<TestRequirementDto>>> GetAllTestReqmtForExportAsync(
             string testCode, string? filter)
         {
             try
@@ -185,79 +185,79 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
                 if (!string.IsNullOrWhiteSpace(filter))
                     url += $"?filter={Uri.EscapeDataString(filter)}";
 
-                var response = await _http.GetAsync<List<TestReqmtRes>>(url);
+                var response = await _http.GetAsync<List<TestRequirementtRes>>(url);
                 if (response.Success)
-                    return _mapper.Map<ApiResponseDto<List<TestReqmtDto>>>(response);
+                    return _mapper.Map<ApiResponseDto<List<TestRequirementDto>>>(response);
 
-                var dto = _mapper.Map<ApiResponseDto<List<TestReqmtDto>>>(response);
-                return ApiResponseDto<List<TestReqmtDto>>.FailureResponse(dto.Errors, dto.Meta);
+                var dto = _mapper.Map<ApiResponseDto<List<TestRequirementDto>>>(response);
+                return ApiResponseDto<List<TestRequirementDto>>.FailureResponse(dto.Errors, dto.Meta);
             }
             catch (Exception)
             {
-                return ApiResponseDto<List<TestReqmtDto>>.FailureResponse(
+                return ApiResponseDto<List<TestRequirementDto>>.FailureResponse(
                     [new ApiErrorDto { Message = "Failed to retrieve test requirements for export", Code = InternalCodeError }],
                     new ApiMetaDto());
             }
         }
 
-        public async Task<ApiResponseDto<TestReqmtDto>> GetTestReqmtByIdAsync(string testCode, string buyer)
+        public async Task<ApiResponseDto<TestRequirementDto>> GetTestReqmtByIdAsync(string testCode, string buyer)
         {
             try
             {
                 var url = string.Format(PactApiEndpoints.GetTestReqmtById,
                     Uri.EscapeDataString(testCode), Uri.EscapeDataString(buyer));
-                var response = await _http.GetAsync<TestReqmtRes>(url);
+                var response = await _http.GetAsync<TestRequirementtRes>(url);
                 if (response.Success)
-                    return _mapper.Map<ApiResponseDto<TestReqmtDto>>(response);
+                    return _mapper.Map<ApiResponseDto<TestRequirementDto>>(response);
 
-                var dto = _mapper.Map<ApiResponseDto<TestReqmtDto>>(response);
-                return ApiResponseDto<TestReqmtDto>.FailureResponse(dto.Errors, dto.Meta);
+                var dto = _mapper.Map<ApiResponseDto<TestRequirementDto>>(response);
+                return ApiResponseDto<TestRequirementDto>.FailureResponse(dto.Errors, dto.Meta);
             }
             catch (Exception)
             {
-                return ApiResponseDto<TestReqmtDto>.FailureResponse(
+                return ApiResponseDto<TestRequirementDto>.FailureResponse(
                     [new ApiErrorDto { Message = "Failed to retrieve test requirement", Code = InternalCodeError }],
                     new ApiMetaDto());
             }
         }
 
-        public async Task<ApiResponseDto<TestReqmtDto>> CreateTestReqmtAsync(TestReqmtDto dto)
+        public async Task<ApiResponseDto<TestRequirementDto>> CreateTestReqmtAsync(TestRequirementDto dto)
         {
             try
             {
-                var request = _mapper.Map<TestReqmtReq>(dto);
-                var response = await _http.PostAsync<TestReqmtReq, TestReqmtRes>(
+                var request = _mapper.Map<TestRequirementReq>(dto);
+                var response = await _http.PostAsync<TestRequirementReq, TestRequirementtRes>(
                     PactApiEndpoints.CreateTestReqmt, request);
                 if (response.Success)
-                    return _mapper.Map<ApiResponseDto<TestReqmtDto>>(response);
+                    return _mapper.Map<ApiResponseDto<TestRequirementDto>>(response);
 
-                var responseDto = _mapper.Map<ApiResponseDto<TestReqmtDto>>(response);
-                return ApiResponseDto<TestReqmtDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+                var responseDto = _mapper.Map<ApiResponseDto<TestRequirementDto>>(response);
+                return ApiResponseDto<TestRequirementDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
             }
             catch (Exception)
             {
-                return ApiResponseDto<TestReqmtDto>.FailureResponse(
+                return ApiResponseDto<TestRequirementDto>.FailureResponse(
                     [new ApiErrorDto { Message = "Failed to create test requirement", Code = InternalCodeError }],
                     new ApiMetaDto());
             }
         }
 
-        public async Task<ApiResponseDto<TestReqmtDto>> UpdateTestReqmtAsync(TestReqmtDto dto)
+        public async Task<ApiResponseDto<TestRequirementDto>> UpdateTestReqmtAsync(TestRequirementDto dto)
         {
             try
             {
-                var request = _mapper.Map<TestReqmtReq>(dto);
-                var response = await _http.PutAsync<TestReqmtReq, TestReqmtRes>(
+                var request = _mapper.Map<TestRequirementReq>(dto);
+                var response = await _http.PutAsync<TestRequirementReq, TestRequirementtRes>(
                     PactApiEndpoints.UpdateTestReqmt, request);
                 if (response.Success)
-                    return _mapper.Map<ApiResponseDto<TestReqmtDto>>(response);
+                    return _mapper.Map<ApiResponseDto<TestRequirementDto>>(response);
 
-                var responseDto = _mapper.Map<ApiResponseDto<TestReqmtDto>>(response);
-                return ApiResponseDto<TestReqmtDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+                var responseDto = _mapper.Map<ApiResponseDto<TestRequirementDto>>(response);
+                return ApiResponseDto<TestRequirementDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
             }
             catch (Exception)
             {
-                return ApiResponseDto<TestReqmtDto>.FailureResponse(
+                return ApiResponseDto<TestRequirementDto>.FailureResponse(
                     [new ApiErrorDto { Message = "Failed to update test requirement", Code = InternalCodeError }],
                     new ApiMetaDto());
             }
@@ -303,7 +303,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             }
         }
 
-        public async Task<ApiResponseDto<TestReqmtDto>> GetTestReqmtPricingAsync(string testCode, string? projectCode = null)
+        public async Task<ApiResponseDto<TestRequirementDto>> GetTestReqmtPricingAsync(string testCode, string? projectCode = null)
         {
             try
             {
@@ -311,16 +311,16 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
                 if (!string.IsNullOrWhiteSpace(projectCode))
                     url += $"&projectCode={Uri.EscapeDataString(projectCode)}";
 
-                var response = await _http.GetAsync<TestReqmtRes>(url);
+                var response = await _http.GetAsync<TestRequirementtRes>(url);
                 if (response.Success)
-                    return _mapper.Map<ApiResponseDto<TestReqmtDto>>(response);
+                    return _mapper.Map<ApiResponseDto<TestRequirementDto>>(response);
 
-                var dto = _mapper.Map<ApiResponseDto<TestReqmtDto>>(response);
-                return ApiResponseDto<TestReqmtDto>.FailureResponse(dto.Errors, dto.Meta);
+                var dto = _mapper.Map<ApiResponseDto<TestRequirementDto>>(response);
+                return ApiResponseDto<TestRequirementDto>.FailureResponse(dto.Errors, dto.Meta);
             }
             catch (Exception)
             {
-                return ApiResponseDto<TestReqmtDto>.FailureResponse(
+                return ApiResponseDto<TestRequirementDto>.FailureResponse(
                     [new ApiErrorDto { Message = "Failed to retrieve test requirement pricing", Code = InternalCodeError }],
                     new ApiMetaDto());
             }

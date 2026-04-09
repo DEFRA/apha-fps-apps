@@ -233,11 +233,11 @@ namespace Apha.PACT.Api.UnitTests.Controller.WorkGroupTestCapabilityControllerTe
         public async Task GetPagedTestReqmt_HappyPath_ReturnsOkWithPaginatedResult()
         {
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var serviceResult = new PaginatedResult<TestReqmtDto>();
-            var mapped = new PaginationRes<TestReqmtRes>();
+            var serviceResult = new PaginatedResult<TestRequirementtDto>();
+            var mapped = new PaginationRes<TestRequirementtRes>();
 
             _service.GetPagedTestReqmtAsync(query, "BLOOD").Returns(serviceResult);
-            _mapper.Map<PaginationRes<TestReqmtRes>>(serviceResult).Returns(mapped);
+            _mapper.Map<PaginationRes<TestRequirementtRes>>(serviceResult).Returns(mapped);
 
             var result = await _controller.GetPagedTestReqmt(query, "BLOOD");
 
@@ -252,19 +252,19 @@ namespace Apha.PACT.Api.UnitTests.Controller.WorkGroupTestCapabilityControllerTe
         [Fact]
         public async Task GetAllTestReqmtForExport_HappyPath_ReturnsOkWithAllItems()
         {
-            var dtos = new List<TestReqmtDto>
+            var dtos = new List<TestRequirementtDto>
             {
                 new() { TestCode = "BLOOD", Buyer = "PRJ1" },
                 new() { TestCode = "BLOOD", Buyer = "PRJ2" }
             };
-            var mapped = new List<TestReqmtRes>
+            var mapped = new List<TestRequirementtRes>
             {
                 new() { TestCode = "BLOOD", Buyer = "PRJ1" },
                 new() { TestCode = "BLOOD", Buyer = "PRJ2" }
             };
 
             _service.GetAllTestReqmtForExportAsync("BLOOD", null).Returns(dtos);
-            _mapper.Map<IEnumerable<TestReqmtRes>>(dtos).Returns(mapped);
+            _mapper.Map<IEnumerable<TestRequirementtRes>>(dtos).Returns(mapped);
 
             var result = await _controller.GetAllTestReqmtForExport("BLOOD", null);
 
@@ -276,11 +276,11 @@ namespace Apha.PACT.Api.UnitTests.Controller.WorkGroupTestCapabilityControllerTe
         public async Task GetAllTestReqmtForExport_WithFilter_PassesFilterToService()
         {
             const string filter = "{\"Buyer\":\"PRJ\"}";
-            var dtos = new List<TestReqmtDto>();
-            var mapped = new List<TestReqmtRes>();
+            var dtos = new List<TestRequirementtDto>();
+            var mapped = new List<TestRequirementtRes>();
 
             _service.GetAllTestReqmtForExportAsync("BLOOD", filter).Returns(dtos);
-            _mapper.Map<IEnumerable<TestReqmtRes>>(dtos).Returns(mapped);
+            _mapper.Map<IEnumerable<TestRequirementtRes>>(dtos).Returns(mapped);
 
             await _controller.GetAllTestReqmtForExport("BLOOD", filter);
 
@@ -290,11 +290,11 @@ namespace Apha.PACT.Api.UnitTests.Controller.WorkGroupTestCapabilityControllerTe
         [Fact]
         public async Task GetAllTestReqmtForExport_EmptyResult_ReturnsOkWithEmptyList()
         {
-            var dtos = new List<TestReqmtDto>();
-            var mapped = new List<TestReqmtRes>();
+            var dtos = new List<TestRequirementtDto>();
+            var mapped = new List<TestRequirementtRes>();
 
             _service.GetAllTestReqmtForExportAsync("BLOOD", null).Returns(dtos);
-            _mapper.Map<IEnumerable<TestReqmtRes>>(dtos).Returns(mapped);
+            _mapper.Map<IEnumerable<TestRequirementtRes>>(dtos).Returns(mapped);
 
             var result = await _controller.GetAllTestReqmtForExport("BLOOD", null);
 
@@ -309,11 +309,11 @@ namespace Apha.PACT.Api.UnitTests.Controller.WorkGroupTestCapabilityControllerTe
         [Fact]
         public async Task GetTestReqmtById_RecordFound_ReturnsOk()
         {
-            var dto = new TestReqmtDto { TestCode = "BLOOD", Buyer = "PRJ1" };
-            var mapped = new TestReqmtRes { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var dto = new TestRequirementtDto { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var mapped = new TestRequirementtRes { TestCode = "BLOOD", Buyer = "PRJ1" };
 
             _service.GetTestReqmtByIdAsync("BLOOD", "PRJ1").Returns(dto);
-            _mapper.Map<TestReqmtRes>(dto).Returns(mapped);
+            _mapper.Map<TestRequirementtRes>(dto).Returns(mapped);
 
             var result = await _controller.GetTestReqmtById("BLOOD", "PRJ1");
 
@@ -324,7 +324,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.WorkGroupTestCapabilityControllerTe
         [Fact]
         public async Task GetTestReqmtById_RecordNotFound_ThrowsKeyNotFoundException()
         {
-            _service.GetTestReqmtByIdAsync("MISSING", "PRJ1").Returns((TestReqmtDto?)null);
+            _service.GetTestReqmtByIdAsync("MISSING", "PRJ1").Returns((TestRequirementtDto?)null);
 
             await Assert.ThrowsAsync<KeyNotFoundException>(() =>
                 _controller.GetTestReqmtById("MISSING", "PRJ1"));
@@ -337,14 +337,14 @@ namespace Apha.PACT.Api.UnitTests.Controller.WorkGroupTestCapabilityControllerTe
         [Fact]
         public async Task CreateTestReqmt_ValidRequest_ReturnsOk()
         {
-            var request = new TestReqmtReq { TestCode = "BLOOD", Buyer = "PRJ1" };
-            var dto = new TestReqmtDto { TestCode = "BLOOD", Buyer = "PRJ1" };
-            var created = new TestReqmtDto { TestCode = "BLOOD", Buyer = "PRJ1" };
-            var mapped = new TestReqmtRes { TestCode = "BLOOD" };
+            var request = new TestRequirementReq { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var dto = new TestRequirementtDto { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var created = new TestRequirementtDto { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var mapped = new TestRequirementtRes { TestCode = "BLOOD" };
 
-            _mapper.Map<TestReqmtDto>(request).Returns(dto);
+            _mapper.Map<TestRequirementtDto>(request).Returns(dto);
             _service.AddTestReqmtAsync(dto).Returns(created);
-            _mapper.Map<TestReqmtRes>(created).Returns(mapped);
+            _mapper.Map<TestRequirementtRes>(created).Returns(mapped);
 
             var result = await _controller.CreateTestReqmt(request);
 
@@ -355,10 +355,10 @@ namespace Apha.PACT.Api.UnitTests.Controller.WorkGroupTestCapabilityControllerTe
         [Fact]
         public async Task CreateTestReqmt_BothBuyerFieldsNull_ThrowsInvalidOperationException()
         {
-            var request = new TestReqmtReq { TestCode = "BLOOD", Buyer = "PRJ1" };
-            var dto = new TestReqmtDto();
+            var request = new TestRequirementReq { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var dto = new TestRequirementtDto();
 
-            _mapper.Map<TestReqmtDto>(request).Returns(dto);
+            _mapper.Map<TestRequirementtDto>(request).Returns(dto);
             _service.AddTestReqmtAsync(dto)
                 .ThrowsAsync(new InvalidOperationException("Must fill in Project Buyer or Test Buyer"));
 
@@ -372,14 +372,14 @@ namespace Apha.PACT.Api.UnitTests.Controller.WorkGroupTestCapabilityControllerTe
         [Fact]
         public async Task UpdateTestReqmt_ValidRequest_ReturnsOk()
         {
-            var request = new TestReqmtReq { TestCode = "BLOOD", Buyer = "PRJ1" };
-            var dto = new TestReqmtDto { TestCode = "BLOOD", Buyer = "PRJ1" };
-            var updated = new TestReqmtDto { TestCode = "BLOOD", Buyer = "PRJ1" };
-            var mapped = new TestReqmtRes { TestCode = "BLOOD" };
+            var request = new TestRequirementReq { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var dto = new TestRequirementtDto { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var updated = new TestRequirementtDto { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var mapped = new TestRequirementtRes { TestCode = "BLOOD" };
 
-            _mapper.Map<TestReqmtDto>(request).Returns(dto);
+            _mapper.Map<TestRequirementtDto>(request).Returns(dto);
             _service.UpdateTestReqmtAsync(dto).Returns(updated);
-            _mapper.Map<TestReqmtRes>(updated).Returns(mapped);
+            _mapper.Map<TestRequirementtRes>(updated).Returns(mapped);
 
             var result = await _controller.UpdateTestReqmt(request);
 
@@ -390,10 +390,10 @@ namespace Apha.PACT.Api.UnitTests.Controller.WorkGroupTestCapabilityControllerTe
         [Fact]
         public async Task UpdateTestReqmt_MonthlyOutputExists_ThrowsInvalidOperationException()
         {
-            var request = new TestReqmtReq { TestCode = "BLOOD", Buyer = "PRJ1" };
-            var dto = new TestReqmtDto();
+            var request = new TestRequirementReq { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var dto = new TestRequirementtDto();
 
-            _mapper.Map<TestReqmtDto>(request).Returns(dto);
+            _mapper.Map<TestRequirementtDto>(request).Returns(dto);
             _service.UpdateTestReqmtAsync(dto)
                 .ThrowsAsync(new InvalidOperationException("Cannot update, existing data in Monthly Output."));
 
@@ -466,11 +466,11 @@ namespace Apha.PACT.Api.UnitTests.Controller.WorkGroupTestCapabilityControllerTe
         [Fact]
         public async Task GetTestReqmtPricing_RecordFound_ReturnsOk()
         {
-            var dto = new TestReqmtDto { TestCode = "BLOOD", RecUnitPrice = 10.5m };
-            var mapped = new TestReqmtRes { TestCode = "BLOOD" };
+            var dto = new TestRequirementtDto { TestCode = "BLOOD", RecUnitPrice = 10.5m };
+            var mapped = new TestRequirementtRes { TestCode = "BLOOD" };
 
             _service.GetTestReqmtPricingAsync("BLOOD", null).Returns(dto);
-            _mapper.Map<TestReqmtRes>(dto).Returns(mapped);
+            _mapper.Map<TestRequirementtRes>(dto).Returns(mapped);
 
             var result = await _controller.GetTestReqmtPricing("BLOOD", null);
 
@@ -481,7 +481,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.WorkGroupTestCapabilityControllerTe
         [Fact]
         public async Task GetTestReqmtPricing_RecordNotFound_ReturnsNotFound()
         {
-            _service.GetTestReqmtPricingAsync("MISSING", null).Returns((TestReqmtDto?)null);
+            _service.GetTestReqmtPricingAsync("MISSING", null).Returns((TestRequirementtDto?)null);
 
             var result = await _controller.GetTestReqmtPricing("MISSING", null);
 
@@ -491,11 +491,11 @@ namespace Apha.PACT.Api.UnitTests.Controller.WorkGroupTestCapabilityControllerTe
         [Fact]
         public async Task GetTestReqmtPricing_WithProjectCode_PassesProjectCodeToService()
         {
-            var dto = new TestReqmtDto { TestCode = "BLOOD", RecUnitPrice = 5.0m };
-            var mapped = new TestReqmtRes { TestCode = "BLOOD" };
+            var dto = new TestRequirementtDto { TestCode = "BLOOD", RecUnitPrice = 5.0m };
+            var mapped = new TestRequirementtRes { TestCode = "BLOOD" };
 
             _service.GetTestReqmtPricingAsync("BLOOD", "PRJ1").Returns(dto);
-            _mapper.Map<TestReqmtRes>(dto).Returns(mapped);
+            _mapper.Map<TestRequirementtRes>(dto).Returns(mapped);
 
             await _controller.GetTestReqmtPricing("BLOOD", "PRJ1");
 

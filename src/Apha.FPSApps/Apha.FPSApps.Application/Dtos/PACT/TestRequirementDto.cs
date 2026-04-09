@@ -1,6 +1,6 @@
-namespace Apha.PACT.Application.Dtos
+namespace Apha.FPSApps.Application.Dtos.PACT
 {
-    public class TestReqmtDto
+    public class TestRequirementDto
     {
         public string TestCode { get; set; } = null!;
         public string Buyer { get; set; } = null!;
