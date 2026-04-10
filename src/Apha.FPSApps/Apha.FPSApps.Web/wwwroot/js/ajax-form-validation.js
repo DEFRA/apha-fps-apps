@@ -161,8 +161,8 @@
         var $c       = resolveContainer(container);
         var $summary = $c.find('.govuk-error-summary');
         var $list    = $summary.find('.govuk-error-summary__list').empty();
-
-        $summary.find('.govuk-error-summary__title').text(summaryMessage || 'There is a problem');
+        debugger;
+        $summary.find('.govuk-error-summary__title').text('There is a problem');
 
         var items            = normaliseErrors(errors);
         var hasSummaryErrors = false;
