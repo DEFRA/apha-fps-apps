@@ -1,9 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Configuration.Binder;
 using Microsoft.Extensions.DependencyInjection;
 using Quartz;
-using Quartz.Extensions.DependencyInjection;
 using AphaBatchJobsFoundationV3.Core.Interfaces;
 using AphaBatchJobsFoundationV3.Infrastructure.Data;
 using AphaBatchJobsFoundationV3.Infrastructure.Scheduling;

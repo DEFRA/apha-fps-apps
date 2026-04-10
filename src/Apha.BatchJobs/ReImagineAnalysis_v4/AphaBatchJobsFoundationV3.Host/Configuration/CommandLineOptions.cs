@@ -9,7 +9,14 @@ namespace AphaBatchJobsFoundationV3.Host.Configuration
     public sealed class CommandLineOptions
     {
         // Constants for valid mode values to avoid magic strings and improve maintainability
+        /// <summary>
+        /// Scheduler execution mode value.
+        /// </summary>
         public const string SchedulerMode = "scheduler";
+
+        /// <summary>
+        /// Command-line immediate execution mode value.
+        /// </summary>
         public const string CliMode = "cli";
 
         /// <summary>
