@@ -24,7 +24,7 @@ namespace Apha.PACT.DataAccess.Repository
         public async Task<PagedData<TestRequirement>> GetPagedByTestCodeAsync(
             PaginationParameters<string> query, string testCode)
         {
-            var baseQuery = _context.TestReqmts
+            var baseQuery = _context.TestRequirements
                 .AsNoTracking()
                 .Where(t => t.TestCode == testCode)
                 .AsQueryable();
@@ -45,7 +45,7 @@ namespace Apha.PACT.DataAccess.Repository
         public async Task<PagedData<TestReqmtDetail>> GetPagedWithDetailsAsync(
             PaginationParameters<string> query, string testCode)
         {
-            var baseQuery = (from t in _context.TestReqmts
+            var baseQuery = (from t in _context.TestRequirements
                              join tp in _context.TestorProducts on t.TestCode equals tp.ItemCode
                              join p in _context.Projects on t.Buyer equals p.ParentProject
                              where t.TestCode == testCode
@@ -99,7 +99,7 @@ namespace Apha.PACT.DataAccess.Repository
 
         public async Task<IEnumerable<TestReqmtDetail>> GetAllForExportAsync(string testCode, string? filterJson)
         {
-            var query = (from t in _context.TestReqmts
+            var query = (from t in _context.TestRequirements
                          join tp in _context.TestorProducts on t.TestCode equals tp.ItemCode
                          join p in _context.Projects on t.Buyer equals p.ParentProject
                          where t.TestCode == testCode
@@ -125,14 +125,14 @@ namespace Apha.PACT.DataAccess.Repository
 
         public async Task<TestRequirement?> GetByIdAsync(string testCode, string buyer)
         {
-            return await _context.TestReqmts
+            return await _context.TestRequirements
                 .AsNoTracking()
                 .FirstOrDefaultAsync(t => t.TestCode == testCode && t.Buyer == buyer);
         }
 
         public async Task<TestReqmtDetail?> GetDetailByIdAsync(string testCode, string buyer)
         {
-            return await (from t in _context.TestReqmts
+            return await (from t in _context.TestRequirements
                           join tp in _context.TestorProducts on t.TestCode equals tp.ItemCode
                           join p in _context.Projects on t.Buyer equals p.ParentProject
                           where t.TestCode == testCode && t.Buyer == buyer
@@ -188,7 +188,7 @@ namespace Apha.PACT.DataAccess.Repository
 
         public async Task<bool> ExistsByTestBuyerCodeAsync(string testBuyerCode)
         {
-            return await _context.TestReqmts
+            return await _context.TestRequirements
                 .AsNoTracking()
                 .AnyAsync(r => r.TestBuyerCode == testBuyerCode);
         }
@@ -204,7 +204,7 @@ namespace Apha.PACT.DataAccess.Repository
         {
             entity.FpsYear = _fpsYearContext.FPSYear;
             entity.DateCreated = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
-            await _context.TestReqmts.AddAsync(entity);
+            await _context.TestRequirements.AddAsync(entity);
             await _context.SaveChangesAsync();
             await WriteAuditLogAsync(entity, "I");
             return entity;
@@ -221,7 +221,7 @@ namespace Apha.PACT.DataAccess.Repository
 
         public async Task<bool> DeleteAsync(string testCode, string buyer)
         {
-            var entity = await _context.TestReqmts
+            var entity = await _context.TestRequirements
                 .FirstOrDefaultAsync(t =>
                     t.TestCode == testCode &&
                     t.Buyer == buyer &&
@@ -230,7 +230,7 @@ namespace Apha.PACT.DataAccess.Repository
             if (entity is null) return false;
 
             await WriteAuditLogAsync(entity, "D");
-            _context.TestReqmts.Remove(entity);
+            _context.TestRequirements.Remove(entity);
             await _context.SaveChangesAsync();
             return true;
         }
