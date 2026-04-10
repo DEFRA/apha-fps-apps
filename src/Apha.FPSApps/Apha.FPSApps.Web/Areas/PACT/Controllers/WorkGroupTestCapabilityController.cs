@@ -23,17 +23,20 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
     {
         private readonly IMapper _mapper;
         private readonly IWorkGroupTestCapabilityService _service;
+        private readonly ITestRequirementService _testReqmtService;
         private readonly IProjectService _projectService;
         private readonly IExcelExportService _excelExportService;
 
         public WorkGroupTestCapabilityController(
             IMapper mapper,
             IWorkGroupTestCapabilityService service,
+            ITestRequirementService testReqmtService,
             IProjectService projectService,
             IExcelExportService excelExportService)
         {
             _mapper = mapper;
             _service = service;
+            _testReqmtService = testReqmtService;
             _projectService = projectService;
             _excelExportService = excelExportService;
         }
@@ -222,7 +225,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
             if (!string.IsNullOrWhiteSpace(testCode))
             {
-                var pricing = await _service.GetTestReqmtPricingAsync(testCode, null);
+                var pricing = await _testReqmtService.GetTestReqmtPricingAsync(testCode, null);
                 if (pricing.Success && pricing.Data is not null)
                 {
                     model.RecUnitPrice = pricing.Data.RecUnitPrice;
@@ -251,7 +254,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 });
 
             var dto = _mapper.Map<TestRequirementDto>(model);
-            var result = await _service.CreateTestReqmtAsync(dto);
+            var result = await _testReqmtService.CreateTestReqmtAsync(dto);
 
             return result.Success
                 ? Json(new { success = true, message = "Test Requirement created successfully." })
@@ -267,7 +270,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpGet]
         public async Task<IActionResult> EditTestReqmt(string testCode, string buyer)
         {
-            var result = await _service.GetTestReqmtByIdAsync(testCode, buyer);
+            var result = await _testReqmtService.GetTestReqmtByIdAsync(testCode, buyer);
             if (!result.Success)
                 return NotFound($"Test Requirement with TestCode '{testCode}' and Buyer '{buyer}' not found.");
 
@@ -295,7 +298,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 });
 
             var dto = _mapper.Map<TestRequirementDto>(model);
-            var result = await _service.UpdateTestReqmtAsync(dto);
+            var result = await _testReqmtService.UpdateTestReqmtAsync(dto);
 
             return result.Success
                 ? Json(new { success = true, message = "Test Requirement updated successfully." })
@@ -311,7 +314,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpDelete]
         public async Task<IActionResult> DeleteTestReqmt(string testCode, string buyer)
         {
-            var result = await _service.DeleteTestReqmtAsync(testCode, buyer);
+            var result = await _testReqmtService.DeleteTestReqmtAsync(testCode, buyer);
             return result.Success
                 ? Json(new { success = true, message = "Test Requirement deleted successfully" })
                 : Json(new
@@ -326,7 +329,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpGet]
         public async Task<IActionResult> ExportTestReqmt(string testCode, string? filter = null)
         {
-            var response = await _service.GetAllTestReqmtForExportAsync(testCode, filter);
+            var response = await _testReqmtService.GetAllTestReqmtForExportAsync(testCode, filter);
 
             var items = response.Success && response.Data != null
                 ? _mapper.Map<List<TestRequirementItem>>(response.Data)
@@ -343,7 +346,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             if (string.IsNullOrWhiteSpace(testCode))
                 return Json(new { success = false });
 
-            var result = await _service.GetTestReqmtPricingAsync(testCode, projectCode);
+            var result = await _testReqmtService.GetTestReqmtPricingAsync(testCode, projectCode);
             if (!result.Success || result.Data is null)
                 return Json(new { success = false });
 
@@ -407,7 +410,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                              ?? new Dictionary<string, string>();
 
             var query = _mapper.Map<QueryParameters<string>>(request);
-            var response = await _service.GetPagedTestReqmtAsync(query, testCode);
+            var response = await _testReqmtService.GetPagedTestReqmtAsync(query, testCode);
 
             var items = response.Success && response.Data != null
                 ? _mapper.Map<List<TestRequirementItem>>(response.Data)

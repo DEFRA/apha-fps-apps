@@ -53,16 +53,16 @@ namespace Apha.Common.Constants
         public const string UpdateTestCapability = "api/v1/workgrouptestcapability/testcapability";
         public const string DeleteTestCapability = "api/v1/workgrouptestcapability/testcapability/{0}/{1}";
 
-        // Test Reqmt
-        public const string GetPagedTestReqmt = "api/v1/workgrouptestcapability/testreqmt/paged/{0}";
-        public const string GetAllTestReqmtForExport = "api/v1/workgrouptestcapability/testreqmt/all/{0}";
-        public const string GetTestReqmtById = "api/v1/workgrouptestcapability/testreqmt/{0}/{1}";
-        public const string CreateTestReqmt = "api/v1/workgrouptestcapability/testreqmt";
-        public const string UpdateTestReqmt = "api/v1/workgrouptestcapability/testreqmt";
-        public const string DeleteTestReqmt = "api/v1/workgrouptestcapability/testreqmt/{0}/{1}";
+        // Test Requirement
+        public const string GetPagedTestReqmt = "api/v1/testrequirement/paged/{0}";
+        public const string GetAllTestReqmtForExport = "api/v1/testrequirement/all/{0}";
+        public const string GetTestReqmtById = "api/v1/testrequirement/{0}/{1}";
+        public const string CreateTestReqmt = "api/v1/testrequirement";
+        public const string UpdateTestReqmt = "api/v1/testrequirement";
+        public const string DeleteTestReqmt = "api/v1/testrequirement/{0}/{1}";
 
         // Lookups
         public const string GetAllTestorProducts = "api/v1/workgrouptestcapability/testorproducts";
-        public const string GetTestReqmtPricing = "api/v1/workgrouptestcapability/testreqmt/pricing";
+        public const string GetTestReqmtPricing = "api/v1/testrequirement/pricing";
     }
 }

@@ -13,20 +13,17 @@ namespace Apha.PACT.Application.Services
         private readonly ITestCapabilityRepository _testCapabilityRepository;
         private readonly ITestRequirementRepository _testReqmtRepository;
         private readonly ITestorProductRepository _testorProductRepository;
-        private readonly IProjectRepository _projectRepository;
         private readonly IMapper _mapper;
 
         public WorkGroupTestCapabilityService(
             ITestCapabilityRepository testCapabilityRepository,
             ITestRequirementRepository testReqmtRepository,
             ITestorProductRepository testorProductRepository,
-            IProjectRepository projectRepository,
             IMapper mapper)
         {
             _testCapabilityRepository = testCapabilityRepository;
             _testReqmtRepository = testReqmtRepository;
             _testorProductRepository = testorProductRepository;
-            _projectRepository = projectRepository;
             _mapper = mapper;
         }
 
@@ -85,102 +82,6 @@ namespace Apha.PACT.Application.Services
                 throw new InvalidOperationException("Cannot delete, test requirements are dependant on this.");
 
             return await _testCapabilityRepository.DeleteAsync(testCode, workGroup);
-        }
-
-        public async Task<PaginatedResult<TestRequirementtDto>> GetPagedTestReqmtAsync(QueryParameters<string> query, string testCode)
-        {
-            var parameters = _mapper.Map<PaginationParameters<string>>(query);
-            var pagedData = await _testReqmtRepository.GetPagedWithDetailsAsync(parameters, testCode);
-            var dtos = _mapper.Map<List<TestRequirementtDto>>(pagedData.Data);
-            var paginationDto = _mapper.Map<PaginationDto>(pagedData.PaginationData);
-            return new PaginatedResult<TestRequirementtDto>(dtos, paginationDto);
-        }
-
-        public async Task<IEnumerable<TestRequirementtDto>> GetAllTestReqmtForExportAsync(string testCode, string? filterJson)
-        {
-            var items = await _testReqmtRepository.GetAllForExportAsync(testCode, filterJson);
-            return _mapper.Map<IEnumerable<TestRequirementtDto>>(items);
-        }
-
-        public async Task<TestRequirementtDto?> GetTestReqmtByIdAsync(string testCode, string buyer)
-        {
-            var detail = await _testReqmtRepository.GetDetailByIdAsync(testCode, buyer);
-            return detail is null ? null : _mapper.Map<TestRequirementtDto>(detail);
-        }
-
-        public async Task<TestRequirementtDto?> GetTestReqmtPricingAsync(string testCode, string? projectCode = null)
-        {
-            var detail = await _testReqmtRepository.GetPricingAsync(testCode, projectCode);
-            return detail is null ? null : _mapper.Map<TestRequirementtDto>(detail);
-        }
-
-        public async Task<TestRequirementtDto> AddTestReqmtAsync(TestRequirementtDto dto)
-        {
-            // ITrig: both fields null
-            if (string.IsNullOrWhiteSpace(dto.ProjectBuyerCode) && string.IsNullOrWhiteSpace(dto.TestBuyerCode))
-                throw new InvalidOperationException("Must fill in Project Buyer or Test Buyer");
-
-            // ITrig: project must exist when ProjectBuyerCode is provided
-            if (!string.IsNullOrWhiteSpace(dto.ProjectBuyerCode))
-            {
-                var projectExists = await _projectRepository.ExistsAsync(dto.ProjectBuyerCode);
-                if (!projectExists)
-                    throw new InvalidOperationException("Not a valid project.");
-            }
-
-            // ITrig: TestCapability must exist when TestBuyerCode is provided
-            if (!string.IsNullOrWhiteSpace(dto.TestBuyerCode))
-            {
-                var capabilityExists = await _testReqmtRepository.ExistsByTestBuyerCodeAsync(dto.TestBuyerCode);
-                if (!capabilityExists)
-                    throw new InvalidOperationException("This workgroup is not setup to do this test.");
-            }
-
-            var entity = _mapper.Map<TestRequirement>(dto);
-            var created = await _testReqmtRepository.AddAsync(entity);
-            return _mapper.Map<TestRequirementtDto>(created);
-        }
-
-        public async Task<TestRequirementtDto> UpdateTestReqmtAsync(TestRequirementtDto dto)
-        {
-            // UTrig: both fields null
-            if (string.IsNullOrWhiteSpace(dto.ProjectBuyerCode) && string.IsNullOrWhiteSpace(dto.TestBuyerCode))
-                throw new InvalidOperationException("Cannot update, you must fill in project buyer or test buyer.");
-
-            // UTrig: TestCapability must exist when TestBuyerCode is provided
-            if (!string.IsNullOrWhiteSpace(dto.TestBuyerCode))
-            {
-                var capabilityExists = await _testReqmtRepository.ExistsByTestBuyerCodeAsync(dto.TestBuyerCode);
-                if (!capabilityExists)
-                    throw new InvalidOperationException("Cannot update, test buyers workgroup is not setup to do this test.");
-            }
-
-            // UTrig: no MonthlyOutput records may exist for this TestCode + Buyer
-            var hasMonthlyOutput = await _testReqmtRepository.ExistsByTestCodeAndBuyerInMonthlyOutputAsync(dto.TestCode, dto.Buyer);
-            if (hasMonthlyOutput)
-                throw new InvalidOperationException("Cannot update, existing data in Monthly Output.");
-
-            // UTrig: project must exist when ProjectBuyerCode is provided
-            if (!string.IsNullOrWhiteSpace(dto.ProjectBuyerCode))
-            {
-                var projectExists = await _projectRepository.ExistsAsync(dto.ProjectBuyerCode);
-                if (!projectExists)
-                    throw new InvalidOperationException("Cannot update, project does not exist.");
-            }
-
-            var entity = _mapper.Map<TestRequirement>(dto);
-            var updated = await _testReqmtRepository.UpdateAsync(entity);
-            return _mapper.Map<TestRequirementtDto>(updated);
-        }
-
-        public async Task<bool> DeleteTestReqmtAsync(string testCode, string buyer)
-        {
-            // DTrig: no MonthlyOutput records may exist for this TestCode + Buyer
-            var hasMonthlyOutput = await _testReqmtRepository.ExistsByTestCodeAndBuyerInMonthlyOutputAsync(testCode, buyer);
-            if (hasMonthlyOutput)
-                throw new InvalidOperationException("Cannot delete, existing data in MonthlyOutput.");
-
-            return await _testReqmtRepository.DeleteAsync(testCode, buyer);
         }
 
         public async Task<IEnumerable<TestorProductDto>> GetAllTestorProductsAsync()

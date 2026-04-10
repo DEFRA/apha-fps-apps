@@ -8,5 +8,6 @@
         IPactProjectInvoiceApiClient PactProjectInvoice { get; }
         IPactProjectSubContractApiClient PactProjectSubContract { get; }
         IPactWorkGroupTestCapabilityApiClient PactWorkGroupTestCapability { get; }
+        IPactTestRequirementApiClient PactTestRequirement { get; }
     }
 }

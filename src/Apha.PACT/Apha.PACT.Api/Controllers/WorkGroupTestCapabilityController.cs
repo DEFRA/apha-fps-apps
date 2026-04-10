@@ -87,62 +87,6 @@ namespace Apha.PACT.Api.Controllers
             return Ok(deleted);
         }
 
-        // ── TEST REQMT (Grid 2) ───────────────────────────────────────────────
-
-        /// <summary>Retrieves a paged list of TestReqmt records for a given TestCode.</summary>
-        [HttpGet("testreqmt/paged/{testCode}")]
-        public async Task<IActionResult> GetPagedTestReqmt(
-            [FromQuery] QueryParameters<string> query,
-            string testCode)
-        {
-            var result = await _service.GetPagedTestReqmtAsync(query, testCode);
-            return Ok(_mapper.Map<PaginationRes<TestRequirementtRes>>(result));
-        }
-
-        /// <summary>Retrieves all TestReqmt records for a given TestCode without pagination (for export).</summary>
-        [HttpGet("testreqmt/all/{testCode}")]
-        public async Task<IActionResult> GetAllTestReqmtForExport(string testCode, [FromQuery] string? filter = null)
-        {
-            var items = await _service.GetAllTestReqmtForExportAsync(testCode, filter);
-            return Ok(_mapper.Map<IEnumerable<TestRequirementtRes>>(items));
-        }
-
-        /// <summary>Retrieves a TestReqmt record by composite key.</summary>
-        [HttpGet("testreqmt/{testCode}/{buyer}")]
-        public async Task<IActionResult> GetTestReqmtById(string testCode, string buyer)
-        {
-            var result = await _service.GetTestReqmtByIdAsync(testCode, buyer);
-            if (result is null)
-                throw new KeyNotFoundException($"TestReqmt with TestCode '{testCode}' and Buyer '{buyer}' not found.");
-            return Ok(_mapper.Map<TestRequirementtRes>(result));
-        }
-
-        /// <summary>Creates a new TestReqmt record.</summary>
-        [HttpPost("testreqmt")]
-        public async Task<IActionResult> CreateTestReqmt([FromBody] TestRequirementReq request)
-        {
-            var dto = _mapper.Map<TestRequirementtDto>(request);
-            var result = await _service.AddTestReqmtAsync(dto);
-            return Ok(_mapper.Map<TestRequirementtRes>(result));
-        }
-
-        /// <summary>Updates an existing TestReqmt record.</summary>
-        [HttpPut("testreqmt")]
-        public async Task<IActionResult> UpdateTestReqmt([FromBody] TestRequirementReq request)
-        {
-            var dto = _mapper.Map<TestRequirementtDto>(request);
-            var result = await _service.UpdateTestReqmtAsync(dto);
-            return Ok(_mapper.Map<TestRequirementtRes>(result));
-        }
-
-        /// <summary>Deletes a TestReqmt record by composite key.</summary>
-        [HttpDelete("testreqmt/{testCode}/{buyer}")]
-        public async Task<IActionResult> DeleteTestReqmt(string testCode, string buyer)
-        {
-            var deleted = await _service.DeleteTestReqmtAsync(testCode, buyer);
-            return Ok(deleted);
-        }
-
         // ── LOOKUPS ───────────────────────────────────────────────────────────
 
         /// <summary>Retrieves all TestorProduct items for dropdown population.</summary>
@@ -151,17 +95,6 @@ namespace Apha.PACT.Api.Controllers
         {
             var items = await _service.GetAllTestorProductsAsync();
             return Ok(_mapper.Map<IEnumerable<TestorProductRes>>(items));
-        }
-
-        /// <summary>Looks up RecUnitPrice and IsDefraProject. ProjectCode is optional — omitting it returns DefraUnitPrice by default.</summary>
-        [HttpGet("testreqmt/pricing")]
-        public async Task<IActionResult> GetTestReqmtPricing(
-            [FromQuery] string testCode, [FromQuery] string? projectCode = null)
-        {
-            var result = await _service.GetTestReqmtPricingAsync(testCode, projectCode);
-            if (result is null)
-                return NotFound($"No pricing found for TestCode '{testCode}'.");
-            return Ok(_mapper.Map<TestRequirementtRes>(result));
         }
     }
 }

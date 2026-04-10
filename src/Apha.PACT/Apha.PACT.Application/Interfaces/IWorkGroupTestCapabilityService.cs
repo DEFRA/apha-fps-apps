@@ -12,14 +12,6 @@ namespace Apha.PACT.Application.Interfaces
         Task<TestCapabilityDto> UpdateTestCapabilityAsync(TestCapabilityDto dto);
         Task<bool> DeleteTestCapabilityAsync(string testCode, string workGroup);
 
-        Task<PaginatedResult<TestRequirementtDto>> GetPagedTestReqmtAsync(QueryParameters<string> query, string testCode);
-        Task<IEnumerable<TestRequirementtDto>> GetAllTestReqmtForExportAsync(string testCode, string? filterJson);
-        Task<TestRequirementtDto?> GetTestReqmtByIdAsync(string testCode, string buyer);
-        Task<TestRequirementtDto?> GetTestReqmtPricingAsync(string testCode, string? projectCode = null);
-        Task<TestRequirementtDto> AddTestReqmtAsync(TestRequirementtDto dto);
-        Task<TestRequirementtDto> UpdateTestReqmtAsync(TestRequirementtDto dto);
-        Task<bool> DeleteTestReqmtAsync(string testCode, string buyer);
-
         Task<IEnumerable<TestorProductDto>> GetAllTestorProductsAsync();
     }
 }

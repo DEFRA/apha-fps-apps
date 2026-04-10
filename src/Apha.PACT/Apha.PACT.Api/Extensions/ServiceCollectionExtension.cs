@@ -27,6 +27,7 @@ namespace Apha.PACT.Api.Extensions
             services.AddScoped<IProjectInvoiceService, ProjectInvoiceService>();
             services.AddScoped<IProjectSubContractService, ProjectSubContractService>();
             services.AddScoped<IWorkGroupTestCapabilityService, WorkGroupTestCapabilityService>();
+            services.AddScoped<ITestRequirementService, TestRequirementService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
