@@ -33,31 +33,10 @@ namespace Apha.FPSApps.Application.Services.PACT
         public async Task<ApiResponseDto<bool>> DeleteTestCapabilityAsync(string testCode, string workGroup)
             => await _pactClient.PactWorkGroupTestCapability.DeleteTestCapabilityAsync(testCode, workGroup);
 
-        public async Task<ApiResponseDto<List<TestRequirementDto>>> GetPagedTestReqmtAsync(QueryParameters<string> query, string testCode)
-            => await _pactClient.PactWorkGroupTestCapability.GetPagedTestReqmtAsync(query, testCode);
-
-        public async Task<ApiResponseDto<List<TestRequirementDto>>> GetAllTestReqmtForExportAsync(string testCode, string? filter)
-            => await _pactClient.PactWorkGroupTestCapability.GetAllTestReqmtForExportAsync(testCode, filter);
-
-        public async Task<ApiResponseDto<TestRequirementDto>> GetTestReqmtByIdAsync(string testCode, string buyer)
-            => await _pactClient.PactWorkGroupTestCapability.GetTestReqmtByIdAsync(testCode, buyer);
-
-        public async Task<ApiResponseDto<TestRequirementDto>> CreateTestReqmtAsync(TestRequirementDto dto)
-            => await _pactClient.PactWorkGroupTestCapability.CreateTestReqmtAsync(dto);
-
-        public async Task<ApiResponseDto<TestRequirementDto>> UpdateTestReqmtAsync(TestRequirementDto dto)
-            => await _pactClient.PactWorkGroupTestCapability.UpdateTestReqmtAsync(dto);
-
-        public async Task<ApiResponseDto<bool>> DeleteTestReqmtAsync(string testCode, string buyer)
-            => await _pactClient.PactWorkGroupTestCapability.DeleteTestReqmtAsync(testCode, buyer);
-
         public async Task<ApiResponseDto<List<TestorProductDto>>> GetAllTestorProductsAsync()
             => await _pactClient.PactWorkGroupTestCapability.GetAllTestorProductsAsync();
 
         public async Task<ApiResponseDto<List<WorkGroupDto>>> GetAllWorkGroupsAsync()
             => await _pactClient.PactWorkGroup.GetAllWorkGroupsAsync();
-
-        public async Task<ApiResponseDto<TestRequirementDto>> GetTestReqmtPricingAsync(string testCode, string? projectCode = null)
-            => await _pactClient.PactWorkGroupTestCapability.GetTestReqmtPricingAsync(testCode, projectCode);
     }
 }
