@@ -7,6 +7,13 @@
             <div class="sup_flex_space_between">
                 @Model.Title
                 <div>
+                    @if (Model.AllowExport)
+                    {
+                        <button type="button" class="govuk-button govuk-button--secondary sup_gov_blue_bg sup_margin_0 sup_p_8"
+                                id="@($"{Model.GridId}_exportBtn")" data-export-url="@Model.ExportUrl">
+                            <i class="fa fa-file-excel-o"></i> Excel Export
+                        </button>
+                    }
                     @if (Model.AllowAdd)
                     {
                         <button type="button" class="govuk-button sup_margin_0 sup_p_8"
@@ -27,8 +34,7 @@
                                               id="@($"{Model.GridId}_bulkDeleteBtn")" data-bulkdelete-function="@Model.BulkDeleteFunction">
                             <i class="fa fa-trash"></i> Delete All
                         </button>
-                    }
-                   
+                    }                    
                 </div>
             </div>
         </h2>
@@ -256,6 +262,15 @@
                             }
                         </tr>
                         rowIndex++;
+                    }
+                    @if (Model.Data == null || Model.Data.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="100" class="govuk-table__cell"
+                                style="text-align:center; color:#505a5f; font-style:italic; padding:16px;">
+                                No records found.
+                            </td>
+                        </tr>
                     }
                 </tbody>
             </table>
@@ -511,6 +526,27 @@
                 if (fn && typeof window[fn] === 'function') {
                     window[fn](getSelectedIds());
                 }
+            });
+
+            // Export button click
+            $('#' + gridId + '_exportBtn').on('click', function () {
+                var exportUrl = $(this).data('export-url');
+                if (!exportUrl) return;
+
+                var currentExtraFilters = typeof window['@Model.ExtraFilterMethod'] === 'function'
+                    ? window['@Model.ExtraFilterMethod']()
+                    : {};
+
+                var params = $.extend(
+                    { filter: JSON.stringify(gridManager.getFilterModel()) },
+                    currentExtraFilters
+                );
+
+                var query = Object.keys(params)
+                    .map(function (k) { return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]); })
+                    .join('&');
+
+                window.location.href = exportUrl + '?' + query;
             });
 
             // Edit button click

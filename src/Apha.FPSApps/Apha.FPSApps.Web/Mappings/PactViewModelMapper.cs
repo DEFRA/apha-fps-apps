@@ -21,6 +21,10 @@ namespace Apha.FPSApps.Web.Mappings
                 .ForMember(dest => dest.SubContCounter, opt => opt.MapFrom(src => src.Counter))
                 .ReverseMap()
                 .ForMember(dest => dest.Counter, opt => opt.MapFrom(src => src.SubContCounter));
+
+            CreateMap<WorkGroupTestCapabilityItem, TestCapabilityDto>().ReverseMap();
+
+            CreateMap<TestRequirementItem, TestRequirementDto>().ReverseMap();
         }
     }
 }
