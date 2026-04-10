@@ -19,6 +19,9 @@ namespace Apha.PACT.DataAccess.Data
         public virtual DbSet<JobCode> JobCodes { get; set; }
         public virtual DbSet<TimeCodeValid> TimeCodeValids { get; set; }
         public virtual DbSet<WorkGroup> WorkGroups { get; set; }
+        public virtual DbSet<ProjectInvoice> ProjectInvoices { get; set; }
+        public virtual DbSet<ProjectSubContract> ProjectSubContracts { get; set; }
+
         public virtual DbSet<TestCapability> TestCapabilities { get; set; }
         public virtual DbSet<TestRequirement> TestRequirements { get; set; }
         public virtual DbSet<TestorProduct> TestorProducts { get; set; }
@@ -440,6 +443,84 @@ namespace Apha.PACT.DataAccess.Data
                 entity.Property(e => e.WgBuyer)
                     .HasMaxLength(50)
                     .HasColumnName("wgbuyer");
+                entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FPSYear);
+            });
+
+            modelBuilder.Entity<ProjectInvoice>(entity =>
+            {
+                entity.HasKey(e => new { e.InvoiceCounter, e.FpsYear }).HasName("pk_proj_invoice");
+
+                entity.ToTable("proj_invoice", "fps");
+
+                entity.Property(e => e.InvoiceCounter).HasColumnName("invoicecounter");
+                entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
+                entity.Property(e => e.Amount)
+                    .HasColumnType("money")
+                    .HasColumnName("amount");
+                entity.Property(e => e.CostOfWork)
+                    .HasColumnType("money")
+                    .HasColumnName("costofwork");
+                entity.Property(e => e.Detail)
+                    .HasMaxLength(100)
+                    .HasColumnName("detail");
+                entity.Property(e => e.Month).HasColumnName("month");
+                entity.Property(e => e.ProfitLoss)
+                    .HasColumnType("money")
+                    .HasColumnName("profitloss");
+                entity.Property(e => e.ProjectParent)
+                    .HasColumnType("citext")
+                    .HasColumnName("projectparent");
+                entity.Property(e => e.Type)
+                    .HasMaxLength(10)
+                    .HasColumnName("type");
+                entity.Property(e => e.Wip)
+                    .HasColumnType("money")
+                    .HasColumnName("wip");
+                entity.Property(e => e.X)
+                    .HasMaxLength(5)
+                    .HasColumnName("x");
+
+                entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FPSYear);
+            });
+
+            modelBuilder.Entity<ProjectSubContract>(entity =>
+            {
+                entity.HasKey(e => new { e.SubContCounter, e.FpsYear }).HasName("pk_proj_subcontract");
+
+                entity.ToTable("proj_subcontract", "fps");
+
+                entity.Property(e => e.SubContCounter)
+                    .ValueGeneratedOnAdd()
+                    .HasColumnName("subcontcounter");
+                entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
+                entity.Property(e => e.AcctCode)
+                    .HasMaxLength(30)
+                    .HasColumnName("acctcode");
+                entity.Property(e => e.Amount)
+                    .HasColumnType("money")
+                    .HasColumnName("amount");
+                entity.Property(e => e.AnimalDays).HasColumnName("animaldays");
+                entity.Property(e => e.DailyRate)
+                    .HasColumnType("money")
+                    .HasColumnName("dailyrate");
+                entity.Property(e => e.Description)
+                    .HasMaxLength(255)
+                    .HasColumnName("description");
+                entity.Property(e => e.Month).HasColumnName("month");
+                entity.Property(e => e.Project)
+                    .HasColumnType("citext")
+                    .HasColumnName("project");
+                entity.Property(e => e.Supplier)
+                    .HasMaxLength(50)
+                    .HasColumnName("supplier");
+                entity.Property(e => e.SupplierNumber).HasColumnName("suppliernumber");
+                entity.Property(e => e.TestJob)
+                    .HasMaxLength(50)
+                    .HasColumnName("testjob");
+                entity.Property(e => e.WorkGroup)
+                    .HasMaxLength(50)
+                    .HasColumnName("workgroup");
+
                 entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FPSYear);
             });
 
