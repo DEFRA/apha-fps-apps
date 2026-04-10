@@ -11,19 +11,18 @@ using Microsoft.AspNetCore.Mvc;
 namespace Apha.PACT.Api.Controllers
 {
     /// <summary>
-    /// API controller for WorkGroupTestCapability operations.
+    /// API controller for TestCapability operations.
     /// </summary>
-    //[Authorize(Roles = "API-FPSUser,API-FPSAdmin")]    
-    [AllowAnonymous]
+    [Authorize(Roles = "API-PACTUser,API-PACTAdmin")]
     [ApiController]
     [ApiVersion("1.0")]
-    [Route("api/v{version:apiVersion}/workgrouptestcapability")]
-    public class WorkGroupTestCapabilityController : ControllerBase
+    [Route("api/v{version:apiVersion}/testcapability")]
+    public class TestCapabilityController : ControllerBase
     {
-        private readonly IWorkGroupTestCapabilityService _service;
+        private readonly ITestCapabilityService _service;
         private readonly IMapper _mapper;
 
-        public WorkGroupTestCapabilityController(IWorkGroupTestCapabilityService service, IMapper mapper)
+        public TestCapabilityController(ITestCapabilityService service, IMapper mapper)
         {
             _service = service;
             _mapper = mapper;

@@ -3,7 +3,7 @@ using Apha.PACT.Application.Pagination;
 
 namespace Apha.PACT.Application.Interfaces
 {
-    public interface IWorkGroupTestCapabilityService
+    public interface ITestCapabilityService
     {
         Task<PaginatedResult<TestCapabilityDto>> GetPagedByWorkGroupAsync(QueryParameters<string> query, string? workGroup);
         Task<PaginatedResult<TestCapabilityDto>> GetPagedByTestCodeAsync(QueryParameters<string> query, string? testCode);

@@ -12,9 +12,8 @@ namespace Apha.PACT.Api.Controllers
 {
     /// <summary>
     /// API controller for TestRequirement operations.
-    /// </summary>
-    //[Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
-    [AllowAnonymous]
+    /// </summary>    
+    [Authorize(Roles = "API-PACTUser,API-PACTAdmin")]
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/testrequirement")]
