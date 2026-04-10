@@ -436,6 +436,25 @@
     justify-content: space-between;
 }
 
+.sup_padding_bottom_10 {
+    padding-bottom: 10px;
+}
+
+.sup_padding_right_10 {
+    padding-right: 10px;
+}
+
+.sup_flex_center_center_center {
+    display: flex;
+    align-content: center;
+    align-items: center;
+    justify-content: center;
+}
+
+.sup_float_right {
+    float: right;
+}
+
 .sup_display_none {
     display:none;
 }
