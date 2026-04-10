@@ -25,7 +25,7 @@ namespace Apha.PACT.DataAccess.Data
         public virtual DbSet<TestCapability> TestCapabilities { get; set; }
         public virtual DbSet<TestRequirement> TestRequirements { get; set; }
         public virtual DbSet<TestorProduct> TestorProducts { get; set; }
-        public virtual DbSet<TestReqLog> TestReqLogs { get; set; }
+        public virtual DbSet<TestRequirementLog> TestRequirementLogs { get; set; }
         public virtual DbSet<MonthlyOutput> MonthlyOutputs { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -358,7 +358,7 @@ namespace Apha.PACT.DataAccess.Data
                 entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FPSYear);
             });
 
-            modelBuilder.Entity<TestReqLog>(entity =>
+            modelBuilder.Entity<TestRequirementLog>(entity =>
             {
                 entity.HasKey(e => new { e.SequenceNo, e.FpsYear }).HasName("pk_testreq_log");
 

@@ -9,14 +9,14 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Moq;
 using NSubstitute;
 
-namespace Apha.PACT.DataAccess.UnitTests.Repository.TestReqmtRepositoryTest
+namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTest
 {
-    public class TestReqmtRepositoryTests
+    public class TestRequirementRepositoryTests
     {
         private const int DefaultFpsYear = 2024;
 
         private static (
-            TestReqmtRepository Repo,
+            TestRequirementRepository Repo,
             Mock<DbSet<TestRequirement>> TestReqmtsDbSet,
             Mock<DbSet<MonthlyOutput>> MonthlyOutputsDbSet,
             Mock<FpsDbContext> Context)
@@ -41,19 +41,19 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestReqmtRepositoryTest
 
             var monthlyOutputsMockSet = RepositoryTestHelper.CreateMockDbSet(monthlyOutputs ?? []);
 
-            var testReqLogsMockSet = RepositoryTestHelper.CreateMockDbSet(new List<TestReqLog>());
+            var testReqLogsMockSet = RepositoryTestHelper.CreateMockDbSet(new List<TestRequirementLog>());
             RepositoryTestHelper.SetupDbSetOperations(testReqLogsMockSet);
             testReqLogsMockSet
-                .Setup(x => x.AddAsync(It.IsAny<TestReqLog>(), It.IsAny<CancellationToken>()))
-                .Returns((TestReqLog _, CancellationToken __) => new ValueTask<EntityEntry<TestReqLog>>());
+                .Setup(x => x.AddAsync(It.IsAny<TestRequirementLog>(), It.IsAny<CancellationToken>()))
+                .Returns((TestRequirementLog _, CancellationToken __) => new ValueTask<EntityEntry<TestRequirementLog>>());
 
             RepositoryTestHelper.SetupSaveChanges(mockContext);
 
             mockContext.Setup(x => x.TestRequirements).Returns(testReqmtsMockSet.Object);
             mockContext.Setup(x => x.MonthlyOutputs).Returns(monthlyOutputsMockSet.Object);
-            mockContext.Setup(x => x.TestReqLogs).Returns(testReqLogsMockSet.Object);
+            mockContext.Setup(x => x.TestRequirementLogs).Returns(testReqLogsMockSet.Object);
 
-            var repo = new TestReqmtRepository(mockContext.Object, fpsYearContext, currentUserContext);
+            var repo = new TestRequirementRepository(mockContext.Object, fpsYearContext, currentUserContext);
             return (repo, testReqmtsMockSet, monthlyOutputsMockSet, mockContext);
         }
 

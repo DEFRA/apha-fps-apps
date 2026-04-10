@@ -14,7 +14,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupTestCapabilityServic
     public class WorkGroupTestCapabilityServiceTests
     {
         private readonly ITestCapabilityRepository _testCapabilityRepo;
-        private readonly ITestReqmtRepository _testReqmtRepo;
+        private readonly ITestRequirementRepository _testReqmtRepo;
         private readonly ITestorProductRepository _testorProductRepo;
         private readonly IProjectRepository _projectRepo;
         private readonly IMapper _mapper;
@@ -23,7 +23,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupTestCapabilityServic
         public WorkGroupTestCapabilityServiceTests()
         {
             _testCapabilityRepo = Substitute.For<ITestCapabilityRepository>();
-            _testReqmtRepo = Substitute.For<ITestReqmtRepository>();
+            _testReqmtRepo = Substitute.For<ITestRequirementRepository>();
             _testorProductRepo = Substitute.For<ITestorProductRepository>();
             _projectRepo = Substitute.For<IProjectRepository>();
             _mapper = Substitute.For<IMapper>();
@@ -245,7 +245,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupTestCapabilityServic
         {
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var mappedParams = new PaginationParameters<string>();
-            var pagedData = new PagedData<TestReqmtDetail>([], new PaginationData());
+            var pagedData = new PagedData<TestRequirementDetail>([], new PaginationData());
             var dtos = new List<TestRequirementtDto>();
             var paginationDto = new PaginationDto();
 
@@ -267,7 +267,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupTestCapabilityServic
         [Fact]
         public async Task GetAllTestReqmtForExportAsync_WithFilter_ReturnsAllMappedItems()
         {
-            var details = new List<TestReqmtDetail>
+            var details = new List<TestRequirementDetail>
             {
                 new() { TestCode = "BLOOD", Buyer = "PRJ1" },
                 new() { TestCode = "BLOOD", Buyer = "PRJ2" }
@@ -290,7 +290,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupTestCapabilityServic
         [Fact]
         public async Task GetAllTestReqmtForExportAsync_NullFilter_PassesNullToRepository()
         {
-            var details = new List<TestReqmtDetail>();
+            var details = new List<TestRequirementDetail>();
             var dtos = new List<TestRequirementtDto>();
 
             _testReqmtRepo.GetAllForExportAsync("BLOOD", null).Returns(details);
@@ -309,7 +309,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupTestCapabilityServic
         [Fact]
         public async Task GetTestReqmtByIdAsync_RecordFound_ReturnsMappedDto()
         {
-            var detail = new TestReqmtDetail { TestCode = "BLOOD", Buyer = "PRJ1" };
+            var detail = new TestRequirementDetail { TestCode = "BLOOD", Buyer = "PRJ1" };
             var dto = new TestRequirementtDto { TestCode = "BLOOD", Buyer = "PRJ1" };
 
             _testReqmtRepo.GetDetailByIdAsync("BLOOD", "PRJ1").Returns(detail);
@@ -323,7 +323,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupTestCapabilityServic
         [Fact]
         public async Task GetTestReqmtByIdAsync_RecordNotFound_ReturnsNull()
         {
-            _testReqmtRepo.GetDetailByIdAsync("MISSING", "PRJ1").Returns((TestReqmtDetail?)null);
+            _testReqmtRepo.GetDetailByIdAsync("MISSING", "PRJ1").Returns((TestRequirementDetail?)null);
 
             var result = await _sut.GetTestReqmtByIdAsync("MISSING", "PRJ1");
 
@@ -337,7 +337,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupTestCapabilityServic
         [Fact]
         public async Task GetTestReqmtPricingAsync_RecordFound_ReturnsMappedDto()
         {
-            var detail = new TestReqmtDetail { TestCode = "BLOOD", RecUnitPrice = 10.5m };
+            var detail = new TestRequirementDetail { TestCode = "BLOOD", RecUnitPrice = 10.5m };
             var dto = new TestRequirementtDto { TestCode = "BLOOD", RecUnitPrice = 10.5m };
 
             _testReqmtRepo.GetPricingAsync("BLOOD", null).Returns(detail);
@@ -351,7 +351,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupTestCapabilityServic
         [Fact]
         public async Task GetTestReqmtPricingAsync_RecordNotFound_ReturnsNull()
         {
-            _testReqmtRepo.GetPricingAsync("MISSING", null).Returns((TestReqmtDetail?)null);
+            _testReqmtRepo.GetPricingAsync("MISSING", null).Returns((TestRequirementDetail?)null);
 
             var result = await _sut.GetTestReqmtPricingAsync("MISSING", null);
 
@@ -361,7 +361,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupTestCapabilityServic
         [Fact]
         public async Task GetTestReqmtPricingAsync_WithProjectCode_PassesProjectCodeToRepository()
         {
-            var detail = new TestReqmtDetail { TestCode = "BLOOD", RecUnitPrice = 5.0m, IsDefraProject = 1 };
+            var detail = new TestRequirementDetail { TestCode = "BLOOD", RecUnitPrice = 5.0m, IsDefraProject = 1 };
             var dto = new TestRequirementtDto { TestCode = "BLOOD", RecUnitPrice = 5.0m };
 
             _testReqmtRepo.GetPricingAsync("BLOOD", "PRJ1").Returns(detail);

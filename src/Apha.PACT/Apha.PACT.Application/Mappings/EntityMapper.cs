@@ -22,7 +22,7 @@ namespace Apha.PACT.Application.Mappings
             CreateMap<ProjectSubContract, ProjectSubContractDto>().ReverseMap();
             CreateMap<TestCapability, TestCapabilityDto>().ReverseMap();
             CreateMap<TestRequirement, TestRequirementtDto>().ReverseMap();
-            CreateMap<TestReqmtDetail, TestRequirementtDto>();
+            CreateMap<TestRequirementDetail, TestRequirementtDto>();
             CreateMap<TestorProduct, TestorProductDto>().ReverseMap();
         }
     }
