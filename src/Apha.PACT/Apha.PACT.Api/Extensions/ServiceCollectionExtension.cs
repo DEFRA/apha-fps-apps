@@ -23,6 +23,8 @@ namespace Apha.PACT.Api.Extensions
             services.AddScoped<IJobCodeService, JobCodeService>();
             services.AddScoped<ITimeCodeValidService, TimeCodeValidService>();
             services.AddScoped<IWorkGroupService, WorkGroupService>();
+            services.AddScoped<IProjectInvoiceService, ProjectInvoiceService>();
+            services.AddScoped<IProjectSubContractService, ProjectSubContractService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
@@ -31,6 +33,8 @@ namespace Apha.PACT.Api.Extensions
             services.AddScoped<IJobCodeRepository, JobCodeRepository>();
             services.AddScoped<ITimeCodeValidRepository, TimeCodeValidRepository>();
             services.AddScoped<IWorkGroupRepository, WorkGroupRepository>();
+            services.AddScoped<IProjectInvoiceRepository, ProjectInvoiceRepository>();
+            services.AddScoped<IProjectSubContractRepository, ProjectSubContractRepository>();
             return services;
         }
     }
