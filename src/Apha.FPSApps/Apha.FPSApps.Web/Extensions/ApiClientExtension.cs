@@ -53,7 +53,18 @@ namespace Apha.FPSApps.Web.Extensions
                 client.BaseAddress = new Uri(configuration["PACTApiSettings:BaseUrl"]
                     ?? throw new InvalidOperationException("PACT base URL not configured"));
                 client.DefaultRequestHeaders.Add(AcceptHeader, ApplicationJson);
-            }).AddHttpMessageHandler<RequestHeadersHandler>();
+            })
+            .AddHttpMessageHandler(sp =>
+            {
+                var scopes = configuration["PACTApiSettings:Scope"]!
+                    .Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+                return new BearerTokenHandler(
+                    sp.GetRequiredService<ITokenAcquisition>(),
+                    sp.GetRequiredService<IHttpContextAccessor>(),
+                    scopes);
+            })
+            .AddHttpMessageHandler<RequestHeadersHandler>();
 
             services.AddScoped<IPactHttpExecutor>(sp =>
             {
