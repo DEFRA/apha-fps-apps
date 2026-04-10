@@ -53,46 +53,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Apha.PACT.Application.UnitT
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Apha.PACT.DataAccess.UnitTests", "Apha.PACT\Apha.PACT.DataAccess.UnitTests\Apha.PACT.DataAccess.UnitTests.csproj", "{1CA7E014-52F8-8336-B4A6-B5B9EFB34B50}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Source", "Source", "{3D8497E8-753D-4583-8001-1885ABA97C97}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "frm", "frm", "{8D9E6DF1-C0E5-4417-9201-A5AC0B4C4CE0}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "FPS", "FPS", "{664CB4F0-82FF-48C8-ACB2-CDB12829A003}"
-	ProjectSection(SolutionItems) = preProject
-		..\..\Rohit_\FPS_Screen\Tech-Details\PACT\Test Capability\frmWorkGroupTestCapability.frm = ..\..\Rohit_\FPS_Screen\Tech-Details\PACT\Test Capability\frmWorkGroupTestCapability.frm
-		..\..\Rohit_\FPS_Screen\Tech-Details\PACT\Test Capability\frmWorkGroupTestCapability.msaccfrm = ..\..\Rohit_\FPS_Screen\Tech-Details\PACT\Test Capability\frmWorkGroupTestCapability.msaccfrm
-		..\..\Rohit_\FPS_Screen\Tech-Details\PACT\Test Capability\fsubWorkGroupTestCap2.frm = ..\..\Rohit_\FPS_Screen\Tech-Details\PACT\Test Capability\fsubWorkGroupTestCap2.frm
-		..\..\Rohit_\FPS_Screen\Tech-Details\PACT\Test Capability\fsubWorkGroupTestCap2.msaccfrm = ..\..\Rohit_\FPS_Screen\Tech-Details\PACT\Test Capability\fsubWorkGroupTestCap2.msaccfrm
-		..\..\Rohit_\FPS_Screen\Tech-Details\PACT\Test Capability\fsubWorkGroupTestCapability.frm = ..\..\Rohit_\FPS_Screen\Tech-Details\PACT\Test Capability\fsubWorkGroupTestCapability.frm
-		..\..\Rohit_\FPS_Screen\Tech-Details\PACT\Test Capability\fsubWorkGroupTestCapability.msaccfrm = ..\..\Rohit_\FPS_Screen\Tech-Details\PACT\Test Capability\fsubWorkGroupTestCapability.msaccfrm
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ui", "ui", "{45B31387-8797-49FF-956D-590E2341C25D}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "FPS", "FPS", "{3679E79B-2997-47D0-B58F-C8CC77A4A8E9}"
-	ProjectSection(SolutionItems) = preProject
-		..\..\Rohit_\FPS_Screen\Tech-Details\PACT\Test Capability\workgroup_management.html = ..\..\Rohit_\FPS_Screen\Tech-Details\PACT\Test Capability\workgroup_management.html
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "dbfiles", "dbfiles", "{E5D85CB2-6F6E-45EF-9B77-B9BAA843C979}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "FPS", "FPS", "{1AA8C705-3873-4CC3-8122-57D038F4FCDD}"
-	ProjectSection(SolutionItems) = preProject
-		..\..\Rohit_\FPS_Screen\Tech-Details\PACT\Test Capability\DTrig_tlkpTestReqmt.sql = ..\..\Rohit_\FPS_Screen\Tech-Details\PACT\Test Capability\DTrig_tlkpTestReqmt.sql
-		..\..\Rohit_\FPS_Screen\Tech-Details\PACT\Test Capability\TestorProduct.sql = ..\..\Rohit_\FPS_Screen\Tech-Details\PACT\Test Capability\TestorProduct.sql
-		..\..\Rohit_\FPS_Screen\Tech-Details\PACT\Test Capability\tlkpProject.sql = ..\..\Rohit_\FPS_Screen\Tech-Details\PACT\Test Capability\tlkpProject.sql
-		..\..\Rohit_\FPS_Screen\Tech-Details\PACT\Test Capability\tlkpTestCapability.sql = ..\..\Rohit_\FPS_Screen\Tech-Details\PACT\Test Capability\tlkpTestCapability.sql
-		..\..\Rohit_\FPS_Screen\Tech-Details\PACT\Test Capability\tlkpTestCapabilityMAP.sql = ..\..\Rohit_\FPS_Screen\Tech-Details\PACT\Test Capability\tlkpTestCapabilityMAP.sql
-		..\..\Rohit_\FPS_Screen\Tech-Details\PACT\Test Capability\tlkpTestCapability_DTrig.sql = ..\..\Rohit_\FPS_Screen\Tech-Details\PACT\Test Capability\tlkpTestCapability_DTrig.sql
-		..\..\Rohit_\FPS_Screen\Tech-Details\PACT\Test Capability\tlkpTestCapability_UTrig.sql = ..\..\Rohit_\FPS_Screen\Tech-Details\PACT\Test Capability\tlkpTestCapability_UTrig.sql
-		..\..\Rohit_\FPS_Screen\Tech-Details\PACT\Test Capability\tlkpTestReqmt.sql = ..\..\Rohit_\FPS_Screen\Tech-Details\PACT\Test Capability\tlkpTestReqmt.sql
-		..\..\Rohit_\FPS_Screen\Tech-Details\PACT\Test Capability\tlkpTestReqmt_Dtrig.sql = ..\..\Rohit_\FPS_Screen\Tech-Details\PACT\Test Capability\tlkpTestReqmt_Dtrig.sql
-		..\..\Rohit_\FPS_Screen\Tech-Details\PACT\Test Capability\tlkpTestReqmt_ITrig.sql = ..\..\Rohit_\FPS_Screen\Tech-Details\PACT\Test Capability\tlkpTestReqmt_ITrig.sql
-		..\..\Rohit_\FPS_Screen\Tech-Details\PACT\Test Capability\tlkpTestReqmt_UTrig.sql = ..\..\Rohit_\FPS_Screen\Tech-Details\PACT\Test Capability\tlkpTestReqmt_UTrig.sql
-		..\..\Rohit_\FPS_Screen\Tech-Details\PACT\Test Capability\UITrig_tlkpTestReqmt.sql = ..\..\Rohit_\FPS_Screen\Tech-Details\PACT\Test Capability\UITrig_tlkpTestReqmt.sql
-		..\..\Rohit_\FPS_Screen\Tech-Details\PACT\Test Capability\WorkGroup.sql = ..\..\Rohit_\FPS_Screen\Tech-Details\PACT\Test Capability\WorkGroup.sql
-	EndProjectSection
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -381,12 +341,6 @@ Global
 		{F24A143E-1F9A-FB16-5A28-154C578145C7} = {A4837D11-33F3-4358-BCDD-6BE3D2ABAD58}
 		{D2449DF6-F990-182E-7F60-A2D2DDD55614} = {A4837D11-33F3-4358-BCDD-6BE3D2ABAD58}
 		{1CA7E014-52F8-8336-B4A6-B5B9EFB34B50} = {A4837D11-33F3-4358-BCDD-6BE3D2ABAD58}
-		{8D9E6DF1-C0E5-4417-9201-A5AC0B4C4CE0} = {3D8497E8-753D-4583-8001-1885ABA97C97}
-		{664CB4F0-82FF-48C8-ACB2-CDB12829A003} = {8D9E6DF1-C0E5-4417-9201-A5AC0B4C4CE0}
-		{45B31387-8797-49FF-956D-590E2341C25D} = {3D8497E8-753D-4583-8001-1885ABA97C97}
-		{3679E79B-2997-47D0-B58F-C8CC77A4A8E9} = {45B31387-8797-49FF-956D-590E2341C25D}
-		{E5D85CB2-6F6E-45EF-9B77-B9BAA843C979} = {3D8497E8-753D-4583-8001-1885ABA97C97}
-		{1AA8C705-3873-4CC3-8122-57D038F4FCDD} = {E5D85CB2-6F6E-45EF-9B77-B9BAA843C979}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {BF0A7DFC-1B06-4BBB-818A-4E94D83940B7}
