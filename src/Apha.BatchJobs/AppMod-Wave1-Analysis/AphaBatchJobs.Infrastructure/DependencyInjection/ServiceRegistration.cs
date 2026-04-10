@@ -1,5 +1,8 @@
+using AphaBatchJobs.Application.Adhoc;
+using AphaBatchJobs.Application.Adhoc.Services;
 using AphaBatchJobs.Application.Scheduled;
 using AphaBatchJobs.Core.Interfaces;
+using AphaBatchJobs.Core.Interfaces.Adhoc;
 using AphaBatchJobs.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -126,6 +129,38 @@ namespace AphaBatchJobs.Infrastructure.DependencyInjection
 
             // Register scheduled jobs as singleton for job orchestration framework
             services.AddSingleton<IScheduledJob, ScheduledLoadFromFpsJob>();
+
+            // Register adhoc jobs as singleton for on-demand job orchestration framework
+            services.AddSingleton<IAdhocJob, AdhocRecreateSummariesJob>();
+
+            // Register adhoc service implementations (16 core procedures + 8 email services)
+            // Core procedure services
+            services.AddSingleton<IDeleteMonthImportDetailsService, DeleteMonthImportDetailsService>();
+            services.AddSingleton<IRestrictionExpiredService, RestrictionExpiredService>();
+            services.AddSingleton<ICreateActivityRestrictionDetailService, CreateActivityRestrictionDetailService>();
+            services.AddSingleton<IJoinedOnDeleteService, JoinedOnDeleteService>();
+            services.AddSingleton<ICreateFromEmpHireService, CreateFromEmpHireService>();
+            services.AddSingleton<ICreateActivityEmpHireService, CreateActivityEmpHireService>();
+            services.AddSingleton<IChangeOfStatusDeleteService, ChangeOfStatusDeleteService>();
+            services.AddSingleton<ICreateActivityChangeOfStatusService, CreateActivityChangeOfStatusService>();
+            services.AddSingleton<ICreateActivityEmpLeftDateService, CreateActivityEmpLeftDateService>();
+            services.AddSingleton<ICreateProjectMonthCaseworkService, CreateProjectMonthCaseworkService>();
+            services.AddSingleton<ICreateTimeCostCalcsService, CreateTimeCostCalcsService>();
+            services.AddSingleton<IDeleteEmpMonthTimeDetailsService, DeleteEmpMonthTimeDetailsService>();
+            services.AddSingleton<ICreateActivityEmpMonthTimeService, CreateActivityEmpMonthTimeService>();
+            services.AddSingleton<IDeleteMonthImportTimingsService, DeleteMonthImportTimingsService>();
+            services.AddSingleton<ICreateActivityMonthImportTimingService, CreateActivityMonthImportTimingService>();
+            services.AddSingleton<ICreateMonthAccountCodeService, CreateMonthAccountCodeService>();
+
+            // Email notification services
+            services.AddSingleton<IEmailEmpHireService, EmailEmpHireService>();
+            services.AddSingleton<IEmailJoinedOnService, EmailJoinedOnService>();
+            services.AddSingleton<IEmailChangeOfStatusService, EmailChangeOfStatusService>();
+            services.AddSingleton<IEmailLeftDateService, EmailLeftDateService>();
+            services.AddSingleton<IEmailRestrictionService, EmailRestrictionService>();
+            services.AddSingleton<IEmailExpiredRestrictionService, EmailExpiredRestrictionService>();
+            services.AddSingleton<IEmailImportSummaryService, EmailImportSummaryService>();
+            services.AddSingleton<IEmailProbationSummaryService, EmailProbationSummaryService>();
 
             return services;
         }
