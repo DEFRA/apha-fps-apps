@@ -49,7 +49,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestReqmtRepositoryTest
 
             RepositoryTestHelper.SetupSaveChanges(mockContext);
 
-            mockContext.Setup(x => x.TestReqmts).Returns(testReqmtsMockSet.Object);
+            mockContext.Setup(x => x.TestRequirements).Returns(testReqmtsMockSet.Object);
             mockContext.Setup(x => x.MonthlyOutputs).Returns(monthlyOutputsMockSet.Object);
             mockContext.Setup(x => x.TestReqLogs).Returns(testReqLogsMockSet.Object);
 
