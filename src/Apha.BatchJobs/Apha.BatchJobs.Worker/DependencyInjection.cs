@@ -1,3 +1,6 @@
+using Apha.BatchJobs.Application.Factory;
+using Apha.BatchJobs.Application.Interfaces;
+using Apha.BatchJobs.Application.Jobs.HealthCheck;
 using Apha.BatchJobs.Domain.Configuration;
 using Apha.BatchJobs.Domain.Interfaces;
 using Apha.BatchJobs.Infrastructure.Data;
@@ -63,9 +66,21 @@ public static class ServiceCollectionSetup
         services.AddScoped<IBatchLockRepository, BatchLockRepository>();
         services.AddScoped<IJobExecutionRepository, JobExecutionRepository>();
 
-        // Register configuration
-        services.AddSingleton(config);
+        // Register batch job handlers
+        services.AddScoped<HealthCheckJobHandler>();
+
+        // Create job registry
+        var jobRegistry = new Dictionary<string, Type>
+        {
+            { "HealthCheck", typeof(HealthCheckJobHandler) }
+        };
+
+        // Register job factory
+        services.AddScoped<IBatchJobFactory>(sp => new BatchJobFactory(sp, jobRegistry));
 
         return services;
+
+
+
     }
 }
