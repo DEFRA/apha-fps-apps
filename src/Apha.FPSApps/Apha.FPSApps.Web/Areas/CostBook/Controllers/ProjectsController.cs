@@ -9,13 +9,15 @@ using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Identity.Web;
 using Newtonsoft.Json;
 using System.Web;
 
 namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
 {
     [Area("CostBook")]
-    [AllowAnonymous] // Following FPS pattern
+    [Authorize(Roles = "CostbookAdmin,CostbookUser")]
+    [AuthorizeForScopes(ScopeKeySection = "CostBookApiSettings:Scope")]
     public class ProjectsController : Controller
     {
         private readonly ICostBookProjectService _projectService;
