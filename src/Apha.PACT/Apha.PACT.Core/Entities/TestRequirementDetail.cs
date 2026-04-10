@@ -1,6 +1,6 @@
 namespace Apha.PACT.Core.Entities
 {
-    public class TestReqmtDetail
+    public class TestRequirementDetail
     {
         public string TestCode { get; set; } = null!;
         public string Buyer { get; set; } = null!;

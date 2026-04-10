@@ -7,12 +7,12 @@ using Newtonsoft.Json;
 
 namespace Apha.PACT.DataAccess.Repository
 {
-    public class TestReqmtRepository : BaseRepository, ITestReqmtRepository
+    public class TestRequirementRepository : BaseRepository, ITestRequirementRepository
     {
         private readonly IFpsYearContext _fpsYearContext;
         private readonly ICurrentUserContext _currentUserContext;
 
-        public TestReqmtRepository(
+        public TestRequirementRepository(
             FpsDbContext context,
             IFpsYearContext fpsYearContext,
             ICurrentUserContext currentUserContext) : base(context)
@@ -42,14 +42,14 @@ namespace Apha.PACT.DataAccess.Repository
             return ApplyPaging(result, query.Page, query.PageSize);
         }
 
-        public async Task<PagedData<TestReqmtDetail>> GetPagedWithDetailsAsync(
+        public async Task<PagedData<TestRequirementDetail>> GetPagedWithDetailsAsync(
             PaginationParameters<string> query, string testCode)
         {
             var baseQuery = (from t in _context.TestRequirements
                              join tp in _context.TestorProducts on t.TestCode equals tp.ItemCode
                              join p in _context.Projects on t.Buyer equals p.ParentProject
                              where t.TestCode == testCode
-                             select new TestReqmtDetail
+                             select new TestRequirementDetail
                              {
                                  TestCode = t.TestCode,
                                  Buyer = t.Buyer,
@@ -70,24 +70,24 @@ namespace Apha.PACT.DataAccess.Repository
             {
                 (true, true) => query.SortBy switch
                 {
-                    nameof(TestReqmtDetail.Buyer) => baseQuery.OrderByDescending(t => t.Buyer),
-                    nameof(TestReqmtDetail.UnitPrice) => baseQuery.OrderByDescending(t => t.UnitPrice),
-                    nameof(TestReqmtDetail.NoRequired) => baseQuery.OrderByDescending(t => t.NoRequired),
-                    nameof(TestReqmtDetail.Active) => baseQuery.OrderByDescending(t => t.Active),
-                    nameof(TestReqmtDetail.ProjectBuyerCode) => baseQuery.OrderByDescending(t => t.ProjectBuyerCode),
-                    nameof(TestReqmtDetail.IsDefraProject) => baseQuery.OrderByDescending(t => t.IsDefraProject),
-                    nameof(TestReqmtDetail.RecUnitPrice) => baseQuery.OrderByDescending(t => t.RecUnitPrice),
+                    nameof(TestRequirementDetail.Buyer) => baseQuery.OrderByDescending(t => t.Buyer),
+                    nameof(TestRequirementDetail.UnitPrice) => baseQuery.OrderByDescending(t => t.UnitPrice),
+                    nameof(TestRequirementDetail.NoRequired) => baseQuery.OrderByDescending(t => t.NoRequired),
+                    nameof(TestRequirementDetail.Active) => baseQuery.OrderByDescending(t => t.Active),
+                    nameof(TestRequirementDetail.ProjectBuyerCode) => baseQuery.OrderByDescending(t => t.ProjectBuyerCode),
+                    nameof(TestRequirementDetail.IsDefraProject) => baseQuery.OrderByDescending(t => t.IsDefraProject),
+                    nameof(TestRequirementDetail.RecUnitPrice) => baseQuery.OrderByDescending(t => t.RecUnitPrice),
                     _ => baseQuery.OrderByDescending(t => t.TestCode)
                 },
                 (true, false) => query.SortBy switch
                 {
-                    nameof(TestReqmtDetail.Buyer) => baseQuery.OrderBy(t => t.Buyer),
-                    nameof(TestReqmtDetail.UnitPrice) => baseQuery.OrderBy(t => t.UnitPrice),
-                    nameof(TestReqmtDetail.NoRequired) => baseQuery.OrderBy(t => t.NoRequired),
-                    nameof(TestReqmtDetail.Active) => baseQuery.OrderBy(t => t.Active),
-                    nameof(TestReqmtDetail.ProjectBuyerCode) => baseQuery.OrderBy(t => t.ProjectBuyerCode),
-                    nameof(TestReqmtDetail.IsDefraProject) => baseQuery.OrderBy(t => t.IsDefraProject),
-                    nameof(TestReqmtDetail.RecUnitPrice) => baseQuery.OrderBy(t => t.RecUnitPrice),
+                    nameof(TestRequirementDetail.Buyer) => baseQuery.OrderBy(t => t.Buyer),
+                    nameof(TestRequirementDetail.UnitPrice) => baseQuery.OrderBy(t => t.UnitPrice),
+                    nameof(TestRequirementDetail.NoRequired) => baseQuery.OrderBy(t => t.NoRequired),
+                    nameof(TestRequirementDetail.Active) => baseQuery.OrderBy(t => t.Active),
+                    nameof(TestRequirementDetail.ProjectBuyerCode) => baseQuery.OrderBy(t => t.ProjectBuyerCode),
+                    nameof(TestRequirementDetail.IsDefraProject) => baseQuery.OrderBy(t => t.IsDefraProject),
+                    nameof(TestRequirementDetail.RecUnitPrice) => baseQuery.OrderBy(t => t.RecUnitPrice),
                     _ => baseQuery.OrderBy(t => t.TestCode)
                 },
                 _ => baseQuery.OrderBy(t => t.TestCode)
@@ -97,13 +97,13 @@ namespace Apha.PACT.DataAccess.Repository
             return ApplyPaging(result, query.Page, query.PageSize);
         }
 
-        public async Task<IEnumerable<TestReqmtDetail>> GetAllForExportAsync(string testCode, string? filterJson)
+        public async Task<IEnumerable<TestRequirementDetail>> GetAllForExportAsync(string testCode, string? filterJson)
         {
             var query = (from t in _context.TestRequirements
                          join tp in _context.TestorProducts on t.TestCode equals tp.ItemCode
                          join p in _context.Projects on t.Buyer equals p.ParentProject
                          where t.TestCode == testCode
-                         select new TestReqmtDetail
+                         select new TestRequirementDetail
                          {
                              TestCode = t.TestCode,
                              Buyer = t.Buyer,
@@ -130,13 +130,13 @@ namespace Apha.PACT.DataAccess.Repository
                 .FirstOrDefaultAsync(t => t.TestCode == testCode && t.Buyer == buyer);
         }
 
-        public async Task<TestReqmtDetail?> GetDetailByIdAsync(string testCode, string buyer)
+        public async Task<TestRequirementDetail?> GetDetailByIdAsync(string testCode, string buyer)
         {
             return await (from t in _context.TestRequirements
                           join tp in _context.TestorProducts on t.TestCode equals tp.ItemCode
                           join p in _context.Projects on t.Buyer equals p.ParentProject
                           where t.TestCode == testCode && t.Buyer == buyer
-                          select new TestReqmtDetail
+                          select new TestRequirementDetail
                           {
                               TestCode = t.TestCode,
                               Buyer = t.Buyer,
@@ -152,7 +152,7 @@ namespace Apha.PACT.DataAccess.Repository
                           }).FirstOrDefaultAsync();
         }
 
-        public async Task<TestReqmtDetail?> GetPricingAsync(string testCode, string? projectCode)
+        public async Task<TestRequirementDetail?> GetPricingAsync(string testCode, string? projectCode)
         {
             var tp = await _context.TestorProducts
                 .AsNoTracking()
@@ -163,7 +163,7 @@ namespace Apha.PACT.DataAccess.Repository
             // TestCode only — return DefraUnitPrice with no project context
             if (string.IsNullOrWhiteSpace(projectCode))
             {
-                return new TestReqmtDetail
+                return new TestRequirementDetail
                 {
                     TestCode = testCode,
                     RecUnitPrice = tp.DefraUnitPrice
@@ -177,7 +177,7 @@ namespace Apha.PACT.DataAccess.Repository
 
             if (p is null) return null;
 
-            return new TestReqmtDetail
+            return new TestRequirementDetail
             {
                 TestCode = testCode,
                 Buyer = projectCode,
@@ -252,8 +252,8 @@ namespace Apha.PACT.DataAccess.Repository
             return query;
         }
 
-        private static IQueryable<TestReqmtDetail> ApplyTestReqmtDetailFilter(
-            IQueryable<TestReqmtDetail> query, string? filterJson)
+        private static IQueryable<TestRequirementDetail> ApplyTestReqmtDetailFilter(
+            IQueryable<TestRequirementDetail> query, string? filterJson)
         {
             if (string.IsNullOrWhiteSpace(filterJson)) return query;
 
@@ -272,7 +272,7 @@ namespace Apha.PACT.DataAccess.Repository
         // ── UITrig: INSERT/UPDATE → 'I'  |  DTrig: DELETE → 'D' ─────────────
         private async Task WriteAuditLogAsync(TestRequirement entity, string insertDelete)
         {
-            var log = new TestReqLog
+            var log = new TestRequirementLog
             {
                 TestCode      = entity.TestCode,
                 Buyer         = entity.Buyer,
@@ -292,7 +292,7 @@ namespace Apha.PACT.DataAccess.Repository
                 log.Active           = entity.Active;
             }
 
-            await _context.TestReqLogs.AddAsync(log);
+            await _context.TestRequirementLogs.AddAsync(log);
             await _context.SaveChangesAsync();
         }
     }

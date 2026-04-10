@@ -1,6 +1,6 @@
 ﻿namespace Apha.PACT.Core.Entities
 {
-    public partial class TestReqLog
+    public partial class TestRequirementLog
     {
         public int SequenceNo { get; set; }
 

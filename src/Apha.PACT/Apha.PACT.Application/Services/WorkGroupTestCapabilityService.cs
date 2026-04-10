@@ -11,14 +11,14 @@ namespace Apha.PACT.Application.Services
     public class WorkGroupTestCapabilityService : IWorkGroupTestCapabilityService
     {
         private readonly ITestCapabilityRepository _testCapabilityRepository;
-        private readonly ITestReqmtRepository _testReqmtRepository;
+        private readonly ITestRequirementRepository _testReqmtRepository;
         private readonly ITestorProductRepository _testorProductRepository;
         private readonly IProjectRepository _projectRepository;
         private readonly IMapper _mapper;
 
         public WorkGroupTestCapabilityService(
             ITestCapabilityRepository testCapabilityRepository,
-            ITestReqmtRepository testReqmtRepository,
+            ITestRequirementRepository testReqmtRepository,
             ITestorProductRepository testorProductRepository,
             IProjectRepository projectRepository,
             IMapper mapper)
