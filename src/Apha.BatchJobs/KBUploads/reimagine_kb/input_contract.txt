@@ -1,0 +1,8 @@
+Input Contract for ReImagine Foundation Run
+
+Use this KB to generate foundation only.
+Do not convert stored procedures in this run.
+Do not create fake implementation methods.
+Create compile ready files only.
+Preserve separation between scheduled and adhoc job orchestration.
+Use patterns from existing Apha solutions.

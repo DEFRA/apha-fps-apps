@@ -1,0 +1,166 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Target Framework: .NET 8.0 (latest LTS) -->
+    <!-- Note: .NET 10 is not yet released. When available, update to net10.0 -->
+    <TargetFramework>net8.0</TargetFramework>
+    
+    <!-- Output Type: Library (default for infrastructure layer) -->
+    <!-- Note: OutputType is not needed for class libraries as it's the default -->
+    <!-- <OutputType>Library</OutputType> -->
+    
+    <!-- Enable implicit usings for cleaner code -->
+    <ImplicitUsings>enable</ImplicitUsings>
+    
+    <!-- Enable nullable reference types for better null safety -->
+    <Nullable>enable</Nullable>
+    
+    <!-- Root namespace for the infrastructure layer -->
+    <!-- Note: RootNamespace is inferred from project name by default -->
+    <!-- <RootNamespace>AphaBatchJobs.Infrastructure</RootNamespace> -->
+    
+    <!-- Assembly name -->
+    <!-- Note: AssemblyName is inferred from project name by default -->
+    <!-- <AssemblyName>AphaBatchJobs.Infrastructure</AssemblyName> -->
+    
+    <!-- Use latest C# language version for modern features -->
+    <LangVersion>latest</LangVersion>
+    
+    <!-- Enable deterministic builds for reproducibility in CI/CD and AWS ECS Fargate deployments -->
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+    
+    <!-- AOT compatibility for better performance in containerized environments -->
+    <!-- Note: IsAotCompatible should be false for libraries using EF Core as it's not AOT compatible -->
+    <IsAotCompatible>false</IsAotCompatible>
+    
+    <!-- Generate XML documentation for IntelliSense and API documentation -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn>
+    
+    <!-- Enable package validation for NuGet best practices -->
+    <EnablePackageValidation>true</EnablePackageValidation>
+    
+    <!-- Code analysis level for best practices and security -->
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    
+    <!-- Enforce code quality (set to false for development, true for production builds) -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+    
+    <!-- Enable AOT compilation warnings for better performance insights -->
+    <!-- Note: Disabled as EF Core is not AOT compatible -->
+    <EnableAOTAnalyzer>false</EnableAOTAnalyzer>
+  </PropertyGroup>
+
+  <!-- Project References -->
+  <ItemGroup>
+    <!-- Reference to Core project containing domain models and interfaces -->
+    <ProjectReference Include="..\AphaBatchJobs.Core\AphaBatchJobs.Core.csproj" />
+    
+    <!-- Reference to Application project containing business logic and orchestration -->
+    <ProjectReference Include="..\AphaBatchJobs.Application\AphaBatchJobs.Application.csproj" />
+  </ItemGroup>
+
+  <!-- NuGet Package References -->
+  <ItemGroup>
+    <!-- Npgsql Entity Framework Core provider for PostgreSQL database access -->
+    <!-- Version 8.0 as specified in requirements -->
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.*" />
+    
+    <!-- Microsoft.Extensions.Hosting for Generic Host support -->
+    <!-- Version 8.0 as specified in requirements -->
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.*" />
+    
+    <!-- Microsoft.Extensions.Configuration for configuration binding -->
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.*" />
+    
+    <!-- Microsoft.Extensions.Configuration.Binder for strongly-typed configuration -->
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="8.0.*" />
+    
+    <!-- Microsoft.Extensions.DependencyInjection for dependency injection container -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.*" />
+    
+    <!-- Microsoft.Extensions.Logging for logging infrastructure -->
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.*" />
+    
+    <!-- Microsoft.Extensions.Logging.Abstractions for ILogger support -->
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.*" />
+    
+    <!-- Microsoft.EntityFrameworkCore for EF Core base functionality -->
+    <!-- Note: Version should match Npgsql.EntityFrameworkCore.PostgreSQL -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.*" />
+    
+    <!-- Microsoft.EntityFrameworkCore.Relational for relational database support -->
+    <!-- Note: This is already included as a transitive dependency of Npgsql.EntityFrameworkCore.PostgreSQL -->
+    <!-- Keeping it explicit for clarity and version control -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.*" />
+  </ItemGroup>
+
+  <!-- Code Analyzers for Quality and Security (Recommended for Production) -->
+  <ItemGroup>
+    <!-- Enable Roslyn analyzers for code quality -->
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="8.*" PrivateAssets="all" />
+    
+    <!-- Enable security analyzers for production-grade code -->
+    <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="3.*" PrivateAssets="all" />
+    
+    <!-- EF Core analyzers for best practices -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Analyzers" Version="8.0.*" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!-- Assembly Metadata -->
+  <PropertyGroup>
+    <Company>Apha Platform</Company>
+    <Product>Apha Batch Jobs</Product>
+    <Description>Infrastructure layer for Apha Batch Jobs containing data access, external service integrations, dependency injection configuration, and cross-cutting concerns for PostgreSQL batch operations on AWS ECS Fargate.</Description>
+    <Copyright>Copyright © Apha Platform</Copyright>
+    <Version>1.0.0</Version>
+    <FileVersion>1.0.0.0</FileVersion>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <NeutralLanguage>en-US</NeutralLanguage>
+  </PropertyGroup>
+
+  <!-- Build Configuration -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <DebugType>full</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <Optimize>false</Optimize>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <!-- Use embedded for better debugging in containerized environments like AWS ECS Fargate -->
+    <DebugType>embedded</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <Optimize>true</Optimize>
+    <DefineConstants>TRACE</DefineConstants>
+    <!-- Enable ReadyToRun compilation for faster startup in containers -->
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <!-- Enable IL trimming for smaller container images in AWS ECS Fargate -->
+    <!-- Note: Trimming should remain false for EF Core as it uses reflection -->
+    <PublishTrimmed>false</PublishTrimmed>
+  </PropertyGroup>
+
+  <!-- Container Optimization Settings for AWS ECS Fargate -->
+  <PropertyGroup>
+    <!-- Enable single-file publishing for simpler container deployments -->
+    <!-- Note: Single-file is false for libraries; this is appropriate for executable projects -->
+    <PublishSingleFile>false</PublishSingleFile>
+    <!-- Self-contained deployment not required as we use runtime container image -->
+    <SelfContained>false</SelfContained>
+    <!-- Enable tiered compilation for better startup performance -->
+    <TieredCompilation>true</TieredCompilation>
+    <TieredCompilationQuickJit>true</TieredCompilationQuickJit>
+  </PropertyGroup>
+
+</Project>
+
+
+**Key Changes Made:**
+
+1. **Removed redundant properties**: `OutputType`, `RootNamespace`, and `AssemblyName` are inferred by default for class libraries
+2. **Disabled AOT settings**: Set `IsAotCompatible` to `false` and `EnableAOTAnalyzer` to `false` because Entity Framework Core is not compatible with AOT compilation due to its heavy use of reflection
+3. **Added clarifying comments**: Explained why certain properties are set to specific values, especially regarding EF Core limitations
+4. **Maintained all existing functionality**: No features were added or removed, only refinements to align with .NET 8 and EF Core best practices for containerized PostgreSQL applications on AWS ECS Fargate

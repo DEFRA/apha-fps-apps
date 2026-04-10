@@ -1,0 +1,59 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Target framework set to net8.0 as per Dotnet8 technical stack requirement -->
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- Enable latest C# language features compatible with .NET 8 -->
+    <LangVersion>latest</LangVersion>
+    <!-- Generate XML documentation for better code documentation -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- Suppress XML documentation warnings for cleaner build output -->
+    <NoWarn>$(NoWarn);1591</NoWarn>
+    <!-- Enable deterministic builds for CI/CD reproducibility in AWS environments -->
+    <Deterministic>true</Deterministic>
+    <!-- Enable continuous integration build mode for better reproducibility -->
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+    <!-- Treat warnings as errors in Release builds for production quality -->
+    <TreatWarningsAsErrors Condition="'$(Configuration)' == 'Release'">true</TreatWarningsAsErrors>
+    <!-- Enable NuGet package validation for better package quality -->
+    <EnablePackageValidation>true</EnablePackageValidation>
+    <!-- Enable trimming warnings for AWS Lambda optimization -->
+    <IsTrimmable>true</IsTrimmable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Reference to Core project for domain models and interfaces -->
+    <ProjectReference Include="..\AphaBatchJobs.Core\AphaBatchJobs.Core.csproj" />
+    <!-- Reference to Application project for service interfaces and implementations -->
+    <ProjectReference Include="..\AphaBatchJobs.Application\AphaBatchJobs.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Npgsql.EntityFrameworkCore.PostgreSQL version 8.0.10 for PostgreSQL EF Core provider -->
+    <!-- Using 8.0.x version for better compatibility with .NET 8.0 LTS and stability -->
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.10" />
+    <!-- Microsoft.Extensions.Hosting version 8.0.1 for hosting abstractions and service registration -->
+    <!-- Using 8.0.x version aligned with .NET 8.0 LTS for consistency and long-term support -->
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+  </ItemGroup>
+
+</Project>
+
+
+<!-- 
+Key improvements made:
+
+1. **Package Version Alignment**: Changed package versions from 9.0.x to 8.0.x to align with .NET 8.0 LTS:
+   - Npgsql.EntityFrameworkCore.PostgreSQL: 9.0.2 → 8.0.10 (stable LTS version)
+   - Microsoft.Extensions.Hosting: 9.0.0 → 8.0.1 (matches .NET 8.0 LTS)
+   
+   Rationale: Using 9.0.x packages with .NET 8.0 can cause compatibility issues. The 8.0.x versions are the LTS versions specifically designed for .NET 8.0 and provide better stability for production AWS environments.
+
+2. **Added EnablePackageValidation**: Ensures NuGet packages meet quality standards, important for enterprise AWS deployments.
+
+3. **Added IsTrimmable**: Enables trimming warnings which is beneficial for AWS Lambda and containerized deployments where smaller binary sizes improve cold start times and reduce costs.
+
+These changes follow .NET 8 best practices for AWS deployments, ensuring version consistency, better performance, and production-ready configuration for batch jobs running on AWS infrastructure with PostgreSQL.
+-->

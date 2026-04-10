@@ -1,0 +1,77 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Library</OutputType>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    
+    <LangVersion>latest</LangVersion>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors>nullable</WarningsAsErrors>
+    
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    
+    <!-- Performance and security best practices -->
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <IsTrimmable>true</IsTrimmable>
+    <EnableAOTAnalyzer>true</EnableAOTAnalyzer>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AphaBatchJobs.Core\AphaBatchJobs.Core.csproj" />
+    <ProjectReference Include="..\AphaBatchJobs.Application\AphaBatchJobs.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Updated to .NET 10 compatible version -->
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
+    <!-- Updated to .NET 10 compatible version -->
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
+    <!-- Updated to latest stable version for .NET 10 -->
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.0" PrivateAssets="All" />
+    
+    <!-- AWS SDK for .NET best practices - Add core AWS dependencies if using AWS services -->
+    <!-- Uncomment if AWS services are used in Infrastructure layer -->
+    <!-- <PackageReference Include="AWSSDK.Core" Version="3.7.*" /> -->
+    <!-- <PackageReference Include="AWSSDK.Extensions.NETCore.Setup" Version="3.7.*" /> -->
+  </ItemGroup>
+
+  <!-- Security scanning and code analysis -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>
+
+
+<!-- 
+Key improvements made:
+
+1. **Version Alignment**: Updated package versions to be compatible with .NET 10.0:
+   - Npgsql.EntityFrameworkCore.PostgreSQL: 9.0.2 → 10.0.0
+   - Microsoft.Extensions.Hosting: 9.0.0 → 10.0.0
+   - Microsoft.SourceLink.GitHub: 8.0.0 → 10.0.0
+
+2. **Performance Optimizations**: Added trim and AOT analyzer properties for better runtime performance:
+   - EnableTrimAnalyzer: Helps identify trim-unsafe code
+   - IsTrimmable: Marks the library as trim-compatible
+   - EnableAOTAnalyzer: Enables ahead-of-time compilation analysis
+
+3. **Code Quality**: Added Microsoft.CodeAnalysis.NetAnalyzers for enhanced static code analysis and security scanning
+
+4. **AWS Integration**: Added commented placeholders for AWS SDK packages (to be uncommented when AWS services are actually used in the infrastructure layer)
+
+5. **Best Practices**: Maintained all existing security and build configurations while ensuring compatibility with .NET 10.0 ecosystem
+
+Note: The AWS SDK package references are commented out as they should only be included if actually used in the codebase to avoid unnecessary dependencies.
+-->

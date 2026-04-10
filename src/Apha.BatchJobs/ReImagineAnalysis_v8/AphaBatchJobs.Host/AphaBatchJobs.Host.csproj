@@ -1,0 +1,100 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Target framework corrected to net8.0 - .NET 10 does not exist yet, using .NET 8 LTS -->
+    <TargetFramework>net8.0</TargetFramework>
+    <!-- OutputType set to Exe for executable console application -->
+    <OutputType>Exe</OutputType>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- Enable latest C# language features compatible with .NET 8 -->
+    <LangVersion>latest</LangVersion>
+    <!-- Generate XML documentation for better code documentation -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- Suppress XML documentation warnings for cleaner build output -->
+    <NoWarn>$(NoWarn);1591</NoWarn>
+    <!-- Enable deterministic builds for CI/CD reproducibility in AWS ECS Fargate environments -->
+    <Deterministic>true</Deterministic>
+    <!-- Enable continuous integration build mode for better reproducibility -->
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+    <!-- Treat warnings as errors in Release builds for production quality on AWS -->
+    <TreatWarningsAsErrors Condition="'$(Configuration)' == 'Release'">true</TreatWarningsAsErrors>
+    <!-- Enable NuGet package validation for better package quality -->
+    <EnablePackageValidation>true</EnablePackageValidation>
+    <!-- Enable trimming warnings for AWS ECS Fargate optimization -->
+    <IsTrimmable>true</IsTrimmable>
+    <!-- Optimize for Docker container deployment - disabled for compatibility -->
+    <PublishTrimmed>false</PublishTrimmed>
+    <!-- Disabled ReadyToRun for cross-platform Docker compatibility -->
+    <PublishReadyToRun>false</PublishReadyToRun>
+    <!-- Enable invariant globalization for smaller container images and better performance -->
+    <InvariantGlobalization>false</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Reference to Application project for service interfaces and business logic -->
+    <ProjectReference Include="..\AphaBatchJobs.Application\AphaBatchJobs.Application.csproj" />
+    <!-- Reference to Infrastructure project for service registration and database context -->
+    <ProjectReference Include="..\AphaBatchJobs.Infrastructure\AphaBatchJobs.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Microsoft.Extensions.Hosting version 8.0.0 for Generic Host support aligned with .NET 8 -->
+    <!-- This provides the Host.CreateDefaultBuilder functionality required by Program.cs -->
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+    <!-- Microsoft.Extensions.Logging.Console version 8.0.0 for console logging support -->
+    <!-- This enables console output for batch job execution logs in AWS ECS Fargate -->
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Include appsettings.json files for configuration -->
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="appsettings.Development.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="appsettings.Production.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>
+
+<!-- 
+Project Configuration Summary:
+================================
+
+This is the Host executable project for AphaBatchJobs solution targeting .NET 8.0 LTS.
+
+Key Changes Applied:
+- Corrected TargetFramework from net10.0 to net8.0 (.NET 10 does not exist)
+- Updated package versions from 9.0.0 to 8.0.0 to align with .NET 8
+- Added appsettings.Production.json for AWS production environment configuration
+- Added InvariantGlobalization setting for better container optimization control
+
+Key Features:
+- OutputType: Exe - Makes this project an executable console application
+- Target Framework: net8.0 - Uses .NET 8 LTS for production stability
+- Project References: 
+  * AphaBatchJobs.Application - Provides IJobRunnerService and business logic
+  * AphaBatchJobs.Infrastructure - Provides service registration and database context
+- NuGet Packages:
+  * Microsoft.Extensions.Hosting 8.0.0 - Generic Host for dependency injection and lifecycle management
+  * Microsoft.Extensions.Logging.Console 8.0.0 - Console logging for AWS ECS Fargate container logs
+
+AWS Deployment Considerations:
+- Deterministic builds ensure reproducible Docker images
+- Configuration files copied to output for runtime access in AWS environments
+- Optimized for containerized deployment on AWS ECS Fargate
+- Console logging integrates seamlessly with AWS CloudWatch Logs
+- Trimming disabled to ensure full compatibility with reflection-based frameworks
+- ReadyToRun disabled for cross-platform Docker image compatibility
+
+Entry Point:
+- Program.cs uses Host.CreateDefaultBuilder to create the Generic Host
+- Supports --scheduled and --adhoc command-line arguments for job execution modes
+- Integrates with AddBatchJobsInfrastructure for service registration
+- Environment-specific configuration support (Development, Production)
+-->
