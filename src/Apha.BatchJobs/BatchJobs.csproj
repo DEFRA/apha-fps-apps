@@ -15,10 +15,15 @@
   <ItemGroup>
     <Compile Remove="Archive\**\*.cs" />
     <Compile Remove="ReImagineAnalysis_v4\**\*.cs" />
+    <Compile Remove="docs\**\*.cs" />
+    <Compile Remove="docs\legacy\**\*.cs" />
     <EmbeddedResource Remove="Archive\**\*" />
     <EmbeddedResource Remove="ReImagineAnalysis_v4\**\*" />
+    <EmbeddedResource Remove="docs\**\*" />
+    <EmbeddedResource Remove="docs\legacy\**\*" />
     <None Include="Archive\**\*" />
     <None Include="ReImagineAnalysis_v4\**\*" />
+    <None Include="docs\**\*" />
   </ItemGroup>
 
   <ItemGroup>
