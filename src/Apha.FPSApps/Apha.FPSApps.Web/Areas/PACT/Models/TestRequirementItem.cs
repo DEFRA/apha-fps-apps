@@ -7,7 +7,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
     {
         // ── Key / hidden ──────────────────────────────────────────────────────
 
-        [Display(Name = "TestCode")]
+        [Display(Name = "Test Code")]
         [Required(ErrorMessage = "Test Code is required.")]
         [GridColumn(Order = 1, Width = 120, Type = GridColumnType.Text, IsFilterable = true)]
         public string TestCode { get; set; } = null!;

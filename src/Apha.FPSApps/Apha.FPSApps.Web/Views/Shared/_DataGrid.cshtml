@@ -7,6 +7,13 @@
             <div class="sup_flex_space_between">
                 @Model.Title
                 <div>
+                    @if (Model.AllowExport)
+                    {
+                        <button type="button" class="govuk-button govuk-button--secondary sup_gov_blue_bg sup_margin_0 sup_p_8"
+                                id="@($"{Model.GridId}_exportBtn")" data-export-url="@Model.ExportUrl">
+                            <i class="fa fa-file-excel-o"></i> Excel Export
+                        </button>
+                    }
                     @if (Model.AllowAdd)
                     {
                         <button type="button" class="govuk-button sup_margin_0 sup_p_8"
@@ -27,14 +34,7 @@
                                               id="@($"{Model.GridId}_bulkDeleteBtn")" data-bulkdelete-function="@Model.BulkDeleteFunction">
                             <i class="fa fa-trash"></i> Delete All
                         </button>
-                    }
-                    @if (Model.AllowExport)
-                    {
-                        <button type="button" class="govuk-button govuk-button--secondary sup_margin_0 sup_p_8"
-                                id="@($"{Model.GridId}_exportBtn")" data-export-url="@Model.ExportUrl">
-                            <i class="fa fa-file-excel-o"></i> Export
-                        </button>
-                    }
+                    }                    
                 </div>
             </div>
         </h2>
