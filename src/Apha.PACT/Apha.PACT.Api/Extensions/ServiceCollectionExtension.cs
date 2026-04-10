@@ -26,7 +26,7 @@ namespace Apha.PACT.Api.Extensions
             services.AddScoped<IWorkGroupService, WorkGroupService>();
             services.AddScoped<IProjectInvoiceService, ProjectInvoiceService>();
             services.AddScoped<IProjectSubContractService, ProjectSubContractService>();
-            services.AddScoped<IWorkGroupTestCapabilityService, WorkGroupTestCapabilityService>();
+            services.AddScoped<ITestCapabilityService, TestCapabilityService>();
             services.AddScoped<ITestRequirementService, TestRequirementService>();
             return services;
         }

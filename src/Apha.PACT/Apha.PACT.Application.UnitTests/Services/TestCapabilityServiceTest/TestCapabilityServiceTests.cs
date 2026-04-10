@@ -9,23 +9,23 @@ using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 
-namespace Apha.PACT.Application.UnitTests.Services.WorkGroupTestCapabilityServiceTest
+namespace Apha.PACT.Application.UnitTests.Services.TestCapabilityServiceTest
 {
-    public class WorkGroupTestCapabilityServiceTests
+    public class TestCapabilityServiceTests
     {
         private readonly ITestCapabilityRepository _testCapabilityRepo;
         private readonly ITestRequirementRepository _testReqmtRepo;
         private readonly ITestorProductRepository _testorProductRepo;
         private readonly IMapper _mapper;
-        private readonly WorkGroupTestCapabilityService _sut;
+        private readonly TestCapabilityService _sut;
 
-        public WorkGroupTestCapabilityServiceTests()
+        public TestCapabilityServiceTests()
         {
             _testCapabilityRepo = Substitute.For<ITestCapabilityRepository>();
             _testReqmtRepo = Substitute.For<ITestRequirementRepository>();
             _testorProductRepo = Substitute.For<ITestorProductRepository>();
             _mapper = Substitute.For<IMapper>();
-            _sut = new WorkGroupTestCapabilityService(
+            _sut = new TestCapabilityService(
                 _testCapabilityRepo, _testReqmtRepo, _testorProductRepo, _mapper);
         }
 

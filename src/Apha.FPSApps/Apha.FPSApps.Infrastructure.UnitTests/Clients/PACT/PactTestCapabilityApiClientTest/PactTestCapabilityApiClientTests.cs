@@ -10,15 +10,15 @@ using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Xunit;
 
-namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactWorkGroupTestCapabilityApiClientTest
+namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestCapabilityApiClientTest
 {
-    public class PactWorkGroupTestCapabilityApiClientTests
+    public class PactTestCapabilityApiClientTests
     {
         private readonly IPactHttpExecutor _http;
         private readonly IMapper _mapper;
         private readonly PactWorkGroupTestCapabilityApiClient _client;
 
-        public PactWorkGroupTestCapabilityApiClientTests()
+        public PactTestCapabilityApiClientTests()
         {
             _http = Substitute.For<IPactHttpExecutor>();
             _mapper = Substitute.For<IMapper>();
@@ -35,7 +35,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactWorkGroupTestCa
             var expectedDto = ApiResponseDto<List<TestCapabilityDto>>.SuccessResponse([new TestCapabilityDto { TestCode = "TC1" }]);
 
             _http.GetAsync<List<TestCapabilityRes>>(Arg.Is<string>(url =>
-                url.Contains("api/v1/workgrouptestcapability/paged/workgroup") && url.Contains("WG1")))
+                url.Contains("api/v1/testcapability/paged/workgroup") && url.Contains("WG1")))
                 .Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<TestCapabilityDto>>>(apiResponse).Returns(expectedDto);
 
@@ -44,7 +44,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactWorkGroupTestCa
             Assert.NotNull(result);
             Assert.True(result.Success);
             await _http.Received(1).GetAsync<List<TestCapabilityRes>>(Arg.Is<string>(url =>
-                url.Contains("api/v1/workgrouptestcapability/paged/workgroup")));
+                url.Contains("api/v1/testcapability/paged/workgroup")));
         }
 
         [Fact]
@@ -90,7 +90,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactWorkGroupTestCa
             var expectedDto = ApiResponseDto<List<TestCapabilityDto>>.SuccessResponse([new TestCapabilityDto { TestCode = "TC1" }]);
 
             _http.GetAsync<List<TestCapabilityRes>>(Arg.Is<string>(url =>
-                url.Contains("api/v1/workgrouptestcapability/paged/testcode") && url.Contains("TC1")))
+                url.Contains("api/v1/testcapability/paged/testcode") && url.Contains("TC1")))
                 .Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<TestCapabilityDto>>>(apiResponse).Returns(expectedDto);
 
@@ -98,7 +98,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactWorkGroupTestCa
 
             Assert.True(result.Success);
             await _http.Received(1).GetAsync<List<TestCapabilityRes>>(Arg.Is<string>(url =>
-                url.Contains("api/v1/workgrouptestcapability/paged/testcode")));
+                url.Contains("api/v1/testcapability/paged/testcode")));
         }
 
         [Fact]
@@ -141,7 +141,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactWorkGroupTestCa
             var expectedDto = ApiResponseDto<TestCapabilityDto>.SuccessResponse(new TestCapabilityDto { TestCode = "TC1" });
 
             _http.GetAsync<TestCapabilityRes>(Arg.Is<string>(url =>
-                url.Contains("api/v1/workgrouptestcapability/testcapability/") &&
+                url.Contains("api/v1/testcapability/testcapability/") &&
                 url.Contains(Uri.EscapeDataString("TC1")) && url.Contains(Uri.EscapeDataString("WG1"))))
                 .Returns(apiResponse);
             _mapper.Map<ApiResponseDto<TestCapabilityDto>>(apiResponse).Returns(expectedDto);
@@ -193,7 +193,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactWorkGroupTestCa
 
             _mapper.Map<TestCapabilityReq>(dto).Returns(req);
             _http.PostAsync<TestCapabilityReq, TestCapabilityRes>(
-                Arg.Is<string>(url => url.Contains("api/v1/workgrouptestcapability/testcapability")), req)
+                Arg.Is<string>(url => url.Contains("api/v1/testcapability/testcapability")), req)
                 .Returns(apiResponse);
             _mapper.Map<ApiResponseDto<TestCapabilityDto>>(apiResponse).Returns(expectedDto);
 
@@ -201,7 +201,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactWorkGroupTestCa
 
             Assert.True(result.Success);
             await _http.Received(1).PostAsync<TestCapabilityReq, TestCapabilityRes>(
-                Arg.Is<string>(url => url.Contains("api/v1/workgrouptestcapability/testcapability")), req);
+                Arg.Is<string>(url => url.Contains("api/v1/testcapability/testcapability")), req);
         }
 
         [Fact]
@@ -251,7 +251,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactWorkGroupTestCa
 
             _mapper.Map<TestCapabilityReq>(dto).Returns(req);
             _http.PutAsync<TestCapabilityReq, TestCapabilityRes>(
-                Arg.Is<string>(url => url.Contains("api/v1/workgrouptestcapability/testcapability")), req)
+                Arg.Is<string>(url => url.Contains("api/v1/testcapability/testcapability")), req)
                 .Returns(apiResponse);
             _mapper.Map<ApiResponseDto<TestCapabilityDto>>(apiResponse).Returns(expectedDto);
 
@@ -304,7 +304,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactWorkGroupTestCa
             var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
 
             _http.DeleteAsync<bool>(Arg.Is<string>(url =>
-                url.Contains("api/v1/workgrouptestcapability/testcapability/") &&
+                url.Contains("api/v1/testcapability/testcapability/") &&
                 url.Contains(Uri.EscapeDataString("TC1")) && url.Contains(Uri.EscapeDataString("WG1"))))
                 .Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
@@ -360,7 +360,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactWorkGroupTestCa
             ]);
 
             _http.GetAsync<List<TestorProductRes>>(
-                Arg.Is<string>(url => url.Contains("api/v1/workgrouptestcapability/testorproducts")))
+                Arg.Is<string>(url => url.Contains("api/v1/testcapability/testorproducts")))
                 .Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<TestorProductDto>>>(apiResponse).Returns(expectedDto);
 

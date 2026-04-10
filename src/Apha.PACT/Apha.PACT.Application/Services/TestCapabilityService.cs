@@ -8,14 +8,14 @@ using AutoMapper;
 
 namespace Apha.PACT.Application.Services
 {
-    public class WorkGroupTestCapabilityService : IWorkGroupTestCapabilityService
+    public class TestCapabilityService : ITestCapabilityService
     {
         private readonly ITestCapabilityRepository _testCapabilityRepository;
         private readonly ITestRequirementRepository _testReqmtRepository;
         private readonly ITestorProductRepository _testorProductRepository;
         private readonly IMapper _mapper;
 
-        public WorkGroupTestCapabilityService(
+        public TestCapabilityService(
             ITestCapabilityRepository testCapabilityRepository,
             ITestRequirementRepository testReqmtRepository,
             ITestorProductRepository testorProductRepository,

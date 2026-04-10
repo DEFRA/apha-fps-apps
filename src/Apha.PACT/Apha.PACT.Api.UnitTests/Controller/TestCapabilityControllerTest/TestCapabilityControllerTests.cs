@@ -10,19 +10,19 @@ using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 
-namespace Apha.PACT.Api.UnitTests.Controller.WorkGroupTestCapabilityControllerTest
+namespace Apha.PACT.Api.UnitTests.Controller.TestCapabilityControllerTest
 {
-    public class WorkGroupTestCapabilityControllerTests
+    public class TestCapabilityControllerTests
     {
-        private readonly IWorkGroupTestCapabilityService _service;
+        private readonly ITestCapabilityService _service;
         private readonly IMapper _mapper;
-        private readonly WorkGroupTestCapabilityController _controller;
+        private readonly TestCapabilityController _controller;
 
-        public WorkGroupTestCapabilityControllerTests()
+        public TestCapabilityControllerTests()
         {
-            _service = Substitute.For<IWorkGroupTestCapabilityService>();
+            _service = Substitute.For<ITestCapabilityService>();
             _mapper = Substitute.For<IMapper>();
-            _controller = new WorkGroupTestCapabilityController(_service, _mapper);
+            _controller = new TestCapabilityController(_service, _mapper);
         }
 
         #region GetPagedByWorkGroup
