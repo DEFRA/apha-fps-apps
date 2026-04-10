@@ -69,7 +69,9 @@ namespace Apha.FPSApps.Web.Extensions
                 client.BaseAddress = new Uri(configuration["PIMSApiSettings:BaseUrl"]
                     ?? throw new InvalidOperationException("PIMS base URL not configured"));
                 client.DefaultRequestHeaders.Add(AcceptHeader, ApplicationJson);
-            }).AddHttpMessageHandler<RequestHeadersHandler>();
+            })
+            .AddHttpMessageHandler<RequestHeadersHandler>();
+                
 
             services.AddScoped<IPimsHttpExecutor>(sp =>
             {
@@ -85,6 +87,15 @@ namespace Apha.FPSApps.Web.Extensions
                 client.BaseAddress = new Uri(configuration["CostBookApiSettings:BaseUrl"]
                     ?? throw new InvalidOperationException("CostBook base URL not configured"));
                 client.DefaultRequestHeaders.Add(AcceptHeader, ApplicationJson);
+            }).AddHttpMessageHandler(sp =>
+            {
+                var scopes = configuration["CostBookApiSettings:Scope"]!
+                    .Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+                return new BearerTokenHandler(
+                    sp.GetRequiredService<ITokenAcquisition>(),
+                    sp.GetRequiredService<IHttpContextAccessor>(),
+                    scopes);
             }).AddHttpMessageHandler<RequestHeadersHandler>();
 
             services.AddScoped<ICostBookHttpExecutor>(sp =>
