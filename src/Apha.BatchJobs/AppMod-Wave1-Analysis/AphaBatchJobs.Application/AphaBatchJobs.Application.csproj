@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Target framework set to .NET 10.0 -->
+    <TargetFramework>net10.0</TargetFramework>
+    
+    <!-- Enable nullable reference types for better null safety -->
+    <Nullable>enable</Nullable>
+    
+    <!-- Enable implicit usings to reduce boilerplate using statements -->
+    <ImplicitUsings>enable</ImplicitUsings>
+    
+    <!-- Assembly and root namespace configuration -->
+    <RootNamespace>AphaBatchJobs.Application</RootNamespace>
+    <AssemblyName>AphaBatchJobs.Application</AssemblyName>
+    
+    <!-- Generate XML documentation file for API documentation -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    
+    <!-- Treat warnings as errors for higher code quality -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    
+    <!-- Language version set to latest for C# 12 features -->
+    <LangVersion>latest</LangVersion>
+    
+    <!-- Enable deterministic builds for reproducible outputs -->
+    <Deterministic>true</Deterministic>
+    
+    <!-- Enforce code analysis for better code quality -->
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest</AnalysisLevel>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="AphaBatchJobs.Core/AphaBatchJobs.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Serilog for structured logging -->
+    <PackageReference Include="Serilog" Version="4.2.0" />
+    <PackageReference Include="Serilog.Extensions.Logging" Version="9.0.0" />
+  </ItemGroup>
+
+</Project>
