@@ -4,8 +4,8 @@
     <!-- Output type set to Exe as this is the host application entry point -->
     <OutputType>Exe</OutputType>
     
-    <!-- Target framework set to .NET 8.0 as per requirement -->
-    <TargetFramework>net8.0</TargetFramework>
+    <!-- Target framework set to .NET 10.0 as per requirement -->
+    <TargetFramework>net10.0</TargetFramework>
     
     <!-- Enable nullable reference types for better null safety -->
     <Nullable>enable</Nullable>
