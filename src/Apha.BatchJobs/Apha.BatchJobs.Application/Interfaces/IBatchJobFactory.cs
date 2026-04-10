@@ -7,4 +7,8 @@ public interface IBatchJobFactory
     /// <param name="jobName">The registered name of the job to create.</param>
     /// <returns>The matching <see cref="IBatchJob"/> instance.</returns>
     IBatchJob Create(string jobName);
+
+    /// <summary>Gets all registered job names.</summary>
+    /// <returns>Collection of available job names.</returns>
+    IEnumerable<string> GetAvailableJobs();
 }
