@@ -28,5 +28,21 @@ namespace Apha.Common.Constants
 
         // Work Group
         public const string GetAllWorkGroups = "api/v1/workgroup";
+
+        // Project Invoice
+        public const string GetPagedProjectInvoices = "api/v1/projectinvoice?parentProject={0}";
+        public const string GetProjectInvoiceTotalAmount = "api/v1/projectinvoice/total";
+        public const string GetProjectInvoiceById = "api/v1/projectinvoice/{0}";
+        public const string CreateProjectInvoice = "api/v1/projectinvoice";
+        public const string UpdateProjectInvoice = "api/v1/projectinvoice/{0}";
+        public const string DeleteProjectInvoice = "api/v1/projectinvoice/{0}";
+
+        // Project SubContract
+        public const string GetPagedProjectSubContracts = "api/v1/projectsubcontract";
+        public const string GetProjectSubContractTotalAmount = "api/v1/projectsubcontract/total";
+        public const string GetProjectSubContractById = "api/v1/projectsubcontract/{0}";
+        public const string CreateProjectSubContract = "api/v1/projectsubcontract";
+        public const string UpdateProjectSubContract = "api/v1/projectsubcontract/{0}";
+        public const string DeleteProjectSubContract = "api/v1/projectsubcontract/{0}";
     }
 }
