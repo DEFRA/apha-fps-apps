@@ -48,7 +48,7 @@
 
         <!-- ── INVOICES SECTION ─────────────────────────────────────── -->
         <div class="govuk-grid-row sup_margin_left_right_0">
-            <div class="sup_border">
+            <div>
                 <div id="gridContainer_invoicesGrid">
                     @await Html.PartialAsync("_DataGrid", Model.InvoicesGrid)
                 </div>
@@ -65,7 +65,7 @@
 
         <!-- ── SUB-CONTRACTS SECTION ─────────────────────────────────── -->
         <div class="govuk-grid-row sup_margin_left_right_0 sup_margin_top_10">
-            <div class="sup_border">    
+            <div>    
                 <div id="gridContainer_subContractsGrid">
                     @await Html.PartialAsync("_DataGrid", Model.SubContractsGrid)
                 </div>
@@ -104,6 +104,10 @@
         function getSubContractsGridManager() {
             return window['gridManager_' + subContractsGridId];
         }
+
+         function toggleSidebar() {
+            document.querySelector('.sidenav').classList.toggle('collapsed');
+         }
 
         // ── Invoice CRUD ─────────────────────────────────────────────────
 

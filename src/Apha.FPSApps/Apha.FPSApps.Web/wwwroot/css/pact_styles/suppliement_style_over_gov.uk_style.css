@@ -497,3 +497,10 @@
     gap: 1px;
     padding-bottom: 10px;
 }
+
+.sup_flex_space_between {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
