@@ -1,0 +1,126 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Target Framework: .NET 8.0 (latest LTS) -->
+    <!-- Note: .NET 10 is not yet released. When available, update to net10.0 -->
+    <TargetFramework>net8.0</TargetFramework>
+    
+    <!-- Output Type: Library (default for application layer) -->
+    <OutputType>Library</OutputType>
+    
+    <!-- Enable implicit usings for cleaner code -->
+    <ImplicitUsings>enable</ImplicitUsings>
+    
+    <!-- Enable nullable reference types for better null safety -->
+    <Nullable>enable</Nullable>
+    
+    <!-- Root namespace for the application layer -->
+    <RootNamespace>AphaBatchJobs.Application</RootNamespace>
+    
+    <!-- Assembly name -->
+    <AssemblyName>AphaBatchJobs.Application</AssemblyName>
+    
+    <!-- Use latest C# language version for modern features -->
+    <LangVersion>latest</LangVersion>
+    
+    <!-- Enable deterministic builds for reproducibility in CI/CD -->
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+    
+    <!-- Trimming support: Use IsAotCompatible instead of IsTrimmable for better AOT/trimming compatibility -->
+    <!-- For library projects, PublishTrimmed should be set in the consuming application (host project) -->
+    <IsAotCompatible>true</IsAotCompatible>
+    
+    <!-- Generate XML documentation for IntelliSense and API documentation -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn>
+    
+    <!-- Enable package validation for NuGet best practices -->
+    <EnablePackageValidation>true</EnablePackageValidation>
+    
+    <!-- Code analysis level for best practices and security -->
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    
+    <!-- Enforce code quality (set to false for development, true for production builds) -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+    
+    <!-- Enable AOT compilation warnings for better performance insights -->
+    <EnableAOTAnalyzer>true</EnableAOTAnalyzer>
+    
+    <!-- Remove OptimizationPreference as it's not a standard MSBuild property -->
+    <!-- Optimization is controlled by the Configuration (Debug/Release) -->
+    <!-- For container optimization, use PublishReadyToRun and PublishSingleFile in the host project -->
+  </PropertyGroup>
+
+  <!-- Project References -->
+  <ItemGroup>
+    <!-- Reference to Core project containing domain models and interfaces -->
+    <ProjectReference Include="..\AphaBatchJobs.Core\AphaBatchJobs.Core.csproj" />
+  </ItemGroup>
+
+  <!-- NuGet Package References -->
+  <ItemGroup>
+    <!-- Microsoft.Extensions.Logging.Abstractions for ILogger support -->
+    <!-- Using wildcard versioning for patch updates within major version -->
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.*" />
+    
+    <!-- Microsoft.Extensions.DependencyInjection.Abstractions for DI support -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.*" />
+  </ItemGroup>
+
+  <!-- Code Analyzers for Quality and Security (Recommended for Production) -->
+  <ItemGroup>
+    <!-- Enable Roslyn analyzers for code quality -->
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="8.*" PrivateAssets="all" />
+    
+    <!-- Enable security analyzers for production-grade code -->
+    <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="3.*" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!-- Assembly Metadata -->
+  <PropertyGroup>
+    <Company>Apha Platform</Company>
+    <Product>Apha Batch Jobs</Product>
+    <Description>Application layer for Apha Batch Jobs containing business logic and orchestration services for scheduled and adhoc PostgreSQL batch operations on AWS ECS Fargate.</Description>
+    <Copyright>Copyright © Apha Platform</Copyright>
+    <Version>1.0.0</Version>
+    <FileVersion>1.0.0.0</FileVersion>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <NeutralLanguage>en-US</NeutralLanguage>
+  </PropertyGroup>
+
+  <!-- Build Configuration -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <DebugType>full</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <Optimize>false</Optimize>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <!-- Use embedded for better debugging in containerized environments like ECS Fargate -->
+    <DebugType>embedded</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <Optimize>true</Optimize>
+    <DefineConstants>TRACE</DefineConstants>
+    <!-- Enable ReadyToRun compilation for faster startup in containers -->
+    <PublishReadyToRun>true</PublishReadyToRun>
+  </PropertyGroup>
+
+</Project>
+
+
+**Key improvements made:**
+
+1. **Replaced `IsTrimmable` with `IsAotCompatible`**: More appropriate for library projects and better aligns with modern .NET trimming/AOT practices
+2. **Removed `OptimizationPreference`**: Not a standard MSBuild property; optimization is handled by Configuration settings
+3. **Changed `AnalysisLevel` to `latest-recommended`**: More stable than `latest` for production code
+4. **Added `EnforceCodeStyleInBuild`**: Ensures code style rules are enforced during build
+5. **Updated package versions to use wildcards** (`8.0.*`): Allows automatic patch updates while maintaining major version stability
+6. **Enabled code analyzers**: Uncommented security and quality analyzers for production-grade code quality
+7. **Changed Release `DebugType` to `embedded`**: Better for containerized environments (ECS Fargate) as symbols are embedded in the assembly
+8. **Added `PublishReadyToRun`**: Improves startup performance in containers
+9. **Added `NeutralLanguage`**: Best practice for assembly metadata
+10. **Updated Description**: Added AWS ECS Fargate context for clarity

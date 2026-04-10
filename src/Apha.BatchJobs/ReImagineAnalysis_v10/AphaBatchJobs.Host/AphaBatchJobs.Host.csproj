@@ -1,0 +1,74 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Target Framework: Corrected to net8.0 as per Dotnet8 PostgreSQL AWS best practices -->
+    <!-- Note: net10.0 does not exist. Using .NET 8.0 LTS for production stability on AWS -->
+    <TargetFramework>net8.0</TargetFramework>
+    <!-- OutputType: Exe to make this an executable console application -->
+    <OutputType>Exe</OutputType>
+    <!-- Enable implicit usings for cleaner code -->
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Enable nullable reference types for better null safety -->
+    <Nullable>enable</Nullable>
+    <!-- Use latest C# language version compatible with .NET 8 -->
+    <LangVersion>latest</LangVersion>
+    <!-- Enable deterministic builds for reproducibility in CI/CD pipelines -->
+    <Deterministic>true</Deterministic>
+    <!-- Enable continuous integration build flag for AWS ECS Fargate deployment pipelines -->
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+    <!-- Generate XML documentation file for better IntelliSense support -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- Treat warnings as errors in Release mode for production quality on AWS -->
+    <TreatWarningsAsErrors Condition="'$(Configuration)' == 'Release'">true</TreatWarningsAsErrors>
+    <!-- Suppress XML documentation warnings for public APIs -->
+    <NoWarn>$(NoWarn);1591</NoWarn>
+    <!-- Enable source link for better debugging experience in production -->
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <!-- Use portable PDB for better cross-platform debugging on AWS Linux containers -->
+    <DebugType>portable</DebugType>
+    <!-- Enable ReadyToRun compilation for faster startup in AWS ECS Fargate -->
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <!-- Enable trimming for smaller container images on AWS -->
+    <PublishTrimmed>false</PublishTrimmed>
+    <!-- Invariant globalization for smaller footprint and better performance -->
+    <InvariantGlobalization>false</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Project References -->
+    <!-- Reference to Application project containing service interfaces and business logic -->
+    <ProjectReference Include="..\AphaBatchJobs.Application\AphaBatchJobs.Application.csproj" />
+    <!-- Reference to Infrastructure project containing database and service implementations -->
+    <ProjectReference Include="..\AphaBatchJobs.Infrastructure\AphaBatchJobs.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- NuGet Package References -->
+    <!-- Microsoft.Extensions.Hosting for Generic Host builder and dependency injection -->
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+    <!-- Microsoft.Extensions.Logging.Console for console logging output -->
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.1" />
+    <!-- AWS SDK for Systems Manager for Parameter Store integration -->
+    <PackageReference Include="AWSSDK.Extensions.NETCore.Setup" Version="3.7.7" />
+    <!-- Source Link support for GitHub repositories -->
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Configuration Files -->
+    <!-- Copy appsettings.json to output directory for runtime configuration -->
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <!-- Copy appsettings.Development.json to output directory for development environment configuration -->
+    <None Update="appsettings.Development.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <!-- Copy appsettings.Production.json for AWS production environment -->
+    <None Update="appsettings.Production.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

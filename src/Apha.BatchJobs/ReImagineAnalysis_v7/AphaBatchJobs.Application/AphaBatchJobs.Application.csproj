@@ -1,0 +1,59 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Library</OutputType>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    
+    <LangVersion>latest</LangVersion>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- Best Practice: Enable TreatWarningsAsErrors in production code to catch potential issues early -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    
+    <!-- Best Practice: Add NoWarn for specific documentation warnings if needed, rather than disabling all warnings -->
+    <!-- <NoWarn>$(NoWarn);CS1591</NoWarn> -->
+    
+    <!-- Best Practice: Enable nullable reference type warnings as errors for better null safety -->
+    <WarningsAsErrors>nullable</WarningsAsErrors>
+    
+    <!-- Best Practice: Enable source link for better debugging experience -->
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AphaBatchJobs.Core\AphaBatchJobs.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Best Practice: Update to .NET 10 compatible versions when available, currently using latest stable -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
+    
+    <!-- Best Practice: Add source link support for better debugging -->
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+  </ItemGroup>
+
+</Project>
+
+
+<!-- 
+Key improvements made:
+
+1. Changed TreatWarningsAsErrors from false to true - This is a best practice for production code to catch potential issues early
+
+2. Added WarningsAsErrors for nullable - Ensures nullable reference type warnings are treated as errors for better null safety
+
+3. Added Source Link support properties (PublishRepositoryUrl, EmbedUntrackedSources, IncludeSymbols, SymbolPackageFormat) - Improves debugging experience
+
+4. Added Microsoft.SourceLink.GitHub package reference - Enables source link functionality for better debugging
+
+5. Added comments for NoWarn configuration - Provides guidance on how to selectively disable specific warnings if needed
+
+These changes align with .NET best practices for library projects, improving code quality, debugging capabilities, and maintainability without adding new features.
+-->

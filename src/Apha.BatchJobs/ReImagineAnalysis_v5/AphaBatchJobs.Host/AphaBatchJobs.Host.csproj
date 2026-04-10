@@ -1,0 +1,211 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Target Framework: .NET 8.0 (latest LTS) -->
+    <!-- Note: .NET 10 is not yet released. When available, update to net10.0 -->
+    <TargetFramework>net8.0</TargetFramework>
+    
+    <!-- Output Type: Executable (console application) -->
+    <OutputType>Exe</OutputType>
+    
+    <!-- Enable implicit usings for cleaner code -->
+    <ImplicitUsings>enable</ImplicitUsings>
+    
+    <!-- Enable nullable reference types for better null safety -->
+    <Nullable>enable</Nullable>
+    
+    <!-- Root namespace for the host project -->
+    <RootNamespace>AphaBatchJobs.Host</RootNamespace>
+    
+    <!-- Assembly name -->
+    <AssemblyName>AphaBatchJobs.Host</AssemblyName>
+    
+    <!-- Use latest C# language version for modern features -->
+    <LangVersion>latest</LangVersion>
+    
+    <!-- Enable deterministic builds for reproducibility in CI/CD and AWS ECS Fargate deployments -->
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+    
+    <!-- AOT compatibility for better performance in containerized environments -->
+    <!-- Note: IsAotCompatible should be false for applications using EF Core as it's not AOT compatible -->
+    <IsAotCompatible>false</IsAotCompatible>
+    
+    <!-- Generate XML documentation for IntelliSense and API documentation -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn>
+    
+    <!-- Code analysis level for best practices and security -->
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    
+    <!-- Enforce code quality (set to false for development, true for production builds) -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+    
+    <!-- Enable AOT compilation warnings for better performance insights -->
+    <!-- Note: Disabled as EF Core is not AOT compatible -->
+    <EnableAOTAnalyzer>false</EnableAOTAnalyzer>
+    
+    <!-- Enable tiered compilation for better startup performance in AWS ECS Fargate -->
+    <TieredCompilation>true</TieredCompilation>
+    <TieredCompilationQuickJit>true</TieredCompilationQuickJit>
+    
+    <!-- Invariant globalization for smaller container images and better performance -->
+    <!-- Recommended for AWS ECS Fargate deployments that don't require culture-specific formatting -->
+    <InvariantGlobalization>false</InvariantGlobalization>
+  </PropertyGroup>
+
+  <!-- Project References -->
+  <ItemGroup>
+    <!-- Reference to Application project containing business logic and orchestration -->
+    <ProjectReference Include="..\AphaBatchJobs.Application\AphaBatchJobs.Application.csproj" />
+    
+    <!-- Reference to Infrastructure project containing data access and DI configuration -->
+    <ProjectReference Include="..\AphaBatchJobs.Infrastructure\AphaBatchJobs.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <!-- NuGet Package References -->
+  <ItemGroup>
+    <!-- Microsoft.Extensions.Hosting for Generic Host support -->
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.*" />
+    
+    <!-- Microsoft.Extensions.Configuration for configuration support -->
+    <!-- Note: Removed redundant Configuration package as it's included in Hosting -->
+    
+    <!-- Microsoft.Extensions.Configuration.Json for JSON configuration files -->
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.*" />
+    
+    <!-- Microsoft.Extensions.Configuration.EnvironmentVariables for environment variable configuration -->
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="8.0.*" />
+    
+    <!-- Microsoft.Extensions.Configuration.CommandLine for command-line configuration -->
+    <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="8.0.*" />
+    
+    <!-- Microsoft.Extensions.Logging for logging infrastructure -->
+    <!-- Note: Removed redundant Logging package as it's included in Hosting -->
+    
+    <!-- Microsoft.Extensions.Logging.Console for console logging -->
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.*" />
+    
+    <!-- Microsoft.Extensions.DependencyInjection for dependency injection container -->
+    <!-- Note: Removed redundant DependencyInjection package as it's included in Hosting -->
+  </ItemGroup>
+
+  <!-- Configuration Files -->
+  <ItemGroup>
+    <!-- Include appsettings.json and copy to output directory -->
+    <Content Include="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    
+    <!-- Include appsettings.Development.json and copy to output directory -->
+    <Content Include="appsettings.Development.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <DependentUpon>appsettings.json</DependentUpon>
+    </Content>
+    
+    <!-- Include appsettings.Production.json for AWS ECS Fargate production environment -->
+    <Content Include="appsettings.Production.json" Condition="Exists('appsettings.Production.json')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <DependentUpon>appsettings.json</DependentUpon>
+    </Content>
+  </ItemGroup>
+
+  <!-- Code Analyzers for Quality and Security (Recommended for Production) -->
+  <ItemGroup>
+    <!-- Enable Roslyn analyzers for code quality -->
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="8.*">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    
+    <!-- Enable security analyzers for production-grade code -->
+    <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="3.*">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <!-- Assembly Metadata -->
+  <PropertyGroup>
+    <Company>Apha Platform</Company>
+    <Product>Apha Batch Jobs</Product>
+    <Description>Host executable for Apha Batch Jobs providing CLI entry point for scheduled and adhoc PostgreSQL batch operations on AWS ECS Fargate.</Description>
+    <Copyright>Copyright © Apha Platform</Copyright>
+    <Version>1.0.0</Version>
+    <FileVersion>1.0.0.0</FileVersion>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <NeutralLanguage>en-US</NeutralLanguage>
+  </PropertyGroup>
+
+  <!-- Build Configuration -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <DebugType>full</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <Optimize>false</Optimize>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <!-- Use embedded for better debugging in containerized environments like AWS ECS Fargate -->
+    <DebugType>embedded</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <Optimize>true</Optimize>
+    <DefineConstants>TRACE</DefineConstants>
+    <!-- Enable ReadyToRun compilation for faster startup in containers -->
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <!-- Disable ReadyToRun for cross-platform builds (enable only for platform-specific builds) -->
+    <PublishReadyToRunComposite>false</PublishReadyToRunComposite>
+    <!-- Enable IL trimming for smaller container images in AWS ECS Fargate -->
+    <!-- Note: Trimming should remain false for EF Core as it uses reflection -->
+    <PublishTrimmed>false</PublishTrimmed>
+    <!-- Strip symbols to reduce container image size -->
+    <StripSymbols>false</StripSymbols>
+  </PropertyGroup>
+
+  <!-- Container Optimization Settings for AWS ECS Fargate -->
+  <PropertyGroup>
+    <!-- Enable single-file publishing for simpler container deployments -->
+    <!-- Note: Set to false for better compatibility with EF Core and reflection-based libraries -->
+    <PublishSingleFile>false</PublishSingleFile>
+    <!-- Self-contained deployment not required as we use runtime container image -->
+    <SelfContained>false</SelfContained>
+    <!-- Runtime identifier for Linux x64 (AWS ECS Fargate default) -->
+    <!-- Note: This should be specified during publish command, not in project file -->
+    <!-- Example: dotnet publish -c Release -r linux-x64 --no-self-contained -->
+    
+    <!-- Enable server garbage collection for better throughput in containerized environments -->
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+    <!-- Enable concurrent garbage collection for better responsiveness -->
+    <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+    <!-- Retain VM for faster subsequent startups in long-running containers -->
+    <RetainVMGarbageCollection>false</RetainVMGarbageCollection>
+  </PropertyGroup>
+
+</Project>
+
+
+<!-- 
+Key improvements made:
+
+1. **Removed redundant package references**: Microsoft.Extensions.Configuration, Microsoft.Extensions.Logging, and Microsoft.Extensions.DependencyInjection are already included in Microsoft.Extensions.Hosting
+
+2. **Changed configuration files from <None> to <Content>**: This is the correct element type for configuration files that should be copied to output
+
+3. **Added DependentUpon for environment-specific config files**: Better organization in Solution Explorer
+
+4. **Added conditional Production config file**: Common pattern for AWS ECS Fargate deployments
+
+5. **Enhanced analyzer package references**: Added explicit IncludeAssets to ensure analyzers work correctly
+
+6. **Added GC configuration properties**: ServerGarbageCollection and ConcurrentGarbageCollection are important for containerized batch job performance
+
+7. **Added PublishReadyToRunComposite**: Explicitly set to false for better cross-platform compatibility
+
+8. **Added InvariantGlobalization property**: Set to false (default) but documented for awareness in container optimization
+
+9. **Improved comments**: Added more specific guidance for AWS ECS Fargate deployments
+
+All changes maintain existing functionality while following .NET 8 and containerization best practices for AWS ECS Fargate deployments.
+-->

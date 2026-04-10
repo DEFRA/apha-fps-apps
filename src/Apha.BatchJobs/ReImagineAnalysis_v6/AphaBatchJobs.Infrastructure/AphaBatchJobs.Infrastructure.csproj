@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <!-- Best Practice: Enable warnings as errors in production code for better code quality -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- Best Practice: Enable documentation file generation for better API documentation -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AphaBatchJobs.Core\AphaBatchJobs.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Best Practice: Update Npgsql to version 9.x for .NET 10 compatibility and latest features -->
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.2" />
+    <!-- Best Practice: Update Microsoft.Extensions packages to version 9.x or 10.x for .NET 10 compatibility -->
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="9.0.0" />
+  </ItemGroup>
+
+</Project>
+
+
+<!-- 
+Key improvements made:
+
+1. **Package Version Alignment**: Updated all Microsoft.Extensions.* packages from version 8.x to 9.x to align with .NET 10 target framework. Using .NET 8 packages with .NET 10 can lead to compatibility issues and missing performance improvements.
+
+2. **Npgsql Version Update**: Updated Npgsql.EntityFrameworkCore.PostgreSQL from 8.0.10 to 9.0.2 for better .NET 10 compatibility and latest PostgreSQL features support.
+
+3. **TreatWarningsAsErrors**: Changed from false to true. This is a best practice for production code to catch potential issues early and maintain high code quality standards.
+
+4. **GenerateDocumentationFile**: Changed from false to true. This enables XML documentation generation which is important for API documentation, IntelliSense support, and maintaining code documentation standards.
+
+5. **Maintained Existing Structure**: All other settings and project references remain unchanged as per the requirement to only refine existing code without adding new features.
+
+These changes ensure the project follows .NET 10 best practices while maintaining compatibility with PostgreSQL and AWS deployment scenarios.
+-->

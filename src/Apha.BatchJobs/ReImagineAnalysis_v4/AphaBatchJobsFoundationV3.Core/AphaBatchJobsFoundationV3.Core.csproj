@@ -1,0 +1,58 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Target framework set to .NET 8.0 as per requirement -->
+    <TargetFramework>net8.0</TargetFramework>
+    
+    <!-- Enable nullable reference types for better null safety -->
+    <Nullable>enable</Nullable>
+    
+    <!-- Enable implicit usings to reduce boilerplate using statements -->
+    <ImplicitUsings>enable</ImplicitUsings>
+    
+    <!-- Assembly and root namespace configuration -->
+    <RootNamespace>AphaBatchJobsFoundationV3.Core</RootNamespace>
+    <AssemblyName>AphaBatchJobsFoundationV3.Core</AssemblyName>
+    
+    <!-- Generate XML documentation file for API documentation -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    
+    <!-- Treat warnings as errors for higher code quality - should be enabled for production code -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    
+    <!-- Language version set to latest for C# 12 features -->
+    <LangVersion>latest</LangVersion>
+    
+    <!-- Enable deterministic builds for reproducible outputs -->
+    <Deterministic>true</Deterministic>
+    
+    <!-- Enforce code analysis for better code quality -->
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest</AnalysisLevel>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- No external package dependencies as this is the Core/Domain layer -->
+    <!-- Core layer contains pure business logic abstractions and domain models -->
+    <!-- All dependencies should be injected through interfaces defined in this layer -->
+  </ItemGroup>
+
+</Project>
+
+
+<!-- 
+Key improvements made:
+
+1. Changed TreatWarningsAsErrors from false to true - This is a best practice for maintaining high code quality, especially in core/domain layers where stability is critical.
+
+2. Added Deterministic property set to true - Ensures reproducible builds, which is important for CI/CD pipelines and debugging.
+
+3. Added EnforceCodeStyleInBuild set to true - Enforces code style rules during build, ensuring consistent code formatting across the team.
+
+4. Added EnableNETAnalyzers set to true - Enables .NET code analyzers for better code quality and security checks.
+
+5. Added AnalysisLevel set to latest - Ensures the latest code analysis rules are applied, helping catch potential issues early.
+
+These additions align with .NET best practices for project configuration, particularly for core/domain layers where code quality and stability are paramount.
+-->

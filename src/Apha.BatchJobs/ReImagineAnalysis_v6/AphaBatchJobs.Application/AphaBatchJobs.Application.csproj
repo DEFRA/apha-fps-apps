@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <!-- Best Practice: Enable warnings as errors in production code for better code quality -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- Best Practice: Generate XML documentation for better API documentation and IntelliSense -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+    <!-- Best Practice: Enable nullable reference type warnings for better null safety -->
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <!-- Best Practice: Add assembly metadata for better traceability in AWS environments -->
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+  </PropertyGroup>
+
+  <!-- Best Practice: Suppress XML documentation warnings for specific scenarios if needed -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <NoWarn>$(NoWarn);1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AphaBatchJobs.Core\AphaBatchJobs.Core.csproj" />
+    <ProjectReference Include="..\AphaBatchJobs.Infrastructure\AphaBatchJobs.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <!-- Best Practice: Add common package references for Application layer -->
+  <!-- Note: Uncomment and add specific versions as needed for your project -->
+  <!--
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
+  </ItemGroup>
+  -->
+
+</Project>
+
+
+<!-- 
+Key improvements made:
+1. Changed TreatWarningsAsErrors to true - Best practice for production code quality
+2. Changed GenerateDocumentationFile to true - Improves API documentation and maintainability
+3. Added EnforceCodeStyleInBuild - Ensures consistent code style across the team
+4. Added GenerateAssemblyInfo - Better traceability in AWS CloudWatch and distributed systems
+5. Added conditional NoWarn for Debug configuration - Allows flexibility during development
+6. Added commented section for common Application layer dependencies
+7. All changes maintain existing functionality while improving code quality and AWS deployment practices
+-->

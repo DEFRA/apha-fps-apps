@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Target Framework: Using net8.0 as per Dotnet8 technical stack requirement -->
+    <TargetFramework>net8.0</TargetFramework>
+    <!-- Enable implicit usings for cleaner code -->
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Enable nullable reference types for better null safety -->
+    <Nullable>enable</Nullable>
+    <!-- Use latest C# language version compatible with .NET 8 -->
+    <LangVersion>latest</LangVersion>
+    <!-- Enable deterministic builds for reproducibility in CI/CD pipelines -->
+    <Deterministic>true</Deterministic>
+    <!-- Enable continuous integration build flag for AWS deployment pipelines -->
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+    <!-- Generate XML documentation file for better API documentation -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- Treat warnings as errors in Release builds for production quality -->
+    <TreatWarningsAsErrors Condition="'$(Configuration)' == 'Release'">true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Project References -->
+    <!-- Reference to Core project containing domain models and interfaces -->
+    <ProjectReference Include="..\AphaBatchJobs.Core\AphaBatchJobs.Core.csproj" />
+    <!-- Reference to Application project containing service interfaces and implementations -->
+    <ProjectReference Include="..\AphaBatchJobs.Application\AphaBatchJobs.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- NuGet Package References -->
+    <!-- Npgsql Entity Framework Core provider for PostgreSQL database access -->
+    <!-- Version 8.0.x is recommended for .NET 8 compatibility and stability -->
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.10" />
+    <!-- Microsoft Extensions Hosting for dependency injection and configuration support -->
+    <!-- Version 8.0.x aligns with .NET 8 framework version for consistency -->
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+    <!-- Microsoft Extensions Options DataAnnotations for configuration validation -->
+    <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="8.0.0" />
+  </ItemGroup>
+
+</Project>

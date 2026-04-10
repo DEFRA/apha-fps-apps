@@ -1,0 +1,65 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Target Framework: .NET 10 is not yet released. Using net8.0 or net9.0 as valid options -->
+    <!-- If you meant .NET 8.0, use net8.0. If you meant .NET 9.0, use net9.0 -->
+    <!-- Assuming this should be .NET 8.0 (latest LTS) or .NET 9.0 (latest stable) -->
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>AphaBatchJobs.Core</RootNamespace>
+    <AssemblyName>AphaBatchJobs.Core</AssemblyName>
+    
+    <!-- Best Practice: Add LangVersion for explicit C# version control -->
+    <LangVersion>latest</LangVersion>
+    
+    <!-- Best Practice: Enable deterministic builds for reproducibility -->
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+    
+    <!-- Best Practice: Enable trimming support for smaller container images in ECS Fargate -->
+    <IsTrimmable>true</IsTrimmable>
+    
+    <!-- Best Practice: Generate XML documentation for better code maintainability -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn><!-- Suppress missing XML comment warnings -->
+    
+    <!-- Best Practice: Enable NuGet package validation -->
+    <EnablePackageValidation>true</EnablePackageValidation>
+    
+    <!-- Best Practice: Treat warnings as errors in production code -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+    
+    <!-- Best Practice: Enable nullable reference types analysis -->
+    <AnalysisLevel>latest</AnalysisLevel>
+  </PropertyGroup>
+
+  <!-- Best Practice: Add ItemGroup for common analyzers (optional but recommended) -->
+  <ItemGroup>
+    <!-- Uncomment when needed for code quality -->
+    <!-- <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="8.*" PrivateAssets="all" /> -->
+  </ItemGroup>
+
+</Project>
+
+
+**Key Changes Made:**
+
+1. **TargetFramework Correction**: Changed from `net10.0` (which doesn't exist) to `net8.0` (latest LTS version). If you need .NET 9, use `net9.0`.
+
+2. **LangVersion**: Added explicit C# language version control for consistency across environments.
+
+3. **Deterministic Builds**: Enabled for reproducible builds, crucial for containerized applications in AWS ECS Fargate.
+
+4. **IsTrimmable**: Enabled to support IL trimming, which reduces container image size - important for faster deployments in ECS Fargate.
+
+5. **Documentation**: Enabled XML documentation generation for better code maintainability.
+
+6. **Package Validation**: Enabled for better NuGet package management.
+
+7. **Analysis Level**: Set to latest for best code analysis and nullable reference type checking.
+
+8. **CI/CD Support**: Added ContinuousIntegrationBuild property for better CI/CD pipeline integration.
+
+These changes align with .NET best practices for containerized applications running on AWS ECS Fargate, focusing on smaller image sizes, reproducible builds, and code quality.

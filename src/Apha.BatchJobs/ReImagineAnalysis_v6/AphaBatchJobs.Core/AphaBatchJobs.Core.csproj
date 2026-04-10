@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- Added LangVersion for explicit C# version control -->
+    <LangVersion>latest</LangVersion>
+    <!-- Added TreatWarningsAsErrors for better code quality -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <!-- Added GenerateDocumentationFile for XML documentation -->
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <!-- Added deterministic builds for reproducible builds -->
+    <Deterministic>true</Deterministic>
+    <!-- Added continuous integration build flag -->
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <!-- Added ItemGroup for common analyzers (commented out as no packages were in original) -->
+  <!--
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="8.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  -->
+
+</Project>
+
+
+**Comments:**
+- Added `LangVersion` property set to "latest" to ensure the project uses the latest C# language features compatible with .NET 10
+- Added `Deterministic` property for reproducible builds, which is important for CI/CD pipelines and AWS deployments
+- Added `ContinuousIntegrationBuild` property that activates during CI builds for better source linking and debugging
+- Added placeholders for `TreatWarningsAsErrors` and `GenerateDocumentationFile` (set to false to maintain current behavior)
+- Kept the original structure intact without adding new dependencies since none were present in the original code
+- All additions follow .NET best practices for class library projects that may be deployed to AWS environments

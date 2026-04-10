@@ -282,6 +282,86 @@ Planned release order for Scheduled jobs:
   - test evidence
   - migration impact
 
+## Commit Tag And Release Strategy
+### Release Intent
+Support controlled deployment by phase, even when later phase code already exists in development branches.
+
+### Branch Strategy
+- Integration branch: `feature/batchjobs-mainline`
+- Release branches by phase:
+  - `release/batchjobs-foundation`
+  - `release/batchjobs-scheduled-core`
+  - `release/batchjobs-scheduled-loaders`
+  - `release/batchjobs-adhoc-core`
+  - `release/batchjobs-hardening`
+- Hotfix branches when needed:
+  - `hotfix/batchjobs-foundation-*`
+
+### Commit Strategy
+- Keep commits atomic and phase aligned.
+- Do not mix foundation, conversion, and hardening in one commit.
+- Commit categories:
+  - `feat(batchjobs-foundation): ...`
+  - `feat(batchjobs-scheduled): ...`
+  - `feat(batchjobs-adhoc): ...`
+  - `chore(batchjobs): ...`
+  - `test(batchjobs): ...`
+- Each commit must be deploy meaningful within its phase.
+
+### Tag Strategy
+- Use annotated tags at release points.
+- Pre release tags:
+  - `v0.1.0-foundation-rc1`
+  - `v0.1.0-foundation-rc2`
+- Release tags:
+  - `v0.1.0-foundation`
+  - `v0.2.0-scheduled-core`
+  - `v0.3.0-scheduled-loaders`
+  - `v0.4.0-adhoc-core`
+  - `v1.0.0-batchjobs-ga`
+- Patch tags for post release fixes:
+  - `v0.1.1-foundation`
+  - `v0.2.1-scheduled-core`
+
+### Deployment Control Model
+- Deploy only from release branches.
+- Keep later phase work on integration branch until approved.
+- Use release profile gates in pipeline:
+  - `foundation`
+  - `scheduled-core`
+  - `scheduled-loaders`
+  - `adhoc-core`
+  - `hardening`
+- Require manual approval for production deployment.
+
+### Foundation First Deployment Policy
+Release 1 deploys foundation only:
+- Program host and startup wiring
+- Dependency injection and configuration setup
+- Logging and error handling baseline
+- Scheduler and cli trigger contracts
+- Docker and runtime baseline
+
+Excluded from foundation release:
+- Stored procedure conversion modules
+- Data loader conversion logic
+- Adhoc notification conversion modules
+
+### Definition Of Done For Foundation Release
+- Application starts in AWS runtime target.
+- Configuration loads from approved environment and secret sources.
+- Structured logs are visible in target log sink.
+- Smoke execution path completes successfully.
+- No destructive database operations are triggered.
+
+### Promotion Flow
+1. Build and validate on integration branch.
+2. Cut release branch for target phase only.
+3. Run phase specific pipeline gates.
+4. Tag approved commit.
+5. Deploy tagged release.
+6. Merge release branch back to mainline with release notes.
+
 ## Documentation Artifacts To Maintain
 - This rollout plan document.
 - AppMod generation metadata note.
