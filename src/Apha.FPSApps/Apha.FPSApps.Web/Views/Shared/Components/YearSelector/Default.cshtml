@@ -11,8 +11,14 @@
                text-shadow: 1px 1px #b0d7ff;
                letter-spacing: 1px;
                background: #fff;
-               padding: 3px;"
-        asp-items="Model.Years">
+               padding: 3px;">
+    @foreach (var item in Model.Years)
+    {
+        var selectedAttr = item.Selected ? "selected" : null;
+        <option value="@item.Value" selected="@selectedAttr">
+            @item.Text
+        </option>
+    }
 </select>
 
 <script>

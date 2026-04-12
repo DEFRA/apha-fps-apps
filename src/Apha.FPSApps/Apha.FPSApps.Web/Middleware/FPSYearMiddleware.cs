@@ -57,7 +57,9 @@ namespace Apha.FPSApps.Web.Middleware
                         : Enum.Parse<YearStatus>(selectedYear.YearStatus, ignoreCase: true);
                 }
             }
-            catch (MicrosoftIdentityWebChallengeUserException)
+            catch (Exception ex) when (
+                ex is MicrosoftIdentityWebChallengeUserException ||
+                ex.InnerException is MicrosoftIdentityWebChallengeUserException)
             {
                 // Token expired or re-consent required — let it propagate
                 // so OIDC middleware can redirect the user back to Azure AD
