@@ -3,9 +3,7 @@ using Apha.FPSApps.Web.Enums;
 using System.Linq;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Dtos.FPS;
-using Apha.FPSApps.Web.Constants;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Identity.Web;
 
 namespace Apha.FPSApps.Web.Middleware
 {
@@ -14,6 +12,7 @@ namespace Apha.FPSApps.Web.Middleware
         private readonly RequestDelegate _next;
         private readonly IMemoryCache _cache;
         private const string ExecutedKey = "FpsYearMiddleware.Executed";
+        private const string YearsCacheKey = "FpsYearMiddleware.AllYears";
         private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(10);
 
         public FpsYearMiddleware(RequestDelegate next, IMemoryCache cache)
@@ -27,6 +26,7 @@ namespace Apha.FPSApps.Web.Middleware
             IFpsYearContext fyContext,
             IYearMasterService yearMasterService)
         {
+            // Skip static assets (fonts, css, js, images, etc.) and prevent double-execution
             var path = context.Request.Path.Value;
             if ((path is not null && Path.HasExtension(path)) ||
                 context.Items.ContainsKey(ExecutedKey))
@@ -57,15 +57,8 @@ namespace Apha.FPSApps.Web.Middleware
                         : Enum.Parse<YearStatus>(selectedYear.YearStatus, ignoreCase: true);
                 }
             }
-            catch (MicrosoftIdentityWebChallengeUserException)
-            {
-                // Token expired or re-consent required — let it propagate
-                // so OIDC middleware can redirect the user back to Azure AD
-                throw;
-            }
             catch
             {
-                // All other failures (network, API down, etc.) — fall back silently
                 year = tempYear;
             }
 
@@ -80,14 +73,15 @@ namespace Apha.FPSApps.Web.Middleware
 
         private async Task<IEnumerable<YearMasterDto>?> GetCachedYearsAsync(IYearMasterService yearMasterService)
         {
-            if (_cache.TryGetValue(FpsCacheKeys.AllYears, out IEnumerable<YearMasterDto>? cached))
+            if (_cache.TryGetValue(YearsCacheKey, out IEnumerable<YearMasterDto>? cached))
                 return cached;
 
             var response = await yearMasterService.GetAllFpsYearsAsync();
             var data = response?.Data;
 
+            // Only cache successful responses — avoid persisting nulls/errors
             if (data != null)
-                _cache.Set(FpsCacheKeys.AllYears, data, CacheDuration);
+                _cache.Set(YearsCacheKey, data, CacheDuration);
 
             return data;
         }
