@@ -9,12 +9,12 @@
     <title>@ViewData["Title"]</title>
 
     <!-- Shared stylesheets -->  
-    <link rel="stylesheet" href="~/css/bootstrap.min.css" />
+    <!--<link rel="stylesheet" href="~/css/bootstrap.min.css" />-->
     <link rel="stylesheet" href="~/css/pact_styles/govuk-frontend-6.0.0.min.css" /> 
     <link rel="stylesheet" href="~/css/pact_styles/custom_style.css" />    
     <link rel="stylesheet" href="~/css/pact_styles/navstyle.css" />    
     <link rel="stylesheet" href="~/css/pact_styles/style.css" /> 
-    <link rel="stylesheet" href="~/css/pact_styles/suppliement_style_over_gov.uk_style.css" />
+    <!--<link rel="stylesheet" href="~/css/pact_styles/suppliement_style_over_gov.uk_style.css" />-->
     <link rel="stylesheet" href="~/DataGrid/editable-grid.css" />
     <link href="~/css/suppliement_style_over_gov.uk_style.css" rel="stylesheet" />
     <!-- jQuery (required before any scripts) -->
@@ -29,22 +29,13 @@
                 <div>
                     <img src="~/images/defra_logo.png" width="80px" alt="Animal & Plant Health Agency" />
                 </div>                
-                <div class="pims-log">
-                    <span>PACT</span>
-                </div>               
-                 <div class="pims-log" style="width: 160px;font-size: 16px;">
-                 <select aria-label="Select year" class="pims-log" style="border: 0;border-radius: 0;margin-left: 0px;width: 150px;outline: 0;">
-				    <option>2017-2018</option>
-					<option>2018-2019</option>
-				 	<option>2019-2020</option>
-				 	<option>2020-2021</option>
-				 	<option>2021-2022</option>
-				 	<option>2022-2023</option>
-					<option>2023-2024</option>
-					<option>2024-2025</option>
-					<option selected>2025-2026</option>
+				<div class="pims-log">
+					<span>PACT</span>
+				</div>               
+				 <div class="pims-log" style="width: 160px;font-size: 16px;">
+					<select aria-label="Select year" id="yearSelector" class="pims-log" style="border: 0;border-radius: 0;margin-left: 0px;width: 150px;outline: 0;">
 					</select>					
-                </div>
+				</div>
             </div>
         </div>
     </header>
@@ -196,17 +187,78 @@
     <fps-year-script></fps-year-script>
 
     <script>
-        // ── Year selector ────────────────────────────────────────────────
-        (function () {
-            var currentYear = @Fy.Year;
-            var sel = document.getElementById('pactYearSelector');
-            if (sel) {
-                sel.value = String(currentYear);
-                sel.addEventListener('change', function () {
-                    window.location.href = '/Home/Index?year=' + this.value;
-                });
+        // Initialize year selector with API data
+        $(document).ready(function () {
+            loadYearMasterDropdown();
+        });
+
+        function loadYearMasterDropdown() {
+            $.ajax({
+                url: '@Url.Action("GetYearMasterDropdown", "YearMaster", new { area = "FPS" })',
+                type: 'GET',
+                success: function (response) {
+                    if (response.success && response.data) {
+                        var $select = $('#yearSelector');
+                        $select.empty();
+
+                        // Get the year from query string (if present) or from context
+                        var urlParams = new URLSearchParams(window.location.search);
+                        var yearFromUrl = urlParams.get('year');
+                        var currentYear = @Fy.Year;
+
+                        // Determine which year to select
+                        var defaultYear;
+                        if (yearFromUrl) {
+                            // If year is in URL, use that
+                            defaultYear = parseInt(yearFromUrl);
+                        } else {
+                            // Otherwise, find the year with status "Open"
+                            var openYear = response.data.find(function(item) {
+                                return item.yearStatus && item.yearStatus.toLowerCase() === 'open';
+                            });
+                            // Fallback to current year from context if no open year found
+                            defaultYear = openYear ? openYear.value : currentYear;
+                        }
+
+                        var yearFound = false;
+
+                        $.each(response.data, function (index, item) {
+                            var $option = $('<option></option>')
+                                .val(item.value)
+                                .text(item.text);
+
+                            // Set selected year based on URL parameter or Open status
+                            if (item.value == defaultYear) {
+                                $option.attr('selected', 'selected');
+                                yearFound = true;
+                            }
+
+                            $select.append($option);
+                        });
+
+                        // If default year not found, select first item
+                        if (!yearFound && response.data.length > 0) {
+                            $select.val(response.data[0].value);
+                        }
+                    } else {
+                        console.error('Failed to load year master dropdown');
+                        $('#yearSelector').html('<option value="">Error loading years</option>');
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error loading year master dropdown:', error);
+                    $('#yearSelector').html('<option value="">Error loading years</option>');
+                }
+            });
+        }
+
+        // Handle year change event
+        $('#yearSelector').on('change', function () {
+            var selectedYear = $(this).val();
+            if (selectedYear) {
+                window.location.href = '/PACT/Home/Index?year=' + selectedYear;
             }
-        })();
+        });
 
         // ── Modal open / close helpers ────────────────────────────────────
         (function () {

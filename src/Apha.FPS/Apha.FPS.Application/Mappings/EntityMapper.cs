@@ -32,11 +32,13 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<SubAccount, SubAccountDto>().ReverseMap();
             CreateMap<ProjectGroup, ProjectGroupDto>().ReverseMap();
             CreateMap<Employee, EmployeeDto>().ReverseMap();
-            CreateMap<Manager, ManagerDto>().ReverseMap();           
+            CreateMap<Manager, ManagerDto>().ReverseMap();
+            CreateMap<ProjectView, ProjectDto>().ReverseMap();
             CreateMap<PactProjectView, ProjectDto>()
                 .ForMember(d => d.FpsCalYear, o => o.MapFrom(s => s.FpsYear))
                 .ReverseMap()
                 .ForMember(d => d.FpsYear, o => o.MapFrom(s => s.FpsCalYear));
+            CreateMap<YearMaster, YearMasterDto>().ReverseMap();
         }
     }
 }

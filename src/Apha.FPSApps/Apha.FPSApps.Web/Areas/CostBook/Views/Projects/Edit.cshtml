@@ -1,0 +1,376 @@
+﻿@model Apha.FPSApps.Web.Areas.CostBook.Models.ProjectCreateEditViewModel
+
+@{
+    ViewData["Title"] = "Project Edit";
+}
+
+<script>
+    function onDefraProjectChange() {
+        var selectElement = document.getElementById('Isdefraproject');
+        var warningSpan = selectElement.parentElement.querySelector('.warning-text');
+        if (warningSpan) {
+            warningSpan.style.display = 'inline-block';
+            setTimeout(function () { warningSpan.style.display = 'none'; }, 3000);
+        }
+    }
+
+    function onInflationChange() {
+        var checkboxElement = document.getElementById('chkInflation');
+        var warningSpan = checkboxElement.closest('.govuk-form-group').querySelector('.warning-text');
+        if (warningSpan) {
+            warningSpan.style.display = 'inline-block';
+            setTimeout(function () { warningSpan.style.display = 'none'; }, 3000);
+        }
+    }
+
+    function openDatePicker(pickerId) {
+        var picker = document.getElementById(pickerId);
+        if (picker) {
+            try { picker.showPicker(); } catch (e) { picker.click(); }
+        }
+    }
+
+    function syncDateToText(pickerId, displayId, hiddenId) {
+        var picker = document.getElementById(pickerId);
+        if (picker.value) {
+            var parts = picker.value.split('-');
+            document.getElementById(displayId).value = parts[2] + '/' + parts[1] + '/' + parts[0];
+            document.getElementById(hiddenId).value = picker.value;
+        } else {
+            document.getElementById(displayId).value = '';
+            document.getElementById(hiddenId).value = '';
+        }
+    }
+</script>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="govuk-grid-row">
+                <div class="govuk-grid-column-full">
+                    <h1 class="govuk-heading-s sup_border-bottom" style="padding:10px 0 10px 10px">
+                        Project Selection
+                        <a asp-area="CostBook" asp-controller="Projects" asp-action="Index" class="govuk-back-link sup_align_right">Back</a>
+                    </h1>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-12">
+            <div class="main-content" style="padding-top: 0px;">
+                <div class="existing_project mt-2">
+                    <form asp-area="CostBook" asp-controller="Projects" asp-action="Edit" asp-route-id="@Model.ProjectId" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="ProjectId" value="@Model.ProjectId" />
+                        <input type="hidden" name="CreatedDate" value="@Model.CreatedDate.ToString("o")" />
+                        <input type="hidden" name="CreatedBy" value="@Model.CreatedBy" />
+                        <input type="hidden" name="Status" value="@Model.Status" />
+
+                        @if (!ViewData.ModelState.IsValid)
+                        {
+                            <div asp-validation-summary="All" class="govuk-error-summary" aria-labelledby="error-summary-title" role="alert" data-module="govuk-error-summary">
+                                <h2 class="govuk-error-summary__title" id="error-summary-title">There is a problem</h2>
+                            </div>
+                        }
+
+                        @if (TempData["Success"] != null)
+                        {
+                            <div class="alert alert-success" role="alert">@TempData["Success"]</div>
+                        }
+                        @if (TempData["Error"] != null)
+                        {
+                            <div class="alert alert-danger" role="alert">@TempData["Error"]</div>
+                        }
+
+                        <div style="max-width: 1200px; margin-bottom: 25px;">
+
+                            <!-- Action buttons -->
+                            <div class="d-flex gap-2 mb-3">
+                                <button type="button" class="govuk-button govuk-button--warning sup_margin_0" onclick="confirmDelete()">Delete</button>
+                                <button type="button" class="govuk-button sup_margin_0" onclick="copyProject()">Copy</button>
+                            </div>
+
+                            <!-- Costing Book Code -->
+                            <div class="govuk-form-group d-flex align-items-start mb-2">
+                                <label asp-for="ProjectId" class="govuk-label label_width mb-0 pt-1">Costing Book Code:</label>
+                                <div>
+                                    <input asp-for="ProjectId" class="govuk-input width-200 read-only" readonly>
+                                    <span asp-validation-for="ProjectId" class="govuk-error-message"></span>
+                                </div>
+                            </div>
+
+                            <!-- Contract Number -->
+                            <div class="govuk-form-group d-flex align-items-start mb-2">
+                                <label asp-for="ContractNumber" class="govuk-label label_width mb-0 pt-1">Contract Number:</label>
+                                <div>                                    
+
+                                    <input asp-for="ContractNumber" class="govuk-input width-200">
+                                    <span asp-validation-for="ContractNumber" class="govuk-error-message"></span>
+                                </div>
+                            </div>
+
+                            <!-- Title -->
+                            <div class="govuk-form-group d-flex align-items-start mb-2">
+                                <label asp-for="Projecttitle" class="govuk-label label_width mb-0 pt-1">Title:</label>
+                                <div style="width: 61%;">
+                                    <textarea asp-for="Projecttitle" class="govuk-textarea w-100 sup_margin_0"></textarea>
+                                    <span asp-validation-for="Projecttitle" class="govuk-error-message"></span>
+                                </div>
+                            </div>
+
+                            @* FIX 1: was missing opening < on the div tag — caused "malformed form tag helper" error *@
+                            @* FIX 2: bound to Financialyears (int?) not Plancat — 0=Calendar Year, 1=Financial Year *@
+                            <!-- Year Type (Financialyears) + Programme -->
+                            <div class="govuk-form-group d-flex align-items-start mb-2">
+                                <label for="Financialyears" class="govuk-label label_width mb-0 pt-1">Year Type:</label>
+                                <div class="me-4">
+                                    <select id="Financialyears" name="Financialyears" class="govuk-select width-200">
+                                        <option value="">Select Year Type</option>
+                                        <option value="0" selected="@(Model.Financialyears == 0 ? "selected" : null)">Calendar Year</option>
+                                        <option value="1" selected="@(Model.Financialyears != null && Model.Financialyears != 0 ? "selected" : null)">Financial Year</option>
+                                    </select>
+                                    <span asp-validation-for="Financialyears" class="govuk-error-message"></span>
+                                </div>
+                                <label asp-for="Programme" class="govuk-label label_width mb-0 pt-1">Programme:</label>
+                                <div>
+                                    <select asp-for="Programme" asp-items="Model.AvailablePrograms" class="govuk-select width-200">
+                                        <option value="">Select Programme</option>
+                                    </select>
+                                    <span asp-validation-for="Programme" class="govuk-error-message"></span>
+                                </div>
+                            </div>
+
+                            <!-- Customer Name + Disease -->
+                            <div class="govuk-form-group d-flex align-items-start mb-2">
+                                <label asp-for="CustomerName" class="govuk-label label_width mb-0 pt-1">Customer Name:</label>
+                                <div class="me-4">
+                                    <select asp-for="CustomerName" asp-items="Model.AvailableCustomers" class="govuk-select width-200">
+                                        <option value="">Select Customer</option>
+                                    </select>
+                                    <span asp-validation-for="CustomerName" class="govuk-error-message"></span>
+                                </div>
+                                <label asp-for="Disease" class="govuk-label label_width mb-0 pt-1">Disease:</label>
+                                <div>
+                                            <select asp-for="Disease" asp-items="Model.AvailableDiseases" class="govuk-select width-200">
+                                                <option value="">Select Disease</option>
+                                            </select>
+                                            <span asp-validation-for="Disease" class="govuk-error-message"></span>
+                                    
+                                </div>
+                            </div>
+
+                            <!-- Start Date + Is Defra Project -->
+                            <div class="govuk-form-group d-flex align-items-start mb-2">
+                                <label for="StartdateDisplay" class="govuk-label label_width mb-0 pt-1">Start Date:</label>
+                                <div class="me-4">
+                                    <div style="position:relative; display:inline-block;">
+                                        <input type="text"
+                                               id="StartdateDisplay"
+                                               class="govuk-input width-200"
+                                               value="@Model.Startdate?.ToString("dd/MM/yyyy")"
+                                               autocomplete="off"
+                                               onclick="openDatePicker('StartdatePicker')"
+                                               style="cursor:pointer;"
+                                               readonly>
+                                        <input type="hidden"
+                                               name="Startdate"
+                                               id="StartdateBinding"
+                                               value="@Model.Startdate?.ToString("yyyy-MM-dd")">
+                                        <input type="date"
+                                               id="StartdatePicker"
+                                               value="@Model.Startdate?.ToString("yyyy-MM-dd")"
+                                               style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
+                                               onchange="syncDateToText('StartdatePicker', 'StartdateDisplay', 'StartdateBinding')">
+                                    </div>
+                                    <span asp-validation-for="Startdate" class="govuk-error-message"></span>
+                                </div>
+                                <label asp-for="Isdefraproject" class="govuk-label label_width mb-0 pt-1">Is Defra Project?:</label>
+                                <div class="d-flex align-items-center gap-2">
+                                    <select id="Isdefraproject" name="Isdefraproject" class="govuk-select" style="min-width: 80px;" onchange="onDefraProjectChange()">
+                                        <option value="">Select</option>
+                                        <option value="1" selected="@(Model.Isdefraproject == 1 ? "selected" : null)">Yes</option>
+                                        <option value="0" selected="@(Model.Isdefraproject == 0 ? "selected" : null)">No</option>
+                                    </select>
+                                    <span class="warning-text" style="display:none; font-size:13px; width:217px; color:#353535; border:1px dashed #0d6efd; border-radius:4px; padding:2px;">
+                                        Changing this option will recost existing projects with current rates.
+                                    </span>
+                                    <span asp-validation-for="Isdefraproject" class="govuk-error-message"></span>
+                                </div>
+                            </div>
+
+                            <!-- Start Financial Year (readonly) + Rate Used -->
+                            <div class="govuk-form-group d-flex align-items-start mb-2">
+                                <label asp-for="Startfyear" class="govuk-label label_width mb-0 pt-1">Start (Financial) Year:</label>
+                                <div class="me-4">
+                                    <input asp-for="Startfyear" asp-format="{0:0}" class="govuk-input width-200 read-only" readonly>
+                                    <span asp-validation-for="Startfyear" class="govuk-error-message"></span>
+                                </div>
+                                <label asp-for="Euroconvrate" class="govuk-label label_width mb-0 pt-1">Rate Used (£):</label>
+                                <div>
+                                    <input asp-for="Euroconvrate" class="govuk-input width-200">
+                                    <span asp-validation-for="Euroconvrate" class="govuk-error-message"></span>
+                                </div>
+                            </div>
+
+                            <!-- Submitted By Firstname + Prepared By -->
+                            <div class="govuk-form-group d-flex align-items-start mb-2">
+                                <label asp-for="Submittedbyfname" class="govuk-label label_width mb-0 pt-1" style="overflow-wrap: break-word;">Submitted By - Firstname:</label>
+                                <div class="me-4">
+                                    <input asp-for="Submittedbyfname" class="govuk-input width-200">
+                                    <span asp-validation-for="Submittedbyfname" class="govuk-error-message"></span>
+                                </div>
+                                <label asp-for="PreparedBy" class="govuk-label label_width mb-0 pt-1">Prepared by:</label>
+                                <div>
+                                    <select asp-for="PreparedBy" asp-items="Model.AvailableStaff" class="govuk-select inline-select">
+                                        <option value="">Name not found</option>
+                                    </select>
+                                    <span asp-validation-for="PreparedBy" class="govuk-error-message"></span>
+                                </div>
+                            </div>
+
+                            @* FIX 3: removed invalid {{!-- --}} Handlebars comment — not valid Razor syntax *@
+                            <!-- Submitted By Lastname + Include Inflation -->
+                            <div class="govuk-form-group d-flex align-items-start mb-2">
+                                <label asp-for="Submittedbylname" class="govuk-label label_width mb-0 pt-1">Lastname:</label>
+                                <div class="me-4">
+                                    <input asp-for="Submittedbylname" class="govuk-input width-200">
+                                    <span asp-validation-for="Submittedbylname" class="govuk-error-message"></span>
+                                </div>
+                                <label for="chkInflation" class="govuk-label label_width mb-0 pt-1">Include Inflation?:</label>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="form-check form-check-inline">
+                                        <input type="checkbox"
+                                               id="chkInflation"
+                                               name="Inflation"
+                                               value="1"
+                                               class="form-check-input"
+                                               style="width:20px; height:20px; cursor:pointer;"
+                                               checked="@(Model.Inflation.HasValue && Model.Inflation.Value != 0)"
+                                               onchange="onInflationChange()">
+                                        <input name="Inflation" type="hidden" value="0" />
+                                        <label class="form-check-label govuk-label ms-2" for="chkInflation">Yes</label>
+                                    </div>
+                                    <span class="warning-text" style="display:none; font-size:13px; width:286px; color:#353535; border:1px dashed #0d6efd; border-radius:4px; padding:2px;">
+                                        Changing this option will recost existing projects with current rates as well as affecting inflation.
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Date of Submission -->
+                            <div class="govuk-form-group d-flex align-items-start mb-2">
+                                <label for="DateOfSubmissionDisplay" class="govuk-label label_width mb-0 pt-1">Date of Submission:</label>
+                                <div>
+                                    <div style="position:relative; display:inline-block;">
+                                        <input type="text"
+                                               id="DateOfSubmissionDisplay"
+                                               class="govuk-input width-200"
+                                               value="@Model.DateOfSubmission?.ToString("dd/MM/yyyy")"
+                                               autocomplete="off"
+                                               onclick="openDatePicker('DateOfSubmissionPicker')"
+                                               style="cursor:pointer;"
+                                               readonly>
+                                        <input type="hidden"
+                                               name="DateOfSubmission"
+                                               id="DateOfSubmissionBinding"
+                                               value="@Model.DateOfSubmission?.ToString("yyyy-MM-dd")">
+                                        <input type="date"
+                                               id="DateOfSubmissionPicker"
+                                               value="@Model.DateOfSubmission?.ToString("yyyy-MM-dd")"
+                                               style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
+                                               onchange="syncDateToText('DateOfSubmissionPicker', 'DateOfSubmissionDisplay', 'DateOfSubmissionBinding')">
+                                    </div>
+                                    <span asp-validation-for="DateOfSubmission" class="govuk-error-message"></span>
+                                </div>
+                            </div>
+
+                            <!-- Notes -->
+                            <div class="govuk-form-group d-flex align-items-start mb-2">
+                                <label asp-for="Notes" class="govuk-label label_width mb-0 pt-1">Notes:</label>
+                                <div style="width: 61%;">
+                                    <textarea asp-for="Notes" class="govuk-textarea w-100"></textarea>
+                                    <span asp-validation-for="Notes" class="govuk-error-message"></span>
+                                </div>
+                            </div>
+
+                            <!-- Save / Cancel -->
+                            <div class="d-flex gap-2 mt-3">
+                                <button type="submit" class="govuk-button">Save</button>
+                                <a asp-area="CostBook" asp-controller="Projects" asp-action="Details" asp-route-id="@Model.ProjectId" class="govuk-button govuk-button--secondary">Cancel</a>
+                            </div>
+
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        function confirmDelete() {
+        if (confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
+        document.body.style.cursor = 'wait';
+        var deleteBtn = event.target;
+        if (deleteBtn) { deleteBtn.disabled = true; deleteBtn.textContent = 'Deleting...'; }
+
+        var projectId = '@Html.Raw(Model.ProjectId)';
+        if (!projectId || projectId === '') {
+        alert('Project ID is missing. Cannot delete project.');
+        if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.textContent = 'Delete'; }
+        document.body.style.cursor = 'default';
+        return;
+        }
+
+        var form = document.createElement('form');
+        form.method = 'post';
+        form.action = '@Url.Action("Delete", "Projects", new { area = "CostBook" })' + '/' + encodeURIComponent(projectId);
+
+        var token = document.createElement('input');
+        token.type = 'hidden';
+        token.name = '__RequestVerificationToken';
+        token.value = document.querySelector('input[name="__RequestVerificationToken"]').value;
+        form.appendChild(token);
+
+        var idInput = document.createElement('input');
+        idInput.type = 'hidden';
+        idInput.name = 'id';
+        idInput.value = projectId;
+        form.appendChild(idInput);
+
+        document.body.appendChild(form);
+        form.submit();
+        }
+        }
+
+        function copyProject() {
+        var projectId = '@Html.Raw(Model.ProjectId)';
+        if (!confirm('Copy project "' + projectId + '"? A new project ID will be generated automatically.')) return;
+
+        var copyBtn = event.target;
+        if (copyBtn) { copyBtn.disabled = true; copyBtn.textContent = 'Copying...'; }
+
+        $.post('@Url.Action("Copy", "Projects", new { area = "CostBook" })', {
+        id: projectId,
+        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+        })
+        .done(function (data) {
+        if (data.success) {
+        var newId = data.generatedId || data.projectId;
+        alert('Project copied successfully! New project ID: ' + newId);
+        var editUrl = '@Url.Action("Edit", "Projects", new { area = "CostBook", id = "PLACEHOLDER" })';
+        editUrl = editUrl.replace('PLACEHOLDER', encodeURIComponent(newId));
+        window.location.href = editUrl;
+        } else {
+        alert('Failed to copy project: ' + (data.errors ? data.errors.join(', ') : 'Unknown error'));
+        if (copyBtn) { copyBtn.disabled = false; copyBtn.textContent = 'Copy'; }
+        }
+        })
+        .fail(function () {
+        alert('Failed to copy project. Please try again.');
+        if (copyBtn) { copyBtn.disabled = false; copyBtn.textContent = 'Copy'; }
+        });
+        }
+    </script>
+}

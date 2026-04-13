@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Apha.PACT.Api.Controllers
 {
-    [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
+    [Authorize(Roles = "API-PACTUser,API-PACTAdmin")]
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/workgroup")]

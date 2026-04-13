@@ -92,6 +92,14 @@ namespace Apha.PACT.Api.Middleware
                         Message = ex.Message
                     });
                     break;
+                case InvalidOperationException:
+                    context.Response.StatusCode = StatusCodes.Status409Conflict;
+                    apiResponse.Errors.Add(new ApiError
+                    {
+                        Code = "BUSINESS_RULE_VIOLATION",
+                        Message = ex.Message
+                    });
+                    break;
                 default:
                     context.Response.StatusCode = StatusCodes.Status500InternalServerError;
                     apiResponse.Errors.Add(new ApiError

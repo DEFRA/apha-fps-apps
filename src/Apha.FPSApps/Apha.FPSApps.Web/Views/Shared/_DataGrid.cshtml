@@ -1,12 +1,19 @@
 ﻿@using Apha.FPSApps.Web.Models.Components.DataGrid
 @model dynamic
 
-<div class="editable-grid-container">
-    <div class="sup_border sup_border_bottom_0">
+<div class="editable-grid-container sup_border">
+    <div class="sup_border_bottom_0">
         <h2 class="sup_border-bottom sup_text_color sup_heading_bg_color govuk-heading-s sup_margin_0 sup_align_heading">
             <div class="sup_flex_space_between">
                 @Model.Title
-                <div style="display:flex; gap:4px; align-items:center;">
+                <div>
+                    @if (Model.AllowExport)
+                    {
+                        <button type="button" class="govuk-button govuk-button--secondary sup_gov_blue_bg sup_margin_0 sup_p_8"
+                                id="@($"{Model.GridId}_exportBtn")" data-export-url="@Model.ExportUrl">
+                            <i class="fa fa-file-excel-o"></i> Excel Export
+                        </button>
+                    }
                     @if (Model.AllowAdd)
                     {
                         <button type="button" class="govuk-button sup_margin_0 sup_p_8"
@@ -27,7 +34,7 @@
                                               id="@($"{Model.GridId}_bulkDeleteBtn")" data-bulkdelete-function="@Model.BulkDeleteFunction">
                             <i class="fa fa-trash"></i> Delete All
                         </button>
-                    }
+                    }                    
                 </div>
             </div>
         </h2>
@@ -56,11 +63,11 @@
 
 
 
-    <div class="grid-wrapper">
+    <div>
         <div class="grid-scroll-container">
             <table id="@($"tbl_{Model.GridId}")" class="editable-grid-table govuk-table custom-table">
                 <thead class="govuk-table__head">
-                    <tr class="govuk-table__row">
+                    <tr class="govuk-table__row"> 
                         @if (Model.ShowCheckboxColumn)
                         {
                             <th scope="col" class="govuk-table__header sup_p_0">
@@ -94,9 +101,9 @@
                                         </th>
                                     }
                                 }
-                                @if (Model.AllowEdit || Model.AllowDelete)
+                                @if (Model.AllowEdit || Model.AllowDelete || Model.AllowView)
                                 {
-                                    <th scope="col" class="row-number-header govuk-table__header" style="width: 80px;">Action</th>
+                                    <th scope="col" class="govuk-table__header">Action</th>
                                 }
                     </tr>
                     <!-- Filter Row -->
@@ -150,7 +157,7 @@
                                     </th>
                                             }
                                         }
-                                        @if (Model.AllowEdit || Model.AllowDelete)
+                                        @if (Model.AllowEdit || Model.AllowDelete || Model.AllowView)
                                         {
                                             <th scope="col"></th>
                                         }
@@ -211,14 +218,14 @@
                                     }
                                 }
                             }
-                            <!-- Edit / Delete Buttons -->
-                            @if (Model.AllowEdit || Model.AllowDelete || Model.AllowCopy)
+                            <!-- Edit / Delete / View Buttons -->
+                            @if (Model.AllowEdit || Model.AllowDelete || Model.AllowCopy || Model.AllowView)
                             {
                                 <td class="govuk-table__cell">
                                     @if (Model.AllowEdit)
                                     {
                                         <button type="button"
-                                                class="btn btn-sm btn-info edit-row-btn"
+                                                class="btn btn-sm edit-row-btn"
                                                 data-id="@GridHelpers.GetPropertyValue(row, Model.KeyProperty)"
                                                 data-edit-function="@Model.EditFunction">
                                             <img src="~/images/edit_gridicon.svg" alt="Edit icon" width="20" height="20" title="Edit">
@@ -236,22 +243,40 @@
                                     @if (Model.AllowDelete)
                                     {
                                         <button type="button"
-                                                class="btn btn-sm btn-danger delete-row-btn"
+                                                class="btn btn-sm delete-row-btn"
                                                 data-id="@GridHelpers.GetPropertyValue(row, Model.KeyProperty)"
                                                 data-delete-function="@Model.DeleteFunction">
                                             <img src="~/images/delete_gridicon.svg" alt="Delete icon" width="20" height="20" title="Delete">
                                         </button>
                                     }
+                                                @if (Model.AllowView)
+                                                {
+                                                    <button type="button"
+                                                            class="btn btn-sm delete-row-btn"
+                                                            data-id="@GridHelpers.GetPropertyValue(row, Model.KeyProperty)"
+                                                            data-delete-function="@Model.ViewFunction">
+                                                        <img src="~/images/view_icon.png" alt="View icon" width="20" height="20" title="View">
+                                                        </button>
+                                                    }
                                 </td>
                             }
                         </tr>
                         rowIndex++;
                     }
+                    @if (Model.Data == null || Model.Data.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="100" class="govuk-table__cell"
+                                style="text-align:center; color:#505a5f; font-style:italic; padding:16px;">
+                                No records found.
+                            </td>
+                        </tr>
+                    }
                 </tbody>
             </table>
         </div>
     </div>
-    <div class="sup_pagination_footer sup_p_0">
+                    <div class="sup_pagination_footer sup_p_0">
         <div class="sup_pagination_wrapper">
             <div class="sup_margin_top_bottom_5_10 sup_flex_center">
                 <label for="recordsPerPage" class="sup_margin_right_5">Records per page  </label>
@@ -501,6 +526,27 @@
                 if (fn && typeof window[fn] === 'function') {
                     window[fn](getSelectedIds());
                 }
+            });
+
+            // Export button click
+            $('#' + gridId + '_exportBtn').on('click', function () {
+                var exportUrl = $(this).data('export-url');
+                if (!exportUrl) return;
+
+                var currentExtraFilters = typeof window['@Model.ExtraFilterMethod'] === 'function'
+                    ? window['@Model.ExtraFilterMethod']()
+                    : {};
+
+                var params = $.extend(
+                    { filter: JSON.stringify(gridManager.getFilterModel()) },
+                    currentExtraFilters
+                );
+
+                var query = Object.keys(params)
+                    .map(function (k) { return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]); })
+                    .join('&');
+
+                window.location.href = exportUrl + '?' + query;
             });
 
             // Edit button click

@@ -1,16 +1,107 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "FPS Apps Landing Page";
+}
+@using System.Security.Claims
+@{
+    // Get display name from claims (try multiple claim types)
+    var displayName = User.FindFirst("name")?.Value 
+                      ?? User.FindFirst(ClaimTypes.GivenName)?.Value 
+                      ?? User.FindFirst(ClaimTypes.Name)?.Value?.Split('@')[0] 
+                      ?? "Unknown User";
+
+    var email = User.FindFirst(ClaimTypes.Name)?.Value 
+                ?? User.FindFirst("preferred_username")?.Value;
+
+    var rolename = User.FindFirst("rolename")?.Value;
+
+    // Check user permissions for each application
+    var hasFpsAccess = User.IsInRole("FPSAdmin") || User.IsInRole("FPSUser");
+    var hasPactAccess = User.IsInRole("PACTUser");
+    var hasPimsAccess = User.IsInRole("PIMSUser") || User.IsInRole("PIMSAdmin") || User.IsInRole("PIMSProjectManager");
+    var hasCostbookAccess = User.IsInRole("CostbookUser") || User.IsInRole("CostbookAdmin");
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<div class="parent">
+    <div class="uklogo">
+        <img src="~/images/govuklog.png" alt="GOV.UK Logo" />
+        <div class="user-info">
+            <span class="user-name">@displayName</span>
+        </div>
+    </div>
+    <div class="tile-wrapper">
+        <div class="defra-logo-div-wrapper">
+
+            <div class="defra-four-app-wrapper">
+
+                <div class="border_left_2 padding_left_10">
+                    <div>
+                        <img src="~/images/defralogo.png" alt="Department for Environment, Food &amp; Rural Affairs">
+                    </div>
+                    <span class="uklogofont govuk-!-font-size-19">
+                        Department<br>
+                        for Environment,
+                        Food &amp; Rural Affairs
+                    </span>
+                </div>
+
+            </div>
 
 
-<div class="d-flex justify-content-center">
-    <a class="btn btn-primary m-2" asp-area="FPS" asp-controller="Home" asp-action="Index">FPS</a>    
-    <a href="#" class="btn btn-secondary m-2">PACT</a>
-    <a href="#" class="btn btn-success m-2">PIMS</a>
-    <a href="#" class="btn btn-danger m-2">Costbook</a>
+        </div>
+        <div class="link-wrapper">
+
+            <div class="tile @(hasFpsAccess ? "" : "tile-disabled")">  
+                @if (hasFpsAccess)
+                {
+                    <a asp-area="FPS" asp-controller="Home" asp-action="Index" class="govuk-link govuk-link--inverse">FPS</a>
+                }
+                else
+                {
+                    <span class="govuk-link govuk-link--inverse" style="cursor: not-allowed; opacity: 0.5;">FPS</span>
+                }
+            </div>
+            <div class="tile @(hasPactAccess ? "" : "tile-disabled")">  
+                @if (hasPactAccess)
+                {
+                    <a asp-area="PACT" asp-controller="Home" asp-action="Index" class="govuk-link govuk-link--inverse">PACT</a>
+                }
+                else
+                {
+                    <span class="govuk-link govuk-link--inverse" style="cursor: not-allowed; opacity: 0.5;">PACT</span>
+                }
+            </div>
+            <div class="tile @(hasPimsAccess ? "" : "tile-disabled")">  
+                @if (hasPimsAccess)
+                {
+                    <a asp-area="PIMS" asp-controller="Home" asp-action="Index" class="govuk-link govuk-link--inverse">PIMS</a>
+                }
+                else
+                {
+                    <span class="govuk-link govuk-link--inverse" style="cursor: not-allowed; opacity: 0.5;">PIMS</span>
+                }
+            </div>
+            <div class="tile @(hasCostbookAccess ? "" : "tile-disabled")">  
+                @if (hasCostbookAccess)
+                {
+                    <a asp-area="Costbook" asp-controller="Projects" asp-action="Index" class="govuk-link govuk-link--inverse">COSTBOOK</a>
+                }
+                else
+                {
+                    <span class="govuk-link govuk-link--inverse" style="cursor: not-allowed; opacity: 0.5;">COSTBOOK</span>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="footerline"></div>
+    <div class="footer-circle-one">
+        <div class="circle1"></div>
+        <div class="circle2"></div>
+        <div class="circle3"></div>
+    </div>
+
+    <div class="footer-circle-two">
+        <div class="circle1"></div>
+        <div class="circle2"></div>
+        <div class="circle3"></div>
+    </div>
 </div>
