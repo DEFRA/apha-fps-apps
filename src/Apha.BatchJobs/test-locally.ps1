@@ -118,6 +118,7 @@ function Run-Native {
     Push-Location $BatchJobsDir
     try {
         dotnet build
+        dotnet test .\Apha.BatchJobs.UnitTests\Apha.BatchJobs.UnitTests.csproj --no-build
         dotnet run --project BatchJobs.csproj -- $JobName
     } finally {
         Pop-Location
@@ -175,8 +176,9 @@ if ($script:ExecutionMode -eq "docker") {
     Write-Host "  4. Stream logs"
 } else {
     Write-Host "  1. Build the .NET project"
-    Write-Host "  2. Run $JobName natively"
-    Write-Host "  3. Validate worker bootstrap, logging, and job execution"
+    Write-Host "  2. Run the local unit test suite"
+    Write-Host "  3. Run $JobName natively"
+    Write-Host "  4. Validate worker bootstrap, logging, and job execution"
 }
 Write-Host ""
 

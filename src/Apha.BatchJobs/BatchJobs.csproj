@@ -17,13 +17,16 @@
     <Compile Remove="ReImagineAnalysis_v4\**\*.cs" />
     <Compile Remove="docs\**\*.cs" />
     <Compile Remove="docs\legacy\**\*.cs" />
+    <Compile Remove="Apha.BatchJobs.UnitTests\**\*.cs" />
     <EmbeddedResource Remove="Archive\**\*" />
     <EmbeddedResource Remove="ReImagineAnalysis_v4\**\*" />
     <EmbeddedResource Remove="docs\**\*" />
     <EmbeddedResource Remove="docs\legacy\**\*" />
+    <EmbeddedResource Remove="Apha.BatchJobs.UnitTests\**\*" />
     <None Include="Archive\**\*" />
     <None Include="ReImagineAnalysis_v4\**\*" />
     <None Include="docs\**\*" />
+    <None Include="Apha.BatchJobs.UnitTests\**\*" />
   </ItemGroup>
 
   <ItemGroup>
