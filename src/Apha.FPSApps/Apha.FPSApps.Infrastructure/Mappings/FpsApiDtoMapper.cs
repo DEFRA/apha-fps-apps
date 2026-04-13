@@ -37,6 +37,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<DiseaseDto, DiseaseRes>().ReverseMap();
             CreateMap<CustomerDto, CustomerRes>().ReverseMap();
             CreateMap<ContractDto, ContractRes>().ReverseMap();
+            CreateMap<ProjectGroupDto, ProjectGroupRes>().ReverseMap();
 
            
 

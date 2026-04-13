@@ -1,0 +1,347 @@
+@using Apha.FPSApps.Web.Areas.FPS.Models
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.FPS.Models.ProgramProjectViewModel
+@{
+    ViewData["Title"] = "Plan Projects Individually";
+}
+
+<main id="main-content">
+    <div class="container-fluid">
+        <!-- Breadcrumb section -->
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full">
+                <div style="padding: 5px 5px; border-bottom: 1px solid #b4b4b4" class="row">
+                    <div style="display: flex; font-size: 14px; align-items: center; justify-content: space-between;">
+                        <div class="col-md-8">
+                            <nav aria-label="Breadcrumb">
+                                <a href="@Url.Action("Index", "Home", new { area = "FPS" })">Home</a>
+                                &gt; Programme Management &gt; Plan Projects Individually
+                            </nav>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;" class="col-md-4">
+                            <span class="govuk-label--s">Programme:</span>
+                            <strong id="resultprogram">@Model.SelectedProgramNo</strong>
+                            <button type="button" class="govuk-button govuk-button--secondary sup_margin_0"
+                                    data-bs-toggle="modal" data-bs-target="#selectProgrammeModal">
+                                Change
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Title section -->
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full">
+                <div class="row" style="display:flex; align-items: center;">
+                    <div class="col-sm-12" style="padding:0px;">
+                        <div style="border-bottom: 2px solid #1d70b8; height:48px;">
+                            <h1 style="padding: 15px 0 5px 17px; font-size:16px; width: 50%; font-weight: 700; float:left; margin: 0;">
+                                Projects within Programme
+                            </h1>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-12">
+                <main class="main-content" style="padding:0;">
+                    <div class="container-fluid" style="padding: 0;">
+                        <div class="row">
+                            <div class="container-fluid" style="padding-left:0px;">
+                                <div style="display: flex; flex-direction: row; align-items: flex-start;">
+
+                                    <!-- Side navigation: Plan vs Actuals -->
+                                    <nav class="sidenav flex-column flex-shrink-0" id="shortnav">
+                                        <button class="toggle-btn ppi-toggle-btn-position" onclick="toggleSidebar()" aria-label="Toggle side navigation">
+                                            <img src="~/images/chevron-left-solid-full.svg" alt="Toggle navigation" width="24">
+                                        </button>
+                                        <ul>
+                                            <li><a class="dropdown-item sidenav-title">Plan vs Actuals</a></li>
+                                            <li><a class="dropdown-item" href="@Url.Action("Index", "ProgramStaffPlan", new { area = "FPS", programNo = Model.SelectedProgramNo })">Staff</a></li>
+                                            <li><a class="dropdown-item" href="#">Tests</a></li>
+                                            <li><a class="dropdown-item" href="@Url.Action("Index", "ProgramAnimalPlan", new { area = "FPS", programNo = Model.SelectedProgramNo })">Animals</a></li>
+                                            <li><a class="dropdown-item" href="#">Additional</a></li>
+                                        </ul>
+                                    </nav>
+
+                                    <div style="display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; margin: 0 0 5px 8px;">
+
+                                        <!-- Selected project bar -->
+                                        <div class="govuk-grid-row">
+                                            <div class="govuk-grid-column-full mt-2">
+                                                <div class="project-code-section" style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                                                    <label class="govuk-label--s" for="selected-project-input">Selected project</label>
+                                                    <input type="text" id="selected-project-input" value=""
+                                                           placeholder="Project" readonly
+                                                           class="govuk-input govuk-!-font-size-16"
+                                                           style="width:160px;">
+                                                    <input type="hidden" id="hdnSelectedProject" value="" />
+                                                    <a id="btnPlan" class="govuk-button sup_margin_0" style="display:none;"
+                                                       href="@Url.Action("Index", "ProjectPlanning", new { area = "FPS" })">
+                                                        <i class="fa fa-cogs" aria-hidden="true"></i> Plan
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Projects DataGrid -->
+                                        <div class="govuk-grid-row">
+                                            <div class="govuk-grid-column-full mt-2">
+                                                <div id="gridContainer_@Model.ProjectsGrid.GridId" style="padding: 5px;">
+                                                    @await Html.PartialAsync("_DataGrid", Model.ProjectsGrid)
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Financial summary footer -->
+                                        <div class="govuk-grid-column-full mt-2">
+                                            <footer class="financial-summary">
+                                                <div class="summary-row govuk-!-margin-top-0 govuk-!-margin-bottom-0">
+                                                    <div class="summary-item">
+                                                        <label class="govuk-label--s" for="summary-total-budget">Total Budget:</label>
+                                                        <input type="text" id="summary-total-budget" readonly
+                                                               class="govuk-input govuk-!-font-size-16 text-AlignRight" value="£0">
+                                                    </div>
+                                                    <div class="summary-item">
+                                                        <label class="govuk-label--s" for="summary-total-cost-inc">Total Cost Inc:</label>
+                                                        <input type="text" id="summary-total-cost-inc" readonly
+                                                               class="govuk-input govuk-!-font-size-16 text-AlignRight" value="£0">
+                                                    </div>
+                                                    <div class="summary-item">
+                                                        <label class="govuk-label--s" for="summary-total-trans-inc">Total Trans Inc:</label>
+                                                        <input type="text" id="summary-total-trans-inc" readonly
+                                                               class="govuk-input govuk-!-font-size-16 text-AlignRight" value="£0">
+                                                    </div>
+                                                    <div class="summary-item">
+                                                        <label class="govuk-label--s" for="summary-total-cw-debit">Total CW Debit:</label>
+                                                        <input type="text" id="summary-total-cw-debit" readonly
+                                                               class="govuk-input govuk-!-font-size-16 text-AlignRight" value="£0">
+                                                    </div>
+                                                </div>
+                                            </footer>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Select Programme modal -->
+<div class="modal fade" id="selectProgrammeModal" data-bs-backdrop="static" data-bs-keyboard="false"
+     tabindex="-1" aria-labelledby="selectProgrammeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="display-flex">
+                    <div class="col sup_margin_0">
+                        <label for="select_program" class="govuk-label">Select a Programme</label>
+                        <select class="govuk-select govuk-!-font-size-16 w-100" id="select_program"
+                                asp-items="Model.ProgrammeList" asp-for="SelectedProgramNo">
+                            <option value="" disabled>-- Select a Programme --</option>
+                        </select>
+                        <div id="select_program_error" class="govuk-error-message" style="display:none;">
+                            Please select a programme
+                        </div>
+                    </div>
+                    <div class="ms-3">
+                        <button class="govuk-button sup_margin_0 govuk-!-padding-top-1 govuk-!-padding-bottom-1"
+                                type="button" onclick="selectProgramme()">GO</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/ajax-form-validation.js"></script>
+    <script>
+        var currentProgramNo = '@Html.Raw(Model.SelectedProgramNo)';
+
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidenav');
+            if (sidebar) sidebar.classList.toggle('collapsed');
+        }
+
+        function selectProgramme() {
+            const selectEl = document.getElementById('select_program');
+            const errorEl = document.getElementById('select_program_error');
+            const val = (selectEl.value || '').trim();
+
+            if (!val) {
+                errorEl.style.display = 'block';
+                selectEl.focus();
+                return;
+            }
+
+            errorEl.style.display = 'none';
+            currentProgramNo = val;
+
+            const selectedText = selectEl.options[selectEl.selectedIndex].text;
+            document.getElementById('resultprogram').textContent = selectedText;
+
+            const modalEl = document.getElementById('selectProgrammeModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+
+            resetSelectedProject();
+            window['gridManager_@Model.ProjectsGrid.GridId'].reloadGrid({ page: 1 });
+        }
+
+        function getProgramProjectExtraFilters() {
+            return { programNo: currentProgramNo };
+        }
+
+        function selectProgramProject(btn) {
+            const id = $(btn).data('id');
+            document.getElementById('selected-project-input').value = id;
+            document.getElementById('hdnSelectedProject').value = id;
+
+            const planBtn = document.getElementById('btnPlan');
+            if (planBtn) {
+                planBtn.href = '@Url.Action("Index", "ProjectPlanning", new { area = "FPS" })?parentProject=' + encodeURIComponent(id);
+                planBtn.style.display = '';
+            }
+        }
+
+        function resetSelectedProject() {
+            document.getElementById('selected-project-input').value = '';
+            document.getElementById('hdnSelectedProject').value = '';
+            const planBtn = document.getElementById('btnPlan');
+            if (planBtn) planBtn.style.display = 'none';
+        }
+
+        function editProgramProject(btn) {
+            const id = $(btn).data('id');
+            $.ajax({
+                url: '/FPS/ProgramProject/Edit',
+                type: 'GET',
+                data: { parentProject: id },
+                success: function (html) {
+                    $('#modaPopupBody').html(html);
+                    $('#modalPopup').addClass('show');
+                },
+                error: function () {
+                    alert('An error occurred while loading the edit form.');
+                }
+            });
+        }
+
+        function updateProgramProject() {
+            clearValidationErrors('#modaPopupBody');
+            var form = $('#editProgramProjectForm');
+
+            if (!isFormValid(form)) {
+                displayClientValidationErrors(form, '#modaPopupBody');
+                return;
+            }
+
+            var data = {
+                ParentProject:     form.find('[name="ParentProject"]').val(),
+                ProjectTitle:      form.find('[name="ProjectTitle"]').val(),
+                Manager:           form.find('[name="Manager"]').val(),
+                Program:           form.find('[name="Program"]').val(),
+                Customer:          form.find('[name="Customer"]').val(),
+                ProjectGroup:      form.find('[name="ProjectGroup"]').val(),
+                Contract:          form.find('[name="Contract"]').val(),
+                Disease:           form.find('[name="Disease"]').val(),
+                ProjectStatus:     form.find('[name="ProjectStatus"]').val(),
+                BudgetCvl:         parseDecimal(form.find('[name="BudgetCvl"]').val()),
+                BudgetExt:         parseDecimal(form.find('[name="BudgetExt"]').val()),
+                TransferIncome:    parseDecimal(form.find('[name="TransferIncome"]').val()),
+                PlanCaseWorkDebit: parseDecimal(form.find('[name="PlanCaseWorkDebit"]').val()),
+                IsDefraProject:    form.find('[name="IsDefraProject"]').val()
+            };
+
+            $.ajax({
+                url: '@Url.Action("Edit", "ProgramProject", new { area = "FPS" })',
+                type: 'POST',
+                data: JSON.stringify(data),
+                contentType: 'application/json; charset=utf-8',
+                success: function (result) {
+                    if (result.success) {
+                        alert(result.message);
+                        closeModal();
+                        window['gridManager_@Model.ProjectsGrid.GridId'].reloadGrid({ page: 1 });
+                    } else {
+                        displayServerValidationErrors(result.errors, result.message, '#modaPopupBody');
+                    }
+                },
+                error: function (xhr) {
+                    if (xhr.status === 400 && xhr.responseJSON) {
+                        displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
+                    } else {
+                        alert('An error occurred while saving.');
+                    }
+                }
+            });
+        }
+
+        function deleteProgramProject(btn) {
+            const id = $(btn).data('id');
+            if (!confirm('Are you sure you want to delete this project?')) return;
+
+            $.ajax({
+                url: '/FPS/ProgramProject/Delete',
+                type: 'DELETE',
+                data: { parentProject: id },
+                success: function (response) {
+                    if (response.success) {
+                        window['gridManager_@Model.ProjectsGrid.GridId'].reloadGrid({ page: 1 });
+                        recalculateTotals();
+                    } else {
+                        alert(response.message || 'Failed to delete project.');
+                    }
+                },
+                error: function () {
+                    alert('An error occurred while deleting.');
+                }
+            });
+        }
+
+        function parseDecimal(val) {
+            if (!val) return 0;
+            return parseFloat(val.replace(/[£,]/g, '').trim()) || 0;
+        }
+
+        function formatGbp(value) {
+            return '£' + (value || 0).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function recalculateTotals() {
+            let totalBudget = 0, totalCostInc = 0, totalTransInc = 0, totalCwDebit = 0;
+
+            document.querySelectorAll('#gridContainer_@Model.ProjectsGrid.GridId tbody tr').forEach(function (row) {
+                totalBudget   += parseDecimal(row.querySelector('[data-col="BudgetCvl"]')?.textContent || '');
+                totalCostInc  += parseDecimal(row.querySelector('[data-col="BudgetExt"]')?.textContent || '');
+                totalTransInc += parseDecimal(row.querySelector('[data-col="TransferIncome"]')?.textContent || '');
+                totalCwDebit  += parseDecimal(row.querySelector('[data-col="PlanCaseWorkDebit"]')?.textContent || '');
+            });
+
+            document.getElementById('summary-total-budget').value    = formatGbp(totalBudget);
+            document.getElementById('summary-total-cost-inc').value  = formatGbp(totalCostInc);
+            document.getElementById('summary-total-trans-inc').value = formatGbp(totalTransInc);
+            document.getElementById('summary-total-cw-debit').value  = formatGbp(totalCwDebit);
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            if (currentProgramNo) {
+                window['gridManager_@Model.ProjectsGrid.GridId'].reloadGrid({ page: 1 });
+            }
+
+            const gridContainer = document.getElementById('gridContainer_@Model.ProjectsGrid.GridId');
+            if (gridContainer) {
+                new MutationObserver(recalculateTotals).observe(gridContainer, { childList: true, subtree: true });
+            }
+        });
+    </script>
+}

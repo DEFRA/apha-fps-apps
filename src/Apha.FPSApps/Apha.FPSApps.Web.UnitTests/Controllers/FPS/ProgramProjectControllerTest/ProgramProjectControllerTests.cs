@@ -16,13 +16,17 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramProjectControllerTes
     {
         private readonly IMapper _mapper;
         private readonly IProjectService _projectService;
+        private readonly IProgramService _programService;
+        private readonly IEmployeeService _employeeService;
         private readonly ProgramProjectController _controller;
 
         public ProgramProjectControllerTests()
         {
             _mapper = Substitute.For<IMapper>();
             _projectService = Substitute.For<IProjectService>();
-            _controller = new ProgramProjectController(_mapper, _projectService);
+            _programService = Substitute.For<IProgramService>();
+            _employeeService = Substitute.For<IEmployeeService>();
+            _controller = new ProgramProjectController(_mapper, _projectService, _programService, _employeeService);
         }
 
         private static T? GetJsonResultValue<T>(JsonResult jsonResult)

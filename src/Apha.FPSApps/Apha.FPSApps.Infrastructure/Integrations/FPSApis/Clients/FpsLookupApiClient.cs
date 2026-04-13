@@ -95,5 +95,24 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                     new ApiMetaDto());
             }
         }
+
+        public async Task<ApiResponseDto<List<ProjectGroupDto>>> GetAllProjectGroupsAsync()
+        {
+            try
+            {
+                var response = await _http.GetAsync<List<ProjectGroupRes>>(FpsApiEndpoints.GetAllProjectGroups);
+                if (response.Success)
+                    return _mapper.Map<ApiResponseDto<List<ProjectGroupDto>>>(response);
+
+                var dto = _mapper.Map<ApiResponseDto<List<ProjectGroupDto>>>(response);
+                return ApiResponseDto<List<ProjectGroupDto>>.FailureResponse(dto.Errors, dto.Meta);
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<List<ProjectGroupDto>>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to retrieve project groups", Code = InternalCodeError }],
+                    new ApiMetaDto());
+            }
+        }
     }
 }

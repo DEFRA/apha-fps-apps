@@ -109,6 +109,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             project.FpsYear = _requestContext.FpsYear;
             _dbContext.Entry(project).State = EntityState.Modified;
+            _dbContext.Entry(project).Property(p => p.IncomeAccountCode).IsModified = false;
             await _dbContext.SaveChangesAsync();
             return project;
         }
@@ -176,6 +177,9 @@ namespace Apha.FPS.DataAccess.Repositories
 
             if (dict.TryGetValue("JobDescription", out var jobDescription) && jobDescription != null)
                 query = query.Where(x => x.ProjectTitle!.Contains(jobDescription.ToString()!));
+
+            if (dict.TryGetValue("ParentProject", out var parentProject) && parentProject != null)
+                query = query.Where(x => x.ParentProject.Contains(parentProject.ToString()!));
 
             return query;
         }
