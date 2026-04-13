@@ -86,6 +86,10 @@ namespace Apha.FPS.DataAccess.Data
                 .HasMaxLength(50)
                 .UseCollation(Latin1GeneralCiAs)
                 .HasColumnName("username");
+                entity.Property(e => e.UserEmail)
+                .HasMaxLength(255)
+                .UseCollation("latin1_general_ci_as")
+                .HasColumnName("useremail");
             });
 
             modelBuilder.Entity<UserProgram>(entity =>
