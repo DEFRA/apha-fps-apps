@@ -11,6 +11,10 @@
 
 set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+JOB_NAME="HealthCheck"
+NO_PROMPT="false"
+NATIVE="false"
+EXECUTION_MODE=""
 
 # Colors for output
 RED='\033[0;31m'
@@ -41,16 +45,43 @@ function print_info() {
 function test_docker() {
     print_info "Checking Docker..."
     if ! command -v docker &> /dev/null; then
-        print_error "Docker not found. Please install Docker Desktop."
-        exit 1
+        print_error "Docker not found."
+        return 1
     fi
     
     if ! docker ps &> /dev/null; then
-        print_error "Docker daemon not running. Please start Docker."
-        exit 1
+        print_error "Docker daemon not running."
+        return 1
     fi
     
     print_success "Docker is available"
+    return 0
+}
+
+function detect_execution_mode() {
+    if [ "$NATIVE" = "true" ]; then
+        echo "native"
+        return
+    fi
+
+    if ! test_docker; then
+        echo "native"
+        return
+    fi
+
+    DOCKER_OS_TYPE=$(docker info --format '{{.OSType}}' 2>/dev/null || echo "")
+    if [ "$DOCKER_OS_TYPE" = "linux" ]; then
+        echo "docker"
+        return
+    fi
+
+    if [ "$DOCKER_OS_TYPE" = "windows" ]; then
+        print_info "Docker daemon is running in Windows container mode; native .NET mode will be used instead."
+    else
+        print_info "Unable to determine Docker container mode; native .NET mode will be used instead."
+    fi
+
+    echo "native"
 }
 
 function stop_containers() {
@@ -101,6 +132,14 @@ function build_and_run() {
     popd > /dev/null
 }
 
+function run_native() {
+    print_header "Running Native .NET Validation"
+    pushd "$SCRIPT_DIR" > /dev/null
+    dotnet build
+    dotnet run --project BatchJobs.csproj -- "$JOB_NAME"
+    popd > /dev/null
+}
+
 function show_status() {
     echo ""
     print_header "Container Status Check"
@@ -129,40 +168,94 @@ function show_status() {
 }
 
 # Main script
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        stop)
+            ACTION="stop"
+            shift
+            ;;
+        logs)
+            ACTION="logs"
+            shift
+            ;;
+        clean)
+            ACTION="clean"
+            shift
+            ;;
+        --native)
+            NATIVE="true"
+            shift
+            ;;
+        --no-prompt)
+            NO_PROMPT="true"
+            shift
+            ;;
+        --job)
+            JOB_NAME="$2"
+            shift 2
+            ;;
+        *)
+            shift
+            ;;
+    esac
+done
+
 clear
 echo -e "${CYAN}Batch Jobs - Local Testing Script${NC} $(date '+%Y-%m-%d %H:%M:%S')"
 
-test_docker
+EXECUTION_MODE=$(detect_execution_mode)
+print_info "Execution mode: $EXECUTION_MODE"
 
-if [ "$1" = "stop" ]; then
-    stop_containers
+if [ "$ACTION" = "stop" ]; then
+    if [ "$EXECUTION_MODE" = "docker" ]; then
+        stop_containers
+    else
+        print_info "Stop is only applicable in docker mode"
+    fi
     exit 0
 fi
 
-if [ "$1" = "logs" ]; then
-    show_logs
+if [ "$ACTION" = "logs" ]; then
+    if [ "$EXECUTION_MODE" = "docker" ]; then
+        show_logs
+    else
+        print_info "Logs are only applicable in docker mode"
+    fi
     exit 0
 fi
 
-if [ "$1" = "clean" ]; then
+if [ "$ACTION" = "clean" ] && [ "$EXECUTION_MODE" = "docker" ]; then
     clean_environment
 fi
 
 echo ""
 print_info "This script will:"
-print_info "  1. Build Docker image (BatchJobs)"
-print_info "  2. Start PostgreSQL container"
-print_info "  3. Run HealthCheck batch job"
-print_info "  4. Stream logs to console"
-print_info "  5. Exit when job completes"
+if [ "$EXECUTION_MODE" = "docker" ]; then
+    print_info "  1. Build Docker image (BatchJobs)"
+    print_info "  2. Start PostgreSQL container"
+    print_info "  3. Run $JOB_NAME batch job"
+    print_info "  4. Stream logs to console"
+    print_info "  5. Exit when job completes"
+else
+    print_info "  1. Build the .NET project"
+    print_info "  2. Run $JOB_NAME natively"
+    print_info "  3. Validate worker bootstrap, logging, and job execution"
+fi
 echo ""
-print_info "You can Ctrl+C to stop viewing logs (containers keep running)"
+if [ "$EXECUTION_MODE" = "docker" ]; then
+    print_info "You can Ctrl+C to stop viewing logs (containers keep running)"
+fi
 echo ""
-read -p "Press Enter to continue..." || true
+if [ "$NO_PROMPT" != "true" ]; then
+    read -p "Press Enter to continue..." || true
+fi
 
-build_and_run
-
-show_status
+if [ "$EXECUTION_MODE" = "docker" ]; then
+    build_and_run
+    show_status
+else
+    run_native
+fi
 
 echo ""
 print_info "TIP: View logs again with: ./test-locally.sh logs"
