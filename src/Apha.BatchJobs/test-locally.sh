@@ -136,6 +136,7 @@ function run_native() {
     print_header "Running Native .NET Validation"
     pushd "$SCRIPT_DIR" > /dev/null
     dotnet build
+    dotnet test ./Apha.BatchJobs.UnitTests/Apha.BatchJobs.UnitTests.csproj --no-build
     dotnet run --project BatchJobs.csproj -- "$JOB_NAME"
     popd > /dev/null
 }
@@ -238,8 +239,9 @@ if [ "$EXECUTION_MODE" = "docker" ]; then
     print_info "  5. Exit when job completes"
 else
     print_info "  1. Build the .NET project"
-    print_info "  2. Run $JOB_NAME natively"
-    print_info "  3. Validate worker bootstrap, logging, and job execution"
+    print_info "  2. Run the local unit test suite"
+    print_info "  3. Run $JOB_NAME natively"
+    print_info "  4. Validate worker bootstrap, logging, and job execution"
 fi
 echo ""
 if [ "$EXECUTION_MODE" = "docker" ]; then

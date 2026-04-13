@@ -17,13 +17,14 @@ public static class ServiceCollectionSetup
 {
     /// <summary>Creates and returns the configured <see cref="IServiceCollection"/> for the worker host.</summary>
     /// <returns>A populated <see cref="IServiceCollection"/> ready for the host to build.</returns>
-    public static IServiceCollection CreateDefaultServices()
+    public static IServiceCollection CreateDefaultServices(string? configurationBasePath = null)
     {
         var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";
+        var basePath = configurationBasePath ?? Directory.GetCurrentDirectory();
         
         // Build configuration from appsettings.json and environment variables
         var config = new ConfigurationBuilder()
-            .SetBasePath(Directory.GetCurrentDirectory())
+            .SetBasePath(basePath)
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
             .AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: true)
             .AddEnvironmentVariables()
@@ -77,6 +78,9 @@ public static class ServiceCollectionSetup
 
         // Register job factory
         services.AddScoped<IBatchJobFactory>(sp => new BatchJobFactory(sp, jobRegistry));
+
+        // Register raw configuration for consumers that need direct access.
+        services.AddSingleton<IConfiguration>(config);
 
         return services;
 
