@@ -9,6 +9,10 @@ This guide walks you through testing the BatchJobs foundation layer locally. You
 - See the container exit when complete
 - View all logs
 
+The recommended mode depends on the host:
+- Linux-capable Docker host: containerized validation with `docker-compose`
+- Windows Server host: native `.NET` validation via the local test script fallback
+
 ## Prerequisites
 
 ✅ **Required:**
@@ -23,7 +27,27 @@ This guide walks you through testing the BatchJobs foundation layer locally. You
 
 ## Quick Start (Fastest Way)
 
-### 1. Build and Run Everything with Docker Compose
+### 1. Build and Run Everything with the Local Test Script
+
+Recommended command:
+
+```powershell
+cd src/Apha.BatchJobs
+./test-locally.ps1 -NoPrompt
+```
+
+On Linux/macOS:
+
+```bash
+cd src/Apha.BatchJobs
+./test-locally.sh --no-prompt
+```
+
+What happens:
+- On Linux Docker hosts, the script uses `docker-compose`
+- On Windows Server / Windows container hosts, the script falls back to native `.NET`
+
+### 2. Build and Run Everything with Docker Compose
 
 The easiest way - one command spins up PostgreSQL + runs the batch job:
 
@@ -156,6 +180,8 @@ Exit codes:
 ---
 
 ## Advanced Testing (Local Without Docker)
+
+This is the recommended local mode on Windows Server hosts where Docker is running in Windows container mode.
 
 ### Build and Run Locally
 

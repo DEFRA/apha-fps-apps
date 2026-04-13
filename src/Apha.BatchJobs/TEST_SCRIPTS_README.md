@@ -1,6 +1,9 @@
 # Quick Start Testing Scripts
 
-Two one-command scripts to test the foundation layer locally:
+Two one-command scripts to test the foundation layer locally. They now auto-select the best mode for the host:
+
+- Linux Docker host: containerized validation with docker-compose
+- Windows Server / Windows containers host: native .NET validation fallback
 
 ## PowerShell (Windows)
 
@@ -15,7 +18,10 @@ cd src/Apha.BatchJobs
 
 ### Commands:
 ```powershell
-./test-locally.ps1                        # Build, start services, run job
+./test-locally.ps1                        # Auto-select docker or native mode
+./test-locally.ps1 -NoPrompt              # Non-interactive mode
+./test-locally.ps1 -Native                # Force native .NET mode
+./test-locally.ps1 -JobName HealthCheck   # Run a specific job
 ./test-locally.ps1 -LogsOnly              # View logs from running containers
 ./test-locally.ps1 -Stop                  # Stop all containers
 ./test-locally.ps1 -Clean                 # Clean and restart fresh
@@ -37,7 +43,10 @@ chmod +x test-locally.sh
 
 ### Commands:
 ```bash
-./src/Apha.BatchJobs/test-locally.sh         # Build, start services, run job
+./src/Apha.BatchJobs/test-locally.sh         # Auto-select docker or native mode
+./src/Apha.BatchJobs/test-locally.sh --no-prompt
+./src/Apha.BatchJobs/test-locally.sh --native
+./src/Apha.BatchJobs/test-locally.sh --job HealthCheck
 ./src/Apha.BatchJobs/test-locally.sh logs    # View logs from running containers
 ./src/Apha.BatchJobs/test-locally.sh stop    # Stop all containers
 ./src/Apha.BatchJobs/test-locally.sh clean   # Clean and restart fresh
@@ -45,35 +54,27 @@ chmod +x test-locally.sh
 
 ## What Happens
 
-1. ✓ Checks Docker is running
-2. ✓ Builds BatchJobs Docker image
-3. ✓ Starts PostgreSQL container
-4. ✓ Starts batch job container
-5. ✓ Streams live logs
-6. ✓ Container exits when job completes
-7. ✓ Shows exit code (0 = success)
+1. Checks host/container mode
+2. Uses Docker when Linux containers are available
+3. Falls back to native `.NET` when Docker is unavailable or in Windows container mode
+4. Runs the `HealthCheck` job and prints logs
+5. Leaves Docker-only commands available when docker mode is active
 
 ## Expected Output
 
 ```
+Execution mode: native
+
 ========================================
-Starting Services with docker-compose
+Running Native .NET Validation
 ========================================
 
-Starting PostgreSQL and Batch Job...
-[+] Building...
-batch-jobs | ===========================================
-batch-jobs | Batch Jobs Worker - Starting
-batch-jobs | ===========================================
-batch-jobs | Timestamp: 2026-04-10 12:30:45.123
-batch-jobs | ProcessId: 1234
-batch-jobs | Available jobs: HealthCheck
-batch-jobs | 
-batch-jobs | === HealthCheck Job Started ===
-batch-jobs | Phase 1: Validating configuration...
+[INF] Batch Jobs Worker - Starting
+[INF] Requested job: HealthCheck
+[INF] === HealthCheck Job Started ===
+[INF] Phase 1: Validating configuration...
 ...
-batch-jobs | === HealthCheck Job Completed Successfully ===
-batch-jobs exited with code 0
+[INF] === HealthCheck Job Completed Successfully ===
 ```
 
 ## Troubleshooting
@@ -93,9 +94,13 @@ chmod +x test-locally.sh
 ```
 
 ### Docker not running
-- Start Docker Desktop
-- Wait for "Docker Engine is running"
-- Run script again
+- On Linux container hosts, start Docker and rerun the script.
+- On Windows Server hosts, the script will fall back to native mode automatically.
+
+### Windows Server host
+- This repo targets Linux containers for AWS ECS Fargate.
+- On Windows Server, use the script's native fallback for local validation.
+- Use a Linux-capable host or CI runner for container-image validation.
 
 ### Port already in use
 ```bash
