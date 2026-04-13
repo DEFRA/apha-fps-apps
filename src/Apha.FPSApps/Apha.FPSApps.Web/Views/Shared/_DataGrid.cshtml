@@ -10,7 +10,7 @@
                     @if (Model.AllowExport)
                     {
                         <button type="button" class="govuk-button govuk-button--secondary sup_gov_blue_bg sup_margin_0 sup_p_8"
-                                id="@($"{Model.GridId}_exportBtn")" data-export-url="@Model.ExportUrl">
+                                id="@($"{Model.GridId}_exportBtn")" data-export-url="@Model.ExportUrl" allow-edit ="true">
                             <i class="fa fa-file-excel-o"></i> Excel Export
                         </button>
                     }
