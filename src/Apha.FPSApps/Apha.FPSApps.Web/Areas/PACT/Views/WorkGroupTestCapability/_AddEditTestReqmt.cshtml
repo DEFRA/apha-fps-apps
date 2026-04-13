@@ -38,7 +38,7 @@
                     <label class="govuk-label govuk-!-font-weight-bold" for="TestCode">Test Code:</label>
                     @if (isEdit)
                     {
-                        <select class="govuk-select govuk-!-font-size-16" asp-for="TestCode"
+                        <select class="govuk-select govuk-!-font-size-16" asp-for="TestCode" disabled
                                 asp-items="testorProductOptions" style="width:100%;">
                             <option value="">-- Select Test Code --</option>
                         </select>
@@ -59,7 +59,7 @@
                 <div class="govuk-form-group sup_margin_bottom_10">
                     <label class="govuk-label govuk-!-font-weight-bold" for="ProjectBuyerCode">Project:</label>
                     <select class="govuk-select govuk-!-font-size-16" id="ProjectBuyerCode" 
-                            name="ProjectBuyerCode" style="width:100%;" required
+                            name="ProjectBuyerCode" style="width:100%;" @(isEdit ? "disabled" : "required")
                             onchange="onTestReqmtProjectChange(this, @isEdit.ToString().ToLower())">
                         <option value="">-- Select Project --</option>
                         @foreach (var p in projects)
