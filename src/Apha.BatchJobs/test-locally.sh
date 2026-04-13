@@ -10,6 +10,7 @@
 #
 
 set -e
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Colors for output
 RED='\033[0;31m'
@@ -54,35 +55,36 @@ function test_docker() {
 
 function stop_containers() {
     print_header "Stopping Containers"
-    cd src/Apha.BatchJobs
+    pushd "$SCRIPT_DIR" > /dev/null
     docker-compose down 2>/dev/null || true
-    cd - > /dev/null
+    popd > /dev/null
     print_success "Containers stopped"
 }
 
 function clean_environment() {
     print_header "Cleaning Environment"
     print_info "Removing containers and volumes..."
-    cd src/Apha.BatchJobs
+    pushd "$SCRIPT_DIR" > /dev/null
     docker-compose down -v 2>/dev/null || true
     docker-compose rm -f 2>/dev/null || true
-    cd - > /dev/null
+    popd > /dev/null
     print_success "Environment cleaned"
 }
 
 function show_logs() {
     print_header "Showing Logs"
-    cd src/Apha.BatchJobs
+    pushd "$SCRIPT_DIR" > /dev/null
     docker-compose logs -f batch-jobs
-    cd - > /dev/null
+    popd > /dev/null
 }
 
 function build_and_run() {
     print_header "Building Docker Image"
     
-    cd src/Apha.BatchJobs
+    pushd "$SCRIPT_DIR" > /dev/null
     
     if ! docker-compose build; then
+        popd > /dev/null
         print_error "Docker build failed"
         exit 1
     fi
@@ -96,14 +98,14 @@ function build_and_run() {
     echo ""
     
     docker-compose up --no-build
-    cd - > /dev/null
+    popd > /dev/null
 }
 
 function show_status() {
     echo ""
     print_header "Container Status Check"
     
-    cd src/Apha.BatchJobs
+    pushd "$SCRIPT_DIR" > /dev/null
     
     if docker-compose ps -q | grep -q .; then
         docker-compose ps
@@ -123,7 +125,7 @@ function show_status() {
         print_info "No containers running"
     fi
     
-    cd - > /dev/null
+    popd > /dev/null
 }
 
 # Main script

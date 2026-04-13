@@ -5,21 +5,31 @@ Two one-command scripts to test the foundation layer locally:
 ## PowerShell (Windows)
 
 ```powershell
+# From repo root (recommended)
+./test-locally.ps1
+
+# Or from BatchJobs folder
 cd src/Apha.BatchJobs
 ./test-locally.ps1
 ```
 
 ### Commands:
 ```powershell
-./test-locally.ps1                # Build, start services, run job
-./test-locally.ps1 -LogsOnly      # View logs from running containers
-./test-locally.ps1 -Stop          # Stop all containers
-./test-locally.ps1 -Clean         # Clean and restart fresh
+./test-locally.ps1                        # Build, start services, run job
+./test-locally.ps1 -LogsOnly              # View logs from running containers
+./test-locally.ps1 -Stop                  # Stop all containers
+./test-locally.ps1 -Clean                 # Clean and restart fresh
+./src/Apha.BatchJobs/test-locally.ps1     # Direct script path from repo root
 ```
 
 ## Bash (macOS / Linux)
 
 ```bash
+# From repo root
+chmod +x src/Apha.BatchJobs/test-locally.sh
+./src/Apha.BatchJobs/test-locally.sh
+
+# Or from BatchJobs folder
 cd src/Apha.BatchJobs
 chmod +x test-locally.sh
 ./test-locally.sh
@@ -27,10 +37,10 @@ chmod +x test-locally.sh
 
 ### Commands:
 ```bash
-./test-locally.sh          # Build, start services, run job
-./test-locally.sh logs     # View logs from running containers
-./test-locally.sh stop     # Stop all containers
-./test-locally.sh clean    # Clean and restart fresh
+./src/Apha.BatchJobs/test-locally.sh         # Build, start services, run job
+./src/Apha.BatchJobs/test-locally.sh logs    # View logs from running containers
+./src/Apha.BatchJobs/test-locally.sh stop    # Stop all containers
+./src/Apha.BatchJobs/test-locally.sh clean   # Clean and restart fresh
 ```
 
 ## What Happens
