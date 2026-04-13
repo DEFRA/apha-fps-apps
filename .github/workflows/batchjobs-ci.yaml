@@ -1,0 +1,120 @@
+name: BatchJobs CI
+on:
+  push:
+    branches:
+      - 'feature/*'
+      - 'fix/*'
+      - 'docs/*'
+      - main
+    paths:
+      - 'src/Apha.BatchJobs/**'
+      - '.github/workflows/batchjobs-ci.yaml'
+  workflow_dispatch:
+
+permissions: {}
+
+env:
+  BATCHJOBS_PROJECT: src/Apha.BatchJobs/BatchJobs.csproj
+  BATCHJOBS_WORKDIR: src/Apha.BatchJobs
+  ECR_REPOSITORY: apha/batchjobs
+
+jobs:
+  build-smoke-and-image:
+    name: Build, Smoke Test, and Container Build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      should_push: ${{ steps.check_commit.outputs.should_push }}
+      image_tag: ${{ steps.imgtag.outputs.image_tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore ${{ env.BATCHJOBS_PROJECT }}
+
+      - name: Build
+        run: dotnet build ${{ env.BATCHJOBS_PROJECT }} --configuration Release --no-restore
+
+      - name: Native smoke test
+        working-directory: ${{ env.BATCHJOBS_WORKDIR }}
+        run: dotnet run --project BatchJobs.csproj --configuration Release --no-build -- HealthCheck
+
+      - name: Check last commit message for 'ecrpush'
+        id: check_commit
+        shell: bash
+        run: |
+          COMMIT_MSG="$(git log -1 --pretty=%B)"
+          echo "Last commit message: $COMMIT_MSG"
+          if [[ "$COMMIT_MSG" == *"ecrpush"* ]]; then
+            echo "should_push=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_push=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Compose image tag
+        id: imgtag
+        shell: bash
+        run: |
+          git fetch --tags
+          latest_tag=$(git describe --tags "$(git rev-list --tags --max-count=1)" 2>/dev/null || echo "")
+          if [ -z "$latest_tag" ]; then
+            latest_tag="v0.0.0"
+          fi
+          sha="${GITHUB_SHA::8}"
+          image_tag="${latest_tag}-dev-${sha}"
+          echo "image_tag=$image_tag" >> "$GITHUB_OUTPUT"
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Linux container image
+        working-directory: ${{ env.BATCHJOBS_WORKDIR }}
+        run: docker build --file Dockerfile --tag batchjobs-ci:${{ steps.imgtag.outputs.image_tag }} .
+
+      - name: Container smoke test
+        working-directory: ${{ env.BATCHJOBS_WORKDIR }}
+        run: docker run --rm -e ASPNETCORE_ENVIRONMENT=Development batchjobs-ci:${{ steps.imgtag.outputs.image_tag }} HealthCheck
+
+  push-image:
+    name: Push BatchJobs image to ECR
+    needs: build-smoke-and-image
+    if: needs.build-smoke-and-image.outputs.should_push == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ secrets.AWS_ENV_REGION }}
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ENV_ACCOUNT }}:role/${{ secrets.AWS_ENV_ROLE }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push image
+        working-directory: ${{ env.BATCHJOBS_WORKDIR }}
+        env:
+          IMAGE_TAG: ${{ needs.build-smoke-and-image.outputs.image_tag }}
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          IMAGE_NAME="$ECR_REGISTRY/${ECR_REPOSITORY}"
+          docker build --file Dockerfile --tag "$IMAGE_NAME:$IMAGE_TAG" .
+          docker push "$IMAGE_NAME:$IMAGE_TAG"
