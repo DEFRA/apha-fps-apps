@@ -1,5 +1,121 @@
 # Foundation Layer Testing Summary
 
+## What The Foundation Does Today
+
+In simple terms, the current BatchJobs foundation is the minimum working shell for running batch jobs in a controlled way.
+
+Right now it does these things:
+- Loads configuration from `appsettings.json`, environment-specific settings, and environment variables.
+- Creates the dependency injection container so the app knows how to build its services.
+- Sets up Serilog logging so every run prints a clear execution trail.
+- Registers a job factory that can find a job handler by name.
+- Runs a sample job called `HealthCheck`.
+- Returns clear exit codes for success, expected job-selection errors, cancellation, and unexpected failures.
+
+What it does not do yet:
+- It does not execute real business batch logic.
+- It does not yet write execution history to the database during the health check.
+- It does not yet perform real lock acquisition during the health check.
+- It does not yet depend on AWS to run or be tested locally.
+
+So the foundation is best understood as: the app startup, job selection, logging, configuration, and test harness are working; real job behavior will be added on top of this shell.
+
+---
+
+## Simple Runtime Flow
+
+When you run the app, this is the current flow in plain language:
+
+1. `Program.cs` starts the worker.
+2. `ServiceCollectionSetup.CreateDefaultServices()` builds the service container.
+3. Configuration is loaded from local config files and environment variables.
+4. Logging is configured with Serilog.
+5. Repositories, database context, job handlers, and the job factory are registered.
+6. The worker reads the requested job name.
+  If no job is provided, it defaults to `HealthCheck`.
+7. The worker asks `IBatchJobFactory` for the matching job handler.
+8. The job handler runs.
+9. The app logs the result and exits with the appropriate exit code.
+
+Today, the default flow is:
+
+`HealthCheck` job selected -> `HealthCheckJobHandler` created -> simulated work runs -> logs are written -> app exits successfully.
+
+---
+
+## What The HealthCheck Job Actually Proves
+
+The `HealthCheck` job is not business logic. It is a proof that the foundation wiring works.
+
+It proves that:
+- the app can start successfully,
+- the service container is valid,
+- the job factory can resolve a registered job,
+- a job can execute asynchronously,
+- logs are written throughout the run,
+- the process finishes cleanly.
+
+Its four phases are:
+
+1. Configuration check
+  It logs environment name, .NET version, and OS information.
+2. Simulated processing
+  It processes 50 fake records with progress logs.
+3. Database phase placeholder
+  It logs where real repository/database validation will happen later.
+4. Completion report
+  It logs processed counts and success rate.
+
+This is why the current health check is useful: it tests the execution pipeline without requiring real batch data.
+
+---
+
+## How The Unit Tests Test The Flow
+
+The unit tests are intentionally small and focused. They do not try to test everything at once. They test the key foundation decisions.
+
+### 1. `BatchJobFactoryTests`
+
+These tests verify the job factory behavior.
+
+They check that:
+- a registered job name resolves to the correct handler,
+- an unknown job name throws a clear error,
+- the list of available jobs is returned correctly.
+
+Why this matters:
+- If factory resolution breaks, the whole batch framework breaks because the worker cannot create jobs by name.
+
+### 2. `ServiceCollectionSetupTests`
+
+This test verifies the application bootstrap.
+
+It checks that:
+- configuration can be loaded from the BatchJobs project root,
+- the DI container builds successfully,
+- `IBatchJobFactory` is registered,
+- the `HealthCheck` job is registered and resolvable.
+
+Why this matters:
+- This is the closest unit-level proof that startup wiring works before the app is actually run.
+
+### 3. Local Smoke Run
+
+The local script adds a higher-level test on top of the unit tests.
+
+It runs:
+- `dotnet build`
+- `dotnet test`
+- `dotnet run -- HealthCheck`
+
+Why this matters:
+- Unit tests prove the parts are wired correctly.
+- The smoke run proves the whole startup path actually executes in a real process.
+
+That combination is what gives you confidence locally.
+
+---
+
 ## What You Can Test Locally
 
 Your foundation layer is now fully testable **without any AWS resources or environment variables**. Everything runs locally with Docker.
