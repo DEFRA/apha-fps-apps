@@ -97,6 +97,61 @@ namespace Apha.PACT.DataAccess.Repository
             return ApplyPaging(result, query.Page, query.PageSize);
         }
 
+        public async Task<PagedData<TestRequirementDetail>> GetPagedByProjectAsync(
+            PaginationParameters<string> query, string parentProject)
+        {
+            var baseQuery = (from t in _context.TestRequirements
+                             join tp in _context.TestorProducts on t.TestCode equals tp.ItemCode
+                             join p in _context.Projects on t.Buyer equals p.ParentProject
+                             where t.Buyer == parentProject
+                             select new TestRequirementDetail
+                             {
+                                 TestCode = t.TestCode,
+                                 Buyer = t.Buyer,
+                                 UnitPrice = t.UnitPrice,
+                                 NoRequired = t.NoRequired,
+                                 ProjectBuyerCode = t.ProjectBuyerCode,
+                                 TestBuyerCode = t.TestBuyerCode,
+                                 DateCreated = t.DateCreated,
+                                 Active = t.Active,
+                                 FpsYear = t.FpsYear,
+                                 IsDefraProject = p.IsDefraProject,
+                                 RecUnitPrice = p.IsDefraProject == 0 ? tp.UnitPriceVla : (decimal?)tp.DefraUnitPrice
+                             }).AsQueryable();
+
+            baseQuery = ApplyTestReqmtDetailFilter(baseQuery, query.Filter);
+
+            baseQuery = (!string.IsNullOrWhiteSpace(query.SortBy), query.Descending) switch
+            {
+                (true, true) => query.SortBy switch
+                {
+                    nameof(TestRequirementDetail.TestCode) => baseQuery.OrderByDescending(t => t.TestCode),
+                    nameof(TestRequirementDetail.UnitPrice) => baseQuery.OrderByDescending(t => t.UnitPrice),
+                    nameof(TestRequirementDetail.NoRequired) => baseQuery.OrderByDescending(t => t.NoRequired),
+                    nameof(TestRequirementDetail.Active) => baseQuery.OrderByDescending(t => t.Active),
+                    nameof(TestRequirementDetail.ProjectBuyerCode) => baseQuery.OrderByDescending(t => t.ProjectBuyerCode),
+                    nameof(TestRequirementDetail.IsDefraProject) => baseQuery.OrderByDescending(t => t.IsDefraProject),
+                    nameof(TestRequirementDetail.RecUnitPrice) => baseQuery.OrderByDescending(t => t.RecUnitPrice),
+                    _ => baseQuery.OrderByDescending(t => t.TestCode)
+                },
+                (true, false) => query.SortBy switch
+                {
+                    nameof(TestRequirementDetail.TestCode) => baseQuery.OrderBy(t => t.TestCode),
+                    nameof(TestRequirementDetail.UnitPrice) => baseQuery.OrderBy(t => t.UnitPrice),
+                    nameof(TestRequirementDetail.NoRequired) => baseQuery.OrderBy(t => t.NoRequired),
+                    nameof(TestRequirementDetail.Active) => baseQuery.OrderBy(t => t.Active),
+                    nameof(TestRequirementDetail.ProjectBuyerCode) => baseQuery.OrderBy(t => t.ProjectBuyerCode),
+                    nameof(TestRequirementDetail.IsDefraProject) => baseQuery.OrderBy(t => t.IsDefraProject),
+                    nameof(TestRequirementDetail.RecUnitPrice) => baseQuery.OrderBy(t => t.RecUnitPrice),
+                    _ => baseQuery.OrderBy(t => t.TestCode)
+                },
+                _ => baseQuery.OrderBy(t => t.TestCode)
+            };
+
+            var result = await baseQuery.ToListAsync();
+            return ApplyPaging(result, query.Page, query.PageSize);
+        }
+
         public async Task<IEnumerable<TestRequirementDetail>> GetAllForExportAsync(string testCode, string? filterJson)
         {
             var query = (from t in _context.TestRequirements

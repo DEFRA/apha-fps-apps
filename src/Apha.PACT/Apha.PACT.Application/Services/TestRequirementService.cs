@@ -33,6 +33,15 @@ namespace Apha.PACT.Application.Services
             return new PaginatedResult<TestRequirementtDto>(dtos, paginationDto);
         }
 
+        public async Task<PaginatedResult<TestRequirementtDto>> GetPagedTestReqmtByProjectAsync(QueryParameters<string> query, string parentProject)
+        {
+            var parameters = _mapper.Map<PaginationParameters<string>>(query);
+            var pagedData = await _testReqmtRepository.GetPagedByProjectAsync(parameters, parentProject);
+            var dtos = _mapper.Map<List<TestRequirementtDto>>(pagedData.Data);
+            var paginationDto = _mapper.Map<PaginationDto>(pagedData.PaginationData);
+            return new PaginatedResult<TestRequirementtDto>(dtos, paginationDto);
+        }
+
         public async Task<IEnumerable<TestRequirementtDto>> GetAllTestReqmtForExportAsync(string testCode, string? filterJson)
         {
             var items = await _testReqmtRepository.GetAllForExportAsync(testCode, filterJson);

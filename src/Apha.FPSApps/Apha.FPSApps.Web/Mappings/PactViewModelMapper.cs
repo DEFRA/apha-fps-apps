@@ -25,6 +25,7 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<WorkGroupTestCapabilityItem, TestCapabilityDto>().ReverseMap();
 
             CreateMap<TestRequirementItem, TestRequirementDto>().ReverseMap();
+            CreateMap<TestPurchaseRequirementItem, TestRequirementDto>().ReverseMap();
         }
     }
 }

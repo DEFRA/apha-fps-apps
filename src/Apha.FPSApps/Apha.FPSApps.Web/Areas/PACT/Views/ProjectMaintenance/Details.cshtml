@@ -38,8 +38,8 @@
             </li>
             <li class="sidebar-link-two"
                 style="border-radius:0 8px 8px 0; cursor:pointer; background-color:#1d70b8;">
-                <a style="color:#fff;">Test Purchase Requirements</a>
-            </li>
+                <a style="color:#fff;" asp-area="PACT" asp-controller="TestPurchaseRequirement" asp-action="Index" asp-route-parentProject="@Model.Project.ParentProject"> Test Purchase Requirements</a>
+               </li>
         </ul>
     </nav>
 

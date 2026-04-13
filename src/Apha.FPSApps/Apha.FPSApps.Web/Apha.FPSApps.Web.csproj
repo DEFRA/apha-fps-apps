@@ -21,12 +21,12 @@
   <ItemGroup>
     <ProjectReference Include="..\Apha.FPSApps.Application\Apha.FPSApps.Application.csproj" />
     <ProjectReference Include="..\Apha.FPSApps.Infrastructure\Apha.FPSApps.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Apha.FPS\Apha.FPS.Application\Apha.FPS.Application.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Areas\CostBook\Models\" />
     <Folder Include="Areas\FPS\Views\YearMaster\" />
-    <Folder Include="Areas\PACT\Models\" />
     <Folder Include="Areas\PIMS\Models\" />
     <Folder Include="Filters\" />
     <Folder Include="Utilities\" />

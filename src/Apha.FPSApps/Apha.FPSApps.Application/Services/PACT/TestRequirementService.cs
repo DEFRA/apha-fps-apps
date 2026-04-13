@@ -17,6 +17,8 @@ namespace Apha.FPSApps.Application.Services.PACT
 
         public async Task<ApiResponseDto<List<TestRequirementDto>>> GetPagedTestReqmtAsync(QueryParameters<string> query, string testCode)
             => await _pactClient.PactTestRequirement.GetPagedTestReqmtAsync(query, testCode);
+        public async Task<ApiResponseDto<List<TestRequirementDto>>> GetPagedTestReqmtbyProjectAsync(QueryParameters<string> query, string parentProject)
+            => await _pactClient.PactTestRequirement.GetPagedTestReqmtbyProjectAsync(query, parentProject);
 
         public async Task<ApiResponseDto<List<TestRequirementDto>>> GetAllTestReqmtForExportAsync(string testCode, string? filter)
             => await _pactClient.PactTestRequirement.GetAllTestReqmtForExportAsync(testCode, filter);
