@@ -28,5 +28,41 @@ namespace Apha.Common.Constants
 
         // Work Group
         public const string GetAllWorkGroups = "api/v1/workgroup";
+
+        // Project Invoice
+        public const string GetPagedProjectInvoices = "api/v1/projectinvoice?parentProject={0}";
+        public const string GetProjectInvoiceTotalAmount = "api/v1/projectinvoice/total";
+        public const string GetProjectInvoiceById = "api/v1/projectinvoice/{0}";
+        public const string CreateProjectInvoice = "api/v1/projectinvoice";
+        public const string UpdateProjectInvoice = "api/v1/projectinvoice/{0}";
+        public const string DeleteProjectInvoice = "api/v1/projectinvoice/{0}";
+
+        // Project SubContract
+        public const string GetPagedProjectSubContracts = "api/v1/projectsubcontract";
+        public const string GetProjectSubContractTotalAmount = "api/v1/projectsubcontract/total";
+        public const string GetProjectSubContractById = "api/v1/projectsubcontract/{0}";
+        public const string CreateProjectSubContract = "api/v1/projectsubcontract";
+        public const string UpdateProjectSubContract = "api/v1/projectsubcontract/{0}";
+        public const string DeleteProjectSubContract = "api/v1/projectsubcontract/{0}";
+
+        // WorkGroup Test Capability
+        public const string GetPagedTestCapabilityByWorkGroup = "api/v1/testcapability/paged/workgroup";
+        public const string GetPagedTestCapabilityByTestCode = "api/v1/testcapability/paged/testcode";
+        public const string GetTestCapabilityById = "api/v1/testcapability/testcapability/{0}/{1}";
+        public const string CreateTestCapability = "api/v1/testcapability/testcapability";
+        public const string UpdateTestCapability = "api/v1/testcapability/testcapability";
+        public const string DeleteTestCapability = "api/v1/testcapability/testcapability/{0}/{1}";
+
+        // Test Requirement
+        public const string GetPagedTestReqmt = "api/v1/testrequirement/paged/{0}";
+        public const string GetAllTestReqmtForExport = "api/v1/testrequirement/all/{0}";
+        public const string GetTestReqmtById = "api/v1/testrequirement/{0}/{1}";
+        public const string CreateTestReqmt = "api/v1/testrequirement";
+        public const string UpdateTestReqmt = "api/v1/testrequirement";
+        public const string DeleteTestReqmt = "api/v1/testrequirement/{0}/{1}";
+
+        // Lookups
+        public const string GetAllTestorProducts = "api/v1/testcapability/testorproducts";
+        public const string GetTestReqmtPricing = "api/v1/testrequirement/pricing";
     }
 }
