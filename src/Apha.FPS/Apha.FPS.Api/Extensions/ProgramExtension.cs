@@ -33,14 +33,21 @@ namespace Apha.FPS.Api.Extensions
                         }
                         ), ServiceLifetime.Scoped);
                        
-            services.AddStackExchangeRedisCache(options =>
+            if (builder.Environment.IsEnvironment("local"))
             {
-                options.Configuration = configuration.GetConnectionString("RedisConnectionString");
-                options.InstanceName = "RedisInstance";
-            });
+                services.AddDistributedMemoryCache();
+            }
+            else
+            {
+                services.AddStackExchangeRedisCache(options =>
+                {
+                    options.Configuration = configuration.GetConnectionString("RedisConnectionString");
+                    options.InstanceName = "RedisInstance";
+                });
+            }
 
 
-            // AutoMapper            
+            // AutoMapper
             services.AddAutoMapper(config =>
             {
                 config.AddMaps(typeof(EntityMapper).Assembly);
