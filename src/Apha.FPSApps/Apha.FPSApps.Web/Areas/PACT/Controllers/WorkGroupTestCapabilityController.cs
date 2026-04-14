@@ -26,19 +26,22 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         private readonly ITestRequirementService _testReqmtService;
         private readonly IProjectService _projectService;
         private readonly IExcelExportService _excelExportService;
-
+        private readonly ITestorProductService _testorProductService;
         public WorkGroupTestCapabilityController(
             IMapper mapper,
             IWorkGroupTestCapabilityService service,
             ITestRequirementService testReqmtService,
             IProjectService projectService,
-            IExcelExportService excelExportService)
+            IExcelExportService excelExportService,
+            ITestorProductService testorProductService
+            )
         {
             _mapper = mapper;
             _service = service;
             _testReqmtService = testReqmtService;
             _projectService = projectService;
             _excelExportService = excelExportService;
+            _testorProductService = testorProductService;
         }
 
         // ── INDEX ─────────────────────────────────────────────────────────────
@@ -50,7 +53,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var testReqmtGrid = BuildEmptyTestReqmtGrid();
 
             var workGroupsResponse = await _service.GetAllWorkGroupsAsync();
-            var testsResponse = await _service.GetAllTestorProductsAsync();
+            var testsResponse = await _testorProductService.GetAllTestorProductsAsync();
 
             var viewModel = new WorkGroupTestCapabilityViewModel
             {
@@ -485,7 +488,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
         private async Task<List<SelectListItem>> GetTestorProductSelectListAsync()
         {
-            var response = await _service.GetAllTestorProductsAsync();
+            var response = await _testorProductService.GetAllTestorProductsAsync();
             return response.Success && response.Data != null
                 ? response.Data
                     .Select(t => new SelectListItem(

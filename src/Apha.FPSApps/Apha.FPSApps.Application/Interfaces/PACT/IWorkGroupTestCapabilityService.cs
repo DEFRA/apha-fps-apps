@@ -13,7 +13,7 @@ namespace Apha.FPSApps.Application.Interfaces.PACT
         Task<ApiResponseDto<TestCapabilityDto>> UpdateTestCapabilityAsync(TestCapabilityDto dto);
         Task<ApiResponseDto<bool>> DeleteTestCapabilityAsync(string testCode, string workGroup);
 
-        Task<ApiResponseDto<List<TestorProductDto>>> GetAllTestorProductsAsync();
+       // Task<ApiResponseDto<List<TestorProductDto>>> GetAllTestorProductsAsync();
         Task<ApiResponseDto<List<WorkGroupDto>>> GetAllWorkGroupsAsync();
     }
 }

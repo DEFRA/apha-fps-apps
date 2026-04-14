@@ -22,6 +22,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
         private readonly IProjectService _projectService;
         private readonly IExcelExportService _excelExportService;
         private readonly ITestRequirementService _testReqmtService;
+        private readonly ITestorProductService _testorProductService;
         private readonly WorkGroupTestCapabilityController _controller;
 
         public WorkGroupTestCapabilityControllerTests()
@@ -31,12 +32,14 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
             _testReqmtService = Substitute.For<ITestRequirementService>();
             _projectService = Substitute.For<IProjectService>();
             _excelExportService = Substitute.For<IExcelExportService>();
+            _testorProductService = Substitute.For<ITestorProductService>();
             _controller = new WorkGroupTestCapabilityController(
                 _mapper,
                 _service,
                 _testReqmtService,
                 _projectService,
-                _excelExportService);
+                _excelExportService,
+                _testorProductService);
         }
 
         private static JsonElement GetJsonResultElement(JsonResult jsonResult)
@@ -69,7 +72,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
         {
             _service.GetAllWorkGroupsAsync()
                 .Returns(ApiResponseDto<List<WorkGroupDto>>.SuccessResponse([]));
-            _service.GetAllTestorProductsAsync()
+            _testorProductService.GetAllTestorProductsAsync()
                 .Returns(ApiResponseDto<List<TestorProductDto>>.SuccessResponse([]));
             _projectService.GetAllProjectsAsync()
                 .Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse([]));
@@ -85,7 +88,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
                 .Returns(ApiResponseDto<List<TestCapabilityDto>>.SuccessResponse([]));
             _service.GetAllWorkGroupsAsync()
                 .Returns(ApiResponseDto<List<WorkGroupDto>>.SuccessResponse([new WorkGroupDto { WorkGroupName = "WG1" }]));
-            _service.GetAllTestorProductsAsync()
+            _testorProductService.GetAllTestorProductsAsync()
                 .Returns(ApiResponseDto<List<TestorProductDto>>.SuccessResponse([new TestorProductDto { ItemCode = "BLOOD" }]));
             SetupTestCapabilityGridMapper();
 
@@ -111,7 +114,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
                     new WorkGroupDto { WorkGroupName = "WG1" },
                     new WorkGroupDto { WorkGroupName = "WG2" }
                 ]));
-            _service.GetAllTestorProductsAsync()
+            _testorProductService.GetAllTestorProductsAsync()
                 .Returns(ApiResponseDto<List<TestorProductDto>>.SuccessResponse(
                 [
                     new TestorProductDto { ItemCode = "BLOOD" },
@@ -138,7 +141,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
                 .Returns(ApiResponseDto<List<TestCapabilityDto>>.SuccessResponse([]));
             _service.GetAllWorkGroupsAsync()
                 .Returns(ApiResponseDto<List<WorkGroupDto>>.FailureResponse(errors, new ApiMetaDto()));
-            _service.GetAllTestorProductsAsync()
+            _testorProductService.GetAllTestorProductsAsync()
                 .Returns(ApiResponseDto<List<TestorProductDto>>.FailureResponse(errors, new ApiMetaDto()));
             SetupTestCapabilityGridMapper();
 
@@ -617,7 +620,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
             _testReqmtService.GetTestReqmtByIdAsync("BLOOD", "PRJ1")
                 .Returns(ApiResponseDto<TestRequirementDto>.SuccessResponse(dto));
             _mapper.Map<TestRequirementItem>(dto).Returns(item);
-            _service.GetAllTestorProductsAsync().Returns(ApiResponseDto<List<TestorProductDto>>.SuccessResponse([]));
+            _testorProductService.GetAllTestorProductsAsync().Returns(ApiResponseDto<List<TestorProductDto>>.SuccessResponse([]));
             _projectService.GetAllProjectsAsync().Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse([]));
 
             // Act

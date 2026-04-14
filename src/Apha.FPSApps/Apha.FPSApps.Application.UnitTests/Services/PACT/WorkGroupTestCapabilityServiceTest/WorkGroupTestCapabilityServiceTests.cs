@@ -187,39 +187,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupTestCapabili
         }
 
         #endregion       
-
-        #region GetAllTestorProductsAsync
-
-        [Fact]
-        public async Task GetAllTestorProductsAsync_DelegatesToApiClient_ReturnsResult()
-        {
-            var expected = ApiResponseDto<List<TestorProductDto>>.SuccessResponse(
-            [
-                new TestorProductDto { ItemCode = "BLOOD" },
-                new TestorProductDto { ItemCode = "URINE" }
-            ]);
-            _apiClient.GetAllTestorProductsAsync().Returns(expected);
-
-            var result = await _service.GetAllTestorProductsAsync();
-
-            Assert.Equal(expected, result);
-            await _apiClient.Received(1).GetAllTestorProductsAsync();
-        }
-
-        [Fact]
-        public async Task GetAllTestorProductsAsync_WhenEmpty_ReturnsEmptyList()
-        {
-            var expected = ApiResponseDto<List<TestorProductDto>>.SuccessResponse([]);
-            _apiClient.GetAllTestorProductsAsync().Returns(expected);
-
-            var result = await _service.GetAllTestorProductsAsync();
-
-            Assert.True(result.Success);
-            Assert.Empty(result.Data!);
-        }
-
-        #endregion
-
+                
         #region GetAllWorkGroupsAsync
 
         [Fact]
