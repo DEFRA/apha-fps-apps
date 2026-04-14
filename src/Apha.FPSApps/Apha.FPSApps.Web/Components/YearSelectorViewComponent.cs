@@ -2,12 +2,12 @@ using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Web.Constants;
 using Apha.FPSApps.Web.Handler;
-using Apha.FPSApps.Web.Models.ViewComponents;
+using Apha.FPSApps.Web.Models.Components.YearSelector;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Caching.Memory;
 
-namespace Apha.FPSApps.Web.ViewComponents
+namespace Apha.FPSApps.Web.Components
 {
     public class YearSelectorViewComponent : ViewComponent
     {

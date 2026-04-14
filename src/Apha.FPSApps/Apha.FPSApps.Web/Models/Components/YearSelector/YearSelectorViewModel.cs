@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 
-namespace Apha.FPSApps.Web.Models.ViewComponents
+namespace Apha.FPSApps.Web.Models.Components.YearSelector
 {
     public class YearSelectorViewModel
     {
