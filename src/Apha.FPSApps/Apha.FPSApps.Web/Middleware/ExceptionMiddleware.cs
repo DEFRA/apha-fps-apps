@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.Identity.Web;
 
 namespace Apha.FPSApps.Web.Middleware
 {
@@ -23,43 +25,78 @@ namespace Apha.FPSApps.Web.Middleware
             }
             catch (Exception ex)
             {
-                await HandleExceptionAsync(context, ex);
+                var correlationId = context.Request.Headers["X-Correlation-ID"].ToString();
+                var (errorType, errorCode, statusCode) = ClassifyException(ex);
+                LogException(context, ex, errorType, errorCode, correlationId);
+
+                if (context.Response.HasStarted)
+                    return;
+
+                await HandleExceptionAsync(context, ex, statusCode);
             }
         }
 
-        private async Task HandleExceptionAsync(HttpContext context, Exception ex)
-        {           
-            var correlationId = context.Request.Headers["X-Correlation-ID"].ToString();
-            string errorCode = string.Empty;
+        private async Task HandleExceptionAsync(HttpContext context, Exception ex, int statusCode)
+        {
+            // Unwrap: UnauthorizedAccessException may wrap MicrosoftIdentityWebChallengeUserException
+            var oidcChallenge = ex as MicrosoftIdentityWebChallengeUserException
+                ?? ex.InnerException as MicrosoftIdentityWebChallengeUserException;
+
+            //trigger an OIDC challenge to redirect to Azure AD.
+            if (oidcChallenge != null)
+            {
+                // Redirect to Azure AD for re-authentication, returning to the current path
+                await context.ChallengeAsync(
+                    OpenIdConnectDefaults.AuthenticationScheme,
+                    new AuthenticationProperties
+                    {
+                        RedirectUri = context.Request.Path + context.Request.QueryString
+                    });
+                return;
+            }
+
+            context.Response.StatusCode = statusCode;
+
+            //Pending to create a user friendly error page and redirect to that page
+            if (!context.Request.Path.StartsWithSegments("/Home/Error"))
+            {
+                context.Response.Redirect("/Home/Error");
+            }
+
+            await context.Response.CompleteAsync();
+        }
+
+        private (string errorType, string errorCode, int statusCode) ClassifyException(Exception ex)
+        {
             var errorType = _configuration["ExceptionTypes:General"]
                             ?? "FPS.GENERAL_EXCEPTION";
+            string errorCode;
+            int statusCode;
 
             switch (ex)
             {
                 case UnauthorizedAccessException:
                 case AuthenticationFailureException:
-                    context.Response.StatusCode = StatusCodes.Status403Forbidden;
                     errorCode = "403 - Forbidden";
-                    errorType = _configuration["ExceptionTypes:Authorization"];
+                    statusCode = StatusCodes.Status403Forbidden;
+                    errorType = _configuration["ExceptionTypes:Authorization"] ?? errorType;
                     break;
                 case InvalidOperationException:
                 case ArgumentException:
-                    context.Response.StatusCode = StatusCodes.Status400BadRequest;
-                    errorCode = "ARGUMENT_INVALID";                    
+                    errorCode = "ARGUMENT_INVALID";
+                    statusCode = StatusCodes.Status400BadRequest;
                     break;
                 case KeyNotFoundException:
-                    context.Response.StatusCode = StatusCodes.Status404NotFound;
-                    errorCode = "RESOURCE_NOT_FOUND";                   
+                    errorCode = "RESOURCE_NOT_FOUND";
+                    statusCode = StatusCodes.Status404NotFound;
                     break;
                 default:
-                    context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-                    errorCode = "SERVER_500";                   
+                    errorCode = "SERVER_500";
+                    statusCode = StatusCodes.Status500InternalServerError;
                     break;
             }
 
-            LogException(context, ex, errorType!, errorCode, correlationId);
-            context.Response.Redirect("/Home/Error");
-            await context.Response.CompleteAsync();
+            return (errorType, errorCode, statusCode);
         }
 
         private void LogException(
