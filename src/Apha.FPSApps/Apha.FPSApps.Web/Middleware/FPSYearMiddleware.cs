@@ -60,7 +60,7 @@ namespace Apha.FPSApps.Web.Middleware
 
             // Get the year status from the already loaded data
             var selectedYear = allYears.FirstOrDefault(y => y.FpsYear == year);
-            yearStatus = selectedYear?.YearStatus == null ? YearStatus.Closed : (YearStatus) Enum.Parse(typeof(YearStatus), selectedYear.YearStatus, true);
+            yearStatus = selectedYear?.YearStatus == null ? YearStatus.Closed : Enum.Parse<YearStatus>(selectedYear.YearStatus, true);
         }
         else
         {

@@ -11,10 +11,6 @@ namespace Apha.FPSApps.Web.TagHelpers
     {
         private readonly IFpsYearContext _fy;
 
-        [ViewContext]
-        [HtmlAttributeNotBound]
-        public ViewContext? ViewContext { get; set; }
-
         public FpsYearAnchorTagHelper(
             IHtmlGenerator generator,
             IFpsYearContext fy)
