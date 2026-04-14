@@ -1,10 +1,6 @@
 {
   "name": "apha-fps-apps-codespaces",
-  "image": "mcr.microsoft.com/devcontainers/dotnet:1-8.0-bookworm",
-  "features": {
-    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
-    "ghcr.io/devcontainers/features/github-cli:1": {}
-  },
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
   "remoteUser": "vscode",
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}/src/Apha.BatchJobs",
   "hostRequirements": {
