@@ -49,6 +49,16 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             // YEar Master
             CreateMap<YearMasterDto, YearMasterRes>().ReverseMap();
             CreateMap<YearMasterDto, YearMasterReq>().ReverseMap();
+
+            // ProgrammeNewProject
+            CreateMap<ProgrammeNewProjectDto, ProgrammeNewProjectReq>().ReverseMap();
+            CreateMap<ProgrammeNewProjectDto, ProgrammeNewProjectRes>().ReverseMap();
+            CreateMap<AccountCodeDto, AccountCodeRes>().ReverseMap();
+            CreateMap<SubAccountDto, SubAccountRes>()
+                .ForMember(d => d.SubAccount, o => o.MapFrom(s => s.SubAccount)).ReverseMap();
+            CreateMap<ProjectGroupDto, ProjectGroupRes>()
+                .ForMember(d => d.ProjectGroup, o => o.MapFrom(s => s.ProjectGroup)).ReverseMap();
+            CreateMap<CostCentreWorkgroupDto, CostCentreWorkgroupRes>().ReverseMap();
         }
     }
 }

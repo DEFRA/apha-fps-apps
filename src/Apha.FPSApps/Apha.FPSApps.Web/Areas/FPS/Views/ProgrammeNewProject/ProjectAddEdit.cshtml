@@ -1,0 +1,426 @@
+﻿@* Single unified view for both Add and Edit operations *@
+@model Apha.FPSApps.Web.Areas.FPS.Models.ProgrammeNewProjectViewModel
+@{
+    var isEditMode = ViewBag.IsEditMode ?? !string.IsNullOrEmpty(Model.ParentProject);
+    ViewData["Title"] = isEditMode ? $"Edit Project - {Model.ParentProject}" : "Add New Project";
+    
+    var formId = isEditMode ? "editProgrammeNewProjectForm" : "addProgrammeNewProjectForm";
+    var submitButtonText = isEditMode ? "Update" : "Save";
+    var submitFunction = isEditMode
+        ? $"updateProject('{Model.ParentProject}', '{formId}')"
+        : $"saveProject('{formId}')";
+}
+
+<main id="main-content">
+    <div class="container-fluid">
+        <!-- Breadcrumb section -->
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full">
+                <div style="padding: 5px 5px; border-bottom: 1px solid #b4b4b4" class="row">
+                    <div style="display: flex; font-size: 14px; align-items: center; justify-content: space-between;">
+                        <div class="col-md-6">
+                            <nav aria-label="Breadcrumb">
+                                <a href="@Url.Action("Index", "Home", new { area = "FPS" })">Home</a> &gt;
+                                <a href="@Url.Action("Index", "ProgrammeNewProject", new { area = "FPS" })">Programme Management</a> &gt;
+                                Plan Projects &gt; @(isEditMode ? "Edit Project" : "Set Up A New Project")
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Title section -->
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full">
+                <div class="row" style="display:flex; align-items: center;">
+                    <div class="col-sm-12" style="padding:0px;">
+                        <div style="border-bottom: 2px solid #1d70b8; height:48px;">
+                            <h1 style="padding: 15px 0 5px 17px; font-size:16px; width: 50%; font-weight: 700; float:left; margin: 0;">
+                                2025-2026 : @(isEditMode ? $"Edit Project - {Model.ParentProject}" : "Set Up New Project")
+                            </h1>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-12">
+                <main class="main-content" style="padding:0px 10px 10px 10px;">
+
+                    <!-- Error Summary -->
+                    <div class="govuk-error-summary" role="alert" aria-labelledby="error-summary-title" tabindex="-1" style="display:none;">
+                        <h2 class="govuk-error-summary__title" id="error-summary-title">There is a problem</h2>
+                        <div class="govuk-error-summary__body">
+                            <ul class="govuk-list govuk-error-summary__list"></ul>
+                        </div>
+                    </div>
+
+                    <!-- Form -->
+                    <form id="@formId">
+                        @Html.AntiForgeryToken()
+
+                        @* Hidden field to store original project code - Edit mode only *@
+                        @if (isEditMode)
+                        {
+                            <input type="hidden" name="OriginalParentProject" value="@Model.ParentProject" />
+                        }
+
+                        <div class="row d-flex align-items-center mt-2 mb-2">
+                            <div class="col-lg-6">
+                                <h2 class="sup_text_color govuk-heading-s sup_align_flexheading">
+                                    Please insert data for mandatory fields marked with *
+                                </h2>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="action-buttons">
+                                    <button class="govuk-button sup_margin_0" type="button" onclick="@submitFunction">
+                                        @submitButtonText
+                                    </button>
+                                    <button class="govuk-button govuk-button--secondary sup_margin_0" type="button"
+                                            onclick="window.location.href='@Url.Action("Index", "ProgrammeNewProject", new { area = "FPS" })'">
+                                        Cancel
+                                    </button>
+                                    @if (isEditMode)
+                                    {
+                                        <button class="govuk-button govuk-button--warning sup_margin_0" type="button"
+                                                onclick="deleteProject('@Model.ParentProject')">
+                                            Delete this Project
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        @* Change Project Code section - Edit mode only *@
+                        @if (isEditMode)
+                        {
+                            <div class="govuk-form-group sup_margin_0 mt-2 mb-3"
+                                 style="border: 1px solid #1d70b8; padding: 8px; border-radius: 4px; display: flex; align-items: center; gap: 10px;">
+                                <label class="govuk-label" style="display:inline-block; margin:0;" for="NewProjectCode">Change Project Code:</label>
+                                <input type="text" style="width:350px;" class="govuk-input" id="NewProjectCode" name="NewProjectCode"
+                                       placeholder="Enter new project code" />
+                                <button class="govuk-button sup_margin_0" type="button"
+                                        onclick="changeProjectCode(document.querySelector('input[name=OriginalParentProject]').value, document.getElementById('NewProjectCode').value)">
+                                    Submit
+                                </button>
+                            </div>
+                        }
+
+                        <div class="form-container mt-3">
+                            <!-- form-left column -->
+                            <div class="form-left">
+                                <div class="govuk-form-group sup_margin_0">
+                                    <label class="govuk-label required" asp-for="ParentProject">Project Code:</label>
+                                    <input type="text" asp-for="ParentProject" class="govuk-input" readonly="@isEditMode" />
+                                    <span asp-validation-for="ParentProject" class="govuk-error-message" style="display:none;"></span>
+                                </div>
+
+                                <div class="govuk-form-group sup_margin_0">
+                                    <label class="govuk-label required" asp-for="ProjectTitle">Description:</label>
+                                    <input type="text" asp-for="ProjectTitle" class="govuk-input" />
+                                    <span asp-validation-for="ProjectTitle" class="govuk-error-message" style="display:none;"></span>
+                                </div>
+
+                                <div class="govuk-form-group sup_margin_0">
+                                    <label class="govuk-label required" asp-for="ShortTitle">Short Title:</label>
+                                    <input type="text" asp-for="ShortTitle" class="govuk-input" />
+                                    <span asp-validation-for="ShortTitle" class="govuk-error-message" style="display:none;"></span>
+                                </div>
+
+                                <div class="govuk-form-group sup_margin_0">
+                                    <label class="govuk-label required" asp-for="Customer">Customer:</label>
+                                    <select asp-for="Customer" asp-items="@Model.CustomerList" class="govuk-select sup_select_option_width_100"></select>
+                                    <span asp-validation-for="Customer" class="govuk-error-message" style="display:none;"></span>
+                                </div>
+
+                                <div class="govuk-form-group sup_margin_0">
+                                    <label class="govuk-label required" asp-for="Program">Programme:</label>
+                                    <select asp-for="Program" asp-items="@Model.ProgramList" class="govuk-select sup_select_option_width_100"></select>
+                                    <span asp-validation-for="Program" class="govuk-error-message" style="display:none;"></span>
+                                </div>
+
+                                <div class="govuk-form-group sup_margin_0">
+                                    <label class="govuk-label" asp-for="Manager">Manager:</label>
+                                    <select asp-for="Manager" asp-items="@Model.ManagerList" class="govuk-select sup_select_option_width_100"></select>
+                                    <span asp-validation-for="Manager" class="govuk-error-message" style="display:none;"></span>
+                                </div>
+
+                                <div class="govuk-form-group sup_margin_0">
+                                    <label class="govuk-label required" asp-for="Disease">Disease:</label>
+                                    <select asp-for="Disease" asp-items="@Model.DiseaseList" class="govuk-select sup_select_option_width_100"></select>
+                                    <span asp-validation-for="Disease" class="govuk-error-message" style="display:none;"></span>
+                                </div>
+
+                                <div class="govuk-form-group sup_margin_0">
+                                    <label class="govuk-label required" asp-for="CustIncome">Customer Income:</label>
+                                    <input type="text" asp-for="CustIncome" class="govuk-input currency-input" />
+                                    <span asp-validation-for="CustIncome" class="govuk-error-message" style="display:none;"></span>
+                                </div>
+
+                                <div class="govuk-form-group sup_margin_0">
+                                    <label class="govuk-label required" asp-for="TransferIncome">Transfer Income:</label>
+                                    <input type="text" asp-for="TransferIncome" class="govuk-input currency-input" />
+                                    <span asp-validation-for="TransferIncome" class="govuk-error-message" style="display:none;"></span>
+                                </div>
+
+                                <div class="govuk-form-group sup_margin_0">
+                                    <label class="govuk-label" asp-for="Profit">Target Profit:</label>
+                                    <input type="text" asp-for="Profit" class="govuk-input currency-input" />
+                                    <span asp-validation-for="Profit" class="govuk-error-message" style="display:none;"></span>
+                                </div>
+
+                                <div class="govuk-form-group sup_margin_0">
+                                    <label class="govuk-label required" asp-for="ProjectStatus">Status:</label>
+                                    <select asp-for="ProjectStatus" asp-items="@Model.ProjectStatusList" class="govuk-select sup_select_option_width_100"></select>
+                                    <span asp-validation-for="ProjectStatus" class="govuk-error-message" style="display:none;"></span>
+                                </div>
+
+                                <div class="govuk-form-group sup_margin_0">
+                                    <label class="govuk-label" asp-for="CostBookNo">CostBookNo:</label>
+                                    <input type="text" asp-for="CostBookNo" class="govuk-input" />
+                                    <span asp-validation-for="CostBookNo" class="govuk-error-message" style="display:none;"></span>
+                                </div>
+
+                                <div class="govuk-form-group sup_margin_0">
+                                    <label class="govuk-label required" asp-for="Contract">Contract No:</label>
+                                    <select asp-for="Contract" asp-items="@Model.ContractList" class="govuk-select sup_select_option_width_100"></select>
+                                    <span asp-validation-for="Contract" class="govuk-error-message" style="display:none;"></span>
+                                </div>
+
+                                <div class="govuk-form-group sup_margin_0">
+                                    <label class="govuk-label required" asp-for="IsDefraProject">Is Defra Project?</label>
+                                    <select asp-for="IsDefraProject" asp-items="@Model.IsDefraProjectList" class="govuk-select sup_select_option_width_100"></select>
+                                    <span asp-validation-for="IsDefraProject" class="govuk-error-message" style="display:none;"></span>
+                                </div>
+
+                                <div class="govuk-form-group sup_margin_0">
+                                    <label class="govuk-label required" asp-for="CostCentre">Cost Centre:</label>
+                                    <select asp-for="CostCentre" asp-items="@Model.CostCentreList" class="govuk-select sup_select_option_width_100"></select>
+                                    <span asp-validation-for="CostCentre" class="govuk-error-message" style="display:none;"></span>
+                                </div>
+
+                                <div class="govuk-form-group sup_margin_0">
+                                    <label class="govuk-label" asp-for="OwningRc">Resource Centre:</label>
+                                    <input type="text" asp-for="OwningRc" class="govuk-input" />
+                                    <span asp-validation-for="OwningRc" class="govuk-error-message" style="display:none;"></span>
+                                </div>
+
+                                <div class="govuk-form-group sup_margin_0">
+                                    <label class="govuk-label" asp-for="ProjectGroup">Project Group:</label>
+                                    <select asp-for="ProjectGroup" asp-items="@Model.ProjectGroupList" class="govuk-select sup_select_option_width_100"></select>
+                                    <span asp-validation-for="ProjectGroup" class="govuk-error-message" style="display:none;"></span>
+                                </div>
+
+                                <div class="govuk-form-group sup_margin_0">
+                                    <label class="govuk-label required" asp-for="IncomeAccountCode">Income Account Code:</label>
+                                    <select asp-for="IncomeAccountCode" asp-items="@Model.IncomeAccountCodeList" class="govuk-select sup_select_option_width_100"></select>
+                                    <span asp-validation-for="IncomeAccountCode" class="govuk-error-message" style="display:none;"></span>
+                                </div>
+
+                                <div class="govuk-form-group sup_margin_0">
+                                    <label class="govuk-label" asp-for="SubAccountCode">Objective Code:</label>
+                                    <select asp-for="SubAccountCode" asp-items="@Model.SubAccountCodeList" class="govuk-select sup_select_option_width_100"></select>
+                                    <span asp-validation-for="SubAccountCode" class="govuk-error-message" style="display:none;"></span>
+                                </div>
+                            </div>
+
+                            <!-- form-center column -->
+                            <div class="form-center">
+                                <div class="govuk-form-group sup_margin_0">
+                                    <label class="govuk-label required" asp-for="BudgetCvl">Budget:</label>
+                                    <input type="text" asp-for="BudgetCvl" class="govuk-input currency-input" />
+                                    <span asp-validation-for="BudgetCvl" class="govuk-error-message" style="display:none;"></span>
+                                </div>
+
+                                <div class="govuk-form-group sup_margin_0">
+                                    <label class="govuk-label" asp-for="PvsIncome">PVS Income: (Surv Only)</label>
+                                    <input type="text" asp-for="PvsIncome" class="govuk-input" />
+                                    <span asp-validation-for="PvsIncome" class="govuk-error-message" style="display:none;"></span>
+                                </div>
+
+                                <div class="govuk-form-group sup_margin_0">
+                                    <label class="govuk-label" asp-for="PlanCaseWorkDebit">Plan CW Debit: (Surv Only)</label>
+                                    <input type="text" asp-for="PlanCaseWorkDebit" class="govuk-input" />
+                                    <span asp-validation-for="PlanCaseWorkDebit" class="govuk-error-message" style="display:none;"></span>
+                                </div>
+
+                                <div class="govuk-form-group sup_margin_0">
+                                    <label class="govuk-label" asp-for="CarryOver">CarryOver:</label>
+                                    <input type="text" asp-for="CarryOver" class="govuk-input currency-input" />
+                                    <span asp-validation-for="CarryOver" class="govuk-error-message" style="display:none;"></span>
+                                </div>
+
+                                <div class="govuk-form-group sup_margin_0">
+                                    <label class="govuk-label" asp-for="CarryOverSeed">CarryOverSeed:</label>
+                                    <input type="text" asp-for="CarryOverSeed" class="govuk-input" />
+                                    <span asp-validation-for="CarryOverSeed" class="govuk-error-message" style="display:none;"></span>
+                                </div>
+
+                                <div class="govuk-form-group sup_margin_0">
+                                    <label class="govuk-label" asp-for="Comments">Comments:</label>
+                                    <textarea asp-for="Comments" class="govuk-textarea sup_margin_0"></textarea>
+                                    <span asp-validation-for="Comments" class="govuk-error-message" style="display:none;"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </main>
+            </div>
+        </div>
+    </div>
+</main>
+
+@section Scripts {
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+    <script>
+        if (typeof $ !== 'undefined' && $.validator && $.validator.unobtrusive) {
+            $.validator.unobtrusive.parse(document);
+        }
+
+        window.saveProject = function(formId) {
+            const form = $('#' + formId);
+            if (!form.valid()) { displayValidationErrors(form); return; }
+            submitForm(formId, false);
+        };
+
+        window.updateProject = function(parentProject, formId) {
+            const form = $('#' + formId);
+            if (!form.valid()) { displayValidationErrors(form); return; }
+            submitForm(formId, true, parentProject);
+        };
+
+        function displayValidationErrors(form) {
+            const errors = [];
+            const validator = form.validate();
+            $.each(validator.errorMap, function(key, value) {
+                errors.push({ field: key, message: value });
+            });
+            if (errors.length > 0) showErrors(errors);
+        }
+
+        function submitForm(formId, isEdit, parentProject) {
+            document.querySelectorAll('.govuk-error-message').forEach(el => el.style.display = 'none');
+            const errorSummary = document.querySelector('.govuk-error-summary');
+            if (errorSummary) errorSummary.style.display = 'none';
+
+            const form = document.getElementById(formId);
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData);
+
+            const numericFields = ['CustIncome', 'TransferIncome', 'Profit', 'BudgetCvl', 'PvsIncome',
+                                   'PlanCaseWorkDebit', 'CarryOver', 'CarryOverSeed', 'CostCentre', 'IsDefraProject'];
+            numericFields.forEach(field => {
+                if (data[field] === '' || data[field] === null || data[field] === undefined) data[field] = null;
+            });
+
+            const url = isEdit
+                ? '@Url.Action("Edit", "ProgrammeNewProject", new { area = "FPS" })' + '?parentProject=' + encodeURIComponent(parentProject)
+                : '@Url.Action("Add", "ProgrammeNewProject", new { area = "FPS" })';
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? ''
+                },
+                body: JSON.stringify(data)
+            })
+            .then(r => r.json())
+            .then(result => {
+                if (result.success) {
+                    if (!isEdit && result.data?.parentProject) {
+                        window.location.href = '@Url.Action("Edit", "ProgrammeNewProject", new { area = "FPS" })' + '?parentProject=' + encodeURIComponent(result.data.parentProject);
+                    } else {
+                        alert(result.message || 'Operation completed successfully!');
+                        window.location.href = '@Url.Action("Index", "ProgrammeNewProject", new { area = "FPS" })';
+                    }
+                } else {
+                    showErrors(result.errors);
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                alert('An error occurred while submitting the form');
+            });
+        }
+
+        window.deleteProject = function(parentProject) {
+            if (!confirm('Are you sure you want to delete this project and all associated data?')) return;
+
+            fetch('@Url.Action("Delete", "ProgrammeNewProject", new { area = "FPS" })' + '?parentProject=' + encodeURIComponent(parentProject), {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '' }
+            })
+            .then(r => r.json())
+            .then(result => {
+                if (result.success) {
+                    alert(result.message);
+                    window.location.href = result.redirectUrl;
+                } else {
+                    showErrors(result.errors);
+                }
+            });
+        };
+
+        window.changeProjectCode = function(oldCode, newCode) {
+            if (!oldCode || !newCode) {
+                alert('Both old and new project codes are required.');
+                return;
+            }
+            if (!confirm(`Are you sure you want to change project code from "${oldCode}" to "${newCode}"? This will update all related records.`)) return;
+
+            fetch('@Url.Action("ChangeCode", "ProgrammeNewProject", new { area = "FPS" })' + '?oldCode=' + encodeURIComponent(oldCode) + '&newCode=' + encodeURIComponent(newCode), {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '' }
+            })
+            .then(r => r.json())
+            .then(result => {
+                if (result.success) {
+                    alert(result.message);
+                    window.location.href = result.redirectUrl;
+                } else {
+                    showErrors(result.errors);
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                alert('An error occurred while changing project code.');
+            });
+        };
+
+        function showSuccess(message) {
+            alert(message || 'Operation completed successfully!');
+            window.location.href = '@Url.Action("Index", "ProgrammeNewProject", new { area = "FPS" })';
+        }
+
+        function showErrors(errors) {
+            if (!errors || errors.length === 0) return;
+
+            const list = errors.map(e => `<li>${e.message}</li>`).join('');
+            const summary = document.querySelector('.govuk-error-summary');
+            if (summary) {
+                const errorList = summary.querySelector('ul');
+                if (errorList) errorList.innerHTML = list;
+                summary.style.display = 'block';
+                summary.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+
+            errors.forEach(error => {
+                if (error.field) {
+                    const fieldName = error.field.split('.').pop();
+                    const errorSpan = document.querySelector(`span[data-valmsg-for="${fieldName}"]`) ||
+                                      document.querySelector(`span[asp-validation-for="${fieldName}"]`);
+                    if (errorSpan) {
+                        errorSpan.textContent = error.message;
+                        errorSpan.style.display = 'block';
+                        const input = document.querySelector(`[name="${fieldName}"], #${fieldName}`);
+                        if (input) input.classList.add('govuk-input--error');
+                    }
+                }
+            });
+        }
+    </script>
+}

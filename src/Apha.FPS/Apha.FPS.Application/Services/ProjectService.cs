@@ -77,5 +77,42 @@ namespace Apha.FPS.Application.Services
             var projects = await _projectRepository.GetProjectsByProgramAsync(filter, programNo);
             return _mapper.Map<PaginatedResult<ProjectDto>>(projects);
         }
+
+        public async Task<bool> CheckProjectExistsAsync(string newProject)
+        {
+            ArgumentNullException.ThrowIfNull(newProject);
+            return await _projectRepository.CheckProjectExistsAsync(newProject);
+        }
+
+        public async Task<bool> CheckProjectExistsInFarmFileAsync(string oldProject)
+        {
+            ArgumentNullException.ThrowIfNull(oldProject);
+            return await _projectRepository.CheckProjectExistsInFarmFileAsync(oldProject);
+        }
+
+        public async Task ChangeProjectCodeAsync(string oldCode, string newCode)
+        {
+            ArgumentNullException.ThrowIfNull(oldCode);
+            ArgumentNullException.ThrowIfNull(newCode);
+
+            if (string.IsNullOrWhiteSpace(newCode))
+                throw new ArgumentException("New project code cannot be empty.", nameof(newCode));
+
+            bool newCodeExists = await _projectRepository.CheckProjectExistsAsync(newCode);
+            if (newCodeExists)
+                throw new InvalidOperationException("This code is already in use.");
+
+            bool farmFileDataExists = await _projectRepository.CheckProjectExistsInFarmFileAsync(oldCode);
+            if (farmFileDataExists)
+                throw new InvalidOperationException("Cannot change code, data exists in Farm File for old code.");
+
+            await _projectRepository.ChangeProjectCodeAsync(oldCode, newCode);
+        }
+
+        public async Task DeleteProjectAndChildrenAsync(string parentProject)
+        {
+            ArgumentNullException.ThrowIfNull(parentProject);
+            await _projectRepository.DeleteProjectAndChildrenAsync(parentProject);
+        }
     }
 }

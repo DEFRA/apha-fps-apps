@@ -2,6 +2,7 @@
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
+using Apha.FPS.Core.Entities;
 using AutoMapper;
 
 namespace Apha.FPS.Api.Mappings
@@ -43,6 +44,18 @@ namespace Apha.FPS.Api.Mappings
                 .ForMember(d => d.ContractNo, o => o.MapFrom(s => s.Contractno))
                 .ForMember(d => d.Category, o => o.MapFrom(s => s.Category));
             CreateMap<YearMasterRes, YearMasterDto>().ReverseMap();
+
+            // ProgrammeNewProject mappings
+            CreateMap<ProjectDto, ProgrammeNewProjectReq>().ReverseMap();
+            CreateMap<ProjectDto, ProgrammeNewProjectRes>().ReverseMap();
+            CreateMap<AccountCodeDto, AccountCodeRes>().ReverseMap();
+            CreateMap<SubAccountDto, SubAccountRes>()
+                .ForMember(d => d.SubAccount, o => o.MapFrom(s => s.SubAccountName)).ReverseMap()
+                .ForMember(d => d.SubAccountName, o => o.MapFrom(s => s.SubAccount));
+            CreateMap<ProjectGroupDto, ProjectGroupRes>()
+                .ForMember(d => d.ProjectGroup, o => o.MapFrom(s => s.ProjectGroupName)).ReverseMap()
+                .ForMember(d => d.ProjectGroupName, o => o.MapFrom(s => s.ProjectGroup));
+            CreateMap<CostCentreWorkgroup, CostCentreWorkgroupRes>().ReverseMap();
         }
     }
 }

@@ -57,6 +57,8 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<PactWorkGroupGradeView> PactWorkGroupGradeViews { get; set; }
 
         public virtual DbSet<YearMaster> YearMasters { get; set; }
+        public virtual DbSet<SurvFFSubmission> SurvFFSubmissions { get; set; }
+        public virtual DbSet<ProjectLog> ProjectLogs { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -1225,6 +1227,73 @@ namespace Apha.FPS.DataAccess.Data
                     .HasMaxLength(10)
                     .HasComment("Lifecycle state: Open (transactions allowed), Closed (read-only), or Planned (configuration only).")
                     .HasColumnName("yearstatus");
+            });
+
+            modelBuilder.Entity<SurvFFSubmission>(entity =>
+            {
+                entity.HasKey(e => new { e.SdPactWg, e.Contract }).HasName("pk___1__12");
+
+                entity.ToTable("tblsurvff_submissions", "fps");
+
+                entity.Property(e => e.SdPactWg)
+                    .HasMaxLength(50)
+                    .HasColumnName("sd_pact_wg");
+                entity.Property(e => e.Contract)
+                    .HasMaxLength(20)
+                    .HasColumnName("contract");
+                entity.Property(e => e.CountOfJobName)
+                    .HasColumnName("countofjobname");
+                entity.Property(e => e.FpsYear)
+                    .HasColumnName("fpsyear");
+
+                entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
+            });
+
+            modelBuilder.Entity<ProjectLog>(entity =>
+            {
+                entity.HasKey(e => e.SequenceNo).HasName("pk_project_log");
+                entity.ToTable("project_log", "fps");
+                entity.Property(e => e.SequenceNo).HasColumnName("sequenceno");
+                entity.Property(e => e.ParentProject).HasMaxLength(20).HasColumnName("parentproject");
+                entity.Property(e => e.InsertDelete).HasMaxLength(2).HasColumnName("insert_delete");
+                entity.Property(e => e.DateTime).HasColumnName("date_time");
+                entity.Property(e => e.UserId).HasMaxLength(20).HasColumnName("user_id");
+                entity.Property(e => e.JobCode).HasMaxLength(20).HasColumnName("jobcode");
+                entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
+                entity.Property(e => e.ProjectTitle).HasColumnName("projecttitle");
+                entity.Property(e => e.Program).HasColumnName("program");
+                entity.Property(e => e.Customer).HasColumnName("customer");
+                entity.Property(e => e.Manager).HasColumnName("manager");
+                entity.Property(e => e.TransferIncome).HasColumnName("transferincome");
+                entity.Property(e => e.CustIncome).HasColumnName("custincome");
+                entity.Property(e => e.WipEoy).HasColumnName("wip_eoy");
+                entity.Property(e => e.WipLimit).HasColumnName("wip_limit");
+                entity.Property(e => e.WipCurrent).HasColumnName("wip_current");
+                entity.Property(e => e.ProjectStatus).HasColumnName("projectstatus");
+                entity.Property(e => e.CostBookNo).HasColumnName("costbookno");
+                entity.Property(e => e.DateCreated).HasColumnName("datecreated");
+                entity.Property(e => e.FecCost).HasColumnName("feccost");
+                entity.Property(e => e.Profit).HasColumnName("profit");
+                entity.Property(e => e.BudgetCvl).HasColumnName("budget_cvl");
+                entity.Property(e => e.DateCosted).HasColumnName("datecosted");
+                entity.Property(e => e.Disease).HasColumnName("disease");
+                entity.Property(e => e.Contract).HasColumnName("contract");
+                entity.Property(e => e.ProjectParent).HasColumnName("projectparent");
+                entity.Property(e => e.ShortTitle).HasColumnName("shorttitle");
+                entity.Property(e => e.CaseWorkSub).HasColumnName("caseworksub");
+                entity.Property(e => e.PvsIncome).HasColumnName("pvsincome");
+                entity.Property(e => e.PlanCaseWorkDebit).HasColumnName("plancaseworkdebit");
+                entity.Property(e => e.Finished).HasColumnName("finished");
+                entity.Property(e => e.OwningRc).HasColumnName("owningrc");
+                entity.Property(e => e.Comments).HasColumnName("comments");
+                entity.Property(e => e.CarryOver).HasColumnName("carryover");
+                entity.Property(e => e.CarryOverSeed).HasColumnName("carryoverseed");
+                entity.Property(e => e.IsDefraProject).HasColumnName("isdefraproject");
+                entity.Property(e => e.CostCentre).HasColumnName("costcentre");
+                entity.Property(e => e.OracleProjectCode).HasColumnName("oracleprojectcode");
+                entity.Property(e => e.SubAccountCode).HasColumnName("subaccountcode");
+                entity.Property(e => e.ProjectGroup).HasColumnName("projectgroup");
+                entity.Property(e => e.IncomeAccountCode).HasColumnName("incomeaccountcode");
             });
 
         }

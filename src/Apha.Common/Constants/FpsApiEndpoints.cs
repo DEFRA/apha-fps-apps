@@ -46,6 +46,19 @@ namespace Apha.Common.Constants
         public const string DeleteProject = "api/v1/project/{0}";
         public const string GetProjectsByProgram = "api/v1/project/paged?programNo={0}";
 
+        // ProgrammeNewProject
+        public const string GetProgrammeNewProjectById = "api/v1/programme-new-project/{0}";
+        public const string CreateProgrammeNewProject = "api/v1/programme-new-project";
+        public const string UpdateProgrammeNewProject = "api/v1/programme-new-project/{0}";
+        public const string DeleteProgrammeNewProjectAndChildren = "api/v1/programme-new-project/{0}/delete-with-children";
+        public const string ChangeProjectCode = "api/v1/programme-new-project/change-code";
+        public const string CheckProjectExists = "api/v1/programme-new-project/check-exists/{0}";
+        public const string GetProgrammeNewProjectManagers = "api/v1/programme-new-project/managers";
+        public const string GetProgrammeNewProjectCostCentres = "api/v1/programme-new-project/cost-centres";
+        public const string GetProgrammeNewProjectProjectGroups = "api/v1/programme-new-project/project-groups";
+        public const string GetProgrammeNewProjectAccountCodes = "api/v1/programme-new-project/account-codes";
+        public const string GetProgrammeNewProjectSubAccounts = "api/v1/programme-new-project/sub-accounts";
+
         // Setting
         public const string GetHoursPerDay = "api/v1/setting/hoursperday";
 
