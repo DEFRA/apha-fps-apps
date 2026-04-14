@@ -1,21 +1,6 @@
 {
-  "name": "apha-fps-apps-codespaces",
-  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  "name": "apha-batchjobs-minimal",
+  "image": "mcr.microsoft.com/devcontainers/base:bookworm",
   "remoteUser": "vscode",
-  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}/src/Apha.BatchJobs",
-  "hostRequirements": {
-    "cpus": 4,
-    "memory": "8gb",
-    "storage": "32gb"
-  },
-  "forwardPorts": [5432],
-  "customizations": {
-    "vscode": {
-      "extensions": [
-        "ms-azuretools.vscode-docker",
-        "ms-dotnettools.csharp",
-        "github.vscode-github-actions"
-      ]
-    }
-  }
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}/src/Apha.BatchJobs"
 }
