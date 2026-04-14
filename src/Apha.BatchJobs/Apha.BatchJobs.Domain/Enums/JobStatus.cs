@@ -33,5 +33,10 @@ public enum JobStatus
     /// <summary>
     /// Job retry is scheduled.
     /// </summary>
-    Retry = 5
+    Retry = 5,
+
+    /// <summary>
+    /// Job was skipped because a concurrent run already holds the distributed lock.
+    /// </summary>
+    Skipped = 6
 }

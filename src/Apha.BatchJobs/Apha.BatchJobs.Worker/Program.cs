@@ -1,4 +1,5 @@
 using Apha.BatchJobs.Application.Interfaces;
+using Apha.BatchJobs.Domain.Enums;
 using Apha.BatchJobs.Worker;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -7,7 +8,6 @@ var services = ServiceCollectionSetup.CreateDefaultServices();
 var serviceProvider = services.BuildServiceProvider();
 
 ILoggerFactory? loggerFactory = null;
-IBatchJobFactory? jobFactory = null;
 
 try
 {
@@ -23,24 +23,23 @@ try
     
     // Get job name from args or environment variable
     var jobName = args.Length > 0 ? args[0] : (Environment.GetEnvironmentVariable("BATCH_JOB_NAME") ?? "HealthCheck");
-    logger.LogInformation("Requested job: {JobName}", jobName);
-    
-    // Resolve job factory
-    jobFactory = serviceProvider.GetRequiredService<IBatchJobFactory>();
-    var availableJobs = string.Join(", ", jobFactory.GetAvailableJobs());
-    logger.LogInformation("Available jobs: {AvailableJobs}", availableJobs);
-    
-    // Create and execute the job
-    logger.LogInformation("Creating job handler for '{JobName}'...", jobName);
-    var job = jobFactory.Create(jobName);
-    
-    logger.LogInformation("Executing job '{JobName}'...", job.Name);
-    await job.ExecuteAsync(CancellationToken.None);
-    
+    var runModeEnv = Environment.GetEnvironmentVariable("BATCH_RUN_MODE") ?? "AdHoc";
+    var runMode = Enum.TryParse<RunMode>(runModeEnv, ignoreCase: true, out var parsedMode) ? parsedMode : RunMode.AdHoc;
+
+    logger.LogInformation("Requested job: {JobName} | RunMode: {RunMode}", jobName, runMode);
+
+    // Run through orchestrator (handles lock, execution records, and job execution)
+    var orchestrator = serviceProvider.GetRequiredService<IJobOrchestrator>();
+    var result = await orchestrator.RunAsync(jobName, runMode, CancellationToken.None);
+
     logger.LogInformation("===========================================");
-    logger.LogInformation("Batch job '{JobName}' completed successfully", job.Name);
+    logger.LogInformation("Job '{JobName}' finished | Status={Status} | RunId={RunId}",
+        result.JobName, result.Status, result.RunId);
     logger.LogInformation("===========================================");
-    Environment.Exit(0);
+
+    // Exit 4 = skipped (lock already held) — not a failure
+    var exitCode = result.Status == JobStatus.Skipped ? 4 : 0;
+    Environment.Exit(exitCode);
 }
 catch (InvalidOperationException ex)
 {
