@@ -25,14 +25,18 @@ namespace Apha.FPSApps.Web.Middleware
             }
             catch (Exception ex)
             {
+                var correlationId = context.Request.Headers["X-Correlation-ID"].ToString();
+                var (errorType, errorCode, statusCode) = ClassifyException(ex);
+                LogException(context, ex, errorType, errorCode, correlationId);
+
                 if (context.Response.HasStarted)
                     return;
 
-                await HandleExceptionAsync(context, ex);
+                await HandleExceptionAsync(context, ex, statusCode);
             }
         }
 
-        private async Task HandleExceptionAsync(HttpContext context, Exception ex)
+        private async Task HandleExceptionAsync(HttpContext context, Exception ex, int statusCode)
         {
             // Unwrap: UnauthorizedAccessException may wrap MicrosoftIdentityWebChallengeUserException
             var oidcChallenge = ex as MicrosoftIdentityWebChallengeUserException
@@ -51,35 +55,7 @@ namespace Apha.FPSApps.Web.Middleware
                 return;
             }
 
-            var correlationId = context.Request.Headers["X-Correlation-ID"].ToString();
-            string errorCode = string.Empty;
-            var errorType = _configuration["ExceptionTypes:General"]
-                            ?? "FPS.GENERAL_EXCEPTION";
-
-            switch (ex)
-            {
-                case UnauthorizedAccessException:
-                case AuthenticationFailureException:
-                    context.Response.StatusCode = StatusCodes.Status403Forbidden;
-                    errorCode = "403 - Forbidden";
-                    errorType = _configuration["ExceptionTypes:Authorization"];
-                    break;
-                case InvalidOperationException:
-                case ArgumentException:
-                    context.Response.StatusCode = StatusCodes.Status400BadRequest;
-                    errorCode = "ARGUMENT_INVALID";
-                    break;
-                case KeyNotFoundException:
-                    context.Response.StatusCode = StatusCodes.Status404NotFound;
-                    errorCode = "RESOURCE_NOT_FOUND";
-                    break;
-                default:
-                    context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-                    errorCode = "SERVER_500";
-                    break;
-            }
-
-            LogException(context, ex, errorType!, errorCode, correlationId);
+            context.Response.StatusCode = statusCode;
 
             //Pending to create a user friendly error page and redirect to that page
             if (!context.Request.Path.StartsWithSegments("/Home/Error"))
@@ -88,6 +64,39 @@ namespace Apha.FPSApps.Web.Middleware
             }
 
             await context.Response.CompleteAsync();
+        }
+
+        private (string errorType, string errorCode, int statusCode) ClassifyException(Exception ex)
+        {
+            var errorType = _configuration["ExceptionTypes:General"]
+                            ?? "FPS.GENERAL_EXCEPTION";
+            string errorCode;
+            int statusCode;
+
+            switch (ex)
+            {
+                case UnauthorizedAccessException:
+                case AuthenticationFailureException:
+                    errorCode = "403 - Forbidden";
+                    statusCode = StatusCodes.Status403Forbidden;
+                    errorType = _configuration["ExceptionTypes:Authorization"] ?? errorType;
+                    break;
+                case InvalidOperationException:
+                case ArgumentException:
+                    errorCode = "ARGUMENT_INVALID";
+                    statusCode = StatusCodes.Status400BadRequest;
+                    break;
+                case KeyNotFoundException:
+                    errorCode = "RESOURCE_NOT_FOUND";
+                    statusCode = StatusCodes.Status404NotFound;
+                    break;
+                default:
+                    errorCode = "SERVER_500";
+                    statusCode = StatusCodes.Status500InternalServerError;
+                    break;
+            }
+
+            return (errorType, errorCode, statusCode);
         }
 
         private void LogException(
