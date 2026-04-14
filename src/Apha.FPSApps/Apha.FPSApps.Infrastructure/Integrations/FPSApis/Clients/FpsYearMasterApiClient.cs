@@ -6,6 +6,7 @@ using Apha.FPSApps.Application.Interfaces.FpsApiClients;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
+using Microsoft.Identity.Web;
 
 namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 {
@@ -36,6 +37,14 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                     var responseDto = _mapper.Map<ApiResponseDto<IEnumerable<YearMasterDto>>>(response);
                     return ApiResponseDto<IEnumerable<YearMasterDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
                 }
+            }
+            catch (MicrosoftIdentityWebChallengeUserException)
+            {
+                throw; // let the OIDC middleware handle it
+            }
+            catch (UnauthorizedAccessException ex) when (ex.InnerException is MicrosoftIdentityWebChallengeUserException)
+            {
+                throw; // unwrap and propagate the wrapped form too
             }
             catch (Exception)
             {
@@ -69,6 +78,14 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                     return ApiResponseDto<List<YearMasterDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
                 }
             }
+            catch (MicrosoftIdentityWebChallengeUserException)
+            {
+                throw; // let the OIDC middleware handle it
+            }
+            catch (UnauthorizedAccessException ex) when (ex.InnerException is MicrosoftIdentityWebChallengeUserException)
+            {
+                throw; // unwrap and propagate the wrapped form too
+            }
             catch (Exception)
             {
                 var apiErrorsDto = new List<ApiErrorDto>
@@ -99,6 +116,14 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                     var responseDto = _mapper.Map<ApiResponseDto<YearMasterDto>>(response);
                     return ApiResponseDto<YearMasterDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
                 }
+            }
+            catch (MicrosoftIdentityWebChallengeUserException)
+            {
+                throw; // let the OIDC middleware handle it
+            }
+            catch (UnauthorizedAccessException ex) when (ex.InnerException is MicrosoftIdentityWebChallengeUserException)
+            {
+                throw; // unwrap and propagate the wrapped form too
             }
             catch (Exception)
             {

@@ -1,11 +1,11 @@
 ﻿using Apha.Common.Utilities.ExcelExport;
+using Apha.Common.Utilities.StateManagement;
+using Apha.FPSApps.Application.Interfaces.Costbook;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.PACT;
+using Apha.FPSApps.Application.Services.Costbook;
 using Apha.FPSApps.Application.Services.FPS;
 using Apha.FPSApps.Application.Services.PACT;
-using Apha.FPSApps.Application.Services.Costbook;
-using Apha.FPSApps.Application.Interfaces.Costbook;
-
 using Apha.FPSApps.Web.Handler;
 namespace Apha.FPSApps.Web.Extensions
 {
@@ -43,6 +43,8 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IWorkGroupTestCapabilityService, WorkGroupTestCapabilityService>();
             services.AddScoped<ITestRequirementService, TestRequirementService>();
             services.AddScoped<IExcelExportService, ExcelExportService>();
+            services.AddScoped<IAppStateService, AppStateService>();
+
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
