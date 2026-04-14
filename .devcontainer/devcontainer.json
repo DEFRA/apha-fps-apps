@@ -2,14 +2,11 @@
   "name": "apha-fps-apps-codespaces",
   "image": "mcr.microsoft.com/devcontainers/dotnet:1-8.0-bookworm",
   "features": {
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {
-      "version": "latest",
-      "moby": true
-    },
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
   "remoteUser": "vscode",
-  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}/src/Apha.BatchJobs",
   "hostRequirements": {
     "cpus": 4,
     "memory": "8gb",
