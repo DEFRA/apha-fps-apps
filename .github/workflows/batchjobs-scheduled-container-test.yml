@@ -1,0 +1,88 @@
+name: BatchJobs Scheduled Container Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      job_name:
+        description: Batch job to run
+        required: false
+        default: HealthCheck
+      aspnet_environment:
+        description: ASPNETCORE_ENVIRONMENT value
+        required: false
+        default: Development
+  schedule:
+    - cron: "30 5 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: batchjobs-scheduled-container-test
+  cancel-in-progress: false
+
+jobs:
+  containerized-batchjobs-run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      COMPOSE_FILE: src/Apha.BatchJobs/docker-compose.yml
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Resolve runtime parameters
+        shell: bash
+        run: |
+          set -euo pipefail
+          JOB_NAME="${{ github.event.inputs.job_name || 'HealthCheck' }}"
+          ASPNET_ENVIRONMENT="${{ github.event.inputs.aspnet_environment || 'Development' }}"
+          echo "JOB_NAME=$JOB_NAME" >> "$GITHUB_ENV"
+          echo "ASPNET_ENVIRONMENT=$ASPNET_ENVIRONMENT" >> "$GITHUB_ENV"
+
+      - name: Show Docker and Compose versions
+        shell: bash
+        run: |
+          docker --version
+          docker compose version
+
+      - name: Validate compose configuration
+        shell: bash
+        run: |
+          docker compose -f "$COMPOSE_FILE" config -q
+
+      - name: Build and run batch job container
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker compose -f "$COMPOSE_FILE" down -v --remove-orphans || true
+
+          # Override only runtime inputs for this run.
+          export BATCH_JOB_NAME="$JOB_NAME"
+          export ASPNETCORE_ENVIRONMENT="$ASPNET_ENVIRONMENT"
+
+          docker compose -f "$COMPOSE_FILE" up --build --abort-on-container-exit --exit-code-from batch-jobs
+
+      - name: Capture compose logs
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          docker compose -f "$COMPOSE_FILE" ps -a > artifacts/compose-ps.txt || true
+          docker compose -f "$COMPOSE_FILE" logs --no-color > artifacts/compose.log || true
+
+      - name: Upload logs artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: batchjobs-compose-logs-${{ github.run_number }}
+          path: artifacts/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Tear down containers and volumes
+        if: always()
+        shell: bash
+        run: |
+          docker compose -f "$COMPOSE_FILE" down -v --remove-orphans
