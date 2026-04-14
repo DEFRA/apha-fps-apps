@@ -92,7 +92,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 return PartialView("_AddEditTestPurchaseRequirement", model);
             }
 
-            var result = await _testReqmtService.GetTestReqmtByIdAsync(testCode!, buyer);
+            var result = await _testReqmtService.GetTestReqmtByIdAsync(testCode!, buyer ?? string.Empty);
             if (!result.Success || result.Data == null) return NotFound();
             var editModel = _mapper.Map<TestPurchaseRequirementItem>(result.Data);
             editModel.IsEdit = true;
