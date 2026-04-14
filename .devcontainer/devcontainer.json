@@ -17,7 +17,5 @@
         "github.vscode-github-actions"
       ]
     }
-  },
-  "postCreateCommand": "docker --version; docker compose version",
-  "postStartCommand": "git config --global --add safe.directory /workspaces/${localWorkspaceFolderBasename}"
+  }
 }
