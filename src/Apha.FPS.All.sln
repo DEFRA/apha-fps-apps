@@ -73,13 +73,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Apha.PACT.Application.UnitT
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Apha.PACT.DataAccess.UnitTests", "Apha.PACT\Apha.PACT.DataAccess.UnitTests\Apha.PACT.DataAccess.UnitTests.csproj", "{1CA7E014-52F8-8336-B4A6-B5B9EFB34B50}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Source", "Source", "{9FE7BBA8-E041-4471-AA07-BE041ABFB24E}"
-	ProjectSection(SolutionItems) = preProject
-		..\..\Rohit_\FPS_Screen\Tech-Details\Program\trigger\tlkpProgram_DTrig.sql = ..\..\Rohit_\FPS_Screen\Tech-Details\Program\trigger\tlkpProgram_DTrig.sql
-		..\..\Rohit_\FPS_Screen\Tech-Details\Program\trigger\tlkpProgram_ITrig.sql = ..\..\Rohit_\FPS_Screen\Tech-Details\Program\trigger\tlkpProgram_ITrig.sql
-		..\..\Rohit_\FPS_Screen\Tech-Details\Program\trigger\tlkpProgram_UTrig.sql = ..\..\Rohit_\FPS_Screen\Tech-Details\Program\trigger\tlkpProgram_UTrig.sql
-	EndProjectSection
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
