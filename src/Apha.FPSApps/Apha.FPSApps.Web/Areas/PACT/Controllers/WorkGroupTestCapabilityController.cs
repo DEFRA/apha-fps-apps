@@ -17,8 +17,8 @@ using Newtonsoft.Json;
 namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 {
     [Area("PACT")]
-    [Authorize(Roles = "FPSAdmin,FPSUser")]
-    [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")]
+    [Authorize(Roles = "FPSAdmin,FPSUser,PACTAdmin,PACTUser")]
+    [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope, PACTApiSettings:Scope")]
     public class WorkGroupTestCapabilityController : Controller
     {
         private readonly IMapper _mapper;
