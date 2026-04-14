@@ -1,3 +1,4 @@
+using Apha.BatchJobs.Application;
 using Apha.BatchJobs.Application.Factory;
 using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Application.Jobs.HealthCheck;
@@ -51,21 +52,30 @@ public static class ServiceCollectionSetup
         });
 
         // Get database settings to build connection string
-        var dbSettings = config.GetSection("DatabaseConnection").Get<DatabaseSettings>();
-        if (dbSettings == null)
-            throw new InvalidOperationException("DatabaseConnection configuration is missing.");
-
-        // Register DbContext
-        services.AddDbContext<BatchJobsDbContext>(options =>
+        // Register database and repositories.
+        // In Development (local), in-memory stubs are used — no real database required.
+        // In all other environments (Staging, Production/AWS), EF Core + PostgreSQL are used.
+        if (environment == "Development")
         {
-            options.UseNpgsql(
-                dbSettings.BuildConnectionString(),
-                npgsqlOptions => npgsqlOptions.CommandTimeout(dbSettings.Timeout));
-        });
+            services.AddSingleton<IBatchLockRepository, InMemoryBatchLockRepository>();
+            services.AddSingleton<IJobExecutionRepository, InMemoryJobExecutionRepository>();
+        }
+        else
+        {
+            var dbSettings = config.GetSection("DatabaseConnection").Get<DatabaseSettings>();
+            if (dbSettings == null)
+                throw new InvalidOperationException("DatabaseConnection configuration is missing.");
 
-        // Register repositories
-        services.AddScoped<IBatchLockRepository, BatchLockRepository>();
-        services.AddScoped<IJobExecutionRepository, JobExecutionRepository>();
+            services.AddDbContext<BatchJobsDbContext>(options =>
+            {
+                options.UseNpgsql(
+                    dbSettings.BuildConnectionString(),
+                    npgsqlOptions => npgsqlOptions.CommandTimeout(dbSettings.Timeout));
+            });
+
+            services.AddScoped<IBatchLockRepository, BatchLockRepository>();
+            services.AddScoped<IJobExecutionRepository, JobExecutionRepository>();
+        }
 
         // Register batch job handlers
         services.AddScoped<HealthCheckJobHandler>();
@@ -78,6 +88,9 @@ public static class ServiceCollectionSetup
 
         // Register job factory
         services.AddScoped<IBatchJobFactory>(sp => new BatchJobFactory(sp, jobRegistry));
+
+        // Register execution orchestrator (the single entry point for all job runs)
+        services.AddScoped<IJobOrchestrator, JobOrchestrator>();
 
         // Register raw configuration for consumers that need direct access.
         services.AddSingleton<IConfiguration>(config);
