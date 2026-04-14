@@ -2,6 +2,7 @@
 
 <select id="yearSelector"
         aria-label="Year"
+        data-area="@ViewContext.RouteData.Values["area"]"
         style="border: 1px solid #0374e9;
                border-radius: 10px;
                margin-left: 10px;
@@ -23,8 +24,8 @@
 
 <script>
     $('#yearSelector').on('change', function () {
-        var url = new URL(window.location.href);
-        url.searchParams.set('year', $(this).val());
-        window.location.href = url.toString();
+        var area = $(this).data('area') || '';
+        var homeUrl = area ? '/' + area + '/Home/Index' : '/Home/Index';
+        window.location.href = homeUrl + '?year=' + $(this).val();
     });
 </script>
