@@ -16,7 +16,7 @@ namespace Apha.PACT.Api.Extensions
             services.AddAuthorization();
 
             return services;
-
+                
         }
 
       

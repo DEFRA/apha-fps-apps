@@ -1,4 +1,5 @@
-﻿using Apha.Common.Utilities.StateManagement;
+﻿using Apha.Common.Utilities.ExcelExport;
+using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Interfaces.Costbook;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.PACT;
@@ -18,7 +19,6 @@ namespace Apha.FPSApps.Web.Extensions
         }
         public static IServiceCollection AddServices(this IServiceCollection services)
         {
-            // Add your application services here
             services.AddScoped<IStaffJobService, StaffJobService>();
             services.AddTransient<RequestHeadersHandler>();
             services.AddScoped<IFpsYearContext, FpsYearContext>();
@@ -38,12 +38,17 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<ICostBookStaffService, CostBookStaffService>();
             services.AddScoped<ICostBookContractService, CostBookContractService>();
             services.AddScoped<IYearMasterService, YearMasterService>();
+            services.AddScoped<IProjectInvoiceService, ProjectInvoiceService>();
+            services.AddScoped<IProjectSubContractService, ProjectSubContractService>();
+            services.AddScoped<IWorkGroupTestCapabilityService, WorkGroupTestCapabilityService>();
+            services.AddScoped<ITestRequirementService, TestRequirementService>();
+            services.AddScoped<IExcelExportService, ExcelExportService>();
             services.AddScoped<IAppStateService, AppStateService>();
+
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
         {
-            // Add your data access services here
             return services;
         }
     }

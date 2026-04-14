@@ -4,13 +4,15 @@ using Apha.Costbook.Application.Dtos;
 using Apha.Costbook.Application.Interfaces;
 using Apha.Costbook.Application.Pagination;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Apha.Costbook.Api.Controllers
 {
         [ApiController]
         [Route("api/projects")]
-        public class ProjectsController : ControllerBase
+    [Authorize(Roles = "API-CostbookAdmin,API-CostbookUser")]
+    public class ProjectsController : ControllerBase
     {
             private readonly IProjectService _service;
             private readonly IContractService _contractService;
