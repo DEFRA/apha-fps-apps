@@ -82,6 +82,11 @@ namespace Apha.PACT.Application.Services
                     throw new InvalidOperationException("This workgroup is not setup to do this test.");
             }
 
+            // Duplicate check: no existing record may exist with same TestCode + Buyer
+            var exists = await _testReqmtRepository.ExistsAsync(dto.TestCode, dto.Buyer);
+            if (exists)
+                throw new InvalidOperationException("A record with the same TestCode and Buyer already exists.");
+
             var entity = _mapper.Map<TestRequirement>(dto);
             var created = await _testReqmtRepository.AddAsync(entity);
             return _mapper.Map<TestRequirementtDto>(created);

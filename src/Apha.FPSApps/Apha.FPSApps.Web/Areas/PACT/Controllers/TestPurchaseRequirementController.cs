@@ -1,6 +1,4 @@
-using Amazon.Runtime.Internal;
 using Apha.FPSApps.Application.Dtos;
-using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.PACT;
@@ -8,7 +6,6 @@ using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.PACT.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Identity.Web;
@@ -43,29 +40,12 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         public async Task<IActionResult> Index(string? parentProject)
         {
             var defaultRequest = new PaginationFilter<string>();
-            var grid = await BuildTestPurchaseRequiremntGridAsync(defaultRequest, parentProject);
-
-            //var testorProductsResponse = await _testorProductService.GetAllTestorProductsAsync();
-            //var projectsResponse = await _projectService.GetAllPactProjectsAsync();
-
-            //var buyerOptions = projectsResponse.Success && projectsResponse.Data != null
-            //    ? projectsResponse.Data
-            //        .Select(p => new SelectListItem(p.ParentProject, p.ParentProject))
-            //        .ToList()
-            //    : new List<SelectListItem>();
-
-            //var testorProductOptions = testorProductsResponse.Success && testorProductsResponse.Data != null
-            //    ? testorProductsResponse.Data
-            //        .Select(t => new SelectListItem(t.ItemCode, t.ItemCode))
-            //        .ToList()
-            //    : new List<SelectListItem>();
+            var grid = await BuildTestPurchaseRequiremntGridAsync(defaultRequest, parentProject ?? string.Empty);            
 
             var viewModel = new TestPurchaseRequirementViewModel
             {
                 ParentProject = parentProject ?? string.Empty,
                 TestPurchaseReqGrid = grid,
-               // TestorProductOptions = testorProductOptions,
-               // BuyerOptions = buyerOptions
             };
 
             return View(viewModel);
@@ -98,32 +78,25 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             ViewBag.TestorProductOptions = await GetTestorProductSelectListAsync();
             ViewBag.BuyerOptions = await GetBuyerSelectListAsync();
 
-            if (string.IsNullOrWhiteSpace(buyer))
+            if (string.IsNullOrWhiteSpace(testCode))
             {
                 var model = new TestPurchaseRequirementItem
                 {
-                    TestCode = testCode ?? string.Empty,
+                    TestCode = string.Empty,
+                    Buyer = buyer ?? string.Empty,
                     ProjectBuyerCode = parentProject,
                     Active = 1,
                     NoRequired = 0
-                };
-
-                if (!string.IsNullOrWhiteSpace(testCode))
-                {
-                    var pricing = await _testReqmtService.GetTestReqmtPricingAsync(testCode, parentProject);
-                    if (pricing.Success && pricing.Data is not null)
-                    {
-                        model.RecUnitPrice = pricing.Data.RecUnitPrice;
-                        model.UnitPrice = pricing.Data.RecUnitPrice;
-                    }
-                }
+                };               
 
                 return PartialView("_AddEditTestPurchaseRequirement", model);
             }
 
             var result = await _testReqmtService.GetTestReqmtByIdAsync(testCode!, buyer);
             if (!result.Success || result.Data == null) return NotFound();
-            return PartialView("_AddEditTestPurchaseRequirement", _mapper.Map<TestPurchaseRequirementItem>(result.Data));
+            var editModel = _mapper.Map<TestPurchaseRequirementItem>(result.Data);
+            editModel.IsEdit = true;
+            return PartialView("_AddEditTestPurchaseRequirement", editModel);
         }
 
         [HttpPost]
@@ -144,7 +117,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 });
 
             var dto = _mapper.Map<TestRequirementDto>(model);
-            var isEdit = !string.IsNullOrWhiteSpace(model.Buyer);
+            var isEdit = model.IsEdit;
 
             ApiResponseDto<TestRequirementDto> result;
             string successMsg;
@@ -247,26 +220,6 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 CurrentFilters = filterDict
             };
         }
-
-        //private static DataGridConfig<TestPurchaseRequirementItem> BuildTestPurchaseRequiremntGridAsync()
-        //{
-        //    return new DataGridConfig<TestPurchaseRequirementItem>
-        //    {
-        //        GridId = "testPurchaseReqGrid",
-        //        Title = "Test to Buy....",
-        //        ShowCheckboxColumn = false,
-        //        ShowPagination = true,
-        //        KeyProperty = "Buyer",
-        //        AddFunction = "addTestPurchaseReq",
-        //        EditFunction = "editTestPurchaseReq",
-        //        DeleteFunction = "deleteTestPurchaseReq",
-        //        ExtraFilterMethod = "getTestPurchaseReqExtraFilters",
-        //        BindGridUrl = "/PACT/TestPurchaseRequirement/LoadTestPurchaseReqGrid",
-        //        Data = new List<TestPurchaseRequirementItem>(),
-        //        Columns = GridDataProvider.GetColumnsDefination<TestPurchaseRequirementItem>(null),
-        //        Pagination = new PaginationModel()
-        //    };
-        //}
 
         private async Task<List<SelectListItem>> GetTestorProductSelectListAsync()
         {

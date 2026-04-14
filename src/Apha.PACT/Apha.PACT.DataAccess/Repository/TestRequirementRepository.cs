@@ -241,6 +241,13 @@ namespace Apha.PACT.DataAccess.Repository
             };
         }
 
+        public async Task<bool> ExistsAsync(string testCode, string buyer)
+        {
+            return await _context.TestRequirements
+                .AsNoTracking()
+                .AnyAsync(p => p.TestCode == testCode && p.Buyer == buyer);
+        }
+
         public async Task<bool> ExistsByTestBuyerCodeAsync(string testBuyerCode)
         {
             return await _context.TestRequirements

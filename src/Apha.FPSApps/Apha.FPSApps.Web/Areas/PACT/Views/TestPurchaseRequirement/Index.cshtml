@@ -57,12 +57,6 @@
     </div>
 </div>
 
-<div class="govuk-footer sup_p_0 sup_margin_left_right_0">
-    <div class="govuk-width-container sup_p_8 sup_text_center">
-        <span>&copy; copyright Defra 2025</span>
-    </div>
-</div>
-
 @section Scripts {
     <script src="~/js/ajax-form-validation.js"></script>
     <script>
@@ -86,7 +80,7 @@
         }
 
         function getTestPurchaseReqExtraFilters() {
-            return { testCode: currentTestCode };
+            return { testCode: decodeURIComponent(parentProject) };
         }
 
         function searchTestPurchaseReq() {
@@ -115,7 +109,7 @@
 
         function addTestPurchaseReq() {
             $.get('/PACT/TestPurchaseRequirement/GetTestPurchaseReq',
-                { testCode: '', buyer: '', parentProject: decodeURIComponent(parentProject) },
+                { testCode: '', buyer: decodeURIComponent(parentProject), parentProject: decodeURIComponent(parentProject) },
                 function (html) {
                     $('#modaPopupBody').html(html);
                     $('#modalPopup').addClass('show');
@@ -163,6 +157,8 @@
 
             var data = form.serializeObject ? form.serializeObject() : Object.fromEntries(new FormData(form[0]));
 
+            if (typeof data.isEdit === 'string') data.isEdit = data.isEdit === 'true';
+
             ['NoRequired', 'UnitPrice'].forEach(function (f) {
                 if (data[f] === '' || data[f] === undefined) data[f] = null;
             });
@@ -184,23 +180,6 @@
                 },
                 error: function () { alert('An error occurred while saving.'); }
             });
-        }
-
-        function fetchTestReqmtPricing() {
-            var testCode = document.getElementById('TestCode')?.value || '';
-            var projectCode = decodeURIComponent(parentProject) || '';
-            if (!testCode) return;
-
-            $.get('/PACT/TestPurchaseRequirement/GetTestReqmtPricing',
-                { testCode: testCode, projectCode: projectCode },
-                function (response) {
-                    if (response.success) {
-                        var unitPriceInput = document.getElementById('UnitPrice');
-                        if (unitPriceInput && response.recUnitPrice != null) {
-                            unitPriceInput.value = parseFloat(response.recUnitPrice).toFixed(2);
-                        }
-                    }
-                });
         }
     </script>
 }

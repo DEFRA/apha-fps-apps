@@ -16,11 +16,15 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         public double? NoRequired { get; set; }
 
         [Display(Name = "Unit Price")]
+        [DisplayFormat(DataFormatString = "{0:F2}", ApplyFormatInEditMode = true)]
         [Range(0, double.MaxValue, ErrorMessage = "Unit Price must be 0 or greater.")]
         [GridColumn(Order = 3, Width = 110, Type = GridColumnType.GbpValue)]
         public decimal? UnitPrice { get; set; }
 
         // ── Hidden (not shown in grid, kept for form and mapping) ─────────
+
+        [GridColumn(IsVisible = false)]
+        public bool IsEdit { get; set; }
 
         [Required(ErrorMessage = "Buyer is required.")]
         [GridColumn(IsVisible = false)]
