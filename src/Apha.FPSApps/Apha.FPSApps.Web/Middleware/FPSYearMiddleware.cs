@@ -4,7 +4,7 @@ using System.Linq;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Web.Constants;
-using Microsoft.Extensions.Caching.Memory;
+using Apha.Common.Utilities.StateManagement;
 using Microsoft.Identity.Web;
 
 namespace Apha.FPSApps.Web.Middleware
@@ -12,30 +12,26 @@ namespace Apha.FPSApps.Web.Middleware
     public class FpsYearMiddleware
     {
         private readonly RequestDelegate _next;
-        private readonly IMemoryCache _cache;
         private const string ExecutedKey = "FpsYearMiddleware.Executed";
         private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(10);
 
-        public FpsYearMiddleware(RequestDelegate next, IMemoryCache cache)
+        public FpsYearMiddleware(RequestDelegate next)
         {
             _next = next;
-            _cache = cache;
         }
 
         public async Task Invoke(
             HttpContext context,
             IFpsYearContext fyContext,
-            IYearMasterService yearMasterService)
+            IYearMasterService yearMasterService,
+            IAppStateService appStateService)
         {
             var path = context.Request.Path.Value;
-            if ((path is not null && Path.HasExtension(path)) ||
-                context.Items.ContainsKey(ExecutedKey))
+            if ((path is not null && Path.HasExtension(path)))
             {
                 await _next(context);
                 return;
             }
-
-            context.Items[ExecutedKey] = true;
 
             var tempYear = GetCurrentFPSYear();
             context.Items["SelectedFPSYear"] = tempYear;
@@ -45,7 +41,7 @@ namespace Apha.FPSApps.Web.Middleware
 
             try
             {
-                var allYears = await GetCachedYearsAsync(yearMasterService);
+                var allYears = await GetCachedYearsAsync(yearMasterService, appStateService);
 
                 if (allYears != null)
                 {
@@ -80,16 +76,19 @@ namespace Apha.FPSApps.Web.Middleware
             await _next(context);
         }
 
-        private async Task<IEnumerable<YearMasterDto>?> GetCachedYearsAsync(IYearMasterService yearMasterService)
+        private static async Task<IEnumerable<YearMasterDto>?> GetCachedYearsAsync(
+            IYearMasterService yearMasterService,
+            IAppStateService appStateService)
         {
-            if (_cache.TryGetValue(FpsCacheKeys.AllYears, out IEnumerable<YearMasterDto>? cached))
+            var cached = await appStateService.GetCacheValueAsync<IEnumerable<YearMasterDto>>(FpsCacheKeys.AllYears);
+            if (cached != null)
                 return cached;
 
             var response = await yearMasterService.GetAllFpsYearsAsync();
             var data = response?.Data;
 
             if (data != null)
-                _cache.Set(FpsCacheKeys.AllYears, data, CacheDuration);
+                await appStateService.SetCacheValueAsync(FpsCacheKeys.AllYears, data, CacheDuration);
 
             return data;
         }
