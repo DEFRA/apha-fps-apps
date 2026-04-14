@@ -1,0 +1,30 @@
+{
+  "name": "apha-fps-apps-codespaces",
+  "image": "mcr.microsoft.com/devcontainers/dotnet:1-8.0-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "latest",
+      "moby": true
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "remoteUser": "vscode",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "hostRequirements": {
+    "cpus": 4,
+    "memory": "8gb",
+    "storage": "32gb"
+  },
+  "forwardPorts": [5432],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-azuretools.vscode-docker",
+        "ms-dotnettools.csharp",
+        "github.vscode-github-actions"
+      ]
+    }
+  },
+  "postCreateCommand": "docker --version; docker compose version",
+  "postStartCommand": "git config --global --add safe.directory /workspaces/${localWorkspaceFolderBasename}"
+}
