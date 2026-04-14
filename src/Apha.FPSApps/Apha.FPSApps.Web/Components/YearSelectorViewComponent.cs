@@ -3,9 +3,9 @@ using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Web.Constants;
 using Apha.FPSApps.Web.Handler;
 using Apha.FPSApps.Web.Models.Components.YearSelector;
+using Apha.Common.Utilities.StateManagement;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace Apha.FPSApps.Web.Components
 {
@@ -13,16 +13,16 @@ namespace Apha.FPSApps.Web.Components
     {
         private readonly IYearMasterService _yearMasterService;
         private readonly IFpsYearContext _fyContext;
-        private readonly IMemoryCache _cache;
+        private readonly IAppStateService _appStateService;
 
         public YearSelectorViewComponent(
             IYearMasterService yearMasterService,
             IFpsYearContext fyContext,
-            IMemoryCache cache)
+            IAppStateService appStateService)
         {
             _yearMasterService = yearMasterService;
             _fyContext = fyContext;
-            _cache = cache;
+            _appStateService = appStateService;
         }
 
         public async Task<IViewComponentResult> InvokeAsync()
@@ -30,7 +30,8 @@ namespace Apha.FPSApps.Web.Components
             try
             {
                 // Reuse cache warmed by FpsYearMiddleware — no additional API call
-                if (!_cache.TryGetValue(FpsCacheKeys.AllYears, out IEnumerable<YearMasterDto>? allYears))
+                var allYears = await _appStateService.GetCacheValueAsync<IEnumerable<YearMasterDto>>(FpsCacheKeys.AllYears);
+                if (allYears == null)
                 {
                     var response = await _yearMasterService.GetAllFpsYearsAsync();
                     allYears = response?.Data;
