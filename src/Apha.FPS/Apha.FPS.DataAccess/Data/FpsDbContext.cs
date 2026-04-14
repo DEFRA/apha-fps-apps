@@ -55,9 +55,8 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<AnimalRequestView> AnimalRequestViews { get; set; }
         public virtual DbSet<PactProjectView> PactProjectViews { get; set; }
         public virtual DbSet<PactWorkGroupGradeView> PactWorkGroupGradeViews { get; set; }
-
         public virtual DbSet<YearMaster> YearMasters { get; set; }
-
+        public virtual DbSet<StaffJobLog> StaffJobLogs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -1229,6 +1228,42 @@ namespace Apha.FPS.DataAccess.Data
                     .HasMaxLength(10)
                     .HasComment("Lifecycle state: Open (transactions allowed), Closed (read-only), or Planned (configuration only).")
                     .HasColumnName("yearstatus");
+            });
+
+            modelBuilder.Entity<StaffJobLog>(entity =>
+            {
+                entity.HasKey(e => new { e.SequenceNo, e.FpsYear }).HasName("pk_staffjob_log");
+
+                entity.ToTable("staffjob_log", "fps");
+
+                entity.HasIndex(e => e.DateTime, "staffjob_log_ind_dt");
+
+                entity.HasIndex(e => e.JobCode, "staffjob_log_ind_jc");
+
+                entity.HasIndex(e => e.SequenceNo, "staffjob_log_pk_idx");
+
+                entity.Property(e => e.SequenceNo)
+                    .ValueGeneratedOnAdd()
+                    .HasColumnName("sequenceno");
+                entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
+                entity.Property(e => e.DateTime)
+                    .HasColumnType("timestamp without time zone")
+                    .HasColumnName("date_time");
+                entity.Property(e => e.InsertDelete)
+                    .HasMaxLength(2)
+                    .IsFixedLength()
+                    .HasColumnName("insert_delete");
+                entity.Property(e => e.JobCode)
+                    .HasMaxLength(20)
+                    .HasColumnName("jobcode");
+                entity.Property(e => e.PlannedHours).HasColumnName("plannedhours");
+                entity.Property(e => e.StaffId)
+                    .HasMaxLength(50)
+                    .HasColumnName("staffid");
+                entity.Property(e => e.UserId)
+                    .HasMaxLength(20)
+                    .HasColumnName("user_id");
+                entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
             });
 
         }
