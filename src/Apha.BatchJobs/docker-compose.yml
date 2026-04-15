@@ -25,7 +25,7 @@ services:
     container_name: batch_jobs_app
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      ConnectionStrings__BatchJobsConnectionString: Host=postgres;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=<REDACTED>;Timeout=30
+      ConnectionStrings__BatchJobsConnectionString: Host=postgres;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Timeout=30
     depends_on:
       postgres:
         condition: service_healthy

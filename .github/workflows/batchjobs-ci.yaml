@@ -42,7 +42,7 @@ jobs:
       should_push: ${{ steps.check_commit.outputs.should_push }}
       image_tag: ${{ steps.imgtag.outputs.image_tag }}
     env:
-      ConnectionStrings__BatchJobsConnectionString: Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=<REDACTED>;Timeout=30
+      ConnectionStrings__BatchJobsConnectionString: Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Timeout=30
     steps:
       - name: Checkout
         uses: actions/checkout@v4

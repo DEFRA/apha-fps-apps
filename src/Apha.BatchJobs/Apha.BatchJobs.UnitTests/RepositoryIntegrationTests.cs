@@ -13,7 +13,7 @@ namespace Apha.BatchJobs.UnitTests;
 /// </summary>
 public sealed class RepositoryIntegrationTests : IAsyncLifetime
 {
-    private const string DefaultConnectionString = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=<REDACTED>;Timeout=30";
+    private const string DefaultConnectionString = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Timeout=30";
     private readonly string _connectionString;
     private string? _skipReason;
 
