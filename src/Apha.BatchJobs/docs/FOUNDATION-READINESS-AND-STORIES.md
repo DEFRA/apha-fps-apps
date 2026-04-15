@@ -7,7 +7,7 @@
 
 ---
 
-## Readiness Score: 78 / 100
+## Readiness Score: 80 / 100
 
 | Layer | Score | Status |
 |---|---|---|
@@ -40,6 +40,8 @@ Two parallel ECS tasks for the same job can both pass the active-lock check befo
 ### ISSUE-02 — `GetExecutionRecordAsync(int)` Is a Stub
 **Priority:** Medium  
 `JobExecutionRepository.GetExecutionRecordAsync(int executionId)` unconditionally returns `null`. Any caller relying on it silently receives no data.
+
+**Status:** Resolved (2026-04-15)
 
 **Affected file:** `Apha.BatchJobs.Infrastructure/Repositories/JobExecutionRepository.cs`
 
@@ -124,6 +126,7 @@ Option B: Use `pg_try_advisory_xact_lock` via a raw SQL query — lighter and no
 **Issue:** ISSUE-02  
 **Priority:** Medium  
 **Estimate:** S (1–2 days)
+**Status:** Completed (2026-04-15)
 
 **As a** developer consuming the execution repository,  
 **I want** `GetExecutionRecordAsync` to either return a real result or be clearly removed from the interface,  
@@ -131,9 +134,15 @@ Option B: Use `pg_try_advisory_xact_lock` via a raw SQL query — lighter and no
 
 **Acceptance criteria:**
 - [ ] Either: implement the method to retrieve a `JobExecutionRecord` by looking up `tbljobqueue` by GUID/RunId mapping.
-- [ ] Or: remove the method from `IJobExecutionRepository` if there is no current consumer.
-- [ ] If removed, verify no callers exist before deletion.
-- [ ] Unit test added or updated covering the chosen outcome.
+- [x] Or: remove the method from `IJobExecutionRepository` if there is no current consumer.
+- [x] If removed, verify no callers exist before deletion.
+- [x] Unit test added or updated covering the chosen outcome.
+
+**Implementation evidence:**
+- `Apha.BatchJobs.Domain/Interfaces/IJobExecutionRepository.cs` no longer exposes `GetExecutionRecordAsync(int)`.
+- `Apha.BatchJobs.Infrastructure/Repositories/JobExecutionRepository.cs` no longer contains the null-return stub.
+- Global usage search showed no callers before removal.
+- Verified with `dotnet build` and `dotnet test` pass: 11/11.
 
 ---
 

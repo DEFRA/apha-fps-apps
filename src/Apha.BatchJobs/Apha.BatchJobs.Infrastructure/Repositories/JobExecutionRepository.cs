@@ -98,14 +98,6 @@ public class JobExecutionRepository : IJobExecutionRepository
     }
 
     /// <inheritdoc />
-    public async Task<JobExecutionRecord?> GetExecutionRecordAsync(int executionId, CancellationToken cancellationToken = default)
-    {
-        // Foundation schema identifies runs by GUID (jobqueueid), not int.
-        // Keep method for backward compatibility with the interface.
-        return await Task.FromResult<JobExecutionRecord?>(null);
-    }
-
-    /// <inheritdoc />
     public async Task<JobExecutionRecord?> GetLastExecutionAsync(string jobName, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(jobName))
