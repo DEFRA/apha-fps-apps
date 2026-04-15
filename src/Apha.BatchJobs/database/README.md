@@ -49,5 +49,6 @@ pwsh ./database/Invoke-BatchDb.ps1 -Action all
 See `sink/README.md` for the VM workflow to:
 
 1. Ingest a cloud snapshot into sink raw structures.
-2. Curate only required fields for foundation revisions.
-3. Sync curated results into `operational` in an idempotent way.
+2. Register and reuse a `snapshot_id` for all pipeline stages.
+3. Curate only required fields for foundation revisions.
+4. Sync curated results into `operational` in an idempotent way.
