@@ -7,7 +7,7 @@
 
 ---
 
-## Readiness Score: 92 / 100
+## Readiness Score: 94 / 100
 
 | Layer | Score | Status |
 |---|---|---|
@@ -92,6 +92,8 @@ Default `BatchJobsConnectionString` in `appsettings.json` includes a hardcoded p
 ### ISSUE-07 — FluentAssertions Commercial License Warning
 **Priority:** Low  
 Test project emits a license warning at runtime. Requires either a commercial Xceed licence or a replacement assertion library (e.g. `Shouldly`).
+
+**Status:** Resolved (2026-04-15)
 
 **Affected file:** `Apha.BatchJobs.UnitTests/Apha.BatchJobs.UnitTests.csproj`
 
@@ -266,6 +268,7 @@ Option B: Use `pg_try_advisory_xact_lock` via a raw SQL query — lighter and no
 **Issue:** ISSUE-07  
 **Priority:** Low  
 **Estimate:** XS (half day)
+**Status:** Completed (2026-04-15)
 
 **As a** developer running the test suite,  
 **I want** no licensing warnings in the test output,  
@@ -273,6 +276,11 @@ Option B: Use `pg_try_advisory_xact_lock` via a raw SQL query — lighter and no
 
 **Acceptance criteria:**
 - [ ] Either: a commercial Xceed licence is obtained and configured.
-- [ ] Or: `FluentAssertions` is replaced with `Shouldly` (or another MIT-licensed assertion library) across all test files.
-- [ ] All 10 existing tests pass after the replacement.
-- [ ] No licensing warnings appear in `dotnet test` output.
+- [x] Or: `FluentAssertions` is replaced with `Shouldly` (or another MIT-licensed assertion library) across all test files.
+- [x] All tests pass after the replacement.
+- [x] No licensing warnings appear in `dotnet test` output.
+
+**Implementation evidence:**
+- `Apha.BatchJobs.UnitTests/Apha.BatchJobs.UnitTests.csproj` now references `Shouldly` and no longer references `FluentAssertions`.
+- Assertions in `JobOrchestratorTests.cs`, `BatchJobFactoryTests.cs`, `RepositoryIntegrationTests.cs`, and `ServiceCollectionSetupTests.cs` were migrated to `Shouldly`.
+- Verified with `dotnet test`: 17/17 passing, no FluentAssertions license warning output.

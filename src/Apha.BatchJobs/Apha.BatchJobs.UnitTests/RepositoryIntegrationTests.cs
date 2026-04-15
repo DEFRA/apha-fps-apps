@@ -2,9 +2,9 @@ using Apha.BatchJobs.Domain.Entities;
 using Apha.BatchJobs.Domain.Enums;
 using Apha.BatchJobs.Infrastructure.Data;
 using Apha.BatchJobs.Infrastructure.Repositories;
-using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using Shouldly;
 
 namespace Apha.BatchJobs.UnitTests;
 
@@ -51,8 +51,8 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
         var first = await repository.TryAcquireLockAsync("IntegrationLockJob", Guid.NewGuid().ToString("N"), 300);
         var second = await repository.TryAcquireLockAsync("IntegrationLockJob", Guid.NewGuid().ToString("N"), 300);
 
-        first.Should().BeTrue();
-        second.Should().BeFalse();
+        first.ShouldBeTrue();
+        second.ShouldBeFalse();
     }
 
     [Fact]
@@ -67,7 +67,7 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
         {
             var repository = new BatchLockRepository(context);
             var acquired = await repository.TryAcquireLockAsync("IntegrationReleaseJob", runId, 300);
-            acquired.Should().BeTrue();
+            acquired.ShouldBeTrue();
             await repository.ReleaseLockAsync("IntegrationReleaseJob", runId);
         }
 
@@ -75,7 +75,7 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
         var active = await verifyContext.BatchLocks
             .FirstOrDefaultAsync(l => l.JobName == "IntegrationReleaseJob");
 
-        active.Should().BeNull();
+        active.ShouldBeNull();
     }
 
     [Fact]
@@ -111,8 +111,8 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
             "SELECT COUNT(*) FROM operational.tbljobqueue_log ql INNER JOIN operational.tbljobqueue q ON q.jobqueueid = ql.jobqueueid WHERE q.jobqueueid = @runId::uuid",
             new NpgsqlParameter("runId", Guid.Parse(runId)));
 
-        queueRows.Should().Be(1);
-        logRows.Should().Be(1);
+        queueRows.ShouldBe(1);
+        logRows.ShouldBe(1);
     }
 
     [Fact]
@@ -162,8 +162,8 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
             "SELECT COUNT(*) FROM operational.tbljobqueue_log WHERE jobqueueid = @runId::uuid",
             new NpgsqlParameter("runId", Guid.Parse(runId)));
 
-        statusName.Should().Be("Completed");
-        logCount.Should().Be(2);
+        statusName.ShouldBe("Completed");
+        logCount.ShouldBe(2);
     }
 
     private BatchJobsDbContext CreateDbContext()

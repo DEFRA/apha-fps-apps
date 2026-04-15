@@ -4,10 +4,10 @@ using Apha.BatchJobs.Domain.Configuration;
 using Apha.BatchJobs.Domain.Entities;
 using Apha.BatchJobs.Domain.Enums;
 using Apha.BatchJobs.Domain.Interfaces;
-using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using NSubstitute;
+using Shouldly;
 
 namespace Apha.BatchJobs.UnitTests;
 
@@ -68,21 +68,21 @@ public sealed class JobOrchestratorTests
         await job.Received(1).ExecuteAsync(Arg.Any<CancellationToken>());
 
         // Assert — execution record created with Running status
-        capturedCreateStatus.Should().ContainSingle()
-            .Which.Should().Be(JobStatus.Running);
+        capturedCreateStatus.Count.ShouldBe(1);
+        capturedCreateStatus[0].ShouldBe(JobStatus.Running);
 
         // Assert — execution record updated with Completed status
-        capturedUpdateStatus.Should().ContainSingle()
-            .Which.Should().Be(JobStatus.Completed);
+        capturedUpdateStatus.Count.ShouldBe(1);
+        capturedUpdateStatus[0].ShouldBe(JobStatus.Completed);
 
         // Assert — lock was released
         await _lockRepo.Received(1).ReleaseLockAsync("TestJob", Arg.Any<string>(), Arg.Any<CancellationToken>());
 
         // Assert — result is correct
-        result.Status.Should().Be(JobStatus.Completed);
-        result.JobName.Should().Be("TestJob");
-        result.RunId.Should().NotBeNullOrEmpty();
-        result.ExecutionId.Should().Be(42);
+        result.Status.ShouldBe(JobStatus.Completed);
+        result.JobName.ShouldBe("TestJob");
+        result.RunId.ShouldNotBeNullOrWhiteSpace();
+        result.ExecutionId.ShouldBe(42);
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -106,8 +106,8 @@ public sealed class JobOrchestratorTests
         await _execRepo.DidNotReceive().CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>());
 
         // Assert — result indicates skip
-        result.Status.Should().Be(JobStatus.Skipped);
-        result.Duration.Should().Be(TimeSpan.Zero);
+        result.Status.ShouldBe(JobStatus.Skipped);
+        result.Duration.ShouldBe(TimeSpan.Zero);
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -141,10 +141,10 @@ public sealed class JobOrchestratorTests
             () => _orchestrator.RunAsync("FailingJob", RunMode.Scheduled));
 
         // Assert — failure record written
-        capturedUpdateStatus.Should().ContainSingle()
-            .Which.Should().Be(JobStatus.Failed);
-        capturedErrorMessage.Should().ContainSingle()
-            .Which.Should().Be("Simulated failure");
+        capturedUpdateStatus.Count.ShouldBe(1);
+        capturedUpdateStatus[0].ShouldBe(JobStatus.Failed);
+        capturedErrorMessage.Count.ShouldBe(1);
+        capturedErrorMessage[0].ShouldBe("Simulated failure");
 
         // Assert — lock still released even after failure
         await _lockRepo.Received(1).ReleaseLockAsync("FailingJob", Arg.Any<string>(), Arg.Any<CancellationToken>());
@@ -180,8 +180,8 @@ public sealed class JobOrchestratorTests
             () => _orchestrator.RunAsync("CancellableJob", RunMode.AdHoc));
 
         // Assert — cancelled record written
-        capturedUpdateStatus.Should().ContainSingle()
-            .Which.Should().Be(JobStatus.Cancelled);
+        capturedUpdateStatus.Count.ShouldBe(1);
+        capturedUpdateStatus[0].ShouldBe(JobStatus.Cancelled);
 
         // Assert — lock released
         await _lockRepo.Received(1).ReleaseLockAsync("CancellableJob", Arg.Any<string>(), Arg.Any<CancellationToken>());
@@ -209,8 +209,8 @@ public sealed class JobOrchestratorTests
         var result2 = await _orchestrator.RunAsync("IdJob", RunMode.AdHoc);
 
         // Assert — each run gets a different RunId
-        result1.RunId.Should().NotBe(result2.RunId);
-        Guid.TryParseExact(result1.RunId, "N", out _).Should().BeTrue("RunId should be a valid GUID without dashes");
+        result1.RunId.ShouldNotBe(result2.RunId);
+        Guid.TryParseExact(result1.RunId, "N", out _).ShouldBeTrue("RunId should be a valid GUID without dashes");
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -242,9 +242,9 @@ public sealed class JobOrchestratorTests
         await _orchestrator.RunAsync("ConsistentJob", RunMode.Scheduled);
 
         // Assert — lock RunId and record RunId are the same
-        capturedLockRunId.Should().NotBeNull();
-        capturedRecordRunId.Should().NotBeNull();
-        capturedLockRunId.Should().Be(capturedRecordRunId);
+        capturedLockRunId.ShouldNotBeNull();
+        capturedRecordRunId.ShouldNotBeNull();
+        capturedLockRunId.ShouldBe(capturedRecordRunId);
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -274,8 +274,8 @@ public sealed class JobOrchestratorTests
         var results = await Task.WhenAll(task1, task2);
 
         // Assert — exactly one completed, one skipped
-        results.Count(r => r.Status == JobStatus.Completed).Should().Be(1);
-        results.Count(r => r.Status == JobStatus.Skipped).Should().Be(1);
+        results.Count(r => r.Status == JobStatus.Completed).ShouldBe(1);
+        results.Count(r => r.Status == JobStatus.Skipped).ShouldBe(1);
 
         // Assert — job executed exactly once
         await job.Received(1).ExecuteAsync(Arg.Any<CancellationToken>());

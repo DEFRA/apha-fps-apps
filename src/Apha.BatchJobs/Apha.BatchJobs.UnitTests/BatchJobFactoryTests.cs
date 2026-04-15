@@ -1,7 +1,7 @@
 using Apha.BatchJobs.Application.Factory;
 using Apha.BatchJobs.Application.Interfaces;
-using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
+using Shouldly;
 
 namespace Apha.BatchJobs.UnitTests;
 
@@ -18,8 +18,8 @@ public sealed class BatchJobFactoryTests
 
         var job = factory.Create("Dummy");
 
-        job.Should().BeOfType<DummyBatchJob>();
-        job.Name.Should().Be("Dummy");
+        job.ShouldBeOfType<DummyBatchJob>();
+        job.Name.ShouldBe("Dummy");
     }
 
     [Fact]
@@ -30,8 +30,8 @@ public sealed class BatchJobFactoryTests
 
         var action = () => factory.Create("MissingJob");
 
-        var exception = action.Should().Throw<InvalidOperationException>().Which;
-        exception.Message.Should().Contain("MissingJob");
+        var exception = Should.Throw<InvalidOperationException>(action);
+        exception.Message.ShouldContain("MissingJob");
     }
 
     [Fact]
@@ -45,7 +45,7 @@ public sealed class BatchJobFactoryTests
         var factory = new BatchJobFactory(serviceProvider);
 
         factory.GetAvailableJobs()
-            .Should().Equal("ArchiveJob", "Dummy");
+            .ShouldBe(new[] { "ArchiveJob", "Dummy" });
     }
 
     [Fact]
@@ -60,9 +60,8 @@ public sealed class BatchJobFactoryTests
 
         var action = () => factory.Create("SameName");
 
-        action.Should()
-            .Throw<InvalidOperationException>()
-            .Which.Message.Should().Contain("Multiple job handlers");
+        var exception = Should.Throw<InvalidOperationException>(action);
+        exception.Message.ShouldContain("Multiple job handlers");
     }
 
     private sealed class DummyBatchJob : IBatchJob

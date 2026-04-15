@@ -1,8 +1,8 @@
 using Apha.BatchJobs.Application.Interfaces;
-using FluentAssertions;
 using Apha.BatchJobs.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Shouldly;
 
 namespace Apha.BatchJobs.UnitTests;
 
@@ -15,11 +15,11 @@ public sealed class ServiceCollectionSetupTests
         var services = ServiceCollectionSetup.CreateDefaultServices(batchJobsRoot);
         using var serviceProvider = services.BuildServiceProvider();
 
-        serviceProvider.GetRequiredService<IConfiguration>().Should().NotBeNull();
+        serviceProvider.GetRequiredService<IConfiguration>().ShouldNotBeNull();
 
         var jobFactory = serviceProvider.GetRequiredService<IBatchJobFactory>();
-        jobFactory.GetAvailableJobs().Should().Contain("HealthCheck");
-        jobFactory.Create("HealthCheck").Name.Should().Be("HealthCheck");
+        jobFactory.GetAvailableJobs().ShouldContain("HealthCheck");
+        jobFactory.Create("HealthCheck").Name.ShouldBe("HealthCheck");
     }
 
     private static string GetBatchJobsRoot()
