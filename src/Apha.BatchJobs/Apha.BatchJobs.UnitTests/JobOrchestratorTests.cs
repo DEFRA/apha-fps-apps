@@ -242,4 +242,38 @@ public sealed class JobOrchestratorTests
         capturedRecordRunId.Should().NotBeNull();
         capturedLockRunId.Should().Be(capturedRecordRunId);
     }
+
+    // ─────────────────────────────────────────────────────────────
+    // Concurrent lock contention — only first caller wins
+    // ─────────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task RunAsync_WhenTwoConcurrentCallsForSameJob_OnlyOneExecutesAndOtherIsSkipped()
+    {
+        // Arrange — first call acquires lock, second call gets false (DB unique constraint)
+        var lockCallCount = 0;
+        _lockRepo.TryAcquireLockAsync("ConcurrentJob", Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+                 .Returns(_ => ++lockCallCount == 1);  // first true, subsequent false
+
+        var job = Substitute.For<IBatchJob>();
+        job.Name.Returns("ConcurrentJob");
+        _factory.Create("ConcurrentJob").Returns(job);
+
+        _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+                 .Returns(1);
+        _execRepo.UpdateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+                 .Returns(Task.CompletedTask);
+
+        // Act — simulate two concurrent runs
+        var task1 = _orchestrator.RunAsync("ConcurrentJob", RunMode.Scheduled);
+        var task2 = _orchestrator.RunAsync("ConcurrentJob", RunMode.Scheduled);
+        var results = await Task.WhenAll(task1, task2);
+
+        // Assert — exactly one completed, one skipped
+        results.Count(r => r.Status == JobStatus.Completed).Should().Be(1);
+        results.Count(r => r.Status == JobStatus.Skipped).Should().Be(1);
+
+        // Assert — job executed exactly once
+        await job.Received(1).ExecuteAsync(Arg.Any<CancellationToken>());
+    }
 }
