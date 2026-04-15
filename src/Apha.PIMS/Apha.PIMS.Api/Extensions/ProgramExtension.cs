@@ -36,11 +36,18 @@ namespace Apha.PIMS.Api.Extensions
                 });
             });
 
-            services.AddStackExchangeRedisCache(options =>
+            if (builder.Environment.IsEnvironment("local"))
             {
-                options.Configuration = builder.Configuration.GetConnectionString("RedisConnectionString");
-                options.InstanceName = "RedisInstance";
-            });
+                services.AddDistributedMemoryCache();
+            }
+            else
+            {
+                services.AddStackExchangeRedisCache(options =>
+                {
+                    options.Configuration = configuration.GetConnectionString("RedisConnectionString");
+                    options.InstanceName = "RedisInstance";
+                });
+            }
 
             // AutoMapper
             services.AddAutoMapper(config =>

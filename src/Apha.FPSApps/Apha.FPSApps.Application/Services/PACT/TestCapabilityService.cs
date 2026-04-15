@@ -6,11 +6,11 @@ using Apha.FPSApps.Application.Pagination;
 
 namespace Apha.FPSApps.Application.Services.PACT
 {
-    public class WorkGroupTestCapabilityService : IWorkGroupTestCapabilityService
+    public class TestCapabilityService : ITestCapabilityService
     {
         private readonly IPactApiClient _pactClient;
 
-        public WorkGroupTestCapabilityService(IPactApiClient pactClient)
+        public TestCapabilityService(IPactApiClient pactClient)
         {
             _pactClient = pactClient;
         }
@@ -32,9 +32,6 @@ namespace Apha.FPSApps.Application.Services.PACT
 
         public async Task<ApiResponseDto<bool>> DeleteTestCapabilityAsync(string testCode, string workGroup)
             => await _pactClient.PactWorkGroupTestCapability.DeleteTestCapabilityAsync(testCode, workGroup);
-
-        public async Task<ApiResponseDto<List<TestorProductDto>>> GetAllTestorProductsAsync()
-            => await _pactClient.PactWorkGroupTestCapability.GetAllTestorProductsAsync();
 
         public async Task<ApiResponseDto<List<WorkGroupDto>>> GetAllWorkGroupsAsync()
             => await _pactClient.PactWorkGroup.GetAllWorkGroupsAsync();
