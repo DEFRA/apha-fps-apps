@@ -99,11 +99,11 @@
         clearValidationErrors($c);
 
         var errors = [];
-        form.find('[required]').each(function () {
+        form.find('[required]').each(function () {            
             var $field = $(this);
             if (!$field.val() || $field.val().trim() === '') {
                 var name  = $field.attr('name') || '';
-                var label = $('label[for="' + name + '"]', $c).text().trim() || name;
+                var label = $('label[for="' + name + '"]', $c).clone().children().remove().end().text().trim().replace(/:\s*$/, '') || name;
                 errors.push({ field: name, message: label + ' is required' });
             }
         });
@@ -157,11 +157,12 @@
      * @param {string|jQuery} [container]       - Scope element (defaults to document).
      */
     window.displayServerValidationErrors = function (errors, summaryMessage, container) {
+        debugger;
         var $c       = resolveContainer(container);
         var $summary = $c.find('.govuk-error-summary');
         var $list    = $summary.find('.govuk-error-summary__list').empty();
-
-        $summary.find('.govuk-error-summary__title').text(summaryMessage || 'There is a problem');
+        debugger;
+        $summary.find('.govuk-error-summary__title').text('There is a problem');
 
         var items            = normaliseErrors(errors);
         var hasSummaryErrors = false;

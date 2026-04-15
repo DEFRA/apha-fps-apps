@@ -2919,3 +2919,7 @@ table#milestoneTable>thead>tr>th {
     padding: 6px 8px;
     border-bottom: 1px solid var(--govuk-border-colour);
 }
+
+.toggle-btn-arrow {
+    margin: -4px 8px 0 -4px;
+}
