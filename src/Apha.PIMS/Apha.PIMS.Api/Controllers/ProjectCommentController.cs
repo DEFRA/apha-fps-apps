@@ -1,0 +1,77 @@
+﻿using Apha.Common.Contracts;
+using Apha.Common.Contracts.PIMS;
+using Apha.PIMS.Application.Dtos;
+using Apha.PIMS.Application.Interfaces;
+using Apha.PIMS.Application.Pagination;
+using Asp.Versioning;
+using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace Apha.PIMS.Api.Controllers
+{
+    [ApiController]
+    [Authorize(Roles = "API-PIMSUser,API-PIMSAdmin")]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/projectcomment")]
+    public class ProjectCommentController : ControllerBase
+    {
+        private readonly ICommentService _service;
+        private readonly IMapper _mapper;
+
+        public ProjectCommentController(ICommentService service, IMapper mapper)
+        {
+            _service = service;
+            _mapper = mapper;
+        }
+
+        
+        [HttpGet]
+        public async Task<IActionResult> GetCommentsByProject(
+            [FromQuery] string project,
+            [FromQuery] int? year,
+            [FromQuery] PaginationReq<string> query)
+        {
+            QueryParameters<string> filter = _mapper.Map<QueryParameters<string>>(query);
+            PaginatedResult<CommentDto> result = await _service.GetCommentsByProjectAsync(project, year, filter);
+            return Ok(_mapper.Map<PaginationRes<CommentRes>>(result));
+        }
+
+       
+        [HttpGet("{commentno:int}")]
+        public async Task<IActionResult> GetById(int commentno)
+        {
+            CommentDto? result = await _service.GetByIdAsync(commentno);
+            if (result is null)
+                throw new KeyNotFoundException($"Comment {commentno} not found.");
+            return Ok(_mapper.Map<CommentRes>(result));
+        }
+
+        
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] CommentReq request)
+        {
+            CommentDto dto = _mapper.Map<CommentDto>(request);
+            CommentDto result = await _service.AddAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { commentno = result.Commentno }, _mapper.Map<CommentRes>(result));
+        }
+
+
+        [HttpPut("{commentno:int}")]
+        public async Task<IActionResult> Update(int commentno, [FromBody] CommentReq request)
+        {
+            CommentDto dto = _mapper.Map<CommentDto>(request);
+            dto.Commentno = commentno;
+            CommentDto result = await _service.UpdateAsync(dto);
+            return Ok(_mapper.Map<CommentRes>(result));
+        }
+
+
+        [HttpDelete("{commentno:int}")]
+        public async Task<IActionResult> Delete(int commentno)
+        {
+            bool deleted = await _service.DeleteAsync(commentno);
+            return Ok(deleted);
+        }
+    }
+}
