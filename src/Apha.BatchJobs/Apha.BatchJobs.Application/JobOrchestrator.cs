@@ -79,7 +79,14 @@ public sealed class JobOrchestrator : IJobOrchestrator
         {
             executionId = await _executionRepository.CreateExecutionRecordAsync(record, cancellationToken);
             record.ExecutionId = executionId;
-            _logger.LogInformation("Execution record created | ExecutionId={ExecutionId}", executionId);
+            if (executionId > 0)
+            {
+                _logger.LogInformation("Execution record created | ExecutionId={ExecutionId}", executionId);
+            }
+            else
+            {
+                _logger.LogInformation("Execution record created | RunId={RunId}", runId);
+            }
         }
         catch (Exception ex)
         {
