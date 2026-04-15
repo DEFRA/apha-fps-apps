@@ -3,6 +3,9 @@
 
 BEGIN;
 
+-- For gen_random_uuid() used by snapshot/run registration helpers.
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 CREATE SCHEMA IF NOT EXISTS sink_meta;
 CREATE SCHEMA IF NOT EXISTS sink_raw;
 CREATE SCHEMA IF NOT EXISTS sink_curated;
