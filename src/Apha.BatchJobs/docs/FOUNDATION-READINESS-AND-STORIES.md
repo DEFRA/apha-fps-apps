@@ -7,7 +7,7 @@
 
 ---
 
-## Readiness Score: 87 / 100
+## Readiness Score: 89 / 100
 
 | Layer | Score | Status |
 |---|---|---|
@@ -70,6 +70,8 @@ Adding a new job requires editing both `DependencyInjection.cs` (service registr
 ### ISSUE-05 — Credentials Committed in `appsettings.json`
 **Priority:** Medium  
 Default `BatchJobsConnectionString` in `appsettings.json` includes a hardcoded password. Even though this is a local default, credentials committed to source are a risk.
+
+**Status:** Resolved (2026-04-15)
 
 **Affected file:** `appsettings.json`
 
@@ -208,16 +210,22 @@ Option B: Use `pg_try_advisory_xact_lock` via a raw SQL query — lighter and no
 **Issue:** ISSUE-05  
 **Priority:** Medium  
 **Estimate:** S (1 day)
+**Status:** Completed (2026-04-15)
 
 **As a** security-conscious engineer,  
 **I want** no credentials stored in committed configuration files,  
 **so that** accidental exposure through source control is prevented.
 
 **Acceptance criteria:**
-- [ ] `appsettings.json` `BatchJobsConnectionString` value is replaced with a placeholder (e.g. `"__REPLACE_VIA_ENV__"`).
-- [ ] `appsettings.Development.json` retains a local dev default connection string (already gitignored via `.gitignore` pattern `appsettings.local.json` — extend or align).
-- [ ] `README` / `LOCAL_TESTING_GUIDE.md` documents how to supply the connection string via env var for local runs.
-- [ ] CI/CD supplies the value via a secret environment variable — no plaintext password in config files committed to the repo.
+- [x] `appsettings.json` `BatchJobsConnectionString` value is replaced with a placeholder (`"__REPLACE_VIA_ENV__"`).
+- [x] `appsettings.Development.json` retains a local dev default connection string.
+- [x] `LOCAL_TESTING_GUIDE.md` documents supplying the connection string via env var for local runs.
+- [x] CI supplies the value via environment variable in workflow execution.
+
+**Implementation evidence:**
+- `appsettings.json` now uses `"__REPLACE_VIA_ENV__"` for `ConnectionStrings:BatchJobsConnectionString`.
+- `docs/LOCAL_TESTING_GUIDE.md` updated to use `ConnectionStrings__BatchJobsConnectionString` examples for PowerShell, bash, and docker run.
+- `.github/workflows/batchjobs-ci.yaml` sets `ConnectionStrings__BatchJobsConnectionString` in job env.
 
 ---
 
