@@ -22,9 +22,24 @@ public class BatchJobsDbContext : DbContext
     public DbSet<BatchLock> BatchLocks { get; set; }
 
     /// <summary>
-    /// Gets or sets the job execution records table.
+    /// Gets or sets the foundation job master table.
     /// </summary>
-    public DbSet<JobExecutionRecord> JobExecutionRecords { get; set; }
+    internal DbSet<TblJobMaster> TblJobMaster { get; set; }
+
+    /// <summary>
+    /// Gets or sets the foundation job status table.
+    /// </summary>
+    internal DbSet<TblJobStatus> TblJobStatus { get; set; }
+
+    /// <summary>
+    /// Gets or sets the foundation job queue table.
+    /// </summary>
+    internal DbSet<TblJobQueue> TblJobQueue { get; set; }
+
+    /// <summary>
+    /// Gets or sets the foundation job queue log table.
+    /// </summary>
+    internal DbSet<TblJobQueueLog> TblJobQueueLog { get; set; }
 
     /// <summary>
     /// Configures the model for the database context.
@@ -48,27 +63,59 @@ public class BatchJobsDbContext : DbContext
             entity.HasIndex(e => e.JobName).IsUnique(false);
         });
 
-        // Configure JobExecutionRecord table
-        modelBuilder.Entity<JobExecutionRecord>(entity =>
+        // Configure foundation job master table
+        modelBuilder.Entity<TblJobMaster>(entity =>
         {
-            entity.ToTable("job_execution_record", schema: "operational");
-            entity.HasKey(e => e.ExecutionId);
-            entity.Property(e => e.ExecutionId).HasColumnName("execution_id");
-            entity.Property(e => e.JobName).HasColumnName("job_name").IsRequired();
-            entity.Property(e => e.RunId).HasColumnName("run_id").IsRequired();
-            entity.Property(e => e.JobType).HasColumnName("job_type");
-            entity.Property(e => e.RunMode).HasColumnName("run_mode");
-            entity.Property(e => e.Status).HasColumnName("status");
-            entity.Property(e => e.StartedAt).HasColumnName("started_at");
-            entity.Property(e => e.CompletedAt).HasColumnName("completed_at");
-            entity.Property(e => e.DurationSeconds).HasColumnName("duration_seconds");
-            entity.Property(e => e.RecordsProcessed).HasColumnName("records_processed");
-            entity.Property(e => e.RecordsFailed).HasColumnName("records_failed");
-            entity.Property(e => e.ErrorMessage).HasColumnName("error_message");
-            entity.Property(e => e.StackTrace).HasColumnName("stack_trace");
-            entity.Property(e => e.RetryAttempts).HasColumnName("retry_attempts");
-            entity.HasIndex(e => e.RunId).IsUnique(true);
-            entity.HasIndex(e => e.JobName).IsUnique(false);
+            entity.ToTable("tbljobmaster", schema: "operational");
+            entity.HasKey(e => e.JobId);
+            entity.Property(e => e.JobId).HasColumnName("jobid");
+            entity.Property(e => e.JobName).HasColumnName("jobname").IsRequired();
+            entity.Property(e => e.Frequency).HasColumnName("frequency");
+            entity.Property(e => e.Note).HasColumnName("note");
+            entity.Property(e => e.TimeToLive).HasColumnName("timetolive");
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+            entity.HasIndex(e => e.JobName).IsUnique(true);
+        });
+
+        // Configure foundation job status table
+        modelBuilder.Entity<TblJobStatus>(entity =>
+        {
+            entity.ToTable("tbljobstatus", schema: "operational");
+            entity.HasKey(e => e.StatusId);
+            entity.Property(e => e.StatusId).HasColumnName("statusid");
+            entity.Property(e => e.JobId).HasColumnName("jobid");
+            entity.Property(e => e.Status).HasColumnName("status").IsRequired();
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+            entity.HasIndex(e => new { e.JobId, e.Status }).IsUnique(true);
+        });
+
+        // Configure foundation job queue table
+        modelBuilder.Entity<TblJobQueue>(entity =>
+        {
+            entity.ToTable("tbljobqueue", schema: "operational");
+            entity.HasKey(e => e.JobQueueId);
+            entity.Property(e => e.JobQueueId).HasColumnName("jobqueueid");
+            entity.Property(e => e.JobId).HasColumnName("jobid");
+            entity.Property(e => e.StatusId).HasColumnName("statusid");
+            entity.Property(e => e.StartDateTime).HasColumnName("startdatetime");
+            entity.Property(e => e.EndDateTime).HasColumnName("enddatetime");
+            entity.Property(e => e.ErrorMessage).HasColumnName("errormessage");
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+        });
+
+        // Configure foundation job queue log table
+        modelBuilder.Entity<TblJobQueueLog>(entity =>
+        {
+            entity.ToTable("tbljobqueue_log", schema: "operational");
+            entity.HasKey(e => e.JobQueueLogId);
+            entity.Property(e => e.JobQueueLogId).HasColumnName("jobqueuelogid");
+            entity.Property(e => e.JobQueueId).HasColumnName("jobqueueid");
+            entity.Property(e => e.StatusId).HasColumnName("statusid");
+            entity.Property(e => e.PerformedBy).HasColumnName("performedby").IsRequired();
+            entity.Property(e => e.LogTime).HasColumnName("logtime");
+            entity.Property(e => e.Note).HasColumnName("note");
         });
     }
 }

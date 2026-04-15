@@ -51,31 +51,21 @@ public static class ServiceCollectionSetup
             loggingBuilder.AddSerilog(Log.Logger);
         });
 
-        // Get database settings to build connection string
         // Register database and repositories.
-        // In Development (local), in-memory stubs are used — no real database required.
-        // In all other environments (Staging, Production/AWS), EF Core + PostgreSQL are used.
-        if (environment == "Development")
-        {
-            services.AddSingleton<IBatchLockRepository, InMemoryBatchLockRepository>();
-            services.AddSingleton<IJobExecutionRepository, InMemoryJobExecutionRepository>();
-        }
-        else
-        {
-            var dbSettings = config.GetSection("DatabaseConnection").Get<DatabaseSettings>();
-            if (dbSettings == null)
-                throw new InvalidOperationException("DatabaseConnection configuration is missing.");
+        // Foundation mode always persists through PostgreSQL.
+        var dbSettings = config.GetSection("DatabaseConnection").Get<DatabaseSettings>();
+        if (dbSettings == null)
+            throw new InvalidOperationException("DatabaseConnection configuration is missing.");
 
-            services.AddDbContext<BatchJobsDbContext>(options =>
-            {
-                options.UseNpgsql(
-                    dbSettings.BuildConnectionString(),
-                    npgsqlOptions => npgsqlOptions.CommandTimeout(dbSettings.Timeout));
-            });
+        services.AddDbContext<BatchJobsDbContext>(options =>
+        {
+            options.UseNpgsql(
+                dbSettings.BuildConnectionString(),
+                npgsqlOptions => npgsqlOptions.CommandTimeout(dbSettings.Timeout));
+        });
 
-            services.AddScoped<IBatchLockRepository, BatchLockRepository>();
-            services.AddScoped<IJobExecutionRepository, JobExecutionRepository>();
-        }
+        services.AddScoped<IBatchLockRepository, BatchLockRepository>();
+        services.AddScoped<IJobExecutionRepository, JobExecutionRepository>();
 
         // Register batch job handlers
         services.AddScoped<HealthCheckJobHandler>();
