@@ -13,27 +13,27 @@ using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using System.Text.Json;
 
-namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityControllerTest
+namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.TestCapabilityControllerTest
 {
-    public class WorkGroupTestCapabilityControllerTests
+    public class TestCapabilityControllerTests
     {
         private readonly IMapper _mapper;
-        private readonly IWorkGroupTestCapabilityService _service;
+        private readonly ITestCapabilityService _service;
         private readonly IProjectService _projectService;
         private readonly IExcelExportService _excelExportService;
         private readonly ITestRequirementService _testReqmtService;
         private readonly ITestorProductService _testorProductService;
-        private readonly WorkGroupTestCapabilityController _controller;
+        private readonly TestCapabilityController _controller;
 
-        public WorkGroupTestCapabilityControllerTests()
+        public TestCapabilityControllerTests()
         {
             _mapper = Substitute.For<IMapper>();
-            _service = Substitute.For<IWorkGroupTestCapabilityService>();
+            _service = Substitute.For<ITestCapabilityService>();
             _testReqmtService = Substitute.For<ITestRequirementService>();
             _projectService = Substitute.For<IProjectService>();
             _excelExportService = Substitute.For<IExcelExportService>();
             _testorProductService = Substitute.For<ITestorProductService>();
-            _controller = new WorkGroupTestCapabilityController(
+            _controller = new TestCapabilityController(
                 _mapper,
                 _service,
                 _testReqmtService,
@@ -52,7 +52,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
         {
             _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string>());
-            _mapper.Map<List<WorkGroupTestCapabilityItem>>(Arg.Any<List<TestCapabilityDto>>())
+            _mapper.Map<List<TestCapabilityItem>>(Arg.Any<List<TestCapabilityDto>>())
                 .Returns([]);
             _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>())
                 .Returns(new PaginationModel());
@@ -97,7 +97,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<WorkGroupTestCapabilityViewModel>(viewResult.Model);
+            var model = Assert.IsType<TestCapabilityViewModel>(viewResult.Model);
             Assert.Equal("testCapabilityGrid", model.TestCapabilityGrid.GridId);
             Assert.Equal("testReqmtGrid", model.TestReqmtGrid.GridId);
         }
@@ -127,7 +127,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<WorkGroupTestCapabilityViewModel>(viewResult.Model);
+            var model = Assert.IsType<TestCapabilityViewModel>(viewResult.Model);
             Assert.Equal(2, model.WorkGroupOptions.Count);
             Assert.Equal(2, model.TestorProductOptions.Count);
         }
@@ -150,7 +150,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<WorkGroupTestCapabilityViewModel>(viewResult.Model);
+            var model = Assert.IsType<TestCapabilityViewModel>(viewResult.Model);
             Assert.Empty(model.WorkGroupOptions);
             Assert.Empty(model.TestorProductOptions);
         }
@@ -174,7 +174,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
             Assert.Equal("_DataGrid", partial.ViewName);
-            Assert.IsType<DataGridConfig<WorkGroupTestCapabilityItem>>(partial.Model);
+            Assert.IsType<DataGridConfig<TestCapabilityItem>>(partial.Model);
         }
 
         [Fact]
@@ -192,7 +192,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
             Assert.Equal("_DataGrid", partial.ViewName);
-            Assert.IsType<DataGridConfig<WorkGroupTestCapabilityItem>>(partial.Model);
+            Assert.IsType<DataGridConfig<TestCapabilityItem>>(partial.Model);
         }
 
         [Fact]
@@ -225,7 +225,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
-            var grid = Assert.IsType<DataGridConfig<WorkGroupTestCapabilityItem>>(partial.Model);
+            var grid = Assert.IsType<DataGridConfig<TestCapabilityItem>>(partial.Model);
             Assert.Empty(grid.Data);
         }
 
@@ -301,7 +301,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
             Assert.Equal("_AddEditTestCapability", partial.ViewName);
-            Assert.IsType<WorkGroupTestCapabilityItem>(partial.Model);
+            Assert.IsType<TestCapabilityItem>(partial.Model);
         }
 
         #endregion
@@ -312,7 +312,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
         public async Task CreateTestCapability_Post_ValidModel_ReturnsJsonSuccess()
         {
             // Arrange
-            var model = new WorkGroupTestCapabilityItem { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" };
+            var model = new TestCapabilityItem { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" };
             var dto = new TestCapabilityDto { TestCode = "TC1" };
             _mapper.Map<TestCapabilityDto>(model).Returns(dto);
             _service.CreateTestCapabilityAsync(dto).Returns(ApiResponseDto<TestCapabilityDto>.SuccessResponse(dto));
@@ -330,7 +330,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
         public async Task CreateTestCapability_Post_ServiceFails_ReturnsJsonFailure()
         {
             // Arrange
-            var model = new WorkGroupTestCapabilityItem { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" };
+            var model = new TestCapabilityItem { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" };
             var dto = new TestCapabilityDto { TestCode = "TC1" };
             var errors = new List<ApiErrorDto> { new() { Code = "CONFLICT", Message = "Already exists" } };
             _mapper.Map<TestCapabilityDto>(model).Returns(dto);
@@ -352,7 +352,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
             _controller.ModelState.AddModelError("TestCode", "Test Code is required.");
 
             // Act
-            var result = await _controller.CreateTestCapability(new WorkGroupTestCapabilityItem());
+            var result = await _controller.CreateTestCapability(new TestCapabilityItem());
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
@@ -369,10 +369,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
         {
             // Arrange
             var dto = new TestCapabilityDto { TestCode = "TC1", WorkGroup = "WG1" };
-            var item = new WorkGroupTestCapabilityItem { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" };
+            var item = new TestCapabilityItem { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" };
             _service.GetTestCapabilityByIdAsync("TC1", "WG1")
                 .Returns(ApiResponseDto<TestCapabilityDto>.SuccessResponse(dto));
-            _mapper.Map<WorkGroupTestCapabilityItem>(dto).Returns(item);
+            _mapper.Map<TestCapabilityItem>(dto).Returns(item);
             SetupDropdowns();
 
             // Act
@@ -381,7 +381,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
             Assert.Equal("_AddEditTestCapability", partial.ViewName);
-            var model = Assert.IsType<WorkGroupTestCapabilityItem>(partial.Model);
+            var model = Assert.IsType<TestCapabilityItem>(partial.Model);
             Assert.Equal("TC1", model.TestCode);
         }
 
@@ -408,7 +408,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
         public async Task EditTestCapability_Post_ValidModel_ReturnsJsonSuccess()
         {
             // Arrange
-            var model = new WorkGroupTestCapabilityItem { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" };
+            var model = new TestCapabilityItem { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" };
             var dto = new TestCapabilityDto { TestCode = "TC1" };
             _mapper.Map<TestCapabilityDto>(model).Returns(dto);
             _service.UpdateTestCapabilityAsync(dto).Returns(ApiResponseDto<TestCapabilityDto>.SuccessResponse(dto));
@@ -426,7 +426,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
         public async Task EditTestCapability_Post_ServiceFails_ReturnsJsonFailure()
         {
             // Arrange
-            var model = new WorkGroupTestCapabilityItem { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" };
+            var model = new TestCapabilityItem { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" };
             var dto = new TestCapabilityDto { TestCode = "TC1" };
             var errors = new List<ApiErrorDto> { new() { Code = "ERR", Message = "Update failed" } };
             _mapper.Map<TestCapabilityDto>(model).Returns(dto);
@@ -448,7 +448,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
             _controller.ModelState.AddModelError("WorkGroup", "Work Group is required.");
 
             // Act
-            var result = await _controller.EditTestCapability(new WorkGroupTestCapabilityItem());
+            var result = await _controller.EditTestCapability(new TestCapabilityItem());
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);

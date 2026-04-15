@@ -6,23 +6,23 @@ using Apha.FPSApps.Application.Services.PACT;
 using NSubstitute;
 using Xunit;
 
-namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupTestCapabilityServiceTest
+namespace Apha.FPSApps.Application.UnitTests.Services.PACT.TestCapabilityServiceTest
 {
-    public class WorkGroupTestCapabilityServiceTests
+    public class TestCapabilityServiceTests
     {
         private readonly IPactApiClient _pactClient;
-        private readonly IPactWorkGroupTestCapabilityApiClient _apiClient;
+        private readonly IPactTestCapabilityApiClient _apiClient;
         private readonly IPactWorkGroupApiClient _workGroupApiClient;
-        private readonly WorkGroupTestCapabilityService _service;
+        private readonly TestCapabilityService _service;
 
-        public WorkGroupTestCapabilityServiceTests()
+        public TestCapabilityServiceTests()
         {
             _pactClient = Substitute.For<IPactApiClient>();
-            _apiClient = Substitute.For<IPactWorkGroupTestCapabilityApiClient>();
+            _apiClient = Substitute.For<IPactTestCapabilityApiClient>();
             _workGroupApiClient = Substitute.For<IPactWorkGroupApiClient>();
             _pactClient.PactWorkGroupTestCapability.Returns(_apiClient);
             _pactClient.PactWorkGroup.Returns(_workGroupApiClient);
-            _service = new WorkGroupTestCapabilityService(_pactClient);
+            _service = new TestCapabilityService(_pactClient);
         }
 
         #region GetPagedByWorkGroupAsync

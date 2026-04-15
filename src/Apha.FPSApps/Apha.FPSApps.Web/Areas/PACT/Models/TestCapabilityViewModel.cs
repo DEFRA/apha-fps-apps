@@ -3,13 +3,13 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Apha.FPSApps.Web.Areas.PACT.Models
 {
-    public class WorkGroupTestCapabilityViewModel
+    public class TestCapabilityViewModel
     {
         public string? SelectedWorkGroup { get; set; }
         public string? SelectedTestCode { get; set; }
         public int ViewBy { get; set; } = 1;
 
-        public DataGridConfig<WorkGroupTestCapabilityItem> TestCapabilityGrid { get; set; } = new();
+        public DataGridConfig<TestCapabilityItem> TestCapabilityGrid { get; set; } = new();
         public DataGridConfig<TestRequirementItem> TestReqmtGrid { get; set; } = new();
 
         public List<SelectListItem> WorkGroupOptions { get; set; } = new();

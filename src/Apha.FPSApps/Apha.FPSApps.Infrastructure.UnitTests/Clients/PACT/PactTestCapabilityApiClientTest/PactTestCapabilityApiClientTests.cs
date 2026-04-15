@@ -16,13 +16,13 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestCapabilityA
     {
         private readonly IPactHttpExecutor _http;
         private readonly IMapper _mapper;
-        private readonly PactWorkGroupTestCapabilityApiClient _client;
+        private readonly PactTestCapabilityApiClient _client;
 
         public PactTestCapabilityApiClientTests()
         {
             _http = Substitute.For<IPactHttpExecutor>();
             _mapper = Substitute.For<IMapper>();
-            _client = new PactWorkGroupTestCapabilityApiClient(_http, _mapper);
+            _client = new PactTestCapabilityApiClient(_http, _mapper);
         }
 
         #region GetPagedByWorkGroupAsync

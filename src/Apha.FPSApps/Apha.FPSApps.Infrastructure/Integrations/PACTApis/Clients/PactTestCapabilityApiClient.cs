@@ -10,13 +10,13 @@ using AutoMapper;
 
 namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
 {
-    public class PactWorkGroupTestCapabilityApiClient : IPactWorkGroupTestCapabilityApiClient
+    public class PactTestCapabilityApiClient : IPactTestCapabilityApiClient
     {
         private readonly IPactHttpExecutor _http;
         private readonly IMapper _mapper;
         private const string InternalCodeError = "INTERNAL_ERROR";
 
-        public PactWorkGroupTestCapabilityApiClient(IPactHttpExecutor http, IMapper mapper)
+        public PactTestCapabilityApiClient(IPactHttpExecutor http, IMapper mapper)
         {
             _http = http;
             _mapper = mapper;

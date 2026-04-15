@@ -100,7 +100,7 @@
                 </button>
                 <div class="dropdown-menu" id="work-group">
                     <a href="#" class="dropdown-item">Work Group People</a>
-                    <a class="dropdown-item" asp-area="PACT" asp-controller="WorkGroupTestCapability" asp-action="Index">Test Capabilities</a>
+                    <a class="dropdown-item" asp-area="PACT" asp-controller="TestCapability" asp-action="Index">Test Capabilities</a>
                     <a href="#" class="dropdown-item">Test Maintenance List</a>
                 </div>
             </div>
@@ -201,7 +201,7 @@
 
             modal.addEventListener('click', function (e) {
                 if (e.target === modal) {
-                    modal.classList.remove('show');
+                    return false;
                 }
             });
 
