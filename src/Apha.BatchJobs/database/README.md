@@ -9,6 +9,7 @@ This folder contains infrastructure-only database scripts for local Docker Deskt
 - `sql/003_runtime_orchestrator_tables.sql` : Runtime lock table setup and legacy cleanup.
 - `sql/seeds/*.sql` : Seed scripts (optional, business-neutral by default).
 - `sql/flush/*.sql` : Flush/reset scripts for local development cycles.
+- `sink/` : Sink pipeline assets for cloud snapshot ingestion and curated sync.
 - `Invoke-BatchDb.ps1` : PowerShell runner for apply/seed/flush/reset workflows.
 
 ## Prerequisites
@@ -42,3 +43,11 @@ pwsh ./database/Invoke-BatchDb.ps1 -Action all
 - Keep business-specific seed data in dedicated files under `sql/seeds` and version them by prefixing with sequence numbers.
 - Worker execution persistence writes to `operational.tbljobqueue` and `operational.tbljobqueue_log`.
 - Runtime configuration follows the repo pattern: `ConnectionStrings:BatchJobsConnectionString`.
+
+## Sink Pipeline
+
+See `sink/README.md` for the VM workflow to:
+
+1. Ingest a cloud snapshot into sink raw structures.
+2. Curate only required fields for foundation revisions.
+3. Sync curated results into `operational` in an idempotent way.
