@@ -1,12 +1,13 @@
 # BatchJobs Foundation — Readiness Assessment & Backlog Stories
 
 **Assessment Date:** 2026-04-15  
+**Last Updated:** 2026-04-15  
 **Branch:** A-Foundation  
 **Assessed by:** Copilot + Engineering review
 
 ---
 
-## Readiness Score: 72 / 100
+## Readiness Score: 78 / 100
 
 | Layer | Score | Status |
 |---|---|---|
@@ -16,7 +17,7 @@
 | Docker / deployment | 8 / 10 | ✅ Good |
 | EF Core / DB mapping | 6 / 10 | ⚠️ Gaps |
 | Integration tests | 0 / 5 | ❌ Missing |
-| Lock safety | 2 / 10 | ❌ Race condition risk |
+| Lock safety | 8 / 10 | ✅ Atomic acquire + DB uniqueness guard |
 | Job extensibility | 4 / 10 | ⚠️ Manual wiring only |
 | Config hygiene | 8 / 10 | ⚠️ Credential in source |
 | Unused settings | 4 / 10 | ⚠️ Dead config |
@@ -29,6 +30,8 @@
 **Priority:** High  
 `BatchLockRepository.TryAcquireLockAsync` performs check-then-insert as two separate DB calls.  
 Two parallel ECS tasks for the same job can both pass the active-lock check before either has committed the new lock row.
+
+**Status:** Resolved (2026-04-15)
 
 **Affected file:** `Apha.BatchJobs.Infrastructure/Repositories/BatchLockRepository.cs`
 
@@ -91,17 +94,24 @@ Test project emits a license warning at runtime. Requires either a commercial Xc
 **Issue:** ISSUE-01  
 **Priority:** High  
 **Estimate:** M (3–5 days)
+**Status:** Completed (2026-04-15)
 
 **As a** batch job operator,  
 **I want** the distributed lock to be safe under concurrent ECS task invocations,  
 **so that** no two instances of the same job can run simultaneously even under race conditions.
 
 **Acceptance criteria:**
-- [ ] `TryAcquireLockAsync` uses a single atomic DB operation (e.g. `INSERT ... ON CONFLICT DO NOTHING` or a Postgres advisory lock).
-- [ ] Removing the check-then-insert pattern eliminates the TOCTOU window.
-- [ ] Existing unit tests for lock behaviour still pass.
-- [ ] A new unit test verifies concurrent acquire attempts result in exactly one success.
-- [ ] No regression in orchestrator flow tests.
+- [x] `TryAcquireLockAsync` uses a single atomic DB operation (single insert attempt guarded by DB unique partial index).
+- [x] Removing the check-then-insert pattern eliminates the TOCTOU window.
+- [x] Existing unit tests for lock behaviour still pass.
+- [x] A new unit test verifies concurrent acquire attempts result in exactly one success.
+- [x] No regression in orchestrator flow tests.
+
+**Implementation evidence:**
+- `Apha.BatchJobs.Infrastructure/Repositories/BatchLockRepository.cs` now attempts insert directly and returns false on Postgres unique violation (`23505`).
+- `database/sql/003_runtime_orchestrator_tables.sql` includes unique partial index `uq_batch_lock_job_name_active` on `(job_name) WHERE is_active = TRUE`.
+- `Apha.BatchJobs.UnitTests/JobOrchestratorTests.cs` includes `RunAsync_WhenTwoConcurrentCallsForSameJob_OnlyOneExecutesAndOtherIsSkipped`.
+- Verified with `dotnet test` pass: 11/11.
 
 **Notes:**  
 Option A: Add a `UNIQUE (job_name)` partial index on `batch_lock WHERE is_active = TRUE` and use EF `ExecuteSqlRaw` for an atomic upsert.  
