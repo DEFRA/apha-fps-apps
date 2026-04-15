@@ -5,12 +5,14 @@ using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Identity.Web;
 using Newtonsoft.Json;
 
 namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
 {
     [Area("PIMS")]
-    [AllowAnonymous]
+    [Authorize(Roles = "PIMSAdmin,PIMSUser")]
+    [AuthorizeForScopes(ScopeKeySection = "PIMSApiSettings:Scope")]
     public class ProjectListController : Controller
     {
         private readonly IMapper _mapper;

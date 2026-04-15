@@ -9,9 +9,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace Apha.PIMS.Api.Controllers
 {
 
-    //[Authorize(Roles = "API-PIMSUser,API-PIMSAdmin")]
-    [AllowAnonymous]
     [ApiController]
+    [Authorize(Roles = "API-PIMSUser,API-PIMSAdmin")]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/projectdetails")]
     public class ProjectDetailsController : ControllerBase

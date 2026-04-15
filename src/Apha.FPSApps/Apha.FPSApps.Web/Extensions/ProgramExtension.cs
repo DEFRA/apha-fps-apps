@@ -44,9 +44,11 @@ namespace Apha.FPSApps.Web.Extensions
                 config.AddMaps(typeof(FpsApiDtoMapper).Assembly);
                 config.AddMaps(typeof(PactApiDtoMapper).Assembly);
                 config.AddMaps(typeof(CostbookApiDtoMapper).Assembly);
+                config.AddMaps(typeof(PimsApiDtoMapper).Assembly);
                 config.AddMaps(typeof(FpsViewModelMapper));
                 config.AddMaps(typeof(PactViewModelMapper));
                 config.AddMaps(typeof(CostbookViewModelMapper));
+                config.AddMaps(typeof(PimsViewModelMapper));
             });
 
             // HTTP Context

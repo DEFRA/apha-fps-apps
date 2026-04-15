@@ -8,14 +8,14 @@ using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Identity.Web;
 using Newtonsoft.Json;
 
 namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
 {
     [Area("PIMS")]
-    //[Authorize(Roles = "PIMSAdmin,PIMSUser")]
-    //[AuthorizeForScopes(ScopeKeySection = "PIMSApiSettings:Scope")]
-    [AllowAnonymous]
+    [Authorize(Roles = "PIMSAdmin,PIMSUser")]
+    [AuthorizeForScopes(ScopeKeySection = "PIMSApiSettings:Scope")]
     public class ProjectDetailsController : Controller
     {
         private readonly IMapper _mapper;

@@ -73,7 +73,7 @@
             <div class="tile @(hasPimsAccess ? "" : "tile-disabled")">  
                 @if (hasPimsAccess)
                 {
-                    <a asp-area="PIMS" asp-controller="Home" asp-action="Index" class="govuk-link govuk-link--inverse">PIMS</a>
+                        <a asp-area="PIMS" asp-controller="ProjectList" asp-action="Index" class="govuk-link govuk-link--inverse">PIMS</a>
                 }
                 else
                 {
