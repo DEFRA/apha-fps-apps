@@ -3,6 +3,7 @@ using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Domain.Entities;
 using Apha.BatchJobs.Domain.Enums;
 using Apha.BatchJobs.Domain.Interfaces;
+using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 
@@ -63,21 +64,21 @@ public sealed class JobOrchestratorTests
         await job.Received(1).ExecuteAsync(Arg.Any<CancellationToken>());
 
         // Assert — execution record created with Running status
-        Assert.Single(capturedCreateStatus);
-        Assert.Equal(JobStatus.Running, capturedCreateStatus[0]);
+        capturedCreateStatus.Should().ContainSingle()
+            .Which.Should().Be(JobStatus.Running);
 
         // Assert — execution record updated with Completed status
-        Assert.Single(capturedUpdateStatus);
-        Assert.Equal(JobStatus.Completed, capturedUpdateStatus[0]);
+        capturedUpdateStatus.Should().ContainSingle()
+            .Which.Should().Be(JobStatus.Completed);
 
         // Assert — lock was released
         await _lockRepo.Received(1).ReleaseLockAsync("TestJob", Arg.Any<string>(), Arg.Any<CancellationToken>());
 
         // Assert — result is correct
-        Assert.Equal(JobStatus.Completed, result.Status);
-        Assert.Equal("TestJob", result.JobName);
-        Assert.NotEmpty(result.RunId);
-        Assert.Equal(42, result.ExecutionId);
+        result.Status.Should().Be(JobStatus.Completed);
+        result.JobName.Should().Be("TestJob");
+        result.RunId.Should().NotBeNullOrEmpty();
+        result.ExecutionId.Should().Be(42);
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -101,8 +102,8 @@ public sealed class JobOrchestratorTests
         await _execRepo.DidNotReceive().CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>());
 
         // Assert — result indicates skip
-        Assert.Equal(JobStatus.Skipped, result.Status);
-        Assert.Equal(TimeSpan.Zero, result.Duration);
+        result.Status.Should().Be(JobStatus.Skipped);
+        result.Duration.Should().Be(TimeSpan.Zero);
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -136,9 +137,10 @@ public sealed class JobOrchestratorTests
             () => _orchestrator.RunAsync("FailingJob", RunMode.Scheduled));
 
         // Assert — failure record written
-        Assert.Single(capturedUpdateStatus);
-        Assert.Equal(JobStatus.Failed, capturedUpdateStatus[0]);
-        Assert.Equal("Simulated failure", capturedErrorMessage[0]);
+        capturedUpdateStatus.Should().ContainSingle()
+            .Which.Should().Be(JobStatus.Failed);
+        capturedErrorMessage.Should().ContainSingle()
+            .Which.Should().Be("Simulated failure");
 
         // Assert — lock still released even after failure
         await _lockRepo.Received(1).ReleaseLockAsync("FailingJob", Arg.Any<string>(), Arg.Any<CancellationToken>());
@@ -174,8 +176,8 @@ public sealed class JobOrchestratorTests
             () => _orchestrator.RunAsync("CancellableJob", RunMode.AdHoc));
 
         // Assert — cancelled record written
-        Assert.Single(capturedUpdateStatus);
-        Assert.Equal(JobStatus.Cancelled, capturedUpdateStatus[0]);
+        capturedUpdateStatus.Should().ContainSingle()
+            .Which.Should().Be(JobStatus.Cancelled);
 
         // Assert — lock released
         await _lockRepo.Received(1).ReleaseLockAsync("CancellableJob", Arg.Any<string>(), Arg.Any<CancellationToken>());
@@ -203,8 +205,8 @@ public sealed class JobOrchestratorTests
         var result2 = await _orchestrator.RunAsync("IdJob", RunMode.AdHoc);
 
         // Assert — each run gets a different RunId
-        Assert.NotEqual(result1.RunId, result2.RunId);
-        Assert.True(Guid.TryParseExact(result1.RunId, "N", out _), "RunId should be a valid GUID without dashes");
+        result1.RunId.Should().NotBe(result2.RunId);
+        Guid.TryParseExact(result1.RunId, "N", out _).Should().BeTrue("RunId should be a valid GUID without dashes");
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -236,8 +238,8 @@ public sealed class JobOrchestratorTests
         await _orchestrator.RunAsync("ConsistentJob", RunMode.Scheduled);
 
         // Assert — lock RunId and record RunId are the same
-        Assert.NotNull(capturedLockRunId);
-        Assert.NotNull(capturedRecordRunId);
-        Assert.Equal(capturedLockRunId, capturedRecordRunId);
+        capturedLockRunId.Should().NotBeNull();
+        capturedRecordRunId.Should().NotBeNull();
+        capturedLockRunId.Should().Be(capturedRecordRunId);
     }
 }

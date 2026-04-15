@@ -9,7 +9,6 @@ using Apha.BatchJobs.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Serilog;
 
 namespace Apha.BatchJobs.Worker;
 
@@ -31,63 +30,47 @@ public static class ServiceCollectionSetup
             .AddEnvironmentVariables()
             .Build();
 
-        // Register configuration sections
         var services = new ServiceCollection();
 
-        services.Configure<DatabaseSettings>(config.GetSection("DatabaseConnection"));
+        ConfigureBatchJobServices(services, config);
+
+        return services;
+    }
+
+    internal static void ConfigureBatchJobServices(IServiceCollection services, IConfiguration config)
+    {
         services.Configure<BatchJobSettings>(config.GetSection("BatchJobs"));
         services.Configure<ApplicationInsightsSettings>(config.GetSection("ApplicationInsights"));
+        services.AddLogging();
 
-        // Configure Serilog
-        Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Information()
-            .WriteTo.Console(outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss}] [{Level:u3}] {Message:lj}{NewLine}{Exception}")
-            .Enrich.FromLogContext()
-            .Enrich.WithProperty("Application", "Apha.BatchJobs")
-            .CreateLogger();
-
-        services.AddLogging(loggingBuilder =>
-        {
-            loggingBuilder.AddSerilog(Log.Logger);
-        });
-
-        // Register database and repositories.
-        // Foundation mode always persists through PostgreSQL.
-        var dbSettings = config.GetSection("DatabaseConnection").Get<DatabaseSettings>();
-        if (dbSettings == null)
-            throw new InvalidOperationException("DatabaseConnection configuration is missing.");
+        var connectionString = config.GetConnectionString("BatchJobsConnectionString")
+            ?? throw new InvalidOperationException("Connection string 'BatchJobsConnectionString' not found.");
 
         services.AddDbContext<BatchJobsDbContext>(options =>
         {
             options.UseNpgsql(
-                dbSettings.BuildConnectionString(),
-                npgsqlOptions => npgsqlOptions.CommandTimeout(dbSettings.Timeout));
+                connectionString,
+                npgsqlOptions =>
+                {
+                    npgsqlOptions.EnableRetryOnFailure(
+                        maxRetryCount: 5,
+                        maxRetryDelay: TimeSpan.FromSeconds(10),
+                        errorCodesToAdd: null);
+                    npgsqlOptions.CommandTimeout(30);
+                });
         });
 
         services.AddScoped<IBatchLockRepository, BatchLockRepository>();
         services.AddScoped<IJobExecutionRepository, JobExecutionRepository>();
-
-        // Register batch job handlers
         services.AddScoped<HealthCheckJobHandler>();
 
-        // Create job registry
         var jobRegistry = new Dictionary<string, Type>
         {
             { "HealthCheck", typeof(HealthCheckJobHandler) }
         };
 
-        // Register job factory
         services.AddScoped<IBatchJobFactory>(sp => new BatchJobFactory(sp, jobRegistry));
-
-        // Register execution orchestrator (the single entry point for all job runs)
         services.AddScoped<IJobOrchestrator, JobOrchestrator>();
-
-        // Register raw configuration for consumers that need direct access.
-        services.AddSingleton<IConfiguration>(config);
-
-        return services;
-
-
-
+        services.AddSingleton(config);
     }
 }

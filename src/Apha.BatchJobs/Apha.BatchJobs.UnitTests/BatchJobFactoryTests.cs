@@ -1,5 +1,6 @@
 using Apha.BatchJobs.Application.Factory;
 using Apha.BatchJobs.Application.Interfaces;
+using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Apha.BatchJobs.UnitTests;
@@ -22,8 +23,8 @@ public sealed class BatchJobFactoryTests
 
         var job = factory.Create("Dummy");
 
-        Assert.IsType<DummyBatchJob>(job);
-        Assert.Equal("Dummy", job.Name);
+        job.Should().BeOfType<DummyBatchJob>();
+        job.Name.Should().Be("Dummy");
     }
 
     [Fact]
@@ -34,8 +35,8 @@ public sealed class BatchJobFactoryTests
 
         var action = () => factory.Create("MissingJob");
 
-        var exception = Assert.Throws<InvalidOperationException>(action);
-        Assert.Contains("MissingJob", exception.Message);
+        var exception = action.Should().Throw<InvalidOperationException>().Which;
+        exception.Message.Should().Contain("MissingJob");
     }
 
     [Fact]
@@ -48,9 +49,8 @@ public sealed class BatchJobFactoryTests
             ["ArchiveJob"] = typeof(DummyBatchJob)
         });
 
-        Assert.Equal(
-            ["ArchiveJob", "HealthCheck"],
-            factory.GetAvailableJobs().OrderBy(name => name));
+        factory.GetAvailableJobs().OrderBy(name => name)
+            .Should().Equal("ArchiveJob", "HealthCheck");
     }
 
     private sealed class DummyBatchJob : IBatchJob

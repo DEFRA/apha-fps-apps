@@ -41,3 +41,4 @@ pwsh ./database/Invoke-BatchDb.ps1 -Action all
 - `flush` is destructive for schema `operational` and should only be used in local/dev environments.
 - Keep business-specific seed data in dedicated files under `sql/seeds` and version them by prefixing with sequence numbers.
 - Worker execution persistence writes to `operational.tbljobqueue` and `operational.tbljobqueue_log`.
+- Runtime configuration follows the repo pattern: `ConnectionStrings:BatchJobsConnectionString`.

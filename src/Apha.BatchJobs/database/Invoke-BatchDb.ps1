@@ -18,7 +18,7 @@ param(
     [string]$Action = "list",
 
     [string]$ContainerName = "batch_jobs_postgres",
-    [string]$Database = "batch_jobs_db",
+    [string]$Database = "batch_jobs_foundation_db",
     [string]$Username = "postgres",
     [string]$ScriptsRoot = "$PSScriptRoot/sql"
 )

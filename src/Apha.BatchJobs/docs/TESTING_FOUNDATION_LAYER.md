@@ -284,7 +284,7 @@ docker run --rm \
   -e ASPNETCORE_ENVIRONMENT=Development \
   -e DatabaseConnection__Server=host.docker.internal \
   -e DatabaseConnection__Port=5432 \
-  -e DatabaseConnection__Database=batch_jobs_db \
+  -e DatabaseConnection__Database=batch_jobs_foundation_db \
   -e DatabaseConnection__Username=postgres \
   -e DatabaseConnection__Password=password \
   batch-test
@@ -330,7 +330,7 @@ After tests, verify database was used:
 
 ```bash
 # Connect to PostgreSQL
-docker exec -it batch_jobs_postgres psql -U postgres -d batch_jobs_db
+docker exec -it batch_jobs_postgres psql -U postgres -d batch_jobs_foundation_db
 
 # List tables
 \dt

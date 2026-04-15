@@ -110,7 +110,7 @@ apha-batch-jobs     dev       a1b2c3d4e5    1 min ago    186MB
 ```bash
 docker run -d \
   --name batch_jobs_postgres \
-  -e POSTGRES_DB=batch_jobs_db \
+  -e POSTGRES_DB=batch_jobs_foundation_db \
   -e POSTGRES_USER=postgres \
   -e POSTGRES_PASSWORD=password \
   -p 5432:5432 \
@@ -135,7 +135,7 @@ docker run --rm \
   -e ASPNETCORE_ENVIRONMENT=Development \
   -e DatabaseConnection__Server=localhost \
   -e DatabaseConnection__Port=5432 \
-  -e DatabaseConnection__Database=batch_jobs_db \
+  -e DatabaseConnection__Database=batch_jobs_foundation_db \
   -e DatabaseConnection__Username=postgres \
   -e DatabaseConnection__Password=password \
   apha-batch-jobs:dev
@@ -204,7 +204,7 @@ Set for the terminal session:
 $env:ASPNETCORE_ENVIRONMENT="Development"
 $env:DatabaseConnection__Server="localhost"
 $env:DatabaseConnection__Port="5432"
-$env:DatabaseConnection__Database="batch_jobs_db"
+$env:DatabaseConnection__Database="batch_jobs_foundation_db"
 $env:DatabaseConnection__Username="postgres"
 $env:DatabaseConnection__Password="password"
 $env:BATCH_JOB_NAME="HealthCheck"
@@ -217,7 +217,7 @@ dotnet run
 export ASPNETCORE_ENVIRONMENT=Development
 export DatabaseConnection__Server=localhost
 export DatabaseConnection__Port=5432
-export DatabaseConnection__Database=batch_jobs_db
+export DatabaseConnection__Database=batch_jobs_foundation_db
 export DatabaseConnection__Username=postgres
 export DatabaseConnection__Password=password
 export BATCH_JOB_NAME=HealthCheck
