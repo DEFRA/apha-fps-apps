@@ -22,11 +22,27 @@ jobs:
   build-smoke-and-image:
     name: Build, Smoke Test, and Container Build
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: batch_jobs_foundation_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d batch_jobs_foundation_db"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
     permissions:
       contents: read
     outputs:
       should_push: ${{ steps.check_commit.outputs.should_push }}
       image_tag: ${{ steps.imgtag.outputs.image_tag }}
+    env:
+      ConnectionStrings__BatchJobsConnectionString: Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=<REDACTED>;Timeout=30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -43,6 +59,9 @@ jobs:
 
       - name: Build
         run: dotnet build ${{ env.BATCHJOBS_PROJECT }} --configuration Release --no-restore
+
+      - name: Test (unit + integration)
+        run: dotnet test src/Apha.BatchJobs/Apha.BatchJobs.UnitTests/Apha.BatchJobs.UnitTests.csproj --configuration Release --no-build
 
       - name: Native smoke test
         working-directory: ${{ env.BATCHJOBS_WORKDIR }}

@@ -7,7 +7,7 @@
 
 ---
 
-## Readiness Score: 80 / 100
+## Readiness Score: 84 / 100
 
 | Layer | Score | Status |
 |---|---|---|
@@ -16,7 +16,7 @@
 | Unit test coverage | 8 / 10 | ✅ Good |
 | Docker / deployment | 8 / 10 | ✅ Good |
 | EF Core / DB mapping | 6 / 10 | ⚠️ Gaps |
-| Integration tests | 0 / 5 | ❌ Missing |
+| Integration tests | 4 / 5 | ✅ Repository integration coverage in place |
 | Lock safety | 8 / 10 | ✅ Atomic acquire + DB uniqueness guard |
 | Job extensibility | 4 / 10 | ⚠️ Manual wiring only |
 | Config hygiene | 8 / 10 | ⚠️ Credential in source |
@@ -50,6 +50,8 @@ Two parallel ECS tasks for the same job can both pass the active-lock check befo
 ### ISSUE-03 — No Integration Tests for Repository Layer
 **Priority:** Medium  
 `BatchLockRepository` and `JobExecutionRepository` have zero tests. These are the only components that touch the database.
+
+**Status:** Resolved (2026-04-15)
 
 **Affected files:** `Apha.BatchJobs.UnitTests/` (test project)
 
@@ -151,19 +153,25 @@ Option B: Use `pg_try_advisory_xact_lock` via a raw SQL query — lighter and no
 **Issue:** ISSUE-03  
 **Priority:** Medium  
 **Estimate:** L (5–8 days)
+**Status:** Completed (2026-04-15)
 
 **As a** developer merging DB-touching changes,  
 **I want** integration tests for `BatchLockRepository` and `JobExecutionRepository`,  
 **so that** a real Postgres instance validates that lock, execution, and log records are written and read correctly.
 
 **Acceptance criteria:**
-- [ ] New test project or test class `Apha.BatchJobs.IntegrationTests` created.
-- [ ] Tests use a Postgres instance (docker-compose or testcontainers).
-- [ ] `TryAcquireLockAsync` — verified lock is created and returned on first call; returns false on second call with same job name.
-- [ ] `ReleaseLockAsync` — verified lock row is removed after release.
-- [ ] `CreateExecutionRecordAsync` — verified row appears in `tbljobqueue` and `tbljobqueue_log`.
-- [ ] `UpdateExecutionRecordAsync` — verified status and `updated_at` are updated; new log row appended.
-- [ ] CI pipeline runs integration tests with the postgres service available.
+- [x] New integration test class created (`RepositoryIntegrationTests`).
+- [x] Tests use a Postgres instance.
+- [x] `TryAcquireLockAsync` — verified lock is created and returned on first call; returns false on second call with same job name.
+- [x] `ReleaseLockAsync` — verified lock row is removed after release.
+- [x] `CreateExecutionRecordAsync` — verified row appears in `tbljobqueue` and `tbljobqueue_log`.
+- [x] `UpdateExecutionRecordAsync` — verified status and `updated_at` are updated; new log row appended.
+- [x] CI pipeline runs integration tests with the postgres service available.
+
+**Implementation evidence:**
+- `Apha.BatchJobs.UnitTests/RepositoryIntegrationTests.cs` added with four Postgres-backed repository tests.
+- `.github/workflows/batchjobs-ci.yaml` updated with postgres service and `dotnet test` step.
+- Verified locally with `dotnet test`: 15/15 passing.
 
 ---
 
