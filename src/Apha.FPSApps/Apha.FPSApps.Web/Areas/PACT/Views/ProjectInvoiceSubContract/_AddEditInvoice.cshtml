@@ -1,0 +1,139 @@
+@model Apha.FPSApps.Web.Areas.PACT.Models.ProjectInvoiceItem
+
+@{
+    var isEdit = Model.InvoiceCounter != 0;
+}
+
+<div class="modal-header flex-space-center">
+    <h3 class="govuk-heading-s sup_margin_0">@(isEdit ? "Edit Invoice" : "Add Invoice")</h3>
+    <button type="button" class="btn-close" onclick="$('#modalPopup').removeClass('show')">×</button>
+</div>
+
+<div class="modal-body" style="overflow:hidden; padding:8px 16px 0 16px;">
+    <form id="invoiceForm" class="govuk-grid-column-full">
+
+        <input type="hidden" name="isEdit" value="@isEdit.ToString().ToLower()" />
+        <input type="hidden" asp-for="InvoiceCounter" />
+
+        <!-- Validation error summary -->
+        <div class="govuk-error-summary" role="alert"
+             aria-labelledby="error-summary-title" tabindex="-1" style="display:none;">
+            <h2 class="govuk-error-summary__title" id="error-summary-title">There is a problem</h2>
+            <div class="govuk-error-summary__body">
+                <ul class="govuk-list govuk-error-summary__list"></ul>
+            </div>
+        </div>
+
+        @if (isEdit)
+        {
+            <div class="govuk-grid-row sup_margin_top_10" id="divInvoicecounter">
+                <div class="govuk-grid-column-one-half">
+                    <div class="govuk-form-group sup_margin_bottom_10">
+                        <label class="govuk-label" asp-for="Counter">Invoice Counter</label>
+                        <div class="govuk-input__wrapper">
+                            <input class="govuk-input govuk-!-font-size-16" value="@Model.Counter" readonly disabled />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="govuk-grid-row sup_margin_top_10">
+            <div class="govuk-grid-column-one-half">
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label class="govuk-label" asp-for="ProjectParent">
+                        Project:<span class="sup_color_red">*</span>
+                    </label>
+                    <select class="govuk-select sup_select_option_width_100 govuk-!-font-size-16"
+                            asp-for="ProjectParent"
+                            asp-items="@(ViewBag.Projects as IEnumerable<SelectListItem>)"
+                            required>
+                        <option value="">-- select project --</option>
+                    </select>
+                    <span asp-validation-for="ProjectParent" class="govuk-error-message"></span>
+                </div>
+            </div>
+            <div class="govuk-grid-column-one-half">
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label class="govuk-label" asp-for="Month">
+                        Month:<span class="sup_color_red">*</span>
+                    </label>
+                    <select class="govuk-select sup_select_option_width_100 govuk-!-font-size-16"
+                            asp-for="Month" required>
+                        <option value="">--select month--</option>
+                        @for (int i = 1; i <= 12; i++)
+                        {
+                            <option value="@i">@i</option>
+                        }
+                    </select>
+                    <span asp-validation-for="Month" class="govuk-error-message"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-one-half">
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label class="govuk-label" asp-for="Amount">
+                        Amount:<span class="sup_color_red">*</span>
+                    </label>
+                    <div class="govuk-input__wrapper">
+                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                        <input type="number" class="govuk-input govuk-!-font-size-16"
+                               asp-for="Amount" step="0.01" placeholder="e.g., 1000" required />
+                        <span asp-validation-for="Amount" class="govuk-error-message"></span>
+                    </div>                    
+                </div>
+            </div>
+            <div class="govuk-grid-column-one-half">
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label class="govuk-label" asp-for="CostOfWork">Cost of Work:</label>
+                    <div class="govuk-input__wrapper">
+                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                        <input type="number" class="govuk-input govuk-!-font-size-16"
+                               asp-for="CostOfWork" step="0.01" placeholder="e.g., 5000" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-one-half">
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label class="govuk-label" asp-for="Wip">WIP:</label>
+                    <div class="govuk-input__wrapper">
+                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                        <input type="number" class="govuk-input govuk-!-font-size-16"
+                               asp-for="Wip" step="0.01" placeholder="e.g., 2000" />
+                    </div>
+                </div>
+            </div>
+            <div class="govuk-grid-column-one-half">
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label class="govuk-label" asp-for="ProfitLoss">Profit/Loss:</label>
+                    <div class="govuk-input__wrapper">
+                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                        <input type="number" class="govuk-input govuk-!-font-size-16"
+                               asp-for="ProfitLoss" step="0.01" placeholder="e.g., 500" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="govuk-form-group sup_margin_bottom_10">
+            <label class="govuk-label" asp-for="Detail">Detail:</label>
+            <textarea class="govuk-textarea govuk-!-font-size-16 sup_margin_0"
+                      asp-for="Detail" rows="3"
+                      placeholder="Enter invoice details..."></textarea>
+        </div>
+
+    </form>
+</div>
+
+<div class="modal-footer sup_flex_space_center">
+    <button type="button" class="govuk-button govuk-button--secondary sup_margin_0"
+            onclick="$('#modalPopup').removeClass('show')">Cancel</button>
+    <button type="button" class="govuk-button sup_margin_0" onclick="saveInvoice()">
+        @(isEdit ? "Update" : "Save")
+    </button>
+</div>

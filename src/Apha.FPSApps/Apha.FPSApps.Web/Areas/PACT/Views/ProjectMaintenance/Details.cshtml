@@ -3,7 +3,7 @@
 
 @{
     ViewData["Title"] = "Project Maintenance - PACT";
-    var parentProject = Model.Project.ParentProject;
+    var parentProject = Model.Project.ParentProject ?? string.Empty;
 }
 
 <!-- ── Page title bar ────────────────────────────────────────────────── -->
@@ -30,7 +30,7 @@
         <ul>
             <li class="sidebar-link-two"
                 style="border-radius:0 8px 8px 0; cursor:pointer; background-color:#1d70b8;">
-                <a style="color:#fff;">Invoices &amp; Subcontracted Costs</a>
+                <a style="color:#fff;" asp-area="PACT" asp-controller="ProjectInvoiceSubContract" asp-action="Index" asp-route-parentProject="@Model.Project.ParentProject">Invoices &amp; Subcontracted Costs</a>
             </li>
             <li class="sidebar-link-two"
                 style="border-radius:0 8px 8px 0; cursor:pointer; background-color:#1d70b8;">
