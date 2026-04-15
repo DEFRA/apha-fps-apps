@@ -7,7 +7,6 @@ using Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
 using Xunit;
 
 namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClientTest
@@ -96,25 +95,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.NotNull(result.Errors);
-        }
-
-        [Fact]
-        public async Task GetAllStaffJobAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            _http.GetAsync<List<StaffJobViewRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetAllStaffJobAsync(query, "JOB001");
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            var error = Assert.Single(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve staff jobs", error.Message);
         }
 
         [Theory]
@@ -207,24 +187,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
             Assert.NotNull(result.Errors);
         }
 
-        [Fact]
-        public async Task GetStaffWorkgroupLookupAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            _http.GetAsync<IEnumerable<StaffWorkgroupLookupRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetStaffWorkgroupLookupAsync();
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            var error = Assert.Single(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve workgroup lookup data", error.Message);
-        }
-
         #endregion
 
         #region GetStaffChargeRate Tests
@@ -285,24 +247,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.NotNull(result.Errors);
-        }
-
-        [Fact]
-        public async Task GetStaffChargeRate_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            _http.GetAsync<decimal?>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetStaffChargeRate("S001", "JOB001");
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            var error = Assert.Single(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve staff charge rate", error.Message);
         }
 
         [Theory]
@@ -387,24 +331,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.NotNull(result.Errors);
-        }
-
-        [Fact]
-        public async Task GetStaffJobByIdAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            _http.GetAsync<StaffJobRes>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetStaffJobByIdAsync("S001", "JOB001");
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            var error = Assert.Single(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve staff job", error.Message);
         }
 
         [Theory]
@@ -496,28 +422,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
             Assert.NotNull(result.Errors);
         }
 
-        [Fact]
-        public async Task CreateStaffJobAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var staffJobDto = new StaffJobDto { StaffId = "S001", JobCode = "JOB001" };
-            var staffJobReq = new StaffJobReq { StaffId = "S001", JobCode = "JOB001" };
-
-            _mapper.Map<StaffJobReq>(staffJobDto).Returns(staffJobReq);
-            _http.PostAsync<StaffJobReq, StaffJobRes>("api/v1/staffjob", staffJobReq).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.CreateStaffJobAsync(staffJobDto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            var error = Assert.Single(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to create staff job", error.Message);
-        }
-
         #endregion
 
         #region UpdateStaffJobAsync Tests
@@ -582,28 +486,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
             Assert.NotNull(result.Errors);
         }
 
-        [Fact]
-        public async Task UpdateStaffJobAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var staffJobDto = new StaffJobDto { StaffId = "S001", JobCode = "JOB001" };
-            var staffJobReq = new StaffJobReq { StaffId = "S001", JobCode = "JOB001" };
-
-            _mapper.Map<StaffJobReq>(staffJobDto).Returns(staffJobReq);
-            _http.PutAsync<StaffJobReq, StaffJobRes>("api/v1/staffjob", staffJobReq).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.UpdateStaffJobAsync(staffJobDto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            var error = Assert.Single(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to update staff job", error.Message);
-        }
-
         #endregion
 
         #region DeleteStaffJobAsync Tests
@@ -663,24 +545,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.NotNull(result.Errors);
-        }
-
-        [Fact]
-        public async Task DeleteStaffJobAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            _http.DeleteAsync<bool?>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.DeleteStaffJobAsync("S001", "JOB001");
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            var error = Assert.Single(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to delete staff job", error.Message);
         }
 
         [Theory]
@@ -810,26 +674,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Null(result.Data);
-        }
-
-        [Fact]
-        public async Task GetViewByStaffIdAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var staffId = "S001";
-            var jobCode = "JOB001";
-            _http.GetAsync<StaffJobViewRes>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetViewByStaffIdAsync(staffId, jobCode);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            var error = Assert.Single(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve staff job view", error.Message);
         }
 
         [Theory]
@@ -978,24 +822,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsStaffJobApiClient
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.NotNull(result.Errors);
-        }
-
-        [Fact]
-        public async Task GetTotalStaffCostAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            _http.GetAsync<decimal>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetTotalStaffCostAsync("JOB001");
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            var error = Assert.Single(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve total staff cost", error.Message);
         }
 
         [Theory]

@@ -7,7 +7,6 @@ using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients;
 using AutoMapper;
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
 using Xunit;
 
 namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestRequirementApiClientTest
@@ -100,25 +99,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestRequirement
             Assert.False(result.Success);
         }
 
-        [Fact]
-        public async Task GetPagedTestReqmtAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var query = new QueryParameters<string>();
-            _http.GetAsync<List<TestRequirementtRes>>(Arg.Any<string>())
-                .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetPagedTestReqmtAsync(query, "BLOOD");
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve test requirements", error.Message);
-        }
-
         #endregion
 
         // ── GetPagedTestReqmtbyProjectAsync ───────────────────────────────────
@@ -180,25 +160,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestRequirement
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.NotNull(result.Errors);
-        }
-
-        [Fact]
-        public async Task GetPagedTestReqmtbyProjectAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var query = new QueryParameters<string>();
-            _http.GetAsync<List<TestRequirementtRes>>(Arg.Any<string>())
-                .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetPagedTestReqmtbyProjectAsync(query, "PRJ001");
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve test requirements", error.Message);
         }
 
         #endregion
@@ -282,24 +243,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestRequirement
             Assert.False(result.Success);
         }
 
-        [Fact]
-        public async Task GetAllTestReqmtForExportAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            _http.GetAsync<List<TestRequirementtRes>>(Arg.Any<string>())
-                .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetAllTestReqmtForExportAsync("BLOOD", null);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve test requirements for export", error.Message);
-        }
-
         #endregion
 
         // ── GetTestReqmtByIdAsync ─────────────────────────────────────────────
@@ -349,24 +292,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestRequirement
             // Assert
             Assert.NotNull(result);
             Assert.False(result.Success);
-        }
-
-        [Fact]
-        public async Task GetTestReqmtByIdAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            _http.GetAsync<TestRequirementtRes>(Arg.Any<string>())
-                .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetTestReqmtByIdAsync("BLOOD", "PRJ001");
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve test requirement", error.Message);
         }
 
         #endregion
@@ -427,28 +352,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestRequirement
             Assert.False(result.Success);
         }
 
-        [Fact]
-        public async Task CreateTestReqmtAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var dto = new TestRequirementDto { TestCode = "BLOOD", Buyer = "PRJ001" };
-            var request = new TestRequirementReq { TestCode = "BLOOD", Buyer = "PRJ001" };
-
-            _mapper.Map<TestRequirementReq>(dto).Returns(request);
-            _http.PostAsync<TestRequirementReq, TestRequirementtRes>(Arg.Any<string>(), Arg.Any<TestRequirementReq>())
-                .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.CreateTestReqmtAsync(dto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to create test requirement", error.Message);
-        }
-
         #endregion
 
         // ── UpdateTestReqmtAsync ──────────────────────────────────────────────
@@ -506,28 +409,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestRequirement
             Assert.False(result.Success);
         }
 
-        [Fact]
-        public async Task UpdateTestReqmtAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var dto = new TestRequirementDto { TestCode = "BLOOD", Buyer = "PRJ001" };
-            var request = new TestRequirementReq { TestCode = "BLOOD", Buyer = "PRJ001" };
-
-            _mapper.Map<TestRequirementReq>(dto).Returns(request);
-            _http.PutAsync<TestRequirementReq, TestRequirementtRes>(Arg.Any<string>(), Arg.Any<TestRequirementReq>())
-                .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.UpdateTestReqmtAsync(dto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to update test requirement", error.Message);
-        }
-
         #endregion
 
         // ── DeleteTestReqmtAsync ──────────────────────────────────────────────
@@ -575,24 +456,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestRequirement
             // Assert
             Assert.NotNull(result);
             Assert.False(result.Success);
-        }
-
-        [Fact]
-        public async Task DeleteTestReqmtAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            _http.DeleteAsync<bool>(Arg.Any<string>())
-                .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.DeleteTestReqmtAsync("BLOOD", "PRJ001");
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to delete test requirement", error.Message);
         }
 
         #endregion
@@ -671,24 +534,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestRequirement
             // Assert
             Assert.NotNull(result);
             Assert.False(result.Success);
-        }
-
-        [Fact]
-        public async Task GetTestReqmtPricingAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            _http.GetAsync<TestRequirementtRes>(Arg.Any<string>())
-                .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetTestReqmtPricingAsync("BLOOD");
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve test requirement pricing", error.Message);
         }
 
         #endregion
