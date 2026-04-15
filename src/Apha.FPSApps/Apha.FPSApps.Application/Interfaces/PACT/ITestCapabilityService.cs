@@ -4,7 +4,7 @@ using Apha.FPSApps.Application.Pagination;
 
 namespace Apha.FPSApps.Application.Interfaces.PACT
 {
-    public interface IWorkGroupTestCapabilityService
+    public interface ITestCapabilityService
     {
         Task<ApiResponseDto<List<TestCapabilityDto>>> GetPagedByWorkGroupAsync(QueryParameters<string> query, string? workGroup);
         Task<ApiResponseDto<List<TestCapabilityDto>>> GetPagedByTestCodeAsync(QueryParameters<string> query, string? testCode);
@@ -12,8 +12,6 @@ namespace Apha.FPSApps.Application.Interfaces.PACT
         Task<ApiResponseDto<TestCapabilityDto>> CreateTestCapabilityAsync(TestCapabilityDto dto);
         Task<ApiResponseDto<TestCapabilityDto>> UpdateTestCapabilityAsync(TestCapabilityDto dto);
         Task<ApiResponseDto<bool>> DeleteTestCapabilityAsync(string testCode, string workGroup);
-
-        Task<ApiResponseDto<List<TestorProductDto>>> GetAllTestorProductsAsync();
         Task<ApiResponseDto<List<WorkGroupDto>>> GetAllWorkGroupsAsync();
     }
 }

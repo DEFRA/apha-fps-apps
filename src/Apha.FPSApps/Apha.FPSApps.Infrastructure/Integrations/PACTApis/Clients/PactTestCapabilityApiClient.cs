@@ -10,13 +10,13 @@ using AutoMapper;
 
 namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
 {
-    public class PactWorkGroupTestCapabilityApiClient : IPactWorkGroupTestCapabilityApiClient
+    public class PactTestCapabilityApiClient : IPactTestCapabilityApiClient
     {
         private readonly IPactHttpExecutor _http;
         private readonly IMapper _mapper;
         private const string InternalCodeError = "INTERNAL_ERROR";
 
-        public PactWorkGroupTestCapabilityApiClient(IPactHttpExecutor http, IMapper mapper)
+        public PactTestCapabilityApiClient(IPactHttpExecutor http, IMapper mapper)
         {
             _http = http;
             _mapper = mapper;
@@ -150,25 +150,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             {
                 return ApiResponseDto<bool>.FailureResponse(
                     [new ApiErrorDto { Message = "Failed to delete test capability", Code = InternalCodeError }],
-                    new ApiMetaDto());
-            }
-        }
-
-        public async Task<ApiResponseDto<List<TestorProductDto>>> GetAllTestorProductsAsync()
-        {
-            try
-            {
-                var response = await _http.GetAsync<List<TestorProductRes>>(PactApiEndpoints.GetAllTestorProducts);
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<List<TestorProductDto>>>(response);
-
-                var dto = _mapper.Map<ApiResponseDto<List<TestorProductDto>>>(response);
-                return ApiResponseDto<List<TestorProductDto>>.FailureResponse(dto.Errors, dto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<List<TestorProductDto>>.FailureResponse(
-                    [new ApiErrorDto { Message = "Failed to retrieve test or products", Code = InternalCodeError }],
                     new ApiMetaDto());
             }
         }

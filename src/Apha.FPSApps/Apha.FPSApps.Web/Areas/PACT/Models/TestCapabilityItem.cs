@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Apha.FPSApps.Web.Areas.PACT.Models
 {
-    public class WorkGroupTestCapabilityItem
+    public class TestCapabilityItem
     {
         [Display(Name = "Test Code")]
         [Required(ErrorMessage = "Test Code is required.")]

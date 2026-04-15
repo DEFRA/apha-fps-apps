@@ -6,23 +6,23 @@ using Apha.FPSApps.Application.Services.PACT;
 using NSubstitute;
 using Xunit;
 
-namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupTestCapabilityServiceTest
+namespace Apha.FPSApps.Application.UnitTests.Services.PACT.TestCapabilityServiceTest
 {
-    public class WorkGroupTestCapabilityServiceTests
+    public class TestCapabilityServiceTests
     {
         private readonly IPactApiClient _pactClient;
-        private readonly IPactWorkGroupTestCapabilityApiClient _apiClient;
+        private readonly IPactTestCapabilityApiClient _apiClient;
         private readonly IPactWorkGroupApiClient _workGroupApiClient;
-        private readonly WorkGroupTestCapabilityService _service;
+        private readonly TestCapabilityService _service;
 
-        public WorkGroupTestCapabilityServiceTests()
+        public TestCapabilityServiceTests()
         {
             _pactClient = Substitute.For<IPactApiClient>();
-            _apiClient = Substitute.For<IPactWorkGroupTestCapabilityApiClient>();
+            _apiClient = Substitute.For<IPactTestCapabilityApiClient>();
             _workGroupApiClient = Substitute.For<IPactWorkGroupApiClient>();
             _pactClient.PactWorkGroupTestCapability.Returns(_apiClient);
             _pactClient.PactWorkGroup.Returns(_workGroupApiClient);
-            _service = new WorkGroupTestCapabilityService(_pactClient);
+            _service = new TestCapabilityService(_pactClient);
         }
 
         #region GetPagedByWorkGroupAsync
@@ -187,39 +187,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupTestCapabili
         }
 
         #endregion       
-
-        #region GetAllTestorProductsAsync
-
-        [Fact]
-        public async Task GetAllTestorProductsAsync_DelegatesToApiClient_ReturnsResult()
-        {
-            var expected = ApiResponseDto<List<TestorProductDto>>.SuccessResponse(
-            [
-                new TestorProductDto { ItemCode = "BLOOD" },
-                new TestorProductDto { ItemCode = "URINE" }
-            ]);
-            _apiClient.GetAllTestorProductsAsync().Returns(expected);
-
-            var result = await _service.GetAllTestorProductsAsync();
-
-            Assert.Equal(expected, result);
-            await _apiClient.Received(1).GetAllTestorProductsAsync();
-        }
-
-        [Fact]
-        public async Task GetAllTestorProductsAsync_WhenEmpty_ReturnsEmptyList()
-        {
-            var expected = ApiResponseDto<List<TestorProductDto>>.SuccessResponse([]);
-            _apiClient.GetAllTestorProductsAsync().Returns(expected);
-
-            var result = await _service.GetAllTestorProductsAsync();
-
-            Assert.True(result.Success);
-            Assert.Empty(result.Data!);
-        }
-
-        #endregion
-
+                
         #region GetAllWorkGroupsAsync
 
         [Fact]
@@ -235,8 +203,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupTestCapabili
             var result = await _service.GetAllWorkGroupsAsync();
 
             Assert.Equal(expected, result);
-            await _workGroupApiClient.Received(1).GetAllWorkGroupsAsync();
-            await _apiClient.DidNotReceive().GetAllTestorProductsAsync();
+            await _workGroupApiClient.Received(1).GetAllWorkGroupsAsync();            
         }
 
         [Fact]

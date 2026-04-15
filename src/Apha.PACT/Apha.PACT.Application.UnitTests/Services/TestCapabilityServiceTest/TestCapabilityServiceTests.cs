@@ -15,7 +15,6 @@ namespace Apha.PACT.Application.UnitTests.Services.TestCapabilityServiceTest
     {
         private readonly ITestCapabilityRepository _testCapabilityRepo;
         private readonly ITestRequirementRepository _testReqmtRepo;
-        private readonly ITestorProductRepository _testorProductRepo;
         private readonly IMapper _mapper;
         private readonly TestCapabilityService _sut;
 
@@ -23,10 +22,9 @@ namespace Apha.PACT.Application.UnitTests.Services.TestCapabilityServiceTest
         {
             _testCapabilityRepo = Substitute.For<ITestCapabilityRepository>();
             _testReqmtRepo = Substitute.For<ITestRequirementRepository>();
-            _testorProductRepo = Substitute.For<ITestorProductRepository>();
             _mapper = Substitute.For<IMapper>();
             _sut = new TestCapabilityService(
-                _testCapabilityRepo, _testReqmtRepo, _testorProductRepo, _mapper);
+                _testCapabilityRepo, _testReqmtRepo, _mapper);
         }
 
         #region GetPagedByWorkGroupAsync
@@ -236,53 +234,6 @@ namespace Apha.PACT.Application.UnitTests.Services.TestCapabilityServiceTest
 
         #endregion
 
-        #region GetAllTestorProductsAsync
-
-        [Fact]
-        public async Task GetAllTestorProductsAsync_WithData_ReturnsMappedDtos()
-        {
-            var entities = new List<TestorProduct>
-            {
-                new() { ItemCode = "BLOOD", ItemDescription = "Blood Test" },
-                new() { ItemCode = "URINE", ItemDescription = "Urine Test" }
-            };
-            var dtos = new List<TestorProductDto>
-            {
-                new() { ItemCode = "BLOOD" },
-                new() { ItemCode = "URINE" }
-            };
-
-            _testorProductRepo.GetAllAsync().Returns(entities);
-            _mapper.Map<IEnumerable<TestorProductDto>>(entities).Returns(dtos);
-
-            var result = await _sut.GetAllTestorProductsAsync();
-
-            result.Should().BeEquivalentTo(dtos);
-            await _testorProductRepo.Received(1).GetAllAsync();
-        }
-
-        [Fact]
-        public async Task GetAllTestorProductsAsync_EmptyRepository_ReturnsEmptyCollection()
-        {
-            var entities = new List<TestorProduct>();
-            var dtos = new List<TestorProductDto>();
-
-            _testorProductRepo.GetAllAsync().Returns(entities);
-            _mapper.Map<IEnumerable<TestorProductDto>>(entities).Returns(dtos);
-
-            var result = await _sut.GetAllTestorProductsAsync();
-
-            result.Should().BeEmpty();
-        }
-
-        [Fact]
-        public async Task GetAllTestorProductsAsync_RepositoryThrows_PropagatesException()
-        {
-            _testorProductRepo.GetAllAsync().ThrowsAsync(new Exception("DB error"));
-
-            await Assert.ThrowsAsync<Exception>(() => _sut.GetAllTestorProductsAsync());
-        }
-
-        #endregion
+        
     }
 }

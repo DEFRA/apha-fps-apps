@@ -1,5 +1,5 @@
 @using Apha.FPSApps.Web.Models.Components.DataGrid
-@model Apha.FPSApps.Web.Areas.PACT.Models.WorkGroupTestCapabilityViewModel
+@model Apha.FPSApps.Web.Areas.PACT.Models.TestCapabilityViewModel
 
 @{
     ViewData["Title"] = "PACT : WorkGroup Test Capability";
@@ -155,7 +155,7 @@
         // ── Grid 1: reload ─────────────────────────────────────────────────────
         function reloadTestCapabilityGrid(filterValue) {
             $.ajax({
-                url: '/PACT/WorkGroupTestCapability/LoadTestCapabilityGrid',
+                url: '/PACT/TestCapability/LoadTestCapabilityGrid',
                 type: 'POST',
                 headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
                 data: {
@@ -185,7 +185,7 @@
         // ── Grid 2: reload ─────────────────────────────────────────────────────
         function reloadTestReqmtGrid(testCode) {
             $.ajax({
-                url: '/PACT/WorkGroupTestCapability/LoadTestReqmtGrid',
+                url: '/PACT/TestCapability/LoadTestReqmtGrid',
                 type: 'POST',
                 headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
                 data: {
@@ -215,7 +215,7 @@
 
         // ── Grid 1 CRUD ────────────────────────────────────────────────────────
         function addTestCapability() {
-            $.get('/PACT/WorkGroupTestCapability/CreateTestCapability', function (html) {
+            $.get('/PACT/TestCapability/CreateTestCapability', function (html) {
                 $('#modaPopupBody').html(html);
                 $('#modalPopup').addClass('show');
             });
@@ -225,7 +225,7 @@
             var testCode  = encodeURIComponent($(rowData).data('id') || '');
             var workGroup = encodeURIComponent(
                 $(rowData).closest('tr').find('[data-property="WorkGroup"]').text().trim());
-            $.get('/PACT/WorkGroupTestCapability/EditTestCapability?testCode=' + testCode + '&workGroup=' + workGroup,
+            $.get('/PACT/TestCapability/EditTestCapability?testCode=' + testCode + '&workGroup=' + workGroup,
                 function (html) {
                     $('#modaPopupBody').html(html);
                     $('#modalPopup').addClass('show');
@@ -246,8 +246,8 @@
                 PlanPortfolio: form.find('[name="PlanPortfolio"]').val()
             };
             var url = isEdit
-                ? '/PACT/WorkGroupTestCapability/EditTestCapability'
-                : '/PACT/WorkGroupTestCapability/CreateTestCapability';
+                ? '/PACT/TestCapability/EditTestCapability'
+                : '/PACT/TestCapability/CreateTestCapability';
             $.ajax({
                 url: url, type: 'POST',
                 contentType: 'application/json; charset=utf-8',
@@ -271,7 +271,7 @@
                 $(rowData).closest('tr').find('[data-property="WorkGroup"]').text().trim());
             if (!confirm('Delete this Test Capability record?')) return;
             $.ajax({
-                url: '/PACT/WorkGroupTestCapability/DeleteTestCapability?testCode=' + testCode + '&workGroup=' + workGroup,
+                url: '/PACT/TestCapability/DeleteTestCapability?testCode=' + testCode + '&workGroup=' + workGroup,
                 type: 'DELETE',
                 headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
                 success: function (result) {
@@ -288,7 +288,7 @@
 
         // ── Grid 2 CRUD ────────────────────────────────────────────────────────
         function addTestReqmt() {           
-            $.get('/PACT/WorkGroupTestCapability/CreateTestReqmt?testCode=' + encodeURIComponent(currentSelectedTestCode),
+            $.get('/PACT/TestCapability/CreateTestReqmt?testCode=' + encodeURIComponent(currentSelectedTestCode),
                 function (html) {
                     $('#modaPopupBody').html(html);
                     $('#modalPopup').addClass('show');
@@ -298,7 +298,7 @@
         function editTestReqmt(rowData) {
             var testCode = encodeURIComponent(currentSelectedTestCode || '');
             var buyer    = encodeURIComponent($(rowData).data('id') || '');
-            $.get('/PACT/WorkGroupTestCapability/EditTestReqmt?testCode=' + testCode + '&buyer=' + buyer,
+            $.get('/PACT/TestCapability/EditTestReqmt?testCode=' + testCode + '&buyer=' + buyer,
                 function (html) {
                     $('#modaPopupBody').html(html);
                     $('#modalPopup').addClass('show');
@@ -326,8 +326,8 @@
                 Active:          rawActive     !== '' ? parseInt(rawActive, 10)   : null
             };
             var url = isEdit
-                ? '/PACT/WorkGroupTestCapability/EditTestReqmt'
-                : '/PACT/WorkGroupTestCapability/CreateTestReqmt';
+                ? '/PACT/TestCapability/EditTestReqmt'
+                : '/PACT/TestCapability/CreateTestReqmt';
             $.ajax({
                 url: url, type: 'POST',
                 contentType: 'application/json; charset=utf-8',
@@ -351,7 +351,7 @@
             var buyer    = encodeURIComponent($(rowData).data('id') || '');
             if (!confirm('Delete this Test Requirement record?')) return;
             $.ajax({
-                url: '/PACT/WorkGroupTestCapability/DeleteTestReqmt?testCode=' + testCode + '&buyer=' + buyer,
+                url: '/PACT/TestCapability/DeleteTestReqmt?testCode=' + testCode + '&buyer=' + buyer,
                 type: 'DELETE',
                 headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
                 success: function (result) {

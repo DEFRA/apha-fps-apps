@@ -19,26 +19,29 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
     [Area("PACT")]
     [Authorize(Roles = "FPSAdmin,FPSUser,PACTAdmin,PACTUser")]
     [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope, PACTApiSettings:Scope")]
-    public class WorkGroupTestCapabilityController : Controller
+    public class TestCapabilityController : Controller
     {
         private readonly IMapper _mapper;
-        private readonly IWorkGroupTestCapabilityService _service;
+        private readonly ITestCapabilityService _service;
         private readonly ITestRequirementService _testReqmtService;
         private readonly IProjectService _projectService;
         private readonly IExcelExportService _excelExportService;
-
-        public WorkGroupTestCapabilityController(
+        private readonly ITestorProductService _testorProductService;
+        public TestCapabilityController(
             IMapper mapper,
-            IWorkGroupTestCapabilityService service,
+            ITestCapabilityService service,
             ITestRequirementService testReqmtService,
             IProjectService projectService,
-            IExcelExportService excelExportService)
+            IExcelExportService excelExportService,
+            ITestorProductService testorProductService
+            )
         {
             _mapper = mapper;
             _service = service;
             _testReqmtService = testReqmtService;
             _projectService = projectService;
             _excelExportService = excelExportService;
+            _testorProductService = testorProductService;
         }
 
         // ── INDEX ─────────────────────────────────────────────────────────────
@@ -50,9 +53,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var testReqmtGrid = BuildEmptyTestReqmtGrid();
 
             var workGroupsResponse = await _service.GetAllWorkGroupsAsync();
-            var testsResponse = await _service.GetAllTestorProductsAsync();
+            var testsResponse = await _testorProductService.GetAllTestorProductsAsync();
 
-            var viewModel = new WorkGroupTestCapabilityViewModel
+            var viewModel = new TestCapabilityViewModel
             {
                 TestCapabilityGrid = testCapabilityGrid,
                 TestReqmtGrid = testReqmtGrid,
@@ -119,11 +122,11 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             ViewBag.WorkGroupOptions = await GetWorkGroupSelectListAsync();
             ViewBag.TestorProductOptions = await GetTestorProductSelectListAsync();
             ViewBag.Projects = await GetProjectsAsync();
-            return PartialView("_AddEditTestCapability", new WorkGroupTestCapabilityItem());
+            return PartialView("_AddEditTestCapability", new TestCapabilityItem());
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateTestCapability([FromBody] WorkGroupTestCapabilityItem model)
+        public async Task<IActionResult> CreateTestCapability([FromBody] TestCapabilityItem model)
         {
             if (!ModelState.IsValid)
                 return Json(new
@@ -163,12 +166,12 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             ViewBag.WorkGroupOptions = await GetWorkGroupSelectListAsync();
             ViewBag.TestorProductOptions = await GetTestorProductSelectListAsync();
             ViewBag.Projects = await GetProjectsAsync();
-            var item = _mapper.Map<WorkGroupTestCapabilityItem>(result.Data);
+            var item = _mapper.Map<TestCapabilityItem>(result.Data);
             return PartialView("_AddEditTestCapability", item);
         }
 
         [HttpPost]
-        public async Task<IActionResult> EditTestCapability([FromBody] WorkGroupTestCapabilityItem model)
+        public async Task<IActionResult> EditTestCapability([FromBody] TestCapabilityItem model)
         {
             if (!ModelState.IsValid)
                 return Json(new
@@ -360,7 +363,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
         // ── PRIVATE HELPERS ───────────────────────────────────────────────────
 
-        private async Task<DataGridConfig<WorkGroupTestCapabilityItem>> BuildTestCapabilityGridAsync(
+        private async Task<DataGridConfig<TestCapabilityItem>> BuildTestCapabilityGridAsync(
             PaginationFilter<string> request, int viewBy, string? filterValue)
         {
             var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}")
@@ -373,8 +376,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 : await _service.GetPagedByWorkGroupAsync(query, filterValue);
 
             var items = response.Success && response.Data != null
-                ? _mapper.Map<List<WorkGroupTestCapabilityItem>>(response.Data)
-                : new List<WorkGroupTestCapabilityItem>();
+                ? _mapper.Map<List<TestCapabilityItem>>(response.Data)
+                : new List<TestCapabilityItem>();
 
             var paginationModel = response.Pagination is null
                 ? new PaginationModel()
@@ -382,7 +385,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             paginationModel.SortColumn = request.SortBy;
             paginationModel.SortDirection = request.Descending;
 
-            return new DataGridConfig<WorkGroupTestCapabilityItem>
+            return new DataGridConfig<TestCapabilityItem>
             {
                 GridId = "testCapabilityGrid",
                 Title = "Test Capabilities",
@@ -395,9 +398,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 DeleteFunction = "deleteTestCapability",
                 RowSelectFunction = "onTestCapabilityRowSelect",
                 ExtraFilterMethod = "getTestCapabilityExtraFilters",
-                BindGridUrl = "/PACT/WorkGroupTestCapability/LoadTestCapabilityGrid",
+                BindGridUrl = "/PACT/TestCapability/LoadTestCapabilityGrid",
                 Data = items,
-                Columns = GridDataProvider.GetColumnsDefination<WorkGroupTestCapabilityItem>(null),
+                Columns = GridDataProvider.GetColumnsDefination<TestCapabilityItem>(null),
                 Pagination = paginationModel,
                 CurrentFilters = filterDict
             };
@@ -430,12 +433,12 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 ShowPagination = true,
                 KeyProperty = "Buyer",
                 AllowExport = true,
-                ExportUrl = "/PACT/WorkGroupTestCapability/ExportTestReqmt",
+                ExportUrl = "/PACT/TestCapability/ExportTestReqmt",
                 AddFunction = "addTestReqmt",
                 EditFunction = "editTestReqmt",
                 DeleteFunction = "deleteTestReqmt",
                 ExtraFilterMethod = "getTestReqmtExtraFilters",
-                BindGridUrl = "/PACT/WorkGroupTestCapability/LoadTestReqmtGrid",
+                BindGridUrl = "/PACT/TestCapability/LoadTestReqmtGrid",
                 Data = items,
                 Columns = GridDataProvider.GetColumnsDefination<TestRequirementItem>(null),
                 Pagination = paginationModel,
@@ -453,12 +456,12 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 ShowPagination = true,
                 KeyProperty = "Buyer",
                 AllowExport = true,
-                ExportUrl = "/PACT/WorkGroupTestCapability/ExportTestReqmt",
+                ExportUrl = "/PACT/TestCapability/ExportTestReqmt",
                 AddFunction = "addTestReqmt",
                 EditFunction = "editTestReqmt",
                 DeleteFunction = "deleteTestReqmt",
                 ExtraFilterMethod = "getTestReqmtExtraFilters",
-                BindGridUrl = "/PACT/WorkGroupTestCapability/LoadTestReqmtGrid",
+                BindGridUrl = "/PACT/TestCapability/LoadTestReqmtGrid",
                 Data = new List<TestRequirementItem>(),
                 Columns = GridDataProvider.GetColumnsDefination<TestRequirementItem>(null),
                 Pagination = new PaginationModel()
@@ -485,7 +488,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
         private async Task<List<SelectListItem>> GetTestorProductSelectListAsync()
         {
-            var response = await _service.GetAllTestorProductsAsync();
+            var response = await _testorProductService.GetAllTestorProductsAsync();
             return response.Success && response.Data != null
                 ? response.Data
                     .Select(t => new SelectListItem(

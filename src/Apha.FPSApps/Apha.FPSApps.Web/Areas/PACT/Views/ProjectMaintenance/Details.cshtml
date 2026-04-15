@@ -21,27 +21,10 @@
 <div style="display:flex; margin-left:0; margin-right:0; flex-direction:row; flex-wrap:nowrap; justify-content:space-between;"
      class="govuk-grid-row">
 
-    <!-- ── Left sidebar nav ─────────────────────────────────────────── -->
-    <nav class="sidenav flex-column flex-shrink-0" id="shortnav">
-        <button class="toggle-btn" onclick="toggleSidebar()" style="right:-8px; top:30px;">
-            <img src="~/images/chevron-left-solid-full.svg" width="20" alt="collapse sidebar"
-                 style="margin:-4px 8px 0 -4px;" />
-        </button>
-        <ul>
-            <li class="sidebar-link-two"
-                style="border-radius:0 8px 8px 0; cursor:pointer; background-color:#1d70b8;">
-                <a style="color:#fff;" asp-area="PACT" asp-controller="ProjectInvoiceSubContract" asp-action="Index" asp-route-parentProject="@Model.Project.ParentProject">Invoices &amp; Subcontracted Costs</a>
-            </li>
-            <li class="sidebar-link-two"
-                style="border-radius:0 8px 8px 0; cursor:pointer; background-color:#1d70b8;">
-                <a style="color:#fff;">Milestones</a>
-            </li>
-            <li class="sidebar-link-two"
-                style="border-radius:0 8px 8px 0; cursor:pointer; background-color:#1d70b8;">
-                <a style="color:#fff;">Test Purchase Requirements</a>
-            </li>
-        </ul>
-    </nav>
+    @await Html.PartialAsync("_PactProjectSideNav", new Apha.FPSApps.Web.Areas.PACT.Models.PactProjectSideNavModel
+    {
+        ParentProject = Model.Project.ParentProject ?? string.Empty
+    })
 
     <!-- ── Main content area ────────────────────────────────────────── -->
     <div class="govuk-grid-column-full">

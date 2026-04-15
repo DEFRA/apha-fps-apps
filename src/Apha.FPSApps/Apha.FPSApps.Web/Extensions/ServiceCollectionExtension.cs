@@ -40,8 +40,9 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IYearMasterService, YearMasterService>();
             services.AddScoped<IProjectInvoiceService, ProjectInvoiceService>();
             services.AddScoped<IProjectSubContractService, ProjectSubContractService>();
-            services.AddScoped<IWorkGroupTestCapabilityService, WorkGroupTestCapabilityService>();
+            services.AddScoped<ITestCapabilityService, TestCapabilityService>();
             services.AddScoped<ITestRequirementService, TestRequirementService>();
+            services.AddScoped<ITestorProductService, TestorProductService>();
             services.AddScoped<IExcelExportService, ExcelExportService>();
             services.AddScoped<IAppStateService, AppStateService>();
 
