@@ -52,7 +52,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<YearMasterDto, YearMasterReq>().ReverseMap();
 
             // Testor Product
-            CreateMap<TestorProductDto, Apha.Common.Contracts.FPS.TestorProductRes>().ReverseMap();
+            CreateMap<TestorProductDto, TestorProductRes>().ReverseMap();
         }
     }
 }

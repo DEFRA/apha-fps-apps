@@ -203,8 +203,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.TestCapabilityService
             var result = await _service.GetAllWorkGroupsAsync();
 
             Assert.Equal(expected, result);
-            await _workGroupApiClient.Received(1).GetAllWorkGroupsAsync();
-            await _apiClient.DidNotReceive().GetAllTestorProductsAsync();
+            await _workGroupApiClient.Received(1).GetAllWorkGroupsAsync();            
         }
 
         [Fact]

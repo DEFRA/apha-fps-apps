@@ -153,24 +153,5 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
                     new ApiMetaDto());
             }
         }
-
-        public async Task<ApiResponseDto<List<TestorProductDto>>> GetAllTestorProductsAsync()
-        {
-            try
-            {
-                var response = await _http.GetAsync<List<TestorProductRes>>(PactApiEndpoints.GetAllTestorProducts);
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<List<TestorProductDto>>>(response);
-
-                var dto = _mapper.Map<ApiResponseDto<List<TestorProductDto>>>(response);
-                return ApiResponseDto<List<TestorProductDto>>.FailureResponse(dto.Errors, dto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<List<TestorProductDto>>.FailureResponse(
-                    [new ApiErrorDto { Message = "Failed to retrieve test or products", Code = InternalCodeError }],
-                    new ApiMetaDto());
-            }
-        }
     }
 }
