@@ -11,15 +11,10 @@ public sealed class BatchJobFactoryTests
     public void Create_ShouldResolveRegisteredJob()
     {
         var services = new ServiceCollection();
-        services.AddSingleton<DummyBatchJob>();
+        services.AddSingleton<IBatchJob, DummyBatchJob>();
         using var serviceProvider = services.BuildServiceProvider();
 
-        var registry = new Dictionary<string, Type>
-        {
-            ["Dummy"] = typeof(DummyBatchJob)
-        };
-
-        var factory = new BatchJobFactory(serviceProvider, registry);
+        var factory = new BatchJobFactory(serviceProvider);
 
         var job = factory.Create("Dummy");
 
@@ -31,7 +26,7 @@ public sealed class BatchJobFactoryTests
     public void Create_ShouldThrowForUnknownJob()
     {
         using var serviceProvider = new ServiceCollection().BuildServiceProvider();
-        var factory = new BatchJobFactory(serviceProvider, new Dictionary<string, Type>());
+        var factory = new BatchJobFactory(serviceProvider);
 
         var action = () => factory.Create("MissingJob");
 
@@ -42,20 +37,67 @@ public sealed class BatchJobFactoryTests
     [Fact]
     public void GetAvailableJobs_ShouldReturnRegisteredNames()
     {
-        using var serviceProvider = new ServiceCollection().BuildServiceProvider();
-        var factory = new BatchJobFactory(serviceProvider, new Dictionary<string, Type>
-        {
-            ["HealthCheck"] = typeof(DummyBatchJob),
-            ["ArchiveJob"] = typeof(DummyBatchJob)
-        });
+        var services = new ServiceCollection();
+        services.AddSingleton<IBatchJob, DummyBatchJob>();
+        services.AddSingleton<IBatchJob, ArchiveBatchJob>();
+        using var serviceProvider = services.BuildServiceProvider();
 
-        factory.GetAvailableJobs().OrderBy(name => name)
-            .Should().Equal("ArchiveJob", "HealthCheck");
+        var factory = new BatchJobFactory(serviceProvider);
+
+        factory.GetAvailableJobs()
+            .Should().Equal("ArchiveJob", "Dummy");
+    }
+
+    [Fact]
+    public void Create_ShouldThrowForDuplicateJobNames()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton<IBatchJob, DuplicateNameJobA>();
+        services.AddSingleton<IBatchJob, DuplicateNameJobB>();
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var factory = new BatchJobFactory(serviceProvider);
+
+        var action = () => factory.Create("SameName");
+
+        action.Should()
+            .Throw<InvalidOperationException>()
+            .Which.Message.Should().Contain("Multiple job handlers");
     }
 
     private sealed class DummyBatchJob : IBatchJob
     {
         public string Name => "Dummy";
+
+        public Task ExecuteAsync(CancellationToken cancellationToken = default)
+        {
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class ArchiveBatchJob : IBatchJob
+    {
+        public string Name => "ArchiveJob";
+
+        public Task ExecuteAsync(CancellationToken cancellationToken = default)
+        {
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class DuplicateNameJobA : IBatchJob
+    {
+        public string Name => "SameName";
+
+        public Task ExecuteAsync(CancellationToken cancellationToken = default)
+        {
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class DuplicateNameJobB : IBatchJob
+    {
+        public string Name => "SameName";
 
         public Task ExecuteAsync(CancellationToken cancellationToken = default)
         {

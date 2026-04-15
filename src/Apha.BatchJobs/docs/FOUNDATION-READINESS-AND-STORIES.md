@@ -7,7 +7,7 @@
 
 ---
 
-## Readiness Score: 84 / 100
+## Readiness Score: 87 / 100
 
 | Layer | Score | Status |
 |---|---|---|
@@ -18,7 +18,7 @@
 | EF Core / DB mapping | 6 / 10 | ⚠️ Gaps |
 | Integration tests | 4 / 5 | ✅ Repository integration coverage in place |
 | Lock safety | 8 / 10 | ✅ Atomic acquire + DB uniqueness guard |
-| Job extensibility | 4 / 10 | ⚠️ Manual wiring only |
+| Job extensibility | 8 / 10 | ✅ Auto-discovery via assembly scanning |
 | Config hygiene | 8 / 10 | ⚠️ Credential in source |
 | Unused settings | 4 / 10 | ⚠️ Dead config |
 
@@ -60,6 +60,8 @@ Two parallel ECS tasks for the same job can both pass the active-lock check befo
 ### ISSUE-04 — Job Registration Requires Manual Code Changes in Two Places
 **Priority:** Medium  
 Adding a new job requires editing both `DependencyInjection.cs` (service registration) and the `jobRegistry` dictionary. This is error-prone as the solution grows.
+
+**Status:** Resolved (2026-04-15)
 
 **Affected file:** `Apha.BatchJobs.Worker/DependencyInjection.cs`
 
@@ -180,17 +182,24 @@ Option B: Use `pg_try_advisory_xact_lock` via a raw SQL query — lighter and no
 **Issue:** ISSUE-04  
 **Priority:** Medium  
 **Estimate:** M (3–5 days)
+**Status:** Completed (2026-04-15)
 
 **As a** developer adding a new batch job,  
 **I want** the DI container to discover and register job handlers automatically,  
 **so that** I only need to implement `IBatchJob` without modifying the registration bootstrap.
 
 **Acceptance criteria:**
-- [ ] `DependencyInjection.cs` scans for all types implementing `IBatchJob` in the Application assembly.
-- [ ] Job registry is built from scanned types using `IBatchJob.Name` as the key.
-- [ ] Manual `jobRegistry` dictionary and explicit `services.AddScoped<HealthCheckJobHandler>()` entries are removed.
-- [ ] Existing `HealthCheckJobHandler` continues to resolve correctly.
-- [ ] `ServiceCollectionSetupTests` verifies that at least all known job names resolve without error after the change.
+- [x] `DependencyInjection.cs` scans for all types implementing `IBatchJob` in the Application assembly.
+- [x] Job resolution now uses scanned `IBatchJob` instances and matches by `IBatchJob.Name`.
+- [x] Manual `jobRegistry` dictionary and explicit `services.AddScoped<HealthCheckJobHandler>()` entries are removed.
+- [x] Existing `HealthCheckJobHandler` continues to resolve correctly.
+- [x] Test suite verifies known job names resolve and factory behavior is correct.
+
+**Implementation evidence:**
+- `Apha.BatchJobs.Worker/DependencyInjection.cs` now auto-registers all `IBatchJob` implementations from the Application assembly.
+- `Apha.BatchJobs.Application/Factory/BatchJobFactory.cs` now resolves jobs from `IEnumerable<IBatchJob>` and matches by job `Name`.
+- `Apha.BatchJobs.UnitTests/BatchJobFactoryTests.cs` updated for service-based discovery and duplicate-name guard.
+- Verified with `dotnet test`: 16/16 passing.
 
 ---
 
