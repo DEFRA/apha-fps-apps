@@ -34,11 +34,18 @@ namespace Apha.PACT.Api.Extensions
                          }
                         ), ServiceLifetime.Scoped);
 
-            services.AddStackExchangeRedisCache(options =>
+            if (builder.Environment.IsEnvironment("local"))
             {
-                options.Configuration = configuration.GetConnectionString("RedisConnectionString");
-                options.InstanceName = "RedisInstance";
-            });
+                services.AddDistributedMemoryCache();
+            }
+            else
+            {
+                services.AddStackExchangeRedisCache(options =>
+                {
+                    options.Configuration = configuration.GetConnectionString("RedisConnectionString");
+                    options.InstanceName = "RedisInstance";
+                });
+            }
 
 
             // AutoMapper
@@ -72,7 +79,7 @@ namespace Apha.PACT.Api.Extensions
             services.AddApplicationServices();
 
             // Authentication
-            //services.AddAuthenticationServices(configuration);
+            services.AddAuthenticationServices(configuration);
 
             // HTTP Context
             services.AddHttpContextAccessor();

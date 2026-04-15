@@ -54,6 +54,7 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<YearMaster> YearMasters { get; set; }
         public virtual DbSet<StaffJobLog> StaffJobLogs { get; set; }
         public virtual DbSet<AnimalRequestLog> AnimalRequestLogs { get; set; }
+        public virtual DbSet<TestorProduct> TestorProducts { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new UserMap());
@@ -64,6 +65,7 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new WgEmployeeMap(_fPSYearContext));
             modelBuilder.ApplyConfiguration(new EmployeeMap(_fPSYearContext));
             modelBuilder.ApplyConfiguration(new FpsSettingMap(_fPSYearContext));
+            modelBuilder.ApplyConfiguration(new TestorProductMap(_fPSYearContext));
             modelBuilder.ApplyConfiguration(new WorkgroupMap(_fPSYearContext));
             modelBuilder.ApplyConfiguration(new WorkgroupGradeMap(_fPSYearContext));
             modelBuilder.ApplyConfiguration(new ProfitCentreGradeMap(_fPSYearContext));

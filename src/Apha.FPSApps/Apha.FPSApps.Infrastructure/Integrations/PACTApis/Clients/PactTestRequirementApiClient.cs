@@ -43,7 +43,27 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
                     new ApiMetaDto());
             }
         }
+        public async Task<ApiResponseDto<List<TestRequirementDto>>> GetPagedTestReqmtbyProjectAsync(
+           QueryParameters<string> query, string parentProject)
+        {
+            try
+            {
+                var baseUrl = string.Format(PactApiEndpoints.GetPagedTestReqmtbyProject, Uri.EscapeDataString(parentProject));
+                var url = QueryStringHelper.AddQueryString(baseUrl, query);
+                var response = await _http.GetAsync<List<TestRequirementtRes>>(url);
+                if (response.Success)
+                    return _mapper.Map<ApiResponseDto<List<TestRequirementDto>>>(response);
 
+                var dto = _mapper.Map<ApiResponseDto<List<TestRequirementDto>>>(response);
+                return ApiResponseDto<List<TestRequirementDto>>.FailureResponse(dto.Errors, dto.Meta);
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<List<TestRequirementDto>>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to retrieve test requirements", Code = InternalCodeError }],
+                    new ApiMetaDto());
+            }
+        }
         public async Task<ApiResponseDto<List<TestRequirementDto>>> GetAllTestReqmtForExportAsync(
             string testCode, string? filter)
         {

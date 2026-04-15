@@ -1,10 +1,10 @@
-﻿using System.Globalization;
-using Apha.FPSApps.Infrastructure.Mappings;
+﻿using Apha.FPSApps.Infrastructure.Mappings;
 using Apha.FPSApps.Web.Mappings;
 using Apha.FPSApps.Web.Middleware;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Localization;
+using System.Globalization;
 
 namespace Apha.FPSApps.Web.Extensions
 {
@@ -15,11 +15,18 @@ namespace Apha.FPSApps.Web.Extensions
             var services = builder.Services;
             var configuration = builder.Configuration;
 
-            services.AddStackExchangeRedisCache(options =>
+            if (builder.Environment.IsEnvironment("local"))
             {
-                options.Configuration = configuration.GetConnectionString("RedisConnectionString");
-                options.InstanceName = "RedisInstance";
-            });
+                services.AddDistributedMemoryCache();
+            }
+            else
+            {
+                services.AddStackExchangeRedisCache(options =>
+                {
+                    options.Configuration = configuration.GetConnectionString("RedisConnectionString");
+                    options.InstanceName = "RedisInstance";
+                });
+            }
 
             services.AddSession(options =>
             {
@@ -37,9 +44,11 @@ namespace Apha.FPSApps.Web.Extensions
                 config.AddMaps(typeof(FpsApiDtoMapper).Assembly);
                 config.AddMaps(typeof(PactApiDtoMapper).Assembly);
                 config.AddMaps(typeof(CostbookApiDtoMapper).Assembly);
+                config.AddMaps(typeof(PimsApiDtoMapper).Assembly);
                 config.AddMaps(typeof(FpsViewModelMapper));
                 config.AddMaps(typeof(PactViewModelMapper));
                 config.AddMaps(typeof(CostbookViewModelMapper));
+                config.AddMaps(typeof(PimsViewModelMapper));
             });
 
             // HTTP Context
@@ -68,6 +77,9 @@ namespace Apha.FPSApps.Web.Extensions
 
             // Application services
             services.AddApplicationServices();
+
+            // In-memory cache (used by FpsYearMiddleware)
+            services.AddMemoryCache();
 
             // Health checks
             services.AddHealthChecks();

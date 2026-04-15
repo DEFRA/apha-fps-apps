@@ -60,5 +60,8 @@ namespace Apha.Common.Constants
         public const string UpdateStaffJob = "api/v1/staffjob";
         public const string DeleteStaffJob = "api/v1/staffjob?staffId={0}&jobcode={1}";
         public const string GetStaffJobViewById = "api/v1/staffjob/view?staffId={0}&jobcode={1}";
+
+        // Testor Product
+        public const string GetAllTestorProducts = "api/v1/testorproduct";
     }
 }

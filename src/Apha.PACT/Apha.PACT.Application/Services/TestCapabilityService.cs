@@ -12,18 +12,15 @@ namespace Apha.PACT.Application.Services
     {
         private readonly ITestCapabilityRepository _testCapabilityRepository;
         private readonly ITestRequirementRepository _testReqmtRepository;
-        private readonly ITestorProductRepository _testorProductRepository;
         private readonly IMapper _mapper;
 
         public TestCapabilityService(
             ITestCapabilityRepository testCapabilityRepository,
             ITestRequirementRepository testReqmtRepository,
-            ITestorProductRepository testorProductRepository,
             IMapper mapper)
         {
             _testCapabilityRepository = testCapabilityRepository;
             _testReqmtRepository = testReqmtRepository;
-            _testorProductRepository = testorProductRepository;
             _mapper = mapper;
         }
 
@@ -82,12 +79,6 @@ namespace Apha.PACT.Application.Services
                 throw new InvalidOperationException("Cannot delete, test requirements are dependant on this.");
 
             return await _testCapabilityRepository.DeleteAsync(testCode, workGroup);
-        }
-
-        public async Task<IEnumerable<TestorProductDto>> GetAllTestorProductsAsync()
-        {
-            var items = await _testorProductRepository.GetAllAsync();
-            return _mapper.Map<IEnumerable<TestorProductDto>>(items);
         }
     }
 }

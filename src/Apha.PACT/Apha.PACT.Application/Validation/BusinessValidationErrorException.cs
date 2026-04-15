@@ -6,7 +6,7 @@
         public string ExceptionMessage { get; set; } = "Business validation failed.";
 
 
-        public List<BusinessValidationError> Errors { get; set; } = new List<BusinessValidationError>();
+        public List<BusinessValidationError> Errors { get; set; }
 
         public BusinessValidationErrorException(List<BusinessValidationError> errors)
         {

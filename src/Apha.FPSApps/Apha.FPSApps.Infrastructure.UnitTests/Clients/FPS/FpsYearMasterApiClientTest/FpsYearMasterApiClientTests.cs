@@ -641,6 +641,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearMasterApiClie
             // Assert
             Assert.NotNull(result);
             Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
             Assert.Single(result.Errors);
             Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
         }
@@ -659,6 +660,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearMasterApiClie
             // Assert
             Assert.NotNull(result);
             Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
             Assert.Single(result.Errors);
             Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
         }
@@ -677,6 +679,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearMasterApiClie
             // Assert
             Assert.NotNull(result);
             Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
             Assert.Single(result.Errors);
             Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
         }

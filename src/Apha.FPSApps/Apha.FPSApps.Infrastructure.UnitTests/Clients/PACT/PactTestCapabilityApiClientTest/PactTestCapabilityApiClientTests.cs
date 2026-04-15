@@ -16,13 +16,13 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestCapabilityA
     {
         private readonly IPactHttpExecutor _http;
         private readonly IMapper _mapper;
-        private readonly PactWorkGroupTestCapabilityApiClient _client;
+        private readonly PactTestCapabilityApiClient _client;
 
         public PactTestCapabilityApiClientTests()
         {
             _http = Substitute.For<IPactHttpExecutor>();
             _mapper = Substitute.For<IMapper>();
-            _client = new PactWorkGroupTestCapabilityApiClient(_http, _mapper);
+            _client = new PactTestCapabilityApiClient(_http, _mapper);
         }
 
         #region GetPagedByWorkGroupAsync
@@ -341,62 +341,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestCapabilityA
             Assert.Equal("Failed to delete test capability", error.Message);
         }
 
-        #endregion              
-
-        #region GetAllTestorProductsAsync
-
-        [Fact]
-        public async Task GetAllTestorProductsAsync_WithData_ReturnsMappedList()
-        {
-            var apiResponse = new ApiResponse<List<TestorProductRes>>
-            {
-                Success = true,
-                Data = [new TestorProductRes { ItemCode = "BLOOD" }, new TestorProductRes { ItemCode = "URINE" }]
-            };
-            var expectedDto = ApiResponseDto<List<TestorProductDto>>.SuccessResponse(
-            [
-                new TestorProductDto { ItemCode = "BLOOD" },
-                new TestorProductDto { ItemCode = "URINE" }
-            ]);
-
-            _http.GetAsync<List<TestorProductRes>>(
-                Arg.Is<string>(url => url.Contains("api/v1/testcapability/testorproducts")))
-                .Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<TestorProductDto>>>(apiResponse).Returns(expectedDto);
-
-            var result = await _client.GetAllTestorProductsAsync();
-
-            Assert.True(result.Success);
-            Assert.Equal(2, result.Data?.Count);
-        }
-
-        [Fact]
-        public async Task GetAllTestorProductsAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
-        {
-            var apiResponse = new ApiResponse<List<TestorProductRes>> { Success = false, Errors = [new ApiError { Code = "ERR" }] };
-            var mappedDto = new ApiResponseDto<List<TestorProductDto>> { Success = false, Errors = [new ApiErrorDto { Code = "ERR" }], Meta = new ApiMetaDto() };
-
-            _http.GetAsync<List<TestorProductRes>>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<TestorProductDto>>>(apiResponse).Returns(mappedDto);
-
-            var result = await _client.GetAllTestorProductsAsync();
-
-            Assert.False(result.Success);
-        }
-
-        [Fact]
-        public async Task GetAllTestorProductsAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            _http.GetAsync<List<TestorProductRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("error"));
-
-            var result = await _client.GetAllTestorProductsAsync();
-
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve test or products", error.Message);
-        }
-
-        #endregion
+        #endregion                     
     }
 }
