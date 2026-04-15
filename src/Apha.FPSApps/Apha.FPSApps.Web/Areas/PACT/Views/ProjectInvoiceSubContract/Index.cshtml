@@ -26,23 +26,10 @@
 
 <div class="govuk-grid-row sup_flex_row sup_margin_left_right_0 sup_margin_bottom_10">
 
-    <nav class="sidenav flex-column flex-shrink-0 sup_margin_bottom_10" id="shortnav">
-        <button class="toggle-btn toggle-btn-position" onclick="toggleSidebar()">
-            <img src="~/images/chevron-left-solid-full.svg" width="20"
-                 alt="side menu left arrow" class="toggle-btn-arrow" />
-        </button>
-        <ul>
-            <li class="sidebar-link-two side-nav-link-bg">
-                <a id="invoiecsubcontract">Invoices &amp; Subcontracted Costs</a>
-            </li>
-            <li class="sidebar-link-two side-nav-link-bg">
-                <a id="milestones">Milestones</a>
-            </li>
-            <li class="sidebar-link-two side-nav-link-bg">
-                <a id="testpurchasereq">Test Purchase Requirements</a>
-            </li>
-        </ul>
-    </nav>
+    @await Html.PartialAsync("_PactProjectSideNav", new Apha.FPSApps.Web.Areas.PACT.Models.PactProjectSideNavModel
+    {
+        ParentProject = Model.ParentProject
+    })
 
     <div class="govuk-grid-column-full">
 

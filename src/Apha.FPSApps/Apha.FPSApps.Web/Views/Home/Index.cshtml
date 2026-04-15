@@ -16,7 +16,7 @@
 
     // Check user permissions for each application
     var hasFpsAccess = User.IsInRole("FPSAdmin") || User.IsInRole("FPSUser");
-    var hasPactAccess = User.IsInRole("PACTUser");
+    var hasPactAccess = true; //User.IsInRole("PACTUser");
     var hasPimsAccess = User.IsInRole("PIMSUser") || User.IsInRole("PIMSAdmin") || User.IsInRole("PIMSProjectManager");
     var hasCostbookAccess = User.IsInRole("CostbookUser") || User.IsInRole("CostbookAdmin");
 }
@@ -73,7 +73,7 @@
             <div class="tile @(hasPimsAccess ? "" : "tile-disabled")">  
                 @if (hasPimsAccess)
                 {
-                    <a asp-area="PIMS" asp-controller="Home" asp-action="Index" class="govuk-link govuk-link--inverse">PIMS</a>
+                        <a asp-area="PIMS" asp-controller="ProjectList" asp-action="Index" class="govuk-link govuk-link--inverse">PIMS</a>
                 }
                 else
                 {

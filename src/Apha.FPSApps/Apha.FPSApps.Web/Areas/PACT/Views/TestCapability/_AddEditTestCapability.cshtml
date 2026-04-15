@@ -1,0 +1,93 @@
+@model Apha.FPSApps.Web.Areas.PACT.Models.TestCapabilityItem
+@using Microsoft.AspNetCore.Mvc.Rendering
+@using Apha.FPSApps.Application.Dtos.FPS
+
+@{
+    var isEdit = !string.IsNullOrEmpty(Model.TestCode);
+    var testorProductOptions = ViewBag.TestorProductOptions as List<SelectListItem> ?? new List<SelectListItem>();
+    var projects = ViewBag.Projects as List<ProjectDto> ?? new List<ProjectDto>();
+    var planPortfolioOptions = projects.Select(p => new SelectListItem(p.ParentProject, p.ParentProject)).ToList();
+}
+
+<div class="modal-header flex-space-center">
+    <h3 class="govuk-heading-s" style="margin:0;">@(isEdit ? "Edit Test Capability" : "Add Test Capability")</h3>
+    <button type="button" class="btn-close" onclick="$('#modalPopup').removeClass('show')">×</button>
+</div>
+
+<div class="modal-body" style="overflow:hidden; padding:8px 8px 0 8px;">
+    <form id="testCapabilityForm" class="govuk-grid-column-full">
+
+        <input type="hidden" name="isEdit" value="@isEdit.ToString().ToLower()" />
+
+        <!-- Validation error summary -->
+        <div class="govuk-error-summary" role="alert"
+             aria-labelledby="tc-error-title" tabindex="-1" style="display:none;">
+            <h2 class="govuk-error-summary__title" id="tc-error-title">There is a problem</h2>
+            <div class="govuk-error-summary__body">
+                <ul class="govuk-list govuk-error-summary__list"></ul>
+            </div>
+        </div>
+
+        <!-- Test Code -->
+        <div class="govuk-form-group sup_margin_bottom_10">
+            <label class="govuk-label govuk-!-font-weight-bold" for="TestCode">Test Code:</label>
+            @if (isEdit)
+            {
+                <input type="hidden" name="TestCode" value="@Model.TestCode" />
+                <select class="govuk-select govuk-!-font-size-16" asp-for="TestCode"
+                        asp-items="testorProductOptions" style="width:100%;" disabled>
+                    <option value="">-- Select Test Code --</option>
+                </select>
+            }
+            else
+            {
+                <select class="govuk-select govuk-!-font-size-16" id="TestCode" name="TestCode"
+                        asp-items="testorProductOptions" style="width:100%;" required>
+                    <option value="">-- Select Test Code --</option>
+                </select>
+                <span data-valmsg-for="TestCode"
+                      class="govuk-error-message field-validation-valid" style="display:none;"></span>
+            }
+        </div>
+
+        <!-- Work Group -->
+        <div class="govuk-form-group sup_margin_bottom_10">
+            <label class="govuk-label govuk-!-font-weight-bold" for="WorkGroup">Work Group:</label>
+            @if (isEdit)
+            {
+                <input type="hidden" name="WorkGroup" value="@Model.WorkGroup" />
+                <input class="govuk-input govuk-!-font-size-16" value="@Model.WorkGroup" disabled />
+            }
+            else
+            {
+                <select class="govuk-select govuk-!-font-size-16" asp-for="WorkGroup"
+                        asp-items="@(ViewBag.WorkGroupOptions as List<SelectListItem>)"
+                        style="width:100%;" required>
+                    <option value="">-- Select Work Group --</option>
+                </select>
+                <span data-valmsg-for="WorkGroup"
+                      class="govuk-error-message field-validation-valid" style="display:none;"></span>
+            }
+        </div>
+
+        <!-- Plan Portfolio -->
+        <div class="govuk-form-group sup_margin_bottom_10">
+            <label class="govuk-label govuk-!-font-weight-bold" for="PlanPortfolio">Plan Portfolio:</label>
+            <select class="govuk-select govuk-!-font-size-16" asp-for="PlanPortfolio"
+                    asp-items="planPortfolioOptions" style="width:100%;" required>
+                <option value="">-- Select Plan Portfolio --</option>
+            </select>
+            <span data-valmsg-for="PlanPortfolio"
+                  class="govuk-error-message field-validation-valid" style="display:none;"></span>
+        </div>
+
+    </form>
+</div>
+
+<div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center;">
+    <button type="button" class="govuk-button govuk-button--secondary sup_margin_0"
+            onclick="$('#modalPopup').removeClass('show')">Cancel</button>
+    <button type="button" class="govuk-button sup_margin_0" onclick="saveTestCapability()">
+        @(isEdit ? "Update" : "Save")
+    </button>
+</div>
