@@ -3,7 +3,7 @@ services:
     image: postgres:16-alpine
     container_name: batch_jobs_postgres
     environment:
-      POSTGRES_DB: batch_jobs_db
+      POSTGRES_DB: batch_jobs_foundation_db
       POSTGRES_USER: postgres
       POSTGRES_HOST_AUTH_METHOD: trust
     ports:
@@ -25,12 +25,7 @@ services:
     container_name: batch_jobs_app
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      DatabaseConnection__Server: postgres
-      DatabaseConnection__Port: 5432
-      DatabaseConnection__Database: batch_jobs_db
-      DatabaseConnection__Username: postgres
-      DatabaseConnection__Password: password
-      DatabaseConnection__Timeout: 30
+      ConnectionStrings__BatchJobsConnectionString: Host=postgres;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=<REDACTED>;Timeout=30
     depends_on:
       postgres:
         condition: service_healthy

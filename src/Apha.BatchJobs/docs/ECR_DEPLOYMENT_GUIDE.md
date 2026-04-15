@@ -146,7 +146,7 @@ The application supports configuration through environment variables:
 ASPNETCORE_ENVIRONMENT           = Production (default)
 DatabaseConnection__Server        = postgres host (injected via ECS task or SSM)
 DatabaseConnection__Port          = 5432
-DatabaseConnection__Database      = batch_jobs_db
+DatabaseConnection__Database      = batch_jobs_foundation_db
 DatabaseConnection__Username      = (injected via ECS Secrets)
 DatabaseConnection__Password      = (injected via ECS Secrets)
 DatabaseConnection__Timeout       = 30

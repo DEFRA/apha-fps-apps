@@ -1,11 +1,35 @@
 using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Domain.Enums;
 using Apha.BatchJobs.Worker;
+using Apha.BatchJobs.Worker.Extensions;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Serilog;
 
-var services = ServiceCollectionSetup.CreateDefaultServices();
-var serviceProvider = services.BuildServiceProvider();
+var builder = Host.CreateApplicationBuilder(args);
+
+if (builder.Environment.IsEnvironment("local"))
+{
+    Log.Logger = new LoggerConfiguration()
+        .WriteTo.Console()
+        .WriteTo.File("Logs/BatchJobs.log", rollingInterval: RollingInterval.Day)
+        .CreateLogger();
+}
+else
+{
+    Log.Logger = new LoggerConfiguration()
+        .ReadFrom.Configuration(builder.Configuration)
+        .UseStructuredConsoleLogging()
+        .CreateLogger();
+}
+
+builder.Logging.ClearProviders();
+builder.Logging.AddSerilog(Log.Logger);
+builder.ConfigureServices();
+
+using var host = builder.Build();
+var serviceProvider = host.Services;
 
 ILoggerFactory? loggerFactory = null;
 
@@ -19,7 +43,7 @@ try
     logger.LogInformation("===========================================");
     logger.LogInformation("Timestamp: {StartTime:yyyy-MM-dd HH:mm:ss.fff}", DateTime.UtcNow);
     logger.LogInformation("ProcessId: {ProcessId}", Environment.ProcessId);
-    logger.LogInformation("Total services registered: {ServiceCount}", services.Count);
+    logger.LogInformation("Environment: {EnvironmentName}", builder.Environment.EnvironmentName);
     
     // Get job name from args or environment variable
     var jobName = args.Length > 0 ? args[0] : (Environment.GetEnvironmentVariable("BATCH_JOB_NAME") ?? "HealthCheck");
@@ -64,5 +88,5 @@ catch (Exception ex)
 }
 finally
 {
-    await serviceProvider.DisposeAsync();
+    Log.CloseAndFlush();
 }
