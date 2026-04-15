@@ -1,5 +1,5 @@
 ﻿Schema Table Counts (read-only snapshot)
-CapturedAtUtc: 2026-04-15T11:04:12.4181010Z
+CapturedAtUtc: 2026-04-15T11:17:54.6308116Z
 
 fps: 94 tables
 mabarchive: 80 tables
