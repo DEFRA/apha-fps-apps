@@ -7,7 +7,7 @@
 
 ---
 
-## Readiness Score: 89 / 100
+## Readiness Score: 90 / 100
 
 | Layer | Score | Status |
 |---|---|---|
@@ -19,7 +19,7 @@
 | Integration tests | 4 / 5 | ✅ Repository integration coverage in place |
 | Lock safety | 8 / 10 | ✅ Atomic acquire + DB uniqueness guard |
 | Job extensibility | 8 / 10 | ✅ Auto-discovery via assembly scanning |
-| Config hygiene | 8 / 10 | ⚠️ Credential in source |
+| Config hygiene | 10 / 10 | ✅ Base/development config sanitized + branch history scrubbed |
 | Unused settings | 4 / 10 | ⚠️ Dead config |
 
 ---
@@ -72,6 +72,8 @@ Adding a new job requires editing both `DependencyInjection.cs` (service registr
 Default `BatchJobsConnectionString` in `appsettings.json` includes a hardcoded password. Even though this is a local default, credentials committed to source are a risk.
 
 **Status:** Resolved (2026-04-15)
+
+**Remediation update:** A-Foundation history was rewritten and force-pushed to remove historical `Password=password` literals.
 
 **Affected file:** `appsettings.json`
 
@@ -218,14 +220,17 @@ Option B: Use `pg_try_advisory_xact_lock` via a raw SQL query — lighter and no
 
 **Acceptance criteria:**
 - [x] `appsettings.json` `BatchJobsConnectionString` value is replaced with a placeholder (`"__REPLACE_VIA_ENV__"`).
-- [x] `appsettings.Development.json` retains a local dev default connection string.
+- [x] `appsettings.Development.json` no longer stores plaintext password.
 - [x] `LOCAL_TESTING_GUIDE.md` documents supplying the connection string via env var for local runs.
 - [x] CI supplies the value via environment variable in workflow execution.
+- [x] Historical branch commits no longer expose `Password=password` literals.
 
 **Implementation evidence:**
 - `appsettings.json` now uses `"__REPLACE_VIA_ENV__"` for `ConnectionStrings:BatchJobsConnectionString`.
-- `docs/LOCAL_TESTING_GUIDE.md` updated to use `ConnectionStrings__BatchJobsConnectionString` examples for PowerShell, bash, and docker run.
-- `.github/workflows/batchjobs-ci.yaml` sets `ConnectionStrings__BatchJobsConnectionString` in job env.
+- `appsettings.Development.json` now uses `"__REPLACE_VIA_ENV__"`.
+- `docs/LOCAL_TESTING_GUIDE.md` updated to use password-free local connection examples.
+- `.github/workflows/batchjobs-ci.yaml` uses trust auth for CI postgres service and no literal password value.
+- A-Foundation branch history scrub completed and force-pushed (credential literal scan against rewritten branch returns no matches).
 
 ---
 
