@@ -35,7 +35,7 @@
         <div class="govuk-grid-row">
             <div class="govuk-grid-column-one-half">
                 <div class="govuk-form-group sup_margin_bottom_10">
-                    <label class="govuk-label govuk-!-font-weight-bold" for="TestCode">Test Code:</label>
+                    <label class="govuk-label govuk-!-font-weight-bold" for="TestCode">Test Code <span class="sup_color_red">*</span></label>
                     @if (isEdit)
                     {
                         <select class="govuk-select govuk-!-font-size-16" asp-for="TestCode"
@@ -57,7 +57,7 @@
             </div>
             <div class="govuk-grid-column-one-half">
                 <div class="govuk-form-group sup_margin_bottom_10">
-                    <label class="govuk-label govuk-!-font-weight-bold" for="ProjectBuyerCode">Project:</label>
+                    <label class="govuk-label govuk-!-font-weight-bold" for="ProjectBuyerCode">Project <span class="sup_color_red">*</span></label>
                     <select class="govuk-select govuk-!-font-size-16" id="ProjectBuyerCode" 
                             name="ProjectBuyerCode" style="width:100%;" required
                             onchange="onTestReqmtProjectChange(this, @isEdit.ToString().ToLower())">
