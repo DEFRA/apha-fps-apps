@@ -1,8 +1,10 @@
 using Apha.BatchJobs.Application.Interfaces;
+using Apha.BatchJobs.Domain.Configuration;
 using Apha.BatchJobs.Domain.Entities;
 using Apha.BatchJobs.Domain.Enums;
 using Apha.BatchJobs.Domain.Interfaces;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Apha.BatchJobs.Application;
 
@@ -16,9 +18,10 @@ public sealed class JobOrchestrator : IJobOrchestrator
     private readonly IBatchLockRepository _lockRepository;
     private readonly IJobExecutionRepository _executionRepository;
     private readonly ILogger<JobOrchestrator> _logger;
+    private readonly int _lockTimeoutSeconds;
 
-    /// <summary>Lock timeout in seconds — matches ECS task timeout so stale locks always expire.</summary>
-    private const int LockTimeoutSeconds = 3600;
+    /// <summary>Default lock timeout in seconds when configuration is missing/invalid.</summary>
+    private const int DefaultLockTimeoutSeconds = 3600;
 
     /// <summary>
     /// Initializes a new instance of <see cref="JobOrchestrator"/>.
@@ -27,11 +30,15 @@ public sealed class JobOrchestrator : IJobOrchestrator
         IBatchJobFactory factory,
         IBatchLockRepository lockRepository,
         IJobExecutionRepository executionRepository,
+        IOptions<BatchJobSettings> settings,
         ILogger<JobOrchestrator> logger)
     {
         _factory = factory ?? throw new ArgumentNullException(nameof(factory));
         _lockRepository = lockRepository ?? throw new ArgumentNullException(nameof(lockRepository));
         _executionRepository = executionRepository ?? throw new ArgumentNullException(nameof(executionRepository));
+        _lockTimeoutSeconds = settings?.Value.JobTimeout > 0
+            ? settings.Value.JobTimeout
+            : DefaultLockTimeoutSeconds;
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -50,7 +57,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
         // Step 1 — Acquire distributed lock
         _logger.LogInformation("Acquiring execution lock for '{JobName}'...", jobName);
         var lockAcquired = await _lockRepository.TryAcquireLockAsync(
-            jobName, runId, LockTimeoutSeconds, cancellationToken);
+            jobName, runId, _lockTimeoutSeconds, cancellationToken);
 
         if (!lockAcquired)
         {
@@ -152,7 +159,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "Could not release lock for '{JobName}' | RunId={RunId} — lock will expire after {Timeout}s",
-                    jobName, runId, LockTimeoutSeconds);
+                    jobName, runId, _lockTimeoutSeconds);
             }
         }
 

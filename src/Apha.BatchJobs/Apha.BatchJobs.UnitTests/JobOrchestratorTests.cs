@@ -1,10 +1,12 @@
 using Apha.BatchJobs.Application;
 using Apha.BatchJobs.Application.Interfaces;
+using Apha.BatchJobs.Domain.Configuration;
 using Apha.BatchJobs.Domain.Entities;
 using Apha.BatchJobs.Domain.Enums;
 using Apha.BatchJobs.Domain.Interfaces;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using NSubstitute;
 
 namespace Apha.BatchJobs.UnitTests;
@@ -18,6 +20,7 @@ public sealed class JobOrchestratorTests
     private readonly IBatchJobFactory _factory = Substitute.For<IBatchJobFactory>();
     private readonly IBatchLockRepository _lockRepo = Substitute.For<IBatchLockRepository>();
     private readonly IJobExecutionRepository _execRepo = Substitute.For<IJobExecutionRepository>();
+    private readonly IOptions<BatchJobSettings> _settings = Options.Create(new BatchJobSettings { JobTimeout = 3600 });
     private readonly JobOrchestrator _orchestrator;
 
     public JobOrchestratorTests()
@@ -26,6 +29,7 @@ public sealed class JobOrchestratorTests
             _factory,
             _lockRepo,
             _execRepo,
+            _settings,
             NullLogger<JobOrchestrator>.Instance);
     }
 
@@ -275,5 +279,40 @@ public sealed class JobOrchestratorTests
 
         // Assert — job executed exactly once
         await job.Received(1).ExecuteAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task RunAsync_UsesConfiguredJobTimeoutForLockAcquisition()
+    {
+        // Arrange
+        var timeoutSettings = Options.Create(new BatchJobSettings { JobTimeout = 1234 });
+        var orchestrator = new JobOrchestrator(
+            _factory,
+            _lockRepo,
+            _execRepo,
+            timeoutSettings,
+            NullLogger<JobOrchestrator>.Instance);
+
+        var job = Substitute.For<IBatchJob>();
+        job.Name.Returns("TimeoutJob");
+        _factory.Create("TimeoutJob").Returns(job);
+
+        _lockRepo.TryAcquireLockAsync("TimeoutJob", Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(true);
+
+        _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+            .Returns(11);
+        _execRepo.UpdateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
+
+        // Act
+        await orchestrator.RunAsync("TimeoutJob", RunMode.Scheduled);
+
+        // Assert
+        await _lockRepo.Received(1).TryAcquireLockAsync(
+            "TimeoutJob",
+            Arg.Any<string>(),
+            1234,
+            Arg.Any<CancellationToken>());
     }
 }

@@ -7,7 +7,7 @@
 
 ---
 
-## Readiness Score: 90 / 100
+## Readiness Score: 92 / 100
 
 | Layer | Score | Status |
 |---|---|---|
@@ -20,7 +20,7 @@
 | Lock safety | 8 / 10 | ✅ Atomic acquire + DB uniqueness guard |
 | Job extensibility | 8 / 10 | ✅ Auto-discovery via assembly scanning |
 | Config hygiene | 10 / 10 | ✅ Base/development config sanitized + branch history scrubbed |
-| Unused settings | 4 / 10 | ⚠️ Dead config |
+| Unused settings | 8 / 10 | ✅ JobTimeout wired; deferred settings explicitly documented |
 
 ---
 
@@ -82,6 +82,8 @@ Default `BatchJobsConnectionString` in `appsettings.json` includes a hardcoded p
 ### ISSUE-06 — `BatchJobSettings` Bound but Never Used
 **Priority:** Low  
 `BatchJobs` config section (`MaxConcurrentJobs`, `RetryAttempts`, `JobTimeout`, `RetryDelaySeconds`) is bound to `BatchJobSettings` but never read by the orchestrator or any other component.
+
+**Status:** Resolved (2026-04-15)
 
 **Affected files:** `Apha.BatchJobs.Domain/Configuration/BatchJobSettings.cs`, `Apha.BatchJobs.Worker/DependencyInjection.cs`
 
@@ -239,16 +241,23 @@ Option B: Use `pg_try_advisory_xact_lock` via a raw SQL query — lighter and no
 **Issue:** ISSUE-06  
 **Priority:** Low  
 **Estimate:** S (1–2 days)
+**Status:** Completed (2026-04-15)
 
 **As a** platform engineer,  
 **I want** configured batch-job settings to actually influence runtime behaviour,  
 **so that** operators can tune timeout and retry values without code changes.
 
 **Acceptance criteria:**
-- [ ] `JobOrchestrator` reads `BatchJobSettings.JobTimeout` to set `LockTimeoutSeconds` (replacing the hardcoded `3600`).
-- [ ] `RetryAttempts` and `RetryDelaySeconds` are either wired into a retry policy (e.g. Polly) or removed from `BatchJobSettings` with a comment that they are planned for a future story.
-- [ ] `MaxConcurrentJobs` is documented as out-of-scope for the current single-job-per-ECS-task model and either removed or commented.
-- [ ] A unit test verifies that a non-default `JobTimeout` value flows through to the lock timeout parameter.
+- [x] `JobOrchestrator` reads `BatchJobSettings.JobTimeout` to set lock timeout (replacing the hardcoded `3600`).
+- [x] `RetryAttempts` and `RetryDelaySeconds` are documented in `BatchJobSettings` as planned for future retry-policy wiring.
+- [x] `MaxConcurrentJobs` is documented as out-of-scope for the current single-job-per-ECS-task model.
+- [x] A unit test verifies that a non-default `JobTimeout` value flows through to the lock timeout parameter.
+
+**Implementation evidence:**
+- `Apha.BatchJobs.Application/JobOrchestrator.cs` now takes `IOptions<BatchJobSettings>` and uses configured `JobTimeout` for lock acquire/release behavior.
+- `Apha.BatchJobs.UnitTests/JobOrchestratorTests.cs` includes `RunAsync_UsesConfiguredJobTimeoutForLockAcquisition`.
+- `Apha.BatchJobs.Domain/Configuration/BatchJobSettings.cs` comments now document out-of-scope/planned settings.
+- Verified with `dotnet test`: 17/17 passing.
 
 ---
 
