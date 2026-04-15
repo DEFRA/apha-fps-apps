@@ -42,6 +42,30 @@
         });
     }
 
+    /**
+     * Attaches an input/change listener on $field so the inline error is cleared
+     * as soon as the user provides a non-empty value.  Uses the '.valclear'
+     * namespace so handlers can be removed cleanly by clearValidationErrors.
+     *
+     * @param {jQuery} $field    - The field element.
+     * @param {string} fieldName - The name attribute used to locate the valmsg span.
+     * @param {jQuery} $c        - The scoped container.
+     */
+    function clearFieldErrorOnInput($field, fieldName, $c) {
+        $field.off('input.valclear change.valclear')
+              .on('input.valclear change.valclear', function () {
+                  if (!$(this).val() || $(this).val().trim() === '') return;
+                  var $fg = $(this).closest('.govuk-form-group');
+                  $fg.removeClass('govuk-form-group--error');
+                  $(this).removeClass('govuk-input--error');
+                  $fg.find('[data-valmsg-for="' + fieldName + '"]')
+                     .text('')
+                     .hide()
+                     .removeClass('field-validation-error')
+                     .addClass('field-validation-valid');
+              });
+    }
+
     // ── Public API ───────────────────────────────────────────────────────────
 
     /**
@@ -79,6 +103,8 @@
         $c.find('.govuk-input--error').removeClass('govuk-input--error');
 
         $c.find('[data-valmsg-for]').each(function () {
+            var fieldName = $(this).attr('data-valmsg-for');
+            $c.find('[name="' + fieldName + '"]').off('input.valclear change.valclear');
             $(this)
                 .text('')
                 .hide()
@@ -121,13 +147,14 @@
 
                 if ($field.length) {
                     // Field found in the form — highlight inline only
-                    $field.closest('.govuk-form-group').addClass('govuk-form-group--error');
+                    var $fg = $field.closest('.govuk-form-group').addClass('govuk-form-group--error');
                     $field.addClass('govuk-input--error');
-                    $field.siblings('[data-valmsg-for="' + error.field + '"]')
+                    $fg.find('[data-valmsg-for="' + error.field + '"]')
                           .text(error.message)
                           .show()
                           .removeClass('field-validation-valid')
                           .addClass('field-validation-error');
+                    clearFieldErrorOnInput($field, error.field, $c);
                 } else {
                     // No matching field — show in summary only
                     $list.append(
@@ -157,11 +184,9 @@
      * @param {string|jQuery} [container]       - Scope element (defaults to document).
      */
     window.displayServerValidationErrors = function (errors, summaryMessage, container) {
-        debugger;
         var $c       = resolveContainer(container);
         var $summary = $c.find('.govuk-error-summary');
         var $list    = $summary.find('.govuk-error-summary__list').empty();
-        debugger;
         $summary.find('.govuk-error-summary__title').text('There is a problem');
 
         var items            = normaliseErrors(errors);
@@ -174,13 +199,14 @@
 
             if ($field.length) {
                 // Field found in the form — highlight inline only
-                $field.closest('.govuk-form-group').addClass('govuk-form-group--error');
+                var $fg = $field.closest('.govuk-form-group').addClass('govuk-form-group--error');
                 $field.addClass('govuk-input--error');
-                $field.siblings('[data-valmsg-for="' + fieldName + '"]')
+                $fg.find('[data-valmsg-for="' + fieldName + '"]')
                       .text(message)
                       .show()
                       .removeClass('field-validation-valid')
                       .addClass('field-validation-error');
+                clearFieldErrorOnInput($field, fieldName, $c);
             } else {
                 // No matching field — show in summary only
                 $list.append(

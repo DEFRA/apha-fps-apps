@@ -334,7 +334,6 @@
                 data: JSON.stringify(data),
                 success: function (result) {
                     if (result.success) {
-                        debugger;
                         $('#modalPopup').removeClass('show');
                         isEdit ?  alert('Record updated successfully.') :  alert('Record saved successfully.');                       
                         reloadTestReqmtGrid(currentSelectedTestCode);
