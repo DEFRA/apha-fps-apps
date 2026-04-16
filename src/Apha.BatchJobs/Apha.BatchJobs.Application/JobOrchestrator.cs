@@ -19,6 +19,8 @@ public sealed class JobOrchestrator : IJobOrchestrator
     private readonly IJobExecutionRepository _executionRepository;
     private readonly ILogger<JobOrchestrator> _logger;
     private readonly int _lockTimeoutSeconds;
+    private readonly int _retryAttempts;
+    private readonly int _retryDelaySeconds;
 
     /// <summary>Default lock timeout in seconds when configuration is missing/invalid.</summary>
     private const int DefaultLockTimeoutSeconds = 3600;
@@ -39,6 +41,12 @@ public sealed class JobOrchestrator : IJobOrchestrator
         _lockTimeoutSeconds = settings?.Value.JobTimeout > 0
             ? settings.Value.JobTimeout
             : DefaultLockTimeoutSeconds;
+        _retryAttempts = settings?.Value.RetryAttempts >= 0
+            ? settings.Value.RetryAttempts
+            : 0;
+        _retryDelaySeconds = settings?.Value.RetryDelaySeconds >= 0
+            ? settings.Value.RetryDelaySeconds
+            : 1;
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -106,19 +114,85 @@ public sealed class JobOrchestrator : IJobOrchestrator
 
         try
         {
-            _logger.LogInformation("Executing job '{JobName}'...", jobName);
-            await job.ExecuteAsync(cancellationToken);
-            _logger.LogInformation("Job '{JobName}' completed successfully", jobName);
-        }
-        catch (OperationCanceledException ex)
-        {
-            jobException = ex;
-            _logger.LogWarning(ex, "Job '{JobName}' was cancelled", jobName);
-        }
-        catch (Exception ex)
-        {
-            jobException = ex;
-            _logger.LogError(ex, "Job '{JobName}' failed: {ErrorMessage}", jobName, ex.Message);
+            var totalAttempts = _retryAttempts + 1;
+            for (var attempt = 1; attempt <= totalAttempts; attempt++)
+            {
+                try
+                {
+                    _logger.LogInformation(
+                        "Executing job '{JobName}' | Attempt={Attempt}/{TotalAttempts}",
+                        jobName,
+                        attempt,
+                        totalAttempts);
+
+                    await job.ExecuteAsync(cancellationToken);
+                    _logger.LogInformation(
+                        "Job '{JobName}' completed successfully | Attempt={Attempt}/{TotalAttempts}",
+                        jobName,
+                        attempt,
+                        totalAttempts);
+
+                    jobException = null;
+                    break;
+                }
+                catch (OperationCanceledException ex)
+                {
+                    jobException = ex;
+                    _logger.LogWarning(ex,
+                        "Job '{JobName}' was cancelled | Attempt={Attempt}/{TotalAttempts}",
+                        jobName,
+                        attempt,
+                        totalAttempts);
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    jobException = ex;
+
+                    // Non-retryable: config, validation, and business-rule errors must not be retried.
+                    if (!IsRetryable(ex))
+                    {
+                        _logger.LogError(ex,
+                            "Job '{JobName}' failed with non-retryable exception | Attempt={Attempt}/{TotalAttempts} | ExceptionType={ExceptionType} | ErrorMessage={ErrorMessage} | RunId={RunId}",
+                            jobName, attempt, totalAttempts, ex.GetType().Name, ex.Message, runId);
+                        break;
+                    }
+
+                    var canRetry = attempt < totalAttempts;
+
+                    if (!canRetry)
+                    {
+                        _logger.LogError(ex,
+                            "Job '{JobName}' failed after retries exhausted | Attempt={Attempt}/{TotalAttempts} | ExceptionType={ExceptionType} | ErrorMessage={ErrorMessage} | RunId={RunId}",
+                            jobName, attempt, totalAttempts, ex.GetType().Name, ex.Message, runId);
+                        break;
+                    }
+
+                    _logger.LogWarning(ex,
+                        "Job '{JobName}' failed | Attempt={Attempt}/{TotalAttempts} | ExceptionType={ExceptionType} | Retrying after {RetryDelaySeconds}s | RunId={RunId}",
+                        jobName,
+                        attempt,
+                        totalAttempts,
+                        ex.GetType().Name,
+                        _retryDelaySeconds,
+                        runId);
+
+                    try
+                    {
+                        await Task.Delay(TimeSpan.FromSeconds(_retryDelaySeconds), cancellationToken);
+                    }
+                    catch (OperationCanceledException cancelDelayEx)
+                    {
+                        jobException = cancelDelayEx;
+                        _logger.LogWarning(cancelDelayEx,
+                            "Retry delay cancelled for '{JobName}' | Attempt={Attempt}/{TotalAttempts}",
+                            jobName,
+                            attempt,
+                            totalAttempts);
+                        break;
+                    }
+                }
+            }
         }
         finally
         {
@@ -183,4 +257,19 @@ public sealed class JobOrchestrator : IJobOrchestrator
 
         return new JobExecutionResult(runId, jobName, status, finalDuration, executionId);
     }
+
+    /// <summary>
+    /// Returns false for exceptions that must never be retried:
+    /// configuration errors, validation failures, and business-rule violations.
+    /// Transient infrastructure failures (timeouts, connectivity) are retryable.
+    /// </summary>
+    internal static bool IsRetryable(Exception ex) => ex switch
+    {
+        OperationCanceledException => false,   // cancellation: never retry
+        ArgumentException => false,            // programming / validation error
+        InvalidOperationException => false,    // configuration / business-rule error
+        NotSupportedException => false,        // permanent capability error
+        NotImplementedException => false,      // permanent
+        _ => true                              // assume transient until proven otherwise
+    };
 }

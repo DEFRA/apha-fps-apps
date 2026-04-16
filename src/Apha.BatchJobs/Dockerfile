@@ -7,19 +7,19 @@ COPY Apha.BatchJobs.Application/ ./Apha.BatchJobs.Application/
 COPY Apha.BatchJobs.Domain/ ./Apha.BatchJobs.Domain/
 COPY Apha.BatchJobs.Infrastructure/ ./Apha.BatchJobs.Infrastructure/
 COPY appsettings.json ./
-COPY appsettings.Development.json ./
+# appsettings.Development.json is intentionally NOT copied — production secrets
+# are supplied via ECS task environment variables / Secrets Manager at runtime.
 
 RUN dotnet publish BatchJobs.csproj -c Release -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/runtime:10.0 AS final
 WORKDIR /app
 
-# Copy published application
+# Copy published application (does not contain appsettings.Development.json)
 COPY --from=build /app/publish ./
 
-# Copy configuration files
+# Base configuration only — no Development file in production image
 COPY appsettings.json ./
-COPY appsettings.Development.json ./
 
 # Runtime environment
 ENV ASPNETCORE_ENVIRONMENT=Production
