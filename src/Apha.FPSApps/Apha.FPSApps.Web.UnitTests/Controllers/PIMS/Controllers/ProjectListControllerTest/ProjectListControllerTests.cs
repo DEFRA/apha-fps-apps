@@ -45,7 +45,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectListCon
             _mapperMock.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string>());
 
-            _projectListServiceMock.GetAllProjectsAsync(Arg.Any<QueryParameters<string>>())
+            _projectListServiceMock.GetAllProjectsAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<int>())
                 .Returns(apiResponse);
 
             _mapperMock.Map<List<ProjectListItem>>(Arg.Any<List<ProjectListViewDto>>())
@@ -97,7 +97,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectListCon
             await _controller.Index();
 
             // Assert
-            await _projectListServiceMock.Received(1).GetAllProjectsAsync(Arg.Any<QueryParameters<string>>());
+            await _projectListServiceMock.Received(1).GetAllProjectsAsync(Arg.Any<QueryParameters<string>>(), 1);
         }
 
         [Fact]
@@ -143,7 +143,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectListCon
 
             _mapperMock.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string>());
-            _projectListServiceMock.GetAllProjectsAsync(Arg.Any<QueryParameters<string>>())
+            _projectListServiceMock.GetAllProjectsAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<int>())
                 .Returns(apiResponse);
 
             // Act
@@ -169,7 +169,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectListCon
 
             _mapperMock.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string>());
-            _projectListServiceMock.GetAllProjectsAsync(Arg.Any<QueryParameters<string>>())
+            _projectListServiceMock.GetAllProjectsAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<int>())
                 .Returns(apiResponse);
 
             // Act
@@ -234,8 +234,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectListCon
             // Arrange
             _mapperMock.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string>());
-            _projectListServiceMock.GetAllProjectsAsync(Arg.Any<QueryParameters<string>>())
-                .ThrowsAsync(new Exception("Service unavailable"));
+            _projectListServiceMock.GetAllProjectsAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<int>())
+               .ThrowsAsync(new Exception("Service unavailable"));
 
             // Act
             var result = await _controller.Index();
@@ -488,7 +488,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectListCon
             await _controller.LoadProjectListGrid(request);
 
             // Assert
-            await _projectListServiceMock.DidNotReceive().GetAllProjectsAsync(Arg.Any<QueryParameters<string>>());
+            await _projectListServiceMock.DidNotReceive().GetAllProjectsAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<int>());
         }
 
         [Fact]
@@ -546,7 +546,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectListCon
             await _controller.LoadProjectListGrid(request);
 
             // Assert
-            await _projectListServiceMock.Received(1).GetAllProjectsAsync(Arg.Any<QueryParameters<string>>());
+            await _projectListServiceMock.Received(1).GetAllProjectsAsync(Arg.Any<QueryParameters<string>>(), 2);
         }
 
         [Fact]
@@ -571,8 +571,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectListCon
 
             _mapperMock.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string>());
-            _projectListServiceMock.GetAllProjectsAsync(Arg.Any<QueryParameters<string>>())
-                .Returns(apiResponse);
+            _projectListServiceMock.GetAllProjectsAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<int>())
+                 .Returns(apiResponse);
             _mapperMock.Map<List<ProjectListItem>>(Arg.Any<List<ProjectListViewDto>>())
                 .Returns(mappedItems);
 
@@ -599,7 +599,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectListCon
 
             _mapperMock.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string>());
-            _projectListServiceMock.GetAllProjectsAsync(Arg.Any<QueryParameters<string>>())
+            _projectListServiceMock.GetAllProjectsAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<int>())
                 .Returns(apiResponse);
 
             // Act
@@ -624,8 +624,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectListCon
 
             _mapperMock.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string>());
-            _projectListServiceMock.GetAllProjectsAsync(Arg.Any<QueryParameters<string>>())
-                .Returns(apiResponse);
+            _projectListServiceMock.GetAllProjectsAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<int>())
+               .Returns(apiResponse);
 
             // Act
             await _controller.LoadProjectListGrid(request);
@@ -749,8 +749,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectListCon
 
             _mapperMock.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string>());
-            _projectListServiceMock.GetAllProjectsAsync(Arg.Any<QueryParameters<string>>())
-                .Returns(apiResponse);
+            _projectListServiceMock.GetAllProjectsAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<int>())
+               .Returns(apiResponse);
             _mapperMock.Map<List<ProjectListItem>>(Arg.Any<List<ProjectListViewDto>>())
                 .Returns(new List<ProjectListItem>());
             _mapperMock.Map<PaginationModel>(Arg.Any<PaginationDto>())
@@ -808,8 +808,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectListCon
             var request = new PaginationFilter<string> { Filter = "{}", Page = 1, PageSize = 10 };
             _mapperMock.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string>());
-            _projectListServiceMock.GetAllProjectsAsync(Arg.Any<QueryParameters<string>>())
-                .ThrowsAsync(new Exception("Service unavailable"));
+            _projectListServiceMock.GetAllProjectsAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<int>())
+               .ThrowsAsync(new Exception("Service unavailable"));
 
             // Act
             var result = await _controller.LoadProjectListGrid(request);

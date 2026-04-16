@@ -22,21 +22,12 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
         public async Task<ApiResponseDto<List<TestorProductDto>>> GetAllTestorProductsAsync()
         {
-            try
-            {
-                var response = await _http.GetAsync<List<TestorProductRes>>(FpsApiEndpoints.GetAllTestorProducts);
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<List<TestorProductDto>>>(response);
+            var response = await _http.GetAsync<List<TestorProductRes>>(FpsApiEndpoints.GetAllTestorProducts);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<TestorProductDto>>>(response);
 
-                var dto = _mapper.Map<ApiResponseDto<List<TestorProductDto>>>(response);
-                return ApiResponseDto<List<TestorProductDto>>.FailureResponse(dto.Errors, dto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<List<TestorProductDto>>.FailureResponse(
-                    [new ApiErrorDto { Message = "Failed to retrieve testor products", Code = InternalCodeError }],
-                    new ApiMetaDto());
-            }
+            var dto = _mapper.Map<ApiResponseDto<List<TestorProductDto>>>(response);
+            return ApiResponseDto<List<TestorProductDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
     }
 }

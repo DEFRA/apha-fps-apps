@@ -24,119 +24,47 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
         public async Task<ApiResponseDto<IEnumerable<YearMasterDto>>> GetAllFpsYearsAsync()
         {
-            try
-            {
-                var response = await _http.GetAsync<List<YearMasterRes>>("api/yearmaster");
+            var response = await _http.GetAsync<List<YearMasterRes>>("api/yearmaster");
 
-                if (response.Success)
-                {
-                    return _mapper.Map<ApiResponseDto<IEnumerable<YearMasterDto>>>(response);
-                }
-                else
-                {
-                    var responseDto = _mapper.Map<ApiResponseDto<IEnumerable<YearMasterDto>>>(response);
-                    return ApiResponseDto<IEnumerable<YearMasterDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
-                }
-            }
-            catch (MicrosoftIdentityWebChallengeUserException)
+            if (response.Success)
             {
-                throw; // let the OIDC middleware handle it
+                return _mapper.Map<ApiResponseDto<IEnumerable<YearMasterDto>>>(response);
             }
-            catch (UnauthorizedAccessException ex) when (ex.InnerException is MicrosoftIdentityWebChallengeUserException)
+            else
             {
-                throw; // unwrap and propagate the wrapped form too
-            }
-            catch (Exception)
-            {
-                var apiErrorsDto = new List<ApiErrorDto>
-                {
-                    new ApiErrorDto
-                    {
-                        Message = "Failed to retrieve year master data",
-                        Code = InternalCodeError,
-                        Details = null
-                    }
-                };
-                return ApiResponseDto<IEnumerable<YearMasterDto>>.FailureResponse(apiErrorsDto, new ApiMetaDto());
+                var responseDto = _mapper.Map<ApiResponseDto<IEnumerable<YearMasterDto>>>(response);
+                return ApiResponseDto<IEnumerable<YearMasterDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
             }
         }
 
         public async Task<ApiResponseDto<List<YearMasterDto>>> GetAllFpsYearsPagedAsync(QueryParameters<int> query)
         {
-            try
-            {
-                var url = QueryStringHelper.AddQueryString("api/yearmaster/paged", query);
-                var response = await _http.GetAsync<List<YearMasterRes>>(url);
+            var url = QueryStringHelper.AddQueryString("api/yearmaster/paged", query);
+            var response = await _http.GetAsync<List<YearMasterRes>>(url);
 
-                if (response.Success)
-                {
-                    return _mapper.Map<ApiResponseDto<List<YearMasterDto>>>(response);
-                }
-                else
-                {
-                    var responseDto = _mapper.Map<ApiResponseDto<List<YearMasterDto>>>(response);
-                    return ApiResponseDto<List<YearMasterDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
-                }
-            }
-            catch (MicrosoftIdentityWebChallengeUserException)
+            if (response.Success)
             {
-                throw; // let the OIDC middleware handle it
+                return _mapper.Map<ApiResponseDto<List<YearMasterDto>>>(response);
             }
-            catch (UnauthorizedAccessException ex) when (ex.InnerException is MicrosoftIdentityWebChallengeUserException)
+            else
             {
-                throw; // unwrap and propagate the wrapped form too
-            }
-            catch (Exception)
-            {
-                var apiErrorsDto = new List<ApiErrorDto>
-                {
-                    new ApiErrorDto
-                    {
-                        Message = "Failed to retrieve paginated year master data",
-                        Code = InternalCodeError,
-                        Details = null
-                    }
-                };
-                return ApiResponseDto<List<YearMasterDto>>.FailureResponse(apiErrorsDto, new ApiMetaDto());
+                var responseDto = _mapper.Map<ApiResponseDto<List<YearMasterDto>>>(response);
+                return ApiResponseDto<List<YearMasterDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
             }
         }
 
         public async Task<ApiResponseDto<YearMasterDto>> GetFpsYearByIdAsync(int fpsYear)
         {
-            try
-            {
-                var response = await _http.GetAsync<YearMasterRes>($"api/yearmaster/{fpsYear}");
+            var response = await _http.GetAsync<YearMasterRes>($"api/yearmaster/{fpsYear}");
 
-                if (response.Success)
-                {
-                    return _mapper.Map<ApiResponseDto<YearMasterDto>>(response);
-                }
-                else
-                {
-                    var responseDto = _mapper.Map<ApiResponseDto<YearMasterDto>>(response);
-                    return ApiResponseDto<YearMasterDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
-                }
-            }
-            catch (MicrosoftIdentityWebChallengeUserException)
+            if (response.Success)
             {
-                throw; // let the OIDC middleware handle it
+                return _mapper.Map<ApiResponseDto<YearMasterDto>>(response);
             }
-            catch (UnauthorizedAccessException ex) when (ex.InnerException is MicrosoftIdentityWebChallengeUserException)
+            else
             {
-                throw; // unwrap and propagate the wrapped form too
-            }
-            catch (Exception)
-            {
-                var apiErrorsDto = new List<ApiErrorDto>
-                {
-                    new ApiErrorDto
-                    {
-                        Message = $"Failed to retrieve year master with FPS Year: {fpsYear}",
-                        Code = InternalCodeError,
-                        Details = null
-                    }
-                };
-                return ApiResponseDto<YearMasterDto>.FailureResponse(apiErrorsDto, new ApiMetaDto());
+                var responseDto = _mapper.Map<ApiResponseDto<YearMasterDto>>(response);
+                return ApiResponseDto<YearMasterDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
             }
         }
     }

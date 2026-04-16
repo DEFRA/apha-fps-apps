@@ -82,7 +82,7 @@
 
         function getProjectExtraFilters() {
             const radios = document.querySelectorAll('input[name="projectFilter"]');
-            let filterOption = 2; // Default: All
+            let filterOption = 1; // Default: Active
             radios.forEach(function (radio) {
                 if (radio.checked) {
                     filterOption = parseInt(radio.value);

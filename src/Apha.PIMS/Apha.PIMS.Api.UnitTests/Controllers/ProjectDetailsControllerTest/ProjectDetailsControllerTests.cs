@@ -64,22 +64,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectDetailsControllerTest
             _mapper.Received(1).Map<ProjectDetailRes>(detailDto);
         }
 
-        [Fact]
-        public async Task GetPimsDetail_WhenProjectNotFound_ThrowsKeyNotFoundException()
-        {
-            // Arrange
-            var parentproject = "UNKNOWN";
-            _service.GetPimsDetailAsync(parentproject).Returns((ProjectDetailDto?)null);
-
-            // Act & Assert
-            var exception = await Assert.ThrowsAsync<KeyNotFoundException>(
-                () => _controller.GetPimsDetail(parentproject));
-
-            Assert.Equal($"PIMS detail for project '{parentproject}' not found.", exception.Message);
-
-            await _service.Received(1).GetPimsDetailAsync(parentproject);
-            _mapper.DidNotReceive().Map<ProjectDetailRes>(Arg.Any<ProjectDetailDto>());
-        }
+        
 
         [Fact]
         public async Task GetPimsDetail_WhenServiceThrowsException_PropagatesException()

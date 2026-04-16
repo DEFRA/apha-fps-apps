@@ -63,11 +63,14 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             {
                 Parentproject = parentproject,
                 FpsProjectDetails = fpsTask.Result.Data,
-                YearlyDetails = yearlyTask.Result.Data ?? [],
+                YearlyDetails = (yearlyTask.Result.Data ?? [])
+                    .OrderByDescending(y => y.Year)
+                    .ToList(),
                 ProposedProjectDetails = proposed ?? new ProposedProjectDto(),
                 TransferToOptions = GetTransferToOptions(allProjectsTask),
                 RiskRatingOptions = GetRiskRatingOptions(risksTask),
                 ProjectDetails = pimsDetail,
+                IsFPS = allProjectsTask.Result.Data?.Any(p => p.Parentproject == parentproject) ?? false,
                 Projecttitle = proposed?.Projecttitle,
                 Costbookno = proposed?.Costbookno,
                 Disease = proposed?.Disease,
@@ -93,16 +96,26 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
 
         private static List<SelectListItem> GetRiskRatingOptions(Task<ApiResponseDto<List<RiskDto>>> risksTask)
         {
-            return risksTask.Result.Data?
-                            .Select(p => new SelectListItem(p.Riskrating, p.Riskid.ToString()))
-                            .ToList() ?? [];
+            List<SelectListItem> options = risksTask.Result.Data?
+                   .Select(p => new SelectListItem(p.Riskrating, p.Riskid.ToString()))
+                   .ToList() ?? [];
+
+            return PrependDefaultOption(options);
         }
 
         private static List<SelectListItem> GetTransferToOptions(Task<ApiResponseDto<List<ProjectListViewDto>>> allProjectsTask)
         {
-            return allProjectsTask.Result.Data?
+            List<SelectListItem> options = allProjectsTask.Result.Data?
                             .Select(p => new SelectListItem(p.Parentproject, p.Parentproject))
                             .ToList() ?? [];
+
+            return PrependDefaultOption(options);
+        }
+
+        private static List<SelectListItem> PrependDefaultOption(List<SelectListItem> options)
+        {
+            options.Insert(0, new SelectListItem("-- Select --", "", selected: true));
+            return options;
         }
 
         [HttpPost]

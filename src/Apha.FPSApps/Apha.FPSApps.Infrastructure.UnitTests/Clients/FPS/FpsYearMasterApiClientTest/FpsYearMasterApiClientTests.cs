@@ -7,7 +7,6 @@ using Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
 
 namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearMasterApiClientTest
 {
@@ -121,25 +120,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearMasterApiClie
             Assert.False(result.Success);
             Assert.NotNull(result.Errors);
             Assert.Single(result.Errors);
-        }
-
-        [Fact]
-        public async Task GetAllYearMastersAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            _httpExecutor.GetAsync<List<YearMasterRes>>("api/yearmaster")
-                .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetAllFpsYearsAsync();
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-            Assert.Equal("Failed to retrieve year master data", result.Errors[0].Message);
         }
 
         [Fact]
@@ -355,26 +335,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearMasterApiClie
             Assert.NotNull(result.Errors);
         }
 
-        [Fact]
-        public async Task GetAllYearMastersPagedAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var queryParameters = new QueryParameters<int> { Page = 1, PageSize = 10 };
-            _httpExecutor.GetAsync<List<YearMasterRes>>(Arg.Any<string>())
-                .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetAllFpsYearsPagedAsync(queryParameters);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-            Assert.Equal("Failed to retrieve paginated year master data", result.Errors[0].Message);
-        }
-
         [Theory]
         [InlineData(2024)]
         [InlineData(2025)]
@@ -584,105 +544,9 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearMasterApiClie
             Assert.NotNull(result.Errors);
         }
 
-        [Fact]
-        public async Task GetYearMasterByIdAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var fpsYear = 2024;
-            _httpExecutor.GetAsync<YearMasterRes>($"api/yearmaster/{fpsYear}")
-                .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetFpsYearByIdAsync(fpsYear);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-            Assert.Equal($"Failed to retrieve year master with FPS Year: {fpsYear}", result.Errors[0].Message);
-        }
-
-        [Theory]
-        [InlineData(0)]
-        [InlineData(-1)]
-        [InlineData(9999)]
-        public async Task GetYearMasterByIdAsync_WithInvalidFpsYear_ReturnsInternalError(int invalidYear)
-        {
-            // Arrange
-            _httpExecutor.GetAsync<YearMasterRes>($"api/yearmaster/{invalidYear}")
-                .ThrowsAsync(new Exception("Invalid year"));
-
-            // Act
-            var result = await _client.GetFpsYearByIdAsync(invalidYear);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-        }
-
         #endregion
 
         #region Edge Cases and Integration Tests
-
-        [Fact]
-        public async Task GetAllYearMastersAsync_WithHttpTimeoutException_ReturnsInternalError()
-        {
-            // Arrange
-            _httpExecutor.GetAsync<List<YearMasterRes>>("api/yearmaster")
-                .ThrowsAsync(new TimeoutException("Request timed out"));
-
-            // Act
-            var result = await _client.GetAllFpsYearsAsync();
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-        }
-
-        [Fact]
-        public async Task GetAllYearMastersPagedAsync_WithHttpTimeoutException_ReturnsInternalError()
-        {
-            // Arrange
-            var queryParameters = new QueryParameters<int> { Page = 1, PageSize = 10 };
-            _httpExecutor.GetAsync<List<YearMasterRes>>(Arg.Any<string>())
-                .ThrowsAsync(new TimeoutException("Request timed out"));
-
-            // Act
-            var result = await _client.GetAllFpsYearsPagedAsync(queryParameters);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-        }
-
-        [Fact]
-        public async Task GetYearMasterByIdAsync_WithHttpTimeoutException_ReturnsInternalError()
-        {
-            // Arrange
-            var fpsYear = 2024;
-            _httpExecutor.GetAsync<YearMasterRes>($"api/yearmaster/{fpsYear}")
-                .ThrowsAsync(new TimeoutException("Request timed out"));
-
-            // Act
-            var result = await _client.GetFpsYearByIdAsync(fpsYear);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-        }
 
         [Fact]
         public async Task GetAllYearMastersAsync_MapsResponseCorrectly()

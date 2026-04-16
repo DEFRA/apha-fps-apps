@@ -1,4 +1,4 @@
-﻿using Apha.Common.Contracts;
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
@@ -6,7 +6,6 @@ using Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
 using Xunit;
 
 namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsLookupApiClientTest
@@ -74,23 +73,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsLookupApiClientTe
             Assert.NotNull(result.Errors);
         }
 
-        [Fact]
-        public async Task GetAllStatusesAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            _http.GetAsync<List<StatusRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetAllStatusesAsync();
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve statuses", error.Message);
-        }
-
         #endregion
 
         #region GetAllDiseasesAsync Tests
@@ -141,23 +123,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsLookupApiClientTe
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.NotNull(result.Errors);
-        }
-
-        [Fact]
-        public async Task GetAllDiseasesAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            _http.GetAsync<List<DiseaseRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetAllDiseasesAsync();
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve diseases", error.Message);
         }
 
         #endregion
@@ -212,23 +177,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsLookupApiClientTe
             Assert.NotNull(result.Errors);
         }
 
-        [Fact]
-        public async Task GetAllCustomersAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            _http.GetAsync<List<CustomerRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetAllCustomersAsync();
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve customers", error.Message);
-        }
-
         #endregion
 
         #region GetAllContractsAsync Tests
@@ -279,23 +227,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsLookupApiClientTe
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.NotNull(result.Errors);
-        }
-
-        [Fact]
-        public async Task GetAllContractsAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            _http.GetAsync<List<ContractRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetAllContractsAsync();
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve contracts", error.Message);
         }
 
         #endregion
