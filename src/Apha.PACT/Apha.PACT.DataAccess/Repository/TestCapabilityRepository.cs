@@ -95,6 +95,13 @@ namespace Apha.PACT.DataAccess.Repository
             return true;
         }
 
+        public async Task<bool> ExistsAsync(string testCode, string portfolio)
+        {
+            return await _context.TestCapabilities
+                .AsNoTracking()
+                .AnyAsync(t => t.TestCode == testCode && t.PlanPortfolio == portfolio);
+        }
+
         private static IQueryable<TestCapability> ApplyTestCapabilityFilter(
             IQueryable<TestCapability> query, string? filterJson)
         {

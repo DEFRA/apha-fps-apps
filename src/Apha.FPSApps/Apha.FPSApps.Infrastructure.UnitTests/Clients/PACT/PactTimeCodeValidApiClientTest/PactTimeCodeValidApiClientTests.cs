@@ -156,9 +156,9 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
         public async Task CreateTimeCodeValidAsync_WithValidItem_ReturnsMappedCreatedTimeCode()
         {
             // Arrange
-            var itemDto = new TimeCodeValidDto { TimeCode = "TC001", WorkGroup = "WG001", ParentProject = "PP001", Active = true };
-            var itemReq = new TimeCodeValidReq { TimeCode = "TC001", WorkGroup = "WG001", ParentProject = "PP001" };
-            var itemRes = new TimeCodeValidRes { TimeCode = "TC001", WorkGroup = "WG001", ParentProject = "PP001" };
+            var itemDto = new TimeCodeValidDto { TimeCode = "TC001", WorkGroup = "WG001", ParentProject = "PP001", JobCode = "JC001", Active = true };
+            var itemReq = new TimeCodeValidReq { TimeCode = "TC001", WorkGroup = "WG001", ParentProject = "PP001", JobCode = "JC001" };
+            var itemRes = new TimeCodeValidRes { TimeCode = "TC001", WorkGroup = "WG001", ParentProject = "PP001", JobCode = "JC001" };
             var apiResponse = new ApiResponse<TimeCodeValidRes> { Success = true, Data = itemRes };
             var expectedDto = ApiResponseDto<TimeCodeValidDto>.SuccessResponse(itemDto);
 
@@ -173,6 +173,31 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal("TC001", result.Data?.TimeCode);
+            await _http.Received(1).PostAsync<TimeCodeValidReq, TimeCodeValidRes>("api/v1/timecodevalid", itemReq);
+        }
+
+        [Fact]
+        public async Task CreateTimeCodeValidAsync_WithTestCodeAndPortfolio_ReturnsMappedCreatedTimeCode()
+        {
+            // Arrange
+            var itemDto = new TimeCodeValidDto { TimeCode = "TC001", WorkGroup = "WG001", ParentProject = "PP001", TestCode = "TST001", Portfolio = "PF001" };
+            var itemReq = new TimeCodeValidReq { TimeCode = "TC001", WorkGroup = "WG001", ParentProject = "PP001", TestCode = "TST001", Portfolio = "PF001" };
+            var itemRes = new TimeCodeValidRes { TimeCode = "TC001", WorkGroup = "WG001", ParentProject = "PP001", TestCode = "TST001", Portfolio = "PF001" };
+            var apiResponse = new ApiResponse<TimeCodeValidRes> { Success = true, Data = itemRes };
+            var expectedDto = ApiResponseDto<TimeCodeValidDto>.SuccessResponse(itemDto);
+
+            _mapper.Map<TimeCodeValidReq>(itemDto).Returns(itemReq);
+            _http.PostAsync<TimeCodeValidReq, TimeCodeValidRes>("api/v1/timecodevalid", itemReq).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<TimeCodeValidDto>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.CreateTimeCodeValidAsync(itemDto);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal("TST001", result.Data?.TestCode);
+            Assert.Equal("PF001", result.Data?.Portfolio);
             await _http.Received(1).PostAsync<TimeCodeValidReq, TimeCodeValidRes>("api/v1/timecodevalid", itemReq);
         }
 
@@ -211,9 +236,9 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
         public async Task UpdateTimeCodeValidAsync_WithValidItem_ReturnsMappedUpdatedTimeCode()
         {
             // Arrange
-            var itemDto = new TimeCodeValidDto { TimeCode = "TC001", WorkGroup = "WG001", ParentProject = "PP001", Active = false };
-            var itemReq = new TimeCodeValidReq { TimeCode = "TC001", WorkGroup = "WG001", ParentProject = "PP001" };
-            var itemRes = new TimeCodeValidRes { TimeCode = "TC001", WorkGroup = "WG001", ParentProject = "PP001" };
+            var itemDto = new TimeCodeValidDto { TimeCode = "TC001", WorkGroup = "WG001", ParentProject = "PP001", JobCode = "JC001", Active = false };
+            var itemReq = new TimeCodeValidReq { TimeCode = "TC001", WorkGroup = "WG001", ParentProject = "PP001", JobCode = "JC001" };
+            var itemRes = new TimeCodeValidRes { TimeCode = "TC001", WorkGroup = "WG001", ParentProject = "PP001", JobCode = "JC001" };
             var apiResponse = new ApiResponse<TimeCodeValidRes> { Success = true, Data = itemRes };
             var expectedDto = ApiResponseDto<TimeCodeValidDto>.SuccessResponse(itemDto);
 
@@ -228,6 +253,31 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal("TC001", result.Data?.TimeCode);
+            await _http.Received(1).PutAsync<TimeCodeValidReq, TimeCodeValidRes>("api/v1/timecodevalid", itemReq);
+        }
+
+        [Fact]
+        public async Task UpdateTimeCodeValidAsync_WithTestCodeAndPortfolio_ReturnsMappedUpdatedTimeCode()
+        {
+            // Arrange
+            var itemDto = new TimeCodeValidDto { TimeCode = "TC001", WorkGroup = "WG001", ParentProject = "PP001", TestCode = "TST001", Portfolio = "PF001" };
+            var itemReq = new TimeCodeValidReq { TimeCode = "TC001", WorkGroup = "WG001", ParentProject = "PP001", TestCode = "TST001", Portfolio = "PF001" };
+            var itemRes = new TimeCodeValidRes { TimeCode = "TC001", WorkGroup = "WG001", ParentProject = "PP001", TestCode = "TST001", Portfolio = "PF001" };
+            var apiResponse = new ApiResponse<TimeCodeValidRes> { Success = true, Data = itemRes };
+            var expectedDto = ApiResponseDto<TimeCodeValidDto>.SuccessResponse(itemDto);
+
+            _mapper.Map<TimeCodeValidReq>(itemDto).Returns(itemReq);
+            _http.PutAsync<TimeCodeValidReq, TimeCodeValidRes>("api/v1/timecodevalid", itemReq).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<TimeCodeValidDto>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.UpdateTimeCodeValidAsync(itemDto);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal("TST001", result.Data?.TestCode);
+            Assert.Equal("PF001", result.Data?.Portfolio);
             await _http.Received(1).PutAsync<TimeCodeValidReq, TimeCodeValidRes>("api/v1/timecodevalid", itemReq);
         }
 
@@ -270,10 +320,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
             var timeCode = "TC001";
             var parentProject = "PP001";
             var expectedUrl = $"api/v1/timecodevalid/{Uri.EscapeDataString(workGroup)}/{Uri.EscapeDataString(timeCode)}/{Uri.EscapeDataString(parentProject)}";
-            var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
+            var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
             var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
 
-            _http.DeleteAsync<bool>(expectedUrl).Returns(apiResponse);
+            _http.DeleteAsync<bool?>(expectedUrl).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -283,7 +333,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.True(result.Data);
-            await _http.Received(1).DeleteAsync<bool>(expectedUrl);
+            await _http.Received(1).DeleteAsync<bool?>(expectedUrl);
         }
 
         [Fact]
@@ -291,7 +341,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
         {
             // Arrange
             var errors = new List<ApiError> { new() { Message = "Not Found", Code = "NOT_FOUND" } };
-            var apiResponse = new ApiResponse<bool> { Success = false, Errors = errors };
+            var apiResponse = new ApiResponse<bool?> { Success = false, Errors = errors };
             var mappedResponse = new ApiResponseDto<bool>
             {
                 Success = false,
@@ -299,7 +349,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
                 Meta = new ApiMetaDto()
             };
 
-            _http.DeleteAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
+            _http.DeleteAsync<bool?>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedResponse);
 
             // Act
@@ -322,10 +372,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
             var jobCode = "JC001";
             var parentProject = "PP001";
             var expectedUrl = $"api/v1/timecodevalid/jobcode/{Uri.EscapeDataString(jobCode)}/project/{Uri.EscapeDataString(parentProject)}";
-            var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
+            var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
             var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
 
-            _http.DeleteAsync<bool>(expectedUrl).Returns(apiResponse);
+            _http.DeleteAsync<bool?>(expectedUrl).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -335,7 +385,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.True(result.Data);
-            await _http.Received(1).DeleteAsync<bool>(expectedUrl);
+            await _http.Received(1).DeleteAsync<bool?>(expectedUrl);
         }
 
         [Fact]
@@ -343,7 +393,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
         {
             // Arrange
             var errors = new List<ApiError> { new() { Message = "API Error", Code = "API_ERROR" } };
-            var apiResponse = new ApiResponse<bool> { Success = false, Errors = errors };
+            var apiResponse = new ApiResponse<bool?> { Success = false, Errors = errors };
             var mappedResponse = new ApiResponseDto<bool>
             {
                 Success = false,
@@ -351,7 +401,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
                 Meta = new ApiMetaDto()
             };
 
-            _http.DeleteAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
+            _http.DeleteAsync<bool?>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedResponse);
 
             // Act

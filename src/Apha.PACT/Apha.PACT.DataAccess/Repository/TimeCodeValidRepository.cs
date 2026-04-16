@@ -249,5 +249,12 @@ namespace Apha.PACT.DataAccess.Repository
         {
             return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
         }
+
+        public async Task<bool> HasRelatedTimeCodeValidRecordsAsync(string jobCode)
+        {
+            return await _context.TimeCodeValids
+                .AsNoTracking()
+                .AnyAsync(t => t.JobCode == jobCode);
+        }
     }
 }

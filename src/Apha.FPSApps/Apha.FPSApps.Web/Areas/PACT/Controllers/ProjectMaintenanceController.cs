@@ -448,7 +448,6 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpDelete]
         public async Task<IActionResult> DeleteJobCode(string jobCodeId, string parentProject)
         {
-            await _timeCodeService.DeleteAllByJobCodeAsync(jobCodeId, parentProject);
             var result = await _jobCodeService.DeleteJobCodeAsync(jobCodeId);
 
             if (result.Success)

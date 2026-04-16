@@ -103,7 +103,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
         public async Task<ApiResponseDto<bool>> DeleteJobCodeAsync(string jobCodeId)
         {
 
-            var response = await _http.DeleteAsync<bool>(string.Format(PactApiEndpoints.DeleteJobCode, Uri.EscapeDataString(jobCodeId)));
+            var response = await _http.DeleteAsync<bool?>(string.Format(PactApiEndpoints.DeleteJobCode, Uri.EscapeDataString(jobCodeId)));
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<bool>>(response);
 

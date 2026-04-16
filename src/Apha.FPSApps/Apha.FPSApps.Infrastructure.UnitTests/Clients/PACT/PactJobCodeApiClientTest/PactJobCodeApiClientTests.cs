@@ -367,10 +367,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactJobCodeApiClien
         {
             // Arrange
             var jobCodeId = "JC001";
-            var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
+            var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
             var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
 
-            _http.DeleteAsync<bool>($"api/v1/jobcode/{Uri.EscapeDataString(jobCodeId)}").Returns(apiResponse);
+            _http.DeleteAsync<bool?>($"api/v1/jobcode/{Uri.EscapeDataString(jobCodeId)}").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -380,7 +380,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactJobCodeApiClien
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.True(result.Data);
-            await _http.Received(1).DeleteAsync<bool>($"api/v1/jobcode/{Uri.EscapeDataString(jobCodeId)}");
+            await _http.Received(1).DeleteAsync<bool?>($"api/v1/jobcode/{Uri.EscapeDataString(jobCodeId)}");
         }
 
         [Fact]
@@ -388,7 +388,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactJobCodeApiClien
         {
             // Arrange
             var errors = new List<ApiError> { new() { Message = "Not Found", Code = "NOT_FOUND" } };
-            var apiResponse = new ApiResponse<bool> { Success = false, Errors = errors };
+            var apiResponse = new ApiResponse<bool?> { Success = false, Errors = errors };
             var mappedResponse = new ApiResponseDto<bool>
             {
                 Success = false,
@@ -396,7 +396,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactJobCodeApiClien
                 Meta = new ApiMetaDto()
             };
 
-            _http.DeleteAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
+            _http.DeleteAsync<bool?>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedResponse);
 
             // Act
@@ -406,6 +406,31 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactJobCodeApiClien
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.NotNull(result.Errors);
+        }
+
+        [Fact]
+        public async Task DeleteJobCodeAsync_WhenApiReturnsBusinessRuleViolation_ReturnsFailureResponse()
+        {
+            // Arrange — API returns 409 when related TimeCodeValid records exist (trigger validation)
+            var errors = new List<ApiError> { new() { Message = "This JobCode has related records in TimeCodeValid and cannot be deleted.", Code = "BUSINESS_RULE_VIOLATION" } };
+            var apiResponse = new ApiResponse<bool?> { Success = false, Errors = errors };
+            var mappedResponse = new ApiResponseDto<bool>
+            {
+                Success = false,
+                Errors = new List<ApiErrorDto> { new() { Message = "This JobCode has related records in TimeCodeValid and cannot be deleted.", Code = "BUSINESS_RULE_VIOLATION" } },
+                Meta = new ApiMetaDto()
+            };
+
+            _http.DeleteAsync<bool?>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.DeleteJobCodeAsync("JC001");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.Contains(result.Errors!, e => e.Code == "BUSINESS_RULE_VIOLATION");
         }
 
         #endregion

@@ -79,7 +79,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
 
         public async Task<ApiResponseDto<bool>> DeleteAsync(int invoiceCounter)
         {
-            var response = await _http.DeleteAsync<bool>(
+            var response = await _http.DeleteAsync<bool?>(
                 string.Format(PactApiEndpoints.DeleteProjectInvoice, invoiceCounter));
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<bool>>(response);

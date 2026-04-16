@@ -13,8 +13,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
     public class PactTimeCodeValidApiClient : IPactTimeCodeValidApiClient
     {
         private readonly IPactHttpExecutor _http;
-        private readonly IMapper _mapper;
-        private const string InternalCodeError = "INTERNAL_ERROR";
+        private readonly IMapper _mapper;        
 
         public PactTimeCodeValidApiClient(IPactHttpExecutor http, IMapper mapper)
         {
@@ -80,7 +79,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
         public async Task<ApiResponseDto<bool>> DeleteTimeCodeValidAsync(string workGroup, string timeCode, string parentProject)
         {
             var url = string.Format(PactApiEndpoints.DeleteTimeCodeValid, Uri.EscapeDataString(workGroup), Uri.EscapeDataString(timeCode), Uri.EscapeDataString(parentProject));
-            var response = await _http.DeleteAsync<bool>(url);
+            var response = await _http.DeleteAsync<bool?>(url);
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<bool>>(response);
 
@@ -91,7 +90,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
         public async Task<ApiResponseDto<bool>> DeleteAllByJobCodeAsync(string jobCode, string parentProject)
         {
             var url = string.Format(PactApiEndpoints.DeleteTimeCodesByJobCode, Uri.EscapeDataString(jobCode), Uri.EscapeDataString(parentProject));
-            var response = await _http.DeleteAsync<bool>(url);
+            var response = await _http.DeleteAsync<bool?>(url);
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<bool>>(response);
 

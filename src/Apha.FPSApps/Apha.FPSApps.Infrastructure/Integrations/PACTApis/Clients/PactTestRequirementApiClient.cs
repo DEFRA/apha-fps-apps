@@ -105,7 +105,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
         {
             var url = string.Format(PactApiEndpoints.DeleteTestReqmt,
                 Uri.EscapeDataString(testCode), Uri.EscapeDataString(buyer));
-            var response = await _http.DeleteAsync<bool>(url);
+            var response = await _http.DeleteAsync<bool?>(url);
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<bool>>(response);
 

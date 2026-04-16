@@ -386,7 +386,7 @@
 
         function deleteJobCode(btn) {
             var jobCodeId = $(btn).data('id');
-            showGovukConfirm('Delete job code "' + jobCodeId + '" and all its time codes?').then(function(confirmed) {
+            showGovukConfirm('Delete this job code?').then(function(confirmed) {
                 if (!confirmed) return;
                 $.ajax({
                     url: '/PACT/ProjectMaintenance/DeleteJobCode',
