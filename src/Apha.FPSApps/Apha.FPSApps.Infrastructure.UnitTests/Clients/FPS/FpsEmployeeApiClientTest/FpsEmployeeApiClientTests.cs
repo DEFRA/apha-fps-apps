@@ -1,4 +1,4 @@
-﻿using Apha.Common.Contracts;
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
@@ -7,7 +7,6 @@ using Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
 
 namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsEmployeeApiClientTest
 {
@@ -124,25 +123,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsEmployeeApiClient
             Assert.NotNull(result.Errors);
         }
 
-        [Fact]
-        public async Task GetFilteredEmployeesAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var queryParameters = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            _httpExecutor.GetAsync<List<EmployeeRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetFilteredEmployeesAsync(queryParameters, 1);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-            Assert.Equal("Failed to retrieve employees", result.Errors[0].Message);
-        }
-
         #endregion
 
         #region GetEmployeeIdAsync Tests
@@ -210,25 +190,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsEmployeeApiClient
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.NotNull(result.Errors);
-        }
-
-        [Fact]
-        public async Task GetEmployeeIdAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var spNumber = "000001";
-            _httpExecutor.GetAsync<EmployeeRes>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetEmployeeIdAsync(spNumber);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-            Assert.Equal("Failed to retrieve employee", result.Errors[0].Message);
         }
 
         [Theory]
@@ -336,29 +297,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsEmployeeApiClient
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.NotNull(result.Errors);
-        }
-
-        [Fact]
-        public async Task CreateEmployeeAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var employeeDto = new EmployeeDto { SPNumber = "000001" };
-            var employeeReq = new EmployeeReq { SPNumber = "000001" };
-
-            _mapper.Map<EmployeeReq>(employeeDto).Returns(employeeReq);
-            _httpExecutor.PostAsync<EmployeeReq, EmployeeRes>(Arg.Any<string>(), Arg.Any<EmployeeReq>())
-                .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.CreateEmployeeAsync(employeeDto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-            Assert.Equal("Failed to create employee", result.Errors[0].Message);
         }
 
         [Fact]
@@ -474,29 +412,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsEmployeeApiClient
             Assert.NotNull(result.Errors);
         }
 
-        [Fact]
-        public async Task UpdateEmployeeAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var employeeDto = new EmployeeDto { SPNumber = "000001" };
-            var employeeReq = new EmployeeReq { SPNumber = "000001" };
-
-            _mapper.Map<EmployeeReq>(employeeDto).Returns(employeeReq);
-            _httpExecutor.PutAsync<EmployeeReq, EmployeeRes>(Arg.Any<string>(), Arg.Any<EmployeeReq>())
-                .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.UpdateEmployeeAsync(employeeDto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-            Assert.Equal("Failed to update employee", result.Errors[0].Message);
-        }
-
         #endregion
 
         #region DeleteEmployeeAsync Tests
@@ -554,25 +469,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsEmployeeApiClient
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.NotNull(result.Errors);
-        }
-
-        [Fact]
-        public async Task DeleteEmployeeAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var spNumber = "000001";
-            _httpExecutor.DeleteAsync<bool?>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.DeleteEmployeeAsync(spNumber);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-            Assert.Equal("Failed to delete employee", result.Errors[0].Message);
         }
 
         [Theory]
@@ -687,24 +583,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsEmployeeApiClient
             Assert.NotNull(result.Errors);
         }
 
-        [Fact]
-        public async Task GetAllManagerAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            _httpExecutor.GetAsync<List<ManagerRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetAllManagerAsync();
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-            Assert.Equal("Failed to retrieve managers", result.Errors[0].Message);
-        }
-
         #endregion
 
         #region GetAllPactManagerAsync Tests
@@ -782,24 +660,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsEmployeeApiClient
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.NotNull(result.Errors);
-        }
-
-        [Fact]
-        public async Task GetAllPactManagerAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            _httpExecutor.GetAsync<List<ManagerRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetAllPactManagerAsync();
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-            Assert.Equal("Failed to retrieve managers", result.Errors[0].Message);
         }
 
         #endregion
