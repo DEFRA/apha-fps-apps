@@ -204,3 +204,52 @@ These principles apply across all stories and must be validated holistically:
 - Run integration tests (degradation scenarios) in CI separately from unit tests.
 - Ensure ops can query any run by RunId alone (correlation is complete).
 - All failure scenarios must be reproducible via test or documented scenario (no unknown failure states).
+
+---
+
+## Story CR-007: Degradation CI Stage Alignment
+
+Status: Implemented
+
+Goal:
+- Ensure degradation-focused integration tests run in a dedicated CI workflow stage with explicit pass/fail visibility.
+
+Acceptance criteria:
+- `.github/workflows/degradation-tests.yml` exists and runs independently.
+- Workflow provisions required dependencies (e.g., Postgres) and executes degradation-focused tests.
+- Workflow outputs clear stage name and test result visibility for operations and engineering.
+- Failure in degradation tests fails the workflow (no silent skips).
+
+Implemented in:
+- .github/workflows/degradation-tests.yml
+
+## Story CR-008: Lock Timeout Wiring Consistency
+
+Status: Implemented
+
+Goal:
+- Ensure lock acquisition timeout uses `LockTimeoutSeconds` (not `JobTimeout`) to match configuration intent.
+
+Acceptance criteria:
+- `JobOrchestrator` reads lock timeout from `BatchJobSettings.LockTimeoutSeconds`.
+- Existing lock-timeout unit test validates the correct setting source.
+- Behavior is backward safe with sensible fallback default when config is missing/invalid.
+
+Implemented in:
+- Apha.BatchJobs.Application/JobOrchestrator.cs
+- Apha.BatchJobs.UnitTests/JobOrchestratorTests.cs
+
+## Story CR-009: Structured Summary Event Preservation
+
+Status: Implemented
+
+Goal:
+- Keep container-visible stdout summary while preserving structured summary fields in application logs.
+
+Acceptance criteria:
+- One terminal summary event is still emitted to stdout.
+- Summary event in logger remains structured with named fields (not only preformatted text).
+- Existing failure-category-based log level discipline remains intact.
+
+Implemented in:
+- Apha.BatchJobs.Worker/Program.cs

@@ -427,10 +427,10 @@ public sealed class JobOrchestratorTests
     }
 
     [Fact]
-    public async Task RunAsync_UsesConfiguredJobTimeoutForLockAcquisition()
+    public async Task RunAsync_UsesConfiguredLockTimeoutForLockAcquisition()
     {
         // Arrange
-        var timeoutSettings = Options.Create(new BatchJobSettings { JobTimeout = 1234 });
+        var timeoutSettings = Options.Create(new BatchJobSettings { LockTimeoutSeconds = 1234 });
         var orchestrator = new JobOrchestrator(
             _factory,
             _lockRepo,

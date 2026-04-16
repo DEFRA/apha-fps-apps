@@ -182,6 +182,7 @@ finally
             _ => LogLevel.Error
         };
         var humanReadableMessage = GenerateHumanReadableMessage(runOutcome, failureCategory);
+        const string summaryTemplate = "Run completed | StartedAt={StartTime} | EndedAt={EndTime} | Outcome={Outcome} | FailureCategory={FailureCategory} | ExitCode={ExitCode} | Message={Message} | JobName={JobName} | RunId={RunId} | ExecutionId={ExecutionId} | RunMode={RunMode} | TotalDurationMs={DurationMs} | GracefulShutdownCompleted={GracefulShutdownCompleted}";
         var summaryLine = BuildSummaryLine(
             startedAt,
             endedAtUtc,
@@ -204,15 +205,54 @@ finally
         // Log at appropriate level by outcome semantics.
         if (logLevel == LogLevel.Information)
         {
-            logger?.LogInformation(summaryLine);
+            logger?.LogInformation(
+                summaryTemplate,
+                startedAt,
+                endedAtUtc,
+                runOutcome,
+                failureCategory,
+                exitCode,
+                humanReadableMessage,
+                requestedJobName ?? "Unknown",
+                capturedRunId ?? "N/A",
+                capturedExecutionId?.ToString() ?? "N/A",
+                requestedRunMode,
+                durationMs,
+                gracefulShutdownCompleted);
         }
         else if (logLevel == LogLevel.Warning)
         {
-            logger?.LogWarning(summaryLine);
+            logger?.LogWarning(
+                summaryTemplate,
+                startedAt,
+                endedAtUtc,
+                runOutcome,
+                failureCategory,
+                exitCode,
+                humanReadableMessage,
+                requestedJobName ?? "Unknown",
+                capturedRunId ?? "N/A",
+                capturedExecutionId?.ToString() ?? "N/A",
+                requestedRunMode,
+                durationMs,
+                gracefulShutdownCompleted);
         }
         else
         {
-            logger?.LogError(summaryLine);
+            logger?.LogError(
+                summaryTemplate,
+                startedAt,
+                endedAtUtc,
+                runOutcome,
+                failureCategory,
+                exitCode,
+                humanReadableMessage,
+                requestedJobName ?? "Unknown",
+                capturedRunId ?? "N/A",
+                capturedExecutionId?.ToString() ?? "N/A",
+                requestedRunMode,
+                durationMs,
+                gracefulShutdownCompleted);
         }
     }
     catch

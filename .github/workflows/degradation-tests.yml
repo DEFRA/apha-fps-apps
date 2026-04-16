@@ -1,0 +1,79 @@
+name: BatchJobs Degradation Tests
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "src/Apha.BatchJobs/**"
+      - ".github/workflows/degradation-tests.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "src/Apha.BatchJobs/**"
+      - ".github/workflows/degradation-tests.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: batchjobs-degradation-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  degradation-tests:
+    name: Degradation Integration Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: batch_jobs_foundation_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d batch_jobs_foundation_db"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: 1
+      ConnectionStrings__BatchJobsConnectionString: Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=postgres;Timeout=30;Command Timeout=30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore BatchJobs test project
+        run: dotnet restore src/Apha.BatchJobs/Apha.BatchJobs.UnitTests/Apha.BatchJobs.UnitTests.csproj
+
+      - name: Build BatchJobs test project
+        run: dotnet build src/Apha.BatchJobs/Apha.BatchJobs.UnitTests/Apha.BatchJobs.UnitTests.csproj --configuration Release --no-restore
+
+      - name: Run degradation-focused repository integration tests
+        run: >-
+          dotnet test src/Apha.BatchJobs/Apha.BatchJobs.UnitTests/Apha.BatchJobs.UnitTests.csproj
+          --configuration Release
+          --no-build
+          --logger "trx;LogFileName=degradation-tests.trx"
+          --filter "FullyQualifiedName~RepositoryIntegrationTests"
+
+      - name: Upload degradation test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: batchjobs-degradation-test-results-${{ github.run_number }}
+          path: "**/*.trx"
+          if-no-files-found: warn
+          retention-days: 14

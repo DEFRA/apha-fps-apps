@@ -44,8 +44,8 @@ public sealed class JobOrchestrator : IJobOrchestrator
         _factory = factory ?? throw new ArgumentNullException(nameof(factory));
         _lockRepository = lockRepository ?? throw new ArgumentNullException(nameof(lockRepository));
         _executionRepository = executionRepository ?? throw new ArgumentNullException(nameof(executionRepository));
-        _lockTimeoutSeconds = settings?.Value.JobTimeout > 0
-            ? settings.Value.JobTimeout
+        _lockTimeoutSeconds = settings?.Value.LockTimeoutSeconds > 0
+            ? settings.Value.LockTimeoutSeconds
             : DefaultLockTimeoutSeconds;
         _retryAttempts = settings?.Value.RetryAttempts >= 0
             ? settings.Value.RetryAttempts
