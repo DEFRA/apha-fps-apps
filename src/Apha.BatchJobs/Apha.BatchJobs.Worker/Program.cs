@@ -52,6 +52,7 @@ string requestedRunMode = "AdHoc";
 string? capturedRunId = null;
 int? capturedExecutionId = null;
 var exitCode = ExitCodeBusinessFailure;
+bool gracefulShutdownCompleted = true; // Assume graceful unless proven otherwise
 
 try
 {
@@ -140,6 +141,10 @@ catch (OperationCanceledException ex)
         "Job was cancelled | JobName={JobName} | RunId={RunId} | RemainingShutdownWindowMs={RemainingWindowMs}",
         requestedJobName ?? "Unknown", capturedRunId ?? "N/A", remainingWindowMs);
     Console.Error.WriteLine($"CANCELLED: Job execution was cancelled");
+    
+    // Mark as forced cancellation if we ran out of graceful window (remainingWindowMs near 0)
+    gracefulShutdownCompleted = remainingWindowMs > 100; // Allow 100ms buffer
+    
     exitCode = ExitCodeCancelled;
     failureCategory = "Cancellation";
     runOutcome = "Cancelled";
@@ -167,17 +172,30 @@ finally
 {
     try
     {
+        var endedAtUtc = DateTime.UtcNow;
+        var durationMs = (endedAtUtc - startedAt).TotalMilliseconds;
+        var logLevel = failureCategory == "LockContentionSkip" ? LogLevel.Information : LogLevel.Error;
+        var humanReadableMessage = GenerateHumanReadableMessage(runOutcome, failureCategory);
+        
         var logger = loggerFactory?.CreateLogger("BatchJobs.Summary");
-        logger?.LogInformation(
-            "Run completed | Outcome={Outcome} | FailureCategory={FailureCategory} | ExitCode={ExitCode} | JobName={JobName} | RunId={RunId} | ExecutionId={ExecutionId} | RunMode={RunMode} | TotalDurationMs={DurationMs}",
-            runOutcome,
-            failureCategory,
-            exitCode,
-            requestedJobName ?? "Unknown",
-            capturedRunId ?? "N/A",
-            capturedExecutionId?.ToString() ?? "N/A",
-            requestedRunMode,
-            (DateTime.UtcNow - startedAt).TotalMilliseconds);
+        
+        // Log at appropriate level (informational for skips, error for actual failures)
+        if (logLevel == LogLevel.Information)
+        {
+            logger?.LogInformation(
+                "Run completed | StartedAt={StartTime} | EndedAt={EndTime} | Outcome={Outcome} | FailureCategory={FailureCategory} | ExitCode={ExitCode} | Message={Message} | JobName={JobName} | RunId={RunId} | ExecutionId={ExecutionId} | RunMode={RunMode} | TotalDurationMs={DurationMs} | GracefulShutdownCompleted={GracefulShutdownCompleted}",
+                startedAt, endedAtUtc, runOutcome, failureCategory, exitCode, humanReadableMessage,
+                requestedJobName ?? "Unknown", capturedRunId ?? "N/A", capturedExecutionId?.ToString() ?? "N/A",
+                requestedRunMode, durationMs, gracefulShutdownCompleted);
+        }
+        else
+        {
+            logger?.LogError(
+                "Run completed | StartedAt={StartTime} | EndedAt={EndTime} | Outcome={Outcome} | FailureCategory={FailureCategory} | ExitCode={ExitCode} | Message={Message} | JobName={JobName} | RunId={RunId} | ExecutionId={ExecutionId} | RunMode={RunMode} | TotalDurationMs={DurationMs} | GracefulShutdownCompleted={GracefulShutdownCompleted}",
+                startedAt, endedAtUtc, runOutcome, failureCategory, exitCode, humanReadableMessage,
+                requestedJobName ?? "Unknown", capturedRunId ?? "N/A", capturedExecutionId?.ToString() ?? "N/A",
+                requestedRunMode, durationMs, gracefulShutdownCompleted);
+        }
     }
     catch
     {
@@ -198,6 +216,20 @@ finally
 }
 
 return exitCode;
+
+static string GenerateHumanReadableMessage(string outcome, string failureCategory)
+{
+    return (outcome, failureCategory) switch
+    {
+        ("Succeeded", _) => "Job completed successfully within the graceful shutdown window.",
+        ("Skipped", "LockContentionSkip") => "Job execution skipped: another worker holds the lock. Retryable.",
+        ("Cancelled", "Cancellation") => "Job execution was cancelled due to host shutdown or timeout.",
+        ("Failed", "ConfigurationError") => "Job failed due to configuration error (job not registered, invalid settings, etc.).",
+        ("Failed", "BusinessFailure") => "Job failed with a business or runtime exception.",
+        ("Failed", "DependencyOutage") => "Job failed due to dependency outage (database unavailable, network timeout, etc.).",
+        _ => $"Job execution ended with outcome: {outcome} ({failureCategory})."
+    };
+}
 
 static bool IsDependencyOutage(Exception ex)
 {

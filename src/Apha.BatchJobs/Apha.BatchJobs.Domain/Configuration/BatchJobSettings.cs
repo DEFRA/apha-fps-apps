@@ -30,6 +30,12 @@ public sealed class BatchJobSettings
     public int RetryDelaySeconds { get; set; } = 60;
 
     /// <summary>
+    /// Maximum total duration (in seconds) for all retry attempts combined.
+    /// Prevents long-running containers from exceeding ECS task timeout.
+    /// </summary>
+    public int MaxRetryDurationSeconds { get; set; } = 300;
+
+    /// <summary>
     /// Lock acquisition timeout in seconds for distributed locking.
     /// </summary>
     public int LockTimeoutSeconds { get; set; } = 300;

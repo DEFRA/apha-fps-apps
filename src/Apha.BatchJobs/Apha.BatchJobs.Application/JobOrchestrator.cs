@@ -3,8 +3,10 @@ using Apha.BatchJobs.Domain.Configuration;
 using Apha.BatchJobs.Domain.Entities;
 using Apha.BatchJobs.Domain.Enums;
 using Apha.BatchJobs.Domain.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Npgsql;
 
 namespace Apha.BatchJobs.Application;
 
@@ -21,9 +23,13 @@ public sealed class JobOrchestrator : IJobOrchestrator
     private readonly int _lockTimeoutSeconds;
     private readonly int _retryAttempts;
     private readonly int _retryDelaySeconds;
+    private readonly int _maxRetryDurationSeconds;
 
     /// <summary>Default lock timeout in seconds when configuration is missing/invalid.</summary>
     private const int DefaultLockTimeoutSeconds = 3600;
+
+    /// <summary>Default maximum retry duration in seconds.</summary>
+    private const int DefaultMaxRetryDurationSeconds = 300;
 
     /// <summary>
     /// Initializes a new instance of <see cref="JobOrchestrator"/>.
@@ -47,6 +53,9 @@ public sealed class JobOrchestrator : IJobOrchestrator
         _retryDelaySeconds = settings?.Value.RetryDelaySeconds >= 0
             ? settings.Value.RetryDelaySeconds
             : 1;
+        _maxRetryDurationSeconds = settings?.Value.MaxRetryDurationSeconds > 0
+            ? settings.Value.MaxRetryDurationSeconds
+            : DefaultMaxRetryDurationSeconds;
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -111,6 +120,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
         // Step 3 — Execute the job
         var job = _factory.Create(jobName);
         Exception? jobException = null;
+        var retryStartedAt = DateTime.UtcNow;
 
         try
         {
@@ -149,8 +159,14 @@ public sealed class JobOrchestrator : IJobOrchestrator
                 {
                     jobException = ex;
 
+                    // Classify whether this exception is retryable (with logging)
+                    var isRetryable = IsRetryable(ex);
+                    _logger.LogInformation(
+                        "Job exception classification | ExceptionType={ExceptionType} | IsRetryable={IsRetryable}",
+                        ex.GetType().Name, isRetryable);
+
                     // Non-retryable: config, validation, and business-rule errors must not be retried.
-                    if (!IsRetryable(ex))
+                    if (!isRetryable)
                     {
                         _logger.LogError(ex,
                             "Job '{JobName}' failed with non-retryable exception | Attempt={Attempt}/{TotalAttempts} | ExceptionType={ExceptionType} | ErrorMessage={ErrorMessage} | RunId={RunId}",
@@ -168,18 +184,34 @@ public sealed class JobOrchestrator : IJobOrchestrator
                         break;
                     }
 
+                    // Check if total retry duration would be exceeded
+                    var elapsedRetrySeconds = (DateTime.UtcNow - retryStartedAt).TotalSeconds;
+                    if (elapsedRetrySeconds >= _maxRetryDurationSeconds)
+                    {
+                        _logger.LogError(ex,
+                            "Job '{JobName}' retry duration capped | Attempt={Attempt}/{TotalAttempts} | ElapsedRetrySeconds={ElapsedSeconds} | MaxRetrySeconds={MaxSeconds} | RunId={RunId}",
+                            jobName, attempt, totalAttempts, (int)elapsedRetrySeconds, _maxRetryDurationSeconds, runId);
+                        break;
+                    }
+
+                    // Calculate retry delay with jitter
+                    var basedelaySeconds = _retryDelaySeconds;
+                    var jitterSeconds = new Random().Next(0, Math.Max(1, basedelaySeconds / 2)); // Up to 50% jitter
+                    var finalDelaySeconds = basedelaySeconds + jitterSeconds;
+
                     _logger.LogWarning(ex,
-                        "Job '{JobName}' failed | Attempt={Attempt}/{TotalAttempts} | ExceptionType={ExceptionType} | Retrying after {RetryDelaySeconds}s | RunId={RunId}",
+                        "Job '{JobName}' failed | Attempt={Attempt}/{TotalAttempts} | ExceptionType={ExceptionType} | Retrying after {RetryDelaySeconds}s (+{JitterSeconds}s jitter) | RunId={RunId}",
                         jobName,
                         attempt,
                         totalAttempts,
                         ex.GetType().Name,
-                        _retryDelaySeconds,
+                        basedelaySeconds,
+                        jitterSeconds,
                         runId);
 
                     try
                     {
-                        await Task.Delay(TimeSpan.FromSeconds(_retryDelaySeconds), cancellationToken);
+                        await Task.Delay(TimeSpan.FromSeconds(finalDelaySeconds), cancellationToken);
                     }
                     catch (OperationCanceledException cancelDelayEx)
                     {
@@ -261,15 +293,29 @@ public sealed class JobOrchestrator : IJobOrchestrator
     /// <summary>
     /// Returns false for exceptions that must never be retried:
     /// configuration errors, validation failures, and business-rule violations.
-    /// Transient infrastructure failures (timeouts, connectivity) are retryable.
+    /// Only explicit transient infrastructure failures (timeouts, connectivity) are retryable.
+    /// Default is now false to avoid overly broad retry surface.
     /// </summary>
     internal static bool IsRetryable(Exception ex) => ex switch
     {
-        OperationCanceledException => false,   // cancellation: never retry
-        ArgumentException => false,            // programming / validation error
-        InvalidOperationException => false,    // configuration / business-rule error
-        NotSupportedException => false,        // permanent capability error
-        NotImplementedException => false,      // permanent
-        _ => true                              // assume transient until proven otherwise
+        // Never retry on cancellation or operational errors
+        OperationCanceledException => false,           // cancellation: never retry
+        
+        // Never retry on programming/configuration errors
+        ArgumentException => false,                    // programming / validation error
+        InvalidOperationException => false,            // configuration / business-rule error
+        NotSupportedException => false,                // permanent capability error
+        NotImplementedException => false,              // permanent / incomplete feature
+        
+        // Retry on transient infrastructure failures (explicit list)
+        TimeoutException => true,                      // transient network/DB timeout
+        NpgsqlException => true,                       // PostgreSQL-specific error (retry safe)
+        DbUpdateException => true,                     // EF/database transient error
+        HttpRequestException => true,                  // Network/HTTP transient error
+        System.Net.Sockets.SocketException => true,   // Network socket failure
+        IOException => true,                           // Transient I/O error
+        
+        // Default: do NOT retry (fail-safe: assume permanent unless proven transient)
+        _ => false
     };
 }
