@@ -64,6 +64,7 @@
                             <div class="govuk-tabs__panel govuk-!-padding-2"
                                  id="nav-home" role="tabpanel"
                                  style="min-height: 40px"
+                                 hidden=@(!Model.IsFPS)
                                  aria-labelledby="tab_nav-home">
                                 @if (Model.FpsProjectDetails is not null)
                                 {
@@ -139,6 +140,7 @@
                             <div class="govuk-tabs__panel govuk-!-padding-2 govuk-tabs__panel--hidden"
                                  id="nav-profile" role="tabpanel"
                                  style="min-height: 460px; overflow-y: auto"
+                                 hidden=@(Model.IsFPS)
                                  aria-labelledby="tab_nav-profile">
                                 <div class="govuk-grid-column-full p-0">
                                     <div class="govuk-form-group">
@@ -170,7 +172,6 @@
                                                                     asp-for="ProposedProjectDetails.TransferTo"
                                                                     asp-items="Model.TransferToOptions"
                                                                     style="min-width: stretch;">
-                                                                <option value="">Select</option>
                                                             </select>
                                                         </div>
                                                     </div>
@@ -265,6 +266,7 @@
                             <div class="govuk-tabs__panel govuk-!-padding-2 govuk-tabs__panel--hidden"
                                  id="nav-contact" role="tabpanel"
                                  style="min-height: 460px; overflow: auto"
+                                 hidden=@(!Model.IsFPS)
                                  aria-labelledby="tab_nav-contact">
                                 <table class="govuk-table custom-table"
                                        style="border-right: 1px solid; border-bottom-color: var(--govuk-border-colour, #cecece); word-wrap: break-word; overflow-wrap: break-word;">
@@ -505,9 +507,15 @@
                 </div>
                 <div class="govuk-form-group govuk-!-margin-bottom-6">
                     <label class="govuk-label font-size-16" for="edit-year">Year</label>
-                    <input class="govuk-input" id="edit-year" name="year"
-                           type="text" inputmode="numeric"
-                           aria-describedby="edit-year-error" placeholder="e.g. 2023" />
+
+                    <select class="govuk-select" id="edit-year" name="year" style="width: stretch;">
+                        <option value="">Select a Year</option>
+                        @foreach (var opt in Model.YearOptions.Where(o => o.Value != ""))
+                        {
+                            <option value="@opt.Value">@opt.Text</option>
+                        }
+                    </select>
+
                 </div>
                 <div class="govuk-form-group govuk-!-margin-bottom-6">
                     <label class="govuk-label font-size-16" for="edit-title">Topic</label>

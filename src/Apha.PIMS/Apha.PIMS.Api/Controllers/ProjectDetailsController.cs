@@ -28,9 +28,7 @@ namespace Apha.PIMS.Api.Controllers
         [HttpGet("{parentproject}/pims")]
         public async Task<IActionResult> GetPimsDetail(string parentproject)
         {
-            ProjectDetailDto? result = await _service.GetPimsDetailAsync(parentproject);
-            if (result is null)
-                throw new KeyNotFoundException($"PIMS detail for project '{parentproject}' not found.");
+            ProjectDetailDto? result = await _service.GetPimsDetailAsync(parentproject);            
             return Ok(_mapper.Map<ProjectDetailRes>(result));
         }
 
