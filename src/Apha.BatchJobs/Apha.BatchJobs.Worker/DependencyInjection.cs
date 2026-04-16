@@ -6,6 +6,7 @@ using Apha.BatchJobs.Domain.Configuration;
 using Apha.BatchJobs.Domain.Interfaces;
 using Apha.BatchJobs.Infrastructure.Data;
 using Apha.BatchJobs.Infrastructure.Repositories;
+using Apha.BatchJobs.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -63,6 +64,7 @@ public static class ServiceCollectionSetup
 
         services.AddScoped<IBatchLockRepository, BatchLockRepository>();
         services.AddScoped<IJobExecutionRepository, JobExecutionRepository>();
+        services.AddSingleton<ICorrelationService, CorrelationService>();
         services.AddScoped<IScheduledLoadFromFpsPlanBuilder, ScheduledLoadFromFpsPlanBuilder>();
 
         RegisterBatchJobs(services);
