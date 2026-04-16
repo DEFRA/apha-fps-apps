@@ -69,7 +69,7 @@
     <div class="govuk-grid-column-one-third sup_p_0_mt_24">
         <div class="govuk-button-group sup_margin_0 sup_float_right">
             <button type="button" class="govuk-button sup_margin_0 sup_p_8 sup_flex"
-                    id="btnPortfolioMaintenance" aria-label="Portfolio Maintenance"
+                    id="btnPortfolioMaintenance"
                     data-module="govuk-button">
                 &nbsp;Portfolio Maintenance
             </button>
@@ -255,13 +255,13 @@
                 success: function (result) {
                     if (result.success) {
                         $('#modalPopup').removeClass('show');
-                        isEdit ?  alert('Record updated successfully.') :  alert('Record saved successfully.');
+                        showGovukAlert(isEdit ? 'Record updated successfully.' : 'Record saved successfully.');
                         reloadTestCapabilityGrid(currentFilterValue);
                     } else {
                         displayServerValidationErrors(result.errors, result.message, '#modaPopupBody');
                     }
                 },
-                error: function () { alert('Request failed. Please try again.'); }
+                error: function () { showGovukAlert('Request failed. Please try again.'); }
             });
         }
 
@@ -269,20 +269,23 @@
             var testCode  = encodeURIComponent($(rowData).data('id') || '');
             var workGroup = encodeURIComponent(
                 $(rowData).closest('tr').find('[data-property="WorkGroup"]').text().trim());
-            if (!confirm('Delete this Test Capability record?')) return;
-            $.ajax({
-                url: '/PACT/TestCapability/DeleteTestCapability?testCode=' + testCode + '&workGroup=' + workGroup,
-                type: 'DELETE',
-                headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
-                success: function (result) {
-                    if (result.success) {
-                        reloadTestCapabilityGrid(currentFilterValue);
-                        clearTestReqmtGrid();
-                    } else {
-                        var msg = result.message ? result.message : 'Delete failed.';
-                        alert(msg);
-                    }
-                }
+            showGovukConfirm('Delete this Test Capability record?').then(function (confirmed) {
+                if (!confirmed) return;
+                $.ajax({
+                    url: '/PACT/TestCapability/DeleteTestCapability?testCode=' + testCode + '&workGroup=' + workGroup,
+                    type: 'DELETE',
+                    headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
+                    success: function (result) {
+                        if (result.success) {
+                            reloadTestCapabilityGrid(currentFilterValue);
+                            clearTestReqmtGrid();
+                            showGovukAlert('Test Capability record deleted successfully.');
+                        } else {
+                            showGovukAlert(result.message ? result.message : 'Delete failed.');
+                        }
+                    },
+                    error: function () { showGovukAlert('An error occurred while deleting.'); }
+                });
             });
         }
 
@@ -335,32 +338,35 @@
                 success: function (result) {
                     if (result.success) {
                         $('#modalPopup').removeClass('show');
-                        isEdit ?  alert('Record updated successfully.') :  alert('Record saved successfully.');                       
+                        showGovukAlert(isEdit ? 'Record updated successfully.' : 'Record saved successfully.');
                         reloadTestReqmtGrid(currentSelectedTestCode);
                     } else {
                         displayServerValidationErrors(result.errors, result.message, '#modaPopupBody');
                     }
                 },
-                error: function () { alert('Request failed. Please try again.'); }
+                error: function () { showGovukAlert('Request failed. Please try again.'); }
             });
         }
 
         function deleteTestReqmt(rowData) {
             var testCode = encodeURIComponent(currentSelectedTestCode || '');
             var buyer    = encodeURIComponent($(rowData).data('id') || '');
-            if (!confirm('Delete this Test Requirement record?')) return;
-            $.ajax({
-                url: '/PACT/TestCapability/DeleteTestReqmt?testCode=' + testCode + '&buyer=' + buyer,
-                type: 'DELETE',
-                headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
-                success: function (result) {
-                    if (result.success) {
-                        reloadTestReqmtGrid(currentSelectedTestCode);
-                    } else {
-                        var msg = result.message ? result.message : 'Delete failed.';
-                        alert(msg);
-                    }
-                }
+            showGovukConfirm('Delete this Test Requirement record?').then(function (confirmed) {
+                if (!confirmed) return;
+                $.ajax({
+                    url: '/PACT/TestCapability/DeleteTestReqmt?testCode=' + testCode + '&buyer=' + buyer,
+                    type: 'DELETE',
+                    headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
+                    success: function (result) {
+                        if (result.success) {
+                            reloadTestReqmtGrid(currentSelectedTestCode);
+                            showGovukAlert('Test Requirement record deleted successfully.');
+                        } else {
+                            showGovukAlert(result.message ? result.message : 'Delete failed.');
+                        }
+                    },
+                    error: function () { showGovukAlert('An error occurred while deleting.'); }
+                });
             });
         }
 

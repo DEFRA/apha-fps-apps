@@ -117,7 +117,8 @@
 
         function deleteInvoice(btn) {
             var id = $(btn).data('id');
-            if (confirm('Delete this invoice?')) {
+            showGovukConfirm('Delete this invoice?').then(function (confirmed) {
+                if (!confirmed) return;
                 $.ajax({
                     url: '/PACT/ProjectInvoiceSubContract/DeleteInvoice',
                     type: 'DELETE',
@@ -126,13 +127,14 @@
                         if (response.success) {
                             getInvoicesGridManager()?.reloadGrid({ page: 1 });
                             refreshInvoiceTotalAmount();
+                            showGovukAlert('Invoice deleted successfully.');
                         } else {
-                            alert('Error: ' + response.message);
+                            showGovukAlert('Error: ' + response.message);
                         }
                     },
-                    error: function () { alert('An error occurred while deleting.'); }
+                    error: function () { showGovukAlert('An error occurred while deleting.'); }
                 });
-            }
+            });
         }
 
         function saveInvoice() {
@@ -193,7 +195,8 @@
 
         function deleteSubContract(btn) {
             var id = $(btn).data('id');
-            if (confirm('Delete this sub-contract?')) {
+            showGovukConfirm('Delete this sub-contract?').then(function (confirmed) {
+                if (!confirmed) return;
                 $.ajax({
                     url: '/PACT/ProjectInvoiceSubContract/DeleteSubContract',
                     type: 'DELETE',
@@ -202,13 +205,14 @@
                         if (response.success) {
                             getSubContractsGridManager()?.reloadGrid({ page: 1 });
                             refreshSubContractTotalAmount();
+                            showGovukAlert('Sub-contract deleted successfully.');
                         } else {
-                            alert('Error: ' + response.message);
+                            showGovukAlert('Error: ' + response.message);
                         }
                     },
-                    error: function () { alert('An error occurred while deleting.'); }
+                    error: function () { showGovukAlert('An error occurred while deleting.'); }
                 });
-            }
+            });
         }
 
         function saveSubContract() {

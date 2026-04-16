@@ -10,25 +10,39 @@
 </div>
 
 <div class="modal-body">
-    @* hidden state used by executeCopyBulkWorkGroup() *@
-    <input type="hidden" id="cwg_sourceJobCode" value="@sourceJobCodeId" />
-    <input type="hidden" id="cwg_parentProject"  value="@parentProject" />
-    <input type="hidden" id="cwg_isAll"          value="false" />
-    <div id="cwg_workGroupsHidden"></div>
+    <form id="copyWorkGroupForm">
+        @* hidden state used by executeCopyBulkWorkGroup() *@
+        <input type="hidden" id="cwg_sourceJobCode" value="@sourceJobCodeId" />
+        <input type="hidden" id="cwg_parentProject"  value="@parentProject" />
+        <input type="hidden" id="cwg_isAll"          value="false" />
+        <div id="cwg_workGroupsHidden"></div>
 
-    <div style="padding-bottom:0; padding:0;">
-        <div class="govuk-form-group sup_margin_bottom_10">
-            <label class="govuk-label" for="dpTargetJobcode">Select target Job code</label>
-            <select class="govuk-select sup_select_option_width_100 govuk-!-font-size-16"
-                    id="dpTargetJobcode" name="dpTargetJobcode">
-                <option value="">-- Select --</option>
-                @foreach (var item in targetJobCodes)
-                {
-                    <option value="@item.Value">@item.Text</option>
-                }
-            </select>
+        <!-- Validation error summary -->
+        <div class="govuk-error-summary" role="alert"
+             aria-labelledby="cwg-error-summary-title" tabindex="-1" style="display:none;">
+            <h2 class="govuk-error-summary__title" id="cwg-error-summary-title">
+                There is a problem
+            </h2>
+            <div class="govuk-error-summary__body">
+                <ul class="govuk-list govuk-error-summary__list"></ul>
+            </div>
         </div>
-    </div>
+
+        <div style="padding-bottom:0; padding:0;">
+            <div class="govuk-form-group sup_margin_bottom_10">
+                <label class="govuk-label" for="dpTargetJobcode">Select target Job code <span class="sup_color_red">*</span></label>
+                <select class="govuk-select sup_select_option_width_100 govuk-!-font-size-16"
+                        id="dpTargetJobcode" name="dpTargetJobcode">
+                    <option value="">-- Select --</option>
+                    @foreach (var item in targetJobCodes)
+                    {
+                        <option value="@item.Value">@item.Text</option>
+                    }
+                </select>
+                <span data-valmsg-for="dpTargetJobcode" class="govuk-error-message field-validation-valid" style="display:none;"></span>
+            </div>
+        </div>
+    </form>
 </div>
 
 <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center; flex-direction:row;">

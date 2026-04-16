@@ -29,7 +29,7 @@
 
         <!-- Job Code -->
         <div class="govuk-form-group">
-            <label class="govuk-label govuk-!-font-weight-bold" asp-for="JobCodeId">Job Code</label>
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="JobCodeId">Job Code <span class="sup_color_red">*</span></label>
             @if (isEdit)
             {
                 <input type="hidden" asp-for="JobCodeId" />
@@ -51,7 +51,7 @@
 
         <!-- Type -->
         <div class="govuk-form-group">
-            <label class="govuk-label govuk-!-font-weight-bold" asp-for="Type">Type:</label>            
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="Type">Type</label>            
             <select asp-for="Type" asp-items="ViewBag.Types" class="govuk-select govuk-!-font-size-16">
                 <option value="">--select type--</option>
             </select>
