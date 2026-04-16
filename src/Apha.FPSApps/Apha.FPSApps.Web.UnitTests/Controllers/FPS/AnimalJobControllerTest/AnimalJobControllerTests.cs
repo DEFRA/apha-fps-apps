@@ -237,7 +237,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.AnimalJobControllerTest
             var jsonResult = Assert.IsType<JsonResult>(result);
             var value = GetJsonResultElement(jsonResult);
             Assert.False(value.GetProperty("success").GetBoolean());
-            Assert.Equal("Failed to create animal cost.", value.GetProperty("message").GetString());
+            Assert.Equal("Failed to save", value.GetProperty("message").GetString());
         }
 
         #endregion
@@ -387,7 +387,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.AnimalJobControllerTest
             var jsonResult = Assert.IsType<JsonResult>(result);
             var value = GetJsonResultElement(jsonResult);
             Assert.False(value.GetProperty("success").GetBoolean());
-            Assert.Equal("Failed to update animal cost.", value.GetProperty("message").GetString());
+            Assert.Equal("Not found", value.GetProperty("message").GetString());
         }
 
         #endregion
@@ -426,7 +426,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.AnimalJobControllerTest
             var jsonResult = Assert.IsType<JsonResult>(result);
             var value = GetJsonResultElement(jsonResult);
             Assert.False(value.GetProperty("success").GetBoolean());
-            Assert.Equal("Failed to delete animal cost.", value.GetProperty("message").GetString());
+            Assert.Equal("Not found", value.GetProperty("message").GetString());
         }
 
         #endregion

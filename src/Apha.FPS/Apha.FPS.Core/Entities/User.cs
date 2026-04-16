@@ -13,6 +13,7 @@
         public string? Comments { get; set; }
 
         public string? Dt2Username { get; set; }
+        public string? UserEmail { get; set; }
     }
 }
 
