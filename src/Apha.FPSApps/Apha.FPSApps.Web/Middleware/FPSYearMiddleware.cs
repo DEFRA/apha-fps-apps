@@ -26,8 +26,13 @@ namespace Apha.FPSApps.Web.Middleware
             IYearMasterService yearMasterService,
             IAppStateService appStateService)
         {
+            var area = context.GetRouteData()?.Values["area"]?.ToString();
             var path = context.Request.Path.Value;
-            if ((path is not null && Path.HasExtension(path)))
+
+            if ((path is not null && Path.HasExtension(path))
+                || !(string.Equals(area, "FPS", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(area, "PACT", StringComparison.OrdinalIgnoreCase))
+                )
             {
                 await _next(context);
                 return;
@@ -70,7 +75,6 @@ namespace Apha.FPSApps.Web.Middleware
             fyContext.Year = year;
             context.Items["SelectedFPSYear"] = year;
 
-            var area = context.GetRouteData()?.Values["area"]?.ToString();
             fyContext.IsReadOnly = ResolveIsReadOnly(area, yearStatus);
 
             await _next(context);
@@ -112,9 +116,9 @@ namespace Apha.FPSApps.Web.Middleware
         private static bool ResolveIsReadOnly(string? area, YearStatus yearStatus) =>
             area?.ToUpperInvariant() switch
             {
-                "FPS"  => yearStatus is not (YearStatus.Planned or YearStatus.Open),
+                "FPS" => yearStatus is not (YearStatus.Planned or YearStatus.Open),
                 "PACT" => yearStatus != YearStatus.Open,
-                _      => false
+                _ => false
             };
 
         private static int GetCurrentFPSYear()
