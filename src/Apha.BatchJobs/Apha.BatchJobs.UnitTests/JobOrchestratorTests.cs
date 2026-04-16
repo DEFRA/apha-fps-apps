@@ -227,6 +227,7 @@ public sealed class JobOrchestratorTests
 
         string? capturedLockRunId = null;
         string? capturedRecordRunId = null;
+        string? capturedReleaseRunId = null;
 
         _lockRepo.TryAcquireLockAsync("ConsistentJob", Arg.Do<string>(id => capturedLockRunId = id),
                  Arg.Any<int>(), Arg.Any<CancellationToken>())
@@ -237,13 +238,19 @@ public sealed class JobOrchestratorTests
                  Arg.Any<CancellationToken>())
                  .Returns(5);
 
-        // Act
-        await _orchestrator.RunAsync("ConsistentJob", RunMode.Scheduled);
+        _lockRepo.ReleaseLockAsync("ConsistentJob", Arg.Do<string>(id => capturedReleaseRunId = id), Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
 
-        // Assert — lock RunId and record RunId are the same
+        // Act
+        var result = await _orchestrator.RunAsync("ConsistentJob", RunMode.Scheduled);
+
+        // Assert — RunId correlation is preserved across lock acquire, execution record, lock release, and final result.
         Assert.NotNull(capturedLockRunId);
         Assert.NotNull(capturedRecordRunId);
+        Assert.NotNull(capturedReleaseRunId);
         Assert.Equal(capturedRecordRunId, capturedLockRunId);
+        Assert.Equal(capturedRecordRunId, capturedReleaseRunId);
+        Assert.Equal(capturedRecordRunId, result.RunId);
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -302,7 +309,7 @@ public sealed class JobOrchestratorTests
         job.Name.Returns("RetrySuccessJob");
         job.ExecuteAsync(Arg.Any<CancellationToken>())
             .Returns(
-                Task.FromException(new InvalidOperationException("Transient failure")),
+                Task.FromException(new TimeoutException("Transient failure")),
                 Task.CompletedTask);
 
         _factory.Create("RetrySuccessJob").Returns(job);
@@ -341,9 +348,9 @@ public sealed class JobOrchestratorTests
 
         var job = Substitute.For<IBatchJob>();
         job.Name.Returns("RetryFailJob");
-        // Use a generic transient exception (IsRetryable returns true) so all 3 attempts run.
+        // Use explicit transient infrastructure exception so all attempts run.
         job.ExecuteAsync(Arg.Any<CancellationToken>())
-            .Returns(Task.FromException(new Exception("Transient persistent failure")));
+            .Returns(Task.FromException(new TimeoutException("Transient persistent failure")));
 
         _factory.Create("RetryFailJob").Returns(job);
         _lockRepo.TryAcquireLockAsync("RetryFailJob", Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
@@ -354,7 +361,7 @@ public sealed class JobOrchestratorTests
             .Returns(Task.CompletedTask);
 
         // Act
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<TimeoutException>(
             () => orchestrator.RunAsync("RetryFailJob", RunMode.Scheduled));
 
         // Assert (first attempt + 2 retries)
@@ -415,7 +422,7 @@ public sealed class JobOrchestratorTests
         Assert.False(JobOrchestrator.IsRetryable(new InvalidOperationException()));
         Assert.False(JobOrchestrator.IsRetryable(new NotSupportedException()));
         Assert.False(JobOrchestrator.IsRetryable(new NotImplementedException()));
-        Assert.True(JobOrchestrator.IsRetryable(new Exception("generic transient")));
+        Assert.False(JobOrchestrator.IsRetryable(new Exception("generic transient")));
         Assert.True(JobOrchestrator.IsRetryable(new TimeoutException()));
     }
 

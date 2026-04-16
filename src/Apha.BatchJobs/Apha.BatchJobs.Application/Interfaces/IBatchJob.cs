@@ -6,6 +6,12 @@ public interface IBatchJob
     /// <summary>Gets the unique name of the batch job.</summary>
     string Name { get; }
 
+    /// <summary>
+    /// Gets the explicit idempotency strategy used by this job.
+    /// Examples: Upsert, DedupKey, Checkpointing.
+    /// </summary>
+    string IdempotencyStrategy { get; }
+
     /// <summary>Executes the batch job asynchronously.</summary>
     /// <param name="cancellationToken">Token used to cancel the operation.</param>
     /// <returns>A task representing the async operation.</returns>

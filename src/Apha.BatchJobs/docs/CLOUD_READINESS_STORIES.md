@@ -13,6 +13,7 @@ Acceptance criteria:
 - Worker uses host lifecycle cancellation token as the primary shutdown signal.
 - A bounded graceful-shutdown window (25 s) is linked with host stopping so the process exits before ECS forces termination at 30 s.
 - Job execution and retry delays both honour the linked cancellation token.
+- All long-running operations must be cancellation-aware (DB calls, external APIs, loops).
 - Partial work during cancellation is deterministic: job records are updated before the process exits.
 - Startup logs include JobName, RunId, and RunMode.
 - Shutdown/cancellation logs include JobName, RunId, FailureCategory, and remaining shutdown window.
@@ -35,7 +36,7 @@ Goal:
 - Add explicit retry/backoff policy for transient failures at application layer (not only EF connection retries).
 
 Retryable exceptions (transient infrastructure failures):
-- TimeoutException, database/connectivity errors, infrastructure-specific exceptions.
+- TimeoutException, explicitly enumerated infrastructure exceptions (e.g., NpgsqlException, HttpRequestException).
 - Note: Avoid overly broad Exception (base) catch; prefer explicit infra exceptions.
 
 Non-retryable exceptions (never retried):
@@ -68,6 +69,7 @@ Acceptance criteria:
 - Summary fields: RunId, ExecutionId, JobName, RunMode, Outcome, FailureCategory, ExitCode, TotalDurationMs, StartedAt, EndedAt.
 - Summary includes human-readable message field (helps ops without parsing codes).
 - Summary is emitted for success, failure, skip, and cancellation — including early-exit paths.
+- Summary event is emitted to both structured logs and stdout (for container-level visibility).
 - Exit codes are stable and deterministic (1:1 mapping with FailureCategory).
 - Only one terminal summary event emitted per run (in the finally block).
 - Summary is emitted even if logging pipeline partially fails (fallback logging).
@@ -104,6 +106,7 @@ Acceptance criteria:
 - Timing-sensitive assertions validate retry delay and lock expiry, not only outcomes.
 - CI degradation-test stage is surfaced separately (not buried in logs) with explicit pass/fail.
 - Structured log fields are validated in at least one integration test.
+- At least one test validates correlation (RunId propagation across layers).
 - Retry exhaustion scenario verifies no partial side-effects are left behind.
 - All exit codes are asserted per scenario (not just behavior).
 
@@ -133,6 +136,7 @@ Acceptance criteria:
 - Repeated execution of the same job does not duplicate output records.
 - Partial failures can resume safely or fail safely without corrupting state.
 - Idempotency strategy is defined per job type (e.g., Upsert, Dedup key, Checkpointing).
+- Each job explicitly declares its idempotency strategy in code/documentation.
 - Idempotency boundary is clearly documented (DB vs external systems).
 - External writes are protected against duplicate invocation via idempotency/correlation key.
 - Concurrent duplicate trigger scenario is validated (race + retry combined).
@@ -155,6 +159,7 @@ Goal:
 
 Acceptance criteria:
 - Every log line in worker, orchestrator, and repository layers includes RunId and JobName where applicable.
+- RunId is the primary query key for all operational troubleshooting.
 - ExecutionId is included once it is available.
 - Correlation is preserved across retry attempts, tasks, and async boundaries.
 - Log schema is standardised and documented: RunId, ExecutionId, JobName, RunMode, Attempt, Status.
@@ -198,3 +203,4 @@ These principles apply across all stories and must be validated holistically:
 - Validate exit code mapping is exhaustive (one entry per FailureCategory).
 - Run integration tests (degradation scenarios) in CI separately from unit tests.
 - Ensure ops can query any run by RunId alone (correlation is complete).
+- All failure scenarios must be reproducible via test or documented scenario (no unknown failure states).

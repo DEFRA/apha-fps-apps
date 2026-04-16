@@ -174,27 +174,45 @@ finally
     {
         var endedAtUtc = DateTime.UtcNow;
         var durationMs = (endedAtUtc - startedAt).TotalMilliseconds;
-        var logLevel = failureCategory == "LockContentionSkip" ? LogLevel.Information : LogLevel.Error;
+        var logLevel = failureCategory switch
+        {
+            "None" => LogLevel.Information,
+            "LockContentionSkip" => LogLevel.Information,
+            "Cancellation" => LogLevel.Warning,
+            _ => LogLevel.Error
+        };
         var humanReadableMessage = GenerateHumanReadableMessage(runOutcome, failureCategory);
+        var summaryLine = BuildSummaryLine(
+            startedAt,
+            endedAtUtc,
+            runOutcome,
+            failureCategory,
+            exitCode,
+            humanReadableMessage,
+            requestedJobName ?? "Unknown",
+            capturedRunId ?? "N/A",
+            capturedExecutionId?.ToString() ?? "N/A",
+            requestedRunMode,
+            durationMs,
+            gracefulShutdownCompleted);
+
+        // Always emit one terminal summary to stdout for container-level visibility.
+        Console.WriteLine(summaryLine);
         
         var logger = loggerFactory?.CreateLogger("BatchJobs.Summary");
         
-        // Log at appropriate level (informational for skips, error for actual failures)
+        // Log at appropriate level by outcome semantics.
         if (logLevel == LogLevel.Information)
         {
-            logger?.LogInformation(
-                "Run completed | StartedAt={StartTime} | EndedAt={EndTime} | Outcome={Outcome} | FailureCategory={FailureCategory} | ExitCode={ExitCode} | Message={Message} | JobName={JobName} | RunId={RunId} | ExecutionId={ExecutionId} | RunMode={RunMode} | TotalDurationMs={DurationMs} | GracefulShutdownCompleted={GracefulShutdownCompleted}",
-                startedAt, endedAtUtc, runOutcome, failureCategory, exitCode, humanReadableMessage,
-                requestedJobName ?? "Unknown", capturedRunId ?? "N/A", capturedExecutionId?.ToString() ?? "N/A",
-                requestedRunMode, durationMs, gracefulShutdownCompleted);
+            logger?.LogInformation(summaryLine);
+        }
+        else if (logLevel == LogLevel.Warning)
+        {
+            logger?.LogWarning(summaryLine);
         }
         else
         {
-            logger?.LogError(
-                "Run completed | StartedAt={StartTime} | EndedAt={EndTime} | Outcome={Outcome} | FailureCategory={FailureCategory} | ExitCode={ExitCode} | Message={Message} | JobName={JobName} | RunId={RunId} | ExecutionId={ExecutionId} | RunMode={RunMode} | TotalDurationMs={DurationMs} | GracefulShutdownCompleted={GracefulShutdownCompleted}",
-                startedAt, endedAtUtc, runOutcome, failureCategory, exitCode, humanReadableMessage,
-                requestedJobName ?? "Unknown", capturedRunId ?? "N/A", capturedExecutionId?.ToString() ?? "N/A",
-                requestedRunMode, durationMs, gracefulShutdownCompleted);
+            logger?.LogError(summaryLine);
         }
     }
     catch
@@ -216,6 +234,23 @@ finally
 }
 
 return exitCode;
+
+static string BuildSummaryLine(
+    DateTime startedAt,
+    DateTime endedAt,
+    string outcome,
+    string failureCategory,
+    int exitCode,
+    string message,
+    string jobName,
+    string runId,
+    string executionId,
+    string runMode,
+    double totalDurationMs,
+    bool gracefulShutdownCompleted)
+{
+    return $"Run completed | StartedAt={startedAt:O} | EndedAt={endedAt:O} | Outcome={outcome} | FailureCategory={failureCategory} | ExitCode={exitCode} | Message={message} | JobName={jobName} | RunId={runId} | ExecutionId={executionId} | RunMode={runMode} | TotalDurationMs={totalDurationMs:F0} | GracefulShutdownCompleted={gracefulShutdownCompleted}";
+}
 
 static string GenerateHumanReadableMessage(string outcome, string failureCategory)
 {

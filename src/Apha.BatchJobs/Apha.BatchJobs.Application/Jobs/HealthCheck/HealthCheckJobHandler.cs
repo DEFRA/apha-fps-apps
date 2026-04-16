@@ -17,6 +17,12 @@ public sealed class HealthCheckJobHandler : IBatchJob
     public string Name => "HealthCheck";
 
     /// <summary>
+    /// Explicit idempotency strategy declaration for this job.
+    /// HealthCheck is read/validate-only and produces no mutable side effects.
+    /// </summary>
+    public string IdempotencyStrategy => "NoWriteValidation";
+
+    /// <summary>
     /// Initializes a new instance of the HealthCheckJobHandler.
     /// </summary>
     /// <param name="logger">Logger instance.</param>

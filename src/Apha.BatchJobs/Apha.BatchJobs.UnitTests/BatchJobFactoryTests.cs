@@ -65,6 +65,7 @@ public sealed class BatchJobFactoryTests
     private sealed class DummyBatchJob : IBatchJob
     {
         public string Name => "Dummy";
+        public string IdempotencyStrategy => "Upsert";
 
         public Task ExecuteAsync(CancellationToken cancellationToken = default)
         {
@@ -75,6 +76,7 @@ public sealed class BatchJobFactoryTests
     private sealed class ArchiveBatchJob : IBatchJob
     {
         public string Name => "ArchiveJob";
+        public string IdempotencyStrategy => "Checkpointing";
 
         public Task ExecuteAsync(CancellationToken cancellationToken = default)
         {
@@ -85,6 +87,7 @@ public sealed class BatchJobFactoryTests
     private sealed class DuplicateNameJobA : IBatchJob
     {
         public string Name => "SameName";
+        public string IdempotencyStrategy => "DedupKey";
 
         public Task ExecuteAsync(CancellationToken cancellationToken = default)
         {
@@ -95,6 +98,7 @@ public sealed class BatchJobFactoryTests
     private sealed class DuplicateNameJobB : IBatchJob
     {
         public string Name => "SameName";
+        public string IdempotencyStrategy => "DedupKey";
 
         public Task ExecuteAsync(CancellationToken cancellationToken = default)
         {
