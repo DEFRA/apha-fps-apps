@@ -150,7 +150,7 @@
                                               asp-route-parentproject="@parentproject"
                                               method="post"
                                               class="govuk-form-group selectedProjectForm"
-                                              id="formPimsDetail">
+                                              id="formProposedDetail">
                                             @Html.AntiForgeryToken()
                                             <fieldset class="govuk-fieldset">
                                                 <input type="hidden" asp-for="ProposedProjectDetails.Id" />
@@ -312,7 +312,7 @@
                           asp-route-parentproject="@parentproject"
                           method="post"
                           class="govuk-form-group selectedProjectForm"
-                          id="formPimsDetail">
+                          id="formPimsDetailRight">
                         @Html.AntiForgeryToken()
                         <div class="flex-column">
                             <fieldset class="govuk-fieldset">
@@ -600,12 +600,12 @@
 
         // ── PIMS Details save ────────────────────────────────────────────
         function savePimsDetail() {
-            const form = document.getElementById('formPimsDetail');
-            const token = form.querySelector('input[name="__RequestVerificationToken"]').value;
+            const form = document.getElementById('formPimsDetailRight');
+            const token = form.querySelector('input[name="__RequestVerificationToken"]').value || null;
             const payload = {
-                Version: form.querySelector('[name="ProjectDetails.Version"]').value,
-                FileRef: form.querySelector('[name="ProjectDetails.FileRef"]').value,
-                CustomerRef: form.querySelector('[name="ProjectDetails.CustomerRef"]').value,
+                Version: form.querySelector('[name="ProjectDetails.Version"]').value || null,
+                FileRef: form.querySelector('[name="ProjectDetails.FileRef"]').value || null,
+                CustomerRef: form.querySelector('[name="ProjectDetails.CustomerRef"]').value || null,
                 StartDate: form.querySelector('[name="ProjectDetails.StartDate"]').value || null,
                 EndDate: form.querySelector('[name="ProjectDetails.EndDate"]').value || null,
                 CostbookNumber: form.querySelector('[name="ProjectDetails.CostbookNumber"]').value,
