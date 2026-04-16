@@ -29,7 +29,7 @@
 
         <!-- Job Code -->
         <div class="govuk-form-group">
-            <label class="govuk-label govuk-!-font-weight-bold" asp-for="JobCodeId">Job Code:</label>
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="JobCodeId">Job Code</label>
             @if (isEdit)
             {
                 <input type="hidden" asp-for="JobCodeId" />
@@ -44,7 +44,7 @@
 
         <!-- Name / Description -->
         <div class="govuk-form-group">
-            <label class="govuk-label govuk-!-font-weight-bold" asp-for="JobCodeName">Name:</label>
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="JobCodeName">Name</label>
             <textarea class="govuk-textarea govuk-!-font-size-16 sup_margin_0"
                       asp-for="JobCodeName" rows="3"></textarea>
         </div>
@@ -59,7 +59,7 @@
 
         <!-- Work Group -->
         <div class="govuk-form-group">
-            <label class="govuk-label govuk-!-font-weight-bold" asp-for="JobCodeWorkGroup">Work Group:</label>
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="JobCodeWorkGroup">Work Group</label>
             <select class="govuk-select govuk-!-font-size-16" asp-for="JobCodeWorkGroup"
                     asp-items="@(ViewBag.WorkGroups as List<SelectListItem>)">
                 <option value="">--select--</option>

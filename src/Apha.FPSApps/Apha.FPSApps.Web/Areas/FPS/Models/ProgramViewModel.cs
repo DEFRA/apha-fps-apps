@@ -9,11 +9,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [Required(ErrorMessage = "Program number is required")]
         [StringLength(10, ErrorMessage = "Program number cannot exceed 10 characters")]
         [Display(Name = "Program Number")]
+        [GridColumn(IsFilterable = true)]
         public required string ProgramNo { get; set; }
         
        
         [StringLength(80, ErrorMessage = "Program name cannot exceed 80 characters")]
         [Display(Name = "Program Name")]
+        [GridColumn(IsFilterable = true)]
         public required string ProgramName { get; set; }
 
 
@@ -24,6 +26,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         
         [StringLength(50, ErrorMessage = "Manager name cannot exceed 50 characters")]
         [Display(Name = "Manager")]
+        [GridColumn(IsFilterable = true)]
         public string? Manager { get; set; }
        
       
