@@ -92,9 +92,10 @@
                                         <a class="dropdown-item" style="display: flex; justify-content: space-between;" href="#">Plan Projects  <img src="~/images/right-arrow.png" alt="Arrow for Plan Projects Sub menu" width="30px" height="30px"></a>
                                         <ul class="dropdown-menu">
                                             <li>
-                                                <a class="dropdown-item" href="#">
-                                                    Set Up A New Projects
+                                                <a class="dropdown-item" asp-area="FPS" asp-controller="ProgrammeNewProject" asp-action="Add">
+                                                 Set Up A New Projects
                                                 </a>
+
                                             </li>
                                             <li>
                                                 <a class="dropdown-item" asp-area="FPS" asp-controller="ProjectPlanning" asp-action="Index">

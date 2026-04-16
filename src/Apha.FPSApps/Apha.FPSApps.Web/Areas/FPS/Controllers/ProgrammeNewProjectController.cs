@@ -40,7 +40,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         // GET: ProgrammeNewProject/Add
         public async Task<IActionResult> Add()
         {
-            var model = new ProgrammeNewProjectViewModel();
+            var model = new ProgrammeNewProjectViewModel { Disease = "Not Specified" };
             await PopulateDropdownsAsync(model);
             ViewBag.IsEditMode = false;
             return View("ProjectAddEdit", model);
@@ -230,14 +230,14 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var accountCodes = (await accountCodeTask).Data ?? new();
             model.IncomeAccountCodeList = accountCodes
                 .Where(ac => !string.IsNullOrEmpty(ac.Code))
-                .Select(ac => new SelectListItem(ac.Code, ac.Code, ac.Code == model.IncomeAccountCode))
+                .Select(ac => new SelectListItem($"{ac.Code} - {ac.Description ?? string.Empty}", ac.Code, ac.Code == model.IncomeAccountCode))
                 .Prepend(new SelectListItem("", ""))
                 .ToList();
 
             var subAccounts = (await subAccountTask).Data ?? new();
             model.SubAccountCodeList = subAccounts
                 .Where(sa => !string.IsNullOrEmpty(sa.SubAccountCode))
-                .Select(sa => new SelectListItem(sa.SubAccountCode, sa.SubAccountCode, sa.SubAccountCode == model.SubAccountCode))
+                .Select(sa => new SelectListItem($"{sa.SubAccountCode} - {sa.SubAccount ?? string.Empty}", sa.SubAccountCode, sa.SubAccountCode == model.SubAccountCode))
                 .Prepend(new SelectListItem("", ""))
                 .ToList();
 
@@ -275,6 +275,16 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 .Select(p => new SelectListItem($"{p.ProgramNo} | {p.ProgramName ?? string.Empty}", p.ProgramNo, p.ProgramNo == model.Program))
                 .Prepend(new SelectListItem("", ""))
                 .ToList();
+
+            model.ProgrammeList = programs
+                .Where(p => !string.IsNullOrEmpty(p.ProgramNo))
+                .Select(p => new SelectListItem
+                {
+                    Value = p.ProgramNo,
+                    Text = $"{p.ProgramNo} - {p.ProgramName ?? string.Empty}"
+                })
+                .ToList();
+            model.SelectedProgramNo = model.Program ?? string.Empty;
 
             model.IsDefraProjectList = new List<SelectListItem>
             {

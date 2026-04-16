@@ -1,6 +1,7 @@
 ﻿using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
+using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -98,26 +99,36 @@ namespace Apha.FPS.Application.Services
 
         public async Task ChangeProjectCodeAsync(string oldCode, string newCode)
         {
-            ArgumentNullException.ThrowIfNull(oldCode);
-            ArgumentNullException.ThrowIfNull(newCode);
-
+            var errors = new List<BusinessValidationError>();
+            if (string.IsNullOrWhiteSpace(oldCode))
+                errors.Add(new BusinessValidationError("Old project code is required.", "OLD_CODE_REQUIRED"));
             if (string.IsNullOrWhiteSpace(newCode))
-                throw new ArgumentException("New project code cannot be empty.", nameof(newCode));
+                errors.Add(new BusinessValidationError("New project code cannot be empty.", "NEW_CODE_REQUIRED"));
+            if (errors.Count > 0)
+                throw new BusinessValidationErrorException(errors);
 
             bool newCodeExists = await _projectRepository.CheckProjectExistsAsync(newCode);
             if (newCodeExists)
-                throw new InvalidOperationException("This code is already in use.");
+                errors.Add(new BusinessValidationError("This code is already in use.", "CODE_ALREADY_EXISTS"));
 
             bool farmFileDataExists = await _projectRepository.CheckProjectExistsInFarmFileAsync(oldCode);
             if (farmFileDataExists)
-                throw new InvalidOperationException("Cannot change code, data exists in Farm File for old code.");
+                errors.Add(new BusinessValidationError("Cannot change code, data exists in Farm File for old code.", "FARM_FILE_DATA_EXISTS"));
+
+            if (errors.Count > 0)
+                throw new BusinessValidationErrorException(errors);
 
             await _projectRepository.ChangeProjectCodeAsync(oldCode, newCode);
         }
 
         public async Task DeleteProjectAndChildrenAsync(string parentProject)
         {
-            ArgumentNullException.ThrowIfNull(parentProject);
+            var errors = new List<BusinessValidationError>();
+            if (string.IsNullOrWhiteSpace(parentProject))
+                errors.Add(new BusinessValidationError("Parent project code is required.", "PARENT_PROJECT_REQUIRED"));
+            if (errors.Count > 0)
+                throw new BusinessValidationErrorException(errors);
+
             await _projectRepository.DeleteProjectAndChildrenAsync(parentProject);
         }
     }

@@ -25,6 +25,16 @@
                                 Plan Projects &gt; @(isEditMode ? "Edit Project" : "Set Up A New Project")
                             </nav>
                         </div>
+                        @if (!isEditMode)
+                        {
+                            <div style="display: flex; justify-content: flex-end; align-items: center; gap: 6px;" class="col-md-6">
+                                <label class="fw-bold mt-2" for="programmeSelect">Programme:</label>
+                                <select id="programmeSelect" asp-items="Model.ProgrammeList" asp-for="SelectedProgramNo"
+                                        class="form-select form-select-sm" style="width: auto; min-width: 260px;">
+                                    <option value="">-- Select Programme --</option>
+                                </select>
+                            </div>
+                        }
                     </div>
                 </div>
             </div>
@@ -142,7 +152,7 @@
                                 </div>
 
                                 <div class="govuk-form-group sup_margin_0">
-                                    <label class="govuk-label" asp-for="Manager">Manager:</label>
+                                    <label class="govuk-label required" asp-for="Manager">Manager:</label>
                                     <select asp-for="Manager" asp-items="@Model.ManagerList" class="govuk-select sup_select_option_width_100"></select>
                                     <span asp-validation-for="Manager" class="govuk-error-message" style="display:none;"></span>
                                 </div>
@@ -220,7 +230,7 @@
                                 </div>
 
                                 <div class="govuk-form-group sup_margin_0">
-                                    <label class="govuk-label" asp-for="SubAccountCode">Objective Code:</label>
+                                    <label class="govuk-label required" asp-for="SubAccountCode">Objective Code:</label>
                                     <select asp-for="SubAccountCode" asp-items="@Model.SubAccountCodeList" class="govuk-select sup_select_option_width_100"></select>
                                     <span asp-validation-for="SubAccountCode" class="govuk-error-message" style="display:none;"></span>
                                 </div>
@@ -280,6 +290,13 @@
             $.validator.unobtrusive.parse(document);
         }
 
+        $('#programmeSelect').on('change', function () {
+            var programDropdown = document.getElementById('Program');
+            if (programDropdown && !programDropdown.value) {
+                programDropdown.value = $(this).val();
+            }
+        });
+
         window.saveProject = function(formId) {
             const form = $('#' + formId);
             if (!form.valid()) { displayValidationErrors(form); return; }
@@ -332,10 +349,10 @@
             .then(result => {
                 if (result.success) {
                     if (!isEdit && result.data?.parentProject) {
+                        alert(result.message || 'Project created successfully.');
                         window.location.href = '@Url.Action("Edit", "ProgrammeNewProject", new { area = "FPS" })' + '?parentProject=' + encodeURIComponent(result.data.parentProject);
                     } else {
                         alert(result.message || 'Operation completed successfully!');
-                        window.location.href = '@Url.Action("Index", "ProgrammeNewProject", new { area = "FPS" })';
                     }
                 } else {
                     showErrors(result.errors);

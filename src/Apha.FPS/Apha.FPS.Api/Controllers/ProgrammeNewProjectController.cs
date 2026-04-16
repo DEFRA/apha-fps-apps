@@ -64,7 +64,7 @@ namespace Apha.FPS.Api.Controllers
         public async Task<ActionResult<ProgrammeNewProjectRes>> UpdateProjectAsync(string parentProject, [FromBody] ProgrammeNewProjectReq request)
         {
             if (parentProject != request.ParentProject)
-                return BadRequest("Route project code does not match request body.");
+                throw new ArgumentException("Route project code does not match request body.");
             var projectDto = _mapper.Map<ProjectDto>(request);
             var updated = await _projectService.UpdateProjectAsync(projectDto);
             return Ok(_mapper.Map<ProgrammeNewProjectRes>(updated));
@@ -74,7 +74,7 @@ namespace Apha.FPS.Api.Controllers
         public async Task<IActionResult> DeleteProjectAndChildrenAsync(string parentProject)
         {
             if (string.IsNullOrWhiteSpace(parentProject))
-                return BadRequest("Parent project cannot be empty.");
+                throw new ArgumentException("Parent project cannot be empty.", nameof(parentProject));
             await _projectService.DeleteProjectAndChildrenAsync(parentProject);
             return Ok(true);
         }
@@ -83,7 +83,7 @@ namespace Apha.FPS.Api.Controllers
         public async Task<IActionResult> ChangeProjectCodeAsync([FromBody] ChangeProjectCodeReq request)
         {
             if (string.IsNullOrWhiteSpace(request.OldCode) || string.IsNullOrWhiteSpace(request.NewCode))
-                return BadRequest("Both old and new project codes are required.");
+                throw new ArgumentException("Both old and new project codes are required.");
             var existing = await _projectService.GetProjectByIdAsync(request.OldCode);
             if (existing == null)
                 return NotFound($"Project with code '{request.OldCode}' not found.");
