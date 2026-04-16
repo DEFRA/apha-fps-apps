@@ -286,7 +286,7 @@ docker run --rm \
   -e DatabaseConnection__Port=5432 \
   -e DatabaseConnection__Database=batch_jobs_foundation_db \
   -e DatabaseConnection__Username=postgres \
-  -e DatabaseConnection__Password=password \
+  -e DatabaseConnection__Password=<REDACTED> \
   batch-test
 ```
 

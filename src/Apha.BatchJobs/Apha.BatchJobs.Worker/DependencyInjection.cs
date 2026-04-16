@@ -1,7 +1,6 @@
 using Apha.BatchJobs.Application;
 using Apha.BatchJobs.Application.Factory;
 using Apha.BatchJobs.Application.Interfaces;
-using Apha.BatchJobs.Application.Jobs.HealthCheck;
 using Apha.BatchJobs.Domain.Configuration;
 using Apha.BatchJobs.Domain.Interfaces;
 using Apha.BatchJobs.Infrastructure.Data;
@@ -62,15 +61,26 @@ public static class ServiceCollectionSetup
 
         services.AddScoped<IBatchLockRepository, BatchLockRepository>();
         services.AddScoped<IJobExecutionRepository, JobExecutionRepository>();
-        services.AddScoped<HealthCheckJobHandler>();
 
-        var jobRegistry = new Dictionary<string, Type>
-        {
-            { "HealthCheck", typeof(HealthCheckJobHandler) }
-        };
-
-        services.AddScoped<IBatchJobFactory>(sp => new BatchJobFactory(sp, jobRegistry));
+        RegisterBatchJobs(services);
+        services.AddScoped<IBatchJobFactory>(sp => new BatchJobFactory(sp));
         services.AddScoped<IJobOrchestrator, JobOrchestrator>();
         services.AddSingleton(config);
+    }
+
+    private static void RegisterBatchJobs(IServiceCollection services)
+    {
+        var batchJobType = typeof(IBatchJob);
+        var applicationAssembly = batchJobType.Assembly;
+
+        var jobTypes = applicationAssembly
+            .GetTypes()
+            .Where(t => t is { IsClass: true, IsAbstract: false } && batchJobType.IsAssignableFrom(t))
+            .ToList();
+
+        foreach (var jobType in jobTypes)
+        {
+            services.AddScoped(typeof(IBatchJob), jobType);
+        }
     }
 }

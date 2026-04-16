@@ -143,16 +143,16 @@ jobs:
 The application supports configuration through environment variables:
 
 ```
-ASPNETCORE_ENVIRONMENT           = Production (default)
-DatabaseConnection__Server        = postgres host (injected via ECS task or SSM)
-DatabaseConnection__Port          = 5432
-DatabaseConnection__Database      = batch_jobs_foundation_db
-DatabaseConnection__Username      = (injected via ECS Secrets)
-DatabaseConnection__Password      = (injected via ECS Secrets)
-DatabaseConnection__Timeout       = 30
-ApplicationInsights__Enabled       = true/false
-ApplicationInsights__InstrumentationKey = (injected via ECS Secrets)
+ASPNETCORE_ENVIRONMENT                          = Production (default)
+ConnectionStrings__BatchJobsConnectionString    = Host=<host>;Port=5432;Database=batch_jobs_foundation_db;Username=<user>;Password=<pass>;Timeout=30
+                                                  (supplied as a single env var or via ECS Secrets / SSM Parameter Store)
+ApplicationInsights__Enabled                    = true/false
+ApplicationInsights__InstrumentationKey         = (injected via ECS Secrets)
 ```
+
+> **Note:** The application reads a single `ConnectionStrings__BatchJobsConnectionString` key that follows
+> the standard .NET `ConnectionStrings` config section convention. The legacy `DatabaseConnection__*`
+> keys listed in earlier documentation were incorrect and have been removed.
 
 ## ECS Fargate Deployment
 
@@ -172,8 +172,8 @@ For ECS Fargate task definitions, reference the ECR image:
   ],
   "secrets": [
     {
-      "name": "DatabaseConnection__Password",
-      "valueFrom": "arn:aws:ssm:us-east-1:[account-id]:parameter/batch-jobs/db-password"
+      "name": "ConnectionStrings__BatchJobsConnectionString",
+      "valueFrom": "arn:aws:ssm:us-east-1:[account-id]:parameter/batch-jobs/connection-string"
     }
   ],
   "logConfiguration": {

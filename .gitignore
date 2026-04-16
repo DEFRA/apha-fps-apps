@@ -99,3 +99,6 @@ web.*.config
 
 # exclude files which shouldnt be git ignored
 !*.slnLaunch.user
+
+# Local DB tooling and scripts - intentionally not pushed to GitHub
+src/Apha.BatchJobs/database/

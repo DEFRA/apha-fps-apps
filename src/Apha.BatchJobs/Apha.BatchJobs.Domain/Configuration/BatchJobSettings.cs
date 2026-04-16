@@ -7,6 +7,8 @@ public sealed class BatchJobSettings
 {
     /// <summary>
     /// Maximum number of concurrent jobs that can run simultaneously.
+    /// Current runtime model is one ECS task per job execution, so this
+    /// setting is intentionally out-of-scope for now.
     /// </summary>
     public int MaxConcurrentJobs { get; set; } = 5;
 
@@ -17,11 +19,13 @@ public sealed class BatchJobSettings
 
     /// <summary>
     /// Number of retry attempts for failed jobs.
+    /// Retry policy wiring is planned in a future story.
     /// </summary>
     public int RetryAttempts { get; set; } = 3;
 
     /// <summary>
     /// Delay in seconds between retry attempts.
+    /// Retry policy wiring is planned in a future story.
     /// </summary>
     public int RetryDelaySeconds { get; set; } = 60;
 

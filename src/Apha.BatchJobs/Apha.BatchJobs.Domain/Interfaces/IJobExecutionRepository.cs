@@ -23,13 +23,6 @@ public interface IJobExecutionRepository
     Task UpdateExecutionRecordAsync(JobExecutionRecord record, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Retrieves an execution record by ID.
-    /// </summary>
-    /// <param name="executionId">The execution record ID.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    Task<JobExecutionRecord?> GetExecutionRecordAsync(int executionId, CancellationToken cancellationToken = default);
-
-    /// <summary>
     /// Gets the last execution record for a given job.
     /// </summary>
     /// <param name="jobName">The name of the job.</param>

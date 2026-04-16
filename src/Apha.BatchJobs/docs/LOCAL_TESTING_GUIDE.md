@@ -112,7 +112,7 @@ docker run -d \
   --name batch_jobs_postgres \
   -e POSTGRES_DB=batch_jobs_foundation_db \
   -e POSTGRES_USER=postgres \
-  -e POSTGRES_PASSWORD=password \
+  -e POSTGRES_HOST_AUTH_METHOD=trust \
   -p 5432:5432 \
   postgres:16-alpine
 ```
@@ -133,11 +133,7 @@ docker run --rm \
   --name batch-jobs-app \
   --network host \
   -e ASPNETCORE_ENVIRONMENT=Development \
-  -e DatabaseConnection__Server=localhost \
-  -e DatabaseConnection__Port=5432 \
-  -e DatabaseConnection__Database=batch_jobs_foundation_db \
-  -e DatabaseConnection__Username=postgres \
-  -e DatabaseConnection__Password=password \
+  -e ConnectionStrings__BatchJobsConnectionString='Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Timeout=30' \
   apha-batch-jobs:dev
 ```
 
@@ -202,11 +198,7 @@ Set for the terminal session:
 **PowerShell:**
 ```powershell
 $env:ASPNETCORE_ENVIRONMENT="Development"
-$env:DatabaseConnection__Server="localhost"
-$env:DatabaseConnection__Port="5432"
-$env:DatabaseConnection__Database="batch_jobs_foundation_db"
-$env:DatabaseConnection__Username="postgres"
-$env:DatabaseConnection__Password="password"
+$env:ConnectionStrings__BatchJobsConnectionString="Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Timeout=30"
 $env:BATCH_JOB_NAME="HealthCheck"
 
 dotnet run
@@ -215,11 +207,7 @@ dotnet run
 **Bash:**
 ```bash
 export ASPNETCORE_ENVIRONMENT=Development
-export DatabaseConnection__Server=localhost
-export DatabaseConnection__Port=5432
-export DatabaseConnection__Database=batch_jobs_foundation_db
-export DatabaseConnection__Username=postgres
-export DatabaseConnection__Password=password
+export ConnectionStrings__BatchJobsConnectionString='Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Timeout=30'
 export BATCH_JOB_NAME=HealthCheck
 
 dotnet run

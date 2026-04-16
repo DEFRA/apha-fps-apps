@@ -9,17 +9,14 @@ namespace Apha.BatchJobs.Application.Factory;
 public sealed class BatchJobFactory : IBatchJobFactory
 {
     private readonly IServiceProvider _serviceProvider;
-    private readonly Dictionary<string, Type> _jobRegistry;
 
     /// <summary>
     /// Initializes a new instance of the BatchJobFactory.
     /// </summary>
     /// <param name="serviceProvider">Service provider for resolving job instances.</param>
-    /// <param name="jobRegistry">Registry mapping job names to handler types.</param>
-    public BatchJobFactory(IServiceProvider serviceProvider, Dictionary<string, Type> jobRegistry)
+    public BatchJobFactory(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-        _jobRegistry = jobRegistry ?? throw new ArgumentNullException(nameof(jobRegistry));
     }
 
     /// <inheritdoc />
@@ -28,16 +25,25 @@ public sealed class BatchJobFactory : IBatchJobFactory
         if (string.IsNullOrWhiteSpace(jobName))
             throw new ArgumentException("Job name cannot be null or empty.", nameof(jobName));
 
-        if (!_jobRegistry.TryGetValue(jobName, out var jobType))
-            throw new InvalidOperationException($"Job '{jobName}' is not registered. Available jobs: {string.Join(", ", _jobRegistry.Keys)}");
+        var jobs = _serviceProvider.GetServices<IBatchJob>().ToList();
+        var matches = jobs
+            .Where(j => string.Equals(j.Name, jobName, StringComparison.OrdinalIgnoreCase))
+            .ToList();
 
-        var instance = _serviceProvider.GetService(jobType) as IBatchJob;
-        if (instance == null)
-            throw new InvalidOperationException($"Failed to resolve job '{jobName}' from the service container.");
+        if (matches.Count == 0)
+            throw new InvalidOperationException($"Job '{jobName}' is not registered. Available jobs: {string.Join(", ", jobs.Select(j => j.Name).Distinct(StringComparer.OrdinalIgnoreCase))}");
 
-        return instance;
+        if (matches.Count > 1)
+            throw new InvalidOperationException($"Multiple job handlers are registered with Name='{jobName}'. Job names must be unique.");
+
+        return matches[0];
     }
 
     /// <inheritdoc />
-    public IEnumerable<string> GetAvailableJobs() => _jobRegistry.Keys;
+    public IEnumerable<string> GetAvailableJobs() =>
+        _serviceProvider.GetServices<IBatchJob>()
+            .Select(j => j.Name)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
+            .ToList();
 }
