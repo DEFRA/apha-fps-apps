@@ -1,6 +1,7 @@
 using Apha.BatchJobs.Application;
 using Apha.BatchJobs.Application.Factory;
 using Apha.BatchJobs.Application.Interfaces;
+using Apha.BatchJobs.Application.Jobs.ScheduledLoadFromFps;
 using Apha.BatchJobs.Domain.Configuration;
 using Apha.BatchJobs.Domain.Interfaces;
 using Apha.BatchJobs.Infrastructure.Data;
@@ -39,6 +40,7 @@ public static class ServiceCollectionSetup
     internal static void ConfigureBatchJobServices(IServiceCollection services, IConfiguration config)
     {
         services.Configure<BatchJobSettings>(config.GetSection("BatchJobs"));
+        services.Configure<ScheduledLoadFromFpsSettings>(config.GetSection("ScheduledLoadFromFps"));
         services.Configure<ApplicationInsightsSettings>(config.GetSection("ApplicationInsights"));
         services.AddLogging();
 
@@ -61,6 +63,7 @@ public static class ServiceCollectionSetup
 
         services.AddScoped<IBatchLockRepository, BatchLockRepository>();
         services.AddScoped<IJobExecutionRepository, JobExecutionRepository>();
+        services.AddScoped<IScheduledLoadFromFpsPlanBuilder, ScheduledLoadFromFpsPlanBuilder>();
 
         RegisterBatchJobs(services);
         services.AddScoped<IBatchJobFactory>(sp => new BatchJobFactory(sp));
