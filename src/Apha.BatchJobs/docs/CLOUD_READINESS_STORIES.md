@@ -127,7 +127,7 @@ Refinement Pointers:
 
 ## Story CR-005: Idempotency and Re-entrancy
 
-Status: Planned
+Status: Implemented
 
 Goal:
 - Verify jobs can be safely re-run without duplicating data or side effects.
@@ -150,9 +150,16 @@ Refinement Pointers:
 - Validate concurrent duplicate trigger scenario (race + retry combined).
 - Ensure idempotency works even after partial commit + retry (edge case).
 
+Implemented in:
+- Apha.BatchJobs.Application/Interfaces/IBatchJob.cs
+- Apha.BatchJobs.Application/Jobs/HealthCheck/HealthCheckJobHandler.cs
+- Apha.BatchJobs.UnitTests/ServiceCollectionSetupTests.cs
+- Apha.BatchJobs.UnitTests/JobOrchestratorTests.cs
+- Apha.BatchJobs/docs/IDEMPOTENCY_STRATEGY.md
+
 ## Story CR-006: Observability and Correlation
 
-Status: Planned
+Status: Implemented
 
 Goal:
 - Formalise required correlation fields across all log layers so every run is queryable end-to-end.
@@ -178,6 +185,14 @@ Refinement Pointers:
 - Add log level discipline: Info (normal), Warning (transient), Error (terminal only).
 - All logs structured (no plain text concatenation); queries should work with simple filters.
 - Define dashboard queries upfront (CloudWatch/App Insights) for ops team.
+
+Implemented in:
+- Apha.BatchJobs.Worker/Program.cs
+- Apha.BatchJobs.Application/JobOrchestrator.cs
+- Apha.BatchJobs.Infrastructure/Repositories/BatchLockRepository.cs
+- Apha.BatchJobs.Infrastructure/Repositories/JobExecutionRepository.cs
+- Apha.BatchJobs.UnitTests/JobOrchestratorTests.cs
+- Apha.BatchJobs/docs/OBSERVABILITY_AND_CORRELATION.md
 
 ---
 

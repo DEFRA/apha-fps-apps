@@ -3,6 +3,8 @@ using Apha.BatchJobs.Domain.Enums;
 using Apha.BatchJobs.Domain.Interfaces;
 using Apha.BatchJobs.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories;
 
@@ -12,6 +14,7 @@ namespace Apha.BatchJobs.Infrastructure.Repositories;
 public class JobExecutionRepository : IJobExecutionRepository
 {
     private readonly BatchJobsDbContext _context;
+    private readonly ILogger<JobExecutionRepository> _logger;
     private const int DefaultTimeToLiveSeconds = 3600;
     private const string SystemActor = "BatchWorker";
 
@@ -19,9 +22,11 @@ public class JobExecutionRepository : IJobExecutionRepository
     /// Initializes a new instance of the JobExecutionRepository.
     /// </summary>
     /// <param name="context">The database context.</param>
-    public JobExecutionRepository(BatchJobsDbContext context)
+    /// <param name="logger">Optional logger for structured execution record events.</param>
+    public JobExecutionRepository(BatchJobsDbContext context, ILogger<JobExecutionRepository>? logger = null)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
+        _logger = logger ?? NullLogger<JobExecutionRepository>.Instance;
     }
 
     /// <inheritdoc />
@@ -32,6 +37,12 @@ public class JobExecutionRepository : IJobExecutionRepository
 
         var runGuid = ParseRunId(record.RunId);
         var now = DateTime.UtcNow;
+        _logger.LogInformation(
+            "Create execution record requested | JobName={JobName} | RunId={RunId} | Status={Status}",
+            record.JobName,
+            record.RunId,
+            record.Status);
+
         var jobId = await EnsureJobMasterAsync(record.JobName, cancellationToken);
         var statusId = await EnsureStatusAsync(jobId, record.Status.ToString(), cancellationToken);
 
@@ -59,6 +70,13 @@ public class JobExecutionRepository : IJobExecutionRepository
 
         await _context.SaveChangesAsync(cancellationToken);
 
+        _logger.LogInformation(
+            "Execution record created | JobName={JobName} | RunId={RunId} | ExecutionId={ExecutionId} | Status={Status}",
+            record.JobName,
+            record.RunId,
+            0,
+            record.Status);
+
         // Foundation queue uses GUID correlation ID. The int return is retained
         // for interface compatibility with orchestrator and tests.
         return 0;
@@ -71,11 +89,25 @@ public class JobExecutionRepository : IJobExecutionRepository
             throw new ArgumentNullException(nameof(record));
 
         var runGuid = ParseRunId(record.RunId);
+        _logger.LogInformation(
+            "Update execution record requested | JobName={JobName} | RunId={RunId} | ExecutionId={ExecutionId} | Status={Status}",
+            record.JobName,
+            record.RunId,
+            record.ExecutionId,
+            record.Status);
+
         var queueRow = await _context.TblJobQueue
             .FirstOrDefaultAsync(q => q.JobQueueId == runGuid, cancellationToken);
 
         if (queueRow == null)
+        {
+            _logger.LogInformation(
+                "Execution record not found for update | JobName={JobName} | RunId={RunId} | ExecutionId={ExecutionId}",
+                record.JobName,
+                record.RunId,
+                record.ExecutionId);
             return;
+        }
 
         var now = DateTime.UtcNow;
         var statusId = await EnsureStatusAsync(queueRow.JobId, record.Status.ToString(), cancellationToken);
@@ -95,6 +127,12 @@ public class JobExecutionRepository : IJobExecutionRepository
         });
 
         await _context.SaveChangesAsync(cancellationToken);
+        _logger.LogInformation(
+            "Execution record updated | JobName={JobName} | RunId={RunId} | ExecutionId={ExecutionId} | Status={Status}",
+            record.JobName,
+            record.RunId,
+            record.ExecutionId,
+            record.Status);
     }
 
     /// <inheritdoc />

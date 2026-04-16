@@ -67,6 +67,12 @@ public sealed class JobOrchestrator : IJobOrchestrator
     {
         var runId = Guid.NewGuid().ToString("N");
         var startedAt = DateTime.UtcNow;
+        using var runScope = _logger.BeginScope(new Dictionary<string, object>
+        {
+            ["RunId"] = runId,
+            ["JobName"] = jobName,
+            ["RunMode"] = runMode.ToString()
+        });
 
         _logger.LogInformation("--- Orchestrator: Starting '{JobName}' | RunId={RunId} | Mode={RunMode}",
             jobName, runId, runMode);
@@ -99,12 +105,17 @@ public sealed class JobOrchestrator : IJobOrchestrator
         };
 
         int executionId = 0;
+        IDisposable? executionScope = null;
         try
         {
             executionId = await _executionRepository.CreateExecutionRecordAsync(record, cancellationToken);
             record.ExecutionId = executionId;
             if (executionId > 0)
             {
+                executionScope = _logger.BeginScope(new Dictionary<string, object>
+                {
+                    ["ExecutionId"] = executionId
+                });
                 _logger.LogInformation("Execution record created | ExecutionId={ExecutionId}", executionId);
             }
             else
@@ -228,6 +239,8 @@ public sealed class JobOrchestrator : IJobOrchestrator
         }
         finally
         {
+            executionScope?.Dispose();
+
             // Step 4 — Update execution record (Completed or Failed)
             var completedAt = DateTime.UtcNow;
             var duration = completedAt - startedAt;

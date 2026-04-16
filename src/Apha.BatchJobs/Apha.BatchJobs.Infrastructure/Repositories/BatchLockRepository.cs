@@ -2,6 +2,8 @@ using Apha.BatchJobs.Domain.Entities;
 using Apha.BatchJobs.Domain.Interfaces;
 using Apha.BatchJobs.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Npgsql;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories;
@@ -12,14 +14,17 @@ namespace Apha.BatchJobs.Infrastructure.Repositories;
 public class BatchLockRepository : IBatchLockRepository
 {
     private readonly BatchJobsDbContext _context;
+    private readonly ILogger<BatchLockRepository> _logger;
 
     /// <summary>
     /// Initializes a new instance of the BatchLockRepository.
     /// </summary>
     /// <param name="context">The database context.</param>
-    public BatchLockRepository(BatchJobsDbContext context)
+    /// <param name="logger">Optional logger for structured lock lifecycle events.</param>
+    public BatchLockRepository(BatchJobsDbContext context, ILogger<BatchLockRepository>? logger = null)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
+        _logger = logger ?? NullLogger<BatchLockRepository>.Instance;
     }
 
     /// <inheritdoc />
@@ -32,6 +37,11 @@ public class BatchLockRepository : IBatchLockRepository
             throw new ArgumentException("Run ID cannot be null or empty.", nameof(runId));
 
         var now = DateTime.UtcNow;
+        _logger.LogInformation(
+            "Lock acquisition requested | JobName={JobName} | RunId={RunId} | TimeoutSeconds={TimeoutSeconds}",
+            jobName,
+            runId,
+            timeoutSeconds);
 
         // Remove expired locks first so the unique partial index slot is freed.
         await _context.BatchLocks
@@ -58,12 +68,14 @@ public class BatchLockRepository : IBatchLockRepository
         try
         {
             await _context.SaveChangesAsync(cancellationToken);
+            _logger.LogInformation("Lock acquired | JobName={JobName} | RunId={RunId}", jobName, runId);
             return true;
         }
         catch (DbUpdateException ex) when (IsUniqueConstraintViolation(ex))
         {
             // Another process holds an active lock for this job.
             _context.ChangeTracker.Clear();
+            _logger.LogInformation("Lock contention detected | JobName={JobName} | RunId={RunId}", jobName, runId);
             return false;
         }
     }
@@ -87,6 +99,11 @@ public class BatchLockRepository : IBatchLockRepository
         {
             _context.BatchLocks.Remove(lockToRelease);
             await _context.SaveChangesAsync(cancellationToken);
+            _logger.LogInformation("Lock released | JobName={JobName} | RunId={RunId}", jobName, runId);
+        }
+        else
+        {
+            _logger.LogInformation("No lock found to release | JobName={JobName} | RunId={RunId}", jobName, runId);
         }
     }
 

@@ -21,6 +21,24 @@ public sealed class ServiceCollectionSetupTests
         Assert.Equal("HealthCheck", jobFactory.Create("HealthCheck").Name);
     }
 
+    [Fact]
+    public void CreateDefaultServices_AllRegisteredJobs_ShouldDeclareExplicitIdempotencyStrategy()
+    {
+        var batchJobsRoot = GetBatchJobsRoot();
+        var services = ServiceCollectionSetup.CreateDefaultServices(batchJobsRoot);
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var jobs = serviceProvider.GetServices<IBatchJob>().ToList();
+        Assert.NotEmpty(jobs);
+
+        foreach (var job in jobs)
+        {
+            Assert.False(
+                string.IsNullOrWhiteSpace(job.IdempotencyStrategy),
+                $"Job '{job.Name}' must declare a non-empty idempotency strategy.");
+        }
+    }
+
     private static string GetBatchJobsRoot()
     {
         var current = new DirectoryInfo(AppContext.BaseDirectory);
