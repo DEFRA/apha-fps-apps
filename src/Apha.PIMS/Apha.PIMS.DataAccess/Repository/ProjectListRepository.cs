@@ -134,6 +134,7 @@ namespace Apha.PIMS.DataAccess.Repository
             return await _context.MyTlkpProjects
                 .AsNoTracking()
                 .Where(p => p.Parentproject == parentproject)
+                .OrderByDescending(p => p.Year)
                 .ToListAsync();
         }
 

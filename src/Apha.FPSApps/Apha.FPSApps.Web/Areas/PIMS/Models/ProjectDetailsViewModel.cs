@@ -11,6 +11,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
         // FPS Project Details (read-only tab)
         public ProjectDto? FpsProjectDetails { get; set; }
 
+        public bool IsFPS { get; set; } = false;
         public ProposedProjectDto? ProposedProjectDetails { get; set; }
         public ProjectDetailDto? ProjectDetails { get; set; }
 

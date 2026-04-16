@@ -316,7 +316,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<ProjectDetailsViewModel>(viewResult.Model);
             Assert.NotEmpty(model.RiskRatingOptions);
-            Assert.Equal(2, model.RiskRatingOptions.Count);
+            Assert.Equal(3, model.RiskRatingOptions.Count);
         }
 
         [Fact]
@@ -333,7 +333,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<ProjectDetailsViewModel>(viewResult.Model);
-            Assert.Empty(model.RiskRatingOptions);
+            // Only the default "-- Select --" item is present when risks are null
+            Assert.Single(model.RiskRatingOptions);
+            Assert.Equal("-- Select --", model.RiskRatingOptions[0].Text);
+            Assert.Equal("", model.RiskRatingOptions[0].Value);
         }
 
         [Fact]
@@ -354,7 +357,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<ProjectDetailsViewModel>(viewResult.Model);
             Assert.NotEmpty(model.TransferToOptions);
-            Assert.Equal(2, model.TransferToOptions.Count);
+            Assert.Equal(3, model.TransferToOptions.Count);
         }
 
         [Fact]
@@ -371,7 +374,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<ProjectDetailsViewModel>(viewResult.Model);
-            Assert.Empty(model.TransferToOptions);
+            // Only the default "-- Select --" item is present when all projects are null
+            Assert.Single(model.TransferToOptions);
+            Assert.Equal("-- Select --", model.TransferToOptions[0].Text);
+            Assert.Equal("", model.TransferToOptions[0].Value);
         }
 
         [Fact]
