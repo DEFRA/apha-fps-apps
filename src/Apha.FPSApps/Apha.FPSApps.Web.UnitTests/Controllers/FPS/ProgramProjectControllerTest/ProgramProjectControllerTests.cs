@@ -367,7 +367,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramProjectControllerTes
             var programs = new List<ProgramDto>
             {
                 new() { ProgramNo = "P001", ProgramName = "Programme Alpha" },
-                new() { ProgramNo = null,   ProgramName = "Should Be Filtered" },
+                new() { ProgramNo = null!,   ProgramName = "Should Be Filtered" },
                 new() { ProgramNo = "",     ProgramName = "Also Filtered" }
             };
             _programService.GetAllProgramsAsync()
