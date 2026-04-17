@@ -82,6 +82,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         public async Task<IActionResult> LoadProjectGrid(
             PaginationFilter<string> request, string? programNo = null)
         {
+            if (!string.IsNullOrEmpty(programNo) && programNo.Length > 20)
+                return Json(new { success = false, message = "Invalid programme number." });
+
             if (!ModelState.IsValid)
             {
                 return Json(new
@@ -141,6 +144,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         public async Task<IActionResult> LoadProgramProjectGrid(
             PaginationFilter<string> request, string? programNo = null)
         {
+            if (!string.IsNullOrEmpty(programNo) && programNo.Length > 20)
+                return Json(new { success = false, message = "Invalid programme number." });
+
             if (!ModelState.IsValid)
             {
                 return Json(new

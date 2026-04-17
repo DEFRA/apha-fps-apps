@@ -232,6 +232,26 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramProjectControllerTes
             Assert.Equal("parentproject", gridConfig.Pagination.SortColumn);
         }
 
+        [Fact]
+        public async Task LoadProjectGrid_WhenProgramNoExceedsMaxLength_ReturnsFailureJson()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
+            var oversizedProgramNo = new string('X', 21);
+
+            // Act
+            var result = await _controller.LoadProjectGrid(request, oversizedProgramNo);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultValue<JsonResponse>(jsonResult);
+            Assert.NotNull(value);
+            Assert.False(value.success);
+            Assert.Equal("Invalid programme number.", value.message);
+            await _projectService.DidNotReceive().GetProjectsByProgramAsync(
+                Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
+        }
+
         #endregion
 
         #region Index Tests
@@ -531,6 +551,26 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramProjectControllerTes
             Assert.NotNull(gridConfig.Pagination);
             Assert.Equal("projecttitle", gridConfig.Pagination.SortColumn);
             Assert.True(gridConfig.Pagination.SortDirection);
+        }
+
+        [Fact]
+        public async Task LoadProgramProjectGrid_WhenProgramNoExceedsMaxLength_ReturnsFailureJson()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
+            var oversizedProgramNo = new string('X', 21);
+
+            // Act
+            var result = await _controller.LoadProgramProjectGrid(request, oversizedProgramNo);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultValue<JsonResponse>(jsonResult);
+            Assert.NotNull(value);
+            Assert.False(value.success);
+            Assert.Equal("Invalid programme number.", value.message);
+            await _projectService.DidNotReceive().GetProjectsByProgramAsync(
+                Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
         }
 
         #endregion
