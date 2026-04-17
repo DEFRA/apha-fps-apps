@@ -71,22 +71,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 RiskRatingOptions = GetRiskRatingOptions(risksTask),
                 ProjectDetails = pimsDetail,
                 IsFPS = allProjectsTask.Result.Data?.Any(p => p.Parentproject == parentproject) ?? false,
-                Projecttitle = proposed?.Projecttitle,
-                Costbookno = proposed?.Costbookno,
-                Disease = proposed?.Disease,
-                Program = proposed?.Program,
-                Customer = proposed?.Customer,
-                Manager = proposed?.Manager,
-                Version = pimsDetail?.Version,
-                FileRef = pimsDetail?.FileRef,
-                CustomerRef = pimsDetail?.CustomerRef,
-                StartDate = pimsDetail?.StartDate,
-                EndDate = pimsDetail?.EndDate,
-                CostbookNumber = pimsDetail?.CostbookNumber,
-                Riskid = pimsDetail?.Riskid,
                 UseProjectYears = pimsDetail?.UseProjectYears ?? false,
-                RevisedEndDate = pimsDetail?.RevisedEndDate,
-                ClosedDate = pimsDetail?.ClosedDate,
                 CommentsGrid = commentsGrid,
                 YearOptions = Enumerable.Range(2017, DateTime.Today.Year - 2017 + 1)
                     .Select(y => new SelectListItem(y.ToString(), y.ToString()))
@@ -162,7 +147,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "Commentno",
-                AllowAdd= false,
+                AllowAdd = false,
                 EditFunction = "editComment",
                 DeleteFunction = "deleteComment",
                 ExtraFilterMethod = "getProjectDetailsExtraFilters",
@@ -192,7 +177,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
         {
             if (projectDetailsViewModel?.ProposedProjectDetails == null)
             {
-                return Json(new { success = false, errors = new[] { "Project details are required" } });
+                return Json(new { success = false, errors = new string[] { "Project details are required" } });
             }
 
             projectDetailsViewModel.ProposedProjectDetails.Parentproject = parentproject;
@@ -205,12 +190,55 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
 
 
         [HttpGet]
+        public async Task<IActionResult> GetAddEditCommentPartial(string parentproject, int? commentno, int? selectedYear)
+        {
+            AddEditCommentViewModel model = LoadAddEditCommentViewModel(parentproject, commentno, selectedYear);
+
+            if (commentno is not null and not 0)
+            {
+                ApiResponseDto<CommentDto> result = await _commentService.GetByIdAsync(commentno.Value);
+                if (result is { Success: true, Data: not null })
+                {
+                    model.Commentno = result.Data.Commentno;
+                    model.Year = result.Data.Year;
+                    model.Topic = result.Data.Topic;
+                    model.Commenttext = result.Data.Commenttext;
+                }
+            }
+
+            return PartialView("_AddEditComment", model);
+        }
+
+        private static AddEditCommentViewModel LoadAddEditCommentViewModel(string parentproject, int? commentno, int? selectedYear)
+        {
+            return new()
+            {
+                Project = parentproject,
+                IsAddingNew = commentno is null or 0,
+                Year = selectedYear,
+                YearOptions = Enumerable.Range(2017, DateTime.Today.Year - 2017 + 1)
+                                .Select(y => new SelectListItem(y.ToString(), y.ToString()))
+                                .ToList(),
+                TopicOptions =
+                            [
+                                new SelectListItem("Select a topic", ""),
+                    new SelectListItem("A&F Report", "A&F Report"),
+                    new SelectListItem("Contracts", "Contracts"),
+                    new SelectListItem("General Comment", "General Comment"),
+                    new SelectListItem("Invoicing", "Invoicing"),
+                    new SelectListItem("Outturn Report", "Outturn Report"),
+                    new SelectListItem("P&C Monitoring Report", "P&C Monitoring Report")
+                            ]
+            };
+        }
+
+        [HttpGet]
         public async Task<IActionResult> GetComment(int commentno)
         {
             ApiResponseDto<CommentDto> result = await _commentService.GetByIdAsync(commentno);
 
             return result.Success
-                ? Json(new { success = true, data = result.Data, message = "Comment added successfully" })
+                ? Json(new { success = true, data = result.Data, message = "Comment retrieved successfully" })
                 : Json(new { success = false, errors = result.Errors });
         }
 
@@ -218,6 +246,16 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateComment([FromBody] CommentDto dto)
         {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState
+                    .Where(ms => ms.Value?.Errors.Count > 0)
+                    .Select(ms => new { field = ms.Key, message = ms.Value!.Errors.First().ErrorMessage })
+                    .ToList();
+                return Json(new { success = false, errors });
+            }
+
+            dto.Madeby = GetCurrentUser();
             dto.Commenttext = dto.Comment?.Trim();
             ApiResponseDto<CommentDto> result = await _commentService.CreateCommentAsync(dto);
             return result.Success
@@ -229,6 +267,16 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateComment([FromBody] CommentDto dto)
         {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState
+                    .Where(ms => ms.Value?.Errors.Count > 0)
+                    .Select(ms => new { field = ms.Key, message = ms.Value!.Errors.First().ErrorMessage })
+                    .ToList();
+                return Json(new { success = false, errors });
+            }
+
+            dto.Madeby = GetCurrentUser();
             ApiResponseDto<CommentDto> result = await _commentService.UpdateCommentAsync(dto.Commentno, dto);
             return result.Success
                 ? Json(new { success = true, data = result.Data, message = "Comment updated successfully" })
@@ -242,6 +290,11 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             return result.Success
                 ? Json(new { success = true, message = "Comment deleted successfully" })
                 : Json(new { success = false, errors = result.Errors });
+        }
+
+        private string GetCurrentUser()
+        {
+            return User?.Identity?.Name ?? "";
         }
     }
 }
