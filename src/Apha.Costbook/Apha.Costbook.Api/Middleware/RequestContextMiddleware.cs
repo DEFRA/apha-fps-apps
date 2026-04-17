@@ -39,7 +39,7 @@ namespace Apha.Costbook.Api.Middleware
 
             SetCorrelationId(context, CorrelationIdHeader);
 
-            ((FPSYearContext)yearContext).FPSYear = fpsYear;
+            ((FPSYearContext)yearContext).FPSYear = 2025;
 
             await _next(context);
         }

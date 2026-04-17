@@ -1,7 +1,8 @@
-﻿using System.Text.Json;
-using Apha.Common.Contracts;
+﻿using Apha.Common.Contracts;
 using Apha.Costbook.Application.Validation;
 using Microsoft.AspNetCore.Authentication;
+using Npgsql;
+using System.Text.Json;
 
 
 namespace Apha.Costbook.Api.Middleware
@@ -49,7 +50,7 @@ namespace Apha.Costbook.Api.Middleware
             };
 
             var errorType = _configuration["ExceptionTypes:General"]
-                            ?? "FPS.GENERAL_EXCEPTION";
+                            ?? "COSTBOOK.GENERAL_EXCEPTION";
 
             switch (ex)
             {
@@ -74,7 +75,7 @@ namespace Apha.Costbook.Api.Middleware
                             Message = err.Message,
                             Details = err.Details
                         });
-                    }                    
+                    }
                     break;
                 case ArgumentException:
                     context.Response.StatusCode = StatusCodes.Status400BadRequest;
@@ -92,6 +93,25 @@ namespace Apha.Costbook.Api.Middleware
                         Message = ex.Message
                     });
                     break;
+                case PostgresException pgEx:
+                    context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+                    apiResponse.Errors.Add(new ApiError
+                    {
+                        Code = "DB_POSTGRES_ERROR",
+                        Message = "A database error occurred.",
+                        Details = pgEx.MessageText
+                    });
+                    errorType = _configuration["ExceptionTypes:Database"];
+                    break;
+                case NpgsqlException:
+                    context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
+                    apiResponse.Errors.Add(new ApiError
+                    {
+                        Code = "DB_CONNECTION_ERROR",
+                        Message = "Database connection failed or service unavailable."
+                    });
+                    errorType = _configuration["ExceptionTypes:Database"];
+                    break;
                 default:
                     context.Response.StatusCode = StatusCodes.Status500InternalServerError;
                     apiResponse.Errors.Add(new ApiError
@@ -108,7 +128,7 @@ namespace Apha.Costbook.Api.Middleware
             await context.Response.WriteAsync(json);
         }
 
-        private void LogException(          
+        private void LogException(
           Exception ex,
           string errorType,
           string errorCode,
@@ -119,7 +139,7 @@ namespace Apha.Costbook.Api.Middleware
                 "[{ErrorType}] [{ErrorCode}] CorrelationId:{CorrelationId} Message:{Message}",
                 errorType,
                 errorCode,
-                correlationId,                
+                correlationId,
                 ex.Message);
         }
     }
