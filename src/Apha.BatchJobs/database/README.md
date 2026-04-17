@@ -10,7 +10,7 @@ This folder contains infrastructure-only database scripts for local Docker Deskt
 - `sql/seeds/*.sql` : Seed scripts (optional, business-neutral by default).
 - `sql/flush/*.sql` : Flush/reset scripts for local development cycles.
 - `sink/` : Sink pipeline assets for cloud snapshot ingestion and curated sync.
-- `Invoke-BatchDb.ps1` : PowerShell runner for apply/seed/flush/reset workflows.
+- `Invoke-BatchDb.ps1` : PowerShell runner for apply/seed/flush/reset/validate workflows.
 
 ## Prerequisites
 
@@ -34,12 +34,14 @@ pwsh ./database/Invoke-BatchDb.ps1 -Action seed
 pwsh ./database/Invoke-BatchDb.ps1 -Action flush
 pwsh ./database/Invoke-BatchDb.ps1 -Action reset
 pwsh ./database/Invoke-BatchDb.ps1 -Action all
+pwsh ./database/Invoke-BatchDb.ps1 -Action validate
 ```
 
 ## Notes
 
 - Scripts are intended to be re-runnable where possible.
 - `flush` is destructive for schema `operational` and should only be used in local/dev environments.
+- `validate` is non-destructive and fails fast if required ScheduledLoadFromFps tables or key constraints are missing.
 - Keep business-specific seed data in dedicated files under `sql/seeds` and version them by prefixing with sequence numbers.
 - Worker execution persistence writes to `fps.job_queue` and `fps.job_queue_log`.
 - Runtime configuration follows the repo pattern: `ConnectionStrings:BatchJobsConnectionString`.

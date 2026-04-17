@@ -102,3 +102,13 @@ web.*.config
 
 # Local DB tooling and scripts - intentionally not pushed to GitHub
 src/Apha.BatchJobs/database/
+
+# CR-010 tracked artifacts (required-table provisioning and verification)
+!src/Apha.BatchJobs/database/
+!src/Apha.BatchJobs/database/sql/
+src/Apha.BatchJobs/database/sql/*
+!src/Apha.BatchJobs/database/sql/validate/
+src/Apha.BatchJobs/database/sql/validate/*
+!src/Apha.BatchJobs/database/sql/010_create_legacy_year_delete_load_table_set.sql
+!src/Apha.BatchJobs/database/sql/011_drop_redundant_scheduledload_tables.sql
+!src/Apha.BatchJobs/database/sql/validate/001_verify_scheduledload_required_tables.sql

@@ -14,7 +14,7 @@ No business data is required. Seed files are optional templates.
 #>
 
 param(
-    [ValidateSet("apply", "seed", "flush", "reset", "all", "list")]
+    [ValidateSet("apply", "seed", "flush", "reset", "all", "validate", "list")]
     [string]$Action = "list",
 
     [string]$ContainerName = "batch_jobs_postgres",
@@ -132,6 +132,12 @@ function Invoke-Flush {
     Invoke-SqlFolder -Path (Join-Path $Root "flush") -Container $Container -Db $Db -User $User -EmptyMessage "No flush files found under sql/flush"
 }
 
+function Invoke-Validate {
+    param([string]$Root, [string]$Container, [string]$Db, [string]$User)
+
+    Invoke-SqlFolder -Path (Join-Path $Root "validate") -Container $Container -Db $Db -User $User -EmptyMessage "No validation files found under sql/validate"
+}
+
 function Show-Plan {
     param([string]$Root)
 
@@ -144,6 +150,8 @@ function Show-Plan {
     (Get-SqlFiles -Path (Join-Path $Root "seeds")).Name | ForEach-Object { Write-Host "    - $_" }
     Write-Host "  Flush scripts:"
     (Get-SqlFiles -Path (Join-Path $Root "flush")).Name | ForEach-Object { Write-Host "    - $_" }
+    Write-Host "  Validation scripts:"
+    (Get-SqlFiles -Path (Join-Path $Root "validate")).Name | ForEach-Object { Write-Host "    - $_" }
     Write-Host ""
 }
 
@@ -170,6 +178,9 @@ switch ($Action) {
     "all" {
         Invoke-Apply -Root $ScriptsRoot -Container $ContainerName -Db $Database -User $Username
         Invoke-Seed -Root $ScriptsRoot -Container $ContainerName -Db $Database -User $Username
+    }
+    "validate" {
+        Invoke-Validate -Root $ScriptsRoot -Container $ContainerName -Db $Database -User $Username
     }
     default {
         throw "Unknown action: $Action"

@@ -92,6 +92,58 @@ Refinement Pointers:
 Implemented in:
 - Apha.BatchJobs.Worker/Program.cs
 
+## Story CR-010: Provision Required FPS and MAB Archive Tables in Current Postgres
+
+Status: Implemented
+
+Goal:
+- Ensure the current Postgres environment has all required ScheduledLoadFromFps source and archive tables in the one-database, two-schema model (`fps`, `mabarchive`).
+
+Context:
+- Legacy used two databases (FPS and MAB_Archive).
+- Current design uses one database with two schemas and year-scoped archive keys.
+- Runtime risk exists if migration scripts were not applied in a given environment.
+
+Acceptance criteria:
+- `fps` and `mabarchive` schemas exist in the target environment.
+- Required source tables exist in `fps` schema:
+  - `fps.fpsyeartotals`
+  - `fps.tlkpproject`
+- Required archive tables exist in `mabarchive` schema:
+  - `mabarchive.my_fpsyeartotals`
+  - `mabarchive.my_tlkpproject_all`
+  - All currently required `my_*` tables used by ScheduledLoadFromFps fan-out.
+- Core archive tables enforce year-scoped primary keys:
+  - `my_fpsyeartotals` PK includes `(year, parentproject)`
+  - `my_tlkpproject_all` PK includes `(year, parentproject)`
+- Migration scripts are idempotent (`IF NOT EXISTS` / safe re-run) and can be executed repeatedly without destructive side effects.
+- A verification SQL checklist is added and executed in CI/local validation to assert table existence and key constraints.
+- If a table name changed from legacy naming, mapping is documented from legacy to current name.
+
+Implementation plan:
+- Apply/create schema/table migrations from:
+  - `dbscript/schemas/01fps/01tables/*.sql`
+  - `dbscript/schemas/02mabarchive/01tables/*.sql`
+  - `src/Apha.BatchJobs/database/sql/006_fps_mabarchive_source_tables.sql` (environment-aligned source mirror)
+- Add a single verification SQL script that fails when required tables/constraints are missing.
+- Wire verification into local test flow and CI database validation step.
+
+Definition of done:
+- Fresh Postgres instance can be provisioned and validated using repository scripts only.
+- ScheduledLoadFromFps pre-check confirms required tables exist before execution.
+- Story evidence includes:
+  - migration script references used
+  - verification SQL output (pass)
+  - mapping confirmation against
+    - `docs/LEGACY-TO-CURRENT-TABLE-MAPPING.md`
+    - `docs/TABLE-FOOTPRINT-AND-SCHEMAS.md`
+
+Implemented in:
+- `src/Apha.BatchJobs/database/sql/010_create_legacy_year_delete_load_table_set.sql`
+- `src/Apha.BatchJobs/database/sql/validate/001_verify_scheduledload_required_tables.sql`
+- `src/Apha.BatchJobs/database/Invoke-BatchDb.ps1` (`-Action validate`)
+- `src/Apha.BatchJobs/database/README.md`
+
 ## Story CR-004: Degradation-Focused Test Scenarios
 
 Status: Implemented
