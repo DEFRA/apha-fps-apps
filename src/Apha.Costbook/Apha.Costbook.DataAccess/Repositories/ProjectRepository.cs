@@ -119,7 +119,7 @@ namespace Apha.Costbook.DataAccess.Repositories
                 return true;
             });
         }
-        public async Task<Project> CopyProjectAsync(Project newProject, string sourceProjectId)
+        public async Task<Project> CopyProjectAsync(Project project, string sourceProjectId)
         {
             var decodedSourceId = HttpUtility.UrlDecode(sourceProjectId);
 
@@ -129,7 +129,7 @@ namespace Apha.Costbook.DataAccess.Repositories
                 using var transaction = await _context.Database.BeginTransactionAsync();
 
                 // 1. Insert the new project record
-                _context.Set<Project>().Add(newProject);
+                _context.Set<Project>().Add(project);
                 await _context.SaveChangesAsync();
 
                 // 2. Copy ProjectYear records
@@ -142,7 +142,7 @@ namespace Apha.Costbook.DataAccess.Repositories
                 {
                     var newPY = new ProjectYear
                     {
-                        Project = newProject.ProjectId,
+                        Project = project.ProjectId,
                         YearValue = sourcePY.YearValue
 
                     };
@@ -159,7 +159,7 @@ namespace Apha.Costbook.DataAccess.Repositories
                 {
                     var newAR = new AnimalRequirement
                     {
-                        Project = newProject.ProjectId,
+                        Project = project.ProjectId,
                         Year = sourceAR.Year,
                         AnimalType = sourceAR.AnimalType,
                         NumberOfDays = sourceAR.NumberOfDays,
@@ -179,7 +179,7 @@ namespace Apha.Costbook.DataAccess.Repositories
                 {
                     var newAC = new AdditionalCost
                     {
-                        Project = newProject.ProjectId,
+                        Project = project.ProjectId,
                         Year = sourceAC.Year,
                         AccountCat = sourceAC.AccountCat,
                         Description = sourceAC.Description,
@@ -200,7 +200,7 @@ namespace Apha.Costbook.DataAccess.Repositories
                 {
                     var newSR = new StaffRequirement
                     {
-                        Project = newProject.ProjectId,
+                        Project = project.ProjectId,
                         Year = sourceSR.Year,
                         WgGrade = sourceSR.WgGrade,
                         Name = sourceSR.Name,
@@ -224,7 +224,7 @@ namespace Apha.Costbook.DataAccess.Repositories
                 {
                     var newTR = new TestRequirement
                     {
-                        Project = newProject.ProjectId,
+                        Project = project.ProjectId,
                         Year = sourceTR.Year,
                         TestCode = sourceTR.TestCode,
                         NumberOfTests = sourceTR.NumberOfTests,
@@ -237,7 +237,7 @@ namespace Apha.Costbook.DataAccess.Repositories
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                return newProject;
+                return project;
             });
         }
         public async Task<string> GetNextProjectNumberAsync(string? baseNumber)

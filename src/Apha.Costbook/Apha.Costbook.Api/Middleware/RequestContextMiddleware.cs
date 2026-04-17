@@ -38,7 +38,7 @@ namespace Apha.Costbook.Api.Middleware
             await _next(context);
         }
 
-        private void SetCorrelationId(HttpContext context, string CorrelationIdHeader)
+        private static void SetCorrelationId(HttpContext context, string CorrelationIdHeader)
         {
             // OPTIONAL HEADER (generate if missing)
             if (!context.Request.Headers.TryGetValue(CorrelationIdHeader, out var correlationId)
