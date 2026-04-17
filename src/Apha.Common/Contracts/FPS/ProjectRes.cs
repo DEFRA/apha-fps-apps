@@ -25,5 +25,7 @@ namespace Apha.Common.Contracts.FPS
         public string? OracleProjectCode { get; set; }
         public string? SubAccountCode { get; set; }
         public string? ProjectGroup { get; set; }
+        public decimal? PlanCaseWorkDebit { get; set; }
+        public string? IncomeAccountCode { get; set; }
     }
 }
