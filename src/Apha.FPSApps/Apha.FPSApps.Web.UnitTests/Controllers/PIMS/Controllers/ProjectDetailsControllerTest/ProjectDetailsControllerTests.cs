@@ -1097,7 +1097,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
         }
 
         [Fact]
-        public async Task UpdateProposedProject_WhenProposedProjectDetailsIsNull_ReturnsJsonWithSuccessFalse()
+        public async Task UpdateProposedProject_WhenProposedProjectDetailsIsNull_ReturnsRedirectToActionResult()
         {
             // Arrange
             var viewModel = new ProjectDetailsViewModel { ProposedProjectDetails = null };
@@ -1106,9 +1106,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
             var result = await _controller.UpdateProposedProject("PP001", viewModel);
 
             // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var json = System.Text.Json.JsonSerializer.Serialize(jsonResult.Value);
-            Assert.Contains("false", json);
+            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
+            Assert.Equal(nameof(_controller.Index), redirectResult.ActionName);
+            Assert.NotNull(redirectResult.RouteValues);
+            Assert.Equal("PP001", redirectResult.RouteValues["parentproject"]);
         }
 
         [Fact]
