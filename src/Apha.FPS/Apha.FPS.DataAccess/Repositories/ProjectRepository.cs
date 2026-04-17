@@ -26,6 +26,14 @@ namespace Apha.FPS.DataAccess.Repositories
                 .Where(p => p.UserEmail != null && p.UserEmail.ToLower() == _requestContext.UserEmailId).ToListAsync();
         }
 
+        public async Task<IEnumerable<PactProjectView>> GetAllPactProjectsAsync()
+        {
+            return await _dbContext.PactProjectViews
+                .AsNoTracking()
+                .OrderBy(p => p.ParentProject)
+                .ToListAsync();
+        }
+
         public async Task<PagedData<Project>> GetProjectsByProgramAsync(PaginationParameters<string> query, string programNo)
         {
             var projectQuery = _dbContext.ProjectViews

@@ -17,6 +17,7 @@
         public bool AllowBulkCopy { get; set; }
         public bool AllowBulkDelete { get; set; }
         public bool AllowView { get; set; }
+        public bool AllowExport { get; set; }
         public string BulkCopyButtonText { get; set; } = "Copy";
         public string BulkCopyFunction { get; set; } = string.Empty;
         public string BulkDeleteFunction { get; set; } = string.Empty;
@@ -26,6 +27,7 @@
         public string EditFunction { get; set; } = string.Empty;
         public string DeleteFunction { get; set; } = string.Empty;
         public string ViewFunction { get; set; } = string.Empty;
+        public string ExportUrl { get; set; } = string.Empty;
         public string BindGridUrl { get; set; } = string.Empty;
         public string ExtraFilterMethod { get; set; } = string.Empty;
         public PaginationModel Pagination { get; set; } = new PaginationModel();
@@ -46,6 +48,7 @@
             AllowBulkCopy = false;
             AllowBulkDelete = false;
             AllowView = false;
+            AllowExport = false;
         }
     }
 }

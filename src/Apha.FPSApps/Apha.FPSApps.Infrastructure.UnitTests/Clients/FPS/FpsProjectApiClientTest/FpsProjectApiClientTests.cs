@@ -7,7 +7,6 @@ using Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
 using Xunit;
 
 namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientTest
@@ -102,28 +101,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
         }
 
         [Fact]
-        public async Task GetProjectsByProgramAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var programNo = "P001";
-
-            _http.GetAsync<List<ProjectRes>>(Arg.Any<string>())
-                .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetProjectsByProgramAsync(query, programNo);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            var error = Assert.Single(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve projects", error.Message);
-        }
-
-        [Fact]
         public async Task GetProjectsByProgramAsync_ConstructsUrlWithEscapedProgramNo()
         {
             // Arrange
@@ -203,21 +180,64 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
             Assert.NotNull(result.Errors);
         }
 
+        #endregion
+
+        #region GetAllPactProjectsAsync Tests
+
         [Fact]
-        public async Task GetAllProjectsAsync_WhenExceptionThrown_ReturnsInternalError()
+        public async Task GetAllPactProjectsAsync_WithSuccessResponse_ReturnsMappedPactProjectList()
         {
             // Arrange
-            _http.GetAsync<List<ProjectRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
+            var projectList = new List<ProjectRes>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "PACT Project One" },
+                new() { ParentProject = "PP002", ProjectTitle = "PACT Project Two" }
+            };
+            var apiResponse = new ApiResponse<List<ProjectRes>> { Success = true, Data = projectList };
+            var expectedDto = ApiResponseDto<List<ProjectDto>>.SuccessResponse(
+                new List<ProjectDto>
+                {
+                    new() { ParentProject = "PP001", ProjectTitle = "PACT Project One" },
+                    new() { ParentProject = "PP002", ProjectTitle = "PACT Project Two" }
+                }
+            );
+
+            _http.GetAsync<List<ProjectRes>>("api/v1/project/pactview/all").Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProjectDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
-            var result = await _client.GetAllProjectsAsync();
+            var result = await _client.GetAllPactProjectsAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data?.Count);
+            await _http.Received(1).GetAsync<List<ProjectRes>>("api/v1/project/pactview/all");
+        }
+
+        [Fact]
+        public async Task GetAllPactProjectsAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var errors = new List<ApiError> { new() { Message = "API Error", Code = "API_ERROR" } };
+            var apiResponse = new ApiResponse<List<ProjectRes>> { Success = false, Errors = errors };
+            var mappedResponse = new ApiResponseDto<List<ProjectDto>>
+            {
+                Success = false,
+                Errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "API_ERROR" } },
+                Meta = new ApiMetaDto()
+            };
+
+            _http.GetAsync<List<ProjectRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProjectDto>>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.GetAllPactProjectsAsync();
 
             // Assert
             Assert.NotNull(result);
             Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve projects", error.Message);
+            Assert.NotNull(result.Errors);
         }
 
         #endregion
@@ -280,24 +300,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
             Assert.NotNull(result.Errors);
         }
 
-        [Fact]
-        public async Task GetPagedProjectsAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            _http.GetAsync<List<ProjectRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetPagedProjectsAsync(query);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve paged projects", error.Message);
-        }
-
         #endregion
 
         #region GetPagedPactProjectsAsync Tests
@@ -352,24 +354,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
             Assert.NotNull(result.Errors);
         }
 
-        [Fact]
-        public async Task GetPagedPactProjectsAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            _http.GetAsync<List<ProjectRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetPagedPactProjectsAsync(query);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve paged projects", error.Message);
-        }
-
         #endregion
 
         #region GetProjectByIdAsync Tests
@@ -422,23 +406,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.NotNull(result.Errors);
-        }
-
-        [Fact]
-        public async Task GetProjectByIdAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            _http.GetAsync<ProjectRes>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetProjectByIdAsync("PP001");
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve project", error.Message);
         }
 
         #endregion
@@ -497,26 +464,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
             Assert.NotNull(result.Errors);
         }
 
-        [Fact]
-        public async Task CreateProjectAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var projectDto = new ProjectDto { ParentProject = "PP001" };
-            _mapper.Map<ProjectReq>(projectDto).Returns(new ProjectReq());
-            _http.PostAsync<ProjectReq, ProjectRes>(Arg.Any<string>(), Arg.Any<ProjectReq>())
-                .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.CreateProjectAsync(projectDto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to create project", error.Message);
-        }
-
         #endregion
 
         #region UpdateProjectAsync Tests
@@ -571,26 +518,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.NotNull(result.Errors);
-        }
-
-        [Fact]
-        public async Task UpdateProjectAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var projectDto = new ProjectDto { ParentProject = "PP001" };
-            _mapper.Map<ProjectReq>(projectDto).Returns(new ProjectReq());
-            _http.PutAsync<ProjectReq, ProjectRes>(Arg.Any<string>(), Arg.Any<ProjectReq>())
-                .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.UpdateProjectAsync(projectDto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to update project", error.Message);
         }
 
         #endregion
@@ -649,26 +576,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
             Assert.NotNull(result.Errors);
         }
 
-        [Fact]
-        public async Task UpdatePactProjectAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var projectDto = new ProjectDto { ParentProject = "PP001" };
-            _mapper.Map<ProjectReq>(projectDto).Returns(new ProjectReq());
-            _http.PatchAsync<ProjectReq, ProjectRes>(Arg.Any<string>(), Arg.Any<ProjectReq>())
-                .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.UpdatePactProjectAsync(projectDto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to update project", error.Message);
-        }
-
         #endregion
 
         #region DeleteProjectAsync Tests
@@ -718,23 +625,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.NotNull(result.Errors);
-        }
-
-        [Fact]
-        public async Task DeleteProjectAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            _http.DeleteAsync<bool?>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.DeleteProjectAsync("PP001");
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to delete project", error.Message);
         }
 
         #endregion

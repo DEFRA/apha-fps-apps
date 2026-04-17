@@ -4,7 +4,6 @@ using Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
 using Xunit;
 
 namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsSettingApiClientTest
@@ -90,25 +89,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsSettingApiClientT
             var error = Assert.Single(result.Errors);
             Assert.Equal("NOT_FOUND", error.Code);
             await _http.Received(1).GetAsync<decimal>("api/v1/setting/hoursperday");
-        }
-
-        [Fact]
-        public async Task GetHoursPerDayAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            _http.GetAsync<decimal>("api/v1/setting/hoursperday")
-                .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetHoursPerDayAsync();
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            var error = Assert.Single(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve hours per day setting", error.Message);
         }
 
         [Fact]

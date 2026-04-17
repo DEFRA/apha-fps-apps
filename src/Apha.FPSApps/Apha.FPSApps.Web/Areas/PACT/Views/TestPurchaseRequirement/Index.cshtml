@@ -1,0 +1,170 @@
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.PACT.Models.TestPurchaseRequirementViewModel
+
+@{
+    ViewData["Title"] = "Test Purchase Requirements";
+}
+
+<div class="govuk-grid-row sup_margin_left_right_0">
+    <div class="govuk-grid-column-full">
+        <h1 class="heading_with_txtbox govuk-heading-s sup_border-bottom">
+            <span class="sup_flex_left_center">
+                Test Purchase Requirements for:
+                <label class="sup_hidden_label" for="sp-projectcode">project code</label>
+                <input type="text" id="sp-projectcode"
+                       class="govuk-input govuk-!-font-size-16 govuk-input--width-10"
+                       value="@Model.ParentProject"
+                       onchange="navigateToProjectCode(this.value)" />
+            </span>
+            <span>
+                <a href="@Url.Action("Index", "ProjectMaintenance", new { area = "PACT" })"
+                   class="govuk-back-link">Back</a>
+            </span>
+        </h1>
+    </div>
+</div>
+
+<div class="govuk-grid-row sup_flex_row sup_margin_left_right_0 sup_margin_bottom_10">
+
+    @await Html.PartialAsync("_PactProjectSideNav", new Apha.FPSApps.Web.Areas.PACT.Models.PactProjectSideNavModel
+    {
+        ParentProject = Model.ParentProject
+    })
+
+    <div class="govuk-grid-column-full">
+        <div class="govuk-grid-row sup_margin_left_right_0 sup_margin_bottom_10">
+            <div id="gridContainer_testPurchaseReqGrid">
+                @await Html.PartialAsync("_DataGrid", Model.TestPurchaseReqGrid)
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/ajax-form-validation.js"></script>
+    <script>
+        var testPurchaseReqGridId = '@Model.TestPurchaseReqGrid.GridId';
+        var parentProject = '@Uri.EscapeDataString(Model.ParentProject ?? string.Empty)';
+        var currentTestCode = '';
+
+        function navigateToProjectCode(code) {
+            code = (code || '').trim();
+            if (code) {
+                window.location.href = '/PACT/TestPurchaseRequirement/Index?parentProject=' + encodeURIComponent(code);
+            }
+        }
+
+        function getGridManager() {
+            return window['gridManager_' + testPurchaseReqGridId];
+        }
+
+        function toggleSidebar() {
+            document.querySelector('.sidenav').classList.toggle('collapsed');
+        }
+
+        function getTestPurchaseReqExtraFilters() {
+            return { testCode: decodeURIComponent(parentProject) };
+        }
+
+        function searchTestPurchaseReq() {
+            var search = document.getElementById('testPurchaseSearch');
+            currentTestCode = (search ? search.value : '').trim();
+            if (currentTestCode) {
+                var gm = getGridManager();
+                if (gm) gm.reloadGrid({ page: 1 });
+            }
+        }
+
+        // Wire up the search box inside the grid title area
+        document.addEventListener('DOMContentLoaded', function () {
+            var searchInput = document.getElementById('testPurchaseSearch');
+            if (searchInput) {
+                searchInput.addEventListener('keypress', function (e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        searchTestPurchaseReq();
+                    }
+                });
+            }
+        });
+
+        // ── CRUD ─────────────────────────────────────────────────────────
+
+        function addTestPurchaseReq() {
+            $.get('/PACT/TestPurchaseRequirement/GetTestPurchaseReq',
+                { testCode: '', buyer: decodeURIComponent(parentProject), parentProject: decodeURIComponent(parentProject) },
+                function (html) {
+                    $('#modaPopupBody').html(html);
+                    $('#modalPopup').addClass('show');
+                });
+        }
+
+        function editTestPurchaseReq(btn) {
+            var testCode = $(btn).data('testcode') || $(btn).closest('tr').find('td:first').text().trim();
+            var buyer = $(btn).data('id');
+            $.get('/PACT/TestPurchaseRequirement/GetTestPurchaseReq',
+                { testCode: testCode, buyer: buyer, parentProject: decodeURIComponent(parentProject) },
+                function (html) {
+                    $('#modaPopupBody').html(html);
+                    $('#modalPopup').addClass('show');
+                });
+        }
+
+        function deleteTestPurchaseReq(btn) {
+            var testCode = $(btn).data('testcode') || $(btn).closest('tr').find('td:first').text().trim();
+            var buyer = $(btn).data('id');
+            showGovukConfirm('Delete this test purchase requirement?').then(function (confirmed) {
+                if (!confirmed) return;
+                $.ajax({
+                    url: '/PACT/TestPurchaseRequirement/DeleteTestPurchaseReq',
+                    type: 'DELETE',
+                    data: { testCode: testCode, buyer: buyer },
+                    success: function (response) {
+                        if (response.success) {
+                            getGridManager()?.reloadGrid({ page: 1 });
+                            showGovukAlert('Test purchase requirement deleted successfully.');
+                        } else {
+                            showGovukAlert('Error: ' + response.message);
+                        }
+                    },
+                    error: function () { showGovukAlert('An error occurred while deleting.'); }
+                });
+            });
+        }
+
+        function saveTestPurchaseReq() {
+            var form = $('#testPurchaseReqForm');
+
+            if (!isFormValid(form)) {
+                displayClientValidationErrors(form, '#testPurchaseReqForm');
+                return;
+            }
+
+            var data = form.serializeObject ? form.serializeObject() : Object.fromEntries(new FormData(form[0]));
+
+            if (typeof data.isEdit === 'string') data.isEdit = data.isEdit === 'true';
+
+            ['NoRequired', 'UnitPrice'].forEach(function (f) {
+                if (data[f] === '' || data[f] === undefined) data[f] = null;
+            });
+
+            clearValidationErrors('#testPurchaseReqForm');
+            $.ajax({
+                url: '/PACT/TestPurchaseRequirement/SaveTestPurchaseReq',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function (response) {
+                    if (response.success) {
+                        $('#modalPopup').removeClass('show');
+                        showGovukAlert(response.message);
+                        getGridManager()?.reloadGrid({ page: 1 });
+                    } else {
+                        displayServerValidationErrors(response.errors, response.message, '#testPurchaseReqForm');
+                    }
+                },
+                error: function () { showGovukAlert('An error occurred while saving.'); }
+            });
+        }
+    </script>
+}

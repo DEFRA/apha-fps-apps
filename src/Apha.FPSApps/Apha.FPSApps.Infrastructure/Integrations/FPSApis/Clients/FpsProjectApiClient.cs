@@ -24,192 +24,114 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
         public async Task<ApiResponseDto<List<ProjectDto>>> GetAllProjectsAsync()
         {
-            try
-            {
-                var response = await _http.GetAsync<List<ProjectRes>>(FpsApiEndpoints.GetAllProjects);
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
+            var response = await _http.GetAsync<List<ProjectRes>>(FpsApiEndpoints.GetAllProjects);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
 
-                var dto = _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
-                return ApiResponseDto<List<ProjectDto>>.FailureResponse(dto.Errors, dto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<List<ProjectDto>>.FailureResponse(
-                    [new ApiErrorDto { Message = "Failed to retrieve projects", Code = InternalCodeError }],
-                    new ApiMetaDto());
-            }
+            var dto = _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
+            return ApiResponseDto<List<ProjectDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+        public async Task<ApiResponseDto<List<ProjectDto>>> GetAllPactProjectsAsync()
+        {
+            var response = await _http.GetAsync<List<ProjectRes>>(FpsApiEndpoints.GetAllPactProjects);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
+            return ApiResponseDto<List<ProjectDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
 
         public async Task<ApiResponseDto<List<ProjectDto>>> GetPagedProjectsAsync(QueryParameters<string> query)
         {
-            try
-            {
-                var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetPagedProjects, query);
-                var response = await _http.GetAsync<List<ProjectRes>>(url);
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
+            var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetPagedProjects, query);
+            var response = await _http.GetAsync<List<ProjectRes>>(url);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
 
-                var dto = _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
-                return ApiResponseDto<List<ProjectDto>>.FailureResponse(dto.Errors, dto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<List<ProjectDto>>.FailureResponse(
-                    [new ApiErrorDto { Message = "Failed to retrieve paged projects", Code = InternalCodeError }],
-                    new ApiMetaDto());
-            }
+            var dto = _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
+            return ApiResponseDto<List<ProjectDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
 
         public async Task<ApiResponseDto<List<ProjectDto>>> GetPagedPactProjectsAsync(QueryParameters<string> query)
         {
-            try
-            {
-                var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetPagedPactProjects, query);
-                var response = await _http.GetAsync<List<ProjectRes>>(url);
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
+            var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetPagedPactProjects, query);
+            var response = await _http.GetAsync<List<ProjectRes>>(url);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
 
-                var dto = _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
-                return ApiResponseDto<List<ProjectDto>>.FailureResponse(dto.Errors, dto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<List<ProjectDto>>.FailureResponse(
-                    [new ApiErrorDto { Message = "Failed to retrieve paged projects", Code = InternalCodeError }],
-                    new ApiMetaDto());
-            }
+            var dto = _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
+            return ApiResponseDto<List<ProjectDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
 
         public async Task<ApiResponseDto<ProjectDto>> GetProjectByIdAsync(string parentProject)
         {
-            try
-            {
-                var response = await _http.GetAsync<ProjectRes>(string.Format(FpsApiEndpoints.GetProjectById, Uri.EscapeDataString(parentProject)));
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<ProjectDto>>(response);
+            var response = await _http.GetAsync<ProjectRes>(string.Format(FpsApiEndpoints.GetProjectById, Uri.EscapeDataString(parentProject)));
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<ProjectDto>>(response);
 
-                var dto = _mapper.Map<ApiResponseDto<ProjectDto>>(response);
-                return ApiResponseDto<ProjectDto>.FailureResponse(dto.Errors, dto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<ProjectDto>.FailureResponse(
-                    [new ApiErrorDto { Message = "Failed to retrieve project", Code = InternalCodeError }],
-                    new ApiMetaDto());
-            }
+            var dto = _mapper.Map<ApiResponseDto<ProjectDto>>(response);
+            return ApiResponseDto<ProjectDto>.FailureResponse(dto.Errors, dto.Meta);
         }
 
         public async Task<ApiResponseDto<ProjectDto>> CreateProjectAsync(ProjectDto project)
         {
-            try
-            {
-                var request = _mapper.Map<ProjectReq>(project);
-                var response = await _http.PostAsync<ProjectReq, ProjectRes>(FpsApiEndpoints.CreateProject, request);
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<ProjectDto>>(response);
+            var request = _mapper.Map<ProjectReq>(project);
+            var response = await _http.PostAsync<ProjectReq, ProjectRes>(FpsApiEndpoints.CreateProject, request);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<ProjectDto>>(response);
 
-                var dto = _mapper.Map<ApiResponseDto<ProjectDto>>(response);
-                return ApiResponseDto<ProjectDto>.FailureResponse(dto.Errors, dto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<ProjectDto>.FailureResponse(
-                    [new ApiErrorDto { Message = "Failed to create project", Code = InternalCodeError }],
-                    new ApiMetaDto());
-            }
+            var dto = _mapper.Map<ApiResponseDto<ProjectDto>>(response);
+            return ApiResponseDto<ProjectDto>.FailureResponse(dto.Errors, dto.Meta);
         }
 
         public async Task<ApiResponseDto<ProjectDto>> UpdateProjectAsync(ProjectDto project)
         {
-            try
-            {
-                var request = _mapper.Map<ProjectReq>(project);
-                var response = await _http.PutAsync<ProjectReq, ProjectRes>(FpsApiEndpoints.UpdateProject, request);
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<ProjectDto>>(response);
+            var request = _mapper.Map<ProjectReq>(project);
+            var response = await _http.PutAsync<ProjectReq, ProjectRes>(FpsApiEndpoints.UpdateProject, request);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<ProjectDto>>(response);
 
-                var dto = _mapper.Map<ApiResponseDto<ProjectDto>>(response);
-                return ApiResponseDto<ProjectDto>.FailureResponse(dto.Errors, dto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<ProjectDto>.FailureResponse(
-                    [new ApiErrorDto { Message = "Failed to update project", Code = InternalCodeError }],
-                    new ApiMetaDto());
-            }
+            var dto = _mapper.Map<ApiResponseDto<ProjectDto>>(response);
+            return ApiResponseDto<ProjectDto>.FailureResponse(dto.Errors, dto.Meta);
         }
 
         public async Task<ApiResponseDto<ProjectDto>> UpdatePactProjectAsync(ProjectDto project)
         {
-            try
-            {
-                var request = _mapper.Map<ProjectReq>(project);
-                var response = await _http.PatchAsync<ProjectReq, ProjectRes>(FpsApiEndpoints.UpdatePactProject, request);
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<ProjectDto>>(response);
+            var request = _mapper.Map<ProjectReq>(project);
+            var response = await _http.PatchAsync<ProjectReq, ProjectRes>(FpsApiEndpoints.UpdatePactProject, request);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<ProjectDto>>(response);
 
-                var dto = _mapper.Map<ApiResponseDto<ProjectDto>>(response);
-                return ApiResponseDto<ProjectDto>.FailureResponse(dto.Errors, dto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<ProjectDto>.FailureResponse(
-                    [new ApiErrorDto { Message = "Failed to update project", Code = InternalCodeError }],
-                    new ApiMetaDto());
-            }
+            var dto = _mapper.Map<ApiResponseDto<ProjectDto>>(response);
+            return ApiResponseDto<ProjectDto>.FailureResponse(dto.Errors, dto.Meta);
         }
 
         public async Task<ApiResponseDto<bool>> DeleteProjectAsync(string parentProject)
         {
-            try
-            {
-                var response = await _http.DeleteAsync<bool?>(string.Format(FpsApiEndpoints.DeleteProject, Uri.EscapeDataString(parentProject)));
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<bool>>(response);
+            var response = await _http.DeleteAsync<bool?>(string.Format(FpsApiEndpoints.DeleteProject, Uri.EscapeDataString(parentProject)));
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<bool>>(response);
 
-                var dto = _mapper.Map<ApiResponseDto<bool>>(response);
-                return ApiResponseDto<bool>.FailureResponse(dto.Errors, dto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<bool>.FailureResponse(
-                    [new ApiErrorDto { Message = "Failed to delete project", Code = InternalCodeError }],
-                    new ApiMetaDto());
-            }
+            var dto = _mapper.Map<ApiResponseDto<bool>>(response);
+            return ApiResponseDto<bool>.FailureResponse(dto.Errors, dto.Meta);
         }
 
         public async Task<ApiResponseDto<List<ProjectDto>>> GetProjectsByProgramAsync(
             QueryParameters<string> query, string programNo)
         {
-            try
+            var url = QueryStringHelper.AddQueryString(
+                string.Format(FpsApiEndpoints.GetProjectsByProgram, Uri.EscapeDataString(programNo)), query);
+
+            var response = await _http.GetAsync<List<ProjectRes>>(url);
+
+            if (response.Success)
             {
-                var url = QueryStringHelper.AddQueryString(
-                    string.Format(FpsApiEndpoints.GetProjectsByProgram, Uri.EscapeDataString(programNo)), query);
-
-                var response = await _http.GetAsync<List<ProjectRes>>(url);
-
-                if (response.Success)
-                {
-                    return _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
-                }
-
-                var responseDto = _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
-                return ApiResponseDto<List<ProjectDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+                return _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
             }
-            catch (Exception)
-            {
-                var apiErrorsDto = new List<ApiErrorDto>
-                {
-                    new ApiErrorDto
-                    {
-                        Message = "Failed to retrieve projects",
-                        Code = InternalCodeError,
-                        Details = null
-                    }
-                };
-                return ApiResponseDto<List<ProjectDto>>.FailureResponse(apiErrorsDto, new ApiMetaDto());
-            }
+
+            var responseDto = _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
+            return ApiResponseDto<List<ProjectDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
     }
 }

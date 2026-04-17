@@ -1,4 +1,4 @@
-﻿using Apha.Common.Contracts;
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.PACT;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PACT;
@@ -7,7 +7,6 @@ using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients;
 using AutoMapper;
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
 using Xunit;
 
 namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidApiClientTest
@@ -88,23 +87,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
             Assert.NotNull(result.Errors);
         }
 
-        [Fact]
-        public async Task GetByJobCodeAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            _http.GetAsync<List<TimeCodeValidRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetByJobCodeAsync("JC001", "PP001");
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve time codes", error.Message);
-        }
-
         #endregion
 
         #region GetPagedTimeCodesAsync Tests
@@ -166,24 +148,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
             Assert.True(result.Success);
         }
 
-        [Fact]
-        public async Task GetPagedTimeCodesAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            _http.GetAsync<List<TimeCodeValidRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetPagedTimeCodesAsync(query, null, null);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve paged time codes", error.Message);
-        }
-
         #endregion
 
         #region CreateTimeCodeValidAsync Tests
@@ -237,26 +201,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.NotNull(result.Errors);
-        }
-
-        [Fact]
-        public async Task CreateTimeCodeValidAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var itemDto = new TimeCodeValidDto { TimeCode = "TC001", WorkGroup = "WG001", ParentProject = "PP001" };
-            _mapper.Map<TimeCodeValidReq>(itemDto).Returns(new TimeCodeValidReq());
-            _http.PostAsync<TimeCodeValidReq, TimeCodeValidRes>(Arg.Any<string>(), Arg.Any<TimeCodeValidReq>())
-                .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.CreateTimeCodeValidAsync(itemDto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to create time code", error.Message);
         }
 
         #endregion
@@ -314,26 +258,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
             Assert.NotNull(result.Errors);
         }
 
-        [Fact]
-        public async Task UpdateTimeCodeValidAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var itemDto = new TimeCodeValidDto { TimeCode = "TC001", WorkGroup = "WG001", ParentProject = "PP001" };
-            _mapper.Map<TimeCodeValidReq>(itemDto).Returns(new TimeCodeValidReq());
-            _http.PutAsync<TimeCodeValidReq, TimeCodeValidRes>(Arg.Any<string>(), Arg.Any<TimeCodeValidReq>())
-                .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.UpdateTimeCodeValidAsync(itemDto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to update time code", error.Message);
-        }
-
         #endregion
 
         #region DeleteTimeCodeValidAsync Tests
@@ -387,23 +311,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
             Assert.NotNull(result.Errors);
         }
 
-        [Fact]
-        public async Task DeleteTimeCodeValidAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            _http.DeleteAsync<bool>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.DeleteTimeCodeValidAsync("WG001", "TC001", "PP001");
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to delete time code", error.Message);
-        }
-
         #endregion
 
         #region DeleteAllByJobCodeAsync Tests
@@ -454,23 +361,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.NotNull(result.Errors);
-        }
-
-        [Fact]
-        public async Task DeleteAllByJobCodeAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            _http.DeleteAsync<bool>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.DeleteAllByJobCodeAsync("JC001", "PP001");
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to delete time codes for job code", error.Message);
         }
 
         #endregion
@@ -537,24 +427,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
             Assert.NotNull(result.Errors);
         }
 
-        [Fact]
-        public async Task CopyWorkGroupAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            _http.PostAsync<object, List<TimeCodeValidRes>>(Arg.Any<string>(), Arg.Any<object>())
-                .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.CopyWorkGroupAsync("JC001", "JC002", "PP001");
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to copy work group time codes", error.Message);
-        }
-
         #endregion
 
         #region DeleteBulkAsync Tests
@@ -613,25 +485,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.NotNull(result.Errors);
-        }
-
-        [Fact]
-        public async Task DeleteBulkAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var requestDto = new BulkDeleteTimeCodeRequestDto { ParentProject = "PP001", Items = [] };
-            _http.PostAsync<BulkDeleteTimeCodeReq, bool>(Arg.Any<string>(), Arg.Any<BulkDeleteTimeCodeReq>())
-                .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.DeleteBulkAsync(requestDto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to bulk delete time codes", error.Message);
         }
 
         #endregion
@@ -708,31 +561,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.NotNull(result.Errors);
-        }
-
-        [Fact]
-        public async Task CopySelectedWorkGroupsAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var requestDto = new BulkCopyWorkGroupRequestDto
-            {
-                ParentProject = "PP001",
-                SourceJobCode = "JC001",
-                TargetJobCode = "JC002",
-                WorkGroups = []
-            };
-            _http.PostAsync<BulkCopyWorkGroupReq, List<TimeCodeValidRes>>(Arg.Any<string>(), Arg.Any<BulkCopyWorkGroupReq>())
-                .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.CopySelectedWorkGroupsAsync(requestDto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to copy selected work group time codes", error.Message);
         }
 
         #endregion

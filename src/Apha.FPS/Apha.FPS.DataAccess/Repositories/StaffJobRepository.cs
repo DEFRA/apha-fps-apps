@@ -71,15 +71,17 @@ namespace Apha.FPS.DataAccess.Repositories
                         on wg.PactId equals s.StaffId
                     join t in _dbContext.Projects
                         on s.JobCode equals t.ParentProject
-                    where s.StaffId == staffId && t.ParentProject == jobcode
+                    where s.StaffId == staffId 
                     select new
                     {
+                        ParentProject = t.ParentProject,
                         ChargeRate = t.IsDefraProject == -1
                             ? p.DefraChargeRate
                             : p.ChargeRate
                     };
 
-            decimal? changeRate = await result.Select(e => e.ChargeRate).FirstOrDefaultAsync();
+            decimal? changeRate = await result.Where(e => e.ParentProject == jobcode).Select(e => e.ChargeRate).FirstOrDefaultAsync();
+            changeRate ??= await result.Select(e => e.ChargeRate).FirstOrDefaultAsync(); 
             return changeRate;
         }
 
@@ -98,66 +100,125 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<StaffJob> AddAsync(StaffJob staffJob)
         {
-            ArgumentNullException.ThrowIfNull(staffJob);
-            ArgumentOutOfRangeException.ThrowIfNegative(staffJob.PlannedHours);
-
-            var existingStaffJob = await _dbContext.StaffJobs
-                .FirstOrDefaultAsync(sj => sj.StaffId == staffJob.StaffId
-                                        && sj.JobCode == staffJob.JobCode);
-
-            if (existingStaffJob is not null)
-                throw new InvalidOperationException(
-                    $"Staff job with StaffId {staffJob.StaffId} and JobCode {staffJob.JobCode} already exists");
-
-            var newStaffJob = new StaffJob
+            var strategy = _dbContext.Database.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(async () =>
             {
-                StaffId = staffJob.StaffId,
-                JobCode = staffJob.JobCode,
-                PlannedHours = staffJob.PlannedHours,
-                FpsYear = _requestContext.FpsYear
-            };
+                await using var transaction = await _dbContext.Database.BeginTransactionAsync();
+                try
+                {
+                    var existingStaffJob = await _dbContext.StaffJobs
+                        .FirstOrDefaultAsync(sj => sj.StaffId == staffJob.StaffId
+                                                && sj.JobCode == staffJob.JobCode);
 
-            _dbContext.StaffJobs.Add(newStaffJob);
-            await _dbContext.SaveChangesAsync();
+                    if (existingStaffJob is not null)
+                        throw new InvalidOperationException(
+                            $"Staff job with StaffId {staffJob.StaffId} and JobCode {staffJob.JobCode} already exists");
 
-            return newStaffJob;
+                    var newStaffJob = new StaffJob
+                    {
+                        StaffId = staffJob.StaffId,
+                        JobCode = staffJob.JobCode,
+                        PlannedHours = staffJob.PlannedHours,
+                        FpsYear = _requestContext.FpsYear
+                    };
+
+                    var logEntry = CreateStaffJobLogEntry(newStaffJob.StaffId, newStaffJob.JobCode, newStaffJob.PlannedHours, "I");
+
+                    _dbContext.StaffJobs.Add(newStaffJob);
+                    _dbContext.StaffJobLogs.Add(logEntry);
+                    await _dbContext.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
+                    return newStaffJob;
+                }
+                catch
+                {
+                    await transaction.RollbackAsync();
+                    throw;
+                }
+            });
         }
 
         public async Task<StaffJob> UpdateAsync(StaffJob staffJob)
         {
-            ArgumentNullException.ThrowIfNull(staffJob);
-            ArgumentOutOfRangeException.ThrowIfNegative(staffJob.PlannedHours);
+            var strategy = _dbContext.Database.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(async () =>
+            {
+                await using var transaction = await _dbContext.Database.BeginTransactionAsync();
+                try
+                {
+                    var existingStaffJob = await _dbContext.StaffJobs
+                        .FirstOrDefaultAsync(sj => sj.StaffId == staffJob.StaffId
+                                                && sj.JobCode == staffJob.JobCode);
 
-            var existingStaffJob = await _dbContext.StaffJobs
-                .FirstOrDefaultAsync(sj => sj.StaffId == staffJob.StaffId
-                                        && sj.JobCode == staffJob.JobCode);
+                    if (existingStaffJob is null)
+                        throw new InvalidOperationException(
+                            $"Staff job with StaffId {staffJob.StaffId} and JobCode {staffJob.JobCode} not found");
 
-            if (existingStaffJob is null)
-                throw new InvalidOperationException(
-                    $"Staff job with StaffId {staffJob.StaffId} and JobCode {staffJob.JobCode} not found");
+                    existingStaffJob.PlannedHours = staffJob.PlannedHours;
+                    existingStaffJob.FpsYear = _requestContext.FpsYear;
 
-            existingStaffJob.PlannedHours = staffJob.PlannedHours;
-            existingStaffJob.FpsYear = _requestContext.FpsYear;
+                    var logEntry = CreateStaffJobLogEntry(existingStaffJob.StaffId, existingStaffJob.JobCode, existingStaffJob.PlannedHours, "I");
 
-            await _dbContext.SaveChangesAsync();
+                    _dbContext.StaffJobLogs.Add(logEntry);
+                    await _dbContext.SaveChangesAsync();
+                    await transaction.CommitAsync();
 
-            return existingStaffJob;
+                    return existingStaffJob;
+                }
+                catch
+                {
+                    await transaction.RollbackAsync();
+                    throw;
+                }
+            });
         }
 
         public async Task<bool> DeleteAsync(string staffId, string jobCode)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(jobCode);
-
             var staffJob = await _dbContext.StaffJobs
                    .FirstOrDefaultAsync(sj => sj.StaffId == staffId && sj.JobCode == jobCode);
 
             if (staffJob is null)
                 return false;
 
-            _dbContext.StaffJobs.Remove(staffJob);
-            await _dbContext.SaveChangesAsync();            
+            var strategy = _dbContext.Database.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(async () =>
+            {
+                await using var transaction = await _dbContext.Database.BeginTransactionAsync();
+                try
+                {
+                    var logEntry = CreateStaffJobLogEntry(staffJob.StaffId, staffJob.JobCode, staffJob.PlannedHours, "D");
 
-            return true;
+                    _dbContext.StaffJobs.Remove(staffJob);
+                    _dbContext.StaffJobLogs.Add(logEntry);
+                    await _dbContext.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
+                    return true;
+                }
+                catch
+                {
+                    await transaction.RollbackAsync();
+                    throw;
+                }
+            });
+        }
+
+        private StaffJobLog CreateStaffJobLogEntry(string staffId, string jobCode, double plannedHours, string insertDelete)
+        {
+            return new StaffJobLog
+            {
+                StaffId = staffId,
+                JobCode = jobCode,
+                PlannedHours = plannedHours,
+                DateTime = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                UserId = _requestContext.UserEmailId?.Length > 20
+                            ? _requestContext.UserEmailId[..20]
+                            : _requestContext.UserEmailId,
+                InsertDelete = insertDelete,
+                FpsYear = _requestContext.FpsYear
+            };
         }
 
         private async Task<IQueryable<StaffJobView>> BuildJobStaffCostQueryAsync(string jobCode)

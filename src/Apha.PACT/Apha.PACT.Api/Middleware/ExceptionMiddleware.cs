@@ -1,7 +1,8 @@
-﻿using System.Text.Json;
-using Apha.Common.Contracts;
+﻿using Apha.Common.Contracts;
 using Apha.PACT.Application.Validation;
 using Microsoft.AspNetCore.Authentication;
+using Npgsql;
+using System.Text.Json;
 
 
 namespace Apha.PACT.Api.Middleware
@@ -91,6 +92,33 @@ namespace Apha.PACT.Api.Middleware
                         Code = "RESOURCE_NOT_FOUND",
                         Message = ex.Message
                     });
+                    break;
+                case InvalidOperationException:
+                    context.Response.StatusCode = StatusCodes.Status409Conflict;
+                    apiResponse.Errors.Add(new ApiError
+                    {
+                        Code = "BUSINESS_RULE_VIOLATION",
+                        Message = ex.Message
+                    });
+                    break;
+                case PostgresException pgEx:
+                    context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+                    apiResponse.Errors.Add(new ApiError
+                    {
+                        Code = "DB_POSTGRES_ERROR",
+                        Message = "A database error occurred.",
+                        Details = pgEx.MessageText
+                    });
+                    errorType = _configuration["ExceptionTypes:Database"];
+                    break;
+                case NpgsqlException:
+                    context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
+                    apiResponse.Errors.Add(new ApiError
+                    {
+                        Code = "DB_CONNECTION_ERROR",
+                        Message = "Database connection failed or service unavailable."
+                    });
+                    errorType = _configuration["ExceptionTypes:Database"];
                     break;
                 default:
                     context.Response.StatusCode = StatusCodes.Status500InternalServerError;

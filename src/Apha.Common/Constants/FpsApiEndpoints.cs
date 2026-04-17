@@ -38,6 +38,7 @@ namespace Apha.Common.Constants
         // Project
         public const string GetAllProjects = "api/v1/project";
         public const string GetPagedProjects = "api/v1/project/paged";
+        public const string GetAllPactProjects = "api/v1/project/pactview/all";
         public const string GetPagedPactProjects = "api/v1/project/pactview";
         public const string GetProjectById = "api/v1/project/{0}";
         public const string CreateProject = "api/v1/project";
@@ -62,5 +63,8 @@ namespace Apha.Common.Constants
         public const string UpdateStaffJob = "api/v1/staffjob";
         public const string DeleteStaffJob = "api/v1/staffjob?staffId={0}&jobcode={1}";
         public const string GetStaffJobViewById = "api/v1/staffjob/view?staffId={0}&jobcode={1}";
+
+        // Testor Product
+        public const string GetAllTestorProducts = "api/v1/testorproduct";
     }
 }

@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
   if (window.showGovukAlert && window.showGovukConfirm) {
     return;
   }

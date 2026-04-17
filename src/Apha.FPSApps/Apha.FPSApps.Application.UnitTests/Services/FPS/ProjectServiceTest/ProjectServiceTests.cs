@@ -120,6 +120,66 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProjectServiceTest
 
         #endregion
 
+        #region GetAllPactProjectsAsync Tests
+
+        [Fact]
+        public async Task GetAllPactProjectsAsync_WithSuccessResponse_ReturnsProjectList()
+        {
+            // Arrange
+            var projects = new List<ProjectDto>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "PACT Project One" },
+                new() { ParentProject = "PP002", ProjectTitle = "PACT Project Two" }
+            };
+            var expectedResponse = ApiResponseDto<List<ProjectDto>>.SuccessResponse(projects);
+            _fpsProjectApiClient.GetAllPactProjectsAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _projectService.GetAllPactProjectsAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data?.Count);
+            await _fpsProjectApiClient.Received(1).GetAllPactProjectsAsync();
+        }
+
+        [Fact]
+        public async Task GetAllPactProjectsAsync_WithEmptyResult_ReturnsSuccessWithEmptyList()
+        {
+            // Arrange
+            var expectedResponse = ApiResponseDto<List<ProjectDto>>.SuccessResponse(new List<ProjectDto>());
+            _fpsProjectApiClient.GetAllPactProjectsAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _projectService.GetAllPactProjectsAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!);
+        }
+
+        [Fact]
+        public async Task GetAllPactProjectsAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "API_ERROR" } };
+            var expectedResponse = ApiResponseDto<List<ProjectDto>>.FailureResponse(errors, new ApiMetaDto());
+            _fpsProjectApiClient.GetAllPactProjectsAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _projectService.GetAllPactProjectsAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+        }
+
+        #endregion
+
         #region GetPagedProjectsAsync Tests
 
         [Fact]

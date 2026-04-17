@@ -65,6 +65,30 @@
         });
     }
 
+    /**
+     * Attaches an input/change listener on $field so the inline error is cleared
+     * as soon as the user provides a non-empty value.  Uses the '.valclear'
+     * namespace so handlers can be removed cleanly by clearValidationErrors.
+     *
+     * @param {jQuery} $field    - The field element.
+     * @param {string} fieldName - The name attribute used to locate the valmsg span.
+     * @param {jQuery} $c        - The scoped container.
+     */
+    function clearFieldErrorOnInput($field, fieldName, $c) {
+        $field.off('input.valclear change.valclear')
+              .on('input.valclear change.valclear', function () {
+                  if (!$(this).val() || $(this).val().trim() === '') return;
+                  var $fg = $(this).closest('.govuk-form-group');
+                  $fg.removeClass('govuk-form-group--error');
+                  $(this).removeClass('govuk-input--error');
+                  $fg.find('[data-valmsg-for="' + fieldName + '"]')
+                     .text('')
+                     .hide()
+                     .removeClass('field-validation-error')
+                     .addClass('field-validation-valid');
+              });
+    }
+
     // ── Public API ───────────────────────────────────────────────────────────
 
     /**
@@ -102,6 +126,8 @@
         $c.find('.govuk-input--error').removeClass('govuk-input--error');
 
         $c.find('[data-valmsg-for]').each(function () {
+            var fieldName = $(this).attr('data-valmsg-for');
+            $c.find('[name="' + fieldName + '"]').off('input.valclear change.valclear');
             $(this)
                 .text('')
                 .hide()
@@ -122,7 +148,7 @@
         clearValidationErrors($c);
 
         var errors = [];
-        form.find('[required]').each(function () {
+        form.find('[required]').each(function () {            
             var $field = $(this);
             if (!$field.val() || $field.val().trim() === '') {
                 var name  = $field.attr('name') || '';
@@ -184,8 +210,7 @@
         var $c       = resolveContainer(container);
         var $summary = $c.find('.govuk-error-summary');
         var $list    = $summary.find('.govuk-error-summary__list').empty();
-
-        $summary.find('.govuk-error-summary__title').text(summaryMessage || 'There is a problem');
+        $summary.find('.govuk-error-summary__title').text('There is a problem');
 
         var items            = normaliseErrors(errors);
         var hasSummaryErrors = false;

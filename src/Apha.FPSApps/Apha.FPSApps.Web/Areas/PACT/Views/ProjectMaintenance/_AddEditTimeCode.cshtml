@@ -47,7 +47,7 @@
 
         <!-- Work Group — always an editable dropdown for both add and edit -->
         <div class="govuk-form-group sup_margin_bottom_10">
-            <label class="govuk-label govuk-!-font-weight-bold" asp-for="WorkGroup">Work Group:</label>
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="WorkGroup">Work Group <span class="sup_color_red">*</span></label>
             <select class="govuk-select govuk-!-font-size-16" asp-for="WorkGroup"
                     asp-items="@(ViewBag.WorkGroups as List<SelectListItem>)">
                 <option value="">--select--</option>
@@ -71,7 +71,7 @@
 
         <!-- Job Code — readonly; its value is also the TimeCode (carried in the hidden input above) -->
         <div class="govuk-form-group sup_margin_bottom_10">
-            <label class="govuk-label govuk-!-font-weight-bold" asp-for="JobCode">Job Code:</label>
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="JobCode">Job Code</label>
             <input class="govuk-input govuk-!-font-size-16" asp-for="JobCode" readonly />
         </div>
 

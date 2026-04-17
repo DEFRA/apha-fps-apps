@@ -1,4 +1,4 @@
-using Apha.Common.Helpers.Repository;
+﻿using Apha.Common.Helpers.Repository;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -19,6 +19,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             IEnumerable<Project>? projects = null,
             IEnumerable<ProjectView>? projectViews = null,
             IEnumerable<JobCode>? jobCodes = null,
+            IEnumerable<PactProjectView>? pactProjectViews = null,
             string userEmailId = "test@example.com", // always lowercase - matches middleware ToLowerInvariant()
             int fpsYear = 2024)
         {
@@ -43,6 +44,12 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             {
                 var jobCodesMockSet = RepositoryTestHelper.CreateMockDbSet(jobCodes);
                 mockContext.Setup(x => x.JobCodes).Returns(jobCodesMockSet.Object);
+            }
+
+            if (pactProjectViews != null)
+            {
+                var pactProjectViewsMockSet = RepositoryTestHelper.CreateMockDbSet(pactProjectViews);
+                mockContext.Setup(x => x.PactProjectViews).Returns(pactProjectViewsMockSet.Object);
             }
 
             return new ProjectRepository(mockContext.Object, mockRequestContext.Object);

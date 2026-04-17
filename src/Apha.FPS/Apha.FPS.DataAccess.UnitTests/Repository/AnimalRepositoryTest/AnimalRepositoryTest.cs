@@ -76,6 +76,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AnimalRepositoryTest
         private static (
             AnimalRepository Repo,
             Mock<DbSet<AnimalRequest>> AnimalRequestsDbSet,
+            Mock<DbSet<AnimalRequestLog>> AnimalRequestLogsDbSet,
             Mock<FpsDbContext> Context,
             Mock<IFpsRequestContext> YearContext)
             CreateRepositoryWithMocks(IEnumerable<AnimalRequest>? animalRequests = null, int fpsYear = DefaultFpsYear)
@@ -86,10 +87,14 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AnimalRepositoryTest
             var animalRequestsMockSet = RepositoryTestHelper.CreateMockDbSet(animalRequests ?? []);
             RepositoryTestHelper.SetupDbSetOperations(animalRequestsMockSet);
             mockContext.Setup(x => x.AnimalRequests).Returns(animalRequestsMockSet.Object);
+
+            var animalRequestLogsMockSet = RepositoryTestHelper.CreateMockDbSet(new List<AnimalRequestLog>());
+            mockContext.Setup(x => x.AnimalRequestLogs).Returns(animalRequestLogsMockSet.Object);
+
             RepositoryTestHelper.SetupSaveChanges(mockContext);
 
             var repo = new AnimalRepository(mockContext.Object, mockFpsYearContext.Object);
-            return (repo, animalRequestsMockSet, mockContext, mockFpsYearContext);
+            return (repo, animalRequestsMockSet, animalRequestLogsMockSet, mockContext, mockFpsYearContext);
         }
 
         [Fact]
@@ -157,7 +162,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AnimalRepositoryTest
         public async Task AddAnimalCostAsync_AddsAnimalRequest_WhenValid()
         {
             // Arrange
-            var (repo, animalRequestsMockSet, mockContext, _) = CreateRepositoryWithMocks([]);
+            var (repo, animalRequestsMockSet, animalRequestLogsMockSet, mockContext, _) = CreateRepositoryWithMocks([]);
             var newRequest = new AnimalRequest
             {
                 IndCounter      = 1,
@@ -177,6 +182,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AnimalRepositoryTest
             Assert.Equal(5.0,     result.NumberOfDays);
             Assert.Equal(3.0,     result.NumberOfAnimals);
             animalRequestsMockSet.Verify(x => x.Add(It.IsAny<AnimalRequest>()), Times.Once);
+            animalRequestLogsMockSet.Verify(m => m.Add(It.Is<AnimalRequestLog>(log =>
+                log.JobCode == "JC001" &&
+                log.AnimalType == "CAT" &&
+                log.InsertDelete == "I")), Times.Once);
             RepositoryTestHelper.VerifySaveChanges(mockContext);
         }
 
@@ -184,7 +193,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AnimalRepositoryTest
         public async Task AddAnimalCostAsync_ReturnsTheSameEntity_ThatWasAdded()
         {
             // Arrange
-            var (repo, _, _, _) = CreateRepositoryWithMocks([]);
+            var (repo, _, _, _, _) = CreateRepositoryWithMocks([]);
             var newRequest = new AnimalRequest
             {
                 IndCounter      = 10,
@@ -257,6 +266,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AnimalRepositoryTest
                 .ReturnsAsync(existing);
 
             mockContext.Setup(x => x.AnimalRequests).Returns(animalRequestsMockSet.Object);
+
+            var animalRequestLogsMockSet = RepositoryTestHelper.CreateMockDbSet(new List<AnimalRequestLog>());
+            mockContext.Setup(x => x.AnimalRequestLogs).Returns(animalRequestLogsMockSet.Object);
+
             RepositoryTestHelper.SetupSaveChanges(mockContext);
 
             var repo = new AnimalRepository(mockContext.Object, mockFpsYearContext.Object);
@@ -280,6 +293,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AnimalRepositoryTest
             Assert.Equal(3.0,            result.NumberOfDays);
             Assert.Equal(4.0,            result.NumberOfAnimals);
             Assert.Equal(DefaultFpsYear, result.FpsYear);
+            animalRequestLogsMockSet.Verify(m => m.Add(It.Is<AnimalRequestLog>(log =>
+                log.JobCode == "JC001" &&
+                log.AnimalType == "DOG" &&
+                log.InsertDelete == "U")), Times.Once);
             RepositoryTestHelper.VerifySaveChanges(mockContext);
         }
 
@@ -366,6 +383,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AnimalRepositoryTest
                 .ReturnsAsync(entity);
 
             mockContext.Setup(x => x.AnimalRequests).Returns(animalRequestsMockSet.Object);
+
+            var animalRequestLogsMockSet = RepositoryTestHelper.CreateMockDbSet(new List<AnimalRequestLog>());
+            mockContext.Setup(x => x.AnimalRequestLogs).Returns(animalRequestLogsMockSet.Object);
+
             RepositoryTestHelper.SetupSaveChanges(mockContext);
 
             var repo = new AnimalRepository(mockContext.Object, mockFpsYearContext.Object);
@@ -393,6 +414,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AnimalRepositoryTest
                 .ReturnsAsync(entity);
 
             mockContext.Setup(x => x.AnimalRequests).Returns(animalRequestsMockSet.Object);
+
+            var animalRequestLogsMockSet = RepositoryTestHelper.CreateMockDbSet(new List<AnimalRequestLog>());
+            mockContext.Setup(x => x.AnimalRequestLogs).Returns(animalRequestLogsMockSet.Object);
+
             RepositoryTestHelper.SetupSaveChanges(mockContext);
 
             var repo = new AnimalRepository(mockContext.Object, mockFpsYearContext.Object);
@@ -402,6 +427,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AnimalRepositoryTest
 
             // Assert
             animalRequestsMockSet.Verify(x => x.Remove(It.IsAny<AnimalRequest>()), Times.Once);
+            animalRequestLogsMockSet.Verify(m => m.Add(It.Is<AnimalRequestLog>(log =>
+                log.JobCode == "JC007" &&
+                log.AnimalType == "DOG" &&
+                log.InsertDelete == "D")), Times.Once);
             RepositoryTestHelper.VerifySaveChanges(mockContext);
         }
 

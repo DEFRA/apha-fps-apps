@@ -136,24 +136,26 @@ function updateAnimalPlan() {
 
 function deleteAnimalPlan(btn) {
     var indCounter = $(btn).data('id');
-    if (confirm('Are you sure you want to delete this animal cost entry?')) {
+    showGovukConfirm('Are you sure you want to delete this animal cost entry?').then(function (confirmed) {
+        if (!confirmed) { return; }
         $.ajax({
             url: '/FPS/AnimalJob/Delete',
             type: 'DELETE',
             data: { indCounter: indCounter },
             success: function (response) {
                 if (response.success) {
-                    alert('Deleted successfully.');
-                    AnimalJobConfig.onDeleted();
+                    showGovukAlert('Deleted successfully.').then(function () {
+                        AnimalJobConfig.onDeleted();
+                    });
                 } else {
-                    alert('Error: ' + response.message);
+                    showGovukAlert('Error: ' + response.message);
                 }
             },
             error: function () {
-                alert('An error occurred while deleting.');
+                showGovukAlert('An error occurred while deleting.');
             }
         });
-    }
+    });
 }
 
 function getAnimalPlanExtraFilters() {

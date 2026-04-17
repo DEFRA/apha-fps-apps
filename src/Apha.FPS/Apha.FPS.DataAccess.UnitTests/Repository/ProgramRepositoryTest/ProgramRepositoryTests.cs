@@ -246,12 +246,12 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
         }
 
         [Fact]
-        public async Task AddProgramAsync_AddsProgram_AndSetsYearAndUserProgram_WhenDboUserExists()
+        public async Task AddProgramAsync_AddsProgram_AndSetsYearAndUserProgram_WhenRequestingUserExists()
         {
             // Arrange
-            var dboUser = new User { UserId = 1, Username = "dbo" };
+            var requestingUser = new User { UserId = 1, UserEmail = "test@example.com" };
             var (repo, programsMockSet, userProgramsMockSet, mockContext) =
-                CreateRepositoryWithMocks([], [], [dboUser]);
+                CreateRepositoryWithMocks([], [], [requestingUser]);
 
             var newProgram = new Core.Entities.Program { ProgramNo = "P001", ProgramName = "Program One" };
 
@@ -268,13 +268,13 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
         }
 
         [Fact]
-        public async Task AddProgramAsync_SetsCorrectUserProgramFields_WhenDboUserExists()
+        public async Task AddProgramAsync_SetsCorrectUserProgramFields_WhenRequestingUserExists()
         {
             // Arrange
-            var dboUser = new User { UserId = 7, Username = "dbo" };
+            var requestingUser = new User { UserId = 7, UserEmail = "test@example.com" };
             UserProgram? capturedUserProgram = null;
             var (repo, _, userProgramsMockSet, _) =
-                CreateRepositoryWithMocks([], [], [dboUser]);
+                CreateRepositoryWithMocks([], [], [requestingUser]);
 
             userProgramsMockSet
                 .Setup(x => x.Add(It.IsAny<UserProgram>()))
@@ -293,9 +293,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
         }
 
         [Fact]
-        public async Task AddProgramAsync_AddsProgramOnly_WhenNoDboUserExists()
+        public async Task AddProgramAsync_AddsProgramOnly_WhenRequestingUserNotFound()
         {
-            // Arrange — no "dbo" user means UserProgram should NOT be added
+            // Arrange — no user found by email means UserProgram should NOT be added
             var (repo, programsMockSet, userProgramsMockSet, mockContext) =
                 CreateRepositoryWithMocks([], [], []);
 
@@ -337,21 +337,21 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
             var repo = CreateRepository([], [], []);
 
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentNullException>(() => repo.UpdateProgramAsync(null!));
+            await Assert.ThrowsAsync<ArgumentNullException>(() => repo.UpdateProgramAsync(null!, string.Empty));
         }
 
         [Fact]
-        public async Task UpdateProgramAsync_UpdatesProgram_AndAddsUserProgram_WhenDboUserExistsAndLinkIsMissing()
+        public async Task UpdateProgramAsync_UpdatesProgram_AndAddsUserProgram_WhenRequestingUserExistsAndLinkIsMissing()
         {
-            // Arrange — dbo user exists but no UserProgram link yet → link should be created
-            var dboUser = new User { UserId = 1, Username = "dbo" };
+            // Arrange — requesting user exists but no UserProgram link yet → link should be created
+            var requestingUser = new User { UserId = 1, UserEmail = "test@example.com" };
             var (repo, programsMockSet, userProgramsMockSet, mockContext) =
-                CreateRepositoryWithMocks([], [], [dboUser]);
+                CreateRepositoryWithMocks([], [], [requestingUser]);
 
             var program = new Core.Entities.Program { ProgramNo = "P001", ProgramName = "Updated Name" };
 
             // Act
-            var result = await repo.UpdateProgramAsync(program);
+            var result = await repo.UpdateProgramAsync(program, program.ProgramNo);
 
             // Assert
             Assert.NotNull(result);
@@ -365,15 +365,15 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
         public async Task UpdateProgramAsync_UpdatesProgram_AndSkipsUserProgram_WhenLinkAlreadyExists()
         {
             // Arrange — UserProgram link already exists → should NOT add a duplicate
-            var dboUser = new User { UserId = 1, Username = "dbo" };
+            var requestingUser = new User { UserId = 1, UserEmail = "test@example.com" };
             var existingLink = new UserProgram { ProgramNo = "P001", UserID = 1, FpsYear = DefaultTestFpsYear };
             var (repo, programsMockSet, userProgramsMockSet, mockContext) =
-                CreateRepositoryWithMocks([], [existingLink], [dboUser]);
+                CreateRepositoryWithMocks([], [existingLink], [requestingUser]);
 
             var program = new Core.Entities.Program { ProgramNo = "P001", ProgramName = "Updated Name" };
 
             // Act
-            var result = await repo.UpdateProgramAsync(program);
+            var result = await repo.UpdateProgramAsync(program, program.ProgramNo);
 
             // Assert
             Assert.NotNull(result);
@@ -383,16 +383,16 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
         }
 
         [Fact]
-        public async Task UpdateProgramAsync_UpdatesProgramOnly_WhenNoDboUserExists()
+        public async Task UpdateProgramAsync_UpdatesProgramOnly_WhenRequestingUserNotFound()
         {
-            // Arrange — no "dbo" user means UserProgram should NOT be touched
+            // Arrange — no user found by email means UserProgram should NOT be touched
             var (repo, programsMockSet, userProgramsMockSet, mockContext) =
                 CreateRepositoryWithMocks([], [], []);
 
             var program = new Core.Entities.Program { ProgramNo = "P001", ProgramName = "Updated Name" };
 
             // Act
-            var result = await repo.UpdateProgramAsync(program);
+            var result = await repo.UpdateProgramAsync(program, program.ProgramNo);
 
             // Assert
             Assert.NotNull(result);
