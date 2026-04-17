@@ -861,20 +861,9 @@ The procedure `sp_LoadFromFPS` checks whether the target FPS database exists bef
 - It queries `master.dbo.sysdatabases` using the constructed database name (for example, `FPS2025`)
 - Processing for that year only proceeds if the database exists
 
-### Plain-English meaning
-
-The system does not assume that every FPS year database exists.
-
-Each yearly cycle (previous year or current year) is conditionally executed only if the corresponding FPS database is present.
-
-### What must not drift
-
-Any conversion must:
-- preserve this existence check
-- avoid assuming the database always exists
-- avoid failing the entire process if one year's database is missing
-
-Skipping a year due to a missing database is valid legacy behavior.
+Conversion implication:
+- missing-year database must result in skipping that year's cycle,
+- conversion must not assume all FPS year databases exist.
 
 ---
 
@@ -940,3 +929,187 @@ The orchestration logic comes from `sp_LoadFromFPS`.
 # 17) One-Line Understanding
 
 This legacy SQL is a **year-based totals rebuild and archive refresh pipeline** that always processes the previous year, conditionally processes the current year, and reloads a broad MAB_Archive yearly dataset from the selected FPS database.
+
+# 18) Subtle SQL Behaviors Worth Preserving
+
+This section captures behavior details that commonly drift during conversion.
+For sign-off use, pair this section with the executable checks in Section 19.
+
+## 18.1 TotalIncome can become NULL
+
+In `sp_createFPSTotals`, `TotalIncome` is calculated as `custincome + Transferincome` with no null wrapper around either input.
+
+Why it matters:
+- if either input is NULL, the result can become NULL,
+- this differs from cost fields that are explicitly defaulted to zero.
+
+## 18.2 SELECT DISTINCT is part of the logic
+
+`sp_createFPSTotals` uses `SELECT DISTINCT` before inserting into `FPSYearTotals`.
+
+Why it matters:
+- duplicate joined rows are suppressed by SQL itself,
+- conversions that do not preserve de-duplication may drift in row counts and totals.
+
+## 18.3 sp_deleteFPSTotals is a full wipe, not a year delete
+
+The legacy procedure is `DELETE from FPSYearTotals` with no `WHERE` clause.
+
+Why it matters:
+- year-filtered delete, archive-before-delete, or selective delete behavior is not original behavior.
+
+## 18.4 sp_LoadFromFPS is guarded by database existence checks
+
+Before running each yearly cycle, `sp_LoadFromFPS` checks `master.dbo.sysdatabases` for the target FPS database.
+
+Why it matters:
+- if the database does not exist, that year's cycle is skipped,
+- conversion must preserve skip-if-missing behavior and avoid assuming all year databases exist.
+
+## 18.5 Orchestration branch semantics must stay intact
+
+`sp_LoadFromFPS` orchestration has three core properties:
+- previous year is attempted first,
+- current-year full cycle runs only when `DATEPART(month, GETDATE()) > 4`,
+- before May, current year only refreshes `MY_tlkpProject_all`.
+
+Why it matters:
+- changing order or branch behavior changes legacy orchestration semantics.
+
+## 18.6 sp_DeleteYearsFPSData is a broad year-specific wipe
+
+Legacy delete-years logic removes the supplied year across many MY_* tables plus `tlkpYear`, and removes matching projects from `G_tlkpProject`.
+
+Why it matters:
+- this is year-specific wipe behavior, not retention cleanup,
+- totals-only delete coverage is under-implementation.
+
+## 18.7 sp_AddYearsFPSData is a broad fan-out loader
+
+Legacy add-years logic runs a long chain across many MY_* and G_* loaders.
+
+Why it matters:
+- totals-only year-add behavior is not functionally equivalent.
+
+## 18.8 Dynamic SQL and dynamic DB naming are part of orchestration behavior
+
+Many loaders build SQL strings with `@cFPSVersion` and read from `<FPSYear>.dbo.<table>`. `sp_LoadFromFPS` also builds procedure names dynamically.
+
+Why it matters:
+- conversion must preserve selected-year database behavior conceptually, even if implementation differs.
+
+## 18.9 Archive targets matter
+
+Legacy loaders write business output into MAB_Archive targets such as:
+- `MY_FPSYearTotals`,
+- `MY_tlkpProject_all`,
+- and many other MY_* tables.
+
+Why it matters:
+- changing output targets is a design change, not a language conversion.
+
+## 18.10 sp_AddG_tlkpProject uses GROUP BY rather than a simple copy
+
+`sp_AddG_tlkpProject` uses grouped project reference columns.
+
+Why it matters:
+- row-for-row copying may not preserve effective grouped output behavior.
+
+## 18.11 sp_AddMY_tlkpProject_All is insert-only
+
+Legacy behavior is `INSERT INTO MY_tlkpProject_all SELECT ...` with no merge/upsert logic.
+
+Why it matters:
+- upsert can be valid enhancement, but is not strict parity by default.
+
+## 18.12 sp_AddMY_FPSYearTotals loads from FPSYearTotals, not raw source tables
+
+This procedure copies from the already-built `FPSYearTotals` table and does not recalculate totals.
+
+Why it matters:
+- independent recalculation in conversion may alter execution semantics.
+
+## 18.13 sp_AddMY_YearDetails depends on a specific DB variable name
+
+It reads `tblDB_Variables` where `db_var_name = 'month'` and inserts into `tlkpYear`.
+
+Why it matters:
+- this specific metadata dependency should not be generalized away.
+
+---
+
+# 19) Conversion Risk Checklist
+
+Use this checklist during .NET conversion and parity validation.
+Each item below highlights where legacy behavior often drifts.
+
+## 19.1 Formula and null-handling risks
+
+- [ ] `TotalCosts` preserves exact legacy formula: Additional + Animal + Staff + Test + PlanCaseworkDebit.
+- [ ] Null-to-zero behavior is preserved for TotalAdditionalCosts, TotalAnimalCosts, TotalStaffCosts, TotalTestCosts, PVSIncome, PlanCaseworkDebit, and TotalPayCosts.
+- [ ] `TotalIncome = CustIncome + TransferIncome` preserves legacy null behavior exactly.
+- [ ] Conversion does not silently replace `NULL + value` with zero-safe logic unless explicitly approved.
+- [ ] `RequiredProfit` continues to map from `Profit`.
+
+## 19.2 Source-read risks
+
+- [ ] `sp_createFPSTotals` source-read behavior is preserved from `tlkpProject`, `qryTotalAdditionalCosts`, `qryTotalAnimalCosts`, `qryTotalStaffCosts`, and `qryTotalTestCosts`.
+- [ ] LEFT JOIN semantics are preserved conceptually.
+- [ ] `SELECT DISTINCT` de-duplication behavior is preserved.
+- [ ] Any denormalized source table used in conversion is validated against original joined-source behavior.
+
+## 19.3 Delete behavior risks
+
+- [ ] `sp_deleteFPSTotals` is treated as delete-only.
+- [ ] No archive-before-delete behavior is added unless tracked as approved enhancement.
+- [ ] No year filter is introduced into the `sp_deleteFPSTotals` equivalent unless explicitly approved.
+
+## 19.4 Archive delete scope risks
+
+- [ ] `sp_DeleteYearsFPSData` is treated as a year-specific wipe, not retention cleanup.
+- [ ] Full delete coverage across legacy archive/reporting tables is preserved.
+- [ ] `G_tlkpProject` delete logic is covered.
+- [ ] `tlkpYear` delete logic is covered.
+- [ ] Validation/audit cleanup is not misrepresented as original legacy behavior.
+
+## 19.5 Archive load scope risks
+
+- [ ] `sp_AddYearsFPSData` is treated as a broad fan-out yearly load.
+- [ ] All called legacy sub-procedures are mapped or explicitly deferred.
+- [ ] Conversion does not reduce add-years logic to totals-only behavior without approval.
+- [ ] `MY_FPSYearTotals` target load is preserved.
+- [ ] `MY_tlkpProject_all` target load is preserved.
+- [ ] Other MY_* archive tables are accounted for in parity scope.
+
+## 19.6 Write-target risks
+
+- [ ] Legacy business outputs that went to MAB_Archive still go to MAB_Archive.
+- [ ] Output targets are not relocated to alternative schemas without approval.
+- [ ] `MY_FPSYearTotals` remains the yearly totals archive target.
+- [ ] `MY_tlkpProject_all` remains the project-all archive target.
+
+## 19.7 Orchestration risks
+
+- [ ] Previous year is always processed first.
+- [ ] Current year full cycle runs only when month > 4.
+- [ ] Before May, current year only refreshes `MY_tlkpProject_all`.
+- [ ] Database existence checks are preserved before each yearly cycle.
+- [ ] Missing FPS year database causes that cycle to be skipped, not treated as fatal by default.
+- [ ] Dynamic year-based database selection behavior is preserved conceptually.
+
+## 19.8 Insert vs upsert risks
+
+- [ ] Insert-only legacy procedures are not silently converted to upsert without explicit review.
+- [ ] If upsert is introduced, it is documented as enhancement and validated for behavior equivalence.
+
+## 19.9 Validation risks
+
+- [ ] Formula validation is separate from orchestration validation.
+- [ ] Archive table count validation includes more than totals.
+- [ ] Branch behavior before/after April is explicitly tested.
+- [ ] Year-scoped delete and reload behavior is explicitly tested.
+- [ ] Parity tests confirm both business calculations and side effects/table coverage.
+
+## 19.10 Sign-off rule
+
+- [ ] Do not claim strict SP-to-.NET parity unless formula behavior, null behavior, delete scope, archive load scope, output targets, and orchestration branch behavior all match legacy.
