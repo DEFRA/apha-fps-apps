@@ -353,6 +353,7 @@
                         $(gridContainerSelector).html(htmlData);
                         self.applyGridColumnWidths();
                         self.deselectAllCheckboxes();
+                        document.dispatchEvent(new CustomEvent('gridReloaded', { detail: { gridId: gridId } }));
                     })
                     .fail(function(xhr, status, error) {
                         console.error('Grid reload failed:', error);

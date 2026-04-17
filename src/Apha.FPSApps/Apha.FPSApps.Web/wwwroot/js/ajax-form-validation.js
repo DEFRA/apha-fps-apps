@@ -31,6 +31,29 @@
     }
 
     /**
+     * Wires up a one-shot input/change listener on `$field` that clears its
+     * inline error styling as soon as the user starts editing.
+     *
+     * @param {jQuery} $field     - The input/select element.
+     * @param {string} fieldName  - The field's `name` attribute value.
+     * @param {jQuery} $c         - The scoped container.
+     */
+    function clearFieldErrorOnInput($field, fieldName, $c) {
+        $field.off('input.valclear change.valclear')
+              .on('input.valclear change.valclear', function () {
+                  var $fg = $field.closest('.govuk-form-group');
+                  $fg.removeClass('govuk-form-group--error');
+                  $field.removeClass('govuk-input--error');
+                  $fg.find('[data-valmsg-for="' + fieldName + '"]')
+                     .text('')
+                     .hide()
+                     .removeClass('field-validation-error')
+                     .addClass('field-validation-valid');
+                  $field.off('input.valclear change.valclear');
+              });
+    }
+
+    /**
      * Normalise errors into a uniform array: [{ field, message }].
      * Accepts either an array or a plain-object dictionary.
      */
@@ -103,7 +126,7 @@
             var $field = $(this);
             if (!$field.val() || $field.val().trim() === '') {
                 var name  = $field.attr('name') || '';
-                var label = $('label[for="' + name + '"]', $c).text().trim() || name;
+                var label = $('label[for="' + name + '"]', $c).clone().children().remove().end().text().trim().replace(/:\s*$/, '') || name;
                 errors.push({ field: name, message: label + ' is required' });
             }
         });
@@ -121,13 +144,14 @@
 
                 if ($field.length) {
                     // Field found in the form — highlight inline only
-                    $field.closest('.govuk-form-group').addClass('govuk-form-group--error');
+                    var $fg = $field.closest('.govuk-form-group').addClass('govuk-form-group--error');
                     $field.addClass('govuk-input--error');
-                    $field.siblings('[data-valmsg-for="' + error.field + '"]')
+                    $fg.find('[data-valmsg-for="' + error.field + '"]')
                           .text(error.message)
                           .show()
                           .removeClass('field-validation-valid')
                           .addClass('field-validation-error');
+                    clearFieldErrorOnInput($field, error.field, $c);
                 } else {
                     // No matching field — show in summary only
                     $list.append(
@@ -173,13 +197,14 @@
 
             if ($field.length) {
                 // Field found in the form — highlight inline only
-                $field.closest('.govuk-form-group').addClass('govuk-form-group--error');
+                var $fg = $field.closest('.govuk-form-group').addClass('govuk-form-group--error');
                 $field.addClass('govuk-input--error');
-                $field.siblings('[data-valmsg-for="' + fieldName + '"]')
+                $fg.find('[data-valmsg-for="' + fieldName + '"]')
                       .text(message)
                       .show()
                       .removeClass('field-validation-valid')
                       .addClass('field-validation-error');
+                clearFieldErrorOnInput($field, fieldName, $c);
             } else {
                 // No matching field — show in summary only
                 $list.append(
