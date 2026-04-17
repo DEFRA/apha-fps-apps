@@ -14,7 +14,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
     {
         private readonly IPactHttpExecutor _http;
         private readonly IMapper _mapper;
-        private const string InternalCodeError = "INTERNAL_ERROR";
 
         public PactProjectSubContractApiClient(IPactHttpExecutor http, IMapper mapper)
         {

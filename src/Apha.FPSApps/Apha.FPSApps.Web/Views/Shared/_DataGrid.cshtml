@@ -234,7 +234,7 @@
                                     @if (Model.AllowCopy)
                                     {
                                         <button type="button"
-                                                class="btn btn-sm btn-secondary copy-row-btn"
+                                                class="btn btn-sm copy-row-btn"
                                                 data-id="@GridHelpers.GetPropertyValue(row, Model.KeyProperty)"
                                                 data-copy-function="@Model.CopyFunction">
                                                 <img src="~/images/copy-regular-full.svg" alt="Copy icon" width="20" height="20" title="Copy">
@@ -249,15 +249,15 @@
                                             <img src="~/images/delete_gridicon.svg" alt="Delete icon" width="20" height="20" title="Delete">
                                         </button>
                                     }
-                                                @if (Model.AllowView)
-                                                {
-                                                    <button type="button"
-                                                            class="btn btn-sm delete-row-btn"
-                                                            data-id="@GridHelpers.GetPropertyValue(row, Model.KeyProperty)"
-                                                            data-delete-function="@Model.ViewFunction">
-                                                        <img src="~/images/view_icon.png" alt="View icon" width="20" height="20" title="View">
-                                                        </button>
-                                                    }
+                                    @if (Model.AllowView)
+                                    {
+                                        <button type="button"
+                                                class="btn btn-sm delete-row-btn"
+                                                data-id="@GridHelpers.GetPropertyValue(row, Model.KeyProperty)"
+                                                data-delete-function="@Model.ViewFunction" allow-edit="true">
+                                            <img src="~/images/view_icon.png" alt="View icon" width="20" height="20" title="View">
+                                        </button>
+                                    }
                                 </td>
                             }
                         </tr>

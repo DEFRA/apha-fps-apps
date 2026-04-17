@@ -1,18 +1,16 @@
-﻿using Apha.FPSApps.Web.Handler;
-using Apha.FPSApps.Web.Enums;
-using System.Linq;
-using Apha.FPSApps.Application.Interfaces.FPS;
+﻿using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Dtos.FPS;
+using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Web.Constants;
-using Apha.Common.Utilities.StateManagement;
+using Apha.FPSApps.Web.Enums;
+using Apha.FPSApps.Web.Handler;
 using Microsoft.Identity.Web;
 
 namespace Apha.FPSApps.Web.Middleware
 {
     public class FpsYearMiddleware
     {
-        private readonly RequestDelegate _next;
-        private const string ExecutedKey = "FpsYearMiddleware.Executed";
+        private readonly RequestDelegate _next;        
         private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(10);
 
         public FpsYearMiddleware(RequestDelegate next)
