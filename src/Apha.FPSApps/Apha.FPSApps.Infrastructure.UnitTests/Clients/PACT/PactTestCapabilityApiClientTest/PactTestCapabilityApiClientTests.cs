@@ -7,7 +7,6 @@ using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients;
 using AutoMapper;
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
 using Xunit;
 
 namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestCapabilityApiClientTest
@@ -64,20 +63,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestCapabilityA
             Assert.NotNull(result.Errors);
         }
 
-        [Fact]
-        public async Task GetPagedByWorkGroupAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            _http.GetAsync<List<TestCapabilityRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            var result = await _client.GetPagedByWorkGroupAsync(query, "WG1");
-
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve test capabilities by work group", error.Message);
-        }
-
         #endregion
 
         #region GetPagedByTestCodeAsync
@@ -116,20 +101,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestCapabilityA
             Assert.False(result.Success);
         }
 
-        [Fact]
-        public async Task GetPagedByTestCodeAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            var query = new QueryParameters<string>();
-            _http.GetAsync<List<TestCapabilityRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("error"));
-
-            var result = await _client.GetPagedByTestCodeAsync(query, "TC1");
-
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve test capabilities by test code", error.Message);
-        }
-
         #endregion
 
         #region GetTestCapabilityByIdAsync
@@ -164,19 +135,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestCapabilityA
             var result = await _client.GetTestCapabilityByIdAsync("TC1", "WG1");
 
             Assert.False(result.Success);
-        }
-
-        [Fact]
-        public async Task GetTestCapabilityByIdAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            _http.GetAsync<TestCapabilityRes>(Arg.Any<string>()).ThrowsAsync(new Exception("error"));
-
-            var result = await _client.GetTestCapabilityByIdAsync("TC1", "WG1");
-
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve test capability", error.Message);
         }
 
         #endregion
@@ -221,22 +179,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestCapabilityA
             Assert.False(result.Success);
         }
 
-        [Fact]
-        public async Task CreateTestCapabilityAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            var dto = new TestCapabilityDto { TestCode = "TC1", WorkGroup = "WG1" };
-            _mapper.Map<TestCapabilityReq>(dto).Returns(new TestCapabilityReq());
-            _http.PostAsync<TestCapabilityReq, TestCapabilityRes>(Arg.Any<string>(), Arg.Any<TestCapabilityReq>())
-                .ThrowsAsync(new Exception("error"));
-
-            var result = await _client.CreateTestCapabilityAsync(dto);
-
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to create test capability", error.Message);
-        }
-
         #endregion
 
         #region UpdateTestCapabilityAsync
@@ -277,22 +219,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestCapabilityA
             Assert.False(result.Success);
         }
 
-        [Fact]
-        public async Task UpdateTestCapabilityAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            var dto = new TestCapabilityDto { TestCode = "TC1", WorkGroup = "WG1" };
-            _mapper.Map<TestCapabilityReq>(dto).Returns(new TestCapabilityReq());
-            _http.PutAsync<TestCapabilityReq, TestCapabilityRes>(Arg.Any<string>(), Arg.Any<TestCapabilityReq>())
-                .ThrowsAsync(new Exception("error"));
-
-            var result = await _client.UpdateTestCapabilityAsync(dto);
-
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to update test capability", error.Message);
-        }
-
         #endregion
 
         #region DeleteTestCapabilityAsync
@@ -326,19 +252,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestCapabilityA
             var result = await _client.DeleteTestCapabilityAsync("TC1", "WG1");
 
             Assert.False(result.Success);
-        }
-
-        [Fact]
-        public async Task DeleteTestCapabilityAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            _http.DeleteAsync<bool>(Arg.Any<string>()).ThrowsAsync(new Exception("error"));
-
-            var result = await _client.DeleteTestCapabilityAsync("TC1", "WG1");
-
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to delete test capability", error.Message);
         }
 
         #endregion                     

@@ -62,7 +62,7 @@ namespace Apha.FPS.DataAccess.Repositories
                                   let dailyRate = (project.IsDefraProject == -1 ? animal.DefraDailyRate : animal.DailyRate)
                                   where animal.AnimalType == animalType
                                       && animalReq.UserEmail != null
-                                      && string.Equals(animalReq.UserEmail, _requestContext.UserEmailId, StringComparison.OrdinalIgnoreCase)
+                                      && animalReq.UserEmail.ToLower() == _requestContext.UserEmailId
                                   select dailyRate;
 
             return await queryAnimalCost.FirstOrDefaultAsync();
@@ -73,48 +73,113 @@ namespace Apha.FPS.DataAccess.Repositories
             ArgumentNullException.ThrowIfNull(animalReq);
             animalReq.FpsYear = _requestContext.FpsYear;
 
-            _dbContext.AnimalRequests.Add(animalReq);
-            await _dbContext.SaveChangesAsync();
-            return animalReq;
+            var strategy = _dbContext.Database.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(async () =>
+            {
+                await using var transaction = await _dbContext.Database.BeginTransactionAsync();
+                try
+                {
+                    var logEntry = CreateAnimalRequestLogEntry(animalReq, "I");
+
+                    _dbContext.AnimalRequests.Add(animalReq);
+                    _dbContext.AnimalRequestLogs.Add(logEntry);
+                    await _dbContext.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
+                    return animalReq;
+                }
+                catch
+                {
+                    await transaction.RollbackAsync();
+                    throw;
+                }
+            });
         }
 
         public async Task<AnimalRequest> UpdateAnimalCostAsync(AnimalRequest animalReq)
         {
             ArgumentNullException.ThrowIfNull(animalReq);
-            
-            var existingEntity = await _dbContext.AnimalRequests.FindAsync(animalReq.IndCounter);
 
-            if (existingEntity == null)
+            var strategy = _dbContext.Database.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(async () =>
             {
-                throw new InvalidOperationException(
-                    $"Animal cost with AnimalType {animalReq.AnimalType} not found");
-            }
+                await using var transaction = await _dbContext.Database.BeginTransactionAsync();
+                try
+                {
+                    var existingEntity = await _dbContext.AnimalRequests.FindAsync(animalReq.IndCounter);
 
-            existingEntity.JobCode = animalReq.JobCode;
-            existingEntity.AnimalType = animalReq.AnimalType;
-            existingEntity.NumberOfDays = animalReq.NumberOfDays;
-            existingEntity.NumberOfAnimals = animalReq.NumberOfAnimals;
-            existingEntity.FpsYear = _requestContext.FpsYear;
+                    if (existingEntity == null)
+                        throw new InvalidOperationException(
+                            $"Animal cost with AnimalType {animalReq.AnimalType} not found");
 
-            await _dbContext.SaveChangesAsync();
+                    existingEntity.JobCode = animalReq.JobCode;
+                    existingEntity.AnimalType = animalReq.AnimalType;
+                    existingEntity.NumberOfDays = animalReq.NumberOfDays;
+                    existingEntity.NumberOfAnimals = animalReq.NumberOfAnimals;
+                    existingEntity.FpsYear = _requestContext.FpsYear;
 
-            return existingEntity;
+                    var logEntry = CreateAnimalRequestLogEntry(existingEntity, "U");
+
+                    _dbContext.AnimalRequestLogs.Add(logEntry);
+                    await _dbContext.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
+                    return existingEntity;
+                }
+                catch
+                {
+                    await transaction.RollbackAsync();
+                    throw;
+                }
+            });
         }
 
         public async Task<bool> DeleteJobAnimalCostAsync(int indCounter)
         {
             ArgumentOutOfRangeException.ThrowIfNegativeOrZero(indCounter);
-           
+
             var entity = await _dbContext.AnimalRequests.FindAsync(indCounter);
             if (entity == null)
-            {
                 return false;
-            }
 
-            _dbContext.AnimalRequests.Remove(entity);
-            await _dbContext.SaveChangesAsync();
+            var strategy = _dbContext.Database.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(async () =>
+            {
+                await using var transaction = await _dbContext.Database.BeginTransactionAsync();
+                try
+                {
+                    var logEntry = CreateAnimalRequestLogEntry(entity, "D");
 
-            return true;
+                    _dbContext.AnimalRequests.Remove(entity);
+                    _dbContext.AnimalRequestLogs.Add(logEntry);
+                    await _dbContext.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
+                    return true;
+                }
+                catch
+                {
+                    await transaction.RollbackAsync();
+                    throw;
+                }
+            });
+        }
+
+        private AnimalRequestLog CreateAnimalRequestLogEntry(AnimalRequest animalReq, string insertDelete)
+        {
+            return new AnimalRequestLog
+            {
+                JobCode = animalReq.JobCode,
+                AnimalType = animalReq.AnimalType,
+                NumberOfDays = animalReq.NumberOfDays,
+                NumberOfAnimals = animalReq.NumberOfAnimals,
+                DateTime = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                UserId = _requestContext.UserEmailId?.Length > 20
+                    ? _requestContext.UserEmailId[..20]
+                    : _requestContext.UserEmailId,
+                InsertDelete = insertDelete,
+                FpsYear = _requestContext.FpsYear
+            };
         }
 
         private IQueryable<AnimalCostView> BuildAnimalCostQuery(string jobCode)

@@ -27,8 +27,8 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
         public async Task<IActionResult> Index()
         {
             PaginationFilter<string> defaultRequest = new() { Filter = "{}" };
-            DataGridConfig<ProjectListItem> gridConfig = await BuildProjectListGridAsync(defaultRequest, 2);
-            return View(new ProjectListViewModel { ProjectGrid = gridConfig, FilterOption = 2 });
+            DataGridConfig<ProjectListItem> gridConfig = await BuildProjectListGridAsync(defaultRequest, 1);
+            return View(new ProjectListViewModel { ProjectGrid = gridConfig, FilterOption = 1 });
         }
 
         [HttpPost]
