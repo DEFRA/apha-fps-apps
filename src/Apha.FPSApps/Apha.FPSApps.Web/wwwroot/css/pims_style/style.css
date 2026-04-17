@@ -118,12 +118,6 @@
     text-align: right;
 }
 
-/* error styling */
-.govuk-form-group--error {
-    border-left: none !important;
-    padding-left: 0 !important;
-}
-
 .pims-log-wrapper {
     display: flex;
     align-items: center;

@@ -10,15 +10,15 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Models
         public required string ProjectId { get; set; }
 
         [GridColumn(Width = 271, Type = GridColumnType.Text)]
-        public required string Projecttitle { get; set; }
+        public required string ProjectTitle { get; set; }
 
         [GridColumn(Width = 271, Type = GridColumnType.Text)]
         public required string ContractNumber { get; set; }
        
         [GridColumn(Width = 271, Type = GridColumnType.Date)]
-        public DateOnly? Startdate { get; set; }
+        public DateOnly? StartDate { get; set; }
 
         [GridColumn(IsVisible =false)]
-        public bool Isdefraproject { get; set; }
+        public bool IsDefraProject { get; set; }
     }
 }

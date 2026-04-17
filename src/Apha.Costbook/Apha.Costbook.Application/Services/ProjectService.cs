@@ -1,9 +1,10 @@
-﻿using Apha.Costbook.Application.Interfaces;
+﻿using Apha.Costbook.Application.Dtos;
+using Apha.Costbook.Application.Interfaces;
 using Apha.Costbook.Application.Pagination;
+using Apha.Costbook.Application.Validation;
 using Apha.Costbook.Core.Entities;
 using Apha.Costbook.Core.Interfaces;
 using Apha.Costbook.Core.Pagination;
-using Apha.Costbook.Application.Dtos;
 using AutoMapper;
 
 namespace Apha.Costbook.Application.Services
@@ -62,20 +63,37 @@ namespace Apha.Costbook.Application.Services
 
         public async Task<ProjectDto> UpdateProjectAsync(string id, ProjectDto dto)
         {
+            var errors = new List<BusinessValidationError>();            
+           
 
-            var existingProject = await _repo.GetProjectByIdAsync(id);
+            var existingProject = await _repo.GetProjectByIdAsync(id);           
+
+            // Add null check to satisfy nullable reference analysis
             if (existingProject == null)
-                throw new ArgumentException($"Project with ID {id} not found");
+                throw new InvalidOperationException("Project not found");            
 
-            var validationMsg = ValidateProject(dto);
-            if (!string.IsNullOrEmpty(validationMsg))
-                throw new ArgumentException(validationMsg);
+            if (dto.Startdate == null)
+                errors.Add(new BusinessValidationError("Please enter Start Date", "Please enter Start Date"));
+            
+            if (string.IsNullOrEmpty(dto.PreparedBy))
+                errors.Add(new BusinessValidationError("Please enter who has prepared this", "Please enter who has prepared this"));
+
+            if (string.IsNullOrEmpty(dto.ProjectTitle))
+                errors.Add(new BusinessValidationError("Please enter a title", "Please enter a title"));    
+            if (!string.IsNullOrEmpty(dto.ProjectTitle) && dto.ProjectTitle.Length > 255)
+                errors.Add(new BusinessValidationError("Please enter a title of less than 255 characters", "Please enter a title of less than 255 characters"));
+
+            if (!dto.IsDefraProject.HasValue)
+                errors.Add(new BusinessValidationError("Please choose Defra/Non-Defra", "Please choose Defra/Non-Defra"));
+
+            if (errors.Count > 0)
+                throw new BusinessValidationErrorException(errors);
 
             CalculateStartFinancialYear(dto);
 
             // Capture old values BEFORE overwriting — needed for recost comparison below
-            var oldInflation = existingProject.Inflation;
-            var oldIsdefraproject = existingProject.Isdefraproject;
+            decimal? oldInflation = existingProject.Inflation;
+            var oldIsdefraproject = existingProject.IsDefraProject;
 
             // Map dto onto the EXISTING tracked entity (in-place update — avoids EF tracking conflict).
             // dto.ProjectId = decoded ID from the form hidden field, so the PK is NOT changed.
@@ -88,7 +106,7 @@ namespace Apha.Costbook.Application.Services
 
             bool shouldRecost =
                 oldInflation != existingProject.Inflation ||
-                oldIsdefraproject != existingProject.Isdefraproject;
+                oldIsdefraproject != existingProject.IsDefraProject;
 
             if (shouldRecost)
             {
@@ -118,12 +136,11 @@ namespace Apha.Costbook.Application.Services
             }
 
             var newProjectDto = _mapper.Map<ProjectDto>(oldProject);
-            newProjectDto.ProjectId = newId;
-          
-            newProjectDto.DateOfSubmission = DateOnly.FromDateTime(DateTime.Now);
+            newProjectDto.ProjectId = newId;         
+            
 
             var entity = _mapper.Map<Project>(newProjectDto);
-            var result = await _repo.AddProjectAsync(entity);
+            var result = await _repo.CopyProjectAsync(entity, oldId);
 
             return _mapper.Map<ProjectDto>(result);
         }
@@ -152,13 +169,13 @@ namespace Apha.Costbook.Application.Services
             if (string.IsNullOrEmpty(dto.PreparedBy))
                 msg += "Please enter who has prepared this.\n";
 
-            if (string.IsNullOrEmpty(dto.Projecttitle))
+            if (string.IsNullOrEmpty(dto.ProjectTitle))
                 msg += "Please enter a title.\n";
 
-            if (!string.IsNullOrEmpty(dto.Projecttitle) && dto.Projecttitle.Length > 255)
+            if (!string.IsNullOrEmpty(dto.ProjectTitle) && dto.ProjectTitle.Length > 255)
                 msg += "Please enter a title of less than 255 characters.\n";
 
-            if (!dto.Isdefraproject.HasValue)
+            if (!dto.IsDefraProject.HasValue)
                 msg += "Please choose Defra/Non-Defra.\n";
 
             return msg;
@@ -172,20 +189,20 @@ namespace Apha.Costbook.Application.Services
             var startDate = dto.Startdate.Value;
 
             // If FinancialYears is "0" (Project Years)
-            if (dto.Financialyears == 0)
+            if (dto.FinancialYears == 0)
             {
-                dto.Startfyear = startDate.Year;
+                dto.StartFYear  = startDate.Year;
             }
             // If it's Financial Years (or default)
             else
             {
                 if (startDate.Month <= 3) // January to March
                 {
-                    dto.Startfyear = startDate.Year - 1;
+                    dto.StartFYear = startDate.Year - 1;
                 }
                 else // April to December
                 {
-                    dto.Startfyear = startDate.Year;
+                    dto.StartFYear = startDate.Year;
                 }
             }
         }       
