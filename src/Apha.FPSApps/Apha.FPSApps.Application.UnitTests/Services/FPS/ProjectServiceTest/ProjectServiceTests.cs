@@ -533,6 +533,49 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProjectServiceTest
 
         #endregion
 
+        #region GetAllProjectGroupsAsync Tests
+
+        [Fact]
+        public async Task GetAllProjectGroupsAsync_WithSuccessResponse_ReturnsProjectGroupList()
+        {
+            // Arrange
+            var projectGroups = new List<ProjectGroupDto>
+            {
+                new() { ProjectGroupName = "Surveillance" },
+                new() { ProjectGroupName = "Research" }
+            };
+            var expectedResponse = ApiResponseDto<List<ProjectGroupDto>>.SuccessResponse(projectGroups);
+            _fpsLookupApiClient.GetAllProjectGroupsAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _projectService.GetAllProjectGroupsAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data?.Count);
+            await _fpsLookupApiClient.Received(1).GetAllProjectGroupsAsync();
+        }
+
+        [Fact]
+        public async Task GetAllProjectGroupsAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "API_ERROR" } };
+            var expectedResponse = ApiResponseDto<List<ProjectGroupDto>>.FailureResponse(errors, new ApiMetaDto());
+            _fpsLookupApiClient.GetAllProjectGroupsAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _projectService.GetAllProjectGroupsAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+        }
+
+        #endregion
+
         #region GetAllContractsAsync Tests
 
         [Fact]

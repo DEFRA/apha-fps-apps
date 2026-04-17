@@ -9,115 +9,143 @@
     <h5 class="modal-title" id="programProjectModalTitle">@title</h5>
     <button type="button" class="btn-close btn-red" onclick="closeModal()" data-bs-dismiss="modal">X</button>
 </div>
-<div class="modal-body">
-    <div class="govuk-error-summary" role="alert"
+<div class="modal-body" style="overflow-y: auto; max-height: calc(80vh - 120px);">
+    <div class="govuk-error-summary" data-module="govuk-error-summary" role="alert"
          aria-labelledby="error-summary-title" tabindex="-1" style="display:none;">
         <h2 class="govuk-error-summary__title" id="error-summary-title">There is a problem</h2>
         <div class="govuk-error-summary__body">
             <ul class="govuk-list govuk-error-summary__list"></ul>
         </div>
     </div>
-    <div class="row g-3">
-        <form id="@formId">
-            <input type="hidden" asp-for="ParentProject" />
-            <input type="hidden" asp-for="IsDefraProject" />
+    <form id="@formId">
+        <input type="hidden" asp-for="OriginalParentProject" />
+        <input type="hidden" asp-for="IsDefraProject" />
 
-            <div class="govuk-form-group sup_margin_0">
-                <label class="govuk-label" asp-for="ParentProject">Project</label>
-                <input type="text" asp-for="ParentProject" readonly class="govuk-input">
+        <div class="row g-3">
+            @* Row 1: Project | Description *@
+            <div class="col-6">
+                <div class="govuk-form-group sup_margin_0">
+                    <label class="govuk-label" asp-for="ParentProject">Project</label>
+                    <span asp-validation-for="ParentProject" class="govuk-error-message" style="display:none;"></span>
+                    <input type="text" asp-for="ParentProject" class="govuk-input" readonly>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="govuk-form-group sup_margin_0">
+                    <label class="govuk-label" asp-for="ProjectTitle">Description</label>
+                    <span asp-validation-for="ProjectTitle" class="govuk-error-message" style="display:none;"></span>
+                    <input type="text" asp-for="ProjectTitle" class="govuk-input" required>
+                </div>
             </div>
 
-            <div class="govuk-form-group sup_margin_0">
-                <label class="govuk-label" asp-for="ProjectTitle">Description</label>
-                <input type="text" asp-for="ProjectTitle" class="govuk-input">
-                <span asp-validation-for="ProjectTitle" class="govuk-error-message" style="display:none;"></span>
+            @* Row 2: Manager | Program *@
+            <div class="col-6">
+                <div class="govuk-form-group sup_margin_0">
+                    <label class="govuk-label" asp-for="Manager">Manager</label>
+                    <span asp-validation-for="Manager" class="govuk-error-message" style="display:none;"></span>
+                    <select asp-for="Manager" asp-items="@Model.ManagerList" class="govuk-select" required>
+                        <option value="">-- Select --</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="govuk-form-group sup_margin_0">
+                    <label class="govuk-label" asp-for="Program">Program</label>
+                    <span asp-validation-for="Program" class="govuk-error-message" style="display:none;"></span>
+                    <select asp-for="Program" asp-items="@Model.ProgramList" class="govuk-select" required>
+                        <option value="">-- Select --</option>
+                    </select>
+                </div>
             </div>
 
-            <div class="govuk-form-group sup_margin_0">
-                <label class="govuk-label" asp-for="Manager">Manager</label>
-                <select asp-for="Manager" asp-items="@Model.ManagerList" class="govuk-select">
-                    <option value="">-- Select --</option>
-                </select>
-                <span asp-validation-for="Manager" class="govuk-error-message" style="display:none;"></span>
+            @* Row 3: Customer | Project Group *@
+            <div class="col-6">
+                <div class="govuk-form-group sup_margin_0">
+                    <label class="govuk-label" asp-for="Customer">Customer</label>
+                    <span asp-validation-for="Customer" class="govuk-error-message" style="display:none;"></span>
+                    <select asp-for="Customer" asp-items="@Model.CustomerList" class="govuk-select" required>
+                        <option value="">-- Select --</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="govuk-form-group sup_margin_0">
+                    <label class="govuk-label" asp-for="ProjectGroup">Project Group</label>
+                    <span asp-validation-for="ProjectGroup" class="govuk-error-message" style="display:none;"></span>
+                    <select asp-for="ProjectGroup" asp-items="@Model.ProjectGroupList" class="govuk-select">
+                        <option value="">-- Select --</option>
+                    </select>
+                </div>
             </div>
 
-            <div class="govuk-form-group sup_margin_0">
-                <label class="govuk-label" asp-for="Program">Program</label>
-                <select asp-for="Program" asp-items="@Model.ProgramList" class="govuk-select">
-                    <option value="">-- Select --</option>
-                </select>
-                <span asp-validation-for="Program" class="govuk-error-message" style="display:none;"></span>
+            @* Row 4: Contract | Disease *@
+            <div class="col-6">
+                <div class="govuk-form-group sup_margin_0">
+                    <label class="govuk-label" asp-for="Contract">Contract</label>
+                    <span asp-validation-for="Contract" class="govuk-error-message" style="display:none;"></span>
+                    <select asp-for="Contract" asp-items="@Model.ContractList" class="govuk-select" required>
+                        <option value="">-- Select --</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="govuk-form-group sup_margin_0">
+                    <label class="govuk-label" asp-for="Disease">Disease</label>
+                    <span asp-validation-for="Disease" class="govuk-error-message" style="display:none;"></span>
+                    <select asp-for="Disease" asp-items="@Model.DiseaseList" class="govuk-select" required>
+                        <option value="">-- Select --</option>
+                    </select>
+                </div>
             </div>
 
-            <div class="govuk-form-group sup_margin_0">
-                <label class="govuk-label" asp-for="Customer">Customer</label>
-                <select asp-for="Customer" asp-items="@Model.CustomerList" class="govuk-select">
-                    <option value="">-- Select --</option>
-                </select>
-                <span asp-validation-for="Customer" class="govuk-error-message" style="display:none;"></span>
+            @* Row 5: Status | Budget *@
+            <div class="col-6">
+                <div class="govuk-form-group sup_margin_0">
+                    <label class="govuk-label" asp-for="ProjectStatus">Status</label>
+                    <span asp-validation-for="ProjectStatus" class="govuk-error-message" style="display:none;"></span>
+                    <select asp-for="ProjectStatus" asp-items="@Model.StatusList" class="govuk-select" required>
+                        <option value="">-- Select --</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="govuk-form-group sup_margin_0">
+                    <label class="govuk-label" asp-for="BudgetCvl">Budget</label>
+                    <span asp-validation-for="BudgetCvl" class="govuk-error-message" style="display:none;"></span>
+                    <input type="text" asp-for="BudgetCvl" class="govuk-input">
+                </div>
             </div>
 
-            <div class="govuk-form-group sup_margin_0">
-                <label class="govuk-label" asp-for="ProjectGroup">Project Group</label>
-                <select asp-for="ProjectGroup" asp-items="@Model.ProjectGroupList" class="govuk-select">
-                    <option value="">-- Select --</option>
-                </select>
-                <span asp-validation-for="ProjectGroup" class="govuk-error-message" style="display:none;"></span>
+            @* Row 6: Cost Inc | Trans Inc *@
+            <div class="col-6">
+                <div class="govuk-form-group sup_margin_0">
+                    <label class="govuk-label" asp-for="BudgetExt">Cost Inc</label>
+                    <span asp-validation-for="BudgetExt" class="govuk-error-message" style="display:none;"></span>
+                    <input type="text" asp-for="BudgetExt" class="govuk-input" required>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="govuk-form-group sup_margin_0">
+                    <label class="govuk-label" asp-for="TransferIncome">Trans Inc</label>
+                    <span asp-validation-for="TransferIncome" class="govuk-error-message" style="display:none;"></span>
+                    <input type="text" asp-for="TransferIncome" class="govuk-input" required>
+                </div>
             </div>
 
-            <div class="govuk-form-group sup_margin_0">
-                <label class="govuk-label" asp-for="Contract">Contract</label>
-                <select asp-for="Contract" asp-items="@Model.ContractList" class="govuk-select">
-                    <option value="">-- Select --</option>
-                </select>
-                <span asp-validation-for="Contract" class="govuk-error-message" style="display:none;"></span>
+            @* Row 7: CW Debit (left column only) *@
+            <div class="col-6">
+                <div class="govuk-form-group sup_margin_0">
+                    <label class="govuk-label" asp-for="PlanCaseWorkDebit">CW Debit</label>
+                    <span asp-validation-for="PlanCaseWorkDebit" class="govuk-error-message" style="display:none;"></span>
+                    <input type="text" asp-for="PlanCaseWorkDebit" class="govuk-input">
+                </div>
             </div>
-
-            <div class="govuk-form-group sup_margin_0">
-                <label class="govuk-label" asp-for="Disease">Disease</label>
-                <select asp-for="Disease" asp-items="@Model.DiseaseList" class="govuk-select">
-                    <option value="">-- Select --</option>
-                </select>
-                <span asp-validation-for="Disease" class="govuk-error-message" style="display:none;"></span>
-            </div>
-
-            <div class="govuk-form-group sup_margin_0">
-                <label class="govuk-label" asp-for="ProjectStatus">Status</label>
-                <select asp-for="ProjectStatus" asp-items="@Model.StatusList" class="govuk-select">
-                    <option value="">-- Select --</option>
-                </select>
-                <span asp-validation-for="ProjectStatus" class="govuk-error-message" style="display:none;"></span>
-            </div>
-
-            <div class="govuk-form-group sup_margin_0">
-                <label class="govuk-label" asp-for="BudgetCvl">Budget</label>
-                <input type="text" asp-for="BudgetCvl" class="govuk-input">
-                <span asp-validation-for="BudgetCvl" class="govuk-error-message" style="display:none;"></span>
-            </div>
-
-            <div class="govuk-form-group sup_margin_0">
-                <label class="govuk-label" asp-for="BudgetExt">Cost Inc</label>
-                <input type="text" asp-for="BudgetExt" class="govuk-input">
-                <span asp-validation-for="BudgetExt" class="govuk-error-message" style="display:none;"></span>
-            </div>
-
-            <div class="govuk-form-group sup_margin_0">
-                <label class="govuk-label" asp-for="TransferIncome">Trans Inc</label>
-                <input type="text" asp-for="TransferIncome" class="govuk-input">
-                <span asp-validation-for="TransferIncome" class="govuk-error-message" style="display:none;"></span>
-            </div>
-
-            <div class="govuk-form-group sup_margin_0">
-                <label class="govuk-label" asp-for="PlanCaseWorkDebit">CW Debit</label>
-                <input type="text" asp-for="PlanCaseWorkDebit" class="govuk-input">
-                <span asp-validation-for="PlanCaseWorkDebit" class="govuk-error-message" style="display:none;"></span>
-            </div>
-        </form>
-    </div>
+        </div>
+    </form>
 </div>
 <div class="modal-footer">
     <button class="govuk-button govuk-button--secondary sup_margin_0" data-module="govuk-button"
-            data-bs-dismiss="modal"> Cancel</button>
+            data-bs-dismiss="modal" onclick="closeModal()">Cancel</button>
     <button class="govuk-button sup_margin_0" data-module="govuk-button"
             type="button" onclick="@saveAction">Update</button>
 </div>

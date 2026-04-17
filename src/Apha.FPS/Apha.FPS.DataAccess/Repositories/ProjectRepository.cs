@@ -35,8 +35,18 @@ namespace Apha.FPS.DataAccess.Repositories
                     ParentProject = pv.ParentProject ?? string.Empty,
                     ProjectTitle = pv.ProjectTitle ?? string.Empty,
                     Program = pv.Program ?? string.Empty,
+                    Manager = pv.Manager,
+                    Customer = pv.Customer ?? string.Empty,
+                    Contract = pv.Contract ?? string.Empty,
+                    Disease = pv.Disease ?? string.Empty,
+                    ProjectStatus = pv.ProjectStatus ?? string.Empty,
+                    ProjectGroup = pv.ProjectGroup,
                     BudgetCvl = pv.BudgetCvl,
-                    IsDefraProject = pv.IsDefraProject ?? 0
+                    CustIncome = pv.CustIncome ?? 0,
+                    TransferIncome = pv.TransferIncome ?? 0,
+                    PlanCaseWorkDebit = pv.PlanCaseWorkDebit,
+                    IsDefraProject = pv.IsDefraProject ?? 0,
+                    IncomeAccountCode = pv.IncomeAccountCode ?? string.Empty
                 }).AsQueryable();
 
             projectQuery = ApplyProjectFilter(projectQuery, query.Filter);
@@ -155,6 +165,13 @@ namespace Apha.FPS.DataAccess.Repositories
             return true;
         }
 
+        public async Task<bool> HasAssociatedJobCodesAsync(string parentProject)
+        {
+            return await _dbContext.JobCodes
+                .AnyAsync(j => j.ParentProject == parentProject
+                    && j.FpsYear == _requestContext.FpsYear);
+        }
+
         private static IQueryable ApplyOrder<T>(IQueryable<Project> query, Expression<Func<Project, T>> keySelector, bool descending)
         {
             return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
@@ -180,6 +197,12 @@ namespace Apha.FPS.DataAccess.Repositories
 
             if (dict.TryGetValue("ParentProject", out var parentProject) && parentProject != null)
                 query = query.Where(x => x.ParentProject.Contains(parentProject.ToString()!));
+
+            if (dict.TryGetValue("ProjectTitle", out var projectTitle) && projectTitle != null)
+                query = query.Where(x => x.ProjectTitle.Contains(projectTitle.ToString()!));
+
+            if (dict.TryGetValue("Manager", out var manager) && manager != null)
+                query = query.Where(x => x.Manager!.Contains(manager.ToString()!));
 
             return query;
         }

@@ -18,10 +18,13 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         private static ProjectRepository CreateRepository(
             IEnumerable<Project>? projects = null,
             IEnumerable<ProjectView>? projectViews = null,
-            string userEmailId = "test@example.com") // always lowercase â€” matches middleware ToLowerInvariant()
+            IEnumerable<JobCode>? jobCodes = null,
+            string userEmailId = "test@example.com", // always lowercase - matches middleware ToLowerInvariant()
+            int fpsYear = 2024)
         {
             var mockRequestContext = new Mock<IFpsRequestContext>();
             mockRequestContext.Setup(x => x.UserEmailId).Returns(userEmailId);
+            mockRequestContext.Setup(x => x.FpsYear).Returns(fpsYear);
             var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(mockRequestContext.Object);
 
             if (projects != null)
@@ -34,6 +37,12 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             {
                 var projectViewsMockSet = RepositoryTestHelper.CreateMockDbSet(projectViews);
                 mockContext.Setup(x => x.ProjectViews).Returns(projectViewsMockSet.Object);
+            }
+
+            if (jobCodes != null)
+            {
+                var jobCodesMockSet = RepositoryTestHelper.CreateMockDbSet(jobCodes);
+                mockContext.Setup(x => x.JobCodes).Returns(jobCodesMockSet.Object);
             }
 
             return new ProjectRepository(mockContext.Object, mockRequestContext.Object);
@@ -641,6 +650,95 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             Assert.Equal(15, result.PaginationData.TotalRecords);
             Assert.Equal(10, result.Data.Count());
             Assert.Equal(2,  result.PaginationData.TotalPages);
+        }
+
+
+        #endregion
+
+        #region HasAssociatedJobCodesAsync Tests
+
+        [Fact]
+        public async Task HasAssociatedJobCodesAsync_ReturnsTrue_WhenJobCodesExistForProjectAndCurrentYear()
+        {
+            // Arrange
+            var jobCodes = new List<JobCode>
+            {
+                new() { JobCodeId = "JC001", ParentProject = "PP001", FpsYear = 2024 },
+                new() { JobCodeId = "JC002", ParentProject = "PP001", FpsYear = 2024 }
+            };
+            var repo = CreateRepository(jobCodes: jobCodes, fpsYear: 2024);
+
+            // Act
+            var result = await repo.HasAssociatedJobCodesAsync("PP001");
+
+            // Assert
+            Assert.True(result);
+        }
+
+        [Fact]
+        public async Task HasAssociatedJobCodesAsync_ReturnsFalse_WhenNoJobCodesExistForProject()
+        {
+            // Arrange
+            var jobCodes = new List<JobCode>
+            {
+                new() { JobCodeId = "JC001", ParentProject = "PP002", FpsYear = 2024 }
+            };
+            var repo = CreateRepository(jobCodes: jobCodes, fpsYear: 2024);
+
+            // Act
+            var result = await repo.HasAssociatedJobCodesAsync("PP001");
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task HasAssociatedJobCodesAsync_ReturnsFalse_WhenJobCodesExistForDifferentFpsYear()
+        {
+            // Arrange
+            var jobCodes = new List<JobCode>
+            {
+                new() { JobCodeId = "JC001", ParentProject = "PP001", FpsYear = 2023 }
+            };
+            var repo = CreateRepository(jobCodes: jobCodes, fpsYear: 2024);
+
+            // Act
+            var result = await repo.HasAssociatedJobCodesAsync("PP001");
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task HasAssociatedJobCodesAsync_ReturnsFalse_WhenJobCodesListIsEmpty()
+        {
+            // Arrange
+            var repo = CreateRepository(jobCodes: new List<JobCode>(), fpsYear: 2024);
+
+            // Act
+            var result = await repo.HasAssociatedJobCodesAsync("PP001");
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task HasAssociatedJobCodesAsync_ReturnsTrue_WhenOneOfManyProjectsHasJobCodes()
+        {
+            // Arrange
+            var jobCodes = new List<JobCode>
+            {
+                new() { JobCodeId = "JC001", ParentProject = "PP002", FpsYear = 2024 },
+                new() { JobCodeId = "JC002", ParentProject = "PP003", FpsYear = 2024 },
+                new() { JobCodeId = "JC003", ParentProject = "PP001", FpsYear = 2024 }
+            };
+            var repo = CreateRepository(jobCodes: jobCodes, fpsYear: 2024);
+
+            // Act
+            var result = await repo.HasAssociatedJobCodesAsync("PP001");
+
+            // Assert
+            Assert.True(result);
         }
 
         #endregion

@@ -1,3 +1,4 @@
+using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Pagination;
@@ -37,7 +38,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         public async Task<IActionResult> Index(string? programNo = null)
         {
             var programmeList = await GetProgrammeListAsync();
-            var selectedProgramNo = programNo ?? programmeList.FirstOrDefault()?.Value ?? string.Empty;
+            var isValidProgramNo = !string.IsNullOrWhiteSpace(programNo)
+                && programmeList.Any(p => p.Value == programNo);
+            var selectedProgramNo = isValidProgramNo
+                ? programNo
+                : programmeList.FirstOrDefault()?.Value ?? string.Empty;
 
             var projectsGrid = new DataGridConfig<ProgramProjectItem>
             {
@@ -191,7 +196,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         /// <summary>
-        /// Returns programme info (name) as JSON for client-side updates.
+        /// GET: returns programme info (name) as JSON for client-side updates.
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetProgramInfo(string programNo)
@@ -210,6 +215,32 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             }
 
             return Json(new { success = false, message = "Programme not found." });
+        }
+
+        /// <summary>
+        /// GET: returns summed financial totals across all projects in a programme.
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> GetProjectTotals(string? programNo)
+        {
+            var zero = new { budgetCvl = 0M, budgetExt = 0M, transferIncome = 0M, planCaseWorkDebit = 0M };
+
+            if (string.IsNullOrWhiteSpace(programNo))
+                return Json(zero);
+
+            var query = new QueryParameters<string> { Page = 1, PageSize = 9999 };
+            var result = await _projectService.GetProjectsByProgramAsync(query, programNo);
+
+            if (!result.Success || result.Data == null)
+                return Json(zero);
+
+            return Json(new
+            {
+                budgetCvl        = result.Data.Sum(p => p.BudgetCvl ?? 0M),
+                budgetExt        = result.Data.Sum(p => p.BudgetExt ?? 0M),
+                transferIncome   = result.Data.Sum(p => (decimal)p.TransferIncome),
+                planCaseWorkDebit = result.Data.Sum(p => p.PlanCaseWorkDebit ?? 0M)
+            });
         }
 
         /// <summary>
@@ -256,7 +287,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var result = await _projectService.UpdateProjectAsync(dto);
 
             if (result.Success)
-                return Json(new { success = true, message = "Project updated successfully." });
+                return Json(new { success = true, message = "Project updated successfully.", data = result.Data });
 
             return Json(new
             {
@@ -277,12 +308,17 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var result = await _projectService.DeleteProjectAsync(parentProject);
 
             if (result.Success && result.Data)
-                return Json(new { success = true, message = "Project deleted successfully." });
+                return Json(new { success = true, message = "Project deleted successfully.", data = result.Data });
 
             return Json(new
             {
                 success = false,
-                message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to delete project."
+                message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to delete project.",
+                errors = (result.Errors ?? new List<ApiErrorDto>()).Select(e => new
+                {
+                    field = e.Code ?? string.Empty,
+                    message = e.Message ?? "An unexpected error occurred."
+                })
             });
         }
 
@@ -347,11 +383,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     .Select(p => new SelectListItem
                     {
                         Value = p.ProgramNo,
-                        Text = $"{p.ProgramNo} - {p.ProgramName}"
+                        Text  = $"{p.ProgramNo} - {p.ProgramName}"
                     })
                     .ToList();
             }
-
             return new List<SelectListItem>();
         }
     }

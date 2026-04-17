@@ -12,6 +12,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public required string ProgramNo { get; set; }
         
        
+        [Required(ErrorMessage = "Program name is required")]
         [StringLength(80, ErrorMessage = "Program name cannot exceed 80 characters")]
         [Display(Name = "Program Name")]
         public required string ProgramName { get; set; }
@@ -27,7 +28,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public string? Manager { get; set; }
        
       
-        [StringLength(50, ErrorMessage = "Directorate cannot exceed 50 characters")]       
+        [Required(ErrorMessage = "Directorate is required")]
+        [StringLength(50, ErrorMessage = "Directorate cannot exceed 50 characters")]
         [Display(Name = "Directorate")]
         public required string Directorate { get; set; }
         
