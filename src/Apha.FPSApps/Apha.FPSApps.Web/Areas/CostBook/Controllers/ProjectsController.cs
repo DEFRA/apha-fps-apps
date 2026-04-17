@@ -310,9 +310,9 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
 
                 if (!response.Success)
                 {
-                    var errorMessage = response.Errors?.Any() == true
-                        ? string.Join(", ", response.Errors.Select(e => e.Message))
-                        : "Project deletion failed. Please try again.";
+                    var errorMessage = response.Errors?.Count > 0
+                    ? string.Join(", ", response.Errors.Select(e => e.Message))
+                    : "Project deletion failed. Please try again.";
 
                     return Json(new
                     {
