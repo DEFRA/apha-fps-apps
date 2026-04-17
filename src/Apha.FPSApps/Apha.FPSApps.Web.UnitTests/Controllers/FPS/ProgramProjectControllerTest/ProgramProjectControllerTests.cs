@@ -360,6 +360,29 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramProjectControllerTes
             Assert.Equal(string.Empty, model.SelectedProgramNo);
         }
 
+        [Fact]
+        public async Task Index_WhenProgrammeListContainsNullProgramNo_FiltersItOut()
+        {
+            // Arrange
+            var programs = new List<ProgramDto>
+            {
+                new() { ProgramNo = "P001", ProgramName = "Programme Alpha" },
+                new() { ProgramNo = null!,   ProgramName = "Should Be Filtered" },
+                new() { ProgramNo = "",     ProgramName = "Also Filtered" }
+            };
+            _programService.GetAllProgramsAsync()
+                .Returns(ApiResponseDto<IEnumerable<ProgramDto>>.SuccessResponse(programs));
+
+            // Act
+            var result = await _controller.Index(null);
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProgramProjectViewModel>(viewResult.Model);
+            Assert.Single(model.ProgrammeList);
+            Assert.Equal("P001", model.SelectedProgramNo);
+        }
+
         #endregion
 
         #region LoadProgramProjectGrid Tests
@@ -891,6 +914,49 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramProjectControllerTes
             Assert.Equal("John Smith", model.ManagerList[0].Value);
             Assert.Single(model.ProgramList);
             Assert.Equal("P001", model.ProgramList[0].Value);
+        }
+
+        [Fact]
+        public async Task EditGet_WhenAllDropdownServicesFail_ReturnsEmptyDropdowns()
+        {
+            // Arrange
+            var parentProject = "PP001";
+            var projectDto = new ProjectDto { ParentProject = "PP001", ProjectTitle = "Alpha Project" };
+            var projectViewModel = new ProgramProjectEditViewModel { ParentProject = "PP001" };
+            var errors = new List<ApiErrorDto> { new() { Message = "Service error", Code = "ERR" } };
+
+            _projectService.GetProjectByIdAsync(parentProject)
+                .Returns(ApiResponseDto<ProjectDto>.SuccessResponse(projectDto));
+            _mapper.Map<ProgramProjectEditViewModel>(projectDto).Returns(projectViewModel);
+
+            _employeeService.GetAllManagersAsync()
+                .Returns(ApiResponseDto<List<ManagerDto>>.FailureResponse(errors, new ApiMetaDto()));
+            _programService.GetAllProgramsAsync()
+                .Returns(ApiResponseDto<IEnumerable<ProgramDto>>.FailureResponse(errors, new ApiMetaDto()));
+            _projectService.GetAllCustomersAsync()
+                .Returns(ApiResponseDto<List<CustomerDto>>.FailureResponse(errors, new ApiMetaDto()));
+            _projectService.GetAllProjectGroupsAsync()
+                .Returns(ApiResponseDto<List<ProjectGroupDto>>.FailureResponse(errors, new ApiMetaDto()));
+            _projectService.GetAllContractsAsync()
+                .Returns(ApiResponseDto<List<ContractDto>>.FailureResponse(errors, new ApiMetaDto()));
+            _projectService.GetAllDiseasesAsync()
+                .Returns(ApiResponseDto<List<DiseaseDto>>.FailureResponse(errors, new ApiMetaDto()));
+            _projectService.GetAllStatusesAsync()
+                .Returns(ApiResponseDto<List<StatusDto>>.FailureResponse(errors, new ApiMetaDto()));
+
+            // Act
+            var result = await _controller.Edit(parentProject);
+
+            // Assert
+            var partialView = Assert.IsType<PartialViewResult>(result);
+            var model = Assert.IsType<ProgramProjectEditViewModel>(partialView.Model);
+            Assert.Empty(model.ManagerList);
+            Assert.Empty(model.ProgramList);
+            Assert.Empty(model.CustomerList);
+            Assert.Empty(model.ProjectGroupList);
+            Assert.Empty(model.ContractList);
+            Assert.Empty(model.DiseaseList);
+            Assert.Empty(model.StatusList);
         }
 
         #endregion
