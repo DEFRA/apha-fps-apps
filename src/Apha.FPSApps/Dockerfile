@@ -22,7 +22,7 @@ RUN find . -type d -exec chmod 555 {} \; && \
     find . -type f -exec chmod 444 {} \;
 
 # ================================
-# -------- Production Stage --------
+# -------- Production Stage ---------
 # ================================
 ARG PARENT_VERSION=dotnet10.0
 FROM defradigital/dotnetcore:$PARENT_VERSION AS production
