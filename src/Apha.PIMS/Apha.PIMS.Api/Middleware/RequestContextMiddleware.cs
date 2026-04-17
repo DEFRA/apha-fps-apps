@@ -30,16 +30,11 @@ namespace Apha.PIMS.Api.Middleware
                 return;
             }
 
-            // REQUIRED HEADER
-            if (!context.Request.Headers.TryGetValue(FpsYearHeader, out var header)
-                            || !int.TryParse(header, out int fpsYear))
-            {
-                throw new ArgumentException($"Required request header '{FpsYearHeader}' is missing or empty.");               
-            }
+           
 
             SetCorrelationId(context, CorrelationIdHeader);
 
-            ((FPSYearContext)yearContext).FPSYear = fpsYear;
+            ((FPSYearContext)yearContext).FPSYear = 2025;
 
             await _next(context);
         }
