@@ -37,6 +37,7 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<PagedData<Project>> GetProjectsByProgramAsync(PaginationParameters<string> query, string programNo)
         {
             var projectQuery = _dbContext.ProjectViews
+                .AsNoTracking()
                 .Where(p => p.UserEmail != null && p.UserEmail.ToLower() == _requestContext.UserEmailId && p.Program == programNo)
                 .Select(pv => new Project
                 {
