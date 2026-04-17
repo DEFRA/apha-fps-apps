@@ -21,6 +21,10 @@ on:
         description: "Short description for the git tag"
         required: true
         type: string  
+      dockerfile_path:
+        description: "Relative path to the Dockerfile from repo root"
+        required: true
+        type: string
   
     secrets:
       AWS_ENV_REGION:
@@ -32,6 +36,7 @@ on:
 
 env:
   REPOSITORY: ${{ inputs.repository }}
+  DOCKERFILE_PATH: ${{ inputs.dockerfile_path }}
 jobs:
   push-image:
     name: Push Docker Image
@@ -40,9 +45,7 @@ jobs:
     permissions:
       id-token: write
       contents: write
-    
     steps:
-
       - name: Checkout code
         uses: actions/checkout@v4
         with:
@@ -123,7 +126,7 @@ jobs:
 
           echo "Building Docker image $IMAGE_NAME:$IMAGE_TAG"
           docker build \
-            --file ./Dockerfile \
+            --file $DOCKERFILE_PATH \
             --build-arg GIT_COMMIT="$META_REVISION" \
             --label org.opencontainers.image.source="$META_SOURCE" \
             --label org.opencontainers.image.revision="$META_REVISION" \
@@ -169,9 +172,9 @@ jobs:
         env:
           IMAGE_TAG: ${{ steps.imgtag.outputs.image_tag }}
         run: |
-          docker build -t bst:$IMAGE_TAG .
+          docker build -t $REPOSITORY:$IMAGE_TAG --file $DOCKERFILE_PATH .
           echo "Running local image: $IMAGE_TAG"
-          docker run -d --name test-container -p 8080:8080 -e ASPNETCORE_ENVIRONMENT=local bst:$IMAGE_TAG
+          docker run -d --name test-container -p 8080:8080 -e ASPNETCORE_ENVIRONMENT=local $REPOSITORY:$IMAGE_TAG
       - name: Wait for service to start
         run: >
           echo "Waiting for the service to start..."
