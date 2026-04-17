@@ -123,10 +123,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectInvoiceA
         {
             // Arrange
             var parentProject = "PP001";
-            var apiResponse = new ApiResponse<decimal> { Success = true, Data = 1500.00m };
+            var apiResponse = new ApiResponse<decimal?> { Success = true, Data = 1500.00m };
             var expectedDto = ApiResponseDto<decimal>.SuccessResponse(1500.00m);
 
-            _http.GetAsync<decimal>(Arg.Is<string>(url =>
+            _http.GetAsync<decimal?>(Arg.Is<string>(url =>
                 url.Contains("api/v1/projectinvoice/total") && url.Contains("parentProject=PP001")))
                 .Returns(apiResponse);
             _mapper.Map<ApiResponseDto<decimal>>(apiResponse).Returns(expectedDto);
@@ -138,7 +138,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectInvoiceA
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(1500.00m, result.Data);
-            await _http.Received(1).GetAsync<decimal>(
+            await _http.Received(1).GetAsync<decimal?>(
                 Arg.Is<string>(url => url.Contains("api/v1/projectinvoice/total") && url.Contains("parentProject=PP001")));
         }
 
@@ -146,10 +146,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectInvoiceA
         public async Task GetTotalAmountAsync_WithNullParentProject_UsesBaseUrl()
         {
             // Arrange
-            var apiResponse = new ApiResponse<decimal> { Success = true, Data = 0m };
+            var apiResponse = new ApiResponse<decimal?> { Success = true, Data = 0m };
             var expectedDto = ApiResponseDto<decimal>.SuccessResponse(0m);
 
-            _http.GetAsync<decimal>("api/v1/projectinvoice/total").Returns(apiResponse);
+            _http.GetAsync<decimal?>("api/v1/projectinvoice/total").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<decimal>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -158,7 +158,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectInvoiceA
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
-            await _http.Received(1).GetAsync<decimal>("api/v1/projectinvoice/total");
+            await _http.Received(1).GetAsync<decimal?>("api/v1/projectinvoice/total");
         }
 
         #endregion
@@ -337,10 +337,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectInvoiceA
         {
             // Arrange
             var invoiceCounter = 1;
-            var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
+            var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
             var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
 
-            _http.DeleteAsync<bool>($"api/v1/projectinvoice/{invoiceCounter}").Returns(apiResponse);
+            _http.DeleteAsync<bool?>($"api/v1/projectinvoice/{invoiceCounter}").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -350,7 +350,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectInvoiceA
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.True(result.Data);
-            await _http.Received(1).DeleteAsync<bool>($"api/v1/projectinvoice/{invoiceCounter}");
+            await _http.Received(1).DeleteAsync<bool?>($"api/v1/projectinvoice/{invoiceCounter}");
         }
 
         [Fact]
@@ -358,7 +358,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectInvoiceA
         {
             // Arrange
             var errors = new List<ApiError> { new() { Message = "Not Found", Code = "NOT_FOUND" } };
-            var apiResponse = new ApiResponse<bool> { Success = false, Errors = errors };
+            var apiResponse = new ApiResponse<bool?> { Success = false, Errors = errors };
             var mappedResponse = new ApiResponseDto<bool>
             {
                 Success = false,
@@ -366,7 +366,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectInvoiceA
                 Meta = new ApiMetaDto()
             };
 
-            _http.DeleteAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
+            _http.DeleteAsync<bool?>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedResponse);
 
             // Act

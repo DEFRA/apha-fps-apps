@@ -419,10 +419,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestRequirement
         public async Task DeleteTestReqmtAsync_WithSuccessResponse_ReturnsTrue()
         {
             // Arrange
-            var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
+            var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
             var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
 
-            _http.DeleteAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
+            _http.DeleteAsync<bool?>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -439,7 +439,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestRequirement
         {
             // Arrange
             var errors = new List<ApiError> { new() { Message = "Not Found", Code = "NOT_FOUND" } };
-            var apiResponse = new ApiResponse<bool> { Success = false, Errors = errors };
+            var apiResponse = new ApiResponse<bool?> { Success = false, Errors = errors };
             var mappedResponse = new ApiResponseDto<bool>
             {
                 Success = false,
@@ -447,7 +447,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestRequirement
                 Meta = new ApiMetaDto()
             };
 
-            _http.DeleteAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
+            _http.DeleteAsync<bool?>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedResponse);
 
             // Act

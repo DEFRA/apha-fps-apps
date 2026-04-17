@@ -15,5 +15,6 @@ namespace Apha.PACT.Core.Interfaces
         Task<IEnumerable<TimeCodeValid>> CopyWorkGroupAsync(string sourceJobCode, string targetJobCode, string parentProject);
         Task<bool> DeleteBulkAsync(IEnumerable<(string WorkGroup, string TimeCode)> items, string parentProject);
         Task<IEnumerable<TimeCodeValid>> CopySelectedWorkGroupsAsync(IEnumerable<string> workGroups, string sourceJobCode, string targetJobCode, string parentProject);
+        Task<bool> HasRelatedTimeCodeValidRecordsAsync(string jobCode);
     }
 }

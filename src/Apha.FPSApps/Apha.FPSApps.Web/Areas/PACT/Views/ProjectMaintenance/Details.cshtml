@@ -261,7 +261,7 @@
                                     </div>
                                     <div style="padding-top:0;">
                                         <button type="button" class="govuk-button sup_margin_0"
-                                                aria-label="Profile by month" onclick="onClickProfileByMonth()">
+                                                aria-label="Profile by month" onclick="onClickProfileByMonth()" allow-edit="true">
                                             Profile By Month
                                         </button>
                                     </div>
@@ -386,7 +386,7 @@
 
         function deleteJobCode(btn) {
             var jobCodeId = $(btn).data('id');
-            showGovukConfirm('Delete job code "' + jobCodeId + '" and all its time codes?').then(function(confirmed) {
+            showGovukConfirm('Delete this job code?').then(function(confirmed) {
                 if (!confirmed) return;
                 $.ajax({
                     url: '/PACT/ProjectMaintenance/DeleteJobCode',

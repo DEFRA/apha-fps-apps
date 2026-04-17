@@ -7,11 +7,11 @@ namespace Apha.PACT.DataAccess.Data
 {
     public class ProjectSubContractMap : IEntityTypeConfiguration<ProjectSubContract>
     {
-        private readonly IFpsYearContext _fPSYearContext;
+        private readonly IFpsRequestContext _fpsRequestContext;
 
-        public ProjectSubContractMap(IFpsYearContext fPSYearContext)
+        public ProjectSubContractMap(IFpsRequestContext fpsRequestContext)
         {
-            _fPSYearContext = fPSYearContext;
+            _fpsRequestContext = fpsRequestContext;
         }
 
         public void Configure(EntityTypeBuilder<ProjectSubContract> entity)
@@ -51,7 +51,7 @@ namespace Apha.PACT.DataAccess.Data
             entity.Property(e => e.WorkGroup)
                 .HasMaxLength(50)
                 .HasColumnName("workgroup");
-            entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FPSYear);
+            entity.HasQueryFilter(e => e.FpsYear == _fpsRequestContext.FpsYear);
         }
     }
 }

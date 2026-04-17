@@ -130,7 +130,7 @@ namespace Apha.FPS.Api.Middleware
                     break;
             }
 
-            LogException(ex, errorType!, apiResponse.Errors.First()!.Code, correlationId);
+            LogException(ex, errorType!, apiResponse.Errors[0].Code, correlationId);
 
             var json = JsonSerializer.Serialize(apiResponse);
             await context.Response.WriteAsync(json);

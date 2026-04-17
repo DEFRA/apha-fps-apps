@@ -9,16 +9,13 @@ namespace Apha.PACT.DataAccess.Repository
 {
     public class TestRequirementRepository : BaseRepository, ITestRequirementRepository
     {
-        private readonly IFpsYearContext _fpsYearContext;
-        private readonly ICurrentUserContext _currentUserContext;
+        private readonly IFpsRequestContext _fpsRequestContext;
 
         public TestRequirementRepository(
             FpsDbContext context,
-            IFpsYearContext fpsYearContext,
-            ICurrentUserContext currentUserContext) : base(context)
+            IFpsRequestContext fpsRequestContext) : base(context)
         {
-            _fpsYearContext = fpsYearContext;
-            _currentUserContext = currentUserContext;
+            _fpsRequestContext = fpsRequestContext;
         }
 
         public async Task<PagedData<TestRequirement>> GetPagedByTestCodeAsync(
@@ -264,7 +261,7 @@ namespace Apha.PACT.DataAccess.Repository
 
         public async Task<TestRequirement> AddAsync(TestRequirement entity)
         {
-            entity.FpsYear = _fpsYearContext.FPSYear;
+            entity.FpsYear = _fpsRequestContext.FpsYear;
             entity.DateCreated = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
             await _context.TestRequirements.AddAsync(entity);
             await _context.SaveChangesAsync();
@@ -274,7 +271,7 @@ namespace Apha.PACT.DataAccess.Repository
 
         public async Task<TestRequirement> UpdateAsync(TestRequirement entity)
         {
-            entity.FpsYear = _fpsYearContext.FPSYear;
+            entity.FpsYear = _fpsRequestContext.FpsYear;
             _context.Entry(entity).State = EntityState.Modified;
             await _context.SaveChangesAsync();
             await WriteAuditLogAsync(entity, "U");
@@ -287,7 +284,7 @@ namespace Apha.PACT.DataAccess.Repository
                 .FirstOrDefaultAsync(t =>
                     t.TestCode == testCode &&
                     t.Buyer == buyer &&
-                    t.FpsYear == _fpsYearContext.FPSYear);
+                    t.FpsYear == _fpsRequestContext.FpsYear);
 
             if (entity is null) return false;
 
@@ -341,9 +338,11 @@ namespace Apha.PACT.DataAccess.Repository
                 UnitPrice     = entity.UnitPrice.HasValue ? (double?)decimal.ToDouble(entity.UnitPrice.Value) : null,
                 NoRequired    = entity.NoRequired.HasValue ? (int?)Convert.ToInt32(entity.NoRequired.Value) : null,
                 DateTime      = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
-                UserId        = _currentUserContext.UserId,
+                UserId        = _fpsRequestContext.UserEmailId?.Length > 20
+                    ? _fpsRequestContext.UserEmailId[..20]
+                    : _fpsRequestContext.UserEmailId,
                 InsertDelete  = insertDelete,
-                FpsYear       = _fpsYearContext.FPSYear
+                FpsYear       = _fpsRequestContext.FpsYear
             };
 
             // UITrig also captures ProjectBuyerCode, TestBuyerCode and Active

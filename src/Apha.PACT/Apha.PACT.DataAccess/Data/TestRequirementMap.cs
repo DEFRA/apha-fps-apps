@@ -7,11 +7,11 @@ namespace Apha.PACT.DataAccess.Data
 {
     public class TestRequirementMap : IEntityTypeConfiguration<TestRequirement>
     {
-        private readonly IFpsYearContext _fPSYearContext;
+        private readonly IFpsRequestContext _fpsRequestContext;
 
-        public TestRequirementMap(IFpsYearContext fPSYearContext)
+        public TestRequirementMap(IFpsRequestContext fpsRequestContext)
         {
-            _fPSYearContext = fPSYearContext;
+            _fpsRequestContext = fpsRequestContext;
         }
 
         public void Configure(EntityTypeBuilder<TestRequirement> entity)
@@ -48,7 +48,7 @@ namespace Apha.PACT.DataAccess.Data
             entity.Property(e => e.UnitPrice)
                 .HasColumnType("money")
                 .HasColumnName("unitprice");
-            entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FPSYear);
+            entity.HasQueryFilter(e => e.FpsYear == _fpsRequestContext.FpsYear);
         }
     }
 }

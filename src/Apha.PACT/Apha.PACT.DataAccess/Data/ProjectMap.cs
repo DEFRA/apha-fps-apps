@@ -7,11 +7,11 @@ namespace Apha.PACT.DataAccess.Data
 {
     public class ProjectMap : IEntityTypeConfiguration<Project>
     {
-        private readonly IFpsYearContext _fPSYearContext;
+        private readonly IFpsRequestContext _fpsRequestContext;
 
-        public ProjectMap(IFpsYearContext fPSYearContext)
+        public ProjectMap(IFpsRequestContext fpsRequestContext)
         {
-            _fPSYearContext = fPSYearContext;
+            _fpsRequestContext = fpsRequestContext;
         }
 
         public void Configure(EntityTypeBuilder<Project> entity)
@@ -128,7 +128,7 @@ namespace Apha.PACT.DataAccess.Data
             entity.Property(e => e.WipLimit)
                 .HasColumnType("money")
                 .HasColumnName("wip_limit");
-            entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FPSYear);
+            entity.HasQueryFilter(e => e.FpsYear == _fpsRequestContext.FpsYear);
         }
     }
 }

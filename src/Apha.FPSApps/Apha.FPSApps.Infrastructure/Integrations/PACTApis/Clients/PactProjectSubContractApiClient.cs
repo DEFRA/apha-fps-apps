@@ -14,7 +14,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
     {
         private readonly IPactHttpExecutor _http;
         private readonly IMapper _mapper;
-        private const string InternalCodeError = "INTERNAL_ERROR";
 
         public PactProjectSubContractApiClient(IPactHttpExecutor http, IMapper mapper)
         {
@@ -74,7 +73,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
 
         public async Task<ApiResponseDto<bool>> DeleteAsync(int subContCounter)
         {
-            var response = await _http.DeleteAsync<bool>(
+            var response = await _http.DeleteAsync<bool?>(
                 string.Format(PactApiEndpoints.DeleteProjectSubContract, subContCounter));
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<bool>>(response);
@@ -89,7 +88,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
                 ? PactApiEndpoints.GetProjectSubContractTotalAmount
                 : QueryStringHelper.AddQueryString(PactApiEndpoints.GetProjectSubContractTotalAmount, new { project });
 
-            var response = await _http.GetAsync<decimal>(url);
+            var response = await _http.GetAsync<decimal?>(url);
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<decimal>>(response);
 
