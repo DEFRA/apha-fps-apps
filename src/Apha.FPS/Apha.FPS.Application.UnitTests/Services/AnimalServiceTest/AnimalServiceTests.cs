@@ -308,32 +308,30 @@ namespace Apha.FPS.Application.UnitTests.Services.AnimalServiceTest
         }
 
         [Fact]
-        public async Task AddAnimalCostAsync_WhenNumberOfDaysIsNegative_ThrowsArgumentException()
+        public async Task AddAnimalCostAsync_WhenNumberOfDaysIsNegative_ThrowsArgumentOutOfRangeException()
         {
             // Arrange
             var inputDto = new AnimalRequestDto { JobCode = "JOB001", AnimalType = "CAT", NumberOfDays = -1, NumberOfAnimals = 5 };
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<ArgumentException>(
+            await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
                 async () => await _sut.AddAnimalCostAsync(inputDto)
             );
 
-            exception.Message.Should().Be("You have entered a negative number for Number of day.");
             await _mockRepository.DidNotReceive().AddAnimalCostAsync(Arg.Any<AnimalRequest>());
         }
 
         [Fact]
-        public async Task AddAnimalCostAsync_WhenNumberOfAnimalsIsNegative_ThrowsArgumentException()
+        public async Task AddAnimalCostAsync_WhenNumberOfAnimalsIsNegative_ThrowsArgumentOutOfRangeException()
         {
             // Arrange
             var inputDto = new AnimalRequestDto { JobCode = "JOB001", AnimalType = "CAT", NumberOfDays = 5, NumberOfAnimals = -1 };
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<ArgumentException>(
+            await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
                 async () => await _sut.AddAnimalCostAsync(inputDto)
             );
 
-            exception.Message.Should().Be("You have entered a negative number Number of animal.");
             await _mockRepository.DidNotReceive().AddAnimalCostAsync(Arg.Any<AnimalRequest>());
         }
 
@@ -388,32 +386,41 @@ namespace Apha.FPS.Application.UnitTests.Services.AnimalServiceTest
         }
 
         [Fact]
-        public async Task UpdateAnimalCostAsync_WhenNumberOfDaysIsNegative_ThrowsArgumentException()
+        public async Task UpdateAnimalCostAsync_WhenRequestIsNull_ThrowsArgumentNullException()
+        {
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentNullException>(
+                async () => await _sut.UpdateAnimalCostAsync(null!)
+            );
+
+            await _mockRepository.DidNotReceive().UpdateAnimalCostAsync(Arg.Any<AnimalRequest>());
+        }
+
+        [Fact]
+        public async Task UpdateAnimalCostAsync_WhenNumberOfDaysIsNegative_ThrowsArgumentOutOfRangeException()
         {
             // Arrange
             var inputDto = new AnimalRequestDto { JobCode = "JOB001", AnimalType = "CAT", NumberOfDays = -3, NumberOfAnimals = 5 };
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<ArgumentException>(
+            await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
                 async () => await _sut.UpdateAnimalCostAsync(inputDto)
             );
 
-            exception.Message.Should().Be("You have entered a negative number for Number of day.");
             await _mockRepository.DidNotReceive().UpdateAnimalCostAsync(Arg.Any<AnimalRequest>());
         }
 
         [Fact]
-        public async Task UpdateAnimalCostAsync_WhenNumberOfAnimalsIsNegative_ThrowsArgumentException()
+        public async Task UpdateAnimalCostAsync_WhenNumberOfAnimalsIsNegative_ThrowsArgumentOutOfRangeException()
         {
             // Arrange
             var inputDto = new AnimalRequestDto { JobCode = "JOB001", AnimalType = "CAT", NumberOfDays = 5, NumberOfAnimals = -2 };
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<ArgumentException>(
+            await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
                 async () => await _sut.UpdateAnimalCostAsync(inputDto)
             );
 
-            exception.Message.Should().Be("You have entered a negative number Number of animal.");
             await _mockRepository.DidNotReceive().UpdateAnimalCostAsync(Arg.Any<AnimalRequest>());
         }
 
@@ -474,17 +481,30 @@ namespace Apha.FPS.Application.UnitTests.Services.AnimalServiceTest
         }
 
         [Fact]
-        public async Task DeleteAnimalCostAsync_WhenIndCounterIsNegative_ThrowsArgumentException()
+        public async Task DeleteAnimalCostAsync_WhenIndCounterIsNegative_ThrowsArgumentOutOfRangeException()
         {
             // Arrange
             var indCounter = -1;
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<ArgumentException>(
+            await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
                 async () => await _sut.DeleteAnimalCostAsync(indCounter)
             );
 
-            exception.Message.Should().Be("Not found any records.");
+            await _mockRepository.DidNotReceive().DeleteJobAnimalCostAsync(Arg.Any<int>());
+        }
+
+        [Fact]
+        public async Task DeleteAnimalCostAsync_WhenIndCounterIsZero_ThrowsArgumentOutOfRangeException()
+        {
+            // Arrange
+            var indCounter = 0;
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
+                async () => await _sut.DeleteAnimalCostAsync(indCounter)
+            );
+
             await _mockRepository.DidNotReceive().DeleteJobAnimalCostAsync(Arg.Any<int>());
         }
 

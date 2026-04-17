@@ -41,7 +41,7 @@ namespace Apha.FPSApps.Web.Handler
             }
             catch(Exception ex)
             {
-                throw new UnauthorizedAccessException("User is not authenticated.", ex); 
+                throw new UnauthorizedAccessException("Error in BearerTokenHandler", ex); 
             }
         }
     }

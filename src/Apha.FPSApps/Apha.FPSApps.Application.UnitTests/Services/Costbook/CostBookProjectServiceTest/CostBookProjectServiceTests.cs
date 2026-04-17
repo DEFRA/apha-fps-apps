@@ -36,8 +36,8 @@ namespace Apha.FPSApps.Application.UnitTests.Costbook.CostBookProjectServiceTest
             };
             var projects = new List<ProjectDto>
             {
-                new ProjectDto { ProjectId = "P001", Projecttitle = "Test Project 1", Status = "Active" },
-                new ProjectDto { ProjectId = "P002", Projecttitle = "Test Project 2", Status = "Active" }
+                new ProjectDto { ProjectId = "P001", ProjectTitle = "Test Project 1", Status = "Active" },
+                new ProjectDto { ProjectId = "P002", ProjectTitle = "Test Project 2", Status = "Active" }
             };
             var expectedResponse = ApiResponseDto<List<ProjectDto>>.SuccessResponse(
                 projects,
@@ -140,7 +140,7 @@ namespace Apha.FPSApps.Application.UnitTests.Costbook.CostBookProjectServiceTest
             var project = new ProjectDto 
             { 
                 ProjectId = projectId, 
-                Projecttitle = "Test Project",
+                ProjectTitle = "Test Project",
                 Status = "Active"
             };
             var expectedResponse = ApiResponseDto<ProjectDto>.SuccessResponse(project);
@@ -209,7 +209,7 @@ namespace Apha.FPSApps.Application.UnitTests.Costbook.CostBookProjectServiceTest
             var project = new ProjectDto 
             { 
                 ProjectId = "P001",
-                Projecttitle = "New Project"
+                ProjectTitle = "New Project"
             };
             var expectedResponse = ApiResponseDto<ProjectDto>.SuccessResponse(project);
 
@@ -230,7 +230,7 @@ namespace Apha.FPSApps.Application.UnitTests.Costbook.CostBookProjectServiceTest
             var project = new ProjectDto 
             { 
                 ProjectId = "P001",
-                Projecttitle = "New Project",
+                ProjectTitle = "New Project",
                 Status = "Pending" // Initial status
             };
             var expectedResponse = ApiResponseDto<ProjectDto>.SuccessResponse(project);
@@ -251,7 +251,7 @@ namespace Apha.FPSApps.Application.UnitTests.Costbook.CostBookProjectServiceTest
             var project = new ProjectDto 
             { 
                 ProjectId = "P001",
-                Projecttitle = "New Project"
+                ProjectTitle = "New Project"
             };
             var expectedResponse = ApiResponseDto<ProjectDto>.SuccessResponse(project);
 
@@ -264,8 +264,7 @@ namespace Apha.FPSApps.Application.UnitTests.Costbook.CostBookProjectServiceTest
             await _costBookProjectApiClient.Received(1).AddProjectAsync(
                 Arg.Is<ProjectDto>(p => 
                     p.ProjectId == "P001" &&
-                    p.Status == "Active" &&
-                    p.CreatedDate != null
+                    p.Status == "Active"
                 )
             );
         }
@@ -277,7 +276,7 @@ namespace Apha.FPSApps.Application.UnitTests.Costbook.CostBookProjectServiceTest
             var project = new ProjectDto 
             { 
                 ProjectId = "P001",
-                Projecttitle = "New Project"
+                ProjectTitle = "New Project"
             };
             var expectedResponse = ApiResponseDto<ProjectDto>.SuccessResponse(project);
 
@@ -299,7 +298,7 @@ namespace Apha.FPSApps.Application.UnitTests.Costbook.CostBookProjectServiceTest
             var project = new ProjectDto 
             { 
                 ProjectId = "P001",
-                Projecttitle = "New Project"
+                ProjectTitle = "New Project"
             };
             var errors = new List<ApiErrorDto>
             {
@@ -331,7 +330,7 @@ namespace Apha.FPSApps.Application.UnitTests.Costbook.CostBookProjectServiceTest
             var project = new ProjectDto 
             { 
                 ProjectId = projectId,
-                Projecttitle = "Updated Project"
+                ProjectTitle = "Updated Project"
             };
             var expectedResponse = ApiResponseDto<ProjectDto>.SuccessResponse(project);
 
@@ -354,7 +353,7 @@ namespace Apha.FPSApps.Application.UnitTests.Costbook.CostBookProjectServiceTest
             var project = new ProjectDto 
             { 
                 ProjectId = projectId,
-                Projecttitle = "Updated Project"
+                ProjectTitle = "Updated Project"
             };
             var expectedResponse = ApiResponseDto<ProjectDto>.SuccessResponse(project);
 
@@ -381,7 +380,7 @@ namespace Apha.FPSApps.Application.UnitTests.Costbook.CostBookProjectServiceTest
             var project = new ProjectDto 
             { 
                 ProjectId = projectId,
-                Projecttitle = "Updated Project"
+                ProjectTitle = "Updated Project"
             };
             var expectedResponse = ApiResponseDto<ProjectDto>.SuccessResponse(project);
 
@@ -404,7 +403,7 @@ namespace Apha.FPSApps.Application.UnitTests.Costbook.CostBookProjectServiceTest
             var project = new ProjectDto 
             { 
                 ProjectId = projectId,
-                Projecttitle = "Updated Project"
+                ProjectTitle = "Updated Project"
             };
             var errors = new List<ApiErrorDto>
             {
@@ -517,7 +516,7 @@ namespace Apha.FPSApps.Application.UnitTests.Costbook.CostBookProjectServiceTest
             var copiedProject = new ProjectDto 
             { 
                 ProjectId = newId,
-                Projecttitle = "Copied Project"
+                ProjectTitle = "Copied Project"
             };
             var expectedResponse = ApiResponseDto<ProjectDto>.SuccessResponse(copiedProject);
 

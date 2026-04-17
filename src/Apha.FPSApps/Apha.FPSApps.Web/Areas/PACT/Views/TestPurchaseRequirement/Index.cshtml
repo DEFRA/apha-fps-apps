@@ -113,7 +113,8 @@
         function deleteTestPurchaseReq(btn) {
             var testCode = $(btn).data('testcode') || $(btn).closest('tr').find('td:first').text().trim();
             var buyer = $(btn).data('id');
-            if (confirm('Delete this test purchase requirement?')) {
+            showGovukConfirm('Delete this test purchase requirement?').then(function (confirmed) {
+                if (!confirmed) return;
                 $.ajax({
                     url: '/PACT/TestPurchaseRequirement/DeleteTestPurchaseReq',
                     type: 'DELETE',
@@ -121,13 +122,14 @@
                     success: function (response) {
                         if (response.success) {
                             getGridManager()?.reloadGrid({ page: 1 });
+                            showGovukAlert('Test purchase requirement deleted successfully.');
                         } else {
-                            alert('Error: ' + response.message);
+                            showGovukAlert('Error: ' + response.message);
                         }
                     },
-                    error: function () { alert('An error occurred while deleting.'); }
+                    error: function () { showGovukAlert('An error occurred while deleting.'); }
                 });
-            }
+            });
         }
 
         function saveTestPurchaseReq() {
@@ -154,14 +156,14 @@
                 data: JSON.stringify(data),
                 success: function (response) {
                     if (response.success) {
-                        alert(response.message);
                         $('#modalPopup').removeClass('show');
+                        showGovukAlert(response.message);
                         getGridManager()?.reloadGrid({ page: 1 });
                     } else {
                         displayServerValidationErrors(response.errors, response.message, '#testPurchaseReqForm');
                     }
                 },
-                error: function () { alert('An error occurred while saving.'); }
+                error: function () { showGovukAlert('An error occurred while saving.'); }
             });
         }
     </script>

@@ -30,6 +30,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             IEnumerable<Employee> employees,
             IEnumerable<StaffActiveView>? staffActiveViews = null,
             IEnumerable<WorkgroupGradeGeneralView>? workgroupGrades = null,
+            IEnumerable<WgEmployee>? wgEmployees = null,
             int fpsYear = DefaultTestFpsYear)
         {
             var mockFpsYearContext = CreateMockFpsYearContext(fpsYear);
@@ -38,6 +39,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             // Setup Employees DbSet
             var employeesMockSet = RepositoryTestHelper.CreateMockDbSet(employees);
             mockContext.Setup(x => x.Employees).Returns(employeesMockSet.Object);
+
+            // Setup WgEmployees DbSet (for DeleteEmployeeAsync guard)
+            var wgEmployeesMockSet = RepositoryTestHelper.CreateMockDbSet(wgEmployees ?? Enumerable.Empty<WgEmployee>());
+            mockContext.Setup(x => x.WgEmployees).Returns(wgEmployeesMockSet.Object);
 
             // Setup StaffActiveView DbSet (for GetAllManagersAsync)
             if (staffActiveViews != null)
@@ -612,14 +617,17 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
                 LastName = "Smith",
                 FpsYear = DefaultTestFpsYear
             };
-            
+
             var mockFpsYearContext = CreateMockFpsYearContext(DefaultTestFpsYear);
-            var (mockContext, employeesMockSet) = 
+            var (mockContext, employeesMockSet) =
                 RepositoryTestHelper.CreateRepositoryContext<FpsDbContext, Employee>(
-                    new List<Employee> { employee }, 
+                    new List<Employee> { employee },
                     mockFpsYearContext.Object);
-            
+
             mockContext.Setup(x => x.Employees).Returns(employeesMockSet.Object);
+
+            var wgEmployeesMockSet = RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<WgEmployee>());
+            mockContext.Setup(x => x.WgEmployees).Returns(wgEmployeesMockSet.Object);
 
             var repo = new EmployeeRepository(mockContext.Object, mockFpsYearContext.Object);
 
@@ -633,20 +641,18 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         }
 
         [Fact]
-        public async Task DeleteEmployeeAsync_ReturnsFalse_WhenNotFound()
+        public async Task DeleteEmployeeAsync_ThrowsInvalidOperation_WhenNotFound()
         {
             // Arrange
             var repo = CreateRepository(new List<Employee>());
 
-            // Act
-            var result = await repo.DeleteEmployeeAsync("SP999");
-
-            // Assert
-            Assert.False(result);
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                repo.DeleteEmployeeAsync("SP999"));
         }
 
         [Fact]
-        public async Task DeleteEmployeeAsync_ReturnsFalse_WhenFpsYearMismatch()
+        public async Task DeleteEmployeeAsync_ThrowsInvalidOperation_WhenFpsYearMismatch()
         {
             // Arrange
             var employee = new Employee
@@ -654,15 +660,39 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
                 SPNumber = "SP001",
                 FirstName = "Alice",
                 LastName = "Smith",
-                FpsYear = 2020 // Different year
+                FpsYear = 2020 // Different year from context
             };
             var repo = CreateRepository(new List<Employee> { employee }, fpsYear: 2024);
 
-            // Act
-            var result = await repo.DeleteEmployeeAsync("SP001");
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                repo.DeleteEmployeeAsync("SP001"));
+        }
 
-            // Assert
-            Assert.False(result);
+        [Fact]
+        public async Task DeleteEmployeeAsync_ThrowsInvalidOperation_WhenLinkedWgEmployeeExists()
+        {
+            // Arrange
+            var employee = new Employee
+            {
+                SPNumber = "SP001",
+                FirstName = "Alice",
+                LastName = "Smith",
+                FpsYear = DefaultTestFpsYear
+            };
+            var linkedWgEmployee = new WgEmployee
+            {
+                SpNumber = "SP001",
+                FpsYear = DefaultTestFpsYear
+            };
+            var repo = CreateRepository(
+                new List<Employee> { employee },
+                wgEmployees: new List<WgEmployee> { linkedWgEmployee });
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                repo.DeleteEmployeeAsync("SP001"));
+            Assert.Contains("SP001", ex.Message);
         }
 
         #endregion
