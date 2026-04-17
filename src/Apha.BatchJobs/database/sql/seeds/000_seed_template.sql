@@ -6,7 +6,7 @@
 BEGIN;
 
 -- Example placeholder (disabled intentionally):
--- INSERT INTO operational.some_lookup_table(code, name)
+-- INSERT INTO fps.some_lookup_table(code, name)
 -- VALUES ('EXAMPLE', 'Example')
 -- ON CONFLICT DO NOTHING;
 

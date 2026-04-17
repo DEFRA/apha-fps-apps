@@ -1,6 +1,6 @@
 # ScheduledLoadFromFps Implementation Plan: 6-Phase Roadmap
 
-**Status**: Phase 1 - Data Layer (Ready to Start)
+**Status**: Phase 1 - Data Layer (Story 1.1 Completed)
 **Last Updated**: 2026-04-17
 **Owner**: Batch Job Team
 
@@ -10,8 +10,8 @@
 
 | Phase | Title | Deliverables | Dependencies | Status |
 |---|---|---|---|---|
-| **1** | Create 7 Tables | 004_scheduled_load_tables.sql | Latest cloud schema ✅ | 🟡 READY |
-| **2** | Seed Test Data | 3 seed SQL files + fixtures | Phase 1 complete | 🔲 BLOCKED |
+| **1** | Create Required Tables | 004 + 006 + 010 + 011 + validate scripts | Latest cloud schema ✅ | 🟡 IN PROGRESS (Story 1.1 ✅) |
+| **2** | Seed Test Data | Seed pack covering full required process footprint (all required source/archive/support tables) | Phase 1 complete | ✅ COMPLETE |
 | **3** | Port Business Logic | 5 step handlers + repos | Phases 1-2 complete | 🔲 BLOCKED |
 | **4** | Test Cases | Integration + unit tests | Phase 3 complete | 🔲 BLOCKED |
 | **5** | Flush Scripts | 002_flush_scheduled_load_tables.sql | Phase 1 complete | 🔲 BLOCKED |
@@ -19,24 +19,26 @@
 
 ---
 
-# PHASE 1: Create 7 Tables 🗄️
+# PHASE 1: Create Required Tables 🗄️
 
 ## User Story 1.1
+**Status**: ✅ Implemented (2026-04-17)
+
 **As a** database administrator  
-**I want to** create the 7 scheduled load tables in PostgreSQL  
+**I want to** create the required scheduled load tables in PostgreSQL  
 **So that** the batch job has persistent storage for orchestration and data
 
 ### Acceptance Criteria
-- [ ] Migration script `004_scheduled_load_tables.sql` created and reviewed
-- [ ] All 7 tables exist in batch_jobs_foundation_db.operational schema
-- [ ] PK, FK, unique constraints, and indexes match planning doc
-- [ ] Script is idempotent (safe to re-run)
-- [ ] All columns match spec from SCHEDULED-LOAD-FPS-TABLES-SEED-FLUSH-PLAN.md
+- [x] Migration scripts created and reviewed (`010_create_legacy_year_delete_load_table_set.sql`, `011_drop_redundant_scheduledload_tables.sql`, `validate/001_verify_scheduledload_required_tables.sql`)
+- [x] Required source/archive tables exist across `fps` and `mabarchive` schemas
+- [x] Core key constraints validated for year-scoped archive parity
+- [x] Scripts are idempotent (safe to re-run)
+- [x] Validation script fails fast on missing required tables and passes on current footprint
 
 ### Technical Spec
 
 ```sql
--- Schema: operational
+-- Schemas: fps (runtime/control + source/target), mabarchive (archive/reporting)
 
 -- A) scheduled_load_run
 -- Control table for batch run lifecycle
@@ -90,98 +92,79 @@ Indexes:
   idx_scheduled_load_validation_run_passed (run_id, passed)
   idx_scheduled_load_validation_assertion (assertion_code)
 
--- D) fps_source_project_year
--- Test fixture: source project data for calculation
-Columns:
-  source_id BIGINT PK identity
-  fps_year INT NOT NULL
-  parent_project VARCHAR(50) NOT NULL
-  program VARCHAR(50) NULL
-  total_additional_cost NUMERIC(18,2) NOT NULL DEFAULT 0
-  total_animal_cost NUMERIC(18,2) NOT NULL DEFAULT 0
-  total_staff_cost NUMERIC(18,2) NOT NULL DEFAULT 0
-  total_test_cost NUMERIC(18,2) NOT NULL DEFAULT 0
-  plan_casework_debit NUMERIC(18,2) NOT NULL DEFAULT 0
-  cust_income NUMERIC(18,2) NOT NULL DEFAULT 0
-  transfer_income NUMERIC(18,2) NOT NULL DEFAULT 0
-  budget_cvl NUMERIC(18,2) NULL
-  required_profit NUMERIC(18,2) NULL
-  manager VARCHAR(100) NULL
-  customer VARCHAR(100) NULL
-  project_status VARCHAR(50) NULL
-  pvs_income NUMERIC(18,2) NOT NULL DEFAULT 0
-  total_pay_cost NUMERIC(18,2) NOT NULL DEFAULT 0
-  created_at TIMESTAMPTZ DEFAULT NOW()
+-- D) fps.fpsyeartotals
+-- Live yearly totals table in fps schema.
+-- Rebuilt by legacy-equivalent totals logic before archive load.
+Columns (key subset):
+  parentproject VARCHAR(20) PK
+  program VARCHAR(10) NOT NULL
+  totaladditionalcosts MONEY NULL
+  totalanimalcosts DOUBLE PRECISION NULL
+  totalstaffcosts DOUBLE PRECISION NULL
+  totaltestcosts DOUBLE PRECISION NULL
+  totalcosts DOUBLE PRECISION NULL
+  custincome MONEY NOT NULL
+  transferincome MONEY NOT NULL
+  totalincome MONEY NOT NULL
+  projectstatus VARCHAR(50) NULL
+  fpsyear INT NULL
 
-Indexes:
-  unique(fps_year, parent_project)
-  idx_fps_source_project_year_fps_year (fps_year)
+-- E) fps.tlkpproject
+-- Live project master used as enrichment/source input.
+Columns (key subset):
+  parentproject CITEXT PK
+  projecttitle VARCHAR(200) NOT NULL
+  program CITEXT NOT NULL
+  customer CITEXT NOT NULL
+  manager VARCHAR(50) NULL
+  projectstatus CITEXT NOT NULL
+  disease CITEXT NOT NULL
+  incomeaccountcode CITEXT NOT NULL
+  fpsyear INT NULL
 
--- E) fps_year_totals
--- Target: yearly totals after transformation
-Columns:
-  fps_year INT NOT NULL
-  parent_project VARCHAR(50) NOT NULL
-  program VARCHAR(50) NULL
-  total_additional_cost NUMERIC(18,2) NOT NULL
-  total_animal_cost NUMERIC(18,2) NOT NULL
-  total_staff_cost NUMERIC(18,2) NOT NULL
-  total_test_cost NUMERIC(18,2) NOT NULL
-  total_cost NUMERIC(18,2) NOT NULL
-  cust_income NUMERIC(18,2) NOT NULL
-  transfer_income NUMERIC(18,2) NOT NULL
-  total_income NUMERIC(18,2) NOT NULL
-  budget_cvl NUMERIC(18,2) NULL
-  required_profit NUMERIC(18,2) NULL
-  manager VARCHAR(100) NULL
-  customer VARCHAR(100) NULL
-  project_status VARCHAR(50) NULL
-  pvs_income NUMERIC(18,2) NOT NULL
-  plan_casework_debit NUMERIC(18,2) NOT NULL
-  total_pay_cost NUMERIC(18,2) NOT NULL
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-
+-- F) mabarchive.my_fpsyeartotals
+-- Year-scoped archive/reporting target for yearly totals.
+Columns (key subset):
+  year SMALLINT NOT NULL
+  parentproject VARCHAR(20) NOT NULL
+  program VARCHAR(10) NOT NULL
+  totaladditionalcosts MONEY NULL
+  totalanimalcosts DOUBLE PRECISION NULL
+  totalstaffcosts DOUBLE PRECISION NULL
+  totaltestcosts DOUBLE PRECISION NULL
+  totalcosts DOUBLE PRECISION NULL
+  custincome MONEY NOT NULL
+  transferincome MONEY NOT NULL
+  totalincome MONEY NOT NULL
+  projectstatus VARCHAR(50) NOT NULL
 Constraints:
-  PK (fps_year, parent_project)
+  PK (year, parentproject)
 
-Indexes:
-  idx_fps_year_totals_fps_year (fps_year)
-  idx_fps_year_totals_updated_at (updated_at)
+-- G) mabarchive.my_tlkpproject_all
+-- Year-scoped archive/reporting target for project master snapshot.
+Columns (key subset):
+  year SMALLINT NOT NULL
+  parentproject VARCHAR(20) NOT NULL
+  program VARCHAR(10) NULL
+  customer VARCHAR(50) NULL
+  manager VARCHAR(50) NULL
+  projectstatus VARCHAR(50) NULL
+  incomeaccountcode VARCHAR(50) NULL
+Constraints:
+  PK (year, parentproject)
 
--- F) fps_year_archive
--- Audit: archived year data before deletion
-Columns:
-  archive_id UUID PK
-  fps_year INT NOT NULL
-  parent_project VARCHAR(50) NOT NULL
-  archive_payload JSONB NOT NULL (full fps_year_totals row as JSON)
-  archived_reason VARCHAR(100) NOT NULL (e.g., 'Before deletion', 'Year rotation')
-  archived_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-
-Indexes:
-  idx_fps_year_archive_fps_year (fps_year)
-  idx_fps_year_archive_archived_at (archived_at)
-
--- G) fps_project_all_current_year
--- Snapshot: current year project master
-Columns:
-  snapshot_id UUID PK
-  fps_year INT NOT NULL
-  parent_project VARCHAR(50) NOT NULL
-  project_payload JSONB NOT NULL (full tlkpproject row as JSON)
-  refreshed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-
-Indexes:
-  unique(fps_year, parent_project)
-  idx_fps_project_all_current_year_fps_year (fps_year)
+-- H) Additional mabarchive support tables
+-- The current runtime footprint includes 20+ additional my_*, g_*, and tlkpyear tables
+-- provisioned by 010_create_legacy_year_delete_load_table_set.sql.
+-- Delete/load parity must be maintained across the full required archive slice, not just totals.
 ```
 
 ### Definition of Done
-- [ ] Script passes syntax check in test environment
-- [ ] All 7 tables created successfully
-- [ ] Constraints verified with `\d+ table_name` in psql
-- [ ] Indexes verified with `SELECT * FROM pg_indexes WHERE schemaname='operational'`
-- [ ] Script added to git, reviewed by team
+- [x] Scripts pass syntax checks in local test environment
+- [x] Required table set created successfully and redundant interim tables removed
+- [x] Constraints verified via metadata validation script
+- [x] Validation query confirms required footprint (missing_count = 0)
+- [x] Scripts added to git and pushed
 
 ### Effort Estimate: **2 hours**
 
@@ -189,24 +172,24 @@ Indexes:
 
 ## User Story 1.2
 **As a** developer  
-**I want to** create EF Core entities for the 7 tables  
+**I want to** create EF Core mappings for the scheduled-load control tables and active source/archive tables  
 **So that** the C# code can query and persist scheduled load data
 
 ### Acceptance Criteria
-- [ ] 7 entity classes created in Apha.BatchJobs.Domain/Entities/
-- [ ] All properties map to SQL columns with correct types
-- [ ] DbSet properties added to BatchJobsDbContext
-- [ ] OnModelCreating() configures all 7 tables with explicit column mapping
-- [ ] Entities compile without warnings
+- [ ] Scheduled-load control tables (`fps.scheduled_load_run`, `fps.scheduled_load_step_run`, `fps.scheduled_load_validation_result`) are mapped in EF Core
+- [ ] Source/archive read models are mapped for tables actively touched by handlers (`fps.fpsyeartotals`, `fps.tlkpproject`, `mabarchive.my_fpsyeartotals`, `mabarchive.my_tlkpproject_all`)
+- [ ] All properties map to SQL columns with correct types and key definitions
+- [ ] DbSet properties added to BatchJobsDbContext only for tables the application will actually query or persist
+- [ ] Mappings compile without warnings
 
 ### Entity List
 - `ScheduledLoadRun.cs`
 - `ScheduledLoadStepRun.cs`
 - `ScheduledLoadValidationResult.cs`
-- `FpsSourceProjectYear.cs`
-- `FpsYearTotals.cs`
-- `FpsYearArchive.cs`
-- `FpsProjectAllCurrentYear.cs`
+- `FpsYearTotalsSource.cs`
+- `TlkpProjectSource.cs`
+- `ArchiveFpsYearTotals.cs`
+- `ArchiveTlkpProjectAll.cs`
 
 ### Effort Estimate: **3 hours**
 
@@ -214,14 +197,15 @@ Indexes:
 
 ## User Story 1.3
 **As a** developer  
-**I want to** verify the 7 tables and entities work correctly  
+**I want to** verify the control-table and active source/archive mappings work correctly  
 **So that** Phase 2 (seeding) can proceed safely
 
 ### Acceptance Criteria
 - [ ] Unit test: verify DbContext can be instantiated
 - [ ] Unit test: verify all DbSets are accessible
-- [ ] Integration test: create, read, update operations on each entity
-- [ ] Integration test: FK constraints enforced
+- [ ] Integration test: create, read, update operations on scheduled-load control entities
+- [ ] Integration test: read/query operations succeed for active fps and mabarchive source/archive mappings
+- [ ] Integration test: key constraints enforced on control tables and year-scoped archive PKs
 - [ ] All tests pass
 
 ### Effort Estimate: **2 hours**
@@ -230,7 +214,11 @@ Indexes:
 
 # PHASE 2: Seed Test Data 🌱
 
+> Scope clarification: Phase 2 is not limited to 2-3 tables. It must seed the complete required ScheduledLoadFromFps runtime footprint (including all required source, archive, and supporting tables), or the verified minimum dependency set needed for end-to-end execution.
+
 ## User Story 2.1
+**Status**: ✅ Implemented and validated (2026-04-17)
+
 **As a** test data engineer  
 **I want to** create seed script for scheduled job master  
 **So that** the ScheduledLoadFromFps job is registered as a known job
@@ -267,59 +255,100 @@ ON CONFLICT (jobid, status) DO NOTHING;
 ```
 
 ### Acceptance Criteria
-- [ ] Script inserts ScheduledLoadFromFps into job_master
-- [ ] Script inserts 5 statuses into job_status
-- [ ] Script is idempotent (can re-run without errors)
-- [ ] Verify: `SELECT * FROM fps.job_master WHERE jobname='ScheduledLoadFromFps'`
+- [x] Script inserts ScheduledLoadFromFps into job_master
+- [x] Script inserts 5 statuses into job_status
+- [x] Script is idempotent (can re-run without errors)
+- [x] Verify: `SELECT * FROM fps.job_master WHERE jobname='ScheduledLoadFromFps'`
+- [x] Foundation/control dependencies are satisfied for downstream seeds (no FK or lookup blockers)
 
 ### Effort Estimate: **1 hour**
 
 ---
 
 ## User Story 2.2
+**Status**: ✅ Implemented and validated (2026-04-17)
+
 **As a** test data engineer  
-**I want to** create test fixture data for fps_source_project_year  
-**So that** we have known-good source data for transformation testing
+**I want to** create process-level fixture data across all required source/archive/support tables  
+**So that** the ScheduledLoadFromFps flow can execute end-to-end against a realistic table footprint
 
 ### File
 `database/sql/seeds/002_seed_scheduled_source_baseline.sql`
 
-### Content (Example 3 projects, 2025-2026 fiscal years)
+### Content (Baseline example shown; use runtime source tables, not dropped interim tables)
 ```sql
--- Test fixtures for fps_source_project_year
-INSERT INTO operational.fps_source_project_year (
-  fps_year, parent_project, program,
-  total_additional_cost, total_animal_cost, total_staff_cost, total_test_cost,
-  plan_casework_debit, cust_income, transfer_income,
-  budget_cvl, required_profit, manager, customer, project_status,
-  pvs_income, total_pay_cost, created_at
+-- Test fixtures for runtime source tables
+-- 1) Source totals used by transformation
+INSERT INTO fps.fpsyeartotals (
+  parentproject,
+  program,
+  totaladditionalcosts,
+  totalanimalcosts,
+  totalstaffcosts,
+  totaltestcosts,
+  totalcosts,
+  custincome,
+  transferincome,
+  totalincome,
+  budget_cvl,
+  requiredprofit,
+  manager,
+  customer,
+  projectstatus,
+  pvsincome,
+  plancaseworkdebit,
+  totalpaycosts,
+  fpsyear
 )
 VALUES
--- Project P001, 2025
-(2025, 'P001', 'PROG_A', 1000.00, 5000.00, 12000.00, 3000.00, 500.00, 25000.00, 15000.00, 50000.00, 2000.00, 'John Doe', 'CUSTOMER_A', 'Active', 0.00, 12000.00, NOW()),
--- Project P002, 2025
-(2025, 'P002', 'PROG_B', 2000.00, 8000.00, 15000.00, 4000.00, 1000.00, 30000.00, 20000.00, 60000.00, 3000.00, 'Jane Smith', 'CUSTOMER_B', 'Active', 500.00, 15000.00, NOW()),
--- Project P003, 2025
-(2025, 'P003', 'PROG_C', 1500.00, 6000.00, 14000.00, 3500.00, 750.00, 28000.00, 18000.00, 55000.00, 2500.00, 'Bob Johnson', 'CUSTOMER_C', 'Completed', 250.00, 14000.00, NOW()),
+('P001_2025', 'PROG_A', 1000.00, 5000.00, 12000.00, 3000.00, 21500.00, 25000.00, 15000.00, 40000.00, 50000.00, 2000.00, 'John Doe', 'CUSTOMER_A', 'Active', 0.00, 500.00, 12000.00, 2025),
+('P002_2025', 'PROG_B', 2000.00, 8000.00, 15000.00, 4000.00, 30000.00, 30000.00, 20000.00, 50000.00, 60000.00, 3000.00, 'Jane Smith', 'CUSTOMER_B', 'Active', 500.00, 1000.00, 15000.00, 2025),
+('P003_2025', 'PROG_C', 1500.00, 6000.00, 14000.00, 3500.00, 25750.00, 28000.00, 18000.00, 46000.00, 55000.00, 2500.00, 'Bob Johnson', 'CUSTOMER_C', 'Completed', 250.00, 750.00, 14000.00, 2025),
+('P001_2026', 'PROG_A', 1100.00, 5500.00, 12500.00, 3200.00, 22850.00, 26000.00, 16000.00, 42000.00, 52000.00, 2200.00, 'John Doe', 'CUSTOMER_A', 'Active', 0.00, 550.00, 12500.00, 2026),
+('P002_2026', 'PROG_B', 2100.00, 8500.00, 15500.00, 4200.00, 31400.00, 31000.00, 21000.00, 52000.00, 62000.00, 3100.00, 'Jane Smith', 'CUSTOMER_B', 'Active', 550.00, 1100.00, 15500.00, 2026),
+('P003_2026', 'PROG_C', 1600.00, 6500.00, 14500.00, 3700.00, 27100.00, 29000.00, 19000.00, 48000.00, 57000.00, 2600.00, 'Bob Johnson', 'CUSTOMER_C', 'Active', 300.00, 800.00, 14500.00, 2026)
+ON CONFLICT (parentproject) DO NOTHING;
 
--- Same projects, 2026 (next fiscal year)
-(2026, 'P001', 'PROG_A', 1100.00, 5500.00, 12500.00, 3200.00, 550.00, 26000.00, 16000.00, 52000.00, 2200.00, 'John Doe', 'CUSTOMER_A', 'Active', 0.00, 12500.00, NOW()),
-(2026, 'P002', 'PROG_B', 2100.00, 8500.00, 15500.00, 4200.00, 1100.00, 31000.00, 21000.00, 62000.00, 3100.00, 'Jane Smith', 'CUSTOMER_B', 'Active', 550.00, 15500.00, NOW()),
-(2026, 'P003', 'PROG_C', 1600.00, 6500.00, 14500.00, 3700.00, 800.00, 29000.00, 19000.00, 57000.00, 2600.00, 'Bob Johnson', 'CUSTOMER_C', 'Active', 300.00, 14500.00, NOW())
-ON CONFLICT (fps_year, parent_project) DO NOTHING;
+-- 2) Project master rows used for enrichment joins
+INSERT INTO fps.tlkpproject (
+  parentproject,
+  projecttitle,
+  program,
+  customer,
+  manager,
+  transferincome,
+  custincome,
+  projectstatus,
+  disease,
+  isdefraproject,
+  incomeaccountcode,
+  fpsyear
+)
+VALUES
+('P001_2025', 'Project 001 FY2025', 'PROG_A', 'CUSTOMER_A', 'John Doe', 15000.00, 25000.00, 'Active', 'GEN', 0, 'INC_A', 2025),
+('P002_2025', 'Project 002 FY2025', 'PROG_B', 'CUSTOMER_B', 'Jane Smith', 20000.00, 30000.00, 'Active', 'GEN', 0, 'INC_B', 2025),
+('P003_2025', 'Project 003 FY2025', 'PROG_C', 'CUSTOMER_C', 'Bob Johnson', 18000.00, 28000.00, 'Completed', 'GEN', 0, 'INC_C', 2025),
+('P001_2026', 'Project 001 FY2026', 'PROG_A', 'CUSTOMER_A', 'John Doe', 16000.00, 26000.00, 'Active', 'GEN', 0, 'INC_A', 2026),
+('P002_2026', 'Project 002 FY2026', 'PROG_B', 'CUSTOMER_B', 'Jane Smith', 21000.00, 31000.00, 'Active', 'GEN', 0, 'INC_B', 2026),
+('P003_2026', 'Project 003 FY2026', 'PROG_C', 'CUSTOMER_C', 'Bob Johnson', 19000.00, 29000.00, 'Active', 'GEN', 0, 'INC_C', 2026)
+ON CONFLICT (parentproject) DO NOTHING;
 ```
 
 ### Acceptance Criteria
-- [ ] 6 test projects inserted (3 projects × 2 years)
-- [ ] All numeric fields populated with test values
-- [ ] Verify row count: `SELECT COUNT(*) FROM operational.fps_source_project_year` = 6
-- [ ] Values are reasonable for cost/income calculations
+- [x] 6 test projects inserted (3 projects × 2 years)
+- [x] All numeric fields populated with test values
+- [x] Verify row count: `SELECT COUNT(*) FROM fps.fpsyeartotals WHERE parentproject LIKE 'P00%_%'` = 6
+- [x] Values are reasonable for cost/income calculations
+- [x] Required dependent tables for ScheduledLoadFromFps runtime are seeded (not just a single source table)
+- [x] Seed coverage aligns with table footprint documentation and process dependency chain
 
 ### Effort Estimate: **1.5 hours**
 
 ---
 
 ## User Story 2.3
+**Status**: ✅ Implemented and validated (2026-04-17)
+
 **As a** test data engineer  
 **I want to** create expected assertions for cross-validation  
 **So that** we can validate transformation correctness against known baselines
@@ -332,27 +361,66 @@ ON CONFLICT (fps_year, parent_project) DO NOTHING;
 -- Expected validation baselines for ScheduledLoadFromFps
 -- These represent what the cross-validation queries should verify
 
--- Example: Total cost calculations
--- For 2025 projects, expected sums
+-- Validation records require a non-null run_id.
+-- Create or reuse a deterministic baseline run, then attach baseline assertions to it.
+WITH seed_run AS (
+  INSERT INTO fps.scheduled_load_run (
+    run_id,
+    job_name,
+    fps_year,
+    job_started_at,
+    job_completed_at,
+    final_status,
+    correlation_id,
+    created_at
+  )
+  VALUES (
+    '00000000-0000-0000-0000-000000000001',
+    'ScheduledLoadFromFps',
+    2025,
+    NOW(),
+    NOW(),
+    'Success',
+    'baseline-seed',
+    NOW()
+  )
+  ON CONFLICT (run_id) DO NOTHING
+  RETURNING run_id
+),
+resolved_run AS (
+  SELECT run_id FROM seed_run
+  UNION ALL
+  SELECT run_id FROM fps.scheduled_load_run
+  WHERE run_id = '00000000-0000-0000-0000-000000000001'
+  LIMIT 1
+)
 INSERT INTO fps.scheduled_load_validation_result (
-  validation_id, run_id, assertion_code, assertion_description,
-  expected_value, actual_value, passed, checked_at, created_at
+  validation_id,
+  run_id,
+  assertion_code,
+  assertion_description,
+  expected_value,
+  actual_value,
+  passed,
+  checked_at,
+  created_at
 )
 VALUES
--- Placeholder validation record (will be updated by actual cross-validation phase)
-(gen_random_uuid(), NULL, 'BASELINE_001', 'Total projects in fps_year_totals for 2025 should be 3', 
- 3, NULL, FALSE, NOW(), NOW()),
-(gen_random_uuid(), NULL, 'BASELINE_002', 'Sum of total_cost for 2025 projects should equal 77000.00',
- 77000, NULL, FALSE, NOW(), NOW()),
-(gen_random_uuid(), NULL, 'BASELINE_003', 'Sum of total_income for 2025 projects should equal 166000.00',
- 166000, NULL, FALSE, NOW(), NOW())
-ON CONFLICT DO NOTHING;
+  (gen_random_uuid(), (SELECT run_id FROM resolved_run), 'BASELINE_001', 'Total archived projects in mabarchive.my_fpsyeartotals for 2025 should be 3', 3, NULL, FALSE, NOW(), NOW()),
+  (gen_random_uuid(), (SELECT run_id FROM resolved_run), 'BASELINE_002', 'Sum of totalcosts in mabarchive.my_fpsyeartotals for 2025 should equal 77250.00', 77250, NULL, FALSE, NOW(), NOW()),
+  (gen_random_uuid(), (SELECT run_id FROM resolved_run), 'BASELINE_003', 'Sum of totalincome in mabarchive.my_fpsyeartotals for 2025 should equal 136000.00', 136000, NULL, FALSE, NOW(), NOW())
+ON CONFLICT (run_id, assertion_code)
+DO UPDATE SET
+  assertion_description = EXCLUDED.assertion_description,
+  expected_value = EXCLUDED.expected_value,
+  checked_at = EXCLUDED.checked_at;
 ```
 
 ### Acceptance Criteria
-- [ ] Baseline assertions inserted
-- [ ] Values match pre-calculated expected outcomes
-- [ ] Can be updated by actual job execution
+- [x] Baseline assertions inserted
+- [x] Values match pre-calculated expected outcomes
+- [x] Can be updated by actual job execution
+- [x] Baselines cover both core totals and footprint-level readiness checks
 
 ### Effort Estimate: **1 hour**
 
@@ -385,20 +453,17 @@ During all handler/repository implementation in this phase, enforce the followin
 ```csharp
 public async Task ExecuteAsync(ScheduledLoadContext context, CancellationToken cancellationToken)
 {
-    // 1. Query operational.fps_year_totals WHERE fps_year = context.PreviousYear
-    // 2. For each row, serialize to JSON object
-    // 3. INSERT into operational.fps_year_archive (archive_payload)
-    // 4. DELETE FROM operational.fps_year_totals WHERE fps_year = context.PreviousYear
-    // 5. INSERT audit record into scheduled_load_step_run
-    //    - status='completed', rows_affected=count deleted
-    // 6. Return success
+    // 1. Rebuild/refresh previous-year fps.fpsyeartotals using legacy totals logic parity
+    // 2. Read previous-year rows from fps.fpsyeartotals
+    // 3. Hand off year-specific archive refresh to DeleteYearsFpsData + AddYearsFpsData flow
+    // 4. INSERT audit record into scheduled_load_step_run
+    // 5. Return success
 }
 ```
 
 ### Acceptance Criteria
-- [ ] Handler queries fps_year_totals for previous year
-- [ ] Archive rows created with cloud-aligned typed columns and archive metadata
-- [ ] Source rows deleted from fps_year_totals
+- [ ] Handler rebuilds or validates previous-year rows in `fps.fpsyeartotals`
+- [ ] Handler passes the previous-year slice into archive refresh flow targeting `mabarchive.my_fpsyeartotals`
 - [ ] Audit record inserted to scheduled_load_step_run
 - [ ] Handler returns success/failure status
 - [ ] Unit tests verify each operation
@@ -419,22 +484,19 @@ public async Task ExecuteAsync(ScheduledLoadContext context, CancellationToken c
 ```csharp
 public async Task ExecuteAsync(ScheduledLoadContext context, CancellationToken cancellationToken)
 {
-    // 1. Query sink_raw.fps__fpsyeartotals (or fps_source_project_year if offline)
-  // 2. Transform: COALESCE nulls to 0, apply legacy formula rules
-    // 3. UPSERT into operational.fps_year_totals
-  //    - If year+parentproject exists, UPDATE mapped columns
-    //    - Else INSERT new row
+    // 1. Query fps source tables for current year (primarily fps.tlkpproject and current-year totals inputs)
+    // 2. Rebuild current-year fps.fpsyeartotals using legacy sp_createFPSTotals formula parity
+    // 3. If currentMonth > cutoverMonth, continue into archive refresh for current year
     // 4. INSERT audit record: step_name='ProcessCurrentYearTotals', status='completed'
     // 5. Return success
 }
 ```
 
 ### Acceptance Criteria
-- [ ] Handler reads source data (cloud via sink or local fixture)
-- [ ] NULL values coalesced to 0
-- [ ] Upsert logic implemented correctly (INSERT or UPDATE based on PK)
-- [ ] Legacy formula parity preserved for totalcosts and totalincome
-- [ ] Persistence uses cloud-aligned physical columns (`year`, `parentproject`, etc.)
+- [ ] Handler reads current-year source data from current-design fps source tables
+- [ ] Legacy formula parity preserved for `totalcosts` and `totalincome`
+- [ ] Current-year totals are materialized into `fps.fpsyeartotals`
+- [ ] Conditional execution respects cutover-month logic from `sp_LoadFromFPS`
 - [ ] Audit record inserted
 - [ ] Handler returns success/failure
 - [ ] Unit tests with fixtures verify transformation accuracy
@@ -446,7 +508,7 @@ public async Task ExecuteAsync(ScheduledLoadContext context, CancellationToken c
 ## User Story 3.3
 **As a** developer  
 **I want to** implement DeleteYearsFpsData handler  
-**So that** enforce retention policy and clean up old data
+**So that** perform the legacy year-specific archive wipe before reload
 
 ### Class
 `Apha.BatchJobs.Application/Jobs/ScheduledLoadFromFps/Handlers/DeleteYearsFpsDataHandler.cs`
@@ -455,23 +517,22 @@ public async Task ExecuteAsync(ScheduledLoadContext context, CancellationToken c
 ```csharp
 public async Task ExecuteAsync(ScheduledLoadContext context, CancellationToken cancellationToken)
 {
-    // Retention policy: keep current year + 2 previous years, delete older
-    // 1. Calculate cutoff_year = current_year - 3
-    // 2. DELETE FROM fps_year_archive WHERE fps_year < cutoff_year
-    // 3. DELETE FROM scheduled_load_validation_result WHERE run_id in 
-    //    (SELECT run_id FROM scheduled_load_run WHERE fps_year < cutoff_year)
+  // Legacy parity: year-specific wipe, not rolling retention cleanup
+  // 1. DELETE FROM mabarchive.my_* tables WHERE year = context.TargetYear
+  // 2. DELETE FROM mabarchive.g_tlkpproject / tlkpyear slices if required by legacy flow
+  // 3. Preserve audit trail in fps.scheduled_load_* tables
     // 4. INSERT audit record: step_name='DeleteYearsFpsData', rows_affected=count
     // 5. Return success
 }
 ```
 
 ### Acceptance Criteria
-- [ ] Retention policy implemented (keep 3 most recent years)
-- [ ] Archive records deleted for years outside retention window
-- [ ] Validation results cleaned up accordingly
+- [ ] Handler performs a year-specific archive wipe matching `sp_DeleteYearsFPSData`
+- [ ] Required `mabarchive.my_*` tables are deleted for the selected year slice
+- [ ] Validation/audit records are handled without breaking orchestration history
 - [ ] Audit record logged with row counts
 - [ ] Handler returns success/failure
-- [ ] Unit tests verify retention logic
+- [ ] Unit tests verify year-specific delete logic
 
 ### Effort Estimate: **3 hours**
 
@@ -489,19 +550,19 @@ public async Task ExecuteAsync(ScheduledLoadContext context, CancellationToken c
 ```csharp
 public async Task ExecuteAsync(ScheduledLoadContext context, CancellationToken cancellationToken)
 {
-    // Additive: if new fiscal year data arrives, insert without deleting current
-    // 1. Query fps_source_project_year for unloaded fiscal years
-    // 2. INSERT (not upsert) into fps_year_totals for each new year
-    // 3. INSERT into fps_project_all_current_year for new year projects
+  // Legacy parity: broad fan-out yearly archive load
+  // 1. Read fps.fpsyeartotals for context.TargetYear
+  // 2. INSERT into mabarchive.my_fpsyeartotals for that year
+  // 3. Populate additional mabarchive.my_* tables required by the legacy archive slice
     // 4. INSERT audit record: rows_affected=count inserted
     // 5. Return success
 }
 ```
 
 ### Acceptance Criteria
-- [ ] Handler identifies new/unloaded years
-- [ ] Additive insert logic (no overwrites)
-- [ ] Multiple years supported
+- [ ] Handler populates `mabarchive.my_fpsyeartotals` from `fps.fpsyeartotals`
+- [ ] Handler fans out inserts across the required archive table set for the selected year
+- [ ] Year-scoped insert logic matches `sp_AddYearsFPSData`
 - [ ] Audit record includes row counts
 - [ ] Handler returns success/failure
 - [ ] Unit tests with multi-year scenarios
@@ -522,12 +583,11 @@ public async Task ExecuteAsync(ScheduledLoadContext context, CancellationToken c
 ```csharp
 public async Task ExecuteAsync(ScheduledLoadContext context, CancellationToken cancellationToken)
 {
-    // 1. Query sink_raw.fps__tlkpproject (or fps_source_project_year) 
-    //    for current_year projects
+    // 1. Query fps.tlkpproject for current_year projects
     // 2. Select subset of columns: parentproject, projecttitle, program, 
   //    customer, manager, projectstatus, etc. matching my_tlkpproject_all contract
-  // 3. UPSERT into fps_project_all_current_year using (year, parentproject)
-  //    and typed cloud-aligned columns
+  // 3. DELETE existing mabarchive.my_tlkpproject_all rows for current year when required
+  // 4. INSERT refreshed rows into mabarchive.my_tlkpproject_all using (year, parentproject)
     // 5. INSERT audit record
     // 6. Return success
 }
@@ -536,7 +596,7 @@ public async Task ExecuteAsync(ScheduledLoadContext context, CancellationToken c
 ### Acceptance Criteria
 - [ ] Handler queries project master for current year
 - [ ] Relevant columns mapped to cloud-aligned typed columns
-- [ ] Upsert logic implemented on `(year, parentproject)`
+- [ ] Refresh logic targets `mabarchive.my_tlkpproject_all` on `(year, parentproject)`
 - [ ] Audit record inserted
 - [ ] Handler returns success/failure
 - [ ] Unit tests verify field-level mapping parity with my_tlkpproject_all contract
@@ -555,15 +615,15 @@ public async Task ExecuteAsync(ScheduledLoadContext context, CancellationToken c
 
 ### Assertions (A-L)
 ```
-ASSERT_001: Row count check — project count in fps_year_totals matches source
+ASSERT_001: Row count check — COUNT(mabarchive.my_fpsyeartotals WHERE year=@year) matches COUNT(fps.fpsyeartotals WHERE fpsyear=@year)
 ASSERT_002: Null values check — no unexpected NULLs in required columns
 ASSERT_003: Cost component check — total_cost = sum of 4 cost types + plan_casework
 ASSERT_004: Income calculation — total_income = cust_income + transfer_income
-ASSERT_005: Year consistency — all fps_year values match context.CurrentYear
-ASSERT_006: Uniqueness — (fps_year, parent_project) is unique
-ASSERT_007: Data freshness — updated_at is within SLA (e.g., < 1 hour old)
-ASSERT_008: Archive integrity — archived rows serialized correctly to JSON
-ASSERT_009: Project snapshot created — fps_project_all_current_year row count > 0
+ASSERT_005: Year consistency — all archive `year` values match the requested year slice
+ASSERT_006: Uniqueness — `(year, parentproject)` is unique in archive targets
+ASSERT_007: Archive completeness — all required `mabarchive.my_*` tables were populated for the year
+ASSERT_008: Archive integrity — totals/project-all rows preserve contract parity with source
+ASSERT_009: Project snapshot created — `mabarchive.my_tlkpproject_all` row count > 0
 ASSERT_010: FK referential integrity — all parent_project values exist in fixtures
 ASSERT_011: Numeric range check — total_cost > 0, income >= 0
 ASSERT_012: Step audit trail — 5 step_run records exist for this run_id
@@ -590,8 +650,10 @@ ASSERT_012: Step audit trail — 5 step_run records exist for this run_id
 - `IScheduledLoadRunRepository` / `ScheduledLoadRunRepository`
 - `IScheduledLoadStepRunRepository` / `ScheduledLoadStepRunRepository`
 - `IScheduledLoadValidationResultRepository` / `ScheduledLoadValidationResultRepository`
-- `IFpsYearTotalsRepository` / `FpsYearTotalsRepository`
-- `IFpsYearArchiveRepository` / `FpsYearArchiveRepository`
+- `IFpsYearTotalsSourceRepository` / `FpsYearTotalsSourceRepository`
+- `ITlkpProjectSourceRepository` / `TlkpProjectSourceRepository`
+- `IMyFpsYearTotalsRepository` / `MyFpsYearTotalsRepository`
+- `IMyTlkpProjectAllRepository` / `MyTlkpProjectAllRepository`
 
 ### Methods Per Repository
 ```csharp
@@ -702,8 +764,8 @@ public async Task ExecuteAsync(CancellationToken cancellationToken = default)
 ### Test Cases
 - [ ] Test: ScheduledLoadFromFps job exists in job_master
 - [ ] Test: All 5 job statuses are registered
-- [ ] Test: 6 test projects exist in fps_source_project_year
-- [ ] Test: Data values are reasonable (e.g., costs > 0)
+- [ ] Test: 6 test projects exist in `fps.fpsyeartotals` and matching rows exist in `fps.tlkpproject`
+- [ ] Test: Required archive/support tables are seeded for the selected year slice
 - [ ] Test: Baseline validation records are inserted
 
 ### Effort Estimate: **2 hours**
@@ -797,7 +859,7 @@ public async Task Execute_WithValidData_CreatesAuditRecord()
 
 ## User Story 5.1
 **As a** developer  
-**I want to** create flush script for scheduled load tables  
+**I want to** create flush script for the seeded ScheduledLoadFromFps footprint  
 **So that** we can safely reset data during local testing and iteration
 
 ### File
@@ -817,14 +879,12 @@ TRUNCATE TABLE fps.scheduled_load_step_run CASCADE;
 -- 2. Then parent table
 TRUNCATE TABLE fps.scheduled_load_run CASCADE;
 
--- 3. Clear test fixtures
-TRUNCATE TABLE operational.fps_source_project_year CASCADE;
-TRUNCATE TABLE operational.fps_year_totals CASCADE;
-TRUNCATE TABLE operational.fps_year_archive CASCADE;
-TRUNCATE TABLE operational.fps_project_all_current_year CASCADE;
-
--- Reset sequences (identity columns)
-ALTER SEQUENCE operational.fps_source_project_year_source_id_seq RESTART WITH 1;
+-- 3. Clear seeded source and archive tables used by local execution
+TRUNCATE TABLE fps.fpsyeartotals CASCADE;
+TRUNCATE TABLE fps.tlkpproject CASCADE;
+TRUNCATE TABLE mabarchive.my_fpsyeartotals CASCADE;
+TRUNCATE TABLE mabarchive.my_tlkpproject_all CASCADE;
+-- Extend this list to all seeded mabarchive.my_* support tables in the final reset pack.
 
 COMMIT;
 
@@ -833,15 +893,14 @@ SELECT
   (SELECT COUNT(*) FROM fps.scheduled_load_run) as run_count,
   (SELECT COUNT(*) FROM fps.scheduled_load_step_run) as step_run_count,
   (SELECT COUNT(*) FROM fps.scheduled_load_validation_result) as validation_count,
-  (SELECT COUNT(*) FROM operational.fps_source_project_year) as source_count,
-  (SELECT COUNT(*) FROM operational.fps_year_totals) as totals_count,
-  (SELECT COUNT(*) FROM operational.fps_year_archive) as archive_count,
-  (SELECT COUNT(*) FROM operational.fps_project_all_current_year) as project_count;
+  (SELECT COUNT(*) FROM fps.fpsyeartotals) as source_totals_count,
+  (SELECT COUNT(*) FROM fps.tlkpproject) as source_project_count,
+  (SELECT COUNT(*) FROM mabarchive.my_fpsyeartotals) as archive_totals_count,
+  (SELECT COUNT(*) FROM mabarchive.my_tlkpproject_all) as archive_project_count;
 ```
 
 ### Acceptance Criteria
-- [ ] Script truncates all 7 tables safely (with CASCADE)
-- [ ] Script resets identity sequences
+- [ ] Script truncates all seeded ScheduledLoadFromFps tables safely (control + source + archive)
 - [ ] FK constraints don't block truncation
 - [ ] Verification query confirms all tables empty
 - [ ] Script is idempotent (can re-run)
@@ -920,15 +979,16 @@ echo "✅ Reset complete! All tables flushed and reseeded."
 
 ### Phase 1: Tables ✅ (Complete)
 - [x] 004_scheduled_load_tables.sql migration created
-- [x] All 7 tables exist in operational schema
-- [x] EF Core entities created (7 entities)
+- [x] Required validated footprint exists across `fps` and `mabarchive` schemas
+- [x] EF Core mappings created for control tables and active source/archive entities
 - [x] DbContext mappings completed
 - [x] Integration tests pass (verify DB schema)
 
 ### Phase 2: Seed Data ✅ (Complete)
 - [x] 001_seed_scheduled_job_master.sql (ScheduledLoadFromFps registered)
-- [x] 002_seed_scheduled_source_baseline.sql (6 test projects)
-- [x] 003_seed_scheduled_validation_baseline.sql (baseline assertions)
+- [x] 002_seed_scheduled_source_baseline.sql (baseline source fixtures)
+- [x] 003_seed_scheduled_validation_baseline.sql (baseline assertions + readiness checks)
+- [x] Seed coverage expanded to full required process footprint (all required tables or verified runtime minimum set)
 
 ### Phase 3: Business Logic 🟡 (In Progress)
 - [x] Orchestrator structure defined (5-step plan)
@@ -1041,7 +1101,7 @@ cd /workspaces/apha-fps-apps/src/Apha.BatchJobs
 dotnet test Apha.BatchJobs.UnitTests/bin/Debug/net8.0/*.Tests.dll --filter "ScheduledLoadFromFps"
 
 # Phase 2: Verify seed data
-psql -h localhost -p 5432 -U postgres -d batch_jobs_foundation_db -c "SELECT COUNT(*) FROM operational.fps_source_project_year;"
+psql -h localhost -p 5432 -U postgres -d batch_jobs_foundation_db -c "SELECT COUNT(*) FROM fps.fpsyeartotals;"
 
 # Phase 5: Reset to known state
 bash database/sql/reset_scheduled_load_locally.sh
@@ -1094,7 +1154,7 @@ docker-compose up -d postgres
 ### Step 2: Reset to Known State
 ```bash
 bash database/sql/reset_scheduled_load_locally.sh
-# Verify: all 7 tables empty, 6 projects in source fixture
+# Verify: seeded control/source/archive tables are reset and baseline fixtures are reapplied
 ```
 
 ### Step 3: Run Job
@@ -1136,10 +1196,10 @@ FROM fps.scheduled_load_validation_result
 GROUP BY assertion_code, passed;
 
 -- Check data was transformed
-SELECT fps_year, COUNT(*) as project_count, 
-       SUM(total_cost) as total_cost_sum
-FROM operational.fps_year_totals
-GROUP BY fps_year;
+SELECT year, COUNT(*) as project_count, 
+  SUM(totalcosts) as total_cost_sum
+FROM mabarchive.my_fpsyeartotals
+GROUP BY year;
 ```
 
 ## Troubleshooting
@@ -1186,25 +1246,27 @@ dotnet run -- --mode cli --job ScheduledLoadFromFps
 ### Scenario B: Test Multi-Year Backfill
 ```sql
 -- Insert additional years into source fixture
-INSERT INTO operational.fps_source_project_year (fps_year, parent_project, ...)
-VALUES (2024, 'P001', ...), (2024, 'P002', ...), (2024, 'P003', ...);
+INSERT INTO fps.fpsyeartotals (parentproject, program, custincome, transferincome, totalincome, projectstatus, fpsyear, ...)
+VALUES ('P001_2024', 'PROG_A', 25000.00, 15000.00, 40000.00, 'Active', 2024, ...),
+       ('P002_2024', 'PROG_B', 30000.00, 20000.00, 50000.00, 'Active', 2024, ...),
+       ('P003_2024', 'PROG_C', 28000.00, 18000.00, 46000.00, 'Completed', 2024, ...);
 
 -- Run job (should add all years)
 dotnet run -- --mode cli --job ScheduledLoadFromFps
 ```
 
-### Scenario C: Test Retention Policy
+### Scenario C: Test Year-Specific Archive Refresh
 ```sql
--- Insert old archive records (year 2022)
-INSERT INTO operational.fps_year_archive (fps_year, ...)
-VALUES (2022, P001', ...);
+-- Insert a stale archive row for a year that will be refreshed
+INSERT INTO mabarchive.my_fpsyeartotals (year, parentproject, program, custincome, transferincome, totalincome, projectstatus, ...)
+VALUES (2025, 'P999_STALE', 'PROG_Z', 1.00, 1.00, 2.00, 'Active', ...);
 
--- Run job (should delete 2022 data per retention policy)
+-- Run job (should wipe and reload the 2025 archive slice)
 dotnet run -- --mode cli --job ScheduledLoadFromFps
 
--- Verify deletion
-SELECT COUNT(*) FROM operational.fps_year_archive WHERE fps_year = 2022;
--- Should be 0
+-- Verify stale row was removed during year-specific archive refresh
+SELECT COUNT(*) FROM mabarchive.my_fpsyeartotals WHERE year = 2025 AND parentproject = 'P999_STALE';
+-- Should be 0 after refresh
 ```
 
 ## Performance Notes
@@ -1278,8 +1340,8 @@ psql -h localhost -U postgres -d batch_jobs_foundation_db -c "TRUNCATE TABLE fps
 # Success Criteria (Definition of Done)
 
 ✅ **Project Complete When:**
-1. All 7 tables created, migrated, and tested ✅
-2. 6 test projects seeded with known-good data ✅
+1. Required `fps` + `mabarchive` table footprint created, migrated, and tested ✅
+2. Full required process footprint seeded (all required tables or verified runtime minimum), including known-good project fixtures ✅
 3. All 5 handlers implemented and passing unit tests ✅
 4. Cross-validation engine passes 12+ assertions ✅
 5. Orchestrator wires all components together ✅

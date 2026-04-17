@@ -6,8 +6,8 @@ Runs foundation DB operations for local Docker Desktop PostgreSQL.
 Supports repeatable foundation workflows:
 - apply: apply foundational migration scripts
 - seed: apply seed scripts
-- flush: drop/recreate operational schema
-- reset: flush then apply
+- flush: truncate the local ScheduledLoadFromFps seeded footprint
+- reset: flush then apply then seed
 - all: apply then seed
 
 No business data is required. Seed files are optional templates.
@@ -174,6 +174,7 @@ switch ($Action) {
     "reset" {
         Invoke-Flush -Root $ScriptsRoot -Container $ContainerName -Db $Database -User $Username
         Invoke-Apply -Root $ScriptsRoot -Container $ContainerName -Db $Database -User $Username
+        Invoke-Seed -Root $ScriptsRoot -Container $ContainerName -Db $Database -User $Username
     }
     "all" {
         Invoke-Apply -Root $ScriptsRoot -Container $ContainerName -Db $Database -User $Username

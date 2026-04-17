@@ -40,11 +40,27 @@ pwsh ./database/Invoke-BatchDb.ps1 -Action validate
 ## Notes
 
 - Scripts are intended to be re-runnable where possible.
-- `flush` is destructive for schema `operational` and should only be used in local/dev environments.
+- `flush` is destructive for the local seeded ScheduledLoadFromFps footprint in `fps` and `mabarchive` and should only be used in local/dev environments.
+- `reset` now performs `flush` + `apply` + `seed` so the database returns to a known seeded baseline.
 - `validate` is non-destructive and fails fast if required ScheduledLoadFromFps tables or key constraints are missing.
 - Keep business-specific seed data in dedicated files under `sql/seeds` and version them by prefixing with sequence numbers.
 - Worker execution persistence writes to `fps.job_queue` and `fps.job_queue_log`.
 - Runtime configuration follows the repo pattern: `ConnectionStrings:BatchJobsConnectionString`.
+
+## Local Reset Script
+
+For a shell-based local reset workflow, run:
+
+```bash
+bash database/sql/reset_scheduled_load_locally.sh
+```
+
+This performs the same sequence as the PowerShell `reset` action:
+1. flush seeded tables
+2. apply migrations
+3. reseed baseline data
+
+It is intended for local/dev use only.
 
 ## Sink Pipeline
 
