@@ -287,12 +287,17 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var result = await _projectService.UpdateProjectAsync(dto);
 
             if (result.Success)
-                return Json(new { success = true, message = "Project updated successfully.", data = result.Data });
+                return Json(new { success = true, data = result.Data, message = "Project updated successfully." });
 
             return Json(new
             {
                 success = false,
-                message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to update project."
+                message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to update project.",
+                errors = (result.Errors ?? new List<ApiErrorDto>()).Select(e => new
+                {
+                    field = e.Code ?? string.Empty,
+                    message = e.Message ?? "An unexpected error occurred."
+                })
             });
         }
 
