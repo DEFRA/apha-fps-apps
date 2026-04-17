@@ -7,25 +7,27 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Models
     public class ProjectCreateEditViewModel
     {
         public string ProjectId { get; set; } = string.Empty;
-        public string? Plancat { get; set; }
-        public string? Projecttitle { get; set; }
+        public string? PlanCategory { get; set; }
+
+        [Required(ErrorMessage = "Project title is required")]
+        public string ProjectTitle { get; set; }= string.Empty;
         public string? Programme { get; set; }
-        public string? Projectworkgroup { get; set; }
-        public double? Contractprice { get; set; }
-        public DateOnly? Startdate { get; set; }
+        public string? ProjectWorkgroup { get; set; }
+        public double? ContractPrice { get; set; }
+        public DateOnly? StartDate { get; set; }
         public string? Disease { get; set; }
-        public double? Startfyear { get; set; }
+        public double? StartFYear { get; set; }
         public string? CustomerName { get; set; }
         public string? ContractNumber { get; set; }
-        public string? Submittedbyfname { get; set; }
-        public string? Submittedbylname { get; set; }
+        public string? SubmittedByFName { get; set; }
+        public string? SubmittedByLName { get; set; }
         public DateOnly? DateOfSubmission { get; set; }
         public string? PreparedBy { get; set; }
         public int? Inflation { get; set; }
-        public int? Financialyears { get; set; }
+        public int? FinancialYears { get; set; }
         public string? Notes { get; set; }
         public double? Euroconvrate { get; set; }
-        public short? Isdefraproject { get; set; }
+        public short? IsDefraProject { get; set; }
         public DateTime? EndDate { get; set; }
         public decimal? BudgetAmount { get; set; }
         public decimal? ActualCost { get; set; }
@@ -37,6 +39,8 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Models
         [BindNever] public List<SelectListItem> AvailableCustomers { get; set; } = new();
         [BindNever] public List<SelectListItem> AvailableDiseases { get; set; } = new();
         [BindNever] public List<SelectListItem> AvailableStaff { get; set; } = new();
-        [BindNever] public List<SelectListItem> AvailableContracts { get; set; } = new();       
+        [BindNever] public List<SelectListItem> AvailableContracts { get; set; } = new();
+        [BindNever] public List<SelectListItem> AvailableFinancialYears { get; set; } = new();
+        [BindNever] public List<SelectListItem> AvailableDefraProjectOptions { get; set; } = new();
     }
 }
