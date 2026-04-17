@@ -7,11 +7,11 @@ namespace Apha.PACT.DataAccess.Data
 {
     public class JobCodeMap : IEntityTypeConfiguration<JobCode>
     {
-        private readonly IFpsYearContext _fPSYearContext;
+        private readonly IFpsRequestContext _fpsRequestContext;
 
-        public JobCodeMap(IFpsYearContext fPSYearContext)
+        public JobCodeMap(IFpsRequestContext fpsRequestContext)
         {
-            _fPSYearContext = fPSYearContext;
+            _fpsRequestContext = fpsRequestContext;
         }
 
         public void Configure(EntityTypeBuilder<JobCode> entity)
@@ -39,7 +39,7 @@ namespace Apha.PACT.DataAccess.Data
             entity.Property(e => e.Type)
                 .HasMaxLength(15)
                 .HasColumnName("type");
-            entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FPSYear);
+            entity.HasQueryFilter(e => e.FpsYear == _fpsRequestContext.FpsYear);
         }
     }
 }

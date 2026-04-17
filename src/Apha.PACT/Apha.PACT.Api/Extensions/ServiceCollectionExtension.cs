@@ -32,7 +32,7 @@ namespace Apha.PACT.Api.Extensions
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
         {
-            services.AddScoped<IFpsYearContext, FpsYearContext>();
+            services.AddScoped<IFpsRequestContext, FpsRequestContext>();
             services.AddScoped<ICurrentUserContext, CurrentUserContext>();
             services.AddScoped<IJobCodeRepository, JobCodeRepository>();
             services.AddScoped<ITimeCodeValidRepository, TimeCodeValidRepository>();

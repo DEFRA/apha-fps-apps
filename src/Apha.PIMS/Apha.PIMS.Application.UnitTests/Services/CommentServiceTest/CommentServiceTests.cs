@@ -225,13 +225,13 @@ namespace Apha.PIMS.Application.UnitTests.Services.CommentServiceTest
         #region AddAsync
 
         [Theory]
-        [InlineData(null, "Some comment text")]
-        [InlineData("", "Some comment text")]
-        [InlineData("   ", "Some comment text")]
-        public async Task AddAsync_WithInvalidProject_ThrowsBusinessValidationErrorException(string? project, string commentText)
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task AddAsync_WithInvalidProject_ThrowsBusinessValidationErrorException(string? project)
         {
             // Arrange
-            var dto = new CommentDto { Project = project, Commenttext = commentText };
+            var dto = new CommentDto { Project = project, Year = 2024, Topic = "Topic1", Commenttext = "Some comment text" };
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(
@@ -246,13 +246,12 @@ namespace Apha.PIMS.Application.UnitTests.Services.CommentServiceTest
         }
 
         [Theory]
-        [InlineData("PP001", null)]
-        [InlineData("PP001", "")]
-        [InlineData("PP001", "   ")]
-        public async Task AddAsync_WithInvalidCommentText_ThrowsBusinessValidationErrorException(string project, string? commentText)
+        [InlineData(null)]
+        [InlineData(0)]
+        public async Task AddAsync_WithInvalidYear_ThrowsBusinessValidationErrorException(int? year)
         {
             // Arrange
-            var dto = new CommentDto { Project = project, Commenttext = commentText };
+            var dto = new CommentDto { Project = "PP001", Year = year, Topic = "Topic1", Commenttext = "Some comment text" };
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(
@@ -260,26 +259,75 @@ namespace Apha.PIMS.Application.UnitTests.Services.CommentServiceTest
             );
 
             exception.Errors.Should().ContainSingle();
-            exception.Errors.First().Code.Should().Be("COMMENT_TEXT_REQUIRED");
-            exception.Errors.First().Message.Should().Be("Comment text is required.");
+            exception.Errors.First().Code.Should().Be("YEAR_REQUIRED");
+            exception.Errors.First().Message.Should().Be("Year is required.");
 
             await _mockRepository.DidNotReceive().AddAsync(Arg.Any<Comment>());
         }
 
-        [Fact]
-        public async Task AddAsync_WithBothProjectAndCommentTextInvalid_ThrowsWithMultipleErrors()
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task AddAsync_WithInvalidTopic_ThrowsBusinessValidationErrorException(string? topic)
         {
             // Arrange
-            var dto = new CommentDto { Project = null, Commenttext = null };
+            var dto = new CommentDto { Project = "PP001", Year = 2024, Topic = topic, Commenttext = "Some comment text" };
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(
                 async () => await _sut.AddAsync(dto)
             );
 
-            exception.Errors.Should().HaveCount(2);
+            exception.Errors.Should().ContainSingle();
+            exception.Errors.First().Code.Should().Be("TOPIC_REQUIRED");
+            exception.Errors.First().Message.Should().Be("Topic is required.");
+
+            await _mockRepository.DidNotReceive().AddAsync(Arg.Any<Comment>());
+        }
+
+        [Fact]
+        public async Task AddAsync_WithAllRequiredFieldsInvalid_ThrowsWithMultipleErrors()
+        {
+            // Arrange
+            var dto = new CommentDto { Project = null, Year = null, Topic = null };
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                async () => await _sut.AddAsync(dto)
+            );
+
+            exception.Errors.Should().HaveCount(3);
             exception.Errors.Should().Contain(e => e.Code == "PROJECT_REQUIRED");
-            exception.Errors.Should().Contain(e => e.Code == "COMMENT_TEXT_REQUIRED");
+            exception.Errors.Should().Contain(e => e.Code == "YEAR_REQUIRED");
+            exception.Errors.Should().Contain(e => e.Code == "TOPIC_REQUIRED");
+
+            await _mockRepository.DidNotReceive().AddAsync(Arg.Any<Comment>());
+        }
+
+        [Fact]
+        public async Task AddAsync_WhenDuplicateExists_ThrowsBusinessValidationErrorException()
+        {
+            // Arrange
+            var dto = new CommentDto
+            {
+                Project = "PP001",
+                Year = 2024,
+                Topic = "Topic1",
+                Commenttext = "Some comment text",
+                Madeby = "User1"
+            };
+
+            _mockRepository.ExistsAsync(dto.Project!, (short)dto.Year!.Value, dto.Topic!)
+                .Returns(true);
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                async () => await _sut.AddAsync(dto)
+            );
+
+            exception.Errors.Should().ContainSingle();
+            exception.Errors.First().Code.Should().Be("COMMENT_DUPLICATE");
 
             await _mockRepository.DidNotReceive().AddAsync(Arg.Any<Comment>());
         }
@@ -328,6 +376,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.CommentServiceTest
                 Dateentered = createdEntity.Dateentered
             };
 
+            _mockRepository.ExistsAsync(dto.Project!, (short)dto.Year!.Value, dto.Topic!).Returns(false);
             _mockMapper.Map<Comment>(dto).Returns(entity);
             _mockRepository.AddAsync(entity).Returns(Task.FromResult(createdEntity));
             _mockMapper.Map<CommentDto>(createdEntity).Returns(expectedDto);
@@ -356,17 +405,22 @@ namespace Apha.PIMS.Application.UnitTests.Services.CommentServiceTest
             var dto = new CommentDto
             {
                 Project = "PP001",
+                Year = 2024,
+                Topic = "Topic1",
                 Commenttext = "Some comment text"
             };
 
             var entity = new Comment
             {
                 Project = "PP001",
+                Year = 2024,
+                Topic = "Topic1",
                 Commenttext = "Some comment text"
             };
 
             var expectedException = new Exception("Database connection failed");
 
+            _mockRepository.ExistsAsync(dto.Project!, (short)dto.Year!.Value, dto.Topic!).Returns(false);
             _mockMapper.Map<Comment>(dto).Returns(entity);
             _mockRepository.AddAsync(entity)
                 .Returns(Task.FromException<Comment>(expectedException));
@@ -388,13 +442,13 @@ namespace Apha.PIMS.Application.UnitTests.Services.CommentServiceTest
         #region UpdateAsync
 
         [Theory]
-        [InlineData(null, "Some comment text")]
-        [InlineData("", "Some comment text")]
-        [InlineData("   ", "Some comment text")]
-        public async Task UpdateAsync_WithInvalidProject_ThrowsBusinessValidationErrorException(string? project, string commentText)
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task UpdateAsync_WithInvalidProject_ThrowsBusinessValidationErrorException(string? project)
         {
             // Arrange
-            var dto = new CommentDto { Project = project, Commenttext = commentText };
+            var dto = new CommentDto { Project = project, Year = 2024, Topic = "Topic1", Commenttext = "Some comment text" };
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(
@@ -409,13 +463,12 @@ namespace Apha.PIMS.Application.UnitTests.Services.CommentServiceTest
         }
 
         [Theory]
-        [InlineData("PP001", null)]
-        [InlineData("PP001", "")]
-        [InlineData("PP001", "   ")]
-        public async Task UpdateAsync_WithInvalidCommentText_ThrowsBusinessValidationErrorException(string project, string? commentText)
+        [InlineData(null)]
+        [InlineData(0)]
+        public async Task UpdateAsync_WithInvalidYear_ThrowsBusinessValidationErrorException(int? year)
         {
             // Arrange
-            var dto = new CommentDto { Project = project, Commenttext = commentText };
+            var dto = new CommentDto { Project = "PP001", Year = year, Topic = "Topic1", Commenttext = "Some comment text" };
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(
@@ -423,26 +476,71 @@ namespace Apha.PIMS.Application.UnitTests.Services.CommentServiceTest
             );
 
             exception.Errors.Should().ContainSingle();
-            exception.Errors.First().Code.Should().Be("COMMENT_TEXT_REQUIRED");
-            exception.Errors.First().Message.Should().Be("Comment text is required.");
+            exception.Errors.First().Code.Should().Be("YEAR_REQUIRED");
+            exception.Errors.First().Message.Should().Be("Year is required.");
 
             await _mockRepository.DidNotReceive().UpdateAsync(Arg.Any<Comment>());
         }
 
-        [Fact]
-        public async Task UpdateAsync_WithBothProjectAndCommentTextInvalid_ThrowsWithMultipleErrors()
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task UpdateAsync_WithInvalidTopic_ThrowsBusinessValidationErrorException(string? topic)
         {
             // Arrange
-            var dto = new CommentDto { Project = null, Commenttext = null };
+            var dto = new CommentDto { Project = "PP001", Year = 2024, Topic = topic, Commenttext = "Some comment text" };
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(
                 async () => await _sut.UpdateAsync(dto)
             );
 
-            exception.Errors.Should().HaveCount(2);
+            exception.Errors.Should().ContainSingle();
+            exception.Errors.First().Code.Should().Be("TOPIC_REQUIRED");
+            exception.Errors.First().Message.Should().Be("Topic is required.");
+
+            await _mockRepository.DidNotReceive().UpdateAsync(Arg.Any<Comment>());
+        }
+
+        [Fact]
+        public async Task UpdateAsync_WithAllRequiredFieldsInvalid_ThrowsWithMultipleErrors()
+        {
+            // Arrange
+            var dto = new CommentDto { Project = null, Year = null, Topic = null };
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                async () => await _sut.UpdateAsync(dto)
+            );
+
+            exception.Errors.Should().HaveCount(3);
             exception.Errors.Should().Contain(e => e.Code == "PROJECT_REQUIRED");
-            exception.Errors.Should().Contain(e => e.Code == "COMMENT_TEXT_REQUIRED");
+            exception.Errors.Should().Contain(e => e.Code == "YEAR_REQUIRED");
+            exception.Errors.Should().Contain(e => e.Code == "TOPIC_REQUIRED");
+
+            await _mockRepository.DidNotReceive().UpdateAsync(Arg.Any<Comment>());
+        }
+
+        [Fact]
+        public async Task UpdateAsync_WhenCommentNotFound_ThrowsKeyNotFoundException()
+        {
+            // Arrange
+            var dto = new CommentDto
+            {
+                Commentno = 999,
+                Project = "PP001",
+                Year = 2024,
+                Topic = "Topic1",
+                Commenttext = "Some comment text"
+            };
+
+            _mockRepository.GetByIdAsync(dto.Commentno).Returns(Task.FromResult<Comment?>(null));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<KeyNotFoundException>(
+                async () => await _sut.UpdateAsync(dto)
+            );
 
             await _mockRepository.DidNotReceive().UpdateAsync(Arg.Any<Comment>());
         }
@@ -461,14 +559,15 @@ namespace Apha.PIMS.Application.UnitTests.Services.CommentServiceTest
                 Madeby = "User1"
             };
 
-            var entity = new Comment
+            var existingEntity = new Comment
             {
                 Commentno = 1,
-                Project = "PP001",
-                Year = 2024,
-                Topic = "Updated Topic",
-                Commenttext = "Updated comment text",
-                Madeby = "User1"
+                Project = "OldProject",
+                Year = 2023,
+                Topic = "Old Topic",
+                Commenttext = "Old text",
+                Madeby = "OldUser",
+                Dateentered = new DateTime(2024, 1, 15)
             };
 
             var updatedEntity = new Comment
@@ -493,8 +592,8 @@ namespace Apha.PIMS.Application.UnitTests.Services.CommentServiceTest
                 Dateentered = new DateTime(2024, 1, 15)
             };
 
-            _mockMapper.Map<Comment>(dto).Returns(entity);
-            _mockRepository.UpdateAsync(entity).Returns(Task.FromResult(updatedEntity));
+            _mockRepository.GetByIdAsync(dto.Commentno).Returns(Task.FromResult<Comment?>(existingEntity));
+            _mockRepository.UpdateAsync(existingEntity).Returns(Task.FromResult(updatedEntity));
             _mockMapper.Map<CommentDto>(updatedEntity).Returns(expectedDto);
 
             // Act
@@ -506,8 +605,8 @@ namespace Apha.PIMS.Application.UnitTests.Services.CommentServiceTest
             result.Project.Should().Be("PP001");
             result.Commenttext.Should().Be("Updated comment text");
 
-            _mockMapper.Received(1).Map<Comment>(dto);
-            await _mockRepository.Received(1).UpdateAsync(entity);
+            await _mockRepository.Received(1).GetByIdAsync(dto.Commentno);
+            await _mockRepository.Received(1).UpdateAsync(existingEntity);
             _mockMapper.Received(1).Map<CommentDto>(updatedEntity);
         }
 
@@ -519,20 +618,24 @@ namespace Apha.PIMS.Application.UnitTests.Services.CommentServiceTest
             {
                 Commentno = 1,
                 Project = "PP001",
+                Year = 2024,
+                Topic = "Topic1",
                 Commenttext = "Some comment text"
             };
 
-            var entity = new Comment
+            var existingEntity = new Comment
             {
                 Commentno = 1,
                 Project = "PP001",
+                Year = 2024,
+                Topic = "Topic1",
                 Commenttext = "Some comment text"
             };
 
             var expectedException = new Exception("Database connection failed");
 
-            _mockMapper.Map<Comment>(dto).Returns(entity);
-            _mockRepository.UpdateAsync(entity)
+            _mockRepository.GetByIdAsync(dto.Commentno).Returns(Task.FromResult<Comment?>(existingEntity));
+            _mockRepository.UpdateAsync(Arg.Any<Comment>())
                 .Returns(Task.FromException<Comment>(expectedException));
 
             // Act & Assert
@@ -542,8 +645,8 @@ namespace Apha.PIMS.Application.UnitTests.Services.CommentServiceTest
 
             exception.Message.Should().Be("Database connection failed");
 
-            _mockMapper.Received(1).Map<Comment>(dto);
-            await _mockRepository.Received(1).UpdateAsync(entity);
+            await _mockRepository.Received(1).GetByIdAsync(dto.Commentno);
+            await _mockRepository.Received(1).UpdateAsync(Arg.Any<Comment>());
             _mockMapper.DidNotReceive().Map<CommentDto>(Arg.Any<Comment>());
         }
 

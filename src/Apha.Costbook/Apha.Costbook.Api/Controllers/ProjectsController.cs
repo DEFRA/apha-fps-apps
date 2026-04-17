@@ -61,20 +61,12 @@ namespace Apha.Costbook.Api.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateProject(string id, [FromBody] ProjectReq projectReq)
         {
-            try
-            {
+           
                 var projectDto = _mapper.Map<ProjectDto>(projectReq);
                 var result = await _service.UpdateProjectAsync(id, projectDto);
                 return Ok(_mapper.Map<ProjectRes>(result));
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "An error occurred while updating the project", details = ex.Message });
-            }
+            
+          
         }
 
 
@@ -82,53 +74,27 @@ namespace Apha.Costbook.Api.Controllers
         [HttpDelete("{id}/delete")]
         public async Task<IActionResult> DeleteProject(string id)
         {
-           
-            try
-            {
-                if (string.IsNullOrEmpty(id))
-                {
-                    return BadRequest(new { message = "Project ID is required" });
-                }
+            if (string.IsNullOrEmpty(id))
+                throw new ArgumentException("Project not found for deletion");
 
-                var success = await _service.DeleteProjectAsync(id);
-
-                if (success)
-                {
-                    return Ok(true); // Return just the boolean
-                   
-                }
-                else
-                {
-                    return NotFound(false); // Return false for not found
-                    
-                }
-            }
-            catch 
+            var deleted = await _service.DeleteProjectAsync(id);
+            if (!deleted)
             {
-                return StatusCode(500, false); // Return false for errors
+                throw new ArgumentException("Error while deleting project");
             }
+            return Ok(deleted);         
+            
+            
         }
 
         [HttpPost("{id}/copy")]
         public async Task<IActionResult> CopyProject(string id, [FromBody] string newId)
         {
-            try
-            {
+           
                 var result = await _service.CopyProjectAsync(id, newId);
                 return CreatedAtAction(nameof(GetProject), new { id = result.ProjectId }, _mapper.Map<ProjectRes>(result));
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "An error occurred while copying the project", details = ex.Message });
-            }
+            
+           
         }
 
         [HttpPost("{id}/recost")]
@@ -142,8 +108,7 @@ namespace Apha.Costbook.Api.Controllers
         [HttpGet("programs")]
         public async Task<IActionResult> GetPrograms()
         {
-            try
-            {
+           
                 var programs = await _programService.GetAllProgramsAsync();
                 var mappedPrograms = _mapper.Map<List<ProgramRes>>(programs);
 
@@ -156,34 +121,13 @@ namespace Apha.Costbook.Api.Controllers
                 };
 
                 return Ok(response);
-            }
-            catch (Exception ex)
-            {
-                var errorResponse = new ApiResponse<List<ProgramRes>>
-                {
-                    Success = false,
-                    Data = null,
-                    Errors = new List<ApiError>
-            {
-                new ApiError
-                {
-                    Code = "INTERNAL_ERROR",
-                    Message = "Failed to retrieve programs",
-                    Details = ex.Message
-                }
-            },
-                    Meta = new ApiMeta()  // provide empty object
-                };
-
-                return StatusCode(500, errorResponse);
-            }
+            
+            
         }
 
         [HttpGet("number")]
         public async Task<IActionResult> GetNextProjectNumber([FromQuery] string? baseNumber)
-        {
-            try
-            {
+        {           
                 var number = await _service.GetNextProjectNumberAsync(baseNumber);
                 var response = new ApiResponse<string>
                 {
@@ -192,34 +136,14 @@ namespace Apha.Costbook.Api.Controllers
                     Errors = new List<ApiError>(),
                     Meta = new ApiMeta()
                 };
-                return Ok(response);
-            }
-            catch (Exception ex)
-            {
-                var errorResponse = new ApiResponse<string>
-                {
-                    Success = false,
-                    Data = null,
-                    Errors = new List<ApiError>
-            {
-                new ApiError
-                {
-                    Code = "INTERNAL_ERROR",
-                    Message = "Failed to retrieve project number",
-                    Details = ex.Message
-                }
-            },
-                    Meta = new ApiMeta()
-                };
-                return StatusCode(500, errorResponse);
-            }
+                return Ok(response);            
+            
         }
 
         [HttpGet("contracts")]
         public async Task<IActionResult> GetContracts()
         {
-            try
-            {
+            
                 var contracts = await _contractService.GetAllContractNumbersAsync();
                 var mappedContracts = contracts.Select(contractNumber => new ContractRes
                 {
@@ -234,33 +158,14 @@ namespace Apha.Costbook.Api.Controllers
                     Meta = new ApiMeta()
                 };
                 return Ok(response);
-            }
-            catch (Exception ex)
-            {
-                var errorResponse = new ApiResponse<List<ContractRes>>
-                {
-                    Success = false,
-                    Data = null,
-                    Errors = new List<ApiError>
-            {
-                new ApiError
-                {
-                    Code = "INTERNAL_ERROR",
-                    Message = "Failed to retrieve contracts",
-                    Details = ex.Message
-                }
-            },
-                    Meta = new ApiMeta()
-                };
-                return StatusCode(500, errorResponse);
-            }
+            
+           
         }
 
         [HttpGet("diseases")]
         public async Task<IActionResult> GetDiseases()
         {
-            try
-            {
+            
                 var diseases = await _diseaseService.GetAllDiseasesAsync();
                 var mappedDiseases = _mapper.Map<List<DiseaseRes>>(diseases);
 
@@ -272,34 +177,15 @@ namespace Apha.Costbook.Api.Controllers
                     Meta = new ApiMeta()
                 };
                 return Ok(response);
-            }
-            catch (Exception ex)
-            {
-                var errorResponse = new ApiResponse<List<DiseaseRes>>
-                {
-                    Success = false,
-                    Data = null,
-                    Errors = new List<ApiError>
-            {
-                new ApiError
-                {
-                    Code = "INTERNAL_ERROR",
-                    Message = "Failed to retrieve diseases",
-                    Details = ex.Message
-                }
-            },
-                    Meta = new ApiMeta()
-                };
-                return StatusCode(500, errorResponse);
-            }
+            
+          
         }
 
         
         [HttpGet("customers")]
         public async Task<IActionResult> GetCustomers()
         {
-            try
-            {
+            
                 var customers = await _customerService.GetAllCustomersAsync();
                 var mappedCustomers = _mapper.Map<List<CustomerRes>>(customers);
 
@@ -310,34 +196,14 @@ namespace Apha.Costbook.Api.Controllers
                     Errors = new List<ApiError>(),
                     Meta = new ApiMeta()
                 };
-                return Ok(response);
-            }
-            catch (Exception ex)
-            {
-                var errorResponse = new ApiResponse<List<CustomerRes>>
-                {
-                    Success = false,
-                    Data = null,
-                    Errors = new List<ApiError>
-            {
-                new ApiError
-                {
-                    Code = "INTERNAL_ERROR",
-                    Message = "Failed to retrieve customers",
-                    Details = ex.Message
-                }
-            },
-                    Meta = new ApiMeta()
-                };
-                return StatusCode(500, errorResponse);
-            }
+                return Ok(response);            
+           
         }
 
         [HttpGet("staff")]
         public async Task<IActionResult> GetStaff()
         {
-            try
-            {
+            
                 var staff = await _staffService.GetAllStaffAsync();
                 var mappedStaff = _mapper.Map<List<StaffRes>>(staff);
 
@@ -349,26 +215,8 @@ namespace Apha.Costbook.Api.Controllers
                     Meta = new ApiMeta()
                 };
                 return Ok(response);
-            }
-            catch (Exception ex)
-            {
-                var errorResponse = new ApiResponse<List<StaffRes>>
-                {
-                    Success = false,
-                    Data = null,
-                    Errors = new List<ApiError>
-            {
-                new ApiError
-                {
-                    Code = "INTERNAL_ERROR",
-                    Message = "Failed to retrieve staff",
-                    Details = ex.Message
-                }
-            },
-                    Meta = new ApiMeta()
-                };
-                return StatusCode(500, errorResponse);
-            }
+            
+            
         }
     }
 }

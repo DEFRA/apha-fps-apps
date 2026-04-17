@@ -226,10 +226,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestCapabilityA
         [Fact]
         public async Task DeleteTestCapabilityAsync_WithValidKeys_DeletesAndReturnsTrue()
         {
-            var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
+            var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
             var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
 
-            _http.DeleteAsync<bool>(Arg.Is<string>(url =>
+            _http.DeleteAsync<bool?>(Arg.Is<string>(url =>
                 url.Contains("api/v1/testcapability/testcapability/") &&
                 url.Contains(Uri.EscapeDataString("TC1")) && url.Contains(Uri.EscapeDataString("WG1"))))
                 .Returns(apiResponse);
@@ -243,10 +243,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestCapabilityA
         [Fact]
         public async Task DeleteTestCapabilityAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
-            var apiResponse = new ApiResponse<bool> { Success = false, Errors = [new ApiError { Code = "NOT_FOUND" }] };
+            var apiResponse = new ApiResponse<bool?> { Success = false, Errors = [new ApiError { Code = "NOT_FOUND" }] };
             var mappedDto = new ApiResponseDto<bool> { Success = false, Errors = [new ApiErrorDto { Code = "NOT_FOUND" }], Meta = new ApiMetaDto() };
 
-            _http.DeleteAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
+            _http.DeleteAsync<bool?>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedDto);
 
             var result = await _client.DeleteTestCapabilityAsync("TC1", "WG1");

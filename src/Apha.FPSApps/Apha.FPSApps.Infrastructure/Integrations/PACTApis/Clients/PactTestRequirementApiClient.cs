@@ -14,7 +14,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
     {
         private readonly IPactHttpExecutor _http;
         private readonly IMapper _mapper;
-        private const string InternalCodeError = "INTERNAL_ERROR";
 
         public PactTestRequirementApiClient(IPactHttpExecutor http, IMapper mapper)
         {
@@ -105,7 +104,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
         {
             var url = string.Format(PactApiEndpoints.DeleteTestReqmt,
                 Uri.EscapeDataString(testCode), Uri.EscapeDataString(buyer));
-            var response = await _http.DeleteAsync<bool>(url);
+            var response = await _http.DeleteAsync<bool?>(url);
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<bool>>(response);
 

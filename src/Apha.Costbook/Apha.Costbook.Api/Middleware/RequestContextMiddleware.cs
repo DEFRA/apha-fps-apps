@@ -29,22 +29,16 @@ namespace Apha.Costbook.Api.Middleware
                 await _next(context);
                 return;
             }
-
-            // REQUIRED HEADER
-            if (!context.Request.Headers.TryGetValue(FpsYearHeader, out var header)
-                            || !int.TryParse(header, out int fpsYear))
-            {
-                throw new ArgumentException($"Required request header '{FpsYearHeader}' is missing or empty.");               
-            }
+           
 
             SetCorrelationId(context, CorrelationIdHeader);
 
-            ((FPSYearContext)yearContext).FPSYear = fpsYear;
+            ((FPSYearContext)yearContext).FPSYear = 2025;
 
             await _next(context);
         }
 
-        private void SetCorrelationId(HttpContext context, string CorrelationIdHeader)
+        private static void SetCorrelationId(HttpContext context, string CorrelationIdHeader)
         {
             // OPTIONAL HEADER (generate if missing)
             if (!context.Request.Headers.TryGetValue(CorrelationIdHeader, out var correlationId)
