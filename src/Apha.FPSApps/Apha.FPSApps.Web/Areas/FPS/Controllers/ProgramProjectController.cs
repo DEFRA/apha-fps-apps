@@ -256,7 +256,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             if (!result.Success || result.Data == null)
                 return NotFound();
 
-            var model = _mapper.Map<ProjectViewModel>(result.Data);
+            var model = _mapper.Map<ProgramProjectEditViewModel>(result.Data);
             await PopulateDropdownsAsync(model);
             return PartialView("_AddEditProgramProject", model);
         }
@@ -265,7 +265,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         /// POST: updates a project's details from the programme projects grid.
         /// </summary>
         [HttpPost]
-        public async Task<IActionResult> Edit([FromBody] ProjectViewModel model)
+        public async Task<IActionResult> Edit([FromBody] ProgramProjectEditViewModel model)
         {
             if (!ModelState.IsValid)
             {
@@ -327,7 +327,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             });
         }
 
-        private async Task PopulateDropdownsAsync(ProjectViewModel model)
+        private async Task PopulateDropdownsAsync(ProgramProjectEditViewModel model)
         {
             var managersResult = await _employeeService.GetAllManagersAsync();
             model.ManagerList = managersResult.Success && managersResult.Data != null

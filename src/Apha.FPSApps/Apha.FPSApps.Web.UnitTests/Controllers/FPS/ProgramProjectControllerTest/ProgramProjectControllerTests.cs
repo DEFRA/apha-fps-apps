@@ -785,11 +785,11 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramProjectControllerTes
             // Arrange
             var parentProject = "PP001";
             var projectDto = new ProjectDto { ParentProject = "PP001", ProjectTitle = "Alpha Project" };
-            var projectViewModel = new ProjectViewModel { ParentProject = "PP001", ProjectTitle = "Alpha Project" };
+            var projectViewModel = new ProgramProjectEditViewModel { ParentProject = "PP001", ProjectTitle = "Alpha Project" };
 
             _projectService.GetProjectByIdAsync(parentProject)
                 .Returns(ApiResponseDto<ProjectDto>.SuccessResponse(projectDto));
-            _mapper.Map<ProjectViewModel>(projectDto).Returns(projectViewModel);
+            _mapper.Map<ProgramProjectEditViewModel>(projectDto).Returns(projectViewModel);
             SetupDropdownMocks();
 
             // Act
@@ -798,7 +798,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramProjectControllerTes
             // Assert
             var partialView = Assert.IsType<PartialViewResult>(result);
             Assert.Equal("_AddEditProgramProject", partialView.ViewName);
-            var model = Assert.IsType<ProjectViewModel>(partialView.Model);
+            var model = Assert.IsType<ProgramProjectEditViewModel>(partialView.Model);
             Assert.Equal("PP001", model.ParentProject);
         }
 
@@ -819,13 +819,13 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramProjectControllerTes
             // Arrange
             var parentProject = "PP001";
             var projectDto = new ProjectDto { ParentProject = "PP001", ProjectTitle = "Alpha Project" };
-            var projectViewModel = new ProjectViewModel { ParentProject = "PP001", ProjectTitle = "Alpha Project" };
+            var projectViewModel = new ProgramProjectEditViewModel { ParentProject = "PP001", ProjectTitle = "Alpha Project" };
             var managers = new List<ManagerDto> { new() { Name = "John Smith" } };
             var programs = new List<ProgramDto> { new() { ProgramNo = "P001", ProgramName = "Programme Alpha" } };
 
             _projectService.GetProjectByIdAsync(parentProject)
                 .Returns(ApiResponseDto<ProjectDto>.SuccessResponse(projectDto));
-            _mapper.Map<ProjectViewModel>(projectDto).Returns(projectViewModel);
+            _mapper.Map<ProgramProjectEditViewModel>(projectDto).Returns(projectViewModel);
             _employeeService.GetAllManagersAsync()
                 .Returns(ApiResponseDto<List<ManagerDto>>.SuccessResponse(managers));
             _programService.GetAllProgramsAsync()
@@ -846,7 +846,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramProjectControllerTes
 
             // Assert
             var partialView = Assert.IsType<PartialViewResult>(result);
-            var model = Assert.IsType<ProjectViewModel>(partialView.Model);
+            var model = Assert.IsType<ProgramProjectEditViewModel>(partialView.Model);
             Assert.Single(model.ManagerList);
             Assert.Equal("John Smith", model.ManagerList[0].Value);
             Assert.Single(model.ProgramList);
@@ -862,7 +862,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramProjectControllerTes
         {
             // Arrange
             _controller.ModelState.AddModelError("ProjectTitle", "Description is required");
-            var model = new ProjectViewModel { ParentProject = "PP001" };
+            var model = new ProgramProjectEditViewModel { ParentProject = "PP001" };
 
             // Act
             var result = await _controller.Edit(model);
@@ -880,7 +880,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramProjectControllerTes
         public async Task EditPost_WhenUpdateSucceeds_ReturnsSuccessJson()
         {
             // Arrange
-            var model = new ProjectViewModel { ParentProject = "PP001", ProjectTitle = "Updated Title" };
+            var model = new ProgramProjectEditViewModel { ParentProject = "PP001", ProjectTitle = "Updated Title" };
             var dto = new ProjectDto { ParentProject = "PP001", ProjectTitle = "Updated Title" };
             _mapper.Map<ProjectDto>(model).Returns(dto);
             _projectService.UpdateProjectAsync(dto)
@@ -901,7 +901,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramProjectControllerTes
         public async Task EditPost_WhenUpdateFails_WithErrorMessage_ReturnsFailureJson()
         {
             // Arrange
-            var model = new ProjectViewModel { ParentProject = "PP001" };
+            var model = new ProgramProjectEditViewModel { ParentProject = "PP001" };
             var dto = new ProjectDto { ParentProject = "PP001" };
             var errors = new List<ApiErrorDto> { new() { Message = "Database error", Code = "DB_ERR" } };
             _mapper.Map<ProjectDto>(model).Returns(dto);
@@ -923,7 +923,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramProjectControllerTes
         public async Task EditPost_WhenUpdateFails_WithNoErrors_ReturnsDefaultMessage()
         {
             // Arrange
-            var model = new ProjectViewModel { ParentProject = "PP001" };
+            var model = new ProgramProjectEditViewModel { ParentProject = "PP001" };
             var dto = new ProjectDto { ParentProject = "PP001" };
             _mapper.Map<ProjectDto>(model).Returns(dto);
             _projectService.UpdateProjectAsync(dto)

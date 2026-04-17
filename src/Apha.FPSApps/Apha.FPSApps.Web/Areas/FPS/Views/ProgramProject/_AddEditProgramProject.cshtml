@@ -1,4 +1,4 @@
-@model Apha.FPSApps.Web.Areas.FPS.Models.ProjectViewModel
+@model Apha.FPSApps.Web.Areas.FPS.Models.ProgramProjectEditViewModel
 @{
     var title    = "Edit Project Details in Programme";
     var formId   = "editProgramProjectForm";
@@ -51,7 +51,7 @@
             <div class="col-6">
                 <div class="govuk-form-group sup_margin_0">
                             <label class="govuk-label" asp-for="Program">Program<span class="sup_color_red">*</span></label>
-                    <span asp-validation-for="Program" class="govuk-error-message" style="display:none;"></span>
+                    
                     <select asp-for="Program" asp-items="@Model.ProgramList" class="govuk-select" required>
                         <option value="">-- Select --</option>
                     </select>

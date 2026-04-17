@@ -197,12 +197,6 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var dict = (IDictionary<string, object>)filterModel;
 
-            if (dict.TryGetValue("JobCode", out var jobCode) && jobCode != null)
-                query = query.Where(x => x.ParentProject.Contains(jobCode.ToString()!));
-
-            if (dict.TryGetValue("JobDescription", out var jobDescription) && jobDescription != null)
-                query = query.Where(x => x.ProjectTitle!.Contains(jobDescription.ToString()!));
-
             if (dict.TryGetValue("ParentProject", out var parentProject) && parentProject != null)
                 query = query.Where(x => x.ParentProject.Contains(parentProject.ToString()!));
 
