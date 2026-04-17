@@ -146,7 +146,7 @@ Developer runs: .\test-locally.ps1
 | **Image Registry** | N/A | Amazon ECR (`apha/batchjobs`) |
 | **Job Name Source** | `args[0]` or env var | `BATCH_JOB_NAME` env var in Task Definition |
 | **Database** | No real DB — lock/record writes are no-ops | Amazon RDS PostgreSQL |
-| **Lock Storage** | Simulated (in-memory / no-op) | `batch_locks` table in RDS |
+| **Lock Storage** | Simulated (in-memory / no-op) | `job_locks` table in RDS |
 | **Execution Records** | Simulated (no-op) | `job_executions` table in RDS |
 | **Logs** | Console/terminal output | Amazon CloudWatch Logs |
 | **Failure Alerting** | Dev sees exit code in terminal | CloudWatch Alarm → SNS → Email |
@@ -248,14 +248,14 @@ sequenceDiagram
     App->>App: Build DI container (reads env vars)
     App->>Orch: RunAsync("HealthCheck", Scheduled)
     Orch->>Orch: Generate RunId (GUID)
-    Orch->>Lock: TryAcquireLockAsync → INSERT batch_locks
+    Orch->>Lock: TryAcquireLockAsync → INSERT job_locks
     Lock-->>Orch: true (lock acquired)
     Orch->>Exec: CreateExecutionRecordAsync → INSERT job_executions
     Orch->>Job: ExecuteAsync()
     Job->>CW: Structured logs (Serilog)
     Job-->>Orch: Task completed
     Orch->>Exec: UpdateExecutionRecordAsync(Completed, duration)
-    Orch->>Lock: ReleaseLockAsync → DELETE batch_locks
+    Orch->>Lock: ReleaseLockAsync → DELETE job_locks
     Orch-->>App: Done
     App->>App: Environment.Exit(0)
     ECS-->>EB: Task stopped (exit 0)

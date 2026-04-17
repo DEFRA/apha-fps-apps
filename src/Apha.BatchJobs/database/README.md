@@ -41,7 +41,7 @@ pwsh ./database/Invoke-BatchDb.ps1 -Action all
 - Scripts are intended to be re-runnable where possible.
 - `flush` is destructive for schema `operational` and should only be used in local/dev environments.
 - Keep business-specific seed data in dedicated files under `sql/seeds` and version them by prefixing with sequence numbers.
-- Worker execution persistence writes to `operational.tbljobqueue` and `operational.tbljobqueue_log`.
+- Worker execution persistence writes to `fps.job_queue` and `fps.job_queue_log`.
 - Runtime configuration follows the repo pattern: `ConnectionStrings:BatchJobsConnectionString`.
 
 ## Sink Pipeline
@@ -51,4 +51,4 @@ See `sink/README.md` for the VM workflow to:
 1. Ingest a cloud snapshot into sink raw structures.
 2. Register and reuse a `snapshot_id` for all pipeline stages.
 3. Curate only required fields for foundation revisions.
-4. Sync curated results into `operational` in an idempotent way.
+4. Sync curated results into `fps` in an idempotent way.

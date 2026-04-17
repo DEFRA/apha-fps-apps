@@ -1,7 +1,7 @@
 namespace Apha.BatchJobs.Infrastructure.Data;
 
 /// <summary>
-/// EF entity for operational.tbljobmaster.
+/// EF entity for fps.job_master.
 /// </summary>
 internal sealed class TblJobMaster
 {
@@ -15,7 +15,7 @@ internal sealed class TblJobMaster
 }
 
 /// <summary>
-/// EF entity for operational.tbljobstatus.
+/// EF entity for fps.job_status.
 /// </summary>
 internal sealed class TblJobStatus
 {
@@ -26,7 +26,7 @@ internal sealed class TblJobStatus
 }
 
 /// <summary>
-/// EF entity for operational.tbljobqueue.
+/// EF entity for fps.job_queue.
 /// </summary>
 internal sealed class TblJobQueue
 {
@@ -41,7 +41,7 @@ internal sealed class TblJobQueue
 }
 
 /// <summary>
-/// EF entity for operational.tbljobqueue_log.
+/// EF entity for fps.job_queue_log.
 /// </summary>
 internal sealed class TblJobQueueLog
 {

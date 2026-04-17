@@ -1,4 +1,4 @@
--- Sync curated records into operational foundation tables.
+-- Sync curated records into fps foundation tables.
 -- Requires psql variable: snapshot_id (UUID string)
 -- Example:
 -- psql "$SINK_CONN" -v ON_ERROR_STOP=1 -v snapshot_id="7e4b9f7c-7f0d-4ecf-ab26-7482f2d8cebb" -f database/sink/sql/030_sync_foundation_from_curated_template.sql
@@ -21,7 +21,7 @@ WITH run_row AS (
 	RETURNING run_id
 ),
 upsert_jobmaster AS (
-	INSERT INTO operational.tbljobmaster (
+	INSERT INTO fps.job_master (
 		jobname,
 		frequency,
 		note,
@@ -43,9 +43,9 @@ upsert_jobmaster AS (
 	RETURNING jobid
 ),
 insert_statuses AS (
-	INSERT INTO operational.tbljobstatus (jobid, status)
+	INSERT INTO fps.job_status (jobid, status)
 	SELECT jm.jobid, s.status_name
-	FROM operational.tbljobmaster jm
+	FROM fps.job_master jm
 	INNER JOIN sink_curated.job_seed c
 		ON c.job_name = jm.jobname
 	CROSS JOIN (VALUES

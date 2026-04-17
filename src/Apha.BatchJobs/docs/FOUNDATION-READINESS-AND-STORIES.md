@@ -177,12 +177,12 @@ The `BatchJobsDbContext.OnModelCreating` configures column names but is missing:
 
 **Implementation evidence:**
 - `Apha.BatchJobs.Infrastructure/Repositories/BatchLockRepository.cs` now attempts insert directly and returns false on Postgres unique violation (`23505`).
-- `database/sql/003_runtime_orchestrator_tables.sql` includes unique partial index `uq_batch_lock_job_name_active` on `(job_name) WHERE is_active = TRUE`.
+- `database/sql/003_runtime_orchestrator_tables.sql` includes unique partial index `uq_job_lock_job_name_active` on `(job_name) WHERE is_active = TRUE`.
 - `Apha.BatchJobs.UnitTests/JobOrchestratorTests.cs` includes `RunAsync_WhenTwoConcurrentCallsForSameJob_OnlyOneExecutesAndOtherIsSkipped`.
 - Verified with `dotnet test` pass: 11/11.
 
 **Notes:**  
-Option A: Add a `UNIQUE (job_name)` partial index on `batch_lock WHERE is_active = TRUE` and use EF `ExecuteSqlRaw` for an atomic upsert.  
+Option A: Add a `UNIQUE (job_name)` partial index on `job_lock WHERE is_active = TRUE` and use EF `ExecuteSqlRaw` for an atomic upsert.  
 Option B: Use `pg_try_advisory_xact_lock` via a raw SQL query — lighter and no row persistence needed.
 
 ---
@@ -199,7 +199,7 @@ Option B: Use `pg_try_advisory_xact_lock` via a raw SQL query — lighter and no
 **so that** there are no silent null-return stubs in the codebase.
 
 **Acceptance criteria:**
-- [ ] Either: implement the method to retrieve a `JobExecutionRecord` by looking up `tbljobqueue` by GUID/RunId mapping.
+- [ ] Either: implement the method to retrieve a `JobExecutionRecord` by looking up `job_queue` by GUID/RunId mapping.
 - [x] Or: remove the method from `IJobExecutionRepository` if there is no current consumer.
 - [x] If removed, verify no callers exist before deletion.
 - [x] Unit test added or updated covering the chosen outcome.
@@ -228,7 +228,7 @@ Option B: Use `pg_try_advisory_xact_lock` via a raw SQL query — lighter and no
 - [x] Tests use a Postgres instance.
 - [x] `TryAcquireLockAsync` — verified lock is created and returned on first call; returns false on second call with same job name.
 - [x] `ReleaseLockAsync` — verified lock row is removed after release.
-- [x] `CreateExecutionRecordAsync` — verified row appears in `tbljobqueue` and `tbljobqueue_log`.
+- [x] `CreateExecutionRecordAsync` — verified row appears in `job_queue` and `job_queue_log`.
 - [x] `UpdateExecutionRecordAsync` — verified status and `updated_at` are updated; new log row appended.
 - [x] CI pipeline runs integration tests with the postgres service available.
 

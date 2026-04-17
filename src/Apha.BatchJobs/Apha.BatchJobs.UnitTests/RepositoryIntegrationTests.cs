@@ -100,11 +100,11 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
         }
 
         var queueRows = await ScalarIntAsync(
-            "SELECT COUNT(*) FROM operational.tbljobqueue WHERE jobqueueid = @runId::uuid",
+            "SELECT COUNT(*) FROM fps.job_queue WHERE jobqueueid = @runId::uuid",
             new NpgsqlParameter("runId", Guid.Parse(runId)));
 
         var logRows = await ScalarIntAsync(
-            "SELECT COUNT(*) FROM operational.tbljobqueue_log ql INNER JOIN operational.tbljobqueue q ON q.jobqueueid = ql.jobqueueid WHERE q.jobqueueid = @runId::uuid",
+            "SELECT COUNT(*) FROM fps.job_queue_log ql INNER JOIN fps.job_queue q ON q.jobqueueid = ql.jobqueueid WHERE q.jobqueueid = @runId::uuid",
             new NpgsqlParameter("runId", Guid.Parse(runId)));
 
         Assert.Equal(1, queueRows);
@@ -150,11 +150,11 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
         }
 
         var statusName = await ScalarStringAsync(
-            "SELECT s.status FROM operational.tbljobqueue q INNER JOIN operational.tbljobstatus s ON s.statusid = q.statusid WHERE q.jobqueueid = @runId::uuid",
+            "SELECT s.status FROM fps.job_queue q INNER JOIN fps.job_status s ON s.statusid = q.statusid WHERE q.jobqueueid = @runId::uuid",
             new NpgsqlParameter("runId", Guid.Parse(runId)));
 
         var logCount = await ScalarIntAsync(
-            "SELECT COUNT(*) FROM operational.tbljobqueue_log WHERE jobqueueid = @runId::uuid",
+            "SELECT COUNT(*) FROM fps.job_queue_log WHERE jobqueueid = @runId::uuid",
             new NpgsqlParameter("runId", Guid.Parse(runId)));
 
         Assert.Equal("Completed", statusName);
@@ -259,11 +259,11 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
 
         // Verify record was updated with error details
         var statusName = await ScalarStringAsync(
-            "SELECT s.status FROM operational.tbljobqueue q INNER JOIN operational.tbljobstatus s ON s.statusid = q.statusid WHERE q.jobqueueid = @runId::uuid",
+            "SELECT s.status FROM fps.job_queue q INNER JOIN fps.job_status s ON s.statusid = q.statusid WHERE q.jobqueueid = @runId::uuid",
             new NpgsqlParameter("runId", Guid.Parse(runId)));
 
         var errorMsg = await ScalarStringAsync(
-            "SELECT q.errormessage FROM operational.tbljobqueue q WHERE q.jobqueueid = @runId::uuid",
+            "SELECT q.errormessage FROM fps.job_queue q WHERE q.jobqueueid = @runId::uuid",
             new NpgsqlParameter("runId", Guid.Parse(runId)));
 
         Assert.Equal("Failed", statusName);
@@ -315,7 +315,7 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
 
         // Verify only first execution record exists
         var executionCount = await ScalarIntAsync(
-            "SELECT COUNT(*) FROM operational.tbljobqueue WHERE jobqueueid IN (@firstRunId::uuid, @secondRunId::uuid)",
+            "SELECT COUNT(*) FROM fps.job_queue WHERE jobqueueid IN (@firstRunId::uuid, @secondRunId::uuid)",
             new NpgsqlParameter("firstRunId", Guid.Parse(firstRunId)),
             new NpgsqlParameter("secondRunId", Guid.Parse(secondRunId)));
 
@@ -381,7 +381,7 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
 
         // Query by RunId and verify log entries
         var logCount = await ScalarIntAsync(
-            "SELECT COUNT(*) FROM operational.tbljobqueue_log ql INNER JOIN operational.tbljobqueue q ON q.jobqueueid = ql.jobqueueid WHERE q.jobqueueid = @runId::uuid",
+            "SELECT COUNT(*) FROM fps.job_queue_log ql INNER JOIN fps.job_queue q ON q.jobqueueid = ql.jobqueueid WHERE q.jobqueueid = @runId::uuid",
             new NpgsqlParameter("runId", Guid.Parse(runId)));
 
         // Expect at least 2 logs: Created and Completed
@@ -389,7 +389,7 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
 
         // Verify structured fields in execution record
         var firstLogTime = await ScalarStringAsync(
-            "SELECT ql.logtime FROM operational.tbljobqueue_log ql INNER JOIN operational.tbljobqueue q ON q.jobqueueid = ql.jobqueueid WHERE q.jobqueueid = @runId::uuid ORDER BY ql.jobqueuelogid ASC LIMIT 1",
+            "SELECT ql.logtime FROM fps.job_queue_log ql INNER JOIN fps.job_queue q ON q.jobqueueid = ql.jobqueueid WHERE q.jobqueueid = @runId::uuid ORDER BY ql.jobqueuelogid ASC LIMIT 1",
             new NpgsqlParameter("runId", Guid.Parse(runId)));
 
         Assert.NotNull(firstLogTime);
@@ -416,9 +416,9 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
         const string sql = @"
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
-CREATE SCHEMA IF NOT EXISTS operational;
+CREATE SCHEMA IF NOT EXISTS fps;
 
-CREATE TABLE IF NOT EXISTS operational.batch_lock (
+CREATE TABLE IF NOT EXISTS fps.job_lock (
     lock_id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     job_name VARCHAR(255) NOT NULL,
     acquired_at TIMESTAMPTZ NOT NULL,
@@ -427,14 +427,14 @@ CREATE TABLE IF NOT EXISTS operational.batch_lock (
     is_active BOOLEAN NOT NULL DEFAULT TRUE
 );
 
-CREATE INDEX IF NOT EXISTS idx_batch_lock_job_name ON operational.batch_lock (job_name);
-CREATE INDEX IF NOT EXISTS idx_batch_lock_job_name_active ON operational.batch_lock (job_name, is_active);
-CREATE INDEX IF NOT EXISTS idx_batch_lock_expires_at ON operational.batch_lock (expires_at);
-CREATE UNIQUE INDEX IF NOT EXISTS uq_batch_lock_job_name_active
-    ON operational.batch_lock (job_name)
+CREATE INDEX IF NOT EXISTS idx_job_lock_job_name ON fps.job_lock (job_name);
+CREATE INDEX IF NOT EXISTS idx_job_lock_job_name_active ON fps.job_lock (job_name, is_active);
+CREATE INDEX IF NOT EXISTS idx_job_lock_expires_at ON fps.job_lock (expires_at);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_job_lock_job_name_active
+    ON fps.job_lock (job_name)
     WHERE is_active = TRUE;
 
-CREATE TABLE IF NOT EXISTS operational.tbljobmaster (
+CREATE TABLE IF NOT EXISTS fps.job_master (
     jobid INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     jobname VARCHAR(100) NOT NULL UNIQUE,
     frequency VARCHAR(50),
@@ -442,22 +442,22 @@ CREATE TABLE IF NOT EXISTS operational.tbljobmaster (
     timetolive INTEGER NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT chk_tbljobmaster_timetolive_positive CHECK (timetolive > 0)
+    CONSTRAINT chk_job_master_timetolive_positive CHECK (timetolive > 0)
 );
 
-CREATE TABLE IF NOT EXISTS operational.tbljobstatus (
+CREATE TABLE IF NOT EXISTS fps.job_status (
     statusid INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     jobid INTEGER NOT NULL,
     status VARCHAR(100) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_tbljobstatus_jobid
+    CONSTRAINT fk_job_status_jobid
         FOREIGN KEY (jobid)
-        REFERENCES operational.tbljobmaster(jobid)
+        REFERENCES fps.job_master(jobid)
         ON DELETE CASCADE,
-    CONSTRAINT uq_tbljobstatus_jobid_status UNIQUE (jobid, status)
+    CONSTRAINT uq_job_status_jobid_status UNIQUE (jobid, status)
 );
 
-CREATE TABLE IF NOT EXISTS operational.tbljobqueue (
+CREATE TABLE IF NOT EXISTS fps.job_queue (
     jobqueueid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     jobid INTEGER NOT NULL,
     statusid INTEGER NOT NULL,
@@ -466,33 +466,33 @@ CREATE TABLE IF NOT EXISTS operational.tbljobqueue (
     errormessage VARCHAR(1000),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_tbljobqueue_jobid
+    CONSTRAINT fk_job_queue_jobid
         FOREIGN KEY (jobid)
-        REFERENCES operational.tbljobmaster(jobid)
+        REFERENCES fps.job_master(jobid)
         ON DELETE RESTRICT,
-    CONSTRAINT fk_tbljobqueue_statusid
+    CONSTRAINT fk_job_queue_statusid
         FOREIGN KEY (statusid)
-        REFERENCES operational.tbljobstatus(statusid)
+        REFERENCES fps.job_status(statusid)
         ON DELETE RESTRICT,
-    CONSTRAINT chk_tbljobqueue_end_after_start CHECK (
+    CONSTRAINT chk_job_queue_end_after_start CHECK (
         enddatetime IS NULL OR enddatetime >= startdatetime
     )
 );
 
-CREATE TABLE IF NOT EXISTS operational.tbljobqueue_log (
+CREATE TABLE IF NOT EXISTS fps.job_queue_log (
     jobqueuelogid INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     jobqueueid UUID NOT NULL,
     statusid INTEGER NOT NULL,
     performedby VARCHAR(100) NOT NULL,
     logtime TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     note VARCHAR(500),
-    CONSTRAINT fk_tbljobqueue_log_jobqueueid
+    CONSTRAINT fk_job_queue_log_jobqueueid
         FOREIGN KEY (jobqueueid)
-        REFERENCES operational.tbljobqueue(jobqueueid)
+        REFERENCES fps.job_queue(jobqueueid)
         ON DELETE CASCADE,
-    CONSTRAINT fk_tbljobqueue_log_statusid
+    CONSTRAINT fk_job_queue_log_statusid
         FOREIGN KEY (statusid)
-        REFERENCES operational.tbljobstatus(statusid)
+        REFERENCES fps.job_status(statusid)
         ON DELETE RESTRICT
 );
 ";
@@ -508,11 +508,11 @@ CREATE TABLE IF NOT EXISTS operational.tbljobqueue_log (
     {
         const string sql = @"
 TRUNCATE TABLE
-    operational.batch_lock,
-    operational.tbljobqueue_log,
-    operational.tbljobqueue,
-    operational.tbljobstatus,
-    operational.tbljobmaster
+    fps.job_lock,
+    fps.job_queue_log,
+    fps.job_queue,
+    fps.job_status,
+    fps.job_master
 RESTART IDENTITY CASCADE;";
 
         await using var connection = new NpgsqlConnection(_connectionString);

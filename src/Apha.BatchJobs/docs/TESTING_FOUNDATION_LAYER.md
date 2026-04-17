@@ -339,7 +339,7 @@ docker exec -it batch_jobs_postgres psql -U postgres -d batch_jobs_foundation_db
 \dt+ operational.*
 
 # View batch locks (should be empty after job)
-SELECT * FROM operational.batch_lock;
+SELECT * FROM fps.job_lock;
 
 # View execution records
 SELECT * FROM operational.job_execution_record;

@@ -133,7 +133,7 @@ WHERE snapshot_id = '7e4b9f7c-7f0d-4ecf-ab26-7482f2d8cebb'::UUID
 ORDER BY started_at DESC;
 
 SELECT jobname, frequency, timetolive
-FROM operational.tbljobmaster
+FROM fps.job_master
 ORDER BY jobname;
 ```
 

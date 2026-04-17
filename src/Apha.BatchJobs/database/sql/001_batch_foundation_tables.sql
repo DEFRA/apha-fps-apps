@@ -9,7 +9,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE SCHEMA IF NOT EXISTS operational;
 
 -- Master table for batch job definitions.
-CREATE TABLE IF NOT EXISTS operational.tbljobmaster (
+CREATE TABLE IF NOT EXISTS operational.job_master (
     jobid INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     jobname VARCHAR(100) NOT NULL UNIQUE,
     frequency VARCHAR(50),
@@ -17,24 +17,24 @@ CREATE TABLE IF NOT EXISTS operational.tbljobmaster (
     timetolive INTEGER NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT chk_tbljobmaster_timetolive_positive CHECK (timetolive > 0)
+    CONSTRAINT chk_job_master_timetolive_positive CHECK (timetolive > 0)
 );
 
 -- Reference table for statuses used by each job.
-CREATE TABLE IF NOT EXISTS operational.tbljobstatus (
+CREATE TABLE IF NOT EXISTS operational.job_status (
     statusid INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     jobid INTEGER NOT NULL,
     status VARCHAR(100) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_tbljobstatus_jobid
+    CONSTRAINT fk_job_status_jobid
         FOREIGN KEY (jobid)
-        REFERENCES operational.tbljobmaster(jobid)
+        REFERENCES operational.job_master(jobid)
         ON DELETE CASCADE,
-    CONSTRAINT uq_tbljobstatus_jobid_status UNIQUE (jobid, status)
+    CONSTRAINT uq_job_status_jobid_status UNIQUE (jobid, status)
 );
 
 -- Queue table that represents one execution instance of a job.
-CREATE TABLE IF NOT EXISTS operational.tbljobqueue (
+CREATE TABLE IF NOT EXISTS operational.job_queue (
     jobqueueid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     jobid INTEGER NOT NULL,
     statusid INTEGER NOT NULL,
@@ -43,57 +43,57 @@ CREATE TABLE IF NOT EXISTS operational.tbljobqueue (
     errormessage VARCHAR(1000),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_tbljobqueue_jobid
+    CONSTRAINT fk_job_queue_jobid
         FOREIGN KEY (jobid)
-        REFERENCES operational.tbljobmaster(jobid)
+        REFERENCES operational.job_master(jobid)
         ON DELETE RESTRICT,
-    CONSTRAINT fk_tbljobqueue_statusid
+    CONSTRAINT fk_job_queue_statusid
         FOREIGN KEY (statusid)
-        REFERENCES operational.tbljobstatus(statusid)
+        REFERENCES operational.job_status(statusid)
         ON DELETE RESTRICT,
-    CONSTRAINT chk_tbljobqueue_end_after_start CHECK (
+    CONSTRAINT chk_job_queue_end_after_start CHECK (
         enddatetime IS NULL OR enddatetime >= startdatetime
     )
 );
 
 -- Detailed chronological log entries for each job queue item.
-CREATE TABLE IF NOT EXISTS operational.tbljobqueue_log (
+CREATE TABLE IF NOT EXISTS operational.job_queue_log (
     jobqueuelogid INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     jobqueueid UUID NOT NULL,
     statusid INTEGER NOT NULL,
     performedby VARCHAR(100) NOT NULL,
     logtime TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     note VARCHAR(500),
-    CONSTRAINT fk_tbljobqueue_log_jobqueueid
+    CONSTRAINT fk_job_queue_log_jobqueueid
         FOREIGN KEY (jobqueueid)
-        REFERENCES operational.tbljobqueue(jobqueueid)
+        REFERENCES operational.job_queue(jobqueueid)
         ON DELETE CASCADE,
-    CONSTRAINT fk_tbljobqueue_log_statusid
+    CONSTRAINT fk_job_queue_log_statusid
         FOREIGN KEY (statusid)
-        REFERENCES operational.tbljobstatus(statusid)
+        REFERENCES operational.job_status(statusid)
         ON DELETE RESTRICT
 );
 
 -- Useful indexes for common orchestration and monitoring lookups.
-CREATE INDEX IF NOT EXISTS idx_tbljobqueue_jobid_startdatetime
-    ON operational.tbljobqueue (jobid, startdatetime DESC);
+CREATE INDEX IF NOT EXISTS idx_job_queue_jobid_startdatetime
+    ON operational.job_queue (jobid, startdatetime DESC);
 
-CREATE INDEX IF NOT EXISTS idx_tbljobqueue_statusid
-    ON operational.tbljobqueue (statusid);
+CREATE INDEX IF NOT EXISTS idx_job_queue_statusid
+    ON operational.job_queue (statusid);
 
-CREATE INDEX IF NOT EXISTS idx_tbljobqueue_log_jobqueueid_logtime
-    ON operational.tbljobqueue_log (jobqueueid, logtime DESC);
+CREATE INDEX IF NOT EXISTS idx_job_queue_log_jobqueueid_logtime
+    ON operational.job_queue_log (jobqueueid, logtime DESC);
 
-CREATE INDEX IF NOT EXISTS idx_tbljobstatus_jobid
-    ON operational.tbljobstatus (jobid);
+CREATE INDEX IF NOT EXISTS idx_job_status_jobid
+    ON operational.job_status (jobid);
 
-COMMENT ON TABLE operational.tbljobmaster IS
+COMMENT ON TABLE operational.job_master IS
     'Batch job definitions and runtime metadata.';
-COMMENT ON TABLE operational.tbljobstatus IS
+COMMENT ON TABLE operational.job_status IS
     'Allowed statuses per job definition.';
-COMMENT ON TABLE operational.tbljobqueue IS
+COMMENT ON TABLE operational.job_queue IS
     'One row per job execution instance.';
-COMMENT ON TABLE operational.tbljobqueue_log IS
+COMMENT ON TABLE operational.job_queue_log IS
     'Chronological audit trail for each execution instance.';
 
 COMMIT;
