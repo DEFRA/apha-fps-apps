@@ -41,7 +41,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var isValidProgramNo = !string.IsNullOrWhiteSpace(programNo)
                 && programmeList.Any(p => p.Value == programNo);
             var selectedProgramNo = isValidProgramNo
-                ? programNo
+                ? programNo ?? string.Empty
                 : programmeList.FirstOrDefault()?.Value ?? string.Empty;
 
             var projectsGrid = new DataGridConfig<ProgramProjectItem>
@@ -380,9 +380,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             if (result.Success && result.Data != null)
             {
                 return result.Data
+                    .Where(p => !string.IsNullOrWhiteSpace(p.ProgramNo))
                     .Select(p => new SelectListItem
                     {
-                        Value = p.ProgramNo,
+                        Value = p.ProgramNo!,
                         Text  = $"{p.ProgramNo} - {p.ProgramName}"
                     })
                     .ToList();
