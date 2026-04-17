@@ -21,5 +21,12 @@ namespace Apha.FPS.Core.Interfaces
         Task<bool> CheckProjectExistsInFarmFileAsync(string oldProject);
         Task ChangeProjectCodeAsync(string oldCode, string newCode);
         Task DeleteProjectAndChildrenAsync(string parentProject);
+
+        // Delete guard checks
+        Task<bool> HasPlannedTestsAsync(string parentProject);
+        Task<bool> HasMonthlyOutputAsync(string parentProject);
+        Task<bool> HasMonthlyTimeAsync(string parentProject);
+        Task<bool> HasProjectInvoicesAsync(string parentProject);
+        Task<bool> HasProjectSubcontractsAsync(string parentProject);
     }
 }

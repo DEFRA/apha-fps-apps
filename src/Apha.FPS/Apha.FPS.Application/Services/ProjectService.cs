@@ -125,7 +125,26 @@ namespace Apha.FPS.Application.Services
         {
             var errors = new List<BusinessValidationError>();
             if (string.IsNullOrWhiteSpace(parentProject))
+            {
                 errors.Add(new BusinessValidationError("Parent project code is required.", "PARENT_PROJECT_REQUIRED"));
+                throw new BusinessValidationErrorException(errors);
+            }
+
+            if (await _projectRepository.HasPlannedTestsAsync(parentProject))
+                errors.Add(new BusinessValidationError("Cannot delete project, it still has tests planned.", "HAS_PLANNED_TESTS"));
+
+            if (await _projectRepository.HasMonthlyOutputAsync(parentProject))
+                errors.Add(new BusinessValidationError("Cannot delete project, there are Monthly Tests records.", "HAS_MONTHLY_OUTPUT"));
+
+            if (await _projectRepository.HasMonthlyTimeAsync(parentProject))
+                errors.Add(new BusinessValidationError("Cannot delete project, there are Monthly Time records.", "HAS_MONTHLY_TIME"));
+
+            if (await _projectRepository.HasProjectInvoicesAsync(parentProject))
+                errors.Add(new BusinessValidationError("Cannot delete project, there are Invoice records.", "HAS_INVOICES"));
+
+            if (await _projectRepository.HasProjectSubcontractsAsync(parentProject))
+                errors.Add(new BusinessValidationError("Cannot delete project, there are Subcontract records.", "HAS_SUBCONTRACTS"));
+
             if (errors.Count > 0)
                 throw new BusinessValidationErrorException(errors);
 

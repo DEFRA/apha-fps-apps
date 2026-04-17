@@ -295,6 +295,45 @@ namespace Apha.FPS.DataAccess.Repositories
                 .AnyAsync(s => s.Contract == oldProject);
         }
 
+        // ── Delete pre-condition checks (moved to service layer) ────────────
+
+        public async Task<bool> HasPlannedTestsAsync(string parentProject)
+        {
+            return await _dbContext.TestRequirements
+                .AsNoTracking()
+                .AnyAsync(tr => tr.ProjectBuyerCode == parentProject);
+        }
+
+        public async Task<bool> HasMonthlyOutputAsync(string parentProject)
+        {
+            return await _dbContext.Database.SqlQueryRaw<int>(
+                    "SELECT COUNT(*)::int AS \"Value\" FROM fps.monthlyoutput WHERE buyer = @p",
+                    new NpgsqlParameter("p", parentProject))
+                .AnyAsync(c => c > 0);
+        }
+
+        public async Task<bool> HasMonthlyTimeAsync(string parentProject)
+        {
+            return await _dbContext.Database.SqlQueryRaw<int>(
+                    "SELECT COUNT(*)::int AS \"Value\" FROM fps.monthlytime WHERE parentproject = @p",
+                    new NpgsqlParameter("p", parentProject))
+                .AnyAsync(c => c > 0);
+        }
+
+        public async Task<bool> HasProjectInvoicesAsync(string parentProject)
+        {
+            return await _dbContext.ProjectInvoices
+                .AsNoTracking()
+                .AnyAsync(pi => pi.ProjectParent == parentProject);
+        }
+
+        public async Task<bool> HasProjectSubcontractsAsync(string parentProject)
+        {
+            return await _dbContext.ProjectSubContracts
+                .AsNoTracking()
+                .AnyAsync(ps => ps.Project == parentProject);
+        }
+
         /// <summary>
         /// Renames a project code and updates all child table references — derived from usp_ChangeProjectCode.
         /// UITrig_tlkpProject FOR INSERT appended: stages audit log entry for the new project row.
@@ -445,55 +484,10 @@ namespace Apha.FPS.DataAccess.Repositories
 
         /// <summary>
         /// Deletes a project and all dependent child records — derived from usp_Delete_Project.
-        /// tlkpProject_DTrig guard: rejects if tlkpTestReqmt has planned tests.
-        /// DTrig_tlkpProject (DELETE) appended: stages audit log entry.
-        /// </summary>
-        /// <summary>
-        /// Deletes a project and all dependent child records — derived from usp_Delete_Project.
-        /// tlkpProject_DTrig guard: rejects if tlkpTestReqmt has planned tests.
         /// DTrig_tlkpProject (DELETE) appended: stages audit log entry.
         /// </summary>
         public async Task DeleteProjectAndChildrenAsync(string parentProject)
         {
-            // Guard: tlkpProject_DTrig custom DRI — reject if planned tests exist
-            bool hasTests = await _dbContext.Database.SqlQueryRaw<int>(
-                    "SELECT COUNT(*)::int AS \"Value\" FROM fps.tlkptestreqmt WHERE projectbuyercode = @p",
-                    new NpgsqlParameter("p", parentProject))
-                .AnyAsync(c => c > 0);
-            if (hasTests)
-                throw new InvalidOperationException("Cannot delete project, it still has tests planned.");
-
-            // Guard checks from usp_Delete_Project
-            bool hasMonthlyOutput = await _dbContext.Database.SqlQueryRaw<int>(
-                    "SELECT COUNT(*)::int AS \"Value\" FROM fps.monthlyoutput WHERE buyer = @p",
-                    new NpgsqlParameter("p", parentProject))
-                .AnyAsync(c => c > 0);
-
-            bool hasMonthlyTime = await _dbContext.Database.SqlQueryRaw<int>(
-                    "SELECT COUNT(*)::int AS \"Value\" FROM fps.monthlytime WHERE parentproject = @p",
-                    new NpgsqlParameter("p", parentProject))
-                .AnyAsync(c => c > 0);
-
-            bool hasProjInvoice = await _dbContext.Database.SqlQueryRaw<int>(
-                    "SELECT COUNT(*)::int AS \"Value\" FROM fps.proj_invoice WHERE projectparent = @p",
-                    new NpgsqlParameter("p", parentProject))
-                .AnyAsync(c => c > 0);
-
-            bool hasProjSubcontract = await _dbContext.Database.SqlQueryRaw<int>(
-                    "SELECT COUNT(*)::int AS \"Value\" FROM fps.proj_subcontract WHERE project = @p",
-                    new NpgsqlParameter("p", parentProject))
-                .AnyAsync(c => c > 0);
-
-            var errorParts = new List<string>();
-            if (hasMonthlyOutput) errorParts.Add("Monthly Tests");
-            if (hasMonthlyTime) errorParts.Add("Monthly Time");
-            if (hasProjInvoice) errorParts.Add("Invoice");
-            if (hasProjSubcontract) errorParts.Add("Subcontracts");
-
-            if (errorParts.Count > 0)
-                throw new InvalidOperationException(
-                    $"This project cannot be deleted, there are records in {string.Join(", ", errorParts)}.");
-
             var strategy = _dbContext.Database.CreateExecutionStrategy();
 
             await strategy.ExecuteAsync(async () =>
