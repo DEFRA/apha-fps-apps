@@ -27,4 +27,5 @@ public sealed class ScheduledLoadFromFpsSettings
     /// Null means use UTC current year.
     /// </summary>
     public int? ForceCurrentYear { get; set; }
+
 }

@@ -2,6 +2,8 @@ using Apha.BatchJobs.Application;
 using Apha.BatchJobs.Application.Factory;
 using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Application.Jobs.ScheduledLoadFromFps;
+using Apha.BatchJobs.Application.Jobs.ScheduledLoadFromFps.Handlers;
+using Apha.BatchJobs.Application.Jobs.ScheduledLoadFromFps.Validation;
 using Apha.BatchJobs.Domain.Configuration;
 using Apha.BatchJobs.Domain.Interfaces;
 using Apha.BatchJobs.Infrastructure.Data;
@@ -66,6 +68,13 @@ public static class ServiceCollectionSetup
         services.AddScoped<IJobExecutionRepository, JobExecutionRepository>();
         services.AddSingleton<ICorrelationService, CorrelationService>();
         services.AddScoped<IScheduledLoadFromFpsPlanBuilder, ScheduledLoadFromFpsPlanBuilder>();
+        services.AddScoped<IScheduledLoadFromFpsRepository, ScheduledLoadFromFpsRepository>();
+        services.AddScoped<ICrossValidationEngine, CrossValidationEngine>();
+        services.AddScoped<IScheduledLoadFromFpsStepHandler, ProcessPreviousYearTotalsHandler>();
+        services.AddScoped<IScheduledLoadFromFpsStepHandler, ProcessCurrentYearTotalsHandler>();
+        services.AddScoped<IScheduledLoadFromFpsStepHandler, DeleteYearsFpsDataHandler>();
+        services.AddScoped<IScheduledLoadFromFpsStepHandler, AddYearsFpsDataHandler>();
+        services.AddScoped<IScheduledLoadFromFpsStepHandler, HandleCurrentYearProjectAllHandler>();
 
         RegisterBatchJobs(services);
         services.AddScoped<IBatchJobFactory>(sp => new BatchJobFactory(sp));

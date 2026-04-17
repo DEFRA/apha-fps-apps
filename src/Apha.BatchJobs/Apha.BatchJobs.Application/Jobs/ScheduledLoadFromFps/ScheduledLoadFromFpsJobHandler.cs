@@ -1,5 +1,7 @@
 using Apha.BatchJobs.Application.Interfaces;
+using Apha.BatchJobs.Application.Jobs.ScheduledLoadFromFps.Validation;
 using Apha.BatchJobs.Domain.Configuration;
+using Apha.BatchJobs.Domain.Interfaces;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -15,6 +17,10 @@ public sealed class ScheduledLoadFromFpsJobHandler : IBatchJob
     private const int DefaultStepTimeoutSeconds = 300;
     private readonly ILogger<ScheduledLoadFromFpsJobHandler> _logger;
     private readonly IScheduledLoadFromFpsPlanBuilder _planBuilder;
+    private readonly IScheduledLoadFromFpsRepository _repository;
+    private readonly ICorrelationService _correlationService;
+    private readonly ICrossValidationEngine _crossValidationEngine;
+    private readonly IReadOnlyDictionary<ScheduledLoadFromFpsStep, IScheduledLoadFromFpsStepHandler> _stepHandlers;
     private readonly ScheduledLoadFromFpsSettings _settings;
 
     /// <summary>
@@ -36,10 +42,18 @@ public sealed class ScheduledLoadFromFpsJobHandler : IBatchJob
     public ScheduledLoadFromFpsJobHandler(
         ILogger<ScheduledLoadFromFpsJobHandler> logger,
         IScheduledLoadFromFpsPlanBuilder planBuilder,
+        IScheduledLoadFromFpsRepository repository,
+        ICorrelationService correlationService,
+        ICrossValidationEngine crossValidationEngine,
+        IEnumerable<IScheduledLoadFromFpsStepHandler> stepHandlers,
         IOptions<ScheduledLoadFromFpsSettings> settings)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _planBuilder = planBuilder ?? throw new ArgumentNullException(nameof(planBuilder));
+        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _correlationService = correlationService ?? throw new ArgumentNullException(nameof(correlationService));
+        _crossValidationEngine = crossValidationEngine ?? throw new ArgumentNullException(nameof(crossValidationEngine));
+        _stepHandlers = BuildStepHandlerMap(stepHandlers);
         _settings = settings?.Value ?? throw new ArgumentNullException(nameof(settings));
     }
 
@@ -50,6 +64,9 @@ public sealed class ScheduledLoadFromFpsJobHandler : IBatchJob
         var effectiveStepTimeout = _settings.StepTimeoutSeconds > 0
             ? _settings.StepTimeoutSeconds
             : DefaultStepTimeoutSeconds;
+        var correlationId = _correlationService.GetCorrelationId() ?? _correlationService.GenerateCorrelationId();
+        var runId = await _repository.StartRunAsync(Name, plan.Context.CurrentYear, correlationId, cancellationToken);
+        var finalStatus = "Completed";
 
         using var scope = _logger.BeginScope(new Dictionary<string, object>
         {
@@ -66,11 +83,54 @@ public sealed class ScheduledLoadFromFpsJobHandler : IBatchJob
             plan.Context.CurrentMonth,
             effectiveStepTimeout);
 
-        foreach (var step in plan.Steps)
+        try
         {
-            cancellationToken.ThrowIfCancellationRequested();
+            var stepSequence = 1;
+            foreach (var step in plan.Steps)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
 
-            await ExecuteStepSkeletonAsync(step, effectiveStepTimeout, cancellationToken);
+                var stepRunId = await _repository.StartStepAsync(runId, step, stepSequence, cancellationToken);
+
+                try
+                {
+                    var rowsAffected = await ExecuteStepAsync(step, plan.Context, effectiveStepTimeout, cancellationToken);
+                    await _repository.CompleteStepAsync(stepRunId, "Completed", rowsAffected, null, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    await _repository.CompleteStepAsync(stepRunId, "Failed", null, ex.Message, cancellationToken);
+                    throw;
+                }
+
+                stepSequence++;
+            }
+
+            var validationResults = await _crossValidationEngine.ExecuteAsync(
+                runId,
+                plan.Context,
+                plan.Steps.Count,
+                cancellationToken);
+
+            if (validationResults.Any(static r => !r.Passed))
+            {
+                finalStatus = "Failed";
+                throw new InvalidOperationException("Cross-validation failed for one or more assertions.");
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            finalStatus = "Cancelled";
+            throw;
+        }
+        catch
+        {
+            finalStatus = "Failed";
+            throw;
+        }
+        finally
+        {
+            await _repository.CompleteRunAsync(runId, finalStatus, CancellationToken.None);
         }
 
         _logger.LogInformation(
@@ -78,11 +138,17 @@ public sealed class ScheduledLoadFromFpsJobHandler : IBatchJob
             string.Join(",", plan.Steps.Select(static s => s.ToString())));
     }
 
-    private async Task ExecuteStepSkeletonAsync(
+    private async Task<int> ExecuteStepAsync(
         ScheduledLoadFromFpsStep step,
+        ScheduledLoadFromFpsExecutionContext context,
         int stepTimeoutSeconds,
         CancellationToken cancellationToken)
     {
+        if (!_stepHandlers.TryGetValue(step, out var handler))
+        {
+            throw new InvalidOperationException($"No step handler registered for step '{step}'.");
+        }
+
         using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(stepTimeoutSeconds));
         using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
 
@@ -90,13 +156,32 @@ public sealed class ScheduledLoadFromFpsJobHandler : IBatchJob
 
         try
         {
-            // Intentional no-op placeholder: DB wiring lands in next phase.
-            await Task.CompletedTask.WaitAsync(linkedCts.Token);
+            return await handler.ExecuteAsync(context, linkedCts.Token);
         }
         catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested)
         {
             throw new TimeoutException(
                 $"Step '{step}' exceeded timeout of {stepTimeoutSeconds} seconds.");
         }
+    }
+
+    private static IReadOnlyDictionary<ScheduledLoadFromFpsStep, IScheduledLoadFromFpsStepHandler> BuildStepHandlerMap(
+        IEnumerable<IScheduledLoadFromFpsStepHandler> stepHandlers)
+    {
+        if (stepHandlers == null)
+        {
+            throw new ArgumentNullException(nameof(stepHandlers));
+        }
+
+        var map = new Dictionary<ScheduledLoadFromFpsStep, IScheduledLoadFromFpsStepHandler>();
+        foreach (var handler in stepHandlers)
+        {
+            if (!map.TryAdd(handler.Step, handler))
+            {
+                throw new InvalidOperationException($"Duplicate step handler registration for '{handler.Step}'.");
+            }
+        }
+
+        return map;
     }
 }
