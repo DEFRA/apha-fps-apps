@@ -22,7 +22,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.BaseRepositoryTest
 
         private static TestRepository CreateRepository()
         {
-            var fpsYearContext = Substitute.For<IFpsYearContext>();
+            var fpsYearContext = Substitute.For<IFpsRequestContext>();
             var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);
             return new TestRepository(mockContext.Object);
         }

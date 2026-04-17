@@ -7,11 +7,11 @@ namespace Apha.PACT.DataAccess.Data
 {
     public class ProjectInvoiceMap : IEntityTypeConfiguration<ProjectInvoice>
     {
-        private readonly IFpsYearContext _fPSYearContext;
+        private readonly IFpsRequestContext _fpsRequestContext;
 
-        public ProjectInvoiceMap(IFpsYearContext fPSYearContext)
+        public ProjectInvoiceMap(IFpsRequestContext fpsRequestContext)
         {
-            _fPSYearContext = fPSYearContext;
+            _fpsRequestContext = fpsRequestContext;
         }
 
         public void Configure(EntityTypeBuilder<ProjectInvoice> entity)
@@ -47,7 +47,7 @@ namespace Apha.PACT.DataAccess.Data
             entity.Property(e => e.X)
                 .HasMaxLength(5)
                 .HasColumnName("x");
-            entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FPSYear);
+            entity.HasQueryFilter(e => e.FpsYear == _fpsRequestContext.FpsYear);
         }
     }
 }

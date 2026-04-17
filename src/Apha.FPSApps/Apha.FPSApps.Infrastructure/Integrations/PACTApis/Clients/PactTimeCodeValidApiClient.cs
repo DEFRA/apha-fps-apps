@@ -118,7 +118,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
                     .Select(i => new TimeCodeKeyItem { WorkGroup = i.WorkGroup, TimeCode = i.TimeCode })
                     .ToList()
             };
-            var response = await _http.PostAsync<BulkDeleteTimeCodeReq, bool>(PactApiEndpoints.DeleteBulkTimeCodes, body);
+            var response = await _http.PostAsync<BulkDeleteTimeCodeReq, bool?>(PactApiEndpoints.DeleteBulkTimeCodes, body);
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<bool>>(response);
 

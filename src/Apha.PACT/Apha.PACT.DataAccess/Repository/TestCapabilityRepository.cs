@@ -9,11 +9,11 @@ namespace Apha.PACT.DataAccess.Repository
 {
     public class TestCapabilityRepository : BaseRepository, ITestCapabilityRepository
     {
-        private readonly IFpsYearContext _fpsYearContext;
+        private readonly IFpsRequestContext _fpsRequestContext;
 
-        public TestCapabilityRepository(FpsDbContext context, IFpsYearContext fpsYearContext) : base(context)
+        public TestCapabilityRepository(FpsDbContext context, IFpsRequestContext fpsRequestContext) : base(context)
         {
-            _fpsYearContext = fpsYearContext;
+            _fpsRequestContext = fpsRequestContext;
         }
 
         public async Task<PagedData<TestCapability>> GetPagedByWorkGroupAsync(
@@ -66,7 +66,7 @@ namespace Apha.PACT.DataAccess.Repository
 
         public async Task<TestCapability> AddAsync(TestCapability entity)
         {
-            entity.FpsYear = _fpsYearContext.FPSYear;
+            entity.FpsYear = _fpsRequestContext.FpsYear;
             await _context.TestCapabilities.AddAsync(entity);
             await _context.SaveChangesAsync();
             return entity;
@@ -74,7 +74,7 @@ namespace Apha.PACT.DataAccess.Repository
 
         public async Task<TestCapability> UpdateAsync(TestCapability entity)
         {
-            entity.FpsYear = _fpsYearContext.FPSYear;
+            entity.FpsYear = _fpsRequestContext.FpsYear;
             _context.Entry(entity).State = EntityState.Modified;
             await _context.SaveChangesAsync();
             return entity;
@@ -86,7 +86,7 @@ namespace Apha.PACT.DataAccess.Repository
                 .FirstOrDefaultAsync(t =>
                     t.TestCode == testCode &&
                     t.WorkGroup == workGroup &&
-                    t.FpsYear == _fpsYearContext.FPSYear);
+                    t.FpsYear == _fpsRequestContext.FpsYear);
 
             if (entity is null) return false;
 

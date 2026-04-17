@@ -123,10 +123,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectSubContr
         {
             // Arrange
             var project = "PP001";
-            var apiResponse = new ApiResponse<decimal> { Success = true, Data = 2000.00m };
+            var apiResponse = new ApiResponse<decimal?> { Success = true, Data = 2000.00m };
             var expectedDto = ApiResponseDto<decimal>.SuccessResponse(2000.00m);
 
-            _http.GetAsync<decimal>(Arg.Is<string>(url =>
+            _http.GetAsync<decimal?>(Arg.Is<string>(url =>
                 url.Contains("api/v1/projectsubcontract/total") && url.Contains("project=PP001")))
                 .Returns(apiResponse);
             _mapper.Map<ApiResponseDto<decimal>>(apiResponse).Returns(expectedDto);
@@ -138,7 +138,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectSubContr
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(2000.00m, result.Data);
-            await _http.Received(1).GetAsync<decimal>(
+            await _http.Received(1).GetAsync<decimal?>(
                 Arg.Is<string>(url => url.Contains("api/v1/projectsubcontract/total") && url.Contains("project=PP001")));
         }
 
@@ -146,10 +146,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectSubContr
         public async Task GetTotalAmountAsync_WithNullProject_UsesBaseUrl()
         {
             // Arrange
-            var apiResponse = new ApiResponse<decimal> { Success = true, Data = 0m };
+            var apiResponse = new ApiResponse<decimal?> { Success = true, Data = 0m };
             var expectedDto = ApiResponseDto<decimal>.SuccessResponse(0m);
 
-            _http.GetAsync<decimal>("api/v1/projectsubcontract/total").Returns(apiResponse);
+            _http.GetAsync<decimal?>("api/v1/projectsubcontract/total").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<decimal>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -158,7 +158,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectSubContr
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
-            await _http.Received(1).GetAsync<decimal>("api/v1/projectsubcontract/total");
+            await _http.Received(1).GetAsync<decimal?>("api/v1/projectsubcontract/total");
         }
 
         #endregion

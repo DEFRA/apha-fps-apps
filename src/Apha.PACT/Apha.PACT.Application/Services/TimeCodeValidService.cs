@@ -101,57 +101,65 @@ namespace Apha.PACT.Application.Services
         /// </summary>
         private async Task ValidateTimeCodeFieldsAsync(TimeCodeValidDto dto, TimeCodeValid? existing)
         {
+            ValidateRequiredFieldCombination(dto);
+
+            bool isInsert = existing == null;
+
+            await ValidateJobCodeAsync(dto, isInsert, existing);
+            await ValidateTestCapabilityAsync(dto, isInsert, existing);
+            await ValidateParentProjectAsync(dto, isInsert, existing);
+        }
+
+        private static void ValidateRequiredFieldCombination(TimeCodeValidDto dto)
+        {
             bool hasTestCode = !string.IsNullOrEmpty(dto.TestCode);
             bool hasPortfolio = !string.IsNullOrEmpty(dto.Portfolio);
             bool hasJobCode = !string.IsNullOrEmpty(dto.JobCode);
 
-            // Rule: must fill in (TestCode + Portfolio) or JobCode — not all null
-            if (!hasTestCode && !hasPortfolio && !hasJobCode)
+            bool hasTestAndPortfolio = hasTestCode && hasPortfolio;
+            bool hasPartialTestPortfolio = hasTestCode != hasPortfolio;
+
+            if (!hasJobCode && !hasTestAndPortfolio || hasPartialTestPortfolio)
                 throw new InvalidOperationException("Must fill in Testcode and Portfolio, or Jobcode");
+        }
 
-            // Rule: TestCode and Portfolio must both be supplied together
-            if (hasTestCode && !hasPortfolio)
-                throw new InvalidOperationException("Must fill in Testcode and Portfolio, or Jobcode");
-            if (hasPortfolio && !hasTestCode)
-                throw new InvalidOperationException("Must fill in Testcode and Portfolio, or Jobcode");
+        private async Task ValidateJobCodeAsync(TimeCodeValidDto dto, bool isInsert, TimeCodeValid? existing)
+        {
+            if (string.IsNullOrEmpty(dto.JobCode))
+                return;
 
-            bool isInsert = existing == null;
+            if (!isInsert && existing!.JobCode == dto.JobCode)
+                return;
 
-            // Rule: validate JobCode FK
-            if (hasJobCode)
-            {
-                bool jobCodeChanged = isInsert || existing!.JobCode != dto.JobCode;
-                if (jobCodeChanged)
-                {
-                    var jobCode = await _jobCodeRepository.GetJobCodeByIdAsync(dto.JobCode!);
-                    if (jobCode == null)
-                        throw new InvalidOperationException("Not a valid jobcode.");
-                }
-            }
+            var jobCode = await _jobCodeRepository.GetJobCodeByIdAsync(dto.JobCode);
+            if (jobCode == null)
+                throw new InvalidOperationException("Not a valid jobcode.");
+        }
 
-            // Rule: validate TestCode + Portfolio combination in tlkpTestCapability
-            if (hasTestCode && hasPortfolio)
-            {
-                bool comboChanged = isInsert || existing!.TestCode != dto.TestCode || existing.Portfolio != dto.Portfolio;
-                if (comboChanged)
-                {
-                    var comboExists = await _testCapabilityRepository.ExistsAsync(dto.TestCode!, dto.Portfolio!);
-                    if (!comboExists)
-                        throw new InvalidOperationException("Cannot update, this testcode is not in this portfolio.");
-                }
-            }
+        private async Task ValidateTestCapabilityAsync(TimeCodeValidDto dto, bool isInsert, TimeCodeValid? existing)
+        {
+            if (string.IsNullOrEmpty(dto.TestCode) || string.IsNullOrEmpty(dto.Portfolio))
+                return;
 
-            // Rule: validate ParentProject FK
-            if (!string.IsNullOrEmpty(dto.ParentProject))
-            {
-                bool projectChanged = isInsert || existing!.ParentProject != dto.ParentProject;
-                if (projectChanged)
-                {
-                    var projectExists = await _projectRepository.ExistsAsync(dto.ParentProject);
-                    if (!projectExists)
-                        throw new InvalidOperationException("Not a valid project");
-                }
-            }
+            if (!isInsert && existing!.TestCode == dto.TestCode && existing.Portfolio == dto.Portfolio)
+                return;
+
+            var comboExists = await _testCapabilityRepository.ExistsAsync(dto.TestCode, dto.Portfolio);
+            if (!comboExists)
+                throw new InvalidOperationException("Cannot update, this testcode is not in this portfolio.");
+        }
+
+        private async Task ValidateParentProjectAsync(TimeCodeValidDto dto, bool isInsert, TimeCodeValid? existing)
+        {
+            if (string.IsNullOrEmpty(dto.ParentProject))
+                return;
+
+            if (!isInsert && existing!.ParentProject == dto.ParentProject)
+                return;
+
+            var projectExists = await _projectRepository.ExistsAsync(dto.ParentProject);
+            if (!projectExists)
+                throw new InvalidOperationException("Not a valid project");
         }
     }
 }

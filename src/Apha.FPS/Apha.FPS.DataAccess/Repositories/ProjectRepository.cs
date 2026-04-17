@@ -179,10 +179,10 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var dict = (IDictionary<string, object>)filterModel;
 
-            if (dict.TryGetValue("JobCode", out var jobCode) && jobCode != null)
+            if (dict.TryGetValue("ParentProject", out var jobCode) && jobCode != null)
                 query = query.Where(x => x.ParentProject.Contains(jobCode.ToString()!));
 
-            if (dict.TryGetValue("JobDescription", out var jobDescription) && jobDescription != null)
+            if (dict.TryGetValue("ProjectTitle", out var jobDescription) && jobDescription != null)
                 query = query.Where(x => x.ProjectTitle!.Contains(jobDescription.ToString()!));
 
             return query;

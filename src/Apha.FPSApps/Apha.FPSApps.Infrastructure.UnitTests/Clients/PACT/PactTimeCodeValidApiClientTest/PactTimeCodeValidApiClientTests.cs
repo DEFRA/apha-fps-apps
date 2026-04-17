@@ -490,10 +490,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
                 ParentProject = "PP001",
                 Items = [new TimeCodeKeyItemDto { WorkGroup = "WG001", TimeCode = "TC001" }]
             };
-            var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
+            var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
             var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
 
-            _http.PostAsync<BulkDeleteTimeCodeReq, bool>("api/v1/timecodevalid/deletebulk", Arg.Any<BulkDeleteTimeCodeReq>()).Returns(apiResponse);
+            _http.PostAsync<BulkDeleteTimeCodeReq, bool?>("api/v1/timecodevalid/deletebulk", Arg.Any<BulkDeleteTimeCodeReq>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -503,7 +503,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.True(result.Data);
-            await _http.Received(1).PostAsync<BulkDeleteTimeCodeReq, bool>(
+            await _http.Received(1).PostAsync<BulkDeleteTimeCodeReq, bool?>(
                 "api/v1/timecodevalid/deletebulk", Arg.Any<BulkDeleteTimeCodeReq>());
         }
 
@@ -517,7 +517,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
                 Items = [new TimeCodeKeyItemDto { WorkGroup = "WG001", TimeCode = "TC001" }]
             };
             var errors = new List<ApiError> { new() { Message = "Bulk delete failed", Code = "API_ERROR" } };
-            var apiResponse = new ApiResponse<bool> { Success = false, Errors = errors };
+            var apiResponse = new ApiResponse<bool?> { Success = false, Errors = errors };
             var mappedResponse = new ApiResponseDto<bool>
             {
                 Success = false,
@@ -525,7 +525,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
                 Meta = new ApiMetaDto()
             };
 
-            _http.PostAsync<BulkDeleteTimeCodeReq, bool>(Arg.Any<string>(), Arg.Any<BulkDeleteTimeCodeReq>()).Returns(apiResponse);
+            _http.PostAsync<BulkDeleteTimeCodeReq, bool?>(Arg.Any<string>(), Arg.Any<BulkDeleteTimeCodeReq>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedResponse);
 
             // Act

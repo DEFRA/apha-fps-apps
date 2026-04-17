@@ -474,7 +474,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             var repo = CreateRepository(projectViews: projectViews);
             var query = new PaginationParameters<string>(page: 1, pageSize: 10)
             {
-                Filter = "{\"JobCode\":\"PP\"}"
+                Filter = "{\"ParentProject\":\"PP\"}"
             };
 
             // Act
@@ -498,7 +498,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             var repo = CreateRepository(projectViews: projectViews);
             var query = new PaginationParameters<string>(page: 1, pageSize: 10)
             {
-                Filter = "{\"JobDescription\":\"FMD\"}"
+                Filter = "{\"ProjectTitle\":\"FMD\"}"
             };
 
             // Act

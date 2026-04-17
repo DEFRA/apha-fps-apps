@@ -88,7 +88,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
                 ? PactApiEndpoints.GetProjectSubContractTotalAmount
                 : QueryStringHelper.AddQueryString(PactApiEndpoints.GetProjectSubContractTotalAmount, new { project });
 
-            var response = await _http.GetAsync<decimal>(url);
+            var response = await _http.GetAsync<decimal?>(url);
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<decimal>>(response);
 

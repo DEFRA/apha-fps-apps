@@ -6,12 +6,12 @@ namespace Apha.PACT.DataAccess.Data
 {
     public partial class FpsDbContext : DbContext
     {
-        private readonly IFpsYearContext _fPSYearContext;
+        private readonly IFpsRequestContext _fpsRequestContext;
 
-        public FpsDbContext(DbContextOptions<FpsDbContext> options, IFpsYearContext fPSYearContext)
+        public FpsDbContext(DbContextOptions<FpsDbContext> options, IFpsRequestContext fpsRequestContext)
             : base(options)
         {
-            _fPSYearContext = fPSYearContext;
+            _fpsRequestContext = fpsRequestContext;
         }
 
         public virtual DbSet<Project> Projects { get; set; }
@@ -28,17 +28,17 @@ namespace Apha.PACT.DataAccess.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.ApplyConfiguration(new ProjectMap(_fPSYearContext));
-            modelBuilder.ApplyConfiguration(new WorkGroupMap(_fPSYearContext));
-            modelBuilder.ApplyConfiguration(new TimeCodeValidMap(_fPSYearContext));
-            modelBuilder.ApplyConfiguration(new JobCodeMap(_fPSYearContext));
-            modelBuilder.ApplyConfiguration(new TestCapabilityMap(_fPSYearContext));
-            modelBuilder.ApplyConfiguration(new TestRequirementMap(_fPSYearContext));
-            modelBuilder.ApplyConfiguration(new TestorProductMap(_fPSYearContext));
-            modelBuilder.ApplyConfiguration(new TestRequirementLogMap(_fPSYearContext));
-            modelBuilder.ApplyConfiguration(new MonthlyOutputMap(_fPSYearContext));
-            modelBuilder.ApplyConfiguration(new ProjectInvoiceMap(_fPSYearContext));
-            modelBuilder.ApplyConfiguration(new ProjectSubContractMap(_fPSYearContext));
+            modelBuilder.ApplyConfiguration(new ProjectMap(_fpsRequestContext));
+            modelBuilder.ApplyConfiguration(new WorkGroupMap(_fpsRequestContext));
+            modelBuilder.ApplyConfiguration(new TimeCodeValidMap(_fpsRequestContext));
+            modelBuilder.ApplyConfiguration(new JobCodeMap(_fpsRequestContext));
+            modelBuilder.ApplyConfiguration(new TestCapabilityMap(_fpsRequestContext));
+            modelBuilder.ApplyConfiguration(new TestRequirementMap(_fpsRequestContext));
+            modelBuilder.ApplyConfiguration(new TestorProductMap(_fpsRequestContext));
+            modelBuilder.ApplyConfiguration(new TestRequirementLogMap(_fpsRequestContext));
+            modelBuilder.ApplyConfiguration(new MonthlyOutputMap(_fpsRequestContext));
+            modelBuilder.ApplyConfiguration(new ProjectInvoiceMap(_fpsRequestContext));
+            modelBuilder.ApplyConfiguration(new ProjectSubContractMap(_fpsRequestContext));
         }
     }
 }
