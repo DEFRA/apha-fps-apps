@@ -175,9 +175,9 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateProposedProject(string parentproject, ProjectDetailsViewModel projectDetailsViewModel)
         {
-            if (projectDetailsViewModel?.ProposedProjectDetails == null)
+            if (projectDetailsViewModel.ProposedProjectDetails is null)
             {
-                return Json(new { success = false, errors = new string[] { "Project details are required" } });
+                return RedirectToAction(nameof(Index), new { parentproject });
             }
 
             projectDetailsViewModel.ProposedProjectDetails.Parentproject = parentproject;
