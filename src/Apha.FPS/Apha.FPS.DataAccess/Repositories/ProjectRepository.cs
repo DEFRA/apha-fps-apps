@@ -37,14 +37,25 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<PagedData<Project>> GetProjectsByProgramAsync(PaginationParameters<string> query, string programNo)
         {
             var projectQuery = _dbContext.ProjectViews
+                .AsNoTracking()
                 .Where(p => p.UserEmail != null && p.UserEmail.ToLower() == _requestContext.UserEmailId && p.Program == programNo)
                 .Select(pv => new Project
                 {
                     ParentProject = pv.ParentProject ?? string.Empty,
                     ProjectTitle = pv.ProjectTitle ?? string.Empty,
                     Program = pv.Program ?? string.Empty,
+                    Manager = pv.Manager,
+                    Customer = pv.Customer ?? string.Empty,
+                    Contract = pv.Contract ?? string.Empty,
+                    Disease = pv.Disease ?? string.Empty,
+                    ProjectStatus = pv.ProjectStatus ?? string.Empty,
+                    ProjectGroup = pv.ProjectGroup,
                     BudgetCvl = pv.BudgetCvl,
-                    IsDefraProject = pv.IsDefraProject ?? 0
+                    CustIncome = pv.CustIncome ?? 0,
+                    TransferIncome = pv.TransferIncome ?? 0,
+                    PlanCaseWorkDebit = pv.PlanCaseWorkDebit,
+                    IsDefraProject = pv.IsDefraProject ?? 0,
+                    IncomeAccountCode = pv.IncomeAccountCode ?? string.Empty
                 }).AsQueryable();
 
             projectQuery = ApplyProjectFilter(projectQuery, query.Filter);
@@ -117,6 +128,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             project.FpsYear = _requestContext.FpsYear;
             _dbContext.Entry(project).State = EntityState.Modified;
+            _dbContext.Entry(project).Property(p => p.IncomeAccountCode).IsModified = false;
             await _dbContext.SaveChangesAsync();
             return project;
         }
@@ -162,6 +174,13 @@ namespace Apha.FPS.DataAccess.Repositories
             return true;
         }
 
+        public async Task<bool> HasAssociatedJobCodesAsync(string parentProject)
+        {
+            return await _dbContext.JobCodes
+                .AnyAsync(j => j.ParentProject == parentProject
+                    && j.FpsYear == _requestContext.FpsYear);
+        }
+
         private static IQueryable ApplyOrder<T>(IQueryable<Project> query, Expression<Func<Project, T>> keySelector, bool descending)
         {
             return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
@@ -179,11 +198,14 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var dict = (IDictionary<string, object>)filterModel;
 
-            if (dict.TryGetValue("ParentProject", out var jobCode) && jobCode != null)
-                query = query.Where(x => x.ParentProject.Contains(jobCode.ToString()!));
+            if (dict.TryGetValue("ParentProject", out var parentProject) && parentProject != null)
+                query = query.Where(x => x.ParentProject.Contains(parentProject.ToString()!));
 
-            if (dict.TryGetValue("ProjectTitle", out var jobDescription) && jobDescription != null)
-                query = query.Where(x => x.ProjectTitle!.Contains(jobDescription.ToString()!));
+            if (dict.TryGetValue("ProjectTitle", out var projectTitle) && projectTitle != null)
+                query = query.Where(x => x.ProjectTitle.Contains(projectTitle.ToString()!));
+
+            if (dict.TryGetValue("Manager", out var manager) && manager != null)
+                query = query.Where(x => x.Manager!.Contains(manager.ToString()!));
 
             return query;
         }
