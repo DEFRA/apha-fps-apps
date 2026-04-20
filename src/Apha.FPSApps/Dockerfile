@@ -11,7 +11,7 @@ LABEL uk.gov.defra.parent-image=defra-dotnetcore-development:${PARENT_VERSION}
 WORKDIR /home/dotnet/src
 
 # Copy all source code into the image under /home/dotnet/src
-COPY --chown=dotnet:dotnet src/. .
+COPY --chmod=555 --chown=dotnet:dotnet src/. .
 
 # Remove write permissions from copied source (files: 444, dirs: 555)
 RUN find . -type d -exec chmod 555 {} \; && \
