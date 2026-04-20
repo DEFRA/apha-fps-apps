@@ -16,7 +16,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
     [Area("PIMS")]
     [Authorize(Roles = "PIMSAdmin,PIMSUser")]
     [AuthorizeForScopes(ScopeKeySection = "PIMSApiSettings:Scope")]
-    public class ProjectDetailsController : Controller
+   public class ProjectDetailsController : Controller
     {
         private readonly IMapper _mapper;
         private readonly IProjectListService _projectListService;
@@ -73,9 +73,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 IsFPS = allProjectsTask.Result.Data?.Any(p => p.Parentproject == parentproject) ?? false,
                 UseProjectYears = pimsDetail?.UseProjectYears ?? false,
                 CommentsGrid = commentsGrid,
-                YearOptions = Enumerable.Range(2017, DateTime.Today.Year - 2017 + 1)
-                    .Select(y => new SelectListItem(y.ToString(), y.ToString()))
-                    .ToList()
+                YearOptions = await GetYearOptions(),
             };
         }
 
@@ -86,6 +84,18 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                    .ToList() ?? [];
 
             return PrependDefaultOption(options);
+        }
+
+        private async Task<List<SelectListItem>> GetYearOptions()
+        {
+            var years = await _projectDetailsService.GetAllYearAsync();
+
+            List<SelectListItem> options = years?.Data?
+                   .OrderByDescending(y => y.Value)
+                   .Select(y => new SelectListItem(y.Value.ToString(), y.Value.ToString()))
+                   .ToList() ?? [];
+
+            return options;
         }
 
         private static List<SelectListItem> GetTransferToOptions(Task<ApiResponseDto<List<ProjectListViewDto>>> allProjectsTask)
@@ -192,7 +202,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAddEditCommentPartial(string parentproject, int? commentno, int? selectedYear)
         {
-            AddEditCommentViewModel model = LoadAddEditCommentViewModel(parentproject, commentno, selectedYear);
+            AddEditCommentViewModel model = await LoadAddEditCommentViewModelAsync(parentproject, commentno, selectedYear);
 
             if (commentno is not null and not 0)
             {
@@ -209,26 +219,24 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             return PartialView("_AddEditComment", model);
         }
 
-        private static AddEditCommentViewModel LoadAddEditCommentViewModel(string parentproject, int? commentno, int? selectedYear)
+        private async Task<AddEditCommentViewModel> LoadAddEditCommentViewModelAsync(string parentproject, int? commentno, int? selectedYear)
         {
+            ApiResponseDto<List<CommentTopicDto>> topicsResult = await _commentService.GetCommentTopicsAsync();
+
+            List<SelectListItem> topicOptions = [new SelectListItem("Select a topic", "")];
+            if (topicsResult is { Success: true, Data: not null })
+            {
+                topicOptions.AddRange(topicsResult.Data
+                    .Select(t => new SelectListItem(t.Topic, t.Topic)));
+            }
+
             return new()
             {
                 Project = parentproject,
                 IsAddingNew = commentno is null or 0,
                 Year = selectedYear,
-                YearOptions = Enumerable.Range(2017, DateTime.Today.Year - 2017 + 1)
-                                .Select(y => new SelectListItem(y.ToString(), y.ToString()))
-                                .ToList(),
-                TopicOptions =
-                            [
-                                new SelectListItem("Select a topic", ""),
-                    new SelectListItem("A&F Report", "A&F Report"),
-                    new SelectListItem("Contracts", "Contracts"),
-                    new SelectListItem("General Comment", "General Comment"),
-                    new SelectListItem("Invoicing", "Invoicing"),
-                    new SelectListItem("Outturn Report", "Outturn Report"),
-                    new SelectListItem("P&C Monitoring Report", "P&C Monitoring Report")
-                            ]
+                YearOptions =  await GetYearOptions(),
+                TopicOptions = topicOptions
             };
         }
 

@@ -15,6 +15,7 @@ namespace Apha.Common.Constants
 
         // Project Details
         public const string GetAllRisks = "api/v1/projectdetails/risks";
+        public const string GetAllYears = "api/v1/projectdetails/years";
         public const string GetPimsDetail = "api/v1/projectdetails/{0}/pims";
         public const string SavePimsDetail = "api/v1/projectdetails/{0}/pims";
         public const string GetProposedProject = "api/v1/projectdetails/{0}/proposed";
@@ -26,5 +27,6 @@ namespace Apha.Common.Constants
         public const string CreateComment = "api/v1/projectcomment";
         public const string UpdateComment = "api/v1/projectcomment/{0}";
         public const string DeleteComment = "api/v1/projectcomment/{0}";
+        public const string GetCommentTopics = "api/v1/projectcomment/commenttopics";
     }
 }

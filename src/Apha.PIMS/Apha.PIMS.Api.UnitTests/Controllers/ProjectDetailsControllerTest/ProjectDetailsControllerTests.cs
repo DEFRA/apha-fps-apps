@@ -235,44 +235,46 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectDetailsControllerTest
             var parentproject = "PP001";
             var request = new ProposedProjectReq
             {
-                Projecttitle = "Updated TB Project",
-                Program = "PROG2",
-                Customer = "CUST2",
-                Manager = "MGR2",
+                Projecttitle  = "Updated TB Project",
+                Program       = "PROG2",
+                Customer      = "CUST2",
+                Manager       = "MGR2",
                 Projectstatus = "Active",
-                Disease = "TB"
+                Disease       = "TB",
+                TransferTo    = null   // null → transferTo falls back to parentproject
             };
             var dto = new ProposedProjectDto
             {
-                Projecttitle = "Updated TB Project",
-                Program = "PROG2",
-                Customer = "CUST2",
-                Manager = "MGR2",
+                Projecttitle  = "Updated TB Project",
+                Program       = "PROG2",
+                Customer      = "CUST2",
+                Manager       = "MGR2",
                 Projectstatus = "Active",
-                Disease = "TB"
+                Disease       = "TB"
             };
             var updatedDto = new ProposedProjectDto
             {
-                Id = 5,
+                Id            = 5,
                 Parentproject = parentproject,
-                Projecttitle = "Updated TB Project",
-                Program = "PROG2",
-                Customer = "CUST2",
-                Manager = "MGR2",
+                Projecttitle  = "Updated TB Project",
+                Program       = "PROG2",
+                Customer      = "CUST2",
+                Manager       = "MGR2",
                 Projectstatus = "Active",
-                Disease = "TB"
+                Disease       = "TB"
             };
             var updatedRes = new ProposedProjectRes
             {
-                Id = 5,
+                Id            = 5,
                 Parentproject = parentproject,
-                Projecttitle = "Updated TB Project",
+                Projecttitle  = "Updated TB Project",
                 Projectstatus = "Active",
-                Disease = "TB"
+                Disease       = "TB"
             };
 
             _mapper.Map<ProposedProjectDto>(request).Returns(dto);
-            _service.UpdateProposedProjectAsync(dto).Returns(updatedDto);
+            // transferTo = request.TransferTo ?? parentproject → "PP001"
+            _service.UpdateProposedProjectAsync(dto, parentproject).Returns(updatedDto);
             _mapper.Map<ProposedProjectRes>(updatedDto).Returns(updatedRes);
 
             // Act
@@ -286,8 +288,38 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectDetailsControllerTest
             Assert.Equal(parentproject, dto.Parentproject);
 
             _mapper.Received(1).Map<ProposedProjectDto>(request);
-            await _service.Received(1).UpdateProposedProjectAsync(dto);
+            await _service.Received(1).UpdateProposedProjectAsync(dto, parentproject);
             _mapper.Received(1).Map<ProposedProjectRes>(updatedDto);
+        }
+
+        [Fact]
+        public async Task UpdateProposedProject_WithTransferTo_PassesTransferToToService()
+        {
+            // Arrange
+            var parentproject = "PP001";
+            var transferTo    = "PP002";
+            var request = new ProposedProjectReq
+            {
+                Projecttitle  = "Updated TB Project",
+                Projectstatus = "Active",
+                TransferTo    = transferTo   // explicit transfer target
+            };
+            var dto        = new ProposedProjectDto { Projecttitle = "Updated TB Project", Projectstatus = "Active" };
+            var updatedDto = new ProposedProjectDto { Id = 5, Parentproject = transferTo, Projecttitle = "Updated TB Project" };
+            var updatedRes = new ProposedProjectRes { Id = 5, Parentproject = transferTo, Projecttitle = "Updated TB Project" };
+
+            _mapper.Map<ProposedProjectDto>(request).Returns(dto);
+            _service.UpdateProposedProjectAsync(dto, transferTo).Returns(updatedDto);
+            _mapper.Map<ProposedProjectRes>(updatedDto).Returns(updatedRes);
+
+            // Act
+            var result = await _controller.UpdateProposedProject(parentproject, request);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(updatedRes, okResult.Value);
+
+            await _service.Received(1).UpdateProposedProjectAsync(dto, transferTo);
         }
 
         [Fact]
@@ -295,17 +327,23 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectDetailsControllerTest
         {
             // Arrange
             var parentproject = "PP001";
-            var request = new ProposedProjectReq { Projecttitle = "Updated Project", Projectstatus = "Active" };
+            var request = new ProposedProjectReq
+            {
+                Projecttitle  = "Updated Project",
+                Projectstatus = "Active",
+                TransferTo    = null
+            };
             var dto = new ProposedProjectDto { Projecttitle = "Updated Project", Projectstatus = "Active" };
 
             _mapper.Map<ProposedProjectDto>(request).Returns(dto);
-            _service.UpdateProposedProjectAsync(dto).Throws(new Exception("Database error"));
+            // transferTo = request.TransferTo ?? parentproject → "PP001"
+            _service.UpdateProposedProjectAsync(dto, parentproject).Throws(new Exception("Database error"));
 
             // Act & Assert
             await Assert.ThrowsAsync<Exception>(() => _controller.UpdateProposedProject(parentproject, request));
 
             _mapper.Received(1).Map<ProposedProjectDto>(request);
-            await _service.Received(1).UpdateProposedProjectAsync(dto);
+            await _service.Received(1).UpdateProposedProjectAsync(dto, parentproject);
             _mapper.DidNotReceive().Map<ProposedProjectRes>(Arg.Any<ProposedProjectDto>());
         }
 

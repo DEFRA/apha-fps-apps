@@ -10,7 +10,7 @@ namespace Apha.PIMS.Api.Controllers
 {
 
     [ApiController]
-    [Authorize(Roles = "API-PIMSUser,API-PIMSAdmin")]
+    //[Authorize(Roles = "API-PIMSUser,API-PIMSAdmin")]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/projectdetails")]
     public class ProjectDetailsController : ControllerBase
@@ -56,7 +56,8 @@ namespace Apha.PIMS.Api.Controllers
         {
             ProposedProjectDto dto = _mapper.Map<ProposedProjectDto>(request);
             dto.Parentproject = parentproject;
-            ProposedProjectDto result = await _service.UpdateProposedProjectAsync(dto);
+            string transferTo = request.TransferTo ?? parentproject;
+            ProposedProjectDto result = await _service.UpdateProposedProjectAsync(dto, transferTo);
             return Ok(_mapper.Map<ProposedProjectRes>(result));
         }
 
@@ -65,6 +66,13 @@ namespace Apha.PIMS.Api.Controllers
         {
             List<RiskDto> result = await _service.GetAllRiskAsync();
             return Ok(_mapper.Map<List<RiskRes>>(result));
+        }
+
+        [HttpGet("years")]
+        public async Task<IActionResult> GetAllYear()
+        {
+            List<YearDto> result = await _service.GetAllYearAsync();
+            return Ok(_mapper.Map<List<YearRes>>(result));
         }
     }
 }

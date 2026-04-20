@@ -388,6 +388,73 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS.ProjectDetailsService
 
         #endregion
 
+        #region GetAllYearAsync Tests
+
+        [Fact]
+        public async Task GetAllYearAsync_WithSuccessResponse_ReturnsYearList()
+        {
+            // Arrange
+            var years = new List<YearDto>
+            {
+                new YearDto { Value = 2022, Latestmonthreleased = 12 },
+                new YearDto { Value = 2023, Latestmonthreleased = 6 },
+                new YearDto { Value = 2024, Latestmonthreleased = null }
+            };
+            var expectedResponse = ApiResponseDto<List<YearDto>>.SuccessResponse(years);
+
+            _pimsProjectDetailsApiClient.GetAllYearAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _projectDetailsService.GetAllYearAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(3, result.Data?.Count);
+            await _pimsProjectDetailsApiClient.Received(1).GetAllYearAsync();
+        }
+
+        [Fact]
+        public async Task GetAllYearAsync_WithEmptyResult_ReturnsSuccessWithEmptyList()
+        {
+            // Arrange
+            var expectedResponse = ApiResponseDto<List<YearDto>>.SuccessResponse(new List<YearDto>());
+
+            _pimsProjectDetailsApiClient.GetAllYearAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _projectDetailsService.GetAllYearAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!);
+        }
+
+        [Fact]
+        public async Task GetAllYearAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var errors = new List<ApiErrorDto>
+            {
+                new ApiErrorDto { Message = "Failed to retrieve years", Code = "API_ERROR" }
+            };
+            var expectedResponse = ApiResponseDto<List<YearDto>>.FailureResponse(errors, new ApiMetaDto());
+
+            _pimsProjectDetailsApiClient.GetAllYearAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _projectDetailsService.GetAllYearAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+        }
+
+        #endregion
+
         #region Constructor Tests
 
         [Fact]

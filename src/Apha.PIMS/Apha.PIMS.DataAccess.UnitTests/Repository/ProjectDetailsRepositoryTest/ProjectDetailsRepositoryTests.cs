@@ -669,8 +669,8 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectDetailsRepositoryTest
                 Disease       = "FMD"
             };
 
-            // Act
-            var result = await repo.UpdateProposedProjectAsync(entity);
+            // Act — transferTo same as Parentproject → takes the Update/SaveChanges branch
+            var result = await repo.UpdateProposedProjectAsync(entity, "PP001");
 
             // Assert
             Assert.NotNull(result);
@@ -686,8 +686,8 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectDetailsRepositoryTest
             var (repo, _, proposedProjectsDbSet, _) = CreateRepositoryWithMocks();
             var entity = new ProposedProject { Id = 1, Parentproject = "PP001" };
 
-            // Act
-            await repo.UpdateProposedProjectAsync(entity);
+            // Act — transferTo same as Parentproject → Update should be called
+            await repo.UpdateProposedProjectAsync(entity, "PP001");
 
             // Assert
             proposedProjectsDbSet.Verify(x => x.Update(entity), Times.Once);
@@ -700,11 +700,27 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectDetailsRepositoryTest
             var (repo, _, _, mockContext) = CreateRepositoryWithMocks();
             var entity = new ProposedProject { Id = 1, Parentproject = "PP001" };
 
-            // Act
-            await repo.UpdateProposedProjectAsync(entity);
+            // Act — transferTo same as Parentproject → SaveChanges should be called
+            await repo.UpdateProposedProjectAsync(entity, "PP001");
 
             // Assert
             RepositoryTestHelper.VerifySaveChanges(mockContext, times: 1);
+        }
+
+        [Fact]
+        public async Task UpdateProposedProjectAsync_WhenTransferToDiffers_DoesNotCallDbSetUpdate()
+        {
+            // Arrange — ChangeProjectCodeAsync uses Database.CreateExecutionStrategy which is not
+            // easily exercised in a unit test, so we verify Update is NOT called on that path.
+            var (repo, _, proposedProjectsDbSet, _) = CreateRepositoryWithMocks();
+            var entity = new ProposedProject { Id = 1, Parentproject = "PP001" };
+
+            // Act + Assert — the code-change path throws because CreateExecutionStrategy is not
+            // set up on the mock, confirming we entered the transfer branch (not the Update branch).
+            await Assert.ThrowsAnyAsync<Exception>(() =>
+                repo.UpdateProposedProjectAsync(entity, "PP002"));
+
+            proposedProjectsDbSet.Verify(x => x.Update(It.IsAny<ProposedProject>()), Times.Never);
         }
 
         #endregion
