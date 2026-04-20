@@ -1,5 +1,4 @@
 using Apha.FPS.Core.Entities;
-using Apha.FPS.Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -7,12 +6,7 @@ namespace Apha.FPS.DataAccess.Data
 {
     public class ProjectViewMap : IEntityTypeConfiguration<ProjectView>
     {
-        private readonly IFpsRequestContext _fPSYearContext;
 
-        public ProjectViewMap(IFpsRequestContext fPSYearContext)
-        {
-            _fPSYearContext = fPSYearContext;
-        }
 
         public void Configure(EntityTypeBuilder<ProjectView> entity)
         {
@@ -127,7 +121,6 @@ namespace Apha.FPS.DataAccess.Data
             entity.Property(e => e.WipLimit)
                 .HasColumnType("money")
                 .HasColumnName("wip_limit");
-            entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
         }
     }
 }

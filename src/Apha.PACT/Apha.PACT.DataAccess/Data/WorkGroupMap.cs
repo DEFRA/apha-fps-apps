@@ -7,13 +7,6 @@ namespace Apha.PACT.DataAccess.Data
 {
     public class WorkGroupMap : IEntityTypeConfiguration<WorkGroup>
     {
-        private readonly IFpsRequestContext _fpsRequestContext;
-
-        public WorkGroupMap(IFpsRequestContext fpsRequestContext)
-        {
-            _fpsRequestContext = fpsRequestContext;
-        }
-
         public void Configure(EntityTypeBuilder<WorkGroup> entity)
         {
             entity.HasKey(e => new { e.WorkGroupName, e.FpsYear }).HasName("pk_workgroup");
@@ -46,7 +39,6 @@ namespace Apha.PACT.DataAccess.Data
                 .HasColumnType("citext")
                 .HasColumnName("profitcentre");
             entity.Property(e => e.SendEmail).HasColumnName("sendemail");
-            entity.HasQueryFilter(e => e.FpsYear == _fpsRequestContext.FpsYear);
         }
     }
 }

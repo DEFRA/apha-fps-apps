@@ -7,6 +7,7 @@ namespace Apha.PACT.DataAccess.Data
     public partial class FpsDbContext : DbContext
     {
         private readonly IFpsRequestContext _fpsRequestContext;
+        public int FilterFpsYear => _fpsRequestContext.FpsYear;
 
         public FpsDbContext(DbContextOptions<FpsDbContext> options, IFpsRequestContext fpsRequestContext)
             : base(options)
@@ -28,17 +29,38 @@ namespace Apha.PACT.DataAccess.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.ApplyConfiguration(new ProjectMap(_fpsRequestContext));
-            modelBuilder.ApplyConfiguration(new WorkGroupMap(_fpsRequestContext));
-            modelBuilder.ApplyConfiguration(new TimeCodeValidMap(_fpsRequestContext));
-            modelBuilder.ApplyConfiguration(new JobCodeMap(_fpsRequestContext));
-            modelBuilder.ApplyConfiguration(new TestCapabilityMap(_fpsRequestContext));
-            modelBuilder.ApplyConfiguration(new TestRequirementMap(_fpsRequestContext));
-            modelBuilder.ApplyConfiguration(new TestorProductMap(_fpsRequestContext));
-            modelBuilder.ApplyConfiguration(new TestRequirementLogMap(_fpsRequestContext));
-            modelBuilder.ApplyConfiguration(new MonthlyOutputMap(_fpsRequestContext));
-            modelBuilder.ApplyConfiguration(new ProjectInvoiceMap(_fpsRequestContext));
-            modelBuilder.ApplyConfiguration(new ProjectSubContractMap(_fpsRequestContext));
+            modelBuilder.ApplyConfiguration(new ProjectMap());
+            modelBuilder.Entity<Project>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new WorkGroupMap());
+            modelBuilder.Entity<WorkGroup>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new TimeCodeValidMap());
+            modelBuilder.Entity<TimeCodeValid>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new JobCodeMap());
+            modelBuilder.Entity<JobCode>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new TestCapabilityMap());
+            modelBuilder.Entity<TestCapability>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new TestRequirementMap());
+            modelBuilder.Entity<TestRequirement>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new TestorProductMap());
+            modelBuilder.Entity<TestorProduct>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new TestRequirementLogMap());
+            modelBuilder.Entity<TestRequirementLog>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new MonthlyOutputMap());
+            modelBuilder.Entity<MonthlyOutput>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new ProjectInvoiceMap());
+            modelBuilder.Entity<ProjectInvoice>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new ProjectSubContractMap());
+            modelBuilder.Entity<ProjectSubContract>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
         }
     }
 }

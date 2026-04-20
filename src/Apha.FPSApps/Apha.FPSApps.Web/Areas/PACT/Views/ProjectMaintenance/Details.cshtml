@@ -542,8 +542,13 @@
         }
 
         function executeCopyJobCode() {
+            var $form = $('#formAddJobcode');
+            clearValidationErrors($form);
+            if (!isFormValid($form)) {
+                displayClientValidationErrors($form, $form);
+                return;
+            }
             var jobCodeId = $('#JobCodeId').val();
-            if (!jobCodeId) { showGovukAlert('Please enter a Job Code.'); return; }
             var data = {
                 SourceJobCode: $('#sourceJobCode').val(),
                 JobCodeId: jobCodeId,
@@ -569,7 +574,7 @@
                             }
                             showGovukAlert('JobCode copied successfully.');
                         } else {
-                            showGovukAlert('Error: ' + response.message);
+                            displayServerValidationErrors(response.errors, response.message, '#formAddJobcode');
                         }
                     },
                     error: function() { showGovukAlert('An error occurred while copying.'); }

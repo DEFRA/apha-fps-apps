@@ -1,5 +1,4 @@
 using Apha.FPS.Core.Entities;
-using Apha.FPS.Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -7,12 +6,7 @@ namespace Apha.FPS.DataAccess.Data
 {
     public class AnimalMap : IEntityTypeConfiguration<Animal>
     {
-        private readonly IFpsRequestContext _fPSYearContext;
 
-        public AnimalMap(IFpsRequestContext fPSYearContext)
-        {
-            _fPSYearContext = fPSYearContext;
-        }
 
         public void Configure(EntityTypeBuilder<Animal> entity)
         {
@@ -39,7 +33,6 @@ namespace Apha.FPS.DataAccess.Data
             entity.Property(e => e.Species)
                 .HasMaxLength(50)
                 .HasColumnName("species");
-            entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
         }
     }
 }

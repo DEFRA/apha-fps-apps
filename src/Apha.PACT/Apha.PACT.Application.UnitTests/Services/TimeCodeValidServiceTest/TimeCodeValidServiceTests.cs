@@ -150,6 +150,7 @@ namespace Apha.PACT.Application.UnitTests.Services.TimeCodeValidServiceTest
 
             _mockJobCodeRepository.GetJobCodeByIdAsync("JC1").Returns(new JobCode { JobCodeId = "JC1" });
             _mockProjectRepository.ExistsAsync("PRJ1").Returns(true);
+            _mockRepository.GetTimeCodeValidAsync("WG1", "TC1", "PRJ1").Returns((TimeCodeValid?)null);
             _mockMapper.Map<TimeCodeValid>(dto).Returns(entity);
             _mockRepository.CreateTimeCodeValidAsync(entity).Returns(created);
             _mockMapper.Map<TimeCodeValidDto>(created).Returns(expected);
@@ -159,6 +160,21 @@ namespace Apha.PACT.Application.UnitTests.Services.TimeCodeValidServiceTest
             result.Should().Be(expected);
             _mockMapper.Received(1).Map<TimeCodeValid>(dto);
             await _mockRepository.Received(1).CreateTimeCodeValidAsync(entity);
+        }
+
+        [Fact]
+        public async Task CreateTimeCodeValidAsync_DuplicateRecord_ThrowsInvalidOperationException()
+        {
+            var dto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC1" };
+            _mockJobCodeRepository.GetJobCodeByIdAsync("JC1").Returns(new JobCode { JobCodeId = "JC1" });
+            _mockProjectRepository.ExistsAsync("PRJ1").Returns(true);
+            _mockRepository.GetTimeCodeValidAsync("WG1", "TC1", "PRJ1")
+                .Returns(new TimeCodeValid { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1" });
+
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.CreateTimeCodeValidAsync(dto));
+
+            ex.Message.Should().Contain("WG1").And.Contain("TC1").And.Contain("PRJ1");
+            await _mockRepository.DidNotReceive().CreateTimeCodeValidAsync(Arg.Any<TimeCodeValid>());
         }
 
         [Fact]

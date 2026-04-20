@@ -1,5 +1,4 @@
 using Apha.FPS.Core.Entities;
-using Apha.FPS.Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -7,12 +6,7 @@ namespace Apha.FPS.DataAccess.Data
 {
     public class FpsSettingMap : IEntityTypeConfiguration<FpsSetting>
     {
-        private readonly IFpsRequestContext _fPSYearContext;
 
-        public FpsSettingMap(IFpsRequestContext fPSYearContext)
-        {
-            _fPSYearContext = fPSYearContext;
-        }
 
         public void Configure(EntityTypeBuilder<FpsSetting> entity)
         {
@@ -42,7 +36,6 @@ namespace Apha.FPS.DataAccess.Data
                 .HasMaxLength(100)
                 .HasComment("User or service account that last modified the row.")
                 .HasColumnName("updated_by");
-            entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
         }
     }
 }

@@ -7,13 +7,6 @@ namespace Apha.PACT.DataAccess.Data
 {
     public class ProjectInvoiceMap : IEntityTypeConfiguration<ProjectInvoice>
     {
-        private readonly IFpsRequestContext _fpsRequestContext;
-
-        public ProjectInvoiceMap(IFpsRequestContext fpsRequestContext)
-        {
-            _fpsRequestContext = fpsRequestContext;
-        }
-
         public void Configure(EntityTypeBuilder<ProjectInvoice> entity)
         {
             entity.HasKey(e => new { e.InvoiceCounter, e.FpsYear }).HasName("pk_proj_invoice");
@@ -47,7 +40,6 @@ namespace Apha.PACT.DataAccess.Data
             entity.Property(e => e.X)
                 .HasMaxLength(5)
                 .HasColumnName("x");
-            entity.HasQueryFilter(e => e.FpsYear == _fpsRequestContext.FpsYear);
         }
     }
 }

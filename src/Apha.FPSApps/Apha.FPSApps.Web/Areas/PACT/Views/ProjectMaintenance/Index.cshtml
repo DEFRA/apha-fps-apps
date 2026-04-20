@@ -108,8 +108,7 @@
 
         function viewProject(btn) {
             var parentProject = $(btn).data('id');
-            debugger;
-            window.location.href = '/PACT/ProjectMaintenance/Details/' + encodeURIComponent(parentProject);
+            fpsNavigateTo('/PACT/ProjectMaintenance/Details/' + encodeURIComponent(parentProject));
         }
     </script>
 }
