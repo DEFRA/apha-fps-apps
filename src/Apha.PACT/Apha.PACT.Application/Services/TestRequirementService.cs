@@ -33,6 +33,15 @@ namespace Apha.PACT.Application.Services
             return new PaginatedResult<TestRequirementtDto>(dtos, paginationDto);
         }
 
+        public async Task<PaginatedResult<TestRequirementtDto>> GetPagedTestReqmtByProjectAsync(QueryParameters<string> query, string parentProject)
+        {
+            var parameters = _mapper.Map<PaginationParameters<string>>(query);
+            var pagedData = await _testReqmtRepository.GetPagedByProjectAsync(parameters, parentProject);
+            var dtos = _mapper.Map<List<TestRequirementtDto>>(pagedData.Data);
+            var paginationDto = _mapper.Map<PaginationDto>(pagedData.PaginationData);
+            return new PaginatedResult<TestRequirementtDto>(dtos, paginationDto);
+        }
+
         public async Task<IEnumerable<TestRequirementtDto>> GetAllTestReqmtForExportAsync(string testCode, string? filterJson)
         {
             var items = await _testReqmtRepository.GetAllForExportAsync(testCode, filterJson);
@@ -72,6 +81,11 @@ namespace Apha.PACT.Application.Services
                 if (!capabilityExists)
                     throw new InvalidOperationException("This workgroup is not setup to do this test.");
             }
+
+            // Duplicate check: no existing record may exist with same TestCode + Buyer
+            var exists = await _testReqmtRepository.ExistsAsync(dto.TestCode, dto.Buyer);
+            if (exists)
+                throw new InvalidOperationException("A record with the same TestCode and Buyer already exists.");
 
             var entity = _mapper.Map<TestRequirement>(dto);
             var created = await _testReqmtRepository.AddAsync(entity);

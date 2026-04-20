@@ -14,23 +14,34 @@
     <form id="formAddJobcode" class="govuk-grid-column-full">
         <input type="hidden" id="sourceJobCode" name="sourceJobCode" value="@sourceJobCodeId" />
 
+        <!-- Validation error summary -->
+        <div class="govuk-error-summary" role="alert"
+             aria-labelledby="error-summary-title" tabindex="-1" style="display:none;">
+            <h2 class="govuk-error-summary__title" id="error-summary-title">
+                There is a problem
+            </h2>
+            <div class="govuk-error-summary__body">
+                <ul class="govuk-list govuk-error-summary__list"></ul>
+            </div>
+        </div>
+
         <!-- Job Code -->
         <div class="govuk-form-group">
-            <label class="govuk-label govuk-!-font-weight-bold" asp-for="JobCodeId">Job code:</label>
-            <input type="text" class="govuk-input govuk-!-font-size-16" asp-for="JobCodeId" />
-            <span asp-validation-for="JobCodeId" class="govuk-error-message"></span>
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="JobCodeId">Job code <span class="sup_color_red">*</span></label>
+            <input type="text" class="govuk-input govuk-!-font-size-16" asp-for="JobCodeId" required/>
+            <span asp-validation-for="JobCodeId" class="govuk-error-message" style="display:none;"></span>
         </div>
 
         <!-- Name / Description -->
         <div class="govuk-form-group">
-            <label class="govuk-label govuk-!-font-weight-bold" asp-for="JobCodeName">Name:</label>
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="JobCodeName">Name</label>
             <textarea class="govuk-textarea govuk-!-font-size-16 sup_margin_0"
                       asp-for="JobCodeName" rows="3"></textarea>
         </div>
 
         <!-- Type -->
         <div class="govuk-form-group">
-            <label class="govuk-label govuk-!-font-weight-bold" asp-for="Type">Type:</label>
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="Type">Type</label>
             <select asp-for="Type" asp-items="ViewBag.Types"
                     class="govuk-select govuk-!-font-size-16">
                 <option value="">--select--</option>
@@ -39,7 +50,7 @@
 
         <!-- Work Group -->
         <div class="govuk-form-group">
-            <label class="govuk-label govuk-!-font-weight-bold" asp-for="JobCodeWorkGroup">Work Group:</label>
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="JobCodeWorkGroup">Work Group</label>
             <select asp-for="JobCodeWorkGroup"
                     asp-items="@(ViewBag.WorkGroups as List<SelectListItem>)"
                     class="govuk-select govuk-!-font-size-16">
@@ -71,6 +82,7 @@
             onclick="$('#modalPopup').removeClass('show')">Cancel</button>
     <button type="button" class="govuk-button sup_margin_0"
             data-module="govuk-button" id="modalcopySaveBtn"
-            onclick="executeCopyJobCode()">Save Copy
+            onclick="executeCopyJobCode()" allow-edit="true">
+        Save Copy
     </button>
 </div>

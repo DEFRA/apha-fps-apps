@@ -124,7 +124,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return Json(new
             {
                 success = false,
-                message = "Failed to create Staff cost planned hours.",
+                message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to create Staff cost planned hours.",
                 errors = (result.Errors ?? new List<ApiErrorDto>()).Select(e => new
                 {
                     field = e.Code ?? string.Empty,
@@ -149,7 +149,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 return Json(new
                 {
                     success = false,
-                    message = "Failed to retrieve Staff job details.",
+                    message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to retrieve Staff job details.",
                     errors = (result.Errors ?? new List<ApiErrorDto>()).Select(e => new
                     {
                         field = e.Code ?? string.Empty,
@@ -194,7 +194,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return Json(new
             {
                 success = false,
-                message = "Failed to update Staff cost planned hours.",
+                message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to update Staff cost planned hours.",
                 errors = (result.Errors ?? new List<ApiErrorDto>()).Select(e => new
                 {
                     field = e.Code ?? string.Empty,
@@ -215,7 +215,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return Json(new
             {
                 success = false,
-                message = "Failed to delete Staff cost planned hours.",
+                message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to delete Staff cost planned hours.",
                 errors = (result.Errors ?? new List<ApiErrorDto>()).Select(e => new
                 {
                     field = e.Code ?? string.Empty,

@@ -64,16 +64,13 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramAnimalPlanController
         }
 
         [Fact]
-        public async Task Index_WithoutProgramNo_UsesFirstProgramFromList()
+        public async Task Index_WithoutProgramNo_UsesEmptySelectedProgramNo()
         {
             // Arrange
             var programs = BuildProgramList();
-            var firstProgram = programs[0];
 
             _programService.GetAllProgramsAsync()
                 .Returns(ApiResponseDto<IEnumerable<ProgramDto>>.SuccessResponse(programs));
-            _programService.GetProgramByIdAsync("P001")
-                .Returns(ApiResponseDto<ProgramDto?>.SuccessResponse(firstProgram));
 
             // Act
             var result = await _controller.Index(null);
@@ -82,10 +79,11 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramAnimalPlanController
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<ProgramAnimalPlanViewModel>(viewResult.Model);
 
-            Assert.Equal("P001",            model.SelectedProgramNo);
-            Assert.Equal("Programme Alpha", model.SelectedProgramme);
-            Assert.Equal("Alice",           model.Manager);
-            await _programService.Received(1).GetProgramByIdAsync("P001");
+            Assert.Equal(string.Empty, model.SelectedProgramNo);
+            Assert.Equal(string.Empty, model.SelectedProgramme);
+            Assert.Equal(string.Empty, model.Manager);
+            Assert.Equal(2, model.ProgrammeList.Count);
+            await _programService.DidNotReceive().GetProgramByIdAsync(Arg.Any<string>());
         }
 
         [Fact]

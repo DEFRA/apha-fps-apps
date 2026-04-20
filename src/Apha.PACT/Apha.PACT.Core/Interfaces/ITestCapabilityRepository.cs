@@ -11,5 +11,6 @@ namespace Apha.PACT.Core.Interfaces
         Task<TestCapability> AddAsync(TestCapability entity);
         Task<TestCapability> UpdateAsync(TestCapability entity);
         Task<bool> DeleteAsync(string testCode, string workGroup);
+        Task<bool> ExistsAsync(string testCode, string portfolio);
     }
 }

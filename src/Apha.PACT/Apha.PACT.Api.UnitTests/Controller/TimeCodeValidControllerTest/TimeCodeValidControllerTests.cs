@@ -127,10 +127,10 @@ namespace Apha.PACT.Api.UnitTests.Controller.TimeCodeValidControllerTest
         [Fact]
         public async Task Create_HappyPath_ReturnsOk()
         {
-            var req = new TimeCodeValidReq { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1" };
-            var dto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1" };
-            var createdDto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1" };
-            var mapped = new TimeCodeValidRes { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1" };
+            var req = new TimeCodeValidReq { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC1" };
+            var dto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC1" };
+            var createdDto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC1" };
+            var mapped = new TimeCodeValidRes { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC1" };
 
             _mapperMock.Map<TimeCodeValidDto>(req).Returns(dto);
             _serviceMock.CreateTimeCodeValidAsync(dto).Returns(createdDto);
@@ -140,6 +140,37 @@ namespace Apha.PACT.Api.UnitTests.Controller.TimeCodeValidControllerTest
 
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(mapped, okResult.Value);
+        }
+
+        [Fact]
+        public async Task Create_WithTestCodeAndPortfolio_ReturnsOk()
+        {
+            var req = new TimeCodeValidReq { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", TestCode = "TST1", Portfolio = "PF1" };
+            var dto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", TestCode = "TST1", Portfolio = "PF1" };
+            var createdDto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", TestCode = "TST1", Portfolio = "PF1" };
+            var mapped = new TimeCodeValidRes { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", TestCode = "TST1", Portfolio = "PF1" };
+
+            _mapperMock.Map<TimeCodeValidDto>(req).Returns(dto);
+            _serviceMock.CreateTimeCodeValidAsync(dto).Returns(createdDto);
+            _mapperMock.Map<TimeCodeValidRes>(createdDto).Returns(mapped);
+
+            var result = await _controller.Create(req);
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(mapped, okResult.Value);
+        }
+
+        [Fact]
+        public async Task Create_ServiceThrowsInvalidOperationException_PropagatesException()
+        {
+            var req = new TimeCodeValidReq { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1" };
+            var dto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1" };
+
+            _mapperMock.Map<TimeCodeValidDto>(req).Returns(dto);
+            _serviceMock.CreateTimeCodeValidAsync(dto).ThrowsAsync(new InvalidOperationException("Must fill in Testcode and Portfolio, or Jobcode"));
+
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.Create(req));
+            Assert.Equal("Must fill in Testcode and Portfolio, or Jobcode", ex.Message);
         }
 
         [Fact]
@@ -161,10 +192,10 @@ namespace Apha.PACT.Api.UnitTests.Controller.TimeCodeValidControllerTest
         [Fact]
         public async Task Update_HappyPath_ReturnsOk()
         {
-            var req = new TimeCodeValidReq { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1" };
-            var dto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1" };
-            var updatedDto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1" };
-            var mapped = new TimeCodeValidRes { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1" };
+            var req = new TimeCodeValidReq { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC1" };
+            var dto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC1" };
+            var updatedDto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC1" };
+            var mapped = new TimeCodeValidRes { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC1" };
 
             _mapperMock.Map<TimeCodeValidDto>(req).Returns(dto);
             _serviceMock.UpdateTimeCodeValidAsync(dto).Returns(updatedDto);
@@ -174,6 +205,37 @@ namespace Apha.PACT.Api.UnitTests.Controller.TimeCodeValidControllerTest
 
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(mapped, okResult.Value);
+        }
+
+        [Fact]
+        public async Task Update_WithTestCodeAndPortfolio_ReturnsOk()
+        {
+            var req = new TimeCodeValidReq { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", TestCode = "TST1", Portfolio = "PF1" };
+            var dto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", TestCode = "TST1", Portfolio = "PF1" };
+            var updatedDto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", TestCode = "TST1", Portfolio = "PF1" };
+            var mapped = new TimeCodeValidRes { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", TestCode = "TST1", Portfolio = "PF1" };
+
+            _mapperMock.Map<TimeCodeValidDto>(req).Returns(dto);
+            _serviceMock.UpdateTimeCodeValidAsync(dto).Returns(updatedDto);
+            _mapperMock.Map<TimeCodeValidRes>(updatedDto).Returns(mapped);
+
+            var result = await _controller.Update(req);
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(mapped, okResult.Value);
+        }
+
+        [Fact]
+        public async Task Update_ServiceThrowsInvalidOperationException_PropagatesException()
+        {
+            var req = new TimeCodeValidReq { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1" };
+            var dto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1" };
+
+            _mapperMock.Map<TimeCodeValidDto>(req).Returns(dto);
+            _serviceMock.UpdateTimeCodeValidAsync(dto).ThrowsAsync(new InvalidOperationException("Not a valid jobcode."));
+
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.Update(req));
+            Assert.Equal("Not a valid jobcode.", ex.Message);
         }
 
         [Fact]

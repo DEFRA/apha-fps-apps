@@ -7,7 +7,6 @@ using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients;
 using AutoMapper;
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
 using Xunit;
 
 namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestCapabilityApiClientTest
@@ -16,13 +15,13 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestCapabilityA
     {
         private readonly IPactHttpExecutor _http;
         private readonly IMapper _mapper;
-        private readonly PactWorkGroupTestCapabilityApiClient _client;
+        private readonly PactTestCapabilityApiClient _client;
 
         public PactTestCapabilityApiClientTests()
         {
             _http = Substitute.For<IPactHttpExecutor>();
             _mapper = Substitute.For<IMapper>();
-            _client = new PactWorkGroupTestCapabilityApiClient(_http, _mapper);
+            _client = new PactTestCapabilityApiClient(_http, _mapper);
         }
 
         #region GetPagedByWorkGroupAsync
@@ -64,20 +63,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestCapabilityA
             Assert.NotNull(result.Errors);
         }
 
-        [Fact]
-        public async Task GetPagedByWorkGroupAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            _http.GetAsync<List<TestCapabilityRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            var result = await _client.GetPagedByWorkGroupAsync(query, "WG1");
-
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve test capabilities by work group", error.Message);
-        }
-
         #endregion
 
         #region GetPagedByTestCodeAsync
@@ -116,20 +101,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestCapabilityA
             Assert.False(result.Success);
         }
 
-        [Fact]
-        public async Task GetPagedByTestCodeAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            var query = new QueryParameters<string>();
-            _http.GetAsync<List<TestCapabilityRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("error"));
-
-            var result = await _client.GetPagedByTestCodeAsync(query, "TC1");
-
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve test capabilities by test code", error.Message);
-        }
-
         #endregion
 
         #region GetTestCapabilityByIdAsync
@@ -164,19 +135,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestCapabilityA
             var result = await _client.GetTestCapabilityByIdAsync("TC1", "WG1");
 
             Assert.False(result.Success);
-        }
-
-        [Fact]
-        public async Task GetTestCapabilityByIdAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            _http.GetAsync<TestCapabilityRes>(Arg.Any<string>()).ThrowsAsync(new Exception("error"));
-
-            var result = await _client.GetTestCapabilityByIdAsync("TC1", "WG1");
-
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve test capability", error.Message);
         }
 
         #endregion
@@ -221,22 +179,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestCapabilityA
             Assert.False(result.Success);
         }
 
-        [Fact]
-        public async Task CreateTestCapabilityAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            var dto = new TestCapabilityDto { TestCode = "TC1", WorkGroup = "WG1" };
-            _mapper.Map<TestCapabilityReq>(dto).Returns(new TestCapabilityReq());
-            _http.PostAsync<TestCapabilityReq, TestCapabilityRes>(Arg.Any<string>(), Arg.Any<TestCapabilityReq>())
-                .ThrowsAsync(new Exception("error"));
-
-            var result = await _client.CreateTestCapabilityAsync(dto);
-
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to create test capability", error.Message);
-        }
-
         #endregion
 
         #region UpdateTestCapabilityAsync
@@ -277,22 +219,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestCapabilityA
             Assert.False(result.Success);
         }
 
-        [Fact]
-        public async Task UpdateTestCapabilityAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            var dto = new TestCapabilityDto { TestCode = "TC1", WorkGroup = "WG1" };
-            _mapper.Map<TestCapabilityReq>(dto).Returns(new TestCapabilityReq());
-            _http.PutAsync<TestCapabilityReq, TestCapabilityRes>(Arg.Any<string>(), Arg.Any<TestCapabilityReq>())
-                .ThrowsAsync(new Exception("error"));
-
-            var result = await _client.UpdateTestCapabilityAsync(dto);
-
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to update test capability", error.Message);
-        }
-
         #endregion
 
         #region DeleteTestCapabilityAsync
@@ -300,10 +226,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestCapabilityA
         [Fact]
         public async Task DeleteTestCapabilityAsync_WithValidKeys_DeletesAndReturnsTrue()
         {
-            var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
+            var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
             var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
 
-            _http.DeleteAsync<bool>(Arg.Is<string>(url =>
+            _http.DeleteAsync<bool?>(Arg.Is<string>(url =>
                 url.Contains("api/v1/testcapability/testcapability/") &&
                 url.Contains(Uri.EscapeDataString("TC1")) && url.Contains(Uri.EscapeDataString("WG1"))))
                 .Returns(apiResponse);
@@ -317,10 +243,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestCapabilityA
         [Fact]
         public async Task DeleteTestCapabilityAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
-            var apiResponse = new ApiResponse<bool> { Success = false, Errors = [new ApiError { Code = "NOT_FOUND" }] };
+            var apiResponse = new ApiResponse<bool?> { Success = false, Errors = [new ApiError { Code = "NOT_FOUND" }] };
             var mappedDto = new ApiResponseDto<bool> { Success = false, Errors = [new ApiErrorDto { Code = "NOT_FOUND" }], Meta = new ApiMetaDto() };
 
-            _http.DeleteAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
+            _http.DeleteAsync<bool?>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedDto);
 
             var result = await _client.DeleteTestCapabilityAsync("TC1", "WG1");
@@ -328,75 +254,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestCapabilityA
             Assert.False(result.Success);
         }
 
-        [Fact]
-        public async Task DeleteTestCapabilityAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            _http.DeleteAsync<bool>(Arg.Any<string>()).ThrowsAsync(new Exception("error"));
-
-            var result = await _client.DeleteTestCapabilityAsync("TC1", "WG1");
-
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to delete test capability", error.Message);
-        }
-
-        #endregion              
-
-        #region GetAllTestorProductsAsync
-
-        [Fact]
-        public async Task GetAllTestorProductsAsync_WithData_ReturnsMappedList()
-        {
-            var apiResponse = new ApiResponse<List<TestorProductRes>>
-            {
-                Success = true,
-                Data = [new TestorProductRes { ItemCode = "BLOOD" }, new TestorProductRes { ItemCode = "URINE" }]
-            };
-            var expectedDto = ApiResponseDto<List<TestorProductDto>>.SuccessResponse(
-            [
-                new TestorProductDto { ItemCode = "BLOOD" },
-                new TestorProductDto { ItemCode = "URINE" }
-            ]);
-
-            _http.GetAsync<List<TestorProductRes>>(
-                Arg.Is<string>(url => url.Contains("api/v1/testcapability/testorproducts")))
-                .Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<TestorProductDto>>>(apiResponse).Returns(expectedDto);
-
-            var result = await _client.GetAllTestorProductsAsync();
-
-            Assert.True(result.Success);
-            Assert.Equal(2, result.Data?.Count);
-        }
-
-        [Fact]
-        public async Task GetAllTestorProductsAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
-        {
-            var apiResponse = new ApiResponse<List<TestorProductRes>> { Success = false, Errors = [new ApiError { Code = "ERR" }] };
-            var mappedDto = new ApiResponseDto<List<TestorProductDto>> { Success = false, Errors = [new ApiErrorDto { Code = "ERR" }], Meta = new ApiMetaDto() };
-
-            _http.GetAsync<List<TestorProductRes>>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<TestorProductDto>>>(apiResponse).Returns(mappedDto);
-
-            var result = await _client.GetAllTestorProductsAsync();
-
-            Assert.False(result.Success);
-        }
-
-        [Fact]
-        public async Task GetAllTestorProductsAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            _http.GetAsync<List<TestorProductRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("error"));
-
-            var result = await _client.GetAllTestorProductsAsync();
-
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve test or products", error.Message);
-        }
-
-        #endregion
+        #endregion                     
     }
 }

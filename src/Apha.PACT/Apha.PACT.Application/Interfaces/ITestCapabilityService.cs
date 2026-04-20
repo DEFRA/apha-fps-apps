@@ -11,7 +11,5 @@ namespace Apha.PACT.Application.Interfaces
         Task<TestCapabilityDto> AddTestCapabilityAsync(TestCapabilityDto dto);
         Task<TestCapabilityDto> UpdateTestCapabilityAsync(TestCapabilityDto dto);
         Task<bool> DeleteTestCapabilityAsync(string testCode, string workGroup);
-
-        Task<IEnumerable<TestorProductDto>> GetAllTestorProductsAsync();
     }
 }

@@ -1,12 +1,8 @@
 ﻿using Apha.Costbook.Api.Filters;
 using Apha.Costbook.Api.Mappings;
 using Apha.Costbook.Api.Middleware;
-using Apha.Costbook.Application.Interfaces;
 using Apha.Costbook.Application.Mappings;
-using Apha.Costbook.Application.Services;
-using Apha.Costbook.Core.Interfaces;
 using Apha.Costbook.DataAccess.Data;
-using Apha.Costbook.DataAccess.Repositories;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
@@ -38,17 +34,21 @@ namespace Apha.Costbook.Api.Extensions
                 });
             });
 
-            services.AddStackExchangeRedisCache(options =>
+            if (builder.Environment.IsEnvironment("local"))
             {
-                options.Configuration = builder.Configuration.GetConnectionString("RedisConnectionString");
-                options.InstanceName = "RedisInstance";
-            });
+                services.AddDistributedMemoryCache();
+            }
+            else
+            {
+                services.AddStackExchangeRedisCache(options =>
+                {
+                    options.Configuration = configuration.GetConnectionString("RedisConnectionString");
+                    options.InstanceName = "RedisInstance";
+                });
+            }
 
-            
-           
 
-
-            // AutoMapper            
+            // AutoMapper
             services.AddAutoMapper(config =>
             {
                 config.AddMaps(typeof(EntityMapper).Assembly);

@@ -1,6 +1,7 @@
 ﻿using Apha.Costbook.Application.Dtos;
 using Apha.Costbook.Application.Pagination;
 using Apha.Costbook.Application.Services;
+using Apha.Costbook.Application.Validation;
 using Apha.Costbook.Core.Entities;
 using Apha.Costbook.Core.Interfaces;
 using Apha.Costbook.Core.Pagination;
@@ -44,8 +45,8 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             {
                 Data = new List<Project>
                 {
-                    new Project { ProjectId = "P001", Projecttitle = "Test Project 1" },
-                    new Project { ProjectId = "P002", Projecttitle = "Test Project 2" }
+                    new Project { ProjectId = "P001", ProjectTitle = "Test Project 1" },
+                    new Project { ProjectId = "P002", ProjectTitle = "Test Project 2" }
                 },
                 PaginationData = new PaginationData
                 {
@@ -59,8 +60,8 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             {
                 Data = new List<ProjectDto>
                 {
-                    new ProjectDto { ProjectId = "P001", Projecttitle = "Test Project 1" },
-                    new ProjectDto { ProjectId = "P002", Projecttitle = "Test Project 2" }
+                    new ProjectDto { ProjectId = "P001", ProjectTitle = "Test Project 1" },
+                    new ProjectDto { ProjectId = "P002", ProjectTitle = "Test Project 2" }
                 },
                 PaginationData = new PaginationDto
                 {
@@ -160,7 +161,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             {
                 Data = new List<Project>
                 {
-                    new Project { ProjectId = "P001", Projecttitle = "Test Project", PreparedBy = "John Doe" }
+                    new Project { ProjectId = "P001", ProjectTitle = "Test Project", PreparedBy = "John Doe" }
                 },
                 PaginationData = new PaginationData
                 {
@@ -174,7 +175,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             {
                 Data = new List<ProjectDto>
                 {
-                    new ProjectDto { ProjectId = "P001", Projecttitle = "Test Project", PreparedBy = "John Doe" }
+                    new ProjectDto { ProjectId = "P001", ProjectTitle = "Test Project", PreparedBy = "John Doe" }
                 },
                 PaginationData = new PaginationDto
                 {
@@ -264,13 +265,13 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             var submittedByFilter = "John Doe";
             var projects = new List<Project>
             {
-                new Project { ProjectId = "P001", Projecttitle = "Test Project 1" },
-                new Project { ProjectId = "P002", Projecttitle = "Test Project 2" }
+                new Project { ProjectId = "P001", ProjectTitle = "Test Project 1" },
+                new Project { ProjectId = "P002", ProjectTitle = "Test Project 2" }
             };
             var projectDtos = new List<ProjectDto>
             {
-                new ProjectDto { ProjectId = "P001", Projecttitle = "Test Project 1" },
-                new ProjectDto { ProjectId = "P002", Projecttitle = "Test Project 2" }
+                new ProjectDto { ProjectId = "P001", ProjectTitle = "Test Project 1" },
+                new ProjectDto { ProjectId = "P002", ProjectTitle = "Test Project 2" }
             };
 
             _mockRepository.GetProjectsAsync(contractFilter, submittedByFilter).Returns(projects);
@@ -291,11 +292,11 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             // Arrange
             var projects = new List<Project>
             {
-                new Project { ProjectId = "P001", Projecttitle = "Test Project 1" }
+                new Project { ProjectId = "P001", ProjectTitle = "Test Project 1" }
             };
             var projectDtos = new List<ProjectDto>
             {
-                new ProjectDto { ProjectId = "P001", Projecttitle = "Test Project 1" }
+                new ProjectDto { ProjectId = "P001", ProjectTitle = "Test Project 1" }
             };
 
             _mockRepository.GetProjectsAsync(null, null).Returns(projects);
@@ -337,8 +338,8 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
         {
             // Arrange
             var projectId = "P001";
-            var project = new Project { ProjectId = projectId, Projecttitle = "Test Project" };
-            var projectDto = new ProjectDto { ProjectId = projectId, Projecttitle = "Test Project" };
+            var project = new Project { ProjectId = projectId, ProjectTitle = "Test Project" };
+            var projectDto = new ProjectDto { ProjectId = projectId, ProjectTitle = "Test Project" };
 
             _mockRepository.GetProjectByIdAsync(projectId).Returns(project);
             _mockMapper.Map<ProjectDto>(project).Returns(projectDto);
@@ -380,17 +381,17 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             var projectDto = new ProjectDto
             {
                 ProjectId = "P001",
-                Projecttitle = "Test Project",
+                ProjectTitle = "Test Project",
                 PreparedBy = "John Doe",
                 Startdate = new DateOnly(2024, 4, 1),
-                Isdefraproject = 1,
+                IsDefraProject = 1,
                 Inflation = 2,
-                Financialyears = 1
+                FinancialYears = 1
             };
 
-            var project = new Project { ProjectId = "P001", Projecttitle = "Test Project" };
-            var resultProject = new Project { ProjectId = "P001", Projecttitle = "Test Project" };
-            var resultDto = new ProjectDto { ProjectId = "P001", Projecttitle = "Test Project" };
+            var project = new Project { ProjectId = "P001", ProjectTitle = "Test Project" };
+            var resultProject = new Project { ProjectId = "P001", ProjectTitle = "Test Project" };
+            var resultDto = new ProjectDto { ProjectId = "P001", ProjectTitle = "Test Project" };
 
             _mockMapper.Map<Project>(projectDto).Returns(project);
             _mockRepository.AddProjectAsync(project).Returns(resultProject);
@@ -402,7 +403,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             // Assert
             Assert.NotNull(result);
             Assert.Equal("P001", result.ProjectId);
-            Assert.Equal(2024, projectDto.Startfyear); // Financial year calculated
+            Assert.Equal(2024, projectDto.StartFYear); // Financial year calculated
             await _mockRepository.Received(1).AddProjectAsync(project);
         }
 
@@ -413,10 +414,10 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             var projectDto = new ProjectDto
             {
                 ProjectId = "",
-                Projecttitle = "Test Project",
+                ProjectTitle = "Test Project",
                 PreparedBy = "John Doe",
                 Startdate = new DateOnly(2024, 4, 1),
-                Isdefraproject = 1
+                IsDefraProject = 1
             };
 
             var generatedId = "P001";
@@ -444,10 +445,10 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             var projectDto = new ProjectDto
             {
                 ProjectId = null!,
-                Projecttitle = "Test Project",
+                ProjectTitle = "Test Project",
                 PreparedBy = "John Doe",
                 Startdate = new DateOnly(2024, 4, 1),
-                Isdefraproject = 1
+                IsDefraProject = 1
             };
 
             var generatedId = "P001";
@@ -475,10 +476,10 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             var projectDto = new ProjectDto
             {
                 ProjectId = "P001",
-                Projecttitle = "Test Project",
+                ProjectTitle = "Test Project",
                 PreparedBy = "John Doe",
                 Startdate = new DateOnly(2024, 4, 1),
-                Isdefraproject = 1,
+                IsDefraProject = 1,
                 Inflation = null
             };
 
@@ -504,10 +505,10 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             var projectDto = new ProjectDto
             {
                 ProjectId = "P001",
-                Projecttitle = "", // Missing title
+                ProjectTitle = "", // Missing title
                 PreparedBy = "John Doe",
                 Startdate = null, // Missing start date
-                Isdefraproject = null // Missing defra project flag
+                IsDefraProject = null // Missing defra project flag
             };
 
             // Act & Assert
@@ -525,10 +526,10 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             var projectDto = new ProjectDto
             {
                 ProjectId = "P001",
-                Projecttitle = longTitle,
+                ProjectTitle = longTitle,
                 PreparedBy = "John Doe",
                 Startdate = new DateOnly(2024, 4, 1),
-                Isdefraproject = 1
+                IsDefraProject = 1
             };
 
             // Act & Assert
@@ -549,15 +550,15 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             {
                 ProjectId = projectId,
                 Inflation = 1,
-                Isdefraproject = 0
+                IsDefraProject = 0
             };
             var projectDto = new ProjectDto
             {
                 ProjectId = projectId,
-                Projecttitle = "Updated Project",
+                ProjectTitle = "Updated Project",
                 PreparedBy = "John Doe",
                 Startdate = new DateOnly(2024, 4, 1),
-                Isdefraproject = 1,
+                IsDefraProject = 1,
                 Inflation = 2
             };
 
@@ -579,7 +580,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
         }
 
         [Fact]
-        public async Task UpdateProjectAsync_ProjectNotFound_ThrowsArgumentException()
+        public async Task UpdateProjectAsync_ProjectNotFound_ThrowsInvalidOperationException()
         {
             // Arrange
             var projectId = "P999";
@@ -588,12 +589,12 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             _mockRepository.GetProjectByIdAsync(projectId).Returns((Project?)null);
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<ArgumentException>(() => _projectService.UpdateProjectAsync(projectId, projectDto));
-            Assert.Equal($"Project with ID {projectId} not found", exception.Message);
+            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => _projectService.UpdateProjectAsync(projectId, projectDto));
+            Assert.Equal("Project not found", exception.Message);
         }
 
         [Fact]
-        public async Task UpdateProjectAsync_InvalidProject_ThrowsArgumentException()
+        public async Task UpdateProjectAsync_InvalidProject_ThrowsBusinessValidationErrorException()
         {
             // Arrange
             var projectId = "P001";
@@ -601,29 +602,30 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             {
                 ProjectId = projectId,
                 Inflation = 1,
-                Isdefraproject = 0
+                IsDefraProject = 0
             };
             var projectDto = new ProjectDto
             {
                 ProjectId = projectId,
-                Projecttitle = "", // Invalid title
+                ProjectTitle = "", // Invalid title
                 PreparedBy = "", // Invalid prepared by
                 Startdate = null, // Invalid start date
-                Isdefraproject = null // Invalid defra project flag
+                IsDefraProject = null // Invalid defra project flag
             };
 
             _mockRepository.GetProjectByIdAsync(projectId).Returns(existingProject);
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<ArgumentException>(() => _projectService.UpdateProjectAsync(projectId, projectDto));
-            Assert.Contains("Please enter Start Date", exception.Message);
-            Assert.Contains("Please enter who has prepared this", exception.Message);
-            Assert.Contains("Please enter a title", exception.Message);
-            Assert.Contains("Please choose Defra/Non-Defra", exception.Message);
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _projectService.UpdateProjectAsync(projectId, projectDto));
+            Assert.Equal(4, exception.Errors.Count);
+            Assert.Contains(exception.Errors, e => e.Message == "Please enter Start Date");
+            Assert.Contains(exception.Errors, e => e.Message == "Please enter who has prepared this");
+            Assert.Contains(exception.Errors, e => e.Message == "Please enter a title");
+            Assert.Contains(exception.Errors, e => e.Message == "Please choose Defra/Non-Defra");
         }
 
         [Fact]
-        public async Task UpdateProjectAsync_TitleTooLong_ThrowsArgumentException()
+        public async Task UpdateProjectAsync_TitleTooLong_ThrowsBusinessValidationErrorException()
         {
             // Arrange
             var projectId = "P001";
@@ -632,17 +634,18 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             var projectDto = new ProjectDto
             {
                 ProjectId = projectId,
-                Projecttitle = longTitle,
+                ProjectTitle = longTitle,
                 PreparedBy = "John Doe",
                 Startdate = new DateOnly(2024, 4, 1),
-                Isdefraproject = 1
+                IsDefraProject = 1
             };
 
             _mockRepository.GetProjectByIdAsync(projectId).Returns(existingProject);
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<ArgumentException>(() => _projectService.UpdateProjectAsync(projectId, projectDto));
-            Assert.Contains("Please enter a title of less than 255 characters", exception.Message);
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _projectService.UpdateProjectAsync(projectId, projectDto));
+            Assert.Single(exception.Errors);
+            Assert.Contains(exception.Errors, e => e.Message == "Please enter a title of less than 255 characters");
         }
 
         [Fact]
@@ -654,15 +657,15 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             {
                 ProjectId = projectId,
                 Inflation = 1,
-                Isdefraproject = 0
+                IsDefraProject = 0
             };
             var projectDto = new ProjectDto
             {
                 ProjectId = projectId,
-                Projecttitle = "Updated Project",
+                ProjectTitle = "Updated Project",
                 PreparedBy = "John Doe",
                 Startdate = new DateOnly(2024, 4, 1),
-                Isdefraproject = 0,
+                IsDefraProject = 0,
                 Inflation = 2 // Changed inflation
             };
 
@@ -681,7 +684,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
         }
 
         [Fact]
-        public async Task UpdateProjectAsync_IsdefraprojectChanged_TriggersRecost()
+        public async Task UpdateProjectAsync_IsDefraProjectChanged_TriggersRecost()
         {
             // Arrange
             var projectId = "P001";
@@ -689,15 +692,15 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             {
                 ProjectId = projectId,
                 Inflation = 1,
-                Isdefraproject = 0
+                IsDefraProject = 0
             };
             var projectDto = new ProjectDto
             {
                 ProjectId = projectId,
-                Projecttitle = "Updated Project",
+                ProjectTitle = "Updated Project",
                 PreparedBy = "John Doe",
                 Startdate = new DateOnly(2024, 4, 1),
-                Isdefraproject = 1, // Changed defra project flag
+                IsDefraProject = 1, // Changed defra project flag
                 Inflation = 1
             };
 
@@ -724,15 +727,15 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             {
                 ProjectId = projectId,
                 Inflation = 1,
-                Isdefraproject = 0
+                IsDefraProject = 0
             };
             var projectDto = new ProjectDto
             {
                 ProjectId = projectId,
-                Projecttitle = "Updated Project",
+                ProjectTitle = "Updated Project",
                 PreparedBy = "John Doe",
                 Startdate = new DateOnly(2024, 4, 1),
-                Isdefraproject = 0,
+                IsDefraProject = 0,
                 Inflation = 1
             };
 
@@ -759,7 +762,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
         [InlineData(2024, 4, 1, 1, 2024)]  // Financial Years - April (current year)
         [InlineData(2024, 12, 31, 1, 2024)] // Financial Years - December (current year)
         public async Task UpdateProjectAsync_CalculateStartFinancialYear_SetsCorrectStartYear(
-            int year, int month, int day, int financialYears, int expectedStartYear)
+            int year, int month, int day, int FinancialYears, int expectedStartYear)
         {
             // Arrange
             var projectId = "P001";
@@ -767,16 +770,16 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             {
                 ProjectId = projectId,
                 Inflation = 1,
-                Isdefraproject = 0
+                IsDefraProject = 0
             };
             var projectDto = new ProjectDto
             {
                 ProjectId = projectId,
-                Projecttitle = "Test Project",
+                ProjectTitle = "Test Project",
                 PreparedBy = "John Doe",
                 Startdate = new DateOnly(year, month, day),
-                Financialyears = financialYears,
-                Isdefraproject = 1
+                FinancialYears = FinancialYears,
+                IsDefraProject = 1
             };
 
             var project = new Project { ProjectId = projectId };
@@ -792,7 +795,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             await _projectService.UpdateProjectAsync(projectId, projectDto);
 
             // Assert
-            Assert.Equal(expectedStartYear, projectDto.Startfyear);
+            Assert.Equal(expectedStartYear, projectDto.StartFYear);
         }
 
         #endregion
@@ -842,13 +845,13 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             var oldProject = new Project
             {
                 ProjectId = oldId,
-                Projecttitle = "Original Project",
+                ProjectTitle = "Original Project",
                 PreparedBy = "John Doe"
             };
             var newProjectDto = new ProjectDto
             {
                 ProjectId = newId,
-                Projecttitle = "Original Project",
+                ProjectTitle = "Original Project",
                 PreparedBy = "John Doe"
             };
             var newProject = new Project { ProjectId = newId };
@@ -858,7 +861,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             _mockRepository.GetProjectByIdAsync(oldId).Returns(oldProject);
             _mockMapper.Map<ProjectDto>(oldProject).Returns(newProjectDto);
             _mockMapper.Map<Project>(newProjectDto).Returns(newProject);
-            _mockRepository.AddProjectAsync(newProject).Returns(resultProject);
+            _mockRepository.CopyProjectAsync(newProject, oldId).Returns(resultProject);
             _mockMapper.Map<ProjectDto>(resultProject).Returns(resultDto);
 
             // Act
@@ -867,9 +870,8 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             // Assert
             Assert.NotNull(result);
             Assert.Equal(newId, newProjectDto.ProjectId);
-            Assert.Equal(DateOnly.FromDateTime(DateTime.Now), newProjectDto.DateOfSubmission);
             await _mockRepository.Received(1).GetProjectByIdAsync(oldId);
-            await _mockRepository.Received(1).AddProjectAsync(newProject);
+            await _mockRepository.Received(1).CopyProjectAsync(newProject, oldId);
         }
 
         [Fact]
@@ -882,12 +884,12 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             var oldProject = new Project
             {
                 ProjectId = oldId,
-                Projecttitle = "Original Project"
+                ProjectTitle = "Original Project"
             };
             var newProjectDto = new ProjectDto
             {
                 ProjectId = generatedId,
-                Projecttitle = "Original Project"
+                ProjectTitle = "Original Project"
             };
             var newProject = new Project { ProjectId = generatedId };
             var resultProject = new Project { ProjectId = generatedId };
@@ -897,7 +899,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             _mockRepository.GetNextProjectNumberAsync(oldId).Returns(generatedId);
             _mockMapper.Map<ProjectDto>(oldProject).Returns(newProjectDto);
             _mockMapper.Map<Project>(newProjectDto).Returns(newProject);
-            _mockRepository.AddProjectAsync(newProject).Returns(resultProject);
+            _mockRepository.CopyProjectAsync(newProject, oldId).Returns(resultProject);
             _mockMapper.Map<ProjectDto>(resultProject).Returns(resultDto);
 
             // Act
@@ -918,12 +920,12 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             var oldProject = new Project
             {
                 ProjectId = oldId,
-                Projecttitle = "Original Project"
+                ProjectTitle = "Original Project"
             };
             var newProjectDto = new ProjectDto
             {
                 ProjectId = generatedId,
-                Projecttitle = "Original Project"
+                ProjectTitle = "Original Project"
             };
             var newProject = new Project { ProjectId = generatedId };
             var resultProject = new Project { ProjectId = generatedId };
@@ -933,7 +935,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             _mockRepository.GetNextProjectNumberAsync(oldId).Returns(generatedId);
             _mockMapper.Map<ProjectDto>(oldProject).Returns(newProjectDto);
             _mockMapper.Map<Project>(newProjectDto).Returns(newProject);
-            _mockRepository.AddProjectAsync(newProject).Returns(resultProject);
+            _mockRepository.CopyProjectAsync(newProject, oldId).Returns(resultProject);
             _mockMapper.Map<ProjectDto>(resultProject).Returns(resultDto);
 
             // Act
@@ -966,7 +968,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             var oldProject = new Project
             {
                 ProjectId = oldId,
-                Projecttitle = "Original Project"
+                ProjectTitle = "Original Project"
             };
 
             _mockRepository.GetProjectByIdAsync(oldId).Returns(oldProject);
@@ -1059,17 +1061,17 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
         [InlineData(2024, 4, 1, 1, 2024)]  // Financial Years - April (current year)
         [InlineData(2024, 12, 31, 1, 2024)] // Financial Years - December (current year)
         public async Task AddProjectAsync_CalculateStartFinancialYear_SetsCorrectStartYear(
-            int year, int month, int day, int financialYears, int expectedStartYear)
+            int year, int month, int day, int FinancialYears, int expectedStartYear)
         {
             // Arrange
             var projectDto = new ProjectDto
             {
                 ProjectId = "P001",
-                Projecttitle = "Test Project",
+                ProjectTitle = "Test Project",
                 PreparedBy = "John Doe",
                 Startdate = new DateOnly(year, month, day),
-                Financialyears = financialYears,
-                Isdefraproject = 1
+                FinancialYears = FinancialYears,
+                IsDefraProject = 1
             };
 
             var project = new Project();
@@ -1084,7 +1086,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             await _projectService.AddProjectAsync(projectDto);
 
             // Assert
-            Assert.Equal(expectedStartYear, projectDto.Startfyear);
+            Assert.Equal(expectedStartYear, projectDto.StartFYear);
         }
 
         [Fact]
@@ -1094,10 +1096,10 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             var projectDto = new ProjectDto
             {
                 ProjectId = "P001",
-                Projecttitle = "Test Project",
+                ProjectTitle = "Test Project",
                 PreparedBy = "John Doe",
                 Startdate = null, // No start date
-                Isdefraproject = 1
+                IsDefraProject = 1
             };
 
             // Act & Assert
@@ -1115,10 +1117,10 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             var projectDto = new ProjectDto
             {
                 ProjectId = "P001",
-                Projecttitle = "Valid Title",
+                ProjectTitle = "Valid Title",
                 PreparedBy = "John Doe",
                 Startdate = new DateOnly(2024, 4, 1),
-                Isdefraproject = 1
+                IsDefraProject = 1
             };
 
             var project = new Project();
@@ -1143,10 +1145,10 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             var projectDto = new ProjectDto
             {
                 ProjectId = "P001",
-                Projecttitle = null, // Invalid
+                ProjectTitle = null, // Invalid
                 PreparedBy = null, // Invalid
                 Startdate = null, // Invalid
-                Isdefraproject = null // Invalid
+                IsDefraProject = null // Invalid
             };
 
             // Act & Assert

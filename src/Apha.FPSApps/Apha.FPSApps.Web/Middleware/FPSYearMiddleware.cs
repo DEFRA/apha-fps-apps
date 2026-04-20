@@ -1,14 +1,17 @@
-﻿using Apha.FPSApps.Web.Handler;
-using Apha.FPSApps.Web.Enums;
-using System.Linq;
+﻿using Apha.Common.Utilities.StateManagement;
+using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
+using Apha.FPSApps.Web.Constants;
+using Apha.FPSApps.Web.Enums;
+using Apha.FPSApps.Web.Handler;
+using Microsoft.Identity.Web;
 
 namespace Apha.FPSApps.Web.Middleware
 {
     public class FpsYearMiddleware
     {
-        private readonly RequestDelegate _next;
-
+        private readonly RequestDelegate _next;        
+        private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(10);
 
         public FpsYearMiddleware(RequestDelegate next)
         {
@@ -16,114 +19,110 @@ namespace Apha.FPSApps.Web.Middleware
         }
 
         public async Task Invoke(
-    HttpContext context,
-    IFpsYearContext fyContext,
-    IYearMasterService yearMasterService)
-{
-    int year;
-    YearStatus yearStatus = YearStatus.Closed;
-
-    // Set a temporary year in context to allow API calls to work
-    var tempYear = GetCurrentFPSYear();
-    context.Items["SelectedFPSYear"] = tempYear;
-
-
-
-    // Get all year masters once - single DB call
-    try
-    {
-        var allYearsResponse = await yearMasterService.GetAllFpsYearsAsync();
-        var allYears = allYearsResponse?.Data;
-
-        if (allYears != null)
+            HttpContext context,
+            IFpsYearContext fyContext,
+            IYearMasterService yearMasterService,
+            IAppStateService appStateService)
         {
-            // Determine which year to use
+            var area = context.GetRouteData()?.Values["area"]?.ToString();
+            var path = context.Request.Path.Value;
+
+            if ((path is not null && Path.HasExtension(path))
+                || !(string.Equals(area, "FPS", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(area, "PACT", StringComparison.OrdinalIgnoreCase))
+                )
+            {
+                await _next(context);
+                return;
+            }
+
+            var tempYear = GetCurrentFPSYear();
+            context.Items["SelectedFPSYear"] = tempYear;
+
+            int year = tempYear;
+            YearStatus yearStatus = YearStatus.Closed;
+
+            try
+            {
+                var allYears = await GetCachedYearsAsync(yearMasterService, appStateService);
+
+                if (allYears != null)
+                {
+                    year = ResolveYear(context, allYears, tempYear);
+
+                    var selectedYear = allYears.FirstOrDefault(y => y.FpsYear == year);
+                    yearStatus = selectedYear?.YearStatus is null
+                        ? YearStatus.Closed
+                        : Enum.Parse<YearStatus>(selectedYear.YearStatus, ignoreCase: true);
+                }
+            }
+            catch (Exception ex) when (
+                ex is MicrosoftIdentityWebChallengeUserException ||
+                ex.InnerException is MicrosoftIdentityWebChallengeUserException)
+            {
+                // Token expired or re-consent required — let it propagate
+                // so OIDC middleware can redirect the user back to Azure AD
+                throw;
+            }
+            catch
+            {
+                // All other failures (network, API down, etc.) — fall back silently
+                year = tempYear;
+            }
+
+            fyContext.Year = year;
+            context.Items["SelectedFPSYear"] = year;
+
+            fyContext.IsReadOnly = ResolveIsReadOnly(area, yearStatus);
+
+            await _next(context);
+        }
+
+        private static async Task<IEnumerable<YearMasterDto>?> GetCachedYearsAsync(
+            IYearMasterService yearMasterService,
+            IAppStateService appStateService)
+        {
+            var cached = await appStateService.GetCacheValueAsync<IEnumerable<YearMasterDto>>(FpsCacheKeys.AllYears);
+            if (cached != null)
+                return cached;
+
+            var response = await yearMasterService.GetAllFpsYearsAsync();
+            var data = response?.Data;
+
+            if (data != null)
+                await appStateService.SetCacheValueAsync(FpsCacheKeys.AllYears, data, CacheDuration);
+
+            return data;
+        }
+
+        private static int ResolveYear(HttpContext context, IEnumerable<YearMasterDto> allYears, int fallback)
+        {
             if (context.Request.Query.TryGetValue("year", out var q) && !string.IsNullOrEmpty(q))
+                return int.Parse(q!);
+
+            if (context.Request.Headers.TryGetValue("X-FPS-Year", out var h) && !string.IsNullOrEmpty(h))
+                return int.Parse(h!);
+
+            if (context.Request.HasFormContentType &&
+                context.Request.Form.TryGetValue("FPSYear", out var f) && !string.IsNullOrEmpty(f))
+                return int.Parse(f!);
+
+            return allYears.FirstOrDefault(y => y.YearStatus?.Equals("Open", StringComparison.OrdinalIgnoreCase) == true)
+                           ?.FpsYear ?? fallback;
+        }
+
+        private static bool ResolveIsReadOnly(string? area, YearStatus yearStatus) =>
+            area?.ToUpperInvariant() switch
             {
-                year = int.Parse(q!);
-            }
-            else if (context.Request.Headers.TryGetValue("X-FPS-Year", out var h) && !string.IsNullOrEmpty(h))
-            {
-                year = int.Parse(h!);
-            }
-            else if (context.Request.HasFormContentType &&
-                     context.Request.Form.TryGetValue("FPSYear", out var f) && !string.IsNullOrEmpty(f))
-            {
-                year = int.Parse(f!);
-            }
-            else
-            {
-                // Find the year with "Open" status 
-                var openYear = allYears.FirstOrDefault(y => y.YearStatus?.Equals("Open", StringComparison.OrdinalIgnoreCase) == true);
-                year = openYear?.FpsYear ?? tempYear;
-            }
+                "FPS" => yearStatus is not (YearStatus.Planned or YearStatus.Open),
+                "PACT" => yearStatus != YearStatus.Open,
+                _ => false
+            };
 
-            // Get the year status from the already loaded data
-            var selectedYear = allYears.FirstOrDefault(y => y.FpsYear == year);
-            yearStatus = selectedYear?.YearStatus == null ? YearStatus.Closed : (YearStatus) Enum.Parse(typeof(YearStatus), selectedYear.YearStatus, true);
-        }
-        else
-        {
-            year = tempYear;
-        }
-    }
-    catch
-    {
-        year = tempYear;
-    }
-
-    fyContext.Year = year;
-    context.Items["SelectedFPSYear"] = year;
-
-    // Get area from route data (available after UseRouting())
-    var area = context.GetRouteData()?.Values["area"]?.ToString();
-
-    // Set IsReadOnly based on YearStatus and Area
-    if (area?.Equals("FPS", StringComparison.OrdinalIgnoreCase) == true)
-    {
-        // For FPS area
-        if (yearStatus != YearStatus.Closed)
-        {
-            // Editable if status is "planned" or "open"
-            fyContext.IsReadOnly = !(yearStatus == YearStatus.Planned || yearStatus == YearStatus.Open);
-        }
-        else
-        {
-            // Default to readonly for FPS if status unknown
-            fyContext.IsReadOnly = true;
-        }
-    }
-    else if (area?.Equals("PACT", StringComparison.OrdinalIgnoreCase) == true)
-    {
-        // For PACT area
-        if (yearStatus != YearStatus.Closed)
-        {
-            // Editable only if status is "open"
-            fyContext.IsReadOnly = yearStatus != YearStatus.Open;
-        }
-        else
-        {
-            // Default to readonly for PACT if status unknown
-            fyContext.IsReadOnly = true;
-        }
-    }
-    else
-    {
-        // For all other areas: always editable
-        fyContext.IsReadOnly = false;
-    }
-
-    await _next(context);
-}
-
-        private int GetCurrentFPSYear()
+        private static int GetCurrentFPSYear()
         {
             var today = DateTime.Today;
-
-            if (today.Month >= 4)   // April to Dec
-                return 2025;//today.Year;
-            else                    // Jan to March
-                return today.Year - 1;
+            return today.Month >= 4 ? 2025 : today.Year - 1;
         }
     }
 }

@@ -1,10 +1,45 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using Apha.Common.Contracts;
+using Apha.Common.Contracts.PIMS;
+using Apha.FPSApps.Application.Dtos;
+using Apha.FPSApps.Application.Dtos.PIMS;
+using Apha.FPSApps.Application.Pagination;
+using AutoMapper;
 
 namespace Apha.FPSApps.Infrastructure.Mappings
 {
-    internal class PimsApiDtoMapper
+    public class PimsApiDtoMapper : Profile
     {
+        public PimsApiDtoMapper()
+        {
+            CreateMap(typeof(ApiResponseDto<>), typeof(ApiResponse<>)).ReverseMap();
+            CreateMap<ApiErrorDto, ApiError>().ReverseMap();
+            CreateMap<ApiMetaDto, ApiMeta>().ReverseMap();
+            CreateMap(typeof(PaginationRes<>), typeof(PaginatedResult<>)).ReverseMap();
+            CreateMap<PaginationDto, Pagination>().ReverseMap();
+
+            // Project List
+            CreateMap<ProjectListRes, ProjectListViewDto>().ReverseMap();
+
+            // FPS Project Details (read-only)
+            CreateMap<ProjectRes, ProjectDto>().ReverseMap();
+
+            // Proposed Project
+            CreateMap<ProposedProjectRes, ProposedProjectDto>().ReverseMap();
+            CreateMap<ProposedProjectDto, ProposedProjectReq>().ReverseMap();
+
+            // FPS Yearly Details
+            CreateMap<ProjectsRes, ProjectsDto>().ReverseMap();
+
+            // Comments
+            CreateMap<CommentRes, CommentDto>().ReverseMap();
+            CreateMap<CommentDto, CommentReq>().ReverseMap();
+
+            // PIMS Project Detail
+            CreateMap<ProjectDetailRes, ProjectDetailDto>().ReverseMap();
+            CreateMap<ProjectDetailDto, ProjectDetailReq>().ReverseMap();
+
+            // Risk
+            CreateMap<RiskRes, RiskDto>().ReverseMap();
+        }
     }
 }

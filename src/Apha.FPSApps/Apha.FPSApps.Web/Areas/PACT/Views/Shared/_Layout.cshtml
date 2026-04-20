@@ -1,6 +1,3 @@
-@using Apha.FPSApps.Web.Handler
-@inject IFpsYearContext Fy
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,13 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@ViewData["Title"]</title>
 
-    <!-- Shared stylesheets -->  
-    <!--<link rel="stylesheet" href="~/css/bootstrap.min.css" />-->
+    <!-- Shared stylesheets -->      
     <link rel="stylesheet" href="~/css/pact_styles/govuk-frontend-6.0.0.min.css" /> 
     <link rel="stylesheet" href="~/css/pact_styles/custom_style.css" />    
     <link rel="stylesheet" href="~/css/pact_styles/navstyle.css" />    
     <link rel="stylesheet" href="~/css/pact_styles/style.css" /> 
-    <!--<link rel="stylesheet" href="~/css/pact_styles/suppliement_style_over_gov.uk_style.css" />-->
     <link rel="stylesheet" href="~/DataGrid/editable-grid.css" />
     <link href="~/css/suppliement_style_over_gov.uk_style.css" rel="stylesheet" />
     <!-- jQuery (required before any scripts) -->
@@ -27,15 +22,14 @@
         <div class="header-nav">
             <div class="pims-log-wrapper">
                 <div>
-                    <img src="~/images/defra_logo.png" width="80px" alt="Animal & Plant Health Agency" />
+                    <img src="~/images/defra_logo.png" width="80" alt="Animal & Plant Health Agency" />
                 </div>                
 				<div class="pims-log">
 					<span>PACT</span>
-				</div>               
-				 <div class="pims-log" style="width: 160px;font-size: 16px;">
-					<select aria-label="Select year" id="yearSelector" class="pims-log" style="border: 0;border-radius: 0;margin-left: 0px;width: 150px;outline: 0;">
-					</select>					
 				</div>
+				<div>
+                @await Component.InvokeAsync("YearSelector")
+            </div>
             </div>
         </div>
     </header>
@@ -43,13 +37,13 @@
     <!-- ── Main Navigation ───────────────────────────────────────────── -->
     <div id="header">
         <div style="display: flex; flex-direction: row;">
-            <button class="userdropdownbtn" style="border: 0; margin-right: 20px;" id="userdropdownbtn">Meg Ved &nbsp; <img src="~/images/circle-user-regular-full.svg" alt="user icon" width="24" /></button>
+            <button class="userdropdownbtn" style="border: 0; margin-right: 20px;" id="userdropdownbtn" allow-edit="true">Meg Ved &nbsp; <img src="~/images/circle-user-regular-full.svg" alt="user icon" width="24" /></button>
         </div>
         <div class="userdropdown" id="userdropdowndp">
             <ul>                   
                 <li>
                     <a href="/" style="display: flex; align-items: center;" type="button">
-                        <img src="~/images/house-user-solid-full.svg" alt="dropdown home icon" width="22px">
+                        <img src="~/images/house-user-solid-full.svg" alt="dropdown home icon" width="22">
                         Home
                     </a>
                 </li>
@@ -59,11 +53,11 @@
         <nav class="main-nav">
             <!-- Project & Programme Dropdown -->
             <div class="nav-item dropdown">
-                <button class="nav-button dropdown-toggle" data-dropdown="project-management">
+                <button class="nav-button dropdown-toggle" data-dropdown="project-management" allow-edit="true">
                     <div class="align-menu-text">
                         <span>Project & Programme</span>
                     </div>
-                    <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow for dropdown menu" width="12px"></span>
+                    <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow for dropdown menu" width="12"></span>
                 </button>
                 <div class="dropdown-menu" id="project-management">
                     <a class="dropdown-item" href="#">Program Maintenance</a>                    
@@ -75,11 +69,11 @@
 
             <!-- Monthly Project Dropdown -->
             <div class="nav-item dropdown">
-                <button class="nav-button dropdown-toggle" data-dropdown="monthly-data">
+                <button class="nav-button dropdown-toggle" data-dropdown="monthly-data" allow-edit="true">
                     <div class="align-menu-text">
                         <span>Monthly Project Data </span>
                     </div>
-                    <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow for dropdown menu" width="12px"></span>
+                    <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow for dropdown menu" width="12"></span>
                 </button>
                 <div class="dropdown-menu" id="monthly-data">
                     <a class="dropdown-item" href="#">Project Invoices (Manual)</a>
@@ -96,26 +90,26 @@
 
             <!-- Work Group Dropdown -->
             <div class="nav-item dropdown">
-                <button class="nav-button dropdown-toggle" data-dropdown="work-group">
+                <button class="nav-button dropdown-toggle" data-dropdown="work-group" allow-edit="true">
                     <div class="align-menu-text">
                         <span> Work Group Static Data </span>
                     </div>
-                    <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow for dropdown menu" width="12px"></span>
+                    <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow for dropdown menu" width="12"></span>
                 </button>
                 <div class="dropdown-menu" id="work-group">
                     <a href="#" class="dropdown-item">Work Group People</a>
-                    <a href="workgroup_management.html" class="dropdown-item">Test Capabilities</a>
+                    <a class="dropdown-item" asp-area="PACT" asp-controller="TestCapability" asp-action="Index">Test Capabilities</a>
                     <a href="#" class="dropdown-item">Test Maintenance List</a>
                 </div>
             </div>
 		
             <!-- Bosworth Interface Dropdown -->
             <div class="nav-item dropdown">
-                <button class="nav-button dropdown-toggle" data-dropdown="bosworth-interface">
+                <button class="nav-button dropdown-toggle" data-dropdown="bosworth-interface" allow-edit="true">
                     <div class="align-menu-text">
                         <span> Bosworth Interface </span>
                     </div>
-                    <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow for dropdown menu" width="12px"></span>
+                    <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow for dropdown menu" width="12"></span>
                 </button>
                 <div class="dropdown-menu" id="bosworth-interface">
                     <a href="#" class="dropdown-item">Resource Management</a>
@@ -127,11 +121,11 @@
 
             <!-- Time & Output Dropdown -->
             <div class="nav-item dropdown">
-                <button class="nav-button dropdown-toggle" data-dropdown="time-data">
+                <button class="nav-button dropdown-toggle" data-dropdown="time-data" allow-edit="true">
                     <div class="align-menu-text">
                         <span> Time & Output Data </span>
                     </div>
-                    <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow for dropdown menu" width="12px"></span>
+                    <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow for dropdown menu" width="12"></span>
                 </button>
                 <div class="dropdown-menu" id="time-data">
                     <a href="timerecording.html" class="dropdown-item">Time record data entry</a>
@@ -143,7 +137,7 @@
                 </div>
             </div>
             <div class="nav-item">
-                <button class="nav-button">
+                <button class="nav-button" allow-edit="true">
                     Reports
                 </button>
             </div>
@@ -184,89 +178,15 @@
     <script src="~/js/pact_js/bootstrap.bundle.min.js"></script>
     <script src="~/lib/jquery-validation/dist/jquery.validate.js"></script>
     <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.js"></script>
+    <script src="~/js/govuk-modal-dialog.js"></script>
     <fps-year-script></fps-year-script>
 
     <script>
-        // Initialize year selector with API data
-        $(document).ready(function () {
-            loadYearMasterDropdown();
-        });
-
-        function loadYearMasterDropdown() {
-            $.ajax({
-                url: '@Url.Action("GetYearMasterDropdown", "YearMaster", new { area = "FPS" })',
-                type: 'GET',
-                success: function (response) {
-                    if (response.success && response.data) {
-                        var $select = $('#yearSelector');
-                        $select.empty();
-
-                        // Get the year from query string (if present) or from context
-                        var urlParams = new URLSearchParams(window.location.search);
-                        var yearFromUrl = urlParams.get('year');
-                        var currentYear = @Fy.Year;
-
-                        // Determine which year to select
-                        var defaultYear;
-                        if (yearFromUrl) {
-                            // If year is in URL, use that
-                            defaultYear = parseInt(yearFromUrl);
-                        } else {
-                            // Otherwise, find the year with status "Open"
-                            var openYear = response.data.find(function(item) {
-                                return item.yearStatus && item.yearStatus.toLowerCase() === 'open';
-                            });
-                            // Fallback to current year from context if no open year found
-                            defaultYear = openYear ? openYear.value : currentYear;
-                        }
-
-                        var yearFound = false;
-
-                        $.each(response.data, function (index, item) {
-                            var $option = $('<option></option>')
-                                .val(item.value)
-                                .text(item.text);
-
-                            // Set selected year based on URL parameter or Open status
-                            if (item.value == defaultYear) {
-                                $option.attr('selected', 'selected');
-                                yearFound = true;
-                            }
-
-                            $select.append($option);
-                        });
-
-                        // If default year not found, select first item
-                        if (!yearFound && response.data.length > 0) {
-                            $select.val(response.data[0].value);
-                        }
-                    } else {
-                        console.error('Failed to load year master dropdown');
-                        $('#yearSelector').html('<option value="">Error loading years</option>');
-                    }
-                },
-                error: function (xhr, status, error) {
-                    console.error('Error loading year master dropdown:', error);
-                    $('#yearSelector').html('<option value="">Error loading years</option>');
-                }
-            });
-        }
-
-        // Handle year change event
-        $('#yearSelector').on('change', function () {
-            var selectedYear = $(this).val();
-            if (selectedYear) {
-                window.location.href = '/PACT/Home/Index?year=' + selectedYear;
-            }
-        });
-
         // ── Modal open / close helpers ────────────────────────────────────
         (function () {
             var modal = document.getElementById('modalPopup');
             if (!modal) return;
 
-            // MutationObserver watches for class changes made by jQuery
-            // (.addClass('show') / .removeClass('show'))
             var observer = new MutationObserver(function () {
                 if (modal.classList.contains('show')) {
                     modal.style.display = 'flex';
@@ -278,14 +198,12 @@
             });
             observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
 
-            // Close on backdrop click
             modal.addEventListener('click', function (e) {
                 if (e.target === modal) {
-                    modal.classList.remove('show');
+                    return false;
                 }
             });
 
-            // Close on Escape key
             document.addEventListener('keydown', function (e) {
                 if (e.key === 'Escape' && modal.classList.contains('show')) {
                     modal.classList.remove('show');
@@ -304,7 +222,6 @@
     </script>
 
     <script src="~/js/pact_js/pactnavmenu.js"></script>
-
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

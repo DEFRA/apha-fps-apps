@@ -45,12 +45,65 @@ namespace Apha.PACT.Application.UnitTests.Services.TestRequirementServiceTest
             var result = await _sut.GetPagedTestReqmtAsync(query, "BLOOD");
 
             result.Should().NotBeNull();
-            await _testReqmtRepo.Received(1).GetPagedWithDetailsAsync(mappedParams, "BLOOD");
-        }
+                await _testReqmtRepo.Received(1).GetPagedWithDetailsAsync(mappedParams, "BLOOD");
+            }
 
-        #endregion
+            #endregion
 
-        #region GetAllTestReqmtForExportAsync
+            #region GetPagedTestReqmtByProjectAsync
+
+            [Fact]
+            public async Task GetPagedTestReqmtByProjectAsync_ValidQuery_ReturnsPaginatedResult()
+            {
+                var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+                var mappedParams = new PaginationParameters<string>();
+                var pagedData = new PagedData<TestRequirementDetail>([], new PaginationData());
+                var dtos = new List<TestRequirementtDto>();
+                var paginationDto = new PaginationDto();
+
+                _mapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+                _testReqmtRepo.GetPagedByProjectAsync(mappedParams, "PRJ1").Returns(pagedData);
+                _mapper.Map<List<TestRequirementtDto>>(pagedData.Data).Returns(dtos);
+                _mapper.Map<PaginationDto>(pagedData.PaginationData).Returns(paginationDto);
+
+                var result = await _sut.GetPagedTestReqmtByProjectAsync(query, "PRJ1");
+
+                result.Should().NotBeNull();
+                await _testReqmtRepo.Received(1).GetPagedByProjectAsync(mappedParams, "PRJ1");
+            }
+
+            [Fact]
+            public async Task GetPagedTestReqmtByProjectAsync_WithItems_ReturnsMappedDtos()
+            {
+                var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+                var mappedParams = new PaginationParameters<string>();
+                var details = new List<TestRequirementDetail>
+                {
+                    new() { TestCode = "BLOOD", Buyer = "PRJ1" },
+                    new() { TestCode = "URINE", Buyer = "PRJ1" }
+                };
+                var pagedData = new PagedData<TestRequirementDetail>(details, new PaginationData());
+                var dtos = new List<TestRequirementtDto>
+                {
+                    new() { TestCode = "BLOOD", Buyer = "PRJ1" },
+                    new() { TestCode = "URINE", Buyer = "PRJ1" }
+                };
+                var paginationDto = new PaginationDto();
+
+                _mapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+                _testReqmtRepo.GetPagedByProjectAsync(mappedParams, "PRJ1").Returns(pagedData);
+                _mapper.Map<List<TestRequirementtDto>>(pagedData.Data).Returns(dtos);
+                _mapper.Map<PaginationDto>(pagedData.PaginationData).Returns(paginationDto);
+
+                var result = await _sut.GetPagedTestReqmtByProjectAsync(query, "PRJ1");
+
+                result.Should().NotBeNull();
+                result.Data.Should().HaveCount(2);
+            }
+
+            #endregion
+
+            #region GetAllTestReqmtForExportAsync
 
         [Fact]
         public async Task GetAllTestReqmtForExportAsync_WithFilter_ReturnsAllMappedItems()

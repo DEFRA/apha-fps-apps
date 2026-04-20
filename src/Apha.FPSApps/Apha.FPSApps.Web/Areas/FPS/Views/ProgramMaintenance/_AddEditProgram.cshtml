@@ -25,7 +25,7 @@
     <div class="row g-3">
         <form id="@formId">
             <div class="govuk-form-group sup_margin_0">
-                <label class="govuk-label" asp-for="ProgramNo">Program</label>
+                <label class="govuk-label" asp-for="ProgramNo">Program <span class="sup_color_red">*</span> </label>
                 <input type="text" asp-for="ProgramNo" required class="govuk-input">
                     <span asp-validation-for="ProgramNo" class="govuk-error-message" style="display:none;"></span>
             </div>
