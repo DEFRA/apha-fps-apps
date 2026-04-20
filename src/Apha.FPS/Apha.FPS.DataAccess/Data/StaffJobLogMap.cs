@@ -37,7 +37,7 @@ namespace Apha.FPS.DataAccess.Data
                 .HasMaxLength(50)
                 .HasColumnName("staffid");
             entity.Property(e => e.UserId)
-                .HasMaxLength(20)
+                .HasMaxLength(255)
                 .HasColumnName("user_id");
         }
     }

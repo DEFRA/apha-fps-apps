@@ -56,7 +56,7 @@ namespace Apha.PACT.DataAccess.Data
                 .HasColumnName("testcode");
             entity.Property(e => e.UnitPrice).HasColumnName("unitprice");
             entity.Property(e => e.UserId)
-                .HasMaxLength(20)
+                .HasMaxLength(255)
                 .UseCollation("latin1_general_ci_as")
                 .HasColumnName("user_id");
         }

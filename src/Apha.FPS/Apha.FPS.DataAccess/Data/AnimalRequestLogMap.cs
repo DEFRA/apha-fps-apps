@@ -40,7 +40,7 @@ namespace Apha.FPS.DataAccess.Data
             entity.Property(e => e.NumberOfAnimals).HasColumnName("numberofanimals");
             entity.Property(e => e.NumberOfDays).HasColumnName("numberofdays");
             entity.Property(e => e.UserId)
-                .HasMaxLength(20)
+                .HasMaxLength(255)
                 .UseCollation("latin1_general_ci_as")
                 .HasColumnName("user_id");
         }
