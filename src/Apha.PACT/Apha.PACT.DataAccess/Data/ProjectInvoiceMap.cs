@@ -13,7 +13,8 @@ namespace Apha.PACT.DataAccess.Data
 
             entity.ToTable("proj_invoice", "fps");
 
-            entity.Property(e => e.InvoiceCounter).HasColumnName("invoicecounter");
+            entity.Property(e => e.InvoiceCounter)
+                 .ValueGeneratedOnAdd().HasColumnName("invoicecounter");
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.Amount)
                 .HasColumnType("money")
