@@ -1,5 +1,4 @@
 ﻿using Apha.FPS.Core.Entities;
-using Apha.FPS.Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -7,12 +6,7 @@ namespace Apha.FPS.DataAccess.Data
 {
     public class TestorProductMap : IEntityTypeConfiguration<TestorProduct>
     {
-        private readonly IFpsRequestContext _fPSYearContext;
 
-        public TestorProductMap(IFpsRequestContext fPSYearContext)
-        {
-            _fPSYearContext = fPSYearContext;
-        }
 
         public void Configure(EntityTypeBuilder<TestorProduct> entity)
         {
@@ -53,7 +47,6 @@ namespace Apha.FPS.DataAccess.Data
                 .HasDefaultValueSql("0")
                 .HasColumnType("money")
                 .HasColumnName("unitpricevla");
-            entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
         }
     }
 }

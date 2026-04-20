@@ -7,20 +7,14 @@ namespace Apha.PACT.DataAccess.Data
 {
     public class ProjectInvoiceMap : IEntityTypeConfiguration<ProjectInvoice>
     {
-        private readonly IFpsRequestContext _fpsRequestContext;
-
-        public ProjectInvoiceMap(IFpsRequestContext fpsRequestContext)
-        {
-            _fpsRequestContext = fpsRequestContext;
-        }
-
         public void Configure(EntityTypeBuilder<ProjectInvoice> entity)
         {
             entity.HasKey(e => new { e.InvoiceCounter, e.FpsYear }).HasName("pk_proj_invoice");
 
             entity.ToTable("proj_invoice", "fps");
 
-            entity.Property(e => e.InvoiceCounter).HasColumnName("invoicecounter");
+            entity.Property(e => e.InvoiceCounter)
+                 .ValueGeneratedOnAdd().HasColumnName("invoicecounter");
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.Amount)
                 .HasColumnType("money")
@@ -47,7 +41,6 @@ namespace Apha.PACT.DataAccess.Data
             entity.Property(e => e.X)
                 .HasMaxLength(5)
                 .HasColumnName("x");
-            entity.HasQueryFilter(e => e.FpsYear == _fpsRequestContext.FpsYear);
         }
     }
 }

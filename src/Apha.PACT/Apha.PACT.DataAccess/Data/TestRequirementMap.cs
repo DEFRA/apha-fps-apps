@@ -7,13 +7,6 @@ namespace Apha.PACT.DataAccess.Data
 {
     public class TestRequirementMap : IEntityTypeConfiguration<TestRequirement>
     {
-        private readonly IFpsRequestContext _fpsRequestContext;
-
-        public TestRequirementMap(IFpsRequestContext fpsRequestContext)
-        {
-            _fpsRequestContext = fpsRequestContext;
-        }
-
         public void Configure(EntityTypeBuilder<TestRequirement> entity)
         {
             entity.HasKey(e => new { e.TestCode, e.Buyer, e.FpsYear }).HasName("pk_tlkptestreqmt");
@@ -48,7 +41,6 @@ namespace Apha.PACT.DataAccess.Data
             entity.Property(e => e.UnitPrice)
                 .HasColumnType("money")
                 .HasColumnName("unitprice");
-            entity.HasQueryFilter(e => e.FpsYear == _fpsRequestContext.FpsYear);
         }
     }
 }

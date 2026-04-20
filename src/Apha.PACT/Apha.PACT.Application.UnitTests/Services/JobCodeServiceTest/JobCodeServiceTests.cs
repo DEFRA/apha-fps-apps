@@ -163,6 +163,7 @@ namespace Apha.PACT.Application.UnitTests.Services.JobCodeServiceTest
             var created = new JobCode { JobCodeId = "JC1", ParentProject = "PRJ1" };
             var expected = new JobCodeDto { JobCodeId = "JC1", ParentProject = "PRJ1" };
 
+            _mockRepository.GetJobCodeByIdAsync("JC1").Returns((JobCode?)null);
             _mockMapper.Map<JobCode>(dto).Returns(entity);
             _mockRepository.CreateJobCodeAsync(entity).Returns(created);
             _mockMapper.Map<JobCodeDto>(created).Returns(expected);
@@ -175,11 +176,24 @@ namespace Apha.PACT.Application.UnitTests.Services.JobCodeServiceTest
         }
 
         [Fact]
+        public async Task CreateJobCodeAsync_DuplicateJobCode_ThrowsInvalidOperationException()
+        {
+            var dto = new JobCodeDto { JobCodeId = "JC1", ParentProject = "PRJ1" };
+            _mockRepository.GetJobCodeByIdAsync("JC1").Returns(new JobCode { JobCodeId = "JC1" });
+
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.CreateJobCodeAsync(dto));
+
+            ex.Message.Should().Contain("JC1");
+            await _mockRepository.DidNotReceive().CreateJobCodeAsync(Arg.Any<JobCode>());
+        }
+
+        [Fact]
         public async Task CreateJobCodeAsync_RepositoryThrows_PropagatesException()
         {
             var dto = new JobCodeDto { JobCodeId = "JC1" };
             var entity = new JobCode { JobCodeId = "JC1" };
 
+            _mockRepository.GetJobCodeByIdAsync("JC1").Returns((JobCode?)null);
             _mockMapper.Map<JobCode>(dto).Returns(entity);
             _mockRepository.CreateJobCodeAsync(entity).ThrowsAsync(new Exception("DB error"));
 

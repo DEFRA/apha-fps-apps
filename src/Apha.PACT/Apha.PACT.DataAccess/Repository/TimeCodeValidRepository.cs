@@ -117,18 +117,30 @@ namespace Apha.PACT.DataAccess.Repository
                 .Where(t => t.JobCode == sourceJobCode && t.ParentProject == parentProject)
                 .ToListAsync();
 
-            var copies = sourceEntries.Select(s => new TimeCodeValid
-            {
-                TimeCode = targetJobCode,
-                WorkGroup = s.WorkGroup,
-                ParentProject = parentProject,
-                JobCode = targetJobCode,
-                Active = s.Active,
-                FpsYear = _fpsRequestContext.FpsYear
-            }).ToList();
+            var existingWorkGroups = await _context.TimeCodeValids
+                .AsNoTracking()
+                .Where(t => t.JobCode == targetJobCode && t.ParentProject == parentProject)
+                .Select(t => t.WorkGroup)
+                .ToHashSetAsync();
 
-            await _context.TimeCodeValids.AddRangeAsync(copies);
-            await _context.SaveChangesAsync();
+            var copies = sourceEntries
+                .Where(s => !existingWorkGroups.Contains(s.WorkGroup))
+                .Select(s => new TimeCodeValid
+                {
+                    TimeCode = targetJobCode,
+                    WorkGroup = s.WorkGroup,
+                    ParentProject = parentProject,
+                    JobCode = targetJobCode,
+                    Active = s.Active,
+                    FpsYear = _fpsRequestContext.FpsYear
+                }).ToList();
+
+            if (copies.Count > 0)
+            {
+                await _context.TimeCodeValids.AddRangeAsync(copies);
+                await _context.SaveChangesAsync();
+            }
+
             return copies;
         }
 
@@ -169,18 +181,30 @@ namespace Apha.PACT.DataAccess.Repository
                             workGroupList.Contains(t.WorkGroup))
                 .ToListAsync();
 
-            var copies = sourceEntries.Select(s => new TimeCodeValid
-            {
-                TimeCode = targetJobCode,
-                WorkGroup = s.WorkGroup,
-                ParentProject = parentProject,
-                JobCode = targetJobCode,
-                Active = s.Active,
-                FpsYear = _fpsRequestContext.FpsYear
-            }).ToList();
+            var existingWorkGroups = await _context.TimeCodeValids
+                .AsNoTracking()
+                .Where(t => t.JobCode == targetJobCode && t.ParentProject == parentProject)
+                .Select(t => t.WorkGroup)
+                .ToHashSetAsync();
 
-            await _context.TimeCodeValids.AddRangeAsync(copies);
-            await _context.SaveChangesAsync();
+            var copies = sourceEntries
+                .Where(s => !existingWorkGroups.Contains(s.WorkGroup))
+                .Select(s => new TimeCodeValid
+                {
+                    TimeCode = targetJobCode,
+                    WorkGroup = s.WorkGroup,
+                    ParentProject = parentProject,
+                    JobCode = targetJobCode,
+                    Active = s.Active,
+                    FpsYear = _fpsRequestContext.FpsYear
+                }).ToList();
+
+            if (copies.Count > 0)
+            {
+                await _context.TimeCodeValids.AddRangeAsync(copies);
+                await _context.SaveChangesAsync();
+            }
+
             return copies;
         }
 
