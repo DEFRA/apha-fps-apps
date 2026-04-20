@@ -43,7 +43,7 @@ EXPOSE ${PORT}
 
 USER app
 WORKDIR /app
-COPY --from=development /home/dotnet/out/ ./
+COPY --chmod=555 --from=development /home/dotnet/out/ ./
 
 ENTRYPOINT ["dotnet", "Apha.FPSApps.Web.dll"]
 
