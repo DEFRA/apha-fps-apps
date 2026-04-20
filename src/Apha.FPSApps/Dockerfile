@@ -13,13 +13,17 @@ WORKDIR /home/dotnet/src
 # Copy all source code into the image under /home/dotnet/src
 COPY --chown=dotnet:dotnet src/. .
 
-# Restore, build and publish the Web project
-RUN dotnet restore ./Apha.FPSApps/Apha.FPSApps.Web/Apha.FPSApps.Web.csproj
-RUN dotnet publish ./Apha.FPSApps/Apha.FPSApps.Web -c Release -o /home/dotnet/out /p:UseAppHost=false
-
-# Remove write permissions (files: 444, dirs: 555)
+# Remove write permissions from copied source (files: 444, dirs: 555)
 RUN find . -type d -exec chmod 555 {} \; && \
     find . -type f -exec chmod 444 {} \;
+
+# Restore, build and publish the Web project
+# Redirect intermediate output outside the read-only source tree
+RUN dotnet restore ./Apha.FPSApps/Apha.FPSApps.Web/Apha.FPSApps.Web.csproj \
+    /p:BaseIntermediateOutputPath=/home/dotnet/obj/
+RUN dotnet publish ./Apha.FPSApps/Apha.FPSApps.Web -c Release -o /home/dotnet/out \
+    /p:UseAppHost=false \
+    /p:BaseIntermediateOutputPath=/home/dotnet/obj/
 
 # ================================
 # -------- Production Stage ---------
