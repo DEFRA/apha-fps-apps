@@ -84,7 +84,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             {
                 GridId = "staffGrid",
                 Title = "Staff Maintenance",
-                ShowCheckboxColumn = true,
+                ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "SPNumber",
                 AddFunction = "addStaff",

@@ -153,7 +153,7 @@ function deleteStaffJob(btn) {
                         StaffJobConfig.onDeleted();
                     });
                 } else {
-                    showGovukAlert('Error: ' + response.message);
+                    showGovukAlert(response.message);
                 }
             },
             error: function () {
