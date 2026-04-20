@@ -60,6 +60,7 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<SurvFFSubmission> SurvFFSubmissions { get; set; }
         public virtual DbSet<ProjectLog> ProjectLogs { get; set; }
         public virtual DbSet<TestRequirement> TestRequirements { get; set; }
+        public virtual DbSet<AdditionalCost> AdditionalCosts { get; set; }
         public virtual DbSet<ProjectInvoice> ProjectInvoices { get; set; }
         public virtual DbSet<ProjectSubContract> ProjectSubContracts { get; set; }
 
@@ -695,6 +696,35 @@ namespace Apha.FPS.DataAccess.Data
                     .HasColumnName("jobcode");
                 entity.Property(e => e.NumberOfAnimals).HasColumnName("numberofanimals");
                 entity.Property(e => e.NumberOfDays).HasColumnName("numberofdays");
+                entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
+            });
+
+            modelBuilder.Entity<AdditionalCost>(entity =>
+            {
+                entity.HasKey(e => new { e.JobCode, e.Account, e.Description })
+                    .HasName("pk__tbladditionalcos__160f4887");
+
+                entity.ToTable("tbladditionalcosts", "fps");
+
+                entity.Property(e => e.JobCode)
+                    .HasColumnType("citext")
+                    .HasColumnName("jobcode");
+                entity.Property(e => e.Account)
+                    .HasColumnType("citext")
+                    .HasColumnName("account");
+                entity.Property(e => e.Description)
+                    .HasMaxLength(20)
+                    .HasColumnName("description");
+                entity.Property(e => e.ItemCost)
+                    .HasColumnType("money")
+                    .HasColumnName("itemcost");
+                entity.Property(e => e.Freq)
+                    .HasMaxLength(5)
+                    .HasColumnName("freq");
+                entity.Property(e => e.Supplier)
+                    .HasMaxLength(50)
+                    .HasColumnName("supplier");
+                entity.Property(e => e.FpsYear).HasColumnName(FpsYear);
                 entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
             });
 

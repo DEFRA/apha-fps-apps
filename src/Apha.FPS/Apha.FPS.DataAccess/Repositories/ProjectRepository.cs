@@ -336,7 +336,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
         /// <summary>
         /// Renames a project code and updates all child table references — derived from usp_ChangeProjectCode.
-        /// UITrig_tlkpProject FOR INSERT appended: stages audit log entry for the new project row.
+        /// UITrig_tlkpProject FOR INSERT appended: stages audit log entry in same unit of work.
         /// </summary>
         public async Task ChangeProjectCodeAsync(string oldCode, string newCode)
         {
@@ -352,50 +352,76 @@ namespace Apha.FPS.DataAccess.Repositories
                     if (newExists)
                         throw new InvalidOperationException("This code is already in use.");
 
-                    // Copy project row (INSERT … SELECT)
-                    await _dbContext.Database.ExecuteSqlAsync(
-                        $"""
-                 INSERT INTO fps.tlkpproject
-                   (parentproject, projecttitle, program, customer, manager, transferincome, custincome,
-                    wip_eoy, wip_limit, wip_current, projectstatus, costbookno, feccost, profit, budget_cvl,
-                    datecosted, disease, contract, projectparent, shorttitle, caseworksub, pvsincome,
-                    plancaseworkdebit, finished, owningrc, comments, carryover, carryoverseed, isdefraproject,
-                    costcentre, oracleprojectcode, subaccountcode, projectgroup, incomeaccountcode, fpsyear)
-                 SELECT {newCode}, projecttitle, program, customer, manager, transferincome, custincome,
-                   wip_eoy, wip_limit, wip_current, projectstatus, costbookno, feccost, profit, budget_cvl,
-                   datecosted, disease, contract, projectparent, shorttitle, caseworksub, pvsincome,
-                   plancaseworkdebit, finished, owningrc, comments, carryover, carryoverseed, isdefraproject,
-                   costcentre, oracleprojectcode, subaccountcode, projectgroup, incomeaccountcode, fpsyear
-                 FROM fps.tlkpproject WHERE parentproject = {oldCode}
-                 """);
+                    // Copy project row and stage audit log in same unit of work
+                    var oldProject = await _dbContext.Projects
+                        .FirstOrDefaultAsync(p => p.ParentProject == oldCode);
+                    if (oldProject == null)
+                        throw new InvalidOperationException($"Project '{oldCode}' not found.");
 
-                    // Converted trigger logic — UITrig_tlkpProject FOR INSERT: insert audit log
-                    await _dbContext.Database.ExecuteSqlAsync(
-                        $"""
-                 INSERT INTO fps.project_log
-                   (parentproject, projecttitle, program, customer, manager, transferincome, custincome,
-                    wip_eoy, wip_limit, wip_current, projectstatus, costbookno, feccost, profit, budget_cvl,
-                    datecosted, disease, contract, projectparent, shorttitle, caseworksub, pvsincome,
-                    plancaseworkdebit, finished, owningrc, comments, carryover, carryoverseed,
-                    date_time, user_id, insert_delete, jobcode, isdefraproject, costcentre,
-                    oracleprojectcode, subaccountcode, projectgroup, incomeaccountcode, fpsyear)
-                 SELECT parentproject, projecttitle, program, customer, manager, transferincome, custincome,
-                   wip_eoy, wip_limit, wip_current, projectstatus, costbookno, feccost, profit, budget_cvl,
-                   datecosted, disease, contract, projectparent, shorttitle, caseworksub, pvsincome,
-                   plancaseworkdebit, finished, owningrc, comments, carryover, carryoverseed,
-                   NOW(), current_user, 'I', parentproject, isdefraproject, costcentre,
-                   oracleprojectcode, subaccountcode, projectgroup, incomeaccountcode, fpsyear
-                 FROM fps.tlkpproject WHERE parentproject = {newCode}
-                 """);
+                    var newProject = new Project
+                    {
+                        ParentProject     = newCode,
+                        ProjectTitle      = oldProject.ProjectTitle,
+                        Program           = oldProject.Program,
+                        Customer          = oldProject.Customer,
+                        Manager           = oldProject.Manager,
+                        TransferIncome    = oldProject.TransferIncome,
+                        CustIncome        = oldProject.CustIncome,
+                        WipEoy            = oldProject.WipEoy,
+                        WipLimit          = oldProject.WipLimit,
+                        WipCurrent        = oldProject.WipCurrent,
+                        ProjectStatus     = oldProject.ProjectStatus,
+                        CostBookNo        = oldProject.CostBookNo,
+                        FecCost           = oldProject.FecCost,
+                        Profit            = oldProject.Profit,
+                        BudgetCvl         = oldProject.BudgetCvl,
+                        DateCosted        = oldProject.DateCosted,
+                        Disease           = oldProject.Disease,
+                        Contract          = oldProject.Contract,
+                        ProjectParent     = oldProject.ProjectParent,
+                        ShortTitle        = oldProject.ShortTitle,
+                        CaseWorkSub       = oldProject.CaseWorkSub,
+                        PvsIncome         = oldProject.PvsIncome,
+                        PlanCaseWorkDebit = oldProject.PlanCaseWorkDebit,
+                        Finished          = oldProject.Finished,
+                        OwningRc          = oldProject.OwningRc,
+                        Comments          = oldProject.Comments,
+                        CarryOver         = oldProject.CarryOver,
+                        CarryOverSeed     = oldProject.CarryOverSeed,
+                        IsDefraProject    = oldProject.IsDefraProject,
+                        CostCentre        = oldProject.CostCentre,
+                        OracleProjectCode = oldProject.OracleProjectCode,
+                        SubAccountCode    = oldProject.SubAccountCode,
+                        ProjectGroup      = oldProject.ProjectGroup,
+                        IncomeAccountCode = oldProject.IncomeAccountCode,
+                        FpsYear           = oldProject.FpsYear
+                    };
+
+                    await _dbContext.Projects.AddAsync(newProject);
+                    // Converted trigger logic — UITrig_tlkpProject FOR INSERT: stage audit log in same unit of work
+                    _dbContext.ProjectLogs.Add(MapProjectToLog(newProject, "I"));
+                    await _dbContext.SaveChangesAsync();
 
                     // INSERT new JobCode rows
-                    await _dbContext.Database.ExecuteSqlAsync(
-                        $"""
-                 INSERT INTO fps.tlkpjobcode (jobcode, parentproject, jobcodeworkgroup, newprog, type, jobcodename, fpsyear)
-                 SELECT CASE jobcode WHEN {oldCode} THEN {newCode} ELSE jobcode END,
-                   {newCode}, jobcodeworkgroup, newprog, type, jobcodename, fpsyear
-                 FROM fps.tlkpjobcode WHERE parentproject = {oldCode}
-                 """);
+                    var jobCodesToCopy = await _dbContext.JobCodes
+                        .Where(jc => jc.ParentProject == oldCode)
+                        .AsNoTracking()
+                        .ToListAsync();
+                    var newJobCodes = jobCodesToCopy.Select(jc => new JobCode
+                    {
+                        JobCodeId        = jc.JobCodeId == oldCode ? newCode : jc.JobCodeId,
+                        ParentProject    = newCode,
+                        JobCodeWorkGroup = jc.JobCodeWorkGroup,
+                        NewProg          = jc.NewProg,
+                        Type             = jc.Type,
+                        JobCodeName      = jc.JobCodeName,
+                        FpsYear          = jc.FpsYear
+                    }).ToList();
+                    if (newJobCodes.Count > 0)
+                    {
+                        await _dbContext.JobCodes.AddRangeAsync(newJobCodes);
+                        await _dbContext.SaveChangesAsync();
+                    }
 
                     // UPDATE tlkpTestCapability.planportfolio
                     await _dbContext.Database.ExecuteSqlAsync(
@@ -433,8 +459,9 @@ namespace Apha.FPS.DataAccess.Repositories
                  """);
                     await _dbContext.Database.ExecuteSqlAsync(
                         $"UPDATE fps.monthlyoutput SET buyer = {newCode} WHERE buyer = {oldCode}");
-                    await _dbContext.Database.ExecuteSqlAsync(
-                        $"UPDATE fps.tbladditionalcosts SET jobcode = {newCode} WHERE jobcode = {oldCode}");
+                    await _dbContext.AdditionalCosts
+                        .Where(ac => ac.JobCode == oldCode)
+                        .ExecuteUpdateAsync(s => s.SetProperty(x => x.JobCode, newCode));
                     await _dbContext.Database.ExecuteSqlAsync(
                         $"UPDATE fps.proj_invoice SET projectparent = {newCode} WHERE projectparent = {oldCode}");
                     await _dbContext.Database.ExecuteSqlAsync(
@@ -447,8 +474,9 @@ namespace Apha.FPS.DataAccess.Repositories
                  """);
                     await _dbContext.Database.ExecuteSqlAsync(
                         $"UPDATE fps.projectmonth SET project = {newCode} WHERE project = {oldCode}");
-                    await _dbContext.Database.ExecuteSqlAsync(
-                        $"UPDATE fps.tblanimalreq SET jobcode = {newCode} WHERE jobcode = {oldCode}");
+                    await _dbContext.AnimalRequests
+                        .Where(ar => ar.JobCode == oldCode)
+                        .ExecuteUpdateAsync(s => s.SetProperty(x => x.JobCode, newCode));
                     await _dbContext.Database.ExecuteSqlAsync(
                         $"UPDATE fps.milestone SET project = {newCode} WHERE project = {oldCode}");
 
@@ -461,8 +489,9 @@ namespace Apha.FPS.DataAccess.Repositories
                         $"UPDATE fps.projectmonthfinal SET project = {newCode} WHERE project = {oldCode}");
 
                     // sp_Delete_tr, sp_Delete_tcv, sp_Delete_jc, sp_Delete_pp
-                    await _dbContext.Database.ExecuteSqlAsync(
-                        $"DELETE FROM fps.tlkptestreqmt WHERE projectbuyercode = {oldCode}");
+                    await _dbContext.TestRequirements
+                        .Where(tr => tr.ProjectBuyerCode == oldCode)
+                        .ExecuteDeleteAsync();
                     await _dbContext.Database.ExecuteSqlAsync(
                         $"DELETE FROM fps.timecodevalid WHERE parentproject = {oldCode} OR portfolio = {oldCode}");
                     await _dbContext.JobCodes
@@ -495,24 +524,12 @@ namespace Apha.FPS.DataAccess.Repositories
                 await using var tx = await _dbContext.Database.BeginTransactionAsync();
                 try
                 {
-                    // Converted trigger logic — DTrig_tlkpProject FOR DELETE: insert audit log before delete
-                    await _dbContext.Database.ExecuteSqlAsync(
-                        $"""
-                 INSERT INTO fps.project_log
-                   (parentproject, projecttitle, program, customer, manager, transferincome, custincome,
-                    wip_eoy, wip_limit, wip_current, projectstatus, costbookno, feccost, profit, budget_cvl,
-                    datecosted, disease, contract, projectparent, shorttitle, caseworksub, pvsincome,
-                    plancaseworkdebit, finished, owningrc, comments, carryover, carryoverseed,
-                    date_time, user_id, insert_delete, jobcode, isdefraproject, costcentre,
-                    oracleprojectcode, subaccountcode, projectgroup, incomeaccountcode, fpsyear)
-                 SELECT parentproject, projecttitle, program, customer, manager, transferincome, custincome,
-                   wip_eoy, wip_limit, wip_current, projectstatus, costbookno, feccost, profit, budget_cvl,
-                   datecosted, disease, contract, projectparent, shorttitle, caseworksub, pvsincome,
-                   plancaseworkdebit, finished, owningrc, comments, carryover, carryoverseed,
-                   NOW(), current_user, 'D', parentproject, isdefraproject, costcentre,
-                   oracleprojectcode, subaccountcode, projectgroup, incomeaccountcode, fpsyear
-                 FROM fps.tlkpproject WHERE parentproject = {parentProject}
-                 """);
+                    // Converted trigger logic — DTrig_tlkpProject FOR DELETE: stage audit log before delete
+                    var project = await _dbContext.Projects
+                        .FirstOrDefaultAsync(p => p.ParentProject == parentProject);
+                    if (project != null)
+                        _dbContext.ProjectLogs.Add(MapProjectToLog(project, "D"));
+                    await _dbContext.SaveChangesAsync();
 
                     // sp_Delete_tcv
                     await _dbContext.Database.ExecuteSqlAsync(
@@ -524,8 +541,9 @@ namespace Apha.FPS.DataAccess.Repositories
                         .ExecuteDeleteAsync();
 
                     // sp_delete_tr
-                    await _dbContext.Database.ExecuteSqlAsync(
-                        $"DELETE FROM fps.tlkptestreqmt WHERE projectbuyercode = {parentProject}");
+                    await _dbContext.TestRequirements
+                        .Where(tr => tr.ProjectBuyerCode == parentProject)
+                        .ExecuteDeleteAsync();
 
                     // sp_Delete_ar
                     await _dbContext.AnimalRequests
@@ -538,8 +556,9 @@ namespace Apha.FPS.DataAccess.Repositories
                         .ExecuteDeleteAsync();
 
                     // sp_Delete_ac
-                    await _dbContext.Database.ExecuteSqlAsync(
-                        $"DELETE FROM fps.tbladditionalcosts WHERE jobcode = {parentProject}");
+                    await _dbContext.AdditionalCosts
+                        .Where(ac => ac.JobCode == parentProject)
+                        .ExecuteDeleteAsync();
 
                     // sp_Delete_pp
                     await _dbContext.Projects
