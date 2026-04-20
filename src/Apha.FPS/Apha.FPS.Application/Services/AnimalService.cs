@@ -32,9 +32,9 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<List<AnimalDto>>(animalLookup);
         }
 
-        public async Task<decimal?> GetAnimalRateByIdAsync(string animalType)
+        public async Task<decimal?> GetAnimalRateByIdAsync(string animalType, string jobCode)
         {
-            var animalCostViews = await _animalRepository.GetAnimalRateByIdAsync(animalType);
+            var animalCostViews = await _animalRepository.GetAnimalRateByIdAsync(animalType, jobCode);
             return animalCostViews;
         }
         public async Task<AnimalRequestDto> AddAnimalCostAsync(AnimalRequestDto animalReq)
