@@ -3,6 +3,7 @@ using Apha.Common.Contracts.FPS;
 using Apha.Common.Contracts.PACT;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
+using Apha.FPSApps.Application.Dtos.PACT;
 
 using Apha.FPSApps.Application.Pagination;
 using AutoMapper;
@@ -37,6 +38,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<DiseaseDto, DiseaseRes>().ReverseMap();
             CreateMap<CustomerDto, CustomerRes>().ReverseMap();
             CreateMap<ContractDto, ContractRes>().ReverseMap();
+            CreateMap<ProjectGroupDto, ProjectGroupRes>().ReverseMap();
 
            
 
@@ -49,6 +51,9 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             // YEar Master
             CreateMap<YearMasterDto, YearMasterRes>().ReverseMap();
             CreateMap<YearMasterDto, YearMasterReq>().ReverseMap();
+
+            // Testor Product
+            CreateMap<TestorProductDto, TestorProductRes>().ReverseMap();
         }
     }
 }

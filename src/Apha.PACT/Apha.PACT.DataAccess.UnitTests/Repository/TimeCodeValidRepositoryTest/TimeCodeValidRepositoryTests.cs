@@ -23,10 +23,10 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TimeCodeValidRepositoryTest
                 IEnumerable<TimeCodeValid> timeCodes,
                 int fpsYear = DefaultTestFpsYear)
         {
-            var fpsYearContext = Substitute.For<IFpsYearContext>();
-            fpsYearContext.FPSYear.Returns(fpsYear);
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            fpsRequestContext.FpsYear.Returns(fpsYear);
 
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
             var timeCodesMockSet = RepositoryTestHelper.CreateMockDbSet(timeCodes);
 
             RepositoryTestHelper.SetupDbSetOperations(timeCodesMockSet);
@@ -43,7 +43,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TimeCodeValidRepositoryTest
 
             mockContext.Setup(x => x.TimeCodeValids).Returns(timeCodesMockSet.Object);
 
-            var repo = new TimeCodeValidRepository(mockContext.Object, fpsYearContext);
+            var repo = new TimeCodeValidRepository(mockContext.Object, fpsRequestContext);
             return (repo, timeCodesMockSet, mockContext);
         }
 
@@ -185,10 +185,10 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TimeCodeValidRepositoryTest
         [Fact]
         public async Task UpdateTimeCodeValidAsync_ValidEntity_SetsFpsYearBeforeEntryIsCalled()
         {
-            var fpsYearContext = Substitute.For<IFpsYearContext>();
-            fpsYearContext.FPSYear.Returns(DefaultTestFpsYear);
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            fpsRequestContext.FpsYear.Returns(DefaultTestFpsYear);
 
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
             var timeCodesMockSet = RepositoryTestHelper.CreateMockDbSet<TimeCodeValid>([]);
             mockContext.Setup(x => x.TimeCodeValids).Returns(timeCodesMockSet.Object);
 
@@ -197,7 +197,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TimeCodeValidRepositoryTest
                 .Callback(() => entryWasCalled = true)
                 .Throws(new NotSupportedException("Entry() is not supported in mocked DbContext"));
 
-            var repo = new TimeCodeValidRepository(mockContext.Object, fpsYearContext);
+            var repo = new TimeCodeValidRepository(mockContext.Object, fpsRequestContext);
             var entity = new TimeCodeValid { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1" };
 
             await Assert.ThrowsAsync<NotSupportedException>(() => repo.UpdateTimeCodeValidAsync(entity));
@@ -210,17 +210,17 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TimeCodeValidRepositoryTest
         public async Task UpdateTimeCodeValidAsync_SetsFpsYear_FromYearContext()
         {
             const int customYear = 2025;
-            var fpsYearContext = Substitute.For<IFpsYearContext>();
-            fpsYearContext.FPSYear.Returns(customYear);
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            fpsRequestContext.FpsYear.Returns(customYear);
 
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
             var timeCodesMockSet = RepositoryTestHelper.CreateMockDbSet<TimeCodeValid>([]);
             mockContext.Setup(x => x.TimeCodeValids).Returns(timeCodesMockSet.Object);
 
             mockContext.Setup(x => x.Entry(It.IsAny<TimeCodeValid>()))
                 .Throws(new NotSupportedException("Entry() is not supported in mocked DbContext"));
 
-            var repo = new TimeCodeValidRepository(mockContext.Object, fpsYearContext);
+            var repo = new TimeCodeValidRepository(mockContext.Object, fpsRequestContext);
             var entity = new TimeCodeValid { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1" };
 
             await Assert.ThrowsAsync<NotSupportedException>(() => repo.UpdateTimeCodeValidAsync(entity));
@@ -384,8 +384,6 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TimeCodeValidRepositoryTest
         [Fact]
         public async Task DeleteBulkAsync_WithWrongFpsYear_SkipsRemoveAndReturnsTrue()
         {
-            // Arrange — entity FpsYear (2020) does not match context year (2024);
-            // the FpsYear filter in the WHERE clause excludes it, so toDelete is empty
             var timeCodes = new List<TimeCodeValid>
             {
                 new() { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", FpsYear = 2020 }

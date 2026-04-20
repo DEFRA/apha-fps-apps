@@ -833,6 +833,30 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
         }
 
         [Fact]
+        public async Task AddAsync_WhenStaffJobIsNull_ThrowsArgumentNullException()
+        {
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentNullException>(() => _sut.AddAsync(null!));
+            await _mockRepository.DidNotReceive().AddAsync(Arg.Any<StaffJob>());
+        }
+
+        [Fact]
+        public async Task AddAsync_WhenPlannedHoursIsNegative_ThrowsArgumentOutOfRangeException()
+        {
+            // Arrange
+            var inputDto = new StaffJobDto
+            {
+                StaffId = "STAFF001",
+                JobCode = "JOB001",
+                PlannedHours = -5
+            };
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => _sut.AddAsync(inputDto));
+            await _mockRepository.DidNotReceive().AddAsync(Arg.Any<StaffJob>());
+        }
+
+        [Fact]
         public async Task UpdateAsync_WithValidStaffJob_ShouldReturnUpdatedStaffJobDto()
         {
             // Arrange
@@ -916,6 +940,30 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
         }
 
         [Fact]
+        public async Task UpdateAsync_WhenStaffJobIsNull_ThrowsArgumentNullException()
+        {
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentNullException>(() => _sut.UpdateAsync(null!));
+            await _mockRepository.DidNotReceive().UpdateAsync(Arg.Any<StaffJob>());
+        }
+
+        [Fact]
+        public async Task UpdateAsync_WhenPlannedHoursIsNegative_ThrowsArgumentOutOfRangeException()
+        {
+            // Arrange
+            var inputDto = new StaffJobDto
+            {
+                StaffId = "STAFF001",
+                JobCode = "JOB001",
+                PlannedHours = -5
+            };
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => _sut.UpdateAsync(inputDto));
+            await _mockRepository.DidNotReceive().UpdateAsync(Arg.Any<StaffJob>());
+        }
+
+        [Fact]
         public async Task DeleteAsync_WithValidParameters_ReturnsTrue()
         {
             // Arrange
@@ -947,20 +995,26 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
             await _mockRepository.Received(1).DeleteAsync(staffId, jobCode);
         }
 
-        [Theory]       
-        [InlineData("", "JOB123")]       
-        [InlineData("STAFF001", "")]
-        public async Task DeleteAsync_WithNullOrEmptyParameters_CallsRepository(string staffId, string jobCode)
+        [Fact]
+        public async Task DeleteAsync_WithEmptyStaffId_CallsRepository()
         {
             // Arrange
-            _mockRepository.DeleteAsync(staffId, jobCode).Returns(Task.FromResult(false));
+            _mockRepository.DeleteAsync("", "JOB123").Returns(Task.FromResult(false));
 
             // Act
-            var result = await _sut.DeleteAsync(staffId, jobCode);
+            var result = await _sut.DeleteAsync("", "JOB123");
 
             // Assert
             Assert.False(result);
-            await _mockRepository.Received(1).DeleteAsync(staffId, jobCode);
+            await _mockRepository.Received(1).DeleteAsync("", "JOB123");
+        }
+
+        [Fact]
+        public async Task DeleteAsync_WithEmptyJobCode_ThrowsArgumentException()
+        {
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentException>(() => _sut.DeleteAsync("STAFF001", ""));
+            await _mockRepository.DidNotReceive().DeleteAsync(Arg.Any<string>(), Arg.Any<string>());
         }
 
         [Fact]

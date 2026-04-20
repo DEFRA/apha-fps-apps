@@ -11,10 +11,6 @@ namespace Apha.FPSApps.Web.TagHelpers
     {
         private readonly IFpsYearContext _fy;
 
-        [ViewContext]
-        [HtmlAttributeNotBound]
-        public ViewContext? ViewContext { get; set; }
-
         public FpsYearAnchorTagHelper(
             IHtmlGenerator generator,
             IFpsYearContext fy)
@@ -42,7 +38,7 @@ namespace Apha.FPSApps.Web.TagHelpers
             if (string.IsNullOrEmpty(href) || href.Contains("year="))
                 return;
 
-            var separator = href.Contains("?") ? "&" : "?";
+            var separator = href.Contains('?') ? "&" : "?";
             output.Attributes.SetAttribute("href", $"{href}{separator}year={_fy.Year}");
 
         }

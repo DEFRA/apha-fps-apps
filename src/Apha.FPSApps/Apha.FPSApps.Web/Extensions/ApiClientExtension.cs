@@ -80,6 +80,15 @@ namespace Apha.FPSApps.Web.Extensions
                 client.BaseAddress = new Uri(configuration["PIMSApiSettings:BaseUrl"]
                     ?? throw new InvalidOperationException("PIMS base URL not configured"));
                 client.DefaultRequestHeaders.Add(AcceptHeader, ApplicationJson);
+            }).AddHttpMessageHandler(sp =>
+            {
+                var scopes = configuration["PIMSApiSettings:Scope"]!
+                    .Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+                return new BearerTokenHandler(
+                    sp.GetRequiredService<ITokenAcquisition>(),
+                    sp.GetRequiredService<IHttpContextAccessor>(),
+                    scopes);
             })
             .AddHttpMessageHandler<RequestHeadersHandler>();
                 

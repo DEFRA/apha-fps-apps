@@ -10,13 +10,12 @@ namespace Apha.PACT.Api.Middleware
         private const string CorrelationIdHeader = "X-Correlation-ID";
 
         public RequestContextMiddleware(
-                RequestDelegate next,
-                ILogger<RequestContextMiddleware> logger)
+                RequestDelegate next)
         {
             _next = next;            
         }
 
-        public async Task InvokeAsync(HttpContext context, IFpsYearContext yearContext)
+        public async Task InvokeAsync(HttpContext context, IFpsRequestContext requestContext)
         {
             var path = context.Request.Path.Value?.ToLower();
 
@@ -39,7 +38,8 @@ namespace Apha.PACT.Api.Middleware
 
             SetCorrelationId(context, CorrelationIdHeader);
 
-            ((FpsYearContext)yearContext).FPSYear = fpsYear;
+            requestContext.FpsYear = fpsYear;
+            requestContext.UserEmailId = ("Rohit.Agarwal@defradev.onmicrosoft.com").ToLowerInvariant(); //(context.User?.Identity?.Name ?? string.Empty).ToLowerInvariant();
 
             await _next(context);
         }

@@ -21,7 +21,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             Mock<FpsDbContext> Context)
             CreateRepositoryWithMocks(IEnumerable<WorkGroup> workGroups)
         {
-            var fpsYearContext = Substitute.For<IFpsYearContext>();
+            var fpsYearContext = Substitute.For<IFpsRequestContext>();
             var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);
             var workGroupsMockSet = RepositoryTestHelper.CreateMockDbSet(workGroups);
 

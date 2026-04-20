@@ -38,6 +38,16 @@ namespace Apha.PACT.Api.Controllers
             return Ok(_mapper.Map<PaginationRes<TestRequirementtRes>>(result));
         }
 
+        /// <summary>Retrieves a paged list of TestReqmt records for a given ParentProject.</summary>
+        [HttpGet("pagedbyproject/{parentProject}")]
+        public async Task<IActionResult> GetPagedByProject(
+            [FromQuery] QueryParameters<string> query,
+            string parentProject)
+        {
+            var result = await _service.GetPagedTestReqmtByProjectAsync(query, parentProject);
+            return Ok(_mapper.Map<PaginationRes<TestRequirementtRes>>(result));
+        }
+
         /// <summary>Retrieves all TestReqmt records for a given TestCode without pagination (for export).</summary>
         [HttpGet("all/{testCode}")]
         public async Task<IActionResult> GetAllTestReqmtForExport(string testCode, [FromQuery] string? filter = null)

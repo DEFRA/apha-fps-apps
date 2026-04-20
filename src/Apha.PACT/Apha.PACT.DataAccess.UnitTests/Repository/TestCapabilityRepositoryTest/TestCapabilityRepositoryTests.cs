@@ -23,10 +23,10 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestCapabilityRepositoryTest
                 IEnumerable<TestCapability> testCapabilities,
                 int fpsYear = DefaultFpsYear)
         {
-            var fpsYearContext = Substitute.For<IFpsYearContext>();
-            fpsYearContext.FPSYear.Returns(fpsYear);
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            fpsRequestContext.FpsYear.Returns(fpsYear);
 
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
             var dbSetMock = RepositoryTestHelper.CreateMockDbSet(testCapabilities);
 
             RepositoryTestHelper.SetupDbSetOperations(dbSetMock);
@@ -37,7 +37,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestCapabilityRepositoryTest
 
             mockContext.Setup(x => x.TestCapabilities).Returns(dbSetMock.Object);
 
-            var repo = new TestCapabilityRepository(mockContext.Object, fpsYearContext);
+            var repo = new TestCapabilityRepository(mockContext.Object, fpsRequestContext);
             return (repo, dbSetMock, mockContext);
         }
 

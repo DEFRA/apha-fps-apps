@@ -9,16 +9,13 @@ namespace Apha.PACT.DataAccess.Repository
 {
     public class TestRequirementRepository : BaseRepository, ITestRequirementRepository
     {
-        private readonly IFpsYearContext _fpsYearContext;
-        private readonly ICurrentUserContext _currentUserContext;
+        private readonly IFpsRequestContext _fpsRequestContext;
 
         public TestRequirementRepository(
             FpsDbContext context,
-            IFpsYearContext fpsYearContext,
-            ICurrentUserContext currentUserContext) : base(context)
+            IFpsRequestContext fpsRequestContext) : base(context)
         {
-            _fpsYearContext = fpsYearContext;
-            _currentUserContext = currentUserContext;
+            _fpsRequestContext = fpsRequestContext;
         }
 
         public async Task<PagedData<TestRequirement>> GetPagedByTestCodeAsync(
@@ -82,6 +79,61 @@ namespace Apha.PACT.DataAccess.Repository
                 (true, false) => query.SortBy switch
                 {
                     nameof(TestRequirementDetail.Buyer) => baseQuery.OrderBy(t => t.Buyer),
+                    nameof(TestRequirementDetail.UnitPrice) => baseQuery.OrderBy(t => t.UnitPrice),
+                    nameof(TestRequirementDetail.NoRequired) => baseQuery.OrderBy(t => t.NoRequired),
+                    nameof(TestRequirementDetail.Active) => baseQuery.OrderBy(t => t.Active),
+                    nameof(TestRequirementDetail.ProjectBuyerCode) => baseQuery.OrderBy(t => t.ProjectBuyerCode),
+                    nameof(TestRequirementDetail.IsDefraProject) => baseQuery.OrderBy(t => t.IsDefraProject),
+                    nameof(TestRequirementDetail.RecUnitPrice) => baseQuery.OrderBy(t => t.RecUnitPrice),
+                    _ => baseQuery.OrderBy(t => t.TestCode)
+                },
+                _ => baseQuery.OrderBy(t => t.TestCode)
+            };
+
+            var result = await baseQuery.ToListAsync();
+            return ApplyPaging(result, query.Page, query.PageSize);
+        }
+
+        public async Task<PagedData<TestRequirementDetail>> GetPagedByProjectAsync(
+            PaginationParameters<string> query, string parentProject)
+        {
+            var baseQuery = (from t in _context.TestRequirements
+                             join tp in _context.TestorProducts on t.TestCode equals tp.ItemCode
+                             join p in _context.Projects on t.Buyer equals p.ParentProject
+                             where t.Buyer == parentProject
+                             select new TestRequirementDetail
+                             {
+                                 TestCode = t.TestCode,
+                                 Buyer = t.Buyer,
+                                 UnitPrice = t.UnitPrice,
+                                 NoRequired = t.NoRequired,
+                                 ProjectBuyerCode = t.ProjectBuyerCode,
+                                 TestBuyerCode = t.TestBuyerCode,
+                                 DateCreated = t.DateCreated,
+                                 Active = t.Active,
+                                 FpsYear = t.FpsYear,
+                                 IsDefraProject = p.IsDefraProject,
+                                 RecUnitPrice = p.IsDefraProject == 0 ? tp.UnitPriceVla : (decimal?)tp.DefraUnitPrice
+                             }).AsQueryable();
+
+            baseQuery = ApplyTestReqmtDetailFilter(baseQuery, query.Filter);
+
+            baseQuery = (!string.IsNullOrWhiteSpace(query.SortBy), query.Descending) switch
+            {
+                (true, true) => query.SortBy switch
+                {
+                    nameof(TestRequirementDetail.TestCode) => baseQuery.OrderByDescending(t => t.TestCode),
+                    nameof(TestRequirementDetail.UnitPrice) => baseQuery.OrderByDescending(t => t.UnitPrice),
+                    nameof(TestRequirementDetail.NoRequired) => baseQuery.OrderByDescending(t => t.NoRequired),
+                    nameof(TestRequirementDetail.Active) => baseQuery.OrderByDescending(t => t.Active),
+                    nameof(TestRequirementDetail.ProjectBuyerCode) => baseQuery.OrderByDescending(t => t.ProjectBuyerCode),
+                    nameof(TestRequirementDetail.IsDefraProject) => baseQuery.OrderByDescending(t => t.IsDefraProject),
+                    nameof(TestRequirementDetail.RecUnitPrice) => baseQuery.OrderByDescending(t => t.RecUnitPrice),
+                    _ => baseQuery.OrderByDescending(t => t.TestCode)
+                },
+                (true, false) => query.SortBy switch
+                {
+                    nameof(TestRequirementDetail.TestCode) => baseQuery.OrderBy(t => t.TestCode),
                     nameof(TestRequirementDetail.UnitPrice) => baseQuery.OrderBy(t => t.UnitPrice),
                     nameof(TestRequirementDetail.NoRequired) => baseQuery.OrderBy(t => t.NoRequired),
                     nameof(TestRequirementDetail.Active) => baseQuery.OrderBy(t => t.Active),
@@ -186,6 +238,13 @@ namespace Apha.PACT.DataAccess.Repository
             };
         }
 
+        public async Task<bool> ExistsAsync(string testCode, string buyer)
+        {
+            return await _context.TestRequirements
+                .AsNoTracking()
+                .AnyAsync(p => p.TestCode == testCode && p.Buyer == buyer);
+        }
+
         public async Task<bool> ExistsByTestBuyerCodeAsync(string testBuyerCode)
         {
             return await _context.TestRequirements
@@ -202,7 +261,7 @@ namespace Apha.PACT.DataAccess.Repository
 
         public async Task<TestRequirement> AddAsync(TestRequirement entity)
         {
-            entity.FpsYear = _fpsYearContext.FPSYear;
+            entity.FpsYear = _fpsRequestContext.FpsYear;
             entity.DateCreated = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
             await _context.TestRequirements.AddAsync(entity);
             await _context.SaveChangesAsync();
@@ -212,7 +271,7 @@ namespace Apha.PACT.DataAccess.Repository
 
         public async Task<TestRequirement> UpdateAsync(TestRequirement entity)
         {
-            entity.FpsYear = _fpsYearContext.FPSYear;
+            entity.FpsYear = _fpsRequestContext.FpsYear;
             _context.Entry(entity).State = EntityState.Modified;
             await _context.SaveChangesAsync();
             await WriteAuditLogAsync(entity, "U");
@@ -225,7 +284,7 @@ namespace Apha.PACT.DataAccess.Repository
                 .FirstOrDefaultAsync(t =>
                     t.TestCode == testCode &&
                     t.Buyer == buyer &&
-                    t.FpsYear == _fpsYearContext.FPSYear);
+                    t.FpsYear == _fpsRequestContext.FpsYear);
 
             if (entity is null) return false;
 
@@ -279,9 +338,11 @@ namespace Apha.PACT.DataAccess.Repository
                 UnitPrice     = entity.UnitPrice.HasValue ? (double?)decimal.ToDouble(entity.UnitPrice.Value) : null,
                 NoRequired    = entity.NoRequired.HasValue ? (int?)Convert.ToInt32(entity.NoRequired.Value) : null,
                 DateTime      = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
-                UserId        = _currentUserContext.UserId,
+                UserId        = _fpsRequestContext.UserEmailId?.Length > 20
+                    ? _fpsRequestContext.UserEmailId[..20]
+                    : _fpsRequestContext.UserEmailId,
                 InsertDelete  = insertDelete,
-                FpsYear       = _fpsYearContext.FPSYear
+                FpsYear       = _fpsRequestContext.FpsYear
             };
 
             // UITrig also captures ProjectBuyerCode, TestBuyerCode and Active

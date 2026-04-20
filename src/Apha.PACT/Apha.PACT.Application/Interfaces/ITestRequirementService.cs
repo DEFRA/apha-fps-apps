@@ -6,6 +6,7 @@ namespace Apha.PACT.Application.Interfaces
     public interface ITestRequirementService
     {
         Task<PaginatedResult<TestRequirementtDto>> GetPagedTestReqmtAsync(QueryParameters<string> query, string testCode);
+        Task<PaginatedResult<TestRequirementtDto>> GetPagedTestReqmtByProjectAsync(QueryParameters<string> query, string parentProject);
         Task<IEnumerable<TestRequirementtDto>> GetAllTestReqmtForExportAsync(string testCode, string? filterJson);
         Task<TestRequirementtDto?> GetTestReqmtByIdAsync(string testCode, string buyer);
         Task<TestRequirementtDto?> GetTestReqmtPricingAsync(string testCode, string? projectCode = null);
