@@ -10,7 +10,7 @@ LABEL uk.gov.defra.parent-image=defra-dotnetcore-development:${PARENT_VERSION}
 
 WORKDIR /home/dotnet/src
 
-COPY --chown=dotnet:dotnet --chmod=444 src/ .
+COPY --chown=dotnet:dotnet src/ .
 
 # Restore execute bit on dirs only (555 = r-xr-xr-x, still no write)
 RUN find . -type d -exec chmod 555 {} \; && \
@@ -48,7 +48,7 @@ EXPOSE ${PORT}
 
 USER app
 WORKDIR /app
-COPY --chmod=555 --from=development /home/dotnet/out/ ./
+COPY --from=development /home/dotnet/out/ ./
 
 ENTRYPOINT ["dotnet", "Apha.FPSApps.Web.dll"]
 
