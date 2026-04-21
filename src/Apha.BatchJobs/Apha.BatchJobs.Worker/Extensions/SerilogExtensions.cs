@@ -29,9 +29,22 @@ public static class SerilogExtensions
             .Enrich.WithProperty("ApplicationName", "Apha.BatchJobs")
             .Enrich.WithProperty("Environment", GetEnvironment());
 
-        // Always log to console with structured JSON format
-        loggerConfiguration = loggerConfiguration
-            .WriteTo.Console(new RenderedCompactJsonFormatter());
+        // Use readable console format for Demo/Development, JSON for Production
+        var environment = GetEnvironment();
+        if (environment.Equals("Demo", StringComparison.OrdinalIgnoreCase) ||
+            environment.Equals("Development", StringComparison.OrdinalIgnoreCase))
+        {
+            // Human-readable format for local testing
+            loggerConfiguration = loggerConfiguration
+                .WriteTo.Console(
+                    outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}");
+        }
+        else
+        {
+            // Structured JSON format for production/CloudWatch
+            loggerConfiguration = loggerConfiguration
+                .WriteTo.Console(new RenderedCompactJsonFormatter());
+        }
 
         // Note: AWS CloudWatch logging is configured at deployment time via ECS task definition
         // and environment-specific appsettings configuration. Foundation layer uses console logging.
