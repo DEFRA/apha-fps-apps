@@ -141,7 +141,7 @@ jobs:
             /d:sonar.cs.vstest.reportsPaths="src/TestResults/*.test_results.trx" \
             /d:sonar.branch.name="$BRANCH_NAME" \
             /d:sonar.verbose=true \
-            /d:sonar.exclusions="**/wwwroot/**,**/Dockerfile" \
+            /d:sonar.exclusions="**/wwwroot/**" \
             /d:sonar.coverage.exclusions="**/wwwroot/**,**/*.cshtml,**/Interfaces/*.cs,**/*Map.cs,**/*Mapper.cs,**/Program.cs,**/Startup.cs,**/DTOs/*.cs,**/Entities/*.cs,**/Models/*.cs"
 
       - name: Restore NuGet packages
