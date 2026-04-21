@@ -31,7 +31,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       DOTNET_ENVIRONMENT: Development
       BatchJobs__EnableDatabase: "true"
-      ConnectionStrings__BatchJobsConnectionString: Host=postgres;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Timeout=30
+      ConnectionStrings__BatchJobsConnectionString: Host=postgres;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=password;Timeout=30
     depends_on:
       postgres:
         condition: service_healthy
@@ -48,7 +48,8 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       DOTNET_ENVIRONMENT: Development
-      BatchJobs__EnableDatabase: "false"
+      BATCHJOBS__ENABLEDATABASE: "false"
+      ConnectionStrings__BatchJobsConnectionString: Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Timeout=30
       BATCH_JOB_NAME: HealthCheck
       BATCH_RUN_MODE: AdHoc
     networks:

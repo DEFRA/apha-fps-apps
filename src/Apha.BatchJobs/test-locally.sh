@@ -65,7 +65,12 @@ function detect_execution_mode() {
         return
     fi
 
-    if ! test_docker; then
+    if ! command -v docker &> /dev/null; then
+        echo "native"
+        return
+    fi
+
+    if ! docker ps &> /dev/null; then
         echo "native"
         return
     fi
@@ -77,9 +82,9 @@ function detect_execution_mode() {
     fi
 
     if [ "$DOCKER_OS_TYPE" = "windows" ]; then
-        print_info "Docker daemon is running in Windows container mode; native .NET mode will be used instead."
+        print_info "Docker daemon is running in Windows container mode; native .NET mode will be used instead." >&2
     else
-        print_info "Unable to determine Docker container mode; native .NET mode will be used instead."
+        print_info "Unable to determine Docker container mode; native .NET mode will be used instead." >&2
     fi
 
     echo "native"
@@ -129,15 +134,17 @@ function build_and_run() {
     
     print_header "Starting Services with docker-compose"
     echo ""
+    SERVICE_NAME="batch-jobs"
     if [ "$DOCKER_PROFILE" = "nodb" ]; then
+        SERVICE_NAME="batch-jobs-nodb"
         print_info "Starting Batch Job container in NoDb mode..."
     else
         print_info "Starting PostgreSQL and Batch Job..."
     fi
-    print_info "Press Ctrl+C to stop viewing logs (containers keep running)"
+    print_info "Streaming logs until the batch job exits..."
     echo ""
-    
-    docker-compose --profile "$DOCKER_PROFILE" up --no-build
+
+    docker-compose --profile "$DOCKER_PROFILE" up --no-build --abort-on-container-exit --exit-code-from "$SERVICE_NAME"
     popd > /dev/null
 }
 
@@ -273,7 +280,7 @@ else
 fi
 echo ""
 if [ "$EXECUTION_MODE" = "docker" ]; then
-    print_info "You can Ctrl+C to stop viewing logs (containers keep running)"
+    print_info "Run will end automatically when the batch job container exits"
 fi
 echo ""
 if [ "$NO_PROMPT" != "true" ]; then

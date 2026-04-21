@@ -12,7 +12,7 @@ COPY appsettings.json ./
 
 RUN dotnet publish BatchJobs.csproj -c Release -o /app/publish
 
-FROM mcr.microsoft.com/dotnet/runtime:10.0 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 
 # Copy published application (does not contain appsettings.Development.json)

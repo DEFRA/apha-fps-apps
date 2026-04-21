@@ -13,6 +13,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Apha.BatchJobs.UnitTests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Remove="Archive\**\*.cs" />
     <Compile Remove="ReImagineAnalysis_v4\**\*.cs" />
     <Compile Remove="docs\**\*.cs" />
