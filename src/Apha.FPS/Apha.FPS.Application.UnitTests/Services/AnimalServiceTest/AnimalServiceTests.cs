@@ -214,19 +214,20 @@ namespace Apha.FPS.Application.UnitTests.Services.AnimalServiceTest
         {
             // Arrange
             var animalType = "CAT";
+            var jobCode = "JOB001";
             var expectedRate = 75.50m;
 
-            _mockRepository.GetAnimalRateByIdAsync(animalType)
+            _mockRepository.GetAnimalRateByIdAsync(animalType, jobCode)
                 .Returns(Task.FromResult<decimal?>(expectedRate));
 
             // Act
-            var result = await _sut.GetAnimalRateByIdAsync(animalType);
+            var result = await _sut.GetAnimalRateByIdAsync(animalType, jobCode);
 
             // Assert
             result.Should().NotBeNull();
             result.Should().Be(expectedRate);
 
-            await _mockRepository.Received(1).GetAnimalRateByIdAsync(animalType);
+            await _mockRepository.Received(1).GetAnimalRateByIdAsync(animalType, jobCode);
         }
 
         [Fact]
@@ -234,17 +235,18 @@ namespace Apha.FPS.Application.UnitTests.Services.AnimalServiceTest
         {
             // Arrange
             var animalType = "UNKNOWN";
+            var jobCode = "JOB001";
 
-            _mockRepository.GetAnimalRateByIdAsync(animalType)
+            _mockRepository.GetAnimalRateByIdAsync(animalType, jobCode)
                 .Returns(Task.FromResult<decimal?>(null));
 
             // Act
-            var result = await _sut.GetAnimalRateByIdAsync(animalType);
+            var result = await _sut.GetAnimalRateByIdAsync(animalType, jobCode);
 
             // Assert
             result.Should().BeNull();
 
-            await _mockRepository.Received(1).GetAnimalRateByIdAsync(animalType);
+            await _mockRepository.Received(1).GetAnimalRateByIdAsync(animalType, jobCode);
         }
 
         [Fact]
@@ -252,18 +254,19 @@ namespace Apha.FPS.Application.UnitTests.Services.AnimalServiceTest
         {
             // Arrange
             var animalType = "CAT";
+            var jobCode = "JOB001";
 
-            _mockRepository.GetAnimalRateByIdAsync(animalType)
+            _mockRepository.GetAnimalRateByIdAsync(animalType, jobCode)
                 .ThrowsAsync(new Exception("Database connection failed"));
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<Exception>(
-                () => _sut.GetAnimalRateByIdAsync(animalType)
+                () => _sut.GetAnimalRateByIdAsync(animalType, jobCode)
             );
 
             exception.Message.Should().Be("Database connection failed");
 
-            await _mockRepository.Received(1).GetAnimalRateByIdAsync(animalType);
+            await _mockRepository.Received(1).GetAnimalRateByIdAsync(animalType, jobCode);
         }
 
         #endregion

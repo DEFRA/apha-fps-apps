@@ -31,5 +31,8 @@ namespace Apha.FPSApps.Application.Services.PIMS
 
         public async Task<ApiResponseDto<List<RiskDto>>> GetAllRiskAsync()
             => await _client.PimsProjectDetails.GetAllRiskAsync();
+
+        public async Task<ApiResponseDto<List<YearDto>>> GetAllYearAsync()
+            => await _client.PimsProjectDetails.GetAllYearAsync();
     }
 }

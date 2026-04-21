@@ -80,7 +80,7 @@
         function navigateToProjectCode(code) {
             code = (code || '').trim();
             if (code) {
-                window.location.href = '/PACT/ProjectInvoiceSubContract/Index?parentProject=' + encodeURIComponent(code);
+                fpsNavigateTo('/PACT/ProjectInvoiceSubContract/Index?parentProject=' + encodeURIComponent(code));
             }
         }
 

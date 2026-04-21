@@ -25,5 +25,7 @@ namespace Apha.PIMS.Application.Dtos
         public string? Disease { get; set; }
 
         public string? Reason { get; set; }
+
+        public string? TransferTo { get; set; }
     }
 }

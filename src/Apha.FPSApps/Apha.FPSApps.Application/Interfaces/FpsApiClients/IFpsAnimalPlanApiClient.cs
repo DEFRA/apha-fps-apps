@@ -8,7 +8,7 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
     {
         Task<ApiResponseDto<List<AnimalCostViewDto>>> GetAllAnimalCostAsync(QueryParameters<string> query, string jobCode);
         Task<ApiResponseDto<List<AnimalDto>>> GetAnimalLookupAsync();
-        Task<ApiResponseDto<decimal?>> GetAnimalRateAsync(string animalType);
+        Task<ApiResponseDto<decimal?>> GetAnimalRateAsync(string animalType, string jobCode);
         Task<ApiResponseDto<decimal>> GetTotalAnimalCostAsync(string jobCode);
         Task<ApiResponseDto<AnimalCostViewDto?>> GetAnimalCostViewByIdAsync(int indCounter, string jobCode);
         Task<ApiResponseDto<AnimalRequestDto>> CreateAnimalCostAsync(AnimalRequestDto animalRequest);

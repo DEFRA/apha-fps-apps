@@ -108,6 +108,7 @@ namespace Apha.PACT.Application.Services
             await ValidateJobCodeAsync(dto, isInsert, existing);
             await ValidateTestCapabilityAsync(dto, isInsert, existing);
             await ValidateParentProjectAsync(dto, isInsert, existing);
+            await ValidateDuplicateAsync(dto, isInsert);
         }
 
         private static void ValidateRequiredFieldCombination(TimeCodeValidDto dto)
@@ -160,6 +161,17 @@ namespace Apha.PACT.Application.Services
             var projectExists = await _projectRepository.ExistsAsync(dto.ParentProject);
             if (!projectExists)
                 throw new InvalidOperationException("Not a valid project");
+        }
+
+        private async Task ValidateDuplicateAsync(TimeCodeValidDto dto, bool isInsert)
+        {
+            if (!isInsert)
+                return;
+
+            var duplicate = await _repository.GetTimeCodeValidAsync(dto.WorkGroup, dto.TimeCode, dto.ParentProject);
+            if (duplicate != null)
+                throw new InvalidOperationException(
+                    $"A time code record already exists for WorkGroup '{dto.WorkGroup}', TimeCode '{dto.TimeCode}' and ParentProject '{dto.ParentProject}'.");
         }
     }
 }

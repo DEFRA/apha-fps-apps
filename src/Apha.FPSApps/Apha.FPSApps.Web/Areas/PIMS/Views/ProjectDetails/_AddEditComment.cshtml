@@ -61,7 +61,7 @@
                     class="govuk-button font-size-16"
                     id="saveRecordBtn"
                     onclick="saveRecord()">
-                Save
+                    @(Model.IsAddingNew ? "Save" : "Update")
             </button>
         </div>
     </div>

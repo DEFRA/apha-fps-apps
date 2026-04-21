@@ -53,67 +53,46 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             Dictionary<string, string> filterDict =
                 JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}") ?? new();
 
-            try
+            QueryParameters<string> queryParameters = _mapper.Map<QueryParameters<string>>(request);
+            var pagedData = await _projectListService.GetAllProjectsAsync(queryParameters, filterOption);
+
+            List<ProjectListItem> items = new();
+            if (pagedData.Success && pagedData.Data != null)
             {
-                QueryParameters<string> queryParameters = _mapper.Map<QueryParameters<string>>(request);
-                var pagedData = await _projectListService.GetAllProjectsAsync(queryParameters, filterOption);
-
-                List<ProjectListItem> items = new();
-                if (pagedData.Success && pagedData.Data != null)
-                {
-                    items = _mapper.Map<List<ProjectListItem>>(pagedData.Data);
-                }
-                else if (pagedData.Errors != null)
-                {
-                    foreach (var error in pagedData.Errors)
-                        Console.WriteLine($"Project list error: {error.Message}");
-                }
-
-                PaginationModel paginationModel = pagedData.Pagination is null
-                    ? new PaginationModel()
-                    : _mapper.Map<PaginationModel>(pagedData.Pagination);
-                paginationModel.SortColumn = request.SortBy;
-                paginationModel.SortDirection = request.Descending;
-
-                return new DataGridConfig<ProjectListItem>
-                {
-                    GridId = "projectListGrid",
-                    Title = "Select Project",
-                    ShowCheckboxColumn = false,
-                    ShowPagination = true,
-                    KeyProperty = "Parentproject",
-                    AllowAdd = false,
-                    AllowEdit = true,
-                    AllowDelete = false,
-                    EditFunction = "editProject",
-                    ExtraFilterMethod = "getProjectExtraFilters",
-                    BindGridUrl = "/PIMS/ProjectList/LoadProjectListGrid",
-                    Data = items,
-                    Columns = GridDataProvider.GetColumnsDefination<ProjectListItem>(null),
-                    Pagination = paginationModel,
-                    CurrentFilters = filterDict
-                };
+                items = _mapper.Map<List<ProjectListItem>>(pagedData.Data);
             }
-            catch (Exception ex)
+            else if (pagedData.Errors != null)
             {
-                Console.WriteLine($"BuildProjectListGridAsync error: {ex.Message}");
-                return new DataGridConfig<ProjectListItem>
-                {
-                    GridId = "projectListGrid",
-                    Title = "Select Project",
-                    ShowCheckboxColumn = false,
-                    ShowPagination = true,
-                    KeyProperty = "Parentproject",
-                    AllowAdd = false,
-                    AllowEdit = true,
-                    AllowDelete = false,
-                    ExtraFilterMethod = "getProjectExtraFilters",
-                    Data = new List<ProjectListItem>(),
-                    Columns = GridDataProvider.GetColumnsDefination<ProjectListItem>(null),
-                    Pagination = new PaginationModel(),
-                    CurrentFilters = filterDict
-                };
+                foreach (var error in pagedData.Errors)
+                    Console.WriteLine($"Project list error: {error.Message}");
             }
+
+            PaginationModel paginationModel = pagedData.Pagination is null
+                ? new PaginationModel()
+                : _mapper.Map<PaginationModel>(pagedData.Pagination);
+            paginationModel.SortColumn = request.SortBy;
+            paginationModel.SortDirection = request.Descending;
+
+            return new DataGridConfig<ProjectListItem>
+            {
+                GridId = "projectListGrid",
+                Title = "Select Project",
+                ShowCheckboxColumn = false,
+                ShowPagination = true,
+                KeyProperty = "Parentproject",
+                AllowAdd = false,
+                AllowEdit = false,
+                AllowDelete = false,
+                EditFunction = "editProject",
+                AllowView = true,
+                ViewFunction = "viewProject",
+                ExtraFilterMethod = "getProjectExtraFilters",
+                BindGridUrl = "/PIMS/ProjectList/LoadProjectListGrid",
+                Data = items,
+                Columns = GridDataProvider.GetColumnsDefination<ProjectListItem>(null),
+                Pagination = paginationModel,
+                CurrentFilters = filterDict
+            };
         }
     }
 }

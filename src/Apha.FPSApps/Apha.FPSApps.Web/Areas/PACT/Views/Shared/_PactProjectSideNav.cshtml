@@ -9,14 +9,20 @@
         <li class="sidebar-link-two"
             style="border-radius:0 8px 8px 0; cursor:pointer; background-color:#1d70b8;">
             <a style="color:#fff;"
-               href="@Url.Action("Index", "ProjectInvoiceSubContract", new { area = "PACT", parentProject = Model.ParentProject })">
+               asp-area="PACT"
+               asp-controller="ProjectInvoiceSubContract"
+               asp-action="Index"
+               asp-route-parentProject="@Model.ParentProject">
                 Invoices &amp; Subcontracted Costs
             </a>
         </li>        
         <li class="sidebar-link-two"
             style="border-radius:0 8px 8px 0; cursor:pointer; background-color:#1d70b8;">
             <a style="color:#fff;"
-               href="@Url.Action("Index", "TestPurchaseRequirement", new { area = "PACT", parentProject = Model.ParentProject })">
+               asp-area="PACT"
+               asp-controller="TestPurchaseRequirement"
+               asp-action="Index"
+               asp-route-parentProject="@Model.ParentProject">
                 Test Purchase Requirements
             </a>
         </li>
