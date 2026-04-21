@@ -31,6 +31,8 @@ namespace Apha.PIMS.Api.Mappings
             CreateMap<ProjectDetailDto, ProjectDetailReq>().ReverseMap();
             CreateMap<ProjectDetailDto, ProjectDetailRes>().ReverseMap();
             CreateMap<RiskDto, RiskRes>().ReverseMap();
+            CreateMap<YearDto, YearRes>().ReverseMap();
+            CreateMap<CommentTopicDto, CommentTopicRes>().ReverseMap();
         }
     }
 }

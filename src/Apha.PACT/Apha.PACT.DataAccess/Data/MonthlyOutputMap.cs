@@ -7,13 +7,6 @@ namespace Apha.PACT.DataAccess.Data
 {
     public class MonthlyOutputMap : IEntityTypeConfiguration<MonthlyOutput>
     {
-        private readonly IFpsYearContext _fPSYearContext;
-
-        public MonthlyOutputMap(IFpsYearContext fPSYearContext)
-        {
-            _fPSYearContext = fPSYearContext;
-        }
-
         public void Configure(EntityTypeBuilder<MonthlyOutput> entity)
         {
             entity.HasKey(e => new { e.TestCode, e.Buyer, e.Month, e.WorkGroup, e.FpsYear }).HasName("pk_monthlyoutput");
@@ -45,7 +38,6 @@ namespace Apha.PACT.DataAccess.Data
             entity.Property(e => e.WgBuyer)
                 .HasMaxLength(50)
                 .HasColumnName("wgbuyer");
-            entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FPSYear);
         }
     }
 }

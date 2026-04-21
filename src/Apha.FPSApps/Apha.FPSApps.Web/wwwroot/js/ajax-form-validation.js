@@ -31,6 +31,29 @@
     }
 
     /**
+     * Wires up a one-shot input/change listener on `$field` that clears its
+     * inline error styling as soon as the user starts editing.
+     *
+     * @param {jQuery} $field     - The input/select element.
+     * @param {string} fieldName  - The field's `name` attribute value.
+     * @param {jQuery} $c         - The scoped container.
+     */
+    function clearFieldErrorOnInput($field, fieldName, $c) {
+        $field.off('input.valclear change.valclear')
+              .on('input.valclear change.valclear', function () {
+                  var $fg = $field.closest('.govuk-form-group');
+                  $fg.removeClass('govuk-form-group--error');
+                  $field.removeClass('govuk-input--error');
+                  $fg.find('[data-valmsg-for="' + fieldName + '"]')
+                     .text('')
+                     .hide()
+                     .removeClass('field-validation-error')
+                     .addClass('field-validation-valid');
+                  $field.off('input.valclear change.valclear');
+              });
+    }
+
+    /**
      * Normalise errors into a uniform array: [{ field, message }].
      * Accepts either an array or a plain-object dictionary.
      */

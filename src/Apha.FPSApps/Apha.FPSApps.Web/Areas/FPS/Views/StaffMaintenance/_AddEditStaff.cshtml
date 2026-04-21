@@ -49,5 +49,5 @@
 
 <div class="modal-footer">
     <button class="govuk-button govuk-button--secondary sup_margin_0" data-module="govuk-button" onclick="closeModal()">Cancel</button>
-    <button class="govuk-button sup_margin_0" data-module="govuk-button" onclick="savestaffplan()">Save</button>
+    <button class="govuk-button sup_margin_0" data-module="govuk-button" onclick="savestaffplan()">@(string.IsNullOrEmpty(Model?.SPNumber) ? "Save" : "Update")</button>
 </div>

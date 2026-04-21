@@ -1,4 +1,4 @@
-using Apha.Common.Helpers.Repository;
+﻿using Apha.Common.Helpers.Repository;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -18,9 +18,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         private static ProjectRepository CreateRepository(
             IEnumerable<Project>? projects = null,
             IEnumerable<ProjectView>? projectViews = null,
+            IEnumerable<JobCode>? jobCodes = null,
             IEnumerable<PactProjectView>? pactProjectViews = null,
-            string userEmailId = "test@example.com",
-            int fpsYear = 2024) // always lowercase â€” matches middleware ToLowerInvariant()
+            string userEmailId = "test@example.com", // always lowercase - matches middleware ToLowerInvariant()
+            int fpsYear = 2024)
         {
             var mockRequestContext = new Mock<IFpsRequestContext>();
             mockRequestContext.Setup(x => x.UserEmailId).Returns(userEmailId);
@@ -37,6 +38,12 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             {
                 var projectViewsMockSet = RepositoryTestHelper.CreateMockDbSet(projectViews);
                 mockContext.Setup(x => x.ProjectViews).Returns(projectViewsMockSet.Object);
+            }
+
+            if (jobCodes != null)
+            {
+                var jobCodesMockSet = RepositoryTestHelper.CreateMockDbSet(jobCodes);
+                mockContext.Setup(x => x.JobCodes).Returns(jobCodesMockSet.Object);
             }
 
             if (pactProjectViews != null)
@@ -474,7 +481,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             var repo = CreateRepository(projectViews: projectViews);
             var query = new PaginationParameters<string>(page: 1, pageSize: 10)
             {
-                Filter = "{\"JobCode\":\"PP\"}"
+                Filter = "{\"ParentProject\":\"PP\"}"
             };
 
             // Act
@@ -498,7 +505,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             var repo = CreateRepository(projectViews: projectViews);
             var query = new PaginationParameters<string>(page: 1, pageSize: 10)
             {
-                Filter = "{\"JobDescription\":\"FMD\"}"
+                Filter = "{\"ProjectTitle\":\"FMD\"}"
             };
 
             // Act
@@ -652,536 +659,93 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             Assert.Equal(2,  result.PaginationData.TotalPages);
         }
 
-        #endregion
-
-        #region GetAllPactProjectsAsync Tests
-
-        [Fact]
-        public async Task GetAllPactProjectsAsync_ReturnsAllViews_OrderedByParentProject()
-        {
-            // Arrange
-            var pactViews = new List<PactProjectView>
-            {
-                new() { ParentProject = "CC003", ProjectTitle = "Gamma Survey" },
-                new() { ParentProject = "AA001", ProjectTitle = "Alpha Survey" },
-                new() { ParentProject = "BB002", ProjectTitle = "Beta Survey"  }
-            };
-            var repo = CreateRepository(pactProjectViews: pactViews);
-
-            // Act
-            var result = await repo.GetAllPactProjectsAsync();
-
-            // Assert
-            Assert.NotNull(result);
-            var list = result.ToList();
-            Assert.Equal(3, list.Count);
-            Assert.Equal("AA001", list[0].ParentProject);
-            Assert.Equal("BB002", list[1].ParentProject);
-            Assert.Equal("CC003", list[2].ParentProject);
-        }
-
-        [Fact]
-        public async Task GetAllPactProjectsAsync_ReturnsEmpty_WhenNoPactProjectsExist()
-        {
-            // Arrange
-            var repo = CreateRepository(pactProjectViews: []);
-
-            // Act
-            var result = await repo.GetAllPactProjectsAsync();
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.Empty(result);
-        }
 
         #endregion
 
-        #region GetPagedProjectsAsync Tests
+        #region HasAssociatedJobCodesAsync Tests
 
         [Fact]
-        public async Task GetPagedProjectsAsync_ReturnsAllProjects_WithDefaultSorting()
+        public async Task HasAssociatedJobCodesAsync_ReturnsTrue_WhenJobCodesExistForProjectAndCurrentYear()
         {
             // Arrange
-            var projects = new List<Project>
+            var jobCodes = new List<JobCode>
             {
-                new() { ParentProject = "BB002", ProjectTitle = "Beta Project",  Program = "P001", Customer = "APHA",  ProjectStatus = "Active", Disease = "D1", Contract = "C1", IncomeAccountCode = "I1" },
-                new() { ParentProject = "AA001", ProjectTitle = "Alpha Project", Program = "P001", Customer = "DEFRA", ProjectStatus = "Active", Disease = "D1", Contract = "C1", IncomeAccountCode = "I1" }
+                new() { JobCodeId = "JC001", ParentProject = "PP001", FpsYear = 2024 },
+                new() { JobCodeId = "JC002", ParentProject = "PP001", FpsYear = 2024 }
             };
-            var repo = CreateRepository(projects: projects);
-            var query = new PaginationParameters<string>(page: 1, pageSize: 10);
+            var repo = CreateRepository(jobCodes: jobCodes, fpsYear: 2024);
 
             // Act
-            var result = await repo.GetPagedProjectsAsync(query);
-
-            // Assert
-            Assert.Equal(2, result.PaginationData.TotalRecords);
-            Assert.Equal("AA001", result.Data.First().ParentProject);
-        }
-
-        [Fact]
-        public async Task GetPagedProjectsAsync_FiltersResults_WhenSearchTermProvided()
-        {
-            // Arrange
-            var projects = new List<Project>
-            {
-                new() { ParentProject = "PP001", ProjectTitle = "FMD Survey",     Program = "P001", Customer = "DEFRA", ProjectStatus = "Active", Disease = "D1", Contract = "C1", IncomeAccountCode = "I1" },
-                new() { ParentProject = "PP002", ProjectTitle = "TB Eradication", Program = "P001", Customer = "DEFRA", ProjectStatus = "Active", Disease = "D2", Contract = "C2", IncomeAccountCode = "I2" },
-                new() { ParentProject = "PP003", ProjectTitle = "FMD Outbreak",   Program = "P001", Customer = "DEFRA", ProjectStatus = "Active", Disease = "D3", Contract = "C3", IncomeAccountCode = "I3" }
-            };
-            var repo = CreateRepository(projects: projects);
-            var query = new PaginationParameters<string>(search: "fmd", page: 1, pageSize: 10);
-
-            // Act
-            var result = await repo.GetPagedProjectsAsync(query);
-
-            // Assert
-            Assert.Equal(2, result.PaginationData.TotalRecords);
-            Assert.All(result.Data, p => Assert.Contains("FMD", p.ProjectTitle, StringComparison.OrdinalIgnoreCase));
-        }
-
-        [Fact]
-        public async Task GetPagedProjectsAsync_ReturnsEmpty_WhenNoProjectsMatchSearch()
-        {
-            // Arrange
-            var projects = new List<Project>
-            {
-                new() { ParentProject = "PP001", ProjectTitle = "Alpha Project", Program = "P001", Customer = "DEFRA", ProjectStatus = "Active", Disease = "D1", Contract = "C1", IncomeAccountCode = "I1" }
-            };
-            var repo = CreateRepository(projects: projects);
-            var query = new PaginationParameters<string>(search: "NOMATCH", page: 1, pageSize: 10);
-
-            // Act
-            var result = await repo.GetPagedProjectsAsync(query);
-
-            // Assert
-            Assert.Empty(result.Data);
-            Assert.Equal(0, result.PaginationData.TotalRecords);
-        }
-
-        [Fact]
-        public async Task GetPagedProjectsAsync_SortsByProjectTitle_Ascending()
-        {
-            // Arrange
-            var projects = new List<Project>
-            {
-                new() { ParentProject = "PP003", ProjectTitle = "Gamma Project", Program = "P001", Customer = "DEFRA", ProjectStatus = "Active", Disease = "D1", Contract = "C1", IncomeAccountCode = "I1" },
-                new() { ParentProject = "PP001", ProjectTitle = "Alpha Project", Program = "P001", Customer = "DEFRA", ProjectStatus = "Active", Disease = "D1", Contract = "C1", IncomeAccountCode = "I1" },
-                new() { ParentProject = "PP002", ProjectTitle = "Beta Project",  Program = "P001", Customer = "DEFRA", ProjectStatus = "Active", Disease = "D1", Contract = "C1", IncomeAccountCode = "I1" }
-            };
-            var repo = CreateRepository(projects: projects);
-            var query = new PaginationParameters<string>(sortBy: "projecttitle", descending: false, page: 1, pageSize: 10);
-
-            // Act
-            var result = await repo.GetPagedProjectsAsync(query);
-
-            // Assert
-            var items = result.Data.ToList();
-            Assert.Equal("PP001", items[0].ParentProject); // Alpha
-            Assert.Equal("PP002", items[1].ParentProject); // Beta
-            Assert.Equal("PP003", items[2].ParentProject); // Gamma
-        }
-
-        [Fact]
-        public async Task GetPagedProjectsAsync_SortsByParentProject_Descending()
-        {
-            // Arrange
-            var projects = new List<Project>
-            {
-                new() { ParentProject = "AA001", ProjectTitle = "Alpha", Program = "P001", Customer = "DEFRA", ProjectStatus = "Active", Disease = "D1", Contract = "C1", IncomeAccountCode = "I1" },
-                new() { ParentProject = "CC003", ProjectTitle = "Gamma", Program = "P001", Customer = "DEFRA", ProjectStatus = "Active", Disease = "D1", Contract = "C1", IncomeAccountCode = "I1" },
-                new() { ParentProject = "BB002", ProjectTitle = "Beta",  Program = "P001", Customer = "DEFRA", ProjectStatus = "Active", Disease = "D1", Contract = "C1", IncomeAccountCode = "I1" }
-            };
-            var repo = CreateRepository(projects: projects);
-            var query = new PaginationParameters<string>(sortBy: "parentproject", descending: true, page: 1, pageSize: 10);
-
-            // Act
-            var result = await repo.GetPagedProjectsAsync(query);
-
-            // Assert
-            var items = result.Data.ToList();
-            Assert.Equal("CC003", items[0].ParentProject);
-            Assert.Equal("BB002", items[1].ParentProject);
-            Assert.Equal("AA001", items[2].ParentProject);
-        }
-
-        [Fact]
-        public async Task GetPagedProjectsAsync_AppliesPaging_ReturnsCorrectPage()
-        {
-            // Arrange
-            var projects = Enumerable.Range(1, 10)
-                .Select(i => new Project
-                {
-                    ParentProject     = $"PP{i:D3}",
-                    ProjectTitle      = $"Project {i}",
-                    Program           = "P001",
-                    Customer          = "DEFRA",
-                    ProjectStatus     = "Active",
-                    Disease           = "D1",
-                    Contract          = "C1",
-                    IncomeAccountCode = "I1"
-                }).ToList();
-            var repo = CreateRepository(projects: projects);
-            var query = new PaginationParameters<string>(page: 2, pageSize: 3);
-
-            // Act
-            var result = await repo.GetPagedProjectsAsync(query);
-
-            // Assert
-            Assert.Equal(3,     result.Data.Count());
-            Assert.Equal(10,    result.PaginationData.TotalRecords);
-            Assert.Equal(2,     result.PaginationData.PageNumber);
-            Assert.Equal(4,     result.PaginationData.TotalPages);
-            Assert.Equal("PP004", result.Data.First().ParentProject);
-        }
-
-        #endregion
-
-        #region GetPagedPactProjectsAsync Tests
-
-        [Fact]
-        public async Task GetPagedPactProjectsAsync_ReturnsAllPactProjects_WithDefaultSorting()
-        {
-            // Arrange
-            var pactViews = new List<PactProjectView>
-            {
-                new() { ParentProject = "CC003", ProjectTitle = "Gamma" },
-                new() { ParentProject = "AA001", ProjectTitle = "Alpha" },
-                new() { ParentProject = "BB002", ProjectTitle = "Beta"  }
-            };
-            var repo = CreateRepository(pactProjectViews: pactViews);
-            var query = new PaginationParameters<string>(page: 1, pageSize: 10);
-
-            // Act
-            var result = await repo.GetPagedPactProjectsAsync(query);
-
-            // Assert
-            Assert.Equal(3, result.PaginationData.TotalRecords);
-            var items = result.Data.ToList();
-            Assert.Equal("AA001", items[0].ParentProject);
-            Assert.Equal("BB002", items[1].ParentProject);
-            Assert.Equal("CC003", items[2].ParentProject);
-        }
-
-        [Fact]
-        public async Task GetPagedPactProjectsAsync_FiltersByParentProject_WhenFilterProvided()
-        {
-            // Arrange
-            var pactViews = new List<PactProjectView>
-            {
-                new() { ParentProject = "PP001", ProjectTitle = "Alpha" },
-                new() { ParentProject = "PP002", ProjectTitle = "Beta"  },
-                new() { ParentProject = "XY003", ProjectTitle = "Gamma" }
-            };
-            var repo = CreateRepository(pactProjectViews: pactViews);
-            var query = new PaginationParameters<string>(page: 1, pageSize: 10)
-            {
-                Filter = "{\"ParentProject\":\"PP\"}"
-            };
-
-            // Act
-            var result = await repo.GetPagedPactProjectsAsync(query);
-
-            // Assert
-            Assert.Equal(2, result.PaginationData.TotalRecords);
-            Assert.All(result.Data, p => Assert.Contains("PP", p.ParentProject));
-        }
-
-        [Fact]
-        public async Task GetPagedPactProjectsAsync_FiltersByProjectTitle_WhenFilterProvided()
-        {
-            // Arrange
-            var pactViews = new List<PactProjectView>
-            {
-                new() { ParentProject = "PP001", ProjectTitle = "FMD Survey"     },
-                new() { ParentProject = "PP002", ProjectTitle = "TB Eradication" },
-                new() { ParentProject = "PP003", ProjectTitle = "FMD Outbreak"   }
-            };
-            var repo = CreateRepository(pactProjectViews: pactViews);
-            var query = new PaginationParameters<string>(page: 1, pageSize: 10)
-            {
-                Filter = "{\"ProjectTitle\":\"FMD\"}"
-            };
-
-            // Act
-            var result = await repo.GetPagedPactProjectsAsync(query);
-
-            // Assert
-            Assert.Equal(2, result.PaginationData.TotalRecords);
-            Assert.All(result.Data, p => Assert.Contains("FMD", p.ProjectTitle));
-        }
-
-        [Fact]
-        public async Task GetPagedPactProjectsAsync_SortsByParentProject_Descending()
-        {
-            // Arrange
-            var pactViews = new List<PactProjectView>
-            {
-                new() { ParentProject = "AA001", ProjectTitle = "Alpha" },
-                new() { ParentProject = "CC003", ProjectTitle = "Gamma" },
-                new() { ParentProject = "BB002", ProjectTitle = "Beta"  }
-            };
-            var repo = CreateRepository(pactProjectViews: pactViews);
-            var query = new PaginationParameters<string>(sortBy: "parentproject", descending: true, page: 1, pageSize: 10);
-
-            // Act
-            var result = await repo.GetPagedPactProjectsAsync(query);
-
-            // Assert
-            var items = result.Data.ToList();
-            Assert.Equal("CC003", items[0].ParentProject);
-            Assert.Equal("BB002", items[1].ParentProject);
-            Assert.Equal("AA001", items[2].ParentProject);
-        }
-
-        [Fact]
-        public async Task GetPagedPactProjectsAsync_SortsByProjectTitle_Ascending()
-        {
-            // Arrange
-            var pactViews = new List<PactProjectView>
-            {
-                new() { ParentProject = "PP003", ProjectTitle = "Gamma" },
-                new() { ParentProject = "PP001", ProjectTitle = "Alpha" },
-                new() { ParentProject = "PP002", ProjectTitle = "Beta"  }
-            };
-            var repo = CreateRepository(pactProjectViews: pactViews);
-            var query = new PaginationParameters<string>(sortBy: "projecttitle", descending: false, page: 1, pageSize: 10);
-
-            // Act
-            var result = await repo.GetPagedPactProjectsAsync(query);
-
-            // Assert
-            var items = result.Data.ToList();
-            Assert.Equal("PP001", items[0].ParentProject); // Alpha
-            Assert.Equal("PP002", items[1].ParentProject); // Beta
-            Assert.Equal("PP003", items[2].ParentProject); // Gamma
-        }
-
-        [Fact]
-        public async Task GetPagedPactProjectsAsync_AppliesPaging_ReturnsCorrectPage()
-        {
-            // Arrange
-            var pactViews = Enumerable.Range(1, 8)
-                .Select(i => new PactProjectView
-                {
-                    ParentProject = $"PP{i:D3}",
-                    ProjectTitle  = $"PACT Project {i}"
-                }).ToList();
-            var repo = CreateRepository(pactProjectViews: pactViews);
-            var query = new PaginationParameters<string>(page: 2, pageSize: 3);
-
-            // Act
-            var result = await repo.GetPagedPactProjectsAsync(query);
-
-            // Assert
-            Assert.Equal(3,      result.Data.Count());
-            Assert.Equal(8,      result.PaginationData.TotalRecords);
-            Assert.Equal(2,      result.PaginationData.PageNumber);
-            Assert.Equal("PP004", result.Data.First().ParentProject);
-        }
-
-        #endregion
-
-        #region CreateProjectAsync Tests
-
-        [Fact]
-        public async Task CreateProjectAsync_SetsCurrentFpsYear_OnProject()
-        {
-            // Arrange
-            const int fpsYear = 2025;
-            var repo = CreateRepository(projects: [], fpsYear: fpsYear);
-            var project = new Project
-            {
-                ParentProject = "PP001", ProjectTitle = "New Project",
-                Program = "P001", Customer = "DEFRA", ProjectStatus = "Active",
-                Disease = "D1", Contract = "C1", IncomeAccountCode = "I1"
-            };
-
-            // Act
-            var result = await repo.CreateProjectAsync(project);
-
-            // Assert
-            Assert.Equal(fpsYear, result.FpsYear);
-        }
-
-        [Fact]
-        public async Task CreateProjectAsync_ReturnsSameProjectInstance_WithFpsYearSet()
-        {
-            // Arrange
-            var repo = CreateRepository(projects: [], fpsYear: 2024);
-            var project = new Project
-            {
-                ParentProject = "PP001", ProjectTitle = "New Project",
-                Program = "P001", Customer = "DEFRA", ProjectStatus = "Active",
-                Disease = "D1", Contract = "C1", IncomeAccountCode = "I1"
-            };
-
-            // Act
-            var result = await repo.CreateProjectAsync(project);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.Same(project, result);
-            Assert.Equal("PP001", result.ParentProject);
-            Assert.Equal(2024, result.FpsYear);
-        }
-
-        #endregion
-
-        #region UpdatePactProjectDetailsAsync Tests
-
-        [Fact]
-        public async Task UpdatePactProjectDetailsAsync_UpdatesAllFields_WhenProjectFound()
-        {
-            // Arrange
-            const int fpsYear = 2024;
-            var existingProject = new Project
-            {
-                ParentProject = "PP001", ProjectTitle = "Original Title", Program = "P001",
-                Customer = "DEFRA",  Manager = "Alice",  Contract = "C001", ProjectStatus = "Active",
-                Disease = "FMD",    IsDefraProject = 1,  Finished = 0,     Comments = "Old comment",
-                BudgetCvl = 1000m,  TransferIncome = 500m, PvsIncome = 200m,
-                WipEoy = 100m,      WipLimit = 150m,    WipCurrent = 80m,  FecCost = 300m,
-                IncomeAccountCode = "I1", FpsYear = fpsYear
-            };
-            var repo = CreateRepository(projects: [existingProject], fpsYear: fpsYear);
-
-            var updateRequest = new Project
-            {
-                ParentProject = "PP001", ProjectTitle = "Updated Title", Program = "P002",
-                Customer = "APHA",    Manager = "Bob",   Contract = "C002", ProjectStatus = "Closed",
-                Disease = "TB",       IsDefraProject = 0, Finished = 1,    Comments = "New comment",
-                BudgetCvl = 2000m,   TransferIncome = 600m, PvsIncome = 300m,
-                WipEoy = 200m,       WipLimit = 250m,   WipCurrent = 180m, FecCost = 400m
-            };
-
-            // Act
-            var result = await repo.UpdatePactProjectDetailsAsync(updateRequest);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.Equal("Updated Title", result.ProjectTitle);
-            Assert.Equal("P002",          result.Program);
-            Assert.Equal("APHA",          result.Customer);
-            Assert.Equal("Bob",           result.Manager);
-            Assert.Equal("C002",          result.Contract);
-            Assert.Equal("Closed",        result.ProjectStatus);
-            Assert.Equal("TB",            result.Disease);
-            Assert.Equal((short)0,        result.IsDefraProject);
-            Assert.Equal((short)1,        result.Finished);
-            Assert.Equal("New comment",   result.Comments);
-            Assert.Equal(2000m,           result.BudgetCvl);
-            Assert.Equal(600m,            result.TransferIncome);
-            Assert.Equal(300m,            result.PvsIncome);
-            Assert.Equal(200m,            result.WipEoy);
-            Assert.Equal(250m,            result.WipLimit);
-            Assert.Equal(180m,            result.WipCurrent);
-            Assert.Equal(400m,            result.FecCost);
-        }
-
-        [Fact]
-        public async Task UpdatePactProjectDetailsAsync_ReturnsNull_WhenProjectNotFound()
-        {
-            // Arrange — existing project has different ParentProject than the update request
-            const int fpsYear = 2024;
-            var existingProject = new Project
-            {
-                ParentProject = "PP001", Program = "P001", Customer = "DEFRA",
-                ProjectStatus = "Active", Disease = "D1", Contract = "C1",
-                IncomeAccountCode = "I1", FpsYear = fpsYear
-            };
-            var repo = CreateRepository(projects: [existingProject], fpsYear: fpsYear);
-
-            var updateRequest = new Project { ParentProject = "PP999" };
-
-            // Act
-            var result = await repo.UpdatePactProjectDetailsAsync(updateRequest);
-
-            // Assert
-            Assert.Null(result);
-        }
-
-        [Fact]
-        public async Task UpdatePactProjectDetailsAsync_ReturnsNull_WhenFpsYearDoesNotMatch()
-        {
-            // Arrange — project exists but for a different FPS year
-            var existingProject = new Project
-            {
-                ParentProject = "PP001", Program = "P001", Customer = "DEFRA",
-                ProjectStatus = "Active", Disease = "D1", Contract = "C1",
-                IncomeAccountCode = "I1", FpsYear = 2023
-            };
-            var repo = CreateRepository(projects: [existingProject], fpsYear: 2024);
-
-            var updateRequest = new Project { ParentProject = "PP001" };
-
-            // Act
-            var result = await repo.UpdatePactProjectDetailsAsync(updateRequest);
-
-            // Assert
-            Assert.Null(result);
-        }
-
-        #endregion
-
-        #region DeleteProjectAsync Tests
-
-        [Fact]
-        public async Task DeleteProjectAsync_ReturnsTrue_WhenProjectExists()
-        {
-            // Arrange
-            const int fpsYear = 2024;
-            var projects = new List<Project>
-            {
-                new() { ParentProject = "PP001", Program = "P001", Customer = "DEFRA",
-                        ProjectStatus = "Active", Disease = "D1", Contract = "C1",
-                        IncomeAccountCode = "I1", FpsYear = fpsYear }
-            };
-            var repo = CreateRepository(projects: projects, fpsYear: fpsYear);
-
-            // Act
-            var result = await repo.DeleteProjectAsync("PP001");
+            var result = await repo.HasAssociatedJobCodesAsync("PP001");
 
             // Assert
             Assert.True(result);
         }
 
         [Fact]
-        public async Task DeleteProjectAsync_ReturnsFalse_WhenProjectNotFound()
+        public async Task HasAssociatedJobCodesAsync_ReturnsFalse_WhenNoJobCodesExistForProject()
         {
-            // Arrange — no project matching the requested ParentProject
-            const int fpsYear = 2024;
-            var projects = new List<Project>
+            // Arrange
+            var jobCodes = new List<JobCode>
             {
-                new() { ParentProject = "PP001", Program = "P001", Customer = "DEFRA",
-                        ProjectStatus = "Active", Disease = "D1", Contract = "C1",
-                        IncomeAccountCode = "I1", FpsYear = fpsYear }
+                new() { JobCodeId = "JC001", ParentProject = "PP002", FpsYear = 2024 }
             };
-            var repo = CreateRepository(projects: projects, fpsYear: fpsYear);
+            var repo = CreateRepository(jobCodes: jobCodes, fpsYear: 2024);
 
             // Act
-            var result = await repo.DeleteProjectAsync("PP999");
+            var result = await repo.HasAssociatedJobCodesAsync("PP001");
 
             // Assert
             Assert.False(result);
         }
 
         [Fact]
-        public async Task DeleteProjectAsync_ReturnsFalse_WhenFpsYearDoesNotMatch()
+        public async Task HasAssociatedJobCodesAsync_ReturnsFalse_WhenJobCodesExistForDifferentFpsYear()
         {
-            // Arrange — project exists but for a different FPS year
-            var projects = new List<Project>
+            // Arrange
+            var jobCodes = new List<JobCode>
             {
-                new() { ParentProject = "PP001", Program = "P001", Customer = "DEFRA",
-                        ProjectStatus = "Active", Disease = "D1", Contract = "C1",
-                        IncomeAccountCode = "I1", FpsYear = 2023 }
+                new() { JobCodeId = "JC001", ParentProject = "PP001", FpsYear = 2023 }
             };
-            var repo = CreateRepository(projects: projects, fpsYear: 2024);
+            var repo = CreateRepository(jobCodes: jobCodes, fpsYear: 2024);
 
             // Act
-            var result = await repo.DeleteProjectAsync("PP001");
+            var result = await repo.HasAssociatedJobCodesAsync("PP001");
 
             // Assert
             Assert.False(result);
+        }
+
+        [Fact]
+        public async Task HasAssociatedJobCodesAsync_ReturnsFalse_WhenJobCodesListIsEmpty()
+        {
+            // Arrange
+            var repo = CreateRepository(jobCodes: new List<JobCode>(), fpsYear: 2024);
+
+            // Act
+            var result = await repo.HasAssociatedJobCodesAsync("PP001");
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task HasAssociatedJobCodesAsync_ReturnsTrue_WhenOneOfManyProjectsHasJobCodes()
+        {
+            // Arrange
+            var jobCodes = new List<JobCode>
+            {
+                new() { JobCodeId = "JC001", ParentProject = "PP002", FpsYear = 2024 },
+                new() { JobCodeId = "JC002", ParentProject = "PP003", FpsYear = 2024 },
+                new() { JobCodeId = "JC003", ParentProject = "PP001", FpsYear = 2024 }
+            };
+            var repo = CreateRepository(jobCodes: jobCodes, fpsYear: 2024);
+
+            // Act
+            var result = await repo.HasAssociatedJobCodesAsync("PP001");
+
+            // Assert
+            Assert.True(result);
         }
 
         #endregion

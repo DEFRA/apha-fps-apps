@@ -11,7 +11,7 @@
     <div class="govuk-grid-column-full">
         <h1 class="govuk-grid-row govuk-heading-s sup_border-bottom" style="padding:10px 0 0px 10px">
             Project Maintenance (not portfolios)
-            <a href="@Url.Action("Index", "ProjectMaintenance", new { area = "PACT" })"
+            <a asp-area="PACT" asp-controller="ProjectMaintenance" asp-action="Index" 
                class="govuk-back-link sup_align_right">Back</a>
         </h1>
     </div>
@@ -58,7 +58,7 @@
                                 <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.ParentProject">
                                     Project Code
                                 </label>
-                                <input class="govuk-input govuk-!-font-size-16" asp-for="Project.ParentProject" readonly />
+                                <input class="govuk-input govuk-!-font-size-16" asp-for="Project.ParentProject" disabled />
                                 <span asp-validation-for="Project.ParentProject" class="govuk-error-message"></span>
                             </div>
                         </div>
@@ -261,7 +261,7 @@
                                     </div>
                                     <div style="padding-top:0;">
                                         <button type="button" class="govuk-button sup_margin_0"
-                                                aria-label="Profile by month" onclick="onClickProfileByMonth()">
+                                                aria-label="Profile by month" onclick="onClickProfileByMonth()" allow-edit="true">
                                             Profile By Month
                                         </button>
                                     </div>
@@ -386,7 +386,7 @@
 
         function deleteJobCode(btn) {
             var jobCodeId = $(btn).data('id');
-            showGovukConfirm('Delete job code "' + jobCodeId + '" and all its time codes?').then(function(confirmed) {
+            showGovukConfirm('Delete this job code?').then(function(confirmed) {
                 if (!confirmed) return;
                 $.ajax({
                     url: '/PACT/ProjectMaintenance/DeleteJobCode',
@@ -542,8 +542,13 @@
         }
 
         function executeCopyJobCode() {
+            var $form = $('#formAddJobcode');
+            clearValidationErrors($form);
+            if (!isFormValid($form)) {
+                displayClientValidationErrors($form, $form);
+                return;
+            }
             var jobCodeId = $('#JobCodeId').val();
-            if (!jobCodeId) { showGovukAlert('Please enter a Job Code.'); return; }
             var data = {
                 SourceJobCode: $('#sourceJobCode').val(),
                 JobCodeId: jobCodeId,
@@ -569,7 +574,7 @@
                             }
                             showGovukAlert('JobCode copied successfully.');
                         } else {
-                            showGovukAlert('Error: ' + response.message);
+                            displayServerValidationErrors(response.errors, response.message, '#formAddJobcode');
                         }
                     },
                     error: function() { showGovukAlert('An error occurred while copying.'); }

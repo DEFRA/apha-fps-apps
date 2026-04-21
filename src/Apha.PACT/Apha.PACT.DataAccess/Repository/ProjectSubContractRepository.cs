@@ -11,11 +11,11 @@ namespace Apha.PACT.DataAccess.Repository
 {
     public class ProjectSubContractRepository : BaseRepository, IProjectSubContractRepository
     {
-        private readonly IFpsYearContext _fpsYearContext;
+        private readonly IFpsRequestContext _fpsRequestContext;
 
-        public ProjectSubContractRepository(FpsDbContext context, IFpsYearContext fpsYearContext) : base(context)
+        public ProjectSubContractRepository(FpsDbContext context, IFpsRequestContext fpsRequestContext) : base(context)
         {
-            _fpsYearContext = fpsYearContext;
+            _fpsRequestContext = fpsRequestContext;
         }
 
         public async Task<PagedData<ProjectSubContract>> GetPagedProjectSubContractsAsync(PaginationParameters<string> query, string? project)
@@ -51,7 +51,7 @@ namespace Apha.PACT.DataAccess.Repository
 
         public async Task<ProjectSubContract> CreateAsync(ProjectSubContract entity)
         {
-            entity.FpsYear = _fpsYearContext.FPSYear;
+            entity.FpsYear = _fpsRequestContext.FpsYear;
             await _context.ProjectSubContracts.AddAsync(entity);
             await _context.SaveChangesAsync();
             return entity;
@@ -59,7 +59,7 @@ namespace Apha.PACT.DataAccess.Repository
 
         public async Task<ProjectSubContract> UpdateAsync(ProjectSubContract entity)
         {
-            entity.FpsYear = _fpsYearContext.FPSYear;
+            entity.FpsYear = _fpsRequestContext.FpsYear;
             _context.Entry(entity).State = EntityState.Modified;
             await _context.SaveChangesAsync();
             return entity;
@@ -68,7 +68,7 @@ namespace Apha.PACT.DataAccess.Repository
         public async Task<bool> DeleteAsync(int subContCounter)
         {
             ProjectSubContract? entity = await _context.ProjectSubContracts
-                .FirstOrDefaultAsync(s => s.SubContCounter == subContCounter && s.FpsYear == _fpsYearContext.FPSYear);
+                .FirstOrDefaultAsync(s => s.SubContCounter == subContCounter && s.FpsYear == _fpsRequestContext.FpsYear);
             if (entity == null) return false;
             _context.ProjectSubContracts.Remove(entity);
             await _context.SaveChangesAsync();

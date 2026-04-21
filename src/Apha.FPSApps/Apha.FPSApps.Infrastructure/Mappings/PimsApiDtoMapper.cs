@@ -38,8 +38,14 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<ProjectDetailRes, ProjectDetailDto>().ReverseMap();
             CreateMap<ProjectDetailDto, ProjectDetailReq>().ReverseMap();
 
+            // Comment Topics
+            CreateMap<CommentTopicRes, CommentTopicDto>().ReverseMap();
+
             // Risk
             CreateMap<RiskRes, RiskDto>().ReverseMap();
+
+            // Year
+            CreateMap<YearRes, YearDto>().ReverseMap();
         }
     }
 }

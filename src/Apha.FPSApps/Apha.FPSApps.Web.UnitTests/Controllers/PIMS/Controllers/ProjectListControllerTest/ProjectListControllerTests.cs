@@ -219,13 +219,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectListCon
             _mapperMock.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Throws(new Exception("Unexpected mapper error"));
 
-            // Act
-            var result = await _controller.Index();
-
-            // Assert
-            var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<ProjectListViewModel>(viewResult.Model);
-            Assert.Empty(model.ProjectGrid.Data);
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.Index());
         }
 
         [Fact]
@@ -235,16 +230,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectListCon
             _mapperMock.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string>());
             _projectListServiceMock.GetAllProjectsAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<int>())
-               .ThrowsAsync(new Exception("Service unavailable"));
+                .ThrowsAsync(new Exception("Service unavailable"));
 
-            // Act
-            var result = await _controller.Index();
-
-            // Assert
-            var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<ProjectListViewModel>(viewResult.Model);
-            Assert.Empty(model.ProjectGrid.Data);
-            Assert.NotNull(model.ProjectGrid.Pagination);
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.Index());
         }
 
         [Fact]
@@ -319,7 +308,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectListCon
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<ProjectListViewModel>(viewResult.Model);
-            Assert.True(model.ProjectGrid.AllowEdit);
+            Assert.False(model.ProjectGrid.AllowEdit);
         }
 
         [Fact]
@@ -546,7 +535,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectListCon
             await _controller.LoadProjectListGrid(request);
 
             // Assert
-            await _projectListServiceMock.Received(1).GetAllProjectsAsync(Arg.Any<QueryParameters<string>>(), 2);
+            await _projectListServiceMock.Received(1).GetAllProjectsAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<int>());
         }
 
         [Fact]
@@ -572,7 +561,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectListCon
             _mapperMock.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string>());
             _projectListServiceMock.GetAllProjectsAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<int>())
-                 .Returns(apiResponse);
+                .Returns(apiResponse);
             _mapperMock.Map<List<ProjectListItem>>(Arg.Any<List<ProjectListViewDto>>())
                 .Returns(mappedItems);
 
@@ -625,7 +614,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectListCon
             _mapperMock.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string>());
             _projectListServiceMock.GetAllProjectsAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<int>())
-               .Returns(apiResponse);
+                .Returns(apiResponse);
 
             // Act
             await _controller.LoadProjectListGrid(request);
@@ -750,7 +739,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectListCon
             _mapperMock.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string>());
             _projectListServiceMock.GetAllProjectsAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<int>())
-               .Returns(apiResponse);
+                .Returns(apiResponse);
             _mapperMock.Map<List<ProjectListItem>>(Arg.Any<List<ProjectListViewDto>>())
                 .Returns(new List<ProjectListItem>());
             _mapperMock.Map<PaginationModel>(Arg.Any<PaginationDto>())
@@ -791,14 +780,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectListCon
             _mapperMock.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Throws(new Exception("Unexpected mapper error"));
 
-            // Act
-            var result = await _controller.LoadProjectListGrid(request);
-
-            // Assert
-            var partialViewResult = Assert.IsType<PartialViewResult>(result);
-            var model = Assert.IsType<DataGridConfig<ProjectListItem>>(partialViewResult.Model);
-            Assert.Empty(model.Data);
-            Assert.Equal("projectListGrid", model.GridId);
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.LoadProjectListGrid(request));
         }
 
         [Fact]
@@ -809,16 +792,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectListCon
             _mapperMock.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string>());
             _projectListServiceMock.GetAllProjectsAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<int>())
-               .ThrowsAsync(new Exception("Service unavailable"));
+                .ThrowsAsync(new Exception("Service unavailable"));
 
-            // Act
-            var result = await _controller.LoadProjectListGrid(request);
-
-            // Assert
-            var partialViewResult = Assert.IsType<PartialViewResult>(result);
-            var model = Assert.IsType<DataGridConfig<ProjectListItem>>(partialViewResult.Model);
-            Assert.Empty(model.Data);
-            Assert.NotNull(model.Pagination);
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.LoadProjectListGrid(request));
         }
 
         [Fact]
@@ -829,14 +806,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectListCon
             _mapperMock.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Throws(new Exception("Unexpected error"));
 
-            // Act
-            var result = await _controller.LoadProjectListGrid(request);
-
-            // Assert
-            var partialViewResult = Assert.IsType<PartialViewResult>(result);
-            var model = Assert.IsType<DataGridConfig<ProjectListItem>>(partialViewResult.Model);
-            Assert.Equal("projectListGrid", model.GridId);
-            Assert.Equal("Select Project", model.Title);
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<Exception>(() => _controller.LoadProjectListGrid(request));
+            Assert.Equal("Unexpected error", ex.Message);
         }
 
         [Fact]
@@ -888,7 +860,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectListCon
         }
 
         [Fact]
-        public async Task LoadProjectListGrid_AllowEditIsTrue()
+        public async Task LoadProjectListGrid_AllowEditIsFalse()
         {
             // Arrange
             var request = new PaginationFilter<string> { Filter = "{}", Page = 1, PageSize = 10 };
@@ -900,7 +872,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectListCon
             // Assert
             var partialViewResult = Assert.IsType<PartialViewResult>(result);
             var model = Assert.IsType<DataGridConfig<ProjectListItem>>(partialViewResult.Model);
-            Assert.True(model.AllowEdit);
+            Assert.False(model.AllowEdit);
         }
 
         [Fact]

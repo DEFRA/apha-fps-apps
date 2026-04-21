@@ -160,7 +160,10 @@
                                                             <label class="govuk-label govuk-!-font-size-16"
                                                                    for="project-transfer">Project</label>
                                                             <input class="govuk-input govuk-!-font-size-16"
-                                                                   type="text" asp-for="ProposedProjectDetails.Parentproject" />
+                                                                   type="text"
+                                                                   readonly="readonly"
+                                                                   maxlength="20"
+                                                                   asp-for="ProposedProjectDetails.Parentproject" />
                                                         </div>
                                                     </div>
                                                     <div class="govuk-grid-column-one-half">
@@ -329,7 +332,8 @@
                                             <input class="govuk-input govuk-!-font-size-16"
                                                    id="pims-version"
                                                    asp-for="ProjectDetails.Version"
-                                                   type="text" />
+                                                   type="text"
+                                                   maxlength="10" />
                                         </div>
                                         <div class="govuk-form-group">
                                             <label class="govuk-label govuk-!-font-size-16" for="file-ref">
@@ -338,7 +342,8 @@
                                             <input class="govuk-input govuk-!-font-size-16"
                                                    id="file-ref"
                                                    asp-for="ProjectDetails.FileRef"
-                                                   type="text" />
+                                                   type="text"
+                                                   maxlength="20" />
                                         </div>
                                         <div class="govuk-form-group">
                                             <label class="govuk-label govuk-!-font-size-16" for="customer-ref">
@@ -347,7 +352,8 @@
                                             <input class="govuk-input govuk-!-font-size-16"
                                                    id="customer-ref"
                                                    asp-for="ProjectDetails.CustomerRef"
-                                                   type="text" />
+                                                   type="text"
+                                                   maxlength="20" />
                                         </div>
                                         <div class="govuk-form-group">
                                             <label class="govuk-label govuk-!-font-size-16" for="start-date">
@@ -379,7 +385,8 @@
                                             <input class="govuk-input govuk-!-font-size-16"
                                                    id="costbook-number"
                                                    asp-for="ProjectDetails.CostbookNumber"
-                                                   type="text" />
+                                                   type="text"
+                                                   maxlength="10" />
                                         </div>
                                         <div class="govuk-form-group">
                                             <label class="govuk-label govuk-!-font-size-16" for="risk-rating">
@@ -485,71 +492,9 @@
 
 </div><!-- end d-flex -->
 <!-- ── Edit / Add Comment Modal (GOV.UK compliant) ─────────────────────── -->
-<div id="editRecordModal" class="govuk-edit-modal">
-    <div class="govuk-edit-modal-dialog">
-        <div class="govuk-edit-modal__header">
-            <h3 class="govuk-edit-modal__title">Edit Record</h3>
-            <button type="button" onclick="closeEditModal()"
-                    aria-label="Close" class="govuk-edit-modal__close-btn">
-                ✕
-            </button>
-        </div>
-        <div class="govuk-edit-modal__body">
-            <form id="editRecordForm">
-                @Html.AntiForgeryToken()
-                <div id="editFormErrorBanner" class="govuk-error-summary"
-                     style="display: none; margin-bottom: 4%; padding: 0; border-width: 3px;"
-                     aria-labelledby="editFormErrorTitle" role="alert">
-                    <h5 class="govuk-error-summary__title" id="editFormErrorTitle"
-                        style="font-size: 14px; margin: 6px 8px;">
-                        Please fill all the fields
-                    </h5>
-                </div>
-                <div class="govuk-form-group govuk-!-margin-bottom-6">
-                    <label class="govuk-label font-size-16" for="edit-year">Year</label>
+<div id="addEditCommentContainer"></div>
 
-                    <select class="govuk-select" id="edit-year" name="year" style="width: stretch;">
-                        <option value="">Select a Year</option>
-                        @foreach (var opt in Model.YearOptions.Where(o => o.Value != ""))
-                        {
-                            <option value="@opt.Value">@opt.Text</option>
-                        }
-                    </select>
-
-                </div>
-                <div class="govuk-form-group govuk-!-margin-bottom-6">
-                    <label class="govuk-label font-size-16" for="edit-title">Topic</label>
-                    <select class="govuk-select" id="edit-title" name="title" style="width: stretch;">
-                        <option value="">Select a topic</option>
-                        @foreach (var opt in Model.TopicOptions.Where(o => o.Value != ""))
-                        {
-                            <option value="@opt.Value">@opt.Text</option>
-                        }
-                    </select>
-                </div>
-                <div class="govuk-form-group govuk-!-margin-bottom-6">
-                    <label class="govuk-label font-size-16" for="edit-comment">Comment</label>
-                    <textarea class="govuk-textarea" id="edit-comment"
-                              name="comment" rows="4"
-                              placeholder="Enter your comments"></textarea>
-                </div>
-            </form>
-        </div>
-        <div class="govuk-edit-modal__footer">
-            <button type="button"
-                    class="govuk-button govuk-button--secondary font-size-16"
-                    onclick="closeEditModal()">
-                Cancel
-            </button>
-            <button type="button"
-                    class="govuk-button font-size-16"
-                    id="saveRecordBtn"
-                    onclick="saveRecord()">
-                Save
-            </button>
-        </div>
-    </div>
-</div>
+<script src="~/js/ajax-form-validation.js"></script>
 
 @section Scripts {
     <script>
@@ -634,73 +579,46 @@
 
         // ── Comment modal ─────────────────────────────────────────────────
         function clearFormErrors() {
-            document.getElementById('editFormErrorBanner').style.display = 'none';
-            ['edit-year', 'edit-title', 'edit-comment'].forEach(function (id) {
-                const el = document.getElementById(id);
-                el.classList.remove('govuk-input--error', 'govuk-select--error', 'govuk-textarea--error');
-                const group = el.closest('.govuk-form-group');
-                if (group) group.classList.remove('govuk-form-group--error');
-            });
+            clearValidationErrors('#editRecordModal');
         }
 
         function closeEditModal() {
-            document.getElementById('editRecordModal').classList.remove('open');
+            var modal = document.getElementById('editRecordModal');
+            if (modal) modal.classList.remove('open');
             clearFormErrors();
-            document.querySelector('.govuk-edit-modal__title').textContent = 'Edit Record';
-        }
-
-        function openEditModal(commentno, year, topic, comment) {
-            clearFormErrors();
-            document.querySelector('.govuk-edit-modal__title').textContent = 'Edit Record';
-            document.getElementById('edit-year').value    = year;
-            document.getElementById('edit-title').value   = topic;
-            document.getElementById('edit-comment').value = comment;
-            document.getElementById('editRecordModal').classList.add('open');
-            currentEditIndex = commentno;
-            isAddingNew      = false;
         }
 
         function openAddCommentModal() {
-            clearFormErrors();
-            document.querySelector('.govuk-edit-modal__title').textContent = 'Add Comment';
-            document.getElementById('edit-year').value    = document.getElementById('dpselectyear').value;
-            document.getElementById('edit-title').value   = '';
-            document.getElementById('edit-comment').value = '';
-            document.getElementById('editRecordModal').classList.add('open');
-            isAddingNew      = true;
-            currentEditIndex = null;
+            var selectedYear = document.getElementById('dpselectyear').value || '';
+            var url = '/PIMS/ProjectDetails/GetAddEditCommentPartial?parentproject=' + encodeURIComponent(currentProject)
+                    + '&selectedYear=' + encodeURIComponent(selectedYear);
+            fetch(url)
+                .then(r => r.text())
+                .then(html => {
+                    document.getElementById('addEditCommentContainer').innerHTML = html;
+                    document.getElementById('editRecordModal').classList.add('open');
+                    isAddingNew = true;
+                    currentEditIndex = null;
+                })
+                .catch(() => showAlert('danger', 'An error occurred while loading the comment form.'));
         }
 
         function saveRecord() {
-            const year    = document.getElementById('edit-year').value.trim();
-            const topic   = document.getElementById('edit-title').value;
-            const comment = document.getElementById('edit-comment').value.trim();
+            var $form = $('#editRecordForm');
+            var $modal = $('#editRecordModal');
 
-            clearFormErrors();
-            let hasError = false;
+            clearValidationErrors($modal);
 
-            if (!year) {
-                document.getElementById('edit-year').classList.add('govuk-input--error');
-                document.getElementById('edit-year').closest('.govuk-form-group').classList.add('govuk-form-group--error');
-                hasError = true;
-            }
-            if (!topic) {
-                document.getElementById('edit-title').classList.add('govuk-select--error');
-                document.getElementById('edit-title').closest('.govuk-form-group').classList.add('govuk-form-group--error');
-                hasError = true;
-            }
-            if (!comment) {
-                document.getElementById('edit-comment').classList.add('govuk-textarea--error');
-                document.getElementById('edit-comment').closest('.govuk-form-group').classList.add('govuk-form-group--error');
-                hasError = true;
-            }
-
-            if (hasError) {
-                document.getElementById('editFormErrorBanner').style.display = 'block';
+            if (!isFormValid($form)) {
+                displayClientValidationErrors($form, $modal);
                 return;
             }
 
-            const token   = document.querySelector('#editRecordForm input[name="__RequestVerificationToken"]').value;
+            const form    = $form[0];
+            const year    = form.querySelector('[name="Year"]').value.trim();
+            const topic   = form.querySelector('[name="Topic"]').value || null;
+            const comment = form.querySelector('[name="Commenttext"]').value.trim()|| null;
+            const token   = form.querySelector('input[name="__RequestVerificationToken"]').value;
             const payload = { Project: currentProject, Year: parseInt(year), Comment: comment, Topic: topic, Commentno: isAddingNew ? 0 : parseInt(currentEditIndex) };
 
             const url = isAddingNew
@@ -719,7 +637,7 @@
                     var gm = getCommentsGridManager();
                     if (gm) gm.reloadGrid({ page: 1 });
                 } else {
-                    showAlert('danger', data.errors?.map(e => e.message).join(', ') || 'Failed to save comment.');
+                    displayServerValidationErrors(data.errors, 'Failed to save comment.', '#editRecordModal');
                 }
             })
             .catch(() => showAlert('danger', 'An error occurred while saving the comment.'));
@@ -727,13 +645,17 @@
 
         function editComment(btn) {
             var commentno = btn.dataset.id;
-            fetch('/PIMS/ProjectDetails/GetComment?commentno=' + commentno)
-                .then(r => r.json())
-                .then(data => {
-                    if (data.success) {
-                        openEditModal(data.data.commentno, data.data.year, data.data.topic, data.data.commenttext);
-                    }
-                });
+            var url = '/PIMS/ProjectDetails/GetAddEditCommentPartial?parentproject=' + encodeURIComponent(currentProject)
+                    + '&commentno=' + encodeURIComponent(commentno);
+            fetch(url)
+                .then(r => r.text())
+                .then(html => {
+                    document.getElementById('addEditCommentContainer').innerHTML = html;
+                    document.getElementById('editRecordModal').classList.add('open');
+                    isAddingNew = false;
+                    currentEditIndex = commentno;
+                })
+                .catch(() => showAlert('danger', 'An error occurred while loading the comment form.'));
         }
 
         function deleteComment(btn) {

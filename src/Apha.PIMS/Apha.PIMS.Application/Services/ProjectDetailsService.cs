@@ -51,7 +51,7 @@ namespace Apha.PIMS.Application.Services
             return entity is null ? null : _mapper.Map<ProposedProjectDto>(entity);
         }
 
-        public async Task<ProposedProjectDto> UpdateProposedProjectAsync(ProposedProjectDto dto)
+        public async Task<ProposedProjectDto> UpdateProposedProjectAsync(ProposedProjectDto dto, string transferTo)
         {
             var errors = new List<BusinessValidationError>();
             if (string.IsNullOrWhiteSpace(dto.Parentproject))
@@ -60,7 +60,7 @@ namespace Apha.PIMS.Application.Services
                 throw new BusinessValidationErrorException(errors);
 
             ProposedProject entity = _mapper.Map<ProposedProject>(dto);
-            ProposedProject updated = await _repository.UpdateProposedProjectAsync(entity);
+            ProposedProject updated = await _repository.UpdateProposedProjectAsync(entity, transferTo);
             return _mapper.Map<ProposedProjectDto>(updated);
         }
 
@@ -68,6 +68,12 @@ namespace Apha.PIMS.Application.Services
         {
             List<Risk> entities = await _repository.GetAllRiskAsync();
             return _mapper.Map<List<RiskDto>>(entities);
+        }
+
+        public async Task<List<YearDto>> GetAllYearAsync()
+        {
+            List<Year> entities = await _repository.GetAllYearAsync();
+            return _mapper.Map<List<YearDto>>(entities);
         }
     }
 }

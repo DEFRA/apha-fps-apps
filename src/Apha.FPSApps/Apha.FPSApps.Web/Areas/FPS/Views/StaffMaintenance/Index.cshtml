@@ -196,7 +196,7 @@
                     success: function (response) {
                         if (response.success) {
                             showGovukAlert('Employee deleted successfully').then(function () {
-                                window.location.reload();
+                                getGridManager().reloadGrid({ page: 1 });
                             });
                         } else {
                             showGovukAlert('Error: ' + response.message);
@@ -240,7 +240,7 @@
                     if (response.success) {
                         alert(response.message);
                         closeModal();
-                        window.location.reload();
+                        getGridManager().reloadGrid({ page: 1 });
                     } else {
                         // Show validation errors from server
                         displayServerValidationErrors(response.errors, response.message, '#modaPopupBody')

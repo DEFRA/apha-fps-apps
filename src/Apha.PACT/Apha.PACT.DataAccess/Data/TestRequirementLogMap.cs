@@ -7,13 +7,6 @@ namespace Apha.PACT.DataAccess.Data
 {
     public class TestRequirementLogMap : IEntityTypeConfiguration<TestRequirementLog>
     {
-        private readonly IFpsYearContext _fPSYearContext;
-
-        public TestRequirementLogMap(IFpsYearContext fPSYearContext)
-        {
-            _fPSYearContext = fPSYearContext;
-        }
-
         public void Configure(EntityTypeBuilder<TestRequirementLog> entity)
         {
             entity.HasKey(e => new { e.SequenceNo, e.FpsYear }).HasName("pk_testreq_log");
@@ -63,10 +56,9 @@ namespace Apha.PACT.DataAccess.Data
                 .HasColumnName("testcode");
             entity.Property(e => e.UnitPrice).HasColumnName("unitprice");
             entity.Property(e => e.UserId)
-                .HasMaxLength(20)
+                .HasMaxLength(255)
                 .UseCollation("latin1_general_ci_as")
                 .HasColumnName("user_id");
-            entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FPSYear);
         }
     }
 }

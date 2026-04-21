@@ -17,6 +17,7 @@ namespace Apha.PIMS.DataAccess.Data
         public virtual DbSet<Project> Projects { get; set; }
         public virtual DbSet<Projects> MyTlkpProjects { get; set; }
         public virtual DbSet<Comment> Comments { get; set; }
+        public virtual DbSet<CommentTopic> CommentTopics { get; set; }
         public virtual DbSet<ProposedProject> ProposedProjects { get; set; }
         public virtual DbSet<RadtrackProg> RadtrackProgs { get; set; }
         public virtual DbSet<ProjectDetail> ProjectDetails { get; set; }
@@ -185,6 +186,17 @@ namespace Apha.PIMS.DataAccess.Data
                     .UseCollation("und-x-icu")
                     .HasColumnName("topic");
                 entity.Property(e => e.Year).HasColumnName("year");
+            });
+
+            modelBuilder.Entity<CommentTopic>(entity =>
+            {
+                entity.HasKey(e => e.Topic).HasName("pk_tlkpcommenttopics");
+
+                entity.ToTable("tlkpcommenttopics", MabArchiveSchema);
+
+                entity.Property(e => e.Topic)
+                    .HasMaxLength(50)
+                    .HasColumnName("topic");
             });
 
             modelBuilder.Entity<ProposedProject>(entity =>

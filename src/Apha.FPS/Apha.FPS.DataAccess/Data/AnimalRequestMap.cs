@@ -1,5 +1,4 @@
 using Apha.FPS.Core.Entities;
-using Apha.FPS.Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -7,12 +6,7 @@ namespace Apha.FPS.DataAccess.Data
 {
     public class AnimalRequestMap : IEntityTypeConfiguration<AnimalRequest>
     {
-        private readonly IFpsRequestContext _fPSYearContext;
 
-        public AnimalRequestMap(IFpsRequestContext fPSYearContext)
-        {
-            _fPSYearContext = fPSYearContext;
-        }
 
         public void Configure(EntityTypeBuilder<AnimalRequest> entity)
         {
@@ -30,7 +24,6 @@ namespace Apha.FPS.DataAccess.Data
                 .HasColumnName("jobcode");
             entity.Property(e => e.NumberOfAnimals).HasColumnName("numberofanimals");
             entity.Property(e => e.NumberOfDays).HasColumnName("numberofdays");
-            entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
         }
     }
 }

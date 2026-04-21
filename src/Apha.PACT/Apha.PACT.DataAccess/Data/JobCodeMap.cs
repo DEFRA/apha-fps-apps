@@ -1,5 +1,4 @@
 using Apha.PACT.Core.Entities;
-using Apha.PACT.Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -7,13 +6,6 @@ namespace Apha.PACT.DataAccess.Data
 {
     public class JobCodeMap : IEntityTypeConfiguration<JobCode>
     {
-        private readonly IFpsYearContext _fPSYearContext;
-
-        public JobCodeMap(IFpsYearContext fPSYearContext)
-        {
-            _fPSYearContext = fPSYearContext;
-        }
-
         public void Configure(EntityTypeBuilder<JobCode> entity)
         {
             entity.HasKey(e => new { e.JobCodeId, e.FpsYear }).HasName("pk_tlkpjobcode");
@@ -39,7 +31,6 @@ namespace Apha.PACT.DataAccess.Data
             entity.Property(e => e.Type)
                 .HasMaxLength(15)
                 .HasColumnName("type");
-            entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FPSYear);
         }
     }
 }

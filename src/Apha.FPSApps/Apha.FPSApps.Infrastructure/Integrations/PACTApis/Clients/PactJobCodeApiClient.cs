@@ -14,7 +14,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
     {
         private readonly IPactHttpExecutor _http;
         private readonly IMapper _mapper;
-        private const string InternalCodeError = "INTERNAL_ERROR";
 
         public PactJobCodeApiClient(IPactHttpExecutor http, IMapper mapper)
         {
@@ -103,7 +102,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
         public async Task<ApiResponseDto<bool>> DeleteJobCodeAsync(string jobCodeId)
         {
 
-            var response = await _http.DeleteAsync<bool>(string.Format(PactApiEndpoints.DeleteJobCode, Uri.EscapeDataString(jobCodeId)));
+            var response = await _http.DeleteAsync<bool?>(string.Format(PactApiEndpoints.DeleteJobCode, Uri.EscapeDataString(jobCodeId)));
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<bool>>(response);
 

@@ -36,6 +36,17 @@ namespace Apha.PIMS.DataAccess.Repository
                 .FirstOrDefaultAsync(c => c.Commentno == commentno);
         }
 
+        public async Task<bool> ExistsAsync(string project, short year, string topic, int? excludeCommentno = null)
+        {
+            IQueryable<Comment> query = _dbContext.Comments
+                .Where(c => c.Project == project && c.Year == year && c.Topic == topic);
+
+            if (excludeCommentno.HasValue)
+                query = query.Where(c => c.Commentno != excludeCommentno.Value);
+
+            return await query.AnyAsync();
+        }
+
         public async Task<Comment> AddAsync(Comment entity)
         {
             _dbContext.Comments.Add(entity);
@@ -57,6 +68,11 @@ namespace Apha.PIMS.DataAccess.Repository
             _dbContext.Comments.Remove(entity);
             await _dbContext.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<IEnumerable<CommentTopic>> GetCommentTopicsAsync()
+        { 
+            return await _dbContext.CommentTopics.ToListAsync();
         }
 
         private static IQueryable ApplySorting(IQueryable<Comment> query, string? sortBy, bool descending)

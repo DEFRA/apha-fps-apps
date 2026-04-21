@@ -45,7 +45,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
             List<ProjectListViewDto>? allProjects = null,
             List<RiskDto>? risks = null,
             List<CommentDto>? comments = null,
-            PaginationDto? commentPagination = null)
+            PaginationDto? commentPagination = null,
+            List<YearDto>? years = null)
         {
             _projectListServiceMock.GetFpsProjectByIdAsync(Arg.Any<string>())
                 .Returns(new ApiResponseDto<ProjectDto> { Success = true, Data = fpsProject });
@@ -64,6 +65,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
 
             _projectDetailsServiceMock.GetAllRiskAsync()
                 .Returns(new ApiResponseDto<List<RiskDto>> { Success = true, Data = risks ?? [] });
+
+            _projectDetailsServiceMock.GetAllYearAsync()
+                .Returns(new ApiResponseDto<List<YearDto>> { Success = true, Data = years ?? [] });
 
             _mapperMock.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string>());
@@ -254,7 +258,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
         }
 
         [Fact]
-        public async Task Index_WithProposedProjectData_MapsProjecttitleToViewModel()
+        public async Task Index_WithProposedProjectData_MapsProposedProjectDetailsToViewModel()
         {
             // Arrange
             var proposed = new ProposedProjectDto
@@ -275,14 +279,15 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<ProjectDetailsViewModel>(viewResult.Model);
-            Assert.Equal("Test Title", model.Projecttitle);
-            Assert.Equal("Program A", model.Program);
-            Assert.Equal("Customer A", model.Customer);
-            Assert.Equal("Manager A", model.Manager);
+            Assert.NotNull(model.ProposedProjectDetails);
+            Assert.Equal("Test Title", model.ProposedProjectDetails.Projecttitle);
+            Assert.Equal("Program A", model.ProposedProjectDetails.Program);
+            Assert.Equal("Customer A", model.ProposedProjectDetails.Customer);
+            Assert.Equal("Manager A", model.ProposedProjectDetails.Manager);
         }
 
         [Fact]
-        public async Task Index_WithPimsDetailData_MapsVersionToViewModel()
+        public async Task Index_WithPimsDetailData_MapsProjectDetailsToViewModel()
         {
             // Arrange
             var pimsDetail = new ProjectDetailDto { Parentproject = "PP001", Version = "2.0", Riskid = 3 };
@@ -294,8 +299,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<ProjectDetailsViewModel>(viewResult.Model);
-            Assert.Equal("2.0", model.Version);
-            Assert.Equal(3, model.Riskid);
+            Assert.NotNull(model.ProjectDetails);
+            Assert.Equal("2.0", model.ProjectDetails.Version);
+            Assert.Equal(3, model.ProjectDetails.Riskid);
         }
 
         [Fact]
@@ -317,6 +323,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
             var model = Assert.IsType<ProjectDetailsViewModel>(viewResult.Model);
             Assert.NotEmpty(model.RiskRatingOptions);
             Assert.Equal(3, model.RiskRatingOptions.Count);
+            Assert.Equal("-- Select --", model.RiskRatingOptions[0].Text);
         }
 
         [Fact]
@@ -333,10 +340,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<ProjectDetailsViewModel>(viewResult.Model);
-            // Only the default "-- Select --" item is present when risks are null
             Assert.Single(model.RiskRatingOptions);
             Assert.Equal("-- Select --", model.RiskRatingOptions[0].Text);
-            Assert.Equal("", model.RiskRatingOptions[0].Value);
         }
 
         [Fact]
@@ -358,6 +363,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
             var model = Assert.IsType<ProjectDetailsViewModel>(viewResult.Model);
             Assert.NotEmpty(model.TransferToOptions);
             Assert.Equal(3, model.TransferToOptions.Count);
+            Assert.Equal("-- Select --", model.TransferToOptions[0].Text);
         }
 
         [Fact]
@@ -374,17 +380,20 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<ProjectDetailsViewModel>(viewResult.Model);
-            // Only the default "-- Select --" item is present when all projects are null
             Assert.Single(model.TransferToOptions);
             Assert.Equal("-- Select --", model.TransferToOptions[0].Text);
-            Assert.Equal("", model.TransferToOptions[0].Value);
         }
 
         [Fact]
         public async Task Index_YearOptionsArePopulated()
         {
             // Arrange
-            SetupSuccessfulIndexMocks();
+            var years = new List<YearDto>
+            {
+                new YearDto { Value = 2023 },
+                new YearDto { Value = 2024 }
+            };
+            SetupSuccessfulIndexMocks(years: years);
 
             // Act
             var result = await _controller.Index("PP001");
@@ -393,6 +402,61 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<ProjectDetailsViewModel>(viewResult.Model);
             Assert.NotEmpty(model.YearOptions);
+            Assert.Equal(2, model.YearOptions.Count);
+        }
+
+        [Fact]
+        public async Task Index_CallsGetAllYearAsync_Once()
+        {
+            // Arrange
+            SetupSuccessfulIndexMocks();
+
+            // Act
+            await _controller.Index("PP001");
+
+            // Assert
+            await _projectDetailsServiceMock.Received(1).GetAllYearAsync();
+        }
+
+        [Fact]
+        public async Task Index_WithYears_PopulatesYearOptionsInDescendingOrder()
+        {
+            // Arrange
+            var years = new List<YearDto>
+            {
+                new YearDto { Value = 2020 },
+                new YearDto { Value = 2024 },
+                new YearDto { Value = 2022 }
+            };
+            SetupSuccessfulIndexMocks(years: years);
+
+            // Act
+            var result = await _controller.Index("PP001");
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProjectDetailsViewModel>(viewResult.Model);
+            Assert.Equal(3, model.YearOptions.Count);
+            Assert.Equal("2024", model.YearOptions[0].Value);
+            Assert.Equal("2022", model.YearOptions[1].Value);
+            Assert.Equal("2020", model.YearOptions[2].Value);
+        }
+
+        [Fact]
+        public async Task Index_WithNullYears_ReturnsEmptyYearOptions()
+        {
+            // Arrange
+            SetupSuccessfulIndexMocks(years: null);
+            _projectDetailsServiceMock.GetAllYearAsync()
+                .Returns(new ApiResponseDto<List<YearDto>> { Success = true, Data = null });
+
+            // Act
+            var result = await _controller.Index("PP001");
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProjectDetailsViewModel>(viewResult.Model);
+            Assert.Empty(model.YearOptions);
         }
 
         [Fact]
@@ -526,7 +590,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
             var model = Assert.IsType<ProjectDetailsViewModel>(viewResult.Model);
             Assert.Equal("deleteComment", model.CommentsGrid.DeleteFunction);
         }
-        
+
 
         [Fact]
         public async Task Index_CommentsGridExtraFilterMethodIsCorrect()
@@ -1097,7 +1161,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
         }
 
         [Fact]
-        public async Task UpdateProposedProject_WhenProposedProjectDetailsIsNull_ReturnsJsonWithSuccessFalse()
+        public async Task UpdateProposedProject_WhenProposedProjectDetailsIsNull_ReturnsRedirectToIndex()
         {
             // Arrange
             var viewModel = new ProjectDetailsViewModel { ProposedProjectDetails = null };
@@ -1106,9 +1170,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
             var result = await _controller.UpdateProposedProject("PP001", viewModel);
 
             // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var json = System.Text.Json.JsonSerializer.Serialize(jsonResult.Value);
-            Assert.Contains("false", json);
+            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
+            Assert.Equal(nameof(_controller.Index), redirectResult.ActionName);
+            Assert.Equal("PP001", redirectResult.RouteValues?["parentproject"]);
         }
 
         [Fact]
@@ -1379,6 +1443,228 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
 
             // Assert
             await _commentServiceMock.Received(1).DeleteCommentAsync(7);
+        }
+
+        #endregion
+
+        #region GetAddEditCommentPartial Tests
+
+        [Fact]
+        public async Task GetAddEditCommentPartial_WithNullCommentno_ReturnsPartialViewResult()
+        {
+            // Arrange & Act
+            var result = await _controller.GetAddEditCommentPartial("PP001", null, 2024);
+
+            // Assert
+            Assert.IsType<PartialViewResult>(result);
+        }
+
+        [Fact]
+        public async Task GetAddEditCommentPartial_WithNullCommentno_ReturnsAddEditCommentPartialView()
+        {
+            // Arrange & Act
+            var result = await _controller.GetAddEditCommentPartial("PP001", null, 2024);
+
+            // Assert
+            var partialViewResult = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_AddEditComment", partialViewResult.ViewName);
+        }
+
+        [Fact]
+        public async Task GetAddEditCommentPartial_WithNullCommentno_SetsIsAddingNewTrue()
+        {
+            // Arrange & Act
+            var result = await _controller.GetAddEditCommentPartial("PP001", null, 2024);
+
+            // Assert
+            var partialViewResult = Assert.IsType<PartialViewResult>(result);
+            var model = Assert.IsType<AddEditCommentViewModel>(partialViewResult.Model);
+            Assert.True(model.IsAddingNew);
+        }
+
+        [Fact]
+        public async Task GetAddEditCommentPartial_WithZeroCommentno_SetsIsAddingNewTrue()
+        {
+            // Arrange & Act
+            var result = await _controller.GetAddEditCommentPartial("PP001", 0, 2024);
+
+            // Assert
+            var partialViewResult = Assert.IsType<PartialViewResult>(result);
+            var model = Assert.IsType<AddEditCommentViewModel>(partialViewResult.Model);
+            Assert.True(model.IsAddingNew);
+        }
+
+        [Fact]
+        public async Task GetAddEditCommentPartial_WithNullCommentno_DoesNotCallGetByIdAsync()
+        {
+            // Arrange & Act
+            await _controller.GetAddEditCommentPartial("PP001", null, 2024);
+
+            // Assert
+            await _commentServiceMock.DidNotReceive().GetByIdAsync(Arg.Any<int>());
+        }
+
+        [Fact]
+        public async Task GetAddEditCommentPartial_WithZeroCommentno_DoesNotCallGetByIdAsync()
+        {
+            // Arrange & Act
+            await _controller.GetAddEditCommentPartial("PP001", 0, 2024);
+
+            // Assert
+            await _commentServiceMock.DidNotReceive().GetByIdAsync(Arg.Any<int>());
+        }
+
+        [Fact]
+        public async Task GetAddEditCommentPartial_WithValidCommentno_CallsGetByIdAsync()
+        {
+            // Arrange
+            _commentServiceMock.GetByIdAsync(5)
+                .Returns(new ApiResponseDto<CommentDto>
+                {
+                    Success = true,
+                    Data = new CommentDto { Commentno = 5, Year = 2024, Topic = "General Comment", Commenttext = "Test" }
+                });
+
+            // Act
+            await _controller.GetAddEditCommentPartial("PP001", 5, 2024);
+
+            // Assert
+            await _commentServiceMock.Received(1).GetByIdAsync(5);
+        }
+
+        [Fact]
+        public async Task GetAddEditCommentPartial_WithValidCommentno_SetsIsAddingNewFalse()
+        {
+            // Arrange
+            _commentServiceMock.GetByIdAsync(5)
+                .Returns(new ApiResponseDto<CommentDto>
+                {
+                    Success = true,
+                    Data = new CommentDto { Commentno = 5, Year = 2024, Topic = "General Comment", Commenttext = "Test" }
+                });
+
+            // Act
+            var result = await _controller.GetAddEditCommentPartial("PP001", 5, 2024);
+
+            // Assert
+            var partialViewResult = Assert.IsType<PartialViewResult>(result);
+            var model = Assert.IsType<AddEditCommentViewModel>(partialViewResult.Model);
+            Assert.False(model.IsAddingNew);
+        }
+
+        [Fact]
+        public async Task GetAddEditCommentPartial_WithValidCommentno_MapsCommentDataToModel()
+        {
+            // Arrange
+            _commentServiceMock.GetByIdAsync(5)
+                .Returns(new ApiResponseDto<CommentDto>
+                {
+                    Success = true,
+                    Data = new CommentDto { Commentno = 5, Year = 2023, Topic = "Contracts", Commenttext = "Some text" }
+                });
+
+            // Act
+            var result = await _controller.GetAddEditCommentPartial("PP001", 5, 2024);
+
+            // Assert
+            var partialViewResult = Assert.IsType<PartialViewResult>(result);
+            var model = Assert.IsType<AddEditCommentViewModel>(partialViewResult.Model);
+            Assert.Equal(5, model.Commentno);
+            Assert.Equal(2023, model.Year);
+            Assert.Equal("Contracts", model.Topic);
+            Assert.Equal("Some text", model.Commenttext);
+        }
+
+        [Fact]
+        public async Task GetAddEditCommentPartial_WithValidCommentno_ServiceFailure_DoesNotMapCommentData()
+        {
+            // Arrange
+            _commentServiceMock.GetByIdAsync(5)
+                .Returns(new ApiResponseDto<CommentDto>
+                {
+                    Success = false,
+                    Errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "Not found", Code = "NOT_FOUND" } }
+                });
+
+            // Act
+            var result = await _controller.GetAddEditCommentPartial("PP001", 5, 2024);
+
+            // Assert
+            var partialViewResult = Assert.IsType<PartialViewResult>(result);
+            var model = Assert.IsType<AddEditCommentViewModel>(partialViewResult.Model);
+            Assert.Equal(0, model.Commentno);
+        }
+
+        [Fact]
+        public async Task GetAddEditCommentPartial_SetsProjectOnModel()
+        {
+            // Arrange & Act
+            var result = await _controller.GetAddEditCommentPartial("PP001", null, 2024);
+
+            // Assert
+            var partialViewResult = Assert.IsType<PartialViewResult>(result);
+            var model = Assert.IsType<AddEditCommentViewModel>(partialViewResult.Model);
+            Assert.Equal("PP001", model.Project);
+        }
+
+        [Fact]
+        public async Task GetAddEditCommentPartial_SetsSelectedYearOnModel()
+        {
+            // Arrange & Act
+            var result = await _controller.GetAddEditCommentPartial("PP001", null, 2023);
+
+            // Assert
+            var partialViewResult = Assert.IsType<PartialViewResult>(result);
+            var model = Assert.IsType<AddEditCommentViewModel>(partialViewResult.Model);
+            Assert.Equal(2023, model.Year);
+        }
+
+        [Fact]
+        public async Task GetAddEditCommentPartial_PopulatesYearOptions()
+        {
+            // Arrange
+            var years = new List<YearDto>
+            {
+                new() { Value = 2023 },
+                new() { Value = 2024 },
+                new() { Value = 2025 }
+            };
+            _projectDetailsServiceMock.GetAllYearAsync()
+                .Returns(new ApiResponseDto<List<YearDto>> { Success = true, Data = years });
+
+            // Act
+            var result = await _controller.GetAddEditCommentPartial("PP001", null, null);
+
+            // Assert
+            var partialViewResult = Assert.IsType<PartialViewResult>(result);
+            var model = Assert.IsType<AddEditCommentViewModel>(partialViewResult.Model);
+            Assert.NotEmpty(model.YearOptions);
+        }
+
+        [Fact]
+        public async Task GetAddEditCommentPartial_PopulatesTopicOptions()
+        {
+            // Arrange
+            var topics = new List<CommentTopicDto>
+            {
+                new() { Topic = "Benchmarking" },
+                new() { Topic = "Contracts" },
+                new() { Topic = "Finance" },
+                new() { Topic = "Funding" },
+                new() { Topic = "Performance" },
+                new() { Topic = "Policy" }
+            };
+            _commentServiceMock.GetCommentTopicsAsync()
+                .Returns(new ApiResponseDto<List<CommentTopicDto>> { Success = true, Data = topics });
+
+            // Act
+            var result = await _controller.GetAddEditCommentPartial("PP001", null, null);
+
+            // Assert
+            var partialViewResult = Assert.IsType<PartialViewResult>(result);
+            var model = Assert.IsType<AddEditCommentViewModel>(partialViewResult.Model);
+            Assert.NotEmpty(model.TopicOptions);
+            Assert.Equal(7, model.TopicOptions.Count);
         }
 
         #endregion

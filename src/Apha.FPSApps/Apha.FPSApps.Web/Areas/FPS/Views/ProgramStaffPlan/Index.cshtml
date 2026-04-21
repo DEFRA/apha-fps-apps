@@ -171,7 +171,7 @@
         function selectProject(btn) {
             var jobCode = $(btn).data('id');
             var row = $(btn).closest('tr');
-            var budgetText = row.find('td[data-property="Budget_cvl"] span').text().replace(/[£,\s]/g, '');
+            var budgetText = row.find('td[data-property="BudgetCvl"] span').text().replace(/[£,\s]/g, '');
             var budget = parseFloat(budgetText) || 0;
 
             currentJobCode = jobCode;
