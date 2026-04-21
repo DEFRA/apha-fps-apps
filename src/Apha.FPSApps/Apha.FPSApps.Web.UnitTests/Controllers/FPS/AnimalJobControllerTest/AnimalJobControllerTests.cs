@@ -438,11 +438,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.AnimalJobControllerTest
         {
             // Arrange
             var animalType = "Cattle";
+            var jobCode = "JOB001";
             var serviceResponse = ApiResponseDto<decimal?>.SuccessResponse(25.50m);
-            _animalPlanService.GetAnimalRateAsync(animalType).Returns(serviceResponse);
+            _animalPlanService.GetAnimalRateAsync(animalType, jobCode).Returns(serviceResponse);
 
             // Act
-            var result = await _controller.GetAnimalRate(animalType);
+            var result = await _controller.GetAnimalRate(animalType, jobCode);
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
@@ -457,26 +458,27 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.AnimalJobControllerTest
         public async Task GetAnimalRate_WithEmptyOrWhitespaceAnimalType_ReturnsFailureJson(string animalType)
         {
             // Act
-            var result = await _controller.GetAnimalRate(animalType);
+            var result = await _controller.GetAnimalRate(animalType, "JOB001");
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
             var value = GetJsonResultElement(jsonResult);
             Assert.False(value.GetProperty("success").GetBoolean());
             Assert.Equal("Animal type is required", value.GetProperty("message").GetString());
-            await _animalPlanService.DidNotReceive().GetAnimalRateAsync(Arg.Any<string>());
+            await _animalPlanService.DidNotReceive().GetAnimalRateAsync(Arg.Any<string>(), Arg.Any<string>());
         }
 
         [Fact]
         public async Task GetAnimalRate_WhenServiceFails_ReturnsFailureJson()
         {
             // Arrange
+            var jobCode = "JOB001";
             var errors = new List<ApiErrorDto> { new() { Message = "Not found", Code = "NOT_FOUND" } };
             var serviceResponse = ApiResponseDto<decimal?>.FailureResponse(errors, new ApiMetaDto());
-            _animalPlanService.GetAnimalRateAsync("Cattle").Returns(serviceResponse);
+            _animalPlanService.GetAnimalRateAsync("Cattle", jobCode).Returns(serviceResponse);
 
             // Act
-            var result = await _controller.GetAnimalRate("Cattle");
+            var result = await _controller.GetAnimalRate("Cattle", jobCode);
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
