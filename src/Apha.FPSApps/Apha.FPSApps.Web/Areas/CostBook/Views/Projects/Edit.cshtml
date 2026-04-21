@@ -214,22 +214,41 @@
                                 </div>
                                 <label for="chkInflation" class="govuk-label label_width mb-0 pt-1">Include Inflation?:</label>
                                 <div class="d-flex align-items-center gap-2">
-                                    <div class="form-check form-check-inline">
+                                    <div class="govuk-checkboxes govuk-checkboxes--small"  data-module="govuk-checkboxes">
+                                         <div class="govuk-checkboxes__item sup_float_right">
                                         <input type="checkbox"
                                                id="chkInflation"
                                                name="Inflation"
                                                value="1"
-                                               class="form-check-input"
+                                                class="govuk-checkboxes__input govuk-!-font-size-16"
                                                style="width:20px; height:20px; cursor:pointer;"
                                                checked="@(Model.Inflation.HasValue && Model.Inflation.Value != 0)" />
                                               
                                         <input name="Inflation" type="hidden" value="0" />
-                                        
+                                        </div>
                                     </div>
                                     <span class="warning-text" style="font-size:13px; width:286px; color:#353535; border:1px dashed #0d6efd; border-radius:4px; padding:2px;">
                                         Changing this option will recost existing projects with current rates as well as affecting inflation.
                                     </span>
+                                </div> 
+                                <!--inflation checkboxl-->
+                               @*  <label for="chkInflation" class="govuk-label label_width mb-0 pt-1">Include Inflation?:</label>
+                                <div class="d-flex align-items-center gap-2">
+                                <div class="govuk-checkboxes govuk-grid-column-one-third govuk-checkboxes--small sup_margin_0 sup_p_t_3"
+                                        data-module="govuk-checkboxes">
+                                    <div class="govuk-checkboxes__item sup_float_right">
+                                        <input class="govuk-checkboxes__input govuk-!-font-size-16"
+                                                id="chkInflation" name="Inflation" type="checkbox"
+                                                                           value="1" @(Model.Inflation.HasValue && Model.Inflation.Value != 0)  />
+                                        <input name="Inflation" type="hidden" value="0" />
+                                         
+                                    </div>
                                 </div>
+                                <span class="warning-text" style="font-size:13px; width:286px; color:#353535; border:1px dashed #0d6efd; border-radius:4px; padding:2px;">
+                                    Changing this option will recost existing projects with current rates as well as affecting inflation.
+                                </span>
+                                </div> *@
+
                             </div>
 
                             <!-- Date of Submission -->
