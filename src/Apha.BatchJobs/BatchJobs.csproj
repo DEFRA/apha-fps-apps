@@ -22,11 +22,13 @@
     <Compile Remove="docs\**\*.cs" />
     <Compile Remove="docs\legacy\**\*.cs" />
     <Compile Remove="Apha.BatchJobs.UnitTests\**\*.cs" />
+    <Compile Remove="Apha.BatchJobs.Api\**\*.cs" />
     <EmbeddedResource Remove="Archive\**\*" />
     <EmbeddedResource Remove="ReImagineAnalysis_v4\**\*" />
     <EmbeddedResource Remove="docs\**\*" />
     <EmbeddedResource Remove="docs\legacy\**\*" />
     <EmbeddedResource Remove="Apha.BatchJobs.UnitTests\**\*" />
+    <EmbeddedResource Remove="Apha.BatchJobs.Api\**\*" />
     <None Include="Archive\**\*" />
     <None Include="ReImagineAnalysis_v4\**\*" />
     <None Include="docs\**\*" />

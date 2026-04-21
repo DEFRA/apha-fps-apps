@@ -38,7 +38,8 @@ public static class ServiceCollectionSetup
         return services;
     }
 
-    internal static void ConfigureBatchJobServices(IServiceCollection services, IConfiguration config)
+    /// <summary>Registers all batch job services, repositories and job handlers into the provided service collection.</summary>
+    public static void ConfigureBatchJobServices(IServiceCollection services, IConfiguration config)
     {
         services.Configure<BatchJobSettings>(config.GetSection("BatchJobs"));
         services.Configure<ApplicationInsightsSettings>(config.GetSection("ApplicationInsights"));
