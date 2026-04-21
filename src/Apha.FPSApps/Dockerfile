@@ -37,8 +37,8 @@ EXPOSE ${PORT}
 
 WORKDIR /app
 
-# Copy published output and set correct ownership for app user
-COPY --from=development --chown=app:app /home/dotnet/out/ ./
+# Copy published output as root — no write permissions assigned to app user
+COPY --from=development /home/dotnet/out/ ./
 
 # Files: read only, Dirs: read+execute only — no write anywhere
 RUN find . -type f -exec chmod 444 {} \; && \
