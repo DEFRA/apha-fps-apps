@@ -148,7 +148,7 @@ function deleteAnimalPlan(btn) {
                         AnimalJobConfig.onDeleted();
                     });
                 } else {
-                    showGovukAlert('Error: ' + response.message);
+                    showGovukAlert(response.message);
                 }
             },
             error: function () {

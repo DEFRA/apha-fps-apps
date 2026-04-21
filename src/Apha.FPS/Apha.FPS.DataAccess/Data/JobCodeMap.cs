@@ -1,5 +1,4 @@
 using Apha.FPS.Core.Entities;
-using Apha.FPS.Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -7,12 +6,7 @@ namespace Apha.FPS.DataAccess.Data
 {
     public class JobCodeMap : IEntityTypeConfiguration<JobCode>
     {
-        private readonly IFpsRequestContext _fPSYearContext;
 
-        public JobCodeMap(IFpsRequestContext fPSYearContext)
-        {
-            _fPSYearContext = fPSYearContext;
-        }
 
         public void Configure(EntityTypeBuilder<JobCode> entity)
         {
@@ -39,7 +33,6 @@ namespace Apha.FPS.DataAccess.Data
             entity.Property(e => e.Type)
                 .HasMaxLength(15)
                 .HasColumnName("type");
-            entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
         }
     }
 }

@@ -11,11 +11,11 @@ namespace Apha.PACT.DataAccess.Repository
 {
     public class TimeCodeValidRepository : BaseRepository, ITimeCodeValidRepository
     {
-        private readonly IFpsYearContext _fpsYearContext;
+        private readonly IFpsRequestContext _fpsRequestContext;
 
-        public TimeCodeValidRepository(FpsDbContext context, IFpsYearContext fpsYearContext) : base(context)
+        public TimeCodeValidRepository(FpsDbContext context, IFpsRequestContext fpsRequestContext) : base(context)
         {
-            _fpsYearContext = fpsYearContext;
+            _fpsRequestContext = fpsRequestContext;
         }
 
         public async Task<IEnumerable<TimeCodeValid>> GetByJobCodeAsync(string jobCode, string parentProject)
@@ -66,7 +66,7 @@ namespace Apha.PACT.DataAccess.Repository
 
         public async Task<TimeCodeValid> CreateTimeCodeValidAsync(TimeCodeValid timeCodeValid)
         {
-            timeCodeValid.FpsYear = _fpsYearContext.FPSYear;
+            timeCodeValid.FpsYear = _fpsRequestContext.FpsYear;
             await _context.TimeCodeValids.AddAsync(timeCodeValid);
             await _context.SaveChangesAsync();
             return timeCodeValid;
@@ -74,7 +74,7 @@ namespace Apha.PACT.DataAccess.Repository
 
         public async Task<TimeCodeValid> UpdateTimeCodeValidAsync(TimeCodeValid timeCodeValid)
         {
-            timeCodeValid.FpsYear = _fpsYearContext.FPSYear;
+            timeCodeValid.FpsYear = _fpsRequestContext.FpsYear;
             _context.Entry(timeCodeValid).State = EntityState.Modified;
             await _context.SaveChangesAsync();
             return timeCodeValid;
@@ -87,7 +87,7 @@ namespace Apha.PACT.DataAccess.Repository
                     t.WorkGroup == workGroup &&
                     t.TimeCode == timeCode &&
                     t.ParentProject == parentProject &&
-                    t.FpsYear == _fpsYearContext.FPSYear);
+                    t.FpsYear == _fpsRequestContext.FpsYear);
             if (entity == null) return false;
             _context.TimeCodeValids.Remove(entity);
             await _context.SaveChangesAsync();
@@ -99,7 +99,7 @@ namespace Apha.PACT.DataAccess.Repository
             var entities = await _context.TimeCodeValids
                 .Where(t => t.JobCode == jobCode &&
                             t.ParentProject == parentProject &&
-                            t.FpsYear == _fpsYearContext.FPSYear)
+                            t.FpsYear == _fpsRequestContext.FpsYear)
                 .ToListAsync();
             if (entities.Count > 0)
             {
@@ -117,18 +117,30 @@ namespace Apha.PACT.DataAccess.Repository
                 .Where(t => t.JobCode == sourceJobCode && t.ParentProject == parentProject)
                 .ToListAsync();
 
-            var copies = sourceEntries.Select(s => new TimeCodeValid
-            {
-                TimeCode = targetJobCode,
-                WorkGroup = s.WorkGroup,
-                ParentProject = parentProject,
-                JobCode = targetJobCode,
-                Active = s.Active,
-                FpsYear = _fpsYearContext.FPSYear
-            }).ToList();
+            var existingWorkGroups = await _context.TimeCodeValids
+                .AsNoTracking()
+                .Where(t => t.JobCode == targetJobCode && t.ParentProject == parentProject)
+                .Select(t => t.WorkGroup)
+                .ToHashSetAsync();
 
-            await _context.TimeCodeValids.AddRangeAsync(copies);
-            await _context.SaveChangesAsync();
+            var copies = sourceEntries
+                .Where(s => !existingWorkGroups.Contains(s.WorkGroup))
+                .Select(s => new TimeCodeValid
+                {
+                    TimeCode = targetJobCode,
+                    WorkGroup = s.WorkGroup,
+                    ParentProject = parentProject,
+                    JobCode = targetJobCode,
+                    Active = s.Active,
+                    FpsYear = _fpsRequestContext.FpsYear
+                }).ToList();
+
+            if (copies.Count > 0)
+            {
+                await _context.TimeCodeValids.AddRangeAsync(copies);
+                await _context.SaveChangesAsync();
+            }
+
             return copies;
         }
 
@@ -140,7 +152,7 @@ namespace Apha.PACT.DataAccess.Repository
 
             var entities = await _context.TimeCodeValids
                 .Where(t => t.ParentProject == parentProject &&
-                            t.FpsYear == _fpsYearContext.FPSYear &&
+                            t.FpsYear == _fpsRequestContext.FpsYear &&
                             workGroups.Contains(t.WorkGroup) &&
                             timeCodes.Contains(t.TimeCode))
                 .ToListAsync();
@@ -169,18 +181,30 @@ namespace Apha.PACT.DataAccess.Repository
                             workGroupList.Contains(t.WorkGroup))
                 .ToListAsync();
 
-            var copies = sourceEntries.Select(s => new TimeCodeValid
-            {
-                TimeCode = targetJobCode,
-                WorkGroup = s.WorkGroup,
-                ParentProject = parentProject,
-                JobCode = targetJobCode,
-                Active = s.Active,
-                FpsYear = _fpsYearContext.FPSYear
-            }).ToList();
+            var existingWorkGroups = await _context.TimeCodeValids
+                .AsNoTracking()
+                .Where(t => t.JobCode == targetJobCode && t.ParentProject == parentProject)
+                .Select(t => t.WorkGroup)
+                .ToHashSetAsync();
 
-            await _context.TimeCodeValids.AddRangeAsync(copies);
-            await _context.SaveChangesAsync();
+            var copies = sourceEntries
+                .Where(s => !existingWorkGroups.Contains(s.WorkGroup))
+                .Select(s => new TimeCodeValid
+                {
+                    TimeCode = targetJobCode,
+                    WorkGroup = s.WorkGroup,
+                    ParentProject = parentProject,
+                    JobCode = targetJobCode,
+                    Active = s.Active,
+                    FpsYear = _fpsRequestContext.FpsYear
+                }).ToList();
+
+            if (copies.Count > 0)
+            {
+                await _context.TimeCodeValids.AddRangeAsync(copies);
+                await _context.SaveChangesAsync();
+            }
+
             return copies;
         }
 
@@ -248,6 +272,13 @@ namespace Apha.PACT.DataAccess.Repository
         private static IQueryable ApplyOrder<T>(IQueryable<TimeCodeValid> query, Expression<Func<TimeCodeValid, T>> keySelector, bool descending)
         {
             return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
+        }
+
+        public async Task<bool> HasRelatedTimeCodeValidRecordsAsync(string jobCode)
+        {
+            return await _context.TimeCodeValids
+                .AsNoTracking()
+                .AnyAsync(t => t.JobCode == jobCode);
         }
     }
 }

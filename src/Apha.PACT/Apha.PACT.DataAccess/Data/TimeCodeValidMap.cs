@@ -7,13 +7,6 @@ namespace Apha.PACT.DataAccess.Data
 {
     public class TimeCodeValidMap : IEntityTypeConfiguration<TimeCodeValid>
     {
-        private readonly IFpsYearContext _fPSYearContext;
-
-        public TimeCodeValidMap(IFpsYearContext fPSYearContext)
-        {
-            _fPSYearContext = fPSYearContext;
-        }
-
         public void Configure(EntityTypeBuilder<TimeCodeValid> entity)
         {
             entity.HasKey(e => new { e.WorkGroup, e.TimeCode, e.ParentProject, e.FpsYear }).HasName("pk_timecodevalid");
@@ -46,7 +39,6 @@ namespace Apha.PACT.DataAccess.Data
             entity.Property(e => e.TestCode)
                 .HasMaxLength(50)
                 .HasColumnName("testcode");
-            entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FPSYear);
         }
     }
 }

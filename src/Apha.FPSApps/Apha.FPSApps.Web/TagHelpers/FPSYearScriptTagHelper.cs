@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Razor.TagHelpers;
 namespace Apha.FPSApps.Web.TagHelpers
 {
     [HtmlTargetElement("fps-year-script")]
-    public class FpsYearScriptTagHelper : ITagHelper
+    public class FpsYearScriptTagHelper : TagHelper
     {
         private readonly IFpsYearContext _fy;
 
@@ -12,23 +12,22 @@ namespace Apha.FPSApps.Web.TagHelpers
         {
             _fy = fy;
         }
-        public int Order => 0;
 
-        public void Init(TagHelperContext context)
-        {
-
-        }
-
-        public Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
+        public override void Process(TagHelperContext context, TagHelperOutput output)
         {
             output.TagName = "script";
+            output.TagMode = TagMode.StartTagAndEndTag;
             output.Content.SetHtmlContent($@"
         window.FPS_YEAR = {_fy.Year};
-                $(document).ajaxSend(function (e, xhr) {{
+                jQuery(document).ajaxSend(function (e, xhr) {{
                     xhr.setRequestHeader('X-FPS-Year', window.FPS_YEAR);
                 }});
+                window.fpsNavigateTo = function (url) {{
+                    var separator = url.indexOf('?') !== -1 ? '&' : '?';
+                    window.location.href = url + separator + 'year=' + window.FPS_YEAR;
+                }};
             ");
-            return Task.CompletedTask;
         }
     }
 }
+

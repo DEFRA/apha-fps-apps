@@ -112,7 +112,7 @@
 <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center; flex-direction:row;">
     <button type="button" class="govuk-button govuk-button--secondary sup_margin_0"
             onclick="$('#modalPopup').removeClass('show')">Cancel</button>
-    <button type="button" class="govuk-button sup_margin_0" onclick="saveSubContract()">
+    <button type="button" class="govuk-button sup_margin_0" onclick="saveSubContract()" allow-edit="true">
         @(isEdit ? "Update" : "Save")
     </button>
 </div>

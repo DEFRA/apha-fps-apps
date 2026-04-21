@@ -1,5 +1,4 @@
 using Apha.FPS.Core.Entities;
-using Apha.FPS.Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -7,12 +6,7 @@ namespace Apha.FPS.DataAccess.Data
 {
     public class PactWorkGroupGradeViewMap : IEntityTypeConfiguration<PactWorkGroupGradeView>
     {
-        private readonly IFpsRequestContext _fPSYearContext;
 
-        public PactWorkGroupGradeViewMap(IFpsRequestContext fPSYearContext)
-        {
-            _fPSYearContext = fPSYearContext;
-        }
 
         public void Configure(EntityTypeBuilder<PactWorkGroupGradeView> entity)
         {
@@ -54,7 +48,6 @@ namespace Apha.FPS.DataAccess.Data
             entity.Property(e => e.WorkGroup)
                 .HasColumnType("citext")
                 .HasColumnName("workgroup");
-            entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
         }
     }
 }

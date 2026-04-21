@@ -42,7 +42,7 @@
             </div>
         </div>
 
-        <div id="amountBoxContainer" class="sup_surface_bg sup_position_relative ytd_total_div">
+        <div id="amountBoxContainer" class="sup_surface_bg sup_position_relative ytd_total_div" style="min-height: 42px;">
             <label id="lbltotalamount" for="txtTotalAmount"
                    class="govuk-label govuk-!-font-weight-bold">YTD Total Amount:</label>
             <input type="text" id="txtTotalAmount"
@@ -59,7 +59,7 @@
             </div>
         </div>
 
-        <div id="testDataAmountBoxContainer" class="sup_surface_bg sup_position_relative ytd_total_div">
+        <div id="testDataAmountBoxContainer" class="sup_surface_bg sup_position_relative ytd_total_div" style="min-height: 42px;">
             <label id="lblTestDataTotalAmount" for="txtTestDataTotalAmount"
                    class="govuk-label govuk-!-font-weight-bold">YTD Total Amount:</label>
             <input type="text" id="txtTestDataTotalAmount"
@@ -80,7 +80,7 @@
         function navigateToProjectCode(code) {
             code = (code || '').trim();
             if (code) {
-                window.location.href = '/PACT/ProjectInvoiceSubContract/Index?parentProject=' + encodeURIComponent(code);
+                fpsNavigateTo('/PACT/ProjectInvoiceSubContract/Index?parentProject=' + encodeURIComponent(code));
             }
         }
 
@@ -282,41 +282,31 @@
                 });
         }
 
-        function alignAmountBox() {
-            var amountTh = document.querySelector('#tbl_invoicesGrid [data-column="Amount"]');
-            var gridContainer = document.getElementById('gridContainer_invoicesGrid');
-            var amountBox = document.getElementById('amountBoxContainer');
-            if (!amountTh || !gridContainer || !amountBox) return;
+        function alignYtdBox(tableId, gridContainerId, amountBoxId, boxId, lblId) {
+            var amountTh = document.querySelector('#' + tableId + ' [data-column="Amount"]');
+            var gridContainer = document.getElementById(gridContainerId);
+            var amountBox = document.getElementById(amountBoxId);
+            var box = document.getElementById(boxId);
+            var lbl = document.getElementById(lblId);
+            if (!amountTh || !gridContainer || !amountBox || !box || !lbl) return;
             var thRect = amountTh.getBoundingClientRect();
-            var containerRect = gridContainer.getBoundingClientRect();
-            var paddingRight = Math.max(0, containerRect.right - thRect.right);
-            amountBox.style.paddingRight = paddingRight + 'px';
-            var txtTotal = document.getElementById('txtTotalAmount');
-            if (txtTotal) txtTotal.style.width = thRect.width + 'px';
+            var leftOffset = thRect.left - gridContainer.getBoundingClientRect().left;
+            amountBox.style.display = 'flex';
+            amountBox.style.alignItems = 'center';
+            lbl.style.whiteSpace = 'nowrap';
+            lbl.style.marginLeft = Math.max(0, leftOffset - lbl.offsetWidth - 8) + 'px';
+            lbl.style.marginRight = '8px';
+            box.style.width = thRect.width + 'px';
+            box.style.flexShrink = '0';
         }
 
-        function alignTestDataAmountBox() {
-            var amountTh = document.querySelector('#tbl_subContractsGrid [data-column="Amount"]');
-            var gridContainer = document.getElementById('gridContainer_subContractsGrid');
-            var amountBox = document.getElementById('testDataAmountBoxContainer');
-            if (!amountTh || !gridContainer || !amountBox) return;
-            var thRect = amountTh.getBoundingClientRect();
-            var containerRect = gridContainer.getBoundingClientRect();
-            var paddingRight = Math.max(0, containerRect.right - thRect.right);
-            amountBox.style.paddingRight = paddingRight + 'px';
-            var txtTotal = document.getElementById('txtTestDataTotalAmount');
-            if (txtTotal) txtTotal.style.width = thRect.width + 'px';
+        function alignAmountBoxes() {
+            alignYtdBox('tbl_invoicesGrid',    'gridContainer_invoicesGrid',    'amountBoxContainer',         'txtTotalAmount',         'lbltotalamount');
+            alignYtdBox('tbl_subContractsGrid', 'gridContainer_subContractsGrid', 'testDataAmountBoxContainer', 'txtTestDataTotalAmount', 'lblTestDataTotalAmount');
         }
 
-        document.addEventListener('DOMContentLoaded', function () {
-            alignAmountBox();
-            alignTestDataAmountBox();
-        });
-
-        window.addEventListener('resize', function () {
-            alignAmountBox();
-            alignTestDataAmountBox();
-        });
+        document.addEventListener('DOMContentLoaded', alignAmountBoxes);
+        window.addEventListener('resize', alignAmountBoxes);
     </script>
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");

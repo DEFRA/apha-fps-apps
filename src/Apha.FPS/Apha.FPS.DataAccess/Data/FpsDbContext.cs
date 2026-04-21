@@ -8,6 +8,7 @@ namespace Apha.FPS.DataAccess.Data
     public partial class FpsDbContext : DbContext
     {
         private readonly IFpsRequestContext _fPSYearContext;
+        public int FilterFpsYear => _fPSYearContext.FpsYear;
 
         public FpsDbContext(DbContextOptions<FpsDbContext> options, IFpsRequestContext fPSYearContext)
             : base(options)
@@ -58,44 +59,108 @@ namespace Apha.FPS.DataAccess.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new UserMap());
-            modelBuilder.ApplyConfiguration(new UserProgramMap(_fPSYearContext));
-            modelBuilder.ApplyConfiguration(new ProgramMap(_fPSYearContext));
-            modelBuilder.ApplyConfiguration(new ProjectMap(_fPSYearContext));
-            modelBuilder.ApplyConfiguration(new StaffJobMap(_fPSYearContext));
-            modelBuilder.ApplyConfiguration(new WgEmployeeMap(_fPSYearContext));
-            modelBuilder.ApplyConfiguration(new EmployeeMap(_fPSYearContext));
-            modelBuilder.ApplyConfiguration(new FpsSettingMap(_fPSYearContext));
-            modelBuilder.ApplyConfiguration(new TestorProductMap(_fPSYearContext));
-            modelBuilder.ApplyConfiguration(new WorkgroupMap(_fPSYearContext));
-            modelBuilder.ApplyConfiguration(new WorkgroupGradeMap(_fPSYearContext));
-            modelBuilder.ApplyConfiguration(new ProfitCentreGradeMap(_fPSYearContext));
-            modelBuilder.ApplyConfiguration(new UserProfitcentreMap(_fPSYearContext));
+
+            modelBuilder.ApplyConfiguration(new UserProgramMap());
+            modelBuilder.Entity<UserProgram>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new ProgramMap());
+            modelBuilder.Entity<Program>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new ProjectMap());
+            modelBuilder.Entity<Project>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new StaffJobMap());
+            modelBuilder.Entity<StaffJob>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new WgEmployeeMap());
+            modelBuilder.Entity<WgEmployee>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new EmployeeMap());
+            modelBuilder.Entity<Employee>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new FpsSettingMap());
+            modelBuilder.Entity<FpsSetting>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new TestorProductMap());
+            modelBuilder.Entity<TestorProduct>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new WorkgroupMap());
+            modelBuilder.Entity<Workgroup>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new WorkgroupGradeMap());
+            modelBuilder.Entity<WorkgroupGrade>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new ProfitCentreGradeMap());
+            modelBuilder.Entity<ProfitCentreGrade>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new UserProfitcentreMap());
+            modelBuilder.Entity<UserProfitcentre>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
             modelBuilder.ApplyConfiguration(new ProfitCentreMap());
-            modelBuilder.ApplyConfiguration(new JobCodeMap(_fPSYearContext));
+
+            modelBuilder.ApplyConfiguration(new JobCodeMap());
+            modelBuilder.Entity<JobCode>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
             modelBuilder.ApplyConfiguration(new StatusMap());
             modelBuilder.ApplyConfiguration(new DiseaseMap());
             modelBuilder.ApplyConfiguration(new CustomerMap());
-            modelBuilder.ApplyConfiguration(new ContractMap(_fPSYearContext));
-            modelBuilder.ApplyConfiguration(new AnimalMap(_fPSYearContext));
-            modelBuilder.ApplyConfiguration(new AnimalRequestMap(_fPSYearContext));
+
+            modelBuilder.ApplyConfiguration(new ContractMap());
+            modelBuilder.Entity<Contract>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new AnimalMap());
+            modelBuilder.Entity<Animal>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new AnimalRequestMap());
+            modelBuilder.Entity<AnimalRequest>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
             modelBuilder.ApplyConfiguration(new ProjectGroupMap());
             modelBuilder.ApplyConfiguration(new AccountCodeMap());
             modelBuilder.ApplyConfiguration(new SubAccountMap());
-            modelBuilder.ApplyConfiguration(new UserCategoryMap(_fPSYearContext));
-            modelBuilder.ApplyConfiguration(new StaffActiveViewMap(_fPSYearContext));
-            modelBuilder.ApplyConfiguration(new WorkgroupGradeGeneralViewMap(_fPSYearContext));
-            modelBuilder.ApplyConfiguration(new ProgramViewMap(_fPSYearContext));
-            modelBuilder.ApplyConfiguration(new ProjectViewMap(_fPSYearContext));
-            modelBuilder.ApplyConfiguration(new StaffJobTblViewMap(_fPSYearContext));
-            modelBuilder.ApplyConfiguration(new StaffGeneralViewMap(_fPSYearContext));
-            modelBuilder.ApplyConfiguration(new StaffViewMap(_fPSYearContext));
-            modelBuilder.ApplyConfiguration(new StaffPickViewMap(_fPSYearContext));
-            modelBuilder.ApplyConfiguration(new AnimalRequestViewMap(_fPSYearContext));
-            modelBuilder.ApplyConfiguration(new PactProjectViewMap(_fPSYearContext));
-            modelBuilder.ApplyConfiguration(new PactWorkGroupGradeViewMap(_fPSYearContext));
+
+            modelBuilder.ApplyConfiguration(new UserCategoryMap());
+            modelBuilder.Entity<UserCategory>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new StaffActiveViewMap());
+            modelBuilder.Entity<StaffActiveView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new WorkgroupGradeGeneralViewMap());
+            modelBuilder.Entity<WorkgroupGradeGeneralView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new ProgramViewMap());
+            modelBuilder.Entity<ProgramView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new ProjectViewMap());
+            modelBuilder.Entity<ProjectView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new StaffJobTblViewMap());
+            modelBuilder.Entity<StaffJobTblView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new StaffGeneralViewMap());
+            modelBuilder.Entity<StaffGeneralView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new StaffViewMap());
+            modelBuilder.Entity<StaffView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new StaffPickViewMap());
+            modelBuilder.Entity<StaffPickView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new AnimalRequestViewMap());
+            modelBuilder.Entity<AnimalRequestView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new PactProjectViewMap());
+            modelBuilder.Entity<PactProjectView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new PactWorkGroupGradeViewMap());
+            modelBuilder.Entity<PactWorkGroupGradeView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
             modelBuilder.ApplyConfiguration(new YearMasterMap());
-            modelBuilder.ApplyConfiguration(new StaffJobLogMap(_fPSYearContext));
-            modelBuilder.ApplyConfiguration(new AnimalRequestLogMap(_fPSYearContext));
-        }       
+
+            modelBuilder.ApplyConfiguration(new StaffJobLogMap());
+            modelBuilder.Entity<StaffJobLog>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new AnimalRequestLogMap());
+            modelBuilder.Entity<AnimalRequestLog>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+        }
     }
 }

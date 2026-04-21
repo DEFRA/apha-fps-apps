@@ -7,13 +7,6 @@ namespace Apha.PACT.DataAccess.Data
 {
     public class ProjectMap : IEntityTypeConfiguration<Project>
     {
-        private readonly IFpsYearContext _fPSYearContext;
-
-        public ProjectMap(IFpsYearContext fPSYearContext)
-        {
-            _fPSYearContext = fPSYearContext;
-        }
-
         public void Configure(EntityTypeBuilder<Project> entity)
         {
             entity.HasKey(e => new { e.ParentProject, e.FpsYear }).HasName("pk_tlkpproject");
@@ -128,7 +121,6 @@ namespace Apha.PACT.DataAccess.Data
             entity.Property(e => e.WipLimit)
                 .HasColumnType("money")
                 .HasColumnName("wip_limit");
-            entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FPSYear);
         }
     }
 }

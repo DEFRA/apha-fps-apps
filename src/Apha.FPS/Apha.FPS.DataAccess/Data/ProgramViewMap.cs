@@ -1,5 +1,4 @@
 using Apha.FPS.Core.Entities;
-using Apha.FPS.Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -7,12 +6,7 @@ namespace Apha.FPS.DataAccess.Data
 {
     public class ProgramViewMap : IEntityTypeConfiguration<ProgramView>
     {
-        private readonly IFpsRequestContext _fPSYearContext;
 
-        public ProgramViewMap(IFpsRequestContext fPSYearContext)
-        {
-            _fPSYearContext = fPSYearContext;
-        }
 
         public void Configure(EntityTypeBuilder<ProgramView> entity)
         {
@@ -54,7 +48,6 @@ namespace Apha.FPS.DataAccess.Data
                 .HasMaxLength(255)
                 .UseCollation("latin1_general_ci_as")
                 .HasColumnName("useremail");
-            entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
         }
     }
 }

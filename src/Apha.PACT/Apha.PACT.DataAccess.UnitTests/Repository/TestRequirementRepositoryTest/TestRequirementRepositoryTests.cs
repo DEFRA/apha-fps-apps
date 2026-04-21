@@ -25,13 +25,10 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
                 IEnumerable<MonthlyOutput>? monthlyOutputs = null,
                 int fpsYear = DefaultFpsYear)
         {
-            var fpsYearContext = Substitute.For<IFpsYearContext>();
-            fpsYearContext.FPSYear.Returns(fpsYear);
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            fpsRequestContext.FpsYear.Returns(fpsYear);
 
-            var currentUserContext = Substitute.For<ICurrentUserContext>();
-            currentUserContext.UserId.Returns("test-user");
-
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
 
             var testReqmtsMockSet = RepositoryTestHelper.CreateMockDbSet(testReqmts ?? []);
             RepositoryTestHelper.SetupDbSetOperations(testReqmtsMockSet);
@@ -53,7 +50,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
             mockContext.Setup(x => x.MonthlyOutputs).Returns(monthlyOutputsMockSet.Object);
             mockContext.Setup(x => x.TestRequirementLogs).Returns(testReqLogsMockSet.Object);
 
-            var repo = new TestRequirementRepository(mockContext.Object, fpsYearContext, currentUserContext);
+            var repo = new TestRequirementRepository(mockContext.Object, fpsRequestContext);
             return (repo, testReqmtsMockSet, monthlyOutputsMockSet, mockContext);
         }
 
@@ -63,13 +60,10 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
             IEnumerable<Project>? projects = null,
             int fpsYear = DefaultFpsYear)
         {
-            var fpsYearContext = Substitute.For<IFpsYearContext>();
-            fpsYearContext.FPSYear.Returns(fpsYear);
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            fpsRequestContext.FpsYear.Returns(fpsYear);
 
-            var currentUserContext = Substitute.For<ICurrentUserContext>();
-            currentUserContext.UserId.Returns("test-user");
-
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
 
             var testReqmtsMockSet = RepositoryTestHelper.CreateMockDbSet(testReqmts ?? []);
             RepositoryTestHelper.SetupDbSetOperations(testReqmtsMockSet);
@@ -91,7 +85,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
             mockContext.Setup(x => x.MonthlyOutputs).Returns(monthlyOutputsMockSet.Object);
             mockContext.Setup(x => x.TestRequirementLogs).Returns(testReqLogsMockSet.Object);
 
-            return new TestRequirementRepository(mockContext.Object, fpsYearContext, currentUserContext);
+            return new TestRequirementRepository(mockContext.Object, fpsRequestContext);
         }
 
         #region GetPagedByProjectAsync

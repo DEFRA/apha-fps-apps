@@ -174,9 +174,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 NumberOfDays = animalReq.NumberOfDays,
                 NumberOfAnimals = animalReq.NumberOfAnimals,
                 DateTime = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
-                UserId = _requestContext.UserEmailId?.Length > 20
-                    ? _requestContext.UserEmailId[..20]
-                    : _requestContext.UserEmailId,
+                UserId = _requestContext.UserEmailId,
                 InsertDelete = insertDelete,
                 FpsYear = _requestContext.FpsYear
             };

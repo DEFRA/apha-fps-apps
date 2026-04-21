@@ -7,13 +7,6 @@ namespace Apha.PACT.DataAccess.Data
 {
     public class TestCapabilityMap : IEntityTypeConfiguration<TestCapability>
     {
-        private readonly IFpsYearContext _fPSYearContext;
-
-        public TestCapabilityMap(IFpsYearContext fPSYearContext)
-        {
-            _fPSYearContext = fPSYearContext;
-        }
-
         public void Configure(EntityTypeBuilder<TestCapability> entity)
         {
             entity.HasKey(e => new { e.TestCode, e.WorkGroup, e.FpsYear }).HasName("pk_tlkptestcapability");
@@ -45,7 +38,6 @@ namespace Apha.PACT.DataAccess.Data
                 .HasDefaultValueSql("0")
                 .HasColumnType("money")
                 .HasColumnName("unitcost");
-            entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FPSYear);
         }
     }
 }

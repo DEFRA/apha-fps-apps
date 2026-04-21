@@ -1,7 +1,7 @@
 @model Apha.FPSApps.Web.Areas.PACT.Models.PactProjectSideNavModel
 
 <nav class="sidenav flex-column flex-shrink-0" id="shortnav">
-    <button type="button" class="toggle-btn" onclick="toggleSidebar()" style="right:-8px; top:30px;">
+    <button type="button" class="toggle-btn" onclick="toggleSidebar()" style="right:-8px; top:30px;" allow-edit="true">
         <img src="~/images/chevron-left-solid-full.svg" width="20" alt="collapse sidebar"
              style="margin:-4px 8px 0 -4px;" />
     </button>
@@ -9,18 +9,20 @@
         <li class="sidebar-link-two"
             style="border-radius:0 8px 8px 0; cursor:pointer; background-color:#1d70b8;">
             <a style="color:#fff;"
-               href="@Url.Action("Index", "ProjectInvoiceSubContract", new { area = "PACT", parentProject = Model.ParentProject })">
+               asp-area="PACT"
+               asp-controller="ProjectInvoiceSubContract"
+               asp-action="Index"
+               asp-route-parentProject="@Model.ParentProject">
                 Invoices &amp; Subcontracted Costs
             </a>
-        </li>
-        <li class="sidebar-link-two"
-            style="border-radius:0 8px 8px 0; cursor:pointer; background-color:#1d70b8;">
-            <a style="color:#fff;">Milestones</a>
-        </li>
+        </li>        
         <li class="sidebar-link-two"
             style="border-radius:0 8px 8px 0; cursor:pointer; background-color:#1d70b8;">
             <a style="color:#fff;"
-               href="@Url.Action("Index", "TestPurchaseRequirement", new { area = "PACT", parentProject = Model.ParentProject })">
+               asp-area="PACT"
+               asp-controller="TestPurchaseRequirement"
+               asp-action="Index"
+               asp-route-parentProject="@Model.ParentProject">
                 Test Purchase Requirements
             </a>
         </li>

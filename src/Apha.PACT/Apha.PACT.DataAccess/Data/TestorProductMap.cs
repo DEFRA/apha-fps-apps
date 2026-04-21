@@ -7,13 +7,6 @@ namespace Apha.PACT.DataAccess.Data
 {
     public class TestorProductMap : IEntityTypeConfiguration<TestorProduct>
     {
-        private readonly IFpsYearContext _fPSYearContext;
-
-        public TestorProductMap(IFpsYearContext fPSYearContext)
-        {
-            _fPSYearContext = fPSYearContext;
-        }
-
         public void Configure(EntityTypeBuilder<TestorProduct> entity)
         {
             entity.HasKey(e => new { e.ItemCode, e.FpsYear }).HasName("pk_testorproduct");
@@ -53,7 +46,6 @@ namespace Apha.PACT.DataAccess.Data
                 .HasDefaultValueSql("0")
                 .HasColumnType("money")
                 .HasColumnName("unitpricevla");
-            entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FPSYear);
         }
     }
 }
