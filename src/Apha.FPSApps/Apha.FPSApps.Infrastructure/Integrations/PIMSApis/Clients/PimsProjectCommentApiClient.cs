@@ -120,5 +120,24 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
                     new ApiMetaDto());
             }
         }
+
+        public async Task<ApiResponseDto<List<CommentTopicDto>>> GetCommentTopicsAsync()
+        {
+            try
+            {
+                var response = await _http.GetAsync<List<CommentTopicRes>>(PimsApiEndpoints.GetCommentTopics);
+                if (response.Success)
+                    return _mapper.Map<ApiResponseDto<List<CommentTopicDto>>>(response);
+
+                var dto = _mapper.Map<ApiResponseDto<List<CommentTopicDto>>>(response);
+                return ApiResponseDto<List<CommentTopicDto>>.FailureResponse(dto.Errors, dto.Meta);
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<List<CommentTopicDto>>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to retrieve comment topics", Code = InternalCodeError }],
+                    new ApiMetaDto());
+            }
+        }
     }
 }

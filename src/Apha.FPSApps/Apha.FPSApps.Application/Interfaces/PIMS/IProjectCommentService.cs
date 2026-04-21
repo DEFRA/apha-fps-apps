@@ -11,5 +11,6 @@ namespace Apha.FPSApps.Application.Interfaces.PIMS
         Task<ApiResponseDto<CommentDto>> CreateCommentAsync(CommentDto dto);
         Task<ApiResponseDto<CommentDto>> UpdateCommentAsync(int commentno, CommentDto dto);
         Task<ApiResponseDto<bool>> DeleteCommentAsync(int commentno);
+        Task<ApiResponseDto<List<CommentTopicDto>>> GetCommentTopicsAsync();
     }
 }

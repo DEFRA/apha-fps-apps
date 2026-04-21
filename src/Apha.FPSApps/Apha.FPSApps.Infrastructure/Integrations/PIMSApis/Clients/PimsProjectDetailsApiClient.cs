@@ -118,5 +118,24 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
                     new ApiMetaDto());
             }
         }
+
+        public async Task<ApiResponseDto<List<YearDto>>> GetAllYearAsync()
+        {
+            try
+            {
+                var response = await _http.GetAsync<List<YearRes>>(PimsApiEndpoints.GetAllYears);
+                if (response.Success && response.Data != null)
+                    return _mapper.Map<ApiResponseDto<List<YearDto>>>(response);
+
+                var dto = _mapper.Map<ApiResponseDto<List<YearDto>>>(response);
+                return ApiResponseDto<List<YearDto>>.FailureResponse(dto.Errors, dto.Meta);
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<List<YearDto>>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to retrieve years", Code = InternalCodeError }],
+                    new ApiMetaDto());
+            }
+        }
     }
 }

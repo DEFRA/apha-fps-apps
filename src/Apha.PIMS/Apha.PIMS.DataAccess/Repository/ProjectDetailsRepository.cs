@@ -2,6 +2,7 @@
 using Apha.PIMS.Core.Interfaces;
 using Apha.PIMS.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Apha.PIMS.DataAccess.Repository
 {
@@ -94,10 +95,20 @@ namespace Apha.PIMS.DataAccess.Repository
                 .FirstOrDefaultAsync(p => p.Parentproject == parentproject);
         }
 
-        public async Task<ProposedProject> UpdateProposedProjectAsync(ProposedProject entity)
+        public async Task<ProposedProject> UpdateProposedProjectAsync(ProposedProject entity, string transferTo)
         {
-            _dbContext.ProposedProjects.Update(entity);
-            await _dbContext.SaveChangesAsync();
+            if (entity.Parentproject != transferTo)
+            {
+                bool codeChanged = await ChangeProjectCodeAsync(entity.Parentproject!, transferTo);
+                if (!codeChanged)
+                    throw new Exception("Failed to change project code for proposed project update.");
+                entity.Parentproject = transferTo;
+            }
+            else {
+                _dbContext.ProposedProjects.Update(entity);
+                await _dbContext.SaveChangesAsync();
+            }
+            
             return entity;
         }
 
@@ -106,6 +117,55 @@ namespace Apha.PIMS.DataAccess.Repository
             var risks = await _dbContext.Risks.ToListAsync();
 
             return risks;
+        }
+
+        public async Task<List<Year>> GetAllYearAsync()
+        {
+            var years = await _dbContext.Years.ToListAsync();
+
+            return years;
+        }
+        private async Task<bool> ChangeProjectCodeAsync(string oldCode, string newCode)
+        {
+            var strategy = _dbContext.Database.CreateExecutionStrategy();
+
+            return await strategy.ExecuteAsync(async () =>
+            {
+                using var transaction = await _dbContext.Database.BeginTransactionAsync();
+
+                var comments = await _dbContext.Comments
+                    .Where(x => x.Project == oldCode)
+                    .ToListAsync();
+
+                if (comments.Count != 0)
+                {
+                    comments.ForEach(x => x.Project = newCode);
+                }
+
+                var proposed = await _dbContext.ProposedProjects
+                    .Where(x => x.Parentproject == oldCode)
+                    .ToListAsync();
+
+                if (proposed.Count != 0)
+                {
+                    proposed.ForEach(x => x.Parentproject = newCode);
+                }
+
+                var radTrackOld = await _dbContext.ProjectRadtrackdata
+                    .Where(x => x.Parentproject == oldCode)
+                    .ToListAsync();
+               
+
+                if (radTrackOld.Count != 0)
+                {
+                    radTrackOld.ForEach(x => x.Parentproject = newCode);
+                }
+
+                await _dbContext.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return true;
+            });
         }
     }
 }

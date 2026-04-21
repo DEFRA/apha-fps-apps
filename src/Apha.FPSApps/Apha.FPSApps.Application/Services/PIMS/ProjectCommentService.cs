@@ -32,5 +32,8 @@ namespace Apha.FPSApps.Application.Services.PIMS
 
         public async Task<ApiResponseDto<bool>> DeleteCommentAsync(int commentno)
             => await _client.PimsProjectComment.DeleteCommentAsync(commentno);
+
+        public async Task<ApiResponseDto<List<CommentTopicDto>>> GetCommentTopicsAsync()
+            => await _client.PimsProjectComment.GetCommentTopicsAsync();
     }
 }
