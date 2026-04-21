@@ -12,23 +12,19 @@ WORKDIR /home/dotnet/src
 
 COPY --chown=dotnet:dotnet src/. .
 
-# Restore execute bit on dirs only (555 = r-xr-xr-x, still no write)
+# Remove write permissions from copied source (files: 444, dirs: 555)
 RUN find . -type d -exec chmod 555 {} \; && \
     find . -type f -exec chmod 444 {} \;
 
-# # Copy all source code into the image under /home/dotnet/src
-# COPY --chmod=555 --chown=dotnet:dotnet src/. .
-# RUN find . -type d -exec chmod 555 {} \; && \
-#     find . -type f -exec chmod 444 {} \;
-# # Remove write permissions from copied source (files: 444, dirs: 555)
-
 # Restore, build and publish the API project
-# Redirect intermediate output outside the read-only source tree
+# Redirect obj/ and bin/ output outside the read-only source tree
 RUN dotnet restore ./Apha.Costbook/Apha.Costbook.Api/Apha.Costbook.Api.csproj \
-    /p:BaseIntermediateOutputPath=/home/dotnet/obj/
+    /p:BaseIntermediateOutputPath=/home/dotnet/obj/ \
+    /p:BaseOutputPath=/home/dotnet/bin/
 RUN dotnet publish ./Apha.Costbook/Apha.Costbook.Api -c Release -o /home/dotnet/out \
     /p:UseAppHost=false \
-    /p:BaseIntermediateOutputPath=/home/dotnet/obj/
+    /p:BaseIntermediateOutputPath=/home/dotnet/obj/ \
+    /p:BaseOutputPath=/home/dotnet/bin/
 
 # ================================
 # -------- Production Stage --------
