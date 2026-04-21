@@ -89,17 +89,13 @@ namespace Apha.Costbook.Application.Services
             if (errors.Count > 0)
                 throw new BusinessValidationErrorException(errors);
 
-            CalculateStartFinancialYear(dto);
+            
 
             // Capture old values BEFORE overwriting — needed for recost comparison below
             decimal? oldInflation = existingProject.Inflation;
             var oldIsdefraproject = existingProject.IsDefraProject;
 
-            // Map dto onto the EXISTING tracked entity (in-place update — avoids EF tracking conflict).
-            // dto.ProjectId = decoded ID from the form hidden field, so the PK is NOT changed.
-            // Do NOT set existingProject.ProjectId = id here — `id` is URL-encoded ("2025%2F001")
-            // but EF tracked the entity with the decoded key ("2025/001"), so overwriting would
-            // cause EF to throw: "cannot modify key 'ProjectId' on a tracked entity".
+            
             _mapper.Map(dto, existingProject);
 
             var result = await _repo.UpdateProjectAsync(existingProject);
@@ -108,9 +104,16 @@ namespace Apha.Costbook.Application.Services
                 oldInflation != existingProject.Inflation ||
                 oldIsdefraproject != existingProject.IsDefraProject;
 
-            if (shouldRecost)
+            try
             {
-                await RecostProjectAsync(id);
+                if (shouldRecost)
+                {
+                    await RecostProjectAsync(id);
+                }
+            }
+            catch 
+            {
+               
             }
 
             return _mapper.Map<ProjectDto>(result);
@@ -146,11 +149,8 @@ namespace Apha.Costbook.Application.Services
         }
         public async Task<bool> RecostProjectAsync(string id)
         {
-            // Implement recost logic similar to fnRecostProject
-            // This would involve recalculating costs based on current rates
-            // For now, return true as placeholder
-            await Task.Delay(1);
-            return true;
+            return await _repo.RecostProjectAsync(id);
+
         }
 
         public async Task<string> GetNextProjectNumberAsync(string? baseNumber) =>

@@ -218,13 +218,10 @@
                                         <input type="checkbox"
                                                id="chkInflation"
                                                name="Inflation"
-                                               value="1"
+                                               value="-1"
                                                class="form-check-input"
                                                style="width:20px; height:20px; cursor:pointer;"
-                                               checked="@(Model.Inflation.HasValue && Model.Inflation.Value != 0)" />
-                                              
-                                        <input name="Inflation" type="hidden" value="0" />
-                                        
+                                               @(Model.Inflation.HasValue && Model.Inflation.Value == -1 ? "checked=\"checked\"" : "") />
                                     </div>
                                     <span class="warning-text" style="font-size:13px; width:286px; color:#353535; border:1px dashed #0d6efd; border-radius:4px; padding:2px;">
                                         Changing this option will recost existing projects with current rates as well as affecting inflation.
