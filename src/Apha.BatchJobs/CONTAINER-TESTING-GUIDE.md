@@ -1,6 +1,17 @@
-# Running Batch Jobs in Containers (GitHub Codespaces)
+# Running Batch Jobs in Containers (GitHub Codespaces ONLY)
 
-## Two Simple Test Scenarios
+## ⚠️ IMPORTANT: Environment Requirements
+
+**Docker is NOT available in the VM environment.**
+
+- ✅ **VM Environment** → Use `.NET 10 SDK` directly (see `Apha.BatchJobs.Worker\VM-TESTING-GUIDE.md`)
+- ✅ **GitHub Codespaces** → Use `docker-compose` (this guide)
+
+**This guide is ONLY for GitHub Codespaces where Docker is available.**
+
+---
+
+## Two Simple Test Scenarios (GitHub Codespaces)
 
 ### Scenario 1: Container WITHOUT Database (NoDb Mode)
 
@@ -89,13 +100,35 @@ docker-compose down -v
 
 ---
 
-## GitHub Codespaces
+## GitHub Codespaces Setup
 
-In Codespaces, the commands work the same:
+### Prerequisites:
+- ✅ GitHub Codespaces environment (Docker is pre-installed)
+- ✅ This repository cloned in Codespaces
 
-1. Open terminal in Codespaces
-2. Run the docker-compose commands above
-3. Everything just works! ✅
+### Steps:
+
+1. **Open repository in GitHub Codespaces**
+   - Go to GitHub repository
+   - Click "Code" → "Codespaces" → "Create codespace on A-Foundation"
+
+2. **Navigate to BatchJobs directory**
+   ```bash
+   cd src/Apha.BatchJobs
+   ```
+
+3. **Run the scenarios** (see commands above)
+
+**Everything just works in Codespaces! ✅**
+
+---
+
+## ❌ NOT for Local VM
+
+**Do NOT try to run these Docker commands in the VM environment:**
+- VM does not have Docker installed
+- VM does not support container workloads
+- For VM testing, use `VM-TESTING-GUIDE.md` instead
 
 ---
 
