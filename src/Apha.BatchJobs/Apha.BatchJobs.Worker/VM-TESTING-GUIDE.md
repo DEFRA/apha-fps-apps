@@ -25,7 +25,15 @@ dotnet run -- HealthCheck
 ### Prerequisites:
 1. PostgreSQL service running: `Get-Service -Name "*postgres*"`
 2. Database `batchjobs` exists
-3. Connection string in `appsettings.Development.json`
+3. **Create `appsettings.local.json`** with your connection string:
+   ```json
+   {
+     "ConnectionStrings": {
+       "BatchJobsConnectionString": "Host=localhost;Port=5432;Database=batchjobs;Username=postgres;Password=YOUR_PASSWORD"
+     }
+   }
+   ```
+   **Note**: This file is in `.gitignore` and will NOT be committed to Git.
 
 ### Run:
 ```powershell
@@ -87,7 +95,8 @@ GracefulShutdownCompleted=True
 **Test 2 fails?**
 - Check PostgreSQL: `Get-Service -Name "*postgres*"`
 - Verify database exists: Connect to postgres and list databases
-- Check connection string in `appsettings.Development.json`
+- **Create `appsettings.local.json`** with your connection string (see example above)
+- Ensure password is correct in `appsettings.local.json`
 
 ---
 

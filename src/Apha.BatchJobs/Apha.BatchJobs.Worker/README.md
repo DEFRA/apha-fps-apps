@@ -65,14 +65,17 @@ This mode uses **PostgreSQL database** for persistence.
    - Schema: `operational`
    - Tables: `batch_lock`, `tbljobmaster`, `tbljobstatus`, `tbljobqueue`, `tbljobqueue_log`
 
-3. **Connection string** configured in `appsettings.Development.json`:
+3. **Connection string** configured in `appsettings.local.json` (NOT committed to Git):
+   - Copy `appsettings.local.json.example` to `appsettings.local.json`
+   - Update with your actual password:
    ```json
    {
      "ConnectionStrings": {
-       "BatchJobsConnectionString": "Host=localhost;Port=5432;Database=batchjobs;Username=postgres;Password=postgres"
+       "BatchJobsConnectionString": "Host=localhost;Port=5432;Database=batchjobs;Username=postgres;Password=YOUR_ACTUAL_PASSWORD"
      }
    }
    ```
+   **Important**: `appsettings.local.json` is in `.gitignore` and will NOT be committed to Git.
 
 #### Steps:
 
@@ -166,12 +169,20 @@ cd D:\Users\atos.user8\source\repos\apha-fps-apps-A-Foundation\src\Apha.BatchJob
       "Default": "Debug",
       "Microsoft.AspNetCore": "Warning"
     }
-  },
-  "ConnectionStrings": {
-    "BatchJobsConnectionString": "Host=localhost;Port=5432;Database=batchjobs;Username=postgres;Password=postgres"
   }
 }
 ```
+**Note**: Connection string is in `appsettings.local.json` (not in Git)
+
+### appsettings.local.json (Local Configuration - NOT in Git)
+```json
+{
+  "ConnectionStrings": {
+    "BatchJobsConnectionString": "Host=localhost;Port=5432;Database=batchjobs;Username=postgres;Password=YOUR_ACTUAL_PASSWORD"
+  }
+}
+```
+**Important**: This file is in `.gitignore` and contains sensitive credentials.
 
 ### appsettings.Production.json (WithDb Mode)
 ```json
