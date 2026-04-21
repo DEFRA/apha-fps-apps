@@ -13,7 +13,7 @@ WORKDIR /home/dotnet/src
 COPY --chown=dotnet:dotnet src/. .
 
 # Restore, build and publish the Web project
-RUN dotnet restore ./Apha.Costbook/Apha.Costbook.Api.csproj
+RUN dotnet restore ./Apha.Costbook/Apha.Costbook.Api/Apha.Costbook.Api.csproj
 RUN dotnet publish ./Apha.Costbook/Apha.Costbook.Api -c Release -o /home/dotnet/out /p:UseAppHost=false
 
 # Remove write permissions from copied source (files: 444, dirs: 555)
