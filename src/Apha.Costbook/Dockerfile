@@ -26,6 +26,12 @@ USER dotnet
 RUN dotnet restore ./Apha.Costbook/Apha.Costbook.Api/Apha.Costbook.Api.csproj
 RUN dotnet publish ./Apha.Costbook/Apha.Costbook.Api -c Release -o /home/dotnet/out /p:UseAppHost=false
 
+# Lock down after publish
+USER root
+RUN find . -type f -exec chmod 440 {} \; && \
+    find . -type d -exec chmod 550 {} \;
+
+USER dotnet
 # # Remove write permissions from copied source (files: 444, dirs: 555)
 # RUN find . -type d -exec chmod 555 {} \; && \
 #     find . -type f -exec chmod 444 {} \;
@@ -46,9 +52,19 @@ ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 ARG PORT=8080
 EXPOSE ${PORT}
 
-USER app
 WORKDIR /app
-COPY --from=development /home/dotnet/out/ ./
+
+# Copy published output and set correct ownership for app user
+COPY --from=development --chown=app:app /home/dotnet/out/ ./
+
+# Files: read only, Dirs: read+execute only — no write anywhere
+RUN find . -type f -exec chmod 444 {} \; && \
+    find . -type d -exec chmod 555 {} \;
+
+USER app
+# USER app
+# WORKDIR /app
+# COPY --from=development /home/dotnet/out/ ./
 
 ENTRYPOINT ["dotnet", "Apha.Costbook.Api.dll"]
 
