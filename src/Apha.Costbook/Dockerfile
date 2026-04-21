@@ -18,7 +18,10 @@ RUN find . -type d -exec chmod 555 {} \; && \
 
 # Restore, build and publish the API project
 # Redirect obj/ and bin/ output outside the read-only source tree
+# --force ensures project.assets.json is regenerated even if the base image
+# has pre-baked restore artefacts that pre-date recently added packages
 RUN dotnet restore ./Apha.Costbook/Apha.Costbook.Api/Apha.Costbook.Api.csproj \
+    --force \
     /p:BaseIntermediateOutputPath=/home/dotnet/obj/ \
     /p:BaseOutputPath=/home/dotnet/bin/
 RUN dotnet publish ./Apha.Costbook/Apha.Costbook.Api -c Release -o /home/dotnet/out \

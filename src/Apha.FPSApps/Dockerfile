@@ -18,7 +18,10 @@ RUN find . -type d -exec chmod 555 {} \; && \
 
 # Restore, build and publish the Web project
 # Redirect obj/ and bin/ output outside the read-only source tree
+# --force ensures project.assets.json is regenerated even if the base image
+# has pre-baked restore artefacts that pre-date recently added packages
 RUN dotnet restore ./Apha.FPSApps/Apha.FPSApps.Web/Apha.FPSApps.Web.csproj \
+    --force \
     /p:BaseIntermediateOutputPath=/home/dotnet/obj/ \
     /p:BaseOutputPath=/home/dotnet/bin/
 RUN dotnet publish ./Apha.FPSApps/Apha.FPSApps.Web -c Release -o /home/dotnet/out \
