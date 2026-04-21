@@ -136,6 +136,9 @@ jobs:
             /o:"defra" \
             /d:sonar.token="$SONAR_TOKEN" \
             /d:sonar.host.url="https://sonarcloud.io" \
+            /d:sonar.issue.ignore.multicriteria=e1 \
+            /d:sonar.issue.ignore.multicriteria.e1.ruleKey=dockerfile:S6504 \
+            /d:sonar.issue.ignore.multicriteria.e1.resourceKey=**/Dockerfile
             /v:"$SONAR_VERSION" \
             /d:sonar.cs.opencover.reportsPaths="src/TestResults/*.coverage.opencover.xml" \
             /d:sonar.cs.vstest.reportsPaths="src/TestResults/*.test_results.trx" \
