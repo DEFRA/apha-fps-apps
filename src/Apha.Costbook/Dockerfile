@@ -17,7 +17,7 @@ WORKDIR /home/dotnet/src
 #COPY --chown=dotnet:dotnet --chmod=400 src/. .
 COPY --chown=root:dotnet --chmod=640 src/ .
 USER root
-RUN chmod -R g+X src
+RUN chmod -R g+X .
 USER dotnet
 
 # Immediately restore directory traversal+write so dotnet restore can work
