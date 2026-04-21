@@ -10,25 +10,14 @@ LABEL uk.gov.defra.parent-image=defra-dotnetcore-development:${PARENT_VERSION}
 
 WORKDIR /home/dotnet/src
 
-COPY --chown=dotnet:dotnet src/. .
+COPY --chown=root:dotnet --chmod=640 src/ .
+USER root
+RUN find . -type d -exec chmod g+wx {} \;
+USER dotnet
 
-# Remove write permissions from copied source (files: 444, dirs: 555)
-RUN find . -type d -exec chmod 555 {} \; && \
-    find . -type f -exec chmod 444 {} \;
-
-# Restore all projects in the solution (including Apha.Common and other dependencies).
-# --force regenerates project.assets.json for every project, preventing the base image's
-# pre-baked restore artefacts from hiding newly added package references.
-# --no-restore on publish prevents a second implicit restore that would bypass --force.
-RUN dotnet restore ./Apha.PIMS/Apha.PIMS.Api.sln \
-    --force \
-    /p:BaseIntermediateOutputPath=/home/dotnet/obj/ \
-    /p:BaseOutputPath=/home/dotnet/bin/
-RUN dotnet publish ./Apha.PIMS/Apha.PIMS.Api -c Release -o /home/dotnet/out \
-    --no-restore \
-    /p:UseAppHost=false \
-    /p:BaseIntermediateOutputPath=/home/dotnet/obj/ \
-    /p:BaseOutputPath=/home/dotnet/bin/
+# Restore, build and publish the API project
+RUN dotnet restore ./Apha.PIMS/Apha.PIMS.Api/Apha.PIMS.Api.csproj
+RUN dotnet publish ./Apha.PIMS/Apha.PIMS.Api -c Release -o /home/dotnet/out /p:UseAppHost=false
 
 # ================================
 # -------- Production Stage --------
@@ -46,10 +35,16 @@ ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 ARG PORT=8080
 EXPOSE ${PORT}
 
-USER app
 WORKDIR /app
-COPY --from=development /home/dotnet/out/ ./
+
+# Copy published output and set correct ownership for app user
+COPY --from=development --chown=app:app /home/dotnet/out/ ./
+
+# Files: read only, Dirs: read+execute only — no write anywhere
+RUN find . -type f -exec chmod 444 {} \; && \
+    find . -type d -exec chmod 555 {} \;
+
+USER app
 
 ENTRYPOINT ["dotnet", "Apha.PIMS.Api.dll"]
-
 
