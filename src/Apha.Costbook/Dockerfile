@@ -12,23 +12,27 @@ WORKDIR /home/dotnet/src
 
 COPY --chown=dotnet:dotnet src/. .
 
+# Restore, build and publish the Web project
+RUN dotnet restore ./Apha.Costbook/Apha.Costbook.Api.csproj
+RUN dotnet publish ./Apha.Costbook/Apha.Costbook.Api -c Release -o /home/dotnet/out /p:UseAppHost=false
+
 # Remove write permissions from copied source (files: 444, dirs: 555)
 RUN find . -type d -exec chmod 555 {} \; && \
     find . -type f -exec chmod 444 {} \;
 
-# Restore all projects in the solution (including Apha.Common and other dependencies).
-# --force regenerates project.assets.json for every project, preventing the base image's
-# pre-baked restore artefacts from hiding newly added package references.
-# --no-restore on publish prevents a second implicit restore that would bypass --force.
-RUN dotnet restore ./Apha.Costbook/Apha.Costbook.Api.sln \
-    --force \
-    /p:BaseIntermediateOutputPath=/home/dotnet/obj/ \
-    /p:BaseOutputPath=/home/dotnet/bin/
-RUN dotnet publish ./Apha.Costbook/Apha.Costbook.Api -c Release -o /home/dotnet/out \
-    --no-restore \
-    /p:UseAppHost=false \
-    /p:BaseIntermediateOutputPath=/home/dotnet/obj/ \
-    /p:BaseOutputPath=/home/dotnet/bin/
+# # Restore all projects in the solution (including Apha.Common and other dependencies).
+# # --force regenerates project.assets.json for every project, preventing the base image's
+# # pre-baked restore artefacts from hiding newly added package references.
+# # --no-restore on publish prevents a second implicit restore that would bypass --force.
+# RUN dotnet restore ./Apha.Costbook/Apha.Costbook.Api.sln \
+#     --force \
+#     /p:BaseIntermediateOutputPath=/home/dotnet/obj/ \
+#     /p:BaseOutputPath=/home/dotnet/bin/
+# RUN dotnet publish ./Apha.Costbook/Apha.Costbook.Api -c Release -o /home/dotnet/out \
+#     --no-restore \
+#     /p:UseAppHost=false \
+#     /p:BaseIntermediateOutputPath=/home/dotnet/obj/ \
+#     /p:BaseOutputPath=/home/dotnet/bin/
 
 # ================================
 # -------- Production Stage --------
