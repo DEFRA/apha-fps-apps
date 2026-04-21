@@ -10,7 +10,7 @@ LABEL uk.gov.defra.parent-image=defra-dotnetcore-development:${PARENT_VERSION}
 
 WORKDIR /home/dotnet/src
 
-COPY --chown=dotnet:dotnet --chmod=400 src/ .
+COPY --chown=dotnet:dotnet --chmod=444 src/ .
 
 # Restore execute bit on dirs only (555 = r-xr-xr-x, still no write)
 RUN find . -type d -exec chmod 555 {} \; && \
