@@ -10,7 +10,8 @@ namespace Apha.PIMS.Application.Interfaces
         Task<ProjectDetailDto?> GetPimsDetailAsync(string parentproject);
         Task<ProjectDetailDto> SavePimsDetailAsync(ProjectDetailDto dto);
         Task<ProposedProjectDto?> GetProposedProjectAsync(string parentproject);
-        Task<ProposedProjectDto> UpdateProposedProjectAsync(ProposedProjectDto dto);
+        Task<ProposedProjectDto> UpdateProposedProjectAsync(ProposedProjectDto dto, string transferTo);
         Task<List<RiskDto>> GetAllRiskAsync();
+        Task<List<YearDto>> GetAllYearAsync();
     }
 }

@@ -35,9 +35,21 @@ namespace Apha.PIMS.DataAccess.Repository
 
         public async Task<List<ProjectListView>> GetAllProjectsForDropDownAsync()
         {
-            IQueryable<ProjectListView> query = GetProjectsAsync();
-
-            return await query.ToListAsync();
+            return await _context.ProjectLatestDetails
+                .AsNoTracking()
+                .Join(_context.RadtrackProgs,
+                      v => v.Program,
+                      r => r.Program,
+                      (v, r) => new { v, r })
+                .Where(x => x.v.Active == "Y")
+                .Select(x => new ProjectListView
+                {
+                    Parentproject = x.v.ParentProject,
+                    Program = x.v.Program,
+                    Customer = x.v.Customer,
+                    OnFps = "Yes"
+                })
+                .ToListAsync();
         }
 
         private IQueryable<ProjectListView> GetProjectsAsync()

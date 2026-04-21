@@ -45,7 +45,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
             List<ProjectListViewDto>? allProjects = null,
             List<RiskDto>? risks = null,
             List<CommentDto>? comments = null,
-            PaginationDto? commentPagination = null)
+            PaginationDto? commentPagination = null,
+            List<YearDto>? years = null)
         {
             _projectListServiceMock.GetFpsProjectByIdAsync(Arg.Any<string>())
                 .Returns(new ApiResponseDto<ProjectDto> { Success = true, Data = fpsProject });
@@ -64,6 +65,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
 
             _projectDetailsServiceMock.GetAllRiskAsync()
                 .Returns(new ApiResponseDto<List<RiskDto>> { Success = true, Data = risks ?? [] });
+
+            _projectDetailsServiceMock.GetAllYearAsync()
+                .Returns(new ApiResponseDto<List<YearDto>> { Success = true, Data = years ?? [] });
 
             _mapperMock.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string>());
@@ -384,7 +388,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
         public async Task Index_YearOptionsArePopulated()
         {
             // Arrange
-            SetupSuccessfulIndexMocks();
+            var years = new List<YearDto>
+            {
+                new YearDto { Value = 2023 },
+                new YearDto { Value = 2024 }
+            };
+            SetupSuccessfulIndexMocks(years: years);
 
             // Act
             var result = await _controller.Index("PP001");
@@ -393,6 +402,61 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<ProjectDetailsViewModel>(viewResult.Model);
             Assert.NotEmpty(model.YearOptions);
+            Assert.Equal(2, model.YearOptions.Count);
+        }
+
+        [Fact]
+        public async Task Index_CallsGetAllYearAsync_Once()
+        {
+            // Arrange
+            SetupSuccessfulIndexMocks();
+
+            // Act
+            await _controller.Index("PP001");
+
+            // Assert
+            await _projectDetailsServiceMock.Received(1).GetAllYearAsync();
+        }
+
+        [Fact]
+        public async Task Index_WithYears_PopulatesYearOptionsInDescendingOrder()
+        {
+            // Arrange
+            var years = new List<YearDto>
+            {
+                new YearDto { Value = 2020 },
+                new YearDto { Value = 2024 },
+                new YearDto { Value = 2022 }
+            };
+            SetupSuccessfulIndexMocks(years: years);
+
+            // Act
+            var result = await _controller.Index("PP001");
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProjectDetailsViewModel>(viewResult.Model);
+            Assert.Equal(3, model.YearOptions.Count);
+            Assert.Equal("2024", model.YearOptions[0].Value);
+            Assert.Equal("2022", model.YearOptions[1].Value);
+            Assert.Equal("2020", model.YearOptions[2].Value);
+        }
+
+        [Fact]
+        public async Task Index_WithNullYears_ReturnsEmptyYearOptions()
+        {
+            // Arrange
+            SetupSuccessfulIndexMocks(years: null);
+            _projectDetailsServiceMock.GetAllYearAsync()
+                .Returns(new ApiResponseDto<List<YearDto>> { Success = true, Data = null });
+
+            // Act
+            var result = await _controller.Index("PP001");
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProjectDetailsViewModel>(viewResult.Model);
+            Assert.Empty(model.YearOptions);
         }
 
         [Fact]
@@ -1097,7 +1161,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
         }
 
         [Fact]
-        public async Task UpdateProposedProject_WhenProposedProjectDetailsIsNull_ReturnsRedirectToActionResult()
+        public async Task UpdateProposedProject_WhenProposedProjectDetailsIsNull_ReturnsRedirectToIndex()
         {
             // Arrange
             var viewModel = new ProjectDetailsViewModel { ProposedProjectDetails = null };
@@ -1108,8 +1172,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
             // Assert
             var redirectResult = Assert.IsType<RedirectToActionResult>(result);
             Assert.Equal(nameof(_controller.Index), redirectResult.ActionName);
-            Assert.NotNull(redirectResult.RouteValues);
-            Assert.Equal("PP001", redirectResult.RouteValues["parentproject"]);
+            Assert.Equal("PP001", redirectResult.RouteValues?["parentproject"]);
         }
 
         [Fact]
@@ -1559,7 +1622,17 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
         [Fact]
         public async Task GetAddEditCommentPartial_PopulatesYearOptions()
         {
-            // Arrange & Act
+            // Arrange
+            var years = new List<YearDto>
+            {
+                new() { Value = 2023 },
+                new() { Value = 2024 },
+                new() { Value = 2025 }
+            };
+            _projectDetailsServiceMock.GetAllYearAsync()
+                .Returns(new ApiResponseDto<List<YearDto>> { Success = true, Data = years });
+
+            // Act
             var result = await _controller.GetAddEditCommentPartial("PP001", null, null);
 
             // Assert
@@ -1571,7 +1644,20 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
         [Fact]
         public async Task GetAddEditCommentPartial_PopulatesTopicOptions()
         {
-            // Arrange & Act
+            // Arrange
+            var topics = new List<CommentTopicDto>
+            {
+                new() { Topic = "Benchmarking" },
+                new() { Topic = "Contracts" },
+                new() { Topic = "Finance" },
+                new() { Topic = "Funding" },
+                new() { Topic = "Performance" },
+                new() { Topic = "Policy" }
+            };
+            _commentServiceMock.GetCommentTopicsAsync()
+                .Returns(new ApiResponseDto<List<CommentTopicDto>> { Success = true, Data = topics });
+
+            // Act
             var result = await _controller.GetAddEditCommentPartial("PP001", null, null);
 
             // Assert

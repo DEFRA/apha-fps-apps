@@ -21,6 +21,8 @@ namespace Apha.PIMS.Application.Mappings
             CreateMap<Comment, CommentDto>().ReverseMap();
             CreateMap<ProjectDetail, ProjectDetailDto>().ReverseMap();
             CreateMap<Risk, RiskDto>().ReverseMap();
+            CreateMap<Year, YearDto>().ReverseMap();
+            CreateMap<CommentTopic, CommentTopicDto>().ReverseMap();
         }
     }
 }

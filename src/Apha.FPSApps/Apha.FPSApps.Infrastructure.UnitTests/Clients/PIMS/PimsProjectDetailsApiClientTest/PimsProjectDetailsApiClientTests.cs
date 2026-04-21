@@ -720,6 +720,164 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectDetailsA
 
         #endregion
 
+        #region GetAllYearAsync Tests
+
+        [Fact]
+        public async Task GetAllYearAsync_WithSuccessResponseAndData_ReturnsMappedYearList()
+        {
+            // Arrange
+            var yearResList = new List<YearRes>
+            {
+                new YearRes { Value = 2023, Latestmonthreleased = 12 },
+                new YearRes { Value = 2024, Latestmonthreleased = null }
+            };
+            var apiResponse = new ApiResponse<List<YearRes>> { Success = true, Data = yearResList };
+            var mappedDto = ApiResponseDto<List<YearDto>>.SuccessResponse(new List<YearDto>
+            {
+                new YearDto { Value = 2023, Latestmonthreleased = 12 },
+                new YearDto { Value = 2024, Latestmonthreleased = null }
+            });
+
+            _http.GetAsync<List<YearRes>>(PimsApiEndpoints.GetAllYears).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<YearDto>>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            var result = await _client.GetAllYearAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.NotNull(result.Data);
+            Assert.Equal(2, result.Data.Count);
+            await _http.Received(1).GetAsync<List<YearRes>>(PimsApiEndpoints.GetAllYears);
+            _mapper.Received(1).Map<ApiResponseDto<List<YearDto>>>(apiResponse);
+        }
+
+        [Fact]
+        public async Task GetAllYearAsync_WithSuccessResponseButNullData_ReturnsFailureResponse()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<List<YearRes>> { Success = true, Data = null };
+            var mappedDto = new ApiResponseDto<List<YearDto>>
+            {
+                Success = false,
+                Errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "No data", Code = "NO_DATA" } },
+                Meta = new ApiMetaDto()
+            };
+
+            _http.GetAsync<List<YearRes>>(PimsApiEndpoints.GetAllYears).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<YearDto>>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            var result = await _client.GetAllYearAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.NotNull(result.Meta);
+            await _http.Received(1).GetAsync<List<YearRes>>(PimsApiEndpoints.GetAllYears);
+            _mapper.Received(1).Map<ApiResponseDto<List<YearDto>>>(apiResponse);
+        }
+
+        [Fact]
+        public async Task GetAllYearAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var errors = new List<ApiError>
+            {
+                new ApiError { Message = "Years not found", Code = "NOT_FOUND" }
+            };
+            var apiResponse = new ApiResponse<List<YearRes>> { Success = false, Data = null, Errors = errors };
+            var mappedDto = new ApiResponseDto<List<YearDto>>
+            {
+                Success = false,
+                Errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "Years not found", Code = "NOT_FOUND" } },
+                Meta = new ApiMetaDto()
+            };
+
+            _http.GetAsync<List<YearRes>>(PimsApiEndpoints.GetAllYears).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<YearDto>>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            var result = await _client.GetAllYearAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+            Assert.Equal("Years not found", result.Errors[0].Message);
+            await _http.Received(1).GetAsync<List<YearRes>>(PimsApiEndpoints.GetAllYears);
+            _mapper.Received(1).Map<ApiResponseDto<List<YearDto>>>(apiResponse);
+        }
+
+        [Fact]
+        public async Task GetAllYearAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
+        {
+            // Arrange
+            _http.GetAsync<List<YearRes>>(PimsApiEndpoints.GetAllYears).ThrowsAsync(new Exception("Network error"));
+
+            // Act
+            var result = await _client.GetAllYearAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.Null(result.Data);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+            Assert.Equal("Failed to retrieve years", result.Errors[0].Message);
+            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+        }
+
+        [Fact]
+        public async Task GetAllYearAsync_WhenMapperThrowsException_ReturnsInternalError()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<List<YearRes>>
+            {
+                Success = true,
+                Data = new List<YearRes> { new YearRes { Value = 2024 } }
+            };
+
+            _http.GetAsync<List<YearRes>>(PimsApiEndpoints.GetAllYears).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<YearDto>>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
+
+            // Act
+            var result = await _client.GetAllYearAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.Null(result.Data);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+            Assert.Equal("Failed to retrieve years", result.Errors[0].Message);
+            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+        }
+
+        [Fact]
+        public async Task GetAllYearAsync_EnsuresCorrectApiEndpoint_CallsWithCorrectUrl()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<List<YearRes>> { Success = true, Data = new List<YearRes>() };
+            var mappedDto = ApiResponseDto<List<YearDto>>.SuccessResponse(new List<YearDto>());
+
+            _http.GetAsync<List<YearRes>>(PimsApiEndpoints.GetAllYears).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<YearDto>>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            await _client.GetAllYearAsync();
+
+            // Assert
+            await _http.Received(1).GetAsync<List<YearRes>>(
+                Arg.Is<string>(s => s == PimsApiEndpoints.GetAllYears)
+            );
+        }
+
+        #endregion
+
         #region Constructor Tests
 
         [Fact]
