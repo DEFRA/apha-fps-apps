@@ -16,15 +16,16 @@ COPY --chown=dotnet:dotnet src/. .
 RUN find . -type d -exec chmod 555 {} \; && \
     find . -type f -exec chmod 444 {} \;
 
-# Restore, build and publish the Web project
-# Redirect obj/ and bin/ output outside the read-only source tree
-# --force ensures project.assets.json is regenerated even if the base image
-# has pre-baked restore artefacts that pre-date recently added packages
-RUN dotnet restore ./Apha.FPSApps/Apha.FPSApps.Web/Apha.FPSApps.Web.csproj \
+# Restore all projects in the solution (including Apha.Common and other dependencies).
+# --force regenerates project.assets.json for every project, preventing the base image's
+# pre-baked restore artefacts from hiding newly added package references.
+# --no-restore on publish prevents a second implicit restore that would bypass --force.
+RUN dotnet restore ./Apha.FPSApps/Apha.FPSApps.Web.sln \
     --force \
     /p:BaseIntermediateOutputPath=/home/dotnet/obj/ \
     /p:BaseOutputPath=/home/dotnet/bin/
 RUN dotnet publish ./Apha.FPSApps/Apha.FPSApps.Web -c Release -o /home/dotnet/out \
+    --no-restore \
     /p:UseAppHost=false \
     /p:BaseIntermediateOutputPath=/home/dotnet/obj/ \
     /p:BaseOutputPath=/home/dotnet/bin/
