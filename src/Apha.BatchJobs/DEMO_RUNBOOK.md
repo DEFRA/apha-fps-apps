@@ -139,3 +139,53 @@ This runbook defines the 4-pass demo matrix, required toggles per pass, and the 
 3. Additional pass checks for NoDb:
 - Execution mode: NoDb is present
 - Phase 3 logs mention no-database execution path
+
+## Temporary API Demo (Trigger + Poll)
+
+Use this when demoing the UI/API-triggered flow before endpoints are moved to FPS backend.
+
+1. Start dependencies and API
+- Terminal A:
+  - docker compose up -d postgres
+- Terminal B:
+  - /home/vscode/.dotnet/dotnet run --project Apha.BatchJobs.Api/Apha.BatchJobs.Api.csproj
+
+2. Set base URL and job name
+
+```bash
+API_BASE="http://localhost:5062"
+JOB_NAME="HealthCheck"
+```
+
+3. Optional pre-check (can-run)
+
+```bash
+curl -s "$API_BASE/api/batch-jobs/$JOB_NAME/can-run"
+```
+
+4. Trigger async execution (returns accepted)
+
+```bash
+curl -s -X POST "$API_BASE/api/batch-jobs/$JOB_NAME/trigger"
+```
+
+5. Poll status until not running
+
+```bash
+for i in {1..30}; do
+  echo "poll #$i"
+  response=$(curl -s "$API_BASE/api/batch-jobs/$JOB_NAME/status")
+  echo "$response"
+  is_running=$(echo "$response" | grep -o '"isRunning":true' || true)
+  if [ -z "$is_running" ]; then
+    echo "Job reached terminal state"
+    break
+  fi
+  sleep 2
+done
+```
+
+6. Expected API outcomes
+- Trigger success: HTTP 202 with `accepted=true` and `operationId`.
+- Already running: HTTP 409 with `accepted=false` and lock details.
+- Unknown job: HTTP 404 with explicit job-not-registered response.

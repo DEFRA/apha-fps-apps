@@ -9,6 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 ServiceCollectionSetup.ConfigureBatchJobServices(builder.Services, builder.Configuration);
 
 builder.Services.AddScoped<IJobStatusService, JobStatusService>();
+builder.Services.AddSingleton<IJobTriggerService, JobTriggerService>();
 builder.Services.AddControllers();
 
 var app = builder.Build();

@@ -11,11 +11,16 @@ namespace Apha.BatchJobs.Api.Controllers;
 public sealed class JobStatusController : ControllerBase
 {
     private readonly IJobStatusService _statusService;
+    private readonly IJobTriggerService _triggerService;
     private readonly ILogger<JobStatusController> _logger;
 
-    public JobStatusController(IJobStatusService statusService, ILogger<JobStatusController> logger)
+    public JobStatusController(
+        IJobStatusService statusService,
+        IJobTriggerService triggerService,
+        ILogger<JobStatusController> logger)
     {
         _statusService = statusService;
+        _triggerService = triggerService;
         _logger = logger;
     }
 
@@ -98,5 +103,57 @@ public sealed class JobStatusController : ControllerBase
             _logger.LogWarning("Unknown job in can-run check: {JobName} | {Message}", jobName, ex.Message);
             return NotFound(new { error = $"Job '{jobName}' is not registered.", jobName });
         }
+    }
+
+    /// <summary>
+    /// POST api/batch-jobs/{jobName}/trigger
+    /// Validates and starts an ad-hoc run asynchronously.
+    /// Returns 202 Accepted immediately so UI can poll status endpoints.
+    /// </summary>
+    [HttpPost("{jobName}/trigger")]
+    [ProducesResponseType(StatusCodes.Status202Accepted)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Trigger(string jobName, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(jobName))
+            return BadRequest(new { error = "Job name is required." });
+
+        _logger.LogInformation("Trigger requested for job: {JobName}", jobName);
+
+        JobStatusResult status;
+        try
+        {
+            status = await _statusService.GetStatusAsync(jobName, cancellationToken);
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning("Unknown job in trigger request: {JobName} | {Message}", jobName, ex.Message);
+            return NotFound(new { error = $"Job '{jobName}' is not registered.", jobName });
+        }
+
+        if (status.IsRunning)
+        {
+            return Conflict(new
+            {
+                accepted = false,
+                reason = "Job is already running",
+                jobName,
+                runId = status.ActiveLock?.RunId,
+                acquiredAt = status.ActiveLock?.AcquiredAt,
+                expiresAt = status.ActiveLock?.ExpiresAt
+            });
+        }
+
+        var result = await _triggerService.TriggerAsync(jobName, cancellationToken);
+
+        return Accepted(new
+        {
+            accepted = true,
+            operationId = result.OperationId,
+            acceptedAt = result.AcceptedAtUtc,
+            jobName,
+            message = "Job accepted for execution. Poll status endpoint for progress."
+        });
     }
 }
