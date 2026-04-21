@@ -1,4 +1,3 @@
-using Apha.BatchJobs.Application;
 using Apha.BatchJobs.Application.Factory;
 using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Domain.Configuration;
@@ -10,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Apha.BatchJobs.Worker;
+namespace Apha.BatchJobs.Application.DependencyInjection;
 
 /// <summary>Bootstraps the DI service collection for the batch jobs worker.</summary>
 public static class ServiceCollectionSetup
@@ -21,7 +20,7 @@ public static class ServiceCollectionSetup
     {
         var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";
         var basePath = configurationBasePath ?? Directory.GetCurrentDirectory();
-        
+
         // Build configuration from appsettings.json and environment variables
         var config = new ConfigurationBuilder()
             .SetBasePath(basePath)

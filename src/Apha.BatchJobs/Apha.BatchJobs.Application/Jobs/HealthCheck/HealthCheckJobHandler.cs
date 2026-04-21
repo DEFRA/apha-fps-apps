@@ -70,7 +70,9 @@ public sealed class HealthCheckJobHandler : IBatchJob
             // Phase 1: Validate configuration
             _logger.LogInformation("Phase 1: Validating configuration...");
             var envName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Not Set";
+            var executionMode = envName.Equals("Demo", StringComparison.OrdinalIgnoreCase) ? "NoDb (In-Memory)" : "WithDb (PostgreSQL)";
             _logger.LogInformation("  Environment: {Environment}", envName);
+            _logger.LogInformation("  Execution Mode: {ExecutionMode}", executionMode);
             _logger.LogInformation("  .NET Version: {DotNetVersion}", System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription);
             _logger.LogInformation("  OS: {OS}", System.Runtime.InteropServices.RuntimeInformation.OSDescription);
 
@@ -98,17 +100,9 @@ public sealed class HealthCheckJobHandler : IBatchJob
                 await Task.Delay(50, cancellationToken);
             }
 
-            // Phase 3: Validate mode-specific infrastructure path
-            if (_settings.EnableDatabase)
-            {
-                _logger.LogInformation("Phase 3: Validating database connectivity path...");
-                _logger.LogInformation("  WithDb mode is enabled; repository write path will validate database access");
-            }
-            else
-            {
-                _logger.LogInformation("Phase 3: Validating no-database execution path...");
-                _logger.LogInformation("  NoDb mode is enabled; in-memory repositories are active");
-            }
+            // Phase 3: Validate database connectivity
+            _logger.LogInformation("Phase 3: Validating database connectivity path...");
+            _logger.LogInformation("  Repository write path will validate database access");
 
             // Phase 4: Report results
             _logger.LogInformation("Phase 4: Job completion report");

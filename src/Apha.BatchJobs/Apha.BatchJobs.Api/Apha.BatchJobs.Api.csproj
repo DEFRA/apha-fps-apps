@@ -13,6 +13,7 @@
     <ProjectReference Include="..\BatchJobs.csproj">
       <SkipGetTargetFrameworkProperties>true</SkipGetTargetFrameworkProperties>
     </ProjectReference>
+    <ProjectReference Include="..\Apha.BatchJobs.Worker\Apha.BatchJobs.Worker.csproj" />
   </ItemGroup>
 
   <!-- Exclude the Worker's Program.cs from being compiled into this project -->

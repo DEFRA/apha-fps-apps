@@ -1,6 +1,6 @@
-using Apha.BatchJobs.Application.Interfaces;
+﻿using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Domain.Enums;
-using Apha.BatchJobs.Worker;
+using Apha.BatchJobs.Application.DependencyInjection;
 using Apha.BatchJobs.Worker.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -25,7 +25,7 @@ const int ExitCodeCancelled = 3;
 const int ExitCodeSkipped = 4;
 const int ExitCodeDependencyOutage = 5;
 
-// ECS SIGTERM → forced-stop window is typically 30 s.
+// ECS SIGTERM â†’ forced-stop window is typically 30 s.
 // We allow 25 s for graceful cleanup before the host forces termination.
 const int GracefulShutdownWindowSeconds = 25;
 
@@ -77,11 +77,7 @@ try
     logger.LogInformation("Environment: {EnvironmentName}", builder.Environment.EnvironmentName);
 
     var config = serviceProvider.GetRequiredService<IConfiguration>();
-    var enableDatabase = config.GetValue<bool?>("BatchJobs:EnableDatabase") ?? true;
-    logger.LogInformation("Execution mode: {ExecutionMode}", enableDatabase ? "WithDb" : "NoDb");
-    logger.LogInformation(
-        "Flow checkpoint: Program.Main -> Host.Started -> Resolving JobOrchestrator | EnableDatabase={EnableDatabase}",
-        enableDatabase);
+    logger.LogInformation("Flow checkpoint: Program.Main -> Host.Started -> Resolving JobOrchestrator");
 
     // Get job name from args or environment variable
     var jobName = args.Length > 0 ? args[0] : (Environment.GetEnvironmentVariable("BATCH_JOB_NAME") ?? "HealthCheck");
@@ -93,7 +89,7 @@ try
     logger.LogInformation("Requested job: {JobName} | RunMode: {RunMode}", jobName, runMode);
 
     // Link host shutdown with a bounded graceful-window timeout.
-    // This ensures the job is cancelled well within the ECS SIGTERM → forced-stop window.
+    // This ensures the job is cancelled well within the ECS SIGTERM â†’ forced-stop window.
     using var shutdownWindowCts = new CancellationTokenSource(TimeSpan.FromSeconds(GracefulShutdownWindowSeconds));
     using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
         hostLifetime.ApplicationStopping,
@@ -102,7 +98,7 @@ try
     if (hostLifetime.ApplicationStopping.IsCancellationRequested)
     {
         logger.LogWarning(
-            "Host stopping signal was already set before job start — skipping execution | JobName={JobName} | GracefulWindowSeconds={GracefulWindowSeconds}",
+            "Host stopping signal was already set before job start â€” skipping execution | JobName={JobName} | GracefulWindowSeconds={GracefulWindowSeconds}",
             jobName, GracefulShutdownWindowSeconds);
         exitCode = ExitCodeCancelled;
         failureCategory = "Cancellation";
@@ -125,7 +121,7 @@ try
         var computedExitCode = result.Status == JobStatus.Skipped ? ExitCodeSkipped : ExitCodeSuccess;
         logger.LogInformation("===========================================");
 
-        // Exit 4 = skipped (lock already held) — not a failure
+        // Exit 4 = skipped (lock already held) â€” not a failure
         exitCode = computedExitCode;
         if (result.Status == JobStatus.Skipped)
         {
@@ -365,3 +361,4 @@ static string GetExceptionTypePrefix(Exception ex, IConfiguration? config = null
     // Default to general exception
     return $"[[{exceptionTypes.GetValueOrDefault("General", "APHA_BATCH.GENERAL_EXCEPTION")}]]";
 }
+

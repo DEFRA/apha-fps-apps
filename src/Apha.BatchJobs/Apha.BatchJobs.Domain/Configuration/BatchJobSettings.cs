@@ -6,12 +6,6 @@ namespace Apha.BatchJobs.Domain.Configuration;
 public sealed class BatchJobSettings
 {
     /// <summary>
-    /// Enables database-backed lock and execution tracking.
-    /// Set to false for local first-pass runs without PostgreSQL.
-    /// </summary>
-    public bool EnableDatabase { get; set; } = true;
-
-    /// <summary>
     /// Maximum number of concurrent jobs that can run simultaneously.
     /// Current runtime model is one ECS task per job execution, so this
     /// setting is intentionally out-of-scope for now.
