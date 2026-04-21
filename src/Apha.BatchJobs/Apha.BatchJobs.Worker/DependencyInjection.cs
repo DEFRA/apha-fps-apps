@@ -42,7 +42,6 @@ public static class ServiceCollectionSetup
     public static void ConfigureBatchJobServices(IServiceCollection services, IConfiguration config)
     {
         services.Configure<BatchJobSettings>(config.GetSection("BatchJobs"));
-        services.Configure<ApplicationInsightsSettings>(config.GetSection("ApplicationInsights"));
         services.AddLogging();
 
         var batchJobSettings = config.GetSection("BatchJobs").Get<BatchJobSettings>() ?? new BatchJobSettings();
