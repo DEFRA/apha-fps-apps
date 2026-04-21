@@ -3,6 +3,7 @@ using Apha.BatchJobs.Domain.Enums;
 using Apha.BatchJobs.Worker;
 using Apha.BatchJobs.Worker.Extensions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -10,6 +11,11 @@ using Npgsql;
 using Serilog;
 
 var builder = Host.CreateApplicationBuilder(args);
+builder.Configuration
+    .SetBasePath(AppContext.BaseDirectory)
+    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
+    .AddJsonFile("appsettings.local.json", optional: true, reloadOnChange: true);
 var startedAt = DateTime.UtcNow;
 const int ExitCodeSuccess = 0;
 const int ExitCodeBusinessFailure = 1;
@@ -68,6 +74,13 @@ try
     logger.LogInformation("Timestamp: {StartTime:yyyy-MM-dd HH:mm:ss.fff}", startedAt);
     logger.LogInformation("ProcessId: {ProcessId}", Environment.ProcessId);
     logger.LogInformation("Environment: {EnvironmentName}", builder.Environment.EnvironmentName);
+
+    var config = serviceProvider.GetRequiredService<IConfiguration>();
+    var enableDatabase = config.GetValue<bool?>("BatchJobs:EnableDatabase") ?? true;
+    logger.LogInformation("Execution mode: {ExecutionMode}", enableDatabase ? "WithDb" : "NoDb");
+    logger.LogInformation(
+        "Flow checkpoint: Program.Main -> Host.Started -> Resolving JobOrchestrator | EnableDatabase={EnableDatabase}",
+        enableDatabase);
     
     // Get job name from args or environment variable
     var jobName = args.Length > 0 ? args[0] : (Environment.GetEnvironmentVariable("BATCH_JOB_NAME") ?? "HealthCheck");
@@ -97,7 +110,8 @@ try
     else
     {
         // Run through orchestrator (handles lock, execution records, and job execution)
-        var orchestrator = serviceProvider.GetRequiredService<IJobOrchestrator>();
+        await using var executionScope = serviceProvider.CreateAsyncScope();
+        var orchestrator = executionScope.ServiceProvider.GetRequiredService<IJobOrchestrator>();
         var result = await orchestrator.RunAsync(jobName, runMode, linkedCts.Token);
 
         capturedRunId = result.RunId;

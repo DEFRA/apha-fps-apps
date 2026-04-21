@@ -1,5 +1,7 @@
 using Apha.BatchJobs.Application.Interfaces;
+using Apha.BatchJobs.Domain.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Apha.BatchJobs.Application.Jobs.HealthCheck;
 
@@ -10,6 +12,7 @@ namespace Apha.BatchJobs.Application.Jobs.HealthCheck;
 public sealed class HealthCheckJobHandler : IBatchJob
 {
     private readonly ILogger<HealthCheckJobHandler> _logger;
+    private readonly BatchJobSettings _settings;
 
     /// <summary>
     /// Name of this job.
@@ -26,9 +29,13 @@ public sealed class HealthCheckJobHandler : IBatchJob
     /// Initializes a new instance of the HealthCheckJobHandler.
     /// </summary>
     /// <param name="logger">Logger instance.</param>
-    public HealthCheckJobHandler(ILogger<HealthCheckJobHandler> logger)
+    /// <param name="settings">Batch job runtime settings.</param>
+    public HealthCheckJobHandler(
+        ILogger<HealthCheckJobHandler> logger,
+        IOptions<BatchJobSettings> settings)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _settings = settings?.Value ?? new BatchJobSettings();
     }
 
     /// <summary>
@@ -75,9 +82,17 @@ public sealed class HealthCheckJobHandler : IBatchJob
                 await Task.Delay(50, cancellationToken);
             }
 
-            // Phase 3: Validate database connectivity
-            _logger.LogInformation("Phase 3: Validating database connectivity...");
-            _logger.LogInformation("  Database operations will be tested in execution repository write");
+            // Phase 3: Validate mode-specific infrastructure path
+            if (_settings.EnableDatabase)
+            {
+                _logger.LogInformation("Phase 3: Validating database connectivity path...");
+                _logger.LogInformation("  WithDb mode is enabled; repository write path will validate database access");
+            }
+            else
+            {
+                _logger.LogInformation("Phase 3: Validating no-database execution path...");
+                _logger.LogInformation("  NoDb mode is enabled; in-memory repositories are active");
+            }
 
             // Phase 4: Report results
             _logger.LogInformation("Phase 4: Job completion report");

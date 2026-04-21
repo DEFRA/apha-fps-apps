@@ -2,6 +2,8 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: batch_jobs_postgres
+    profiles:
+      - withdb
     environment:
       POSTGRES_DB: batch_jobs_foundation_db
       POSTGRES_USER: postgres
@@ -23,12 +25,32 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: batch_jobs_app
+    profiles:
+      - withdb
     environment:
       ASPNETCORE_ENVIRONMENT: Development
+      DOTNET_ENVIRONMENT: Development
+      BatchJobs__EnableDatabase: "true"
       ConnectionStrings__BatchJobsConnectionString: Host=postgres;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Timeout=30
     depends_on:
       postgres:
         condition: service_healthy
+    networks:
+      - batch_jobs_network
+
+  batch-jobs-nodb:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: batch_jobs_app_nodb
+    profiles:
+      - nodb
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      DOTNET_ENVIRONMENT: Development
+      BatchJobs__EnableDatabase: "false"
+      BATCH_JOB_NAME: HealthCheck
+      BATCH_RUN_MODE: AdHoc
     networks:
       - batch_jobs_network
 

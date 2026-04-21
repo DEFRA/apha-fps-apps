@@ -9,6 +9,8 @@ param(
     [switch]$Stop,
     [switch]$NoPrompt,
     [switch]$Native,
+    [ValidateSet("withdb", "nodb")]
+    [string]$DockerProfile = "withdb",
     [string]$JobName = "HealthCheck"
 )
 
@@ -81,7 +83,7 @@ function Get-ExecutionMode {
 function Stop-Containers {
     Write-Header "Stopping Containers"
     Push-Location $BatchJobsDir
-    docker-compose down 2>$null
+    docker-compose --profile $DockerProfile down 2>$null
     Pop-Location
     Write-Success "Containers stopped"
 }
@@ -89,8 +91,8 @@ function Stop-Containers {
 function Clean-Environment {
     Write-Header "Cleaning Environment"
     Push-Location $BatchJobsDir
-    docker-compose down -v 2>$null
-    docker-compose rm -f 2>$null
+    docker-compose --profile $DockerProfile down -v 2>$null
+    docker-compose --profile $DockerProfile rm -f 2>$null
     Pop-Location
     Write-Success "Environment cleaned"
 }
@@ -99,12 +101,12 @@ function Build-And-Run {
     Write-Header "Building Docker Image"
     try {
         Push-Location $BatchJobsDir
-        docker-compose build
+        docker-compose --profile $DockerProfile build
         Write-Success "Image built successfully"
 
         Write-Header "Starting Services with docker-compose"
         Write-Host "Press Ctrl+C to stop viewing logs (containers continue running)" -ForegroundColor Gray
-        docker-compose up --no-build
+        docker-compose --profile $DockerProfile up --no-build
         Pop-Location
     } catch {
         Pop-Location
@@ -127,15 +129,16 @@ function Run-Native {
 
 function Show-Logs {
     Write-Header "Showing Logs"
+    $serviceName = if ($DockerProfile -eq "nodb") { "batch-jobs-nodb" } else { "batch-jobs" }
     Push-Location $BatchJobsDir
-    docker-compose logs -f batch-jobs
+    docker-compose --profile $DockerProfile logs -f $serviceName
     Pop-Location
 }
 
 function Show-Status {
     Write-Header "Container Status"
     Push-Location $BatchJobsDir
-    docker-compose ps
+    docker-compose --profile $DockerProfile ps
     Pop-Location
 }
 
@@ -144,6 +147,7 @@ Write-Host "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')]" -ForegroundColor Gray
 
 $script:ExecutionMode = Get-ExecutionMode
 Write-Host "Execution mode: $script:ExecutionMode" -ForegroundColor Yellow
+Write-Host "Docker profile: $DockerProfile" -ForegroundColor Yellow
 
 if ($Stop) {
     if ($script:ExecutionMode -eq "docker") {
@@ -170,9 +174,15 @@ if ($Clean -and $script:ExecutionMode -eq "docker") {
 Write-Host ""
 Write-Host "This script will:" -ForegroundColor Yellow
 if ($script:ExecutionMode -eq "docker") {
-    Write-Host "  1. Build Docker image"
-    Write-Host "  2. Start PostgreSQL container"
-    Write-Host "  3. Run $JobName job"
+    if ($DockerProfile -eq "nodb") {
+        Write-Host "  1. Build Docker image"
+        Write-Host "  2. Start BatchJobs container without PostgreSQL"
+        Write-Host "  3. Run $JobName job in NoDb mode"
+    } else {
+        Write-Host "  1. Build Docker image"
+        Write-Host "  2. Start PostgreSQL container"
+        Write-Host "  3. Run $JobName job in WithDb mode"
+    }
     Write-Host "  4. Stream logs"
 } else {
     Write-Host "  1. Build the .NET project"

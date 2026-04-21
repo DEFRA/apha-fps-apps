@@ -1,0 +1,34 @@
+{
+  "profiles": {
+    "BatchJobs NoDb FirstPass": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development",
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "BATCH_JOB_NAME": "HealthCheck",
+        "BATCH_RUN_MODE": "AdHoc",
+        "BatchJobs__EnableDatabase": "false"
+      }
+    },
+    "BatchJobs WithDb": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development",
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "BATCH_JOB_NAME": "HealthCheck",
+        "BATCH_RUN_MODE": "AdHoc",
+        "BatchJobs__EnableDatabase": "true"
+      }
+    },
+    "BatchJobs WithDb LocalPostgres": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development",
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "BATCH_JOB_NAME": "HealthCheck",
+        "BATCH_RUN_MODE": "AdHoc",
+        "BatchJobs__EnableDatabase": "true"
+      }
+    }
+  }
+}
