@@ -17,39 +17,22 @@ WORKDIR /home/dotnet/src
 # COPY --chown=dotnet:dotnet src/. .
 COPY --chown=root:dotnet --chmod=640 src/ .
 USER root
-# RUN chmod -R g+X .
-# Dirs: give group rwx (770 style) so dotnet can write obj/bin during build
-RUN chmod -R g+X . && \        
-    find . -type d -exec chmod g+w {} \;
+RUN chmod -R g+X .
+# # Dirs: give group rwx (770 style) so dotnet can write obj/bin during build
+# RUN chmod -R g+X . && \        
+#     find . -type d -exec chmod g+w {} \;
 USER dotnet
 
 # Immediately restore directory traversal+write so dotnet restore can work
-RUN find . -type d -exec chmod 755 {} \;
-
-# # Fix directory execute permissions (dirs need +x to be traversable)
-# RUN find . -type d -exec chmod 555 {} \;
+# RUN find . -type d -exec chmod 755 {} \;
 
 # Restore, build and publish the Web project
 RUN dotnet restore ./Apha.Costbook/Apha.Costbook.Api/Apha.Costbook.Api.csproj
 RUN dotnet publish ./Apha.Costbook/Apha.Costbook.Api -c Release -o /home/dotnet/out /p:UseAppHost=false
 
-# Remove write permissions from copied source (files: 444, dirs: 555)
-RUN find . -type d -exec chmod 555 {} \; && \
-    find . -type f -exec chmod 444 {} \;
-
-# # Restore all projects in the solution (including Apha.Common and other dependencies).
-# # --force regenerates project.assets.json for every project, preventing the base image's
-# # pre-baked restore artefacts from hiding newly added package references.
-# # --no-restore on publish prevents a second implicit restore that would bypass --force.
-# RUN dotnet restore ./Apha.Costbook/Apha.Costbook.Api.sln \
-#     --force \
-#     /p:BaseIntermediateOutputPath=/home/dotnet/obj/ \
-#     /p:BaseOutputPath=/home/dotnet/bin/
-# RUN dotnet publish ./Apha.Costbook/Apha.Costbook.Api -c Release -o /home/dotnet/out \
-#     --no-restore \
-#     /p:UseAppHost=false \
-#     /p:BaseIntermediateOutputPath=/home/dotnet/obj/ \
-#     /p:BaseOutputPath=/home/dotnet/bin/
+# # Remove write permissions from copied source (files: 444, dirs: 555)
+# RUN find . -type d -exec chmod 555 {} \; && \
+#     find . -type f -exec chmod 444 {} \;
 
 # ================================
 # -------- Production Stage --------
