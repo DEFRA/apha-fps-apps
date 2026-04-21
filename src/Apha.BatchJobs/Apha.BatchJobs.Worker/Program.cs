@@ -40,7 +40,7 @@ else
 {
     Log.Logger = new LoggerConfiguration()
         .ReadFrom.Configuration(builder.Configuration)
-        .UseStructuredConsoleLogging()
+        .UseStructuredConsoleLogging(builder.Configuration)
         .CreateLogger();
 }
 
@@ -142,8 +142,9 @@ try
 catch (InvalidOperationException ex)
 {
     var logger = loggerFactory?.CreateLogger("BatchJobs.Error");
-    logger?.LogError(ex, "Job factory error: {ErrorMessage}", ex.Message);
-    Console.Error.WriteLine($"ERROR: {ex.Message}");
+    var exceptionPrefix = GetExceptionTypePrefix(ex, builder.Configuration);
+    logger?.LogError(ex, "{ExceptionType} Job factory error: {ErrorMessage}", exceptionPrefix, ex.Message);
+    Console.Error.WriteLine($"ERROR: {exceptionPrefix} {ex.Message}");
     exitCode = ExitCodeConfigurationError;
     failureCategory = "ConfigurationError";
     runOutcome = "Failed";
@@ -167,15 +168,16 @@ catch (OperationCanceledException ex)
 catch (Exception ex)
 {
     var logger = loggerFactory?.CreateLogger("BatchJobs.Error");
+    var exceptionPrefix = GetExceptionTypePrefix(ex, builder.Configuration);
     if (IsDependencyOutage(ex))
     {
-        logger?.LogError(ex, "Dependency outage detected: {ErrorMessage}", ex.Message);
+        logger?.LogError(ex, "{ExceptionType} Dependency outage detected: {ErrorMessage}", exceptionPrefix, ex.Message);
         exitCode = ExitCodeDependencyOutage;
         failureCategory = "DependencyOutage";
     }
     else
     {
-        logger?.LogError(ex, "Unhandled business/runtime exception: {ErrorMessage}", ex.Message);
+        logger?.LogError(ex, "{ExceptionType} Unhandled business/runtime exception: {ErrorMessage}", exceptionPrefix, ex.Message);
         exitCode = ExitCodeBusinessFailure;
         failureCategory = "BusinessFailure";
     }
@@ -330,4 +332,36 @@ static bool IsDependencyOutage(Exception ex)
     }
 
     return false;
+}
+
+static string GetExceptionTypePrefix(Exception ex, IConfiguration? config = null)
+{
+    // Load exception type mappings from configuration
+    var exceptionTypes = config?.GetSection("ExceptionTypes").Get<Dictionary<string, string>>()
+        ?? new Dictionary<string, string>
+        {
+            { "General", "APHA_BATCH.GENERAL_EXCEPTION" },
+            { "Sql", "APHA_BATCH.SQL_EXCEPTION" },
+            { "Authorization", "APHA_BATCH.AUTHORIZATION_EXCEPTION" },
+            { "Timeout", "APHA_BATCH.TIMEOUT_EXCEPTION" }
+        };
+
+    // Scan exception chain for specific exception types
+    for (Exception? current = ex; current != null; current = current.InnerException)
+    {
+        if (current is NpgsqlException)
+            return $"[[{exceptionTypes.GetValueOrDefault("Sql", "APHA_BATCH.SQL_EXCEPTION")}]]";
+
+        if (current is TimeoutException)
+            return $"[[{exceptionTypes.GetValueOrDefault("Timeout", "APHA_BATCH.TIMEOUT_EXCEPTION")}]]";
+
+        if (current is UnauthorizedAccessException)
+            return $"[[{exceptionTypes.GetValueOrDefault("Authorization", "APHA_BATCH.AUTHORIZATION_EXCEPTION")}]]";
+
+        if (current is DbUpdateException)
+            return $"[[{exceptionTypes.GetValueOrDefault("Sql", "APHA_BATCH.SQL_EXCEPTION")}]]";
+    }
+
+    // Default to general exception
+    return $"[[{exceptionTypes.GetValueOrDefault("General", "APHA_BATCH.GENERAL_EXCEPTION")}]]";
 }

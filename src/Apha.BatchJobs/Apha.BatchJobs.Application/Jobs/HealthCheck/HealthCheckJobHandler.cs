@@ -26,6 +26,22 @@ public sealed class HealthCheckJobHandler : IBatchJob
     public string IdempotencyStrategy => "NoWriteValidation";
 
     /// <summary>
+    /// No schedule expression: HealthCheck is ad-hoc or manually triggered.
+    /// Can be invoked from deployment automation or monitoring dashboards.
+    /// </summary>
+    public string? ScheduleExpression => null;
+
+    /// <summary>
+    /// Human-readable description for ad-hoc validation job.
+    /// </summary>
+    public string? ScheduleDescription => "On-demand health check (no schedule)";
+
+    /// <summary>
+    /// Maximum execution timeout for this light-weight validation job: 5 minutes.
+    /// </summary>
+    public int? MaxExecutionSeconds => 300;
+
+    /// <summary>
     /// Initializes a new instance of the HealthCheckJobHandler.
     /// </summary>
     /// <param name="logger">Logger instance.</param>

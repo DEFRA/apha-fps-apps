@@ -26,6 +26,21 @@ public sealed class ScheduleJobsHandler : IBatchJob
     public string IdempotencyStrategy => "Scheduling";
 
     /// <summary>
+    /// EventBridge Scheduler cron expression: Monday-Saturday at 20:00 (8pm).
+    /// </summary>
+    public string? ScheduleExpression => "cron(0 20 ? * MON-SAT *)";
+
+    /// <summary>
+    /// Human-readable schedule description.
+    /// </summary>
+    public string? ScheduleDescription => "Monday to Saturday at 8:00 PM UTC";
+
+    /// <summary>
+    /// Maximum execution timeout for this job: 1 hour.
+    /// </summary>
+    public int? MaxExecutionSeconds => 3600;
+
+    /// <summary>
     /// Initializes a new instance of the ScheduleJobsHandler.
     /// </summary>
     /// <param name="logger">Logger instance.</param>

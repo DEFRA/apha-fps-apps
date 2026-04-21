@@ -27,6 +27,22 @@ public sealed class FECProcessHandler : IBatchJob
     public string IdempotencyStrategy => "Pending";
 
     /// <summary>
+    /// No schedule expression defined: FEC process trigger mode is under investigation.
+    /// May be scheduled or user-triggered based on business requirements.
+    /// </summary>
+    public string? ScheduleExpression => null;
+
+    /// <summary>
+    /// Placeholder description pending business requirements clarification.
+    /// </summary>
+    public string? ScheduleDescription => "Financial Eligibility Control process (schedule TBD)";
+
+    /// <summary>
+    /// Maximum execution timeout placeholder: 3 hours (may be adjusted based on data volume).
+    /// </summary>
+    public int? MaxExecutionSeconds => 10800;
+
+    /// <summary>
     /// Initializes a new instance of the FECProcessHandler.
     /// </summary>
     /// <param name="logger">Logger instance.</param>

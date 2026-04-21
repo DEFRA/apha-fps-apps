@@ -26,6 +26,22 @@ public sealed class RecreateSummariesHandler : IBatchJob
     public string IdempotencyStrategy => "Upsert";
 
     /// <summary>
+    /// No schedule expression: this is a user-triggered job.
+    /// Triggered via UI button click or API call.
+    /// </summary>
+    public string? ScheduleExpression => null;
+
+    /// <summary>
+    /// Human-readable description for user-triggered job.
+    /// </summary>
+    public string? ScheduleDescription => "User-triggered via UI action";
+
+    /// <summary>
+    /// Maximum execution timeout for this job: 2 hours (summary recreation can be lengthy).
+    /// </summary>
+    public int? MaxExecutionSeconds => 7200;
+
+    /// <summary>
     /// Initializes a new instance of the RecreateSummariesHandler.
     /// </summary>
     /// <param name="logger">Logger instance.</param>
