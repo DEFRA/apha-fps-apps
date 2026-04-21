@@ -17,14 +17,10 @@ WORKDIR /home/dotnet/src
 # COPY --chown=dotnet:dotnet src/. .
 COPY --chown=root:dotnet --chmod=640 src/ .
 USER root
-RUN chmod -R g+X .
-# # Dirs: give group rwx (770 style) so dotnet can write obj/bin during build
-# RUN chmod -R g+X . && \        
-#     find . -type d -exec chmod g+w {} \;
+# RUN chmod -R g+X .
+# g+X = execute on dirs, g+w = write on dirs so dotnet can create obj/bin
+RUN find . -type d -exec chmod g+wx {} \;
 USER dotnet
-
-# Immediately restore directory traversal+write so dotnet restore can work
-# RUN find . -type d -exec chmod 755 {} \;
 
 # Restore, build and publish the Web project
 RUN dotnet restore ./Apha.Costbook/Apha.Costbook.Api/Apha.Costbook.Api.csproj
