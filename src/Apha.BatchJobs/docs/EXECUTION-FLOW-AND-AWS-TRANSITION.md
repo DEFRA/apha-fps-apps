@@ -41,7 +41,7 @@ Developer runs: .\test-locally.ps1
 │  Reads job name → args[0] or BATCH_JOB_NAME env var    │
 │  Builds DI container (ServiceCollectionSetup)           │
 │  Resolves IJobOrchestrator                              │
-│  Calls orchestrator.RunAsync("HealthCheck", AdHoc)      │
+│  Calls orchestrator.RunAsync("HealthCheck", Manual)      │
 └──────────────┬──────────────────────────────────────────┘
                │
                ▼
@@ -151,7 +151,7 @@ Developer runs: .\test-locally.ps1
 | **Logs** | Console/terminal output | Amazon CloudWatch Logs |
 | **Failure Alerting** | Dev sees exit code in terminal | CloudWatch Alarm → SNS → Email |
 | **Scheduling** | Manual / VS Code task | Automated, AWS-managed |
-| **Run Mode** | `AdHoc` | `Scheduled` |
+| **Run Mode** | `Manual` | `Scheduled` |
 
 **Application code is identical in both environments.** The only difference is the infrastructure around it.
 
@@ -210,7 +210,7 @@ sequenceDiagram
     Script->>Script: dotnet test (4 unit tests)
     Script->>App: dotnet run -- HealthCheck
     App->>App: Build DI container
-    App->>Orch: RunAsync("HealthCheck", AdHoc)
+    App->>Orch: RunAsync("HealthCheck", Manual)
     Orch->>Orch: Generate RunId (GUID)
     Orch->>Lock: TryAcquireLockAsync(no-op → true)
     Orch->>Exec: CreateExecutionRecordAsync(Started)

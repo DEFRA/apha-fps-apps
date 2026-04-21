@@ -11,7 +11,7 @@ public enum RunMode
     Scheduled = 0,
 
     /// <summary>
-    /// Job is triggered manually on-demand.
+    /// Job is triggered manually on-demand (via UI, API, or CLI).
     /// </summary>
-    AdHoc = 1
+    Manual = 1
 }

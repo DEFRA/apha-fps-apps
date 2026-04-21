@@ -55,7 +55,7 @@ ILoggerFactory? loggerFactory = null;
 string failureCategory = "BusinessFailure";
 string runOutcome = "Failed";
 string? requestedJobName = null;
-string requestedRunMode = "AdHoc";
+string requestedRunMode = "Manual";
 string? capturedRunId = null;
 int? capturedExecutionId = null;
 var exitCode = ExitCodeBusinessFailure;
@@ -82,11 +82,11 @@ try
     logger.LogInformation(
         "Flow checkpoint: Program.Main -> Host.Started -> Resolving JobOrchestrator | EnableDatabase={EnableDatabase}",
         enableDatabase);
-    
+
     // Get job name from args or environment variable
     var jobName = args.Length > 0 ? args[0] : (Environment.GetEnvironmentVariable("BATCH_JOB_NAME") ?? "HealthCheck");
-    var runModeEnv = Environment.GetEnvironmentVariable("BATCH_RUN_MODE") ?? "AdHoc";
-    var runMode = Enum.TryParse<RunMode>(runModeEnv, ignoreCase: true, out var parsedMode) ? parsedMode : RunMode.AdHoc;
+    var runModeEnv = Environment.GetEnvironmentVariable("BATCH_RUN_MODE") ?? "Manual";
+    var runMode = Enum.TryParse<RunMode>(runModeEnv, ignoreCase: true, out var parsedMode) ? parsedMode : RunMode.Manual;
     requestedJobName = jobName;
     requestedRunMode = runMode.ToString();
 

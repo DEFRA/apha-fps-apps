@@ -54,7 +54,7 @@ This runbook defines the 4-pass demo matrix, required toggles per pass, and the 
 
 4. Job selection controls:
 - BATCH_JOB_NAME=HealthCheck
-- BATCH_RUN_MODE=AdHoc
+- BATCH_RUN_MODE=Manual
 
 ## Program Flow (Entry To Completion)
 
@@ -106,7 +106,7 @@ This runbook defines the 4-pass demo matrix, required toggles per pass, and the 
 2. Environment: Development
 3. Execution mode: NoDb or WithDb
 4. Flow checkpoint: Program.Main -> Host.Started -> Resolving JobOrchestrator
-5. Requested job: HealthCheck | RunMode: AdHoc
+5. Requested job: HealthCheck | RunMode: Manual
 6. --- Orchestrator: Starting 'HealthCheck' | RunId=...
 7. Acquiring execution lock for 'HealthCheck'...
 8. Lock acquired for 'HealthCheck' | RunId=...

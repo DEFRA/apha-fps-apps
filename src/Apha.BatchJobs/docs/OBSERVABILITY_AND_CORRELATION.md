@@ -15,7 +15,7 @@ These fields enable querying any run end-to-end by RunId alone:
 | `RunId` | string | `a1b2c3d4e5f6` | ✅ Always |
 | `JobName` | string | `ImportSalesOrders` | ✅ Always |
 | `ExecutionId` | int | `12345` | ✅ After DB record created |
-| `RunMode` | string | `Scheduled` or `AdHoc` | ✅ Always |
+| `RunMode` | string | `Scheduled` or `Manual` | ✅ Always |
 | `Attempt` | int | `1`, `2`, `3` | ✅ In retry loops |
 | `Status` | string | `Running`, `Completed`, `Failed`, `Cancelled` | ✅ On status change |
 

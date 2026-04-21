@@ -35,7 +35,7 @@ public sealed class JobTriggerService : IJobTriggerService
                     operationId,
                     jobName);
 
-                var result = await orchestrator.RunAsync(jobName, RunMode.AdHoc, CancellationToken.None);
+                var result = await orchestrator.RunAsync(jobName, RunMode.Manual, CancellationToken.None);
 
                 _logger.LogInformation(
                     "Accepted trigger finished | OperationId={OperationId} | JobName={JobName} | Status={Status} | RunId={RunId}",
