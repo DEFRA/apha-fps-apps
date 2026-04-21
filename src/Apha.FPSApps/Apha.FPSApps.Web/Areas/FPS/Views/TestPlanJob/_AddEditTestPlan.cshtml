@@ -1,0 +1,114 @@
+@model Apha.FPSApps.Web.Areas.FPS.Models.TestPlanItem
+@{
+    var isEdit = Model.IsEdit;
+    var title = isEdit ? "Update Test Plan Item" : "Add Test Plan Item";
+    var formId = isEdit ? "formEditTestPlan" : "formAddTestPlan";
+    var saveLabel = isEdit ? "Update" : "Save";
+    var saveAction = isEdit ? "updateTestPlan()" : "saveTestPlan()";
+}
+
+<div class="modal-header flex-space-center">
+    <h3 class="modal-title" style="margin: 0;" id="testPlanModalLabel">@title</h3>
+    <button type="button" class="btn-close btn-red" onclick="closeModal()">X</button>
+</div>
+<div class="modal-body" style="padding-top: 5px;">
+    <div asp-validation-summary="ModelOnly" class="govuk-error-summary" role="alert"
+         aria-labelledby="tp-error-summary-title" tabindex="-1" style="display:none;">
+        <h2 class="govuk-error-summary__title" id="tp-error-summary-title">
+            There is a problem
+        </h2>
+        <div class="govuk-error-summary__body">
+            <ul class="govuk-list govuk-error-summary__list">
+            </ul>
+        </div>
+    </div>
+    <form class="row" id="@formId">
+        <input type="hidden" asp-for="IsEdit" />
+        <input type="hidden" asp-for="Active" />
+        <input type="hidden" asp-for="ProjectBuyerCode" />
+        @if (isEdit)
+        {
+            <input type="hidden" asp-for="TestCode" />
+            <input type="hidden" asp-for="Buyer" />
+        }
+
+        @if (!isEdit)
+        {
+            <!-- Test Code (editable only on add) -->
+            <div class="col-12">
+                <div class="govuk-form-group sup_margin_0">
+                    <label for="TestCode" class="govuk-label p-0">Test Code <span class="sup_color_red">*</span></label>
+                    <select id="TestCode" name="TestCode" required class="govuk-select" style="width:100%;"
+                            onchange="onTestCodeSelected(this)">
+                        <option value="">-- Select Test Code --</option>
+                        @foreach (var option in Model.TestCodeOptions)
+                        {
+                            <option value="@option.Value" data-description="@option.Text" selected="@(option.Selected ? "selected" : null)">@option.Value</option>
+                        }
+                    </select>
+                    <span asp-validation-for="TestCode" class="govuk-error-message" style="display:none;"></span>
+                </div>
+            </div>
+        }
+        else
+        {
+            <!-- Test Code (read-only on edit) -->
+            <div class="col-12">
+                <div class="govuk-form-group sup_margin_0">
+                    <label class="govuk-label p-0">Test Code</label>
+                    <input type="text" class="govuk-input" value="@Model.TestCode" readonly />
+                </div>
+            </div>
+        }
+
+        <!-- Description (read-only, populated from test code) -->
+        <div class="col-12">
+            <div class="govuk-form-group sup_margin_0">
+                <label for="ItemDescription" class="govuk-label">Description</label>
+                <input type="text" class="govuk-input" id="ItemDescription" value="@Model.ItemDescription" readonly />
+            </div>
+        </div>
+
+        <!-- Recommended Unit Price (read-only) -->
+        <div class="col-12">
+            <div class="govuk-form-group sup_margin_0">
+                <label for="RecUnitPrice" class="govuk-label">Rec Unit Price</label>
+                <input type="number" step="0.01" class="govuk-input" id="RecUnitPrice"
+                       value="@(Model.RecUnitPrice?.ToString("F2") ?? "0.00")" readonly>
+            </div>
+        </div>
+
+        <!-- No Required -->
+        <div class="col-12">
+            <div class="govuk-form-group sup_margin_0">
+                <label for="NoRequired" class="govuk-label" asp-for="NoRequired">No Required</label>
+                <input type="number" step="0.01" min="0" asp-for="NoRequired" class="govuk-input" id="NoRequired"
+                       onchange="calculateTestCost()">
+                <span asp-validation-for="NoRequired" class="govuk-error-message" style="display:none;"></span>
+            </div>
+        </div>
+
+        <!-- Unit Price -->
+        <div class="col-12">
+            <div class="govuk-form-group sup_margin_0">
+                <label for="UnitPrice" class="govuk-label" asp-for="UnitPrice">Agreed Unit Price</label>
+                <input type="number" step="0.01" min="0" asp-for="UnitPrice" class="govuk-input" id="UnitPrice"
+                       onchange="calculateTestCost()">
+                <span asp-validation-for="UnitPrice" class="govuk-error-message" style="display:none;"></span>
+            </div>
+        </div>        
+
+        <!-- Total Cost (calculated, read-only) -->
+        <div class="col-12">
+            <div class="govuk-form-group sup_margin_0">
+                <label for="TotalCost" class="govuk-label">Total Cost</label>
+                <input type="number" step="0.01" class="govuk-input" id="TotalCost" readonly
+                       value="@(((Model.UnitPrice ?? 0) * (decimal)(Model.NoRequired ?? 0)).ToString("F2"))">
+            </div>
+        </div>
+    </form>
+</div>
+<div class="modal-footer">
+    <button class="govuk-button govuk-button--secondary sup_margin_0" data-module="govuk-button" onclick="closeModal()">Cancel</button>
+    <button class="govuk-button sup_margin_0" data-module="govuk-button" onclick="@saveAction">@saveLabel</button>
+</div>

@@ -3,6 +3,7 @@ namespace Apha.PACT.Core.Entities
     public class TestRequirementDetail
     {
         public string TestCode { get; set; } = null!;
+        public string? ItemDescription { get; set; }
         public string Buyer { get; set; } = null!;
         public decimal? UnitPrice { get; set; }
         public double? NoRequired { get; set; }
