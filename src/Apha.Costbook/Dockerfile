@@ -10,7 +10,13 @@ LABEL uk.gov.defra.parent-image=defra-dotnetcore-development:${PARENT_VERSION}
 
 WORKDIR /home/dotnet/src
 
-COPY --chown=dotnet:dotnet src/. .
+# COPY --chown=dotnet:dotnet src/. .
+# Copy with no write permissions at copy time (444 for all),
+# then fix dir execute bit — SonarCloud sees no write bits at any layer
+COPY --chown=dotnet:dotnet --chmod=444 src/ .
+
+# Fix directory execute permissions (dirs need +x to be traversable)
+RUN find . -type d -exec chmod 555 {} \;
 
 # Restore, build and publish the Web project
 RUN dotnet restore ./Apha.Costbook/Apha.Costbook.Api/Apha.Costbook.Api.csproj
