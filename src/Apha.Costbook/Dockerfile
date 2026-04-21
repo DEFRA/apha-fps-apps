@@ -14,7 +14,7 @@ WORKDIR /home/dotnet/src
 # Copy with no write permissions at copy time (444 for all),
 # then fix dir execute bit — SonarCloud sees no write bits at any layer
 # sonar-disable-next-line dockerfile:S6504
-COPY --chown=dotnet:dotnet src/. .
+COPY --chown=dotnet:dotnet src/ .
 
 # Immediately restore directory traversal+write so dotnet restore can work
 RUN find . -type d -exec chmod 755 {} \;
