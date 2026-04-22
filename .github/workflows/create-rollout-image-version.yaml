@@ -150,12 +150,62 @@ jobs:
           fi
           echo "All provided version inputs are valid."
 
+  # ── Check ECR image tags do not already exist (ECR images are immutable) ─────
+  check-ecr-tags:
+    needs: validate-inputs
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      AWS_ENV_REGION: ${{ secrets.AWS_ENV_REGION }}
+      AWS_ENV_ACCOUNT: ${{ secrets.AWS_ENV_ACCOUNT }}
+      AWS_ENV_ROLE: ${{ secrets.AWS_ENV_ROLE }}
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ secrets.AWS_ENV_REGION }}
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ENV_ACCOUNT }}:role/${{ secrets.AWS_ENV_ROLE }}
+
+      - name: Check ECR tags are not already in use
+        shell: bash
+        env:
+          FPSAPPS_VERSION: ${{ github.event.inputs.FPSAPPS_VERSION }}
+          FPS_VERSION: ${{ github.event.inputs.FPS_VERSION }}
+          COSTBOOK_VERSION: ${{ github.event.inputs.COSTBOOK_VERSION }}
+          PACT_VERSION: ${{ github.event.inputs.PACT_VERSION }}
+          PIMS_VERSION: ${{ github.event.inputs.PIMS_VERSION }}
+        run: |
+          errors=0
+          check_ecr() {
+            local repo="$1"
+            local version="$2"
+            local tag="v${version}"
+            if aws ecr describe-images --repository-name "$repo" --image-ids imageTag="$tag" > /dev/null 2>&1; then
+              echo "ERROR: ECR image ${repo}:${tag} already exists. ECR images are immutable — cannot overwrite."
+              errors=$((errors + 1))
+            else
+              echo "OK: ${repo}:${tag} does not exist in ECR."
+            fi
+          }
+          [ -n "$FPSAPPS_VERSION" ]  && check_ecr "apha/fpsapps"  "$FPSAPPS_VERSION"
+          [ -n "$FPS_VERSION" ]       && check_ecr "apha/fps"       "$FPS_VERSION"
+          [ -n "$COSTBOOK_VERSION" ]  && check_ecr "apha/costbook"  "$COSTBOOK_VERSION"
+          [ -n "$PACT_VERSION" ]      && check_ecr "apha/pact"      "$PACT_VERSION"
+          [ -n "$PIMS_VERSION" ]      && check_ecr "apha/pims"      "$PIMS_VERSION"
+          if [ $errors -gt 0 ]; then
+            echo "One or more image tags already exist in ECR. Aborting — update the version(s) and retry."
+            exit 1
+          fi
+          echo "All image tags are available in ECR."
+
   # ── Approval gate ─────────────────────────────────────────────────────────────
   # Pauses here and notifies reviewers. Reviewer can check the validate-inputs
   # job log to see current versions before approving.
   await-approval:
-    needs: validate-inputs
-    if: needs.validate-inputs.outputs.needs_approval == 'true'
+    needs: [validate-inputs, check-ecr-tags]
+    if: needs.validate-inputs.outputs.needs_approval == 'true' && needs.check-ecr-tags.result == 'success'
     runs-on: ubuntu-latest
     environment: rollout-approval   # requires reviewers configured in repo Settings → Environments
     permissions: {}
@@ -165,8 +215,8 @@ jobs:
 
   # ── FPSApps Web ──────────────────────────────────────────────────────────────
   build-sonar-fpsapps:
-    needs: [validate-inputs, await-approval]
-    if: always() && needs.validate-inputs.result == 'success' && (needs.await-approval.result == 'success' || needs.await-approval.result == 'skipped') && github.event.inputs.FPSAPPS_VERSION != ''
+    needs: [validate-inputs, check-ecr-tags, await-approval]
+    if: always() && needs.validate-inputs.result == 'success' && needs.check-ecr-tags.result == 'success' && (needs.await-approval.result == 'success' || needs.await-approval.result == 'skipped') && github.event.inputs.FPSAPPS_VERSION != ''
     uses: ./.github/workflows/build-and-sonar-analyze-template.yaml
     with:
       dotnet_application_solution_name: Apha.FPSApps
@@ -203,8 +253,8 @@ jobs:
 
   # ── FPS API ───────────────────────────────────────────────────────────────────
   build-sonar-fps:
-    needs: [validate-inputs, await-approval]
-    if: always() && needs.validate-inputs.result == 'success' && (needs.await-approval.result == 'success' || needs.await-approval.result == 'skipped') && github.event.inputs.FPS_VERSION != ''
+    needs: [validate-inputs, check-ecr-tags, await-approval]
+    if: always() && needs.validate-inputs.result == 'success' && needs.check-ecr-tags.result == 'success' && (needs.await-approval.result == 'success' || needs.await-approval.result == 'skipped') && github.event.inputs.FPS_VERSION != ''
     uses: ./.github/workflows/build-and-sonar-analyze-template.yaml
     with:
       dotnet_application_solution_name: Apha.FPS
@@ -241,8 +291,8 @@ jobs:
 
   # ── Costbook API ──────────────────────────────────────────────────────────────
   build-sonar-costbook:
-    needs: [validate-inputs, await-approval]
-    if: always() && needs.validate-inputs.result == 'success' && (needs.await-approval.result == 'success' || needs.await-approval.result == 'skipped') && github.event.inputs.COSTBOOK_VERSION != ''
+    needs: [validate-inputs, check-ecr-tags, await-approval]
+    if: always() && needs.validate-inputs.result == 'success' && needs.check-ecr-tags.result == 'success' && (needs.await-approval.result == 'success' || needs.await-approval.result == 'skipped') && github.event.inputs.COSTBOOK_VERSION != ''
     uses: ./.github/workflows/build-and-sonar-analyze-template.yaml
     with:
       dotnet_application_solution_name: Apha.Costbook
@@ -279,8 +329,8 @@ jobs:
 
   # ── PACT API ──────────────────────────────────────────────────────────────────
   build-sonar-pact:
-    needs: [validate-inputs, await-approval]
-    if: always() && needs.validate-inputs.result == 'success' && (needs.await-approval.result == 'success' || needs.await-approval.result == 'skipped') && github.event.inputs.PACT_VERSION != ''
+    needs: [validate-inputs, check-ecr-tags, await-approval]
+    if: always() && needs.validate-inputs.result == 'success' && needs.check-ecr-tags.result == 'success' && (needs.await-approval.result == 'success' || needs.await-approval.result == 'skipped') && github.event.inputs.PACT_VERSION != ''
     uses: ./.github/workflows/build-and-sonar-analyze-template.yaml
     with:
       dotnet_application_solution_name: Apha.PACT
@@ -317,8 +367,8 @@ jobs:
 
   # ── PIMS API ──────────────────────────────────────────────────────────────────
   build-sonar-pims:
-    needs: [validate-inputs, await-approval]
-    if: always() && needs.validate-inputs.result == 'success' && (needs.await-approval.result == 'success' || needs.await-approval.result == 'skipped') && github.event.inputs.PIMS_VERSION != ''
+    needs: [validate-inputs, check-ecr-tags, await-approval]
+    if: always() && needs.validate-inputs.result == 'success' && needs.check-ecr-tags.result == 'success' && (needs.await-approval.result == 'success' || needs.await-approval.result == 'skipped') && github.event.inputs.PIMS_VERSION != ''
     uses: ./.github/workflows/build-and-sonar-analyze-template.yaml
     with:
       dotnet_application_solution_name: Apha.PIMS
