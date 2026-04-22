@@ -81,10 +81,10 @@ jobs:
             fi
 
             sha="${GITHUB_SHA::8}"
-            image_tag="${app_name}-v${app_version}-dev-${sha}"
+            image_tag="v${app_version}-dev-${sha}"
             echo "image_tag = $image_tag"
           else
-            image_tag="${app_name}-v$DEV_IMAGE_VERSION"
+            image_tag="v$DEV_IMAGE_VERSION"
           fi
           echo "image_tag=$image_tag" >> $GITHUB_OUTPUT
       - name: Print Docker image tag

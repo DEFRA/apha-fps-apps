@@ -394,8 +394,9 @@ jobs:
           echo -e "Tag annotation:\n$ANNOTATION"
 
           if git ls-remote --tags origin | grep -q "refs/tags/${GIT_TAG}"; then
-            echo "Tag ${GIT_TAG} already exists. Aborting."
-            exit 1
+            echo "Tag ${GIT_TAG} already exists — deleting and recreating (approved re-release)."
+            git push origin --delete "${GIT_TAG}"
+            git tag -d "${GIT_TAG}" 2>/dev/null || true
           fi
 
           git tag -a "$GIT_TAG" -m "$(echo -e "$ANNOTATION")"
