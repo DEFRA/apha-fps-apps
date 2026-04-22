@@ -1,0 +1,39 @@
+# Version control
+.git/
+.github/
+
+# IDE and editor files
+.vs/
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.rsuser
+*.DotSettings.user
+
+# Build outputs
+**/bin/
+**/obj/
+**/[Ll]og/
+*.log
+
+# Test results
+**/TestResults/
+**/coverage/
+
+# NuGet
+*.nupkg
+*.snupkg
+artifacts/
+
+# Sensitive local config
+**/appsettings.local.json
+
+# Docs and scripts not needed in image
+README.md
+dbscript/
+source/
+
+# Sonar
+.sonarlint/
