@@ -57,25 +57,34 @@ jobs:
         shell: bash
         env:
           DEV_IMAGE_VERSION_RELEASE: ${{ inputs.dev_image_version_release }}
-          DEV_IMAGE_VERSION: ${{ github.event.inputs.DEVIMAGEVERSION }}
+          DEV_IMAGE_VERSION: ${{ inputs.IMAGE_VERSION }}
         run: |
-          if [ "$DEV_IMAGE_VERSION_RELEASE" = "false" ]; then
-             # Fetch tags
-            git fetch --tags
-            # get latest tag
-            latest_tag=$(git describe --tags "$(git rev-list --tags --max-count=1)" 2>/dev/null || echo "")
+          # Derive short app name from repository input (e.g. "apha/fpsapps" -> "fpsapps")
+          app_name="${REPOSITORY##*/}"
 
-            # Default if no tag found
-            if [ -z "$latest_tag" ]; then
-              latest_tag="v0.0.0"
+          if [ "$DEV_IMAGE_VERSION_RELEASE" = "false" ]; then
+            git fetch --tags
+            # Search backwards through rollout-v* tags to find the latest one that
+            # includes this app (handles partial rollouts where not all apps are released)
+            app_version=""
+            for rollout_tag in $(git tag --list "rollout-v*" --sort=-version:refname); do
+              app_version=$(git tag -l --format='%(contents)' "$rollout_tag" | grep "^${app_name}=" | cut -d= -f2)
+              if [ -n "$app_version" ]; then
+                echo "Found version ${app_version} for ${app_name} in ${rollout_tag}"
+                break
+              fi
+            done
+
+            if [ -z "$app_version" ]; then
+              app_version="0.0.0"
+              echo "No rollout tag found for ${app_name}, defaulting to ${app_version}"
             fi
-            echo "Latest Git Tag: $latest_tag"
+
             sha="${GITHUB_SHA::8}"
-            echo "sha = $sha"
-            image_tag="${latest_tag}-dev-${sha}"
+            image_tag="${app_name}-v${app_version}-dev-${sha}"
             echo "image_tag = $image_tag"
           else
-            image_tag="v$DEV_IMAGE_VERSION"
+            image_tag="${app_name}-v$DEV_IMAGE_VERSION"
           fi
           echo "image_tag=$image_tag" >> $GITHUB_OUTPUT
       - name: Print Docker image tag
@@ -200,23 +209,4 @@ jobs:
             echo "| version    | $META_VERSION |"
           } >> $GITHUB_STEP_SUMMARY
 
-
-      - name: Create and push git tag
-        if: ${{ inputs.dev_image_version_release == true }}
-        env:
-          IMAGE_TAG: ${{ steps.imgtag.outputs.image_tag }}
-          TAG_MESSAGE: ${{ inputs.tag_short_description }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          # Create the tag only if it doesn't already exist
-          if git ls-remote --tags origin | grep -q "refs/tags/$IMAGE_TAG"; then
-            echo "Tag $IMAGE_TAG already exists. error..."
-            exit 1
-          else
-            echo "Creating and pushing tag $IMAGE_TAG"
-            git tag -a "$IMAGE_TAG" -m "$TAG_MESSAGE"
-            git push origin "$IMAGE_TAG"
-          fi    
+    
