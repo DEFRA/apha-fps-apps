@@ -176,7 +176,7 @@ function onAnimalTypeSelected(selectElement) {
     $.ajax({
         url: '/FPS/AnimalJob/GetAnimalRate',
         type: 'GET',
-        data: { animalType: animalType },
+        data: { animalType: animalType, jobCode: AnimalJobConfig.getJobCode() },
         success: function (result) {
             rateField.prop('disabled', false);
             rateField.val(result.success ? result.dailyRate.toFixed(2) : '0.00');

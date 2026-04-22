@@ -19,6 +19,7 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         private static ProjectRepository CreateRepository(IEnumerable<Project> projects)
         {
             var mockFPSYearContext = new Mock<IFPSYearContext>();
+            var mockSettingsRepository = new Mock<ISettingsRepository>();
             var mockContext = RepositoryTestHelper.CreateMockDbContext<CostbookDbContext>(mockFPSYearContext.Object);
 
             var projectsMockSet = RepositoryTestHelper.CreateMockDbSet(projects);
@@ -41,7 +42,7 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             // Setup SaveChangesAsync
             RepositoryTestHelper.SetupSaveChanges(mockContext);
 
-            return new ProjectRepository(mockContext.Object);
+            return new ProjectRepository(mockContext.Object, mockSettingsRepository.Object);
         }
 
         #region GetPaginatedProjectsAsync

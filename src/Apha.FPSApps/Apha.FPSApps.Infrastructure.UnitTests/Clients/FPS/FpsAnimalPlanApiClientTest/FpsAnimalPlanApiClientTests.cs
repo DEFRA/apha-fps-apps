@@ -166,14 +166,15 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalPlanApiClie
         {
             // Arrange
             var animalType = "Cattle";
+            var jobCode = "JOB001";
             var apiResponse = new ApiResponse<decimal?> { Success = true, Data = 25.50m };
             var expectedDto = ApiResponseDto<decimal?>.SuccessResponse(25.50m);
 
-            _http.GetAsync<decimal?>($"api/v1/animal/rate?animalType={animalType}").Returns(apiResponse);
+            _http.GetAsync<decimal?>($"api/v1/animal/rate?animalType={animalType}&jobCode={jobCode}").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<decimal?>>(apiResponse).Returns(expectedDto);
 
             // Act
-            var result = await _client.GetAnimalRateAsync(animalType);
+            var result = await _client.GetAnimalRateAsync(animalType, jobCode);
 
             // Assert
             Assert.NotNull(result);
@@ -186,6 +187,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalPlanApiClie
         {
             // Arrange
             var animalType = "Cattle";
+            var jobCode = "JOB001";
             var apiResponse = new ApiResponse<decimal?>
             {
                 Success = false,
@@ -198,11 +200,11 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalPlanApiClie
                 Meta = new ApiMetaDto()
             };
 
-            _http.GetAsync<decimal?>($"api/v1/animal/rate?animalType={animalType}").Returns(apiResponse);
+            _http.GetAsync<decimal?>($"api/v1/animal/rate?animalType={animalType}&jobCode={jobCode}").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<decimal?>>(apiResponse).Returns(mappedResponse);
 
             // Act
-            var result = await _client.GetAnimalRateAsync(animalType);
+            var result = await _client.GetAnimalRateAsync(animalType, jobCode);
 
             // Assert
             Assert.NotNull(result);

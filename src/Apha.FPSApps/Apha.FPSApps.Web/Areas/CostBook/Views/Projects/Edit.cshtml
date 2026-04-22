@@ -219,10 +219,10 @@
                                         <input type="checkbox"
                                                id="chkInflation"
                                                name="Inflation"
-                                               value="1"
+                                               value="-1"
                                                 class="govuk-checkboxes__input govuk-!-font-size-16"
                                                style="width:20px; height:20px; cursor:pointer;"
-                                               checked="@(Model.Inflation.HasValue && Model.Inflation.Value != 0)" />
+                                               @(Model.Inflation.HasValue && Model.Inflation.Value == -1 ? "checked=\"checked\"" : "") />
                                               
                                         <input name="Inflation" type="hidden" value="0" />
                                         </div>

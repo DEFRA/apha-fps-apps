@@ -188,6 +188,9 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ProjectCreateEditViewModel viewModel)
         {
+            // Handle unchecked checkbox: null → 0, checked → -1
+            viewModel.Inflation ??= 0;
+
             if (ModelState.IsValid)
             {
                 var projectDto = _mapper.Map<ProjectDto>(viewModel);
@@ -251,11 +254,14 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
             if (decodedId != viewModel.ProjectId)
                 throw new ArgumentException("Project ID mismatch", nameof(id));
 
+            // Handle unchecked checkbox: null → 0, checked → -1
+            viewModel.Inflation ??= 0;
+
             if (ModelState.IsValid)
             {
                 var projectDto = _mapper.Map<ProjectDto>(viewModel);               
-               
-                
+
+
                     var response = await _projectService.UpdateProjectAsync(decodedId, projectDto);
 
                     if (response.Success)
@@ -269,7 +275,7 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
                     {
                         ModelState.AddModelError("", error.Message ?? "Unknown error");
                     }
-                
+
             }
 
             // ❗ IMPORTANT: Re-populate dropdowns when returning view
