@@ -302,7 +302,8 @@ footer {
     display: flex;
     gap: 10px;
     margin-bottom: 20px;
-	justify-content: flex-end;
+    width: 75%;
+    justify-content: flex-end;
 }
 
 .btn {
@@ -1745,4 +1746,7 @@ main {
     border-radius: 0 5px 5px 0;
     padding:6px 6px 4px 6px;
     border: 1px solid #919191;
+}
+.margin_left_5 {
+    margin-left: 2px;
 }
