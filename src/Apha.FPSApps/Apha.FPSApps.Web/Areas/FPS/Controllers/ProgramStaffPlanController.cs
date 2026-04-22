@@ -49,7 +49,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var staffCostGrid = new DataGridConfig<StaffJobItemViewModel>
             {
                 GridId = "staffBookedGrid",
-                Title = "Staff Booked",
+                Title = "Staff Plan",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 AllowAdd = true,
@@ -59,7 +59,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 EditFunction = "editStaffJob",
                 DeleteFunction = "deleteStaffJob",
                 ExtraFilterMethod = "getStaffJobExtraFilters",
-                BindGridUrl = "/FPS/StaffJob/LoadStaffJobGrid",
+                BindGridUrl = $"/FPS/StaffJob/LoadStaffJobGrid?title={Uri.EscapeDataString("Staff Plan")}",                
                 Data = new List<StaffJobItemViewModel>(),
                 Columns = GridDataProvider.GetColumnsDefination<StaffJobItemViewModel>(),
                 Pagination = new PaginationModel()

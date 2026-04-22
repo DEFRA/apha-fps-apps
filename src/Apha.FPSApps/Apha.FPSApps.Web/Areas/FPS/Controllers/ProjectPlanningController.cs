@@ -151,7 +151,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 EditFunction = "editStaffJob",
                 DeleteFunction = "deleteStaffJob",
                 ExtraFilterMethod = "getStaffJobExtraFilters",
-                BindGridUrl = "/FPS/StaffJob/LoadStaffJobGrid",                
+                BindGridUrl = "/FPS/StaffJob/LoadStaffJobGrid?title=Staff%20Booked",
                 Data = staffJobItems,
                 Columns = GridDataProvider.GetColumnsDefination<StaffJobItemViewModel>(null),
                 Pagination = paginationModel
