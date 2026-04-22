@@ -43,8 +43,6 @@ jobs:
   validate-inputs:
     runs-on: ubuntu-latest
     permissions: {}
-    outputs:
-      needs_approval: ${{ steps.version-check.outputs.needs_approval }}
     steps:
       - name: Checkout to read git tags
         uses: actions/checkout@v4
@@ -64,54 +62,6 @@ jobs:
             echo "========================================"
             git tag -l --format='%(contents)' "$latest_rollout" | grep -E '^(fpsapps|fps|costbook|pact|pims|version)=' || true
             echo "========================================"
-          fi
-      - name: Check for version downgrades or re-releases requiring approval
-        id: version-check
-        shell: bash
-        env:
-          FPSAPPS_VERSION: ${{ github.event.inputs.FPSAPPS_VERSION }}
-          FPS_VERSION: ${{ github.event.inputs.FPS_VERSION }}
-          COSTBOOK_VERSION: ${{ github.event.inputs.COSTBOOK_VERSION }}
-          PACT_VERSION: ${{ github.event.inputs.PACT_VERSION }}
-          PIMS_VERSION: ${{ github.event.inputs.PIMS_VERSION }}
-        run: |
-          latest_rollout=$(git tag --list "rollout-v*" --sort=-version:refname | head -n 1 || echo "")
-          needs_approval=false
-
-          if [ -n "$latest_rollout" ]; then
-            # Returns 0 (true) if new_ver is less than or equal to current
-            is_not_increment() {
-              local app="$1"
-              local new_ver="$2"
-              local current
-              current=$(git tag -l --format='%(contents)' "$latest_rollout" | grep "^${app}=" | cut -d= -f2)
-              [ -z "$current" ] && return 1   # app not in previous rollout
-              if [ "$new_ver" = "$current" ]; then
-                echo "APPROVAL NEEDED: $app $new_ver is same as current ($current)"
-                return 0
-              fi
-              local higher
-              higher=$(printf '%s\n%s\n' "$current" "$new_ver" | sort -V | tail -n 1)
-              if [ "$higher" != "$new_ver" ]; then
-                echo "APPROVAL NEEDED: $app $new_ver is a downgrade from current ($current)"
-                return 0
-              fi
-              echo "OK: $app $current -> $new_ver"
-              return 1
-            }
-
-            [ -n "$FPSAPPS_VERSION" ] && is_not_increment "fpsapps"  "$FPSAPPS_VERSION" && needs_approval=true
-            [ -n "$FPS_VERSION" ]      && is_not_increment "fps"       "$FPS_VERSION"      && needs_approval=true
-            [ -n "$COSTBOOK_VERSION" ] && is_not_increment "costbook" "$COSTBOOK_VERSION" && needs_approval=true
-            [ -n "$PACT_VERSION" ]     && is_not_increment "pact"      "$PACT_VERSION"     && needs_approval=true
-            [ -n "$PIMS_VERSION" ]     && is_not_increment "pims"      "$PIMS_VERSION"     && needs_approval=true
-          fi
-
-          echo "needs_approval=$needs_approval" >> $GITHUB_OUTPUT
-          if [ "$needs_approval" = "true" ]; then
-            echo "One or more versions are a downgrade or re-release — awaiting reviewer approval."
-          else
-            echo "All versions are forward increments — no approval required."
           fi
       - name: Validate semver format (major.minor.patch) for all provided versions
         shell: bash
@@ -149,6 +99,18 @@ jobs:
             exit 1
           fi
           echo "All provided version inputs are valid."
+
+      - name: Check rollout git tag does not already exist
+        shell: bash
+        env:
+          ROLLOUT_VERSION: ${{ github.event.inputs.ROLLOUT_VERSION }}
+        run: |
+          GIT_TAG="rollout-v${ROLLOUT_VERSION}"
+          if git ls-remote --tags origin | grep -q "refs/tags/${GIT_TAG}"; then
+            echo "ERROR: Git tag '${GIT_TAG}' already exists. Rollout versions are immutable — choose a new ROLLOUT_VERSION."
+            exit 1
+          fi
+          echo "OK: Rollout tag ${GIT_TAG} is available."
 
   # ── Check ECR image tags do not already exist (ECR images are immutable) ─────
   check-ecr-tags:
@@ -200,23 +162,10 @@ jobs:
           fi
           echo "All image tags are available in ECR."
 
-  # ── Approval gate ─────────────────────────────────────────────────────────────
-  # Pauses here and notifies reviewers. Reviewer can check the validate-inputs
-  # job log to see current versions before approving.
-  await-approval:
-    needs: [validate-inputs, check-ecr-tags]
-    if: needs.validate-inputs.outputs.needs_approval == 'true' && needs.check-ecr-tags.result == 'success'
-    runs-on: ubuntu-latest
-    environment: rollout-approval   # requires reviewers configured in repo Settings → Environments
-    permissions: {}
-    steps:
-      - name: Approval granted — proceeding with rollout
-        run: echo "Rollout approved. Starting builds."
-
   # ── FPSApps Web ──────────────────────────────────────────────────────────────
   build-sonar-fpsapps:
-    needs: [validate-inputs, check-ecr-tags, await-approval]
-    if: always() && needs.validate-inputs.result == 'success' && needs.check-ecr-tags.result == 'success' && (needs.await-approval.result == 'success' || needs.await-approval.result == 'skipped') && github.event.inputs.FPSAPPS_VERSION != ''
+    needs: [validate-inputs, check-ecr-tags]
+    if: needs.validate-inputs.result == 'success' && needs.check-ecr-tags.result == 'success' && github.event.inputs.FPSAPPS_VERSION != ''
     uses: ./.github/workflows/build-and-sonar-analyze-template.yaml
     with:
       dotnet_application_solution_name: Apha.FPSApps
@@ -253,8 +202,8 @@ jobs:
 
   # ── FPS API ───────────────────────────────────────────────────────────────────
   build-sonar-fps:
-    needs: [validate-inputs, check-ecr-tags, await-approval]
-    if: always() && needs.validate-inputs.result == 'success' && needs.check-ecr-tags.result == 'success' && (needs.await-approval.result == 'success' || needs.await-approval.result == 'skipped') && github.event.inputs.FPS_VERSION != ''
+    needs: [validate-inputs, check-ecr-tags]
+    if: needs.validate-inputs.result == 'success' && needs.check-ecr-tags.result == 'success' && github.event.inputs.FPS_VERSION != ''
     uses: ./.github/workflows/build-and-sonar-analyze-template.yaml
     with:
       dotnet_application_solution_name: Apha.FPS
@@ -291,8 +240,8 @@ jobs:
 
   # ── Costbook API ──────────────────────────────────────────────────────────────
   build-sonar-costbook:
-    needs: [validate-inputs, check-ecr-tags, await-approval]
-    if: always() && needs.validate-inputs.result == 'success' && needs.check-ecr-tags.result == 'success' && (needs.await-approval.result == 'success' || needs.await-approval.result == 'skipped') && github.event.inputs.COSTBOOK_VERSION != ''
+    needs: [validate-inputs, check-ecr-tags]
+    if: needs.validate-inputs.result == 'success' && needs.check-ecr-tags.result == 'success' && github.event.inputs.COSTBOOK_VERSION != ''
     uses: ./.github/workflows/build-and-sonar-analyze-template.yaml
     with:
       dotnet_application_solution_name: Apha.Costbook
@@ -329,8 +278,8 @@ jobs:
 
   # ── PACT API ──────────────────────────────────────────────────────────────────
   build-sonar-pact:
-    needs: [validate-inputs, check-ecr-tags, await-approval]
-    if: always() && needs.validate-inputs.result == 'success' && needs.check-ecr-tags.result == 'success' && (needs.await-approval.result == 'success' || needs.await-approval.result == 'skipped') && github.event.inputs.PACT_VERSION != ''
+    needs: [validate-inputs, check-ecr-tags]
+    if: needs.validate-inputs.result == 'success' && needs.check-ecr-tags.result == 'success' && github.event.inputs.PACT_VERSION != ''
     uses: ./.github/workflows/build-and-sonar-analyze-template.yaml
     with:
       dotnet_application_solution_name: Apha.PACT
@@ -367,8 +316,8 @@ jobs:
 
   # ── PIMS API ──────────────────────────────────────────────────────────────────
   build-sonar-pims:
-    needs: [validate-inputs, check-ecr-tags, await-approval]
-    if: always() && needs.validate-inputs.result == 'success' && needs.check-ecr-tags.result == 'success' && (needs.await-approval.result == 'success' || needs.await-approval.result == 'skipped') && github.event.inputs.PIMS_VERSION != ''
+    needs: [validate-inputs, check-ecr-tags]
+    if: needs.validate-inputs.result == 'success' && needs.check-ecr-tags.result == 'success' && github.event.inputs.PIMS_VERSION != ''
     uses: ./.github/workflows/build-and-sonar-analyze-template.yaml
     with:
       dotnet_application_solution_name: Apha.PIMS
@@ -442,12 +391,6 @@ jobs:
 
           echo "Creating rollout tag: $GIT_TAG"
           echo -e "Tag annotation:\n$ANNOTATION"
-
-          if git ls-remote --tags origin | grep -q "refs/tags/${GIT_TAG}"; then
-            echo "Tag ${GIT_TAG} already exists — deleting and recreating (approved re-release)."
-            git push origin --delete "${GIT_TAG}"
-            git tag -d "${GIT_TAG}" 2>/dev/null || true
-          fi
 
           git tag -a "$GIT_TAG" -m "$(echo -e "$ANNOTATION")"
           git push origin "$GIT_TAG"
