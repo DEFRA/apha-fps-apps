@@ -185,7 +185,7 @@ jobs:
 
   push-fpsapps:
     needs: build-sonar-fpsapps
-    if: ${{ github.event.inputs.FPSAPPS_VERSION != '' && needs.build-sonar-fpsapps.result == 'success' }}
+    if: always() && needs.build-sonar-fpsapps.result == 'success' && github.event.inputs.FPSAPPS_VERSION != ''
     uses: ./.github/workflows/push-image-template.yaml
     with:
       IMAGE_VERSION: ${{ github.event.inputs.FPSAPPS_VERSION }}
@@ -223,7 +223,7 @@ jobs:
 
   push-fps:
     needs: build-sonar-fps
-    if: ${{ github.event.inputs.FPS_VERSION != '' && needs.build-sonar-fps.result == 'success' }}
+    if: always() && needs.build-sonar-fps.result == 'success' && github.event.inputs.FPS_VERSION != ''
     uses: ./.github/workflows/push-image-template.yaml
     with:
       IMAGE_VERSION: ${{ github.event.inputs.FPS_VERSION }}
@@ -261,7 +261,7 @@ jobs:
 
   push-costbook:
     needs: build-sonar-costbook
-    if: ${{ github.event.inputs.COSTBOOK_VERSION != '' && needs.build-sonar-costbook.result == 'success' }}
+    if: always() && needs.build-sonar-costbook.result == 'success' && github.event.inputs.COSTBOOK_VERSION != ''
     uses: ./.github/workflows/push-image-template.yaml
     with:
       IMAGE_VERSION: ${{ github.event.inputs.COSTBOOK_VERSION }}
@@ -299,7 +299,7 @@ jobs:
 
   push-pact:
     needs: build-sonar-pact
-    if: ${{ github.event.inputs.PACT_VERSION != '' && needs.build-sonar-pact.result == 'success' }}
+    if: always() && needs.build-sonar-pact.result == 'success' && github.event.inputs.PACT_VERSION != ''
     uses: ./.github/workflows/push-image-template.yaml
     with:
       IMAGE_VERSION: ${{ github.event.inputs.PACT_VERSION }}
@@ -337,7 +337,7 @@ jobs:
 
   push-pims:
     needs: build-sonar-pims
-    if: ${{ github.event.inputs.PIMS_VERSION != '' && needs.build-sonar-pims.result == 'success' }}
+    if: always() && needs.build-sonar-pims.result == 'success' && github.event.inputs.PIMS_VERSION != ''
     uses: ./.github/workflows/push-image-template.yaml
     with:
       IMAGE_VERSION: ${{ github.event.inputs.PIMS_VERSION }}
