@@ -126,7 +126,7 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
                 return new DataGridConfig<ProjectItemViewModel>
                 {
                     GridId = "projectGrid",
-                    Title = "Choose Existing Project",
+                    //Title = "Choose Existing Project",
                     ShowCheckboxColumn = false,
                     ShowPagination = true,
                     KeyProperty = "ProjectId",
