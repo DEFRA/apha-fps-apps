@@ -99,5 +99,11 @@ namespace Apha.PIMS.Application.Services
         {
             return await _repository.DeleteAsync(commentno);
         }
+
+        public async Task<IEnumerable<CommentTopicDto>> GetCommentTopicsAsync()
+        {
+            var topics = await _repository.GetCommentTopicsAsync();
+            return _mapper.Map<IEnumerable<CommentTopicDto>>(topics);
+        }
     }
 }

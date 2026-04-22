@@ -21,8 +21,8 @@ namespace Apha.FPSApps.Application.Services.FPS
         public async Task<ApiResponseDto<List<AnimalDto>>> GetAnimalLookupAsync()
             => await _fpsClient.FpsAnimalPlan.GetAnimalLookupAsync();
 
-        public async Task<ApiResponseDto<decimal?>> GetAnimalRateAsync(string animalType)
-            => await _fpsClient.FpsAnimalPlan.GetAnimalRateAsync(animalType);
+        public async Task<ApiResponseDto<decimal?>> GetAnimalRateAsync(string animalType, string jobCode)
+            => await _fpsClient.FpsAnimalPlan.GetAnimalRateAsync(animalType, jobCode);
 
         public async Task<ApiResponseDto<AnimalRequestDto>> CreateAnimalCostAsync(AnimalRequestDto animalRequest)
             => await _fpsClient.FpsAnimalPlan.CreateAnimalCostAsync(animalRequest);

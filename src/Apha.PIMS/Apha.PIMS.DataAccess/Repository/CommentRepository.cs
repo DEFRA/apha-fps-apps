@@ -70,6 +70,11 @@ namespace Apha.PIMS.DataAccess.Repository
             return true;
         }
 
+        public async Task<IEnumerable<CommentTopic>> GetCommentTopicsAsync()
+        { 
+            return await _dbContext.CommentTopics.ToListAsync();
+        }
+
         private static IQueryable ApplySorting(IQueryable<Comment> query, string? sortBy, bool descending)
         {
             if (string.IsNullOrEmpty(sortBy))

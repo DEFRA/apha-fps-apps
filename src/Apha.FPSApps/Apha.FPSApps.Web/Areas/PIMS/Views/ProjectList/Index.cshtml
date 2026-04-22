@@ -18,35 +18,40 @@
         <main class="main-content" style="padding: 0;">
             <div class="container-fluid" style="padding: 0;">
                 <div class="col-12">
-                    <div class="align-items-start m-10" id="search-grid">
+                    <div class="align-items-start m-10">
 
                         <div class="search-panel">
-                            <div class="grid-header">
-                                <div class="row">
-                                    <div class="col-lg-7 align-items-center">
-                                        <div class="govuk-radios govuk-radios--inline govuk-radios--small" data-module="govuk-radios">
-                                            <div class="govuk-radios__item">
-                                                <input class="govuk-radios__input"
-                                                       type="radio"
-                                                       name="projectFilter"
-                                                       id="rdactive"
-                                                       value="1"
-                                                @(Model.FilterOption == 1 ? "checked" : "")
-                                                       onchange="applyProjectFilter()" />
-                                                <label class="govuk-label govuk-radios__label" for="rdactive">Active</label>
-                                            </div>
-                                            <div class="govuk-radios__item">
-                                                <input class="govuk-radios__input"
-                                                       type="radio"
-                                                       name="projectFilter"
-                                                       id="rdall"
-                                                       value="2"
-                                                @(Model.FilterOption == 2 ? "checked" : "")
-                                                       onchange="applyProjectFilter()" />
-                                                <label class="govuk-label govuk-radios__label" for="rdall">All</label>
-                                            </div>
+                            <div class="govuk-grid-column-full display-flex justify-content-between">
+                                <div>
+                                </div>
+                                <div>
+                                    <div class="govuk-radios govuk-radios--inline govuk-radios govuk-radios--small" data-module="govuk-radios">
+                                        <div class="govuk-radios__item">
+                                            <input class="govuk-radios__input"
+                                                   type="radio"
+                                                   name="projectFilter"
+                                                   id="rdactive"
+                                                   value="1"
+                                            @(Model.FilterOption == 1 ? "checked" : "")
+                                                   onchange="applyProjectFilter()" />
+                                            <label class="govuk-label govuk-radios__label" for="rdactive">Active</label>
+                                        </div>
+                                        <div class="govuk-radios__item">
+                                            <input class="govuk-radios__input"
+                                                   type="radio"
+                                                   name="projectFilter"
+                                                   id="rdall"
+                                                   value="2"
+                                            @(Model.FilterOption == 2 ? "checked" : "")
+                                                   onchange="applyProjectFilter()" />
+                                            <label class="govuk-label govuk-radios__label" for="rdall">All</label>
                                         </div>
                                     </div>
+                                </div>
+                                <div class="govuk-!-margin-right-10">
+                                    <button class="govuk-button sup_margin_0" id="addBtn">
+                                        + &nbsp;New project
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -105,7 +110,7 @@
             });
         }
 
-        function editProject(btn) {
+        function viewProject(btn) {
             var parentproject = $(btn).data('id');
             window.location.href = '/PIMS/ProjectDetails/Index?parentproject=' + encodeURIComponent(parentproject);
         }

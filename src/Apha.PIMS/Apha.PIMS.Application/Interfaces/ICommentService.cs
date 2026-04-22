@@ -13,5 +13,6 @@ namespace Apha.PIMS.Application.Interfaces
         Task<CommentDto> AddAsync(CommentDto dto);
         Task<CommentDto> UpdateAsync(CommentDto dto);
         Task<bool> DeleteAsync(int commentno);
+        Task<IEnumerable<CommentTopicDto>> GetCommentTopicsAsync();
     }
 }

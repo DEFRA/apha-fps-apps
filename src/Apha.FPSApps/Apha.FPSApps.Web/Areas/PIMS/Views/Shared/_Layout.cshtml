@@ -1,4 +1,13 @@
-﻿<!DOCTYPE html>
+﻿@using System.Security.Claims
+@{
+    // Get display name from claims (try multiple claim types)
+    var displayName = User.FindFirst("name")?.Value
+                      ?? User.FindFirst(ClaimTypes.GivenName)?.Value
+                      ?? User.FindFirst(ClaimTypes.Name)?.Value?.Split('@')[0]
+                      ?? "Unknown User";
+   
+}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
@@ -31,8 +40,7 @@
             </div>
 
             <div class="btn-group flex-center font-size-16">
-                @User.Identity?.Name
-
+                @displayName
                 <button type="button"
                         aria-label="User menu — go to home page"
                         class="btn btn-secondary dropdown-toggle user-menu border-0"

@@ -43,9 +43,9 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             return ApiResponseDto<List<AnimalDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
 
-        public async Task<ApiResponseDto<decimal?>> GetAnimalRateAsync(string animalType)
+        public async Task<ApiResponseDto<decimal?>> GetAnimalRateAsync(string animalType, string jobCode)
         {
-            var response = await _http.GetAsync<decimal?>(string.Format(FpsApiEndpoints.GetAnimalRate, animalType));
+            var response = await _http.GetAsync<decimal?>(string.Format(FpsApiEndpoints.GetAnimalRate, Uri.EscapeDataString(animalType), Uri.EscapeDataString(jobCode)));
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<decimal?>>(response);
 
