@@ -30,6 +30,7 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<Workgroup> Workgroups { get; set; }
         public virtual DbSet<WorkgroupGrade> WorkgroupGrades { get; set; }
         public virtual DbSet<ProfitCentreGrade> ProfitcentreGrades { get; set; }
+        public virtual DbSet<DivisionGrade> DivisionGrades { get; set; }
         public virtual DbSet<UserProfitcentre> UserProfitcentres { get; set; }
         public virtual DbSet<ProfitCentre> ProfitCentres { get; set; }
         public virtual DbSet<JobCode> JobCodes { get; set; }
@@ -57,6 +58,8 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<PactWorkGroupGradeView> PactWorkGroupGradeViews { get; set; }
 
         public virtual DbSet<YearMaster> YearMasters { get; set; }
+        public virtual DbSet<Division> Divisions { get; set; }
+        public virtual DbSet<Agency> Agencies { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -1225,6 +1228,57 @@ namespace Apha.FPS.DataAccess.Data
                     .HasMaxLength(10)
                     .HasComment("Lifecycle state: Open (transactions allowed), Closed (read-only), or Planned (configuration only).")
                     .HasColumnName("yearstatus");
+            });
+
+            modelBuilder.Entity<Division>(entity =>
+            {
+                entity.HasKey(e => e.DivName).HasName("pk__tlkpdivision__10566f31");
+
+                entity.ToTable("tlkpdivision", "fps", tb => tb.HasComment("Organizational divisions within agencies for cost allocation and reporting."));
+
+                entity.Property(e => e.DivName)
+                    .HasMaxLength(255)
+                    .HasColumnType("citext")
+                    .HasComment("Division name. Primary key (case-insensitive text).")
+                    .HasColumnName("divname");
+
+                entity.Property(e => e.DivisionId)
+                    .HasComment("Division identifier (regular integer field, not auto-generated).")
+                    .HasColumnName("divisionid");
+
+                entity.Property(e => e.AgencyId)
+                    .HasComment("Parent agency identifier (foreign key to fps.tlkpagency).")
+                    .HasColumnName("agencyid");
+
+                entity.Property(e => e.CentOverhead)
+                    .HasColumnType("money")
+                    .HasDefaultValue(0m)
+                    .HasComment("Central overhead cost allocation.")
+                    .HasColumnName("centoverhead");
+            });
+
+            modelBuilder.Entity<DivisionGrade>(entity =>
+            {
+                entity.HasKey(e => new { e.Division, e.FpsYear }).HasName("pk_divisiongrade");
+
+                entity.ToTable("divisiongrade", "fps", tb => tb.HasComment("Division grade mapping table linking divisions to grade codes."));
+
+                entity.Property(e => e.Division)
+                    .HasMaxLength(255)
+                    .HasComment("Division name (foreign key to fps.tlkpdivision.divname).")
+                    .HasColumnName("division");
+
+                entity.Property(e => e.GradeCode)
+                    .HasMaxLength(50)
+                    .UseCollation(Latin1GeneralCiAs)
+                    .HasComment("Grade code identifier.")
+                    .HasColumnName("gradecode");
+
+                entity.Property(e => e.FpsYear)
+                    .HasComment("Fiscal year.")
+                    .HasColumnName("fpsyear");
+
+                entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
             });
 
         }

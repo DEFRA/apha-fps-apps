@@ -1,0 +1,253 @@
+@section Scripts {
+    <script src="~/js/ajax-form-validation.js"></script>
+    <script>
+        console.log('Division Maintenance scripts loaded');
+
+        // Add Division
+        function addDivision(btn) {
+            console.log('addDivision called', btn);
+            $.ajax({
+                url: '@Url.Action("Create", "DivisionMaintenance", new { area = "FPS" })',
+                type: 'GET',
+                success: function (html) {
+                    console.log('Create response received');
+                    $('#modaPopupBody').html(html);
+                    var modal = $('#modalPopup');
+                    modal.css('display', 'flex');
+                    setTimeout(function() {
+                        modal.addClass("show");
+                    }, 10);
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error in addDivision:', error, xhr);
+                    alert('An error occurred while loading the form: ' + error);
+                }
+            });
+        }
+
+        // Save Division (Create) - NO VALIDATION HERE (Add mode has no original name)
+        function saveDivision() {
+            console.log('saveDivision called');
+            clearValidationErrors('#modaPopupBody');
+            var form = $('#addDivisionForm');
+
+            if (!isFormValid(form)) {
+                displayClientValidationErrors(form, '#modaPopupBody');
+                return;
+            }
+
+            var rawCentOverhead = form.find('[name="CentOverhead"]').val();
+            var centOverhead = rawCentOverhead !== '' ? parseFloat(rawCentOverhead) : null;
+
+            var rawDivisionId = form.find('[name="DivisionId"]').val();
+            var divisionId = rawDivisionId !== '' ? parseInt(rawDivisionId) : null;
+
+            var data = {
+                DivisionId: divisionId,
+                DivName: form.find('[name="DivName"]').val(),
+                AgencyId: parseInt(form.find('[name="AgencyId"]').val()),
+                CentOverhead: centOverhead
+            };
+
+            console.log('Saving division data:', data);
+
+            $.ajax({
+                url: '@Url.Action("Create", "DivisionMaintenance", new { area = "FPS" })',
+                type: 'POST',
+                data: JSON.stringify(data),
+                contentType: 'application/json; charset=utf-8',
+                success: function (result) {
+                    console.log('Save result:', result);
+                    if (result.success) {
+                        alert(result.message || 'Division created successfully');
+                        closeModal();
+                        window.location.reload();
+                    } else {
+                        displayServerValidationErrors(result.errors, result.message, '#modaPopupBody')
+                    }
+                },
+                error: function (xhr) {
+                    console.error('Error saving:', xhr);
+                    if (xhr.status === 400 && xhr.responseJSON) {
+                        displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
+                    } else {
+                        alert('An error occurred while saving');
+                    }
+                }
+            });
+        }
+
+        // Update Division (Edit) - VALIDATION HERE
+        function updateDivision() {
+            console.log('updateDivision called');
+            clearValidationErrors('#modaPopupBody');
+            var form = $('#editDivisionForm');
+
+            if (!isFormValid(form)) {
+                displayClientValidationErrors(form, '#modaPopupBody');
+                return;
+            }
+
+            // Get the original DivName from hidden field
+            var originalDivName = $('#originalDivName').val();
+            var newDivName = form.find('[name="DivName"]').val();
+
+            // Validate that DivName has not been changed (primary key cannot be updated)
+            if (originalDivName && originalDivName !== newDivName) {
+                var errorSummary = $('#modaPopupBody').find('.govuk-error-summary');
+                var errorList = errorSummary.find('.govuk-error-summary__list');
+                
+                errorList.empty();
+                errorList.append('<li><a href="#DivName">Division name cannot be updated as it is primary key</a></li>');
+                
+                var divNameGroup = form.find('[name="DivName"]').closest('.govuk-form-group');
+                divNameGroup.addClass('govuk-form-group--error');
+                divNameGroup.find('.govuk-error-message').text('Division name cannot be updated as it is primary key').show();
+                
+                errorSummary.show();
+                console.error('DivName change attempted:', originalDivName, '->', newDivName);
+                return;
+            }
+
+            var rawCentOverhead = form.find('[name="CentOverhead"]').val();
+            var centOverhead = rawCentOverhead !== '' ? parseFloat(rawCentOverhead) : null;
+
+            var rawDivisionId = form.find('[name="DivisionId"]').val();
+            var divisionId = rawDivisionId !== '' ? parseInt(rawDivisionId) : null;
+
+            var data = {
+                DivisionId: divisionId,
+                DivName: newDivName,
+                AgencyId: parseInt(form.find('[name="AgencyId"]').val()),
+                CentOverhead: centOverhead
+            };
+
+            console.log('Updating division data:', data);
+            console.log('Original DivName for API call:', originalDivName);
+
+            $.ajax({
+                url: '@Url.Action("Edit", "DivisionMaintenance", new { area = "FPS" })?originalDivName=' + encodeURIComponent(originalDivName),
+                type: 'POST',
+                data: JSON.stringify(data),
+                contentType: 'application/json; charset=utf-8',
+                success: function (result) {
+                    console.log('Update result:', result);
+                    if (result.success) {
+                        alert(result.message || 'Division updated successfully');
+                        closeModal();
+                        window.location.reload();
+                    } else {
+                        displayServerValidationErrors(result.errors, result.message, '#modaPopupBody')
+                    }
+                },
+                error: function (xhr) {
+                    console.error('Error updating:', xhr);
+                    if (xhr.status === 400 && xhr.responseJSON) {
+                        displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
+                    } else {
+                        alert('An error occurred while updating.');
+                    }
+                }
+            });
+        }
+
+        // Edit Division
+        function editDivision(btn) {
+            console.log('editDivision called with button:', btn);
+            var divName = $(btn).data('id');
+            console.log('Division name:', divName);
+
+            if (!divName) {
+                console.error('No divName found on button');
+                alert('Error: No division name found');
+                return;
+            }
+
+            $.ajax({
+                url: '@Url.Action("Edit", "DivisionMaintenance", new { area = "FPS" })',
+                type: 'GET',
+                data: { divName: divName },
+                success: function (html) {
+                    console.log('Edit response received');
+                    $('#modaPopupBody').html(html);
+                    var modal = $('#modalPopup');
+                    modal.css('display', 'flex');
+                    setTimeout(function() {
+                        modal.addClass("show");
+                    }, 10);
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error in editDivision:', error, xhr);
+                    alert('An error occurred while editing record: ' + error);
+                }
+            });
+        }
+
+        // Delete Division
+        function deleteDivision(btn) {
+            console.log('deleteDivision called with button:', btn);
+            var divName = $(btn).data('id');
+            console.log('Division name:', divName);
+
+            if (confirm('Are you sure you want to delete the division "' + divName + '"?')) {
+                $.ajax({
+                    url: '@Url.Action("Delete", "DivisionMaintenance", new { area = "FPS" })',
+                    type: 'DELETE',
+                    data: { divName: divName },
+                    success: function (response) {
+                        console.log('Delete result:', response);
+                        if (response.success) {
+                            alert(response.message || 'Division deleted successfully');
+                            window.location.reload();
+                        } else {
+                            alert('Error: ' + (response.message || 'Failed to delete division'));
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error deleting:', error, xhr);
+                        alert('An error occurred while deleting');
+                    }
+                });
+            }
+        }
+
+        function closeModal() {
+            console.log('closeModal called');
+            clearValidationErrors('#modaPopupBody');
+            $('#modaPopupBody').html("");
+            var modal = $('#modalPopup');
+            modal.removeClass("show");
+            setTimeout(function() {
+                modal.css('display', 'none');
+            }, 300);
+        }
+
+        function isFormValid(form) {
+            var isValid = true;
+            form.find('[required]').each(function () {
+                if (!$(this).val() || $(this).val().trim() === '') {
+                    isValid = false;
+                    return false;
+                }
+            });
+            return isValid;
+        }
+
+        $(document).ready(function() {
+            console.log('Document ready');
+            console.log('jQuery version:', $.fn.jquery);
+            console.log('Edit function exists:', typeof window.editDivision);
+
+            var editButtons = $('.edit-row-btn');
+            console.log('Edit buttons found:', editButtons.length);
+            if (editButtons.length > 0) {
+                console.log('First edit button data-edit-function:', editButtons.first().data('edit-function'));
+                console.log('First edit button data-id:', editButtons.first().data('id'));
+            }
+        });
+    </script>
+
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

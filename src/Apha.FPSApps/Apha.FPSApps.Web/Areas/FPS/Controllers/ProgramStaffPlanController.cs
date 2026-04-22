@@ -10,8 +10,9 @@ using Microsoft.Identity.Web;
 namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 {
     [Area("FPS")]
-    [Authorize(Roles = "FPSAdmin,FPSUser")]
-    [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")]
+    //[Authorize(Roles = "FPSAdmin,FPSUser")] // COMMENTED OUT FOR LOCAL DEVELOPMENT
+    [AllowAnonymous]
+    //[AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")] // COMMENTED OUT FOR LOCAL DEVELOPMENT
     public class ProgramStaffPlanController : Controller
     {
         private readonly IProgramService _programService;

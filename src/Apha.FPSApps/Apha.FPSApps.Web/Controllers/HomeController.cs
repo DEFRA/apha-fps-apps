@@ -5,7 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Apha.FPSApps.Web.Controllers
 {
-    [Authorize]
+    //[Authorize] // COMMENTED OUT FOR LOCAL DEVELOPMENT
+    [AllowAnonymous]
     public class HomeController : Controller
     {
         public IActionResult Index()

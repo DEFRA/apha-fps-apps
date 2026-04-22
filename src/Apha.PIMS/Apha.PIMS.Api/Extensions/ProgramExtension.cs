@@ -42,7 +42,7 @@ namespace Apha.PIMS.Api.Extensions
             services.AddApplicationServices();
 
             // Authentication
-            services.AddAuthenticationServices(configuration);
+           // services.AddAuthenticationServices(configuration);
 
             // HTTP Context
             services.AddHttpContextAccessor();

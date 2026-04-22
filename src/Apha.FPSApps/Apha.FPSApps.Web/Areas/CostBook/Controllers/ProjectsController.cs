@@ -16,8 +16,9 @@ using System.Web;
 namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
 {
     [Area("CostBook")]
-    [Authorize(Roles = "CostbookAdmin,CostbookUser")]
-    [AuthorizeForScopes(ScopeKeySection = "CostBookApiSettings:Scope")]
+    //[Authorize(Roles = "CostbookAdmin,CostbookUser")] // COMMENTED OUT FOR LOCAL DEVELOPMENT
+    [AllowAnonymous]
+    //[AuthorizeForScopes(ScopeKeySection = "CostBookApiSettings:Scope")] // COMMENTED OUT FOR LOCAL DEVELOPMENT
     public class ProjectsController : Controller
     {
         private readonly ICostBookProjectService _projectService;

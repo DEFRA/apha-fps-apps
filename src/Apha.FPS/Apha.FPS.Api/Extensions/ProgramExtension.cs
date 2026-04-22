@@ -71,7 +71,7 @@ namespace Apha.FPS.Api.Extensions
             services.AddApplicationServices();
 
             // Authentication
-            services.AddAuthenticationServices(configuration);
+           // services.AddAuthenticationServices(configuration);
 
             // HTTP Context
             services.AddHttpContextAccessor();
@@ -131,9 +131,9 @@ namespace Apha.FPS.Api.Extensions
             app.UseStaticFiles();
             app.UseRouting();
 
-            app.UseAuthentication();
+           // app.UseAuthentication();
             app.UseMiddleware<RequestContextMiddleware>();
-            app.UseAuthorization();
+         //   app.UseAuthorization();
 
             // Default route
             app.MapControllers();

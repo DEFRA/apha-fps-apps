@@ -18,18 +18,20 @@ namespace Apha.FPS.Api.Filters
             }
 
             var correlationId = GetCorrelationId(context);
+            var statusCode = objectResult.StatusCode ?? StatusCodes.Status200OK;
+            var isSuccess = statusCode >= 200 && statusCode < 300;
 
             object wrappedResponse = IsPaginatedResult(objectResult.Value)
-                ? CreatePaginatedResponse(objectResult.Value, correlationId)
-                : CreateStandardResponse(objectResult.Value, correlationId);
+                ? CreatePaginatedResponse(objectResult.Value, correlationId, isSuccess)
+                : CreateStandardResponse(objectResult.Value, correlationId, isSuccess);
 
             context.Result = new ObjectResult(wrappedResponse)
             {
-                StatusCode = objectResult.StatusCode ?? StatusCodes.Status200OK
+                StatusCode = statusCode
             };
 
             await next();
-        }  
+        }
 
         private static bool IsPaginatedResult(object value)
         {
@@ -39,24 +41,66 @@ namespace Apha.FPS.Api.Filters
                    type.GetGenericTypeDefinition() == typeof(PaginationRes<>);
         }
 
-        private static object CreateStandardResponse(object value, string correlationId)
+        private static object CreateStandardResponse(object value, string correlationId, bool isSuccess)
         {
+            // Check if the value already has the error response structure (anonymous objects from BadRequest)
+            var valueType = value.GetType();
+            var successProp = valueType.GetProperty("success");
+            var messageProp = valueType.GetProperty("message");
+            var errorsProp = valueType.GetProperty("errors");
+
+            if (successProp != null && messageProp != null && errorsProp != null)
+            {
+                // This is already an error response with success, message, and errors
+                // Wrap it in ApiResponse but preserve the structure
+                dynamic dynValue = value;
+                return new ApiResponse<object>
+                {
+                    Success = dynValue.success,
+                    Data = null,
+                    Errors = ConvertToApiErrors(dynValue.errors),
+                    Meta = new ApiMeta
+                    {
+                        CorrelationId = correlationId,
+                        TimestampUtc = DateTime.UtcNow,
+                        Message = dynValue.message
+                    }
+                };
+            }
+
+            // Standard success response
             return new ApiResponse<object>
             {
-                Success = true,
+                Success = isSuccess,
                 Data = value,
                 Errors = null,
                 Meta = CreateMeta(correlationId)
             };
         }
 
-        private static object CreatePaginatedResponse(object value, string correlationId)
+        private static List<ApiError>? ConvertToApiErrors(dynamic errors)
+        {
+            if (errors == null) return null;
+
+            var errorList = new List<ApiError>();
+            foreach (var error in errors)
+            {
+                errorList.Add(new ApiError
+                {
+                    Code = error.code?.ToString(),
+                    Message = error.message?.ToString()
+                });
+            }
+            return errorList.Count > 0 ? errorList : null;
+        }
+
+        private static object CreatePaginatedResponse(object value, string correlationId, bool isSuccess)
         {
             dynamic paginated = value;
 
             return new ApiResponse<object>
             {
-                Success = true,
+                Success = isSuccess,
                 Data = paginated.Data,
                 Pagination = paginated.PaginationData,
                 Errors = null,

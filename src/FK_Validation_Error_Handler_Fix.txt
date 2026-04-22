@@ -1,0 +1,35 @@
+﻿// CORRECTED saveDivision() error handler - REPLACE LINES 142-149
+error: function (xhr) {
+    console.error('Error saving:', xhr);
+    if (xhr.status === 400 && xhr.responseJSON && xhr.responseJSON.message) {
+        // Show FK validation or business logic error in summary
+        var $container = $('#modaPopupBody');
+        var $summary = $container.find('.govuk-error-summary');
+        $summary.find('.govuk-error-summary__title').text('There is a problem');
+        var $list = $summary.find('.govuk-error-summary__list').empty();
+        $list.append('<li>' + xhr.responseJSON.message + '</li>');
+        $summary.show().focus();
+    } else if (xhr.status === 400 && xhr.responseJSON && xhr.responseJSON.errors) {
+        displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
+    } else {
+        alert('An error occurred while saving the division');
+    }
+}
+
+// CORRECTED updateDivision() error handler - REPLACE LINES 199-206
+error: function (xhr) {
+    console.error('Error updating:', xhr);
+    if (xhr.status === 400 && xhr.responseJSON && xhr.responseJSON.message) {
+        // Show FK validation or business logic error in summary
+        var $container = $('#modaPopupBody');
+        var $summary = $container.find('.govuk-error-summary');
+        $summary.find('.govuk-error-summary__title').text('There is a problem');
+        var $list = $summary.find('.govuk-error-summary__list').empty();
+        $list.append('<li>' + xhr.responseJSON.message + '</li>');
+        $summary.show().focus();
+    } else if (xhr.status === 400 && xhr.responseJSON && xhr.responseJSON.errors) {
+        displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
+    } else {
+        alert('An error occurred while updating the division');
+    }
+}

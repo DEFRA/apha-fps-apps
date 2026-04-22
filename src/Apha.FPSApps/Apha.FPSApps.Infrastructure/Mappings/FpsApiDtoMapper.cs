@@ -49,6 +49,13 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             // YEar Master
             CreateMap<YearMasterDto, YearMasterRes>().ReverseMap();
             CreateMap<YearMasterDto, YearMasterReq>().ReverseMap();
+
+            // Division
+            CreateMap<DivisionDto, DivisionRes>().ReverseMap();
+            CreateMap<DivisionDto, DivisionReq>().ReverseMap();
+
+            // Agency
+            CreateMap<AgencyDto, AgencyRes>().ReverseMap();
         }
     }
 }

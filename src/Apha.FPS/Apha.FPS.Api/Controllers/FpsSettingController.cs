@@ -10,7 +10,8 @@ namespace Apha.FPS.Api.Controllers
     /// <summary>
     /// API controller for managing FPS settings.
     /// </summary>
-    [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
+   // [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
+    [AllowAnonymous]
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/setting")]

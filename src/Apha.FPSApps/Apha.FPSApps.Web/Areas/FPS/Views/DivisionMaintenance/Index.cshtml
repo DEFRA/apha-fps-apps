@@ -1,0 +1,468 @@
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.FPS.Models.DivisionMaintenanceViewModel
+
+@{
+    ViewData["Title"] = "Division Maintenance";
+}
+
+<main id="main-content">
+    <div class="container-fluid">
+        <!-- Breadcrumb section -->
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full">
+                <div style="padding: 5px 5px; border-bottom: 1px solid #b4b4b4" class="row">
+                    <div style="display: flex; font-size: 14px; align-items: center; justify-content: space-between;">
+                        <div class="col-md-6">
+                            <nav aria-label="Breadcrumb">
+                                <a class="" href="@Url.Action("Index", "Home", new { area = "FPS" })">Home</a> &gt; MAB &gt; Maintenance Menu &gt; Maintain Division
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Title section -->
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full">
+                <div class="row" style="display:flex; align-items: center;">
+                    <div class="col-sm-12" style="padding:0px;">
+                        <div style="border-bottom: 2px solid #1d70b8; height:48px;">
+                            <h1 style="padding: 15px 0 5px 17px; font-size:16px; width: 50%; font-weight: 700; float:left; margin: 0;">
+                                Division Maintenance
+                            </h1>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-12">
+                <main class="main-content" style="padding:0;">
+                    <div class="container-fluid" style="padding: 0;">
+                        <div class="row">
+                            <div class="container-fluid" style="padding-left:0px;">
+                                <div style="display: flex; flex-direction: row; align-items: flex-start;">
+                                    <!-- Side nav -->
+                                    @await Html.PartialAsync("_MaintenanceSideNav", "DivisionMaintenance")
+                                    <div style="display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; margin: 0 0px 5px 8px;">
+                                        <!-- DataGrid section -->
+                                        <div class="govuk-grid-row">
+                                            <div class="govuk-grid-column-full mt-2">
+                                                <!-- Grid Container -->
+                                                <div id="@($"gridContainer_{Model.DivisionGrid.GridId}")">
+                                                    @await Html.PartialAsync("_DataGrid", Model.DivisionGrid)
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+</main>
+
+@section Scripts {
+    <script src="~/js/ajax-form-validation.js"></script>
+    <script>
+        // Debug: Check if functions are loaded
+        console.log('Division Maintenance scripts loaded');
+
+        // Function to get current filters from the grid
+        function getCurrentFilters() {
+            var filters = {};
+            $('.grid-filter').each(function () {
+                var filterName = $(this).data('filter');
+                var filterValue = $(this).val();
+                if (filterValue && filterValue.trim() !== '') {
+                    filters[filterName] = filterValue;
+                }
+            });
+            return filters;
+        }
+
+        // Function to get current sort state
+        function getCurrentSort() {
+            var sortColumn = '';
+            var sortDescending = false;
+
+            var $sortedHeader = $('.sortable-header').filter(function() {
+                return $(this).find('.sort-icon').text().trim() !== '';
+            });
+
+            if ($sortedHeader.length > 0) {
+                sortColumn = $sortedHeader.data('column');
+                sortDescending = $sortedHeader.data('sortdir') === 'true';
+            }
+
+            return { column: sortColumn, descending: sortDescending };
+        }
+
+        // Function to refresh grid with current filters and sort
+        function refreshGrid() {
+            var filters = getCurrentFilters();
+            var sort = getCurrentSort();
+            var currentPage = parseInt($('#divisionGrid').data('current-page')) || 1;
+            var pageSize = parseInt($('#divisionGrid').data('page-size')) || 10;
+
+            var requestData = {
+                Page: currentPage,
+                PageSize: pageSize,
+                Filter: JSON.stringify(filters),
+                SortBy: sort.column,
+                Descending: sort.descending
+            };
+
+            console.log('Refreshing grid with filters:', requestData);
+
+            $.ajax({
+                url: '@Url.Action("LoadDivisionGrid", "DivisionMaintenance", new { area = "FPS" })',
+                type: 'POST',
+                data: requestData,
+                success: function (html) {
+                    $('#gridContainer_divisionGrid').html(html);
+                    console.log('Grid refreshed successfully');
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error refreshing grid:', error);
+                    // Fallback to full page reload if AJAX fails
+                    window.location.reload();
+                }
+            });
+        }
+
+        // Function to refresh grid and show newly added record in first row
+        function refreshGridShowNewRecord(newDivName) {
+            // Clear all filters and sort to show the new record
+            var requestData = {
+                Page: 1,  // Go to first page
+                PageSize: parseInt($('#divisionGrid').data('page-size')) || 10,
+                Filter: '{}',  // Clear all filters
+                SortBy: 'DivisionId',  // Sort by DivisionId
+                Descending: true  // Descending to show higher IDs first (assuming new records have higher IDs)
+            };
+
+            console.log('Refreshing grid to show new record:', newDivName, requestData);
+
+            $.ajax({
+                url: '@Url.Action("LoadDivisionGrid", "DivisionMaintenance", new { area = "FPS" })',
+                type: 'POST',
+                data: requestData,
+                success: function (html) {
+                    $('#gridContainer_divisionGrid').html(html);
+                    console.log('Grid refreshed successfully');
+
+                    // Clear filter inputs visually
+                    $('.grid-filter').val('');
+
+                    // Optional: Highlight the new row temporarily
+                    setTimeout(function() {
+                        highlightRow(newDivName);
+                    }, 100);
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error refreshing grid:', error);
+                    // Fallback to full page reload if AJAX fails
+                    window.location.reload();
+                }
+            });
+        }
+
+        // Function to highlight a specific row
+        function highlightRow(divName) {
+            // Find the row with the matching DivName
+            $('table tbody tr').each(function() {
+                var $row = $(this);
+                var rowDivName = $row.find('td:eq(2)').text().trim(); // Assuming DivName is in 3rd column
+
+                if (rowDivName === divName) {
+                    // Add highlight class
+                    $row.css('background-color', '#ffe5b4');
+
+                    // Scroll to the row
+                    $row[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                    // Remove highlight after 3 seconds
+                    setTimeout(function() {
+                        $row.css('background-color', '');
+                    }, 3000);
+
+                    return false; // Break the loop
+                }
+            });
+        }
+
+        // Add Division
+        function addDivision(btn) {
+            console.log('addDivision called', btn);
+            $.ajax({
+                url: '@Url.Action("Create", "DivisionMaintenance", new { area = "FPS" })',
+                type: 'GET',
+                success: function (html) {
+                    console.log('Create response received');
+                    $('#modaPopupBody').html(html);
+                    var modal = $('#modalPopup');
+                    modal.css('display', 'flex');
+                    setTimeout(function() {
+                        modal.addClass("show");
+                    }, 10);
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error in addDivision:', error, xhr);
+                    alert('An error occurred while loading the form: ' + error);
+                }
+            });
+        }
+
+        // Save Division (Create)
+        function saveDivision() {
+            console.log('saveDivision called');
+            clearValidationErrors('#modaPopupBody');
+            var form = $('#addDivisionForm');
+
+            if (!isFormValid(form)) {
+                displayClientValidationErrors(form, '#modaPopupBody');
+                return;
+            }
+
+            var originalDivName = $('#originalDivName').val();
+            var newDivName = form.find('[name="DivName"]').val();
+
+            var rawCentOverhead = form.find('[name="CentOverhead"]').val();
+            var centOverhead = rawCentOverhead !== '' ? parseFloat(rawCentOverhead) : null;
+
+            var rawDivisionId = form.find('[name="DivisionId"]').val();
+            var divisionId = rawDivisionId !== '' ? parseInt(rawDivisionId) : null;
+
+            var data = {
+                DivisionId: divisionId,
+                DivName: form.find('[name="DivName"]').val(),
+                AgencyId: parseInt(form.find('[name="AgencyId"]').val()),
+                CentOverhead: centOverhead
+            };
+
+            console.log('Saving division data:', data);
+
+            $.ajax({
+                url: '@Url.Action("Create", "DivisionMaintenance", new { area = "FPS" })',
+                type: 'POST',
+                data: JSON.stringify(data),
+                contentType: 'application/json; charset=utf-8',
+                success: function (result) {
+                    console.log('Save result:', result);
+                    if (result.success) {
+                        alert(result.message || 'Division created successfully');
+                        closeModal();
+                        // Refresh grid and show new record in first row
+                        var newDivName = result.data && result.data.divName ? result.data.divName : data.DivName;
+                        refreshGridShowNewRecord(newDivName);
+                    } else {
+                        displayServerValidationErrors(result.errors, result.message, '#modaPopupBody')
+                    }
+                },
+                error: function (xhr) {
+                    console.error('Error saving:', xhr);
+                    if (xhr.status === 400 && xhr.responseJSON && xhr.responseJSON.message) {
+                        // Show FK validation or business logic error in summary
+                        var $container = $('#modaPopupBody');
+                        var $summary = $container.find('.govuk-error-summary');
+                        $summary.find('.govuk-error-summary__title').text('There is a problem');
+                        var $list = $summary.find('.govuk-error-summary__list').empty();
+                        $list.append('<li>' + xhr.responseJSON.message + '</li>');
+                        $summary.show().focus();
+                    } else if (xhr.status === 400 && xhr.responseJSON && xhr.responseJSON.errors) {
+                        displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
+                    } else {
+                        alert('An error occurred while saving the division');
+                    }
+                }
+            });
+        }
+
+        // Update Division (Edit)
+        function updateDivision() {
+            console.log('updateDivision called');
+            clearValidationErrors('#modaPopupBody');
+            var form = $('#editDivisionForm');
+
+            if (!isFormValid(form)) {
+                displayClientValidationErrors(form, '#modaPopupBody');
+                return;
+            }
+
+            var originalDivName = $('#originalDivName').val();
+            var newDivName = form.find('[name="DivName"]').val();
+
+            var rawCentOverhead = form.find('[name="CentOverhead"]').val();
+            var centOverhead = rawCentOverhead !== '' ? parseFloat(rawCentOverhead) : null;
+
+            var rawDivisionId = form.find('[name="DivisionId"]').val();
+            var divisionId = rawDivisionId !== '' ? parseInt(rawDivisionId) : null;
+
+            var data = {
+                DivisionId: divisionId,
+                DivName: newDivName,
+                AgencyId: parseInt(form.find('[name="AgencyId"]').val()),
+                CentOverhead: centOverhead
+            };
+
+            console.log('Updating division data:', data);
+            console.log('Original DivName for API call:', originalDivName);
+
+            // Use original DivName in the URL to identify the record to update
+            $.ajax({
+                url: '@Url.Action("Edit", "DivisionMaintenance", new { area = "FPS" })?originalDivName=' + encodeURIComponent(originalDivName),
+                type: 'POST',
+                data: JSON.stringify(data),
+                contentType: 'application/json; charset=utf-8',
+                success: function (result) {
+                    console.log('Update result:', result);
+                    if (result.success) {
+                        alert(result.message || 'Division updated successfully');
+                        closeModal();
+                        refreshGrid(); // Refresh grid with current filters
+                    } else {
+                        displayServerValidationErrors(result.errors, result.message, '#modaPopupBody')
+                    }
+                },
+                error: function (xhr) {
+                    console.error('Error updating:', xhr);
+                    if (xhr.status === 400 && xhr.responseJSON && xhr.responseJSON.message) {
+                        // Show FK validation or business logic error in summary
+                        var $container = $('#modaPopupBody');
+                        var $summary = $container.find('.govuk-error-summary');
+                        $summary.find('.govuk-error-summary__title').text('There is a problem');
+                        var $list = $summary.find('.govuk-error-summary__list').empty();
+                        $list.append('<li>' + xhr.responseJSON.message + '</li>');
+                        $summary.show().focus();
+                    } else if (xhr.status === 400 && xhr.responseJSON && xhr.responseJSON.errors) {
+                        displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
+                    } else {
+                        alert('An error occurred while updating the division');
+                    }
+                }
+            });
+        }
+
+        // Edit Division
+        function editDivision(btn) {
+            console.log('editDivision called with button:', btn);
+            var divName = $(btn).data('id');
+            console.log('Division name:', divName);
+
+            if (!divName) {
+                console.error('No divName found on button');
+                alert('Error: No division name found');
+                return;
+            }
+
+            $.ajax({
+                url: '@Url.Action("Edit", "DivisionMaintenance", new { area = "FPS" })',
+                type: 'GET',
+                data: { divName: divName },
+                success: function (html) {
+                    console.log('Edit response received');
+                    $('#modaPopupBody').html(html);
+                    var modal = $('#modalPopup');
+                    modal.css('display', 'flex');
+                    setTimeout(function() {
+                        modal.addClass("show");
+                    }, 10);
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error in editDivision:', error, xhr);
+                    alert('An error occurred while editing record: ' + error);
+                }
+            });
+        }
+
+        // Delete Division
+        function deleteDivision(btn) {
+            console.log('deleteDivision called with button:', btn);
+            var divName = $(btn).data('id');
+            console.log('Division name:', divName);
+
+            if (confirm('Are you sure you want to delete the division "' + divName + '"?')) {
+                $.ajax({
+                    url: '@Url.Action("Delete", "DivisionMaintenance", new { area = "FPS" })',
+                    type: 'DELETE',
+                    data: { divName: divName },
+                    success: function (response) {
+                        console.log('Delete result:', response);
+                        if (response.success) {
+                            alert(response.message || 'Division deleted successfully');
+                            refreshGrid(); // Refresh grid with current filters
+                        } else {
+                            alert('Error: ' + (response.message || 'Failed to delete division'));
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error deleting:', error, xhr);
+                        // Handle FK constraint or business logic errors
+                        if (xhr.status === 400 && xhr.responseJSON) {
+                            var errorMessage = xhr.responseJSON.message || 'Failed to delete division';
+                            alert(errorMessage);
+                        } else {
+                            alert('An error occurred while deleting the division');
+                        }
+                    }
+                });
+            }
+        }
+
+        function closeModal() {
+            console.log('closeModal called');
+            clearValidationErrors('#modaPopupBody');
+            $('#modaPopupBody').html("");
+            var modal = $('#modalPopup');
+            modal.removeClass("show");
+            setTimeout(function() {
+                modal.css('display', 'none');
+            }, 300);
+        }
+
+        // Returns true if all required fields in the form have values
+        function isFormValid(form) {
+            var isValid = true;
+            form.find('[required]').each(function () {
+                if (!$(this).val() || $(this).val().trim() === '') {
+                    isValid = false;
+                    return false; // break
+                }
+            });
+            return isValid;
+        }
+
+        // Debug: Log when page is ready
+        $(document).ready(function() {
+            console.log('Document ready');
+            console.log('jQuery version:', $.fn.jquery);
+            console.log('Edit function exists:', typeof window.editDivision);
+
+            // Test if edit buttons exist
+            var editButtons = $('.edit-row-btn');
+            console.log('Edit buttons found:', editButtons.length);
+            if (editButtons.length > 0) {
+                console.log('First edit button data-edit-function:', editButtons.first().data('edit-function'));
+                console.log('First edit button data-id:', editButtons.first().data('id'));
+            }
+
+            // Add Enter key support for filter inputs
+            $('#gridContainer_divisionGrid').on('keypress', '.grid-filter', function(e) {
+                if (e.which === 13) { // Enter key
+                    e.preventDefault();
+                    $(this).trigger('change'); // Trigger the change event to reload grid
+                }
+            });
+        });
+    </script>
+
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
