@@ -59,7 +59,8 @@ jobs:
     if: needs.check-commit.outputs.should_push == 'true'
     uses: ./.github/workflows/push-image-template.yaml
     with:
-      repository: apha/bst
+      repository: apha/fpsapps
+      dockerfile_path: src/Apha.FPSApps/Dockerfile
       dev_image_version_release: false
       tag_short_description: ""
     secrets:

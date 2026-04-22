@@ -21,6 +21,10 @@ on:
         description: "Short description for the git tag"
         required: true
         type: string  
+      dockerfile_path:
+        description: "Relative path to the Dockerfile from repo root"
+        required: true
+        type: string
   
     secrets:
       AWS_ENV_REGION:
@@ -32,6 +36,7 @@ on:
 
 env:
   REPOSITORY: ${{ inputs.repository }}
+  DOCKERFILE_PATH: ${{ inputs.dockerfile_path }}
 jobs:
   push-image:
     name: Push Docker Image
@@ -40,9 +45,7 @@ jobs:
     permissions:
       id-token: write
       contents: write
-    
     steps:
-
       - name: Checkout code
         uses: actions/checkout@v4
         with:
@@ -107,6 +110,37 @@ jobs:
           labels: |
             org.opencontainers.image.licenses=OGL-UK-3.0
 
+      - name: Run container locally
+        env:
+          IMAGE_TAG: ${{ steps.imgtag.outputs.image_tag }}
+        run: |
+          docker build -t $REPOSITORY:$IMAGE_TAG --file $DOCKERFILE_PATH .
+          echo "Running local image: $IMAGE_TAG"
+          docker run -d --name test-container -p 8080:8080 -e ASPNETCORE_ENVIRONMENT=local $REPOSITORY:$IMAGE_TAG
+      - name: Wait for service to start
+        run: >
+          echo "Waiting for the service to start..."
+
+          for i in {1..10}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/health || echo "000")
+            echo "HTTP Status: $STATUS"
+            if [ "$STATUS" -eq 200 ]; then
+              echo "Service is healthy..."
+              break
+            fi
+            echo "--- Last 5 log lines from container ---"
+            docker logs test-container --tail 5 || true
+            echo "---------------------------------------"
+            sleep 3
+          done
+      - name: Test application response
+        run: |
+          curl -i http://localhost:8080/health
+      - name: Cleanup container
+        if: always()
+        run: |
+          docker rm -f test-container
+
       - name: Build and push Docker image manually
         env:
           IMAGE_TAG: ${{ steps.imgtag.outputs.image_tag }}
@@ -123,7 +157,7 @@ jobs:
 
           echo "Building Docker image $IMAGE_NAME:$IMAGE_TAG"
           docker build \
-            --file ./Dockerfile \
+            --file $DOCKERFILE_PATH \
             --build-arg GIT_COMMIT="$META_REVISION" \
             --label org.opencontainers.image.source="$META_SOURCE" \
             --label org.opencontainers.image.revision="$META_REVISION" \
@@ -165,36 +199,6 @@ jobs:
             echo "| url        | $META_URL |"
             echo "| version    | $META_VERSION |"
           } >> $GITHUB_STEP_SUMMARY
-      - name: Run container locally
-        env:
-          IMAGE_TAG: ${{ steps.imgtag.outputs.image_tag }}
-        run: |
-          docker build -t bst:$IMAGE_TAG .
-          echo "Running local image: $IMAGE_TAG"
-          docker run -d --name test-container -p 8080:8080 -e ASPNETCORE_ENVIRONMENT=local bst:$IMAGE_TAG
-      - name: Wait for service to start
-        run: >
-          echo "Waiting for the service to start..."
-
-          for i in {1..10}; do
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/health || echo "000")
-            echo "HTTP Status: $STATUS"
-            if [ "$STATUS" -eq 200 ]; then
-              echo "Service is healthy..."
-              break
-            fi
-            echo "--- Last 5 log lines from container ---"
-            docker logs test-container --tail 5 || true
-            echo "---------------------------------------"
-            sleep 3
-          done
-      - name: Test application response
-        run: |
-          curl -i http://localhost:8080/health
-      - name: Cleanup container
-        if: always()
-        run: |
-          docker rm -f test-container
 
 
       - name: Create and push git tag
