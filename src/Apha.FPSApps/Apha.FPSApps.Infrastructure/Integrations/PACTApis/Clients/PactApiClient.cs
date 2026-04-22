@@ -11,6 +11,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
         public IPactWorkGroupApiClient PactWorkGroup { get; }
         public IPactProjectInvoiceApiClient PactProjectInvoice { get; }
         public IPactProjectSubContractApiClient PactProjectSubContract { get; }
+        public IPactTestListApiClient PactTestList { get; }
 
         public PactApiClient(IPactHttpExecutor http, IMapper mapper)
         {
@@ -19,6 +20,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             PactWorkGroup = new PactWorkGroupApiClient(http, mapper);
             PactProjectInvoice = new PactProjectInvoiceApiClient(http, mapper);
             PactProjectSubContract = new PactProjectSubContractApiClient(http, mapper);
+            PactTestList = new PactTestListApiClient(http, mapper);
         }
     }
 }

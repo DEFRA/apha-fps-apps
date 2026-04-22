@@ -10,6 +10,7 @@
         Date,
         DateTime,
         ReadOnly,
+        Currency, // Currency value
         UsdValue, // $0.00
         GbpValue // £0.00
     }

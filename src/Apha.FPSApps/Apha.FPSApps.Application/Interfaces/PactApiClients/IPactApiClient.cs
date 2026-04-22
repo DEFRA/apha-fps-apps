@@ -7,5 +7,6 @@
         IPactWorkGroupApiClient PactWorkGroup { get; }
         IPactProjectInvoiceApiClient PactProjectInvoice { get; }
         IPactProjectSubContractApiClient PactProjectSubContract { get; }
+        IPactTestListApiClient PactTestList { get; }
     }
 }

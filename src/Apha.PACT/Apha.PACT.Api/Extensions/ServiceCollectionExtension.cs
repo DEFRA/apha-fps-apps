@@ -25,6 +25,7 @@ namespace Apha.PACT.Api.Extensions
             services.AddScoped<IWorkGroupService, WorkGroupService>();
             services.AddScoped<IProjectInvoiceService, ProjectInvoiceService>();
             services.AddScoped<IProjectSubContractService, ProjectSubContractService>();
+            services.AddScoped<ITestListService, TestListService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
@@ -35,6 +36,7 @@ namespace Apha.PACT.Api.Extensions
             services.AddScoped<IWorkGroupRepository, WorkGroupRepository>();
             services.AddScoped<IProjectInvoiceRepository, ProjectInvoiceRepository>();
             services.AddScoped<IProjectSubContractRepository, ProjectSubContractRepository>();
+            services.AddScoped<ITestOrProductRepository, TestOrProductRepository>();
             return services;
         }
     }

@@ -40,6 +40,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IYearMasterService, YearMasterService>();
             services.AddScoped<IProjectInvoiceService, ProjectInvoiceService>();
             services.AddScoped<IProjectSubContractService, ProjectSubContractService>();
+            services.AddScoped<ITestListService, TestListService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)

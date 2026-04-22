@@ -20,6 +20,7 @@ namespace Apha.PACT.Application.Mappings
             CreateMap<WorkGroup, WorkGroupDto>().ReverseMap();
             CreateMap<ProjectInvoice, ProjectInvoiceDto>().ReverseMap();
             CreateMap<ProjectSubContract, ProjectSubContractDto>().ReverseMap();
+            CreateMap<TestOrProduct, TestOrProductDto>().ReverseMap();
         }
     }
 }
