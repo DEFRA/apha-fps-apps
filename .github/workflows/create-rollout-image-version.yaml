@@ -1,0 +1,266 @@
+name: All Apps - Create Rollout Image Version and Push ECR
+
+on:
+  workflow_dispatch:
+    inputs:
+      FPSAPPS_VERSION:
+        description: 'FPSApps Web image version (leave blank to skip)'
+        type: string
+        required: false
+      FPS_VERSION:
+        description: 'FPS API image version (leave blank to skip)'
+        type: string
+        required: false
+      COSTBOOK_VERSION:
+        description: 'Costbook API image version (leave blank to skip)'
+        type: string
+        required: false
+      PACT_VERSION:
+        description: 'PACT API image version (leave blank to skip)'
+        type: string
+        required: false
+      PIMS_VERSION:
+        description: 'PIMS API image version (leave blank to skip)'
+        type: string
+        required: false
+      tag_short_description:
+        description: "Short description for the git tag (applied to all pushed images)"
+        required: true
+        type: string
+
+permissions: {}   # disables all default permissions
+
+concurrency:
+  group: rollout-ecr-push
+  cancel-in-progress: false   # never cancel an in-flight rollout
+
+jobs:
+  # ── Validate version inputs ──────────────────────────────────────────────────
+  validate-inputs:
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Validate semver format (major.minor.patch) for all provided versions
+        shell: bash
+        env:
+          FPSAPPS_VERSION: ${{ github.event.inputs.FPSAPPS_VERSION }}
+          FPS_VERSION: ${{ github.event.inputs.FPS_VERSION }}
+          COSTBOOK_VERSION: ${{ github.event.inputs.COSTBOOK_VERSION }}
+          PACT_VERSION: ${{ github.event.inputs.PACT_VERSION }}
+          PIMS_VERSION: ${{ github.event.inputs.PIMS_VERSION }}
+        run: |
+          VERSION_REGEX='^[0-9]+\.[0-9]+\.[0-9]+$'
+          errors=0
+          check_version() {
+            local name="$1"
+            local value="$2"
+            if [ -n "$value" ] && ! [[ "$value" =~ $VERSION_REGEX ]]; then
+              echo "ERROR: $name value '$value' is not valid semver. Expected format: major.minor.patch (e.g. 1.2.3)"
+              errors=$((errors + 1))
+            fi
+          }
+          check_version "FPSAPPS_VERSION" "$FPSAPPS_VERSION"
+          check_version "FPS_VERSION"      "$FPS_VERSION"
+          check_version "COSTBOOK_VERSION" "$COSTBOOK_VERSION"
+          check_version "PACT_VERSION"     "$PACT_VERSION"
+          check_version "PIMS_VERSION"     "$PIMS_VERSION"
+          if [ $errors -gt 0 ]; then
+            echo "One or more version inputs failed validation. Aborting."
+            exit 1
+          fi
+          # Ensure at least one app version has been provided
+          if [ -z "$FPSAPPS_VERSION" ] && [ -z "$FPS_VERSION" ] && [ -z "$COSTBOOK_VERSION" ] && [ -z "$PACT_VERSION" ] && [ -z "$PIMS_VERSION" ]; then
+            echo "ERROR: At least one app version must be provided. All inputs are blank."
+            exit 1
+          fi
+          echo "All provided version inputs are valid."
+
+  # ── FPSApps Web ──────────────────────────────────────────────────────────────
+  build-sonar-fpsapps:
+    needs: validate-inputs
+    if: ${{ github.event.inputs.FPSAPPS_VERSION != '' }}
+    uses: ./.github/workflows/build-and-sonar-analyze-template.yaml
+    with:
+      dotnet_application_solution_name: Apha.FPSApps
+      sonar_project_key: DEFRA_apha-fps-apps
+      solution_file: Apha.FPSApps.Web
+      run_application_tests: true
+      run_web_tests: true
+      web_layer_suffix: 'Web'
+      run_infrastructure_tests: true
+      environment: rollout
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    permissions:
+      id-token: write
+      contents: read
+
+  push-fpsapps:
+    needs: build-sonar-fpsapps
+    if: ${{ github.event.inputs.FPSAPPS_VERSION != '' && needs.build-sonar-fpsapps.result == 'success' }}
+    uses: ./.github/workflows/push-image-template.yaml
+    with:
+      IMAGE_VERSION: ${{ github.event.inputs.FPSAPPS_VERSION }}
+      repository: apha/fpsapps
+      dockerfile_path: src/Apha.FPSApps/Dockerfile
+      dev_image_version_release: true
+      tag_short_description: ${{ github.event.inputs.tag_short_description }}
+    secrets:
+      AWS_ENV_REGION: ${{ secrets.AWS_ENV_REGION }}
+      AWS_ENV_ACCOUNT: ${{ secrets.AWS_ENV_ACCOUNT }}
+      AWS_ENV_ROLE: ${{ secrets.AWS_ENV_ROLE }}
+    permissions:
+      id-token: write
+      contents: write
+
+  # ── FPS API ───────────────────────────────────────────────────────────────────
+  build-sonar-fps:
+    needs: validate-inputs
+    if: ${{ github.event.inputs.FPS_VERSION != '' }}
+    uses: ./.github/workflows/build-and-sonar-analyze-template.yaml
+    with:
+      dotnet_application_solution_name: Apha.FPS
+      sonar_project_key: DEFRA_apha-fps-apps
+      solution_file: Apha.FPS.Api
+      run_application_tests: true
+      run_web_tests: true
+      web_layer_suffix: 'Api'
+      run_dataaccess_tests: true
+      environment: rollout
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    permissions:
+      id-token: write
+      contents: read
+
+  push-fps:
+    needs: build-sonar-fps
+    if: ${{ github.event.inputs.FPS_VERSION != '' && needs.build-sonar-fps.result == 'success' }}
+    uses: ./.github/workflows/push-image-template.yaml
+    with:
+      IMAGE_VERSION: ${{ github.event.inputs.FPS_VERSION }}
+      repository: apha/fps
+      dockerfile_path: src/Apha.FPS/Dockerfile
+      dev_image_version_release: true
+      tag_short_description: ${{ github.event.inputs.tag_short_description }}
+    secrets:
+      AWS_ENV_REGION: ${{ secrets.AWS_ENV_REGION }}
+      AWS_ENV_ACCOUNT: ${{ secrets.AWS_ENV_ACCOUNT }}
+      AWS_ENV_ROLE: ${{ secrets.AWS_ENV_ROLE }}
+    permissions:
+      id-token: write
+      contents: write
+
+  # ── Costbook API ──────────────────────────────────────────────────────────────
+  build-sonar-costbook:
+    needs: validate-inputs
+    if: ${{ github.event.inputs.COSTBOOK_VERSION != '' }}
+    uses: ./.github/workflows/build-and-sonar-analyze-template.yaml
+    with:
+      dotnet_application_solution_name: Apha.Costbook
+      sonar_project_key: DEFRA_apha-fps-apps
+      solution_file: Apha.Costbook.Api
+      run_application_tests: true
+      run_web_tests: true
+      web_layer_suffix: 'Api'
+      run_dataaccess_tests: true
+      environment: rollout
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    permissions:
+      id-token: write
+      contents: read
+
+  push-costbook:
+    needs: build-sonar-costbook
+    if: ${{ github.event.inputs.COSTBOOK_VERSION != '' && needs.build-sonar-costbook.result == 'success' }}
+    uses: ./.github/workflows/push-image-template.yaml
+    with:
+      IMAGE_VERSION: ${{ github.event.inputs.COSTBOOK_VERSION }}
+      repository: apha/costbook
+      dockerfile_path: src/Apha.Costbook/Dockerfile
+      dev_image_version_release: true
+      tag_short_description: ${{ github.event.inputs.tag_short_description }}
+    secrets:
+      AWS_ENV_REGION: ${{ secrets.AWS_ENV_REGION }}
+      AWS_ENV_ACCOUNT: ${{ secrets.AWS_ENV_ACCOUNT }}
+      AWS_ENV_ROLE: ${{ secrets.AWS_ENV_ROLE }}
+    permissions:
+      id-token: write
+      contents: write
+
+  # ── PACT API ──────────────────────────────────────────────────────────────────
+  build-sonar-pact:
+    needs: validate-inputs
+    if: ${{ github.event.inputs.PACT_VERSION != '' }}
+    uses: ./.github/workflows/build-and-sonar-analyze-template.yaml
+    with:
+      dotnet_application_solution_name: Apha.PACT
+      sonar_project_key: DEFRA_apha-fps-apps
+      solution_file: Apha.PACT.Api
+      run_application_tests: true
+      run_web_tests: true
+      web_layer_suffix: 'Api'
+      run_dataaccess_tests: true
+      environment: rollout
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    permissions:
+      id-token: write
+      contents: read
+
+  push-pact:
+    needs: build-sonar-pact
+    if: ${{ github.event.inputs.PACT_VERSION != '' && needs.build-sonar-pact.result == 'success' }}
+    uses: ./.github/workflows/push-image-template.yaml
+    with:
+      IMAGE_VERSION: ${{ github.event.inputs.PACT_VERSION }}
+      repository: apha/pact
+      dockerfile_path: src/Apha.PACT/Dockerfile
+      dev_image_version_release: true
+      tag_short_description: ${{ github.event.inputs.tag_short_description }}
+    secrets:
+      AWS_ENV_REGION: ${{ secrets.AWS_ENV_REGION }}
+      AWS_ENV_ACCOUNT: ${{ secrets.AWS_ENV_ACCOUNT }}
+      AWS_ENV_ROLE: ${{ secrets.AWS_ENV_ROLE }}
+    permissions:
+      id-token: write
+      contents: write
+
+  # ── PIMS API ──────────────────────────────────────────────────────────────────
+  build-sonar-pims:
+    needs: validate-inputs
+    if: ${{ github.event.inputs.PIMS_VERSION != '' }}
+    uses: ./.github/workflows/build-and-sonar-analyze-template.yaml
+    with:
+      dotnet_application_solution_name: Apha.PIMS
+      sonar_project_key: DEFRA_apha-fps-apps
+      solution_file: Apha.PIMS.Api
+      run_application_tests: false
+      run_web_tests: false
+      web_layer_suffix: 'Api'
+      run_dataaccess_tests: false
+      environment: rollout
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    permissions:
+      id-token: write
+      contents: read
+
+  push-pims:
+    needs: build-sonar-pims
+    if: ${{ github.event.inputs.PIMS_VERSION != '' && needs.build-sonar-pims.result == 'success' }}
+    uses: ./.github/workflows/push-image-template.yaml
+    with:
+      IMAGE_VERSION: ${{ github.event.inputs.PIMS_VERSION }}
+      repository: apha/pims
+      dockerfile_path: src/Apha.PIMS/Dockerfile
+      dev_image_version_release: true
+      tag_short_description: ${{ github.event.inputs.tag_short_description }}
+    secrets:
+      AWS_ENV_REGION: ${{ secrets.AWS_ENV_REGION }}
+      AWS_ENV_ACCOUNT: ${{ secrets.AWS_ENV_ACCOUNT }}
+      AWS_ENV_ROLE: ${{ secrets.AWS_ENV_ROLE }}
+    permissions:
+      id-token: write
+      contents: write
