@@ -20,10 +20,10 @@ jobs:
       dotnet_application_solution_name: Apha.PIMS
       sonar_project_key: DEFRA_apha-fps-apps
       solution_file: Apha.PIMS.Api
-      run_application_tests: false
-      run_web_tests: false
+      run_application_tests: true
+      run_web_tests: true
       web_layer_suffix: 'Api'
-      run_dataaccess_tests: false
+      run_dataaccess_tests: true
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     permissions:
