@@ -107,7 +107,7 @@ jobs:
         run: |
           GIT_TAG="rollout-v${ROLLOUT_VERSION}"
           if git ls-remote --tags origin | grep -q "refs/tags/${GIT_TAG}"; then
-            echo "ERROR: Git tag '${GIT_TAG}' already exists. Rollout versions are immutable — choose a new ROLLOUT_VERSION."
+            echo "ERROR: Git tag '${GIT_TAG}' already exists. Enter a new rollout version and retry."
             exit 1
           fi
           echo "OK: Rollout tag ${GIT_TAG} is available."
