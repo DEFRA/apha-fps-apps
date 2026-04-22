@@ -62,7 +62,7 @@ footer {
     text-align: center;
 }
 
-table, th, td, button, label, input, a {
+table, th, td, button, label, input {
     font-size: 1rem !important;
 }
 
