@@ -27,6 +27,10 @@ on:
         description: "Short description for the git tag (applied to all pushed images)"
         required: true
         type: string
+      ROLLOUT_VERSION:
+        description: 'Rollout version tag (e.g. 1.0.0) - used as the repo-level git tag'
+        required: true
+        type: string
 
 permissions: {}   # disables all default permissions
 
@@ -39,7 +43,76 @@ jobs:
   validate-inputs:
     runs-on: ubuntu-latest
     permissions: {}
+    outputs:
+      needs_approval: ${{ steps.version-check.outputs.needs_approval }}
     steps:
+      - name: Checkout to read git tags
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Show current released versions from latest rollout tag
+        shell: bash
+        run: |
+          git fetch --tags
+          latest_rollout=$(git tag --list "rollout-v*" --sort=-version:refname | head -n 1 || echo "")
+          if [ -z "$latest_rollout" ]; then
+            echo "No previous rollout tags found. This appears to be the first rollout."
+          else
+            echo "========================================"
+            echo " Current versions from: $latest_rollout"
+            echo "========================================"
+            git tag -l --format='%(contents)' "$latest_rollout" | grep -E '^(fpsapps|fps|costbook|pact|pims|version)=' || true
+            echo "========================================"
+          fi
+      - name: Check for version downgrades or re-releases requiring approval
+        id: version-check
+        shell: bash
+        env:
+          FPSAPPS_VERSION: ${{ github.event.inputs.FPSAPPS_VERSION }}
+          FPS_VERSION: ${{ github.event.inputs.FPS_VERSION }}
+          COSTBOOK_VERSION: ${{ github.event.inputs.COSTBOOK_VERSION }}
+          PACT_VERSION: ${{ github.event.inputs.PACT_VERSION }}
+          PIMS_VERSION: ${{ github.event.inputs.PIMS_VERSION }}
+        run: |
+          latest_rollout=$(git tag --list "rollout-v*" --sort=-version:refname | head -n 1 || echo "")
+          needs_approval=false
+
+          if [ -n "$latest_rollout" ]; then
+            # Returns 0 (true) if new_ver is less than or equal to current
+            is_not_increment() {
+              local app="$1"
+              local new_ver="$2"
+              local current
+              current=$(git tag -l --format='%(contents)' "$latest_rollout" | grep "^${app}=" | cut -d= -f2)
+              [ -z "$current" ] && return 1   # app not in previous rollout
+              if [ "$new_ver" = "$current" ]; then
+                echo "APPROVAL NEEDED: $app $new_ver is same as current ($current)"
+                return 0
+              fi
+              local higher
+              higher=$(printf '%s\n%s\n' "$current" "$new_ver" | sort -V | tail -n 1)
+              if [ "$higher" != "$new_ver" ]; then
+                echo "APPROVAL NEEDED: $app $new_ver is a downgrade from current ($current)"
+                return 0
+              fi
+              echo "OK: $app $current -> $new_ver"
+              return 1
+            }
+
+            [ -n "$FPSAPPS_VERSION" ] && is_not_increment "fpsapps"  "$FPSAPPS_VERSION" && needs_approval=true
+            [ -n "$FPS_VERSION" ]      && is_not_increment "fps"       "$FPS_VERSION"      && needs_approval=true
+            [ -n "$COSTBOOK_VERSION" ] && is_not_increment "costbook" "$COSTBOOK_VERSION" && needs_approval=true
+            [ -n "$PACT_VERSION" ]     && is_not_increment "pact"      "$PACT_VERSION"     && needs_approval=true
+            [ -n "$PIMS_VERSION" ]     && is_not_increment "pims"      "$PIMS_VERSION"     && needs_approval=true
+          fi
+
+          echo "needs_approval=$needs_approval" >> $GITHUB_OUTPUT
+          if [ "$needs_approval" = "true" ]; then
+            echo "One or more versions are a downgrade or re-release — awaiting reviewer approval."
+          else
+            echo "All versions are forward increments — no approval required."
+          fi
       - name: Validate semver format (major.minor.patch) for all provided versions
         shell: bash
         env:
@@ -48,6 +121,7 @@ jobs:
           COSTBOOK_VERSION: ${{ github.event.inputs.COSTBOOK_VERSION }}
           PACT_VERSION: ${{ github.event.inputs.PACT_VERSION }}
           PIMS_VERSION: ${{ github.event.inputs.PIMS_VERSION }}
+          ROLLOUT_VERSION: ${{ github.event.inputs.ROLLOUT_VERSION }}
         run: |
           VERSION_REGEX='^[0-9]+\.[0-9]+\.[0-9]+$'
           errors=0
@@ -64,6 +138,7 @@ jobs:
           check_version "COSTBOOK_VERSION" "$COSTBOOK_VERSION"
           check_version "PACT_VERSION"     "$PACT_VERSION"
           check_version "PIMS_VERSION"     "$PIMS_VERSION"
+          check_version "ROLLOUT_VERSION"  "$ROLLOUT_VERSION"
           if [ $errors -gt 0 ]; then
             echo "One or more version inputs failed validation. Aborting."
             exit 1
@@ -75,10 +150,23 @@ jobs:
           fi
           echo "All provided version inputs are valid."
 
+  # ── Approval gate ─────────────────────────────────────────────────────────────
+  # Pauses here and notifies reviewers. Reviewer can check the validate-inputs
+  # job log to see current versions before approving.
+  await-approval:
+    needs: validate-inputs
+    if: needs.validate-inputs.outputs.needs_approval == 'true'
+    runs-on: ubuntu-latest
+    environment: rollout-approval   # requires reviewers configured in repo Settings → Environments
+    permissions: {}
+    steps:
+      - name: Approval granted — proceeding with rollout
+        run: echo "Rollout approved. Starting builds."
+
   # ── FPSApps Web ──────────────────────────────────────────────────────────────
   build-sonar-fpsapps:
-    needs: validate-inputs
-    if: ${{ github.event.inputs.FPSAPPS_VERSION != '' }}
+    needs: [validate-inputs, await-approval]
+    if: always() && needs.validate-inputs.result == 'success' && (needs.await-approval.result == 'success' || needs.await-approval.result == 'skipped') && github.event.inputs.FPSAPPS_VERSION != ''
     uses: ./.github/workflows/build-and-sonar-analyze-template.yaml
     with:
       dotnet_application_solution_name: Apha.FPSApps
@@ -115,8 +203,8 @@ jobs:
 
   # ── FPS API ───────────────────────────────────────────────────────────────────
   build-sonar-fps:
-    needs: validate-inputs
-    if: ${{ github.event.inputs.FPS_VERSION != '' }}
+    needs: [validate-inputs, await-approval]
+    if: always() && needs.validate-inputs.result == 'success' && (needs.await-approval.result == 'success' || needs.await-approval.result == 'skipped') && github.event.inputs.FPS_VERSION != ''
     uses: ./.github/workflows/build-and-sonar-analyze-template.yaml
     with:
       dotnet_application_solution_name: Apha.FPS
@@ -153,8 +241,8 @@ jobs:
 
   # ── Costbook API ──────────────────────────────────────────────────────────────
   build-sonar-costbook:
-    needs: validate-inputs
-    if: ${{ github.event.inputs.COSTBOOK_VERSION != '' }}
+    needs: [validate-inputs, await-approval]
+    if: always() && needs.validate-inputs.result == 'success' && (needs.await-approval.result == 'success' || needs.await-approval.result == 'skipped') && github.event.inputs.COSTBOOK_VERSION != ''
     uses: ./.github/workflows/build-and-sonar-analyze-template.yaml
     with:
       dotnet_application_solution_name: Apha.Costbook
@@ -191,8 +279,8 @@ jobs:
 
   # ── PACT API ──────────────────────────────────────────────────────────────────
   build-sonar-pact:
-    needs: validate-inputs
-    if: ${{ github.event.inputs.PACT_VERSION != '' }}
+    needs: [validate-inputs, await-approval]
+    if: always() && needs.validate-inputs.result == 'success' && (needs.await-approval.result == 'success' || needs.await-approval.result == 'skipped') && github.event.inputs.PACT_VERSION != ''
     uses: ./.github/workflows/build-and-sonar-analyze-template.yaml
     with:
       dotnet_application_solution_name: Apha.PACT
@@ -229,8 +317,8 @@ jobs:
 
   # ── PIMS API ──────────────────────────────────────────────────────────────────
   build-sonar-pims:
-    needs: validate-inputs
-    if: ${{ github.event.inputs.PIMS_VERSION != '' }}
+    needs: [validate-inputs, await-approval]
+    if: always() && needs.validate-inputs.result == 'success' && (needs.await-approval.result == 'success' || needs.await-approval.result == 'skipped') && github.event.inputs.PIMS_VERSION != ''
     uses: ./.github/workflows/build-and-sonar-analyze-template.yaml
     with:
       dotnet_application_solution_name: Apha.PIMS
@@ -264,3 +352,55 @@ jobs:
     permissions:
       id-token: write
       contents: write
+
+  # ── Single repo-level git tag for the whole rollout ───────────────────────────
+  create-rollout-git-tag:
+    needs: [push-fpsapps, push-fps, push-costbook, push-pact, push-pims]
+    if: always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref_name }}
+
+      - name: Create and push rollout git tag
+        env:
+          TAG_MESSAGE: ${{ github.event.inputs.tag_short_description }}
+          ROLLOUT_VERSION: ${{ github.event.inputs.ROLLOUT_VERSION }}
+          FPSAPPS_VERSION: ${{ github.event.inputs.FPSAPPS_VERSION }}
+          FPS_VERSION: ${{ github.event.inputs.FPS_VERSION }}
+          COSTBOOK_VERSION: ${{ github.event.inputs.COSTBOOK_VERSION }}
+          PACT_VERSION: ${{ github.event.inputs.PACT_VERSION }}
+          PIMS_VERSION: ${{ github.event.inputs.PIMS_VERSION }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          GIT_TAG="rollout-v${ROLLOUT_VERSION}"
+
+          # Structured key=value annotation — machine-readable by dev builds
+          ANNOTATION="${TAG_MESSAGE}
+
+[rollout]
+version=${ROLLOUT_VERSION}"
+          [ -n "$FPSAPPS_VERSION" ]  && ANNOTATION+="\nfpsapps=${FPSAPPS_VERSION}"
+          [ -n "$FPS_VERSION" ]       && ANNOTATION+="\nfps=${FPS_VERSION}"
+          [ -n "$COSTBOOK_VERSION" ]  && ANNOTATION+="\ncostbook=${COSTBOOK_VERSION}"
+          [ -n "$PACT_VERSION" ]      && ANNOTATION+="\npact=${PACT_VERSION}"
+          [ -n "$PIMS_VERSION" ]      && ANNOTATION+="\npims=${PIMS_VERSION}"
+
+          echo "Creating rollout tag: $GIT_TAG"
+          echo -e "Tag annotation:\n$ANNOTATION"
+
+          if git ls-remote --tags origin | grep -q "refs/tags/${GIT_TAG}"; then
+            echo "Tag ${GIT_TAG} already exists. Aborting."
+            exit 1
+          fi
+
+          git tag -a "$GIT_TAG" -m "$(echo -e "$ANNOTATION")"
+          git push origin "$GIT_TAG"
+          echo "Tag ${GIT_TAG} pushed successfully."
