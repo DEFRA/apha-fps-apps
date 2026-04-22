@@ -57,7 +57,7 @@ jobs:
         shell: bash
         env:
           DEV_IMAGE_VERSION_RELEASE: ${{ inputs.dev_image_version_release }}
-          DEV_IMAGE_VERSION: ${{ github.event.inputs.DEVIMAGEVERSION }}
+          DEV_IMAGE_VERSION: ${{ inputs.IMAGE_VERSION }}
         run: |
           if [ "$DEV_IMAGE_VERSION_RELEASE" = "false" ]; then
              # Fetch tags
