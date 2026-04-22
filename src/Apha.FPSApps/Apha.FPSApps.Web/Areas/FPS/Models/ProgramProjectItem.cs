@@ -56,7 +56,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [GridColumn(Width = 100, Type = GridColumnType.GbpValue, IsFilterable = false)]
         public decimal? BudgetCvl { get; set; }
 
-        [Display(Name = "Cost Inc")]
+        [Display(Name = "Cust Inc")]
         [DisplayFormat(DataFormatString = "{0:C}", ApplyFormatInEditMode = false)]
         [GridColumn(Width = 100, Type = GridColumnType.GbpValue, IsFilterable = false)]
         public decimal? BudgetExt { get; set; }
