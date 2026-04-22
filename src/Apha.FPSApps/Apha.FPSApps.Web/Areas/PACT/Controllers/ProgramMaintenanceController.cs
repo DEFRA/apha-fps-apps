@@ -175,7 +175,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 BindGridUrl = "/PACT/ProgramMaintenance/LoadProjectsGrid",
                 Data = items,
                 Columns = GridDataProvider.GetColumnsDefination<PactProgramProjectItem>(),
-                Pagination = pagination
+                Pagination = pagination,
+                CurrentFilters = filterDict
             };
         }
     }

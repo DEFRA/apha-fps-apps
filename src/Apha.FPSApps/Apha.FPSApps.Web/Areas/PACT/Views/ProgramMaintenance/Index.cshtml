@@ -259,8 +259,26 @@
         }
 
         function selectProject(btn) {
-            selectedProjectCode = $(btn).data('id');
+            var $row = $(btn).is('tr') ? $(btn) : $(btn).closest('tr');
+            selectedProjectCode = $row.data('id');
             $('#selectedProject').val(selectedProjectCode);
+
+            // Highlight the selected row
+            $('#tbl_projectsGrid tbody tr').removeClass('selected-row');
+            $row.addClass('selected-row');
         }
+
+        // Auto-select the first project row after the projects grid reloads
+        document.addEventListener('gridReloaded', function (e) {
+            if (e.detail && e.detail.gridId === 'projectsGrid') {
+                var $firstRow = $('#tbl_projectsGrid tbody tr[data-id]:first');
+                if ($firstRow.length) {
+                    selectProject($firstRow[0]);
+                } else {
+                    selectedProjectCode = '';
+                    $('#selectedProject').val('');
+                }
+            }
+        });
     </script>
 }
