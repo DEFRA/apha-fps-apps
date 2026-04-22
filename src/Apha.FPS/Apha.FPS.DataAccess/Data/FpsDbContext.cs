@@ -61,6 +61,14 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<ProjectLog> ProjectLogs { get; set; }
         public virtual DbSet<TestRequirement> TestRequirements { get; set; }
         public virtual DbSet<AdditionalCost> AdditionalCosts { get; set; }
+        public virtual DbSet<TestCapability> TestCapabilities { get; set; }
+        public virtual DbSet<MonthlyOutput> MonthlyOutputs { get; set; }
+        public virtual DbSet<MonthlyTime> MonthlyTimes { get; set; }
+        public virtual DbSet<TimeCostCalc> TimeCostCalcs { get; set; }
+        public virtual DbSet<ProjectMonth> ProjectMonths { get; set; }
+        public virtual DbSet<TimeCodeValid> TimeCodeValids { get; set; }
+        public virtual DbSet<Milestone> Milestones { get; set; }
+        public virtual DbSet<ProjectMonthFinal> ProjectMonthFinals { get; set; }
         public virtual DbSet<ProjectInvoice> ProjectInvoices { get; set; }
         public virtual DbSet<ProjectSubContract> ProjectSubContracts { get; set; }
 
@@ -726,6 +734,195 @@ namespace Apha.FPS.DataAccess.Data
                     .HasColumnName("supplier");
                 entity.Property(e => e.FpsYear).HasColumnName(FpsYear);
                 entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
+            });
+
+            modelBuilder.Entity<TestCapability>(entity =>
+            {
+                entity.HasKey(e => new { e.TestCode, e.WorkGroup, e.FpsYear })
+                    .HasName("pk_tlkptestcapability");
+
+                entity.ToTable("tlkptestcapability", "fps");
+
+                entity.Property(e => e.TestCode)
+                    .HasColumnType("citext")
+                    .HasColumnName("testcode");
+                entity.Property(e => e.WorkGroup)
+                    .HasColumnType("citext")
+                    .HasColumnName("workgroup");
+                entity.Property(e => e.FpsYear).HasColumnName(FpsYear);
+                entity.Property(e => e.PlanPortfolio)
+                    .HasColumnType("citext")
+                    .HasColumnName("planportfolio");
+                entity.Property(e => e.PredOutturn)
+                    .HasDefaultValueSql("0")
+                    .HasColumnName("predoutturn");
+                entity.Property(e => e.SmsCode)
+                    .HasMaxLength(50)
+                    .HasColumnName("smscode");
+                entity.Property(e => e.Sop)
+                    .HasMaxLength(50)
+                    .HasColumnName("sop");
+                entity.Property(e => e.UnitCost)
+                    .HasDefaultValueSql("0")
+                    .HasColumnType("money")
+                    .HasColumnName("unitcost");
+                entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
+            });
+
+            modelBuilder.Entity<MonthlyOutput>(entity =>
+            {
+                entity.HasKey(e => new { e.TestCode, e.Buyer, e.Month, e.WorkGroup, e.FpsYear })
+                    .HasName("pk_monthlyoutput");
+
+                entity.ToTable("monthlyoutput", "fps");
+
+                entity.Property(e => e.TestCode)
+                    .HasColumnType("citext")
+                    .HasColumnName("testcode");
+                entity.Property(e => e.Buyer)
+                    .HasColumnType("citext")
+                    .HasColumnName("buyer");
+                entity.Property(e => e.Month).HasColumnName("month");
+                entity.Property(e => e.WorkGroup)
+                    .HasColumnType("citext")
+                    .HasColumnName("workgroup");
+                entity.Property(e => e.FpsYear).HasColumnName(FpsYear);
+                entity.Property(e => e.Volume).HasColumnName("volume");
+                entity.Property(e => e.WgBuyer)
+                    .HasMaxLength(50)
+                    .HasColumnName("wgbuyer");
+                entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
+            });
+
+            // ── Cross-year tables: no HasQueryFilter — bulk rename operates across all years ──
+
+            modelBuilder.Entity<MonthlyTime>(entity =>
+            {
+                entity.HasKey(e => new { e.PactStaffId, e.TimeCode, e.Month, e.ParentProject })
+                    .HasName("pk_monthlytime");
+                entity.ToTable("monthlytime", "fps");
+                entity.Property(e => e.PactStaffId).HasColumnType("citext").HasColumnName("pactstaffid");
+                entity.Property(e => e.TimeCode).HasColumnType("citext").HasColumnName("timecode");
+                entity.Property(e => e.Month).HasColumnName("month");
+                entity.Property(e => e.ParentProject).HasColumnType("citext").HasColumnName("parentproject");
+                entity.Property(e => e.WorkGroup).HasColumnType("citext").HasColumnName("workgroup");
+                entity.Property(e => e.Hours).HasColumnName("hours");
+                entity.Property(e => e.FpsYear).HasColumnName(FpsYear);
+            });
+
+            modelBuilder.Entity<TimeCostCalc>(entity =>
+            {
+                entity.HasKey(e => new { e.WorkGroup, e.JobCode, e.Project, e.Month, e.StaffId })
+                    .HasName("aaaaatimecostcalcs_pk");
+                entity.ToTable("timecostcalcs", "fps");
+                entity.Property(e => e.WorkGroup).HasMaxLength(50).HasColumnName("workgroup");
+                entity.Property(e => e.JobCode).HasMaxLength(50).HasColumnName("jobcode");
+                entity.Property(e => e.Project).HasMaxLength(20).HasColumnName("project");
+                entity.Property(e => e.Month).HasColumnName("month");
+                entity.Property(e => e.StaffId).HasMaxLength(50).HasColumnName("staffid");
+                entity.Property(e => e.GradeCode).HasMaxLength(10).HasColumnName("gradecode");
+                entity.Property(e => e.Name).HasMaxLength(50).HasColumnName("name");
+                entity.Property(e => e.ChargeRate).HasColumnType("money").HasColumnName("chargerate");
+                entity.Property(e => e.Class).HasMaxLength(255).HasColumnName("class");
+                entity.Property(e => e.Time).HasColumnName("time");
+                entity.Property(e => e.Cost).HasColumnName("cost");
+                entity.Property(e => e.Division).HasMaxLength(10).HasColumnName("division");
+                entity.Property(e => e.JobCodeOld).HasMaxLength(14).HasColumnName("jobcodeold");
+                entity.Property(e => e.Pay).HasColumnType("money").HasColumnName("pay");
+                entity.Property(e => e.NonPay).HasColumnType("money").HasColumnName("nonpay");
+                entity.Property(e => e.Overhead).HasColumnType("money").HasColumnName("overhead");
+                entity.Property(e => e.FpsYear).HasColumnName(FpsYear);
+            });
+
+            modelBuilder.Entity<ProjectMonth>(entity =>
+            {
+                entity.HasKey(e => new { e.Project, e.MonthNo })
+                    .HasName("pk_projectmonth_1__16");
+                entity.ToTable("projectmonth", "fps");
+                entity.Property(e => e.Project).HasMaxLength(20).HasColumnName("project");
+                entity.Property(e => e.MonthNo).HasColumnName("monthno");
+                entity.Property(e => e.CostProfile).HasColumnType("money").HasColumnName("costprofile");
+                entity.Property(e => e.FpsYear).HasColumnName(FpsYear);
+            });
+
+            modelBuilder.Entity<TimeCodeValid>(entity =>
+            {
+                entity.HasKey(e => new { e.WorkGroup, e.TimeCode, e.ParentProject })
+                    .HasName("aaaaatimecodevalid_pk");
+                entity.ToTable("timecodevalid", "fps");
+                entity.HasIndex(e => e.JobCode).HasDatabaseName("reference20");
+                entity.HasIndex(e => new { e.TestCode, e.Portfolio }).HasDatabaseName("reference24");
+                entity.HasIndex(e => e.ParentProject).HasDatabaseName("reference3");
+                entity.Property(e => e.WorkGroup).HasColumnType("citext").HasColumnName("workgroup");
+                entity.Property(e => e.TimeCode).HasColumnType("citext").HasColumnName("timecode");
+                entity.Property(e => e.ParentProject).HasColumnType("citext").HasColumnName("parentproject");
+                entity.Property(e => e.TestCode).HasMaxLength(50).HasColumnName("testcode");
+                entity.Property(e => e.JobCode).HasMaxLength(50).HasColumnName("jobcode");
+                entity.Property(e => e.Portfolio).HasMaxLength(20).HasColumnName("portfolio");
+                entity.Property(e => e.Active).HasColumnName("active");
+                entity.Property(e => e.FpsYear).HasColumnName(FpsYear);
+            });
+
+            modelBuilder.Entity<Milestone>(entity =>
+            {
+                entity.HasKey(e => new { e.Project, e.MilestoneRef, e.ObjectiveRef })
+                    .HasName("pk_milestone_1__12");
+                entity.ToTable("milestone", "fps");
+                entity.Property(e => e.Project).HasColumnType("citext").HasColumnName("project");
+                entity.Property(e => e.MilestoneRef).HasMaxLength(4).HasColumnName("milestoneref");
+                entity.Property(e => e.ObjectiveRef).HasMaxLength(50).HasColumnName("objectiveref");
+                entity.Property(e => e.MilestoneTitle).HasMaxLength(120).HasColumnName("milsetonetitle");
+                entity.Property(e => e.PlanDate).HasColumnName("plandate");
+                entity.Property(e => e.ActualDate).HasColumnName("actualdate");
+                entity.Property(e => e.Comment).HasColumnName("comment");
+                entity.Property(e => e.MonthNoFin).HasColumnName("monthnofin");
+                entity.Property(e => e.Year).HasMaxLength(50).HasColumnName("year");
+                entity.Property(e => e.FpsYear).HasColumnName(FpsYear);
+            });
+
+            modelBuilder.Entity<ProjectMonthFinal>(entity =>
+            {
+                entity.HasKey(e => new { e.Project, e.MonthNo })
+                    .HasName("aaaaaprojectmonthfinal_pk");
+                entity.ToTable("projectmonthfinal", "fps");
+                entity.Property(e => e.Project).HasMaxLength(20).HasColumnName("project");
+                entity.Property(e => e.MonthNo).HasColumnName("monthno");
+                entity.Property(e => e.PeriodName).HasMaxLength(50).HasColumnName("periodname");
+                entity.Property(e => e.CumFlag).HasColumnName("cumflag");
+                entity.Property(e => e.CostProfile).HasColumnType("money").HasColumnName("costprofile");
+                entity.Property(e => e.Subcontracts).HasColumnType("money").HasColumnName("subcontracts");
+                entity.Property(e => e.Animals).HasColumnType("money").HasColumnName("animals");
+                entity.Property(e => e.NonAnimals).HasColumnType("money").HasColumnName("nonanimals");
+                entity.Property(e => e.TimeCosts).HasColumnType("money").HasColumnName("timecosts");
+                entity.Property(e => e.TransferCosts).HasColumnType("money").HasColumnName("transfercosts");
+                entity.Property(e => e.TotalCost).HasColumnType("money").HasColumnName("totalcost");
+                entity.Property(e => e.Invoices).HasColumnType("money").HasColumnName("invoices");
+                entity.Property(e => e.Coiw).HasColumnType("money").HasColumnName("coiw");
+                entity.Property(e => e.PortSales).HasColumnType("money").HasColumnName("portsales");
+                entity.Property(e => e.CumCost).HasColumnType("money").HasColumnName("cumcost");
+                entity.Property(e => e.CumProfile).HasColumnType("money").HasColumnName("cumprofile");
+                entity.Property(e => e.SumOfCostProfile).HasColumnType("money").HasColumnName("sumofcostprofile");
+                entity.Property(e => e.CumInvoices).HasColumnType("money").HasColumnName("cuminvoices");
+                entity.Property(e => e.CumCoiw).HasColumnType("money").HasColumnName("cumcoiw");
+                entity.Property(e => e.CumPortSales).HasColumnType("money").HasColumnName("cumportsales");
+                entity.Property(e => e.MilestoneDue).HasColumnName("mstonedue");
+                entity.Property(e => e.DueDone).HasColumnName("due__done");
+                entity.Property(e => e.OnTime).HasColumnName("ontime");
+                entity.Property(e => e.SumOfMilestoneDue).HasColumnName("sumofmstonedue");
+                entity.Property(e => e.SumOfDueDone).HasColumnName("sumofdue__done");
+                entity.Property(e => e.SumOfOnTime).HasColumnName("sumofontime");
+                entity.Property(e => e.CwDebit).HasColumnType("money").HasColumnName("cwdebit");
+                entity.Property(e => e.CwCredit).HasColumnType("money").HasColumnName("cwcredit");
+                entity.Property(e => e.CumCwDebit).HasColumnType("money").HasColumnName("cumcwdebit");
+                entity.Property(e => e.CumCwCredit).HasColumnType("money").HasColumnName("cumcwcredit");
+                entity.Property(e => e.TotalHours).HasColumnName("totalhours");
+                entity.Property(e => e.CumTotalHours).HasColumnName("cumtotalhours");
+                entity.Property(e => e.CumSubcontracts).HasColumnName("cumsubcontracts");
+                entity.Property(e => e.X).HasColumnName("x");
+                entity.Property(e => e.CumTestCosts).HasColumnName("cumtestcosts");
+                entity.Property(e => e.PayCosts).HasColumnName("paycosts");
+                entity.Property(e => e.CumPayCosts).HasColumnName("cumpaycosts");
+                entity.Property(e => e.FpsYear).HasColumnName(FpsYear);
             });
 
             modelBuilder.Entity<ProjectGroup>(entity =>

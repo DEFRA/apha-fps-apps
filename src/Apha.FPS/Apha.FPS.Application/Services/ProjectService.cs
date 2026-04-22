@@ -107,6 +107,10 @@ namespace Apha.FPS.Application.Services
             if (errors.Count > 0)
                 throw new BusinessValidationErrorException(errors);
 
+            bool oldCodeExists = await _projectRepository.CheckProjectExistsAsync(oldCode);
+            if (!oldCodeExists)
+                errors.Add(new BusinessValidationError($"Project '{oldCode}' not found.", "OLD_CODE_NOT_FOUND"));
+
             bool newCodeExists = await _projectRepository.CheckProjectExistsAsync(newCode);
             if (newCodeExists)
                 errors.Add(new BusinessValidationError("This code is already in use.", "CODE_ALREADY_EXISTS"));

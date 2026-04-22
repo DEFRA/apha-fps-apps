@@ -112,7 +112,7 @@ namespace Apha.FPS.DataAccess.Repositories
             project.FpsYear = _requestContext.FpsYear;
             await _dbContext.Projects.AddAsync(project);
             // Converted trigger logic — UITrig_tlkpProject FOR INSERT: stage audit log in same unit of work
-            _dbContext.ProjectLogs.Add(MapProjectToLog(project, "I"));
+            _dbContext.ProjectLogs.Add(MapProjectToLog(project, "I", _requestContext.UserEmailId));
             await _dbContext.SaveChangesAsync();
             return project;
         }
@@ -122,7 +122,7 @@ namespace Apha.FPS.DataAccess.Repositories
             project.FpsYear = _requestContext.FpsYear;
             _dbContext.Entry(project).State = EntityState.Modified;
             // Converted trigger logic — UITrig_tlkpProject FOR UPDATE: stage audit log in same unit of work
-            _dbContext.ProjectLogs.Add(MapProjectToLog(project, "U"));
+            _dbContext.ProjectLogs.Add(MapProjectToLog(project, "U", _requestContext.UserEmailId));
             await _dbContext.SaveChangesAsync();
             return project;
         }
@@ -154,7 +154,7 @@ namespace Apha.FPS.DataAccess.Repositories
             entity.FecCost = project.FecCost;
 
             // Converted trigger logic — UITrig_tlkpProject FOR UPDATE: stage audit log in same unit of work
-            _dbContext.ProjectLogs.Add(MapProjectToLog(entity, "U"));
+            _dbContext.ProjectLogs.Add(MapProjectToLog(entity, "U", _requestContext.UserEmailId));
             await _dbContext.SaveChangesAsync();
             return entity;
         }
@@ -166,7 +166,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     && p.FpsYear == _requestContext.FpsYear);
             if (project == null) return false;
             // Converted trigger logic — DTrig_tlkpProject FOR DELETE: stage audit log before delete in same unit of work
-            _dbContext.ProjectLogs.Add(MapProjectToLog(project, "D"));
+            _dbContext.ProjectLogs.Add(MapProjectToLog(project, "D", _requestContext.UserEmailId));
             _dbContext.Projects.Remove(project);
             await _dbContext.SaveChangesAsync();
             return true;
@@ -306,18 +306,16 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<bool> HasMonthlyOutputAsync(string parentProject)
         {
-            return await _dbContext.Database.SqlQueryRaw<int>(
-                    "SELECT COUNT(*)::int AS \"Value\" FROM fps.monthlyoutput WHERE buyer = @p",
-                    new NpgsqlParameter("p", parentProject))
-                .AnyAsync(c => c > 0);
+            return await _dbContext.MonthlyOutputs
+                .AsNoTracking()
+                .AnyAsync(mo => mo.Buyer == parentProject);
         }
 
         public async Task<bool> HasMonthlyTimeAsync(string parentProject)
         {
-            return await _dbContext.Database.SqlQueryRaw<int>(
-                    "SELECT COUNT(*)::int AS \"Value\" FROM fps.monthlytime WHERE parentproject = @p",
-                    new NpgsqlParameter("p", parentProject))
-                .AnyAsync(c => c > 0);
+            return await _dbContext.MonthlyTimes
+                .AsNoTracking()
+                .AnyAsync(mt => mt.ParentProject == parentProject);
         }
 
         public async Task<bool> HasProjectInvoicesAsync(string parentProject)
@@ -347,16 +345,10 @@ namespace Apha.FPS.DataAccess.Repositories
                 await using var tx = await _dbContext.Database.BeginTransactionAsync();
                 try
                 {
-                    // Guard: new code must not exist
-                    bool newExists = await _dbContext.Projects.AnyAsync(p => p.ParentProject == newCode);
-                    if (newExists)
-                        throw new InvalidOperationException("This code is already in use.");
-
                     // Copy project row and stage audit log in same unit of work
                     var oldProject = await _dbContext.Projects
-                        .FirstOrDefaultAsync(p => p.ParentProject == oldCode);
-                    if (oldProject == null)
-                        throw new InvalidOperationException($"Project '{oldCode}' not found.");
+                        .FirstOrDefaultAsync(p => p.ParentProject == oldCode)
+                        ?? throw new InvalidOperationException($"Project '{oldCode}' not found.");
 
                     var newProject = new Project
                     {
@@ -399,7 +391,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
                     await _dbContext.Projects.AddAsync(newProject);
                     // Converted trigger logic — UITrig_tlkpProject FOR INSERT: stage audit log in same unit of work
-                    _dbContext.ProjectLogs.Add(MapProjectToLog(newProject, "I"));
+                    _dbContext.ProjectLogs.Add(MapProjectToLog(newProject, "I", _requestContext.UserEmailId));
                     await _dbContext.SaveChangesAsync();
 
                     // INSERT new JobCode rows
@@ -424,76 +416,107 @@ namespace Apha.FPS.DataAccess.Repositories
                     }
 
                     // UPDATE tlkpTestCapability.planportfolio
-                    await _dbContext.Database.ExecuteSqlAsync(
-                        $"UPDATE fps.tlkptestcapability SET planportfolio = {newCode} WHERE planportfolio = {oldCode}");
+                    await _dbContext.TestCapabilities
+                        .Where(tc => tc.PlanPortfolio == oldCode)
+                        .ExecuteUpdateAsync(s => s.SetProperty<string>(x => x.PlanPortfolio, newCode));
 
                     // sp_Insert_tcv: copy TimeCodeValid rows with code substitution
-                    await _dbContext.Database.ExecuteSqlAsync(
-                        $"""
-                 INSERT INTO fps.timecodevalid (workgroup, timecode, parentproject, testcode, jobcode, portfolio, active, fpsyear)
-                 SELECT DISTINCT workgroup,
-                   CASE timecode WHEN {oldCode} THEN {newCode} ELSE timecode END,
-                   CASE parentproject WHEN {oldCode} THEN {newCode} ELSE parentproject END,
-                   testcode,
-                   CASE jobcode WHEN {oldCode} THEN {newCode} ELSE jobcode END,
-                   CASE portfolio WHEN {oldCode} THEN {newCode} ELSE portfolio END,
-                   active, fpsyear
-                 FROM fps.timecodevalid
-                 WHERE parentproject = {oldCode} OR portfolio = {oldCode}
-                 """);
+                    var tcvToCopy = await _dbContext.TimeCodeValids
+                        .Where(tcv => tcv.ParentProject == oldCode || tcv.Portfolio == oldCode)
+                        .AsNoTracking()
+                        .ToListAsync();
+                    var newTcvs = tcvToCopy
+                        .Select(tcv => new TimeCodeValid
+                        {
+                            WorkGroup     = tcv.WorkGroup,
+                            TimeCode      = tcv.TimeCode == oldCode ? newCode : tcv.TimeCode,
+                            ParentProject = tcv.ParentProject == oldCode ? newCode : tcv.ParentProject,
+                            TestCode      = tcv.TestCode,
+                            JobCode       = tcv.JobCode == oldCode ? newCode : tcv.JobCode,
+                            Portfolio     = tcv.Portfolio == oldCode ? newCode : tcv.Portfolio,
+                            Active        = tcv.Active,
+                            FpsYear       = tcv.FpsYear
+                        })
+                        .DistinctBy(tcv => new { tcv.WorkGroup, tcv.TimeCode, tcv.ParentProject })
+                        .ToList();
+                    if (newTcvs.Count > 0)
+                    {
+                        await _dbContext.TimeCodeValids.AddRangeAsync(newTcvs);
+                        await _dbContext.SaveChangesAsync();
+                    }
 
                     // sp_Insert_tr: copy tlkpTestReqmt rows with new buyer code
-                    await _dbContext.Database.ExecuteSqlAsync(
-                        $"""
-                 INSERT INTO fps.tlkptestreqmt (testcode, buyer, unitprice, norequired, projectbuyercode, testbuyercode, datecreated, active, fpsyear)
-                 SELECT testcode, {newCode}, unitprice, norequired, {newCode}, testbuyercode, datecreated, active, fpsyear
-                 FROM fps.tlkptestreqmt WHERE projectbuyercode = {oldCode}
-                 """);
+                    var testReqsToCopy = await _dbContext.TestRequirements
+                        .Where(tr => tr.ProjectBuyerCode == oldCode)
+                        .AsNoTracking()
+                        .ToListAsync();
+                    var newTestReqs = testReqsToCopy.Select(tr => new TestRequirement
+                    {
+                        TestCode         = tr.TestCode,
+                        Buyer            = newCode,
+                        UnitPrice        = tr.UnitPrice,
+                        NoRequired       = tr.NoRequired,
+                        ProjectBuyerCode = newCode,
+                        TestBuyerCode    = tr.TestBuyerCode,
+                        DateCreated      = tr.DateCreated,
+                        Active           = tr.Active,
+                        FpsYear          = tr.FpsYear
+                    }).ToList();
+                    if (newTestReqs.Count > 0)
+                    {
+                        await _dbContext.TestRequirements.AddRangeAsync(newTestReqs);
+                        await _dbContext.SaveChangesAsync();
+                    }
 
                     // UPDATE remaining child tables
-                    await _dbContext.Database.ExecuteSqlAsync(
-                        $"""
-                 UPDATE fps.monthlytime
-                 SET parentproject = {newCode}, timecode = CASE timecode WHEN {oldCode} THEN {newCode} ELSE timecode END
-                 WHERE parentproject = {oldCode}
-                 """);
-                    await _dbContext.Database.ExecuteSqlAsync(
-                        $"UPDATE fps.monthlyoutput SET buyer = {newCode} WHERE buyer = {oldCode}");
+                    await _dbContext.MonthlyTimes
+                        .Where(mt => mt.ParentProject == oldCode)
+                        .ExecuteUpdateAsync(s => s
+                            .SetProperty(x => x.ParentProject, newCode)
+                            .SetProperty(x => x.TimeCode, x => x.TimeCode == oldCode ? newCode : x.TimeCode));
+                    await _dbContext.MonthlyOutputs
+                        .Where(mo => mo.Buyer == oldCode)
+                        .ExecuteUpdateAsync(s => s.SetProperty(x => x.Buyer, newCode));
                     await _dbContext.AdditionalCosts
                         .Where(ac => ac.JobCode == oldCode)
                         .ExecuteUpdateAsync(s => s.SetProperty(x => x.JobCode, newCode));
-                    await _dbContext.Database.ExecuteSqlAsync(
-                        $"UPDATE fps.proj_invoice SET projectparent = {newCode} WHERE projectparent = {oldCode}");
-                    await _dbContext.Database.ExecuteSqlAsync(
-                        $"UPDATE fps.proj_subcontract SET project = {newCode} WHERE project = {oldCode}");
-                    await _dbContext.Database.ExecuteSqlAsync(
-                        $"""
-                 UPDATE fps.timecostcalcs
-                 SET project = {newCode}, jobcode = CASE jobcode WHEN {oldCode} THEN {newCode} ELSE jobcode END
-                 WHERE project = {oldCode}
-                 """);
-                    await _dbContext.Database.ExecuteSqlAsync(
-                        $"UPDATE fps.projectmonth SET project = {newCode} WHERE project = {oldCode}");
+                    await _dbContext.ProjectInvoices
+                        .Where(pi => pi.ProjectParent == oldCode)
+                        .ExecuteUpdateAsync(s => s.SetProperty(x => x.ProjectParent, newCode));
+                    await _dbContext.ProjectSubContracts
+                        .Where(ps => ps.Project == oldCode)
+                        .ExecuteUpdateAsync(s => s.SetProperty(x => x.Project, newCode));
+                    await _dbContext.TimeCostCalcs
+                        .Where(tc => tc.Project == oldCode)
+                        .ExecuteUpdateAsync(s => s
+                            .SetProperty(x => x.Project, newCode)
+                            .SetProperty(x => x.JobCode, x => x.JobCode == oldCode ? newCode : x.JobCode));
+                    await _dbContext.ProjectMonths
+                        .Where(pm => pm.Project == oldCode)
+                        .ExecuteUpdateAsync(s => s.SetProperty(x => x.Project, newCode));
                     await _dbContext.AnimalRequests
                         .Where(ar => ar.JobCode == oldCode)
                         .ExecuteUpdateAsync(s => s.SetProperty(x => x.JobCode, newCode));
-                    await _dbContext.Database.ExecuteSqlAsync(
-                        $"UPDATE fps.milestone SET project = {newCode} WHERE project = {oldCode}");
+                    await _dbContext.Milestones
+                        .Where(m => m.Project == oldCode)
+                        .ExecuteUpdateAsync(s => s.SetProperty(x => x.Project, newCode));
 
                     // UPDATE tblStaffJob (existing DbSet — use LINQ for type safety)
                     await _dbContext.StaffJobs
                         .Where(sj => sj.JobCode == oldCode)
                         .ExecuteUpdateAsync(s => s.SetProperty(x => x.JobCode, newCode));
 
-                    await _dbContext.Database.ExecuteSqlAsync(
-                        $"UPDATE fps.projectmonthfinal SET project = {newCode} WHERE project = {oldCode}");
+                    await _dbContext.ProjectMonthFinals
+                        .Where(pmf => pmf.Project == oldCode)
+                        .ExecuteUpdateAsync(s => s.SetProperty(x => x.Project, newCode));
 
                     // sp_Delete_tr, sp_Delete_tcv, sp_Delete_jc, sp_Delete_pp
                     await _dbContext.TestRequirements
                         .Where(tr => tr.ProjectBuyerCode == oldCode)
                         .ExecuteDeleteAsync();
-                    await _dbContext.Database.ExecuteSqlAsync(
-                        $"DELETE FROM fps.timecodevalid WHERE parentproject = {oldCode} OR portfolio = {oldCode}");
+                    await _dbContext.TimeCodeValids
+                        .Where(tcv => tcv.ParentProject == oldCode || tcv.Portfolio == oldCode)
+                        .ExecuteDeleteAsync();
                     await _dbContext.JobCodes
                         .Where(jc => jc.ParentProject == oldCode)
                         .ExecuteDeleteAsync();
@@ -528,12 +551,13 @@ namespace Apha.FPS.DataAccess.Repositories
                     var project = await _dbContext.Projects
                         .FirstOrDefaultAsync(p => p.ParentProject == parentProject);
                     if (project != null)
-                        _dbContext.ProjectLogs.Add(MapProjectToLog(project, "D"));
+                        _dbContext.ProjectLogs.Add(MapProjectToLog(project, "D", _requestContext.UserEmailId));
                     await _dbContext.SaveChangesAsync();
 
                     // sp_Delete_tcv
-                    await _dbContext.Database.ExecuteSqlAsync(
-                        $"DELETE FROM fps.timecodevalid WHERE parentproject = {parentProject} OR portfolio = {parentProject}");
+                    await _dbContext.TimeCodeValids
+                        .Where(tcv => tcv.ParentProject == parentProject || tcv.Portfolio == parentProject)
+                        .ExecuteDeleteAsync();
 
                     // sp_Delete_JC
                     await _dbContext.JobCodes
@@ -577,7 +601,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
         // ── Private helpers ────────────────────────────────────────────────
 
-        private static ProjectLog MapProjectToLog(Project p, string operation) => new()
+        private static ProjectLog MapProjectToLog(Project p, string operation, string? userId) => new()
         {
             ParentProject = p.ParentProject,
             ProjectTitle = p.ProjectTitle,
@@ -591,11 +615,11 @@ namespace Apha.FPS.DataAccess.Repositories
             WipCurrent = p.WipCurrent,
             ProjectStatus = p.ProjectStatus,
             CostBookNo = p.CostBookNo,
-            DateCreated = p.DateCreated,
+            DateCreated = p.DateCreated.HasValue ? DateTime.SpecifyKind(p.DateCreated.Value, DateTimeKind.Utc) : null,
             FecCost = p.FecCost,
             Profit = p.Profit,
             BudgetCvl = p.BudgetCvl,
-            DateCosted = p.DateCosted,
+            DateCosted = p.DateCosted.HasValue ? DateTime.SpecifyKind(p.DateCosted.Value, DateTimeKind.Utc) : null,
             Disease = p.Disease,
             Contract = p.Contract,
             ProjectParent = p.ProjectParent,
@@ -617,7 +641,8 @@ namespace Apha.FPS.DataAccess.Repositories
             SubAccountCode = p.SubAccountCode,
             ProjectGroup = p.ProjectGroup,
             IncomeAccountCode = p.IncomeAccountCode,
-            FpsYear = p.FpsYear
+            FpsYear = p.FpsYear,
+            UserId = userId
         };
     }
 }

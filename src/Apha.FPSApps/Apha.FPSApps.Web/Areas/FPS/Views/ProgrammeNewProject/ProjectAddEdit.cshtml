@@ -297,6 +297,17 @@
             }
         });
 
+        function syncResourceCentreFromCostCentre() {
+            const sel = document.getElementById('CostCentre');
+            if (!sel) return;
+            const parts = sel.options[sel.selectedIndex].text.split('|');
+            const owningRc = document.getElementById('OwningRc');
+            if (owningRc) owningRc.value = parts.length >= 2 ? parts[1].trim() : '';
+        }
+        document.getElementById('CostCentre')?.addEventListener('change', syncResourceCentreFromCostCentre);
+        syncResourceCentreFromCostCentre(); // pre-populate on page load (edit mode)
+
+
         window.saveProject = function(formId) {
             const form = $('#' + formId);
             if (!form.valid()) { displayValidationErrors(form); return; }
