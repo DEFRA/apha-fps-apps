@@ -1,6 +1,7 @@
 ﻿using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Application.Services;
+using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -775,6 +776,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
         {
             // Arrange
             var parentProject = "PP001";
+            _mockRepository.HasAssociatedJobCodesAsync(parentProject).Returns(false);
             _mockRepository.DeleteProjectAsync(parentProject).Returns(true);
 
             // Act
@@ -782,6 +784,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
 
             // Assert
             result.Should().BeTrue();
+            await _mockRepository.Received(1).HasAssociatedJobCodesAsync(parentProject);
             await _mockRepository.Received(1).DeleteProjectAsync(parentProject);
         }
 
@@ -790,6 +793,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
         {
             // Arrange
             var parentProject = "PP999";
+            _mockRepository.HasAssociatedJobCodesAsync(parentProject).Returns(false);
             _mockRepository.DeleteProjectAsync(parentProject).Returns(false);
 
             // Act
@@ -797,7 +801,27 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
 
             // Assert
             result.Should().BeFalse();
+            await _mockRepository.Received(1).HasAssociatedJobCodesAsync(parentProject);
             await _mockRepository.Received(1).DeleteProjectAsync(parentProject);
+        }
+
+        [Fact]
+        public async Task DeleteProjectAsync_WhenProjectHasAssociatedJobCodes_ThrowsBusinessValidationErrorException()
+        {
+            // Arrange
+            var parentProject = "PP001";
+            _mockRepository.HasAssociatedJobCodesAsync(parentProject).Returns(true);
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                async () => await _sut.DeleteProjectAsync(parentProject)
+            );
+
+            exception.Errors.Should().HaveCount(1);
+            exception.Errors[0].Code.Should().Be("PROJECT_HAS_ASSOCIATIONS");
+            exception.Errors[0].Message.Should().Contain(parentProject);
+            await _mockRepository.Received(1).HasAssociatedJobCodesAsync(parentProject);
+            await _mockRepository.DidNotReceive().DeleteProjectAsync(Arg.Any<string>());
         }
 
         [Fact]
@@ -805,6 +829,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
         {
             // Arrange
             var parentProject = "PP001";
+            _mockRepository.HasAssociatedJobCodesAsync(parentProject).Returns(false);
             _mockRepository.DeleteProjectAsync(parentProject)
                 .Returns(Task.FromException<bool>(new Exception("Database connection failed")));
 
@@ -814,6 +839,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
             );
 
             exception.Message.Should().Be("Database connection failed");
+            await _mockRepository.Received(1).HasAssociatedJobCodesAsync(parentProject);
             await _mockRepository.Received(1).DeleteProjectAsync(parentProject);
         }
 

@@ -93,6 +93,14 @@ namespace Apha.FPS.Api.Middleware
                         Message = ex.Message
                     });
                     break;
+                case InvalidOperationException:
+                    context.Response.StatusCode = StatusCodes.Status409Conflict;
+                    apiResponse.Errors.Add(new ApiError
+                    {
+                        Code = "BUSINESS_RULE_VIOLATION",
+                        Message = ex.Message
+                    });
+                    break;
                 case PostgresException pgEx:
                     context.Response.StatusCode = StatusCodes.Status500InternalServerError;
                     apiResponse.Errors.Add(new ApiError
@@ -122,7 +130,7 @@ namespace Apha.FPS.Api.Middleware
                     break;
             }
 
-            LogException(ex, errorType!, apiResponse.Errors.First()!.Code, correlationId);
+            LogException(ex, errorType!, apiResponse.Errors[0].Code, correlationId);
 
             var json = JsonSerializer.Serialize(apiResponse);
             await context.Response.WriteAsync(json);

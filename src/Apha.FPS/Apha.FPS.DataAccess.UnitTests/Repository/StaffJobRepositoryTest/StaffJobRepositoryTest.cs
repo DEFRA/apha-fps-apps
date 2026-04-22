@@ -572,6 +572,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
 
             mockContext.Setup(x => x.StaffJobs).Returns(staffJobMockSet.Object);
 
+            var staffJobLogsMockSet = RepositoryTestHelper.CreateMockDbSet(new List<StaffJobLog>());
+            mockContext.Setup(x => x.StaffJobLogs).Returns(staffJobLogsMockSet.Object);
+
             var repo = new StaffJobRepository(mockContext.Object, mockFpsYearContext.Object);
             var newStaffJob = new StaffJob
             {
@@ -588,33 +591,11 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
             Assert.Equal("S001", result.StaffId);
             Assert.Equal("JOB001", result.JobCode);
             Assert.Equal(2025, result.FpsYear);
+            staffJobLogsMockSet.Verify(m => m.Add(It.Is<StaffJobLog>(log =>
+                log.StaffId == "S001" &&
+                log.JobCode == "JOB001" &&
+                log.InsertDelete == "I")), Times.Once);
             RepositoryTestHelper.VerifySaveChanges(mockContext);
-        }
-
-        [Fact]
-        public async Task AddAsync_ThrowsArgumentNullException_WhenStaffJobIsNull()
-        {
-            // Arrange
-            var repo = CreateRepository(staffJobs: new List<StaffJob>());
-
-            // Act & Assert
-            await Assert.ThrowsAsync<ArgumentNullException>(() => repo.AddAsync(null!));
-        }
-
-        [Fact]
-        public async Task AddAsync_ThrowsArgumentOutOfRangeException_WhenPlannedHoursIsNegative()
-        {
-            // Arrange
-            var repo = CreateRepository(staffJobs: new List<StaffJob>());
-            var staffJob = new StaffJob
-            {
-                StaffId = "S001",
-                JobCode = "JOB001",
-                PlannedHours = -10
-            };
-
-            // Act & Assert
-            await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => repo.AddAsync(staffJob));
         }
 
         [Fact]
@@ -661,6 +642,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
 
             mockContext.Setup(x => x.StaffJobs).Returns(staffJobMockSet.Object);
 
+            var staffJobLogsMockSet = RepositoryTestHelper.CreateMockDbSet(new List<StaffJobLog>());
+            mockContext.Setup(x => x.StaffJobLogs).Returns(staffJobLogsMockSet.Object);
+
             var repo = new StaffJobRepository(mockContext.Object, mockFpsYearContext.Object);
             var updatedStaffJob = new StaffJob
             {
@@ -676,33 +660,11 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
             Assert.NotNull(result);
             Assert.Equal(50, result.PlannedHours);
             Assert.Equal(2025, result.FpsYear);
+            staffJobLogsMockSet.Verify(m => m.Add(It.Is<StaffJobLog>(log =>
+                log.StaffId == "S001" &&
+                log.JobCode == "JOB001" &&
+                log.InsertDelete == "I")), Times.Once);
             RepositoryTestHelper.VerifySaveChanges(mockContext);
-        }
-
-        [Fact]
-        public async Task UpdateAsync_ThrowsArgumentNullException_WhenStaffJobIsNull()
-        {
-            // Arrange
-            var repo = CreateRepository(staffJobs: new List<StaffJob>());
-
-            // Act & Assert
-            await Assert.ThrowsAsync<ArgumentNullException>(() => repo.UpdateAsync(null!));
-        }
-
-        [Fact]
-        public async Task UpdateAsync_ThrowsArgumentOutOfRangeException_WhenPlannedHoursIsNegative()
-        {
-            // Arrange
-            var repo = CreateRepository(staffJobs: new List<StaffJob>());
-            var staffJob = new StaffJob
-            {
-                StaffId = "S001",
-                JobCode = "JOB001",
-                PlannedHours = -10
-            };
-
-            // Act & Assert
-            await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => repo.UpdateAsync(staffJob));
         }
 
         [Fact]
@@ -744,6 +706,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
 
             mockContext.Setup(x => x.StaffJobs).Returns(staffJobMockSet.Object);
 
+            var staffJobLogsMockSet = RepositoryTestHelper.CreateMockDbSet(new List<StaffJobLog>());
+            mockContext.Setup(x => x.StaffJobLogs).Returns(staffJobLogsMockSet.Object);
+
             var repo = new StaffJobRepository(mockContext.Object, mockFpsYearContext.Object);
 
             // Act
@@ -751,6 +716,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
 
             // Assert
             Assert.True(result);
+            staffJobLogsMockSet.Verify(m => m.Add(It.Is<StaffJobLog>(log =>
+                log.StaffId == "S001" &&
+                log.JobCode == "JOB001" &&
+                log.InsertDelete == "D")), Times.Once);
             RepositoryTestHelper.VerifyRemove(staffJobMockSet);
             RepositoryTestHelper.VerifySaveChanges(mockContext);
         }

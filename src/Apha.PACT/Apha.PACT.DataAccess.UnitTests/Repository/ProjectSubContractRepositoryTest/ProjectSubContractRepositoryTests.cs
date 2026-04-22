@@ -28,10 +28,10 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectSubContractRepository
                 IEnumerable<ProjectSubContract> subContracts,
                 int fpsYear = DefaultTestFpsYear)
         {
-            var fpsYearContext = Substitute.For<IFpsYearContext>();
-            fpsYearContext.FPSYear.Returns(fpsYear);
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            fpsRequestContext.FpsYear.Returns(fpsYear);
 
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
             var subContractsMockSet = RepositoryTestHelper.CreateMockDbSet(subContracts);
 
             RepositoryTestHelper.SetupDbSetOperations(subContractsMockSet);
@@ -42,7 +42,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectSubContractRepository
 
             mockContext.Setup(x => x.ProjectSubContracts).Returns(subContractsMockSet.Object);
 
-            var repo = new ProjectSubContractRepository(mockContext.Object, fpsYearContext);
+            var repo = new ProjectSubContractRepository(mockContext.Object, fpsRequestContext);
             return (repo, subContractsMockSet, mockContext);
         }
 
@@ -198,10 +198,10 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectSubContractRepository
         [Fact]
         public async Task UpdateAsync_ValidEntity_SetsFpsYearBeforeEntryIsCalled()
         {
-            var fpsYearContext = Substitute.For<IFpsYearContext>();
-            fpsYearContext.FPSYear.Returns(DefaultTestFpsYear);
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            fpsRequestContext.FpsYear.Returns(DefaultTestFpsYear);
 
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
             var subContractsMockSet = RepositoryTestHelper.CreateMockDbSet<ProjectSubContract>([]);
             mockContext.Setup(x => x.ProjectSubContracts).Returns(subContractsMockSet.Object);
 
@@ -210,7 +210,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectSubContractRepository
                 .Callback(() => entryWasCalled = true)
                 .Throws(new NotSupportedException("Entry() is not supported in mocked DbContext"));
 
-            var repo = new ProjectSubContractRepository(mockContext.Object, fpsYearContext);
+            var repo = new ProjectSubContractRepository(mockContext.Object, fpsRequestContext);
             var entity = new ProjectSubContract { SubContCounter = 1, Project = "PRJ1" };
 
             await Assert.ThrowsAsync<NotSupportedException>(() => repo.UpdateAsync(entity));
@@ -223,17 +223,17 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectSubContractRepository
         public async Task UpdateAsync_SetsFpsYear_FromYearContext()
         {
             const int customYear = 2025;
-            var fpsYearContext = Substitute.For<IFpsYearContext>();
-            fpsYearContext.FPSYear.Returns(customYear);
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            fpsRequestContext.FpsYear.Returns(customYear);
 
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
             var subContractsMockSet = RepositoryTestHelper.CreateMockDbSet<ProjectSubContract>([]);
             mockContext.Setup(x => x.ProjectSubContracts).Returns(subContractsMockSet.Object);
 
             mockContext.Setup(x => x.Entry(It.IsAny<ProjectSubContract>()))
                 .Throws(new NotSupportedException("Entry() is not supported in mocked DbContext"));
 
-            var repo = new ProjectSubContractRepository(mockContext.Object, fpsYearContext);
+            var repo = new ProjectSubContractRepository(mockContext.Object, fpsRequestContext);
             var entity = new ProjectSubContract { SubContCounter = 1 };
 
             await Assert.ThrowsAsync<NotSupportedException>(() => repo.UpdateAsync(entity));

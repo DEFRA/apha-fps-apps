@@ -1,4 +1,4 @@
-﻿using Apha.Common.Contracts;
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.PACT;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PACT;
@@ -7,7 +7,6 @@ using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients;
 using AutoMapper;
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
 using Xunit;
 
 namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectSubContractApiClientTest
@@ -115,24 +114,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectSubContr
             Assert.NotNull(result.Errors);
         }
 
-        [Fact]
-        public async Task GetPagedProjectSubContractsAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            _http.GetAsync<List<ProjectSubContractRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetPagedProjectSubContractsAsync(query, null);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve project sub-contracts", error.Message);
-        }
-
         #endregion
 
         #region GetTotalAmountAsync Tests
@@ -142,10 +123,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectSubContr
         {
             // Arrange
             var project = "PP001";
-            var apiResponse = new ApiResponse<decimal> { Success = true, Data = 2000.00m };
+            var apiResponse = new ApiResponse<decimal?> { Success = true, Data = 2000.00m };
             var expectedDto = ApiResponseDto<decimal>.SuccessResponse(2000.00m);
 
-            _http.GetAsync<decimal>(Arg.Is<string>(url =>
+            _http.GetAsync<decimal?>(Arg.Is<string>(url =>
                 url.Contains("api/v1/projectsubcontract/total") && url.Contains("project=PP001")))
                 .Returns(apiResponse);
             _mapper.Map<ApiResponseDto<decimal>>(apiResponse).Returns(expectedDto);
@@ -157,7 +138,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectSubContr
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(2000.00m, result.Data);
-            await _http.Received(1).GetAsync<decimal>(
+            await _http.Received(1).GetAsync<decimal?>(
                 Arg.Is<string>(url => url.Contains("api/v1/projectsubcontract/total") && url.Contains("project=PP001")));
         }
 
@@ -165,10 +146,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectSubContr
         public async Task GetTotalAmountAsync_WithNullProject_UsesBaseUrl()
         {
             // Arrange
-            var apiResponse = new ApiResponse<decimal> { Success = true, Data = 0m };
+            var apiResponse = new ApiResponse<decimal?> { Success = true, Data = 0m };
             var expectedDto = ApiResponseDto<decimal>.SuccessResponse(0m);
 
-            _http.GetAsync<decimal>("api/v1/projectsubcontract/total").Returns(apiResponse);
+            _http.GetAsync<decimal?>("api/v1/projectsubcontract/total").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<decimal>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -177,24 +158,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectSubContr
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
-            await _http.Received(1).GetAsync<decimal>("api/v1/projectsubcontract/total");
-        }
-
-        [Fact]
-        public async Task GetTotalAmountAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            _http.GetAsync<decimal>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetTotalAmountAsync(null);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve sub-contract total amount", error.Message);
+            await _http.Received(1).GetAsync<decimal?>("api/v1/projectsubcontract/total");
         }
 
         #endregion
@@ -248,23 +212,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectSubContr
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.NotNull(result.Errors);
-        }
-
-        [Fact]
-        public async Task GetByIdAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            _http.GetAsync<ProjectSubContractRes>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetByIdAsync(1);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve project sub-contract", error.Message);
         }
 
         #endregion
@@ -321,26 +268,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectSubContr
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.NotNull(result.Errors);
-        }
-
-        [Fact]
-        public async Task CreateAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var subContractDto = new ProjectSubContractDto { Project = "PP001" };
-            _mapper.Map<ProjectSubContractReq>(subContractDto).Returns(new ProjectSubContractReq { Project = "PP001" });
-            _http.PostAsync<ProjectSubContractReq, ProjectSubContractRes>(Arg.Any<string>(), Arg.Any<ProjectSubContractReq>())
-                .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.CreateAsync(subContractDto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to create project sub-contract", error.Message);
         }
 
         #endregion
@@ -401,27 +328,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectSubContr
             Assert.NotNull(result.Errors);
         }
 
-        [Fact]
-        public async Task UpdateAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var subContCounter = 1;
-            var subContractDto = new ProjectSubContractDto { Project = "PP001" };
-            _mapper.Map<ProjectSubContractReq>(subContractDto).Returns(new ProjectSubContractReq { Project = "PP001" });
-            _http.PutAsync<ProjectSubContractReq, ProjectSubContractRes>(Arg.Any<string>(), Arg.Any<ProjectSubContractReq>())
-                .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.UpdateAsync(subContCounter, subContractDto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to update project sub-contract", error.Message);
-        }
-
         #endregion
 
         #region DeleteAsync Tests
@@ -431,10 +337,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectSubContr
         {
             // Arrange
             var subContCounter = 1;
-            var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
+            var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
             var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
 
-            _http.DeleteAsync<bool>($"api/v1/projectsubcontract/{subContCounter}").Returns(apiResponse);
+            _http.DeleteAsync<bool?>($"api/v1/projectsubcontract/{subContCounter}").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -444,7 +350,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectSubContr
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.True(result.Data);
-            await _http.Received(1).DeleteAsync<bool>($"api/v1/projectsubcontract/{subContCounter}");
+            await _http.Received(1).DeleteAsync<bool?>($"api/v1/projectsubcontract/{subContCounter}");
         }
 
         [Fact]
@@ -452,7 +358,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectSubContr
         {
             // Arrange
             var errors = new List<ApiError> { new() { Message = "Not Found", Code = "NOT_FOUND" } };
-            var apiResponse = new ApiResponse<bool> { Success = false, Errors = errors };
+            var apiResponse = new ApiResponse<bool?> { Success = false, Errors = errors };
             var mappedResponse = new ApiResponseDto<bool>
             {
                 Success = false,
@@ -460,7 +366,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectSubContr
                 Meta = new ApiMetaDto()
             };
 
-            _http.DeleteAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
+            _http.DeleteAsync<bool?>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedResponse);
 
             // Act
@@ -470,23 +376,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectSubContr
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.NotNull(result.Errors);
-        }
-
-        [Fact]
-        public async Task DeleteAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            _http.DeleteAsync<bool>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.DeleteAsync(1);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to delete project sub-contract", error.Message);
         }
 
         #endregion

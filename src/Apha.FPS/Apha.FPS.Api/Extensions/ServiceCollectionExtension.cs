@@ -36,6 +36,7 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IAccountCodeService, AccountCodeService>();
             services.AddScoped<ISubAccountService, SubAccountService>();
             services.AddScoped<IProjectGroupService, ProjectGroupService>();
+            services.AddScoped<ITestorProductService, TestorProductService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
@@ -57,6 +58,7 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<ISubAccountRepository, SubAccountRepository>();
             services.AddScoped<IProjectGroupRepository, ProjectGroupRepository>();
             services.AddScoped<IStoredProcRepository, StoredProcRepository>();
+            services.AddScoped<ITestorProductRepository, TestorProductRepository>();
             return services;
         }
     }

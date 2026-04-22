@@ -1,7 +1,10 @@
 ﻿using Apha.Common.Utilities.ExcelExport;
 using Apha.Common.Utilities.StateManagement;
+using Apha.PIMS.Application.Interfaces;
+using Apha.PIMS.Application.Services;
 using Apha.PIMS.Core.Interfaces;
 using Apha.PIMS.DataAccess.Context;
+using Apha.PIMS.DataAccess.Repository;
 
 namespace Apha.PIMS.Api.Extensions
 {
@@ -18,12 +21,18 @@ namespace Apha.PIMS.Api.Extensions
             // Add your application services here
             services.AddScoped<IAppStateService, AppStateService>();
             services.AddScoped<IExcelExportService, ExcelExportService>();
+            services.AddScoped<IProjectListService, ProjectListService>();
+            services.AddScoped<IProjectDetailsService, ProjectDetailsService>();
+            services.AddScoped<ICommentService, CommentService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
         {
             // Add your data access services here
             services.AddScoped<IFPSYearContext, FPSYearContext>();
+            services.AddScoped<IProjectListRepository, ProjectListRepository>();
+            services.AddScoped<IProjectDetailsRepository, ProjectDetailsRepository>();
+            services.AddScoped<ICommentRepository, CommentRepository>();
             return services;
         }
     }

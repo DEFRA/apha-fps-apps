@@ -5,23 +5,9 @@
 }
 
 <script>
-    function onDefraProjectChange() {
-        var selectElement = document.getElementById('Isdefraproject');
-        var warningSpan = selectElement.parentElement.querySelector('.warning-text');
-        if (warningSpan) {
-            warningSpan.style.display = 'inline-block';
-            setTimeout(function () { warningSpan.style.display = 'none'; }, 3000);
-        }
-    }
+    
 
-    function onInflationChange() {
-        var checkboxElement = document.getElementById('chkInflation');
-        var warningSpan = checkboxElement.closest('.govuk-form-group').querySelector('.warning-text');
-        if (warningSpan) {
-            warningSpan.style.display = 'inline-block';
-            setTimeout(function () { warningSpan.style.display = 'none'; }, 3000);
-        }
-    }
+    
 
     function openDatePicker(pickerId) {
         var picker = document.getElementById(pickerId);
@@ -111,30 +97,24 @@
 
                             <!-- Title -->
                             <div class="govuk-form-group d-flex align-items-start mb-2">
-                                <label asp-for="Projecttitle" class="govuk-label label_width mb-0 pt-1">Title:</label>
+                                <label asp-for="ProjectTitle" class="govuk-label label_width mb-0 pt-1">Title:</label>
                                 <div style="width: 61%;">
-                                    <textarea asp-for="Projecttitle" class="govuk-textarea w-100 sup_margin_0"></textarea>
-                                    <span asp-validation-for="Projecttitle" class="govuk-error-message"></span>
+                                    <textarea asp-for="ProjectTitle" class="govuk-textarea w-100 sup_margin_0"></textarea>
+                                    <span asp-validation-for="ProjectTitle" class="govuk-error-message"></span>
                                 </div>
                             </div>
 
-                            @* FIX 1: was missing opening < on the div tag — caused "malformed form tag helper" error *@
-                            @* FIX 2: bound to Financialyears (int?) not Plancat — 0=Calendar Year, 1=Financial Year *@
                             <!-- Year Type (Financialyears) + Programme -->
                             <div class="govuk-form-group d-flex align-items-start mb-2">
-                                <label for="Financialyears" class="govuk-label label_width mb-0 pt-1">Year Type:</label>
-                                <div class="me-4">
-                                    <select id="Financialyears" name="Financialyears" class="govuk-select width-200">
-                                        <option value="">Select Year Type</option>
-                                        <option value="0" selected="@(Model.Financialyears == 0 ? "selected" : null)">Calendar Year</option>
-                                        <option value="1" selected="@(Model.Financialyears != null && Model.Financialyears != 0 ? "selected" : null)">Financial Year</option>
-                                    </select>
-                                    <span asp-validation-for="Financialyears" class="govuk-error-message"></span>
-                                </div>
+                                        <label asp-for="FinancialYears" class="govuk-label label_width mb-0 pt-1">Year Type:</label>
+                                        <div class="me-4">
+                                            <select asp-for="FinancialYears" asp-items="Model.AvailableFinancialYears" class="govuk-select width-200"></select>
+                                            <span asp-validation-for="FinancialYears" class="govuk-error-message"></span>
+                                        </div>
                                 <label asp-for="Programme" class="govuk-label label_width mb-0 pt-1">Programme:</label>
                                 <div>
                                     <select asp-for="Programme" asp-items="Model.AvailablePrograms" class="govuk-select width-200">
-                                        <option value="">Select Programme</option>
+                                        
                                     </select>
                                     <span asp-validation-for="Programme" class="govuk-error-message"></span>
                                 </div>
@@ -145,14 +125,14 @@
                                 <label asp-for="CustomerName" class="govuk-label label_width mb-0 pt-1">Customer Name:</label>
                                 <div class="me-4">
                                     <select asp-for="CustomerName" asp-items="Model.AvailableCustomers" class="govuk-select width-200">
-                                        <option value="">Select Customer</option>
+                                        
                                     </select>
                                     <span asp-validation-for="CustomerName" class="govuk-error-message"></span>
                                 </div>
                                 <label asp-for="Disease" class="govuk-label label_width mb-0 pt-1">Disease:</label>
                                 <div>
                                             <select asp-for="Disease" asp-items="Model.AvailableDiseases" class="govuk-select width-200">
-                                                <option value="">Select Disease</option>
+                                               
                                             </select>
                                             <span asp-validation-for="Disease" class="govuk-error-message"></span>
                                     
@@ -167,7 +147,7 @@
                                         <input type="text"
                                                id="StartdateDisplay"
                                                class="govuk-input width-200"
-                                               value="@Model.Startdate?.ToString("dd/MM/yyyy")"
+                                               value="@Model.StartDate?.ToString("dd/MM/yyyy")"
                                                autocomplete="off"
                                                onclick="openDatePicker('StartdatePicker')"
                                                style="cursor:pointer;"
@@ -175,35 +155,31 @@
                                         <input type="hidden"
                                                name="Startdate"
                                                id="StartdateBinding"
-                                               value="@Model.Startdate?.ToString("yyyy-MM-dd")">
+                                               value="@Model.StartDate?.ToString("yyyy-MM-dd")">
                                         <input type="date"
                                                id="StartdatePicker"
-                                               value="@Model.Startdate?.ToString("yyyy-MM-dd")"
+                                               value="@Model.StartDate?.ToString("yyyy-MM-dd")"
                                                style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
                                                onchange="syncDateToText('StartdatePicker', 'StartdateDisplay', 'StartdateBinding')">
                                     </div>
-                                    <span asp-validation-for="Startdate" class="govuk-error-message"></span>
+                                    <span asp-validation-for="StartDate" class="govuk-error-message"></span>
                                 </div>
-                                <label asp-for="Isdefraproject" class="govuk-label label_width mb-0 pt-1">Is Defra Project?:</label>
-                                <div class="d-flex align-items-center gap-2">
-                                    <select id="Isdefraproject" name="Isdefraproject" class="govuk-select" style="min-width: 80px;" onchange="onDefraProjectChange()">
-                                        <option value="">Select</option>
-                                        <option value="1" selected="@(Model.Isdefraproject == 1 ? "selected" : null)">Yes</option>
-                                        <option value="0" selected="@(Model.Isdefraproject == 0 ? "selected" : null)">No</option>
-                                    </select>
-                                    <span class="warning-text" style="display:none; font-size:13px; width:217px; color:#353535; border:1px dashed #0d6efd; border-radius:4px; padding:2px;">
-                                        Changing this option will recost existing projects with current rates.
-                                    </span>
-                                    <span asp-validation-for="Isdefraproject" class="govuk-error-message"></span>
-                                </div>
+                                        <label asp-for="IsDefraProject" class="govuk-label label_width mb-0 pt-1">Is Defra Project?:</label>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <select asp-for="IsDefraProject" asp-items="Model.AvailableDefraProjectOptions" class="govuk-select" style="min-width: 80px;"></select>
+                                            <span class="warning-text" style="font-size:13px; width:217px; color:#353535; border:1px dashed #0d6efd; border-radius:4px; padding:2px;">
+                                                Changing this option will recost existing projects with current rates.
+                                            </span>
+                                            <span asp-validation-for="IsDefraProject" class="govuk-error-message"></span>
+                                        </div>
                             </div>
 
                             <!-- Start Financial Year (readonly) + Rate Used -->
                             <div class="govuk-form-group d-flex align-items-start mb-2">
-                                <label asp-for="Startfyear" class="govuk-label label_width mb-0 pt-1">Start (Financial) Year:</label>
+                                <label asp-for="StartFYear" class="govuk-label label_width mb-0 pt-1">Start (Financial) Year:</label>
                                 <div class="me-4">
-                                    <input asp-for="Startfyear" asp-format="{0:0}" class="govuk-input width-200 read-only" readonly>
-                                    <span asp-validation-for="Startfyear" class="govuk-error-message"></span>
+                                    <input asp-for="StartFYear" asp-format="{0:0}" class="govuk-input width-200 read-only" readonly>
+                                    <span asp-validation-for="StartFYear" class="govuk-error-message"></span>
                                 </div>
                                 <label asp-for="Euroconvrate" class="govuk-label label_width mb-0 pt-1">Rate Used (£):</label>
                                 <div>
@@ -214,15 +190,15 @@
 
                             <!-- Submitted By Firstname + Prepared By -->
                             <div class="govuk-form-group d-flex align-items-start mb-2">
-                                <label asp-for="Submittedbyfname" class="govuk-label label_width mb-0 pt-1" style="overflow-wrap: break-word;">Submitted By - Firstname:</label>
+                                                <label asp-for="SubmittedByFName" class="govuk-label label_width mb-0 pt-1" style="overflow-wrap: break-word;">Submitted By - Firstname:</label>
                                 <div class="me-4">
-                                    <input asp-for="Submittedbyfname" class="govuk-input width-200">
-                                    <span asp-validation-for="Submittedbyfname" class="govuk-error-message"></span>
+                                                    <input asp-for="SubmittedByFName" class="govuk-input width-200">
+                                                        <span asp-validation-for="SubmittedByFName" class="govuk-error-message"></span>
                                 </div>
                                 <label asp-for="PreparedBy" class="govuk-label label_width mb-0 pt-1">Prepared by:</label>
                                 <div>
                                     <select asp-for="PreparedBy" asp-items="Model.AvailableStaff" class="govuk-select inline-select">
-                                        <option value="">Name not found</option>
+                                      
                                     </select>
                                     <span asp-validation-for="PreparedBy" class="govuk-error-message"></span>
                                 </div>
@@ -231,10 +207,10 @@
                             @* FIX 3: removed invalid {{!-- --}} Handlebars comment — not valid Razor syntax *@
                             <!-- Submitted By Lastname + Include Inflation -->
                             <div class="govuk-form-group d-flex align-items-start mb-2">
-                                <label asp-for="Submittedbylname" class="govuk-label label_width mb-0 pt-1">Lastname:</label>
+                                                    <label asp-for="SubmittedByLName" class="govuk-label label_width mb-0 pt-1">Lastname:</label>
                                 <div class="me-4">
-                                    <input asp-for="Submittedbylname" class="govuk-input width-200">
-                                    <span asp-validation-for="Submittedbylname" class="govuk-error-message"></span>
+                                                        <input asp-for="SubmittedByLName" class="govuk-input width-200">
+                                                            <span asp-validation-for="SubmittedByLName" class="govuk-error-message"></span>
                                 </div>
                                 <label for="chkInflation" class="govuk-label label_width mb-0 pt-1">Include Inflation?:</label>
                                 <div class="d-flex align-items-center gap-2">
@@ -242,15 +218,12 @@
                                         <input type="checkbox"
                                                id="chkInflation"
                                                name="Inflation"
-                                               value="1"
+                                               value="-1"
                                                class="form-check-input"
                                                style="width:20px; height:20px; cursor:pointer;"
-                                               checked="@(Model.Inflation.HasValue && Model.Inflation.Value != 0)"
-                                               onchange="onInflationChange()">
-                                        <input name="Inflation" type="hidden" value="0" />
-                                        <label class="form-check-label govuk-label ms-2" for="chkInflation">Yes</label>
+                                               @(Model.Inflation.HasValue && Model.Inflation.Value == -1 ? "checked=\"checked\"" : "") />
                                     </div>
-                                    <span class="warning-text" style="display:none; font-size:13px; width:286px; color:#353535; border:1px dashed #0d6efd; border-radius:4px; padding:2px;">
+                                    <span class="warning-text" style="font-size:13px; width:286px; color:#353535; border:1px dashed #0d6efd; border-radius:4px; padding:2px;">
                                         Changing this option will recost existing projects with current rates as well as affecting inflation.
                                     </span>
                                 </div>
@@ -307,69 +280,111 @@
 </div>
 
 @section Scripts {
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         function confirmDelete() {
-        if (confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
-        document.body.style.cursor = 'wait';
-        var deleteBtn = event.target;
-        if (deleteBtn) { deleteBtn.disabled = true; deleteBtn.textContent = 'Deleting...'; }
+            if (!confirm('Are you sure you want to delete this project?')) return;
 
-        var projectId = '@Html.Raw(Model.ProjectId)';
-        if (!projectId || projectId === '') {
-        alert('Project ID is missing. Cannot delete project.');
-        if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.textContent = 'Delete'; }
-        document.body.style.cursor = 'default';
-        return;
-        }
+            document.body.style.cursor = 'wait';
+            var deleteBtn = event.target;
+            if (deleteBtn) { deleteBtn.disabled = true; deleteBtn.textContent = 'Deleting...'; }
 
-        var form = document.createElement('form');
-        form.method = 'post';
-        form.action = '@Url.Action("Delete", "Projects", new { area = "CostBook" })' + '/' + encodeURIComponent(projectId);
+            var projectId = '@Html.Raw(Model.ProjectId)';
+            if (!projectId || projectId === '') {
+                alert('Project ID is missing. Cannot delete project.');
+                if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.textContent = 'Delete'; }
+                document.body.style.cursor = 'default';
+                return;
+            }
 
-        var token = document.createElement('input');
-        token.type = 'hidden';
-        token.name = '__RequestVerificationToken';
-        token.value = document.querySelector('input[name="__RequestVerificationToken"]').value;
-        form.appendChild(token);
-
-        var idInput = document.createElement('input');
-        idInput.type = 'hidden';
-        idInput.name = 'id';
-        idInput.value = projectId;
-        form.appendChild(idInput);
-
-        document.body.appendChild(form);
-        form.submit();
-        }
+            $.ajax({
+                url: '@Url.Action("Delete", "Projects", new { area = "CostBook" })' + '/' + encodeURIComponent(projectId),
+                type: 'POST',
+                data: {
+                    id: projectId,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function (response) {
+                    if (response.success) {
+                        window.location.href = '@Url.Action("Index", "Projects", new { area = "CostBook" })';
+                    } else {
+                        alert('Failed to delete project: ' + (response.message || 'Unknown error'));
+                        if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.textContent = 'Delete'; }
+                        document.body.style.cursor = 'default';
+                    }
+                },
+                error: function () {
+                    alert('An error occurred while deleting the project.');
+                    if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.textContent = 'Delete'; }
+                    document.body.style.cursor = 'default';
+                }
+            });
         }
 
         function copyProject() {
         var projectId = '@Html.Raw(Model.ProjectId)';
-        if (!confirm('Copy project "' + projectId + '"? A new project ID will be generated automatically.')) return;
+        if (!confirm('Copy project "' + projectId + '"?')) return;
 
         var copyBtn = event.target;
         if (copyBtn) { copyBtn.disabled = true; copyBtn.textContent = 'Copying...'; }
 
-        $.post('@Url.Action("Copy", "Projects", new { area = "CostBook" })', {
-        id: projectId,
-        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
-        })
-        .done(function (data) {
-        if (data.success) {
-        var newId = data.generatedId || data.projectId;
-        alert('Project copied successfully! New project ID: ' + newId);
-        var editUrl = '@Url.Action("Edit", "Projects", new { area = "CostBook", id = "PLACEHOLDER" })';
-        editUrl = editUrl.replace('PLACEHOLDER', encodeURIComponent(newId));
-        window.location.href = editUrl;
-        } else {
-        alert('Failed to copy project: ' + (data.errors ? data.errors.join(', ') : 'Unknown error'));
-        if (copyBtn) { copyBtn.disabled = false; copyBtn.textContent = 'Copy'; }
-        }
-        })
-        .fail(function () {
-        alert('Failed to copy project. Please try again.');
-        if (copyBtn) { copyBtn.disabled = false; copyBtn.textContent = 'Copy'; }
+        $.ajax({
+            url: '@Url.Action("Copy", "Projects", new { area = "CostBook" })',
+            type: 'POST',
+            data: {
+                sourceProjectId: projectId,
+                __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+            },
+            success: function (data) {
+                if (data.success) {
+                    var newId = data.generatedId || data.projectId;
+
+                    // Ask user if they want to recost the project
+                    if (confirm('Do you want to recost this project at todays rates, (including inflation if specified)?')) {
+                        // Call Recost method
+                        if (copyBtn) { copyBtn.textContent = 'Recosting...'; }
+
+                        $.ajax({
+                            url: '@Url.Action("Recost", "Projects", new { area = "CostBook" })',
+                            type: 'POST',
+                            data: {
+                                id: newId,
+                                __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                            },
+                            success: function (recostData) {
+                                if (recostData.success) {
+                                    // Navigate to edit page after successful recost
+                                    var editUrl = '@Url.Action("Edit", "Projects", new { area = "CostBook", id = "PLACEHOLDER" })';
+                                    editUrl = editUrl.replace('PLACEHOLDER', encodeURIComponent(newId));
+                                    window.location.href = editUrl;
+                                } else {
+                                    alert('Failed to recost project. Redirecting to edit page.');
+                                    var editUrl = '@Url.Action("Edit", "Projects", new { area = "CostBook", id = "PLACEHOLDER" })';
+                                    editUrl = editUrl.replace('PLACEHOLDER', encodeURIComponent(newId));
+                                    window.location.href = editUrl;
+                                }
+                            },
+                            error: function () {
+                                alert('Error occurred during recost. Redirecting to edit page.');
+                                var editUrl = '@Url.Action("Edit", "Projects", new { area = "CostBook", id = "PLACEHOLDER" })';
+                                editUrl = editUrl.replace('PLACEHOLDER', encodeURIComponent(newId));
+                                window.location.href = editUrl;
+                            }
+                        });
+                    } else {
+                        // User chose not to recost, navigate directly to edit page
+                        var editUrl = '@Url.Action("Edit", "Projects", new { area = "CostBook", id = "PLACEHOLDER" })';
+                        editUrl = editUrl.replace('PLACEHOLDER', encodeURIComponent(newId));
+                        window.location.href = editUrl;
+                    }
+                } else {
+                    alert('Failed to copy project: ' + (data.errors ? data.errors.join(', ') : 'Unknown error'));
+                    if (copyBtn) { copyBtn.disabled = false; copyBtn.textContent = 'Copy'; }
+                }
+            },
+            error: function () {
+                alert('Failed to copy project. Please try again.');
+                if (copyBtn) { copyBtn.disabled = false; copyBtn.textContent = 'Copy'; }
+            }
         });
         }
     </script>

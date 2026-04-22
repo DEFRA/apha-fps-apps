@@ -86,7 +86,61 @@
 
     <!-- Bootstrap JS Reference -->
     <script src="~/js/bootstrap.bundle.min.js"></script>
+                            <!-- ── Shared modal popup (for add/edit forms) ───────────────────── -->
+                            <div id="modalPopup" tabindex="-1" aria-labelledby="modalPopupLabel"
+                                 style="display:none; position:fixed; inset:0; z-index:1050;
+                                background:rgba(0,0,0,0.5); align-items:center; justify-content:center;">
+                                <div class="modal-dialog modal-lg" style="margin:auto; width:100%; max-width:700px;">
+                                    <div id="modaPopupBody" class="modal-content" style="border-radius:4px;">
+                                    </div>
+                                </div>
+                            </div>
 
+                            <!-- ── Scripts ───────────────────────────────────────────────────── -->
+                           
+                            <script src="~/lib/jquery-validation/dist/jquery.validate.js"></script>
+                            <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.js"></script>
+                            
+
+                            <script>
+                                        // ── Modal open / close helpers ────────────────────────────────────
+                                        (function () {
+                                            var modal = document.getElementById('modalPopup');
+                                            if (!modal) return;
+
+                                            var observer = new MutationObserver(function () {
+                                                if (modal.classList.contains('show')) {
+                                                    modal.style.display = 'flex';
+                                                    document.body.style.overflow = 'hidden';
+                                                } else {
+                                                    modal.style.display = 'none';
+                                                    document.body.style.overflow = '';
+                                                }
+                                            });
+                                            observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
+
+                                            modal.addEventListener('click', function (e) {
+                                                if (e.target === modal) {
+                                                    return false;
+                                                }
+                                            });
+
+                                            document.addEventListener('keydown', function (e) {
+                                                if (e.key === 'Escape' && modal.classList.contains('show')) {
+                                                    modal.classList.remove('show');
+                                                }
+                                            });
+                                        })();
+
+                                        // ── jQuery.fn.serializeObject helper ─────────────────────────────
+                                        $.fn.serializeObject = function () {
+                                            var obj = {};
+                                            this.serializeArray().forEach(function (item) {
+                                                obj[item.name] = item.value;
+                                            });
+                                            return obj;
+                                        };
+                            </script>
     <!-- Scripts Section for page-specific JavaScript -->
     @RenderSection("Scripts", required: false)
         </main>

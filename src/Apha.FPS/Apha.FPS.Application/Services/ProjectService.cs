@@ -75,8 +75,19 @@ namespace Apha.FPS.Application.Services
 
         public async Task<bool> DeleteProjectAsync(string parentProject)
         {
+            var hasAssociations = await _projectRepository.HasAssociatedJobCodesAsync(parentProject);
+            if (hasAssociations)
+            {
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"Project '{parentProject}' is associated with existing job codes and cannot be deleted.",
+                        "PROJECT_HAS_ASSOCIATIONS")
+                ]);
+            }
+
             return await _projectRepository.DeleteProjectAsync(parentProject);
-        }   
+        }
 
         public async Task<PaginatedResult<ProjectDto>> GetProjectsByProgramAsync(QueryParameters<string> query, string programNo)
         {

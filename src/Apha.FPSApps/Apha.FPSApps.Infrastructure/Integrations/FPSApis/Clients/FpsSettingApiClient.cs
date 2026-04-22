@@ -20,22 +20,13 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
         public async Task<ApiResponseDto<decimal>> GetHoursPerDayAsync()
         {
-            try
-            {
-                var response = await _http.GetAsync<decimal>(FpsApiEndpoints.GetHoursPerDay);
+            var response = await _http.GetAsync<decimal>(FpsApiEndpoints.GetHoursPerDay);
 
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<decimal>>(response);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<decimal>>(response);
 
-                var dto = _mapper.Map<ApiResponseDto<decimal>>(response);
-                return ApiResponseDto<decimal>.FailureResponse(dto.Errors, dto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<decimal>.FailureResponse(
-                    [new ApiErrorDto { Message = "Failed to retrieve hours per day setting", Code = InternalCodeError }],
-                    new ApiMetaDto());
-            }
+            var dto = _mapper.Map<ApiResponseDto<decimal>>(response);
+            return ApiResponseDto<decimal>.FailureResponse(dto.Errors, dto.Meta);
         }
     }
 }
