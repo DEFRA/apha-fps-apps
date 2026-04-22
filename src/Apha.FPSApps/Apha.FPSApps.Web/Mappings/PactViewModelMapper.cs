@@ -2,6 +2,7 @@
 using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Web.Areas.PACT.Models;
 using AutoMapper;
+using ProgramDto = Apha.FPSApps.Application.Dtos.FPS.ProgramDto;
 
 namespace Apha.FPSApps.Web.Mappings
 {
@@ -26,6 +27,8 @@ namespace Apha.FPSApps.Web.Mappings
 
             CreateMap<TestRequirementItem, TestRequirementDto>().ReverseMap();
             CreateMap<TestPurchaseRequirementItem, TestRequirementDto>().ReverseMap();
+            CreateMap<PactProgramViewModel, ProgramDto>().ReverseMap();
+            CreateMap<PactProgramProjectItem, ProjectDto>().ReverseMap();
         }
     }
 }
