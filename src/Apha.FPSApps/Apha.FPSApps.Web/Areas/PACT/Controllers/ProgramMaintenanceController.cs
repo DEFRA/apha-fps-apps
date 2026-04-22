@@ -171,6 +171,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 AllowDelete = false,
                 AllowRowSelection = true,
                 RowSelectFunction = "selectProject",
+                ExtraFilterMethod = "getProjectsGridExtraFilters",
                 BindGridUrl = "/PACT/ProgramMaintenance/LoadProjectsGrid",
                 Data = items,
                 Columns = GridDataProvider.GetColumnsDefination<PactProgramProjectItem>(),
