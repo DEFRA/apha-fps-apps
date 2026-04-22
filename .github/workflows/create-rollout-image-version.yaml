@@ -383,10 +383,7 @@ jobs:
           GIT_TAG="rollout-v${ROLLOUT_VERSION}"
 
           # Structured key=value annotation — machine-readable by dev builds
-          ANNOTATION="${TAG_MESSAGE}
-
-[rollout]
-version=${ROLLOUT_VERSION}"
+          ANNOTATION="${TAG_MESSAGE}\n\n[rollout]\nversion=${ROLLOUT_VERSION}"
           [ -n "$FPSAPPS_VERSION" ]  && ANNOTATION+="\nfpsapps=${FPSAPPS_VERSION}"
           [ -n "$FPS_VERSION" ]       && ANNOTATION+="\nfps=${FPS_VERSION}"
           [ -n "$COSTBOOK_VERSION" ]  && ANNOTATION+="\ncostbook=${COSTBOOK_VERSION}"
