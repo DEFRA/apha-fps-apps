@@ -59,7 +59,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 EditFunction = "editTestPlan",
                 DeleteFunction = "deleteTestPlan",
                 ExtraFilterMethod = "getTestPlanExtraFilters",
-                BindGridUrl = "/FPS/TestPlanJob/LoadTestPlanGrid",
+                BindGridUrl = $"/FPS/TestPlanJob/LoadTestPlanGrid?title={Uri.EscapeDataString("Test Purchase Plan")}",
                 Data = new List<TestPlanItem>(),
                 Columns = GridDataProvider.GetColumnsDefination<TestPlanItem>(null),
                 Pagination = new PaginationModel()

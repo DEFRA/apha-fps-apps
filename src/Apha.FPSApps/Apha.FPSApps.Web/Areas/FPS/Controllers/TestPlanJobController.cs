@@ -36,7 +36,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         // ── GRID ──────────────────────────────────────────────────────────────
 
         [HttpPost]
-        public async Task<IActionResult> LoadTestPlanGrid(PaginationFilter<string> request, string? jobCode = null)
+        public async Task<IActionResult> LoadTestPlanGrid(PaginationFilter<string> request, string? jobCode = null, string? title = null)
         {
             if (!ModelState.IsValid)
             {
@@ -65,10 +65,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             paginationModel.SortColumn = request.SortBy;
             paginationModel.SortDirection = request.Descending;
 
+            var gridTitle = title ?? "Test Purchase Plan";
             var testPlanGrid = new DataGridConfig<TestPlanItem>
             {
                 GridId = "testPlanGrid",
-                Title = "Test Purchase Plan",
+                Title = gridTitle,
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 AllowAdd = true,
@@ -78,7 +79,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 EditFunction = "editTestPlan",
                 DeleteFunction = "deleteTestPlan",
                 ExtraFilterMethod = "getTestPlanExtraFilters",
-                BindGridUrl = "/FPS/TestPlanJob/LoadTestPlanGrid",
+                BindGridUrl = $"/FPS/TestPlanJob/LoadTestPlanGrid?title={Uri.EscapeDataString(gridTitle)}",
                 Data = items,
                 Columns = GridDataProvider.GetColumnsDefination<TestPlanItem>(null),
                 Pagination = paginationModel,

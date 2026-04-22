@@ -142,10 +142,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramTestPlanControllerTe
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<ProgramTestPlanViewModel>(viewResult.Model);
 
-            Assert.Equal("/FPS/ProgramProject/LoadProjectGrid",   model.ProjectsGrid.BindGridUrl);
-            Assert.Equal("ParentProject",                         model.ProjectsGrid.KeyProperty);
-            Assert.Equal("/FPS/TestPlanJob/LoadTestPlanGrid",     model.TestPlanGrid.BindGridUrl);
-            Assert.Equal("TestCode",                              model.TestPlanGrid.KeyProperty);
+            Assert.Equal("/FPS/ProgramProject/LoadProjectGrid",                       model.ProjectsGrid.BindGridUrl);
+            Assert.Equal("ParentProject",                                             model.ProjectsGrid.KeyProperty);
+            Assert.Equal($"/FPS/TestPlanJob/LoadTestPlanGrid?title={Uri.EscapeDataString("Test Purchase Plan")}", model.TestPlanGrid.BindGridUrl);
+            Assert.Equal("TestCode",                                                  model.TestPlanGrid.KeyProperty);
         }
 
         #endregion
