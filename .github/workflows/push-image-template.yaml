@@ -81,10 +81,10 @@ jobs:
             fi
 
             sha="${GITHUB_SHA::8}"
-            image_tag="${app_name}-v${app_version}-dev-${sha}"
+            image_tag="v${app_version}-dev-${sha}"
             echo "image_tag = $image_tag"
           else
-            image_tag="${app_name}-v$DEV_IMAGE_VERSION"
+            image_tag="v$DEV_IMAGE_VERSION"
           fi
           echo "image_tag=$image_tag" >> $GITHUB_OUTPUT
       - name: Print Docker image tag
@@ -95,7 +95,7 @@ jobs:
           echo "Image Tag: $IMAGE_TAG"
       
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
         with:
           aws-region: ${{ secrets.AWS_ENV_REGION }}
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ENV_ACCOUNT }}:role/${{
