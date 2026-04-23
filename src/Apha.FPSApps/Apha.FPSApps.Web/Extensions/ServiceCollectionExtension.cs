@@ -1,4 +1,4 @@
-﻿using Apha.Common.Utilities.ExcelExport;
+using Apha.Common.Utilities.ExcelExport;
 using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Interfaces.Costbook;
 using Apha.FPSApps.Application.Interfaces.FPS;
@@ -45,6 +45,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<ITestCapabilityService, TestCapabilityService>();
             services.AddScoped<ITestRequirementService, TestRequirementService>();
             services.AddScoped<ITestorProductService, TestorProductService>();
+            services.AddScoped<IProjPlanVsActualsStaffService, ProjPlanVsActualsStaffService>();
             services.AddScoped<IExcelExportService, ExcelExportService>();
             services.AddScoped<IAppStateService, AppStateService>();
             // PIMS

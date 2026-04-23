@@ -57,7 +57,9 @@
                     break;
                 case GridColumnType.GbpValue:
                     if (value is decimal gbpValue)
-                        return gbpValue.ToString("£#,##0;-£#,##0");
+                        return gbpValue.ToString("£#,##0.00;-£#,##0.00");
+                    if (value is double gbpDouble)
+                        return gbpDouble.ToString("£#,##0.00;-£#,##0.00");
                     break;
             }
             
