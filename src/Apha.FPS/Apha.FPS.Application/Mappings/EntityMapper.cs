@@ -41,6 +41,7 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<YearMaster, YearMasterDto>().ReverseMap();
             CreateMap<Division, DivisionDto>().ReverseMap();
             CreateMap<Agency, AgencyDto>().ReverseMap();
+            CreateMap<TestorProduct, TestorProductDto>().ReverseMap();
         }
     }
 }

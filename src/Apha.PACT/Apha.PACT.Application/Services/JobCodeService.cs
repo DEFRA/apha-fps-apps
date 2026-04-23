@@ -11,11 +11,13 @@ namespace Apha.PACT.Application.Services
     public class JobCodeService : IJobCodeService
     {
         private readonly IJobCodeRepository _repository;
+        private readonly ITimeCodeValidRepository _timeCodeValidRepository;
         private readonly IMapper _mapper;
 
-        public JobCodeService(IJobCodeRepository repository, IMapper mapper)
+        public JobCodeService(IJobCodeRepository repository, ITimeCodeValidRepository timeCodeValidRepository, IMapper mapper)
         {
             _repository = repository;
+            _timeCodeValidRepository = timeCodeValidRepository;
             _mapper = mapper;
         }
 
@@ -45,6 +47,10 @@ namespace Apha.PACT.Application.Services
 
         public async Task<JobCodeDto> CreateJobCodeAsync(JobCodeDto jobCode)
         {
+            var existing = await _repository.GetJobCodeByIdAsync(jobCode.JobCodeId);
+            if (existing != null)
+                throw new InvalidOperationException($"A JobCode with ID '{jobCode.JobCodeId}' already exists.");
+
             var entity = _mapper.Map<JobCode>(jobCode);
             var created = await _repository.CreateJobCodeAsync(entity);
             return _mapper.Map<JobCodeDto>(created);
@@ -52,6 +58,13 @@ namespace Apha.PACT.Application.Services
 
         public async Task<JobCodeDto> UpdateJobCodeAsync(JobCodeDto jobCode)
         {
+            var existing = await _repository.GetJobCodeByIdAsync(jobCode.JobCodeId);
+            if (existing != null && existing.JobCodeId != jobCode.JobCodeId && 
+                await _timeCodeValidRepository.HasRelatedTimeCodeValidRecordsAsync(existing.JobCodeId))
+            {
+                throw new InvalidOperationException($"This JobCode has related records in TimeCodeValid and cannot be updated.");
+            }
+
             var entity = _mapper.Map<JobCode>(jobCode);
             var updated = await _repository.UpdateJobCodeAsync(entity);
             return _mapper.Map<JobCodeDto>(updated);
@@ -59,6 +72,9 @@ namespace Apha.PACT.Application.Services
 
         public async Task<bool> DeleteJobCodeAsync(string jobCodeId)
         {
+            if (await _timeCodeValidRepository.HasRelatedTimeCodeValidRecordsAsync(jobCodeId))
+                throw new InvalidOperationException($"This JobCode has related records in TimeCodeValid and cannot be deleted.");
+
             return await _repository.DeleteJobCodeAsync(jobCodeId);
         }
     }

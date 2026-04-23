@@ -8,6 +8,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
+using System.ComponentModel.DataAnnotations;
 using Xunit;
 
 namespace Apha.FPS.Api.UnitTests.Controller.ProjectMaintenanceControllerTest
@@ -254,5 +255,92 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectMaintenanceControllerTest
         }
 
         #endregion
+    }
+
+    public class ProjectReqValidationTests
+    {
+        private static IList<ValidationResult> Validate(ProjectReq req)
+        {
+            var context = new ValidationContext(req);
+            var results = new List<ValidationResult>();
+            Validator.TryValidateObject(req, context, results, validateAllProperties: true);
+            return results;
+        }
+
+        [Fact]
+        public void ProjectReq_WhenValid_PassesValidation()
+        {
+            var req = new ProjectReq { ParentProject = "PP001", ProjectTitle = "Alpha Project" };
+            Assert.Empty(Validate(req));
+        }
+
+        [Fact]
+        public void ProjectReq_WhenParentProjectMissing_FailsValidation()
+        {
+            var req = new ProjectReq { ParentProject = null!, ProjectTitle = "Alpha Project" };
+            var results = Validate(req);
+            Assert.Contains(results, r => r.MemberNames.Contains(nameof(ProjectReq.ParentProject)));
+        }
+
+        [Fact]
+        public void ProjectReq_WhenProjectTitleMissing_FailsValidation()
+        {
+            var req = new ProjectReq { ParentProject = "PP001", ProjectTitle = null! };
+            var results = Validate(req);
+            Assert.Contains(results, r => r.MemberNames.Contains(nameof(ProjectReq.ProjectTitle)));
+        }
+
+        [Fact]
+        public void ProjectReq_WhenParentProjectExceedsMaxLength_FailsValidation()
+        {
+            var req = new ProjectReq { ParentProject = new string('X', 21), ProjectTitle = "Alpha Project" };
+            var results = Validate(req);
+            Assert.Contains(results, r => r.MemberNames.Contains(nameof(ProjectReq.ParentProject)));
+        }
+
+        [Fact]
+        public void ProjectReq_WhenProjectTitleExceedsMaxLength_FailsValidation()
+        {
+            var req = new ProjectReq { ParentProject = "PP001", ProjectTitle = new string('X', 201) };
+            var results = Validate(req);
+            Assert.Contains(results, r => r.MemberNames.Contains(nameof(ProjectReq.ProjectTitle)));
+        }
+
+        [Theory]
+        [InlineData(nameof(ProjectReq.Program), 11)]
+        [InlineData(nameof(ProjectReq.Customer), 51)]
+        [InlineData(nameof(ProjectReq.Manager), 51)]
+        [InlineData(nameof(ProjectReq.ProjectStatus), 51)]
+        [InlineData(nameof(ProjectReq.Disease), 51)]
+        [InlineData(nameof(ProjectReq.Contract), 11)]
+        [InlineData(nameof(ProjectReq.ProjectParent), 51)]
+        [InlineData(nameof(ProjectReq.OracleProjectCode), 51)]
+        [InlineData(nameof(ProjectReq.SubAccountCode), 51)]
+        [InlineData(nameof(ProjectReq.ProjectGroup), 51)]
+        [InlineData(nameof(ProjectReq.IncomeAccountCode), 51)]
+        public void ProjectReq_WhenOptionalStringExceedsMaxLength_FailsValidation(string propertyName, int length)
+        {
+            var req = new ProjectReq { ParentProject = "PP001", ProjectTitle = "Alpha Project" };
+            typeof(ProjectReq).GetProperty(propertyName)!.SetValue(req, new string('X', length));
+            var results = Validate(req);
+            Assert.Contains(results, r => r.MemberNames.Contains(propertyName));
+        }
+
+        [Fact]
+        public void ProjectReq_WhenIsDefraProjectOutOfRange_FailsValidation()
+        {
+            var req = new ProjectReq { ParentProject = "PP001", ProjectTitle = "Alpha", IsDefraProject = 2 };
+            var results = Validate(req);
+            Assert.Contains(results, r => r.MemberNames.Contains(nameof(ProjectReq.IsDefraProject)));
+        }
+
+        [Theory]
+        [InlineData((short)0)]
+        [InlineData((short)1)]
+        public void ProjectReq_WhenIsDefraProjectIsValid_PassesValidation(short value)
+        {
+            var req = new ProjectReq { ParentProject = "PP001", ProjectTitle = "Alpha", IsDefraProject = value };
+            Assert.Empty(Validate(req));
+        }
     }
 }

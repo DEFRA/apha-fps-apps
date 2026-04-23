@@ -28,10 +28,10 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectInvoiceRepositoryTest
                 IEnumerable<ProjectInvoice> invoices,
                 int fpsYear = DefaultTestFpsYear)
         {
-            var fpsYearContext = Substitute.For<IFpsYearContext>();
-            fpsYearContext.FPSYear.Returns(fpsYear);
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            fpsRequestContext.FpsYear.Returns(fpsYear);
 
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
             var invoicesMockSet = RepositoryTestHelper.CreateMockDbSet(invoices);
 
             RepositoryTestHelper.SetupDbSetOperations(invoicesMockSet);
@@ -42,7 +42,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectInvoiceRepositoryTest
 
             mockContext.Setup(x => x.ProjectInvoices).Returns(invoicesMockSet.Object);
 
-            var repo = new ProjectInvoiceRepository(mockContext.Object, fpsYearContext);
+            var repo = new ProjectInvoiceRepository(mockContext.Object, fpsRequestContext);
             return (repo, invoicesMockSet, mockContext);
         }
 
@@ -198,10 +198,10 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectInvoiceRepositoryTest
         [Fact]
         public async Task UpdateAsync_ValidEntity_SetsFpsYearBeforeEntryIsCalled()
         {
-            var fpsYearContext = Substitute.For<IFpsYearContext>();
-            fpsYearContext.FPSYear.Returns(DefaultTestFpsYear);
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            fpsRequestContext.FpsYear.Returns(DefaultTestFpsYear);
 
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
             var invoicesMockSet = RepositoryTestHelper.CreateMockDbSet<ProjectInvoice>([]);
             mockContext.Setup(x => x.ProjectInvoices).Returns(invoicesMockSet.Object);
 
@@ -210,7 +210,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectInvoiceRepositoryTest
                 .Callback(() => entryWasCalled = true)
                 .Throws(new NotSupportedException("Entry() is not supported in mocked DbContext"));
 
-            var repo = new ProjectInvoiceRepository(mockContext.Object, fpsYearContext);
+            var repo = new ProjectInvoiceRepository(mockContext.Object, fpsRequestContext);
             var entity = new ProjectInvoice { InvoiceCounter = 1, ProjectParent = "PRJ1" };
 
             await Assert.ThrowsAsync<NotSupportedException>(() => repo.UpdateAsync(entity));
@@ -223,17 +223,17 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectInvoiceRepositoryTest
         public async Task UpdateAsync_SetsFpsYear_FromYearContext()
         {
             const int customYear = 2025;
-            var fpsYearContext = Substitute.For<IFpsYearContext>();
-            fpsYearContext.FPSYear.Returns(customYear);
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            fpsRequestContext.FpsYear.Returns(customYear);
 
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
             var invoicesMockSet = RepositoryTestHelper.CreateMockDbSet<ProjectInvoice>([]);
             mockContext.Setup(x => x.ProjectInvoices).Returns(invoicesMockSet.Object);
 
             mockContext.Setup(x => x.Entry(It.IsAny<ProjectInvoice>()))
                 .Throws(new NotSupportedException("Entry() is not supported in mocked DbContext"));
 
-            var repo = new ProjectInvoiceRepository(mockContext.Object, fpsYearContext);
+            var repo = new ProjectInvoiceRepository(mockContext.Object, fpsRequestContext);
             var entity = new ProjectInvoice { InvoiceCounter = 1 };
 
             await Assert.ThrowsAsync<NotSupportedException>(() => repo.UpdateAsync(entity));

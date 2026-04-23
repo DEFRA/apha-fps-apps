@@ -136,24 +136,26 @@ function updateAnimalPlan() {
 
 function deleteAnimalPlan(btn) {
     var indCounter = $(btn).data('id');
-    if (confirm('Are you sure you want to delete this animal cost entry?')) {
+    showGovukConfirm('Are you sure you want to delete this animal cost entry?').then(function (confirmed) {
+        if (!confirmed) { return; }
         $.ajax({
             url: '/FPS/AnimalJob/Delete',
             type: 'DELETE',
             data: { indCounter: indCounter },
             success: function (response) {
                 if (response.success) {
-                    alert('Deleted successfully.');
-                    AnimalJobConfig.onDeleted();
+                    showGovukAlert('Deleted successfully.').then(function () {
+                        AnimalJobConfig.onDeleted();
+                    });
                 } else {
-                    alert('Error: ' + response.message);
+                    showGovukAlert(response.message);
                 }
             },
             error: function () {
-                alert('An error occurred while deleting.');
+                showGovukAlert('An error occurred while deleting.');
             }
         });
-    }
+    });
 }
 
 function getAnimalPlanExtraFilters() {
@@ -174,7 +176,7 @@ function onAnimalTypeSelected(selectElement) {
     $.ajax({
         url: '/FPS/AnimalJob/GetAnimalRate',
         type: 'GET',
-        data: { animalType: animalType },
+        data: { animalType: animalType, jobCode: AnimalJobConfig.getJobCode() },
         success: function (result) {
             rateField.prop('disabled', false);
             rateField.val(result.success ? result.dailyRate.toFixed(2) : '0.00');

@@ -1,0 +1,694 @@
+﻿@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.PIMS.Models.ProjectDetailsViewModel
+
+@{
+    ViewData["Title"] = "PIMS : Project Details";
+    string parentproject = Model.Parentproject;
+}
+
+<div class="govuk-grid-row sup_border-bottom" style="padding: 0">
+    <h5 class="govuk-heading-s sup_margin_0"
+        style="padding: 10px 0 5px 24px; border-bottom: 2px solid #1d70b8">
+        Project Details
+    </h5>
+</div>
+
+<div id="saveSuccessAlert" class="alert alert-success alert-dismissible fade" role="alert" style="display: none; margin: 10px 24px 0 24px;">
+    <span id="saveSuccessMessage"></span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+
+<div class="d-flex govuk-!-padding-top-2">
+
+    <!-- ── Side Navigation ─────────────────────────────────────────── -->
+    @await Html.PartialAsync("_SideNav", @Model)
+
+    <!-- ── Main Content ────────────────────────────────────────────── -->
+    <main class="main-content" style="padding-top: 0px">
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full"
+                 style="display: flex; align-items: flex-start; gap: 20px;">
+
+                <!-- ── Left Column: Tabs ──────────────────────────────────── -->
+                <div class="govuk-grid-column-one-half p-0">
+                    <div class="govuk-template__body js-enabled govuk-frontend-supported">
+                        <div class="govuk-tabs" data-module="govuk-tabs" id="projectDetailsTabs">
+                            <ul class="govuk-tabs__list">
+                                <li class="govuk-tabs__list-item govuk-tabs__list-item--selected govuk-!-padding-2"
+                                    id="tab_nav-home" role="presentation">
+                                    <a class="govuk-tabs__tab tab-font-bold-size"
+                                           href="#nav-home" role="tab"
+                                           aria-controls="nav-home" aria-selected="true">
+                                        FPS Project Details
+                                    </a>
+                                </li>
+                                <li class="govuk-tabs__list-item govuk-!-padding-2"
+                                    id="tab_nav-profile" role="presentation">
+                                    <a class="govuk-tabs__tab tab-font-bold-size"
+                                           href="#nav-profile" role="tab"
+                                           aria-controls="nav-profile" aria-selected="false" tabindex="-1">
+                                        Proposed Project Details
+                                    </a>
+                                </li>
+                                <li class="govuk-tabs__list-item govuk-!-padding-2"
+                                    id="tab_nav-contact" role="presentation">
+                                    <a class="govuk-tabs__tab tab-font-bold-size"
+                                           href="#nav-contact" role="tab"
+                                           aria-controls="nav-contact" aria-selected="false" tabindex="-1">
+                                        FPS Yearly Details
+                                    </a>
+                                </li>
+                            </ul>
+
+                            <!-- Tab 1: FPS Project Details (read-only) -->
+                            <div class="govuk-tabs__panel govuk-!-padding-2"
+                                 id="nav-home" role="tabpanel"
+                                 style="min-height: 40px"
+                                 hidden=@(!Model.IsFPS)
+                                 aria-labelledby="tab_nav-home">
+                                @if (Model.FpsProjectDetails is not null)
+                                {
+                                    <div class="govuk-grid-row" style="align-items: flex-start">
+                                        <div class="govuk-grid-column-one-quarter">
+                                            <label class="tab-font-bold-size"
+                                                   asp-for="FpsProjectDetails.Parentproject">
+                                                Project
+                                            </label>
+                                        </div>
+                                        <div class="govuk-grid-column-three-quarters">
+                                            <p id="selected_project" class="tab-font-size">
+                                                @Model.FpsProjectDetails.Parentproject
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="govuk-grid-row">
+                                        <div class="govuk-grid-column-one-quarter">
+                                            <label class="tab-font-bold-size"
+                                                   asp-for="FpsProjectDetails.Projecttitle">
+                                                Title
+                                            </label>
+                                        </div>
+                                        <div class="govuk-grid-column-three-quarters">
+                                            <p class="tab-font-size">@Model.FpsProjectDetails.Projecttitle</p>
+                                        </div>
+                                    </div>
+                                    <div class="govuk-grid-row">
+                                        <div class="govuk-grid-column-one-quarter">
+                                            <label class="tab-font-bold-size"
+                                                   asp-for="FpsProjectDetails.Disease">
+                                                Disease
+                                            </label>
+                                        </div>
+                                        <div class="govuk-grid-column-three-quarters">
+                                            <p class="tab-font-size">
+                                                @(string.IsNullOrWhiteSpace(Model.FpsProjectDetails.Disease)
+                                                    ? "Not Specified"
+                                                    : Model.FpsProjectDetails.Disease)
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="govuk-grid-row">
+                                        <div class="govuk-grid-column-one-quarter">
+                                            <label class="tab-font-bold-size"
+                                                   asp-for="FpsProjectDetails.Contract">
+                                                Contract
+                                            </label>
+                                        </div>
+                                        <div class="govuk-grid-column-three-quarters">
+                                            <p class="tab-font-size">@Model.FpsProjectDetails.Contract</p>
+                                        </div>
+                                    </div>
+                                    <div class="govuk-grid-row">
+                                        <div class="govuk-grid-column-one-quarter">
+                                            <label class="tab-font-bold-size"
+                                                   asp-for="FpsProjectDetails.Projectstatus">
+                                                Status
+                                            </label>
+                                        </div>
+                                        <div class="govuk-grid-column-three-quarters">
+                                            <p class="green">@Model.FpsProjectDetails.Projectstatus</p>
+                                        </div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <p class="tab-font-size govuk-hint">No FPS record found for this project.</p>
+                                }
+                            </div>
+
+                            <!-- Tab 2: Proposed Project Details (editable) -->
+                            <div class="govuk-tabs__panel govuk-!-padding-2 govuk-tabs__panel--hidden"
+                                 id="nav-profile" role="tabpanel"
+                                 style="min-height: 460px; overflow-y: auto"
+                                 hidden=@(Model.IsFPS)
+                                 aria-labelledby="tab_nav-profile">
+                                <div class="govuk-grid-column-full p-0">
+                                    <div class="govuk-form-group">
+                                        <form asp-action="UpdateProposedProject"
+                                              asp-controller="ProjectDetails"
+                                              asp-area="PIMS"
+                                              asp-route-parentproject="@parentproject"
+                                              method="post"
+                                              class="govuk-form-group selectedProjectForm"
+                                              id="formProposedDetail">
+                                            @Html.AntiForgeryToken()
+                                            <fieldset class="govuk-fieldset">
+                                                <input type="hidden" asp-for="ProposedProjectDetails.Id" />
+                                                <div class="govuk-grid-row">
+                                                    <div class="govuk-grid-column-one-half">
+                                                        <div class="govuk-form-group mb-2">
+                                                            <label class="govuk-label govuk-!-font-size-16"
+                                                                   for="project-transfer">Project</label>
+                                                            <input class="govuk-input govuk-!-font-size-16"
+                                                                   type="text"
+                                                                   readonly="readonly"
+                                                                   maxlength="20"
+                                                                   asp-for="ProposedProjectDetails.Parentproject" />
+                                                        </div>
+                                                    </div>
+                                                    <div class="govuk-grid-column-one-half">
+                                                        <div class="govuk-form-group mb-2">
+                                                            <label class="govuk-label govuk-!-font-size-16"
+                                                                   for="transfer-to">Transfer to</label>
+                                                            <select class="govuk-select govuk-!-font-size-16"
+                                                                    id="transfer-to"
+                                                                    asp-for="ProposedProjectDetails.TransferTo"
+                                                                    asp-items="Model.TransferToOptions"
+                                                                    style="min-width: stretch;">
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="govuk-form-group mb-2">
+                                                    <label class="govuk-label govuk-!-font-size-16"
+                                                           asp-for="ProposedProjectDetails.Projecttitle">
+                                                        Title
+                                                    </label>
+                                                    <textarea class="govuk-textarea govuk-!-font-size-16"
+                                                              id="title-transfer"
+                                                              asp-for="ProposedProjectDetails.Projecttitle"
+                                                              rows="2"
+                                                              style="margin-bottom: auto;">ProposedProjectDetails.Projecttitle</textarea>
+                                                </div>
+                                                <div class="govuk-grid-row">
+                                                    <div class="govuk-grid-column-one-half">
+                                                        <div class="govuk-form-group mb-2">
+                                                            <label class="govuk-label govuk-!-font-size-16"
+                                                                   for="costbook-transfer"
+                                                                   asp-for="ProposedProjectDetails.Costbookno">
+                                                                Costbook No
+                                                            </label>
+                                                            <input class="govuk-input govuk-!-font-size-16"
+                                                                   id="costbook-transfer"
+                                                                   asp-for="ProposedProjectDetails.Costbookno"
+                                                                   type="text" />
+                                                        </div>
+                                                    </div>
+                                                    <div class="govuk-grid-column-one-half">
+                                                        <div class="govuk-form-group mb-2">
+                                                            <label class="govuk-label govuk-!-font-size-16"
+                                                                   asp-for="ProposedProjectDetails.Disease">
+                                                                Disease
+                                                            </label>
+                                                            <input class="govuk-input govuk-!-font-size-16"
+                                                                   id="disease-transfer"
+                                                                   asp-for="ProposedProjectDetails.Disease"
+                                                                   type="text" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="govuk-grid-row">
+                                                    <div class="govuk-grid-column-one-half">
+                                                        <div class="govuk-form-group mb-2">
+                                                            <label class="govuk-label govuk-!-font-size-16"
+                                                                   asp-for="ProposedProjectDetails.Program">
+                                                                Program
+                                                            </label>
+                                                            <input class="govuk-input govuk-!-font-size-16"
+                                                                   id="program-transfer"
+                                                                   asp-for="ProposedProjectDetails.Program"
+                                                                   type="text" />
+                                                        </div>
+                                                    </div>
+                                                    <div class="govuk-grid-column-one-half">
+                                                        <div class="govuk-form-group mb-2">
+                                                            <label class="govuk-label govuk-!-font-size-16"
+                                                                   asp-for="ProposedProjectDetails.Customer">
+                                                                Customer
+                                                            </label>
+                                                            <input class="govuk-input govuk-!-font-size-16"
+                                                                   id="customer-transfer"
+                                                                   asp-for="ProposedProjectDetails.Customer"
+                                                                   type="text" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="govuk-form-group mb-2">
+                                                    <label class="govuk-label govuk-!-font-size-16"
+                                                           asp-for="ProposedProjectDetails.Manager">
+                                                        Manager
+                                                    </label>
+                                                    <input class="govuk-input govuk-!-font-size-16"
+                                                           id="manager-transfer"
+                                                           asp-for="ProposedProjectDetails.Manager"
+                                                           type="text" />
+                                                </div>
+                                            </fieldset>
+                                            <div class="govuk-button-group govuk-!-margin-top-2 govuk-!-margin-bottom-2"
+                                                 style="display: flex; justify-content: end;">
+                                                <a href="@Url.Action("Index", "ProjectList", new { area = "PIMS" })"
+                                                   class="govuk-button govuk-button--secondary govuk-!-font-size-16">Cancel</a>
+                                                <button type="submit" class="govuk-button govuk-!-font-size-16">Save</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tab 3: FPS Yearly Details (read-only) -->
+                            <div class="govuk-tabs__panel govuk-!-padding-2 govuk-tabs__panel--hidden"
+                                 id="nav-contact" role="tabpanel"
+                                 style="min-height: 460px; overflow: auto"
+                                 hidden=@(!Model.IsFPS)
+                                 aria-labelledby="tab_nav-contact">
+                                <table class="govuk-table custom-table"
+                                       style="border-right: 1px solid; border-bottom-color: var(--govuk-border-colour, #cecece); word-wrap: break-word; overflow-wrap: break-word;">
+                                    <thead class="govuk-table__head tab-font-bold-size">
+                                        <tr class="govuk-table__row">
+                                            <th class="govuk-table__header">Year</th>
+                                            <th class="govuk-table__header">Program</th>
+                                            <th class="govuk-table__header">Customer</th>
+                                            <th class="govuk-table__header">Manager</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="govuk-table__body tab-font-size">
+                                        @if (Model.YearlyDetails.Any())
+                                        {
+                                            @foreach (var row in Model.YearlyDetails)
+                                            {
+                                                <tr class="govuk-table__row">
+                                                    <td class="govuk-table__cell">@row.Year</td>
+                                                    <td class="govuk-table__cell">@row.Program</td>
+                                                    <td class="govuk-table__cell">@row.Customer</td>
+                                                    <td class="govuk-table__cell">@row.Manager</td>
+                                                </tr>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <tr class="govuk-table__row">
+                                                <td class="govuk-table__cell text-center" colspan="4">No yearly records found.</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── Right Column: PIMS Details Form ───────────────────── -->
+                <div class="govuk-grid-column-one-half">
+                    <form asp-action="SavePimsDetail"
+                          asp-controller="ProjectDetails"
+                          asp-area="PIMS"
+                          asp-route-parentproject="@parentproject"
+                          method="post"
+                          class="govuk-form-group selectedProjectForm"
+                          id="formPimsDetailRight">
+                        @Html.AntiForgeryToken()
+                        <div class="flex-column">
+                            <fieldset class="govuk-fieldset">
+                                <div class="headline">
+                                    <h6 class="selectedProjectForm govuk-form-group">PIMS Details</h6>
+                                </div>
+                                <div class="govuk-grid-row">
+                                    <!-- Left sub-column -->
+                                    <div class="govuk-grid-column-one-half">
+                                        <div class="govuk-form-group">
+                                            <label class="govuk-label govuk-!-font-size-16" for="pims-version">
+                                                Version
+                                            </label>
+                                            <input class="govuk-input govuk-!-font-size-16"
+                                                   id="pims-version"
+                                                   asp-for="ProjectDetails.Version"
+                                                   type="text"
+                                                   maxlength="10" />
+                                        </div>
+                                        <div class="govuk-form-group">
+                                            <label class="govuk-label govuk-!-font-size-16" for="file-ref">
+                                                File Ref
+                                            </label>
+                                            <input class="govuk-input govuk-!-font-size-16"
+                                                   id="file-ref"
+                                                   asp-for="ProjectDetails.FileRef"
+                                                   type="text"
+                                                   maxlength="20" />
+                                        </div>
+                                        <div class="govuk-form-group">
+                                            <label class="govuk-label govuk-!-font-size-16" for="customer-ref">
+                                                Customer Ref
+                                            </label>
+                                            <input class="govuk-input govuk-!-font-size-16"
+                                                   id="customer-ref"
+                                                   asp-for="ProjectDetails.CustomerRef"
+                                                   type="text"
+                                                   maxlength="20" />
+                                        </div>
+                                        <div class="govuk-form-group">
+                                            <label class="govuk-label govuk-!-font-size-16" for="start-date">
+                                                Start Date
+                                            </label>
+                                            <input class="govuk-input govuk-!-font-size-16 govuk-input--width-10"
+                                                   id="start-date"
+                                                   asp-for="ProjectDetails.StartDate"
+                                                   type="date"
+                                                   style="min-width: stretch;" />
+                                        </div>
+                                        <div class="govuk-form-group">
+                                            <label class="govuk-label govuk-!-font-size-16" for="end-date">
+                                                End Date
+                                            </label>
+                                            <input class="govuk-input govuk-!-font-size-16 govuk-input--width-10"
+                                                   id="end-date"
+                                                   asp-for="ProjectDetails.EndDate"
+                                                   type="date"
+                                                   style="min-width: stretch;" />
+                                        </div>
+                                    </div>
+                                    <!-- Right sub-column -->
+                                    <div class="govuk-grid-column-one-half">
+                                        <div class="govuk-form-group">
+                                            <label class="govuk-label govuk-!-font-size-16" for="costbook-number">
+                                                Costbook Number
+                                            </label>
+                                            <input class="govuk-input govuk-!-font-size-16"
+                                                   id="costbook-number"
+                                                   asp-for="ProjectDetails.CostbookNumber"
+                                                   type="text"
+                                                   maxlength="10" />
+                                        </div>
+                                        <div class="govuk-form-group">
+                                            <label class="govuk-label govuk-!-font-size-16" for="risk-rating">
+                                                Risk Rating
+                                            </label>
+                                            <select class="govuk-select govuk-!-font-size-16"
+                                                    id="risk-rating"
+                                                    asp-for="ProjectDetails.Riskid"
+                                                    asp-items="Model.RiskRatingOptions"
+                                                    style="min-width: stretch;">
+                                            </select>
+                                        </div>
+                                        <div class="govuk-checkboxes govuk-checkboxes--small"
+                                             style="margin-top: 33px;">
+                                            <div class="govuk-checkboxes__item">
+                                                <input class="govuk-checkboxes__input govuk-!-font-size-16"
+                                                       id="use-project-yr"
+                                                       asp-for="UseProjectYears"
+                                                       type="checkbox"
+                                                       value="true" />
+                                                <label class="govuk-label govuk-checkboxes__label govuk-!-font-size-16"
+                                                       for="use-project-yr">
+                                                    Use Project Years?
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="govuk-form-group" style="margin-top: 18px;">
+                                            <label class="govuk-label govuk-!-font-size-16"
+                                                   for="revised-end-date">Revised End Date</label>
+                                            <input class="govuk-input govuk-!-font-size-16 govuk-input--width-10"
+                                                   id="revised-end-date"
+                                                   asp-for="ProjectDetails.RevisedEndDate"
+                                                   type="date"
+                                                   style="min-width: stretch;" />
+                                        </div>
+                                        <div class="govuk-form-group">
+                                            <label class="govuk-label govuk-!-font-size-16" for="closed-date">
+                                                Closed Date
+                                            </label>
+                                            <input class="govuk-input govuk-!-font-size-16 govuk-input--width-10"
+                                                   id="closed-date"
+                                                   asp-for="ProjectDetails.ClosedDate"
+                                                   type="date"
+                                                   style="min-width: stretch;" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </fieldset>
+                            <div class="govuk-button-group govuk-!-margin-top-2"
+                                 style="display: flex; justify-content: flex-end;">
+                                <a href="@Url.Action("Index", "ProjectList", new { area = "PIMS" })"
+                                   class="govuk-button govuk-button--secondary govuk-!-font-size-16">Cancel</a>
+                                <button type="button" class="govuk-button govuk-!-font-size-16" onclick="savePimsDetail()">Save</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+            </div><!-- end govuk-grid-column-full -->
+            <!-- ── Comments Section ─────────────────────────────────────── -->
+            <div class="govuk-grid-column-full">
+                <div class="sup_search_panel sup_p_0 sup_border_b_0"
+                     style="margin-top: 20px; padding-top: 0">
+                    <div class="sup_flex_between_center" style="padding: 8px 10px 8px">
+                        <div style="display: flex; justify-content: flex-start; gap: 30px;">
+                            <div class="input-group searchfiels"
+                                 style="flex-direction: column; align-items: flex-start; margin-right: -20px;">
+                                <label for="dpselectyear" class="govuk-label govuk-!-font-size-16">
+                                    Select year
+                                </label>
+                                <select id="dpselectyear"
+                                        class="govuk-select govuk-!-font-size-16"
+                                        asp-for="SelectedCommentYear"
+                                        asp-items="Model.YearOptions"
+                                        onchange="filterCommentsByYear(this.value)">
+                                    <option value="">All years</option>
+                                </select>
+                            </div>
+                            <div style="align-content: end;">
+                                <button type="button"
+                                        class="govuk-button sup_margin_0 sup_flex govuk-!-font-size-16"
+                                        style="height: max-content; width: max-content; align-items: flex-end;"
+                                        aria-label="Add comment to project"
+                                        onclick="openAddCommentModal()">
+                                    <i class="fa-solid fa-comment govuk-!-font-size-16"
+                                       style="color: #ffffff"></i>
+                                    &nbsp; Add comment
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="overflow: auto;">
+                    <div id="@($"gridContainer_{Model.CommentsGrid.GridId}")">
+                        @await Html.PartialAsync("_DataGrid", Model.CommentsGrid)
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- end govuk-grid-row -->
+    </main>
+
+</div><!-- end d-flex -->
+<!-- ── Edit / Add Comment Modal (GOV.UK compliant) ─────────────────────── -->
+<div id="addEditCommentContainer"></div>
+
+<script src="~/js/ajax-form-validation.js"></script>
+
+@section Scripts {
+    <script>
+        var commentsGridId   = '@Model.CommentsGrid.GridId';
+        var currentProject   = '@parentproject';
+        var currentEditIndex = null;
+        var isAddingNew      = false;
+
+        function getCommentsGridManager() {
+            return window['gridManager_' + commentsGridId];
+        }
+
+        // ── Sidebar ──────────────────────────────────────────────────────
+        function toggleSidebar() {
+            document.querySelector('.sidenav').classList.toggle('collapsed');
+        }
+
+        // ── Tabs ─────────────────────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', function () {
+            const tabs   = document.querySelectorAll('.govuk-tabs__tab');
+            const panels = document.querySelectorAll('.govuk-tabs__panel');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href').substring(1);
+
+                    panels.forEach(p => p.classList.add('govuk-tabs__panel--hidden'));
+                    document.querySelectorAll('.govuk-tabs__list-item')
+                            .forEach(li => li.classList.remove('govuk-tabs__list-item--selected'));
+
+                    document.getElementById(targetId).classList.remove('govuk-tabs__panel--hidden');
+                    this.parentElement.classList.add('govuk-tabs__list-item--selected');
+                });
+            });
+        });
+
+        // ── Reusable alert banner ─────────────────────────────────────────
+        function showAlert(type, message) {
+            const alertEl = document.getElementById('saveSuccessAlert');
+            const msgEl = document.getElementById('saveSuccessMessage');
+            alertEl.className = 'alert alert-' + type + ' alert-dismissible fade show';
+            msgEl.textContent = message;
+            alertEl.style.display = '';
+            alertEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            setTimeout(() => { alertEl.classList.remove('show'); alertEl.style.display = 'none'; }, 5000);
+        }
+
+        // ── PIMS Details save ────────────────────────────────────────────
+        function savePimsDetail() {
+            const form = document.getElementById('formPimsDetailRight');
+            const token = form.querySelector('input[name="__RequestVerificationToken"]').value || null;
+            const payload = {
+                Version: form.querySelector('[name="ProjectDetails.Version"]').value || null,
+                FileRef: form.querySelector('[name="ProjectDetails.FileRef"]').value || null,
+                CustomerRef: form.querySelector('[name="ProjectDetails.CustomerRef"]').value || null,
+                StartDate: form.querySelector('[name="ProjectDetails.StartDate"]').value || null,
+                EndDate: form.querySelector('[name="ProjectDetails.EndDate"]').value || null,
+                CostbookNumber: form.querySelector('[name="ProjectDetails.CostbookNumber"]').value,
+                Riskid: parseInt(form.querySelector('[name="ProjectDetails.Riskid"]').value) || null,
+                UseProjectYears: document.getElementById('use-project-yr').checked,
+                RevisedEndDate: form.querySelector('[name="ProjectDetails.RevisedEndDate"]').value || null,
+                ClosedDate: form.querySelector('[name="ProjectDetails.ClosedDate"]').value || null
+            };
+
+            fetch('/PIMS/ProjectDetails/SavePimsDetail?parentproject=' + encodeURIComponent(currentProject), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+                body: JSON.stringify(payload)
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    console.log(data.data);
+                    showAlert('success', data.message);
+                } else {
+                    showAlert('danger', data.errors?.map(e => e.message).join(', ') || 'Failed to save PIMS details.');
+                }
+            })
+            .catch(() => showAlert('danger', 'An error occurred while saving PIMS details.'));
+        }
+
+        // ── Comment modal ─────────────────────────────────────────────────
+        function clearFormErrors() {
+            clearValidationErrors('#editRecordModal');
+        }
+
+        function closeEditModal() {
+            var modal = document.getElementById('editRecordModal');
+            if (modal) modal.classList.remove('open');
+            clearFormErrors();
+        }
+
+        function openAddCommentModal() {
+            var selectedYear = document.getElementById('dpselectyear').value || '';
+            var url = '/PIMS/ProjectDetails/GetAddEditCommentPartial?parentproject=' + encodeURIComponent(currentProject)
+                    + '&selectedYear=' + encodeURIComponent(selectedYear);
+            fetch(url)
+                .then(r => r.text())
+                .then(html => {
+                    document.getElementById('addEditCommentContainer').innerHTML = html;
+                    document.getElementById('editRecordModal').classList.add('open');
+                    isAddingNew = true;
+                    currentEditIndex = null;
+                })
+                .catch(() => showAlert('danger', 'An error occurred while loading the comment form.'));
+        }
+
+        function saveRecord() {
+            var $form = $('#editRecordForm');
+            var $modal = $('#editRecordModal');
+
+            clearValidationErrors($modal);
+
+            if (!isFormValid($form)) {
+                displayClientValidationErrors($form, $modal);
+                return;
+            }
+
+            const form    = $form[0];
+            const year    = form.querySelector('[name="Year"]').value.trim();
+            const topic   = form.querySelector('[name="Topic"]').value || null;
+            const comment = form.querySelector('[name="Commenttext"]').value.trim()|| null;
+            const token   = form.querySelector('input[name="__RequestVerificationToken"]').value;
+            const payload = { Project: currentProject, Year: parseInt(year), Comment: comment, Topic: topic, Commentno: isAddingNew ? 0 : parseInt(currentEditIndex) };
+
+            const url = isAddingNew
+                ? '/PIMS/ProjectDetails/CreateComment'
+                : '/PIMS/ProjectDetails/UpdateComment';
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+                body: JSON.stringify(payload)
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    closeEditModal();
+                    showAlert('success', data.message);
+                    var gm = getCommentsGridManager();
+                    if (gm) gm.reloadGrid({ page: 1 });
+                } else {
+                    displayServerValidationErrors(data.errors, 'Failed to save comment.', '#editRecordModal');
+                }
+            })
+            .catch(() => showAlert('danger', 'An error occurred while saving the comment.'));
+        }
+
+        function editComment(btn) {
+            var commentno = btn.dataset.id;
+            var url = '/PIMS/ProjectDetails/GetAddEditCommentPartial?parentproject=' + encodeURIComponent(currentProject)
+                    + '&commentno=' + encodeURIComponent(commentno);
+            fetch(url)
+                .then(r => r.text())
+                .then(html => {
+                    document.getElementById('addEditCommentContainer').innerHTML = html;
+                    document.getElementById('editRecordModal').classList.add('open');
+                    isAddingNew = false;
+                    currentEditIndex = commentno;
+                })
+                .catch(() => showAlert('danger', 'An error occurred while loading the comment form.'));
+        }
+
+        function deleteComment(btn) {
+            var commentno = btn.dataset.id;
+            if (!confirm('Are you sure you want to delete this comment?')) return;
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            fetch('/PIMS/ProjectDetails/DeleteComment?commentno=' + commentno, {
+                method: 'DELETE',
+                headers: { 'RequestVerificationToken': token }
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('success', data.message);
+                    var gm = getCommentsGridManager();
+                    if (gm) gm.reloadGrid({ page: 1 });
+                } else {
+                    showAlert('danger', data.errors?.map(e => e.message).join(', ') || 'Failed to delete comment.');
+                }
+            })
+            .catch(() => showAlert('danger', 'An error occurred while deleting the comment.'));
+        }
+
+        function filterCommentsByYear(year) {
+            var gm = getCommentsGridManager();
+            if (gm) gm.reloadGrid({ page: 1 });
+        }
+
+        function getProjectDetailsExtraFilters() {
+            return {
+                parentproject: currentProject,
+                year: document.getElementById('dpselectyear').value || null
+            };
+        }
+    </script>
+}

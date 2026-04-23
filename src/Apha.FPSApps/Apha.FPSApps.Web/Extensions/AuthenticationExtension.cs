@@ -37,8 +37,7 @@ namespace Apha.FPSApps.Web.Extensions
             }
 
             var currentTime = DateTime.UtcNow;
-            var userName = identity.Name! ?? string.Empty;
-            var userroles = identity.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
+            var userName = identity.Name! ?? string.Empty;            
            
             var logger = context.HttpContext.RequestServices
                 .GetRequiredService<ILoggerFactory>()

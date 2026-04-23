@@ -54,6 +54,58 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestRequirementControllerTest
 
         #endregion
 
+        #region GetPagedByProject
+
+        [Fact]
+        public async Task GetPagedByProject_HappyPath_ReturnsOkWithPaginatedResult()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var serviceResult = new PaginatedResult<TestRequirementtDto>();
+            var mapped = new PaginationRes<TestRequirementtRes>();
+
+            _service.GetPagedTestReqmtByProjectAsync(query, "PRJ1").Returns(serviceResult);
+            _mapper.Map<PaginationRes<TestRequirementtRes>>(serviceResult).Returns(mapped);
+
+            var result = await _controller.GetPagedByProject(query, "PRJ1");
+
+            var ok = Assert.IsType<OkObjectResult>(result);
+            ok.Value.Should().Be(mapped);
+        }
+
+        [Fact]
+        public async Task GetPagedByProject_WithItems_ReturnsMappedResult()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var dtos = new List<TestRequirementtDto>
+            {
+                new() { TestCode = "BLOOD", Buyer = "PRJ1" },
+                new() { TestCode = "URINE", Buyer = "PRJ1" }
+            };
+            var serviceResult = new PaginatedResult<TestRequirementtDto>(dtos, new PaginationDto());
+            var mapped = new PaginationRes<TestRequirementtRes>();
+
+            _service.GetPagedTestReqmtByProjectAsync(query, "PRJ1").Returns(serviceResult);
+            _mapper.Map<PaginationRes<TestRequirementtRes>>(serviceResult).Returns(mapped);
+
+            var result = await _controller.GetPagedByProject(query, "PRJ1");
+
+            var ok = Assert.IsType<OkObjectResult>(result);
+            ok.Value.Should().Be(mapped);
+            await _service.Received(1).GetPagedTestReqmtByProjectAsync(query, "PRJ1");
+        }
+
+        [Fact]
+        public async Task GetPagedByProject_ServiceThrows_PropagatesException()
+        {
+            var query = new QueryParameters<string>();
+            _service.GetPagedTestReqmtByProjectAsync(query, "PRJ1")
+                .ThrowsAsync(new Exception("Service error"));
+
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetPagedByProject(query, "PRJ1"));
+        }
+
+        #endregion
+
         #region GetAllTestReqmtForExport
 
         [Fact]

@@ -72,8 +72,8 @@ namespace Apha.Costbook.Api.UnitTests.Controller.ProjectsControllerTest
         {
             // Arrange
             var projectId = "123";
-            var projectDto = new ProjectDto { ProjectId = projectId, Projecttitle = "Test Project" };
-            var projectRes = new ProjectRes { ProjectId = projectId, Projecttitle = "Test Project" };
+            var projectDto = new ProjectDto { ProjectId = projectId, ProjectTitle = "Test Project" };
+            var projectRes = new ProjectRes { ProjectId = projectId, ProjectTitle = "Test Project" };
 
             _projectService.GetProjectByIdAsync(projectId).Returns(projectDto);
             _mapper.Map<ProjectRes>(projectDto).Returns(projectRes);
@@ -108,10 +108,10 @@ namespace Apha.Costbook.Api.UnitTests.Controller.ProjectsControllerTest
         public async Task AddProject_ReturnsCreatedAtAction_WithMappedProject()
         {
             // Arrange
-            var projectReq = new ProjectReq { ProjectId = "123", Projecttitle = "New Project" };
-            var projectDto = new ProjectDto { ProjectId = "123", Projecttitle = "New Project" };
-            var resultDto = new ProjectDto { ProjectId = "123", Projecttitle = "New Project" };
-            var projectRes = new ProjectRes { ProjectId = "123", Projecttitle = "New Project" };
+            var projectReq = new ProjectReq { ProjectId = "123", ProjectTitle = "New Project" };
+            var projectDto = new ProjectDto { ProjectId = "123", ProjectTitle = "New Project" };
+            var resultDto = new ProjectDto { ProjectId = "123", ProjectTitle = "New Project" };
+            var projectRes = new ProjectRes { ProjectId = "123", ProjectTitle = "New Project" };
 
             _mapper.Map<ProjectDto>(projectReq).Returns(projectDto);
             _projectService.AddProjectAsync(projectDto).Returns(resultDto);
@@ -137,10 +137,10 @@ namespace Apha.Costbook.Api.UnitTests.Controller.ProjectsControllerTest
         {
             // Arrange
             var projectId = "123";
-            var projectReq = new ProjectReq { ProjectId = projectId, Projecttitle = "Updated Project" };
-            var projectDto = new ProjectDto { ProjectId = projectId, Projecttitle = "Updated Project" };
-            var resultDto = new ProjectDto { ProjectId = projectId, Projecttitle = "Updated Project" };
-            var projectRes = new ProjectRes { ProjectId = projectId, Projecttitle = "Updated Project" };
+            var projectReq = new ProjectReq { ProjectId = projectId, ProjectTitle = "Updated Project" };
+            var projectDto = new ProjectDto { ProjectId = projectId, ProjectTitle = "Updated Project" };
+            var resultDto = new ProjectDto { ProjectId = projectId, ProjectTitle = "Updated Project" };
+            var projectRes = new ProjectRes { ProjectId = projectId, ProjectTitle = "Updated Project" };
 
             _mapper.Map<ProjectDto>(projectReq).Returns(projectDto);
             _projectService.UpdateProjectAsync(projectId, projectDto).Returns(resultDto);
@@ -158,69 +158,26 @@ namespace Apha.Costbook.Api.UnitTests.Controller.ProjectsControllerTest
             _mapper.Received(1).Map<ProjectRes>(resultDto);
         }
 
-        // NEW TEST: UpdateProject with ArgumentException
+        // NEW TEST: UpdateProject with Exception
         [Fact]
-        public async Task UpdateProject_WithArgumentException_ReturnsBadRequest()
+        public async Task UpdateProject_WithException_ThrowsException()
         {
             // Arrange
             var projectId = "123";
-            var projectReq = new ProjectReq { ProjectId = projectId, Projecttitle = "Updated Project" };
-            var projectDto = new ProjectDto { ProjectId = projectId, Projecttitle = "Updated Project" };
+            var projectReq = new ProjectReq { ProjectId = projectId, ProjectTitle = "Updated Project" };
+            var projectDto = new ProjectDto { ProjectId = projectId, ProjectTitle = "Updated Project" };
 
             _mapper.Map<ProjectDto>(projectReq).Returns(projectDto);
-            _projectService.UpdateProjectAsync(projectId, projectDto).Throws(new ArgumentException("Invalid argument"));
+            _projectService.UpdateProjectAsync(projectId, projectDto).Throws(new Exception("Database error"));
 
-            // Act
-            var result = await _controller.UpdateProject(projectId, projectReq);
-
-            // Assert
-            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-            var response = badRequestResult.Value;
-            Assert.NotNull(response);
-
-            var messageProperty = response.GetType().GetProperty("message");
-            Assert.NotNull(messageProperty);
-            Assert.Equal("Invalid argument", messageProperty.GetValue(response));
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.UpdateProject(projectId, projectReq));
 
             _mapper.Received(1).Map<ProjectDto>(projectReq);
             await _projectService.Received(1).UpdateProjectAsync(projectId, projectDto);
         }
 
-        // NEW TEST: UpdateProject with generic Exception
-        [Fact]
-        public async Task UpdateProject_WithGenericException_ReturnsInternalServerError()
-        {
-            // Arrange
-            var projectId = "123";
-            var projectReq = new ProjectReq { ProjectId = projectId, Projecttitle = "Updated Project" };
-            var projectDto = new ProjectDto { ProjectId = projectId, Projecttitle = "Updated Project" };
-
-            _mapper.Map<ProjectDto>(projectReq).Returns(projectDto);
-            _projectService.UpdateProjectAsync(projectId, projectDto).Throws(new Exception("Unexpected error"));
-
-            // Act
-            var result = await _controller.UpdateProject(projectId, projectReq);
-
-            // Assert
-            var statusCodeResult = Assert.IsType<ObjectResult>(result);
-            Assert.Equal(500, statusCodeResult.StatusCode);
-
-            var response = statusCodeResult.Value;
-            Assert.NotNull(response);
-
-            var messageProperty = response.GetType().GetProperty("message");
-            var detailsProperty = response.GetType().GetProperty("details");
-
-            Assert.NotNull(messageProperty);
-            Assert.NotNull(detailsProperty);
-            Assert.Equal("An error occurred while updating the project", messageProperty.GetValue(response));
-            Assert.Equal("Unexpected error", detailsProperty.GetValue(response));
-
-            _mapper.Received(1).Map<ProjectDto>(projectReq);
-            await _projectService.Received(1).UpdateProjectAsync(projectId, projectDto);
-        }
-
-        // UPDATED TEST: DeleteProject - Current implementation now returns Ok(true) or NotFound(false)
+        // UPDATED TEST: DeleteProject - Now returns Ok(true) or throws ArgumentException
         [Fact]
         public async Task DeleteProject_WithValidId_ReturnsOkTrue()
         {
@@ -237,64 +194,31 @@ namespace Apha.Costbook.Api.UnitTests.Controller.ProjectsControllerTest
             await _projectService.Received(1).DeleteProjectAsync(projectId);
         }
 
-        // UPDATED TEST: DeleteProject - Current implementation now returns Ok(true) or NotFound(false)
+        // UPDATED TEST: DeleteProject - Service returns false, throws ArgumentException
         [Fact]
-        public async Task DeleteProject_WithInvalidId_ReturnsNotFoundFalse()
+        public async Task DeleteProject_WithInvalidId_ThrowsArgumentException()
         {
             // Arrange
             var projectId = "invalid";
             _projectService.DeleteProjectAsync(projectId).Returns(false);
 
-            // Act
-            var result = await _controller.DeleteProject(projectId);
-
-            // Assert
-            var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
-            Assert.True(notFoundResult.Value is bool b && !b);
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<ArgumentException>(() => _controller.DeleteProject(projectId));
+            Assert.Equal("Error while deleting project", exception.Message);
             await _projectService.Received(1).DeleteProjectAsync(projectId);
         }
 
-        // NEW TEST: DeleteProject with null/empty ID
+        // NEW TEST: DeleteProject with null/empty ID throws ArgumentException
         [Fact]
-        public async Task DeleteProject_WithNullOrEmptyId_ReturnsBadRequest()
+        public async Task DeleteProject_WithNullOrEmptyId_ThrowsArgumentException()
         {
             // Act & Assert for null
-            var resultNull = await _controller.DeleteProject(null!);
-            var badRequestResultNull = Assert.IsType<BadRequestObjectResult>(resultNull);
-            var responseNull = badRequestResultNull.Value;
-            Assert.NotNull(responseNull);
-
-            var messagePropertyNull = responseNull.GetType().GetProperty("message");
-            Assert.NotNull(messagePropertyNull);
-            Assert.Equal("Project ID is required", messagePropertyNull.GetValue(responseNull));
+            var exceptionNull = await Assert.ThrowsAsync<ArgumentException>(() => _controller.DeleteProject(null!));
+            Assert.Equal("Project not found for deletion", exceptionNull.Message);
 
             // Act & Assert for empty string
-            var resultEmpty = await _controller.DeleteProject("");
-            var badRequestResultEmpty = Assert.IsType<BadRequestObjectResult>(resultEmpty);
-            var responseEmpty = badRequestResultEmpty.Value;
-            Assert.NotNull(responseEmpty);
-
-            var messagePropertyEmpty = responseEmpty.GetType().GetProperty("message");
-            Assert.NotNull(messagePropertyEmpty);
-            Assert.Equal("Project ID is required", messagePropertyEmpty.GetValue(responseEmpty));
-        }
-
-        // NEW TEST: DeleteProject with exception
-        [Fact]
-        public async Task DeleteProject_WithException_ReturnsInternalServerErrorFalse()
-        {
-            // Arrange
-            var projectId = "123";
-            _projectService.DeleteProjectAsync(projectId).Throws(new Exception("Database error"));
-
-            // Act
-            var result = await _controller.DeleteProject(projectId);
-
-            // Assert
-            var statusCodeResult = Assert.IsType<ObjectResult>(result);
-            Assert.Equal(500, statusCodeResult.StatusCode);
-            Assert.True(statusCodeResult.Value is bool b && !b);
-            await _projectService.Received(1).DeleteProjectAsync(projectId);
+            var exceptionEmpty = await Assert.ThrowsAsync<ArgumentException>(() => _controller.DeleteProject(""));
+            Assert.Equal("Project not found for deletion", exceptionEmpty.Message);
         }
 
         // UPDATED TEST: CopyProject now returns CreatedAtAction
@@ -304,8 +228,8 @@ namespace Apha.Costbook.Api.UnitTests.Controller.ProjectsControllerTest
             // Arrange
             var sourceId = "123";
             var newId = "456";
-            var resultDto = new ProjectDto { ProjectId = newId, Projecttitle = "Copied Project" };
-            var projectRes = new ProjectRes { ProjectId = newId, Projecttitle = "Copied Project" };
+            var resultDto = new ProjectDto { ProjectId = newId, ProjectTitle = "Copied Project" };
+            var projectRes = new ProjectRes { ProjectId = newId, ProjectTitle = "Copied Project" };
 
             _projectService.CopyProjectAsync(sourceId, newId).Returns(resultDto);
             _mapper.Map<ProjectRes>(resultDto).Returns(projectRes);
@@ -324,83 +248,18 @@ namespace Apha.Costbook.Api.UnitTests.Controller.ProjectsControllerTest
             _mapper.Received(1).Map<ProjectRes>(resultDto);
         }
 
-        // NEW TEST: CopyProject with ArgumentException
+        // NEW TEST: CopyProject with Exception
         [Fact]
-        public async Task CopyProject_WithArgumentException_ReturnsBadRequest()
+        public async Task CopyProject_WithException_ThrowsException()
         {
             // Arrange
             var sourceId = "123";
             var newId = "456";
 
-            _projectService.CopyProjectAsync(sourceId, newId).Throws(new ArgumentException("Invalid project ID"));
+            _projectService.CopyProjectAsync(sourceId, newId).Throws(new Exception("Database error"));
 
-            // Act
-            var result = await _controller.CopyProject(sourceId, newId);
-
-            // Assert
-            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-            var response = badRequestResult.Value;
-            Assert.NotNull(response);
-
-            var messageProperty = response.GetType().GetProperty("message");
-            Assert.NotNull(messageProperty);
-            Assert.Equal("Invalid project ID", messageProperty.GetValue(response));
-
-            await _projectService.Received(1).CopyProjectAsync(sourceId, newId);
-        }
-
-        // NEW TEST: CopyProject with InvalidOperationException
-        [Fact]
-        public async Task CopyProject_WithInvalidOperationException_ReturnsBadRequest()
-        {
-            // Arrange
-            var sourceId = "123";
-            var newId = "456";
-
-            _projectService.CopyProjectAsync(sourceId, newId).Throws(new InvalidOperationException("Operation not allowed"));
-
-            // Act
-            var result = await _controller.CopyProject(sourceId, newId);
-
-            // Assert
-            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-            var response = badRequestResult.Value;
-            Assert.NotNull(response);
-
-            var messageProperty = response.GetType().GetProperty("message");
-            Assert.NotNull(messageProperty);
-            Assert.Equal("Operation not allowed", messageProperty.GetValue(response));
-
-            await _projectService.Received(1).CopyProjectAsync(sourceId, newId);
-        }
-
-        // NEW TEST: CopyProject with generic Exception
-        [Fact]
-        public async Task CopyProject_WithGenericException_ReturnsInternalServerError()
-        {
-            // Arrange
-            var sourceId = "123";
-            var newId = "456";
-
-            _projectService.CopyProjectAsync(sourceId, newId).Throws(new Exception("Unexpected error"));
-
-            // Act
-            var result = await _controller.CopyProject(sourceId, newId);
-
-            // Assert
-            var statusCodeResult = Assert.IsType<ObjectResult>(result);
-            Assert.Equal(500, statusCodeResult.StatusCode);
-
-            var response = statusCodeResult.Value;
-            Assert.NotNull(response);
-
-            var messageProperty = response.GetType().GetProperty("message");
-            var detailsProperty = response.GetType().GetProperty("details");
-
-            Assert.NotNull(messageProperty);
-            Assert.NotNull(detailsProperty);
-            Assert.Equal("An error occurred while copying the project", messageProperty.GetValue(response));
-            Assert.Equal("Unexpected error", detailsProperty.GetValue(response));
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.CopyProject(sourceId, newId));
 
             await _projectService.Received(1).CopyProjectAsync(sourceId, newId);
         }
@@ -489,28 +348,14 @@ namespace Apha.Costbook.Api.UnitTests.Controller.ProjectsControllerTest
 
         // NEW TEST: GetNextProjectNumber with exception
         [Fact]
-        public async Task GetNextProjectNumber_WithException_ReturnsInternalServerError_WithApiResponse()
+        public async Task GetNextProjectNumber_WithException_ThrowsException()
         {
             // Arrange
             var baseNumber = "PRJ";
             _projectService.GetNextProjectNumberAsync(baseNumber).Throws(new Exception("Database error"));
 
-            // Act
-            var result = await _controller.GetNextProjectNumber(baseNumber);
-
-            // Assert
-            var statusCodeResult = Assert.IsType<ObjectResult>(result);
-            Assert.Equal(500, statusCodeResult.StatusCode);
-
-            var response = Assert.IsType<ApiResponse<string>>(statusCodeResult.Value);
-            Assert.False(response.Success);
-            Assert.Null(response.Data);
-            Assert.NotNull(response.Errors);
-            Assert.Single(response.Errors);
-            Assert.Equal("INTERNAL_ERROR", response.Errors.First().Code);
-            Assert.Equal("Failed to retrieve project number", response.Errors.First().Message);
-            Assert.Equal("Database error", response.Errors.First().Details);
-            Assert.NotNull(response.Meta);
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetNextProjectNumber(baseNumber));
 
             await _projectService.Received(1).GetNextProjectNumberAsync(baseNumber);
         }
@@ -545,27 +390,13 @@ namespace Apha.Costbook.Api.UnitTests.Controller.ProjectsControllerTest
 
         // NEW TEST: GetContracts with exception
         [Fact]
-        public async Task GetContracts_WithException_ReturnsInternalServerError_WithApiResponse()
+        public async Task GetContracts_WithException_ThrowsException()
         {
             // Arrange
             _contractService.GetAllContractNumbersAsync().Throws(new Exception("Database error"));
 
-            // Act
-            var result = await _controller.GetContracts();
-
-            // Assert
-            var statusCodeResult = Assert.IsType<ObjectResult>(result);
-            Assert.Equal(500, statusCodeResult.StatusCode);
-
-            var response = Assert.IsType<ApiResponse<List<ContractRes>>>(statusCodeResult.Value);
-            Assert.False(response.Success);
-            Assert.Null(response.Data);
-            Assert.NotNull(response.Errors);
-            Assert.Single(response.Errors);
-            Assert.Equal("INTERNAL_ERROR", response.Errors.First().Code);
-            Assert.Equal("Failed to retrieve contracts", response.Errors.First().Message);
-            Assert.Equal("Database error", response.Errors.First().Details);
-            Assert.NotNull(response.Meta);
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetContracts());
 
             await _contractService.Received(1).GetAllContractNumbersAsync();
         }
@@ -600,27 +431,13 @@ namespace Apha.Costbook.Api.UnitTests.Controller.ProjectsControllerTest
 
         // NEW TEST: GetDiseases with exception
         [Fact]
-        public async Task GetDiseases_WithException_ReturnsInternalServerError_WithApiResponse()
+        public async Task GetDiseases_WithException_ThrowsException()
         {
             // Arrange
             _diseaseService.GetAllDiseasesAsync().Throws(new Exception("Database error"));
 
-            // Act
-            var result = await _controller.GetDiseases();
-
-            // Assert
-            var statusCodeResult = Assert.IsType<ObjectResult>(result);
-            Assert.Equal(500, statusCodeResult.StatusCode);
-
-            var response = Assert.IsType<ApiResponse<List<DiseaseRes>>>(statusCodeResult.Value);
-            Assert.False(response.Success);
-            Assert.Null(response.Data);
-            Assert.NotNull(response.Errors);
-            Assert.Single(response.Errors);
-            Assert.Equal("INTERNAL_ERROR", response.Errors.First().Code);
-            Assert.Equal("Failed to retrieve diseases", response.Errors.First().Message);
-            Assert.Equal("Database error", response.Errors.First().Details);
-            Assert.NotNull(response.Meta);
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetDiseases());
 
             await _diseaseService.Received(1).GetAllDiseasesAsync();
         }
@@ -655,27 +472,13 @@ namespace Apha.Costbook.Api.UnitTests.Controller.ProjectsControllerTest
 
         // NEW TEST: GetPrograms with exception
         [Fact]
-        public async Task GetPrograms_WithException_ReturnsInternalServerError_WithApiResponse()
+        public async Task GetPrograms_WithException_ThrowsException()
         {
             // Arrange
             _programService.GetAllProgramsAsync().Throws(new Exception("Database error"));
 
-            // Act
-            var result = await _controller.GetPrograms();
-
-            // Assert
-            var statusCodeResult = Assert.IsType<ObjectResult>(result);
-            Assert.Equal(500, statusCodeResult.StatusCode);
-
-            var response = Assert.IsType<ApiResponse<List<ProgramRes>>>(statusCodeResult.Value);
-            Assert.False(response.Success);
-            Assert.Null(response.Data);
-            Assert.NotNull(response.Errors);
-            Assert.Single(response.Errors);
-            Assert.Equal("INTERNAL_ERROR", response.Errors.First().Code);
-            Assert.Equal("Failed to retrieve programs", response.Errors.First().Message);
-            Assert.Equal("Database error", response.Errors.First().Details);
-            Assert.NotNull(response.Meta);
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetPrograms());
 
             await _programService.Received(1).GetAllProgramsAsync();
         }
@@ -710,27 +513,13 @@ namespace Apha.Costbook.Api.UnitTests.Controller.ProjectsControllerTest
 
         // NEW TEST: GetCustomers with exception
         [Fact]
-        public async Task GetCustomers_WithException_ReturnsInternalServerError_WithApiResponse()
+        public async Task GetCustomers_WithException_ThrowsException()
         {
             // Arrange
             _customerService.GetAllCustomersAsync().Throws(new Exception("Database error"));
 
-            // Act
-            var result = await _controller.GetCustomers();
-
-            // Assert
-            var statusCodeResult = Assert.IsType<ObjectResult>(result);
-            Assert.Equal(500, statusCodeResult.StatusCode);
-
-            var response = Assert.IsType<ApiResponse<List<CustomerRes>>>(statusCodeResult.Value);
-            Assert.False(response.Success);
-            Assert.Null(response.Data);
-            Assert.NotNull(response.Errors);
-            Assert.Single(response.Errors);
-            Assert.Equal("INTERNAL_ERROR", response.Errors.First().Code);
-            Assert.Equal("Failed to retrieve customers", response.Errors.First().Message);
-            Assert.Equal("Database error", response.Errors.First().Details);
-            Assert.NotNull(response.Meta);
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetCustomers());
 
             await _customerService.Received(1).GetAllCustomersAsync();
         }
@@ -765,27 +554,13 @@ namespace Apha.Costbook.Api.UnitTests.Controller.ProjectsControllerTest
 
         // NEW TEST: GetStaff with exception
         [Fact]
-        public async Task GetStaff_WithException_ReturnsInternalServerError_WithApiResponse()
+        public async Task GetStaff_WithException_ThrowsException()
         {
             // Arrange
             _staffService.GetAllStaffAsync().Throws(new Exception("Database error"));
 
-            // Act
-            var result = await _controller.GetStaff();
-
-            // Assert
-            var statusCodeResult = Assert.IsType<ObjectResult>(result);
-            Assert.Equal(500, statusCodeResult.StatusCode);
-
-            var response = Assert.IsType<ApiResponse<List<StaffRes>>>(statusCodeResult.Value);
-            Assert.False(response.Success);
-            Assert.Null(response.Data);
-            Assert.NotNull(response.Errors);
-            Assert.Single(response.Errors);
-            Assert.Equal("INTERNAL_ERROR", response.Errors.First().Code);
-            Assert.Equal("Failed to retrieve staff", response.Errors.First().Message);
-            Assert.Equal("Database error", response.Errors.First().Details);
-            Assert.NotNull(response.Meta);
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetStaff());
 
             await _staffService.Received(1).GetAllStaffAsync();
         }
@@ -813,8 +588,8 @@ namespace Apha.Costbook.Api.UnitTests.Controller.ProjectsControllerTest
         public async Task AddProject_WithException_ThrowsException()
         {
             // Arrange
-            var projectReq = new ProjectReq { ProjectId = "123", Projecttitle = "New Project" };
-            var projectDto = new ProjectDto { ProjectId = "123", Projecttitle = "New Project" };
+            var projectReq = new ProjectReq { ProjectId = "123", ProjectTitle = "New Project" };
+            var projectDto = new ProjectDto { ProjectId = "123", ProjectTitle = "New Project" };
 
             _mapper.Map<ProjectDto>(projectReq).Returns(projectDto);
             _projectService.AddProjectAsync(projectDto).Throws(new Exception("Database error"));

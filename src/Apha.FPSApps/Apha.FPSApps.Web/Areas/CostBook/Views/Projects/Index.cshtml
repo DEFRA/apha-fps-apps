@@ -13,9 +13,9 @@
     }
 </style>
 
-@* <div class="govuk-grid-row sup_border-bottom">
+@* <div class="govuk-grid-row sup_margin_left_right_0">
     <div class="govuk-grid-column-one-half">
-        <h1 class="govuk-heading-s sup_margin_0" style="padding:10px 0 10px 10px">Choose Existing Project</h1>
+        <h1 class="heading_with_txtbox govuk-heading-s sup_border-bottom">Choose Existing Project</h1>
     </div>
     <div class="govuk-grid-column-one-half">
         <div style="float: right; text-align:right; margin-top: 2px; width:50%;">
@@ -24,24 +24,29 @@
     </div>
 </div> *@
 
-<div class="row">
-    <div class="col-lg-6">
-        <div style="margin: 2px 0 0 0;">
+
+<div class="govuk-grid-row sup_margin_left_right_0 sup_border-bottom">
+    <div class="govuk-grid-column-full sup_flex_left_center sup_p_0">
+        <div class="govuk-grid-column-one-half">
+
+            <h1 class="heading_with_txtbox govuk-heading-s sup_margin_bottom_0 sup_p_0">
+                Choose Existing Project
+            </h1>
+        </div>
+
+        <div class="govuk-grid-column-one-half sup_p_0 sup_align_right">
+            <a href="#" class="govuk-button govuk-!-margin-bottom-1 govuk-!-margin-top-1 floatRight">
+                + Add New Project
+            </a>
         </div>
     </div>
-    <div class="col-lg-6">
-    </div>
+</div>
 
-    <div class="col-lg-12">
-        
-
-
-            @* <div class="container-fluid" style="padding: 0;"> *@
-        <div class="govuk-grid-row sup_margin_left_right_0">
-            <div class="govuk-grid-column-full">
-                    <div class="align-items-start m-10" id="search-grid">
-                        
-
+<div class="govuk-grid-row sup_margin_left_right_0 sup_margin_top_10 sup_margin_bottom_10">
+   
+    <div class="govuk-grid-column-full"> 
+       
+                    <div class="align-items-start" id="search-grid"> 
                         <!-- Grid Container -->
                         <div id="@($"gridContainer_{Model.ProjectGrid.GridId}")">
                             @await Html.PartialAsync("_DataGrid", Model.ProjectGrid)
@@ -49,8 +54,7 @@
 
                    
                 </div>
-            </div>
-            </div>
+             
        
     </div>
 </div>

@@ -14,14 +14,25 @@ namespace Apha.PACT.Application.UnitTests.Services.TimeCodeValidServiceTest
     public class TimeCodeValidServiceTests
     {
         private readonly ITimeCodeValidRepository _mockRepository;
+        private readonly IJobCodeRepository _mockJobCodeRepository;
+        private readonly ITestCapabilityRepository _mockTestCapabilityRepository;
+        private readonly IProjectRepository _mockProjectRepository;
         private readonly IMapper _mockMapper;
         private readonly TimeCodeValidService _sut;
 
         public TimeCodeValidServiceTests()
         {
             _mockRepository = Substitute.For<ITimeCodeValidRepository>();
+            _mockJobCodeRepository = Substitute.For<IJobCodeRepository>();
+            _mockTestCapabilityRepository = Substitute.For<ITestCapabilityRepository>();
+            _mockProjectRepository = Substitute.For<IProjectRepository>();
             _mockMapper = Substitute.For<IMapper>();
-            _sut = new TimeCodeValidService(_mockRepository, _mockMapper);
+            _sut = new TimeCodeValidService(
+                _mockRepository,
+                _mockJobCodeRepository,
+                _mockTestCapabilityRepository,
+                _mockProjectRepository,
+                _mockMapper);
         }
 
         #region GetByJobCodeAsync
@@ -132,11 +143,14 @@ namespace Apha.PACT.Application.UnitTests.Services.TimeCodeValidServiceTest
         [Fact]
         public async Task CreateTimeCodeValidAsync_ValidInput_ReturnsMappedDto()
         {
-            var dto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1" };
-            var entity = new TimeCodeValid { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1" };
-            var created = new TimeCodeValid { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1" };
-            var expected = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1" };
+            var dto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC1" };
+            var entity = new TimeCodeValid { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC1" };
+            var created = new TimeCodeValid { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC1" };
+            var expected = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC1" };
 
+            _mockJobCodeRepository.GetJobCodeByIdAsync("JC1").Returns(new JobCode { JobCodeId = "JC1" });
+            _mockProjectRepository.ExistsAsync("PRJ1").Returns(true);
+            _mockRepository.GetTimeCodeValidAsync("WG1", "TC1", "PRJ1").Returns((TimeCodeValid?)null);
             _mockMapper.Map<TimeCodeValid>(dto).Returns(entity);
             _mockRepository.CreateTimeCodeValidAsync(entity).Returns(created);
             _mockMapper.Map<TimeCodeValidDto>(created).Returns(expected);
@@ -149,11 +163,104 @@ namespace Apha.PACT.Application.UnitTests.Services.TimeCodeValidServiceTest
         }
 
         [Fact]
-        public async Task CreateTimeCodeValidAsync_RepositoryThrows_PropagatesException()
+        public async Task CreateTimeCodeValidAsync_DuplicateRecord_ThrowsInvalidOperationException()
+        {
+            var dto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC1" };
+            _mockJobCodeRepository.GetJobCodeByIdAsync("JC1").Returns(new JobCode { JobCodeId = "JC1" });
+            _mockProjectRepository.ExistsAsync("PRJ1").Returns(true);
+            _mockRepository.GetTimeCodeValidAsync("WG1", "TC1", "PRJ1")
+                .Returns(new TimeCodeValid { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1" });
+
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.CreateTimeCodeValidAsync(dto));
+
+            ex.Message.Should().Contain("WG1").And.Contain("TC1").And.Contain("PRJ1");
+            await _mockRepository.DidNotReceive().CreateTimeCodeValidAsync(Arg.Any<TimeCodeValid>());
+        }
+
+        [Fact]
+        public async Task CreateTimeCodeValidAsync_WithTestCodeAndPortfolio_ValidatesComboAndReturnsDto()
+        {
+            var dto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", TestCode = "TST1", Portfolio = "PF1" };
+            var entity = new TimeCodeValid { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", TestCode = "TST1", Portfolio = "PF1" };
+            var expected = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", TestCode = "TST1", Portfolio = "PF1" };
+
+            _mockTestCapabilityRepository.ExistsAsync("TST1", "PF1").Returns(true);
+            _mockProjectRepository.ExistsAsync("PRJ1").Returns(true);
+            _mockMapper.Map<TimeCodeValid>(dto).Returns(entity);
+            _mockRepository.CreateTimeCodeValidAsync(entity).Returns(entity);
+            _mockMapper.Map<TimeCodeValidDto>(entity).Returns(expected);
+
+            var result = await _sut.CreateTimeCodeValidAsync(dto);
+
+            result.Should().Be(expected);
+            await _mockTestCapabilityRepository.Received(1).ExistsAsync("TST1", "PF1");
+        }
+
+        [Fact]
+        public async Task CreateTimeCodeValidAsync_AllFieldsNull_ThrowsInvalidOperationException()
         {
             var dto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1" };
-            var entity = new TimeCodeValid { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1" };
 
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.CreateTimeCodeValidAsync(dto));
+        }
+
+        [Fact]
+        public async Task CreateTimeCodeValidAsync_TestCodeWithoutPortfolio_ThrowsInvalidOperationException()
+        {
+            var dto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", TestCode = "TST1" };
+
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.CreateTimeCodeValidAsync(dto));
+            ex.Message.Should().Be("Must fill in Testcode and Portfolio, or Jobcode");
+        }
+
+        [Fact]
+        public async Task CreateTimeCodeValidAsync_PortfolioWithoutTestCode_ThrowsInvalidOperationException()
+        {
+            var dto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", Portfolio = "PF1" };
+
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.CreateTimeCodeValidAsync(dto));
+            ex.Message.Should().Be("Must fill in Testcode and Portfolio, or Jobcode");
+        }
+
+        [Fact]
+        public async Task CreateTimeCodeValidAsync_InvalidJobCode_ThrowsInvalidOperationException()
+        {
+            var dto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "INVALID" };
+            _mockJobCodeRepository.GetJobCodeByIdAsync("INVALID").Returns((JobCode?)null);
+
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.CreateTimeCodeValidAsync(dto));
+            ex.Message.Should().Be("Not a valid jobcode.");
+        }
+
+        [Fact]
+        public async Task CreateTimeCodeValidAsync_InvalidTestCodePortfolioCombo_ThrowsInvalidOperationException()
+        {
+            var dto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", TestCode = "TST1", Portfolio = "PF1" };
+            _mockTestCapabilityRepository.ExistsAsync("TST1", "PF1").Returns(false);
+
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.CreateTimeCodeValidAsync(dto));
+            ex.Message.Should().Be("Cannot update, this testcode is not in this portfolio.");
+        }
+
+        [Fact]
+        public async Task CreateTimeCodeValidAsync_InvalidParentProject_ThrowsInvalidOperationException()
+        {
+            var dto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "INVALID_PRJ", JobCode = "JC1" };
+            _mockJobCodeRepository.GetJobCodeByIdAsync("JC1").Returns(new JobCode { JobCodeId = "JC1" });
+            _mockProjectRepository.ExistsAsync("INVALID_PRJ").Returns(false);
+
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.CreateTimeCodeValidAsync(dto));
+            ex.Message.Should().Be("Not a valid project");
+        }
+
+        [Fact]
+        public async Task CreateTimeCodeValidAsync_RepositoryThrows_PropagatesException()
+        {
+            var dto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC1" };
+            var entity = new TimeCodeValid { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC1" };
+
+            _mockJobCodeRepository.GetJobCodeByIdAsync("JC1").Returns(new JobCode { JobCodeId = "JC1" });
+            _mockProjectRepository.ExistsAsync("PRJ1").Returns(true);
             _mockMapper.Map<TimeCodeValid>(dto).Returns(entity);
             _mockRepository.CreateTimeCodeValidAsync(entity).ThrowsAsync(new Exception("DB error"));
 
@@ -167,11 +274,14 @@ namespace Apha.PACT.Application.UnitTests.Services.TimeCodeValidServiceTest
         [Fact]
         public async Task UpdateTimeCodeValidAsync_ValidInput_ReturnsMappedDto()
         {
-            var dto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", Active = true };
-            var entity = new TimeCodeValid { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", Active = true };
-            var updated = new TimeCodeValid { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", Active = true };
-            var expected = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", Active = true };
+            var dto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC1", Active = true };
+            var existing = new TimeCodeValid { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC1" };
+            var entity = new TimeCodeValid { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC1", Active = true };
+            var updated = new TimeCodeValid { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC1", Active = true };
+            var expected = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC1", Active = true };
 
+            _mockRepository.GetTimeCodeValidAsync("WG1", "TC1", "PRJ1").Returns(existing);
+            // JobCode unchanged — no FK call needed
             _mockMapper.Map<TimeCodeValid>(dto).Returns(entity);
             _mockRepository.UpdateTimeCodeValidAsync(entity).Returns(updated);
             _mockMapper.Map<TimeCodeValidDto>(updated).Returns(expected);
@@ -184,11 +294,123 @@ namespace Apha.PACT.Application.UnitTests.Services.TimeCodeValidServiceTest
         }
 
         [Fact]
-        public async Task UpdateTimeCodeValidAsync_RepositoryThrows_PropagatesException()
+        public async Task UpdateTimeCodeValidAsync_JobCodeChanged_ValidatesNewJobCode()
+        {
+            var dto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC_NEW" };
+            var existing = new TimeCodeValid { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC_OLD" };
+            var entity = new TimeCodeValid { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC_NEW" };
+            var expected = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC_NEW" };
+
+            _mockRepository.GetTimeCodeValidAsync("WG1", "TC1", "PRJ1").Returns(existing);
+            _mockJobCodeRepository.GetJobCodeByIdAsync("JC_NEW").Returns(new JobCode { JobCodeId = "JC_NEW" });
+            _mockMapper.Map<TimeCodeValid>(dto).Returns(entity);
+            _mockRepository.UpdateTimeCodeValidAsync(entity).Returns(entity);
+            _mockMapper.Map<TimeCodeValidDto>(entity).Returns(expected);
+
+            var result = await _sut.UpdateTimeCodeValidAsync(dto);
+
+            result.Should().Be(expected);
+            await _mockJobCodeRepository.Received(1).GetJobCodeByIdAsync("JC_NEW");
+        }
+
+        [Fact]
+        public async Task UpdateTimeCodeValidAsync_JobCodeChangedToInvalid_ThrowsInvalidOperationException()
+        {
+            var dto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "INVALID" };
+            var existing = new TimeCodeValid { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC_OLD" };
+
+            _mockRepository.GetTimeCodeValidAsync("WG1", "TC1", "PRJ1").Returns(existing);
+            _mockJobCodeRepository.GetJobCodeByIdAsync("INVALID").Returns((JobCode?)null);
+
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.UpdateTimeCodeValidAsync(dto));
+            ex.Message.Should().Be("Not a valid jobcode.");
+        }
+
+        [Fact]
+        public async Task UpdateTimeCodeValidAsync_TestCodePortfolioChanged_ValidatesCombo()
+        {
+            var dto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", TestCode = "TST_NEW", Portfolio = "PF_NEW" };
+            var existing = new TimeCodeValid { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", TestCode = "TST_OLD", Portfolio = "PF_OLD" };
+            var entity = new TimeCodeValid { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", TestCode = "TST_NEW", Portfolio = "PF_NEW" };
+            var expected = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", TestCode = "TST_NEW", Portfolio = "PF_NEW" };
+
+            _mockRepository.GetTimeCodeValidAsync("WG1", "TC1", "PRJ1").Returns(existing);
+            _mockTestCapabilityRepository.ExistsAsync("TST_NEW", "PF_NEW").Returns(true);
+            _mockMapper.Map<TimeCodeValid>(dto).Returns(entity);
+            _mockRepository.UpdateTimeCodeValidAsync(entity).Returns(entity);
+            _mockMapper.Map<TimeCodeValidDto>(entity).Returns(expected);
+
+            var result = await _sut.UpdateTimeCodeValidAsync(dto);
+
+            result.Should().Be(expected);
+            await _mockTestCapabilityRepository.Received(1).ExistsAsync("TST_NEW", "PF_NEW");
+        }
+
+        [Fact]
+        public async Task UpdateTimeCodeValidAsync_InvalidTestCodePortfolioCombo_ThrowsInvalidOperationException()
+        {
+            var dto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", TestCode = "TST_NEW", Portfolio = "PF_NEW" };
+            var existing = new TimeCodeValid { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", TestCode = "TST_OLD", Portfolio = "PF_OLD" };
+
+            _mockRepository.GetTimeCodeValidAsync("WG1", "TC1", "PRJ1").Returns(existing);
+            _mockTestCapabilityRepository.ExistsAsync("TST_NEW", "PF_NEW").Returns(false);
+
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.UpdateTimeCodeValidAsync(dto));
+            ex.Message.Should().Be("Cannot update, this testcode is not in this portfolio.");
+        }
+
+        [Fact]
+        public async Task UpdateTimeCodeValidAsync_ParentProjectChanged_ValidatesProject()
+        {
+            var dto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ_NEW", JobCode = "JC1" };
+            var existing = new TimeCodeValid { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ_OLD", JobCode = "JC1" };
+            var entity = new TimeCodeValid { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ_NEW", JobCode = "JC1" };
+            var expected = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ_NEW", JobCode = "JC1" };
+
+            _mockRepository.GetTimeCodeValidAsync("WG1", "TC1", "PRJ_NEW").Returns(existing);
+            _mockProjectRepository.ExistsAsync("PRJ_NEW").Returns(true);
+            _mockMapper.Map<TimeCodeValid>(dto).Returns(entity);
+            _mockRepository.UpdateTimeCodeValidAsync(entity).Returns(entity);
+            _mockMapper.Map<TimeCodeValidDto>(entity).Returns(expected);
+
+            var result = await _sut.UpdateTimeCodeValidAsync(dto);
+
+            result.Should().Be(expected);
+            await _mockProjectRepository.Received(1).ExistsAsync("PRJ_NEW");
+        }
+
+        [Fact]
+        public async Task UpdateTimeCodeValidAsync_InvalidParentProject_ThrowsInvalidOperationException()
+        {
+            var dto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "INVALID_PRJ", JobCode = "JC1" };
+            var existing = new TimeCodeValid { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ_OLD", JobCode = "JC1" };
+
+            _mockRepository.GetTimeCodeValidAsync("WG1", "TC1", "INVALID_PRJ").Returns(existing);
+            _mockProjectRepository.ExistsAsync("INVALID_PRJ").Returns(false);
+
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.UpdateTimeCodeValidAsync(dto));
+            ex.Message.Should().Be("Not a valid project");
+        }
+
+        [Fact]
+        public async Task UpdateTimeCodeValidAsync_AllOptionalFieldsNull_ThrowsInvalidOperationException()
         {
             var dto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1" };
-            var entity = new TimeCodeValid { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1" };
+            var existing = new TimeCodeValid { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1" };
 
+            _mockRepository.GetTimeCodeValidAsync("WG1", "TC1", "PRJ1").Returns(existing);
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.UpdateTimeCodeValidAsync(dto));
+        }
+
+        [Fact]
+        public async Task UpdateTimeCodeValidAsync_RepositoryThrows_PropagatesException()
+        {
+            var dto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC1" };
+            var entity = new TimeCodeValid { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC1" };
+            var existing = new TimeCodeValid { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC1" };
+
+            _mockRepository.GetTimeCodeValidAsync("WG1", "TC1", "PRJ1").Returns(existing);
             _mockMapper.Map<TimeCodeValid>(dto).Returns(entity);
             _mockRepository.UpdateTimeCodeValidAsync(entity).ThrowsAsync(new Exception("DB error"));
 

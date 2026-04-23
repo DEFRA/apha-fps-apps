@@ -10,6 +10,7 @@
         IFpsAnimalPlanApiClient FpsAnimalPlan { get; }
         IFpsSettingApiClient FpsSetting { get; }
         IFpsYearMasterApiClient FpsYearMaster { get; }
+        IFpsTestorProductApiClient FpsTestorProduct { get; }
         IFpsDivisionApiClient FpsDivision { get; }
         IFpsAgencyApiClient FpsAgency { get; }
     }

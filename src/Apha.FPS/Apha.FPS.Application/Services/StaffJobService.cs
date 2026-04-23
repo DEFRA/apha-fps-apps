@@ -59,6 +59,8 @@ namespace Apha.FPS.Application.Services
 
         public async Task<StaffJobDto> AddAsync(StaffJobDto staffJob)
         {
+            ArgumentNullException.ThrowIfNull(staffJob);
+            ArgumentOutOfRangeException.ThrowIfNegative(staffJob.PlannedHours);
             var mapStaffJob = _mapper.Map<StaffJob>(staffJob);
             var staffWorkgroup = await _staffJobRepository.AddAsync(mapStaffJob);
             return _mapper.Map<StaffJobDto>(staffWorkgroup);
@@ -66,6 +68,8 @@ namespace Apha.FPS.Application.Services
 
         public async Task<StaffJobDto> UpdateAsync(StaffJobDto staffJob)
         {
+            ArgumentNullException.ThrowIfNull(staffJob);
+            ArgumentOutOfRangeException.ThrowIfNegative(staffJob.PlannedHours);
             var mapStaffJob = _mapper.Map<StaffJob>(staffJob);
             var staffWorkgroup = await _staffJobRepository.UpdateAsync(mapStaffJob);
             return _mapper.Map<StaffJobDto>(staffWorkgroup);
@@ -73,6 +77,7 @@ namespace Apha.FPS.Application.Services
 
         public async Task<bool> DeleteAsync(string staffId, string jobCode)
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(jobCode);
             var isDeleted = await _staffJobRepository.DeleteAsync(staffId, jobCode);
             return isDeleted;
         }

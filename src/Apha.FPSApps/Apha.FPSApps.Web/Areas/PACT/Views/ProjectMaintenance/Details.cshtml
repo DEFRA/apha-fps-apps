@@ -11,7 +11,7 @@
     <div class="govuk-grid-column-full">
         <h1 class="govuk-grid-row govuk-heading-s sup_border-bottom" style="padding:10px 0 0px 10px">
             Project Maintenance (not portfolios)
-            <a href="@Url.Action("Index", "ProjectMaintenance", new { area = "PACT" })"
+            <a asp-area="PACT" asp-controller="ProjectMaintenance" asp-action="Index" 
                class="govuk-back-link sup_align_right">Back</a>
         </h1>
     </div>
@@ -21,27 +21,10 @@
 <div style="display:flex; margin-left:0; margin-right:0; flex-direction:row; flex-wrap:nowrap; justify-content:space-between;"
      class="govuk-grid-row">
 
-    <!-- ── Left sidebar nav ─────────────────────────────────────────── -->
-    <nav class="sidenav flex-column flex-shrink-0" id="shortnav">
-        <button class="toggle-btn" onclick="toggleSidebar()" style="right:-8px; top:30px;">
-            <img src="~/images/chevron-left-solid-full.svg" width="20" alt="collapse sidebar"
-                 style="margin:-4px 8px 0 -4px;" />
-        </button>
-        <ul>
-            <li class="sidebar-link-two"
-                style="border-radius:0 8px 8px 0; cursor:pointer; background-color:#1d70b8;">
-                <a style="color:#fff;" asp-area="PACT" asp-controller="ProjectInvoiceSubContract" asp-action="Index" asp-route-parentProject="@Model.Project.ParentProject">Invoices &amp; Subcontracted Costs</a>
-            </li>
-            <li class="sidebar-link-two"
-                style="border-radius:0 8px 8px 0; cursor:pointer; background-color:#1d70b8;">
-                <a style="color:#fff;">Milestones</a>
-            </li>
-            <li class="sidebar-link-two"
-                style="border-radius:0 8px 8px 0; cursor:pointer; background-color:#1d70b8;">
-                <a style="color:#fff;">Test Purchase Requirements</a>
-            </li>
-        </ul>
-    </nav>
+    @await Html.PartialAsync("_PactProjectSideNav", new Apha.FPSApps.Web.Areas.PACT.Models.PactProjectSideNavModel
+    {
+        ParentProject = Model.Project.ParentProject ?? string.Empty
+    })
 
     <!-- ── Main content area ────────────────────────────────────────── -->
     <div class="govuk-grid-column-full">
@@ -73,16 +56,16 @@
                         <div class="govuk-grid-column-one-half">
                             <div class="govuk-form-group sup_margin_top_10">
                                 <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.ParentProject">
-                                    Project Code:
+                                    Project Code
                                 </label>
-                                <input class="govuk-input govuk-!-font-size-16" asp-for="Project.ParentProject" readonly />
+                                <input class="govuk-input govuk-!-font-size-16" asp-for="Project.ParentProject" disabled />
                                 <span asp-validation-for="Project.ParentProject" class="govuk-error-message"></span>
                             </div>
                         </div>
                         <div class="govuk-grid-column-one-half">
                             <div class="govuk-form-group sup_margin_bottom_10 sup_margin_top_10">
                                 <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.ProjectTitle">
-                                    Title:
+                                    Title <span class="sup_color_red">*</span>
                                 </label>
                                 <textarea class="govuk-textarea govuk-!-font-size-16 sup_margin_0"
                                           asp-for="Project.ProjectTitle" rows="3"></textarea>
@@ -93,15 +76,15 @@
 
                     <!-- ── Business Area ── -->
                     <div class="govuk-grid-column-full sup_p_0">
-                        <div class="sup_border" style="flex-direction:column; display:flex; padding-bottom:6px;">
-                            <div class="cust-position-relative">
-                                <h2 class="sup_border-bottom sup_text_color govuk-heading-s sup_align_heading">
+                        <div  style="flex-direction:column; display:flex; padding-bottom:6px;">
+                            <div class="cust-position-relative sup_border">
+                                <h2 class="sup_border-bottom sup_border_b_0 sup_text_color govuk-grid-column-two-thirds govuk-heading-s sup_align_heading">
                                     Business Area
                                 </h2>
                                 <!-- Finished checkbox -->
-                                <div class="govuk-checkboxes govuk-checkboxes--small sup_margin_0 cust-abs-top-right"
+                                <div class="govuk-checkboxes govuk-grid-column-one-third govuk-checkboxes--small sup_margin_0 sup_p_t_3"
                                      data-module="govuk-checkboxes">
-                                    <div class="govuk-checkboxes__item">
+                                    <div class="govuk-checkboxes__item sup_float_right">
                                         <input class="govuk-checkboxes__input govuk-!-font-size-16"
                                                id="Finished" name="Finished" type="checkbox"
                                                value="1" @(Model.Project.Finished == 1 ? "checked" : "") />
@@ -111,12 +94,14 @@
                                 </div>
                             </div>
 
-                            <div class="sup_business_area_wrapper govuk-grid-row">
+                            <div class="sup_business_area_wrapper sup_border govuk-grid-row">
 
                                 <!-- Left: Programme / Status / Disease / Defra Project -->
                                 <div class="govuk-grid-column-one-half">
                                     <div class="govuk-form-group sup_margin_bottom_10">
-                                        <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.Program">Programme:</label>
+                                        <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.Program">
+                                            Programme <span class="sup_color_red">*</span>
+                                        </label>
                                         <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
                                                 asp-for="Project.Program"
                                                 asp-items="Model.Programs"
@@ -126,7 +111,8 @@
                                         <span asp-validation-for="Project.Program" class="govuk-error-message"></span>
                                     </div>
                                     <div class="govuk-form-group sup_margin_bottom_10">
-                                        <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.ProjectStatus">Status:</label>
+                                        <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.ProjectStatus">Status <span class="sup_color_red">*</span>
+                                            </label>
                                         <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
                                                 asp-for="Project.ProjectStatus"
                                                 asp-items="Model.Statuses"
@@ -136,7 +122,8 @@
                                         <span asp-validation-for="Project.ProjectStatus" class="govuk-error-message"></span>
                                     </div>
                                     <div class="govuk-form-group sup_margin_bottom_10">
-                                        <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.Disease">Disease:</label>
+                                        <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.Disease">Disease <span class="sup_color_red">*</span>
+                                            </label>
                                         <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
                                                 asp-for="Project.Disease"
                                                 asp-items="Model.Diseases"
@@ -159,7 +146,8 @@
                                 <!-- Right: Customer / Manager / Contract -->
                                 <div class="govuk-grid-column-one-half">
                                     <div class="govuk-form-group sup_margin_bottom_10">
-                                        <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.Customer">Customer:</label>
+                                        <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.Customer">Customer <span class="sup_color_red">*</span>
+                                            </label>
                                         <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
                                                 asp-for="Project.Customer"
                                                 asp-items="Model.Customers"
@@ -169,7 +157,7 @@
                                         <span asp-validation-for="Project.Customer" class="govuk-error-message"></span>
                                     </div>
                                     <div class="govuk-form-group sup_margin_bottom_10">
-                                        <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.Manager">Manager:</label>
+                                        <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.Manager">Manager</label>
                                         <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
                                                 asp-for="Project.Manager"
                                                 asp-items="Model.Managers"
@@ -179,7 +167,8 @@
                                         <span asp-validation-for="Project.Manager" class="govuk-error-message"></span>
                                     </div>
                                     <div class="govuk-form-group sup_margin_bottom_0">
-                                        <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.Contract">Contract:</label>
+                                        <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.Contract">Contract <span class="sup_color_red">*</span>
+                                            </label>
                                         <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
                                                 asp-for="Project.Contract"
                                                 asp-items="Model.Contracts"
@@ -194,7 +183,7 @@
                     </div>
 
                     <!-- ── Comments + Financial Data ── -->
-                    <div class="sup_border govuk-grid-column-full sup_p_0"
+                    <div class="sup_border sup_border_t_0 govuk-grid-column-full sup_p_0"
                          style="padding:10px 0; display:flex; padding-bottom:10px; border-top:0; flex-direction:column;">
                         <div style="padding-bottom:0;" class="govuk-grid-column-full">
                             <div class="govuk-form-group sup_margin_bottom_10">
@@ -212,25 +201,25 @@
                         <div class="sup_financial_area_wrapper govuk-grid-row">
                             <div class="govuk-grid-column-one-half">
                                 <div class="govuk-form-group sup_margin_bottom_10">
-                                    <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.BudgetCvl">Budget-CVL:</label>
+                                    <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.BudgetCvl">Budget-CVL</label>
                                     <input class="govuk-input govuk-!-font-size-16" asp-for="Project.BudgetCvl"
                                            type="number" step="0.01" />
                                     <span asp-validation-for="Project.BudgetCvl" class="govuk-error-message"></span>
                                 </div>
                                 <div class="govuk-form-group sup_margin_bottom_10">
-                                    <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.TransferIncome">Transfer Inc:</label>
+                                    <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.TransferIncome">Transfer Inc</label>
                                     <input class="govuk-input govuk-!-font-size-16" asp-for="Project.TransferIncome"
                                            type="number" step="0.01" />
                                     <span asp-validation-for="Project.TransferIncome" class="govuk-error-message"></span>
                                 </div>
                                 <div class="govuk-form-group sup_margin_bottom_10">
-                                    <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.BudgetExt">Budget-Ext:</label>
+                                    <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.BudgetExt">Budget-Ext</label>
                                     <input class="govuk-input govuk-!-font-size-16" asp-for="Project.BudgetExt"
                                            type="number" step="0.01" />
                                     <span asp-validation-for="Project.BudgetExt" class="govuk-error-message"></span>
                                 </div>
                                 <div class="govuk-form-group sup_margin_bottom_10">
-                                    <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.PvsIncome">PVS Inc:</label>
+                                    <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.PvsIncome">PVS Inc</label>
                                     <input class="govuk-input govuk-!-font-size-16" asp-for="Project.PvsIncome"
                                            type="number" step="0.01" />
                                     <span asp-validation-for="Project.PvsIncome" class="govuk-error-message"></span>
@@ -239,7 +228,7 @@
                             <div class="govuk-grid-column-one-half">
                                 <div class="govuk-form-group sup_margin_bottom_10"
                                      style="padding-top:0; padding-bottom:0;">
-                                    <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.WipEoy">WIP-EOY:</label>
+                                    <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.WipEoy">WIP-EOY</label>
                                     <input class="govuk-input govuk-!-font-size-16" asp-for="Project.WipEoy"
                                            type="number" step="0.01" />
                                     <span asp-validation-for="Project.WipEoy" class="govuk-error-message"></span>
@@ -247,13 +236,13 @@
                                 <!-- WIP-Limit + WIP_Cur side by side -->
                                 <div style="display:flex; justify-content:flex-start; gap:26px;">
                                     <div class="govuk-form-group sup_margin_bottom_10">
-                                        <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.WipLimit">WIP-Limit:</label>
+                                        <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.WipLimit">WIP-Limit</label>
                                         <input class="govuk-input govuk-!-font-size-16" asp-for="Project.WipLimit"
                                                type="number" step="0.01" />
                                         <span asp-validation-for="Project.WipLimit" class="govuk-error-message"></span>
                                     </div>
                                     <div class="govuk-form-group sup_margin_bottom_10">
-                                        <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.WipCurrent">WIP_Cur:</label>
+                                        <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.WipCurrent">WIP_Cur</label>
                                         <input class="govuk-input govuk-!-font-size-16" asp-for="Project.WipCurrent"
                                                type="number" step="0.01" />
                                         <span asp-validation-for="Project.WipCurrent" class="govuk-error-message"></span>
@@ -264,7 +253,7 @@
                                      style="border:2px dashed #8c8c8c; display:flex; padding:0px 10px 10px 10px; flex-direction:column; justify-content:space-between;">
                                     <div>
                                         <div class="govuk-form-group">
-                                            <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.FecCost">Forecast:</label>
+                                            <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.FecCost">Forecast</label>
                                             <input class="govuk-input govuk-!-font-size-16" asp-for="Project.FecCost"
                                                    type="number" step="0.01" />
                                             <span asp-validation-for="Project.FecCost" class="govuk-error-message"></span>
@@ -272,7 +261,7 @@
                                     </div>
                                     <div style="padding-top:0;">
                                         <button type="button" class="govuk-button sup_margin_0"
-                                                aria-label="Profile by month" onclick="onClickProfileByMonth()">
+                                                aria-label="Profile by month" onclick="onClickProfileByMonth()" allow-edit="true">
                                             Profile By Month
                                         </button>
                                     </div>
@@ -282,8 +271,8 @@
                     </div>
 
                     <!-- ── Save button ── -->
-                    <div class="govuk-grid-row" style="text-align:right; margin:5px 0px 5px 0;">
-                        <button type="button" class="govuk-button sup_margin_0"
+                    <div class="govuk-grid-row sup_margin_0 sup_text_align_right">
+                        <button type="button" class="govuk-button sup_margin_tb_5"
                                 aria-label="Save Business Area details"
                                 id="btnProjectMaintenance" data-module="govuk-button"
                                 onclick="saveProjectDetail()">
@@ -300,8 +289,8 @@
             <div class="govuk-grid-column-one-half sup_p_0">
                 <div>
                     <!-- Job Codes grid -->
-                    <div class="sup_border">
-                        <h2 class="sup_border-bottom sup_text_color sup_heading_bg_color govuk-heading-s sup_align_heading">
+                    <div>
+                        <h2 class="sup_border sup_border_b_0 sup_text_color sup_heading_bg_color govuk-heading-s sup_align_heading">
                             Project's Job Code
                         </h2>
                         <div id="@($"gridContainer_{Model.JobCodeGrid.GridId}")">
@@ -310,9 +299,9 @@
                     </div>
 
                     <!-- Time Code Validity grid -->
-                    <div id="section2" class="sup_border"
+                    <div id="section2"  
                          style="padding-left:0; padding-right:0; margin-top:10px; margin-bottom:10px;">
-                        <h2 class="sup_border-bottom sup_text_color sup_heading_bg_color govuk-heading-s sup_align_flexheading sup_decrease_font_size_s">
+                        <h2 class="sup_border sup_border_b_0 sup_text_color sup_heading_bg_color govuk-heading-s sup_align_flexheading sup_decrease_font_size_s">
                             Time Code Validity for Project's Job Code &nbsp;
                             <span id="timeCodeGridSubtitle"></span>
                         </h2>
@@ -397,23 +386,24 @@
 
         function deleteJobCode(btn) {
             var jobCodeId = $(btn).data('id');
-            if (confirm('Delete job code "' + jobCodeId + '" and all its time codes?')) {
+            showGovukConfirm('Delete this job code?').then(function(confirmed) {
+                if (!confirmed) return;
                 $.ajax({
                     url: '/PACT/ProjectMaintenance/DeleteJobCode',
                     type: 'DELETE',
                     data: { jobCodeId: jobCodeId, parentProject: decodeURIComponent(parentProject) },
                     success: function(response) {
                         if (response.success) {
-                            alert('JobCode deleted successfully.');
                             getJobCodeGridManager()?.reloadGrid({ page: 1 });
                             reloadTimeCodeGrid(null);
+                            showGovukAlert('JobCode deleted successfully.');
                         } else {
-                            alert('Error: ' + response.message);
+                            showGovukAlert('Error: ' + response.message);
                         }
                     },
-                    error: function() { alert('An error occurred while deleting.'); }
+                    error: function() { showGovukAlert('An error occurred while deleting.'); }
                 });
-            }
+            });
         }
 
         function copyJobCode(btn) {
@@ -504,18 +494,23 @@
         function deleteTimeCode(btn) {
             var timeCode = $(btn).data('id');
             var workGroup = $(btn).closest('tr').find('[data-property="WorkGroup"] span').text();
-            if (confirm('Delete time code "' + timeCode + '"?')) {
+            showGovukConfirm('Delete time code "' + timeCode + '"?').then(function(confirmed) {
+                if (!confirmed) return;
                 $.ajax({
                     url: '/PACT/ProjectMaintenance/DeleteTimeCode',
                     type: 'DELETE',
                     data: { workGroup: workGroup, timeCode: timeCode, parentProject: decodeURIComponent(parentProject) },
                     success: function(response) {
-                        if (response.success) reloadTimeCodeGrid(selectedJobCodeId);
-                        else alert('Error: ' + response.message);
+                        if (response.success) {
+                            reloadTimeCodeGrid(selectedJobCodeId);
+                            showGovukAlert('Time code deleted successfully.');
+                        } else {
+                            showGovukAlert('Error: ' + response.message);
+                        }
                     },
-                    error: function() { alert('An error occurred while deleting.'); }
+                    error: function() { showGovukAlert('An error occurred while deleting.'); }
                 });
-            }
+            });
         }
 
         function saveTimeCode() {
@@ -546,9 +541,14 @@
             });
         }
 
-        function executeCopyJobCode() {            
+        function executeCopyJobCode() {
+            var $form = $('#formAddJobcode');
+            clearValidationErrors($form);
+            if (!isFormValid($form)) {
+                displayClientValidationErrors($form, $form);
+                return;
+            }
             var jobCodeId = $('#JobCodeId').val();
-            if (!jobCodeId) { alert('Please enter a Job Code.'); return; }
             var data = {
                 SourceJobCode: $('#sourceJobCode').val(),
                 JobCodeId: jobCodeId,
@@ -558,33 +558,36 @@
                 ParentProject: decodeURIComponent(parentProject),
                 CopyWorkGroup: $('#chkcopywithworkgroup').is(':checked')
             };
-            $.ajax({
-                url: '/PACT/ProjectMaintenance/CopyProjectJobCode',
-                type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify(data),
-                success: function(response) {
-                    if (response.success) {
-                        alert('JobCode copied successfully.');
-                        $('#modalPopup').removeClass('show');
-                        getJobCodeGridManager()?.reloadGrid({ page: 1 });
-                        if (data.CopyWorkGroup) {
-                            reloadTimeCodeGrid(jobCodeId);
+            showGovukConfirm('Copy job code "' + data.SourceJobCode + '" to "' + jobCodeId + '"?').then(function(confirmed) {
+                if (!confirmed) return;
+                $.ajax({
+                    url: '/PACT/ProjectMaintenance/CopyProjectJobCode',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(data),
+                    success: function(response) {
+                        if (response.success) {
+                            $('#modalPopup').removeClass('show');
+                            getJobCodeGridManager()?.reloadGrid({ page: 1 });
+                            if (data.CopyWorkGroup) {
+                                reloadTimeCodeGrid(jobCodeId);
+                            }
+                            showGovukAlert('JobCode copied successfully.');
+                        } else {
+                            displayServerValidationErrors(response.errors, response.message, '#formAddJobcode');
                         }
-                    } else {
-                        alert('Error: ' + response.message);
-                    }
-                },
-                error: function() { alert('An error occurred while copying.'); }
+                    },
+                    error: function() { showGovukAlert('An error occurred while copying.'); }
+                });
             });
         }
 
         // ── Bulk Copy Work Group ──────────────────────────────────────────────
 
         function copyBulkWorkGroup(selection) {
-            if (!selectedJobCodeId) { alert('Please select a job code first.'); return; }
+            if (!selectedJobCodeId) { showGovukAlert('Please select a job code first.'); return; }
             if (!selection || !selection.ids || selection.ids.length === 0) {
-                alert('Please select at least one work group to copy.'); return;
+                showGovukAlert('Please select at least one work group to copy.'); return;
             }
 
             $.get('/PACT/ProjectMaintenance/CopyWorkGroupPartial',
@@ -613,8 +616,7 @@
                         });
 
                         if (container.find('.cwg-wg').length === 0) {
-                            alert('No work groups found in selected rows.');
-                            $('#modalPopup').removeClass('show');
+                            showGovukAlert('No work groups found in selected rows.');
                             return;
                         }
                     }
@@ -629,24 +631,36 @@
             var pp = $('#cwg_parentProject').val();
             var isAll = $('#cwg_isAll').val() === 'true';
 
-            if (!targetJobCode) { alert('Please select a target job code.'); return; }
+            clearValidationErrors('#copyWorkGroupForm');
+
+            if (!targetJobCode) {
+                displayServerValidationErrors(
+                    [{ field: 'dpTargetJobcode', message: 'Please select a target job code.' }],
+                    'There is a problem',
+                    '#copyWorkGroupForm'
+                );
+                return;
+            }
 
             if (isAll) {
                 // Copy every work group across all pages using the simple copy endpoint
-                $.ajax({
-                    url: '/PACT/ProjectMaintenance/CopyAllJobCodeWorkGroups',
-                    type: 'POST',
-                    data: { parentProject: pp, sourceJobCodeId: sourceJobCode, targetJobCodeId: targetJobCode },
-                    success: function(response) {
-                        if (response.success) {
-                            alert('All work groups copied successfully.');
-                            $('#modalPopup').removeClass('show');
-                            reloadTimeCodeGrid(selectedJobCodeId);
-                        } else {
-                            alert('Error: ' + (response.message || 'Copy failed.'));
-                        }
-                    },
-                    error: function() { alert('An error occurred while copying.'); }
+                showGovukConfirm('Copy all work groups from "' + sourceJobCode + '" to "' + targetJobCode + '"?').then(function(confirmed) {
+                    if (!confirmed) return;
+                    $.ajax({
+                        url: '/PACT/ProjectMaintenance/CopyAllJobCodeWorkGroups',
+                        type: 'POST',
+                        data: { parentProject: pp, sourceJobCodeId: sourceJobCode, targetJobCodeId: targetJobCode },
+                        success: function(response) {
+                            if (response.success) {
+                                $('#modalPopup').removeClass('show');
+                                reloadTimeCodeGrid(selectedJobCodeId);
+                                showGovukAlert('All work groups copied successfully.');
+                            } else {
+                                displayServerValidationErrors(response.errors, response.message, '#copyWorkGroupForm');
+                            }
+                        },
+                        error: function() { showGovukAlert('An error occurred while copying.'); }
+                    });
                 });
             } else {
                 // Copy only the selected work groups
@@ -655,28 +669,31 @@
                     workGroups.push($(this).val());
                 });
 
-                if (workGroups.length === 0) { alert('No work groups to copy.'); return; }
+                if (workGroups.length === 0) { showGovukAlert('No work groups to copy.'); return; }
 
-                $.ajax({
-                    url: '/PACT/ProjectMaintenance/CopyBulkWorkGroup',
-                    type: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({
-                        parentProject: pp,
-                        sourceJobCodeId: sourceJobCode,
-                        targetJobCodeId: targetJobCode,
-                        workGroups: workGroups
-                    }),
-                    success: function(response) {
-                        if (response.success) {
-                            alert('Work group(s) copied successfully.');
-                            $('#modalPopup').removeClass('show');
-                            reloadTimeCodeGrid(selectedJobCodeId);
-                        } else {
-                            alert('Error: ' + (response.message || 'Copy failed.'));
-                        }
-                    },
-                    error: function() { alert('An error occurred while copying.'); }
+                showGovukConfirm('Copy ' + workGroups.length + ' work group(s) from "' + sourceJobCode + '" to "' + targetJobCode + '"?').then(function(confirmed) {
+                    if (!confirmed) return;
+                    $.ajax({
+                        url: '/PACT/ProjectMaintenance/CopyBulkWorkGroup',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({
+                            parentProject: pp,
+                            sourceJobCodeId: sourceJobCode,
+                            targetJobCodeId: targetJobCode,
+                            workGroups: workGroups
+                        }),
+                        success: function(response) {
+                            if (response.success) {
+                                $('#modalPopup').removeClass('show');
+                                reloadTimeCodeGrid(selectedJobCodeId);
+                                showGovukAlert('Work group(s) copied successfully.');
+                            } else {
+                                displayServerValidationErrors(response.errors, response.message, '#copyWorkGroupForm');
+                            }
+                        },
+                        error: function() { showGovukAlert('An error occurred while copying.'); }
+                    });
                 });
             }
         }
@@ -684,28 +701,29 @@
         // ── Bulk Delete Time Codes ────────────────────────────────────────────
 
         function deleteBulkTimeCode(selection) {
-            if (!selectedJobCodeId) { alert('Please select a job code first.'); return; }
+            if (!selectedJobCodeId) { showGovukAlert('Please select a job code first.'); return; }
             if (!selection || !selection.ids || selection.ids.length === 0) {
-                alert('Please select at least one time code row to delete.'); return;
+                showGovukAlert('Please select at least one time code row to delete.'); return;
             }
 
             if (selection.isAll) {
                 // Select-all across pages — delete every time code for this job code
-                if (!confirm('Delete ALL time codes for job code "' + selectedJobCodeId + '"?')) return;
-
-                $.ajax({
-                    url: '/PACT/ProjectMaintenance/DeleteAllJobCodeTimeCodes',
-                    type: 'POST',
-                    data: { parentProject: decodeURIComponent(parentProject), jobCodeId: selectedJobCodeId },
-                    success: function(response) {
-                        if (response.success) {
-                            alert('All time codes deleted successfully.');
-                            reloadTimeCodeGrid(selectedJobCodeId);
-                        } else {
-                            alert('Error: ' + (response.message || 'Delete failed.'));
-                        }
-                    },
-                    error: function() { alert('An error occurred while deleting.'); }
+                showGovukConfirm('Delete ALL time codes for job code "' + selectedJobCodeId + '"?').then(function(confirmed) {
+                    if (!confirmed) return;
+                    $.ajax({
+                        url: '/PACT/ProjectMaintenance/DeleteAllJobCodeTimeCodes',
+                        type: 'POST',
+                        data: { parentProject: decodeURIComponent(parentProject), jobCodeId: selectedJobCodeId },
+                        success: function(response) {
+                            if (response.success) {
+                                reloadTimeCodeGrid(selectedJobCodeId);
+                                showGovukAlert('All time codes deleted successfully.');
+                            } else {
+                                showGovukAlert('Error: ' + (response.message || 'Delete failed.'));
+                            }
+                        },
+                        error: function() { showGovukAlert('An error occurred while deleting.'); }
+                    });
                 });
             } else {
                 // Delete only the checked rows on the current page
@@ -718,27 +736,28 @@
                     }
                 });
 
-                if (items.length === 0) { alert('No rows selected for deletion.'); return; }
+                if (items.length === 0) { showGovukAlert('No rows selected for deletion.'); return; }
 
-                if (!confirm('Delete ' + items.length + ' selected time code(s)?')) return;
-
-                $.ajax({
-                    url: '/PACT/ProjectMaintenance/DeleteBulkTimeCode',
-                    type: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({
-                        parentProject: decodeURIComponent(parentProject),
-                        items: items
-                    }),
-                    success: function(response) {
-                        if (response.success) {
-                            alert(items.length + ' time code(s) deleted successfully.');
-                            reloadTimeCodeGrid(selectedJobCodeId);
-                        } else {
-                            alert('Error: ' + (response.message || 'Delete failed.'));
-                        }
-                    },
-                    error: function() { alert('An error occurred while deleting.'); }
+                showGovukConfirm('Delete ' + items.length + ' selected time code(s)?').then(function(confirmed) {
+                    if (!confirmed) return;
+                    $.ajax({
+                        url: '/PACT/ProjectMaintenance/DeleteBulkTimeCode',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({
+                            parentProject: decodeURIComponent(parentProject),
+                            items: items
+                        }),
+                        success: function(response) {
+                            if (response.success) {
+                                reloadTimeCodeGrid(selectedJobCodeId);
+                                showGovukAlert(items.length + ' time code(s) deleted successfully.');
+                            } else {
+                                showGovukAlert('Error: ' + (response.message || 'Delete failed.'));
+                            }
+                        },
+                        error: function() { showGovukAlert('An error occurred while deleting.'); }
+                    });
                 });
             }
         }

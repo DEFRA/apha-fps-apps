@@ -79,16 +79,18 @@ namespace Apha.FPS.DataAccess.Repositories
                 {
                     _dbContext.Programs.Add(entity);
 
-                    var dboUser = await _dbContext.Users.FirstOrDefaultAsync(u => u.Username == "dbo");
-                    if (dboUser != null)
+                    // ITrig: Add UserProgram for the requesting user
+                    var requestingUser = await _dbContext.Users
+                        .FirstOrDefaultAsync(u => u.UserEmail != null &&
+                                                  u.UserEmail.ToLower() == _requestContext.UserEmailId);
+                    if (requestingUser != null)
                     {
-                        var userProgram = new UserProgram
+                        _dbContext.UserPrograms.Add(new UserProgram
                         {
                             ProgramNo = entity.ProgramNo,
-                            UserID = dboUser.UserId,
+                            UserID = requestingUser.UserId,
                             FpsYear = _requestContext.FpsYear
-                        };
-                        _dbContext.UserPrograms.Add(userProgram);
+                        });
                     }
 
                     await _dbContext.SaveChangesAsync();
@@ -103,7 +105,7 @@ namespace Apha.FPS.DataAccess.Repositories
             });
         }
 
-        public async Task<Program> UpdateProgramAsync(Program entity)
+        public async Task<Program> UpdateProgramAsync(Program entity, string originalProgramNo)
         {
             ArgumentNullException.ThrowIfNull(entity);
             entity.FpsYear = _requestContext.FpsYear;
@@ -114,23 +116,41 @@ namespace Apha.FPS.DataAccess.Repositories
                 await using var transaction = await _dbContext.Database.BeginTransactionAsync();
                 try
                 {
-                    _dbContext.Programs.Update(entity);
-                    var dboUser = await _dbContext.Users.FirstOrDefaultAsync(u => u.Username == "dbo");
+                    // UTrig: Cascade ProgramNo PK change to related tables
+                    if (entity.ProgramNo != originalProgramNo)
+                    {
+                        await _dbContext.Database.ExecuteSqlInterpolatedAsync(
+                            $"UPDATE fps.tlkpprogram SET programno = {entity.ProgramNo} WHERE programno = {originalProgramNo}");
 
-                    if (dboUser != null)
+                        await _dbContext.UserPrograms
+                            .IgnoreQueryFilters()
+                            .Where(up => up.ProgramNo == originalProgramNo)
+                            .ExecuteUpdateAsync(s => s.SetProperty(up => up.ProgramNo, entity.ProgramNo));
+
+                        await _dbContext.Projects
+                            .Where(p => p.Program == originalProgramNo)
+                            .ExecuteUpdateAsync(s => s.SetProperty(p => p.Program, entity.ProgramNo));
+                    }
+
+                    _dbContext.Programs.Update(entity);
+
+                    // UTrig: Ensure UserProgram exists for the requesting user
+                    var requestingUser = await _dbContext.Users
+                        .FirstOrDefaultAsync(u => u.UserEmail != null &&
+                                                  u.UserEmail.ToLower() == _requestContext.UserEmailId);
+                    if (requestingUser != null)
                     {
                         var userProgramExists = await _dbContext.UserPrograms
-                            .AnyAsync(up => up.ProgramNo == entity.ProgramNo && up.UserID == dboUser.UserId);
+                            .AnyAsync(up => up.ProgramNo == entity.ProgramNo && up.UserID == requestingUser.UserId);
 
                         if (!userProgramExists)
                         {
-                            var userProgram = new UserProgram
+                            _dbContext.UserPrograms.Add(new UserProgram
                             {
                                 ProgramNo = entity.ProgramNo,
-                                UserID = dboUser.UserId,
+                                UserID = requestingUser.UserId,
                                 FpsYear = _requestContext.FpsYear
-                            };
-                            _dbContext.UserPrograms.Add(userProgram);
+                            });
                         }
                     }
 
@@ -144,6 +164,12 @@ namespace Apha.FPS.DataAccess.Repositories
                     throw;
                 }
             });
+        }
+
+        public async Task<bool> HasLinkedProjectsAsync(string programNo)
+        {
+            return await _dbContext.Projects
+                .AnyAsync(p => p.Program == programNo);
         }
 
         public async Task<bool> DeleteProgramAsync(string id)

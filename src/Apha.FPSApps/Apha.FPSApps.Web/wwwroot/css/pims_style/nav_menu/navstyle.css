@@ -1,0 +1,262 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+
+
+@font-face {
+    font-family: "GDS Transport";
+    font-style: normal;
+    font-weight: normal;
+    src: url(https://www.gov.uk/assets/collections/light-94a07e06a1-v2-01565b0034e61d4609689bbb7ae0be844701f3812c8fe029fa1659b7ef3aa94f.woff2) format("woff2"), url(https://www.gov.uk/assets/collections/light-f591b13f7d-v2-369b1da7f442cafca0e8ac0faf1bb64df8170f9c3c7015da1195c8529df5837e.woff) format("woff");
+    font-display: fallback
+}
+
+@font-face {
+    font-family: "GDS Transport";
+    font-style: normal;
+    font-weight: bold;
+    src: url(https://www.gov.uk/assets/collections/bold-b542beb274-v2-35bf540bb39615b6a517986f3aa83f7fefa1efd1878603eeeb196488078542d1.woff2) format("woff2"), url(https://www.gov.uk/assets/collections/bold-affa96571d-v2-088c8da9d0319b63b23ac19791f37a33ec0d4b61f884ab56123bfd96d8312153.woff) format("woff");
+}
+
+
+
+body {
+    font-family: "GDS Transport";
+    font-size: 1rem !important;
+    background: #fff;
+}
+
+.main-nav {
+    display: flex;
+    background-color: #1d70b8;
+    padding: 0;
+}
+
+.main-nav {
+    display: flex;
+    background-color: #1d70b8;
+    padding: 0;
+    margin: 0;
+    /* box-shadow: 0 2px 4px rgba(0,0,0,0.1); */
+}
+
+.nav-item {
+    position: relative;
+    display: flex;
+}
+
+.nav-button {
+    background-color: #1d70b8;
+    color: white;
+    border: none;
+    padding: 10px 40px 10px 15px;
+    min-height: 42px;
+    cursor: pointer;
+    font-size: 16px;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.2s ease;
+    border-right: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.nav-button:hover {
+    background-color: #003078;
+}
+
+.nav-button.active {
+    background-color: #357abd;
+}
+
+.nav-button:focus {
+    background: #003078;
+}
+
+.arrow {
+    font-size: 1rem;
+    transition: transform 0.2s ease;
+    right: 16px !important;
+}
+
+.dropdown.active .arrow {
+    transform: rotate(180deg);
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: white;
+    z-index: 999;
+    list-style-type: none;
+    min-width: 180px;
+    margin: 0;
+    padding: 0;
+    border-radius: 0px;
+}
+
+/*    .dropdown-menu ul {
+        display: inline-block;
+        margin: 0;
+        padding: 0;
+        list-style-type: none;
+        width: 180px;
+        border: 1px solid #cecece;
+    }
+
+    .dropdown-menu.show {
+        display: block;
+    }*/
+
+.dropdown-item {
+    display: block;
+    padding: 6px 20px 8px 5px;
+    color: #333;
+    text-decoration: none;
+    border: 1px solid #cecece;
+    width: 180px;
+    transition: background-color 0.2s ease;
+}
+
+/* .dropdown-item ul {
+    display: inline-block;
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+    width: 180px;
+    border: 1px solid #cecece;
+} */
+
+.dropdown-item:hover {
+    background: aliceblue;
+}
+
+
+
+.align-menu-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+@media (max-width: 768px) {
+    .main-nav {
+        flex-direction: column;
+    }
+
+    .nav-button {
+        border-right: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .dropdown-menu {
+        position: static;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        min-width: auto;
+    }
+}
+
+.dropdown-toggle::after {
+    display: none !important;
+    margin-left: .255em;
+    vertical-align: .255em;
+    content: "";
+    border-top: .3em solid;
+    border-right: .3em solid transparent;
+    border-bottom: 0;
+    border-left: .3em solid transparent;
+}
+
+.dropdown-toggle .arrow {
+    transition: transform 0.3s;
+    display: inline-block;
+}
+
+.dropdown.show .dropdown-toggle .arrow {
+    transform: rotate(180deg);
+}
+
+.arrow {
+    color: #333;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.userdropdownbtn {
+    background: none;
+    color: #000;
+    position: absolute;
+    right: 2px;
+    display: flex;
+    font-size: 16px !important;
+    top: 22px;
+    align-items: center;
+}
+
+.userdropdownbtn:focus {
+    outline: none;
+}
+
+.userdropdown {
+    display: none;
+    background: none;
+    color: #000;
+    position: absolute;
+    right: 20px;
+    top: 60px;
+    z-index: 999;
+}
+
+.userdropdown.show {
+    display: block;
+}
+
+.userdropdown>ul {
+    display: inline-block;
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+    width: 180px;
+    border: 1px solid #cecece;
+}
+
+.userdropdown>ul>li {
+    display: inline-flex;
+    width: 100%;
+    margin: 0;
+}
+
+.userdropdown>ul>li>a {
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+    background: white;
+    width: 100%;
+    color: #000;
+    display: flex;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.userdropdown>ul>li>a:hover {
+    background: aliceblue;
+}
+
+.userdropdown>ul>li>a>img {
+    margin-right: 5px;
+}
+
+
+.userdropdownbtn::after {
+    display: inline-block;
+    margin-left: .255em;
+    vertical-align: .255em;
+    content: "";
+    border-top: .3em solid;
+    border-right: .3em solid transparent;
+    border-bottom: 0;
+    border-left: .3em solid transparent;
+}

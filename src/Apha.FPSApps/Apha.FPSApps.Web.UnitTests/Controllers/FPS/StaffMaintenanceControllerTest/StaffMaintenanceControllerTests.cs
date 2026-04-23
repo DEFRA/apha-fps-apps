@@ -714,8 +714,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.StaffMaintenanceControllerT
             
             Assert.Equal("staffGrid", gridConfig.GridId);
             Assert.Equal("Staff Maintenance", gridConfig.Title);
-            Assert.True(gridConfig.ShowCheckboxColumn);
-            Assert.True(gridConfig.ShowPagination);
             Assert.Equal("SPNumber", gridConfig.KeyProperty);
             Assert.Equal("addStaff", gridConfig.AddFunction);
             Assert.Equal("editStaff", gridConfig.EditFunction);

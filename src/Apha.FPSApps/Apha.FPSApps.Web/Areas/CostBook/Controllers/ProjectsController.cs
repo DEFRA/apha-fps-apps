@@ -7,6 +7,7 @@ using Apha.FPSApps.Web.Areas.CostBook.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Identity.Web;
@@ -27,7 +28,7 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
         private readonly ICostBookProgramService _programService;
         private readonly ICostBookStaffService _staffService;
         private readonly ICostBookContractService _contractService;
-     
+
         private readonly IMapper _mapper;
 
         public ProjectsController(
@@ -51,7 +52,7 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
         // GET: /CostBook/Projects - Form OnLoad/OnOpen logic preserved with FPS DataGrid pattern
         public async Task<IActionResult> Index(string? searchTerm, int selectedYear = 0, int recordsPerPage = 5, int currentPage = 1, string? contractFilter = null, string? submittedByFilter = null)
         {
-           
+
             var defaultRequest = new PaginationFilter<string> { Filter = "{}" };
 
             var projectGridConfig = await GetProjectGridConfigAsync(defaultRequest);
@@ -95,7 +96,7 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
             var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}")
                 ?? new Dictionary<string, string>();
 
-            var queryParameters = _mapper.Map<QueryParameters<string>>(request);          
+            var queryParameters = _mapper.Map<QueryParameters<string>>(request);
 
             try
             {
@@ -126,16 +127,16 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
                 return new DataGridConfig<ProjectItemViewModel>
                 {
                     GridId = "projectGrid",
-                    Title = "Choose Existing Project",
+                    //Title = "Choose Existing Project",
                     ShowCheckboxColumn = false,
                     ShowPagination = true,
                     KeyProperty = "ProjectId",
                     AllowAdd = false,
-                    AllowDelete = false,   
+                    AllowDelete = false,
                     AllowEdit = false,
-                    AllowView = true,                   
+                    AllowView = true,
                     ViewFunction = "viewProject",
-                                        
+
                     BindGridUrl = "/CostBook/Projects/LoadProjectGrid",
                     Data = projectItems,
                     Columns = GridDataProvider.GetColumnsDefination<ProjectItemViewModel>(null),
@@ -143,7 +144,7 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
                     CurrentFilters = filterDict
                 };
             }
-            catch 
+            catch
             {
                 // MS Access style error handling - return empty grid instead of crashing
                 return new DataGridConfig<ProjectItemViewModel>
@@ -163,21 +164,7 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
 
 
 
-        // GET: /CostBook/Projects/Details/5 - MS Access OnCurrent equivalent
-        public async Task<IActionResult> Details(string id)
-        {
-            if (string.IsNullOrEmpty(id))
-                return NotFound();
-
-            var decodedId = HttpUtility.UrlDecode(id);
-            var response = await _projectService.GetProjectByIdAsync(decodedId);
-
-            if (!response.Success || response.Data == null)
-                return NotFound();
-
-            var viewModel = _mapper.Map<ProjectDetailViewModel>(response.Data);
-            return View(viewModel);
-        }
+       
 
         // GET: /CostBook/Projects/Create - MS Access Form OnOpen for new record
         public async Task<IActionResult> Create()
@@ -185,9 +172,9 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
             var viewModel = new ProjectCreateEditViewModel
             {
                 ProjectId = string.Empty, // Will be set by user
-                Projecttitle = string.Empty, // Will be set by user
+                ProjectTitle = string.Empty, // Will be set by user
                 ContractNumber = string.Empty,
-                Startdate = DateOnly.FromDateTime(DateTime.Today),// DateTime.Today → DateOnly?
+                StartDate = DateOnly.FromDateTime(DateTime.Today),// DateTime.Today → DateOnly?
                 Status = "Active",
                 CreatedDate = DateTime.Now
             };
@@ -202,6 +189,9 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ProjectCreateEditViewModel viewModel)
         {
+            // Handle unchecked checkbox: null → 0, checked → -1
+            viewModel.Inflation ??= 0;
+
             if (ModelState.IsValid)
             {
                 var projectDto = _mapper.Map<ProjectDto>(viewModel);
@@ -214,7 +204,7 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
                     if (response.Success && response.Data != null)
                     {
                         TempData["Success"] = "Project created successfully!";
-                        return RedirectToAction(nameof(Details), new { id = response.Data.ProjectId });
+                        return RedirectToAction(nameof(Edit), new { id = response.Data.ProjectId });
                     }
 
                     foreach (var error in response.Errors ?? new List<ApiErrorDto>())
@@ -228,22 +218,22 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
             return View(viewModel);
         }
 
-       
+
 
         [HttpGet]
         public async Task<IActionResult> Edit(string id)
         {
             if (string.IsNullOrEmpty(id))
-                return NotFound();
+                throw new ArgumentException("Project ID is required", nameof(id));
 
             var decodedId = HttpUtility.UrlDecode(id);
 
             var editResponse = await _projectService.GetProjectByIdAsync(decodedId);
 
             if (!editResponse.Success || editResponse.Data == null)
-                return NotFound();
+                throw new KeyNotFoundException($"Project with ID '{decodedId}' not found");
 
-            // ✅ FIXED
+         
             var viewModel = _mapper.Map<ProjectCreateEditViewModel>(editResponse.Data);
 
             await PopulateDropdownsAsync(viewModel);
@@ -251,41 +241,42 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
             return View(viewModel);
         }
 
-     
+
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(string id, ProjectCreateEditViewModel viewModel)
         {
             if (string.IsNullOrEmpty(id))
-                return NotFound();
+                throw new ArgumentException("Project ID is required", nameof(id));
 
             var decodedId = HttpUtility.UrlDecode(id);
 
             if (decodedId != viewModel.ProjectId)
-                return NotFound();
+                throw new ArgumentException("Project ID mismatch", nameof(id));
+
+            // Handle unchecked checkbox: null → 0, checked → -1
+            viewModel.Inflation ??= 0;
 
             if (ModelState.IsValid)
             {
-                var projectDto = _mapper.Map<ProjectDto>(viewModel);
+                var projectDto = _mapper.Map<ProjectDto>(viewModel);               
 
-                // ✅ Business validation
-                if (await ValidateProjectBusinessRules(projectDto))
-                {
+
                     var response = await _projectService.UpdateProjectAsync(decodedId, projectDto);
 
                     if (response.Success)
                     {
                         TempData["Success"] = "Project updated successfully!";
-                        return RedirectToAction(nameof(Details), new { id = decodedId });
+                        return RedirectToAction(nameof(Edit), new { id = decodedId });
                     }
 
-                    // ✅ API errors
+                    // API errors
                     foreach (var error in response.Errors ?? new List<ApiErrorDto>())
                     {
                         ModelState.AddModelError("", error.Message ?? "Unknown error");
                     }
-                }
+
             }
 
             // ❗ IMPORTANT: Re-populate dropdowns when returning view
@@ -298,13 +289,13 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
         public async Task<IActionResult> Delete(string id)
         {
             if (string.IsNullOrEmpty(id))
-                return NotFound();
+                throw new ArgumentException("Project ID is required", nameof(id));
 
             var decodedId = HttpUtility.UrlDecode(id);
             var response = await _projectService.GetProjectByIdAsync(decodedId);
 
             if (!response.Success || response.Data == null)
-                return NotFound();
+                throw new KeyNotFoundException($"Project with ID '{decodedId}' not found");
 
             var viewModel = _mapper.Map<ProjectDetailViewModel>(response.Data);
             return View(viewModel);
@@ -313,25 +304,38 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
         // POST: /CostBook/Projects/Delete/5 - MS Access OnClick Delete button
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(string id)
+        public async Task<JsonResult> DeleteConfirmed(string id)
         {
-            //var response = await _projectService.DeleteProjectAsync(id);
-            if (string.IsNullOrEmpty(id))
-                return NotFound();
+           
+                if (string.IsNullOrEmpty(id))
+                {
+                    return Json(new { success = false, message = "Project ID is required" });
+                }
 
-            var decodedId = HttpUtility.UrlDecode(id);
-            var response = await _projectService.DeleteProjectAsync(decodedId);
+                var decodedId = HttpUtility.UrlDecode(id);
+                var response = await _projectService.DeleteProjectAsync(decodedId);
 
-            if (response.Success)
-            {
-                TempData["Success"] = "Project deleted successfully!";
-            }
-            else
-            {
-                TempData["Error"] = "Failed to delete project.";
-            }
+                if (!response.Success)
+                {
+                    var errorMessage = response.Errors?.Count > 0
+                    ? string.Join(", ", response.Errors.Select(e => e.Message))
+                    : "Project deletion failed. Please try again.";
 
-            return RedirectToAction(nameof(Index));
+                    return Json(new
+                    {
+                        success = false,
+                        message = errorMessage,
+                        errors = response.Errors?.Select(e => e.Message)
+                    });
+                }
+
+                return Json(new
+                {
+                    success = true,
+                    message = "Project deleted successfully!"
+                });
+            
+           
         }
 
         // Control-level events (MS Access OnClick, AfterUpdate equivalents)
@@ -353,53 +357,26 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
             return Json(new { programs = customerPrograms });
         }
 
-       
+
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<JsonResult> Copy(string id, string newId)
+        public async Task<JsonResult> Copy(string sourceProjectId)
         {
-            try
-            {
-                // URL decode the input newId if it's provided
-                if (!string.IsNullOrEmpty(newId))
-                {
-                    newId = HttpUtility.UrlDecode(newId);
-                }
+            string newProjectId=String.Empty;
 
-                // If newId is provided, check if it already exists
-                if (!string.IsNullOrEmpty(newId))
-                {
-                    var existingProjectResponse = await _projectService.GetProjectByIdAsync(newId);
-
-                    // If the project with newId already exists, generate a new sequential ID
-                    if (existingProjectResponse.Success && existingProjectResponse.Data != null)
-                    {
-                        var nextIdResponse = await _projectService.GetNextProjectNumberAsync(newId);
-                        if (nextIdResponse.Success && !string.IsNullOrEmpty(nextIdResponse.Data))
-                        {
-                            newId = nextIdResponse.Data;
-                        }
-                        else
-                        {
-                            return Json(new { success = false, errors = new[] { "Failed to generate new project ID" } });
-                        }
-                    }
-                }
-                else
-                {
-                    // If newId is not provided, generate one based on the oldId (same logic as API)
-                    var nextIdResponse = await _projectService.GetNextProjectNumberAsync(id);
-                    if (nextIdResponse.Success && !string.IsNullOrEmpty(nextIdResponse.Data))
-                    {
-                        newId = nextIdResponse.Data;
-                    }
-                    else
-                    {
+            // If newId is not provided, generate one based on the oldId (same logic as API)
+            var nextIdResponse = await _projectService.GetNextProjectNumberAsync(sourceProjectId);
+                  if (nextIdResponse.Success && !string.IsNullOrEmpty(nextIdResponse.Data))
+                  {
+                        newProjectId = nextIdResponse.Data;
+                  }
+                  else
+                  {
                         return Json(new { success = false, errors = new[] { "Failed to generate new project ID" } });
-                    }
-                }
+                  }
+                
 
-                var response = await _projectService.CopyProjectAsync(id, newId);
+                var response = await _projectService.CopyProjectAsync(sourceProjectId, newProjectId);
 
                 if (response.Success)
                 {
@@ -408,16 +385,12 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
                         success = true,
                         projectId = response.Data?.ProjectId,
                         message = "Project copied successfully!",
-                        generatedId = newId  // Return the generated ID for user feedback
+                        generatedId = newProjectId  // Return the generated ID for user feedback
                     });
                 }
 
                 return Json(new { success = false, errors = response.Errors?.Select(e => e.Message) });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, errors = new[] { $"Error copying project: {ex.Message}" } });
-            }
+           
         }
 
         [HttpPost]
@@ -432,9 +405,9 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
         private async Task<bool> ValidateProjectBusinessRules(ProjectDto project)
         {
             // MS Access ValidationRule equivalent
-            //if (project.EndDate.HasValue && project.EndDate < project.Startdate)
-            if (project.EndDate.HasValue && project.Startdate.HasValue &&
-    DateOnly.FromDateTime(project.EndDate.Value) < project.Startdate.Value)
+            //if (project.EndDate.HasValue && project.EndDate < project.StartDate)
+            if (project.EndDate.HasValue && project.StartDate.HasValue &&
+    DateOnly.FromDateTime(project.EndDate.Value) < project.StartDate.Value)
 
             {
                 ModelState.AddModelError("EndDate", "End date cannot be earlier than start date");
@@ -458,14 +431,7 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
 
         private void PopulateViewModelOptions(ProjectViewModel viewModel)
         {
-            // MS Access RowSource equivalent for fixed dropdowns
-            viewModel.YearOptions = new List<SelectListItem>
-            {
-                new() { Value = "2024", Text = "2024" },
-                new() { Value = "2025", Text = "2025", Selected = viewModel.SelectedYear == 2025 },
-                new() { Value = "2026", Text = "2026" },
-                new() { Value = "2027", Text = "2027" }
-            };
+            
 
             viewModel.RecordsPerPageOptions = new List<SelectListItem>
             {
@@ -484,58 +450,133 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
             var customersResponse = await _customerService.GetAllCustomersAsync();
             var diseasesResponse = await _diseaseService.GetAllDiseasesAsync();
             var staffResponse = await _staffService.GetAllStaffAsync();
-            var contractsResponse = await _contractService.GetAllContractNumbersAsync();
+            
 
-            // ✅ Programs with selected value
-            viewModel.AvailablePrograms = programsResponse.Data?
-                .Select(p => new SelectListItem 
-                { 
-                    Value = p.ProgramNo, 
+            // Programs with selected value
+            var programsList = programsResponse.Data?
+                .Select(p => new SelectListItem
+                {
+                    Value = p.ProgramNo,
                     Text = p.ProgramNo,
                     Selected = p.ProgramNo == viewModel.Programme
                 })
                 .ToList() ?? new List<SelectListItem>();
 
-            // ✅ Customers with selected value
-            viewModel.AvailableCustomers = customersResponse.Data?
-                .Select(c => new SelectListItem 
-                { 
-                    Value = c.CustomerName, 
+            // If Programme is set but not in the programs list, add it to preserve the value
+            if (!string.IsNullOrEmpty(viewModel.Programme) &&
+                !programsList.Any(p => p.Value == viewModel.Programme))
+            {
+                programsList.Insert(0, new SelectListItem
+                {
+                    Value = viewModel.Programme,
+                    Text = viewModel.Programme,
+                    Selected = true
+                });
+            }
+
+            viewModel.AvailablePrograms = programsList;
+
+            // Customers with selected value
+            var customersList = customersResponse.Data?
+                .Select(c => new SelectListItem
+                {
+                    Value = c.CustomerName,
                     Text = c.CustomerName,
                     Selected = c.CustomerName == viewModel.CustomerName
                 })
                 .ToList() ?? new List<SelectListItem>();
 
-            // ✅ Diseases with selected value
-            viewModel.AvailableDiseases = diseasesResponse.Data?
-                .Select(d => new SelectListItem 
-                { 
-                    Value = d.DiseaseName, 
+            // If CustomerName is set but not in the customers list, add it to preserve the value
+            if (!string.IsNullOrEmpty(viewModel.CustomerName) &&
+                !customersList.Any(c => c.Value == viewModel.CustomerName))
+            {
+                customersList.Insert(0, new SelectListItem
+                {
+                    Value = viewModel.CustomerName,
+                    Text = viewModel.CustomerName,
+                    Selected = true
+                });
+            }
+
+            viewModel.AvailableCustomers = customersList;
+
+            // Diseases with selected value
+            var diseasesList = diseasesResponse.Data?
+                .Select(d => new SelectListItem
+                {
+                    Value = d.DiseaseName,
                     Text = d.DiseaseName,
                     Selected = d.DiseaseName == viewModel.Disease
                 })
                 .ToList() ?? new List<SelectListItem>();
 
-            // ✅ Staff with selected value
-            viewModel.AvailableStaff = staffResponse.Data?
-                .Select(s => new SelectListItem 
-                { 
-                    Value = s.Name, 
-                    Text = s.Name,
-                    Selected = s.Name == viewModel.PreparedBy
-                })
-                .ToList() ?? new List<SelectListItem>();
+            // If Disease is set but not in the diseases list, add it to preserve the value
+            if (!string.IsNullOrEmpty(viewModel.Disease) &&
+                !diseasesList.Any(d => d.Value == viewModel.Disease))
+            {
+                diseasesList.Insert(0, new SelectListItem
+                {
+                    Value = viewModel.Disease,
+                    Text = viewModel.Disease,
+                    Selected = true
+                });
+            }
 
-            // ✅ Contracts with selected value
-            viewModel.AvailableContracts = contractsResponse.Data?
-                .Select(c => new SelectListItem 
-                { 
-                    Value = c.ContractNumber, 
-                    Text = c.ContractNumber,
-                    Selected = c.ContractNumber == viewModel.ContractNumber
-                })
-                .ToList() ?? new List<SelectListItem>();
+            viewModel.AvailableDiseases = diseasesList;
 
-        }        
+            // Staff with selected value
+            var staffList = staffResponse.Data?
+               .Select(s => new SelectListItem
+               {
+                   Value = s.Name,
+                   Text = s.Name,
+                   Selected = s.Name == viewModel.PreparedBy
+               })
+               .ToList() ?? new List<SelectListItem>();
+
+            // If PreparedBy is set but not in the staff list, add it to preserve the value
+            if (!string.IsNullOrEmpty(viewModel.PreparedBy) &&
+                !staffList.Any(s => s.Value == viewModel.PreparedBy))
+            {
+                staffList.Insert(0, new SelectListItem
+                {
+                    Value = viewModel.PreparedBy,
+                    Text = viewModel.PreparedBy,
+                    Selected = true
+                });
+            }
+
+            viewModel.AvailableStaff = staffList;            
+
+            // Available Financial Years with selected value
+            var selectedFinancialYear = viewModel.FinancialYears?.ToString() ?? "-1";
+            viewModel.AvailableFinancialYears = new List<(string Value, string Text)>
+                {
+                    ("-1", "Financial Years"),
+                    ("0", "Project Years")
+                }
+                .Select(item => new SelectListItem
+                {
+                    Value = item.Value,
+                    Text = item.Text,
+                    Selected = item.Value == selectedFinancialYear
+                })
+                .ToList();
+
+            // Available Defra Project Options with selected value
+            var selectedDefraProject = viewModel.IsDefraProject?.ToString() ?? "-1";
+            viewModel.AvailableDefraProjectOptions = new List<(string Value, string Text)>
+                {
+                     ("-1", "Yes"),
+                    ("0", "No")
+                }
+                .Select(item => new SelectListItem
+                {
+                    Value = item.Value,
+                    Text = item.Text,
+                    Selected = item.Value == selectedDefraProject
+                })
+                .ToList();
+        }
     }
 }
