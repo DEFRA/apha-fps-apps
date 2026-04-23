@@ -100,9 +100,17 @@ public sealed class HealthCheckJobHandler : IBatchJob
                 await Task.Delay(50, cancellationToken);
             }
 
-            // Phase 3: Validate database connectivity
-            _logger.LogInformation("Phase 3: Validating database connectivity path...");
-            _logger.LogInformation("  Repository write path will validate database access");
+            // Phase 3: Validate the active execution path
+            if (envName.Equals("Demo", StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.LogInformation("Phase 3: Validating in-memory execution path...");
+                _logger.LogInformation("  In-memory repositories are active for NoDb execution");
+            }
+            else
+            {
+                _logger.LogInformation("Phase 3: Validating database connectivity path...");
+                _logger.LogInformation("  Repository write path will validate database access");
+            }
 
             // Phase 4: Report results
             _logger.LogInformation("Phase 4: Job completion report");

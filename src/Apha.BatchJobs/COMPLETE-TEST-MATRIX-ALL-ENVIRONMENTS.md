@@ -4,6 +4,56 @@
 
 This document provides a comprehensive test matrix covering **both VM and Container environments** for the Apha Batch Jobs Worker.
 
+### Quick Copy/Paste Command Matrix (Consolidated)
+
+#### VM (PowerShell)
+
+```powershell
+cd D:\Users\atos.user8\source\repos\apha-fps-apps-A-Foundation\src\Apha.BatchJobs\Apha.BatchJobs.Worker
+
+# 1) Demo - HealthCheck
+$env:ASPNETCORE_ENVIRONMENT="Demo"; $env:DOTNET_ENVIRONMENT="Demo"; dotnet run -- HealthCheck
+
+# 2) Development - HealthCheck
+$env:ASPNETCORE_ENVIRONMENT="Development"; $env:DOTNET_ENVIRONMENT="Development"; dotnet run -- HealthCheck
+
+# 3) Demo - ScheduleJobs
+$env:ASPNETCORE_ENVIRONMENT="Demo"; $env:DOTNET_ENVIRONMENT="Demo"; dotnet run -- ScheduleJobs
+
+# 4) Development - ScheduleJobs
+$env:ASPNETCORE_ENVIRONMENT="Development"; $env:DOTNET_ENVIRONMENT="Development"; dotnet run -- ScheduleJobs
+
+# 5) Demo - FECProcess
+$env:ASPNETCORE_ENVIRONMENT="Demo"; $env:DOTNET_ENVIRONMENT="Demo"; dotnet run -- FECProcess
+
+# 6) Development - FECProcess
+$env:ASPNETCORE_ENVIRONMENT="Development"; $env:DOTNET_ENVIRONMENT="Development"; dotnet run -- FECProcess
+```
+
+#### Container (Bash, same approach for NoDb and WithDb)
+
+```bash
+cd /workspaces/apha-fps-apps/src/Apha.BatchJobs
+
+# 7) NoDb - HealthCheck
+./test-locally.sh --docker-profile nodb --job HealthCheck --no-prompt
+
+# 8) WithDb - HealthCheck
+./test-locally.sh --docker-profile withdb --job HealthCheck --no-prompt
+
+# 9) NoDb - ScheduleJobs
+./test-locally.sh --docker-profile nodb --job ScheduleJobs --no-prompt
+
+# 10) WithDb - ScheduleJobs
+./test-locally.sh --docker-profile withdb --job ScheduleJobs --no-prompt
+
+# 11) NoDb - FECProcess
+./test-locally.sh --docker-profile nodb --job FECProcess --no-prompt
+
+# 12) WithDb - FECProcess
+./test-locally.sh --docker-profile withdb --job FECProcess --no-prompt
+```
+
 ---
 
 ## 📊 Test Scenario Matrix
@@ -18,14 +68,14 @@ This document provides a comprehensive test matrix covering **both VM and Contai
 | 5 | VM | FECProcess | NoDb | ~2s | 0 | ✅ PASS |
 | 6 | VM | FECProcess | WithDb | ~10s | 0 | ✅ PASS |
 | **Container Tests (GitHub Codespaces)** |
-| 7 | Container | HealthCheck | NoDb | ~6s | 0 | ⏳ Pending |
-| 8 | Container | HealthCheck | WithDb | ~20s | 0 | ⏳ Pending |
-| 9 | Container | ScheduleJobs | NoDb | ~5s | 0 | ⏳ Pending |
-| 10 | Container | ScheduleJobs | WithDb | ~16s | 0 | ⏳ Pending |
-| 11 | Container | FECProcess | NoDb | ~2s | 0 | ⏳ Pending |
-| 12 | Container | FECProcess | WithDb | ~10s | 0 | ⏳ Pending |
+| 7 | Container | HealthCheck | NoDb | ~6s | 0 | ✅ Ready |
+| 8 | Container | HealthCheck | WithDb | ~20s | 0 | ✅ Ready |
+| 9 | Container | ScheduleJobs | NoDb | ~5s | 0 | ✅ Ready |
+| 10 | Container | ScheduleJobs | WithDb | ~16s | 0 | ✅ Ready |
+| 11 | Container | FECProcess | NoDb | ~2s | 0 | ✅ Ready |
+| 12 | Container | FECProcess | WithDb | ~10s | 0 | ✅ Ready |
 
-**Total Tests:** 12 (6 VM ✅ Complete, 6 Container ⏳ Pending)
+**Total Tests:** 12 (6 VM ✅ Complete, 6 Container ✅ Ready)
 
 ---
 
@@ -149,7 +199,7 @@ dotnet run -- FECProcess
 ### Test 7: Container - HealthCheck NoDb
 ```bash
 cd /workspaces/apha-fps-apps/src/Apha.BatchJobs
-docker-compose --profile nodb up batch-jobs-nodb
+./test-locally.sh --docker-profile nodb --job HealthCheck --no-prompt
 ```
 
 **Expected Output:**
@@ -165,7 +215,7 @@ docker-compose --profile nodb up batch-jobs-nodb
 ### Test 8: Container - HealthCheck WithDb
 ```bash
 cd /workspaces/apha-fps-apps/src/Apha.BatchJobs
-docker-compose --profile withdb up
+./test-locally.sh --docker-profile withdb --job HealthCheck --no-prompt
 ```
 
 **Expected Output:**
@@ -183,7 +233,7 @@ docker-compose --profile withdb up
 ### Test 9: Container - ScheduleJobs NoDb
 ```bash
 cd /workspaces/apha-fps-apps/src/Apha.BatchJobs
-docker-compose --profile nodb run --rm -e BATCH_JOB_NAME=ScheduleJobs batch-jobs-nodb
+./test-locally.sh --docker-profile nodb --job ScheduleJobs --no-prompt
 ```
 
 **Expected Output:**
@@ -198,9 +248,7 @@ docker-compose --profile nodb run --rm -e BATCH_JOB_NAME=ScheduleJobs batch-jobs
 ### Test 10: Container - ScheduleJobs WithDb
 ```bash
 cd /workspaces/apha-fps-apps/src/Apha.BatchJobs
-docker-compose --profile withdb up -d postgres
-docker-compose --profile withdb run --rm -e BATCH_JOB_NAME=ScheduleJobs batch-jobs-withdb
-docker-compose --profile withdb down
+./test-locally.sh --docker-profile withdb --job ScheduleJobs --no-prompt
 ```
 
 **Expected Output:**
@@ -216,7 +264,7 @@ docker-compose --profile withdb down
 ### Test 11: Container - FECProcess NoDb
 ```bash
 cd /workspaces/apha-fps-apps/src/Apha.BatchJobs
-docker-compose --profile nodb run --rm -e BATCH_JOB_NAME=FECProcess batch-jobs-nodb
+./test-locally.sh --docker-profile nodb --job FECProcess --no-prompt
 ```
 
 **Expected Output:**
@@ -231,9 +279,7 @@ docker-compose --profile nodb run --rm -e BATCH_JOB_NAME=FECProcess batch-jobs-n
 ### Test 12: Container - FECProcess WithDb
 ```bash
 cd /workspaces/apha-fps-apps/src/Apha.BatchJobs
-docker-compose --profile withdb up -d postgres
-docker-compose --profile withdb run --rm -e BATCH_JOB_NAME=FECProcess batch-jobs-withdb
-docker-compose --profile withdb down
+./test-locally.sh --docker-profile withdb --job FECProcess --no-prompt
 ```
 
 **Expected Output:**
@@ -290,32 +336,22 @@ Write-Host "`n=== All VM Tests Completed ===" -ForegroundColor Green
 cd /workspaces/apha-fps-apps/src/Apha.BatchJobs
 
 echo "=== Test 7: Container - HealthCheck NoDb ==="
-docker-compose --profile nodb up batch-jobs-nodb
-docker-compose --profile nodb down
+./test-locally.sh --docker-profile nodb --job HealthCheck --no-prompt || exit 1
 
 echo "=== Test 8: Container - HealthCheck WithDb ==="
-docker-compose --profile withdb up
-docker-compose --profile withdb down
+./test-locally.sh --docker-profile withdb --job HealthCheck --no-prompt || exit 1
 
 echo "=== Test 9: Container - ScheduleJobs NoDb ==="
-docker-compose --profile nodb run --rm -e BATCH_JOB_NAME=ScheduleJobs batch-jobs-nodb
-docker-compose --profile nodb down
+./test-locally.sh --docker-profile nodb --job ScheduleJobs --no-prompt || exit 1
 
 echo "=== Test 10: Container - ScheduleJobs WithDb ==="
-docker-compose --profile withdb up -d postgres
-sleep 10  # Wait for PostgreSQL to be ready
-docker-compose --profile withdb run --rm -e BATCH_JOB_NAME=ScheduleJobs batch-jobs-withdb
-docker-compose --profile withdb down
+./test-locally.sh --docker-profile withdb --job ScheduleJobs --no-prompt || exit 1
 
 echo "=== Test 11: Container - FECProcess NoDb ==="
-docker-compose --profile nodb run --rm -e BATCH_JOB_NAME=FECProcess batch-jobs-nodb
-docker-compose --profile nodb down
+./test-locally.sh --docker-profile nodb --job FECProcess --no-prompt || exit 1
 
 echo "=== Test 12: Container - FECProcess WithDb ==="
-docker-compose --profile withdb up -d postgres
-sleep 10  # Wait for PostgreSQL to be ready
-docker-compose --profile withdb run --rm -e BATCH_JOB_NAME=FECProcess batch-jobs-withdb
-docker-compose --profile withdb down
+./test-locally.sh --docker-profile withdb --job FECProcess --no-prompt || exit 1
 
 echo "=== All Container Tests Completed ==="
 ```
@@ -455,10 +491,10 @@ Notes: _________________________________
 
 | Environment | Tests | Status | Next Steps |
 |-------------|-------|--------|------------|
-| **VM** | 6/6 | ✅ Complete | Move to Container testing |
-| **Container** | 0/6 | ⏳ Pending | Run in GitHub Codespaces |
+| **VM** | 6/6 | ✅ Complete | Maintain regression cadence |
+| **Container** | 6 scenarios defined | ✅ Ready to run | Execute and record results |
 
-**Total Progress: 50% (6/12 tests complete)**
+**Total Coverage: 12 scenarios defined (6 VM + 6 Container)**
 
 ---
 
@@ -471,6 +507,6 @@ Notes: _________________________________
 
 ---
 
-**Last Updated:** 2026-04-21  
+**Last Updated:** 2026-04-23  
 **Branch:** A-Foundation  
-**Commit:** b7527a6
+**Commit:** 8717697
