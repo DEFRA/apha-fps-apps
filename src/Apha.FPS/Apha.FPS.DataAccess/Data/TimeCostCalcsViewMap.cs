@@ -7,12 +7,7 @@ namespace Apha.FPS.DataAccess.Data
 {
     public class TimeCostCalcsViewMap : IEntityTypeConfiguration<TimeCostCalcsView>
     {
-        private readonly IFpsRequestContext _fPSYearContext;
-
-        public TimeCostCalcsViewMap(IFpsRequestContext fPSYearContext)
-        {
-            _fPSYearContext = fPSYearContext;
-        }
+       
 
         public void Configure(EntityTypeBuilder<TimeCostCalcsView> entity)
         {
@@ -35,7 +30,7 @@ namespace Apha.FPS.DataAccess.Data
             entity.Property(e => e.JobCodeOld).HasColumnName("jobcodeold");
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
 
-            entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
+            
         }
     }
 }

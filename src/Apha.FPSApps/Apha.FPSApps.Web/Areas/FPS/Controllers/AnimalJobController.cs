@@ -209,14 +209,14 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAnimalRate(string animalType)
+        public async Task<IActionResult> GetAnimalRate(string animalType, string jobCode)
         {
             if (string.IsNullOrWhiteSpace(animalType))
             {
                 return Json(new { success = false, message = "Animal type is required", dailyRate = 0 });
             }
 
-            ApiResponseDto<decimal?> result = await _animalPlanService.GetAnimalRateAsync(animalType);
+            ApiResponseDto<decimal?> result = await _animalPlanService.GetAnimalRateAsync(animalType, jobCode);
 
             if (result.Success)
             {

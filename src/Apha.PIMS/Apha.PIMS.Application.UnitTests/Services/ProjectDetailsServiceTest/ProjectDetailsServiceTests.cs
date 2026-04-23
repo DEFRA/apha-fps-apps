@@ -449,74 +449,76 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectDetailsServiceTest
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(
-                async () => await _sut.UpdateProposedProjectAsync(dto)
+                async () => await _sut.UpdateProposedProjectAsync(dto, "PP001")
             );
 
             exception.Errors.Should().ContainSingle();
             exception.Errors.First().Code.Should().Be("PROJECT_REQUIRED");
             exception.Errors.First().Message.Should().Be("Project is required.");
 
-            await _mockRepository.DidNotReceive().UpdateProposedProjectAsync(Arg.Any<ProposedProject>());
+            // Validation fires before repository is touched
+            await _mockRepository.DidNotReceive().UpdateProposedProjectAsync(Arg.Any<ProposedProject>(), Arg.Any<string>());
         }
 
         [Fact]
-        public async Task UpdateProposedProjectAsync_WithValidDto_ReturnsMappedUpdatedDto()
+        public async Task UpdateProposedProjectAsync_WithValidDto_SameTransferTo_ReturnsMappedUpdatedDto()
         {
-            // Arrange
+            // Arrange — transferTo == dto.Parentproject (no project-code change)
+            var transferTo = "PP001";
             var dto = new ProposedProjectDto
             {
-                Id = 1,
+                Id            = 1,
                 Parentproject = "PP001",
-                Projecttitle = "Updated FMD Survey",
-                Program = "PROG1",
-                Customer = "CUST1",
-                Manager = "MGR1",
+                Projecttitle  = "Updated FMD Survey",
+                Program       = "PROG1",
+                Customer      = "CUST1",
+                Manager       = "MGR1",
                 Projectstatus = "Active",
-                Disease = "FMD"
+                Disease       = "FMD"
             };
 
             var entity = new ProposedProject
             {
-                Id = 1,
+                Id            = 1,
                 Parentproject = "PP001",
-                Projecttitle = "Updated FMD Survey",
-                Program = "PROG1",
-                Customer = "CUST1",
-                Manager = "MGR1",
+                Projecttitle  = "Updated FMD Survey",
+                Program       = "PROG1",
+                Customer      = "CUST1",
+                Manager       = "MGR1",
                 Projectstatus = "Active",
-                Disease = "FMD"
+                Disease       = "FMD"
             };
 
             var updatedEntity = new ProposedProject
             {
-                Id = 1,
+                Id            = 1,
                 Parentproject = "PP001",
-                Projecttitle = "Updated FMD Survey",
-                Program = "PROG1",
-                Customer = "CUST1",
-                Manager = "MGR1",
+                Projecttitle  = "Updated FMD Survey",
+                Program       = "PROG1",
+                Customer      = "CUST1",
+                Manager       = "MGR1",
                 Projectstatus = "Active",
-                Disease = "FMD"
+                Disease       = "FMD"
             };
 
             var expectedDto = new ProposedProjectDto
             {
-                Id = 1,
+                Id            = 1,
                 Parentproject = "PP001",
-                Projecttitle = "Updated FMD Survey",
-                Program = "PROG1",
-                Customer = "CUST1",
-                Manager = "MGR1",
+                Projecttitle  = "Updated FMD Survey",
+                Program       = "PROG1",
+                Customer      = "CUST1",
+                Manager       = "MGR1",
                 Projectstatus = "Active",
-                Disease = "FMD"
+                Disease       = "FMD"
             };
 
             _mockMapper.Map<ProposedProject>(dto).Returns(entity);
-            _mockRepository.UpdateProposedProjectAsync(entity).Returns(Task.FromResult(updatedEntity));
+            _mockRepository.UpdateProposedProjectAsync(entity, transferTo).Returns(Task.FromResult(updatedEntity));
             _mockMapper.Map<ProposedProjectDto>(updatedEntity).Returns(expectedDto);
 
             // Act
-            var result = await _sut.UpdateProposedProjectAsync(dto);
+            var result = await _sut.UpdateProposedProjectAsync(dto, transferTo);
 
             // Assert
             result.Should().NotBeNull();
@@ -525,7 +527,63 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectDetailsServiceTest
             result.Projectstatus.Should().Be("Active");
 
             _mockMapper.Received(1).Map<ProposedProject>(dto);
-            await _mockRepository.Received(1).UpdateProposedProjectAsync(entity);
+            await _mockRepository.Received(1).UpdateProposedProjectAsync(entity, transferTo);
+            _mockMapper.Received(1).Map<ProposedProjectDto>(updatedEntity);
+        }
+
+        [Fact]
+        public async Task UpdateProposedProjectAsync_WithDifferentTransferTo_PassesTransferToRepository()
+        {
+            // Arrange — transferTo differs → project-code transfer path
+            var transferTo = "PP002";
+            var dto = new ProposedProjectDto
+            {
+                Id            = 1,
+                Parentproject = "PP001",
+                Projecttitle  = "Updated FMD Survey",
+                Projectstatus = "Active",
+                Disease       = "FMD"
+            };
+
+            var entity = new ProposedProject
+            {
+                Id            = 1,
+                Parentproject = "PP001",
+                Projecttitle  = "Updated FMD Survey",
+                Projectstatus = "Active",
+                Disease       = "FMD"
+            };
+
+            var updatedEntity = new ProposedProject
+            {
+                Id            = 1,
+                Parentproject = transferTo,
+                Projecttitle  = "Updated FMD Survey",
+                Projectstatus = "Active",
+                Disease       = "FMD"
+            };
+
+            var expectedDto = new ProposedProjectDto
+            {
+                Id            = 1,
+                Parentproject = transferTo,
+                Projecttitle  = "Updated FMD Survey",
+                Projectstatus = "Active",
+                Disease       = "FMD"
+            };
+
+            _mockMapper.Map<ProposedProject>(dto).Returns(entity);
+            _mockRepository.UpdateProposedProjectAsync(entity, transferTo).Returns(Task.FromResult(updatedEntity));
+            _mockMapper.Map<ProposedProjectDto>(updatedEntity).Returns(expectedDto);
+
+            // Act
+            var result = await _sut.UpdateProposedProjectAsync(dto, transferTo);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Parentproject.Should().Be(transferTo);
+
+            await _mockRepository.Received(1).UpdateProposedProjectAsync(entity, transferTo);
             _mockMapper.Received(1).Map<ProposedProjectDto>(updatedEntity);
         }
 
@@ -533,35 +591,36 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectDetailsServiceTest
         public async Task UpdateProposedProjectAsync_WhenRepositoryThrowsException_PropagatesException()
         {
             // Arrange
+            var transferTo = "PP001";
             var dto = new ProposedProjectDto
             {
-                Id = 1,
+                Id            = 1,
                 Parentproject = "PP001",
-                Projecttitle = "FMD Survey"
+                Projecttitle  = "FMD Survey"
             };
 
             var entity = new ProposedProject
             {
-                Id = 1,
+                Id            = 1,
                 Parentproject = "PP001",
-                Projecttitle = "FMD Survey"
+                Projecttitle  = "FMD Survey"
             };
 
             var expectedException = new Exception("Database connection failed");
 
             _mockMapper.Map<ProposedProject>(dto).Returns(entity);
-            _mockRepository.UpdateProposedProjectAsync(entity)
+            _mockRepository.UpdateProposedProjectAsync(entity, transferTo)
                 .Returns(Task.FromException<ProposedProject>(expectedException));
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<Exception>(
-                async () => await _sut.UpdateProposedProjectAsync(dto)
+                async () => await _sut.UpdateProposedProjectAsync(dto, transferTo)
             );
 
             exception.Message.Should().Be("Database connection failed");
 
             _mockMapper.Received(1).Map<ProposedProject>(dto);
-            await _mockRepository.Received(1).UpdateProposedProjectAsync(entity);
+            await _mockRepository.Received(1).UpdateProposedProjectAsync(entity, transferTo);
             _mockMapper.DidNotReceive().Map<ProposedProjectDto>(Arg.Any<ProposedProject>());
         }
 

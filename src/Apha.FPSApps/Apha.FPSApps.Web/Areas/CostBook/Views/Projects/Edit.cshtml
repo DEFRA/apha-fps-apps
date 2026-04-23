@@ -29,12 +29,12 @@
     }
 </script>
 
-<div class="container-fluid">
+<div class="container-fluid costbook-edit-page">
     <div class="row">
-        <div class="col-lg-12">
-            <div class="govuk-grid-row">
+        <div >
+            <div class="govuk-grid-row sup_border-bottom sup_margin_bottom_0">
                 <div class="govuk-grid-column-full">
-                    <h1 class="govuk-heading-s sup_border-bottom" style="padding:10px 0 10px 10px">
+                    <h1 class="govuk-heading-s " style="padding-top: 10px">
                         Project Selection
                         <a asp-area="CostBook" asp-controller="Projects" asp-action="Index" class="govuk-back-link sup_align_right">Back</a>
                     </h1>
@@ -42,9 +42,9 @@
             </div>
         </div>
 
-        <div class="col-lg-12">
+        <div>
             <div class="main-content" style="padding-top: 0px;">
-                <div class="existing_project mt-2">
+                <div class=" sup_margin_top_10">
                     <form asp-area="CostBook" asp-controller="Projects" asp-action="Edit" asp-route-id="@Model.ProjectId" method="post">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="ProjectId" value="@Model.ProjectId" />
@@ -68,29 +68,30 @@
                             <div class="alert alert-danger" role="alert">@TempData["Error"]</div>
                         }
 
-                        <div style="max-width: 1200px; margin-bottom: 25px;">
+                        <div style="costbook-edit-page edit-form-container">
 
                             <!-- Action buttons -->
-                            <div class="d-flex gap-2 mb-3">
+                            <div class="action-buttons edit-action-buttons">
                                 <button type="button" class="govuk-button govuk-button--warning sup_margin_0" onclick="confirmDelete()">Delete</button>
                                 <button type="button" class="govuk-button sup_margin_0" onclick="copyProject()">Copy</button>
+                                <button type="button" class="govuk-button sup_margin_0">Yearly Details</button>
                             </div>
 
                             <!-- Costing Book Code -->
                             <div class="govuk-form-group d-flex align-items-start mb-2">
                                 <label asp-for="ProjectId" class="govuk-label label_width mb-0 pt-1">Costing Book Code:</label>
                                 <div>
-                                    <input asp-for="ProjectId" class="govuk-input width-200 read-only" readonly>
+                                    <input asp-for="ProjectId" class="govuk-input width-200 read-only margin_left_5" readonly>
                                     <span asp-validation-for="ProjectId" class="govuk-error-message"></span>
                                 </div>
                             </div>
 
                             <!-- Contract Number -->
-                            <div class="govuk-form-group d-flex align-items-start mb-2">
+                            <div class="govuk-form-group d-flex align-items-start mb-2 margin_left_5">
                                 <label asp-for="ContractNumber" class="govuk-label label_width mb-0 pt-1">Contract Number:</label>
                                 <div>                                    
 
-                                    <input asp-for="ContractNumber" class="govuk-input width-200">
+                                    <input asp-for="ContractNumber" class="govuk-input width-200 margin_left_5">
                                     <span asp-validation-for="ContractNumber" class="govuk-error-message"></span>
                                 </div>
                             </div>
@@ -98,8 +99,8 @@
                             <!-- Title -->
                             <div class="govuk-form-group d-flex align-items-start mb-2">
                                 <label asp-for="ProjectTitle" class="govuk-label label_width mb-0 pt-1">Title:</label>
-                                <div style="width: 61%;">
-                                    <textarea asp-for="ProjectTitle" class="govuk-textarea w-100 sup_margin_0"></textarea>
+                                <div style="width: 61%; margin_left_5">
+                                    <textarea asp-for="ProjectTitle" class="govuk-textarea w-100 sup_margin_0 margin_left_5"></textarea>
                                     <span asp-validation-for="ProjectTitle" class="govuk-error-message"></span>
                                 </div>
                             </div>
@@ -107,13 +108,13 @@
                             <!-- Year Type (Financialyears) + Programme -->
                             <div class="govuk-form-group d-flex align-items-start mb-2">
                                         <label asp-for="FinancialYears" class="govuk-label label_width mb-0 pt-1">Year Type:</label>
-                                        <div class="me-4">
-                                            <select asp-for="FinancialYears" asp-items="Model.AvailableFinancialYears" class="govuk-select width-200"></select>
+                                        <div class="me-4 margin_left_5">
+                                            <select asp-for="FinancialYears" asp-items="Model.AvailableFinancialYears" class="govuk-select width-200 margin_left_5"></select>
                                             <span asp-validation-for="FinancialYears" class="govuk-error-message"></span>
                                         </div>
                                 <label asp-for="Programme" class="govuk-label label_width mb-0 pt-1">Programme:</label>
                                 <div>
-                                    <select asp-for="Programme" asp-items="Model.AvailablePrograms" class="govuk-select width-200">
+                                    <select asp-for="Programme" asp-items="Model.AvailablePrograms" class="govuk-select width-200 margin_left_5 ">
                                         
                                     </select>
                                     <span asp-validation-for="Programme" class="govuk-error-message"></span>
@@ -124,14 +125,14 @@
                             <div class="govuk-form-group d-flex align-items-start mb-2">
                                 <label asp-for="CustomerName" class="govuk-label label_width mb-0 pt-1">Customer Name:</label>
                                 <div class="me-4">
-                                    <select asp-for="CustomerName" asp-items="Model.AvailableCustomers" class="govuk-select width-200">
+                                    <select asp-for="CustomerName" asp-items="Model.AvailableCustomers" class="govuk-select width-200 margin_left_5">
                                         
                                     </select>
                                     <span asp-validation-for="CustomerName" class="govuk-error-message"></span>
                                 </div>
                                 <label asp-for="Disease" class="govuk-label label_width mb-0 pt-1">Disease:</label>
                                 <div>
-                                            <select asp-for="Disease" asp-items="Model.AvailableDiseases" class="govuk-select width-200">
+                                            <select asp-for="Disease" asp-items="Model.AvailableDiseases" class="govuk-select width-200 margin_left_5">
                                                
                                             </select>
                                             <span asp-validation-for="Disease" class="govuk-error-message"></span>
@@ -143,10 +144,10 @@
                             <div class="govuk-form-group d-flex align-items-start mb-2">
                                 <label for="StartdateDisplay" class="govuk-label label_width mb-0 pt-1">Start Date:</label>
                                 <div class="me-4">
-                                    <div style="position:relative; display:inline-block;">
+                                    <div style="position:relative; display:inline-block; margin_left_5">
                                         <input type="text"
                                                id="StartdateDisplay"
-                                               class="govuk-input width-200"
+                                               class="govuk-input width-200 "
                                                value="@Model.StartDate?.ToString("dd/MM/yyyy")"
                                                autocomplete="off"
                                                onclick="openDatePicker('StartdatePicker')"
@@ -165,7 +166,7 @@
                                     <span asp-validation-for="StartDate" class="govuk-error-message"></span>
                                 </div>
                                         <label asp-for="IsDefraProject" class="govuk-label label_width mb-0 pt-1">Is Defra Project?:</label>
-                                        <div class="d-flex align-items-center gap-2">
+                                <div class="d-flex align-items-center gap-2 margin_left_5">
                                             <select asp-for="IsDefraProject" asp-items="Model.AvailableDefraProjectOptions" class="govuk-select" style="min-width: 80px;"></select>
                                             <span class="warning-text" style="font-size:13px; width:217px; color:#353535; border:1px dashed #0d6efd; border-radius:4px; padding:2px;">
                                                 Changing this option will recost existing projects with current rates.
@@ -178,26 +179,26 @@
                             <div class="govuk-form-group d-flex align-items-start mb-2">
                                 <label asp-for="StartFYear" class="govuk-label label_width mb-0 pt-1">Start (Financial) Year:</label>
                                 <div class="me-4">
-                                    <input asp-for="StartFYear" asp-format="{0:0}" class="govuk-input width-200 read-only" readonly>
+                                    <input asp-for="StartFYear" asp-format="{0:0}" class="govuk-input width-200 margin_left_5 read-only" readonly>
                                     <span asp-validation-for="StartFYear" class="govuk-error-message"></span>
                                 </div>
                                 <label asp-for="Euroconvrate" class="govuk-label label_width mb-0 pt-1">Rate Used (£):</label>
                                 <div>
-                                    <input asp-for="Euroconvrate" class="govuk-input width-200">
+                                    <input asp-for="Euroconvrate" class="govuk-input width-200 margin_left_5">
                                     <span asp-validation-for="Euroconvrate" class="govuk-error-message"></span>
                                 </div>
                             </div>
 
                             <!-- Submitted By Firstname + Prepared By -->
-                            <div class="govuk-form-group d-flex align-items-start mb-2">
-                                                <label asp-for="SubmittedByFName" class="govuk-label label_width mb-0 pt-1" style="overflow-wrap: break-word;">Submitted By - Firstname:</label>
+                            <div class="govuk-form-group d-flex align-items-start mb-2" >
+                                                <label asp-for="SubmittedByFName" class="govuk-label label_width mb-0 pt-1" style="overflow-wrap: break-word; margin-left: -16px;">Submitted By - Firstname:</label>
                                 <div class="me-4">
-                                                    <input asp-for="SubmittedByFName" class="govuk-input width-200">
+                                    <input asp-for="SubmittedByFName" class="govuk-input width-200 margin_left_5">
                                                         <span asp-validation-for="SubmittedByFName" class="govuk-error-message"></span>
                                 </div>
                                 <label asp-for="PreparedBy" class="govuk-label label_width mb-0 pt-1">Prepared by:</label>
                                 <div>
-                                    <select asp-for="PreparedBy" asp-items="Model.AvailableStaff" class="govuk-select inline-select">
+                                    <select asp-for="PreparedBy" asp-items="Model.AvailableStaff" class="govuk-select inline-select" >
                                       
                                     </select>
                                     <span asp-validation-for="PreparedBy" class="govuk-error-message"></span>
@@ -209,22 +210,22 @@
                             <div class="govuk-form-group d-flex align-items-start mb-2">
                                                     <label asp-for="SubmittedByLName" class="govuk-label label_width mb-0 pt-1">Lastname:</label>
                                 <div class="me-4">
-                                                        <input asp-for="SubmittedByLName" class="govuk-input width-200">
+                                    <input asp-for="SubmittedByLName" class="govuk-input width-200 margin_left_5">
                                                             <span asp-validation-for="SubmittedByLName" class="govuk-error-message"></span>
                                 </div>
                                 <label for="chkInflation" class="govuk-label label_width mb-0 pt-1">Include Inflation?:</label>
-                                <div class="d-flex align-items-center gap-2">
-                                    <div class="form-check form-check-inline">
-                                        <input type="checkbox"
-                                               id="chkInflation"
-                                               name="Inflation"
-                                               value="1"
-                                               class="form-check-input"
-                                               style="width:20px; height:20px; cursor:pointer;"
-                                               checked="@(Model.Inflation.HasValue && Model.Inflation.Value != 0)" />
-                                              
-                                        <input name="Inflation" type="hidden" value="0" />
-                                        
+                                <div class="d-flex align-items-center gap-2 margin_left_5">
+                      
+                                    <div class="govuk-checkboxes govuk-checkboxes--small">
+                                        <div class="govuk-checkboxes__item">
+                                            <input type="checkbox"
+                                                   id="chkInflation"
+                                                   name="Inflation"
+                                                   value="-1"
+                                                   class="govuk-checkboxes__input"
+                                            @(Model.Inflation.HasValue && Model.Inflation.Value == -1 ? "checked=\"checked\"" : "") />
+                                            <label class="govuk-checkboxes__label" for="chkInflation"></label>
+                                        </div>
                                     </div>
                                     <span class="warning-text" style="font-size:13px; width:286px; color:#353535; border:1px dashed #0d6efd; border-radius:4px; padding:2px;">
                                         Changing this option will recost existing projects with current rates as well as affecting inflation.
@@ -236,10 +237,10 @@
                             <div class="govuk-form-group d-flex align-items-start mb-2">
                                 <label for="DateOfSubmissionDisplay" class="govuk-label label_width mb-0 pt-1">Date of Submission:</label>
                                 <div>
-                                    <div style="position:relative; display:inline-block;">
+                                    <div style="position:relative; display:inline-block; ">
                                         <input type="text"
                                                id="DateOfSubmissionDisplay"
-                                               class="govuk-input width-200"
+                                               class="govuk-input width-200 margin_left_5"
                                                value="@Model.DateOfSubmission?.ToString("dd/MM/yyyy")"
                                                autocomplete="off"
                                                onclick="openDatePicker('DateOfSubmissionPicker')"
@@ -263,13 +264,13 @@
                             <div class="govuk-form-group d-flex align-items-start mb-2">
                                 <label asp-for="Notes" class="govuk-label label_width mb-0 pt-1">Notes:</label>
                                 <div style="width: 61%;">
-                                    <textarea asp-for="Notes" class="govuk-textarea w-100"></textarea>
+                                    <textarea asp-for="Notes" class="govuk-textarea w-100 margin_left_5"></textarea>
                                     <span asp-validation-for="Notes" class="govuk-error-message"></span>
                                 </div>
                             </div>
 
                             <!-- Save / Cancel -->
-                            <div class="d-flex gap-2 mt-3">
+                            <div class="action-buttons edit-action-buttons">
                                 <button type="submit" class="govuk-button">Save</button>
                                 <a asp-area="CostBook" asp-controller="Projects" asp-action="Details" asp-route-id="@Model.ProjectId" class="govuk-button govuk-button--secondary">Cancel</a>
                             </div>
@@ -391,4 +392,4 @@
         });
         }
     </script>
-}
+    }

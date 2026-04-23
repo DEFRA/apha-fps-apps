@@ -47,6 +47,10 @@ namespace Apha.PACT.Application.Services
 
         public async Task<JobCodeDto> CreateJobCodeAsync(JobCodeDto jobCode)
         {
+            var existing = await _repository.GetJobCodeByIdAsync(jobCode.JobCodeId);
+            if (existing != null)
+                throw new InvalidOperationException($"A JobCode with ID '{jobCode.JobCodeId}' already exists.");
+
             var entity = _mapper.Map<JobCode>(jobCode);
             var created = await _repository.CreateJobCodeAsync(entity);
             return _mapper.Map<JobCodeDto>(created);

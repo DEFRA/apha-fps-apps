@@ -1,4 +1,13 @@
-﻿<!DOCTYPE html>
+﻿@using System.Security.Claims
+@{
+    // Get display name from claims (try multiple claim types)
+    var displayName = User.FindFirst("name")?.Value
+                      ?? User.FindFirst(ClaimTypes.GivenName)?.Value
+                      ?? User.FindFirst(ClaimTypes.Name)?.Value?.Split('@')[0]
+                      ?? "Unknown User";
+   
+}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
@@ -31,8 +40,7 @@
             </div>
 
             <div class="btn-group flex-center font-size-16">
-                @User.Identity?.Name
-
+                @displayName
                 <button type="button"
                         aria-label="User menu — go to home page"
                         class="btn btn-secondary dropdown-toggle user-menu border-0"
@@ -44,20 +52,18 @@
                          alt="Dropdown arrow"
                          width="30px" height="30px" />
                 </button>
-
+                    
                 <ul class="dropdown-menu dropdown-menu-end">
                     <li>
-                        <a asp-area="PIMS"
-                               asp-controller="Home"
-                               asp-action="Index"
+                        <a href="/"
                                class="dropdown-item">
                             <img src="~/images/house-user-solid-full.svg"
                                  alt="Home icon" width="22px" />
                             Home
-                        </a>
-                    </li>
-                </ul>
-            </div>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
         </div>
     </header>
 
@@ -129,7 +135,7 @@
     </div>
 
     <!-- ── Scripts ─────────────────────────────────────────────────────── -->
-    <script src="~/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/DataGrid/editable-grid.js"></script>
 
     @await RenderSectionAsync("Scripts", required: false)

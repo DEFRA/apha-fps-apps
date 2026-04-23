@@ -53,19 +53,14 @@ namespace Apha.FPS.DataAccess.Repositories
             return record;
         }
 
-        public async Task<decimal?> GetAnimalRateByIdAsync(string animalType)
+        public async Task<decimal?> GetAnimalRateByIdAsync(string animalType, string jobCode)
         {
-            var queryAnimalCost = from animalReq in _dbContext.AnimalRequestViews
-                                  join animal in _dbContext.Animals on animalReq.AnimalType equals animal.AnimalType
-                                  join project in _dbContext.ProjectViews on
-                                         new { animalReq.JobCode, animalReq.UserId } equals new { JobCode = project.ParentProject, project.UserId }
-                                  let dailyRate = (project.IsDefraProject == -1 ? animal.DefraDailyRate : animal.DailyRate)
-                                  where animal.AnimalType == animalType
-                                      && animalReq.UserEmail != null
-                                      && animalReq.UserEmail.ToLower() == _requestContext.UserEmailId
-                                  select dailyRate;
 
-            return await queryAnimalCost.FirstOrDefaultAsync();
+            var IsDefraProject = await _dbContext.Projects.Where(e => e.ParentProject == jobCode).Select(p => p.IsDefraProject).FirstOrDefaultAsync();
+
+            var queryAnimalCost = from animal in _dbContext.Animals where animal.AnimalType == animalType
+                                  select IsDefraProject == -1 ? animal.DefraDailyRate : animal.DailyRate;
+             return await queryAnimalCost.FirstOrDefaultAsync();           
         }
 
         public async Task<AnimalRequest> AddAnimalCostAsync(AnimalRequest animalReq)
@@ -174,9 +169,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 NumberOfDays = animalReq.NumberOfDays,
                 NumberOfAnimals = animalReq.NumberOfAnimals,
                 DateTime = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
-                UserId = _requestContext.UserEmailId?.Length > 20
-                    ? _requestContext.UserEmailId[..20]
-                    : _requestContext.UserEmailId,
+                UserId = _requestContext.UserEmailId,
                 InsertDelete = insertDelete,
                 FpsYear = _requestContext.FpsYear
             };

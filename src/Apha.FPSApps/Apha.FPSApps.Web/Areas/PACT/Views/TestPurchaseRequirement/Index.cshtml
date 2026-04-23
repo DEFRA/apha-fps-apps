@@ -50,7 +50,7 @@
         function navigateToProjectCode(code) {
             code = (code || '').trim();
             if (code) {
-                window.location.href = '/PACT/TestPurchaseRequirement/Index?parentProject=' + encodeURIComponent(code);
+                fpsNavigateTo('/PACT/TestPurchaseRequirement/Index?parentProject=' + encodeURIComponent(code));
             }
         }
 

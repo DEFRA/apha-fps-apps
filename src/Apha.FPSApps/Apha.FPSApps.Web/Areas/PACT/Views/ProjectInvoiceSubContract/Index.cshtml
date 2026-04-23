@@ -42,7 +42,7 @@
             </div>
         </div>
 
-        <div id="amountBoxContainer" class="sup_surface_bg sup_position_relative ytd_total_div" style="min-height: 42px;">
+        <div id="amountBoxContainer" class="sup_surface_bg sup_position_relative ytd_total_div sup_border sup_border_t_0" style="min-height: 42px;">
             <label id="lbltotalamount" for="txtTotalAmount"
                    class="govuk-label govuk-!-font-weight-bold">YTD Total Amount:</label>
             <input type="text" id="txtTotalAmount"
@@ -59,7 +59,7 @@
             </div>
         </div>
 
-        <div id="testDataAmountBoxContainer" class="sup_surface_bg sup_position_relative ytd_total_div" style="min-height: 42px;">
+        <div id="testDataAmountBoxContainer" class="sup_surface_bg sup_position_relative ytd_total_div sup_border sup_border_t_0" style="min-height: 42px;">
             <label id="lblTestDataTotalAmount" for="txtTestDataTotalAmount"
                    class="govuk-label govuk-!-font-weight-bold">YTD Total Amount:</label>
             <input type="text" id="txtTestDataTotalAmount"
@@ -80,7 +80,7 @@
         function navigateToProjectCode(code) {
             code = (code || '').trim();
             if (code) {
-                window.location.href = '/PACT/ProjectInvoiceSubContract/Index?parentProject=' + encodeURIComponent(code);
+                fpsNavigateTo('/PACT/ProjectInvoiceSubContract/Index?parentProject=' + encodeURIComponent(code));
             }
         }
 

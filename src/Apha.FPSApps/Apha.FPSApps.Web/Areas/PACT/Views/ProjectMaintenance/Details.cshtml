@@ -11,7 +11,7 @@
     <div class="govuk-grid-column-full">
         <h1 class="govuk-grid-row govuk-heading-s sup_border-bottom" style="padding:10px 0 0px 10px">
             Project Maintenance (not portfolios)
-            <a href="@Url.Action("Index", "ProjectMaintenance", new { area = "PACT" })"
+            <a asp-area="PACT" asp-controller="ProjectMaintenance" asp-action="Index" 
                class="govuk-back-link sup_align_right">Back</a>
         </h1>
     </div>
@@ -58,7 +58,7 @@
                                 <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.ParentProject">
                                     Project Code
                                 </label>
-                                <input class="govuk-input govuk-!-font-size-16" asp-for="Project.ParentProject" readonly />
+                                <input class="govuk-input govuk-!-font-size-16" asp-for="Project.ParentProject" disabled />
                                 <span asp-validation-for="Project.ParentProject" class="govuk-error-message"></span>
                             </div>
                         </div>
@@ -76,15 +76,15 @@
 
                     <!-- ── Business Area ── -->
                     <div class="govuk-grid-column-full sup_p_0">
-                        <div class="sup_border" style="flex-direction:column; display:flex; padding-bottom:6px;">
-                            <div class="cust-position-relative">
-                                <h2 class="sup_border-bottom sup_text_color govuk-heading-s sup_align_heading">
+                        <div  style="flex-direction:column; display:flex; padding-bottom:6px;">
+                            <div class="cust-position-relative sup_border">
+                                <h2 class="sup_border-bottom sup_border_b_0 sup_text_color govuk-grid-column-two-thirds govuk-heading-s sup_align_heading">
                                     Business Area
                                 </h2>
                                 <!-- Finished checkbox -->
-                                <div class="govuk-checkboxes govuk-checkboxes--small sup_margin_0 cust-abs-top-right"
+                                <div class="govuk-checkboxes govuk-grid-column-one-third govuk-checkboxes--small sup_margin_0 sup_p_t_3"
                                      data-module="govuk-checkboxes">
-                                    <div class="govuk-checkboxes__item">
+                                    <div class="govuk-checkboxes__item sup_float_right">
                                         <input class="govuk-checkboxes__input govuk-!-font-size-16"
                                                id="Finished" name="Finished" type="checkbox"
                                                value="1" @(Model.Project.Finished == 1 ? "checked" : "") />
@@ -94,7 +94,7 @@
                                 </div>
                             </div>
 
-                            <div class="sup_business_area_wrapper govuk-grid-row">
+                            <div class="sup_business_area_wrapper sup_border govuk-grid-row">
 
                                 <!-- Left: Programme / Status / Disease / Defra Project -->
                                 <div class="govuk-grid-column-one-half">
@@ -183,7 +183,7 @@
                     </div>
 
                     <!-- ── Comments + Financial Data ── -->
-                    <div class="sup_border govuk-grid-column-full sup_p_0"
+                    <div class="sup_border sup_border_t_0 govuk-grid-column-full sup_p_0"
                          style="padding:10px 0; display:flex; padding-bottom:10px; border-top:0; flex-direction:column;">
                         <div style="padding-bottom:0;" class="govuk-grid-column-full">
                             <div class="govuk-form-group sup_margin_bottom_10">
@@ -271,8 +271,8 @@
                     </div>
 
                     <!-- ── Save button ── -->
-                    <div class="govuk-grid-row" style="text-align:right; margin:5px 0px 5px 0;">
-                        <button type="button" class="govuk-button sup_margin_0"
+                    <div class="govuk-grid-row sup_margin_0 sup_text_align_right">
+                        <button type="button" class="govuk-button sup_margin_tb_5"
                                 aria-label="Save Business Area details"
                                 id="btnProjectMaintenance" data-module="govuk-button"
                                 onclick="saveProjectDetail()">
@@ -289,8 +289,8 @@
             <div class="govuk-grid-column-one-half sup_p_0">
                 <div>
                     <!-- Job Codes grid -->
-                    <div class="sup_border">
-                        <h2 class="sup_border-bottom sup_text_color sup_heading_bg_color govuk-heading-s sup_align_heading">
+                    <div>
+                        <h2 class="sup_border sup_border_b_0 sup_text_color sup_heading_bg_color govuk-heading-s sup_align_heading">
                             Project's Job Code
                         </h2>
                         <div id="@($"gridContainer_{Model.JobCodeGrid.GridId}")">
@@ -299,9 +299,9 @@
                     </div>
 
                     <!-- Time Code Validity grid -->
-                    <div id="section2" class="sup_border"
+                    <div id="section2"  
                          style="padding-left:0; padding-right:0; margin-top:10px; margin-bottom:10px;">
-                        <h2 class="sup_border-bottom sup_text_color sup_heading_bg_color govuk-heading-s sup_align_flexheading sup_decrease_font_size_s">
+                        <h2 class="sup_border sup_border_b_0 sup_text_color sup_heading_bg_color govuk-heading-s sup_align_flexheading sup_decrease_font_size_s">
                             Time Code Validity for Project's Job Code &nbsp;
                             <span id="timeCodeGridSubtitle"></span>
                         </h2>
@@ -542,8 +542,13 @@
         }
 
         function executeCopyJobCode() {
+            var $form = $('#formAddJobcode');
+            clearValidationErrors($form);
+            if (!isFormValid($form)) {
+                displayClientValidationErrors($form, $form);
+                return;
+            }
             var jobCodeId = $('#JobCodeId').val();
-            if (!jobCodeId) { showGovukAlert('Please enter a Job Code.'); return; }
             var data = {
                 SourceJobCode: $('#sourceJobCode').val(),
                 JobCodeId: jobCodeId,
@@ -569,7 +574,7 @@
                             }
                             showGovukAlert('JobCode copied successfully.');
                         } else {
-                            showGovukAlert('Error: ' + response.message);
+                            displayServerValidationErrors(response.errors, response.message, '#formAddJobcode');
                         }
                     },
                     error: function() { showGovukAlert('An error occurred while copying.'); }

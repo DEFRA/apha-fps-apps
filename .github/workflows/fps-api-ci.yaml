@@ -60,6 +60,7 @@ jobs:
     uses: ./.github/workflows/push-image-template.yaml
     with:
       repository: apha/fps
+      dockerfile_path: src/Apha.FPS/Dockerfile
       dev_image_version_release: false
       tag_short_description: ""
     secrets:

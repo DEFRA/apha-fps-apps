@@ -14,5 +14,6 @@ namespace Apha.PIMS.Core.Interfaces
         Task<Comment> UpdateAsync(Comment entity);
         Task<bool> DeleteAsync(int commentno);
         Task<bool> ExistsAsync(string project, short year, string topic, int? excludeCommentno = null);
+        Task<IEnumerable<CommentTopic>> GetCommentTopicsAsync();
     }
 }

@@ -5,7 +5,7 @@ namespace Apha.Common.Constants
         // Animal
         public const string GetAnimalCosts = "api/v1/animal?jobCode={0}";
         public const string GetAnimalLookup = "api/v1/animal/lookup";
-        public const string GetAnimalRate = "api/v1/animal/rate?animalType={0}";
+        public const string GetAnimalRate = "api/v1/animal/rate?animalType={0}&jobCode={1}";
         public const string CreateAnimalCost = "api/v1/animal";
         public const string UpdateAnimalCost = "api/v1/animal";
         public const string DeleteAnimalCost = "api/v1/animal?indCounter={0}";

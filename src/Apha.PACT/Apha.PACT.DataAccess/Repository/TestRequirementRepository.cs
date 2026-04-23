@@ -338,9 +338,7 @@ namespace Apha.PACT.DataAccess.Repository
                 UnitPrice     = entity.UnitPrice.HasValue ? (double?)decimal.ToDouble(entity.UnitPrice.Value) : null,
                 NoRequired    = entity.NoRequired.HasValue ? (int?)Convert.ToInt32(entity.NoRequired.Value) : null,
                 DateTime      = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
-                UserId        = _fpsRequestContext.UserEmailId?.Length > 20
-                    ? _fpsRequestContext.UserEmailId[..20]
-                    : _fpsRequestContext.UserEmailId,
+                UserId        = _fpsRequestContext.UserEmailId,
                 InsertDelete  = insertDelete,
                 FpsYear       = _fpsRequestContext.FpsYear
             };

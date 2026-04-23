@@ -7,12 +7,7 @@ namespace Apha.FPS.DataAccess.Data
 {
     public class TimeCostCalcsMap : IEntityTypeConfiguration<TimeCostCalcs>
     {
-        private readonly IFpsRequestContext _fpsRequestContext;
-
-        public TimeCostCalcsMap(IFpsRequestContext fpsRequestContext)
-        {
-            _fpsRequestContext = fpsRequestContext;
-        }
+       
 
         public void Configure(EntityTypeBuilder<TimeCostCalcs> entity)
         {
@@ -37,7 +32,7 @@ namespace Apha.FPS.DataAccess.Data
             entity.Property(e => e.NonPay).HasColumnType("money").HasColumnName("nonpay");
             entity.Property(e => e.Overhead).HasColumnType("money").HasColumnName("overhead");
 
-            entity.HasQueryFilter(e => e.FpsYear == _fpsRequestContext.FpsYear);
+           
         }
     }
 }

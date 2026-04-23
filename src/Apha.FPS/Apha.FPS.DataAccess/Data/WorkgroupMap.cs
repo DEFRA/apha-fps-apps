@@ -1,5 +1,4 @@
 using Apha.FPS.Core.Entities;
-using Apha.FPS.Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -7,12 +6,7 @@ namespace Apha.FPS.DataAccess.Data
 {
     public class WorkgroupMap : IEntityTypeConfiguration<Workgroup>
     {
-        private readonly IFpsRequestContext _fPSYearContext;
 
-        public WorkgroupMap(IFpsRequestContext fPSYearContext)
-        {
-            _fPSYearContext = fPSYearContext;
-        }
 
         public void Configure(EntityTypeBuilder<Workgroup> entity)
         {
@@ -49,7 +43,6 @@ namespace Apha.FPS.DataAccess.Data
             entity.Property(e => e.SysTimestamp)
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("systimestamp");
-            entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FpsYear);
         }
     }
 }
