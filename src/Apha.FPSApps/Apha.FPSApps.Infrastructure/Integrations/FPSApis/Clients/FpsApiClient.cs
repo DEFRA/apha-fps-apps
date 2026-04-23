@@ -1,4 +1,4 @@
-﻿using Apha.FPSApps.Application.Interfaces.FpsApiClients;
+using Apha.FPSApps.Application.Interfaces.FpsApiClients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
 
@@ -17,6 +17,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public IFpsYearMasterApiClient FpsYearMaster { get; }
 
         public IFpsTestorProductApiClient FpsTestorProduct { get; }
+        public IFpsProjectStaffPlanActualApiClient FpsProjectStaffPlanActual { get; }
 
         public FpsApiClient(IFpsHttpExecutor http, IMapper mapper)
         {
@@ -29,6 +30,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             FpsSetting = new FpsSettingApiClient(http, mapper);
             FpsYearMaster = new FpsYearMasterApiClient(http, mapper);
             FpsTestorProduct = new FpsTestorProductApiClient(http, mapper);
+            FpsProjectStaffPlanActual = new FpsProjectStaffPlanActualApiClient(http, mapper);
         }
     }
 }

@@ -33,8 +33,9 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<ICustomerService, CustomerService>();
             services.AddScoped<IContractService, ContractService>();
             services.AddScoped<IYearMasterService, YearMasterService>();
-services.AddScoped<IProjectGroupService, ProjectGroupService>();
+            services.AddScoped<IProjectGroupService, ProjectGroupService>();
 services.AddScoped<ITestorProductService, TestorProductService>();
+            services.AddScoped<ITimeCostCalcsService, TimeCostCalcsService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
@@ -54,6 +55,7 @@ services.AddScoped<ITestorProductService, TestorProductService>();
             services.AddScoped<IYearMasterRepository, YearMasterRepository>();
 services.AddScoped<IProjectGroupRepository, ProjectGroupRepository>();
 services.AddScoped<ITestorProductRepository, TestorProductRepository>();
+            services.AddScoped<ITimeCostCalcsRepository, TimeCostCalcsRepository>();
             return services;
         }
     }
