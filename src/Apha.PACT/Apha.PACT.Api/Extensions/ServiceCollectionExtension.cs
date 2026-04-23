@@ -42,6 +42,7 @@ namespace Apha.PACT.Api.Extensions
             services.AddScoped<IProjectRepository, ProjectRepository>();
             services.AddScoped<ITestCapabilityRepository, TestCapabilityRepository>();
             services.AddScoped<ITestRequirementRepository, TestRequirementRepository>();
+            services.AddScoped<ITestorProductRepository, TestorProductRepository>();
                  return services;
         }
     }

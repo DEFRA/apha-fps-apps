@@ -50,6 +50,16 @@ namespace Apha.PACT.Api.Controllers
             return Ok(_mapper.Map<PaginationRes<TestCapabilityRes>>(result));
         }
 
+        /// <summary>Retrieves a paged list of TestCapability records filtered by PlanPortfolio.</summary>
+        [HttpGet("paged/portfolio")]
+        public async Task<IActionResult> GetPagedByPortfolio(
+            [FromQuery] QueryParameters<string> query,
+            [FromQuery] string? portfolio)
+        {
+            var result = await _service.GetPagedByPortfolioAsync(query, portfolio);
+            return Ok(_mapper.Map<PaginationRes<TestCapabilityRes>>(result));
+        }
+
         /// <summary>Retrieves a TestCapability record by composite key.</summary>
         [HttpGet("testcapability/{testCode}/{workGroup}")]
         public async Task<IActionResult> GetTestCapabilityById(string testCode, string workGroup)

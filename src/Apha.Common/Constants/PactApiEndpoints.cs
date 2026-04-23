@@ -48,6 +48,7 @@ namespace Apha.Common.Constants
         // WorkGroup Test Capability
         public const string GetPagedTestCapabilityByWorkGroup = "api/v1/testcapability/paged/workgroup";
         public const string GetPagedTestCapabilityByTestCode = "api/v1/testcapability/paged/testcode";
+        public const string GetPagedTestCapabilityByPortfolio = "api/v1/testcapability/paged/portfolio";
         public const string GetTestCapabilityById = "api/v1/testcapability/testcapability/{0}/{1}";
         public const string CreateTestCapability = "api/v1/testcapability/testcapability";
         public const string UpdateTestCapability = "api/v1/testcapability/testcapability";

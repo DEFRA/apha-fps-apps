@@ -12,15 +12,18 @@ namespace Apha.PACT.Application.Services
     {
         private readonly ITestCapabilityRepository _testCapabilityRepository;
         private readonly ITestRequirementRepository _testReqmtRepository;
+        private readonly ITestorProductRepository _testorProductRepository;
         private readonly IMapper _mapper;
 
         public TestCapabilityService(
             ITestCapabilityRepository testCapabilityRepository,
             ITestRequirementRepository testReqmtRepository,
+            ITestorProductRepository testorProductRepository,
             IMapper mapper)
         {
             _testCapabilityRepository = testCapabilityRepository;
             _testReqmtRepository = testReqmtRepository;
+            _testorProductRepository = testorProductRepository;
             _mapper = mapper;
         }
 
@@ -36,6 +39,26 @@ namespace Apha.PACT.Application.Services
             var parameters = _mapper.Map<PaginationParameters<string>>(query);
             var pagedData = await _testCapabilityRepository.GetPagedByTestCodeAsync(parameters, testCode);
             return _mapper.Map<PaginatedResult<TestCapabilityDto>>(pagedData);
+        }
+
+        public async Task<PaginatedResult<TestCapabilityDto>> GetPagedByPortfolioAsync(QueryParameters<string> query, string? portfolio)
+        {
+            var parameters = _mapper.Map<PaginationParameters<string>>(query);
+            var pagedData = await _testCapabilityRepository.GetPagedByPortfolioAsync(parameters, portfolio);
+            var result = _mapper.Map<PaginatedResult<TestCapabilityDto>>(pagedData);
+
+            if (result.Data != null && result.Data.Any())
+            {
+                var testCodes = result.Data.Select(d => d.TestCode).Distinct().ToList();
+                var descriptions = await _testorProductRepository.GetDescriptionsByCodesAsync(testCodes);
+                foreach (var dto in result.Data)
+                {
+                    if (descriptions.TryGetValue(dto.TestCode, out var desc))
+                        dto.ItemDescription = desc;
+                }
+            }
+
+            return result;
         }
 
         public async Task<TestCapabilityDto?> GetTestCapabilityByIdAsync(string testCode, string workGroup)
