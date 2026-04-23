@@ -1,3 +1,4 @@
+using Apha.Common.Constants;
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPSApps.Application.Dtos;
@@ -263,7 +264,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjPlanVsActuals
         {
             // Arrange
             var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
-            _http.DeleteAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
+            _http.DeleteAsync<TimeCostCalcsReq, bool>(Arg.Any<string>(), Arg.Any<TimeCostCalcsReq>()).Returns(apiResponse);
 
             // Act
             var result = await _client.DeleteTimeCostCalcsAsync("WG1", "JOB1", "AH0033", 1, "S01");
@@ -278,17 +279,20 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjPlanVsActuals
         {
             // Arrange
             var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
-            _http.DeleteAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
+            _http.DeleteAsync<TimeCostCalcsReq, bool>(Arg.Any<string>(), Arg.Any<TimeCostCalcsReq>()).Returns(apiResponse);
 
             // Act
             await _client.DeleteTimeCostCalcsAsync("WG1", "JOB1", "AH0033", 1, "S01");
 
             // Assert
-            await _http.Received(1).DeleteAsync<bool>(Arg.Is<string>(url =>
-                url.Contains("workgroup=WG1") &&
-                url.Contains("jobCode=JOB1") &&
-                url.Contains("project=AH0033") &&
-                url.Contains("staffId=S01")));
+            await _http.Received(1).DeleteAsync<TimeCostCalcsReq, bool>(
+                FpsApiEndpoints.DeleteTimeCostCalcs,
+                Arg.Is<TimeCostCalcsReq>(r =>
+                    r.WorkGroup == "WG1" &&
+                    r.JobCode   == "JOB1" &&
+                    r.Project   == "AH0033" &&
+                    r.Month     == 1 &&
+                    r.StaffId   == "S01"));
         }
 
         [Fact]
@@ -307,7 +311,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjPlanVsActuals
                 Meta    = new ApiMetaDto()
             };
 
-            _http.DeleteAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
+            _http.DeleteAsync<TimeCostCalcsReq, bool>(Arg.Any<string>(), Arg.Any<TimeCostCalcsReq>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedDto);
 
             // Act

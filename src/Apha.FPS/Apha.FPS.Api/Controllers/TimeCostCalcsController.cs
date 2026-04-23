@@ -70,18 +70,16 @@ namespace Apha.FPS.Api.Controllers
         /// Deletes a single time cost record by its composite key.
         /// </summary>
         [HttpDelete]
-        public async Task<IActionResult> DeleteTimeCostCalcsAsync(
-            [FromQuery] string workgroup,
-            [FromQuery] string jobCode,
-            [FromQuery] string project,
-            [FromQuery] double month,
-            [FromQuery] string staffId)
+        public async Task<IActionResult> DeleteTimeCostCalcsAsync([FromBody] TimeCostCalcsReq req)
         {
-            if (string.IsNullOrWhiteSpace(workgroup) || string.IsNullOrWhiteSpace(jobCode)
-                || string.IsNullOrWhiteSpace(project) || string.IsNullOrWhiteSpace(staffId))
+            if (req == null)
+                throw new ArgumentException("Request body is required.");
+
+            if (string.IsNullOrWhiteSpace(req.WorkGroup) || string.IsNullOrWhiteSpace(req.JobCode)
+                || string.IsNullOrWhiteSpace(req.Project) || string.IsNullOrWhiteSpace(req.StaffId))
                 throw new ArgumentException("workgroup, jobCode, project and staffId are required.");
 
-            var deleted = await _service.DeleteTimeCostCalcsAsync(workgroup, jobCode, project, month, staffId);
+            var deleted = await _service.DeleteTimeCostCalcsAsync(req.WorkGroup, req.JobCode, req.Project, req.Month, req.StaffId);
             if (!deleted)
                 throw new KeyNotFoundException("Record not found.");
 

@@ -70,6 +70,6 @@ namespace Apha.Common.Constants
         // View Project Plan vs Actual Staff
         public const string GetTimeCostCalcsByProject = "api/v1/timecostcalcs?projectCode={0}";
         public const string GetTimeCostCalcsTotalsByProject = "api/v1/timecostcalcs/totals?projectCode={0}";
-        public const string DeleteTimeCostCalcs = "api/v1/timecostcalcs?workgroup={0}&jobCode={1}&project={2}&month={3}&staffId={4}";
+        public const string DeleteTimeCostCalcs = "api/v1/timecostcalcs";
     }
 }

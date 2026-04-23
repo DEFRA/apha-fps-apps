@@ -1,5 +1,5 @@
 @using Apha.FPSApps.Web.Models.Components.DataGrid
-@model Apha.FPSApps.Web.Areas.FPS.Models.ProjPlanVsActualsStaffViewModel
+@model Apha.FPSApps.Web.Areas.FPS.Models.ProjectStaffPlanActualViewModel
 @{
     ViewData["Title"] = "Plan vs Actual - Staff";
 }
@@ -191,7 +191,7 @@
             $('#project-percent-plan').val('0%');
 
             if (currentProjectCode) {
-                $.get('@Url.Action("GetProjectInfo", "ProjPlanVsActualsStaff", new { area = "FPS" })',
+                $.get('@Url.Action("GetProjectInfo", "ProjectStaffPlanActual", new { area = "FPS" })',
                     { projectCode: currentProjectCode },
                     function (result) {
                         if (result.success) {
@@ -219,7 +219,7 @@
 
         function refreshPlannedCost() {
             if (!currentProjectCode) return;
-            $.get('@Url.Action("GetTotalPlannedCost", "ProjPlanVsActualsStaff", new { area = "FPS" })',
+            $.get('@Url.Action("GetTotalPlannedCost", "ProjectStaffPlanActual", new { area = "FPS" })',
                 { projectCode: currentProjectCode },
                 function (result) {
                     if (result.success) {
@@ -232,7 +232,7 @@
 
         function refreshActualTotals() {
             if (!currentProjectCode) return;
-            $.get('@Url.Action("GetTotalActualCost", "ProjPlanVsActualsStaff", new { area = "FPS" })',
+            $.get('@Url.Action("GetTotalActualCost", "ProjectStaffPlanActual", new { area = "FPS" })',
                 { projectCode: currentProjectCode },
                 function (result) {
                     if (result.success) {
@@ -261,7 +261,7 @@
             showGovukConfirm('Are you sure you want to delete this record?').then(function (confirmed) {
                 if (!confirmed) return;
                 $.ajax({
-                    url: '@Url.Action("DeleteTimeCostCalcs", "ProjPlanVsActualsStaff", new { area = "FPS" })',
+                    url: '@Url.Action("DeleteTimeCostCalcs", "ProjectStaffPlanActual", new { area = "FPS" })',
                     type: 'DELETE',
                     data: { rowKey: rowKey },
                     success: function (result) {

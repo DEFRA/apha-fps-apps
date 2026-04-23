@@ -16,14 +16,14 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
     [Area("FPS")]
     [Authorize(Roles = "FPSAdmin,FPSUser")]
     [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")]
-    public class ProjPlanVsActualsStaffController : Controller
+    public class ProjectStaffPlanActualController : Controller
     {
         private readonly IMapper _mapper;
         private readonly IProjPlanVsActualsStaffService _ProjPlanVsActualsStaffService;
         private readonly IProjectService _projectService;
         private readonly IStaffJobService _staffJobService;
 
-        public ProjPlanVsActualsStaffController(
+        public ProjectStaffPlanActualController(
             IMapper mapper,
             IProjPlanVsActualsStaffService ProjPlanVsActualsStaffService,
             IProjectService projectService,
@@ -77,7 +77,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 KeyProperty = "RowKey",
                 DeleteFunction = "deleteCompareStaff2",
                 ExtraFilterMethod = "getCompareStaff2ExtraFilters",
-                BindGridUrl = "/FPS/ProjPlanVsActualsStaff/LoadCompareStaff2Grid",
+                BindGridUrl = "/FPS/ProjectStaffPlanActual/LoadCompareStaff2Grid",
                 Data = new List<CompareStaff2Item>(),
                 Columns = GridDataProvider.GetColumnsDefination<CompareStaff2Item>(),
                 Pagination = new PaginationModel()
@@ -87,7 +87,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ? (await _staffJobService.GetTotalStaffCostAsync(selectedProjectCode)).Data
                 : 0m;
 
-            var model = new ProjPlanVsActualsStaffViewModel
+            var model = new ProjectStaffPlanActualViewModel
             {
                 SelectedProjectCode = selectedProjectCode,
                 ProjectTitle = projectInfo?.ProjectTitle ?? string.Empty,
@@ -140,7 +140,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 KeyProperty = "RowKey",
                 DeleteFunction = "deleteCompareStaff2",
                 ExtraFilterMethod = "getCompareStaff2ExtraFilters",
-                BindGridUrl = "/FPS/ProjPlanVsActualsStaff/LoadCompareStaff2Grid",
+                BindGridUrl = "/FPS/ProjectStaffPlanActual/LoadCompareStaff2Grid",
                 Data = items,
                 Columns = GridDataProvider.GetColumnsDefination<CompareStaff2Item>(null),
                 Pagination = paginationModel,

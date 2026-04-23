@@ -237,9 +237,10 @@ namespace Apha.FPS.Api.UnitTests.Controller.TimeCostCalcsControllerTest
             // Arrange
             _serviceMock.DeleteTimeCostCalcsAsync("WG1", "JOB1", "AH0033", 1, "S01")
                 .Returns(true);
+            var req = new TimeCostCalcsReq { WorkGroup = "WG1", JobCode = "JOB1", Project = "AH0033", Month = 1, StaffId = "S01" };
 
             // Act
-            var result = await _controller.DeleteTimeCostCalcsAsync("WG1", "JOB1", "AH0033", 1, "S01");
+            var result = await _controller.DeleteTimeCostCalcsAsync(req);
 
             // Assert
             Assert.IsType<OkObjectResult>(result);
@@ -251,10 +252,11 @@ namespace Apha.FPS.Api.UnitTests.Controller.TimeCostCalcsControllerTest
             // Arrange
             _serviceMock.DeleteTimeCostCalcsAsync("WG1", "JOB1", "AH0033", 1, "S01")
                 .Returns(false);
+            var req = new TimeCostCalcsReq { WorkGroup = "WG1", JobCode = "JOB1", Project = "AH0033", Month = 1, StaffId = "S01" };
 
             // Act & Assert
             await Assert.ThrowsAsync<KeyNotFoundException>(
-                () => _controller.DeleteTimeCostCalcsAsync("WG1", "JOB1", "AH0033", 1, "S01"));
+                () => _controller.DeleteTimeCostCalcsAsync(req));
         }
 
         [Theory]
@@ -265,9 +267,11 @@ namespace Apha.FPS.Api.UnitTests.Controller.TimeCostCalcsControllerTest
         public async Task DeleteTimeCostCalcsAsync_WithMissingRequiredParam_ThrowsArgumentException(
             string workgroup, string jobCode, string project, string staffId)
         {
+            var req = new TimeCostCalcsReq { WorkGroup = workgroup, JobCode = jobCode, Project = project, Month = 1, StaffId = staffId };
+
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentException>(
-                () => _controller.DeleteTimeCostCalcsAsync(workgroup, jobCode, project, 1, staffId));
+                () => _controller.DeleteTimeCostCalcsAsync(req));
             await _serviceMock.DidNotReceive().DeleteTimeCostCalcsAsync(
                 Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(),
                 Arg.Any<double>(), Arg.Any<string>());
@@ -279,9 +283,10 @@ namespace Apha.FPS.Api.UnitTests.Controller.TimeCostCalcsControllerTest
             // Arrange
             _serviceMock.DeleteTimeCostCalcsAsync("WG1", "JOB1", "AH0033", 3.5, "S01")
                 .Returns(true);
+            var req = new TimeCostCalcsReq { WorkGroup = "WG1", JobCode = "JOB1", Project = "AH0033", Month = 3.5, StaffId = "S01" };
 
             // Act
-            await _controller.DeleteTimeCostCalcsAsync("WG1", "JOB1", "AH0033", 3.5, "S01");
+            await _controller.DeleteTimeCostCalcsAsync(req);
 
             // Assert
             await _serviceMock.Received(1)

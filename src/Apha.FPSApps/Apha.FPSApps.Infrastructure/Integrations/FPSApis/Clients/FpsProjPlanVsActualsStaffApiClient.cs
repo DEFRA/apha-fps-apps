@@ -48,8 +48,15 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
         public async Task<ApiResponseDto<bool>> DeleteTimeCostCalcsAsync(string workgroup, string jobCode, string project, double month, string staffId)
         {
-            var url = string.Format(FpsApiEndpoints.DeleteTimeCostCalcs, workgroup, jobCode, project, month, staffId);
-            var response = await _http.DeleteAsync<bool>(url);
+            var req = new TimeCostCalcsReq
+            {
+                WorkGroup = workgroup,
+                JobCode   = jobCode,
+                Project   = project,
+                Month     = month,
+                StaffId   = staffId
+            };
+            var response = await _http.DeleteAsync<TimeCostCalcsReq, bool>(FpsApiEndpoints.DeleteTimeCostCalcs, req);
             if (response.Success)
                 return ApiResponseDto<bool>.SuccessResponse(true);
 

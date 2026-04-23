@@ -11,23 +11,23 @@ using NSubstitute;
 using System.Text.Json;
 using Xunit;
 
-namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjPlanVsActualsStaffControllerTest
+namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectStaffPlanActualControllerTest
 {
-    public class ProjPlanVsActualsStaffControllerTests
+    public class ProjectStaffPlanActualControllerTests
     {
         private readonly IMapper _mapper;
         private readonly IProjPlanVsActualsStaffService _ProjPlanVsActualsStaffService;
         private readonly IProjectService _projectService;
         private readonly IStaffJobService _staffJobService;
-        private readonly ProjPlanVsActualsStaffController _controller;
+        private readonly ProjectStaffPlanActualController _controller;
 
-        public ProjPlanVsActualsStaffControllerTests()
+        public ProjectStaffPlanActualControllerTests()
         {
             _mapper = Substitute.For<IMapper>();
             _ProjPlanVsActualsStaffService = Substitute.For<IProjPlanVsActualsStaffService>();
             _projectService = Substitute.For<IProjectService>();
             _staffJobService = Substitute.For<IStaffJobService>();
-            _controller = new ProjPlanVsActualsStaffController(
+            _controller = new ProjectStaffPlanActualController(
                 _mapper,
                 _ProjPlanVsActualsStaffService,
                 _projectService,
@@ -87,7 +87,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjPlanVsActualsStaffContr
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<ProjPlanVsActualsStaffViewModel>(viewResult.Model);
+            var model = Assert.IsType<ProjectStaffPlanActualViewModel>(viewResult.Model);
             Assert.Equal(projectCode, model.SelectedProjectCode);
             Assert.Equal("Test Project", model.ProjectTitle);
             Assert.Equal("P001", model.Program);
@@ -115,7 +115,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjPlanVsActualsStaffContr
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<ProjPlanVsActualsStaffViewModel>(viewResult.Model);
+            var model = Assert.IsType<ProjectStaffPlanActualViewModel>(
+                Assert.IsType<ViewResult>(result).Model);
             Assert.Equal("AH0001", model.SelectedProjectCode);
         }
 
@@ -136,7 +137,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjPlanVsActualsStaffContr
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<ProjPlanVsActualsStaffViewModel>(viewResult.Model);
+            var model = Assert.IsType<ProjectStaffPlanActualViewModel>(viewResult.Model);
             Assert.Equal("AH0001", model.SelectedProjectCode);
         }
 
@@ -154,7 +155,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjPlanVsActualsStaffContr
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<ProjPlanVsActualsStaffViewModel>(viewResult.Model);
+            var model = Assert.IsType<ProjectStaffPlanActualViewModel>(viewResult.Model);
             Assert.Equal(string.Empty, model.SelectedProjectCode);
             Assert.Empty(model.ProjectList);
         }
@@ -171,7 +172,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjPlanVsActualsStaffContr
             var result = await _controller.Index("AH0033");
 
             // Assert
-            var model = Assert.IsType<ProjPlanVsActualsStaffViewModel>(
+            var model = Assert.IsType<ProjectStaffPlanActualViewModel>(
                 Assert.IsType<ViewResult>(result).Model);
             Assert.NotNull(model.StaffPlanGrid);
             Assert.NotNull(model.CompareStaff2Grid);
@@ -191,7 +192,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjPlanVsActualsStaffContr
             var result = await _controller.Index("AH0033");
 
             // Assert
-            var model = Assert.IsType<ProjPlanVsActualsStaffViewModel>(
+            var model = Assert.IsType<ProjectStaffPlanActualViewModel>(
                 Assert.IsType<ViewResult>(result).Model);
             Assert.False(model.CompareStaff2Grid.AllowAdd);
             Assert.False(model.CompareStaff2Grid.AllowEdit);
@@ -210,7 +211,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjPlanVsActualsStaffContr
             var result = await _controller.Index("AH0033");
 
             // Assert
-            var model = Assert.IsType<ProjPlanVsActualsStaffViewModel>(
+            var model = Assert.IsType<ProjectStaffPlanActualViewModel>(
                 Assert.IsType<ViewResult>(result).Model);
             Assert.True(model.StaffPlanGrid.AllowAdd);
             Assert.True(model.StaffPlanGrid.AllowEdit);
