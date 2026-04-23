@@ -85,9 +85,12 @@ namespace Apha.FPS.DataAccess.Repositories
                 || string.IsNullOrWhiteSpace(project) || string.IsNullOrWhiteSpace(staffId))
                 return false;
 
+            const double epsilon = 1e-9;
             var entity = await _dbContext.TimeCostCalcs
                 .Where(x => x.WorkGroup == workgroup && x.JobCode == jobCode
-                         && x.Project == project && x.Month == month && x.StaffId == staffId)
+                         && x.Project == project
+                         && x.Month >= month - epsilon && x.Month <= month + epsilon
+                         && x.StaffId == staffId)
                 .FirstOrDefaultAsync();
 
             if (entity == null) return false;

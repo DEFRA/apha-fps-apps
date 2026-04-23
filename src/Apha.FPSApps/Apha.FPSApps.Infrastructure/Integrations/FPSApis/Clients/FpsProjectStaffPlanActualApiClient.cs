@@ -10,13 +10,13 @@ using AutoMapper;
 
 namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 {
-    public class FpsProjPlanVsActualsStaffApiClient : IFpsProjPlanVsActualsStaffApiClient
+    public class FpsProjectStaffPlanActualApiClient : IFpsProjectStaffPlanActualApiClient
     {
         private readonly IFpsHttpExecutor _http;
         private readonly IMapper _mapper;
         private const string InternalCodeError = "INTERNAL_ERROR";
 
-        public FpsProjPlanVsActualsStaffApiClient(IFpsHttpExecutor http, IMapper mapper)
+        public FpsProjectStaffPlanActualApiClient(IFpsHttpExecutor http, IMapper mapper)
         {
             _http = http;
             _mapper = mapper;

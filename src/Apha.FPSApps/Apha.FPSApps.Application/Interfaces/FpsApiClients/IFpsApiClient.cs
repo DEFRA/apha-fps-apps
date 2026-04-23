@@ -11,6 +11,6 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         IFpsSettingApiClient FpsSetting { get; }
         IFpsYearMasterApiClient FpsYearMaster { get; }
         IFpsTestorProductApiClient FpsTestorProduct { get; }
-        IFpsProjPlanVsActualsStaffApiClient FpsProjPlanVsActualsStaff { get; }
+        IFpsProjectStaffPlanActualApiClient FpsProjectStaffPlanActual { get; }
     }
 }

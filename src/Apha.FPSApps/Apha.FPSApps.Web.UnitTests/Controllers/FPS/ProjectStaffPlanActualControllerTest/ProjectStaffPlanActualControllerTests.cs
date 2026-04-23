@@ -16,7 +16,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectStaffPlanActualContr
     public class ProjectStaffPlanActualControllerTests
     {
         private readonly IMapper _mapper;
-        private readonly IProjPlanVsActualsStaffService _ProjPlanVsActualsStaffService;
+        private readonly IProjectStaffPlanActualService _projPlanVsActualsStaffService;
         private readonly IProjectService _projectService;
         private readonly IStaffJobService _staffJobService;
         private readonly ProjectStaffPlanActualController _controller;
@@ -24,12 +24,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectStaffPlanActualContr
         public ProjectStaffPlanActualControllerTests()
         {
             _mapper = Substitute.For<IMapper>();
-            _ProjPlanVsActualsStaffService = Substitute.For<IProjPlanVsActualsStaffService>();
+            _projPlanVsActualsStaffService = Substitute.For<IProjectStaffPlanActualService>();
             _projectService = Substitute.For<IProjectService>();
             _staffJobService = Substitute.For<IStaffJobService>();
             _controller = new ProjectStaffPlanActualController(
                 _mapper,
-                _ProjPlanVsActualsStaffService,
+                _projPlanVsActualsStaffService,
                 _projectService,
                 _staffJobService);
         }
@@ -242,7 +242,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectStaffPlanActualContr
             var paginationModel = new PaginationModel { PageNumber = 1, PageSize = 10, TotalRecords = 1 };
 
             _mapper.Map<QueryParameters<string>>(request).Returns(query);
-            _ProjPlanVsActualsStaffService.GetTimeCostCalcsByProjectAsync(query, projectCode).Returns(serviceResponse);
+            _projPlanVsActualsStaffService.GetTimeCostCalcsByProjectAsync(query, projectCode).Returns(serviceResponse);
             _mapper.Map<List<CompareStaff2Item>>(items).Returns(gridItems);
             _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(paginationModel);
 
@@ -271,7 +271,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectStaffPlanActualContr
                 new List<TimeCostCalcsViewDto>(), new PaginationDto());
 
             _mapper.Map<QueryParameters<string>>(request).Returns(query);
-            _ProjPlanVsActualsStaffService.GetTimeCostCalcsByProjectAsync(query, string.Empty).Returns(serviceResponse);
+            _projPlanVsActualsStaffService.GetTimeCostCalcsByProjectAsync(query, string.Empty).Returns(serviceResponse);
             _mapper.Map<List<CompareStaff2Item>>(Arg.Any<List<TimeCostCalcsViewDto>>()).Returns(new List<CompareStaff2Item>());
             _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(new PaginationModel());
 
@@ -280,7 +280,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectStaffPlanActualContr
 
             // Assert
             Assert.IsType<PartialViewResult>(result);
-            await _ProjPlanVsActualsStaffService.Received(1)
+            await _projPlanVsActualsStaffService.Received(1)
                 .GetTimeCostCalcsByProjectAsync(query, string.Empty);
         }
 
@@ -300,7 +300,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectStaffPlanActualContr
             Assert.NotNull(value);
             Assert.False(value.success);
             Assert.Equal("Invalid request data", value.message);
-            await _ProjPlanVsActualsStaffService.DidNotReceive()
+            await _projPlanVsActualsStaffService.DidNotReceive()
                 .GetTimeCostCalcsByProjectAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
         }
 
@@ -461,7 +461,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectStaffPlanActualContr
             // Arrange
             var projectCode = "AH0033";
             var totals = new TimeCostCalcsTotalsDto { TotalHours = 40.5, TotalCost = 5000.0 };
-            _ProjPlanVsActualsStaffService.GetTotalActualByProjectAsync(projectCode)
+            _projPlanVsActualsStaffService.GetTotalActualByProjectAsync(projectCode)
                 .Returns(ApiResponseDto<TimeCostCalcsTotalsDto>.SuccessResponse(totals));
 
             // Act
@@ -489,7 +489,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectStaffPlanActualContr
             var jsonResult = Assert.IsType<JsonResult>(result);
             var value = GetJsonResultValue<JsonResponse>(jsonResult);
             Assert.False(value!.success);
-            await _ProjPlanVsActualsStaffService.DidNotReceive()
+            await _projPlanVsActualsStaffService.DidNotReceive()
                 .GetTotalActualByProjectAsync(Arg.Any<string>());
         }
 
@@ -499,7 +499,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectStaffPlanActualContr
             // Arrange
             var projectCode = "AH0033";
             var errors = new List<ApiErrorDto> { new() { Code = "ERROR", Message = "Failed" } };
-            _ProjPlanVsActualsStaffService.GetTotalActualByProjectAsync(projectCode)
+            _projPlanVsActualsStaffService.GetTotalActualByProjectAsync(projectCode)
                 .Returns(ApiResponseDto<TimeCostCalcsTotalsDto>.FailureResponse(errors, new ApiMetaDto()));
 
             // Act
@@ -516,7 +516,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectStaffPlanActualContr
         {
             // Arrange
             var projectCode = "AH0033";
-            _ProjPlanVsActualsStaffService.GetTotalActualByProjectAsync(projectCode)
+            _projPlanVsActualsStaffService.GetTotalActualByProjectAsync(projectCode)
                 .Returns(ApiResponseDto<TimeCostCalcsTotalsDto>.SuccessResponse(null!));
 
             // Act
@@ -537,7 +537,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectStaffPlanActualContr
         {
             // Arrange
             var rowKey = "WG1|JOB1|AH0033|1|S01";
-            _ProjPlanVsActualsStaffService
+            _projPlanVsActualsStaffService
                 .DeleteTimeCostCalcsAsync("WG1", "JOB1", "AH0033", 1, "S01")
                 .Returns(ApiResponseDto<bool>.SuccessResponse(true));
 
@@ -563,7 +563,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectStaffPlanActualContr
             var jsonResult = Assert.IsType<JsonResult>(result);
             var value = GetJsonResultValue<JsonResponse>(jsonResult);
             Assert.False(value!.success);
-            await _ProjPlanVsActualsStaffService.DidNotReceive()
+            await _projPlanVsActualsStaffService.DidNotReceive()
                 .DeleteTimeCostCalcsAsync(Arg.Any<string>(), Arg.Any<string>(),
                     Arg.Any<string>(), Arg.Any<double>(), Arg.Any<string>());
         }
@@ -590,7 +590,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectStaffPlanActualContr
             // Arrange
             var rowKey = "WG1|JOB1|AH0033|1|S01";
             var errors = new List<ApiErrorDto> { new() { Code = "NOT_FOUND", Message = "Not found" } };
-            _ProjPlanVsActualsStaffService
+            _projPlanVsActualsStaffService
                 .DeleteTimeCostCalcsAsync("WG1", "JOB1", "AH0033", 1, "S01")
                 .Returns(ApiResponseDto<bool>.FailureResponse(errors, new ApiMetaDto()));
 
@@ -608,7 +608,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectStaffPlanActualContr
         {
             // Arrange
             var rowKey = "WG1|JOB1|AH0033|3.5|S01";
-            _ProjPlanVsActualsStaffService
+            _projPlanVsActualsStaffService
                 .DeleteTimeCostCalcsAsync("WG1", "JOB1", "AH0033", 3.5, "S01")
                 .Returns(ApiResponseDto<bool>.SuccessResponse(true));
 
@@ -619,7 +619,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectStaffPlanActualContr
             var jsonResult = Assert.IsType<JsonResult>(result);
             var value = GetJsonResultValue<SuccessResponse>(jsonResult);
             Assert.True(value!.success);
-            await _ProjPlanVsActualsStaffService.Received(1)
+            await _projPlanVsActualsStaffService.Received(1)
                 .DeleteTimeCostCalcsAsync("WG1", "JOB1", "AH0033", 3.5, "S01");
         }
 
@@ -628,7 +628,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectStaffPlanActualContr
         {
             // Arrange
             var rowKey = "WG1|JOB1|AH0033|ABC|S01";
-            _ProjPlanVsActualsStaffService
+            _projPlanVsActualsStaffService
                 .DeleteTimeCostCalcsAsync("WG1", "JOB1", "AH0033", 0, "S01")
                 .Returns(ApiResponseDto<bool>.SuccessResponse(true));
 
@@ -636,7 +636,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectStaffPlanActualContr
             var result = await _controller.DeleteTimeCostCalcs(rowKey);
 
             // Assert
-            await _ProjPlanVsActualsStaffService.Received(1)
+            await _projPlanVsActualsStaffService.Received(1)
                 .DeleteTimeCostCalcsAsync("WG1", "JOB1", "AH0033", 0, "S01");
         }
 

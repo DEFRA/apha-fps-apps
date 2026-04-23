@@ -6,22 +6,22 @@ using Apha.FPSApps.Application.Pagination;
 
 namespace Apha.FPSApps.Application.Services.FPS
 {
-    public class ProjPlanVsActualsStaffService : IProjPlanVsActualsStaffService
+    public class ProjectStaffPlanActualService : IProjectStaffPlanActualService
     {
         private readonly IFpsApiClient _fpsClient;
 
-        public ProjPlanVsActualsStaffService(IFpsApiClient fpsClient)
+        public ProjectStaffPlanActualService(IFpsApiClient fpsClient)
         {
             _fpsClient = fpsClient;
         }
 
         public async Task<ApiResponseDto<List<TimeCostCalcsViewDto>>> GetTimeCostCalcsByProjectAsync(QueryParameters<string> query, string projectCode)
-            => await _fpsClient.FpsProjPlanVsActualsStaff.GetTimeCostCalcsByProjectAsync(query, projectCode);
+            => await _fpsClient.FpsProjectStaffPlanActual.GetTimeCostCalcsByProjectAsync(query, projectCode);
 
         public async Task<ApiResponseDto<TimeCostCalcsTotalsDto>> GetTotalActualByProjectAsync(string projectCode)
-            => await _fpsClient.FpsProjPlanVsActualsStaff.GetTotalActualByProjectAsync(projectCode);
+            => await _fpsClient.FpsProjectStaffPlanActual.GetTotalActualByProjectAsync(projectCode);
 
         public async Task<ApiResponseDto<bool>> DeleteTimeCostCalcsAsync(string workgroup, string jobCode, string project, double month, string staffId)
-            => await _fpsClient.FpsProjPlanVsActualsStaff.DeleteTimeCostCalcsAsync(workgroup, jobCode, project, month, staffId);
+            => await _fpsClient.FpsProjectStaffPlanActual.DeleteTimeCostCalcsAsync(workgroup, jobCode, project, month, staffId);
     }
 }

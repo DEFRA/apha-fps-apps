@@ -6,20 +6,20 @@ using Apha.FPSApps.Application.Services.FPS;
 using NSubstitute;
 using Xunit;
 
-namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProjPlanVsActualsStaffServiceTest
+namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProjectStaffPlanActualServiceTest
 {
-    public class ProjPlanVsActualsStaffServiceTests
+    public class ProjectStaffPlanActualServiceTests
     {
         private readonly IFpsApiClient _fpsClient;
-        private readonly IFpsProjPlanVsActualsStaffApiClient _apiClient;
-        private readonly ProjPlanVsActualsStaffService _service;
+        private readonly IFpsProjectStaffPlanActualApiClient _apiClient;
+        private readonly ProjectStaffPlanActualService _service;
 
-        public ProjPlanVsActualsStaffServiceTests()
+        public ProjectStaffPlanActualServiceTests()
         {
             _fpsClient = Substitute.For<IFpsApiClient>();
-            _apiClient = Substitute.For<IFpsProjPlanVsActualsStaffApiClient>();
-            _fpsClient.FpsProjPlanVsActualsStaff.Returns(_apiClient);
-            _service   = new ProjPlanVsActualsStaffService(_fpsClient);
+            _apiClient = Substitute.For<IFpsProjectStaffPlanActualApiClient>();
+            _fpsClient.FpsProjectStaffPlanActual.Returns(_apiClient);
+            _service   = new ProjectStaffPlanActualService(_fpsClient);
         }
 
         private static QueryParameters<string> DefaultQuery(int page = 1, int pageSize = 10)
@@ -113,7 +113,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProjPlanVsActualsStaff
 
             // Assert
             await _apiClient.Received(1).GetTimeCostCalcsByProjectAsync(query, projectCode);
-            _ = _fpsClient.Received(1).FpsProjPlanVsActualsStaff;
+            _ = _fpsClient.Received(1).FpsProjectStaffPlanActual;
         }
 
         [Theory]
@@ -189,7 +189,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProjPlanVsActualsStaff
 
             // Assert
             await _apiClient.Received(1).GetTotalActualByProjectAsync(projectCode);
-            _ = _fpsClient.Received(1).FpsProjPlanVsActualsStaff;
+            _ = _fpsClient.Received(1).FpsProjectStaffPlanActual;
         }
 
         #endregion
@@ -238,7 +238,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProjPlanVsActualsStaff
 
             // Assert
             await _apiClient.Received(1).DeleteTimeCostCalcsAsync("WG1", "JOB1", "AH0033", 3.5, "S01");
-            _ = _fpsClient.Received(1).FpsProjPlanVsActualsStaff;
+            _ = _fpsClient.Received(1).FpsProjectStaffPlanActual;
         }
 
         #endregion

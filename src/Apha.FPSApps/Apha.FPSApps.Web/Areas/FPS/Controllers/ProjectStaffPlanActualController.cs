@@ -19,18 +19,18 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
     public class ProjectStaffPlanActualController : Controller
     {
         private readonly IMapper _mapper;
-        private readonly IProjPlanVsActualsStaffService _ProjPlanVsActualsStaffService;
+        private readonly IProjectStaffPlanActualService _projPlanVsActualsStaffService;
         private readonly IProjectService _projectService;
         private readonly IStaffJobService _staffJobService;
 
         public ProjectStaffPlanActualController(
             IMapper mapper,
-            IProjPlanVsActualsStaffService ProjPlanVsActualsStaffService,
+            IProjectStaffPlanActualService projPlanVsActualsStaffService,
             IProjectService projectService,
             IStaffJobService staffJobService)
         {
             _mapper = mapper;
-            _ProjPlanVsActualsStaffService = ProjPlanVsActualsStaffService;
+            _projPlanVsActualsStaffService = projPlanVsActualsStaffService;
             _projectService = projectService;
             _staffJobService = staffJobService;
         }
@@ -118,7 +118,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}")
                 ?? new Dictionary<string, string>();
             var queryParameters = _mapper.Map<QueryParameters<string>>(request);
-            var pagedData = await _ProjPlanVsActualsStaffService.GetTimeCostCalcsByProjectAsync(queryParameters, projectCode ?? string.Empty);
+            var pagedData = await _projPlanVsActualsStaffService.GetTimeCostCalcsByProjectAsync(queryParameters, projectCode ?? string.Empty);
 
             var items = new List<CompareStaff2Item>();
             if (pagedData.Data != null)
@@ -209,7 +209,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             if (string.IsNullOrWhiteSpace(projectCode))
                 return Json(new { success = false, message = "Project code is required." });
 
-            var result = await _ProjPlanVsActualsStaffService.GetTotalActualByProjectAsync(projectCode);
+            var result = await _projPlanVsActualsStaffService.GetTotalActualByProjectAsync(projectCode);
             if (result.Success && result.Data != null)
                 return Json(new { success = true, totalHours = result.Data.TotalHours, totalCost = result.Data.TotalCost });
 
@@ -243,7 +243,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var month     = double.TryParse(parts[3], out var m) ? m : 0;
             var staffId   = parts[4];
 
-            var result = await _ProjPlanVsActualsStaffService.DeleteTimeCostCalcsAsync(workgroup, jobCode, project, month, staffId);
+            var result = await _projPlanVsActualsStaffService.DeleteTimeCostCalcsAsync(workgroup, jobCode, project, month, staffId);
             if (result.Success)
                 return Json(new { success = true, message = "Record deleted successfully" });
 

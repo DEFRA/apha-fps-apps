@@ -17,7 +17,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public IFpsYearMasterApiClient FpsYearMaster { get; }
 
         public IFpsTestorProductApiClient FpsTestorProduct { get; }
-        public IFpsProjPlanVsActualsStaffApiClient FpsProjPlanVsActualsStaff { get; }
+        public IFpsProjectStaffPlanActualApiClient FpsProjectStaffPlanActual { get; }
 
         public FpsApiClient(IFpsHttpExecutor http, IMapper mapper)
         {
@@ -30,7 +30,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             FpsSetting = new FpsSettingApiClient(http, mapper);
             FpsYearMaster = new FpsYearMasterApiClient(http, mapper);
             FpsTestorProduct = new FpsTestorProductApiClient(http, mapper);
-            FpsProjPlanVsActualsStaff = new FpsProjPlanVsActualsStaffApiClient(http, mapper);
+            FpsProjectStaffPlanActual = new FpsProjectStaffPlanActualApiClient(http, mapper);
         }
     }
 }

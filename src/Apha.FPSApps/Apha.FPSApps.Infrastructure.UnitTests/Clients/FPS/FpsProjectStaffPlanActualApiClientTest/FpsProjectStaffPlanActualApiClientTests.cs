@@ -10,19 +10,19 @@ using AutoMapper;
 using NSubstitute;
 using Xunit;
 
-namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjPlanVsActualsStaffApiClientTest
+namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectStaffPlanActualApiClientTest
 {
-    public class FpsProjPlanVsActualsStaffApiClientTests
+    public class FpsProjectStaffPlanActualApiClientTests
     {
         private readonly IFpsHttpExecutor _http;
         private readonly IMapper _mapper;
-        private readonly FpsProjPlanVsActualsStaffApiClient _client;
+        private readonly FpsProjectStaffPlanActualApiClient _client;
 
-        public FpsProjPlanVsActualsStaffApiClientTests()
+        public FpsProjectStaffPlanActualApiClientTests()
         {
             _http   = Substitute.For<IFpsHttpExecutor>();
             _mapper = Substitute.For<IMapper>();
-            _client = new FpsProjPlanVsActualsStaffApiClient(_http, _mapper);
+            _client = new FpsProjectStaffPlanActualApiClient(_http, _mapper);
         }
 
         private static QueryParameters<string> DefaultQuery(int page = 1, int pageSize = 10)
