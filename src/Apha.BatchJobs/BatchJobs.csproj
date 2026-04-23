@@ -33,11 +33,12 @@
     <EmbeddedResource Remove="Apha.BatchJobs.UnitTests\**\*" />
     <EmbeddedResource Remove="Apha.BatchJobs.Api\**\*" />
     <EmbeddedResource Remove="Apha.BatchJobs.Worker\**\*" />
+    <None Remove="Apha.BatchJobs.UnitTests\**\*" />
+    <None Remove="Apha.BatchJobs.Api\**\*" />
+    <None Remove="Apha.BatchJobs.Worker\**\*" />
     <None Include="Archive\**\*" />
     <None Include="ReImagineAnalysis_v4\**\*" />
     <None Include="docs\**\*" />
-    <None Include="Apha.BatchJobs.UnitTests\**\*" />
-    <None Include="Apha.BatchJobs.Worker\**\*" />
   </ItemGroup>
 
   <ItemGroup>
