@@ -1,7 +1,7 @@
 var selectedProjectCode = '';
 
 $(document).ready(function () {
-    // ── Program Dropdown ─────────────────────────────────────────
+    // ── Program Dropdown ───
     var $input = $('#programSelect');
     var $panel = $('#programDropdownPanel');
     var $search = $('#programSearchBox');
@@ -42,7 +42,7 @@ $(document).ready(function () {
         }
     });
 
-    // ── Initial Load ─────────────────────────────────────────────
+    // ── Initial Load ─────────
     var programNo = $('#selectedProgramNo').val();
     if (programNo) {
         // Set the input display text from the matching row

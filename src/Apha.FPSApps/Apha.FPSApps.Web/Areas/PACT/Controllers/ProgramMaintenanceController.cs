@@ -22,17 +22,12 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         private readonly IProgramService _programService;
         private readonly IProjectService _projectService;
 
-        public ProgramMaintenanceController(
-            IMapper mapper,
-            IProgramService programService,
-            IProjectService projectService)
+        public ProgramMaintenanceController( IMapper mapper, IProgramService programService, IProjectService projectService)
         {
             _mapper = mapper;
             _programService = programService;
             _projectService = projectService;
         }
-
-        // ── INDEX ────────────────────────────────────────────────────────────
 
         public async Task<IActionResult> Index(string? programNo = null)
         {
@@ -40,13 +35,13 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
             var isValid = !string.IsNullOrWhiteSpace(programNo)
                           && programList.Any(p => p.Value == programNo);
+            
             var selectedProgramNo = isValid
                 ? programNo!
                 : programList.FirstOrDefault()?.Value ?? string.Empty;
 
             var defaultRequest = new PaginationFilter<string>();
             var grid = await BuildProjectsGrid(defaultRequest, string.IsNullOrEmpty(programNo) ? selectedProgramNo : programNo);
-
 
             var model = new PactProgramMaintenanceViewModel
             {
@@ -58,8 +53,11 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return View(model);
         }
 
-        // ── LOAD PROGRAM (AJAX) ──────────────────────────────────────────────
-
+        /// <summary>
+        /// Method to fetch program details. Method invoke from AJAX
+        /// </summary>
+        /// <param name="programNo"></param>
+        /// <returns></returns>
         [HttpGet]
         public async Task<IActionResult> GetProgram(string programNo)
         {
@@ -71,8 +69,11 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return Json(new { success = true, data = vm });
         }
 
-        // ── SAVE PROGRAM (AJAX) ─────────────────────────────────────────────
-
+        /// <summary>
+        /// Method to save program details. Method invoke from AJAX
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
         [HttpPost]
         public async Task<IActionResult> Save([FromBody] PactProgramViewModel model)
         {
@@ -116,8 +117,12 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             });
         }
 
-        // ── LOAD PROJECTS GRID (AJAX) ────────────────────────────────────────
-
+        /// <summary>
+        /// Method to save program's project details. Method invoke from AJAX
+        /// </summary>
+        /// <param name="request"></param>
+        /// <param name="programNo"></param>
+        /// <returns></returns>
         [HttpPost]
         public async Task<IActionResult> LoadProjectsGrid(PaginationFilter<string> request, string programNo)
         {
@@ -129,7 +134,6 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return PartialView("_DataGrid", gridConfig);
         }
 
-        // ── PRIVATE HELPERS ──────────────────────────────────────────────────
 
         private async Task<List<SelectListItem>> GetProgramListAsync()
         {
@@ -146,8 +150,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 .ToList();
         }
 
-        private async Task<DataGridConfig<PactProgramProjectItem>> BuildProjectsGrid(
-            PaginationFilter<string> request, string programNo)
+        private async Task<DataGridConfig<PactProgramProjectItem>> BuildProjectsGrid(PaginationFilter<string> request, string programNo)
         {
             var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}")
                              ?? new Dictionary<string, string>();
@@ -165,7 +168,6 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             pagination.SortColumn = request.SortBy;
             pagination.SortDirection = request.Descending;
 
-            //var gridConfig = new DataGridConfig<PactProgramProjectItem>
             return new DataGridConfig<PactProgramProjectItem>
             {
                 GridId = "projectsGrid",
