@@ -45,7 +45,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 : programList.FirstOrDefault()?.Value ?? string.Empty;
 
             var defaultRequest = new PaginationFilter<string>();
-            var grid = await BuildEmptyProjectsGrid(defaultRequest, string.IsNullOrEmpty(programNo) ? selectedProgramNo : programNo);
+            var grid = await BuildProjectsGrid(defaultRequest, string.IsNullOrEmpty(programNo) ? selectedProgramNo : programNo);
 
 
             var model = new PactProgramMaintenanceViewModel
@@ -117,7 +117,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             if (!ModelState.IsValid || string.IsNullOrWhiteSpace(programNo))
                 return BadRequest(ModelState);
 
-            var gridConfig = await BuildEmptyProjectsGrid(request, programNo);
+            var gridConfig = await BuildProjectsGrid(request, programNo);
            
             return PartialView("_DataGrid", gridConfig);
         }
@@ -139,7 +139,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 .ToList();
         }
 
-        private async Task<DataGridConfig<PactProgramProjectItem>> BuildEmptyProjectsGrid(
+        private async Task<DataGridConfig<PactProgramProjectItem>> BuildProjectsGrid(
             PaginationFilter<string> request, string programNo)
         {
             var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}")
