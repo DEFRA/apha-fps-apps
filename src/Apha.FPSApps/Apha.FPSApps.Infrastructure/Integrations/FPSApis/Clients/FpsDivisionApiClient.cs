@@ -1,3 +1,4 @@
+using Apha.Common.Constants;
 using Apha.Common.Contracts.FPS;
 using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
@@ -16,7 +17,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
     {
         private readonly IFpsHttpExecutor _http;
         private readonly IMapper _mapper;
-        private const string InternalCodeError = "INTERNAL_ERROR";
+        private const string internalCodeError = "INTERNAL_ERROR";
 
         public FpsDivisionApiClient(IFpsHttpExecutor http, IMapper mapper)
         {
@@ -28,7 +29,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var response = await _http.GetAsync<List<DivisionRes>>("api/division");
+                var response = await _http.GetAsync<List<DivisionRes>>(FpsApiEndpoints.GetAllDivisions);
 
                 if (response.Success)
                 {
@@ -47,7 +48,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                     new ApiErrorDto
                     {
                         Message = "Failed to retrieve division data",
-                        Code = InternalCodeError,
+                        Code = internalCodeError,
                         Details = null
                     }
                 };
@@ -59,7 +60,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var url = QueryStringHelper.AddQueryString("api/division/paged", query);
+                var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetPagedDivisions, query);
                 var response = await _http.GetAsync<List<DivisionRes>>(url);
 
                 if (response.Success)
@@ -79,7 +80,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                     new ApiErrorDto
                     {
                         Message = "Failed to retrieve paginated division data",
-                        Code = InternalCodeError,
+                        Code = internalCodeError,
                         Details = null
                     }
                 };
@@ -91,7 +92,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var response = await _http.GetAsync<DivisionRes>($"api/division/{divName}");
+                var response = await _http.GetAsync<DivisionRes>(string.Format(FpsApiEndpoints.GetDivisionByName, divName));
 
                 if (response.Success)
                 {
@@ -110,7 +111,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                     new ApiErrorDto
                     {
                         Message = $"Failed to retrieve division '{divName}'",
-                        Code = InternalCodeError,
+                        Code = internalCodeError,
                         Details = null
                     }
                 };
@@ -123,7 +124,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             try
             {
                 var request = _mapper.Map<DivisionReq>(divisionDto);
-                var response = await _http.PostAsync<DivisionReq, DivisionRes>("api/division", request);
+                var response = await _http.PostAsync<DivisionReq, DivisionRes>(FpsApiEndpoints.CreateDivision, request);
 
                 if (response.Success)
                 {
@@ -142,7 +143,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                     new ApiErrorDto
                     {
                         Message = "Failed to create division",
-                        Code = InternalCodeError,
+                        Code = internalCodeError,
                         Details = null
                     }
                 };
@@ -155,7 +156,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             try
             {
                 var request = _mapper.Map<DivisionReq>(divisionDto);
-                var response = await _http.PutAsync<DivisionReq, DivisionRes>($"api/division/{divName}", request);
+                var response = await _http.PutAsync<DivisionReq, DivisionRes>(string.Format(FpsApiEndpoints.UpdateDivision, divName), request);
 
                 if (response.Success)
                 {
@@ -174,7 +175,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                     new ApiErrorDto
                     {
                         Message = $"Failed to update division '{divName}'",
-                        Code = InternalCodeError,
+                        Code = internalCodeError,
                         Details = null
                     }
                 };
@@ -186,7 +187,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var response = await _http.DeleteAsync<bool?>($"api/division/{divName}");
+                var response = await _http.DeleteAsync<bool?>(string.Format(FpsApiEndpoints.DeleteDivision, divName));
 
                 if (response.Success)
                 {
@@ -205,7 +206,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                     new ApiErrorDto
                     {
                         Message = $"Failed to delete division '{divName}'",
-                        Code = InternalCodeError,
+                        Code = internalCodeError,
                         Details = null
                     }
                 };

@@ -70,8 +70,6 @@
 @section Scripts {
     <script src="~/js/ajax-form-validation.js"></script>
     <script>
-        // Debug: Check if functions are loaded
-        console.log('Division Maintenance scripts loaded');
 
         // Function to get current filters from the grid
         function getCurrentFilters() {
@@ -118,18 +116,14 @@
                 Descending: sort.descending
             };
 
-            console.log('Refreshing grid with filters:', requestData);
-
             $.ajax({
                 url: '@Url.Action("LoadDivisionGrid", "DivisionMaintenance", new { area = "FPS" })',
                 type: 'POST',
                 data: requestData,
                 success: function (html) {
                     $('#gridContainer_divisionGrid').html(html);
-                    console.log('Grid refreshed successfully');
                 },
                 error: function (xhr, status, error) {
-                    console.error('Error refreshing grid:', error);
                     // Fallback to full page reload if AJAX fails
                     window.location.reload();
                 }
@@ -147,15 +141,12 @@
                 Descending: true  // Descending to show higher IDs first (assuming new records have higher IDs)
             };
 
-            console.log('Refreshing grid to show new record:', newDivName, requestData);
-
             $.ajax({
                 url: '@Url.Action("LoadDivisionGrid", "DivisionMaintenance", new { area = "FPS" })',
                 type: 'POST',
                 data: requestData,
                 success: function (html) {
                     $('#gridContainer_divisionGrid').html(html);
-                    console.log('Grid refreshed successfully');
 
                     // Clear filter inputs visually
                     $('.grid-filter').val('');
@@ -166,7 +157,6 @@
                     }, 100);
                 },
                 error: function (xhr, status, error) {
-                    console.error('Error refreshing grid:', error);
                     // Fallback to full page reload if AJAX fails
                     window.location.reload();
                 }
@@ -199,29 +189,21 @@
 
         // Add Division
         function addDivision(btn) {
-            console.log('addDivision called', btn);
             $.ajax({
                 url: '@Url.Action("Create", "DivisionMaintenance", new { area = "FPS" })',
                 type: 'GET',
                 success: function (html) {
-                    console.log('Create response received');
                     $('#modaPopupBody').html(html);
-                    var modal = $('#modalPopup');
-                    modal.css('display', 'flex');
-                    setTimeout(function() {
-                        modal.addClass("show");
-                    }, 10);
+                    $('#modalPopup').addClass("show");
                 },
-                error: function (xhr, status, error) {
-                    console.error('Error in addDivision:', error, xhr);
-                    alert('An error occurred while loading the form: ' + error);
+                error: function () {
+                    alert('An error occurred while loading the form');
                 }
             });
         }
 
         // Save Division (Create)
         function saveDivision() {
-            console.log('saveDivision called');
             clearValidationErrors('#modaPopupBody');
             var form = $('#addDivisionForm');
 
@@ -246,39 +228,25 @@
                 CentOverhead: centOverhead
             };
 
-            console.log('Saving division data:', data);
-
             $.ajax({
                 url: '@Url.Action("Create", "DivisionMaintenance", new { area = "FPS" })',
                 type: 'POST',
                 data: JSON.stringify(data),
                 contentType: 'application/json; charset=utf-8',
                 success: function (result) {
-                    console.log('Save result:', result);
                     if (result.success) {
-                        alert(result.message || 'Division created successfully');
+                        alert(result.message);
                         closeModal();
-                        // Refresh grid and show new record in first row
-                        var newDivName = result.data && result.data.divName ? result.data.divName : data.DivName;
-                        refreshGridShowNewRecord(newDivName);
+                        window['gridManager_divisionGrid'].reloadGrid({ page: 1 });
                     } else {
                         displayServerValidationErrors(result.errors, result.message, '#modaPopupBody')
                     }
                 },
                 error: function (xhr) {
-                    console.error('Error saving:', xhr);
-                    if (xhr.status === 400 && xhr.responseJSON && xhr.responseJSON.message) {
-                        // Show FK validation or business logic error in summary
-                        var $container = $('#modaPopupBody');
-                        var $summary = $container.find('.govuk-error-summary');
-                        $summary.find('.govuk-error-summary__title').text('There is a problem');
-                        var $list = $summary.find('.govuk-error-summary__list').empty();
-                        $list.append('<li>' + xhr.responseJSON.message + '</li>');
-                        $summary.show().focus();
-                    } else if (xhr.status === 400 && xhr.responseJSON && xhr.responseJSON.errors) {
+                    if (xhr.status === 400 && xhr.responseJSON) {
                         displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
                     } else {
-                        alert('An error occurred while saving the division');
+                        alert('An error occurred while saving');
                     }
                 }
             });
@@ -286,7 +254,6 @@
 
         // Update Division (Edit)
         function updateDivision() {
-            console.log('updateDivision called');
             clearValidationErrors('#modaPopupBody');
             var form = $('#editDivisionForm');
 
@@ -311,9 +278,6 @@
                 CentOverhead: centOverhead
             };
 
-            console.log('Updating division data:', data);
-            console.log('Original DivName for API call:', originalDivName);
-
             // Use original DivName in the URL to identify the record to update
             $.ajax({
                 url: '@Url.Action("Edit", "DivisionMaintenance", new { area = "FPS" })?originalDivName=' + encodeURIComponent(originalDivName),
@@ -321,29 +285,19 @@
                 data: JSON.stringify(data),
                 contentType: 'application/json; charset=utf-8',
                 success: function (result) {
-                    console.log('Update result:', result);
                     if (result.success) {
-                        alert(result.message || 'Division updated successfully');
+                        alert(result.message);
                         closeModal();
-                        refreshGrid(); // Refresh grid with current filters
+                        window['gridManager_divisionGrid'].reloadGrid({ page: 1 });
                     } else {
                         displayServerValidationErrors(result.errors, result.message, '#modaPopupBody')
                     }
                 },
                 error: function (xhr) {
-                    console.error('Error updating:', xhr);
-                    if (xhr.status === 400 && xhr.responseJSON && xhr.responseJSON.message) {
-                        // Show FK validation or business logic error in summary
-                        var $container = $('#modaPopupBody');
-                        var $summary = $container.find('.govuk-error-summary');
-                        $summary.find('.govuk-error-summary__title').text('There is a problem');
-                        var $list = $summary.find('.govuk-error-summary__list').empty();
-                        $list.append('<li>' + xhr.responseJSON.message + '</li>');
-                        $summary.show().focus();
-                    } else if (xhr.status === 400 && xhr.responseJSON && xhr.responseJSON.errors) {
+                    if (xhr.status === 400 && xhr.responseJSON) {
                         displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
                     } else {
-                        alert('An error occurred while updating the division');
+                        alert('An error occurred while saving.');
                     }
                 }
             });
@@ -351,79 +305,51 @@
 
         // Edit Division
         function editDivision(btn) {
-            console.log('editDivision called with button:', btn);
             var divName = $(btn).data('id');
-            console.log('Division name:', divName);
-
-            if (!divName) {
-                console.error('No divName found on button');
-                alert('Error: No division name found');
-                return;
-            }
-
             $.ajax({
                 url: '@Url.Action("Edit", "DivisionMaintenance", new { area = "FPS" })',
                 type: 'GET',
                 data: { divName: divName },
                 success: function (html) {
-                    console.log('Edit response received');
                     $('#modaPopupBody').html(html);
-                    var modal = $('#modalPopup');
-                    modal.css('display', 'flex');
-                    setTimeout(function() {
-                        modal.addClass("show");
-                    }, 10);
+                    $('#modalPopup').addClass("show");
                 },
-                error: function (xhr, status, error) {
-                    console.error('Error in editDivision:', error, xhr);
-                    alert('An error occurred while editing record: ' + error);
+                error: function () {
+                    alert('An error occurred while editing record');
                 }
             });
         }
 
         // Delete Division
         function deleteDivision(btn) {
-            console.log('deleteDivision called with button:', btn);
             var divName = $(btn).data('id');
-            console.log('Division name:', divName);
-
-            if (confirm('Are you sure you want to delete the division "' + divName + '"?')) {
+            showGovukConfirm('Are you sure you want to delete this record?').then(function (result) {
+                if (!result) return;
                 $.ajax({
                     url: '@Url.Action("Delete", "DivisionMaintenance", new { area = "FPS" })',
                     type: 'DELETE',
                     data: { divName: divName },
                     success: function (response) {
-                        console.log('Delete result:', response);
                         if (response.success) {
-                            alert(response.message || 'Division deleted successfully');
-                            refreshGrid(); // Refresh grid with current filters
+                                showGovukAlert('Deleted successfully').then(function () {
+                                    window['gridManager_divisionGrid'].reloadGrid({ page: 1 });
+                                });
                         } else {
-                            alert('Error: ' + (response.message || 'Failed to delete division'));
+
+                            showGovukAlert('Error: ' + response.message);
                         }
                     },
-                    error: function (xhr, status, error) {
-                        console.error('Error deleting:', error, xhr);
-                        // Handle FK constraint or business logic errors
-                        if (xhr.status === 400 && xhr.responseJSON) {
-                            var errorMessage = xhr.responseJSON.message || 'Failed to delete division';
-                            alert(errorMessage);
-                        } else {
-                            alert('An error occurred while deleting the division');
-                        }
+                    error: function () {
+                        showGovukAlert('An error occurred while deleting');
                     }
                 });
-            }
+            });
         }
-
+        
         function closeModal() {
-            console.log('closeModal called');
             clearValidationErrors('#modaPopupBody');
             $('#modaPopupBody').html("");
-            var modal = $('#modalPopup');
-            modal.removeClass("show");
-            setTimeout(function() {
-                modal.css('display', 'none');
-            }, 300);
+            $('#modalPopup').removeClass("show");
         }
 
         // Returns true if all required fields in the form have values
@@ -438,19 +364,7 @@
             return isValid;
         }
 
-        // Debug: Log when page is ready
         $(document).ready(function() {
-            console.log('Document ready');
-            console.log('jQuery version:', $.fn.jquery);
-            console.log('Edit function exists:', typeof window.editDivision);
-
-            // Test if edit buttons exist
-            var editButtons = $('.edit-row-btn');
-            console.log('Edit buttons found:', editButtons.length);
-            if (editButtons.length > 0) {
-                console.log('First edit button data-edit-function:', editButtons.first().data('edit-function'));
-                console.log('First edit button data-id:', editButtons.first().data('id'));
-            }
 
             // Add Enter key support for filter inputs
             $('#gridContainer_divisionGrid').on('keypress', '.grid-filter', function(e) {

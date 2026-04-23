@@ -16,15 +16,13 @@ namespace Apha.FPS.Api.UnitTests.Controller.DivisionControllerTest
     {
         private readonly IDivisionService _serviceMock;
         private readonly IMapper _mapperMock;
-        private readonly ILogger<DivisionController> _loggerMock;
         private readonly DivisionController _controller;
 
         public DivisionControllerTests()
         {
             _serviceMock = Substitute.For<IDivisionService>();
             _mapperMock = Substitute.For<IMapper>();
-            _loggerMock = Substitute.For<ILogger<DivisionController>>();
-            _controller = new DivisionController(_serviceMock, _mapperMock, _loggerMock);
+            _controller = new DivisionController(_serviceMock, _mapperMock);
         }
 
         #region Constructor Tests
@@ -34,7 +32,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.DivisionControllerTest
         {
             // Act & Assert
             var exception = Assert.Throws<ArgumentNullException>(
-                () => new DivisionController(null!, _mapperMock, _loggerMock)
+                () => new DivisionController(null!, _mapperMock)
             );
 
             Assert.Equal("divisionService", exception.ParamName);
@@ -45,21 +43,10 @@ namespace Apha.FPS.Api.UnitTests.Controller.DivisionControllerTest
         {
             // Act & Assert
             var exception = Assert.Throws<ArgumentNullException>(
-                () => new DivisionController(_serviceMock, null!, _loggerMock)
+                () => new DivisionController(_serviceMock, null!)
             );
 
             Assert.Equal("mapper", exception.ParamName);
-        }
-
-        [Fact]
-        public void Constructor_WithNullLogger_ThrowsArgumentNullException()
-        {
-            // Act & Assert
-            var exception = Assert.Throws<ArgumentNullException>(
-                () => new DivisionController(_serviceMock, _mapperMock, null!)
-            );
-
-            Assert.Equal("logger", exception.ParamName);
         }
 
         #endregion

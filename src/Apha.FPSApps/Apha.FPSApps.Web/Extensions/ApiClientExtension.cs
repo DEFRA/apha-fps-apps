@@ -27,16 +27,16 @@ namespace Apha.FPSApps.Web.Extensions
                         ?? throw new InvalidOperationException("FPS base URL not configured"));
                 client.DefaultRequestHeaders.Add(AcceptHeader, ApplicationJson);
             })
-            //.AddHttpMessageHandler(sp =>
-            //{
-            //    var scopes = configuration["FPSApiSettings:Scope"]!
-            //        .Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            .AddHttpMessageHandler(sp =>
+            {
+                var scopes = configuration["FPSApiSettings:Scope"]!
+                    .Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
-            //    return new BearerTokenHandler(
-            //        sp.GetRequiredService<ITokenAcquisition>(),
-            //        sp.GetRequiredService<IHttpContextAccessor>(),
-            //        scopes);
-            //})
+                return new BearerTokenHandler(
+                    sp.GetRequiredService<ITokenAcquisition>(),
+                    sp.GetRequiredService<IHttpContextAccessor>(),
+                    scopes);
+            })
             .AddHttpMessageHandler<RequestHeadersHandler>();
 
             services.AddScoped<IFpsHttpExecutor>(sp =>
@@ -54,16 +54,16 @@ namespace Apha.FPSApps.Web.Extensions
                     ?? throw new InvalidOperationException("PACT base URL not configured"));
                 client.DefaultRequestHeaders.Add(AcceptHeader, ApplicationJson);
             })
-            //.AddHttpMessageHandler(sp =>
-            //{
-            //    var scopes = configuration["PACTApiSettings:Scope"]!
-            //        .Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            .AddHttpMessageHandler(sp =>
+            {
+                var scopes = configuration["PACTApiSettings:Scope"]!
+                    .Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
-            //    return new BearerTokenHandler(
-            //        sp.GetRequiredService<ITokenAcquisition>(),
-            //        sp.GetRequiredService<IHttpContextAccessor>(),
-            //        scopes);
-            //})
+                return new BearerTokenHandler(
+                    sp.GetRequiredService<ITokenAcquisition>(),
+                    sp.GetRequiredService<IHttpContextAccessor>(),
+                    scopes);
+            })
             .AddHttpMessageHandler<RequestHeadersHandler>();
 
             services.AddScoped<IPactHttpExecutor>(sp =>

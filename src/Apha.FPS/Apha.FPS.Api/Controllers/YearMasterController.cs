@@ -9,8 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Apha.FPS.Api.Controllers
 {
-    // [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
-    [AllowAnonymous]
+    [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
     [Route("api/yearmaster")]
     [ApiController]
     public class YearMasterController : ControllerBase

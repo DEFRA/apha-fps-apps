@@ -6,8 +6,7 @@ using Microsoft.Identity.Web;
 namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 {
     [Area("FPS")]
-    //[Authorize(Roles = "FPSAdmin,FPSUser")]
-    [AllowAnonymous]
+    [Authorize(Roles = "FPSAdmin,FPSUser")]
     [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")]
     public class YearMasterController : Controller
     {

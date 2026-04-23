@@ -31,13 +31,13 @@
                     }
 
                     <div class="govuk-form-group sup_margin_0">
-                        <label class="govuk-label" asp-for="DivisionId">Division ID</label>
+                        <label class="govuk-label" asp-for="DivisionId">Division ID <span class="sup_color_red">*</span></label>
                         <input type="number" asp-for="DivisionId" class="govuk-input" required min="1">
                         <span asp-validation-for="DivisionId" class="govuk-error-message" style="display:none;"></span>
                     </div>
 
                     <div class="govuk-form-group sup_margin_0">
-                        <label class="govuk-label" asp-for="AgencyId">Agency ID</label>
+                        <label class="govuk-label" asp-for="AgencyId">Agency ID <span class="sup_color_red">*</span></label>
                         <select asp-for="AgencyId" required class="govuk-select">
                             <option value="">-- Select Agency --</option>
                         </select>
@@ -45,7 +45,7 @@
                     </div>
 
                     <div class="govuk-form-group sup_margin_0">
-                        <label class="govuk-label" asp-for="DivName">Division Name</label>
+                        <label class="govuk-label" asp-for="DivName">Division Name <span class="sup_color_red">*</span></label>
                         <input type="text" asp-for="DivName" required class="govuk-input" maxlength="255">
                         <span asp-validation-for="DivName" class="govuk-error-message" style="display:none;"></span>
                     </div>
@@ -61,8 +61,8 @@
                 </form>
             </div>
         </div>
-<div class="modal-footer">
-    <button class="govuk-button govuk-button--secondary sup_margin_0" data-module="govuk-button" onclick="closeModal()">Cancel</button>
+<div class="modal-footer sup_flex_space_center">
+    <button class="govuk-button govuk-button--secondary sup_margin_0" data-module="govuk-button" data-bs-dismiss="modal" onclick="closeModal()">Cancel</button>
     <button class="govuk-button sup_margin_0" data-module="govuk-button" type="button" onclick="@saveAction">@saveLabel</button>
 </div>
 
@@ -89,12 +89,9 @@
                             .attr('selected', isSelected)
                             .text(agency.agencyId)); // Display AgencyId since we don't have Agency Name yet
                     });
-                } else {
-                    console.error('Failed to load agencies:', response.message);
                 }
             },
             error: function (xhr, status, error) {
-                console.error('Error loading agencies:', error);
                 // Fallback to showing at least one option
                 $select.append($('<option value=""></option>').text('Error loading agencies'));
             }
