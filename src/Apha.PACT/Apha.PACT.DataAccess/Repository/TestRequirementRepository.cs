@@ -49,6 +49,7 @@ namespace Apha.PACT.DataAccess.Repository
                              select new TestRequirementDetail
                              {
                                  TestCode = t.TestCode,
+                                 ItemDescription = tp.ItemDescription,
                                  Buyer = t.Buyer,
                                  UnitPrice = t.UnitPrice,
                                  NoRequired = t.NoRequired,
@@ -104,6 +105,7 @@ namespace Apha.PACT.DataAccess.Repository
                              select new TestRequirementDetail
                              {
                                  TestCode = t.TestCode,
+                                 ItemDescription = tp.ItemDescription,
                                  Buyer = t.Buyer,
                                  UnitPrice = t.UnitPrice,
                                  NoRequired = t.NoRequired,
@@ -158,6 +160,7 @@ namespace Apha.PACT.DataAccess.Repository
                          select new TestRequirementDetail
                          {
                              TestCode = t.TestCode,
+                             ItemDescription = tp.ItemDescription,
                              Buyer = t.Buyer,
                              UnitPrice = t.UnitPrice,
                              NoRequired = t.NoRequired,
@@ -191,6 +194,7 @@ namespace Apha.PACT.DataAccess.Repository
                           select new TestRequirementDetail
                           {
                               TestCode = t.TestCode,
+                              ItemDescription = tp.ItemDescription,
                               Buyer = t.Buyer,
                               UnitPrice = t.UnitPrice,
                               NoRequired = t.NoRequired,

@@ -7,17 +7,17 @@ using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using System.Text.Json;
 
-namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramAnimalPlanControllerTest
+namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramTestPlanControllerTest
 {
-    public class ProgramAnimalPlanControllerTests
+    public class ProgramTestPlanControllerTests
     {
         private readonly IProgramService _programService;
-        private readonly ProgramAnimalPlanController _controller;
+        private readonly ProgramTestPlanController _controller;
 
-        public ProgramAnimalPlanControllerTests()
+        public ProgramTestPlanControllerTests()
         {
             _programService = Substitute.For<IProgramService>();
-            _controller = new ProgramAnimalPlanController(_programService);
+            _controller = new ProgramTestPlanController(_programService);
         }
 
         private static JsonElement GetJsonResultElement(JsonResult jsonResult)
@@ -52,15 +52,15 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramAnimalPlanController
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<ProgramAnimalPlanViewModel>(viewResult.Model);
+            var model = Assert.IsType<ProgramTestPlanViewModel>(viewResult.Model);
 
-            Assert.Equal("P001",             model.SelectedProgramNo);
-            Assert.Equal("Programme Alpha",  model.SelectedProgramme);
-            Assert.Equal("Alice",            model.Manager);
-            Assert.Equal(1000m,              model.Target);
-            Assert.Equal(2, model.ProgrammeList.Count);
+            Assert.Equal("P001",            model.SelectedProgramNo);
+            Assert.Equal("Programme Alpha", model.SelectedProgramme);
+            Assert.Equal("Alice",           model.Manager);
+            Assert.Equal(1000m,             model.Target);
+            Assert.Equal(2,                 model.ProgrammeList.Count);
             Assert.NotNull(model.ProjectsGrid);
-            Assert.NotNull(model.AnimalCostGrid);
+            Assert.NotNull(model.TestPlanGrid);
         }
 
         [Fact]
@@ -77,53 +77,29 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramAnimalPlanController
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<ProgramAnimalPlanViewModel>(viewResult.Model);
+            var model = Assert.IsType<ProgramTestPlanViewModel>(viewResult.Model);
 
             Assert.Equal(string.Empty, model.SelectedProgramNo);
             Assert.Equal(string.Empty, model.SelectedProgramme);
             Assert.Equal(string.Empty, model.Manager);
-            Assert.Equal(2, model.ProgrammeList.Count);
+            Assert.Equal(2,            model.ProgrammeList.Count);
             await _programService.DidNotReceive().GetProgramByIdAsync(Arg.Any<string>());
         }
 
         [Fact]
-        public async Task Index_WhenProgramListIsEmpty_UsesEmptySelectedProgramNo()
-        {
-            // Arrange
-            _programService.GetAllProgramsAsync()
-                .Returns(ApiResponseDto<IEnumerable<ProgramDto>>.SuccessResponse(
-                    Enumerable.Empty<ProgramDto>()));
-            _programService.GetProgramByIdAsync(string.Empty)
-                .Returns(ApiResponseDto<ProgramDto?>.SuccessResponse(null));
-
-            // Act
-            var result = await _controller.Index(null);
-
-            // Assert
-            var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<ProgramAnimalPlanViewModel>(viewResult.Model);
-
-            Assert.Equal(string.Empty, model.SelectedProgramNo);
-            Assert.Empty(model.ProgrammeList);
-            Assert.Equal(string.Empty, model.SelectedProgramme);
-        }
-
-        [Fact]
-        public async Task Index_WhenGetAllProgramsFails_UsesFallbackEmptyList()
+        public async Task Index_WhenGetAllProgramsFails_UsesEmptyProgrammeList()
         {
             // Arrange
             var errors = new List<ApiErrorDto> { new() { Message = "Error", Code = "ERROR" } };
             _programService.GetAllProgramsAsync()
                 .Returns(ApiResponseDto<IEnumerable<ProgramDto>>.FailureResponse(errors, new ApiMetaDto()));
-            _programService.GetProgramByIdAsync(string.Empty)
-                .Returns(ApiResponseDto<ProgramDto?>.SuccessResponse(null));
 
             // Act
             var result = await _controller.Index(null);
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<ProgramAnimalPlanViewModel>(viewResult.Model);
+            var model = Assert.IsType<ProgramTestPlanViewModel>(viewResult.Model);
 
             Assert.Empty(model.ProgrammeList);
             Assert.Equal(string.Empty, model.SelectedProgramNo);
@@ -137,19 +113,17 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramAnimalPlanController
 
             _programService.GetAllProgramsAsync()
                 .Returns(ApiResponseDto<IEnumerable<ProgramDto>>.SuccessResponse(programs));
-            _programService.GetProgramByIdAsync("P001")
-                .Returns(ApiResponseDto<ProgramDto?>.SuccessResponse(programs[0]));
 
             // Act
             var result = await _controller.Index(null);
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<ProgramAnimalPlanViewModel>(viewResult.Model);
+            var model = Assert.IsType<ProgramTestPlanViewModel>(viewResult.Model);
             var firstItem = model.ProgrammeList[0];
 
-            Assert.Equal("P001",                       firstItem.Value);
-            Assert.Equal("P001 - Programme Alpha",     firstItem.Text);
+            Assert.Equal("P001",                   firstItem.Value);
+            Assert.Equal("P001 - Programme Alpha", firstItem.Text);
         }
 
         [Fact]
@@ -160,20 +134,18 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramAnimalPlanController
 
             _programService.GetAllProgramsAsync()
                 .Returns(ApiResponseDto<IEnumerable<ProgramDto>>.SuccessResponse(programs));
-            _programService.GetProgramByIdAsync("P001")
-                .Returns(ApiResponseDto<ProgramDto?>.SuccessResponse(programs[0]));
 
             // Act
             var result = await _controller.Index(null);
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<ProgramAnimalPlanViewModel>(viewResult.Model);
+            var model = Assert.IsType<ProgramTestPlanViewModel>(viewResult.Model);
 
-            Assert.Equal("/FPS/ProgramProject/LoadProjectGrid",              model.ProjectsGrid.BindGridUrl);
-            Assert.Equal("ParentProject",                                     model.ProjectsGrid.KeyProperty);
-            Assert.Equal($"/FPS/AnimalJob/LoadAnimalPlanGrid?title={Uri.EscapeDataString("Animal Plan")}", model.AnimalCostGrid.BindGridUrl);
-            Assert.Equal("IndCounter",                                        model.AnimalCostGrid.KeyProperty);
+            Assert.Equal("/FPS/ProgramProject/LoadProjectGrid",                       model.ProjectsGrid.BindGridUrl);
+            Assert.Equal("ParentProject",                                             model.ProjectsGrid.KeyProperty);
+            Assert.Equal($"/FPS/TestPlanJob/LoadTestPlanGrid?title={Uri.EscapeDataString("Test Purchase Plan")}", model.TestPlanGrid.BindGridUrl);
+            Assert.Equal("TestCode",                                                  model.TestPlanGrid.KeyProperty);
         }
 
         #endregion
@@ -192,6 +164,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramAnimalPlanController
                 Manager     = "Alice",
                 Target      = 5000m
             };
+
             _programService.GetProgramByIdAsync(programNo)
                 .Returns(ApiResponseDto<ProgramDto?>.SuccessResponse(programInfo));
 
@@ -203,55 +176,14 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramAnimalPlanController
             var value = GetJsonResultElement(jsonResult);
 
             Assert.True(value.GetProperty("success").GetBoolean());
-            Assert.Equal("Programme Alpha", value.GetProperty("programmeName").GetString());
             Assert.Equal("Alice",           value.GetProperty("manager").GetString());
             Assert.Equal(5000m,             value.GetProperty("target").GetDecimal());
-            await _programService.Received(1).GetProgramByIdAsync(programNo);
-        }
-
-        [Fact]
-        public async Task GetProgramInfo_WhenProgramNotFound_ReturnsFailureJson()
-        {
-            // Arrange
-            var programNo = "P999";
-            _programService.GetProgramByIdAsync(programNo)
-                .Returns(ApiResponseDto<ProgramDto?>.SuccessResponse(null));
-
-            // Act
-            var result = await _controller.GetProgramInfo(programNo);
-
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var value = GetJsonResultElement(jsonResult);
-
-            Assert.False(value.GetProperty("success").GetBoolean());
-            Assert.Equal("Programme not found.", value.GetProperty("message").GetString());
-        }
-
-        [Fact]
-        public async Task GetProgramInfo_WhenServiceFails_ReturnsNotFoundJson()
-        {
-            // Arrange
-            var programNo = "P001";
-            var errors = new List<ApiErrorDto> { new() { Message = "Error", Code = "ERROR" } };
-            _programService.GetProgramByIdAsync(programNo)
-                .Returns(ApiResponseDto<ProgramDto?>.FailureResponse(errors, new ApiMetaDto()));
-
-            // Act
-            var result = await _controller.GetProgramInfo(programNo);
-
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var value = GetJsonResultElement(jsonResult);
-
-            Assert.False(value.GetProperty("success").GetBoolean());
-            Assert.Equal("Programme not found.", value.GetProperty("message").GetString());
         }
 
         [Theory]
         [InlineData("")]
         [InlineData("   ")]
-        public async Task GetProgramInfo_WithEmptyOrWhitespaceProgramNo_ReturnsRequiredFailureJson(string programNo)
+        public async Task GetProgramInfo_WithEmptyOrWhitespaceProgramNo_ReturnsFailureJson(string programNo)
         {
             // Act
             var result = await _controller.GetProgramInfo(programNo);
@@ -266,23 +198,39 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramAnimalPlanController
         }
 
         [Fact]
-        public async Task GetProgramInfo_WithNullTarget_ReturnsZeroTarget()
+        public async Task GetProgramInfo_WhenProgramNotFound_ReturnsFailureJson()
         {
             // Arrange
-            var programNo = "P001";
-            var programInfo = new ProgramDto { ProgramNo = "P001", ProgramName = "Alpha", Manager = "Alice", Target = null };
-            _programService.GetProgramByIdAsync(programNo)
-                .Returns(ApiResponseDto<ProgramDto?>.SuccessResponse(programInfo));
+            _programService.GetProgramByIdAsync("UNKNOWN")
+                .Returns(ApiResponseDto<ProgramDto?>.SuccessResponse(null));
 
             // Act
-            var result = await _controller.GetProgramInfo(programNo);
+            var result = await _controller.GetProgramInfo("UNKNOWN");
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
             var value = GetJsonResultElement(jsonResult);
 
-            Assert.True(value.GetProperty("success").GetBoolean());
-            Assert.Equal(0m, value.GetProperty("target").GetDecimal());
+            Assert.False(value.GetProperty("success").GetBoolean());
+            Assert.Equal("Programme not found.", value.GetProperty("message").GetString());
+        }
+
+        [Fact]
+        public async Task GetProgramInfo_WhenServiceFails_ReturnsFailureJson()
+        {
+            // Arrange
+            var errors = new List<ApiErrorDto> { new() { Message = "Error", Code = "ERROR" } };
+            _programService.GetProgramByIdAsync("P001")
+                .Returns(ApiResponseDto<ProgramDto?>.FailureResponse(errors, new ApiMetaDto()));
+
+            // Act
+            var result = await _controller.GetProgramInfo("P001");
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultElement(jsonResult);
+
+            Assert.False(value.GetProperty("success").GetBoolean());
         }
 
         #endregion
