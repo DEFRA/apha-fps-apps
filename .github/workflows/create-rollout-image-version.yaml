@@ -27,6 +27,10 @@ on:
         description: "Short description for the git tag (applied to all pushed images)"
         required: true
         type: string
+      ROLLOUT_VERSION:
+        description: 'Rollout version tag (e.g. 1.0.0) - used as the repo-level git tag'
+        required: true
+        type: string
 
 permissions: {}   # disables all default permissions
 
@@ -40,6 +44,25 @@ jobs:
     runs-on: ubuntu-latest
     permissions: {}
     steps:
+      - name: Checkout to read git tags
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Show current released versions from latest rollout tag
+        shell: bash
+        run: |
+          git fetch --tags
+          latest_rollout=$(git tag --list "rollout-v*" --sort=-version:refname | head -n 1 || echo "")
+          if [ -z "$latest_rollout" ]; then
+            echo "No previous rollout tags found. This appears to be the first rollout."
+          else
+            echo "========================================"
+            echo " Current versions from: $latest_rollout"
+            echo "========================================"
+            git tag -l --format='%(contents)' "$latest_rollout" | grep -E '^(fpsapps|fps|costbook|pact|pims|version)=' || true
+            echo "========================================"
+          fi
       - name: Validate semver format (major.minor.patch) for all provided versions
         shell: bash
         env:
@@ -48,6 +71,7 @@ jobs:
           COSTBOOK_VERSION: ${{ github.event.inputs.COSTBOOK_VERSION }}
           PACT_VERSION: ${{ github.event.inputs.PACT_VERSION }}
           PIMS_VERSION: ${{ github.event.inputs.PIMS_VERSION }}
+          ROLLOUT_VERSION: ${{ github.event.inputs.ROLLOUT_VERSION }}
         run: |
           VERSION_REGEX='^[0-9]+\.[0-9]+\.[0-9]+$'
           errors=0
@@ -64,6 +88,7 @@ jobs:
           check_version "COSTBOOK_VERSION" "$COSTBOOK_VERSION"
           check_version "PACT_VERSION"     "$PACT_VERSION"
           check_version "PIMS_VERSION"     "$PIMS_VERSION"
+          check_version "ROLLOUT_VERSION"  "$ROLLOUT_VERSION"
           if [ $errors -gt 0 ]; then
             echo "One or more version inputs failed validation. Aborting."
             exit 1
@@ -75,10 +100,72 @@ jobs:
           fi
           echo "All provided version inputs are valid."
 
+      - name: Check rollout git tag does not already exist
+        shell: bash
+        env:
+          ROLLOUT_VERSION: ${{ github.event.inputs.ROLLOUT_VERSION }}
+        run: |
+          GIT_TAG="rollout-v${ROLLOUT_VERSION}"
+          if git ls-remote --tags origin | grep -q "refs/tags/${GIT_TAG}"; then
+            echo "ERROR: Git tag '${GIT_TAG}' already exists. Enter a new rollout version and retry."
+            exit 1
+          fi
+          echo "OK: Rollout tag ${GIT_TAG} is available."
+
+  # ── Check ECR image tags do not already exist (ECR images are immutable) ─────
+  check-ecr-tags:
+    needs: validate-inputs
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      AWS_ENV_REGION: ${{ secrets.AWS_ENV_REGION }}
+      AWS_ENV_ACCOUNT: ${{ secrets.AWS_ENV_ACCOUNT }}
+      AWS_ENV_ROLE: ${{ secrets.AWS_ENV_ROLE }}
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
+        with:
+          aws-region: ${{ secrets.AWS_ENV_REGION }}
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ENV_ACCOUNT }}:role/${{ secrets.AWS_ENV_ROLE }}
+
+      - name: Check ECR tags are not already in use
+        shell: bash
+        env:
+          FPSAPPS_VERSION: ${{ github.event.inputs.FPSAPPS_VERSION }}
+          FPS_VERSION: ${{ github.event.inputs.FPS_VERSION }}
+          COSTBOOK_VERSION: ${{ github.event.inputs.COSTBOOK_VERSION }}
+          PACT_VERSION: ${{ github.event.inputs.PACT_VERSION }}
+          PIMS_VERSION: ${{ github.event.inputs.PIMS_VERSION }}
+        run: |
+          errors=0
+          check_ecr() {
+            local repo="$1"
+            local version="$2"
+            local tag="v${version}"
+            if aws ecr describe-images --repository-name "$repo" --image-ids imageTag="$tag" > /dev/null 2>&1; then
+              echo "ERROR: ECR image ${repo}:${tag} already exists. ECR images are immutable — cannot overwrite."
+              errors=$((errors + 1))
+            else
+              echo "OK: ${repo}:${tag} does not exist in ECR."
+            fi
+          }
+          [ -n "$FPSAPPS_VERSION" ]  && check_ecr "apha/fpsapps"  "$FPSAPPS_VERSION"
+          [ -n "$FPS_VERSION" ]       && check_ecr "apha/fps"       "$FPS_VERSION"
+          [ -n "$COSTBOOK_VERSION" ]  && check_ecr "apha/costbook"  "$COSTBOOK_VERSION"
+          [ -n "$PACT_VERSION" ]      && check_ecr "apha/pact"      "$PACT_VERSION"
+          [ -n "$PIMS_VERSION" ]      && check_ecr "apha/pims"      "$PIMS_VERSION"
+          if [ $errors -gt 0 ]; then
+            echo "One or more image tags already exist in ECR. Aborting — update the version(s) and retry."
+            exit 1
+          fi
+          echo "All image tags are available in ECR."
+
   # ── FPSApps Web ──────────────────────────────────────────────────────────────
   build-sonar-fpsapps:
-    needs: validate-inputs
-    if: ${{ github.event.inputs.FPSAPPS_VERSION != '' }}
+    needs: [validate-inputs, check-ecr-tags]
+    if: needs.validate-inputs.result == 'success' && needs.check-ecr-tags.result == 'success' && github.event.inputs.FPSAPPS_VERSION != ''
     uses: ./.github/workflows/build-and-sonar-analyze-template.yaml
     with:
       dotnet_application_solution_name: Apha.FPSApps
@@ -97,7 +184,7 @@ jobs:
 
   push-fpsapps:
     needs: build-sonar-fpsapps
-    if: ${{ github.event.inputs.FPSAPPS_VERSION != '' && needs.build-sonar-fpsapps.result == 'success' }}
+    if: always() && needs.build-sonar-fpsapps.result == 'success' && github.event.inputs.FPSAPPS_VERSION != ''
     uses: ./.github/workflows/push-image-template.yaml
     with:
       IMAGE_VERSION: ${{ github.event.inputs.FPSAPPS_VERSION }}
@@ -115,8 +202,8 @@ jobs:
 
   # ── FPS API ───────────────────────────────────────────────────────────────────
   build-sonar-fps:
-    needs: validate-inputs
-    if: ${{ github.event.inputs.FPS_VERSION != '' }}
+    needs: [validate-inputs, check-ecr-tags]
+    if: needs.validate-inputs.result == 'success' && needs.check-ecr-tags.result == 'success' && github.event.inputs.FPS_VERSION != ''
     uses: ./.github/workflows/build-and-sonar-analyze-template.yaml
     with:
       dotnet_application_solution_name: Apha.FPS
@@ -135,7 +222,7 @@ jobs:
 
   push-fps:
     needs: build-sonar-fps
-    if: ${{ github.event.inputs.FPS_VERSION != '' && needs.build-sonar-fps.result == 'success' }}
+    if: always() && needs.build-sonar-fps.result == 'success' && github.event.inputs.FPS_VERSION != ''
     uses: ./.github/workflows/push-image-template.yaml
     with:
       IMAGE_VERSION: ${{ github.event.inputs.FPS_VERSION }}
@@ -153,8 +240,8 @@ jobs:
 
   # ── Costbook API ──────────────────────────────────────────────────────────────
   build-sonar-costbook:
-    needs: validate-inputs
-    if: ${{ github.event.inputs.COSTBOOK_VERSION != '' }}
+    needs: [validate-inputs, check-ecr-tags]
+    if: needs.validate-inputs.result == 'success' && needs.check-ecr-tags.result == 'success' && github.event.inputs.COSTBOOK_VERSION != ''
     uses: ./.github/workflows/build-and-sonar-analyze-template.yaml
     with:
       dotnet_application_solution_name: Apha.Costbook
@@ -173,7 +260,7 @@ jobs:
 
   push-costbook:
     needs: build-sonar-costbook
-    if: ${{ github.event.inputs.COSTBOOK_VERSION != '' && needs.build-sonar-costbook.result == 'success' }}
+    if: always() && needs.build-sonar-costbook.result == 'success' && github.event.inputs.COSTBOOK_VERSION != ''
     uses: ./.github/workflows/push-image-template.yaml
     with:
       IMAGE_VERSION: ${{ github.event.inputs.COSTBOOK_VERSION }}
@@ -191,8 +278,8 @@ jobs:
 
   # ── PACT API ──────────────────────────────────────────────────────────────────
   build-sonar-pact:
-    needs: validate-inputs
-    if: ${{ github.event.inputs.PACT_VERSION != '' }}
+    needs: [validate-inputs, check-ecr-tags]
+    if: needs.validate-inputs.result == 'success' && needs.check-ecr-tags.result == 'success' && github.event.inputs.PACT_VERSION != ''
     uses: ./.github/workflows/build-and-sonar-analyze-template.yaml
     with:
       dotnet_application_solution_name: Apha.PACT
@@ -211,7 +298,7 @@ jobs:
 
   push-pact:
     needs: build-sonar-pact
-    if: ${{ github.event.inputs.PACT_VERSION != '' && needs.build-sonar-pact.result == 'success' }}
+    if: always() && needs.build-sonar-pact.result == 'success' && github.event.inputs.PACT_VERSION != ''
     uses: ./.github/workflows/push-image-template.yaml
     with:
       IMAGE_VERSION: ${{ github.event.inputs.PACT_VERSION }}
@@ -229,8 +316,8 @@ jobs:
 
   # ── PIMS API ──────────────────────────────────────────────────────────────────
   build-sonar-pims:
-    needs: validate-inputs
-    if: ${{ github.event.inputs.PIMS_VERSION != '' }}
+    needs: [validate-inputs, check-ecr-tags]
+    if: needs.validate-inputs.result == 'success' && needs.check-ecr-tags.result == 'success' && github.event.inputs.PIMS_VERSION != ''
     uses: ./.github/workflows/build-and-sonar-analyze-template.yaml
     with:
       dotnet_application_solution_name: Apha.PIMS
@@ -249,7 +336,7 @@ jobs:
 
   push-pims:
     needs: build-sonar-pims
-    if: ${{ github.event.inputs.PIMS_VERSION != '' && needs.build-sonar-pims.result == 'success' }}
+    if: always() && needs.build-sonar-pims.result == 'success' && github.event.inputs.PIMS_VERSION != ''
     uses: ./.github/workflows/push-image-template.yaml
     with:
       IMAGE_VERSION: ${{ github.event.inputs.PIMS_VERSION }}
@@ -264,3 +351,47 @@ jobs:
     permissions:
       id-token: write
       contents: write
+
+  # ── Single repo-level git tag for the whole rollout ───────────────────────────
+  create-rollout-git-tag:
+    needs: [push-fpsapps, push-fps, push-costbook, push-pact, push-pims]
+    if: always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref_name }}
+
+      - name: Create and push rollout git tag
+        env:
+          TAG_MESSAGE: ${{ github.event.inputs.tag_short_description }}
+          ROLLOUT_VERSION: ${{ github.event.inputs.ROLLOUT_VERSION }}
+          FPSAPPS_VERSION: ${{ github.event.inputs.FPSAPPS_VERSION }}
+          FPS_VERSION: ${{ github.event.inputs.FPS_VERSION }}
+          COSTBOOK_VERSION: ${{ github.event.inputs.COSTBOOK_VERSION }}
+          PACT_VERSION: ${{ github.event.inputs.PACT_VERSION }}
+          PIMS_VERSION: ${{ github.event.inputs.PIMS_VERSION }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          GIT_TAG="rollout-v${ROLLOUT_VERSION}"
+
+          # Structured key=value annotation — machine-readable by dev builds
+          ANNOTATION="${TAG_MESSAGE}\n\n[rollout]\nversion=${ROLLOUT_VERSION}"
+          [ -n "$FPSAPPS_VERSION" ]  && ANNOTATION+="\nfpsapps=${FPSAPPS_VERSION}"
+          [ -n "$FPS_VERSION" ]       && ANNOTATION+="\nfps=${FPS_VERSION}"
+          [ -n "$COSTBOOK_VERSION" ]  && ANNOTATION+="\ncostbook=${COSTBOOK_VERSION}"
+          [ -n "$PACT_VERSION" ]      && ANNOTATION+="\npact=${PACT_VERSION}"
+          [ -n "$PIMS_VERSION" ]      && ANNOTATION+="\npims=${PIMS_VERSION}"
+
+          echo "Creating rollout tag: $GIT_TAG"
+          echo -e "Tag annotation:\n$ANNOTATION"
+
+          git tag -a "$GIT_TAG" -m "$(echo -e "$ANNOTATION")"
+          git push origin "$GIT_TAG"
+          echo "Tag ${GIT_TAG} pushed successfully."
