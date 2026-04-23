@@ -24,11 +24,11 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         [Display(Name = "Program Name")]
         public string ProgramName { get; set; } = string.Empty;
 
-        [StringLength(100, ErrorMessage = "Sector name cannot exceed 100 characters")]
+        [StringLength(50, ErrorMessage = "Sector name cannot exceed 100 characters")]
         [Display(Name = "Sector Name")]
         public string? SectorName { get; set; }
 
-        [StringLength(100, ErrorMessage = "Customer cannot exceed 100 characters")]
+        [StringLength(50, ErrorMessage = "Customer cannot exceed 100 characters")]
         [Display(Name = "Customer")]
         public string? Customer { get; set; }
 
@@ -36,11 +36,11 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         [Display(Name = "Leader")]
         public string? Manager { get; set; }
 
-        [StringLength(20, ErrorMessage = "MINIM cannot exceed 20 characters")]
+        [StringLength(7, ErrorMessage = "MINIM cannot exceed 20 characters")]
         [Display(Name = "MINIM")]
         public string? Minim { get; set; }
 
-        [StringLength(50, ErrorMessage = "Directorate cannot exceed 50 characters")]
+        [StringLength(15, ErrorMessage = "Directorate cannot exceed 50 characters")]
         [Display(Name = "Directorate")]
         public string? Directorate { get; set; }
     }

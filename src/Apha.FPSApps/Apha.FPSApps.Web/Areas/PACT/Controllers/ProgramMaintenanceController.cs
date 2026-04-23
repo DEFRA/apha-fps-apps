@@ -82,7 +82,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                     .Where(kvp => kvp.Value?.Errors.Count > 0)
                     .SelectMany(kvp => kvp.Value!.Errors.Select(e => new
                     {
-                        field = kvp.Key,
+                        // [FromBody] with System.Text.Json produces keys like "$.ProgramNo";
+                        // strip the "$." prefix so the client JS can remap to "Program.ProgramNo".
+                        field = kvp.Key.StartsWith("$.") ? kvp.Key[2..] : kvp.Key,
                         message = string.IsNullOrWhiteSpace(e.ErrorMessage)
                             ? e.Exception?.Message ?? "Validation error"
                             : e.ErrorMessage
