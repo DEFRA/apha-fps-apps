@@ -10,7 +10,7 @@ COPY appsettings.json ./
 # appsettings.Development.json is intentionally NOT copied — production secrets
 # are supplied via ECS task environment variables / Secrets Manager at runtime.
 
-RUN dotnet publish BatchJobs.csproj -c Release -o /app/publish
+RUN dotnet publish Apha.BatchJobs.Worker/Apha.BatchJobs.Worker.csproj -c Release -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
@@ -35,5 +35,5 @@ LABEL managed="true"
 LABEL application="batch-jobs"
 LABEL description="Containerized .NET 10 batch jobs worker for FPS application"
 
-ENTRYPOINT ["dotnet", "BatchJobs.dll"]
+ENTRYPOINT ["dotnet", "Apha.BatchJobs.Worker.dll"]
 CMD []

@@ -110,7 +110,7 @@ function clean_environment() {
 
 function show_logs() {
     print_header "Showing Logs"
-    SERVICE_NAME="batch-jobs"
+    SERVICE_NAME="batch-jobs-withdb"
     if [ "$DOCKER_PROFILE" = "nodb" ]; then
         SERVICE_NAME="batch-jobs-nodb"
     fi
@@ -139,6 +139,7 @@ function build_and_run() {
         SERVICE_NAME="batch-jobs-nodb"
         print_info "Starting Batch Job container in NoDb mode..."
     else
+        SERVICE_NAME="batch-jobs-withdb"
         print_info "Starting PostgreSQL and Batch Job..."
     fi
     print_info "Streaming logs until the batch job exits..."
@@ -168,9 +169,9 @@ function show_status() {
         echo ""
         
         # Try to get exit code of batch-jobs container
-        CONTAINER_NAME="batch_jobs_app"
+        CONTAINER_NAME="batch_jobs_withdb"
         if [ "$DOCKER_PROFILE" = "nodb" ]; then
-            CONTAINER_NAME="batch_jobs_app_nodb"
+            CONTAINER_NAME="batch_jobs_nodb"
         fi
         EXIT_CODE=$(docker wait "$CONTAINER_NAME" 2>/dev/null || echo "")
         if [ -n "$EXIT_CODE" ]; then
