@@ -46,8 +46,6 @@ namespace Apha.FPS.Api.Mappings
             CreateMap<YearMasterRes, YearMasterDto>().ReverseMap();
 
             // ProgrammeNewProject mappings
-            CreateMap<ProjectDto, ProgrammeNewProjectReq>().ReverseMap();
-            CreateMap<ProjectDto, ProgrammeNewProjectRes>().ReverseMap();
             CreateMap<AccountCodeDto, AccountCodeRes>().ReverseMap();
             CreateMap<SubAccountDto, SubAccountRes>()
                 .ForMember(d => d.SubAccount, o => o.MapFrom(s => s.SubAccountName)).ReverseMap()

@@ -50,18 +50,18 @@ namespace Apha.Common.Constants
         // Project Group
         public const string GetAllProjectGroups = "api/v1/projectgroup";
 
-        // ProgrammeNewProject
-        public const string GetProgrammeNewProjectById = "api/v1/programme-new-project/{0}";
-        public const string CreateProgrammeNewProject = "api/v1/programme-new-project";
-        public const string UpdateProgrammeNewProject = "api/v1/programme-new-project/{0}";
-        public const string DeleteProgrammeNewProjectAndChildren = "api/v1/programme-new-project/{0}/delete-with-children";
-        public const string ChangeProjectCode = "api/v1/programme-new-project/change-code";
-        public const string CheckProjectExists = "api/v1/programme-new-project/check-exists/{0}";
-        public const string GetProgrammeNewProjectManagers = "api/v1/programme-new-project/managers";
-        public const string GetProgrammeNewProjectCostCentres = "api/v1/programme-new-project/cost-centres";
-        public const string GetProgrammeNewProjectProjectGroups = "api/v1/programme-new-project/project-groups";
-        public const string GetProgrammeNewProjectAccountCodes = "api/v1/programme-new-project/account-codes";
-        public const string GetProgrammeNewProjectSubAccounts = "api/v1/programme-new-project/sub-accounts";
+        // ProgrammeNewProject (merged into project route)
+        public const string GetProgrammeNewProjectById = "api/v1/project/{0}";
+        public const string CreateProgrammeNewProject = "api/v1/project";
+        public const string UpdateProgrammeNewProject = "api/v1/project/{0}";
+        public const string DeleteProgrammeNewProjectAndChildren = "api/v1/project/{0}/delete-with-children";
+        public const string ChangeProjectCode = "api/v1/project/change-code";
+        public const string CheckProjectExists = "api/v1/project/check-exists/{0}";
+        public const string GetProgrammeNewProjectManagers = "api/v1/project-support/managers";
+        public const string GetProgrammeNewProjectCostCentres = "api/v1/project-support/cost-centres";
+        public const string GetProgrammeNewProjectProjectGroups = "api/v1/project-support/project-groups";
+        public const string GetProgrammeNewProjectAccountCodes = "api/v1/project-support/account-codes";
+        public const string GetProgrammeNewProjectSubAccounts = "api/v1/project-support/sub-accounts";
 
         // Setting
         public const string GetHoursPerDay = "api/v1/setting/hoursperday";

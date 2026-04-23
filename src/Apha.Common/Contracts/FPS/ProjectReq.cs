@@ -24,6 +24,7 @@ namespace Apha.Common.Contracts.FPS
         public decimal TransferIncome { get; set; }
         public decimal? BudgetCvl { get; set; }
         public decimal? BudgetExt { get; set; }
+        public decimal CustIncome { get; set; }
         public decimal? PvsIncome { get; set; }
         public decimal? WipEoy { get; set; }
         public decimal? WipLimit { get; set; }
@@ -34,10 +35,18 @@ namespace Apha.Common.Contracts.FPS
         public string? ProjectStatus { get; set; }
 
         [MaxLength(50)]
+        public string? CostBookNo { get; set; }
+
+        public decimal? Profit { get; set; }
+
+        [MaxLength(50)]
         public string? Disease { get; set; }
 
         [MaxLength(10)]
         public string? Contract { get; set; }
+
+        [MaxLength(200)]
+        public string? ShortTitle { get; set; }
 
         [MaxLength(50)]
         public string? ProjectParent { get; set; }
@@ -45,8 +54,16 @@ namespace Apha.Common.Contracts.FPS
         public short? Finished { get; set; }
         public string? Comments { get; set; }
 
+        public decimal? CarryOver { get; set; }
+        public decimal? CarryOverSeed { get; set; }
+
         [Range(0, 1)]
         public short IsDefraProject { get; set; }
+
+        public double? CostCentre { get; set; }
+
+        [MaxLength(50)]
+        public string? OwningRc { get; set; }
 
         [MaxLength(50)]
         public string? OracleProjectCode { get; set; }

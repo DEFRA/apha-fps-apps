@@ -21,5 +21,17 @@ namespace Apha.FPSApps.Application.Interfaces.FPS
         Task<ApiResponseDto<List<ContractDto>>> GetAllContractsAsync();
         Task<ApiResponseDto<List<ProjectDto>>> GetProjectsByProgramAsync(QueryParameters<string> query, string programNo);
         Task<ApiResponseDto<List<ProjectGroupDto>>> GetAllProjectGroupsAsync();
+
+        // Merged from IProgrammeNewProjectService
+        Task<ApiResponseDto<ProjectDto>> GetProgrammeNewProjectByIdAsync(string parentProject);
+        Task<ApiResponseDto<ProjectDto>> UpdateProjectAsync(string parentProject, ProjectDto project);
+        Task<ApiResponseDto<bool>> DeleteProjectAndChildrenAsync(string parentProject);
+        Task<ApiResponseDto<bool>> ChangeProjectCodeAsync(string oldCode, string newCode);
+        Task<ApiResponseDto<bool>> CheckProjectExistsAsync(string code);
+        Task<ApiResponseDto<List<ManagerDto>>> GetManagersAsync();
+        Task<ApiResponseDto<List<CostCentreWorkgroupDto>>> GetCostCentresAsync();
+        Task<ApiResponseDto<List<ProjectGroupDto>>> GetProjectGroupsAsync();
+        Task<ApiResponseDto<List<AccountCodeDto>>> GetAccountCodesAsync();
+        Task<ApiResponseDto<List<SubAccountDto>>> GetSubAccountsAsync();
     }
 }

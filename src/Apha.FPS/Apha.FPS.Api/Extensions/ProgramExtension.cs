@@ -95,6 +95,8 @@ namespace Apha.FPS.Api.Extensions
                     Version = "v1",
                     Description = "Field Productive System (FPS) Web API"
                 });
+                options.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
+                options.CustomSchemaIds(type => type.FullName);
             });
         }
 

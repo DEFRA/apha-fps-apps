@@ -17,13 +17,13 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectMaintenanceControllerTest
     {
         private readonly IProjectService _serviceMock;
         private readonly IMapper _mapperMock;
-        private readonly ProjectMaintenanceController _controller;
+        private readonly ProjectController _projectController;
 
         public ProjectMaintenanceControllerTests()
         {
             _serviceMock = Substitute.For<IProjectService>();
             _mapperMock = Substitute.For<IMapper>();
-            _controller = new ProjectMaintenanceController(_serviceMock, _mapperMock);
+            _projectController = new ProjectController(_serviceMock, _mapperMock);
         }
 
         #region GetAllProjectsAsync
@@ -37,7 +37,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectMaintenanceControllerTest
             _serviceMock.GetAllProjectsAsync().Returns(dtos);
             _mapperMock.Map<List<ProjectRes>>(dtos).Returns(mapped);
 
-            var result = await _controller.GetAllProjectsAsync();
+            var result = await _projectController.GetAllProjectsAsync();
 
             var okResult = Assert.IsType<OkObjectResult>(result.Result);
             Assert.Equal(mapped, okResult.Value);
@@ -63,7 +63,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectMaintenanceControllerTest
             _serviceMock.GetPagedPactProjectsAsync(query).Returns(serviceResult);
             _mapperMock.Map<PaginationRes<ProjectRes>>(serviceResult).Returns(mapped);
 
-            var result = await _controller.GetPagedPactProjectsAsync(query);
+            var result = await _projectController.GetPagedPactProjectsAsync(query);
 
             var okResult = Assert.IsType<OkObjectResult>(result.Result);
             Assert.Equal(mapped, okResult.Value);
@@ -82,7 +82,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectMaintenanceControllerTest
             _serviceMock.GetAllPactProjectsAsync().Returns(dtos);
             _mapperMock.Map<List<ProjectRes>>(dtos).Returns(mapped);
 
-            var result = await _controller.GetAllPactProjectsAsync();
+            var result = await _projectController.GetAllPactProjectsAsync();
 
             var okResult = Assert.IsType<OkObjectResult>(result.Result);
             Assert.Equal(mapped, okResult.Value);
@@ -101,7 +101,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectMaintenanceControllerTest
             _serviceMock.GetProjectByIdAsync("PP001").Returns(dto);
             _mapperMock.Map<ProjectRes>(dto).Returns(mapped);
 
-            var result = await _controller.GetProjectByIdAsync("PP001");
+            var result = await _projectController.GetProjectByIdAsync("PP001");
 
             var okResult = Assert.IsType<OkObjectResult>(result.Result);
             Assert.Equal(mapped, okResult.Value);
@@ -112,7 +112,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectMaintenanceControllerTest
         {
             _serviceMock.GetProjectByIdAsync("PP999").Returns((ProjectDto?)null);
 
-            var result = await _controller.GetProjectByIdAsync("PP999");
+            var result = await _projectController.GetProjectByIdAsync("PP999");
 
             Assert.IsType<NotFoundResult>(result.Result);
         }
@@ -133,9 +133,9 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectMaintenanceControllerTest
             _serviceMock.CreateProjectAsync(dto).Returns(createdDto);
             _mapperMock.Map<ProjectRes>(createdDto).Returns(mapped);
 
-            var result = await _controller.CreateProjectAsync(req);
+            var result = await _projectController.CreateProjectAsync(req);
 
-            var createdResult = Assert.IsType<CreatedAtActionResult>(result.Result);
+            var createdResult = Assert.IsType<OkObjectResult>(result.Result);
             Assert.Equal(mapped, createdResult.Value);
         }
 
@@ -148,15 +148,15 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectMaintenanceControllerTest
             _mapperMock.Map<ProjectDto>(req).Returns(dto);
             _serviceMock.CreateProjectAsync(dto).Throws(new Exception("Service error"));
 
-            await Assert.ThrowsAsync<Exception>(() => _controller.CreateProjectAsync(req));
+            await Assert.ThrowsAsync<Exception>(() => _projectController.CreateProjectAsync(req));
         }
 
         #endregion
 
-        #region UpdateProjectAsync
+        #region UpdateProjectRootAsync
 
         [Fact]
-        public async Task UpdateProjectAsync_ValidRequest_ReturnsOk()
+        public async Task UpdateProjectRootAsync_ValidRequest_ReturnsOk()
         {
             var req = new ProjectReq { ParentProject = "PP001" };
             var dto = new ProjectDto { ParentProject = "PP001" };
@@ -167,14 +167,14 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectMaintenanceControllerTest
             _serviceMock.UpdateProjectAsync(dto).Returns(updatedDto);
             _mapperMock.Map<ProjectRes>(updatedDto).Returns(mapped);
 
-            var result = await _controller.UpdateProjectAsync(req);
+            var result = await _projectController.UpdateProjectRootAsync(req);
 
             var okResult = Assert.IsType<OkObjectResult>(result.Result);
             Assert.Equal(mapped, okResult.Value);
         }
 
         [Fact]
-        public async Task UpdateProjectAsync_ServiceThrows_ThrowsException()
+        public async Task UpdateProjectRootAsync_ServiceThrows_ThrowsException()
         {
             var req = new ProjectReq { ParentProject = "PP001" };
             var dto = new ProjectDto { ParentProject = "PP001" };
@@ -182,7 +182,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectMaintenanceControllerTest
             _mapperMock.Map<ProjectDto>(req).Returns(dto);
             _serviceMock.UpdateProjectAsync(dto).Throws(new Exception("Service error"));
 
-            await Assert.ThrowsAsync<Exception>(() => _controller.UpdateProjectAsync(req));
+            await Assert.ThrowsAsync<Exception>(() => _projectController.UpdateProjectRootAsync(req));
         }
 
         #endregion
@@ -201,7 +201,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectMaintenanceControllerTest
             _serviceMock.UpdatePactProjectDetailsAsync(dto).Returns(updatedDto);
             _mapperMock.Map<ProjectRes>(updatedDto).Returns(mapped);
 
-            var result = await _controller.UpdatePactProjectDetailsAsync(req);
+            var result = await _projectController.UpdatePactProjectDetailsAsync(req);
 
             var okResult = Assert.IsType<OkObjectResult>(result.Result);
             Assert.Equal(mapped, okResult.Value);
@@ -216,7 +216,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectMaintenanceControllerTest
             _mapperMock.Map<ProjectDto>(req).Returns(dto);
             _serviceMock.UpdatePactProjectDetailsAsync(dto).Returns((ProjectDto?)null);
 
-            var result = await _controller.UpdatePactProjectDetailsAsync(req);
+            var result = await _projectController.UpdatePactProjectDetailsAsync(req);
 
             Assert.IsType<NotFoundResult>(result.Result);
         }
@@ -230,7 +230,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectMaintenanceControllerTest
         {
             _serviceMock.DeleteProjectAsync("PP001").Returns(true);
 
-            var result = await _controller.DeleteProjectAsync("PP001");
+            var result = await _projectController.DeleteProjectAsync("PP001");
 
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.True((bool)okResult.Value!);
@@ -239,7 +239,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectMaintenanceControllerTest
         [Fact]
         public async Task DeleteProjectAsync_EmptyId_ReturnsBadRequest()
         {
-            var result = await _controller.DeleteProjectAsync("");
+            var result = await _projectController.DeleteProjectAsync("");
 
             Assert.IsType<BadRequestObjectResult>(result);
         }
@@ -249,7 +249,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectMaintenanceControllerTest
         {
             _serviceMock.DeleteProjectAsync("PP999").Returns(false);
 
-            var result = await _controller.DeleteProjectAsync("PP999");
+            var result = await _projectController.DeleteProjectAsync("PP999");
 
             Assert.IsType<NotFoundResult>(result);
         }

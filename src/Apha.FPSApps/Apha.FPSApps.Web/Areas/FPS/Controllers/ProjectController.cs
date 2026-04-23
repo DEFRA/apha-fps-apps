@@ -12,21 +12,18 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
     [Area("FPS")]
     [Authorize(Roles = "FPSAdmin,FPSUser")]
     [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")]
-    public class ProgrammeNewProjectController : Controller
+    public class ProjectController : Controller
     {
         private readonly IMapper _mapper;
-        private readonly IProgrammeNewProjectService _programmeNewProjectService;
         private readonly IProjectService _projectService;
         private readonly IProgramService _programService;
 
-        public ProgrammeNewProjectController(
+        public ProjectController(
             IMapper mapper,
-            IProgrammeNewProjectService programmeNewProjectService,
             IProjectService projectService,
             IProgramService programService)
         {
             _mapper = mapper;
-            _programmeNewProjectService = programmeNewProjectService;
             _projectService = projectService;
             _programService = programService;
         }
@@ -66,8 +63,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 });
             }
 
-            var dto = _mapper.Map<ProgrammeNewProjectDto>(model);
-            var response = await _programmeNewProjectService.CreateProjectAsync(dto);
+            var dto = _mapper.Map<ProjectDto>(model);
+            var response = await _projectService.CreateProjectAsync(dto);
             if (response.Success)
                 return Json(new { success = true, data = response.Data, message = "Project created successfully." });
 
@@ -86,7 +83,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         // GET: ProgrammeNewProject/Edit/{parentProject}
         public async Task<IActionResult> Edit(string parentProject)
         {
-            var response = await _programmeNewProjectService.GetProjectByIdAsync(parentProject);
+            var response = await _projectService.GetProgrammeNewProjectByIdAsync(parentProject);
             if (!response.Success || response.Data == null)
                 return NotFound();
 
@@ -116,8 +113,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 });
             }
 
-            var dto = _mapper.Map<ProgrammeNewProjectDto>(model);
-            var response = await _programmeNewProjectService.UpdateProjectAsync(parentProject, dto);
+            var dto = _mapper.Map<ProjectDto>(model);
+            var response = await _projectService.UpdateProjectAsync(parentProject, dto);
             if (response.Success)
                 return Json(new { success = true, data = response.Data, message = "Project updated successfully." });
 
@@ -137,13 +134,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         [HttpPost]
         public async Task<IActionResult> Delete(string parentProject)
         {
-            var response = await _programmeNewProjectService.DeleteProjectAndChildrenAsync(parentProject);
+            var response = await _projectService.DeleteProjectAndChildrenAsync(parentProject);
             if (response.Success)
                 return Json(new
                 {
                     success = true,
                     message = "Project deleted successfully.",
-                    redirectUrl = Url.Action("Add", "ProgrammeNewProject", new { area = "FPS" })
+                    redirectUrl = Url.Action("Add", "Project", new { area = "FPS" })
                 });
 
             return Json(new
@@ -165,13 +162,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             if (string.IsNullOrWhiteSpace(oldCode) || string.IsNullOrWhiteSpace(newCode))
                 return Json(new { success = false, message = "Both old and new project codes are required." });
 
-            var response = await _programmeNewProjectService.ChangeProjectCodeAsync(oldCode, newCode);
+            var response = await _projectService.ChangeProjectCodeAsync(oldCode, newCode);
             if (response.Success)
                 return Json(new
                 {
                     success = true,
                     message = "Project code changed successfully.",
-                    redirectUrl = Url.Action("Edit", "ProgrammeNewProject", new { area = "FPS", parentProject = newCode })
+                    redirectUrl = Url.Action("Edit", "Project", new { area = "FPS", parentProject = newCode })
                 });
 
             return Json(new
@@ -188,11 +185,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         private async Task PopulateDropdownsAsync(ProgrammeNewProjectViewModel model)
         {
-            var managerTask = _programmeNewProjectService.GetManagersAsync();
-            var costCentreTask = _programmeNewProjectService.GetCostCentresAsync();
-            var projectGroupTask = _programmeNewProjectService.GetProjectGroupsAsync();
-            var accountCodeTask = _programmeNewProjectService.GetAccountCodesAsync();
-            var subAccountTask = _programmeNewProjectService.GetSubAccountsAsync();
+            var managerTask = _projectService.GetManagersAsync();
+            var costCentreTask = _projectService.GetCostCentresAsync();
+            var projectGroupTask = _projectService.GetProjectGroupsAsync();
+            var accountCodeTask = _projectService.GetAccountCodesAsync();
+            var subAccountTask = _projectService.GetSubAccountsAsync();
             var statusTask = _projectService.GetAllStatusesAsync();
             var diseaseTask = _projectService.GetAllDiseasesAsync();
             var customerTask = _projectService.GetAllCustomersAsync();
@@ -222,8 +219,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             var projectGroups = (await projectGroupTask).Data ?? new();
             model.ProjectGroupList = projectGroups
-                .Where(pg => !string.IsNullOrEmpty(pg.ProjectGroup))
-                .Select(pg => new SelectListItem(pg.ProjectGroup, pg.ProjectGroup, pg.ProjectGroup == model.ProjectGroup))
+                .Where(pg => !string.IsNullOrEmpty(pg.ProjectGroupName))
+                .Select(pg => new SelectListItem(pg.ProjectGroupName, pg.ProjectGroupName, pg.ProjectGroupName == model.ProjectGroup))
                 .Prepend(new SelectListItem("", ""))
                 .ToList();
 

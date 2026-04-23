@@ -25,7 +25,7 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<AnimalPlanItem, AnimalRequestDto>().ReverseMap();
 
             // ProgrammeNewProject
-            CreateMap<ProgrammeNewProjectDto, ProgrammeNewProjectViewModel>().ReverseMap();
+            CreateMap<ProjectDto, ProgrammeNewProjectViewModel>().ReverseMap();
         }
     }
 }

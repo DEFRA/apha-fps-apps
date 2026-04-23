@@ -4,6 +4,7 @@ using Apha.FPS.Api.Controllers;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
+using Apha.FPS.Core.Interfaces;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
@@ -22,7 +23,9 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectControllerTest
         {
             _serviceMock = Substitute.For<IProjectService>();
             _mapperMock = Substitute.For<IMapper>();
-            _controller = new ProjectController(_serviceMock, _mapperMock);
+            _controller = new ProjectController(
+                _serviceMock,
+                _mapperMock);
         }
 
         #region GetProjectsByProgramAsync

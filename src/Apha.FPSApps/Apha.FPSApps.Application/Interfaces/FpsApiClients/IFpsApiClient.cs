@@ -11,6 +11,5 @@
         IFpsSettingApiClient FpsSetting { get; }
         IFpsYearMasterApiClient FpsYearMaster { get; }
         IFpsTestorProductApiClient FpsTestorProduct { get; }
-        IFpsProgrammeNewProjectApiClient FpsProgrammeNewProject { get; }
     }
 }

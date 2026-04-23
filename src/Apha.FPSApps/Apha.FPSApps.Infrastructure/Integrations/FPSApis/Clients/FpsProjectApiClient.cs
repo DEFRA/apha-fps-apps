@@ -7,6 +7,7 @@ using Apha.FPSApps.Application.Interfaces.FpsApiClients;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
+using Microsoft.Identity.Web;
 
 namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 {
@@ -132,6 +133,101 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
             var responseDto = _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
             return ApiResponseDto<List<ProjectDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+        }
+
+        public async Task<ApiResponseDto<ProjectDto>> UpdateProjectAsync(string parentProject, ProjectDto project)
+        {
+            var req = _mapper.Map<ProjectReq>(project);
+            var response = await _http.PutAsync<ProjectReq, ProjectRes>(
+                string.Format(FpsApiEndpoints.UpdateProgrammeNewProject, Uri.EscapeDataString(parentProject)), req);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<ProjectDto>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<ProjectDto>>(response);
+            return ApiResponseDto<ProjectDto>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+        public async Task<ApiResponseDto<bool>> DeleteProjectAndChildrenAsync(string parentProject)
+        {
+            var response = await _http.DeleteAsync<bool?>(
+                string.Format(FpsApiEndpoints.DeleteProgrammeNewProjectAndChildren, Uri.EscapeDataString(parentProject)));
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<bool>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<bool>>(response);
+            return ApiResponseDto<bool>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+        public async Task<ApiResponseDto<bool>> ChangeProjectCodeAsync(string oldCode, string newCode)
+        {
+            var req = new { OldCode = oldCode, NewCode = newCode };
+            var response = await _http.PostAsync<object, bool?>(FpsApiEndpoints.ChangeProjectCode, req);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<bool>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<bool>>(response);
+            return ApiResponseDto<bool>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+        public async Task<ApiResponseDto<bool>> CheckProjectExistsAsync(string code)
+        {
+            var response = await _http.GetAsync<bool>(
+                string.Format(FpsApiEndpoints.CheckProjectExists, Uri.EscapeDataString(code)));
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<bool>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<bool>>(response);
+            return ApiResponseDto<bool>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+        public async Task<ApiResponseDto<List<ManagerDto>>> GetManagersAsync()
+        {
+            var response = await _http.GetAsync<List<ManagerRes>>(FpsApiEndpoints.GetProgrammeNewProjectManagers);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<ManagerDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<ManagerDto>>>(response);
+            return ApiResponseDto<List<ManagerDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+        public async Task<ApiResponseDto<List<CostCentreWorkgroupDto>>> GetCostCentresAsync()
+        {
+            var response = await _http.GetAsync<List<CostCentreWorkgroupRes>>(FpsApiEndpoints.GetProgrammeNewProjectCostCentres);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<CostCentreWorkgroupDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<CostCentreWorkgroupDto>>>(response);
+            return ApiResponseDto<List<CostCentreWorkgroupDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+        public async Task<ApiResponseDto<List<ProjectGroupDto>>> GetProjectGroupsAsync()
+        {
+            var response = await _http.GetAsync<List<ProjectGroupRes>>(FpsApiEndpoints.GetProgrammeNewProjectProjectGroups);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<ProjectGroupDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<ProjectGroupDto>>>(response);
+            return ApiResponseDto<List<ProjectGroupDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+        public async Task<ApiResponseDto<List<AccountCodeDto>>> GetAccountCodesAsync()
+        {
+            var response = await _http.GetAsync<List<AccountCodeRes>>(FpsApiEndpoints.GetProgrammeNewProjectAccountCodes);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<AccountCodeDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<AccountCodeDto>>>(response);
+            return ApiResponseDto<List<AccountCodeDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+        public async Task<ApiResponseDto<List<SubAccountDto>>> GetSubAccountsAsync()
+        {
+            var response = await _http.GetAsync<List<SubAccountRes>>(FpsApiEndpoints.GetProgrammeNewProjectSubAccounts);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<SubAccountDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<SubAccountDto>>>(response);
+            return ApiResponseDto<List<SubAccountDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
     }
 }
