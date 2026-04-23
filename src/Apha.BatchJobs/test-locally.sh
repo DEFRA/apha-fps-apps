@@ -93,7 +93,7 @@ function detect_execution_mode() {
 function stop_containers() {
     print_header "Stopping Containers"
     pushd "$SCRIPT_DIR" > /dev/null
-    docker-compose --profile "$DOCKER_PROFILE" down 2>/dev/null || true
+    docker-compose --profile "$DOCKER_PROFILE" down --remove-orphans 2>/dev/null || true
     popd > /dev/null
     print_success "Containers stopped"
 }
@@ -102,7 +102,7 @@ function clean_environment() {
     print_header "Cleaning Environment"
     print_info "Removing containers and volumes..."
     pushd "$SCRIPT_DIR" > /dev/null
-    docker-compose --profile "$DOCKER_PROFILE" down -v 2>/dev/null || true
+    docker-compose --profile "$DOCKER_PROFILE" down -v --remove-orphans 2>/dev/null || true
     docker-compose --profile "$DOCKER_PROFILE" rm -f 2>/dev/null || true
     popd > /dev/null
     print_success "Environment cleaned"
@@ -134,7 +134,7 @@ function build_and_run() {
     
     print_header "Starting Services with docker-compose"
     echo ""
-    SERVICE_NAME="batch-jobs"
+    SERVICE_NAME="batch-jobs-withdb"
     if [ "$DOCKER_PROFILE" = "nodb" ]; then
         SERVICE_NAME="batch-jobs-nodb"
         print_info "Starting Batch Job container in NoDb mode..."
@@ -145,7 +145,7 @@ function build_and_run() {
     print_info "Streaming logs until the batch job exits..."
     echo ""
 
-    docker-compose --profile "$DOCKER_PROFILE" up --no-build --abort-on-container-exit --exit-code-from "$SERVICE_NAME"
+    docker-compose --profile "$DOCKER_PROFILE" up --no-build --remove-orphans --abort-on-container-exit --exit-code-from "$SERVICE_NAME"
     popd > /dev/null
 }
 

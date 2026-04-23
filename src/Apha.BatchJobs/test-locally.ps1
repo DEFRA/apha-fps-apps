@@ -83,7 +83,7 @@ function Get-ExecutionMode {
 function Stop-Containers {
     Write-Header "Stopping Containers"
     Push-Location $BatchJobsDir
-    docker-compose --profile $DockerProfile down 2>$null
+    docker-compose --profile $DockerProfile down --remove-orphans 2>$null
     Pop-Location
     Write-Success "Containers stopped"
 }
@@ -91,7 +91,7 @@ function Stop-Containers {
 function Clean-Environment {
     Write-Header "Cleaning Environment"
     Push-Location $BatchJobsDir
-    docker-compose --profile $DockerProfile down -v 2>$null
+    docker-compose --profile $DockerProfile down -v --remove-orphans 2>$null
     docker-compose --profile $DockerProfile rm -f 2>$null
     Pop-Location
     Write-Success "Environment cleaned"
@@ -105,8 +105,14 @@ function Build-And-Run {
         Write-Success "Image built successfully"
 
         Write-Header "Starting Services with docker-compose"
-        Write-Host "Press Ctrl+C to stop viewing logs (containers continue running)" -ForegroundColor Gray
-        docker-compose --profile $DockerProfile up --no-build
+        $serviceName = if ($DockerProfile -eq "nodb") { "batch-jobs-nodb" } else { "batch-jobs-withdb" }
+        if ($DockerProfile -eq "nodb") {
+            Write-Host "Starting Batch Job container in NoDb mode..." -ForegroundColor Yellow
+        } else {
+            Write-Host "Starting PostgreSQL and Batch Job..." -ForegroundColor Yellow
+        }
+        Write-Host "Streaming logs until the batch job exits..." -ForegroundColor Yellow
+        docker-compose --profile $DockerProfile up --no-build --remove-orphans --abort-on-container-exit --exit-code-from $serviceName
         Pop-Location
     } catch {
         Pop-Location
@@ -129,7 +135,7 @@ function Run-Native {
 
 function Show-Logs {
     Write-Header "Showing Logs"
-    $serviceName = if ($DockerProfile -eq "nodb") { "batch-jobs-nodb" } else { "batch-jobs" }
+    $serviceName = if ($DockerProfile -eq "nodb") { "batch-jobs-nodb" } else { "batch-jobs-withdb" }
     Push-Location $BatchJobsDir
     docker-compose --profile $DockerProfile logs -f $serviceName
     Pop-Location

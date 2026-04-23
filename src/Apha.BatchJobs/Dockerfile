@@ -26,6 +26,11 @@ ENV ASPNETCORE_ENVIRONMENT=Production
 ENV DOTNET_EnableDiagnostics=0
 ENV DOTNET_GCConserveMemory=1
 
+# Npgsql may probe Kerberos/GSSAPI support at runtime.
+RUN apt-get update \
+	&& apt-get install -y --no-install-recommends libgssapi-krb5-2 \
+	&& rm -rf /var/lib/apt/lists/*
+
 # Run as non-root user
 RUN useradd -m -u 10001 batchjobs && chown -R batchjobs:batchjobs /app
 USER batchjobs
