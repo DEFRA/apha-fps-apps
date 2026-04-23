@@ -12,20 +12,20 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
     [Area("FPS")]
     [Authorize(Roles = "FPSAdmin,FPSUser")]
     [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")]
-    public class ProgramStaffPlanController : Controller
+    public class ProgramTestPlanController : Controller
     {
         private readonly IProgramService _programService;
 
-        public ProgramStaffPlanController(IProgramService programService)
+        public ProgramTestPlanController(IProgramService programService)
         {
             _programService = programService;
         }
 
         public async Task<IActionResult> Index(string? programNo = null)
         {
-            var programmeList = await GetProgrammeListAsync();
-            var selectedProgramNo = programNo ?? string.Empty;
-            var programInfo = await GetProgramInfoAsync(selectedProgramNo);
+            List<SelectListItem> programmeList = await GetProgrammeListAsync();
+            string selectedProgramNo = programNo ?? string.Empty;
+            ProgramDto? programInfo = await GetProgramInfoAsync(selectedProgramNo);
 
             var projectsGrid = new DataGridConfig<ProjectViewModel>
             {
@@ -46,26 +46,26 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 Pagination = new PaginationModel()
             };
 
-            var staffCostGrid = new DataGridConfig<StaffJobItemViewModel>
+            var testPlanGrid = new DataGridConfig<TestPlanItem>
             {
-                GridId = "staffBookedGrid",
-                Title = "Staff Plan",
+                GridId = "testPlanGrid",
+                Title = "Test Purchase Plan",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 AllowAdd = true,
-                AllowDelete = false,
-                KeyProperty = "StaffID",
-                AddFunction = "addStaffJob",
-                EditFunction = "editStaffJob",
-                DeleteFunction = "deleteStaffJob",
-                ExtraFilterMethod = "getStaffJobExtraFilters",
-                BindGridUrl = $"/FPS/StaffJob/LoadStaffJobGrid?title={Uri.EscapeDataString("Staff Plan")}",                
-                Data = new List<StaffJobItemViewModel>(),
-                Columns = GridDataProvider.GetColumnsDefination<StaffJobItemViewModel>(),
+                AllowDelete = true,
+                KeyProperty = "TestCode",
+                AddFunction = "addTestPlan",
+                EditFunction = "editTestPlan",
+                DeleteFunction = "deleteTestPlan",
+                ExtraFilterMethod = "getTestPlanExtraFilters",
+                BindGridUrl = $"/FPS/TestPlanJob/LoadTestPlanGrid?title={Uri.EscapeDataString("Test Purchase Plan")}",
+                Data = new List<TestPlanItem>(),
+                Columns = GridDataProvider.GetColumnsDefination<TestPlanItem>(null),
                 Pagination = new PaginationModel()
             };
 
-            var model = new ProgramStaffPlanViewModel
+            var model = new ProgramTestPlanViewModel
             {
                 SelectedProgramNo = selectedProgramNo,
                 SelectedProgramme = programInfo?.ProgramName ?? string.Empty,
@@ -73,7 +73,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 Target = programInfo?.Target ?? 0,
                 ProgrammeList = programmeList,
                 ProjectsGrid = projectsGrid,
-                StaffCostGrid = staffCostGrid
+                TestPlanGrid = testPlanGrid
             };
 
             return View(model);
@@ -87,15 +87,15 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 return Json(new { success = false, message = "Programme number is required." });
             }
 
-            var result = await _programService.GetProgramByIdAsync(programNo);
-            if (result.Success && result.Data != null)
+            ProgramDto? programInfo = await GetProgramInfoAsync(programNo);
+            if (programInfo != null)
             {
                 return Json(new
                 {
                     success = true,
-                    programmeName = result.Data.ProgramName,
-                    manager = result.Data.Manager,
-                    target = result.Data.Target ?? 0
+                    programmeName = programInfo.ProgramName,
+                    manager = programInfo.Manager,
+                    target = programInfo.Target ?? 0
                 });
             }
 
