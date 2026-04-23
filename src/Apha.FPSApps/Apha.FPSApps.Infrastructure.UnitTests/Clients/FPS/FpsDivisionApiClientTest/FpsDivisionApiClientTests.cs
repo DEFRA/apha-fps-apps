@@ -46,7 +46,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsDivisionApiClient
                 }
             );
 
-            _http.GetAsync<List<DivisionRes>>("api/division").Returns(apiResponse);
+            _http.GetAsync<List<DivisionRes>>("api/v1/division").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<IEnumerable<DivisionDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -56,7 +56,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsDivisionApiClient
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(2, result.Data?.Count());
-            await _http.Received(1).GetAsync<List<DivisionRes>>("api/division");
+            await _http.Received(1).GetAsync<List<DivisionRes>>("api/v1/division");
             _mapper.Received(1).Map<ApiResponseDto<IEnumerable<DivisionDto>>>(apiResponse);
         }
 
@@ -76,7 +76,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsDivisionApiClient
                 Meta = new ApiMetaDto()
             };
 
-            _http.GetAsync<List<DivisionRes>>("api/division").Returns(apiResponse);
+            _http.GetAsync<List<DivisionRes>>("api/v1/division").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<IEnumerable<DivisionDto>>>(apiResponse).Returns(mappedResponse);
 
             // Act
@@ -91,7 +91,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsDivisionApiClient
         public async Task GetAllDivisionsAsync_WhenExceptionThrown_ReturnsInternalError()
         {
             // Arrange
-            _http.GetAsync<List<DivisionRes>>("api/division")
+            _http.GetAsync<List<DivisionRes>>("api/v1/division")
                 .ThrowsAsync(new Exception("Network error"));
 
             // Act
@@ -134,7 +134,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsDivisionApiClient
                 new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 2 }
             );
 
-            _http.GetAsync<List<DivisionRes>>(Arg.Is<string>(url => url.Contains("api/division/paged")))
+            _http.GetAsync<List<DivisionRes>>(Arg.Is<string>(url => url.Contains("api/v1/division/paged")))
                 .Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<DivisionDto>>>(apiResponse).Returns(expectedDto);
 
@@ -145,7 +145,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsDivisionApiClient
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(2, result.Data?.Count);
-            await _http.Received(1).GetAsync<List<DivisionRes>>(Arg.Is<string>(url => url.Contains("api/division/paged")));
+            await _http.Received(1).GetAsync<List<DivisionRes>>(Arg.Is<string>(url => url.Contains("api/v1/division/paged")));
             _mapper.Received(1).Map<ApiResponseDto<List<DivisionDto>>>(apiResponse);
         }
 
@@ -211,7 +211,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsDivisionApiClient
                 new DivisionDto { DivName = divName, AgencyId = 1 }
             );
 
-            _http.GetAsync<DivisionRes>($"api/division/{divName}").Returns(apiResponse);
+            _http.GetAsync<DivisionRes>($"api/v1/division/{divName}").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<DivisionDto>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -221,7 +221,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsDivisionApiClient
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(divName, result.Data?.DivName);
-            await _http.Received(1).GetAsync<DivisionRes>($"api/division/{divName}");
+            await _http.Received(1).GetAsync<DivisionRes>($"api/v1/division/{divName}");
         }
 
         [Fact]
@@ -241,7 +241,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsDivisionApiClient
                 Meta = new ApiMetaDto()
             };
 
-            _http.GetAsync<DivisionRes>($"api/division/{divName}").Returns(apiResponse);
+            _http.GetAsync<DivisionRes>($"api/v1/division/{divName}").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<DivisionDto>>(apiResponse).Returns(mappedResponse);
 
             // Act
@@ -286,7 +286,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsDivisionApiClient
             var expectedDto = ApiResponseDto<DivisionDto>.SuccessResponse(divisionDto);
 
             _mapper.Map<DivisionReq>(divisionDto).Returns(divisionReq);
-            _http.PostAsync<DivisionReq, DivisionRes>("api/division", divisionReq).Returns(apiResponse);
+            _http.PostAsync<DivisionReq, DivisionRes>("api/v1/division", divisionReq).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<DivisionDto>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -296,7 +296,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsDivisionApiClient
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal("DIV3", result.Data?.DivName);
-            await _http.Received(1).PostAsync<DivisionReq, DivisionRes>("api/division", divisionReq);
+            await _http.Received(1).PostAsync<DivisionReq, DivisionRes>("api/v1/division", divisionReq);
         }
 
         [Fact]
@@ -318,7 +318,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsDivisionApiClient
             };
 
             _mapper.Map<DivisionReq>(divisionDto).Returns(divisionReq);
-            _http.PostAsync<DivisionReq, DivisionRes>("api/division", divisionReq).Returns(apiResponse);
+            _http.PostAsync<DivisionReq, DivisionRes>("api/v1/division", divisionReq).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<DivisionDto>>(apiResponse).Returns(mappedResponse);
 
             // Act
@@ -367,7 +367,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsDivisionApiClient
             var expectedDto = ApiResponseDto<DivisionDto>.SuccessResponse(divisionDto);
 
             _mapper.Map<DivisionReq>(divisionDto).Returns(divisionReq);
-            _http.PutAsync<DivisionReq, DivisionRes>($"api/division/{divName}", divisionReq).Returns(apiResponse);
+            _http.PutAsync<DivisionReq, DivisionRes>($"api/v1/division/{divName}", divisionReq).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<DivisionDto>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -377,7 +377,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsDivisionApiClient
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(divName, result.Data?.DivName);
-            await _http.Received(1).PutAsync<DivisionReq, DivisionRes>($"api/division/{divName}", divisionReq);
+            await _http.Received(1).PutAsync<DivisionReq, DivisionRes>($"api/v1/division/{divName}", divisionReq);
         }
 
         [Fact]
@@ -400,7 +400,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsDivisionApiClient
             };
 
             _mapper.Map<DivisionReq>(divisionDto).Returns(divisionReq);
-            _http.PutAsync<DivisionReq, DivisionRes>($"api/division/{divName}", divisionReq).Returns(apiResponse);
+            _http.PutAsync<DivisionReq, DivisionRes>($"api/v1/division/{divName}", divisionReq).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<DivisionDto>>(apiResponse).Returns(mappedResponse);
 
             // Act
@@ -446,7 +446,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsDivisionApiClient
             var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
             var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
 
-            _http.DeleteAsync<bool?>($"api/division/{divName}").Returns(apiResponse);
+            _http.DeleteAsync<bool?>($"api/v1/division/{divName}").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -456,7 +456,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsDivisionApiClient
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.True(result.Data);
-            await _http.Received(1).DeleteAsync<bool?>($"api/division/{divName}");
+            await _http.Received(1).DeleteAsync<bool?>($"api/v1/division/{divName}");
         }
 
         [Fact]
@@ -476,7 +476,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsDivisionApiClient
                 Meta = new ApiMetaDto()
             };
 
-            _http.DeleteAsync<bool?>($"api/division/{divName}").Returns(apiResponse);
+            _http.DeleteAsync<bool?>($"api/v1/division/{divName}").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedResponse);
 
             // Act
