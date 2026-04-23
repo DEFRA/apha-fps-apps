@@ -125,6 +125,7 @@ namespace Apha.FPSApps.Web.Extensions
             });
 
             services.AddScoped<ICostBookApiClient, CostBookApiClient>();
+            services.AddScoped<ICostBookYearlyDetailsApiClient, CostBookYearlyDetailsApiClient>();
 
             return services;
         }

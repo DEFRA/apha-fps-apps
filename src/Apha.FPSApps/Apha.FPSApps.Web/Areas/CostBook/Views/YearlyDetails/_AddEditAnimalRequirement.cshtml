@@ -1,0 +1,36 @@
+@model Apha.FPSApps.Web.Areas.CostBook.Models.AnimalRequirementItem
+
+<div class="modal-header">
+    <h5 class="modal-title">@(Model.ArIdentity == 0 ? "Add" : "Edit") Animal Requirement</h5>
+    <button type="button" class="close project-close-btn" aria-label="Close" onclick="closeModal()">×</button>
+</div>
+<div class="modal-body">
+    <form id="animalRequirementForm">
+        <div class="form-group mb-2">
+            <label asp-for="AnimalType" class="govuk-label"></label>
+            <select asp-for="AnimalType" class="govuk-select" id="animalTypeSelect">
+                @* Options populated via JS *@
+            </select>
+            <span asp-validation-for="AnimalType" class="govuk-error-message"></span>
+        </div>
+        <div class="form-group mb-2">
+            <label asp-for="NumberOfAnimals" class="govuk-label"></label>
+            <input asp-for="NumberOfAnimals" type="number" step="1" class="govuk-input" id="animalNumberOfAnimals">
+        </div>
+        <div class="form-group mb-2">
+            <label asp-for="NumberOfDays" class="govuk-label"></label>
+            <input asp-for="NumberOfDays" type="number" step="1" class="govuk-input" id="animalNumberOfDays">
+        </div>
+        <div class="form-group mb-2">
+            <label asp-for="DailyRate" class="govuk-label"></label>
+            <input asp-for="DailyRate" type="text" readonly class="govuk-input" id="animalDailyRate">
+        </div>
+        <div class="form-group mb-2">
+            <label asp-for="AnimalCost" class="govuk-label"></label>
+            <input asp-for="AnimalCost" type="text" readonly class="govuk-input" id="animalCost">
+        </div>
+        <input asp-for="ArIdentity" type="hidden">
+        <button type="submit" class="govuk-button">Save</button>
+        <button type="button" class="govuk-button govuk-button--secondary sup_margin_0" onclick="closeModal()">Cancel</button>
+    </form>
+</div>

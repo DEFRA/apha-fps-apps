@@ -115,8 +115,8 @@ namespace Apha.Costbook.Api.Extensions
             app.UseMiddleware<ExceptionMiddleware>();
             app.UseMiddleware<RequestContextMiddleware>();
 
-            app.UseAuthentication();
-            app.UseAuthorization();
+            //app.UseAuthentication();
+            //app.UseAuthorization();
 
             // Default route
             app.MapControllers();

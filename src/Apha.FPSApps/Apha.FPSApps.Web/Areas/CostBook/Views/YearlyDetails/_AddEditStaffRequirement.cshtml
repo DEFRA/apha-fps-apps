@@ -1,0 +1,39 @@
+@model Apha.FPSApps.Web.Areas.CostBook.Models.StaffRequirementItem
+
+<div class="modal-header">
+    <h5 class="modal-title">@(Model.SrIdentity == 0 ? "Add" : "Edit") Staff Requirement</h5>
+    <button type="button" class="close project-close-btn" aria-label="Close" onclick="closeModal()">×</button>
+</div>
+<div class="modal-body">
+    <form id="staffRequirementForm">
+        <div class="form-group mb-2">
+            <label asp-for="WgGrade" class="govuk-label"></label>
+            <select asp-for="WgGrade" class="govuk-select" id="staffWgGradeSelect">
+                @* Options injected via JS from cached pay rates *@
+            </select>
+            <span asp-validation-for="WgGrade" class="govuk-error-message"></span>
+        </div>
+        <div class="form-group mb-2">
+            <label asp-for="Nohours" class="govuk-label"></label>
+            <input asp-for="Nohours" type="number" step="0.01" class="govuk-input" id="staffNohours">
+        </div>
+        <div class="form-group mb-2">
+            <label asp-for="Nodays" class="govuk-label"></label>
+            <input asp-for="Nodays" type="number" step="0.01" class="govuk-input" id="staffNodays">
+        </div>
+        <div class="form-group mb-2">
+            <label asp-for="Chargerate" class="govuk-label"></label>
+            <input asp-for="Chargerate" type="text" readonly class="govuk-input" id="staffChargerate">
+        </div>
+        <div class="form-group mb-2">
+            <label asp-for="StaffCost" class="govuk-label"></label>
+            <input asp-for="StaffCost" type="text" readonly class="govuk-input" id="staffCost">
+        </div>
+        <input asp-for="SrIdentity" type="hidden">
+        <input asp-for="Payrate" type="hidden">
+        <input asp-for="Npr" type="hidden">
+        <input asp-for="Ohr" type="hidden">
+        <button type="submit" class="govuk-button">Save</button>
+        <button type="button" class="govuk-button govuk-button--secondary sup_margin_0" onclick="closeModal()">Cancel</button>
+    </form>
+</div>

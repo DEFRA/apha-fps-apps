@@ -27,6 +27,22 @@ namespace Apha.Costbook.Api.Mappings
             CreateMap<DiseaseDto, DiseaseRes>().ReverseMap();
             CreateMap<ProgramDto, ProgramRes>().ReverseMap();
             CreateMap<StaffDto, StaffRes>().ReverseMap();
+
+            // Project1 form mappings
+            CreateMap<ProjectHeaderDto, ProjectHeaderRes>().ReverseMap();
+            CreateMap<ProjectYearDto, ProjectYearRes>().ReverseMap();
+            CreateMap<ProjectYearDto, ProjectYearReq>().ReverseMap();
+            CreateMap<StaffRequirementDto, StaffRequirementRes>().ReverseMap();
+            CreateMap<StaffRequirementDto, StaffRequirementReq>().ReverseMap();
+            CreateMap<TestRequirementDto, TestRequirementRes>().ReverseMap();
+            CreateMap<TestRequirementDto, TestRequirementReq>().ReverseMap();
+            CreateMap<AnimalRequirementDto, AnimalRequirementRes>().ReverseMap();
+            CreateMap<AnimalRequirementDto, AnimalRequirementReq>().ReverseMap();
+            CreateMap<AdditionalCostDto, AdditionalCostRes>().ReverseMap();
+            CreateMap<AdditionalCostDto, AdditionalCostReq>().ReverseMap();
+            CreateMap<PayRateDto, PayRateRes>().ReverseMap();
+            CreateMap<AnimalRateDto, AnimalRateRes>().ReverseMap();
+            CreateMap<AccountCategoryDto, AccountCategoryRes>().ReverseMap();
         }
     }
 }
