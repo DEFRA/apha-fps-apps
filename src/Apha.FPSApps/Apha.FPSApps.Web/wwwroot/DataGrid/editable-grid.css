@@ -4,6 +4,7 @@
     /*height: 100vh; */
     position: relative;
     min-height: 350px;
+    border: 1px solid var(--govuk-border-colour) !important; 
 }
 
 .filter-row th {
@@ -167,7 +168,7 @@
 .grid-readonly {
     display: block;
     padding: 2px 4px;
-    color: #666;
+   /* color: #666;*/
 }
 
 .grid-footer {

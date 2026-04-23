@@ -7,17 +7,17 @@ using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using System.Text.Json;
 
-namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramAnimalPlanControllerTest
+namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramStaffPlanControllerTest
 {
-    public class ProgramAnimalPlanControllerTests
+    public class ProgramStaffPlanControllerTests
     {
         private readonly IProgramService _programService;
-        private readonly ProgramAnimalPlanController _controller;
+        private readonly ProgramStaffPlanController _controller;
 
-        public ProgramAnimalPlanControllerTests()
+        public ProgramStaffPlanControllerTests()
         {
             _programService = Substitute.For<IProgramService>();
-            _controller = new ProgramAnimalPlanController(_programService);
+            _controller = new ProgramStaffPlanController(_programService);
         }
 
         private static JsonElement GetJsonResultElement(JsonResult jsonResult)
@@ -52,15 +52,15 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramAnimalPlanController
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<ProgramAnimalPlanViewModel>(viewResult.Model);
+            var model = Assert.IsType<ProgramStaffPlanViewModel>(viewResult.Model);
 
-            Assert.Equal("P001",             model.SelectedProgramNo);
-            Assert.Equal("Programme Alpha",  model.SelectedProgramme);
-            Assert.Equal("Alice",            model.Manager);
-            Assert.Equal(1000m,              model.Target);
-            Assert.Equal(2, model.ProgrammeList.Count);
+            Assert.Equal("P001",            model.SelectedProgramNo);
+            Assert.Equal("Programme Alpha", model.SelectedProgramme);
+            Assert.Equal("Alice",           model.Manager);
+            Assert.Equal(1000m,             model.Target);
+            Assert.Equal(2,                 model.ProgrammeList.Count);
             Assert.NotNull(model.ProjectsGrid);
-            Assert.NotNull(model.AnimalCostGrid);
+            Assert.NotNull(model.StaffCostGrid);
         }
 
         [Fact]
@@ -77,12 +77,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramAnimalPlanController
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<ProgramAnimalPlanViewModel>(viewResult.Model);
+            var model = Assert.IsType<ProgramStaffPlanViewModel>(viewResult.Model);
 
             Assert.Equal(string.Empty, model.SelectedProgramNo);
             Assert.Equal(string.Empty, model.SelectedProgramme);
             Assert.Equal(string.Empty, model.Manager);
-            Assert.Equal(2, model.ProgrammeList.Count);
+            Assert.Equal(2,            model.ProgrammeList.Count);
             await _programService.DidNotReceive().GetProgramByIdAsync(Arg.Any<string>());
         }
 
@@ -93,15 +93,13 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramAnimalPlanController
             _programService.GetAllProgramsAsync()
                 .Returns(ApiResponseDto<IEnumerable<ProgramDto>>.SuccessResponse(
                     Enumerable.Empty<ProgramDto>()));
-            _programService.GetProgramByIdAsync(string.Empty)
-                .Returns(ApiResponseDto<ProgramDto?>.SuccessResponse(null));
 
             // Act
             var result = await _controller.Index(null);
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<ProgramAnimalPlanViewModel>(viewResult.Model);
+            var model = Assert.IsType<ProgramStaffPlanViewModel>(viewResult.Model);
 
             Assert.Equal(string.Empty, model.SelectedProgramNo);
             Assert.Empty(model.ProgrammeList);
@@ -115,15 +113,13 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramAnimalPlanController
             var errors = new List<ApiErrorDto> { new() { Message = "Error", Code = "ERROR" } };
             _programService.GetAllProgramsAsync()
                 .Returns(ApiResponseDto<IEnumerable<ProgramDto>>.FailureResponse(errors, new ApiMetaDto()));
-            _programService.GetProgramByIdAsync(string.Empty)
-                .Returns(ApiResponseDto<ProgramDto?>.SuccessResponse(null));
 
             // Act
             var result = await _controller.Index(null);
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<ProgramAnimalPlanViewModel>(viewResult.Model);
+            var model = Assert.IsType<ProgramStaffPlanViewModel>(viewResult.Model);
 
             Assert.Empty(model.ProgrammeList);
             Assert.Equal(string.Empty, model.SelectedProgramNo);
@@ -137,19 +133,17 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramAnimalPlanController
 
             _programService.GetAllProgramsAsync()
                 .Returns(ApiResponseDto<IEnumerable<ProgramDto>>.SuccessResponse(programs));
-            _programService.GetProgramByIdAsync("P001")
-                .Returns(ApiResponseDto<ProgramDto?>.SuccessResponse(programs[0]));
 
             // Act
             var result = await _controller.Index(null);
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<ProgramAnimalPlanViewModel>(viewResult.Model);
+            var model = Assert.IsType<ProgramStaffPlanViewModel>(viewResult.Model);
             var firstItem = model.ProgrammeList[0];
 
-            Assert.Equal("P001",                       firstItem.Value);
-            Assert.Equal("P001 - Programme Alpha",     firstItem.Text);
+            Assert.Equal("P001",                   firstItem.Value);
+            Assert.Equal("P001 - Programme Alpha", firstItem.Text);
         }
 
         [Fact]
@@ -160,20 +154,101 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramAnimalPlanController
 
             _programService.GetAllProgramsAsync()
                 .Returns(ApiResponseDto<IEnumerable<ProgramDto>>.SuccessResponse(programs));
-            _programService.GetProgramByIdAsync("P001")
-                .Returns(ApiResponseDto<ProgramDto?>.SuccessResponse(programs[0]));
 
             // Act
             var result = await _controller.Index(null);
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<ProgramAnimalPlanViewModel>(viewResult.Model);
+            var model = Assert.IsType<ProgramStaffPlanViewModel>(viewResult.Model);
 
-            Assert.Equal("/FPS/ProgramProject/LoadProjectGrid",              model.ProjectsGrid.BindGridUrl);
-            Assert.Equal("ParentProject",                                     model.ProjectsGrid.KeyProperty);
-            Assert.Equal($"/FPS/AnimalJob/LoadAnimalPlanGrid?title={Uri.EscapeDataString("Animal Plan")}", model.AnimalCostGrid.BindGridUrl);
-            Assert.Equal("IndCounter",                                        model.AnimalCostGrid.KeyProperty);
+            Assert.Equal("/FPS/ProgramProject/LoadProjectGrid",                   model.ProjectsGrid.BindGridUrl);
+            Assert.Equal("ParentProject",                                         model.ProjectsGrid.KeyProperty);
+            Assert.Equal("/FPS/StaffJob/LoadStaffJobGrid?title=Staff%20Plan",     model.StaffCostGrid.BindGridUrl);
+            Assert.Equal("StaffID",                                               model.StaffCostGrid.KeyProperty);
+        }
+
+        [Fact]
+        public async Task Index_GridConfigs_HaveCorrectGridIds()
+        {
+            // Arrange
+            var programs = BuildProgramList();
+
+            _programService.GetAllProgramsAsync()
+                .Returns(ApiResponseDto<IEnumerable<ProgramDto>>.SuccessResponse(programs));
+
+            // Act
+            var result = await _controller.Index(null);
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProgramStaffPlanViewModel>(viewResult.Model);
+
+            Assert.Equal("projectGrid",     model.ProjectsGrid.GridId);
+            Assert.Equal("staffBookedGrid", model.StaffCostGrid.GridId);
+        }
+
+        [Fact]
+        public async Task Index_StaffCostGrid_HasCorrectTitle()
+        {
+            // Arrange
+            var programs = BuildProgramList();
+
+            _programService.GetAllProgramsAsync()
+                .Returns(ApiResponseDto<IEnumerable<ProgramDto>>.SuccessResponse(programs));
+
+            // Act
+            var result = await _controller.Index(null);
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProgramStaffPlanViewModel>(viewResult.Model);
+
+            Assert.Equal("Staff Plan", model.StaffCostGrid.Title);
+        }
+
+        [Fact]
+        public async Task Index_WithValidProgramNo_ProgramInfoIsLoadedFromService()
+        {
+            // Arrange
+            var programNo = "P001";
+            var programs = BuildProgramList();
+            var programInfo = programs[0];
+
+            _programService.GetAllProgramsAsync()
+                .Returns(ApiResponseDto<IEnumerable<ProgramDto>>.SuccessResponse(programs));
+            _programService.GetProgramByIdAsync(programNo)
+                .Returns(ApiResponseDto<ProgramDto?>.SuccessResponse(programInfo));
+
+            // Act
+            await _controller.Index(programNo);
+
+            // Assert
+            await _programService.Received(1).GetProgramByIdAsync(programNo);
+        }
+
+        [Fact]
+        public async Task Index_WhenProgramInfoNotFound_UsesEmptyDefaults()
+        {
+            // Arrange
+            var programs = BuildProgramList();
+
+            _programService.GetAllProgramsAsync()
+                .Returns(ApiResponseDto<IEnumerable<ProgramDto>>.SuccessResponse(programs));
+            _programService.GetProgramByIdAsync("P999")
+                .Returns(ApiResponseDto<ProgramDto?>.SuccessResponse(null));
+
+            // Act
+            var result = await _controller.Index("P999");
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProgramStaffPlanViewModel>(viewResult.Model);
+
+            Assert.Equal("P999",       model.SelectedProgramNo);
+            Assert.Equal(string.Empty, model.SelectedProgramme);
+            Assert.Equal(string.Empty, model.Manager);
+            Assert.Equal(0m,           model.Target);
         }
 
         #endregion
