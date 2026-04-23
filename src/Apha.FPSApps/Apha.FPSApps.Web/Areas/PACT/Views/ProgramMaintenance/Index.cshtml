@@ -53,44 +53,63 @@
         <div class="govuk-grid-column-one-half">
             <div class="sup_padding_10 sup_border sup_overflow_hidden sup_margin_bottom_10">
                 <div class="govuk-grid-column-full sup_p_0 sup_padding_10 sup_border_bottom_0">
-                    <div class="govuk-grid-row">
-                        <div class="govuk-grid-column-one-half">
-                            <div class="govuk-form-group">
-                                <label class="govuk-label govuk-!-font-weight-bold" for="programNo">Program No:</label>
-                                <input class="govuk-input govuk-!-font-size-16" id="programNo" name="programNo" type="text" readonly>
-                            </div>
-                            <div class="govuk-form-group sup_margin_bottom_10">
-                                <label class="govuk-label govuk-!-font-weight-bold" for="sectorName">Sector Name:</label>
-                                <input class="govuk-input govuk-!-font-size-16" id="sectorName" name="sectorName" type="text">
-                            </div>
-                            <div class="govuk-form-group sup_margin_bottom_10">
-                                <label class="govuk-label govuk-!-font-weight-bold" for="leader">Leader:</label>
-                                <input class="govuk-input govuk-!-font-size-16" id="leader" name="leader" type="text">
-                            </div>
-                            <div class="govuk-form-group sup_margin_bottom_10">
-                                <label class="govuk-label govuk-!-font-weight-bold" for="directorate">Directorate:</label>
-                                <input class="govuk-input govuk-!-font-size-16" id="directorate" name="directorate" type="text">
+                    <form id="programDetailForm">
+                        <!-- Validation error summary -->
+                        <div class="govuk-error-summary" role="alert"
+                             aria-labelledby="error-summary-title" tabindex="-1" style="display:none;">
+                            <h2 class="govuk-error-summary__title" id="error-summary-title">
+                                There is a problem
+                            </h2>
+                            <div class="govuk-error-summary__body">
+                                <ul class="govuk-list govuk-error-summary__list"></ul>
                             </div>
                         </div>
-                        <div class="govuk-grid-column-one-half">
-                            <div class="govuk-form-group sup_margin_bottom_10">
-                                <label class="govuk-label govuk-!-font-weight-bold" for="programName">Program Name:</label>
-                                <textarea class="govuk-textarea govuk-!-font-size-16 sup_margin_bottom_12" id="programName"
-                                          name="programName" rows="2"></textarea>
+                        <div class="govuk-grid-row">
+                            <div class="govuk-grid-column-one-half">
+                                <div class="govuk-form-group">
+                                    <label class="govuk-label govuk-!-font-weight-bold" asp-for="Program.ProgramNo">Program No:</label>
+                                    <input class="govuk-input govuk-!-font-size-16" asp-for="Program.ProgramNo" readonly />
+                                    <span asp-validation-for="Program.ProgramNo" class="govuk-error-message"></span>
+                                </div>
+                                <div class="govuk-form-group sup_margin_bottom_10">
+                                    <label class="govuk-label govuk-!-font-weight-bold" asp-for="Program.SectorName">Sector Name:</label>
+                                    <input class="govuk-input govuk-!-font-size-16" asp-for="Program.SectorName" />
+                                    <span asp-validation-for="Program.SectorName" class="govuk-error-message"></span>
+                                </div>
+                                <div class="govuk-form-group sup_margin_bottom_10">
+                                    <label class="govuk-label govuk-!-font-weight-bold" asp-for="Program.Manager">Leader:</label>
+                                    <input class="govuk-input govuk-!-font-size-16" asp-for="Program.Manager" />
+                                    <span asp-validation-for="Program.Manager" class="govuk-error-message"></span>
+                                </div>
+                                <div class="govuk-form-group sup_margin_bottom_10">
+                                    <label class="govuk-label govuk-!-font-weight-bold" asp-for="Program.Directorate">Directorate:</label>
+                                    <input class="govuk-input govuk-!-font-size-16" asp-for="Program.Directorate" />
+                                    <span asp-validation-for="Program.Directorate" class="govuk-error-message"></span>
+                                </div>
                             </div>
-                            <div class="govuk-form-group sup_margin_bottom_10">
-                                <label class="govuk-label govuk-!-font-weight-bold" for="customer">Customer:</label>
-                                <input class="govuk-input govuk-!-font-size-16" id="customer" name="customer" type="text">
-                            </div>
-                            <div class="govuk-form-group sup_margin_bottom_10">
-                                <label class="govuk-label govuk-!-font-weight-bold" for="minim">Minim:</label>
-                                <input class="govuk-input govuk-!-font-size-16" id="minim" name="minim" type="text">
-                            </div>
-                            <div class="govuk-form-group sup_margin_top_25 sup_text_align_right sup_margin_bottom_10">
-                                <button type="button" class="govuk-button sup_margin_top_10 sup_margin_bottom_0" id="btnSaveProgram">Save</button>
+                            <div class="govuk-grid-column-one-half">
+                                <div class="govuk-form-group sup_margin_bottom_10">
+                                    <label class="govuk-label govuk-!-font-weight-bold" asp-for="Program.ProgramName">Program Name:</label>
+                                    <textarea class="govuk-textarea govuk-!-font-size-16 sup_margin_bottom_12"
+                                              asp-for="Program.ProgramName" rows="2"></textarea>
+                                    <span asp-validation-for="Program.ProgramName" class="govuk-error-message"></span>
+                                </div>
+                                <div class="govuk-form-group sup_margin_bottom_10">
+                                    <label class="govuk-label govuk-!-font-weight-bold" asp-for="Program.Customer">Customer:</label>
+                                    <input class="govuk-input govuk-!-font-size-16" asp-for="Program.Customer" />
+                                    <span asp-validation-for="Program.Customer" class="govuk-error-message"></span>
+                                </div>
+                                <div class="govuk-form-group sup_margin_bottom_10">
+                                    <label class="govuk-label govuk-!-font-weight-bold" asp-for="Program.Minim">Minim:</label>
+                                    <input class="govuk-input govuk-!-font-size-16" asp-for="Program.Minim" />
+                                    <span asp-validation-for="Program.Minim" class="govuk-error-message"></span>
+                                </div>
+                                <div class="govuk-form-group sup_margin_top_25 sup_text_align_right sup_margin_bottom_10">
+                                    <button type="button" class="govuk-button sup_margin_top_10 sup_margin_bottom_0" id="btnSaveProgram">Save</button>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -123,6 +142,7 @@
 <input type="hidden" id="selectedProgramNo" value="@Model.SelectedProgramNo" />
 
 @section Scripts {
+    <script src="~/js/ajax-form-validation.js"></script>
     <script>
         var selectedProjectCode = '';
 
@@ -204,13 +224,14 @@
                 success: function (result) {
                     if (result.success) {
                         var d = result.data;
-                        $('#programNo').val(d.programNo);
-                        $('#programName').val(d.programName);
-                        $('#sectorName').val(d.sectorName);
-                        $('#customer').val(d.customer);
-                        $('#leader').val(d.manager);
-                        $('#minim').val(d.minim);
-                        $('#directorate').val(d.directorate);
+                        $('#Program_ProgramNo').val(d.programNo);
+                        $('#Program_ProgramName').val(d.programName);
+                        $('#Program_SectorName').val(d.sectorName);
+                        $('#Program_Customer').val(d.customer);
+                        $('#Program_Manager').val(d.manager);
+                        $('#Program_Minim').val(d.minim);
+                        $('#Program_Directorate').val(d.directorate);
+                        clearValidationErrors('#programDetailForm');
                     }
                 },
                 error: function () {
@@ -221,15 +242,16 @@
 
         function saveProgram() {
             var data = {
-                ProgramNo: $('#programNo').val(),
-                ProgramName: $('#programName').val(),
-                SectorName: $('#sectorName').val(),
-                Customer: $('#customer').val(),
-                Manager: $('#leader').val(),
-                Minim: $('#minim').val(),
-                Directorate: $('#directorate').val()
+                ProgramNo: $('#Program_ProgramNo').val(),
+                ProgramName: $('#Program_ProgramName').val(),
+                SectorName: $('#Program_SectorName').val(),
+                Customer: $('#Program_Customer').val(),
+                Manager: $('#Program_Manager').val(),
+                Minim: $('#Program_Minim').val(),
+                Directorate: $('#Program_Directorate').val()
             };
 
+            clearValidationErrors('#programDetailForm');
             $.ajax({
                 url: '@Url.Action("Save", "ProgramMaintenance", new { area = "PACT" })',
                 type: 'POST',
@@ -239,7 +261,13 @@
                     if (result.success) {
                         alert(result.message);
                     } else {
-                        alert(result.message || 'Save failed.');
+                        // Server returns field names without the "Program." prefix (e.g. "ProgramNo"),
+                        // but asp-for generates name="Program.ProgramNo", so we remap here so that
+                        // displayServerValidationErrors can match fields and show errors inline.
+                        var remappedErrors = (result.errors || []).map(function (e) {
+                            return { field: e.field ? 'Program.' + e.field : e.field, message: e.message };
+                        });
+                        displayServerValidationErrors(remappedErrors, result.message, '#programDetailForm');
                     }
                 },
                 error: function () {
@@ -281,4 +309,7 @@
             }
         });
     </script>
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

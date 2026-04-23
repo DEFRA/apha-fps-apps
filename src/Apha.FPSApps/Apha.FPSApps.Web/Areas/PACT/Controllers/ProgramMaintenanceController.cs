@@ -78,17 +78,22 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         {
             if (!ModelState.IsValid)
             {
+                var errors = ModelState
+                    .Where(kvp => kvp.Value?.Errors.Count > 0)
+                    .SelectMany(kvp => kvp.Value!.Errors.Select(e => new
+                    {
+                        field = kvp.Key,
+                        message = string.IsNullOrWhiteSpace(e.ErrorMessage)
+                            ? e.Exception?.Message ?? "Validation error"
+                            : e.ErrorMessage
+                    }))
+                    .ToList();
+
                 return Json(new
                 {
                     success = false,
                     message = "Please correct the errors below.",
-                    errors = ModelState
-                        .Where(kvp => kvp.Value!.Errors.Any())
-                        .SelectMany(kvp => kvp.Value!.Errors.Select(e => new
-                        {
-                            field = kvp.Key,
-                            message = e.ErrorMessage
-                        }))
+                    errors
                 });
             }
 
