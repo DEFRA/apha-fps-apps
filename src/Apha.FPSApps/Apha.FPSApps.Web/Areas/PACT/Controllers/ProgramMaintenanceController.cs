@@ -65,7 +65,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             if (!response.Success || response.Data == null)
                 return Json(new { success = false, message = "Program not found." });
 
-            var vm = _mapper.Map<PactProgramViewModel>(response.Data);
+            var vm = _mapper.Map<ProgramViewModel>(response.Data);
             return Json(new { success = true, data = vm });
         }
 
@@ -75,7 +75,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpPost]
-        public async Task<IActionResult> Save([FromBody] PactProgramViewModel model)
+        public async Task<IActionResult> Save([FromBody] ProgramViewModel model)
         {
             if (!ModelState.IsValid)
             {
@@ -150,7 +150,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 .ToList();
         }
 
-        private async Task<DataGridConfig<PactProgramProjectItem>> BuildProjectsGrid(PaginationFilter<string> request, string programNo)
+        private async Task<DataGridConfig<ProgramProjectItem>> BuildProjectsGrid(PaginationFilter<string> request, string programNo)
         {
             var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}")
                              ?? new Dictionary<string, string>();
@@ -159,7 +159,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var response = await _projectService.GetProjectsByProgramAsync(query, programNo);
 
             var items = response.Data != null
-                ? _mapper.Map<List<PactProgramProjectItem>>(response.Data)
+                ? _mapper.Map<List<ProgramProjectItem>>(response.Data)
                 : [];
 
             var pagination = response.Pagination != null
@@ -168,7 +168,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             pagination.SortColumn = request.SortBy;
             pagination.SortDirection = request.Descending;
 
-            return new DataGridConfig<PactProgramProjectItem>
+            return new DataGridConfig<ProgramProjectItem>
             {
                 GridId = "projectsGrid",
                 Title = "Projects",
@@ -183,7 +183,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 ExtraFilterMethod = "getProjectsGridExtraFilters",
                 BindGridUrl = "/PACT/ProgramMaintenance/LoadProjectsGrid",
                 Data = items,
-                Columns = GridDataProvider.GetColumnsDefination<PactProgramProjectItem>(),
+                Columns = GridDataProvider.GetColumnsDefination<ProgramProjectItem>(),
                 Pagination = pagination,
                 CurrentFilters = filterDict
             };
