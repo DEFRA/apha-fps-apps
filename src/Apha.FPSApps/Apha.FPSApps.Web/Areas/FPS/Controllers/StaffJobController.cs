@@ -35,7 +35,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> LoadStaffJobGrid(PaginationFilter<string> request, string? jobCode = null)
+        public async Task<IActionResult> LoadStaffJobGrid(PaginationFilter<string> request, string? jobCode = null, string? title = null)
         {
             if (!ModelState.IsValid)
             {
@@ -60,10 +60,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             paginationModel.SortColumn = request.SortBy;
             paginationModel.SortDirection = request.Descending;
 
+            var gridTitle = title ?? "Staff Booked";
             var staffJobGridConfig = new DataGridConfig<StaffJobItemViewModel>
             {
                 GridId = "staffBookedGrid",
-                Title = "Staff Booked",
+                Title = gridTitle,
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "StaffID",
@@ -71,7 +72,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 EditFunction = "editStaffJob",
                 DeleteFunction = "deleteStaffJob",
                 ExtraFilterMethod = "getStaffJobExtraFilters",
-                BindGridUrl = "/FPS/StaffJob/LoadStaffJobGrid",
+                BindGridUrl = $"/FPS/StaffJob/LoadStaffJobGrid?title={Uri.EscapeDataString(gridTitle)}",
                 Data = staffJobItems,
                 Columns = GridDataProvider.GetColumnsDefination<StaffJobItemViewModel>(null),
                 Pagination = paginationModel,
@@ -124,7 +125,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return Json(new
             {
                 success = false,
-                message = "Failed to create Staff cost planned hours.",
+                message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to create Staff cost planned hours.",
                 errors = (result.Errors ?? new List<ApiErrorDto>()).Select(e => new
                 {
                     field = e.Code ?? string.Empty,
@@ -149,7 +150,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 return Json(new
                 {
                     success = false,
-                    message = "Failed to retrieve Staff job details.",
+                    message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to retrieve Staff job details.",
                     errors = (result.Errors ?? new List<ApiErrorDto>()).Select(e => new
                     {
                         field = e.Code ?? string.Empty,
@@ -194,7 +195,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return Json(new
             {
                 success = false,
-                message = "Failed to update Staff cost planned hours.",
+                message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to update Staff cost planned hours.",
                 errors = (result.Errors ?? new List<ApiErrorDto>()).Select(e => new
                 {
                     field = e.Code ?? string.Empty,
@@ -215,7 +216,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return Json(new
             {
                 success = false,
-                message = "Failed to delete Staff cost planned hours.",
+                message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to delete Staff cost planned hours.",
                 errors = (result.Errors ?? new List<ApiErrorDto>()).Select(e => new
                 {
                     field = e.Code ?? string.Empty,

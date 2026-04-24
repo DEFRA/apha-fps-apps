@@ -7,7 +7,93 @@
     box-sizing: border-box;
 }
 
+html,body{
+    height:100%;
+    margin:0;
+}
 
+.content-wrapper {
+    flex: 1;
+}
+
+footer {
+    text-align: center;
+}
+
+.userdropdownbtn {
+    background: none;
+    color: #000;
+    position: absolute;
+    right: 2px;
+    display: flex;
+    font-size: 16px !important;
+    top: 22px;
+    align-items: center;
+}
+
+    .userdropdownbtn:focus {
+        outline: none;
+    }
+
+.userdropdown {
+    display: none;
+    background: none;
+    color: #000;
+    position: absolute;
+    right: 20px;
+    top: 60px;
+    z-index: 999;
+}
+
+    .userdropdown.show {
+        display: block;
+    }
+
+    .userdropdown > ul {
+        display: inline-block;
+        margin: 0;
+        padding: 0;
+        list-style-type: none;
+        width: 180px;
+        border: 1px solid #cecece;
+    }
+
+        .userdropdown > ul > li {
+            display: inline-flex;
+            width: 100%;
+            margin: 0;
+        }
+
+            .userdropdown > ul > li > a {
+                padding: 10px;
+                border-bottom: 1px solid #ccc;
+                background: white;
+                width: 100%;
+                color: #000;
+                display: flex;
+                text-decoration: none;
+                cursor: pointer;
+            }
+
+                .userdropdown > ul > li > a:hover {
+                    background: aliceblue;
+                }
+
+                .userdropdown > ul > li > a > img {
+                    margin-right: 5px;
+                }
+
+
+.userdropdownbtn::after {
+    display: inline-block;
+    margin-left: .255em;
+    vertical-align: .255em;
+    content: "";
+    border-top: .3em solid;
+    border-right: .3em solid transparent;
+    border-bottom: 0;
+    border-left: .3em solid transparent;
+}
 
 /* .header { */
     /* background: #fff; */
@@ -216,7 +302,8 @@
     display: flex;
     gap: 10px;
     margin-bottom: 20px;
-	justify-content: flex-end;
+    width: 75%;
+    justify-content: flex-end;
 }
 
 .btn {
@@ -907,7 +994,7 @@ border: 1px solid #1d70b8;
     padding: 4px;
     border: 1px solid #b7b7b7;
     border-radius: 4px;
-    font-family: 'Inter', sans-serif;
+   /* font-family: 'Inter', sans-serif;*/
     font-size: 13px;
     /* font-weight: 600; */
     background-color: #ffffff;
@@ -1659,4 +1746,7 @@ main {
     border-radius: 0 5px 5px 0;
     padding:6px 6px 4px 6px;
     border: 1px solid #919191;
+}
+.margin_left_5 {
+    margin-left: 2px;
 }

@@ -1,10 +1,13 @@
-﻿using Apha.FPSApps.Application.Interfaces.FPS;
+using Apha.Common.Utilities.ExcelExport;
+using Apha.Common.Utilities.StateManagement;
+using Apha.FPSApps.Application.Interfaces.Costbook;
+using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.PACT;
+using Apha.FPSApps.Application.Interfaces.PIMS;
+using Apha.FPSApps.Application.Services.Costbook;
 using Apha.FPSApps.Application.Services.FPS;
 using Apha.FPSApps.Application.Services.PACT;
-using Apha.FPSApps.Application.Services.Costbook;
-using Apha.FPSApps.Application.Interfaces.Costbook;
-
+using Apha.FPSApps.Application.Services.PIMS;
 using Apha.FPSApps.Web.Handler;
 namespace Apha.FPSApps.Web.Extensions
 {
@@ -18,7 +21,6 @@ namespace Apha.FPSApps.Web.Extensions
         }
         public static IServiceCollection AddServices(this IServiceCollection services)
         {
-            // Add your application services here
             services.AddScoped<IStaffJobService, StaffJobService>();
             services.AddTransient<RequestHeadersHandler>();
             services.AddScoped<IFpsYearContext, FpsYearContext>();
@@ -40,12 +42,22 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IYearMasterService, YearMasterService>();
             services.AddScoped<IProjectInvoiceService, ProjectInvoiceService>();
             services.AddScoped<IProjectSubContractService, ProjectSubContractService>();
+            services.AddScoped<ITestCapabilityService, TestCapabilityService>();
+            services.AddScoped<ITestRequirementService, TestRequirementService>();
+            services.AddScoped<ITestorProductService, TestorProductService>();
+            services.AddScoped<IProjectStaffPlanActualService, ProjectStaffPlanActualService>();
+            services.AddScoped<IExcelExportService, ExcelExportService>();
+            services.AddScoped<IAppStateService, AppStateService>();
+            // PIMS
+            services.AddScoped<IProjectListService, ProjectListService>();
+            services.AddScoped<IProjectDetailsService, ProjectDetailsService>();
+            services.AddScoped<IProjectCommentService, ProjectCommentService>();
+
             services.AddScoped<ITestListService, TestListService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
         {
-            // Add your data access services here
             return services;
         }
     }

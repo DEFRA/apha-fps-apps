@@ -23,10 +23,10 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TimeCodeValidRepositoryTest
                 IEnumerable<TimeCodeValid> timeCodes,
                 int fpsYear = DefaultTestFpsYear)
         {
-            var fpsYearContext = Substitute.For<IFpsYearContext>();
-            fpsYearContext.FPSYear.Returns(fpsYear);
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            fpsRequestContext.FpsYear.Returns(fpsYear);
 
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
             var timeCodesMockSet = RepositoryTestHelper.CreateMockDbSet(timeCodes);
 
             RepositoryTestHelper.SetupDbSetOperations(timeCodesMockSet);
@@ -43,7 +43,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TimeCodeValidRepositoryTest
 
             mockContext.Setup(x => x.TimeCodeValids).Returns(timeCodesMockSet.Object);
 
-            var repo = new TimeCodeValidRepository(mockContext.Object, fpsYearContext);
+            var repo = new TimeCodeValidRepository(mockContext.Object, fpsRequestContext);
             return (repo, timeCodesMockSet, mockContext);
         }
 
@@ -185,10 +185,10 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TimeCodeValidRepositoryTest
         [Fact]
         public async Task UpdateTimeCodeValidAsync_ValidEntity_SetsFpsYearBeforeEntryIsCalled()
         {
-            var fpsYearContext = Substitute.For<IFpsYearContext>();
-            fpsYearContext.FPSYear.Returns(DefaultTestFpsYear);
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            fpsRequestContext.FpsYear.Returns(DefaultTestFpsYear);
 
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
             var timeCodesMockSet = RepositoryTestHelper.CreateMockDbSet<TimeCodeValid>([]);
             mockContext.Setup(x => x.TimeCodeValids).Returns(timeCodesMockSet.Object);
 
@@ -197,7 +197,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TimeCodeValidRepositoryTest
                 .Callback(() => entryWasCalled = true)
                 .Throws(new NotSupportedException("Entry() is not supported in mocked DbContext"));
 
-            var repo = new TimeCodeValidRepository(mockContext.Object, fpsYearContext);
+            var repo = new TimeCodeValidRepository(mockContext.Object, fpsRequestContext);
             var entity = new TimeCodeValid { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1" };
 
             await Assert.ThrowsAsync<NotSupportedException>(() => repo.UpdateTimeCodeValidAsync(entity));
@@ -210,17 +210,17 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TimeCodeValidRepositoryTest
         public async Task UpdateTimeCodeValidAsync_SetsFpsYear_FromYearContext()
         {
             const int customYear = 2025;
-            var fpsYearContext = Substitute.For<IFpsYearContext>();
-            fpsYearContext.FPSYear.Returns(customYear);
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            fpsRequestContext.FpsYear.Returns(customYear);
 
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
             var timeCodesMockSet = RepositoryTestHelper.CreateMockDbSet<TimeCodeValid>([]);
             mockContext.Setup(x => x.TimeCodeValids).Returns(timeCodesMockSet.Object);
 
             mockContext.Setup(x => x.Entry(It.IsAny<TimeCodeValid>()))
                 .Throws(new NotSupportedException("Entry() is not supported in mocked DbContext"));
 
-            var repo = new TimeCodeValidRepository(mockContext.Object, fpsYearContext);
+            var repo = new TimeCodeValidRepository(mockContext.Object, fpsRequestContext);
             var entity = new TimeCodeValid { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1" };
 
             await Assert.ThrowsAsync<NotSupportedException>(() => repo.UpdateTimeCodeValidAsync(entity));
@@ -337,7 +337,33 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TimeCodeValidRepositoryTest
             var result = await repo.CopyWorkGroupAsync("JC_SRC", "JC_TGT", "PRJ1");
 
             Assert.Empty(result);
+            timeCodesMockSet.Verify(x => x.AddRangeAsync(It.IsAny<IEnumerable<TimeCodeValid>>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task CopyWorkGroupAsync_WithExistingWorkGroupInTarget_SkipsExistingAndCopiesNew()
+        {
+            // Arrange — WG1 exists in both source and target; WG2 exists only in source
+            var timeCodes = new List<TimeCodeValid>
+            {
+                new() { TimeCode = "TC_SRC", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC_SRC", Active = true,  FpsYear = DefaultTestFpsYear },
+                new() { TimeCode = "TC_SRC", WorkGroup = "WG2", ParentProject = "PRJ1", JobCode = "JC_SRC", Active = false, FpsYear = DefaultTestFpsYear },
+                new() { TimeCode = "JC_TGT", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC_TGT", Active = true,  FpsYear = DefaultTestFpsYear }
+            };
+            var (repo, timeCodesMockSet, mockContext) = CreateRepositoryWithMocks(timeCodes);
+
+            // Act
+            var result = (await repo.CopyWorkGroupAsync("JC_SRC", "JC_TGT", "PRJ1")).ToList();
+
+            // Assert — only WG2 should be copied; WG1 skipped because it already exists in target
+            Assert.Single(result);
+            Assert.Equal("WG2",    result[0].WorkGroup);
+            Assert.Equal("JC_TGT", result[0].JobCode);
+            Assert.Equal("JC_TGT", result[0].TimeCode);
+            Assert.False(result[0].Active);
+            Assert.Equal(DefaultTestFpsYear, result[0].FpsYear);
             timeCodesMockSet.Verify(x => x.AddRangeAsync(It.IsAny<IEnumerable<TimeCodeValid>>(), It.IsAny<CancellationToken>()), Times.Once);
+            RepositoryTestHelper.VerifySaveChanges(mockContext);
         }
 
         #endregion
@@ -384,8 +410,6 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TimeCodeValidRepositoryTest
         [Fact]
         public async Task DeleteBulkAsync_WithWrongFpsYear_SkipsRemoveAndReturnsTrue()
         {
-            // Arrange — entity FpsYear (2020) does not match context year (2024);
-            // the FpsYear filter in the WHERE clause excludes it, so toDelete is empty
             var timeCodes = new List<TimeCodeValid>
             {
                 new() { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", FpsYear = 2020 }
@@ -434,7 +458,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TimeCodeValidRepositoryTest
         [Fact]
         public async Task CopySelectedWorkGroupsAsync_WithNoMatchingWorkGroups_ReturnsEmptyCollection()
         {
-            // Arrange — store is empty; AddRangeAsync is still always called (same as CopyWorkGroupAsync)
+            // Arrange — store is empty; no copies produced so AddRangeAsync must not be called
             var (repo, timeCodesMockSet, _) = CreateRepositoryWithMocks([]);
             var workGroups = new List<string> { "WG_NONE" };
 
@@ -443,7 +467,33 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TimeCodeValidRepositoryTest
 
             // Assert
             Assert.Empty(result);
+            timeCodesMockSet.Verify(x => x.AddRangeAsync(It.IsAny<IEnumerable<TimeCodeValid>>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task CopySelectedWorkGroupsAsync_WithExistingWorkGroupInTarget_SkipsExistingAndCopiesNew()
+        {
+            // Arrange — WG1 already exists in target; WG2 exists only in source
+            var timeCodes = new List<TimeCodeValid>
+            {
+                new() { TimeCode = "TC_SRC", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC_SRC", Active = true,  FpsYear = DefaultTestFpsYear },
+                new() { TimeCode = "TC_SRC", WorkGroup = "WG2", ParentProject = "PRJ1", JobCode = "JC_SRC", Active = true,  FpsYear = DefaultTestFpsYear },
+                new() { TimeCode = "JC_TGT", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC_TGT", Active = true,  FpsYear = DefaultTestFpsYear }
+            };
+            var (repo, timeCodesMockSet, mockContext) = CreateRepositoryWithMocks(timeCodes);
+            var workGroups = new List<string> { "WG1", "WG2" };
+
+            // Act
+            var result = (await repo.CopySelectedWorkGroupsAsync(workGroups, "JC_SRC", "JC_TGT", "PRJ1")).ToList();
+
+            // Assert — only WG2 copied; WG1 skipped because it already exists in target
+            Assert.Single(result);
+            Assert.Equal("WG2",    result[0].WorkGroup);
+            Assert.Equal("JC_TGT", result[0].JobCode);
+            Assert.Equal("JC_TGT", result[0].TimeCode);
+            Assert.Equal(DefaultTestFpsYear, result[0].FpsYear);
             timeCodesMockSet.Verify(x => x.AddRangeAsync(It.IsAny<IEnumerable<TimeCodeValid>>(), It.IsAny<CancellationToken>()), Times.Once);
+            RepositoryTestHelper.VerifySaveChanges(mockContext);
         }
 
         [Fact]

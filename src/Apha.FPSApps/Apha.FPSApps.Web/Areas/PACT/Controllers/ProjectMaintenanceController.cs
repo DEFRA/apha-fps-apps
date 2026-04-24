@@ -94,9 +94,11 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 GridId = "projectGrid",
                 Title = "Project Maintenance",
                 AllowAdd = false,
+                AllowEdit = false,
                 AllowDelete = false,
+                AllowView = true,
                 KeyProperty = "ParentProject",
-                EditFunction = "editProject",
+                ViewFunction = "viewProject",
                 ExtraFilterMethod = "getProjectMaintenanceExtraFilters",
                 BindGridUrl = "/PACT/ProjectMaintenance/LoadProjectGrid",
                 Data = items,
@@ -129,9 +131,11 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 GridId = "projectGrid",
                 Title = "Project Maintenance",
                 AllowAdd = false,
+                AllowEdit = false,
                 AllowDelete = false,
+                AllowView = true,
                 KeyProperty = "ParentProject",
-                EditFunction = "editProject",
+                ViewFunction = "viewProject",
                 ExtraFilterMethod = "getProjectMaintenanceExtraFilters",
                 BindGridUrl = "/PACT/ProjectMaintenance/LoadProjectGrid",
                 Data = items,
@@ -252,6 +256,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var pagination = response.Pagination != null
                 ? _mapper.Map<PaginationModel>(response.Pagination)
                 : new PaginationModel();
+            pagination.SortColumn = request.SortBy;
+            pagination.SortDirection = request.Descending;
 
             var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}")
                 ?? new Dictionary<string, string>();
@@ -448,7 +454,6 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpDelete]
         public async Task<IActionResult> DeleteJobCode(string jobCodeId, string parentProject)
         {
-            await _timeCodeService.DeleteAllByJobCodeAsync(jobCodeId, parentProject);
             var result = await _jobCodeService.DeleteJobCodeAsync(jobCodeId);
 
             if (result.Success)

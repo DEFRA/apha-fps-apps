@@ -11,11 +11,11 @@ namespace Apha.PACT.DataAccess.Repository
 {
     public class ProjectInvoiceRepository : BaseRepository, IProjectInvoiceRepository
     {
-        private readonly IFpsYearContext _fpsYearContext;
+        private readonly IFpsRequestContext _fpsRequestContext;
 
-        public ProjectInvoiceRepository(FpsDbContext context, IFpsYearContext fpsYearContext) : base(context)
+        public ProjectInvoiceRepository(FpsDbContext context, IFpsRequestContext fpsRequestContext) : base(context)
         {
-            _fpsYearContext = fpsYearContext;
+            _fpsRequestContext = fpsRequestContext;
         }
 
         public async Task<PagedData<ProjectInvoice>> GetPagedProjectInvoicesAsync(PaginationParameters<string> query, string? parentProject)
@@ -51,7 +51,7 @@ namespace Apha.PACT.DataAccess.Repository
 
         public async Task<ProjectInvoice> CreateAsync(ProjectInvoice entity)
         {
-            entity.FpsYear = _fpsYearContext.FPSYear;
+            entity.FpsYear = _fpsRequestContext.FpsYear;
             await _context.ProjectInvoices.AddAsync(entity);
             await _context.SaveChangesAsync();
             return entity;
@@ -59,7 +59,7 @@ namespace Apha.PACT.DataAccess.Repository
 
         public async Task<ProjectInvoice> UpdateAsync(ProjectInvoice entity)
         {
-            entity.FpsYear = _fpsYearContext.FPSYear;
+            entity.FpsYear = _fpsRequestContext.FpsYear;
             _context.Entry(entity).State = EntityState.Modified;
             await _context.SaveChangesAsync();
             return entity;
@@ -68,7 +68,7 @@ namespace Apha.PACT.DataAccess.Repository
         public async Task<bool> DeleteAsync(int invoiceCounter)
         {
             ProjectInvoice? entity = await _context.ProjectInvoices
-                .FirstOrDefaultAsync(i => i.InvoiceCounter == invoiceCounter && i.FpsYear == _fpsYearContext.FPSYear);
+                .FirstOrDefaultAsync(i => i.InvoiceCounter == invoiceCounter && i.FpsYear == _fpsRequestContext.FpsYear);
             if (entity == null) return false;
             _context.ProjectInvoices.Remove(entity);
             await _context.SaveChangesAsync();

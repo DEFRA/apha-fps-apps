@@ -15,8 +15,10 @@ namespace Apha.Costbook.Core.Interfaces
         Task<IEnumerable<Project>> GetProjectsAsync(string? contractFilter, string? submittedByFilter);
         Task<Project?> GetProjectByIdAsync(string id);
         Task<Project> AddProjectAsync(Project project);
+        Task<Project> CopyProjectAsync(Project project, string sourceProjectId);
         Task<Project> UpdateProjectAsync(Project project);
         Task<bool> DeleteProjectAsync(string id);
         Task<string> GetNextProjectNumberAsync(string? baseNumber);
+        Task<bool> RecostProjectAsync(string projectID);
     }
 }

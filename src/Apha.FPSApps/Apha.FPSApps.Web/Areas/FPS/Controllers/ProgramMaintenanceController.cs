@@ -108,7 +108,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return Json(new
             {
                 success = false,
-                message = "Failed to create program.",
+                message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to create program.",
                 errors = (response.Errors ?? new List<ApiErrorDto>()).Select(e => new
                 {
                     field = e.Code ?? string.Empty,
@@ -163,7 +163,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return Json(new
             {
                 success = false,
-                message = "Failed to update program.",
+                message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to update program.",
                 errors = (response.Errors ?? new List<ApiErrorDto>()).Select(e => new
                 {
                     field = e.Code ?? string.Empty,
@@ -189,7 +189,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return Json(new
             {
                 success = false,
-                message = "Failed to delete program.",
+                message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to delete program.",
                 errors = (response.Errors ?? new List<ApiErrorDto>()).Select(e => new
                 {
                     field = e.Code ?? string.Empty,
