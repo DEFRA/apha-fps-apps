@@ -100,6 +100,9 @@ web.*.config
 # exclude files which shouldnt be git ignored
 !*.slnLaunch.user
 
-/.github/instructions
-/.github/prompts
-/source
+# Copilot instructions and prompts
+.github/instructions/
+.github/prompts/
+
+# Source folder
+source/
