@@ -52,20 +52,18 @@
                          alt="Dropdown arrow"
                          width="30px" height="30px" />
                 </button>
-
+                    
                 <ul class="dropdown-menu dropdown-menu-end">
                     <li>
-                        <a asp-area="PIMS"
-                               asp-controller="Home"
-                               asp-action="Index"
+                        <a href="/"
                                class="dropdown-item">
                             <img src="~/images/house-user-solid-full.svg"
                                  alt="Home icon" width="22px" />
                             Home
-                        </a>
-                    </li>
-                </ul>
-            </div>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
         </div>
     </header>
 
@@ -137,7 +135,7 @@
     </div>
 
     <!-- ── Scripts ─────────────────────────────────────────────────────── -->
-    <script src="~/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/DataGrid/editable-grid.js"></script>
 
     @await RenderSectionAsync("Scripts", required: false)

@@ -59,7 +59,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 EditFunction = "editAnimalPlan",
                 DeleteFunction = "deleteAnimalPlan",
                 ExtraFilterMethod = "getAnimalPlanExtraFilters",
-                BindGridUrl = "/FPS/AnimalJob/LoadAnimalPlanGrid",
+                BindGridUrl = $"/FPS/AnimalJob/LoadAnimalPlanGrid?title={Uri.EscapeDataString("Animal Plan")}", 
                 Data = new List<AnimalPlanItem>(),
                 Columns = GridDataProvider.GetColumnsDefination<AnimalPlanItem>(null),
                 Pagination = new PaginationModel()

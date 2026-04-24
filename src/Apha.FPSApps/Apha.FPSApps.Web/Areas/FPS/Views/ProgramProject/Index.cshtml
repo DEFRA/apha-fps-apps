@@ -21,7 +21,7 @@
                         <div style="display: flex; justify-content: flex-end;" class="col-md-4">
                             <label class="fw-bold mt-2" for="programmeSelect">Programme: </label>
                             <select id="programmeSelect" asp-items="Model.ProgrammeList" asp-for="SelectedProgramNo"
-                                    class="form-select form-select-sm" style="width: auto; min-width: 260px;">
+                                    class="govuk-select govuk-!-font-size-16" style="width: auto; min-width: 260px;">
                                 <option value="">-- Select Programme --</option>
                             </select>
                         </div>
@@ -54,15 +54,16 @@
                                 <div style="display: flex; flex-direction: row; align-items: flex-start;">
 
                                     <!-- Side navigation: Plan vs Actuals -->
-                                    <nav class="sidenav flex-column flex-shrink-0" id="shortnav">
+                                    <nav class="sidenav flex-column flex-shrink-0" id="shortnav" aria-label="Plan vs Actuals side navigation">
                                         <button class="toggle-btn ppi-toggle-btn-position" onclick="toggleSidebar()" aria-label="Toggle side navigation">
                                             <img src="~/images/chevron-left-solid-full.svg" alt="Toggle navigation" width="24">
                                         </button>
                                         <ul>
                                             <li><a class="dropdown-item sidenav-title">Plan vs Actuals</a></li>
                                             <li><a class="dropdown-item"
-                                                   data-nav-program="@Url.Action("Index", "ProgramStaffPlan", new { area = "FPS" })"
-                                                   href="@Url.Action("Index", "ProgramStaffPlan", new { area = "FPS", programNo = Model.SelectedProgramNo })">Staff</a></li>
+                                                   data-nav-program="@Url.Action("Index", "ProjectStaffPlanActual", new { area = "FPS" })"
+                                                   href="@Url.Action("Index", "ProjectStaffPlanActual", new { area = "FPS", programNo = Model.SelectedProgramNo })">Staff</a>
+                                                </li>
                                             <li><a class="dropdown-item" href="#">Tests</a></li>
                                             <li><a class="dropdown-item"
                                                    data-nav-program="@Url.Action("Index", "ProgramAnimalPlan", new { area = "FPS" })"
@@ -110,7 +111,7 @@
                                                                class="govuk-input govuk-!-font-size-16 text-AlignRight" value="£0">
                                                     </div>
                                                     <div class="summary-item">
-                                                        <label class="govuk-label--s" for="summary-total-cost-inc">Total Cost Inc:</label>
+                                                        <label class="govuk-label--s" for="summary-total-cost-inc">Total Cust Inc:</label>
                                                         <input type="text" id="summary-total-cost-inc" readonly
                                                                class="govuk-input govuk-!-font-size-16 text-AlignRight" value="£0">
                                                     </div>
