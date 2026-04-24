@@ -33,9 +33,10 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<ICustomerService, CustomerService>();
             services.AddScoped<IContractService, ContractService>();
             services.AddScoped<IYearMasterService, YearMasterService>();
+            services.AddScoped<IProjectGroupService, ProjectGroupService>();
+            services.AddScoped<ITimeCostCalcsService, TimeCostCalcsService>();
             services.AddScoped<IAccountCodeService, AccountCodeService>();
             services.AddScoped<ISubAccountService, SubAccountService>();
-            services.AddScoped<IProjectGroupService, ProjectGroupService>();
             services.AddScoped<ITestorProductService, TestorProductService>();
             return services;
         }
@@ -54,11 +55,12 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<ICustomerRepository, CustomerRepository>();
             services.AddScoped<IContractRepository, ContractRepository>();
             services.AddScoped<IYearMasterRepository, YearMasterRepository>();
+services.AddScoped<IProjectGroupRepository, ProjectGroupRepository>();
+services.AddScoped<ITestorProductRepository, TestorProductRepository>();
+            services.AddScoped<ITimeCostCalcsRepository, TimeCostCalcsRepository>();
             services.AddScoped<IAccountCodeRepository, AccountCodeRepository>();
             services.AddScoped<ISubAccountRepository, SubAccountRepository>();
-            services.AddScoped<IProjectGroupRepository, ProjectGroupRepository>();
             services.AddScoped<IStoredProcRepository, StoredProcRepository>();
-            services.AddScoped<ITestorProductRepository, TestorProductRepository>();
             return services;
         }
     }

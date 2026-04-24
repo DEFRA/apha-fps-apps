@@ -51,6 +51,8 @@ namespace Apha.FPS.Api.Mappings
                 .ForMember(d => d.SubAccount, o => o.MapFrom(s => s.SubAccountName)).ReverseMap()
                 .ForMember(d => d.SubAccountName, o => o.MapFrom(s => s.SubAccount));
             CreateMap<ProjectGroupDto, ProjectGroupRes>().ReverseMap();
+            CreateMap<TimeCostCalcsViewDto, TimeCostCalcsViewRes>().ReverseMap();
+            CreateMap<TimeCostCalcsTotalsDto, TimeCostCalcsTotalsRes>().ReverseMap();
             CreateMap<CostCentreWorkgroup, CostCentreWorkgroupRes>().ReverseMap();
         }
     }

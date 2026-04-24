@@ -63,13 +63,15 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<TestCapability> TestCapabilities { get; set; }
         public virtual DbSet<MonthlyOutput> MonthlyOutputs { get; set; }
         public virtual DbSet<MonthlyTime> MonthlyTimes { get; set; }
-        public virtual DbSet<TimeCostCalc> TimeCostCalcs { get; set; }
         public virtual DbSet<ProjectMonth> ProjectMonths { get; set; }
         public virtual DbSet<TimeCodeValid> TimeCodeValids { get; set; }
         public virtual DbSet<Milestone> Milestones { get; set; }
         public virtual DbSet<ProjectMonthFinal> ProjectMonthFinals { get; set; }
         public virtual DbSet<ProjectInvoice> ProjectInvoices { get; set; }
         public virtual DbSet<ProjectSubContract> ProjectSubContracts { get; set; }
+
+        public virtual DbSet<TimeCostCalcsView> TimeCostCalcsViews { get; set; }
+        public virtual DbSet<TimeCostCalcs> TimeCostCalcs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -205,7 +207,7 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new MonthlyTimeMap());
 
-            modelBuilder.ApplyConfiguration(new TimeCostCalcMap());
+            //modelBuilder.ApplyConfiguration(new TimeCostCalcMap());
 
             modelBuilder.ApplyConfiguration(new ProjectMonthMap());
 
@@ -214,6 +216,14 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new MilestoneMap());
 
             modelBuilder.ApplyConfiguration(new ProjectMonthFinalMap());
+
+
+            modelBuilder.ApplyConfiguration(new TimeCostCalcsViewMap());
+            modelBuilder.Entity<TimeCostCalcsView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new TimeCostCalcsMap());
+            modelBuilder.Entity<TimeCostCalcs>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
 
         }
     }
