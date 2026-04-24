@@ -139,7 +139,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProgramMaintenanceControll
             // Arrange
             var dto = new ProgramDto { ProgramNo = "P001", ProgramName = "Test" };
             _programService.GetProgramByIdAsync("P001")
-                .Returns(ApiResponseDto<ProgramDto>.SuccessResponse(dto));
+                .Returns(ApiResponseDto<ProgramDto?>.SuccessResponse(dto));
             _mapper.Map<ProgramViewModel>(dto)
                 .Returns(new ProgramViewModel { ProgramNo = "P001", ProgramName = "Test" });
 
@@ -158,7 +158,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProgramMaintenanceControll
             // Arrange
             var errors = new List<ApiErrorDto> { new() { Message = "Not found" } };
             _programService.GetProgramByIdAsync("MISSING")
-                .Returns(ApiResponseDto<ProgramDto>.FailureResponse(errors, new ApiMetaDto()));
+                .Returns(ApiResponseDto<ProgramDto?>.FailureResponse(errors, new ApiMetaDto()));
 
             // Act
             var result = await _controller.GetProgram("MISSING");
@@ -175,7 +175,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProgramMaintenanceControll
         {
             // Arrange
             _programService.GetProgramByIdAsync("P001")
-                .Returns(new ApiResponseDto<ProgramDto> { Success = true, Data = null });
+                .Returns(new ApiResponseDto<ProgramDto?> { Success = true, Data = null });
 
             // Act
             var result = await _controller.GetProgram("P001");
