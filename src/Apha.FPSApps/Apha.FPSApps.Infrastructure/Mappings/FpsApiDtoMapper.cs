@@ -54,6 +54,11 @@ namespace Apha.FPSApps.Infrastructure.Mappings
 
             // Testor Product
             CreateMap<TestorProductDto, TestorProductRes>().ReverseMap();
+
+            // Additional Cost
+            CreateMap<AdditionalCostDto, AdditionalCostReq>().ReverseMap();
+            CreateMap<AdditionalCostDto, AdditionalCostRes>().ReverseMap();
+            CreateMap<AccountCategoryDto, AccountCategoryRes>().ReverseMap();
         }
     }
 }

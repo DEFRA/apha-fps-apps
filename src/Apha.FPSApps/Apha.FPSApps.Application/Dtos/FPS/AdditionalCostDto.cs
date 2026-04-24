@@ -1,0 +1,19 @@
+namespace Apha.FPSApps.Application.Dtos.FPS
+{
+    public class AdditionalCostDto
+    {
+        public string JobCode { get; set; } = null!;
+
+        public string Account { get; set; } = null!;
+
+        public string Description { get; set; } = null!;
+
+        public decimal ItemCost { get; set; }
+
+        public string? Freq { get; set; }
+
+        public string? Supplier { get; set; }
+
+        public int? FpsYear { get; set; }
+    }
+}

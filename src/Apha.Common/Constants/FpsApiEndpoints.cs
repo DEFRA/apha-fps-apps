@@ -66,5 +66,14 @@ namespace Apha.Common.Constants
 
         // Testor Product
         public const string GetAllTestorProducts = "api/v1/testorproduct";
+
+        // Additional Cost
+        public const string GetAdditionalCosts = "api/v1/additionalcost?jobCode={0}";
+        public const string GetTotalItemCost = "api/v1/additionalcost/totalitemcost?jobCode={0}";
+        public const string GetAccountCategories = "api/v1/additionalcost/accountcategories";
+        public const string GetAdditionalCostById = "api/v1/additionalcost/{0}/{1}/{2}";
+        public const string CreateAdditionalCost = "api/v1/additionalcost";
+        public const string UpdateAdditionalCost = "api/v1/additionalcost";
+        public const string DeleteAdditionalCost = "api/v1/additionalcost?jobCode={0}&account={1}&description={2}";
     }
 }

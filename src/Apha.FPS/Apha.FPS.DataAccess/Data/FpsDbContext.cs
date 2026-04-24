@@ -56,6 +56,9 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<StaffJobLog> StaffJobLogs { get; set; }
         public virtual DbSet<AnimalRequestLog> AnimalRequestLogs { get; set; }
         public virtual DbSet<TestorProduct> TestorProducts { get; set; }
+        public virtual DbSet<AdditionalCost> AdditionalCosts { get; set; }
+        public virtual DbSet<AdditionalCostLog> AdditionalCostLogs { get; set; }
+        public virtual DbSet<AccountCategory> AccountCategories { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new UserMap());
@@ -161,6 +164,14 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new AnimalRequestLogMap());
             modelBuilder.Entity<AnimalRequestLog>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new AdditionalCostMap());
+            modelBuilder.Entity<AdditionalCost>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new AdditionalCostLogMap());
+            modelBuilder.Entity<AdditionalCostLog>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new AccountCategoryMap());
         }
     }
 }

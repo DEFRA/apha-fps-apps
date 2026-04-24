@@ -47,6 +47,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<ITestorProductService, TestorProductService>();
             services.AddScoped<IExcelExportService, ExcelExportService>();
             services.AddScoped<IAppStateService, AppStateService>();
+            services.AddScoped<IAdditionalCostService, AdditionalCostService>();
             // PIMS
             services.AddScoped<IProjectListService, ProjectListService>();
             services.AddScoped<IProjectDetailsService, ProjectDetailsService>();
