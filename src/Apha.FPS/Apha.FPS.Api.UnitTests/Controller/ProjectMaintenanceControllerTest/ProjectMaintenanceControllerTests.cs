@@ -336,7 +336,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectMaintenanceControllerTest
 
         [Theory]
         [InlineData((short)0)]
-        [InlineData((short)1)]
+        [InlineData((short)-1)]
         public void ProjectReq_WhenIsDefraProjectIsValid_PassesValidation(short value)
         {
             var req = new ProjectReq { ParentProject = "PP001", ProjectTitle = "Alpha", IsDefraProject = value };

@@ -736,5 +736,302 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProjectServiceTest
         }
 
         #endregion
+
+        #region GetProgrammeNewProjectByIdAsync Tests
+
+        [Fact]
+        public async Task GetProgrammeNewProjectByIdAsync_WithValidId_ReturnsProject()
+        {
+            var project = new ProjectDto { ParentProject = "PP001", ProjectTitle = "Test" };
+            var expectedResponse = ApiResponseDto<ProjectDto>.SuccessResponse(project);
+            _fpsProjectApiClient.GetProjectByIdAsync("PP001").Returns(expectedResponse);
+
+            var result = await _projectService.GetProgrammeNewProjectByIdAsync("PP001");
+
+            Assert.True(result.Success);
+            Assert.Equal("PP001", result.Data?.ParentProject);
+            await _fpsProjectApiClient.Received(1).GetProjectByIdAsync("PP001");
+        }
+
+        [Fact]
+        public async Task GetProgrammeNewProjectByIdAsync_WhenApiFails_ReturnsFailure()
+        {
+            var errors = new List<ApiErrorDto> { new() { Message = "Not found", Code = "NOT_FOUND" } };
+            var expectedResponse = ApiResponseDto<ProjectDto>.FailureResponse(errors, new ApiMetaDto());
+            _fpsProjectApiClient.GetProjectByIdAsync("NOPE").Returns(expectedResponse);
+
+            var result = await _projectService.GetProgrammeNewProjectByIdAsync("NOPE");
+
+            Assert.False(result.Success);
+        }
+
+        #endregion
+
+        #region UpdateProjectAsync (with parentProject) Tests
+
+        [Fact]
+        public async Task UpdateProjectAsync_WithParentProject_ReturnsSuccess()
+        {
+            var project = new ProjectDto { ParentProject = "PP001", ProjectTitle = "Updated" };
+            var expectedResponse = ApiResponseDto<ProjectDto>.SuccessResponse(project);
+            _fpsProjectApiClient.UpdateProjectAsync("PP001", project).Returns(expectedResponse);
+
+            var result = await _projectService.UpdateProjectAsync("PP001", project);
+
+            Assert.True(result.Success);
+            Assert.Equal("Updated", result.Data?.ProjectTitle);
+            await _fpsProjectApiClient.Received(1).UpdateProjectAsync("PP001", project);
+        }
+
+        [Fact]
+        public async Task UpdateProjectAsync_WithParentProject_WhenApiFails_ReturnsFailure()
+        {
+            var project = new ProjectDto { ParentProject = "PP001" };
+            var errors = new List<ApiErrorDto> { new() { Message = "Failed", Code = "ERR" } };
+            var expectedResponse = ApiResponseDto<ProjectDto>.FailureResponse(errors, new ApiMetaDto());
+            _fpsProjectApiClient.UpdateProjectAsync("PP001", project).Returns(expectedResponse);
+
+            var result = await _projectService.UpdateProjectAsync("PP001", project);
+
+            Assert.False(result.Success);
+        }
+
+        #endregion
+
+        #region DeleteProjectAndChildrenAsync Tests
+
+        [Fact]
+        public async Task DeleteProjectAndChildrenAsync_WithValidId_ReturnsSuccess()
+        {
+            var expectedResponse = ApiResponseDto<bool>.SuccessResponse(true);
+            _fpsProjectApiClient.DeleteProjectAndChildrenAsync("PP001").Returns(expectedResponse);
+
+            var result = await _projectService.DeleteProjectAndChildrenAsync("PP001");
+
+            Assert.True(result.Success);
+            Assert.True(result.Data);
+            await _fpsProjectApiClient.Received(1).DeleteProjectAndChildrenAsync("PP001");
+        }
+
+        [Fact]
+        public async Task DeleteProjectAndChildrenAsync_WhenApiFails_ReturnsFailure()
+        {
+            var errors = new List<ApiErrorDto> { new() { Message = "Has children", Code = "HAS_CHILDREN" } };
+            var expectedResponse = ApiResponseDto<bool>.FailureResponse(errors, new ApiMetaDto());
+            _fpsProjectApiClient.DeleteProjectAndChildrenAsync("PP001").Returns(expectedResponse);
+
+            var result = await _projectService.DeleteProjectAndChildrenAsync("PP001");
+
+            Assert.False(result.Success);
+        }
+
+        #endregion
+
+        #region ChangeProjectCodeAsync Tests
+
+        [Fact]
+        public async Task ChangeProjectCodeAsync_WithValidCodes_ReturnsSuccess()
+        {
+            var expectedResponse = ApiResponseDto<bool>.SuccessResponse(true);
+            _fpsProjectApiClient.ChangeProjectCodeAsync("OLD1", "NEW1").Returns(expectedResponse);
+
+            var result = await _projectService.ChangeProjectCodeAsync("OLD1", "NEW1");
+
+            Assert.True(result.Success);
+            await _fpsProjectApiClient.Received(1).ChangeProjectCodeAsync("OLD1", "NEW1");
+        }
+
+        [Fact]
+        public async Task ChangeProjectCodeAsync_WhenApiFails_ReturnsFailure()
+        {
+            var errors = new List<ApiErrorDto> { new() { Message = "Code exists", Code = "DUPLICATE" } };
+            var expectedResponse = ApiResponseDto<bool>.FailureResponse(errors, new ApiMetaDto());
+            _fpsProjectApiClient.ChangeProjectCodeAsync("OLD1", "NEW1").Returns(expectedResponse);
+
+            var result = await _projectService.ChangeProjectCodeAsync("OLD1", "NEW1");
+
+            Assert.False(result.Success);
+        }
+
+        #endregion
+
+        #region CheckProjectExistsAsync Tests
+
+        [Fact]
+        public async Task CheckProjectExistsAsync_WhenExists_ReturnsTrue()
+        {
+            var expectedResponse = ApiResponseDto<bool>.SuccessResponse(true);
+            _fpsProjectApiClient.CheckProjectExistsAsync("PP001").Returns(expectedResponse);
+
+            var result = await _projectService.CheckProjectExistsAsync("PP001");
+
+            Assert.True(result.Success);
+            Assert.True(result.Data);
+            await _fpsProjectApiClient.Received(1).CheckProjectExistsAsync("PP001");
+        }
+
+        [Fact]
+        public async Task CheckProjectExistsAsync_WhenApiFails_ReturnsFailure()
+        {
+            var errors = new List<ApiErrorDto> { new() { Message = "Error", Code = "ERR" } };
+            var expectedResponse = ApiResponseDto<bool>.FailureResponse(errors, new ApiMetaDto());
+            _fpsProjectApiClient.CheckProjectExistsAsync("PP001").Returns(expectedResponse);
+
+            var result = await _projectService.CheckProjectExistsAsync("PP001");
+
+            Assert.False(result.Success);
+        }
+
+        #endregion
+
+        #region GetManagersAsync Tests
+
+        [Fact]
+        public async Task GetManagersAsync_WithSuccess_ReturnsManagerList()
+        {
+            var managers = new List<ManagerDto> { new() { Name = "Alice" } };
+            var expectedResponse = ApiResponseDto<List<ManagerDto>>.SuccessResponse(managers);
+            _fpsProjectApiClient.GetManagersAsync().Returns(expectedResponse);
+
+            var result = await _projectService.GetManagersAsync();
+
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+            await _fpsProjectApiClient.Received(1).GetManagersAsync();
+        }
+
+        [Fact]
+        public async Task GetManagersAsync_WhenApiFails_ReturnsFailure()
+        {
+            var errors = new List<ApiErrorDto> { new() { Message = "Error", Code = "ERR" } };
+            var expectedResponse = ApiResponseDto<List<ManagerDto>>.FailureResponse(errors, new ApiMetaDto());
+            _fpsProjectApiClient.GetManagersAsync().Returns(expectedResponse);
+
+            var result = await _projectService.GetManagersAsync();
+
+            Assert.False(result.Success);
+        }
+
+        #endregion
+
+        #region GetCostCentresAsync Tests
+
+        [Fact]
+        public async Task GetCostCentresAsync_WithSuccess_ReturnsCostCentreList()
+        {
+            var data = new List<CostCentreWorkgroupDto> { new() { CostCentre = 100 } };
+            var expectedResponse = ApiResponseDto<List<CostCentreWorkgroupDto>>.SuccessResponse(data);
+            _fpsProjectApiClient.GetCostCentresAsync().Returns(expectedResponse);
+
+            var result = await _projectService.GetCostCentresAsync();
+
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+            await _fpsProjectApiClient.Received(1).GetCostCentresAsync();
+        }
+
+        [Fact]
+        public async Task GetCostCentresAsync_WhenApiFails_ReturnsFailure()
+        {
+            var errors = new List<ApiErrorDto> { new() { Message = "Error", Code = "ERR" } };
+            var expectedResponse = ApiResponseDto<List<CostCentreWorkgroupDto>>.FailureResponse(errors, new ApiMetaDto());
+            _fpsProjectApiClient.GetCostCentresAsync().Returns(expectedResponse);
+
+            var result = await _projectService.GetCostCentresAsync();
+
+            Assert.False(result.Success);
+        }
+
+        #endregion
+
+        #region GetProjectGroupsAsync (via FpsProject) Tests
+
+        [Fact]
+        public async Task GetProjectGroupsAsync_WithSuccess_ReturnsProjectGroupList()
+        {
+            var data = new List<ProjectGroupDto> { new() { ProjectGroupName = "GRP1" } };
+            var expectedResponse = ApiResponseDto<List<ProjectGroupDto>>.SuccessResponse(data);
+            _fpsProjectApiClient.GetProjectGroupsAsync().Returns(expectedResponse);
+
+            var result = await _projectService.GetProjectGroupsAsync();
+
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+            await _fpsProjectApiClient.Received(1).GetProjectGroupsAsync();
+        }
+
+        [Fact]
+        public async Task GetProjectGroupsAsync_WhenApiFails_ReturnsFailure()
+        {
+            var errors = new List<ApiErrorDto> { new() { Message = "Error", Code = "ERR" } };
+            var expectedResponse = ApiResponseDto<List<ProjectGroupDto>>.FailureResponse(errors, new ApiMetaDto());
+            _fpsProjectApiClient.GetProjectGroupsAsync().Returns(expectedResponse);
+
+            var result = await _projectService.GetProjectGroupsAsync();
+
+            Assert.False(result.Success);
+        }
+
+        #endregion
+
+        #region GetAccountCodesAsync Tests
+
+        [Fact]
+        public async Task GetAccountCodesAsync_WithSuccess_ReturnsAccountCodeList()
+        {
+            var data = new List<AccountCodeDto> { new() { Code = "AC1" } };
+            var expectedResponse = ApiResponseDto<List<AccountCodeDto>>.SuccessResponse(data);
+            _fpsProjectApiClient.GetAccountCodesAsync().Returns(expectedResponse);
+
+            var result = await _projectService.GetAccountCodesAsync();
+
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+            await _fpsProjectApiClient.Received(1).GetAccountCodesAsync();
+        }
+
+        [Fact]
+        public async Task GetAccountCodesAsync_WhenApiFails_ReturnsFailure()
+        {
+            var errors = new List<ApiErrorDto> { new() { Message = "Error", Code = "ERR" } };
+            var expectedResponse = ApiResponseDto<List<AccountCodeDto>>.FailureResponse(errors, new ApiMetaDto());
+            _fpsProjectApiClient.GetAccountCodesAsync().Returns(expectedResponse);
+
+            var result = await _projectService.GetAccountCodesAsync();
+
+            Assert.False(result.Success);
+        }
+
+        #endregion
+
+        #region GetSubAccountsAsync Tests
+
+        [Fact]
+        public async Task GetSubAccountsAsync_WithSuccess_ReturnsSubAccountList()
+        {
+            var data = new List<SubAccountDto> { new() { SubAccountCode = "SA1" } };
+            var expectedResponse = ApiResponseDto<List<SubAccountDto>>.SuccessResponse(data);
+            _fpsProjectApiClient.GetSubAccountsAsync().Returns(expectedResponse);
+
+            var result = await _projectService.GetSubAccountsAsync();
+
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+            await _fpsProjectApiClient.Received(1).GetSubAccountsAsync();
+        }
+
+        [Fact]
+        public async Task GetSubAccountsAsync_WhenApiFails_ReturnsFailure()
+        {
+            var errors = new List<ApiErrorDto> { new() { Message = "Error", Code = "ERR" } };
+            var expectedResponse = ApiResponseDto<List<SubAccountDto>>.FailureResponse(errors, new ApiMetaDto());
+            _fpsProjectApiClient.GetSubAccountsAsync().Returns(expectedResponse);
+
+            var result = await _projectService.GetSubAccountsAsync();
+
+            Assert.False(result.Success);
+        }
+
+        #endregion
     }
 }

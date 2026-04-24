@@ -286,7 +286,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             model.IsDefraProjectList = new List<SelectListItem>
             {
                 new("", ""),
-                new("Yes", "1", model.IsDefraProject == 1),
+                new("Yes", "-1", model.IsDefraProject == -1),
                 new("No", "0", model.IsDefraProject == 0)
             };
         }

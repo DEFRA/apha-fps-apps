@@ -167,7 +167,7 @@
                                     <label class="govuk-label required" asp-for="CustIncome">Customer Income:</label>
                                     <div class="govuk-input__wrapper">
                                         <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                                        <input type="text" asp-for="CustIncome" class="govuk-input" required />
+                                        <input type="text" asp-for="CustIncome" class="govuk-input currency-input" required />
                                     </div>
                                     <span asp-validation-for="CustIncome" class="govuk-error-message" style="display:none;"></span>
                                 </div>
@@ -176,7 +176,7 @@
                                     <label class="govuk-label required" asp-for="TransferIncome">Transfer Income:</label>
                                     <div class="govuk-input__wrapper">
                                         <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                                        <input type="text" asp-for="TransferIncome" class="govuk-input" required />
+                                        <input type="text" asp-for="TransferIncome" class="govuk-input currency-input" required />
                                     </div>
                                     <span asp-validation-for="TransferIncome" class="govuk-error-message" style="display:none;"></span>
                                 </div>
@@ -185,7 +185,7 @@
                                     <label class="govuk-label" asp-for="Profit">Target Profit:</label>
                                     <div class="govuk-input__wrapper">
                                         <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                                        <input type="text" asp-for="Profit" class="govuk-input" />
+                                        <input type="text" asp-for="Profit" class="govuk-input currency-input" />
                                     </div>
                                     <span asp-validation-for="Profit" class="govuk-error-message" style="display:none;"></span>
                                 </div>
@@ -222,7 +222,7 @@
 
                                 <div class="govuk-form-group sup_margin_0">
                                     <label class="govuk-label" asp-for="OwningRc">Resource Centre:</label>
-                                    <input type="text" asp-for="OwningRc" class="govuk-input" readonly />
+                                    <input type="text" asp-for="OwningRc" class="govuk-input" />
                                     <span asp-validation-for="OwningRc" class="govuk-error-message" style="display:none;"></span>
                                 </div>
 
@@ -251,26 +251,20 @@
                                     <label class="govuk-label required" asp-for="BudgetCvl">Budget:</label>
                                     <div class="govuk-input__wrapper">
                                         <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                                        <input type="text" asp-for="BudgetCvl" class="govuk-input" required />
+                                        <input type="text" asp-for="BudgetCvl" class="govuk-input currency-input" required />
                                     </div>
                                     <span asp-validation-for="BudgetCvl" class="govuk-error-message" style="display:none;"></span>
                                 </div>
 
                                 <div class="govuk-form-group sup_margin_0">
                                     <label class="govuk-label" asp-for="PvsIncome">PVS Income: (Surv Only)</label>
-                                    <div class="govuk-input__wrapper">
-                                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                                        <input type="text" asp-for="PvsIncome" class="govuk-input" />
-                                    </div>
+                                    <input type="text" asp-for="PvsIncome" class="govuk-input" />
                                     <span asp-validation-for="PvsIncome" class="govuk-error-message" style="display:none;"></span>
                                 </div>
 
                                 <div class="govuk-form-group sup_margin_0">
                                     <label class="govuk-label" asp-for="PlanCaseWorkDebit">Plan CW Debit: (Surv Only)</label>
-                                    <div class="govuk-input__wrapper">
-                                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                                        <input type="text" asp-for="PlanCaseWorkDebit" class="govuk-input" />
-                                    </div>
+                                    <input type="text" asp-for="PlanCaseWorkDebit" class="govuk-input" />
                                     <span asp-validation-for="PlanCaseWorkDebit" class="govuk-error-message" style="display:none;"></span>
                                 </div>
 
@@ -278,17 +272,14 @@
                                     <label class="govuk-label" asp-for="CarryOver">CarryOver:</label>
                                     <div class="govuk-input__wrapper">
                                         <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                                        <input type="text" asp-for="CarryOver" class="govuk-input" />
+                                        <input type="text" asp-for="CarryOver" class="govuk-input currency-input" />
                                     </div>
                                     <span asp-validation-for="CarryOver" class="govuk-error-message" style="display:none;"></span>
                                 </div>
 
                                 <div class="govuk-form-group sup_margin_0">
                                     <label class="govuk-label" asp-for="CarryOverSeed">CarryOverSeed:</label>
-                                    <div class="govuk-input__wrapper">
-                                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                                        <input type="text" asp-for="CarryOverSeed" class="govuk-input" />
-                                    </div>
+                                    <input type="text" asp-for="CarryOverSeed" class="govuk-input" />
                                     <span asp-validation-for="CarryOverSeed" class="govuk-error-message" style="display:none;"></span>
                                 </div>
 
@@ -332,66 +323,9 @@
         document.getElementById('CostCentre')?.addEventListener('change', syncResourceCentreFromCostCentre);
         syncResourceCentreFromCostCentre(); // pre-populate on page load (edit mode)
 
-        // Currency formatting and validation (same pattern as ProgramStaffPlan)
-        function formatCurrency(value) {
-            return '\u00A3' + parseFloat(value || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-        }
-
-        function parseCurrencyValue(val) {
-            return (val || '').toString().replace(/[£,\s]/g, '').trim();
-        }
-
-        var currencyFieldNames = ['CustIncome', 'TransferIncome', 'Profit', 'BudgetCvl', 'PvsIncome', 'PlanCaseWorkDebit', 'CarryOver', 'CarryOverSeed'];
-
-        // Format currency fields on page load (edit mode)
-        $(document).ready(function () {
-            currencyFieldNames.forEach(function (name) {
-                var $field = $('[name="' + name + '"]');
-                var raw = parseCurrencyValue($field.val());
-                if (raw !== '' && !isNaN(parseFloat(raw))) {
-                    $field.val(formatCurrency(raw));
-                }
-            });
-        });
-
-        // Re-format on blur, validate on input
-        currencyFieldNames.forEach(function (name) {
-            var $field = $('[name="' + name + '"]');
-
-            $field.on('blur', function () {
-                var raw = parseCurrencyValue($(this).val());
-                if (raw !== '' && !isNaN(parseFloat(raw))) {
-                    $(this).val(formatCurrency(raw));
-                }
-            });
-
-            $field.on('focus', function () {
-                var raw = parseCurrencyValue($(this).val());
-                $(this).val(raw);
-            });
-
-            $field.on('input', function () {
-                var raw = $(this).val();
-                // Allow digits, one decimal point, optional leading minus, and empty
-                if (raw !== '' && raw !== '-' && !/^-?\d*\.?\d*$/.test(raw)) {
-                    $(this).val(raw.replace(/[^0-9.\-]/g, ''));
-                }
-            });
-        });
-
-
-        // Strip currency formatting before validation so jQuery data-val-number passes
-        function stripCurrencyFormatting() {
-            currencyFieldNames.forEach(function (name) {
-                var $field = $('[name="' + name + '"]');
-                var raw = parseCurrencyValue($field.val());
-                $field.val(raw);
-            });
-        }
 
         window.saveProject = function(formId) {
             clearValidationErrors('#main-content');
-            stripCurrencyFormatting();
             const form = $('#' + formId);
             if (!form.valid()) { displayClientValidationErrors(form, '#main-content'); return; }
             submitForm(formId, false);
@@ -399,7 +333,6 @@
 
         window.updateProject = function(parentProject, formId) {
             clearValidationErrors('#main-content');
-            stripCurrencyFormatting();
             const form = $('#' + formId);
             if (!form.valid()) { displayClientValidationErrors(form, '#main-content'); return; }
             submitForm(formId, true, parentProject);
@@ -412,11 +345,11 @@
             const formData = new FormData(form);
             const data = Object.fromEntries(formData);
 
-            // Strip £ signs, commas, and spaces from currency/numeric fields before parsing
+            // Strip £ signs and commas from currency fields before parsing
             const numericFields = ['CustIncome', 'TransferIncome', 'Profit', 'BudgetCvl', 'PvsIncome',
                                    'PlanCaseWorkDebit', 'CarryOver', 'CarryOverSeed', 'CostCentre', 'IsDefraProject'];
             numericFields.forEach(field => {
-                var raw = parseCurrencyValue(data[field]);
+                var raw = (data[field] || '').toString().replace(/[£,]/g, '').trim();
                 if (raw === '') {
                     data[field] = null;
                 } else {

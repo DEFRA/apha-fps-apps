@@ -57,7 +57,7 @@ namespace Apha.Common.Contracts.FPS
         public decimal? CarryOver { get; set; }
         public decimal? CarryOverSeed { get; set; }
 
-        [Range(0, 1)]
+        [Range(-1, 0)]
         public short IsDefraProject { get; set; }
 
         public double? CostCentre { get; set; }

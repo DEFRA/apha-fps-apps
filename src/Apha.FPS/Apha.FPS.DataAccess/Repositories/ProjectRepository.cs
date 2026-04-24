@@ -121,6 +121,7 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<Project> CreateProjectAsync(Project project)
         {
             project.FpsYear = _requestContext.FpsYear;
+            project.DateCreated = DateTime.Now;
             await _dbContext.Projects.AddAsync(project);
             // Converted trigger logic — UITrig_tlkpProject FOR INSERT: stage audit log in same unit of work
             _dbContext.ProjectLogs.Add(MapProjectToLog(project, "I", _requestContext.UserEmailId));

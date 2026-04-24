@@ -55,13 +55,10 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             // Testor Product
             CreateMap<TestorProductDto, TestorProductRes>().ReverseMap();
 
-            // ProgrammeNewProject
-            CreateMap<ProjectDto, ProjectReq>().ReverseMap();
-            CreateMap<ProjectDto, ProjectRes>().ReverseMap();
+            // ProgrammeNewProject (merged into ProjectDto - mappings above)
             CreateMap<AccountCodeDto, AccountCodeRes>().ReverseMap();
             CreateMap<SubAccountDto, SubAccountRes>()
                 .ForMember(d => d.SubAccount, o => o.MapFrom(s => s.SubAccount)).ReverseMap();
-            CreateMap<ProjectGroupDto, ProjectGroupRes>().ReverseMap();
             CreateMap<CostCentreWorkgroupDto, CostCentreWorkgroupRes>().ReverseMap();
         }
     }
