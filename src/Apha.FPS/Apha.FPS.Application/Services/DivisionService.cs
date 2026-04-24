@@ -62,7 +62,7 @@ namespace Apha.FPS.Application.Services
             // This check should happen FIRST to give better error message than PK constraint violation
             var referencedTables = await _divisionRepository.GetDivisionForeignKeyReferencesAsync(divisionDto.DivName);
 
-            if (referencedTables.Any())
+            if (referencedTables.Count != 0)
             {
                 throw new InvalidOperationException("Unable to add the division name as it is already in use.");
             }
@@ -110,9 +110,8 @@ namespace Apha.FPS.Application.Services
 
                 // Check if the division name is referenced in other tables (foreign key check)
                 var referencedTables = await _divisionRepository.GetDivisionForeignKeyReferencesAsync(originalDivName);
-                if (referencedTables.Any())
+                if (referencedTables.Count != 0)
                 {
-                    var tableList = string.Join(", ", referencedTables);
                     throw new InvalidOperationException("Unable to edit the division name as it is already in use.");
                 }
             }
@@ -133,7 +132,7 @@ namespace Apha.FPS.Application.Services
             // Check if the division name is referenced in other tables (foreign key check)
             var referencedTables = await _divisionRepository.GetDivisionForeignKeyReferencesAsync(divName);
 
-            if (referencedTables.Any())
+            if (referencedTables.Count != 0)
             {
                 throw new InvalidOperationException("Unable to delete the division name as it is already in use.");
             }

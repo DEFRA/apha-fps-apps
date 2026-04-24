@@ -11,11 +11,8 @@ namespace Apha.FPS.DataAccess.Repositories
     /// </summary>
     public class DivisionRepository : BaseRepository, IDivisionRepository
     {
-        private readonly FpsDbContext _context;
-
         public DivisionRepository(FpsDbContext context) : base(context)
         {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
         public async Task<List<Division>> GetAllDivisionsAsync()
