@@ -9,11 +9,11 @@ namespace Apha.FPS.DataAccess.Repositories
     /// <summary>
     /// Repository implementation for Division entity data access.
     /// </summary>
-    public class DivisionRepository : IDivisionRepository
+    public class DivisionRepository : BaseRepository, IDivisionRepository
     {
         private readonly FpsDbContext _context;
 
-        public DivisionRepository(FpsDbContext context)
+        public DivisionRepository(FpsDbContext context) : base(context)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
         }
@@ -37,31 +37,12 @@ namespace Apha.FPS.DataAccess.Repositories
             // Apply filtering
             divisionsQuery = ApplyDivisionFilter(divisionsQuery, query.Filter);
 
-            // Get total count before paging
-            var totalCount = await divisionsQuery.CountAsync();
-
             // Apply sorting
             divisionsQuery = ApplySorting(divisionsQuery, query.SortBy, query.Descending);
 
-            // Apply paging
-            var divisions = await divisionsQuery
-                .Skip((query.Page - 1) * query.PageSize)
-                .Take(query.PageSize)
-                .ToListAsync();
+            var divisions = await divisionsQuery.ToListAsync();
 
-            var totalPages = (int)Math.Ceiling(totalCount / (double)query.PageSize);
-
-            return new PagedData<Division>
-            {
-                Data = divisions,
-                PaginationData = new PaginationData
-                {
-                    PageNumber = query.Page,
-                    PageSize = query.PageSize,
-                    TotalRecords = totalCount,
-                    TotalPages = totalPages
-                }
-            };
+            return ApplyPaging(divisions, query.Page, query.PageSize);
         }
 
         public async Task<Division?> GetDivisionByNameAsync(string divName)
