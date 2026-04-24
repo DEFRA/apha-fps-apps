@@ -3,6 +3,7 @@ namespace Apha.Common.Contracts.PACT
     public class TestRequirementtRes
     {
         public string TestCode { get; set; } = null!;
+        public string? ItemDescription { get; set; }
         public string Buyer { get; set; } = null!;
         public decimal? UnitPrice { get; set; }
         public double? NoRequired { get; set; }

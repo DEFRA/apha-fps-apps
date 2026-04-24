@@ -57,6 +57,9 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<StaffJobLog> StaffJobLogs { get; set; }
         public virtual DbSet<AnimalRequestLog> AnimalRequestLogs { get; set; }
         public virtual DbSet<TestorProduct> TestorProducts { get; set; }
+        public virtual DbSet<TimeCostCalcsView> TimeCostCalcsViews { get; set; }
+        public virtual DbSet<TimeCostCalcs> TimeCostCalcs { get; set; }
+
         public virtual DbSet<Division> Divisions { get; set; }
         public virtual DbSet<Agency> Agencies { get; set; }
 
@@ -165,6 +168,14 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new AnimalRequestLogMap());
             modelBuilder.Entity<AnimalRequestLog>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new TimeCostCalcsViewMap());
+            modelBuilder.Entity<TimeCostCalcsView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new TimeCostCalcsMap());
+            modelBuilder.Entity<TimeCostCalcs>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+
 
             modelBuilder.ApplyConfiguration(new DivisionMap());
             modelBuilder.ApplyConfiguration(new DivisionGradeMap());

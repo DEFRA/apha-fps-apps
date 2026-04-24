@@ -74,5 +74,10 @@ namespace Apha.Common.Constants
 
         // Testor Product
         public const string GetAllTestorProducts = "api/v1/testorproduct";
+
+        // View Project Plan vs Actual Staff
+        public const string GetTimeCostCalcsByProject = "api/v1/timecostcalcs?projectCode={0}";
+        public const string GetTimeCostCalcsTotalsByProject = "api/v1/timecostcalcs/totals?projectCode={0}";
+        public const string DeleteTimeCostCalcs = "api/v1/timecostcalcs";
     }
 }
