@@ -159,7 +159,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         // ── SAVE PORTFOLIO DETAILS ────────────────────────────────────────────
 
         [HttpPost]
-        public async Task<IActionResult> Edit([FromBody] PactProjectViewModel model)
+        public async Task<IActionResult> Edit([FromBody] PortfolioDetailModel model)
         {
             if (!ModelState.IsValid)
                 return Json(new
@@ -167,15 +167,26 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                     success = false,
                     message = "Please correct the errors below.",
                     errors = ModelState
-                        .Where(kvp => kvp.Value!.Errors.Any())
-                        .SelectMany(kvp => kvp.Value!.Errors.Select(e => new
+                        .Where(x => x.Value?.Errors.Count > 0)
+                        .SelectMany(x => x.Value!.Errors.Select(e => new
                         {
-                            field = kvp.Key,
+                            field = "CurrentPortfolio." + x.Key,
                             message = e.ErrorMessage
                         }))
                 });
 
-            var dto = _mapper.Map<ProjectDto>(model);
+            var dto = new ProjectDto
+            {
+                ParentProject = model.ParentProject ?? string.Empty,
+                ProjectTitle = model.ProjectTitle ?? string.Empty,
+                Finished = model.Finished ? (short)-1 : (short)0,
+                Program = model.Program,
+                Manager = model.ProjectManager,
+                BudgetCvl = model.BudgetCvl,
+                TransferIncome = model.TransferIncome ?? 0,
+                Comments = model.Comments
+            };
+
             var result = await _projectService.UpdatePactPortfolioAsync(dto);
 
             return result.Success
@@ -208,10 +219,10 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                     success = false,
                     message = "Please correct the errors below.",
                     errors = ModelState
-                        .Where(kvp => kvp.Value!.Errors.Any())
+                        .Where(kvp => kvp.Value!.Errors.Any() && kvp.Key != "$")
                         .SelectMany(kvp => kvp.Value!.Errors.Select(e => new
                         {
-                            field = kvp.Key,
+                            field = kvp.Key.StartsWith("$.") ? kvp.Key[2..] : kvp.Key,
                             message = e.ErrorMessage
                         }))
                 });
@@ -272,8 +283,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 // Fill in TestCode and Portfolio from context where the DB holds nulls
                 foreach (var item in items)
                 {
-                    if (string.IsNullOrEmpty(item.TestCode) && !string.IsNullOrEmpty(testCode))
-                        item.TestCode = testCode;
+                    if (string.IsNullOrEmpty(item.TestCode))
+                        item.TestCode = item.TimeCode;
                     if (string.IsNullOrEmpty(item.Portfolio))
                         item.Portfolio = parentProject;
                 }
@@ -337,10 +348,10 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                     success = false,
                     message = "Please correct the errors below.",
                     errors = ModelState
-                        .Where(kvp => kvp.Value!.Errors.Any())
+                        .Where(kvp => kvp.Value!.Errors.Any() && kvp.Key != "$")
                         .SelectMany(kvp => kvp.Value!.Errors.Select(e => new
                         {
-                            field = kvp.Key,
+                            field = kvp.Key.StartsWith("$.") ? kvp.Key[2..] : kvp.Key,
                             message = e.ErrorMessage
                         }))
                 });
@@ -384,10 +395,10 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                     success = false,
                     message = "Please correct the errors below.",
                     errors = ModelState
-                        .Where(kvp => kvp.Value!.Errors.Any())
+                        .Where(kvp => kvp.Value!.Errors.Any() && kvp.Key != "$")
                         .SelectMany(kvp => kvp.Value!.Errors.Select(e => new
                         {
-                            field = kvp.Key,
+                            field = kvp.Key.StartsWith("$.") ? kvp.Key[2..] : kvp.Key,
                             message = e.ErrorMessage
                         }))
                 });

@@ -176,7 +176,7 @@
                                 Parent Project
                             </label>
                             <input class="govuk-input govuk-!-font-size-16" asp-for="CurrentPortfolio.ParentProject"
-                                   id="txtParentProject" readonly />
+                                   id="txtParentProject" disabled />
                             <span asp-validation-for="CurrentPortfolio.ParentProject" class="govuk-error-message"></span>
                         </div>
 
@@ -313,6 +313,7 @@
 </div>
 
 @section Scripts {
+<script src="~/js/ajax-form-validation.js"></script>
 <script>
     var currentParentProject = '';
     var currentTestCode = '';
@@ -369,6 +370,9 @@
         });
     });
 
+    // ── Wrap a plain message string into the errors-array format ─────────────
+    function errMsg(msg) { return [{ field: '', message: msg }]; }
+
     // ── Load all data for a portfolio ────────────────────────────────────────
     function loadPortfolioData(parentProject) {
         currentParentProject = parentProject;
@@ -384,7 +388,7 @@
                     $('#hdnParentProject').val(d.parentProject || '');
                     $('#txtParentProject').val(d.parentProject || '');
                     $('#txtProjectTitle').val(d.projectTitle || '');
-                    $('#chkFinished').prop('checked', d.finished === 1 || d.finished === true);
+                    $('#chkFinished').prop('checked', d.finished === -1 || d.finished === true);
                     $('#dpProgramme').val(d.program || '');
                     $('#dpManager').val(d.projectManager || '');
                     $('#txtBudgetCvl').val(d.budgetCvl || '');
@@ -401,10 +405,10 @@
                     loadConstituentTestGrid(parentProject);
                     loadTimeCodeGrid(parentProject, '');
                 } else {
-                    showError(res.message || 'Portfolio not found.');
+                    showGovukAlert(res.message || 'Portfolio not found.');
                 }
             })
-            .fail(function () { showError('Failed to load portfolio data.'); });
+            .fail(function () { alert('An error occurred while loading portfolio data.'); });
     }
 
     // ── Enable/disable buttons ───────────────────────────────────────────────
@@ -415,11 +419,11 @@
 
     // ── Save portfolio form ───────────────────────────────────────────────────
     $('#btnSavePortfolio').on('click', function () {
-        clearErrors();
+        clearValidationErrors('#portfolioDetailForm');
         var payload = {
             parentProject: $('#hdnParentProject').val(),
             projectTitle: $('#txtProjectTitle').val(),
-            finished: $('#chkFinished').is(':checked') ? 1 : 0,
+            finished: $('#chkFinished').is(':checked'),
             program: $('#dpProgramme').val(),
             projectManager: $('#dpManager').val(),
             budgetCvl: $('#txtBudgetCvl').val() || null,
@@ -434,11 +438,12 @@
             data: JSON.stringify(payload)
         }).done(function (res) {
             if (res.success) {
-                showSuccess(res.message || 'Saved successfully.');
+                clearValidationErrors('#portfolioDetailForm');
+                alert(res.message || 'Saved successfully.');
             } else {
-                showErrors(res.errors, res.message);
+                displayServerValidationErrors(res.errors, res.message, '#portfolioDetailForm');
             }
-        }).fail(function () { showError('Failed to save portfolio.'); });
+        }).fail(function () { alert('An error occurred while saving.'); });
     });
 
     // ── Constituent Tests grid ───────────────────────────────────────────────
@@ -457,7 +462,7 @@
             data: payload
         }).done(function (html) {
             $('#gridContainer_constituentTestGrid').html(html);
-        }).fail(function () { showError('Failed to load constituent tests.'); });
+        }).fail(function () { alert('An error occurred while loading constituent tests.'); });
     }
 
     function addConstituentTest() {
@@ -472,7 +477,7 @@
     }
 
     function saveConstituentTest() {
-        clearErrors();
+        clearValidationErrors('#portfolioDetailForm');
         var form = $('#formAddTest');
         var payload = {
             testCode: form.find('#txtmodal-testcode').val(),
@@ -489,35 +494,36 @@
             if (res.success) {
                 $('#modalPopup').removeClass('show');
                 loadConstituentTestGrid(currentParentProject);
-                showSuccess(res.message || 'Test added.');
+                alert(res.message || 'Test added.');
             } else {
-                showErrors(res.errors, res.message);
+                    displayServerValidationErrors(res.errors, res.message, '#formAddTest');
             }
-        }).fail(function () { showError('Failed to add constituent test.'); });
+        }).fail(function () { alert('An error occurred while saving.'); });
     }
 
     function deleteConstituentTest(btn) {
         var testCode = $(btn).data('id');
         var workGroup = $(btn).data('secondary-key') || $(btn).data('workgroup') || currentWorkGroup;
-        if (!confirm('Delete this constituent test?')) return;
-
-        $.ajax({
-            url: '/PACT/PortfolioMaintenance/DeleteConstituentTest',
-            method: 'DELETE',
-            data: { testCode: testCode, workGroup: workGroup }
-        }).done(function (res) {
-            if (res.success) {
-                loadConstituentTestGrid(currentParentProject);
-                if (currentTestCode === testCode) {
-                    currentTestCode = '';
-                    $('#txtSelectedPortfolioTest').val('');
-                    loadTimeCodeGrid(currentParentProject, '');
+        showGovukConfirm('Delete this constituent test?').then(function (confirmed) {
+            if (!confirmed) return;
+            $.ajax({
+                url: '/PACT/PortfolioMaintenance/DeleteConstituentTest',
+                method: 'DELETE',
+                data: { testCode: testCode, workGroup: workGroup }
+            }).done(function (res) {
+                if (res.success) {
+                    loadConstituentTestGrid(currentParentProject);
+                    if (currentTestCode === testCode) {
+                        currentTestCode = '';
+                        $('#txtSelectedPortfolioTest').val('');
+                        loadTimeCodeGrid(currentParentProject, '');
+                    }
+                    showGovukAlert(res.message || 'Deleted.');
+                } else {
+                    showGovukAlert('Error: ' + (res.message || 'Delete failed.'));
                 }
-                showSuccess(res.message || 'Deleted.');
-            } else {
-                showError(res.message || 'Delete failed.');
-            }
-        }).fail(function () { showError('Failed to delete constituent test.'); });
+            }).fail(function () { showGovukAlert('An error occurred while deleting.'); });
+        });
     }
 
     function selectConstituentTest(btn) {
@@ -545,7 +551,7 @@
             data: payload
         }).done(function (html) {
             $('#gridContainer_portfolioTimeCodeGrid').html(html);
-        }).fail(function () { showError('Failed to load work groups.'); });
+        }).fail(function () { alert('An error occurred while loading work groups.'); });
     }
 
     function addPortfolioTimeCode() {
@@ -560,12 +566,13 @@
     }
 
     function savePortfolioTimeCode() {
-        clearErrors();
+        clearValidationErrors('#portfolioDetailForm');
         var form = $('#timeCodeForm');
         var payload = {
             workGroup: form.find('[name=WorkGroup]').val(),
             timeCode: form.find('[name=TimeCode]').val(),
-            parentProject: currentParentProject,
+            parentProject: form.find('[name=ParentProject]').val(),
+            portfolio: form.find('[name=Portfolio]').val(),
             testCode: currentTestCode,
             active: form.find('[name=Active]').is(':checked')
         };
@@ -579,11 +586,11 @@
             if (res.success) {
                 $('#modalPopup').removeClass('show');
                 loadTimeCodeGrid(currentParentProject, currentTestCode);
-                showSuccess(res.message || 'Work group added.');
+                alert(res.message || 'Work group added.');
             } else {
-                showErrors(res.errors, res.message);
+                    displayServerValidationErrors(res.errors, res.message, '#timeCodeForm');
             }
-        }).fail(function () { showError('Failed to add work group.'); });
+        }).fail(function () { alert('An error occurred while saving.'); });
     }
 
     function editPortfolioTimeCode(btn) {
@@ -599,7 +606,7 @@
     }
 
     function updatePortfolioTimeCode() {
-        clearErrors();
+        clearValidationErrors('#portfolioDetailForm');
         var form = $('#timeCodeForm');
         var payload = {
             workGroup: form.find('[name=WorkGroup]').val(),
@@ -618,30 +625,31 @@
             if (res.success) {
                 $('#modalPopup').removeClass('show');
                 loadTimeCodeGrid(currentParentProject, currentTestCode);
-                showSuccess(res.message || 'Work group updated.');
+                alert(res.message || 'Work group updated.');
             } else {
-                showErrors(res.errors, res.message);
+                    displayServerValidationErrors(res.errors, res.message, '#timeCodeForm');
             }
-        }).fail(function () { showError('Failed to update work group.'); });
+        }).fail(function () { alert('An error occurred while saving.'); });
     }
 
     function deletePortfolioTimeCode(btn) {
         var workGroup = $(btn).data('id');
         var timeCode = $(btn).data('secondary-key') || $(btn).data('timecode') || '';
-        if (!confirm('Delete this work group entry?')) return;
-
-        $.ajax({
-            url: '/PACT/PortfolioMaintenance/DeletePortfolioTimeCode',
-            method: 'DELETE',
-            data: { workGroup: workGroup, timeCode: timeCode, parentProject: currentParentProject }
-        }).done(function (res) {
-            if (res.success) {
-                loadTimeCodeGrid(currentParentProject, currentTestCode);
-                showSuccess(res.message || 'Deleted.');
-            } else {
-                showError(res.message || 'Delete failed.');
-            }
-        }).fail(function () { showError('Failed to delete work group.'); });
+        showGovukConfirm('Delete this work group entry?').then(function (confirmed) {
+            if (!confirmed) return;
+            $.ajax({
+                url: '/PACT/PortfolioMaintenance/DeletePortfolioTimeCode',
+                method: 'DELETE',
+                data: { workGroup: workGroup, timeCode: timeCode, parentProject: currentParentProject }
+            }).done(function (res) {
+                if (res.success) {
+                    loadTimeCodeGrid(currentParentProject, currentTestCode);
+                    showGovukAlert(res.message || 'Deleted.');
+                } else {
+                    showGovukAlert('Error: ' + (res.message || 'Delete failed.'));
+                }
+            }).fail(function () { showGovukAlert('An error occurred while deleting.'); });
+        });
     }
 
     // ── Portfolio Time Codes button ─────────────────────────────────────────
@@ -656,37 +664,9 @@
         if (fn && window[fn]) window[fn]();
     });
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
-    function showSuccess(msg) {
-        $('#portfolioErrorSummary').hide();
-        // Re-use existing site notification pattern if available
-        if (typeof fpsShowSuccess === 'function') {
-            fpsShowSuccess(msg);
-        } else {
-            alert(msg);
-        }
-    }
-
-    function showError(msg) {
-        $('#portfolioErrorList').html('<li>' + msg + '</li>');
-        $('#portfolioErrorSummary').show();
-    }
-
-    function showErrors(errors, fallback) {
-        var html = '';
-        if (errors && errors.length) {
-            $.each(errors, function (_, e) { html += '<li>' + e.message + '</li>'; });
-        } else {
-            html = '<li>' + (fallback || 'An error occurred.') + '</li>';
-        }
-        $('#portfolioErrorList').html(html);
-        $('#portfolioErrorSummary').show();
-        window.scrollTo(0, 0);
-    }
-
-    function clearErrors() {
-        $('#portfolioErrorSummary').hide();
-        $('#portfolioErrorList').empty();
-    }
+    // Validation helpers are provided by ajax-form-validation.js
 </script>
+@{
+    await Html.RenderPartialAsync("_ValidationScriptsPartial");
+}
 }

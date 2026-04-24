@@ -76,7 +76,7 @@
                 Test Code: <span class="sup_color_red">*</span>
             </label>
             <input class="govuk-input govuk-!-font-size-16" asp-for="TestCode"
-                   id="txtmodal-wg-testcode" placeholder="Test Code" readonly />
+                   id="txtmodal-wg-testcode" placeholder="Test Code" disabled />
             <span asp-validation-for="TestCode" class="govuk-error-message"></span>
         </div>
 
@@ -86,13 +86,13 @@
                 Portfolio: <span class="sup_color_red">*</span>
             </label>
             <input class="govuk-input govuk-!-font-size-16" asp-for="Portfolio"
-                   id="txtmodal-wg-portfolio" placeholder="Portfolio" readonly />
+                   id="txtmodal-wg-portfolio" placeholder="Portfolio" disabled />
             <span asp-validation-for="Portfolio" class="govuk-error-message"></span>
         </div>
 
         <!-- Active -->
         <div class="govuk-form-group sup_margin_bottom_10">
-            <label class="govuk-label govuk-!-font-weight-bold">Active:</label>
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="Active">Active:</label>
             <div class="govuk-checkboxes govuk-checkboxes--small sup_margin_0" data-module="govuk-checkboxes">
                 <div class="govuk-checkboxes__item">
                     <input class="govuk-checkboxes__input"

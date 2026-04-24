@@ -22,7 +22,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         public string TimeCode { get; set; } = null!;
 
         [Display(Name = "Project")]
-        [Required(ErrorMessage = "Parent Project is required")]
+        [Required(ErrorMessage = "Project is required")]
         [StringLength(50)]
         [GridColumn(Order = 4, Width = 150, Type = GridColumnType.Text, IsFilterable = true)]
         public string ParentProject { get; set; } = null!;
