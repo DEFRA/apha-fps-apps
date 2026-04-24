@@ -1,4 +1,5 @@
 using Apha.Costbook.Application.Dtos;
+using Apha.Costbook.Application.Pagination;
 
 namespace Apha.Costbook.Application.Interfaces;
 
@@ -9,7 +10,8 @@ public interface IYearlyDetailsService
     Task<ProjectYearDto> AddProjectYearAsync(string projectId, int year);
     Task<ProjectYearDto> UpdateProjectYearAsync(ProjectYearDto dto);
 
-    Task<IEnumerable<StaffRequirementDto>> GetStaffRequirementsAsync(string projectId, int year);
+    // ?? Staff — now paginated ?????????????????????????????????????????????????
+    Task<PaginatedResult<StaffRequirementDto>> GetStaffRequirementsAsync(string projectId, int year, QueryParameters<string> query);
     Task<StaffRequirementDto> AddStaffRequirementAsync(StaffRequirementDto dto);
     Task<StaffRequirementDto> UpdateStaffRequirementAsync(StaffRequirementDto dto);
     Task<bool> DeleteStaffRequirementAsync(int srIdentity);

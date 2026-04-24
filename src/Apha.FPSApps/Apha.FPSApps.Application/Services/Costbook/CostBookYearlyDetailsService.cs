@@ -2,6 +2,7 @@ using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.CostBook;
 using Apha.FPSApps.Application.Interfaces.CostBookApiClients;
 using Apha.FPSApps.Application.Interfaces.Costbook;
+using Apha.FPSApps.Application.Pagination;
 
 namespace Apha.FPSApps.Application.Services.Costbook;
 
@@ -23,8 +24,9 @@ public class CostBookYearlyDetailsService : ICostBookYearlyDetailsService
     public Task<ApiResponseDto<ProjectYearDto>> UpdateProjectYearAsync(string projectId, int year, ProjectYearDto dto)
         => _client.UpdateProjectYearAsync(projectId, year, dto);
 
-    public Task<ApiResponseDto<List<StaffRequirementDto>>> GetStaffRequirementsAsync(string projectId, int year)
-        => _client.GetStaffRequirementsAsync(projectId, year);
+    public Task<ApiResponseDto<PaginatedResult<StaffRequirementDto>>> GetStaffRequirementsAsync(
+        string projectId, int year, QueryParameters<string> query)
+        => _client.GetStaffRequirementsAsync(projectId, year, query);
 
     public Task<ApiResponseDto<StaffRequirementDto>> AddStaffRequirementAsync(string projectId, int year, StaffRequirementDto dto)
         => _client.AddStaffRequirementAsync(projectId, year, dto);

@@ -1,11 +1,14 @@
 ﻿using Apha.Common.Constants;
 using Apha.Common.Contracts.Costbook;
+using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.CostBook;
 using Apha.FPSApps.Application.Interfaces.CostBookApiClients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
 using System.Web;
+using Apha.FPSApps.Application.Pagination;
+using Apha.Common.Contracts;
 
 namespace Apha.FPSApps.Infrastructure.Integrations.CostBookApis.Clients;
 
@@ -64,14 +67,33 @@ public class CostBookYearlyDetailsApiClient : ICostBookYearlyDetailsApiClient
 
     // ── Staff ─────────────────────────────────────────────────────────────────
 
-    public async Task<ApiResponseDto<List<StaffRequirementDto>>> GetStaffRequirementsAsync(string projectId, int year)
+    public async Task<ApiResponseDto<PaginatedResult<StaffRequirementDto>>> GetStaffRequirementsAsync(
+        string projectId, int year, QueryParameters<string> query)
     {
-        var response = await _http.GetAsync<List<StaffRequirementRes>>(
-            string.Format(CostBookApiEndpoints.GetStaffRequirements, HttpUtility.UrlEncode(projectId), year));
+        var endpoint = string.Format(CostBookApiEndpoints.GetStaffRequirements,
+                                     HttpUtility.UrlEncode(projectId), year);
+        var url = QueryStringHelper.AddQueryString(endpoint, query);
+
+        // BuildOk() in the API wraps PaginationRes inside ApiResponse<PaginationRes<...>>,
+        // so the filter leaves it intact — $.data is the PaginationRes object, not a flat list.
+        var response = await _http.GetAsync<PaginationRes<StaffRequirementRes>>(url);
+
         if (response.Success && response.Data != null)
-            return ApiResponseDto<List<StaffRequirementDto>>.SuccessResponse(_mapper.Map<List<StaffRequirementDto>>(response.Data));
-        var err = _mapper.Map<ApiResponseDto<List<StaffRequirementDto>>>(response);
-        return ApiResponseDto<List<StaffRequirementDto>>.FailureResponse(err.Errors, err.Meta);
+        {
+            var items      = _mapper.Map<List<StaffRequirementDto>>(response.Data.Data);
+            var pagination = response.Data.PaginationData;
+
+            var result = new PaginatedResult<StaffRequirementDto>(
+                items,
+                pagination?.TotalRecords ?? items.Count,
+                pagination?.PageNumber   ?? query.Page,
+                pagination?.PageSize     ?? query.PageSize);
+
+            return ApiResponseDto<PaginatedResult<StaffRequirementDto>>.SuccessResponse(result);
+        }
+
+        var err = _mapper.Map<ApiResponseDto<PaginatedResult<StaffRequirementDto>>>(response);
+        return ApiResponseDto<PaginatedResult<StaffRequirementDto>>.FailureResponse(err.Errors, err.Meta);
     }
 
     public async Task<ApiResponseDto<StaffRequirementDto>> AddStaffRequirementAsync(string projectId, int year, StaffRequirementDto dto)

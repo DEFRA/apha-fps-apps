@@ -1,5 +1,6 @@
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.CostBook;
+using Apha.FPSApps.Application.Pagination;
 
 namespace Apha.FPSApps.Application.Interfaces.Costbook;
 
@@ -10,7 +11,8 @@ public interface ICostBookYearlyDetailsService
     Task<ApiResponseDto<ProjectYearDto>> AddProjectYearAsync(string projectId, int year);
     Task<ApiResponseDto<ProjectYearDto>> UpdateProjectYearAsync(string projectId, int year, ProjectYearDto dto);
 
-    Task<ApiResponseDto<List<StaffRequirementDto>>> GetStaffRequirementsAsync(string projectId, int year);
+    // ── Staff — now paginated ─────────────────────────────────────────────────
+    Task<ApiResponseDto<PaginatedResult<StaffRequirementDto>>> GetStaffRequirementsAsync(string projectId, int year, QueryParameters<string> query);
     Task<ApiResponseDto<StaffRequirementDto>> AddStaffRequirementAsync(string projectId, int year, StaffRequirementDto dto);
     Task<ApiResponseDto<StaffRequirementDto>> UpdateStaffRequirementAsync(string projectId, int year, int srIdentity, StaffRequirementDto dto);
     Task<ApiResponseDto<bool>> DeleteStaffRequirementAsync(string projectId, int year, int srIdentity);

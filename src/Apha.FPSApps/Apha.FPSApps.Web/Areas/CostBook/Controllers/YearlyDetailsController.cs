@@ -84,7 +84,8 @@ public class YearlyDetailsController : Controller
     [HttpPost]
     public async Task<IActionResult> LoadStaffGrid(PaginationFilter<string> request, string projectId, int year)
     {
-        var gridConfig = await BuildStaffGridAsync(HttpUtility.UrlDecode(projectId), year);
+        var query = _mapper.Map<QueryParameters<string>>(request);
+        var gridConfig = await BuildStaffGridAsync(HttpUtility.UrlDecode(projectId), year, query);
         return PartialView("_DataGrid", gridConfig);
     }
 
@@ -144,9 +145,14 @@ public class YearlyDetailsController : Controller
     [HttpGet]
     public async Task<IActionResult> EditStaff(string projectId, int year, int srIdentity, bool isDefra)
     {
-        var listResponse = await _service.GetStaffRequirementsAsync(HttpUtility.UrlDecode(projectId), year);
-        var row = listResponse.Data?.FirstOrDefault(s => s.SrIdentity == srIdentity);
+        // Fetch full list (staff rows per project/year are few; pageSize 1000 covers all cases)
+        var query = new QueryParameters<string> { Page = 1, PageSize = 1000 };
+        var listResponse = await _service.GetStaffRequirementsAsync(
+                               HttpUtility.UrlDecode(projectId), year, query);
+
+        var row = listResponse.Data?.data?.FirstOrDefault(s => s.SrIdentity == srIdentity);
         if (row is null) return NotFound();
+
         return PartialView("_AddEditStaffRequirement", _mapper.Map<StaffRequirementItem>(row));
     }
 
@@ -319,29 +325,42 @@ public class YearlyDetailsController : Controller
 
     // ── PRIVATE HELPERS ───────────────────────────────────────────────────
 
-    private async Task<DataGridConfig<StaffRequirementItem>> BuildStaffGridAsync(string projectId, int year)
+    private async Task<DataGridConfig<StaffRequirementItem>> BuildStaffGridAsync(
+        string projectId, int year, QueryParameters<string>? query = null)
     {
-        var response = await _service.GetStaffRequirementsAsync(projectId, year);
-        var data = response.Success && response.Data != null
-            ? _mapper.Map<List<StaffRequirementItem>>(response.Data)
+        query ??= new QueryParameters<string> { Page = 1, PageSize = 10 };
+
+        var response = await _service.GetStaffRequirementsAsync(projectId, year, query);
+        var pagedResult = response.Success ? response.Data : null;
+
+        var data = pagedResult?.data != null
+            ? _mapper.Map<List<StaffRequirementItem>>(pagedResult.data)
             : new List<StaffRequirementItem>();
 
         return new DataGridConfig<StaffRequirementItem>
         {
-            GridId = "staffGrid",
-            Title = "Staff",
-            Data = data,
+            GridId      = "staffGrid",
+            Title       = "Staff",
+            Data        = data,
             KeyProperty = nameof(StaffRequirementItem.SrIdentity),
-            AllowAdd = true,
-            AllowEdit = true,
+            AllowAdd    = true,
+            AllowEdit   = true,
             AllowDelete = true,
-            AllowCopy = false,
-            ShowPagination = false,
-            AddFunction = $"openAddStaffModal('{projectId}', {year})",
+            AllowCopy   = false,
+            ShowPagination = true,
+            Pagination  = new PaginationModel
+            {
+                TotalRecords = pagedResult?.TotalCount ?? 0,
+                PageNumber   = query.Page,
+                PageSize     = query.PageSize,
+                SortColumn   = query.SortBy,
+                SortDirection = query.Descending
+            },
+            AddFunction  = $"openAddStaffModal('{projectId}', {year})",
             EditFunction = $"openEditStaffModal('{projectId}', {year})",
             DeleteFunction = $"deleteStaff('{projectId}', {year})",
-            BindGridUrl = Url.Action("LoadStaffGrid", new { projectId, year }) ?? string.Empty,
-            Columns = GridDataProvider.GetColumnsDefination<StaffRequirementItem>(null)
+            BindGridUrl  = Url.Action("LoadStaffGrid", new { projectId, year }) ?? string.Empty,
+            Columns      = GridDataProvider.GetColumnsDefination<StaffRequirementItem>(null)
         };
     }
 

@@ -2,6 +2,7 @@ using Apha.Common.Contracts;
 using Apha.Common.Contracts.Costbook;
 using Apha.Costbook.Application.Dtos;
 using Apha.Costbook.Application.Interfaces;
+using Apha.Costbook.Application.Pagination;
 using Asp.Versioning;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -64,10 +65,12 @@ public class YearlyDetailsController : ControllerBase
     // ── Staff requirements ────────────────────────────────────────────────────
 
     [HttpGet("{projectId}/years/{year}/staff")]
-    public async Task<IActionResult> GetStaffRequirements(string projectId, int year)
+    public async Task<IActionResult> GetStaffRequirements(
+        string projectId, int year, [FromQuery] PaginationReq<string> query)
     {
-        var dtos = await _service.GetStaffRequirementsAsync(projectId, year);
-        return Ok(BuildOk(_mapper.Map<List<StaffRequirementRes>>(dtos)));
+        QueryParameters<string> filter = _mapper.Map<QueryParameters<string>>(query);
+        PaginatedResult<StaffRequirementDto> result = await _service.GetStaffRequirementsAsync(projectId, year, filter);
+        return Ok(BuildOk(_mapper.Map<PaginationRes<StaffRequirementRes>>(result)));
     }
 
     [HttpPost("{projectId}/years/{year}/staff")]

@@ -1,7 +1,9 @@
 using Apha.Costbook.Application.Dtos;
 using Apha.Costbook.Application.Interfaces;
+using Apha.Costbook.Application.Pagination;
 using Apha.Costbook.Core.Entities;
 using Apha.Costbook.Core.Interfaces;
+using Apha.Costbook.Core.Pagination;
 using Apha.Costbook.DataAccess;
 using AutoMapper;
 
@@ -60,33 +62,38 @@ public class YearlyDetailsService : IYearlyDetailsService
         return _mapper.Map<ProjectYearDto>(updated);
     }
 
-    // ── Staff ────────────────────────────────────────────────────────────────
+    // ── Staff ─────────────────────────────────────────────────────────────────────
 
-    public async Task<IEnumerable<StaffRequirementDto>> GetStaffRequirementsAsync(string projectId, int year)
+    public async Task<PaginatedResult<StaffRequirementDto>> GetStaffRequirementsAsync(
+        string projectId, int year, QueryParameters<string> query)
     {
-        var rows = await _staffRepo.GetByProjectYearAsync(projectId, year);
-        return rows.Select(r => new StaffRequirementDto
+        PaginationParameters<string> filter = _mapper.Map<PaginationParameters<string>>(query);
+        PagedData<StaffRequirementDetailView> result = await _staffRepo.GetByProjectYearAsync(projectId, year, filter);
+
+        var dtos = result.Data.Select(r => new StaffRequirementDto
         {
-            SrIdentity = r.SrIdentity,
-            Project = r.Project,
-            Year = r.Year,
-            WgGrade = r.WgGrade,
-            Name = r.Name,
-            Nohours = r.Nohours,
-            Nodays = r.Nodays,
-            Chargerate = r.Chargerate,
-            StaffCost = r.Chargerate.HasValue && r.Nohours.HasValue
-                               ? r.Chargerate.Value * r.Nohours.Value
-                               : null,
-            Payrate = r.Payrate,
-            Npr = r.Npr,
-            Ohr = r.Ohr,
-            WorkGroup = r.WorkGroup,
-            GradeCode = r.GradeCode,
-            Programme = r.Programme,
+            SrIdentity   = r.SrIdentity,
+            Project      = r.Project,
+            Year         = r.Year,
+            WgGrade      = r.WgGrade,
+            Name         = r.Name,
+            Nohours      = r.Nohours,
+            Nodays       = r.Nodays,
+            Chargerate   = r.Chargerate,
+            StaffCost    = r.Chargerate.HasValue && r.Nohours.HasValue
+                           ? r.Chargerate.Value * r.Nohours.Value
+                           : null,
+            Payrate      = r.Payrate,
+            Npr          = r.Npr,
+            Ohr          = r.Ohr,
+            WorkGroup    = r.WorkGroup,
+            GradeCode    = r.GradeCode,
+            Programme    = r.Programme,
             EuroConvRate = r.EuroConvRate,
-            EuGrade = r.EuGrade
+            EuGrade      = r.EuGrade
         });
+
+        return new PaginatedResult<StaffRequirementDto>(dtos, _mapper.Map<PaginationDto>(result.PaginationData));
     }
 
 

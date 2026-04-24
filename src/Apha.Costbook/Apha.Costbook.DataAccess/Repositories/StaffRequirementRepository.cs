@@ -1,55 +1,48 @@
-using Apha.Costbook.Core.Interfaces;
-using Apha.Costbook.DataAccess.Data;
 using Apha.Costbook.Core.Entities;
+using Apha.Costbook.Core.Interfaces;
+using Apha.Costbook.Core.Pagination;
+using Apha.Costbook.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Web;
 
 namespace Apha.Costbook.DataAccess.Repositories;
 
-public class StaffRequirementRepository : IStaffRequirementRepository
+public class StaffRequirementRepository : RepositoryBase<StaffRequirement>, IStaffRequirementRepository
 {
-    private readonly CostbookDbContext _context;
     private readonly IFPSYearContext _fpsYearContext;
 
     public StaffRequirementRepository(CostbookDbContext context, IFPSYearContext fpsYearContext)
+        : base(context)
     {
-        _context = context;
         _fpsYearContext = fpsYearContext;
     }
 
     /// <summary>
-    /// LINQ equivalent of MS Access qryStaffReqGrade.
-    /// WorkGroupGrades uses IgnoreQueryFilters() + explicit FpsYear in the join condition
-    /// to guarantee a true LEFT JOIN — preventing EF Core from converting it to an INNER JOIN
-    /// when the query filter (FpsYear == current) is applied as a WHERE clause.
+    /// LINQ equivalent of MS Access qryStaffReqGrade — with server-side sorting and paging.
     /// </summary>
-    public async Task<IEnumerable<StaffRequirementDetailView>> GetByProjectYearAsync(string project, int year)
+    public async Task<PagedData<StaffRequirementDetailView>> GetByProjectYearAsync(
+        string project, int year, PaginationParameters<string> query)
     {
         var decodedProject = HttpUtility.UrlDecode(project);
         var fpsYear = _fpsYearContext.FPSYear;
 
-        return await (
+        var baseQuery =
             from sr in _context.StaffRequirements.AsNoTracking()
 
-            // LEFT JOIN WorkGroupGrade — IgnoreQueryFilters() + explicit FpsYear in ON clause
-            // prevents EF Core from emitting the filter as a WHERE, which would make it INNER JOIN
             join wgg in _context.WorkGroupGrades.AsNoTracking().IgnoreQueryFilters()
                 on new { sr.WgGrade, FpsYear = fpsYear }
                 equals new { wgg.WgGrade, wgg.FpsYear } into wggJoin
             from wgg in wggJoin.DefaultIfEmpty()
 
-            // LEFT JOIN Project
             join proj in _context.Projects.AsNoTracking()
                 on sr.Project equals proj.ProjectId into projJoin
             from proj in projJoin.DefaultIfEmpty()
 
-            // LEFT JOIN EuGradeConversion — DLookup equivalent on GradeCode
             join eu in _context.EuGradeConversions.AsNoTracking()
                 on wgg.GradeCode equals eu.VlaGrade into euJoin
             from eu in euJoin.DefaultIfEmpty()
 
             where sr.Project == decodedProject && sr.Year == year
-            orderby sr.WgGrade
             select new StaffRequirementDetailView
             {
                 SrIdentity   = sr.SrIdentity,
@@ -63,13 +56,17 @@ public class StaffRequirementRepository : IStaffRequirementRepository
                 Payrate      = sr.Payrate,
                 Npr          = sr.Npr,
                 Ohr          = sr.Ohr,
-                WorkGroup    = wgg != null ? wgg.WorkGroup : null,
-                GradeCode    = wgg != null ? wgg.GradeCode : null,
+                WorkGroup    = wgg != null ? wgg.WorkGroup  : null,
+                GradeCode    = wgg != null ? wgg.GradeCode  : null,
                 Programme    = proj != null ? proj.Programme : null,
                 EuroConvRate = proj != null ? proj.Euroconvrate : null,
-                EuGrade      = eu != null ? eu.EuGrade : null
-            }
-        ).ToListAsync();
+                EuGrade      = eu  != null ? eu.EuGrade     : null
+            };
+
+        baseQuery = ApplySorting(baseQuery, query.SortBy, query.Descending);
+
+        List<StaffRequirementDetailView> result = await baseQuery.ToListAsync();
+        return ApplyPaging(result, query.Page, query.PageSize);
     }
 
     public async Task<StaffRequirement> AddAsync(StaffRequirement staffRequirement)
@@ -92,5 +89,26 @@ public class StaffRequirementRepository : IStaffRequirementRepository
             .Where(s => s.SrIdentity == srIdentity)
             .ExecuteDeleteAsync();
         return deleted > 0;
+    }
+
+    // ── Private helpers ───────────────────────────────────────────────────────
+
+    private static IQueryable<StaffRequirementDetailView> ApplySorting(
+        IQueryable<StaffRequirementDetailView> query, string? sortBy, bool descending)
+    {
+        if (string.IsNullOrEmpty(sortBy))
+            return query.OrderBy(c => c.WgGrade);
+
+        return sortBy.ToLower() switch
+        {
+            "sridentity" => descending ? query.OrderByDescending(c => c.SrIdentity) : query.OrderBy(c => c.SrIdentity),
+            "project"    => descending ? query.OrderByDescending(c => c.Project)    : query.OrderBy(c => c.Project),
+            "year"       => descending ? query.OrderByDescending(c => c.Year)       : query.OrderBy(c => c.Year),
+            "wggrade"    => descending ? query.OrderByDescending(c => c.WgGrade)    : query.OrderBy(c => c.WgGrade),
+            "name"       => descending ? query.OrderByDescending(c => c.Name)       : query.OrderBy(c => c.Name),
+            "nohours"    => descending ? query.OrderByDescending(c => c.Nohours)    : query.OrderBy(c => c.Nohours),
+            "chargerate" => descending ? query.OrderByDescending(c => c.Chargerate) : query.OrderBy(c => c.Chargerate),
+            _            => query.OrderBy(c => c.WgGrade)
+        };
     }
 }
