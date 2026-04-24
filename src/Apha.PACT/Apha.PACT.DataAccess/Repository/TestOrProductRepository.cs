@@ -8,18 +8,18 @@ using System.Dynamic;
 
 namespace Apha.PACT.DataAccess.Repository
 {
-    public class TestOrProductRepository : BaseRepository, ITestOrProductRepository
+    public class TestorProductRepository : BaseRepository, ITestorProductRepository
     {
-        private readonly IFpsYearContext _fpsYearContext;
+        private readonly IFpsRequestContext _fpsRequestContext;
 
-        public TestOrProductRepository(FpsDbContext context, IFpsYearContext fpsYearContext) : base(context)
+        public TestorProductRepository(FpsDbContext context, IFpsRequestContext fpsRequestContext) : base(context)
         {
-            _fpsYearContext = fpsYearContext;
+            _fpsRequestContext = fpsRequestContext;
         }
 
-        public async Task<PagedData<TestOrProduct>> GetPagedTestOrProductsAsync(PaginationParameters<string> parameters)
+        public async Task<PagedData<TestorProduct>> GetPagedTestOrProductsAsync(PaginationParameters<string> parameters)
         {
-            var query = _context.TestOrProducts.AsNoTracking().AsQueryable();
+            var query = _context.TestorProducts.AsNoTracking().AsQueryable();
 
             query = ApplyTestOrProductFilter(query, parameters.Filter);
             query = ApplySorting(query, parameters.SortBy, parameters.Descending);
@@ -28,24 +28,24 @@ namespace Apha.PACT.DataAccess.Repository
             return ApplyPaging(result, parameters.Page, parameters.PageSize);
         }
 
-        public async Task<TestOrProduct?> GetTestOrProductByIdAsync(string itemCode)
+        public async Task<TestorProduct?> GetTestOrProductByIdAsync(string itemCode)
         {
-            return await _context.TestOrProducts
+            return await _context.TestorProducts
                 .AsNoTracking()
                 .FirstOrDefaultAsync(t => t.ItemCode == itemCode);
         }
 
-        public async Task<TestOrProduct> CreateTestOrProductAsync(TestOrProduct entity)
+        public async Task<TestorProduct> CreateTestOrProductAsync(TestorProduct entity)
         {
-            entity.FpsYear = _fpsYearContext.FPSYear;
-            await _context.TestOrProducts.AddAsync(entity);
+            entity.FpsYear = _fpsRequestContext.FpsYear;
+            await _context.TestorProducts.AddAsync(entity);
             await _context.SaveChangesAsync();
             return entity;
         }
 
-        public async Task<TestOrProduct> UpdateTestOrProductAsync(TestOrProduct entity)
+        public async Task<TestorProduct> UpdateTestOrProductAsync(TestorProduct entity)
         {
-            entity.FpsYear = _fpsYearContext.FPSYear;
+            entity.FpsYear = _fpsRequestContext.FpsYear;
             _context.Entry(entity).State = EntityState.Modified;
             await _context.SaveChangesAsync();
             return entity;
@@ -53,17 +53,17 @@ namespace Apha.PACT.DataAccess.Repository
 
         public async Task<bool> DeleteTestOrProductAsync(string itemCode)
         {
-            var entity = await _context.TestOrProducts
-                .FirstOrDefaultAsync(t => t.ItemCode == itemCode && t.FpsYear == _fpsYearContext.FPSYear);
+            var entity = await _context.TestorProducts  
+                .FirstOrDefaultAsync(t => t.ItemCode == itemCode && t.FpsYear == _fpsRequestContext.FpsYear);
             if (entity == null) return false;
-            _context.TestOrProducts.Remove(entity);
+            _context.TestorProducts.Remove(entity);
             await _context.SaveChangesAsync();
             return true;
         }
 
         public async Task<IEnumerable<string>> GetOwnersAsync()
         {
-            return await _context.TestOrProducts
+            return await _context.TestorProducts
                 .AsNoTracking()
                 .Where(t => t.Owner != null)
                 .Select(t => t.Owner!)
@@ -72,7 +72,7 @@ namespace Apha.PACT.DataAccess.Repository
                 .ToListAsync();
         }
 
-        private static IQueryable<TestOrProduct> ApplyTestOrProductFilter(IQueryable<TestOrProduct> query, string? filter)
+        private static IQueryable<TestorProduct> ApplyTestOrProductFilter(IQueryable<TestorProduct> query, string? filter)
         {
             if (string.IsNullOrEmpty(filter))
             {
@@ -115,7 +115,7 @@ namespace Apha.PACT.DataAccess.Repository
             return query;
         }
 
-        private static IQueryable<TestOrProduct> ApplySorting(IQueryable<TestOrProduct> query, string? sortBy, bool descending)
+        private static IQueryable<TestorProduct> ApplySorting(IQueryable<TestorProduct> query, string? sortBy, bool descending)
         {
             if (string.IsNullOrEmpty(sortBy))
             {

@@ -11,16 +11,16 @@ namespace Apha.PACT.Application.Services
 {
     public class TestListService : ITestListService
     {
-        private readonly ITestOrProductRepository _repository;
+        private readonly ITestorProductRepository _repository;
         private readonly IMapper _mapper;
 
-        public TestListService(ITestOrProductRepository repository, IMapper mapper)
+        public TestListService(ITestorProductRepository repository, IMapper mapper)
         {
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
-        public async Task<PaginatedResult<TestOrProductDto>> GetPagedTestOrProductsAsync(QueryParameters<string> query)
+        public async Task<PaginatedResult<TestorProductDto>> GetPagedTestOrProductsAsync(QueryParameters<string> query)
         {
             if (query == null)
             {
@@ -35,10 +35,10 @@ namespace Apha.PACT.Application.Services
                 throw new InvalidOperationException("Failed to retrieve paged test/product data from repository.");
             }
 
-            return _mapper.Map<PaginatedResult<TestOrProductDto>>(pagedData);
+            return _mapper.Map<PaginatedResult<TestorProductDto>>(pagedData);
         }
 
-        public async Task<TestOrProductDto?> GetTestOrProductByIdAsync(string itemCode)
+        public async Task<TestorProductDto?> GetTestorProductByIdAsync(string itemCode)
         {
             if (string.IsNullOrWhiteSpace(itemCode))
             {
@@ -46,10 +46,10 @@ namespace Apha.PACT.Application.Services
             }
 
             var entity = await _repository.GetTestOrProductByIdAsync(itemCode);
-            return entity == null ? null : _mapper.Map<TestOrProductDto>(entity);
+            return entity == null ? null : _mapper.Map<TestorProductDto>(entity);
         }
 
-        public async Task<TestOrProductDto> CreateTestOrProductAsync(TestOrProductDto dto)
+        public async Task<TestorProductDto> CreateTestorProductAsync(TestorProductDto dto)
         {
             if (dto == null)
             {
@@ -65,7 +65,7 @@ namespace Apha.PACT.Application.Services
             // Validate business rules
             ValidateTestOrProductDto(dto);
 
-            var entity = _mapper.Map<TestOrProduct>(dto);
+            var entity = _mapper.Map<TestorProduct>(dto);
             var created = await _repository.CreateTestOrProductAsync(entity);
 
             if (created == null)
@@ -73,10 +73,10 @@ namespace Apha.PACT.Application.Services
                 throw new InvalidOperationException("Failed to create test/product.");
             }
 
-            return _mapper.Map<TestOrProductDto>(created);
+            return _mapper.Map<TestorProductDto>(created);
         }
 
-        public async Task<TestOrProductDto> UpdateTestOrProductAsync(TestOrProductDto dto)
+        public async Task<TestorProductDto> UpdateTestorProductAsync(TestorProductDto dto)
         {
             if (dto == null)
             {
@@ -99,7 +99,7 @@ namespace Apha.PACT.Application.Services
             // Validate business rules
             ValidateTestOrProductDto(dto);
 
-            var entity = _mapper.Map<TestOrProduct>(dto);
+            var entity = _mapper.Map<TestorProduct>(dto);
             var updated = await _repository.UpdateTestOrProductAsync(entity);
 
             if (updated == null)
@@ -107,10 +107,10 @@ namespace Apha.PACT.Application.Services
                 throw new InvalidOperationException($"Failed to update test/product with Item Code '{dto.ItemCode}'.");
             }
 
-            return _mapper.Map<TestOrProductDto>(updated);
+            return _mapper.Map<TestorProductDto>(updated);
         }
 
-        public async Task<bool> DeleteTestOrProductAsync(string itemCode)
+        public async Task<bool> DeleteTestorProductAsync(string itemCode)
         {
             if (string.IsNullOrWhiteSpace(itemCode))
             {
@@ -144,7 +144,7 @@ namespace Apha.PACT.Application.Services
         /// </summary>
         /// <param name="dto">The DTO to validate</param>
         /// <exception cref="ArgumentException">Thrown when validation fails</exception>
-        private void ValidateTestOrProductDto(TestOrProductDto dto)
+        private void ValidateTestOrProductDto(TestorProductDto dto)
         {
             var validationErrors = new List<string>();
 

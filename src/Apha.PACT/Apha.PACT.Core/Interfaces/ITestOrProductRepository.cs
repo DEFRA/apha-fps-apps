@@ -3,12 +3,12 @@ using Apha.PACT.Core.Pagination;
 
 namespace Apha.PACT.Core.Interfaces
 {
-    public interface ITestOrProductRepository
+    public interface ITestorProductRepository
     {
-        Task<PagedData<TestOrProduct>> GetPagedTestOrProductsAsync(PaginationParameters<string> parameters);
-        Task<TestOrProduct?> GetTestOrProductByIdAsync(string itemCode);
-        Task<TestOrProduct> CreateTestOrProductAsync(TestOrProduct entity);
-        Task<TestOrProduct> UpdateTestOrProductAsync(TestOrProduct entity);
+        Task<PagedData<TestorProduct>> GetPagedTestOrProductsAsync(PaginationParameters<string> parameters);
+        Task<TestorProduct?> GetTestOrProductByIdAsync(string itemCode);
+        Task<TestorProduct> CreateTestOrProductAsync(TestorProduct entity);
+        Task<TestorProduct> UpdateTestOrProductAsync(TestorProduct entity);
         Task<bool> DeleteTestOrProductAsync(string itemCode);
         Task<IEnumerable<string>> GetOwnersAsync();
     }

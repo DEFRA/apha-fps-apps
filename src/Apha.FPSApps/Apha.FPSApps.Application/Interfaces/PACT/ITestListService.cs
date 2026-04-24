@@ -6,10 +6,10 @@ namespace Apha.FPSApps.Application.Interfaces.PACT
 {
     public interface ITestListService
     {
-        Task<ApiResponseDto<List<TestOrProductDto>>> GetPagedTestOrProductsAsync(QueryParameters<string> query);
-        Task<ApiResponseDto<TestOrProductDto>> GetTestOrProductByIdAsync(string itemCode);
-        Task<ApiResponseDto<TestOrProductDto>> CreateTestOrProductAsync(TestOrProductDto dto);
-        Task<ApiResponseDto<TestOrProductDto>> UpdateTestOrProductAsync(string itemCode, TestOrProductDto dto);
+        Task<ApiResponseDto<List<TestorProductDto>>> GetPagedTestOrProductsAsync(QueryParameters<string> query);
+        Task<ApiResponseDto<TestorProductDto>> GetTestOrProductByIdAsync(string itemCode);
+        Task<ApiResponseDto<TestorProductDto>> CreateTestOrProductAsync(TestorProductDto dto);
+        Task<ApiResponseDto<TestorProductDto>> UpdateTestOrProductAsync(string itemCode, TestorProductDto dto);
         Task<ApiResponseDto<bool>> DeleteTestOrProductAsync(string itemCode);
         Task<ApiResponseDto<List<string>>> GetOwnersAsync();
     }

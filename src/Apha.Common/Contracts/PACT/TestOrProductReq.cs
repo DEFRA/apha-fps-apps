@@ -1,6 +1,6 @@
 namespace Apha.Common.Contracts.PACT
 {
-    public class TestOrProductReq
+    public class TestorProductReq
     {
         public string ItemCode { get; set; } = null!;
         public string? ItemDescription { get; set; }

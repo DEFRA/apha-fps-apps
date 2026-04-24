@@ -1,6 +1,6 @@
 namespace Apha.PACT.Core.Entities
 {
-    public partial class TestOrProduct
+    public partial class TestorProduct
     {
         public string ItemCode { get; set; } = null!;
         public string? ItemDescription { get; set; }

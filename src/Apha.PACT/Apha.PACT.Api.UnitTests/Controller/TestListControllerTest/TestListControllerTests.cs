@@ -35,24 +35,24 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestListControllerTest
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var dtos = new List<TestOrProductDto> { new() { ItemCode = "TEST001", DefraUnitPrice = 100m } };
+            var dtos = new List<TestorProductDto> { new() { ItemCode = "TEST001", DefraUnitPrice = 100m } };
             var paginationData = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1, TotalPages = 1 };
-            var serviceResult = new PaginatedResult<TestOrProductDto>(dtos, paginationData);
-            var mappedResult = new PaginationRes<TestOrProductRes>
+            var serviceResult = new PaginatedResult<TestorProductDto>(dtos, paginationData);
+            var mappedResult = new PaginationRes<TestorProductRes>
             {
-                Data = new List<TestOrProductRes> { new() { ItemCode = "TEST001", DefraUnitPrice = 100m } },
+                Data = new List<TestorProductRes> { new() { ItemCode = "TEST001", DefraUnitPrice = 100m } },
                 PaginationData = new Pagination { PageNumber = 1, PageSize = 10, TotalRecords = 1, TotalPages = 1 }
             };
 
             _serviceMock.GetPagedTestOrProductsAsync(query).Returns(serviceResult);
-            _mapperMock.Map<PaginationRes<TestOrProductRes>>(serviceResult).Returns(mappedResult);
+            _mapperMock.Map<PaginationRes<TestorProductRes>>(serviceResult).Returns(mappedResult);
 
             // Act
             var result = await _controller.GetPaged(query);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var apiResponse = Assert.IsType<ApiResponse<PaginationRes<TestOrProductRes>>>(okResult.Value);
+            var apiResponse = Assert.IsType<ApiResponse<PaginationRes<TestorProductRes>>>(okResult.Value);
             Assert.True(apiResponse.Success);
             Assert.Equal(mappedResult, apiResponse.Data);
         }
@@ -62,18 +62,18 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestListControllerTest
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var serviceResult = new PaginatedResult<TestOrProductDto>(Enumerable.Empty<TestOrProductDto>(), new PaginationDto());
-            var mappedResult = new PaginationRes<TestOrProductRes>();
+            var serviceResult = new PaginatedResult<TestorProductDto>(Enumerable.Empty<TestorProductDto>(), new PaginationDto());
+            var mappedResult = new PaginationRes<TestorProductRes>();
 
             _serviceMock.GetPagedTestOrProductsAsync(query).Returns(serviceResult);
-            _mapperMock.Map<PaginationRes<TestOrProductRes>>(serviceResult).Returns(mappedResult);
+            _mapperMock.Map<PaginationRes<TestorProductRes>>(serviceResult).Returns(mappedResult);
 
             // Act
             var result = await _controller.GetPaged(query);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var apiResponse = Assert.IsType<ApiResponse<PaginationRes<TestOrProductRes>>>(okResult.Value);
+            var apiResponse = Assert.IsType<ApiResponse<PaginationRes<TestorProductRes>>>(okResult.Value);
             Assert.True(apiResponse.Success);
         }
 
@@ -96,11 +96,11 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestListControllerTest
         public async Task GetById_ExistingItemCode_ReturnsOkWithMappedData()
         {
             // Arrange
-            var dto = new TestOrProductDto { ItemCode = "TEST001", DefraUnitPrice = 100m };
-            var mapped = new TestOrProductRes { ItemCode = "TEST001", DefraUnitPrice = 100m };
+            var dto = new TestorProductDto { ItemCode = "TEST001", DefraUnitPrice = 100m };
+            var mapped = new TestorProductRes { ItemCode = "TEST001", DefraUnitPrice = 100m };
 
-            _serviceMock.GetTestOrProductByIdAsync("TEST001").Returns(dto);
-            _mapperMock.Map<TestOrProductRes>(dto).Returns(mapped);
+            _serviceMock.GetTestorProductByIdAsync("TEST001").Returns(dto);
+            _mapperMock.Map<TestorProductRes>(dto).Returns(mapped);
 
             // Act
             var result = await _controller.GetById("TEST001");
@@ -114,7 +114,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestListControllerTest
         public async Task GetById_NonExistentItemCode_ThrowsKeyNotFoundException()
         {
             // Arrange
-            _serviceMock.GetTestOrProductByIdAsync("MISSING").Returns((TestOrProductDto?)null);
+            _serviceMock.GetTestorProductByIdAsync("MISSING").Returns((TestorProductDto?)null);
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<KeyNotFoundException>(() => _controller.GetById("MISSING"));
@@ -126,7 +126,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestListControllerTest
         public async Task GetById_ServiceThrows_PropagatesException()
         {
             // Arrange
-            _serviceMock.GetTestOrProductByIdAsync("TEST001").ThrowsAsync(new ArgumentException("Invalid itemCode"));
+            _serviceMock.GetTestorProductByIdAsync("TEST001").ThrowsAsync(new ArgumentException("Invalid itemCode"));
 
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentException>(() => _controller.GetById("TEST001"));
@@ -140,14 +140,14 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestListControllerTest
         public async Task Create_ValidRequest_ReturnsCreatedAtAction()
         {
             // Arrange
-            var request = new TestOrProductReq { ItemCode = "TEST001", DefraUnitPrice = 100m };
-            var dto = new TestOrProductDto { ItemCode = "TEST001", DefraUnitPrice = 100m };
-            var createdDto = new TestOrProductDto { ItemCode = "TEST001", DefraUnitPrice = 100m, FpsYear = 2024 };
-            var mapped = new TestOrProductRes { ItemCode = "TEST001", DefraUnitPrice = 100m };
+            var request = new TestorProductReq { ItemCode = "TEST001", DefraUnitPrice = 100m };
+            var dto = new TestorProductDto { ItemCode = "TEST001", DefraUnitPrice = 100m };
+            var createdDto = new TestorProductDto { ItemCode = "TEST001", DefraUnitPrice = 100m, FpsYear = 2024 };
+            var mapped = new TestorProductRes { ItemCode = "TEST001", DefraUnitPrice = 100m };
 
-            _mapperMock.Map<TestOrProductDto>(request).Returns(dto);
-            _serviceMock.CreateTestOrProductAsync(dto).Returns(createdDto);
-            _mapperMock.Map<TestOrProductRes>(createdDto).Returns(mapped);
+            _mapperMock.Map<TestorProductDto>(request).Returns(dto);
+            _serviceMock.CreateTestorProductAsync(dto).Returns(createdDto);
+            _mapperMock.Map<TestorProductRes>(createdDto).Returns(mapped);
 
             // Act
             var result = await _controller.Create(request);
@@ -164,11 +164,11 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestListControllerTest
         public async Task Create_ServiceThrowsArgumentException_PropagatesException()
         {
             // Arrange
-            var request = new TestOrProductReq { ItemCode = "TEST001", DefraUnitPrice = -1m };
-            var dto = new TestOrProductDto { ItemCode = "TEST001", DefraUnitPrice = -1m };
+            var request = new TestorProductReq { ItemCode = "TEST001", DefraUnitPrice = -1m };
+            var dto = new TestorProductDto { ItemCode = "TEST001", DefraUnitPrice = -1m };
 
-            _mapperMock.Map<TestOrProductDto>(request).Returns(dto);
-            _serviceMock.CreateTestOrProductAsync(dto).ThrowsAsync(new ArgumentException("Validation failed"));
+            _mapperMock.Map<TestorProductDto>(request).Returns(dto);
+            _serviceMock.CreateTestorProductAsync(dto).ThrowsAsync(new ArgumentException("Validation failed"));
 
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentException>(() => _controller.Create(request));
@@ -178,11 +178,11 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestListControllerTest
         public async Task Create_ServiceThrowsInvalidOperationException_PropagatesException()
         {
             // Arrange
-            var request = new TestOrProductReq { ItemCode = "TEST001", DefraUnitPrice = 100m };
-            var dto = new TestOrProductDto { ItemCode = "TEST001", DefraUnitPrice = 100m };
+            var request = new TestorProductReq { ItemCode = "TEST001", DefraUnitPrice = 100m };
+            var dto = new TestorProductDto { ItemCode = "TEST001", DefraUnitPrice = 100m };
 
-            _mapperMock.Map<TestOrProductDto>(request).Returns(dto);
-            _serviceMock.CreateTestOrProductAsync(dto).ThrowsAsync(new InvalidOperationException("Failed to create"));
+            _mapperMock.Map<TestorProductDto>(request).Returns(dto);
+            _serviceMock.CreateTestorProductAsync(dto).ThrowsAsync(new InvalidOperationException("Failed to create"));
 
             // Act & Assert
             await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.Create(request));
@@ -197,14 +197,14 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestListControllerTest
         {
             // Arrange
             var itemCode = "TEST001";
-            var request = new TestOrProductReq { DefraUnitPrice = 150m };
-            var dto = new TestOrProductDto { ItemCode = itemCode, DefraUnitPrice = 150m };
-            var updatedDto = new TestOrProductDto { ItemCode = itemCode, DefraUnitPrice = 150m, FpsYear = 2024 };
-            var mapped = new TestOrProductRes { ItemCode = itemCode, DefraUnitPrice = 150m };
+            var request = new TestorProductReq { DefraUnitPrice = 150m };
+            var dto = new TestorProductDto { ItemCode = itemCode, DefraUnitPrice = 150m };
+            var updatedDto = new TestorProductDto { ItemCode = itemCode, DefraUnitPrice = 150m, FpsYear = 2024 };
+            var mapped = new TestorProductRes { ItemCode = itemCode, DefraUnitPrice = 150m };
 
-            _mapperMock.Map<TestOrProductDto>(request).Returns(dto);
-            _serviceMock.UpdateTestOrProductAsync(dto).Returns(updatedDto);
-            _mapperMock.Map<TestOrProductRes>(updatedDto).Returns(mapped);
+            _mapperMock.Map<TestorProductDto>(request).Returns(dto);
+            _serviceMock.UpdateTestorProductAsync(dto).Returns(updatedDto);
+            _mapperMock.Map<TestorProductRes>(updatedDto).Returns(mapped);
 
             // Act
             var result = await _controller.Update(itemCode, request);
@@ -220,14 +220,14 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestListControllerTest
         {
             // Arrange
             var itemCode = "TEST001";
-            var request = new TestOrProductReq { DefraUnitPrice = 150m };
-            var dto = new TestOrProductDto { DefraUnitPrice = 150m };
-            var updatedDto = new TestOrProductDto { ItemCode = itemCode, DefraUnitPrice = 150m };
-            var mapped = new TestOrProductRes { ItemCode = itemCode, DefraUnitPrice = 150m };
+            var request = new TestorProductReq { DefraUnitPrice = 150m };
+            var dto = new TestorProductDto { DefraUnitPrice = 150m };
+            var updatedDto = new TestorProductDto { ItemCode = itemCode, DefraUnitPrice = 150m };
+            var mapped = new TestorProductRes { ItemCode = itemCode, DefraUnitPrice = 150m };
 
-            _mapperMock.Map<TestOrProductDto>(request).Returns(dto);
-            _serviceMock.UpdateTestOrProductAsync(Arg.Do<TestOrProductDto>(d => Assert.Equal(itemCode, d.ItemCode))).Returns(updatedDto);
-            _mapperMock.Map<TestOrProductRes>(updatedDto).Returns(mapped);
+            _mapperMock.Map<TestorProductDto>(request).Returns(dto);
+            _serviceMock.UpdateTestorProductAsync(Arg.Do<TestorProductDto>(d => Assert.Equal(itemCode, d.ItemCode))).Returns(updatedDto);
+            _mapperMock.Map<TestorProductRes>(updatedDto).Returns(mapped);
 
             // Act
             var result = await _controller.Update(itemCode, request);
@@ -241,11 +241,11 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestListControllerTest
         {
             // Arrange
             var itemCode = "MISSING";
-            var request = new TestOrProductReq { DefraUnitPrice = 150m };
-            var dto = new TestOrProductDto { ItemCode = itemCode, DefraUnitPrice = 150m };
+            var request = new TestorProductReq { DefraUnitPrice = 150m };
+            var dto = new TestorProductDto { ItemCode = itemCode, DefraUnitPrice = 150m };
 
-            _mapperMock.Map<TestOrProductDto>(request).Returns(dto);
-            _serviceMock.UpdateTestOrProductAsync(dto).ThrowsAsync(new InvalidOperationException($"Test/Product with Item Code '{itemCode}' not found."));
+            _mapperMock.Map<TestorProductDto>(request).Returns(dto);
+            _serviceMock.UpdateTestorProductAsync(dto).ThrowsAsync(new InvalidOperationException($"Test/Product with Item Code '{itemCode}' not found."));
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.Update(itemCode, request));
@@ -257,11 +257,11 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestListControllerTest
         {
             // Arrange
             var itemCode = "TEST001";
-            var request = new TestOrProductReq { DefraUnitPrice = -1m };
-            var dto = new TestOrProductDto { ItemCode = itemCode, DefraUnitPrice = -1m };
+            var request = new TestorProductReq { DefraUnitPrice = -1m };
+            var dto = new TestorProductDto { ItemCode = itemCode, DefraUnitPrice = -1m };
 
-            _mapperMock.Map<TestOrProductDto>(request).Returns(dto);
-            _serviceMock.UpdateTestOrProductAsync(dto).ThrowsAsync(new ArgumentException("Validation failed"));
+            _mapperMock.Map<TestorProductDto>(request).Returns(dto);
+            _serviceMock.UpdateTestorProductAsync(dto).ThrowsAsync(new ArgumentException("Validation failed"));
 
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentException>(() => _controller.Update(itemCode, request));
@@ -275,7 +275,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestListControllerTest
         public async Task Delete_ExistingItemCode_ReturnsOkTrue()
         {
             // Arrange
-            _serviceMock.DeleteTestOrProductAsync("TEST001").Returns(true);
+            _serviceMock.DeleteTestorProductAsync("TEST001").Returns(true);
 
             // Act
             var result = await _controller.Delete("TEST001");
@@ -289,7 +289,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestListControllerTest
         public async Task Delete_NonExistentItemCode_ThrowsKeyNotFoundException()
         {
             // Arrange
-            _serviceMock.DeleteTestOrProductAsync("MISSING").Returns(false);
+            _serviceMock.DeleteTestorProductAsync("MISSING").Returns(false);
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<KeyNotFoundException>(() => _controller.Delete("MISSING"));
@@ -301,7 +301,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestListControllerTest
         public async Task Delete_ServiceThrowsInvalidOperationException_PropagatesException()
         {
             // Arrange
-            _serviceMock.DeleteTestOrProductAsync("TEST001").ThrowsAsync(new InvalidOperationException("Not found"));
+            _serviceMock.DeleteTestorProductAsync("TEST001").ThrowsAsync(new InvalidOperationException("Not found"));
 
             // Act & Assert
             await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.Delete("TEST001"));
@@ -311,7 +311,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestListControllerTest
         public async Task Delete_ServiceThrowsArgumentException_PropagatesException()
         {
             // Arrange
-            _serviceMock.DeleteTestOrProductAsync("").ThrowsAsync(new ArgumentException("ItemCode cannot be empty"));
+            _serviceMock.DeleteTestorProductAsync("").ThrowsAsync(new ArgumentException("ItemCode cannot be empty"));
 
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentException>(() => _controller.Delete(""));

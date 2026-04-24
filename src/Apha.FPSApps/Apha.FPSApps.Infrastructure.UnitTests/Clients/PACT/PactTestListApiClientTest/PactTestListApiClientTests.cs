@@ -28,12 +28,12 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestListApiClie
         private void SetupMapper()
         {
             // Map TestOrProductRes to TestOrProductDto
-            _mapper.Map<TestOrProductDto>(Arg.Any<TestOrProductRes>())
+            _mapper.Map<TestorProductDto>(Arg.Any<TestorProductRes>())
                 .Returns(callInfo =>
                 {
-                    var res = callInfo.ArgAt<TestOrProductRes>(0);
+                    var res = callInfo.ArgAt<TestorProductRes>(0);
                     if (res == null) return null;
-                    return new TestOrProductDto
+                    return new TestorProductDto
                     {
                         ItemCode = res.ItemCode,
                         ItemDescription = res.ItemDescription,
@@ -50,12 +50,12 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestListApiClie
                 });
 
             // Map TestOrProductDto to TestOrProductReq
-            _mapper.Map<TestOrProductReq>(Arg.Any<TestOrProductDto>())
+            _mapper.Map<TestorProductReq>(Arg.Any<TestorProductDto>())
                 .Returns(callInfo =>
                 {
-                    var dto = callInfo.ArgAt<TestOrProductDto>(0);
+                    var dto = callInfo.ArgAt<TestorProductDto>(0);
                     if (dto == null) return null;
-                    return new TestOrProductReq
+                    return new TestorProductReq
                     {
                         ItemCode = dto.ItemCode,
                         ItemDescription = dto.ItemDescription,
@@ -72,12 +72,12 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestListApiClie
                 });
 
             // Map List<TestOrProductRes> to List<TestOrProductDto>
-            _mapper.Map<List<TestOrProductDto>>(Arg.Any<IEnumerable<TestOrProductRes>>())
+            _mapper.Map<List<TestorProductDto>>(Arg.Any<IEnumerable<TestorProductRes>>())
                 .Returns(callInfo =>
                 {
-                    var resList = callInfo.ArgAt<IEnumerable<TestOrProductRes>>(0);
-                    if (resList == null) return new List<TestOrProductDto>();
-                    return resList.Select(res => new TestOrProductDto
+                    var resList = callInfo.ArgAt<IEnumerable<TestorProductRes>>(0);
+                    if (resList == null) return new List<TestorProductDto>();
+                    return resList.Select(res => new TestorProductDto
                     {
                         ItemCode = res.ItemCode,
                         ItemDescription = res.ItemDescription,
@@ -93,17 +93,17 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestListApiClie
                     }).ToList();
                 });
 
-            // Map ApiResponse<List<TestOrProductRes>> to ApiResponseDto<List<TestOrProductDto>>
-            _mapper.Map<ApiResponseDto<List<TestOrProductDto>>>(Arg.Any<ApiResponse<List<TestOrProductRes>>>())
+            // Map ApiResponse<List<TestorProductRes>> to ApiResponseDto<List<TestorProductDto>>
+            _mapper.Map<ApiResponseDto<List<TestorProductDto>>>(Arg.Any<ApiResponse<List<TestorProductRes>>>())
                 .Returns(callInfo =>
                 {
-                    var response = callInfo.ArgAt<ApiResponse<List<TestOrProductRes>>>(0);
+                    var response = callInfo.ArgAt<ApiResponse<List<TestorProductRes>>>(0);
                     if (response == null || !response.Success || response.Data == null)
-                        return ApiResponseDto<List<TestOrProductDto>>.FailureResponse(
+                        return ApiResponseDto<List<TestorProductDto>>.FailureResponse(
                             response?.Errors?.Select(e => new ApiErrorDto { Message = e.Message, Code = e.Code }).ToList() ?? [],
                             new ApiMetaDto());
 
-                    var dtoList = response.Data.Select(res => new TestOrProductDto
+                    var dtoList = response.Data.Select(res => new TestorProductDto
                     {
                         ItemCode = res.ItemCode,
                         ItemDescription = res.ItemDescription,
@@ -118,20 +118,20 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestListApiClie
                         FpsYear = res.FpsYear
                     }).ToList();
 
-                    return ApiResponseDto<List<TestOrProductDto>>.SuccessResponse(dtoList);
+                    return ApiResponseDto<List<TestorProductDto>>.SuccessResponse(dtoList);
                 });
 
-            // Map ApiResponse<TestOrProductRes> to ApiResponseDto<TestOrProductDto>
-            _mapper.Map<ApiResponseDto<TestOrProductDto>>(Arg.Any<ApiResponse<TestOrProductRes>>())
+            // Map ApiResponse<TestorProductRes> to ApiResponseDto<TestorProductDto>
+            _mapper.Map<ApiResponseDto<TestorProductDto>>(Arg.Any<ApiResponse<TestorProductRes>>())
                 .Returns(callInfo =>
                 {
-                    var response = callInfo.ArgAt<ApiResponse<TestOrProductRes>>(0);
+                    var response = callInfo.ArgAt<ApiResponse<TestorProductRes>>(0);
                     if (response == null || !response.Success || response.Data == null)
-                        return ApiResponseDto<TestOrProductDto>.FailureResponse(
+                        return ApiResponseDto<TestorProductDto>.FailureResponse(
                             response?.Errors?.Select(e => new ApiErrorDto { Message = e.Message, Code = e.Code }).ToList() ?? [],
                             new ApiMetaDto());
 
-                    var dto = new TestOrProductDto
+                    var dto = new TestorProductDto
                     {
                         ItemCode = response.Data.ItemCode,
                         ItemDescription = response.Data.ItemDescription,
@@ -146,7 +146,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestListApiClie
                         FpsYear = response.Data.FpsYear
                     };
 
-                    return ApiResponseDto<TestOrProductDto>.SuccessResponse(dto);
+                    return ApiResponseDto<TestorProductDto>.SuccessResponse(dto);
                 });
 
             // Map ApiResponse<bool> to ApiResponseDto<bool>
@@ -181,17 +181,17 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestListApiClie
         {
             // Arrange
             var query = new Application.Pagination.QueryParameters<string> { Page = 1, PageSize = 10 };
-            var testItems = new List<TestOrProductRes>
+            var testItems = new List<TestorProductRes>
             {
                 new() { ItemCode = "T001", ItemDescription = "Test One" },
                 new() { ItemCode = "T002", ItemDescription = "Test Two" }
             };
-            var httpResponse = new ApiResponse<List<TestOrProductRes>>
+            var httpResponse = new ApiResponse<List<TestorProductRes>>
             {
                 Success = true,
                 Data = testItems
             };
-            _httpExecutor.GetAsync<List<TestOrProductRes>>(Arg.Any<string>())
+            _httpExecutor.GetAsync<List<TestorProductRes>>(Arg.Any<string>())
                 .Returns(Task.FromResult(httpResponse));
 
             // Act
@@ -208,12 +208,12 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestListApiClie
         {
             // Arrange
             var query = new Application.Pagination.QueryParameters<string> { Page = 1, PageSize = 10 };
-            var httpResponse = new ApiResponse<List<TestOrProductRes>>
+            var httpResponse = new ApiResponse<List<TestorProductRes>>
             {
                 Success = true,
-                Data = new List<TestOrProductRes>()
+                Data = new List<TestorProductRes>()
             };
-            _httpExecutor.GetAsync<List<TestOrProductRes>>(Arg.Any<string>())
+            _httpExecutor.GetAsync<List<TestorProductRes>>(Arg.Any<string>())
                 .Returns(Task.FromResult(httpResponse));
 
             // Act
@@ -230,12 +230,12 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestListApiClie
         {
             // Arrange
             var query = new Application.Pagination.QueryParameters<string> { Page = 1, PageSize = 10 };
-            var httpResponse = new ApiResponse<List<TestOrProductRes>>
+            var httpResponse = new ApiResponse<List<TestorProductRes>>
             {
                 Success = false,
                 Errors = new List<ApiError> { new() { Message = "HTTP Error", Code = "HTTP_ERROR" } }
             };
-            _httpExecutor.GetAsync<List<TestOrProductRes>>(Arg.Any<string>())
+            _httpExecutor.GetAsync<List<TestorProductRes>>(Arg.Any<string>())
                 .Returns(Task.FromResult(httpResponse));
 
             // Act
@@ -252,8 +252,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestListApiClie
         {
             // Arrange
             var query = new Application.Pagination.QueryParameters<string> { Page = 1, PageSize = 10 };
-            _httpExecutor.GetAsync<List<TestOrProductRes>>(Arg.Any<string>())
-                .Returns<Task<ApiResponse<List<TestOrProductRes>>>>(x => throw new Exception("Test exception"));
+            _httpExecutor.GetAsync<List<TestorProductRes>>(Arg.Any<string>())
+                .Returns<Task<ApiResponse<List<TestorProductRes>>>>(x => throw new Exception("Test exception"));
 
             // Act
             var result = await _client.GetPagedTestOrProductsAsync(query);
@@ -273,13 +273,13 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestListApiClie
         {
             // Arrange
             var itemCode = "T001";
-            var testOrProduct = new TestOrProductRes { ItemCode = itemCode, ItemDescription = "Test Product" };
-            var httpResponse = new ApiResponse<TestOrProductRes>
+            var testorProduct = new TestorProductRes{ItemCode = itemCode, ItemDescription = "Test Product" };
+            var httpResponse = new ApiResponse<TestorProductRes>
             {
                 Success = true,
-                Data = testOrProduct
+                Data = testorProduct
             };
-            _httpExecutor.GetAsync<TestOrProductRes>(Arg.Any<string>())
+            _httpExecutor.GetAsync<TestorProductRes>(Arg.Any<string>())
                 .Returns(Task.FromResult(httpResponse));
 
             // Act
@@ -296,12 +296,12 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestListApiClie
         {
             // Arrange
             var itemCode = "NOTFOUND";
-            var httpResponse = new ApiResponse<TestOrProductRes>
+            var httpResponse = new ApiResponse<TestorProductRes>
             {
                 Success = false,
                 Errors = new List<ApiError> { new() { Message = "Not Found", Code = "NOT_FOUND" } }
             };
-            _httpExecutor.GetAsync<TestOrProductRes>(Arg.Any<string>())
+            _httpExecutor.GetAsync<TestorProductRes>(Arg.Any<string>())
                 .Returns(Task.FromResult(httpResponse));
 
             // Act
@@ -317,8 +317,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestListApiClie
         {
             // Arrange
             var itemCode = "T001";
-            _httpExecutor.GetAsync<TestOrProductRes>(Arg.Any<string>())
-                .Returns<Task<ApiResponse<TestOrProductRes>>>(x => throw new Exception("Test exception"));
+            _httpExecutor.GetAsync<TestorProductRes>(Arg.Any<string>())
+                .Returns<Task<ApiResponse<TestorProductRes>>>(x => throw new Exception("Test exception"));
 
             // Act
             var result = await _client.GetTestOrProductByIdAsync(itemCode);
@@ -336,14 +336,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestListApiClie
         public async Task CreateTestOrProductAsync_WithValidDto_ReturnsCreatedDto()
         {
             // Arrange
-            var dto = new TestOrProductDto { ItemCode = "T001", ItemDescription = "New Test" };
-            var createdRes = new TestOrProductRes { ItemCode = "T001", ItemDescription = "New Test" };
-            var httpResponse = new ApiResponse<TestOrProductRes>
+            var dto = new TestorProductDto { ItemCode = "T001", ItemDescription = "New Test" };
+            var createdRes = new TestorProductRes { ItemCode = "T001", ItemDescription = "New Test" };
+            var httpResponse = new ApiResponse<TestorProductRes>
             {
                 Success = true,
                 Data = createdRes
             };
-            _httpExecutor.PostAsync<TestOrProductReq, TestOrProductRes>(Arg.Any<string>(), Arg.Any<TestOrProductReq>())
+            _httpExecutor.PostAsync<TestorProductReq, TestorProductRes>(Arg.Any<string>(), Arg.Any<TestorProductReq>())
                 .Returns(Task.FromResult(httpResponse));
 
             // Act
@@ -359,13 +359,13 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestListApiClie
         public async Task CreateTestOrProductAsync_WhenValidationFails_ReturnsFailureResponse()
         {
             // Arrange
-            var dto = new TestOrProductDto { ItemCode = "T001" };
-            var httpResponse = new ApiResponse<TestOrProductRes>
+            var dto = new TestorProductDto { ItemCode = "T001" };
+            var httpResponse = new ApiResponse<TestorProductRes>
             {
                 Success = false,
                 Errors = new List<ApiError> { new() { Message = "Validation failed", Code = "VALIDATION_ERROR" } }
             };
-            _httpExecutor.PostAsync<TestOrProductReq, TestOrProductRes>(Arg.Any<string>(), Arg.Any<TestOrProductReq>())
+            _httpExecutor.PostAsync<TestorProductReq, TestorProductRes>(Arg.Any<string>(), Arg.Any<TestorProductReq>())
                 .Returns(Task.FromResult(httpResponse));
 
             // Act
@@ -380,9 +380,9 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestListApiClie
         public async Task CreateTestOrProductAsync_WhenExceptionThrown_ReturnsFailureResponse()
         {
             // Arrange
-            var dto = new TestOrProductDto { ItemCode = "T001" };
-            _httpExecutor.PostAsync<TestOrProductReq, TestOrProductRes>(Arg.Any<string>(), Arg.Any<TestOrProductReq>())
-                .Returns<Task<ApiResponse<TestOrProductRes>>>(x => throw new Exception("Test exception"));
+            var dto = new TestorProductDto { ItemCode = "T001" };
+            _httpExecutor.PostAsync<TestorProductReq, TestorProductRes>(Arg.Any<string>(), Arg.Any<TestorProductReq>())
+                .Returns<Task<ApiResponse<TestorProductRes>>>(x => throw new Exception("Test exception"));
 
             // Act
             var result = await _client.CreateTestOrProductAsync(dto);
@@ -401,14 +401,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestListApiClie
         {
             // Arrange
             var itemCode = "T001";
-            var dto = new TestOrProductDto { ItemCode = itemCode, ItemDescription = "Updated Test" };
-            var updatedRes = new TestOrProductRes { ItemCode = itemCode, ItemDescription = "Updated Test" };
-            var httpResponse = new ApiResponse<TestOrProductRes>
+            var dto = new TestorProductDto { ItemCode = itemCode, ItemDescription = "Updated Test" };
+            var updatedRes = new TestorProductRes { ItemCode = itemCode, ItemDescription = "Updated Test" };
+            var httpResponse = new ApiResponse<TestorProductRes>
             {
                 Success = true,
                 Data = updatedRes
             };
-            _httpExecutor.PutAsync<TestOrProductReq, TestOrProductRes>(Arg.Any<string>(), Arg.Any<TestOrProductReq>())
+            _httpExecutor.PutAsync<TestorProductReq, TestorProductRes>(Arg.Any<string>(), Arg.Any<TestorProductReq>())
                 .Returns(Task.FromResult(httpResponse));
 
             // Act
@@ -425,13 +425,13 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestListApiClie
         {
             // Arrange
             var itemCode = "NOTFOUND";
-            var dto = new TestOrProductDto { ItemCode = itemCode };
-            var httpResponse = new ApiResponse<TestOrProductRes>
+            var dto = new TestorProductDto { ItemCode = itemCode };
+            var httpResponse = new ApiResponse<TestorProductRes>
             {
                 Success = false,
                 Errors = new List<ApiError> { new() { Message = "Not Found", Code = "NOT_FOUND" } }
             };
-            _httpExecutor.PutAsync<TestOrProductReq, TestOrProductRes>(Arg.Any<string>(), Arg.Any<TestOrProductReq>())
+            _httpExecutor.PutAsync<TestorProductReq, TestorProductRes>(Arg.Any<string>(), Arg.Any<TestorProductReq>())
                 .Returns(Task.FromResult(httpResponse));
 
             // Act
@@ -447,13 +447,13 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestListApiClie
         {
             // Arrange
             var itemCode = "T001";
-            var dto = new TestOrProductDto { ItemCode = itemCode };
-            var httpResponse = new ApiResponse<TestOrProductRes>
+            var dto = new TestorProductDto { ItemCode = itemCode };
+            var httpResponse = new ApiResponse<TestorProductRes>
             {
                 Success = false,
                 Errors = new List<ApiError> { new() { Message = "Validation failed", Code = "VALIDATION_ERROR" } }
             };
-            _httpExecutor.PutAsync<TestOrProductReq, TestOrProductRes>(Arg.Any<string>(), Arg.Any<TestOrProductReq>())
+            _httpExecutor.PutAsync<TestorProductReq, TestorProductRes>(Arg.Any<string>(), Arg.Any<TestorProductReq>())
                 .Returns(Task.FromResult(httpResponse));
 
             // Act
@@ -469,9 +469,9 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestListApiClie
         {
             // Arrange
             var itemCode = "T001";
-            var dto = new TestOrProductDto { ItemCode = itemCode };
-            _httpExecutor.PutAsync<TestOrProductReq, TestOrProductRes>(Arg.Any<string>(), Arg.Any<TestOrProductReq>())
-                .Returns<Task<ApiResponse<TestOrProductRes>>>(x => throw new Exception("Test exception"));
+            var dto = new TestorProductDto { ItemCode = itemCode };
+            _httpExecutor.PutAsync<TestorProductReq, TestorProductRes>(Arg.Any<string>(), Arg.Any<TestorProductReq>())
+                .Returns<Task<ApiResponse<TestorProductRes>>>(x => throw new Exception("Test exception"));
 
             // Act
             var result = await _client.UpdateTestOrProductAsync(itemCode, dto);

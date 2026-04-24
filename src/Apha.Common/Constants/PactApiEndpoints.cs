@@ -29,6 +29,14 @@ namespace Apha.Common.Constants
         // Work Group
         public const string GetAllWorkGroups = "api/v1/workgroup";
 
+        // Test List
+        public const string GetPagedTestOrProducts = "api/v1/testlist/paged";
+        public const string GetTestOrProductById = "api/v1/testlist/{0}";
+        public const string CreateTestOrProduct = "api/v1/testlist";
+        public const string UpdateTestOrProduct = "api/v1/testlist/{0}";
+        public const string DeleteTestOrProduct = "api/v1/testlist/{0}";
+        public const string GetTestListOwners = "api/v1/testlist/owners";
+
         // Project Invoice
         public const string GetPagedProjectInvoices = "api/v1/projectinvoice?parentProject={0}";
         public const string GetProjectInvoiceTotalAmount = "api/v1/projectinvoice/total";

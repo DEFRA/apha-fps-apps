@@ -34,9 +34,9 @@ namespace Apha.PACT.Api.Controllers
         public async Task<IActionResult> GetPaged([FromQuery] QueryParameters<string> query)
         {
             var pagedResult = await _service.GetPagedTestOrProductsAsync(query);
-            var mappedResult = _mapper.Map<PaginationRes<TestOrProductRes>>(pagedResult);
+            var mappedResult = _mapper.Map<PaginationRes<TestorProductRes>>(pagedResult);
             // Wrap in ApiResponse to match expected format by Web application
-            var response = new ApiResponse<PaginationRes<TestOrProductRes>>
+            var response = new ApiResponse<PaginationRes<TestorProductRes>>
             {
                 Success = true,
                 Data = mappedResult,
@@ -49,38 +49,38 @@ namespace Apha.PACT.Api.Controllers
         [HttpGet("{itemCode}")]
         public async Task<IActionResult> GetById(string itemCode)
         {
-            var item = await _service.GetTestOrProductByIdAsync(itemCode);
+            var item = await _service.GetTestorProductByIdAsync(itemCode);
             if (item == null)
             {
                 throw new KeyNotFoundException($"Test or Product with ItemCode {itemCode} not found.");
             }
-            return Ok(_mapper.Map<TestOrProductRes>(item));
+            return Ok(_mapper.Map<TestorProductRes>(item));
         }
 
         /// <summary>Creates a new Test or Product record.</summary>
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] TestOrProductReq request)
+        public async Task<IActionResult> Create([FromBody] TestorProductReq request)
         {
-            var dto = _mapper.Map<TestOrProductDto>(request);
-            var created = await _service.CreateTestOrProductAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { itemCode = created.ItemCode }, _mapper.Map<TestOrProductRes>(created));
+            var dto = _mapper.Map<TestorProductDto>(request);
+            var created = await _service.CreateTestorProductAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { itemCode = created.ItemCode }, _mapper.Map<TestorProductRes>(created));
         }
 
         /// <summary>Updates an existing Test or Product record.</summary>
         [HttpPut("{itemCode}")]
-        public async Task<IActionResult> Update(string itemCode, [FromBody] TestOrProductReq request)
+        public async Task<IActionResult> Update(string itemCode, [FromBody] TestorProductReq request)
         {
-            var dto = _mapper.Map<TestOrProductDto>(request);
+            var dto = _mapper.Map<TestorProductDto>(request);
             dto.ItemCode = itemCode;
-            var updated = await _service.UpdateTestOrProductAsync(dto);
-            return Ok(_mapper.Map<TestOrProductRes>(updated));
+            var updated = await _service.UpdateTestorProductAsync(dto);
+            return Ok(_mapper.Map<TestorProductRes>(updated));
         }
 
         /// <summary>Deletes a Test or Product record.</summary>
         [HttpDelete("{itemCode}")]
         public async Task<IActionResult> Delete(string itemCode)
         {
-            var deleted = await _service.DeleteTestOrProductAsync(itemCode);
+            var deleted = await _service.DeleteTestorProductAsync(itemCode);
             if (!deleted)
             {
                 throw new KeyNotFoundException($"Test or Product with ItemCode {itemCode} not found for deletion.");

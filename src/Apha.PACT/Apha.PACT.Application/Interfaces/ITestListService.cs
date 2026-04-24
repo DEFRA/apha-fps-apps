@@ -5,11 +5,11 @@ namespace Apha.PACT.Application.Interfaces
 {
     public interface ITestListService
     {
-        Task<PaginatedResult<TestOrProductDto>> GetPagedTestOrProductsAsync(QueryParameters<string> query);
-        Task<TestOrProductDto?> GetTestOrProductByIdAsync(string itemCode);
-        Task<TestOrProductDto> CreateTestOrProductAsync(TestOrProductDto dto);
-        Task<TestOrProductDto> UpdateTestOrProductAsync(TestOrProductDto dto);
-        Task<bool> DeleteTestOrProductAsync(string itemCode);
+        Task<PaginatedResult<TestorProductDto>> GetPagedTestOrProductsAsync(QueryParameters<string> query);
+        Task<TestorProductDto?> GetTestorProductByIdAsync(string itemCode);
+        Task<TestorProductDto> CreateTestorProductAsync(TestorProductDto dto);
+        Task<TestorProductDto> UpdateTestorProductAsync(TestorProductDto dto);
+        Task<bool> DeleteTestorProductAsync(string itemCode);
         Task<IEnumerable<string>> GetOwnersAsync();
     }
 }

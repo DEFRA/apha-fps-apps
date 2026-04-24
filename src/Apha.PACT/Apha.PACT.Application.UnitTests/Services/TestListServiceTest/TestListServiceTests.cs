@@ -17,13 +17,13 @@ namespace Apha.PACT.Application.UnitTests.Services.TestListServiceTest
     /// </summary>
     public class TestListServiceTests
     {
-        private readonly ITestOrProductRepository _mockRepository;
+        private readonly ITestorProductRepository _mockRepository;
         private readonly IMapper _mockMapper;
         private readonly TestListService _sut;
 
         public TestListServiceTests()
         {
-            _mockRepository = Substitute.For<ITestOrProductRepository>();
+            _mockRepository = Substitute.For<ITestorProductRepository>();
             _mockMapper = Substitute.For<IMapper>();
             _sut = new TestListService(_mockRepository, _mockMapper);
         }
@@ -58,12 +58,12 @@ namespace Apha.PACT.Application.UnitTests.Services.TestListServiceTest
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var mappedParams = new PaginationParameters<string>();
-            var pagedData = new PagedData<TestOrProduct>(new List<TestOrProduct>(), new PaginationData());
-            var pagedResult = new PaginatedResult<TestOrProductDto>();
+            var pagedData = new PagedData<TestorProduct>(new List<TestorProduct>(), new PaginationData());
+            var pagedResult = new PaginatedResult<TestorProductDto>();
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
             _mockRepository.GetPagedTestOrProductsAsync(mappedParams).Returns(pagedData);
-            _mockMapper.Map<PaginatedResult<TestOrProductDto>>(pagedData).Returns(pagedResult);
+            _mockMapper.Map<PaginatedResult<TestorProductDto>>(pagedData).Returns(pagedResult);
 
             // Act
             var result = await _sut.GetPagedTestOrProductsAsync(query);
@@ -90,7 +90,7 @@ namespace Apha.PACT.Application.UnitTests.Services.TestListServiceTest
             // Arrange
             var query = new QueryParameters<string>();
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(new PaginationParameters<string>());
-            _mockRepository.GetPagedTestOrProductsAsync(Arg.Any<PaginationParameters<string>>()).Returns((PagedData<TestOrProduct>?)null);
+            _mockRepository.GetPagedTestOrProductsAsync(Arg.Any<PaginationParameters<string>>()).Returns(Task.FromResult<PagedData<TestorProduct>?>(null));
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
@@ -100,20 +100,20 @@ namespace Apha.PACT.Application.UnitTests.Services.TestListServiceTest
 
         #endregion
 
-        #region GetTestOrProductByIdAsync
+        #region GetTestorProductByIdAsync
 
         [Fact]
-        public async Task GetTestOrProductByIdAsync_ValidItemCode_ReturnsMappedDto()
+        public async Task GetTestorProductByIdAsync_ValidItemCode_ReturnsMappedDto()
         {
             // Arrange
-            var entity = new TestOrProduct { ItemCode = "TEST001", DefraUnitPrice = 100m };
-            var dto = new TestOrProductDto { ItemCode = "TEST001", DefraUnitPrice = 100m };
+            var entity = new TestorProduct { ItemCode = "TEST001", DefraUnitPrice = 100m };
+            var dto = new TestorProductDto { ItemCode = "TEST001", DefraUnitPrice = 100m };
 
             _mockRepository.GetTestOrProductByIdAsync("TEST001").Returns(entity);
-            _mockMapper.Map<TestOrProductDto>(entity).Returns(dto);
+            _mockMapper.Map<TestorProductDto>(entity).Returns(dto);
 
             // Act
-            var result = await _sut.GetTestOrProductByIdAsync("TEST001");
+            var result = await _sut.GetTestorProductByIdAsync("TEST001");
 
             // Assert
             result.Should().Be(dto);
@@ -121,65 +121,65 @@ namespace Apha.PACT.Application.UnitTests.Services.TestListServiceTest
         }
 
         [Fact]
-        public async Task GetTestOrProductByIdAsync_NotFound_ReturnsNull()
+        public async Task GetTestorProductByIdAsync_NotFound_ReturnsNull()
         {
             // Arrange
-            _mockRepository.GetTestOrProductByIdAsync("MISSING").Returns((TestOrProduct?)null);
+            _mockRepository.GetTestOrProductByIdAsync("MISSING").Returns(Task.FromResult<TestorProduct?>(null));
 
             // Act
-            var result = await _sut.GetTestOrProductByIdAsync("MISSING");
+            var result = await _sut.GetTestorProductByIdAsync("MISSING");
 
             // Assert
             result.Should().BeNull();
         }
 
         [Fact]
-        public async Task GetTestOrProductByIdAsync_NullItemCode_ThrowsArgumentException()
+        public async Task GetTestorProductByIdAsync_NullItemCode_ThrowsArgumentException()
         {
             // Act & Assert
             var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
-                _sut.GetTestOrProductByIdAsync(null!));
+                _sut.GetTestorProductByIdAsync(null!));
             Assert.Equal("itemCode", exception.ParamName);
             Assert.Contains("Item Code cannot be null or empty", exception.Message);
         }
 
         [Fact]
-        public async Task GetTestOrProductByIdAsync_EmptyItemCode_ThrowsArgumentException()
+        public async Task GetTestorProductByIdAsync_EmptyItemCode_ThrowsArgumentException()
         {
             // Act & Assert
             var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
-                _sut.GetTestOrProductByIdAsync(""));
+                _sut.GetTestorProductByIdAsync(""));
             Assert.Equal("itemCode", exception.ParamName);
         }
 
         [Fact]
-        public async Task GetTestOrProductByIdAsync_WhitespaceItemCode_ThrowsArgumentException()
+        public async Task GetTestorProductByIdAsync_WhitespaceItemCode_ThrowsArgumentException()
         {
             // Act & Assert
             var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
-                _sut.GetTestOrProductByIdAsync("   "));
+                _sut.GetTestorProductByIdAsync("   "));
             Assert.Equal("itemCode", exception.ParamName);
         }
 
         #endregion
 
-        #region CreateTestOrProductAsync
+        #region CreateTestorProductAsync
 
         [Fact]
-        public async Task CreateTestOrProductAsync_ValidDto_ReturnsCreatedDto()
+        public async Task CreateTestorProductAsync_ValidDto_ReturnsCreatedDto()
         {
             // Arrange
-            var dto = new TestOrProductDto { ItemCode = "TEST001", DefraUnitPrice = 100m, FpsYear = 2024 };
-            var entity = new TestOrProduct { ItemCode = "TEST001", DefraUnitPrice = 100m };
-            var createdEntity = new TestOrProduct { ItemCode = "TEST001", DefraUnitPrice = 100m, FpsYear = 2024 };
-            var createdDto = new TestOrProductDto { ItemCode = "TEST001", DefraUnitPrice = 100m, FpsYear = 2024 };
+            var dto = new TestorProductDto { ItemCode = "TEST001", DefraUnitPrice = 100m, FpsYear = 2024 };
+            var entity = new TestorProduct { ItemCode = "TEST001", DefraUnitPrice = 100m };
+            var createdEntity = new TestorProduct { ItemCode = "TEST001", DefraUnitPrice = 100m, FpsYear = 2024 };
+            var createdDto = new TestorProductDto { ItemCode = "TEST001", DefraUnitPrice = 100m, FpsYear = 2024 };
 
-            _mockMapper.Map<TestOrProduct>(dto).Returns(entity);
+            _mockMapper.Map<TestorProduct>(dto).Returns(entity);
             _mockRepository.CreateTestOrProductAsync(entity).Returns(createdEntity);
-            _mockMapper.Map<TestOrProductDto>(createdEntity).Returns(createdDto);
+            _mockMapper.Map<TestorProductDto>(createdEntity).Returns(createdDto);
 
             // Act
-            var result = await _sut.CreateTestOrProductAsync(dto);
+            var result = await _sut.CreateTestorProductAsync(dto);
 
             // Assert
             result.Should().Be(createdDto);
@@ -187,97 +187,96 @@ namespace Apha.PACT.Application.UnitTests.Services.TestListServiceTest
         }
 
         [Fact]
-        public async Task CreateTestOrProductAsync_NullDto_ThrowsArgumentNullException()
+        public async Task CreateTestorProductAsync_NullDto_ThrowsArgumentNullException()
         {
             // Act & Assert
             var exception = await Assert.ThrowsAsync<ArgumentNullException>(() =>
-                _sut.CreateTestOrProductAsync(null!));
+                _sut.CreateTestorProductAsync(null!));
             Assert.Equal("dto", exception.ParamName);
             Assert.Contains("Test/Product DTO cannot be null", exception.Message);
         }
 
         [Fact]
-        public async Task CreateTestOrProductAsync_NullItemCode_ThrowsArgumentException()
+        public async Task CreateTestorProductAsync_NullItemCode_ThrowsArgumentException()
         {
             // Arrange
-            var dto = new TestOrProductDto { ItemCode = null!, DefraUnitPrice = 100m };
+            var dto = new TestorProductDto { ItemCode = null!, DefraUnitPrice = 100m };
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
-                _sut.CreateTestOrProductAsync(dto));
+                _sut.CreateTestorProductAsync(dto));
             Assert.Equal("ItemCode", exception.ParamName);
             Assert.Contains("Item Code is required", exception.Message);
         }
 
         [Fact]
-        public async Task CreateTestOrProductAsync_EmptyItemCode_ThrowsArgumentException()
+        public async Task CreateTestorProductAsync_EmptyItemCode_ThrowsArgumentException()
         {
             // Arrange
-            var dto = new TestOrProductDto { ItemCode = "", DefraUnitPrice = 100m };
+            var dto = new TestorProductDto { ItemCode = "", DefraUnitPrice = 100m };
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
-                _sut.CreateTestOrProductAsync(dto));
+                _sut.CreateTestorProductAsync(dto));
             Assert.Equal("ItemCode", exception.ParamName);
         }
 
         [Fact]
-        public async Task CreateTestOrProductAsync_ItemCodeTooLong_ThrowsArgumentException()
+        public async Task CreateTestorProductAsync_ItemCodeTooLong_ThrowsArgumentException()
         {
             // Arrange
-            var dto = new TestOrProductDto { ItemCode = new string('A', 21), DefraUnitPrice = 100m, FpsYear = 2024 };
+            var dto = new TestorProductDto { ItemCode = new string('A', 21), DefraUnitPrice = 100m, FpsYear = 2024 };
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
-                _sut.CreateTestOrProductAsync(dto));
+                _sut.CreateTestorProductAsync(dto));
             Assert.Contains("Item Code cannot exceed 20 characters", exception.Message);
         }
 
         [Fact]
-        public async Task CreateTestOrProductAsync_NegativeDefraUnitPrice_ThrowsArgumentException()
+        public async Task CreateTestorProductAsync_NegativeDefraUnitPrice_ThrowsArgumentException()
         {
             // Arrange
-            var dto = new TestOrProductDto { ItemCode = "TEST001", DefraUnitPrice = -1m, FpsYear = 2024 };
+            var dto = new TestorProductDto { ItemCode = "TEST001", DefraUnitPrice = -1m, FpsYear = 2024 };
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
-                _sut.CreateTestOrProductAsync(dto));
+                _sut.CreateTestorProductAsync(dto));
             Assert.Contains("DEFRA Unit Price cannot be negative", exception.Message);
         }
 
         [Fact]
-        public async Task CreateTestOrProductAsync_InvalidFpsYear_ThrowsArgumentException()
+        public async Task CreateTestorProductAsync_InvalidFpsYear_ThrowsArgumentException()
         {
             // Arrange
-            var dto = new TestOrProductDto { ItemCode = "TEST001", DefraUnitPrice = 100m, FpsYear = 1999 };
+            var dto = new TestorProductDto { ItemCode = "TEST001", DefraUnitPrice = 100m, FpsYear = 1999 };
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
-                _sut.CreateTestOrProductAsync(dto));
+                _sut.CreateTestorProductAsync(dto));
             Assert.Contains("FPS Year must be between 2000 and 2100", exception.Message);
         }
 
         [Fact]
-        public async Task CreateTestOrProductAsync_RepositoryReturnsNull_ThrowsInvalidOperationException()
+        public async Task CreateTestorProductAsync_RepositoryReturnsNull_ThrowsInvalidOperationException()
         {
             // Arrange
-            var dto = new TestOrProductDto { ItemCode = "TEST001", DefraUnitPrice = 100m, FpsYear = 2024 };
-            var entity = new TestOrProduct { ItemCode = "TEST001" };
-
-            _mockMapper.Map<TestOrProduct>(dto).Returns(entity);
-            _mockRepository.CreateTestOrProductAsync(entity).Returns((TestOrProduct?)null);
+            var dto = new TestorProductDto { ItemCode = "TEST001", DefraUnitPrice = 100m, FpsYear = 2024 };
+            var entity = new TestorProduct { ItemCode = "TEST001" };
+            _mockMapper.Map<TestorProduct>(dto).Returns(entity);
+            _mockRepository.CreateTestOrProductAsync(entity).Returns(Task.FromResult<TestorProduct?>(null));
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-                _sut.CreateTestOrProductAsync(dto));
+                _sut.CreateTestorProductAsync(dto));
             Assert.Contains("Failed to create test/product", exception.Message);
         }
 
         [Fact]
-        public async Task CreateTestOrProductAsync_AllFieldLengthsValid_Succeeds()
+        public async Task CreateTestorProductAsync_AllFieldLengthsValid_Succeeds()
         {
             // Arrange
-            var dto = new TestOrProductDto
+            var dto = new TestorProductDto
             {
                 ItemCode = new string('A', 20), // Max 20
                 ShortDescription = new string('B', 18), // Max 18
@@ -289,16 +288,16 @@ namespace Apha.PACT.Application.UnitTests.Services.TestListServiceTest
                 DefraUnitPrice = 100m,
                 FpsYear = 2024
             };
-            var entity = new TestOrProduct();
-            var createdEntity = new TestOrProduct();
-            var createdDto = new TestOrProductDto();
+            var entity = new TestorProduct();
+            var createdEntity = new TestorProduct();
+            var createdDto = new TestorProductDto();
 
-            _mockMapper.Map<TestOrProduct>(dto).Returns(entity);
+            _mockMapper.Map<TestorProduct>(dto).Returns(entity);
             _mockRepository.CreateTestOrProductAsync(entity).Returns(createdEntity);
-            _mockMapper.Map<TestOrProductDto>(createdEntity).Returns(createdDto);
+            _mockMapper.Map<TestorProductDto>(createdEntity).Returns(createdDto);
 
             // Act
-            var result = await _sut.CreateTestOrProductAsync(dto);
+            var result = await _sut.CreateTestorProductAsync(dto);
 
             // Assert
             result.Should().Be(createdDto);
@@ -306,25 +305,25 @@ namespace Apha.PACT.Application.UnitTests.Services.TestListServiceTest
 
         #endregion
 
-        #region UpdateTestOrProductAsync
+        #region UpdateTestorProductAsync
 
         [Fact]
-        public async Task UpdateTestOrProductAsync_ValidDto_ReturnsUpdatedDto()
+        public async Task UpdateTestorProductAsync_ValidDto_ReturnsUpdatedDto()
         {
             // Arrange
-            var dto = new TestOrProductDto { ItemCode = "TEST001", DefraUnitPrice = 150m, FpsYear = 2024 };
-            var existingEntity = new TestOrProduct { ItemCode = "TEST001", DefraUnitPrice = 100m };
-            var entity = new TestOrProduct { ItemCode = "TEST001", DefraUnitPrice = 150m };
-            var updatedEntity = new TestOrProduct { ItemCode = "TEST001", DefraUnitPrice = 150m, FpsYear = 2024 };
-            var updatedDto = new TestOrProductDto { ItemCode = "TEST001", DefraUnitPrice = 150m, FpsYear = 2024 };
+            var dto = new TestorProductDto { ItemCode = "TEST001", DefraUnitPrice = 150m, FpsYear = 2024 };
+            var existingEntity = new TestorProduct { ItemCode = "TEST001", DefraUnitPrice = 100m };
+            var entity = new TestorProduct { ItemCode = "TEST001", DefraUnitPrice = 150m };
+            var updatedEntity = new TestorProduct { ItemCode = "TEST001", DefraUnitPrice = 150m, FpsYear = 2024 };
+            var updatedDto = new TestorProductDto { ItemCode = "TEST001", DefraUnitPrice = 150m, FpsYear = 2024 };
 
             _mockRepository.GetTestOrProductByIdAsync("TEST001").Returns(existingEntity);
-            _mockMapper.Map<TestOrProduct>(dto).Returns(entity);
+            _mockMapper.Map<TestorProduct>(dto).Returns(entity);
             _mockRepository.UpdateTestOrProductAsync(entity).Returns(updatedEntity);
-            _mockMapper.Map<TestOrProductDto>(updatedEntity).Returns(updatedDto);
+            _mockMapper.Map<TestorProductDto>(updatedEntity).Returns(updatedDto);
 
             // Act
-            var result = await _sut.UpdateTestOrProductAsync(dto);
+            var result = await _sut.UpdateTestorProductAsync(dto);
 
             // Assert
             result.Should().Be(updatedDto);
@@ -333,92 +332,92 @@ namespace Apha.PACT.Application.UnitTests.Services.TestListServiceTest
         }
 
         [Fact]
-        public async Task UpdateTestOrProductAsync_NullDto_ThrowsArgumentNullException()
+        public async Task UpdateTestorProductAsync_NullDto_ThrowsArgumentNullException()
         {
             // Act & Assert
             var exception = await Assert.ThrowsAsync<ArgumentNullException>(() =>
-                _sut.UpdateTestOrProductAsync(null!));
+                _sut.UpdateTestorProductAsync(null!));
             Assert.Equal("dto", exception.ParamName);
         }
 
         [Fact]
-        public async Task UpdateTestOrProductAsync_NullItemCode_ThrowsArgumentException()
+        public async Task UpdateTestorProductAsync_NullItemCode_ThrowsArgumentException()
         {
             // Arrange
-            var dto = new TestOrProductDto { ItemCode = null!, DefraUnitPrice = 100m };
+            var dto = new TestorProductDto { ItemCode = null!, DefraUnitPrice = 100m };
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
-                _sut.UpdateTestOrProductAsync(dto));
+                _sut.UpdateTestorProductAsync(dto));
             Assert.Equal("ItemCode", exception.ParamName);
             Assert.Contains("Item Code is required for update", exception.Message);
         }
 
         [Fact]
-        public async Task UpdateTestOrProductAsync_NonExistentItem_ThrowsInvalidOperationException()
+        public async Task UpdateTestorProductAsync_NonExistentItem_ThrowsInvalidOperationException()
         {
             // Arrange
-            var dto = new TestOrProductDto { ItemCode = "MISSING", DefraUnitPrice = 100m, FpsYear = 2024 };
-            _mockRepository.GetTestOrProductByIdAsync("MISSING").Returns((TestOrProduct?)null);
+            var dto = new TestorProductDto { ItemCode = "MISSING", DefraUnitPrice = 100m, FpsYear = 2024 };
+            _mockRepository.GetTestOrProductByIdAsync("MISSING").Returns(Task.FromResult<TestorProduct?>(null));
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-                _sut.UpdateTestOrProductAsync(dto));
+                _sut.UpdateTestorProductAsync(dto));
             Assert.Contains("MISSING", exception.Message);
             Assert.Contains("not found", exception.Message);
         }
 
         [Fact]
-        public async Task UpdateTestOrProductAsync_RepositoryReturnsNull_ThrowsInvalidOperationException()
+        public async Task UpdateTestorProductAsync_RepositoryReturnsNull_ThrowsInvalidOperationException()
         {
             // Arrange
-            var dto = new TestOrProductDto { ItemCode = "TEST001", DefraUnitPrice = 150m, FpsYear = 2024 };
-            var existingEntity = new TestOrProduct { ItemCode = "TEST001" };
-            var entity = new TestOrProduct { ItemCode = "TEST001" };
+            var dto = new TestorProductDto { ItemCode = "TEST001", DefraUnitPrice = 150m, FpsYear = 2024 };
+            var existingEntity = new TestorProduct { ItemCode = "TEST001" };
+            var entity = new TestorProduct { ItemCode = "TEST001" };
 
             _mockRepository.GetTestOrProductByIdAsync("TEST001").Returns(existingEntity);
-            _mockMapper.Map<TestOrProduct>(dto).Returns(entity);
-            _mockRepository.UpdateTestOrProductAsync(entity).Returns((TestOrProduct?)null);
+            _mockMapper.Map<TestorProduct>(dto).Returns(entity);
+            _mockRepository.UpdateTestOrProductAsync(entity).Returns(Task.FromResult<TestorProduct?>(null));
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-                _sut.UpdateTestOrProductAsync(dto));
+                _sut.UpdateTestorProductAsync(dto));
             Assert.Contains("Failed to update test/product", exception.Message);
         }
 
         [Fact]
-        public async Task UpdateTestOrProductAsync_InvalidValidation_ThrowsArgumentException()
+        public async Task UpdateTestorProductAsync_InvalidValidation_ThrowsArgumentException()
         {
             // Arrange
-            var dto = new TestOrProductDto
+            var dto = new TestorProductDto
             {
                 ItemCode = "TEST001",
                 DefraUnitPrice = -1m,
                 FpsYear = 2024
             };
-            var existingEntity = new TestOrProduct { ItemCode = "TEST001" };
+            var existingEntity = new TestorProduct { ItemCode = "TEST001" };
             _mockRepository.GetTestOrProductByIdAsync("TEST001").Returns(existingEntity);
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
-                _sut.UpdateTestOrProductAsync(dto));
+                _sut.UpdateTestorProductAsync(dto));
             Assert.Contains("DEFRA Unit Price cannot be negative", exception.Message);
         }
 
         #endregion
 
-        #region DeleteTestOrProductAsync
+        #region DeleteTestorProductAsync
 
         [Fact]
-        public async Task DeleteTestOrProductAsync_ExistingItem_ReturnsTrue()
+        public async Task DeleteTestorProductAsync_ExistingItem_ReturnsTrue()
         {
             // Arrange
-            var existingEntity = new TestOrProduct { ItemCode = "TEST001" };
+            var existingEntity = new TestorProduct { ItemCode = "TEST001" };
             _mockRepository.GetTestOrProductByIdAsync("TEST001").Returns(existingEntity);
             _mockRepository.DeleteTestOrProductAsync("TEST001").Returns(true);
 
             // Act
-            var result = await _sut.DeleteTestOrProductAsync("TEST001");
+            var result = await _sut.DeleteTestorProductAsync("TEST001");
 
             // Assert
             result.Should().BeTrue();
@@ -427,32 +426,32 @@ namespace Apha.PACT.Application.UnitTests.Services.TestListServiceTest
         }
 
         [Fact]
-        public async Task DeleteTestOrProductAsync_NullItemCode_ThrowsArgumentException()
+        public async Task DeleteTestorProductAsync_NullItemCode_ThrowsArgumentException()
         {
             // Act & Assert
             var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
-                _sut.DeleteTestOrProductAsync(null!));
+                _sut.DeleteTestorProductAsync(null!));
             Assert.Equal("itemCode", exception.ParamName);
         }
 
         [Fact]
-        public async Task DeleteTestOrProductAsync_EmptyItemCode_ThrowsArgumentException()
+        public async Task DeleteTestorProductAsync_EmptyItemCode_ThrowsArgumentException()
         {
             // Act & Assert
             var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
-                _sut.DeleteTestOrProductAsync(""));
+                _sut.DeleteTestorProductAsync(""));
             Assert.Equal("itemCode", exception.ParamName);
         }
 
         [Fact]
-        public async Task DeleteTestOrProductAsync_NonExistentItem_ThrowsInvalidOperationException()
+        public async Task DeleteTestorProductAsync_NonExistentItem_ThrowsInvalidOperationException()
         {
             // Arrange
-            _mockRepository.GetTestOrProductByIdAsync("MISSING").Returns((TestOrProduct?)null);
+            _mockRepository.GetTestOrProductByIdAsync("MISSING").Returns(Task.FromResult<TestorProduct?>(null));
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-                _sut.DeleteTestOrProductAsync("MISSING"));
+                _sut.DeleteTestorProductAsync("MISSING"));
             Assert.Contains("MISSING", exception.Message);
             Assert.Contains("not found for deletion", exception.Message);
         }
@@ -493,7 +492,7 @@ namespace Apha.PACT.Application.UnitTests.Services.TestListServiceTest
         public async Task GetOwnersAsync_RepositoryReturnsNull_ThrowsInvalidOperationException()
         {
             // Arrange
-            _mockRepository.GetOwnersAsync().Returns((IEnumerable<string>?)null);
+            _mockRepository.GetOwnersAsync().Returns(Task.FromResult<IEnumerable<string>?>(null));
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
@@ -512,10 +511,10 @@ namespace Apha.PACT.Application.UnitTests.Services.TestListServiceTest
         [InlineData("Owner", 3)]
         [InlineData("JobStatus", 3)]
         [InlineData("ChargeMethod", 3)]
-        public async Task CreateTestOrProductAsync_FieldExceedsMaxLength_ThrowsArgumentException(string fieldName, int length)
+        public async Task CreateTestorProductAsync_FieldExceedsMaxLength_ThrowsArgumentException(string fieldName, int length)
         {
             // Arrange
-            var dto = new TestOrProductDto
+            var dto = new TestorProductDto
             {
                 ItemCode = "TEST001",
                 DefraUnitPrice = 100m,
@@ -547,15 +546,15 @@ namespace Apha.PACT.Application.UnitTests.Services.TestListServiceTest
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
-                _sut.CreateTestOrProductAsync(dto));
+                _sut.CreateTestorProductAsync(dto));
             Assert.Contains("cannot exceed", exception.Message);
         }
 
         [Fact]
-        public async Task CreateTestOrProductAsync_NegativeUnitPriceVla_ThrowsArgumentException()
+        public async Task CreateTestorProductAsync_NegativeUnitPriceVla_ThrowsArgumentException()
         {
             // Arrange
-            var dto = new TestOrProductDto
+            var dto = new TestorProductDto
             {
                 ItemCode = "TEST001",
                 DefraUnitPrice = 100m,
@@ -565,15 +564,15 @@ namespace Apha.PACT.Application.UnitTests.Services.TestListServiceTest
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
-                _sut.CreateTestOrProductAsync(dto));
+                _sut.CreateTestorProductAsync(dto));
             Assert.Contains("Unit Price VLA cannot be negative", exception.Message);
         }
 
         [Fact]
-        public async Task CreateTestOrProductAsync_NegativePriceAhvg_ThrowsArgumentException()
+        public async Task CreateTestorProductAsync_NegativePriceAhvg_ThrowsArgumentException()
         {
             // Arrange
-            var dto = new TestOrProductDto
+            var dto = new TestorProductDto
             {
                 ItemCode = "TEST001",
                 DefraUnitPrice = 100m,
@@ -583,17 +582,17 @@ namespace Apha.PACT.Application.UnitTests.Services.TestListServiceTest
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
-                _sut.CreateTestOrProductAsync(dto));
+                _sut.CreateTestorProductAsync(dto));
             Assert.Contains("Price AHVG cannot be negative", exception.Message);
         }
 
         [Theory]
         [InlineData(1999)]
         [InlineData(2101)]
-        public async Task CreateTestOrProductAsync_FpsYearOutOfRange_ThrowsArgumentException(int year)
+        public async Task CreateTestorProductAsync_FpsYearOutOfRange_ThrowsArgumentException(int year)
         {
             // Arrange
-            var dto = new TestOrProductDto
+            var dto = new TestorProductDto
             {
                 ItemCode = "TEST001",
                 DefraUnitPrice = 100m,
@@ -602,7 +601,7 @@ namespace Apha.PACT.Application.UnitTests.Services.TestListServiceTest
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
-                _sut.CreateTestOrProductAsync(dto));
+                _sut.CreateTestorProductAsync(dto));
             Assert.Contains("FPS Year must be between 2000 and 2100", exception.Message);
         }
 

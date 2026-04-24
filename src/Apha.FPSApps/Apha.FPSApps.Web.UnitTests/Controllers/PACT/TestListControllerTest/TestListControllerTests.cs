@@ -37,7 +37,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.TestListControllerTest
 
         private void SetupTestOrProductPagedGridMapper()
         {
-            var testDtos = new List<TestOrProductDto>
+            var testDtos = new List<TestorProductDto>
             {
                 new() { ItemCode = "T001", ItemDescription = "Test One" }
             };
@@ -45,7 +45,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.TestListControllerTest
             {
                 new() { ItemCode = "T001", ItemDescription = "Test One" }
             };
-            _mapper.Map<List<TestOrProductViewModel>>(Arg.Is<List<TestOrProductDto>>(list => list.Count == 1 && list[0].ItemCode == "T001"))
+            _mapper.Map<List<TestOrProductViewModel>>(Arg.Is<List<TestorProductDto>>(list => list.Count == 1 && list[0].ItemCode == "T001"))
                 .Returns(viewModels);
         }
 
@@ -73,11 +73,11 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.TestListControllerTest
         public async Task Index_Always_ReturnsViewResultWithTestGrid()
         {
             // Arrange
-            var testDtos = new List<TestOrProductDto>
+            var testDtos = new List<TestorProductDto>
             {
                 new() { ItemCode = "T001", ItemDescription = "Test One" }
             };
-            var expectedResponse = ApiResponseDto<List<TestOrProductDto>>.SuccessResponse(testDtos);
+            var expectedResponse = ApiResponseDto<List<TestorProductDto>>.SuccessResponse(testDtos);
             _testListService.GetPagedTestOrProductsAsync(Arg.Any<QueryParameters<string>>()).Returns(Task.FromResult(expectedResponse));
             SetupTestOrProductPagedGridMapper();
             SetupQueryParametersMapper();
@@ -101,12 +101,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.TestListControllerTest
         {
             // Arrange
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = "{}" };
-            var testDtos = new List<TestOrProductDto>
+            var testDtos = new List<TestorProductDto>
             {
                 new() { ItemCode = "T001", ItemDescription = "Test One" },
                 new() { ItemCode = "T002", ItemDescription = "Test Two" }
             };
-            var expectedResponse = ApiResponseDto<List<TestOrProductDto>>.SuccessResponse(testDtos);
+            var expectedResponse = ApiResponseDto<List<TestorProductDto>>.SuccessResponse(testDtos);
             _testListService.GetPagedTestOrProductsAsync(Arg.Any<QueryParameters<string>>()).Returns(Task.FromResult(expectedResponse));
 
             var viewModels = new List<TestOrProductViewModel>
@@ -114,7 +114,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.TestListControllerTest
                 new() { ItemCode = "T001", ItemDescription = "Test One" },
                 new() { ItemCode = "T002", ItemDescription = "Test Two" }
             };
-            _mapper.Map<List<TestOrProductViewModel>>(Arg.Is<List<TestOrProductDto>>(list => list.Count == 2 && list[0].ItemCode == "T001"))
+            _mapper.Map<List<TestOrProductViewModel>>(Arg.Is<List<TestorProductDto>>(list => list.Count == 2 && list[0].ItemCode == "T001"))
                 .Returns(viewModels);
             SetupQueryParametersMapper();
 
@@ -133,10 +133,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.TestListControllerTest
         {
             // Arrange
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = "{}" };
-            var expectedResponse = ApiResponseDto<List<TestOrProductDto>>.SuccessResponse(new List<TestOrProductDto>());
+            var expectedResponse = ApiResponseDto<List<TestorProductDto>>.SuccessResponse(new List<TestorProductDto>());
             _testListService.GetPagedTestOrProductsAsync(Arg.Any<QueryParameters<string>>()).Returns(Task.FromResult(expectedResponse));
 
-            _mapper.Map<List<TestOrProductViewModel>>(Arg.Any<List<TestOrProductDto>>())
+            _mapper.Map<List<TestOrProductViewModel>>(Arg.Any<List<TestorProductDto>>())
                 .Returns(new List<TestOrProductViewModel>());
             SetupQueryParametersMapper();
 
@@ -170,10 +170,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.TestListControllerTest
             // Arrange
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = "{}" };
             var errors = new List<ApiErrorDto> { new() { Message = "Service error" } };
-            var expectedResponse = ApiResponseDto<List<TestOrProductDto>>.FailureResponse(errors, new ApiMetaDto());
+            var expectedResponse = ApiResponseDto<List<TestorProductDto>>.FailureResponse(errors, new ApiMetaDto());
             _testListService.GetPagedTestOrProductsAsync(Arg.Any<QueryParameters<string>>()).Returns(Task.FromResult(expectedResponse));
 
-            _mapper.Map<List<TestOrProductViewModel>>(Arg.Any<List<TestOrProductDto>>())
+            _mapper.Map<List<TestOrProductViewModel>>(Arg.Any<List<TestorProductDto>>())
                 .Returns(new List<TestOrProductViewModel>());
             SetupQueryParametersMapper();
 
@@ -253,12 +253,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.TestListControllerTest
         {
             // Arrange
             var itemCode = "T001";
-            var testDto = new TestOrProductDto { ItemCode = itemCode, ItemDescription = "Test Product" };
-            var expectedResponse = ApiResponseDto<TestOrProductDto>.SuccessResponse(testDto);
+            var testDto = new TestorProductDto { ItemCode = itemCode, ItemDescription = "Test Product" };
+            var expectedResponse = ApiResponseDto<TestorProductDto>.SuccessResponse(testDto);
             _testListService.GetTestOrProductByIdAsync(itemCode).Returns(Task.FromResult(expectedResponse));
 
             var viewModel = new TestOrProductViewModel { ItemCode = itemCode, ItemDescription = "Test Product" };
-            _mapper.Map<TestOrProductViewModel>(Arg.Is<TestOrProductDto>(d => d.ItemCode == itemCode)).Returns(viewModel);
+            _mapper.Map<TestOrProductViewModel>(Arg.Is<TestorProductDto>(d => d.ItemCode == itemCode)).Returns(viewModel);
 
             // Act
             var result = await _controller.GetTestOrProduct(itemCode);
@@ -289,7 +289,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.TestListControllerTest
             // Arrange
             var itemCode = "T001";
             var errors = new List<ApiErrorDto> { new() { Message = "Not found" } };
-            var expectedResponse = ApiResponseDto<TestOrProductDto>.FailureResponse(errors, new ApiMetaDto());
+            var expectedResponse = ApiResponseDto<TestorProductDto>.FailureResponse(errors, new ApiMetaDto());
             _testListService.GetTestOrProductByIdAsync(itemCode).Returns(Task.FromResult(expectedResponse));
 
             // Act
@@ -328,12 +328,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.TestListControllerTest
         {
             // Arrange
             var model = new TestOrProductViewModel { ItemCode = "T001", ItemDescription = "New Test", DefraUnitPrice = 10.5m };
-            var dto = new TestOrProductDto { ItemCode = "T001", ItemDescription = "New Test", DefraUnitPrice = 10.5m, FpsYear = CurrentYear };
-            var createdDto = new TestOrProductDto { ItemCode = "T001", ItemDescription = "New Test", DefraUnitPrice = 10.5m };
-            var expectedResponse = ApiResponseDto<TestOrProductDto>.SuccessResponse(createdDto);
+            var dto = new TestorProductDto { ItemCode = "T001", ItemDescription = "New Test", DefraUnitPrice = 10.5m, FpsYear = CurrentYear };
+            var createdDto = new TestorProductDto { ItemCode = "T001", ItemDescription = "New Test", DefraUnitPrice = 10.5m };
+            var expectedResponse = ApiResponseDto<TestorProductDto>.SuccessResponse(createdDto);
 
-            _mapper.Map<TestOrProductDto>(Arg.Is<TestOrProductViewModel>(m => m.ItemCode == "T001")).Returns(dto);
-            _testListService.CreateTestOrProductAsync(Arg.Is<TestOrProductDto>(d => d.ItemCode == "T001" && d.FpsYear == CurrentYear))
+            _mapper.Map<TestorProductDto>(Arg.Is<TestOrProductViewModel>(m => m.ItemCode == "T001")).Returns(dto);
+            _testListService.CreateTestOrProductAsync(Arg.Is<TestorProductDto>(d => d.ItemCode == "T001" && d.FpsYear == CurrentYear))
                 .Returns(Task.FromResult(expectedResponse));
 
             // Act
@@ -381,12 +381,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.TestListControllerTest
         {
             // Arrange
             var model = new TestOrProductViewModel { ItemCode = "T001", DefraUnitPrice = 10.5m };
-            var dto = new TestOrProductDto { ItemCode = "T001", DefraUnitPrice = 10.5m, FpsYear = CurrentYear };
+            var dto = new TestorProductDto { ItemCode = "T001", DefraUnitPrice = 10.5m, FpsYear = CurrentYear };
             var errors = new List<ApiErrorDto> { new() { Message = "Creation failed", Code = "CREATE_ERROR" } };
-            var expectedResponse = ApiResponseDto<TestOrProductDto>.FailureResponse(errors, new ApiMetaDto());
+            var expectedResponse = ApiResponseDto<TestorProductDto>.FailureResponse(errors, new ApiMetaDto());
 
-            _mapper.Map<TestOrProductDto>(Arg.Any<TestOrProductViewModel>()).Returns(dto);
-            _testListService.CreateTestOrProductAsync(Arg.Any<TestOrProductDto>())
+            _mapper.Map<TestorProductDto>(Arg.Any<TestOrProductViewModel>()).Returns(dto);
+            _testListService.CreateTestOrProductAsync(Arg.Any<TestorProductDto>())
                 .Returns(Task.FromResult(expectedResponse));
 
             // Act
@@ -404,10 +404,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.TestListControllerTest
         {
             // Arrange
             var model = new TestOrProductViewModel { ItemCode = "T001", DefraUnitPrice = 10.5m };
-            var dto = new TestOrProductDto { ItemCode = "T001", DefraUnitPrice = 10.5m, FpsYear = CurrentYear };
+            var dto = new TestorProductDto { ItemCode = "T001", DefraUnitPrice = 10.5m, FpsYear = CurrentYear };
 
-            _mapper.Map<TestOrProductDto>(Arg.Any<TestOrProductViewModel>()).Returns(dto);
-            _testListService.CreateTestOrProductAsync(Arg.Any<TestOrProductDto>()).ThrowsAsync(new Exception("Test exception"));
+            _mapper.Map<TestorProductDto>(Arg.Any<TestOrProductViewModel>()).Returns(dto);
+            _testListService.CreateTestOrProductAsync(Arg.Any<TestorProductDto>()).ThrowsAsync(new Exception("Test exception"));
 
             // Act
             var result = await _controller.CreateTestOrProduct(model);
@@ -429,12 +429,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.TestListControllerTest
             // Arrange
             var itemCode = "T001";
             var model = new TestOrProductViewModel { ItemCode = itemCode, ItemDescription = "Updated Test", DefraUnitPrice = 15.5m };
-            var dto = new TestOrProductDto { ItemCode = itemCode, ItemDescription = "Updated Test", DefraUnitPrice = 15.5m, FpsYear = CurrentYear };
-            var updatedDto = new TestOrProductDto { ItemCode = itemCode, ItemDescription = "Updated Test", DefraUnitPrice = 15.5m };
-            var expectedResponse = ApiResponseDto<TestOrProductDto>.SuccessResponse(updatedDto);
+            var dto = new TestorProductDto { ItemCode = itemCode, ItemDescription = "Updated Test", DefraUnitPrice = 15.5m, FpsYear = CurrentYear };
+            var updatedDto = new TestorProductDto { ItemCode = itemCode, ItemDescription = "Updated Test", DefraUnitPrice = 15.5m };
+            var expectedResponse = ApiResponseDto<TestorProductDto>.SuccessResponse(updatedDto);
 
-            _mapper.Map<TestOrProductDto>(Arg.Is<TestOrProductViewModel>(m => m.ItemCode == itemCode)).Returns(dto);
-            _testListService.UpdateTestOrProductAsync(itemCode, Arg.Is<TestOrProductDto>(d => d.ItemCode == itemCode && d.FpsYear == CurrentYear))
+            _mapper.Map<TestorProductDto>(Arg.Is<TestOrProductViewModel>(m => m.ItemCode == itemCode)).Returns(dto);
+            _testListService.UpdateTestOrProductAsync(itemCode, Arg.Is<TestorProductDto>(d => d.ItemCode == itemCode && d.FpsYear == CurrentYear))
                 .Returns(Task.FromResult(expectedResponse));
 
             // Act
@@ -500,12 +500,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.TestListControllerTest
             // Arrange
             var itemCode = "T001";
             var model = new TestOrProductViewModel { ItemCode = itemCode, DefraUnitPrice = 15.5m };
-            var dto = new TestOrProductDto { ItemCode = itemCode, DefraUnitPrice = 15.5m, FpsYear = CurrentYear };
+            var dto = new TestorProductDto { ItemCode = itemCode, DefraUnitPrice = 15.5m, FpsYear = CurrentYear };
             var errors = new List<ApiErrorDto> { new() { Message = "Update failed", Code = "UPDATE_ERROR" } };
-            var expectedResponse = ApiResponseDto<TestOrProductDto>.FailureResponse(errors, new ApiMetaDto());
+            var expectedResponse = ApiResponseDto<TestorProductDto>.FailureResponse(errors, new ApiMetaDto());
 
-            _mapper.Map<TestOrProductDto>(Arg.Any<TestOrProductViewModel>()).Returns(dto);
-            _testListService.UpdateTestOrProductAsync(Arg.Any<string>(), Arg.Any<TestOrProductDto>())
+            _mapper.Map<TestorProductDto>(Arg.Any<TestOrProductViewModel>()).Returns(dto);
+            _testListService.UpdateTestOrProductAsync(Arg.Any<string>(), Arg.Any<TestorProductDto>())
                 .Returns(Task.FromResult(expectedResponse));
 
             // Act
@@ -524,10 +524,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.TestListControllerTest
             // Arrange
             var itemCode = "T001";
             var model = new TestOrProductViewModel { ItemCode = itemCode, DefraUnitPrice = 15.5m };
-            var dto = new TestOrProductDto { ItemCode = itemCode, DefraUnitPrice = 15.5m, FpsYear = CurrentYear };
+            var dto = new TestorProductDto { ItemCode = itemCode, DefraUnitPrice = 15.5m, FpsYear = CurrentYear };
 
-            _mapper.Map<TestOrProductDto>(Arg.Any<TestOrProductViewModel>()).Returns(dto);
-            _testListService.UpdateTestOrProductAsync(Arg.Any<string>(), Arg.Any<TestOrProductDto>()).ThrowsAsync(new Exception("Test exception"));
+            _mapper.Map<TestorProductDto>(Arg.Any<TestOrProductViewModel>()).Returns(dto);
+            _testListService.UpdateTestOrProductAsync(Arg.Any<string>(), Arg.Any<TestorProductDto>()).ThrowsAsync(new Exception("Test exception"));
 
             // Act
             var result = await _controller.UpdateTestOrProduct(itemCode, model);

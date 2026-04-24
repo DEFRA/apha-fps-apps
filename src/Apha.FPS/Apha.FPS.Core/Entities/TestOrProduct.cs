@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Apha.FPS.Core.Entities;
 
-public partial class TestOrProduct
+public partial class TestorProduct
 {
     public string ItemCode { get; set; } = null!;
 

@@ -62,19 +62,14 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpGet]
         public async Task<IActionResult> GetOwners()
         {
-            try
-            {
+           
                 var response = await _testListService.GetOwnersAsync();
                 if (response.Success)
                 {
                     return Json(new { success = true, data = response.Data });
                 }
                 return Json(new { success = false, message = "Failed to retrieve owners" });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = ex.Message });
-            }
+           
         }
 
         [HttpGet]
@@ -85,82 +80,53 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 return Json(new { success = false, message = "Item Code cannot be null or empty." });
             }
 
-            try
+            var response = await _testListService.GetTestOrProductByIdAsync(itemCode);
+            if (response.Success && response.Data != null)
             {
-                var response = await _testListService.GetTestOrProductByIdAsync(itemCode);
-                if (response.Success && response.Data != null)
-                {
-                    var viewModel = _mapper.Map<TestOrProductViewModel>(response.Data);
-                    return Json(new { success = true, data = viewModel });
-                }
-                return Json(new { success = false, message = $"Test/Product with Item Code '{itemCode}' not found." });
+                var viewModel = _mapper.Map<TestOrProductViewModel>(response.Data);
+                return Json(new { success = true, data = viewModel });
             }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = $"Error retrieving test/product: {ex.Message}" });
-            }
+            return Json(new { success = false, message = $"Test/Product with Item Code '{itemCode}' not found." });
         }
 
         [HttpPost]
         public async Task<IActionResult> CreateTestOrProduct([FromBody] TestOrProductViewModel model)
         {
-            if (model == null)
+            if (!ModelState.IsValid)
             {
                 return Json(new
                 {
                     success = false,
-                    message = "Request body cannot be null.",
-                    errors = new[] { new { field = "", message = "Invalid request data." } }
+                    message = "Please correct the errors below.",
+                    errors = ModelState
+                        .Where(kvp => kvp.Value!.Errors.Any() && kvp.Key != "$")
+                        .SelectMany(kvp => kvp.Value!.Errors.Select(e => new
+                        {
+                            field = kvp.Key.StartsWith("$.") ? kvp.Key[2..] : kvp.Key,
+                            message = e.ErrorMessage
+                        }))
                 });
             }
 
-            try
+            model.FpsYear = _fpsYearContext.Year;
+            var dto = _mapper.Map<TestorProductDto>(model);
+            var response = await _testListService.CreateTestOrProductAsync(dto);
+
+            if (response.Success)
             {
-                if (!ModelState.IsValid)
-                {
-                    return Json(new
-                    {
-                        success = false,
-                        message = "Please correct the errors below.",
-                        errors = ModelState
-                            .Where(kvp => kvp.Value!.Errors.Any() && kvp.Key != "$")
-                            .SelectMany(kvp => kvp.Value!.Errors.Select(e => new
-                            {
-                                field = kvp.Key.StartsWith("$.") ? kvp.Key[2..] : kvp.Key,
-                                message = e.ErrorMessage
-                            }))
-                    });
-                }
-
-                model.FpsYear = _fpsYearContext.Year;
-                var dto = _mapper.Map<TestOrProductDto>(model);
-                var response = await _testListService.CreateTestOrProductAsync(dto);
-
-                if (response.Success)
-                {
-                    return Json(new { success = true, message = "Test/Product created successfully", data = response.Data });
-                }
-
-                return Json(new
-                {
-                    success = false,
-                    message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to create Test/Product",
-                    errors = (response.Errors ?? new List<ApiErrorDto>()).Select(e => new
-                    {
-                        field = e.Code ?? string.Empty,
-                        message = e.Message ?? "An unexpected error occurred."
-                    })
-                });
+                return Json(new { success = true, message = "Test/Product created successfully", data = response.Data });
             }
-            catch (Exception ex)
+
+            return Json(new
             {
-                return Json(new 
-                { 
-                    success = false, 
-                    message = $"Error creating test/product: {ex.Message}",
-                    errors = new[] { new { field = "", message = ex.Message } }
-                });
-            }
+                success = false,
+                message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to create Test/Product",
+                errors = (response.Errors ?? new List<ApiErrorDto>()).Select(e => new
+                {
+                    field = e.Code ?? string.Empty,
+                    message = e.Message ?? "An unexpected error occurred."
+                })
+            });
         }
 
         [HttpPost]
@@ -176,63 +142,25 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 });
             }
 
-            if (model == null)
+            model.FpsYear = _fpsYearContext.Year;
+            var dto = _mapper.Map<TestorProductDto>(model);
+            var response = await _testListService.UpdateTestOrProductAsync(itemCode, dto);
+
+            if (response.Success)
             {
-                return Json(new
-                {
-                    success = false,
-                    message = "Request body cannot be null.",
-                    errors = new[] { new { field = "", message = "Invalid request data." } }
-                });
+                return Json(new { success = true, message = "Test/Product updated successfully", data = response.Data });
             }
 
-            try
+            return Json(new
             {
-                if (!ModelState.IsValid)
+                success = false,
+                message = response.Errors?.FirstOrDefault()?.Message ?? $"Failed to update Test/Product with Item Code '{itemCode}'.",
+                errors = (response.Errors ?? new List<ApiErrorDto>()).Select(e => new
                 {
-                    return Json(new
-                    {
-                        success = false,
-                        message = "Validation failed",
-                        errors = ModelState
-                            .Where(kvp => kvp.Value!.Errors.Any())
-                            .SelectMany(kvp => kvp.Value!.Errors.Select(e => new
-                            {
-                                field = kvp.Key,
-                                message = e.ErrorMessage
-                            }))
-                    });
-                }
-
-                model.FpsYear = _fpsYearContext.Year;
-                var dto = _mapper.Map<TestOrProductDto>(model);
-                var response = await _testListService.UpdateTestOrProductAsync(itemCode, dto);
-
-                if (response.Success)
-                {
-                    return Json(new { success = true, message = "Test/Product updated successfully", data = response.Data });
-                }
-
-                return Json(new 
-                { 
-                    success = false, 
-                    message = response.Errors?.FirstOrDefault()?.Message ?? $"Failed to update Test/Product with Item Code '{itemCode}'.",
-                    errors = (response.Errors ?? new List<ApiErrorDto>()).Select(e => new
-                    {
-                        field = e.Code ?? string.Empty,
-                        message = e.Message ?? "An unexpected error occurred."
-                    })
-                });
-            }
-            catch (Exception ex)
-            {
-                return Json(new 
-                { 
-                    success = false, 
-                    message = $"Error updating test/product: {ex.Message}",
-                    errors = new[] { new { field = "", message = ex.Message } }
-                });
-            }
+                    field = e.Code ?? string.Empty,
+                    message = e.Message ?? "An unexpected error occurred."
+                })
+            });
         }
 
         [HttpPost]
@@ -243,20 +171,13 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 return Json(new { success = false, message = "Item Code cannot be null or empty." });
             }
 
-            try
+            var response = await _testListService.DeleteTestOrProductAsync(itemCode);
+            if (response.Success && response.Data)
             {
-                var response = await _testListService.DeleteTestOrProductAsync(itemCode);
-                if (response.Success && response.Data)
-                {
-                    return Json(new { success = true, message = $"Test/Product with Item Code '{itemCode}' deleted successfully." });
-                }
+                return Json(new { success = true, message = $"Test/Product with Item Code '{itemCode}' deleted successfully." });
+            }
 
-                return Json(new { success = false, message = $"Test/Product with Item Code '{itemCode}' not found or could not be deleted." });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = $"Error deleting test/product: {ex.Message}" });
-            }
+            return Json(new { success = false, message = $"Test/Product with Item Code '{itemCode}' not found or could not be deleted." });
         }
 
         private async Task<DataGridConfig<TestOrProductViewModel>>  GetTestOrProductGridConfigAsync(PaginationFilter<string> request)

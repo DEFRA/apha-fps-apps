@@ -29,12 +29,12 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.TestListServiceTest
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10, Search = "TEST" };
-            var testItems = new List<TestOrProductDto>
+            var testItems = new List<TestorProductDto>
             {
                 new() { ItemCode = "T001", ItemDescription = "Test One" },
                 new() { ItemCode = "T002", ItemDescription = "Test Two" }
             };
-            var expectedResponse = ApiResponseDto<List<TestOrProductDto>>.SuccessResponse(testItems);
+            var expectedResponse = ApiResponseDto<List<TestorProductDto>>.SuccessResponse(testItems);
             _pactTestListApiClient.GetPagedTestOrProductsAsync(query).Returns(Task.FromResult(expectedResponse));
 
             // Act
@@ -52,7 +52,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.TestListServiceTest
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var expectedResponse = ApiResponseDto<List<TestOrProductDto>>.SuccessResponse(new List<TestOrProductDto>());
+            var expectedResponse = ApiResponseDto<List<TestorProductDto>>.SuccessResponse(new List<TestorProductDto>());
             _pactTestListApiClient.GetPagedTestOrProductsAsync(query).Returns(Task.FromResult(expectedResponse));
 
             // Act
@@ -70,7 +70,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.TestListServiceTest
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "API_ERROR" } };
-            var expectedResponse = ApiResponseDto<List<TestOrProductDto>>.FailureResponse(errors, new ApiMetaDto());
+            var expectedResponse = ApiResponseDto<List<TestorProductDto>>.FailureResponse(errors, new ApiMetaDto());
             _pactTestListApiClient.GetPagedTestOrProductsAsync(query).Returns(Task.FromResult(expectedResponse));
 
             // Act
@@ -92,8 +92,8 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.TestListServiceTest
         {
             // Arrange
             var itemCode = "T001";
-            var testOrProduct = new TestOrProductDto { ItemCode = itemCode, ItemDescription = "Test Product" };
-            var expectedResponse = ApiResponseDto<TestOrProductDto>.SuccessResponse(testOrProduct);
+            var testOrProduct = new TestorProductDto { ItemCode = itemCode, ItemDescription = "Test Product" };
+            var expectedResponse = ApiResponseDto<TestorProductDto>.SuccessResponse(testOrProduct);
             _pactTestListApiClient.GetTestOrProductByIdAsync(itemCode).Returns(Task.FromResult(expectedResponse));
 
             // Act
@@ -112,7 +112,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.TestListServiceTest
             // Arrange
             var itemCode = "NOTFOUND";
             var errors = new List<ApiErrorDto> { new() { Message = "Not Found", Code = "NOT_FOUND" } };
-            var expectedResponse = ApiResponseDto<TestOrProductDto>.FailureResponse(errors, new ApiMetaDto());
+            var expectedResponse = ApiResponseDto<TestorProductDto>.FailureResponse(errors, new ApiMetaDto());
             _pactTestListApiClient.GetTestOrProductByIdAsync(itemCode).Returns(Task.FromResult(expectedResponse));
 
             // Act
@@ -130,7 +130,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.TestListServiceTest
             // Arrange
             var itemCode = "T001";
             var errors = new List<ApiErrorDto> { new() { Message = "Service error", Code = "SERVICE_ERROR" } };
-            var expectedResponse = ApiResponseDto<TestOrProductDto>.FailureResponse(errors, new ApiMetaDto());
+            var expectedResponse = ApiResponseDto<TestorProductDto>.FailureResponse(errors, new ApiMetaDto());
             _pactTestListApiClient.GetTestOrProductByIdAsync(itemCode).Returns(Task.FromResult(expectedResponse));
 
             // Act
@@ -149,9 +149,9 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.TestListServiceTest
         public async Task CreateTestOrProductAsync_WithValidRequest_ReturnsCreatedTestOrProduct()
         {
             // Arrange
-            var request = new TestOrProductDto { ItemCode = "T001", ItemDescription = "New Test" };
-            var createdTestOrProduct = new TestOrProductDto { ItemCode = "T001", ItemDescription = "New Test" };
-            var expectedResponse = ApiResponseDto<TestOrProductDto>.SuccessResponse(createdTestOrProduct);
+            var request = new TestorProductDto { ItemCode = "T001", ItemDescription = "New Test" };
+            var createdTestOrProduct = new TestorProductDto { ItemCode = "T001", ItemDescription = "New Test" };
+            var expectedResponse = ApiResponseDto<TestorProductDto>.SuccessResponse(createdTestOrProduct);
             _pactTestListApiClient.CreateTestOrProductAsync(request).Returns(Task.FromResult(expectedResponse));
 
             // Act
@@ -168,9 +168,9 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.TestListServiceTest
         public async Task CreateTestOrProductAsync_WhenValidationFails_ReturnsFailureResponse()
         {
             // Arrange
-            var request = new TestOrProductDto { ItemCode = "T001" };
+            var request = new TestorProductDto { ItemCode = "T001" };
             var errors = new List<ApiErrorDto> { new() { Message = "Validation failed", Code = "VALIDATION_ERROR" } };
-            var expectedResponse = ApiResponseDto<TestOrProductDto>.FailureResponse(errors, new ApiMetaDto());
+            var expectedResponse = ApiResponseDto<TestorProductDto>.FailureResponse(errors, new ApiMetaDto());
             _pactTestListApiClient.CreateTestOrProductAsync(request).Returns(Task.FromResult(expectedResponse));
 
             // Act
@@ -186,9 +186,9 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.TestListServiceTest
         public async Task CreateTestOrProductAsync_WhenApiFails_ReturnsFailureResponse()
         {
             // Arrange
-            var request = new TestOrProductDto { ItemCode = "T001" };
+            var request = new TestorProductDto { ItemCode = "T001" };
             var errors = new List<ApiErrorDto> { new() { Message = "Internal error", Code = "INTERNAL_ERROR" } };
-            var expectedResponse = ApiResponseDto<TestOrProductDto>.FailureResponse(errors, new ApiMetaDto());
+            var expectedResponse = ApiResponseDto<TestorProductDto>.FailureResponse(errors, new ApiMetaDto());
             _pactTestListApiClient.CreateTestOrProductAsync(request).Returns(Task.FromResult(expectedResponse));
 
             // Act
@@ -208,9 +208,9 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.TestListServiceTest
         {
             // Arrange
             var itemCode = "T001";
-            var request = new TestOrProductDto { ItemCode = itemCode, ItemDescription = "Updated Test" };
-            var updatedTestOrProduct = new TestOrProductDto { ItemCode = itemCode, ItemDescription = "Updated Test" };
-            var expectedResponse = ApiResponseDto<TestOrProductDto>.SuccessResponse(updatedTestOrProduct);
+            var request = new TestorProductDto { ItemCode = itemCode, ItemDescription = "Updated Test" };
+            var updatedTestOrProduct = new TestorProductDto { ItemCode = itemCode, ItemDescription = "Updated Test" };
+            var expectedResponse = ApiResponseDto<TestorProductDto>.SuccessResponse(updatedTestOrProduct);
             _pactTestListApiClient.UpdateTestOrProductAsync(itemCode, request).Returns(Task.FromResult(expectedResponse));
 
             // Act
@@ -228,9 +228,9 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.TestListServiceTest
         {
             // Arrange
             var itemCode = "NOTFOUND";
-            var request = new TestOrProductDto { ItemCode = itemCode };
+            var request = new TestorProductDto { ItemCode = itemCode };
             var errors = new List<ApiErrorDto> { new() { Message = "Not Found", Code = "NOT_FOUND" } };
-            var expectedResponse = ApiResponseDto<TestOrProductDto>.FailureResponse(errors, new ApiMetaDto());
+            var expectedResponse = ApiResponseDto<TestorProductDto>.FailureResponse(errors, new ApiMetaDto());
             _pactTestListApiClient.UpdateTestOrProductAsync(itemCode, request).Returns(Task.FromResult(expectedResponse));
 
             // Act
@@ -247,9 +247,9 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.TestListServiceTest
         {
             // Arrange
             var itemCode = "T001";
-            var request = new TestOrProductDto { ItemCode = itemCode };
+            var request = new TestorProductDto { ItemCode = itemCode };
             var errors = new List<ApiErrorDto> { new() { Message = "Validation failed", Code = "VALIDATION_ERROR" } };
-            var expectedResponse = ApiResponseDto<TestOrProductDto>.FailureResponse(errors, new ApiMetaDto());
+            var expectedResponse = ApiResponseDto<TestorProductDto>.FailureResponse(errors, new ApiMetaDto());
             _pactTestListApiClient.UpdateTestOrProductAsync(itemCode, request).Returns(Task.FromResult(expectedResponse));
 
             // Act
@@ -266,9 +266,9 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.TestListServiceTest
         {
             // Arrange
             var itemCode = "T001";
-            var request = new TestOrProductDto { ItemCode = itemCode };
+            var request = new TestorProductDto { ItemCode = itemCode };
             var errors = new List<ApiErrorDto> { new() { Message = "Internal error", Code = "INTERNAL_ERROR" } };
-            var expectedResponse = ApiResponseDto<TestOrProductDto>.FailureResponse(errors, new ApiMetaDto());
+            var expectedResponse = ApiResponseDto<TestorProductDto>.FailureResponse(errors, new ApiMetaDto());
             _pactTestListApiClient.UpdateTestOrProductAsync(itemCode, request).Returns(Task.FromResult(expectedResponse));
 
             // Act

@@ -59,7 +59,7 @@ namespace Apha.PACT.DataAccess.Data
             modelBuilder.ApplyConfiguration(new ProjectInvoiceMap());
             modelBuilder.Entity<ProjectInvoice>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
-            modelBuilder.Entity<TestOrProduct>(entity =>
+            modelBuilder.Entity<TestorProduct>(entity =>
             {
                 entity.HasKey(e => new { e.ItemCode, e.FpsYear }).HasName("pk_testorproduct");
 
@@ -68,7 +68,7 @@ namespace Apha.PACT.DataAccess.Data
                 entity.Property(e => e.ItemCode)
                     .HasMaxLength(50)
                     .HasColumnName("itemcode");
-                entity.Property(e => e.FpsYear).HasColumnName(fpsYear);
+                //entity.Property(e => e.FpsYear).HasColumnName(fpsYear); pradeep
                 entity.Property(e => e.ItemDescription)
                     .HasMaxLength(255)
                     .HasColumnName("itemdescription");
@@ -97,7 +97,7 @@ namespace Apha.PACT.DataAccess.Data
                     .HasColumnType("money")
                     .HasColumnName("defraunitprice");
 
-                entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FPSYear);
+                //entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FPSYear); pradeep
             });
 
 

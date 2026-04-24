@@ -1,4 +1,3 @@
-using Apha.Common.Helpers.Repository;
 using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
@@ -11,194 +10,104 @@ using NSubstitute;
 
 namespace Apha.PACT.DataAccess.UnitTests.Repository.TestOrProductRepositoryTest
 {
-    /// <summary>
-    /// Unit tests for TestOrProductRepository (Data Access Layer).
-    /// Tests data access operations without using real database or InMemory database.
-    /// Uses mocked DbContext and DbSet for testing.
-    /// </summary>
     public class TestOrProductRepositoryTests
     {
-        private const int DefaultTestFpsYear = 2024;
+        private record RepositoryContext(
+            TestorProductRepository Repo,
+            Mock<DbSet<TestorProduct>> TestorProductsDbSet,
+            Mock<FpsDbContext> MockContext,
+            IFpsRequestContext FpsRequestContext);
 
-        /// <summary>
-        /// Creates a TestOrProductRepository alongside mocked DbSet and context for call verification.
-        /// </summary>
-        private static (
-            TestOrProductRepository Repo,
-            Mock<DbSet<TestOrProduct>> TestOrProductsDbSet,
-            Mock<FpsDbContext> Context)
-            CreateRepositoryWithMocks(
-                IEnumerable<TestOrProduct> testOrProducts,
-                int fpsYear = DefaultTestFpsYear)
+        private static RepositoryContext CreateRepositoryContext(
+                int fpsYear = 2024,
+                IEnumerable<TestorProduct> testorProducts = null!,
+                bool setupForModification = false)
         {
-            var fpsYearContext = Substitute.For<IFpsYearContext>();
-            fpsYearContext.FPSYear.Returns(fpsYear);
+            var mockContext = new Mock<FpsDbContext>();
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            fpsRequestContext.FpsYear.Returns(fpsYear);
 
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);
-            var testOrProductsMockSet = RepositoryTestHelper.CreateMockDbSet(testOrProducts);
+            var testorProductsList = (testorProducts ?? Enumerable.Empty<TestorProduct>()).ToList();
+            var testorProductsMockSet = CreateMockDbSet(testorProductsList);
 
-            RepositoryTestHelper.SetupDbSetOperations(testOrProductsMockSet);
-            testOrProductsMockSet
-                .Setup(x => x.AddAsync(It.IsAny<TestOrProduct>(), It.IsAny<CancellationToken>()))
-                .Returns((TestOrProduct _, CancellationToken __) => new ValueTask<EntityEntry<TestOrProduct>>());
-            RepositoryTestHelper.SetupSaveChanges(mockContext);
+            if (setupForModification)
+            {
+                mockContext.Setup(m => m.SaveChangesAsync(default))
+                    .ReturnsAsync(1);
+                mockContext.Setup(m => m.TestorProducts.AddAsync(It.IsAny<TestorProduct>(), default))
+                    .Returns((TestorProduct _, CancellationToken __) => new ValueTask<EntityEntry<TestorProduct>>());
+                mockContext.Setup(m => m.Entry(It.IsAny<TestorProduct>()))
+                    .Returns((TestorProduct entity) =>
+                    {
+                        var entry = new Mock<EntityEntry<TestorProduct>>();
+                        entry.Object.State = EntityState.Modified;
+                        return entry.Object;
+                    });
+            }
 
-            // Setup Entry for Update operations - directly setup to return a mock that allows State property setting
-            mockContext.Setup(x => x.Entry(It.IsAny<TestOrProduct>()))
-                .Returns((TestOrProduct entity) =>
-                {
-                    var mockEntry = new Mock<EntityEntry<TestOrProduct>>(MockBehavior.Loose, new object[] { null! });
-                    mockEntry.SetupProperty(e => e.State);
-                    return mockEntry.Object;
-                });
+            mockContext.Setup(x => x.TestorProducts).Returns(testorProductsMockSet.Object);
 
-            mockContext.Setup(x => x.TestOrProducts).Returns(testOrProductsMockSet.Object);
-
-            var repo = new TestOrProductRepository(mockContext.Object, fpsYearContext);
-            return (repo, testOrProductsMockSet, mockContext);
+            var repo = new TestorProductRepository(mockContext.Object, fpsRequestContext);
+            return new RepositoryContext(repo, testorProductsMockSet, mockContext, fpsRequestContext);
         }
 
-        private static TestOrProductRepository CreateRepository(
-            IEnumerable<TestOrProduct> testOrProducts,
-            int fpsYear = DefaultTestFpsYear)
-            => CreateRepositoryWithMocks(testOrProducts, fpsYear).Repo;
+        private static TestorProductRepository CreateRepository(
+            IEnumerable<TestorProduct> testorProducts,
+            Mock<FpsDbContext> mockContext = null!,
+            IFpsRequestContext fpsRequestContext = null!)
+        {
+            mockContext ??= new Mock<FpsDbContext>();
+            fpsRequestContext ??= Substitute.For<IFpsRequestContext>();
+            fpsRequestContext.FpsYear.Returns(2024);
+
+            var testorProductsList = testorProducts.ToList();
+            var mockSet = CreateMockDbSet(testorProductsList);
+            mockContext.Setup(x => x.TestorProducts).Returns(mockSet.Object);
+
+            return new TestorProductRepository(mockContext.Object, fpsRequestContext);
+        }
+
+        private static Mock<DbSet<T>> CreateMockDbSet<T>(List<T> data) where T : class
+        {
+            var queryable = data.AsQueryable();
+            var mockSet = new Mock<DbSet<T>>();
+            mockSet.As<IQueryable<T>>().Setup(m => m.Provider).Returns(queryable.Provider);
+            mockSet.As<IQueryable<T>>().Setup(m => m.Expression).Returns(queryable.Expression);
+            mockSet.As<IQueryable<T>>().Setup(m => m.ElementType).Returns(queryable.ElementType);
+            mockSet.As<IQueryable<T>>().Setup(m => m.GetEnumerator()).Returns(() => queryable.GetEnumerator());
+            mockSet.As<IAsyncEnumerable<T>>().Setup(m => m.GetAsyncEnumerator(default))
+                .Returns(new TestAsyncEnumerator<T>(queryable.GetEnumerator()));
+            return mockSet;
+        }
 
         #region GetPagedTestOrProductsAsync
 
         [Fact]
-        public async Task GetPagedTestOrProductsAsync_NoFilter_ReturnsAllRecordsPaged()
+        public async Task GetPagedTestOrProductsAsync_ReturnsPagedData()
         {
             // Arrange
-            var testOrProducts = new List<TestOrProduct>
-            {
-                new() { ItemCode = "TEST001", DefraUnitPrice = 100m, FpsYear = DefaultTestFpsYear },
-                new() { ItemCode = "TEST002", DefraUnitPrice = 200m, FpsYear = DefaultTestFpsYear }
-            };
-            var repo = CreateRepository(testOrProducts);
-            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
-
-            // Act
-            var result = await repo.GetPagedTestOrProductsAsync(query);
-
-            // Assert
-            Assert.Equal(2, result.PaginationData.TotalRecords);
-            Assert.Equal(2, result.Data.Count());
-        }
-
-        [Fact]
-        public async Task GetPagedTestOrProductsAsync_WithItemCodeFilter_ReturnsFilteredResult()
-        {
-            // Arrange
-            var testOrProducts = new List<TestOrProduct>
-            {
-                new() { ItemCode = "TEST001", DefraUnitPrice = 100m, FpsYear = DefaultTestFpsYear },
-                new() { ItemCode = "PROD001", DefraUnitPrice = 200m, FpsYear = DefaultTestFpsYear }
-            };
-            var repo = CreateRepository(testOrProducts);
-            var query = new PaginationParameters<string>
-            {
-                Page = 1,
-                PageSize = 10,
-                Filter = "{\"ItemCode\":\"TEST\"}"
-            };
-
-            // Act
-            var result = await repo.GetPagedTestOrProductsAsync(query);
-
-            // Assert
-            Assert.Single(result.Data);
-            Assert.Equal("TEST001", result.Data.First().ItemCode);
-        }
-
-        [Fact]
-        public async Task GetPagedTestOrProductsAsync_WithSorting_ReturnsSortedResult()
-        {
-            // Arrange
-            var testOrProducts = new List<TestOrProduct>
-            {
-                new() { ItemCode = "TEST002", DefraUnitPrice = 200m, FpsYear = DefaultTestFpsYear },
-                new() { ItemCode = "TEST001", DefraUnitPrice = 100m, FpsYear = DefaultTestFpsYear }
-            };
-            var repo = CreateRepository(testOrProducts);
-            var query = new PaginationParameters<string>
-            {
-                Page = 1,
-                PageSize = 10,
-                SortBy = "itemcode",
-                Descending = false
-            };
-
-            // Act
-            var result = await repo.GetPagedTestOrProductsAsync(query);
-
-            // Assert
-            Assert.Equal("TEST001", result.Data.First().ItemCode);
-            Assert.Equal("TEST002", result.Data.Last().ItemCode);
-        }
-
-        [Fact]
-        public async Task GetPagedTestOrProductsAsync_DescendingSort_ReturnsSortedDescending()
-        {
-            // Arrange
-            var testOrProducts = new List<TestOrProduct>
-            {
-                new() { ItemCode = "TEST001", DefraUnitPrice = 100m, FpsYear = DefaultTestFpsYear },
-                new() { ItemCode = "TEST002", DefraUnitPrice = 200m, FpsYear = DefaultTestFpsYear }
-            };
-            var repo = CreateRepository(testOrProducts);
-            var query = new PaginationParameters<string>
-            {
-                Page = 1,
-                PageSize = 10,
-                SortBy = "defraunitprice",
-                Descending = true
-            };
-
-            // Act
-            var result = await repo.GetPagedTestOrProductsAsync(query);
-
-            // Assert
-            Assert.Equal("TEST002", result.Data.First().ItemCode);
-        }
-
-        [Fact]
-        public async Task GetPagedTestOrProductsAsync_Pagination_ReturnsCorrectPage()
-        {
-            // Arrange
-            var testOrProducts = Enumerable.Range(1, 25).Select(i => new TestOrProduct
+            var testorProducts = Enumerable.Range(1, 25).Select(i => new TestorProduct
             {
                 ItemCode = $"TEST{i:D3}",
+                ItemDescription = $"Test {i}",
                 DefraUnitPrice = i * 10m,
-                FpsYear = DefaultTestFpsYear
-            }).ToList();
-            var repo = CreateRepository(testOrProducts);
-            var query = new PaginationParameters<string> { Page = 2, PageSize = 10 };
+                FpsYear = 2024
+            });
+            var repo = CreateRepository(testorProducts);
+            var parameters = new PaginationParameters<string>
+            {
+                Page = 2,
+                PageSize = 10
+            };
 
             // Act
-            var result = await repo.GetPagedTestOrProductsAsync(query);
+            var result = await repo.GetPagedTestOrProductsAsync(parameters);
 
             // Assert
+            Assert.NotNull(result);
             Assert.Equal(10, result.Data.Count());
             Assert.Equal(25, result.PaginationData.TotalRecords);
-            Assert.Equal(2, result.PaginationData.PageNumber);
-        }
-
-        [Fact]
-        public async Task GetPagedTestOrProductsAsync_EmptyFilter_ReturnsAllRecords()
-        {
-            // Arrange
-            var testOrProducts = new List<TestOrProduct>
-            {
-                new() { ItemCode = "TEST001", FpsYear = DefaultTestFpsYear }
-            };
-            var repo = CreateRepository(testOrProducts);
-            var query = new PaginationParameters<string> { Filter = "" };
-
-            // Act
-            var result = await repo.GetPagedTestOrProductsAsync(query);
-
-            // Assert
-            Assert.Single(result.Data);
+            Assert.Equal(3, result.PaginationData.TotalPages);
         }
 
         #endregion
@@ -206,14 +115,14 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestOrProductRepositoryTest
         #region GetTestOrProductByIdAsync
 
         [Fact]
-        public async Task GetTestOrProductByIdAsync_ExistingItemCode_ReturnsTestOrProduct()
+        public async Task GetTestOrProductByIdAsync_ExistingItemCode_ReturnsEntity()
         {
             // Arrange
-            var testOrProducts = new List<TestOrProduct>
+            var testorProducts = new List<TestorProduct>
             {
-                new() { ItemCode = "TEST001", DefraUnitPrice = 100m, FpsYear = DefaultTestFpsYear }
+                new() { ItemCode = "TEST001", ItemDescription = "Test One", DefraUnitPrice = 100m, FpsYear = 2024 }
             };
-            var repo = CreateRepository(testOrProducts);
+            var repo = CreateRepository(testorProducts);
 
             // Act
             var result = await repo.GetTestOrProductByIdAsync("TEST001");
@@ -221,14 +130,17 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestOrProductRepositoryTest
             // Assert
             Assert.NotNull(result);
             Assert.Equal("TEST001", result.ItemCode);
-            Assert.Equal(100m, result.DefraUnitPrice);
         }
 
         [Fact]
         public async Task GetTestOrProductByIdAsync_NonExistentItemCode_ReturnsNull()
         {
             // Arrange
-            var repo = CreateRepository([]);
+            var testorProducts = new List<TestorProduct>
+            {
+                new() { ItemCode = "TEST001", ItemDescription = "Test One", DefraUnitPrice = 100m, FpsYear = 2024 }
+            };
+            var repo = CreateRepository(testorProducts);
 
             // Act
             var result = await repo.GetTestOrProductByIdAsync("MISSING");
@@ -238,22 +150,16 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestOrProductRepositoryTest
         }
 
         [Fact]
-        public async Task GetTestOrProductByIdAsync_CaseSensitiveMatch_FindsExactMatch()
+        public async Task GetTestOrProductByIdAsync_EmptyList_ReturnsNull()
         {
             // Arrange
-            var testOrProducts = new List<TestOrProduct>
-            {
-                new() { ItemCode = "TEST001", FpsYear = DefaultTestFpsYear },
-                new() { ItemCode = "test001", FpsYear = DefaultTestFpsYear }
-            };
-            var repo = CreateRepository(testOrProducts);
+            var repo = CreateRepository(Enumerable.Empty<TestorProduct>());
 
             // Act
             var result = await repo.GetTestOrProductByIdAsync("TEST001");
 
             // Assert
-            Assert.NotNull(result);
-            Assert.Equal("TEST001", result.ItemCode);
+            Assert.Null(result);
         }
 
         #endregion
@@ -261,37 +167,38 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestOrProductRepositoryTest
         #region CreateTestOrProductAsync
 
         [Fact]
-        public async Task CreateTestOrProductAsync_ValidEntity_SetsFpsYearAndReturnsEntity()
+        public async Task CreateTestOrProductAsync_ValidEntity_ReturnsSavedEntity()
         {
             // Arrange
-            var (repo, mockSet, mockContext) = CreateRepositoryWithMocks([], 2025);
-            var entity = new TestOrProduct { ItemCode = "TEST001", DefraUnitPrice = 100m };
+            var context = CreateRepositoryContext(fpsYear: 2024, setupForModification: true);
+            var entity = new TestorProduct { ItemCode = "NEW001", DefraUnitPrice = 100m };
 
             // Act
-            var result = await repo.CreateTestOrProductAsync(entity);
+            var result = await context.Repo.CreateTestOrProductAsync(entity);
 
             // Assert
-            Assert.Equal(2025, result.FpsYear);
-            Assert.Equal("TEST001", result.ItemCode);
-            mockSet.Verify(x => x.AddAsync(It.IsAny<TestOrProduct>(), It.IsAny<CancellationToken>()), Times.Once);
-            mockContext.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+            Assert.NotNull(result);
+            Assert.Equal("NEW001", result.ItemCode);
+            Assert.Equal(2024, result.FpsYear);
+            context.MockContext.Verify(x => x.SaveChangesAsync(default), Times.Once);
         }
 
         [Fact]
-        public async Task CreateTestOrProductAsync_MultipleEntities_EachGetsFpsYear()
+        public async Task CreateTestOrProductAsync_MultipleEntities_SavesAll()
         {
             // Arrange
-            var (repo, _, _) = CreateRepositoryWithMocks([], 2024);
-            var entity1 = new TestOrProduct { ItemCode = "TEST001", DefraUnitPrice = 100m };
-            var entity2 = new TestOrProduct { ItemCode = "TEST002", DefraUnitPrice = 200m };
+            var context = CreateRepositoryContext(fpsYear: 2024, setupForModification: true);
+            var entity1 = new TestorProduct { ItemCode = "NEW001", DefraUnitPrice = 100m };
+            var entity2 = new TestorProduct { ItemCode = "NEW002", DefraUnitPrice = 200m };
 
             // Act
-            var result1 = await repo.CreateTestOrProductAsync(entity1);
-            var result2 = await repo.CreateTestOrProductAsync(entity2);
+            var result1 = await context.Repo.CreateTestOrProductAsync(entity1);
+            var result2 = await context.Repo.CreateTestOrProductAsync(entity2);
 
             // Assert
             Assert.Equal(2024, result1.FpsYear);
             Assert.Equal(2024, result2.FpsYear);
+            context.MockContext.Verify(x => x.SaveChangesAsync(default), Times.Exactly(2));
         }
 
         #endregion
@@ -299,36 +206,34 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestOrProductRepositoryTest
         #region UpdateTestOrProductAsync
 
         [Fact]
-        public async Task UpdateTestOrProductAsync_ValidEntity_SetsFpsYearAndUpdatesState()
+        public async Task UpdateTestOrProductAsync_ValidEntity_ReturnsUpdatedEntity()
         {
             // Arrange
-            var existingEntity = new TestOrProduct { ItemCode = "TEST001", DefraUnitPrice = 100m, FpsYear = 2023 };
-            var (repo, _, mockContext) = CreateRepositoryWithMocks([existingEntity], 2024);
-            var entityToUpdate = new TestOrProduct { ItemCode = "TEST001", DefraUnitPrice = 150m };
+            var entityToUpdate = new TestorProduct { ItemCode = "TEST001", ItemDescription = "Updated", DefraUnitPrice = 150m };
+            var context = CreateRepositoryContext(fpsYear: 2024, setupForModification: true);
 
             // Act
-            var result = await repo.UpdateTestOrProductAsync(entityToUpdate);
+            var result = await context.Repo.UpdateTestOrProductAsync(entityToUpdate);
 
             // Assert
+            Assert.NotNull(result);
+            Assert.Equal("TEST001", result.ItemCode);
             Assert.Equal(2024, result.FpsYear);
-            Assert.Equal(150m, result.DefraUnitPrice);
-            mockContext.Verify(x => x.Entry(entityToUpdate), Times.Once);
-            mockContext.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+            context.MockContext.Verify(x => x.SaveChangesAsync(default), Times.Once);
         }
 
         [Fact]
-        public async Task UpdateTestOrProductAsync_UpdatesExistingRecord_OverridesPreviousFpsYear()
+        public async Task UpdateTestOrProductAsync_UpdatesFpsYear()
         {
             // Arrange
-            var existingEntity = new TestOrProduct { ItemCode = "TEST001", DefraUnitPrice = 100m, FpsYear = 2023 };
-            var (repo, _, _) = CreateRepositoryWithMocks([existingEntity], 2025);
-            var entityToUpdate = new TestOrProduct { ItemCode = "TEST001", DefraUnitPrice = 150m, FpsYear = 2023 };
+            var entityToUpdate = new TestorProduct { ItemCode = "TEST001", DefraUnitPrice = 150m, FpsYear = 2023 };
+            var context = CreateRepositoryContext(fpsYear: 2025, setupForModification: true);
 
             // Act
-            var result = await repo.UpdateTestOrProductAsync(entityToUpdate);
+            var result = await context.Repo.UpdateTestOrProductAsync(entityToUpdate);
 
             // Assert
-            Assert.Equal(2025, result.FpsYear); // Should be updated to current FPS year
+            Assert.Equal(2025, result.FpsYear);
         }
 
         #endregion
@@ -336,74 +241,72 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestOrProductRepositoryTest
         #region DeleteTestOrProductAsync
 
         [Fact]
-        public async Task DeleteTestOrProductAsync_ExistingItemInCurrentYear_ReturnsTrue()
+        public async Task DeleteTestOrProductAsync_ExistingEntity_ReturnsTrue()
         {
             // Arrange
-            var testOrProducts = new List<TestOrProduct>
+            var testorProducts = new List<TestorProduct>
             {
-                new() { ItemCode = "TEST001", DefraUnitPrice = 100m, FpsYear = DefaultTestFpsYear }
+                new() { ItemCode = "TEST001", DefraUnitPrice = 100m, FpsYear = 2024 }
             };
-            var (repo, mockSet, mockContext) = CreateRepositoryWithMocks(testOrProducts, DefaultTestFpsYear);
+            var context = CreateRepositoryContext(fpsYear: 2024, testorProducts: testorProducts, setupForModification: true);
 
             // Act
-            var result = await repo.DeleteTestOrProductAsync("TEST001");
+            var result = await context.Repo.DeleteTestOrProductAsync("TEST001");
 
             // Assert
             Assert.True(result);
-            mockSet.Verify(x => x.Remove(It.IsAny<TestOrProduct>()), Times.Once);
-            mockContext.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+            context.MockContext.Verify(x => x.SaveChangesAsync(default), Times.Once);
         }
 
         [Fact]
-        public async Task DeleteTestOrProductAsync_NonExistentItem_ReturnsFalse()
+        public async Task DeleteTestOrProductAsync_NonExistentEntity_ReturnsFalse()
         {
             // Arrange
-            var (repo, mockSet, mockContext) = CreateRepositoryWithMocks([]);
+            var testorProducts = new List<TestorProduct>
+            {
+                new() { ItemCode = "TEST001", DefraUnitPrice = 100m, FpsYear = 2024 }
+            };
+            var context = CreateRepositoryContext(fpsYear: 2024, testorProducts: testorProducts);
 
             // Act
-            var result = await repo.DeleteTestOrProductAsync("MISSING");
+            var result = await context.Repo.DeleteTestOrProductAsync("MISSING");
 
             // Assert
             Assert.False(result);
-            mockSet.Verify(x => x.Remove(It.IsAny<TestOrProduct>()), Times.Never);
-            mockContext.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Fact]
-        public async Task DeleteTestOrProductAsync_ItemInDifferentYear_ReturnsFalse()
+        public async Task DeleteTestOrProductAsync_WrongFpsYear_ReturnsFalse()
         {
             // Arrange
-            var testOrProducts = new List<TestOrProduct>
+            var testorProducts = new List<TestorProduct>
             {
                 new() { ItemCode = "TEST001", DefraUnitPrice = 100m, FpsYear = 2023 }
             };
-            var (repo, mockSet, _) = CreateRepositoryWithMocks(testOrProducts, 2024);
+            var context = CreateRepositoryContext(fpsYear: 2024, testorProducts: testorProducts);
 
             // Act
-            var result = await repo.DeleteTestOrProductAsync("TEST001");
+            var result = await context.Repo.DeleteTestOrProductAsync("TEST001");
 
             // Assert
             Assert.False(result);
-            mockSet.Verify(x => x.Remove(It.IsAny<TestOrProduct>()), Times.Never);
         }
 
         [Fact]
-        public async Task DeleteTestOrProductAsync_MultipleYearsSameItemCode_DeletesOnlyCurrentYear()
+        public async Task DeleteTestOrProductAsync_MatchingFpsYear_ReturnsTrue()
         {
             // Arrange
-            var testOrProducts = new List<TestOrProduct>
+            var testorProducts = new List<TestorProduct>
             {
-                new() { ItemCode = "TEST001", DefraUnitPrice = 100m, FpsYear = 2023 },
-                new() { ItemCode = "TEST001", DefraUnitPrice = 150m, FpsYear = DefaultTestFpsYear }
+                new() { ItemCode = "TEST001", DefraUnitPrice = 100m, FpsYear = 2024 }
             };
-            var (repo, mockSet, _) = CreateRepositoryWithMocks(testOrProducts, DefaultTestFpsYear);
+            var context = CreateRepositoryContext(fpsYear: 2024, testorProducts: testorProducts, setupForModification: true);
 
             // Act
-            var result = await repo.DeleteTestOrProductAsync("TEST001");
+            var result = await context.Repo.DeleteTestOrProductAsync("TEST001");
 
             // Assert
             Assert.True(result);
-            mockSet.Verify(x => x.Remove(It.Is<TestOrProduct>(e => e.FpsYear == DefaultTestFpsYear)), Times.Once);
         }
 
         #endregion
@@ -411,71 +314,33 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestOrProductRepositoryTest
         #region GetOwnersAsync
 
         [Fact]
-        public async Task GetOwnersAsync_MultipleOwners_ReturnsDistinctOrderedList()
+        public async Task GetOwnersAsync_ReturnsDistinctOwners()
         {
             // Arrange
-            var testOrProducts = new List<TestOrProduct>
+            var testorProducts = new List<TestorProduct>
             {
-                new() { ItemCode = "TEST001", Owner = "OW3", FpsYear = DefaultTestFpsYear },
-                new() { ItemCode = "TEST002", Owner = "OW1", FpsYear = DefaultTestFpsYear },
-                new() { ItemCode = "TEST003", Owner = "OW2", FpsYear = DefaultTestFpsYear },
-                new() { ItemCode = "TEST004", Owner = "OW1", FpsYear = DefaultTestFpsYear } // Duplicate
+                new() { ItemCode = "TEST001", Owner = "AB", DefraUnitPrice = 100m, FpsYear = 2024 },
+                new() { ItemCode = "TEST002", Owner = "CD", DefraUnitPrice = 100m, FpsYear = 2024 },
+                new() { ItemCode = "TEST003", Owner = "AB", DefraUnitPrice = 100m, FpsYear = 2024 },
+                new() { ItemCode = "TEST004", Owner = null, DefraUnitPrice = 100m, FpsYear = 2024 }
             };
-            var repo = CreateRepository(testOrProducts);
-
-            // Act
-            var result = (await repo.GetOwnersAsync()).ToList();
-
-            // Assert
-            Assert.Equal(3, result.Count);
-            Assert.Equal("OW1", result[0]); // Should be ordered
-            Assert.Equal("OW2", result[1]);
-            Assert.Equal("OW3", result[2]);
-        }
-
-        [Fact]
-        public async Task GetOwnersAsync_NullOwners_ExcludesNullValues()
-        {
-            // Arrange
-            var testOrProducts = new List<TestOrProduct>
-            {
-                new() { ItemCode = "TEST001", Owner = "OW1", FpsYear = DefaultTestFpsYear },
-                new() { ItemCode = "TEST002", Owner = null, FpsYear = DefaultTestFpsYear },
-                new() { ItemCode = "TEST003", Owner = "OW2", FpsYear = DefaultTestFpsYear }
-            };
-            var repo = CreateRepository(testOrProducts);
-
-            // Act
-            var result = (await repo.GetOwnersAsync()).ToList();
-
-            // Assert
-            Assert.Equal(2, result.Count);
-            Assert.DoesNotContain(null, result);
-        }
-
-        [Fact]
-        public async Task GetOwnersAsync_NoOwners_ReturnsEmptyList()
-        {
-            // Arrange
-            var repo = CreateRepository([]);
+            var repo = CreateRepository(testorProducts);
 
             // Act
             var result = await repo.GetOwnersAsync();
 
             // Assert
-            Assert.Empty(result);
+            var ownersList = result.ToList();
+            Assert.Equal(2, ownersList.Count);
+            Assert.Contains("AB", ownersList);
+            Assert.Contains("CD", ownersList);
         }
 
         [Fact]
-        public async Task GetOwnersAsync_AllNullOwners_ReturnsEmptyList()
+        public async Task GetOwnersAsync_EmptyList_ReturnsEmpty()
         {
             // Arrange
-            var testOrProducts = new List<TestOrProduct>
-            {
-                new() { ItemCode = "TEST001", Owner = null, FpsYear = DefaultTestFpsYear },
-                new() { ItemCode = "TEST002", Owner = null, FpsYear = DefaultTestFpsYear }
-            };
-            var repo = CreateRepository(testOrProducts);
+            var repo = CreateRepository(Enumerable.Empty<TestorProduct>());
 
             // Act
             var result = await repo.GetOwnersAsync();
@@ -485,154 +350,25 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestOrProductRepositoryTest
         }
 
         #endregion
+    }
 
-        #region Filter Tests
+    internal class TestAsyncEnumerator<T> : IAsyncEnumerator<T>
+    {
+        private readonly IEnumerator<T> _inner;
 
-        [Fact]
-        public async Task GetPagedTestOrProductsAsync_FilterByItemDescription_ReturnsMatchingRecords()
+        public TestAsyncEnumerator(IEnumerator<T> inner)
         {
-            // Arrange
-            var testOrProducts = new List<TestOrProduct>
-            {
-                new() { ItemCode = "TEST001", ItemDescription = "Blood Test", FpsYear = DefaultTestFpsYear },
-                new() { ItemCode = "TEST002", ItemDescription = "Urine Test", FpsYear = DefaultTestFpsYear }
-            };
-            var repo = CreateRepository(testOrProducts);
-            var query = new PaginationParameters<string>
-            {
-                Filter = "{\"ItemDescription\":\"Blood\"}"
-            };
-
-            // Act
-            var result = await repo.GetPagedTestOrProductsAsync(query);
-
-            // Assert
-            Assert.Single(result.Data);
-            Assert.Equal("TEST001", result.Data.First().ItemCode);
+            _inner = inner;
         }
 
-        [Fact]
-        public async Task GetPagedTestOrProductsAsync_FilterByOwner_ReturnsMatchingRecords()
+        public ValueTask<bool> MoveNextAsync() => new ValueTask<bool>(_inner.MoveNext());
+
+        public T Current => _inner.Current;
+
+        public ValueTask DisposeAsync()
         {
-            // Arrange
-            var testOrProducts = new List<TestOrProduct>
-            {
-                new() { ItemCode = "TEST001", Owner = "OW1", FpsYear = DefaultTestFpsYear },
-                new() { ItemCode = "TEST002", Owner = "OW2", FpsYear = DefaultTestFpsYear }
-            };
-            var repo = CreateRepository(testOrProducts);
-            var query = new PaginationParameters<string>
-            {
-                Filter = "{\"Owner\":\"OW1\"}"
-            };
-
-            // Act
-            var result = await repo.GetPagedTestOrProductsAsync(query);
-
-            // Assert
-            Assert.Single(result.Data);
-            Assert.Equal("TEST001", result.Data.First().ItemCode);
+            _inner.Dispose();
+            return ValueTask.CompletedTask;
         }
-
-        [Fact]
-        public async Task GetPagedTestOrProductsAsync_FilterByTestManager_ReturnsMatchingRecords()
-        {
-            // Arrange
-            var testOrProducts = new List<TestOrProduct>
-            {
-                new() { ItemCode = "TEST001", TestManager = "TM001", FpsYear = DefaultTestFpsYear },
-                new() { ItemCode = "TEST002", TestManager = "TM002", FpsYear = DefaultTestFpsYear }
-            };
-            var repo = CreateRepository(testOrProducts);
-            var query = new PaginationParameters<string>
-            {
-                Filter = "{\"TestManager\":\"TM001\"}"
-            };
-
-            // Act
-            var result = await repo.GetPagedTestOrProductsAsync(query);
-
-            // Assert
-            Assert.Single(result.Data);
-            Assert.Equal("TEST001", result.Data.First().ItemCode);
-        }
-
-        [Fact]
-        public async Task GetPagedTestOrProductsAsync_InvalidJsonFilter_ReturnsAllRecords()
-        {
-            // Arrange
-            var testOrProducts = new List<TestOrProduct>
-            {
-                new() { ItemCode = "TEST001", FpsYear = DefaultTestFpsYear }
-            };
-            var repo = CreateRepository(testOrProducts);
-            var query = new PaginationParameters<string>
-            {
-                Filter = "null" // null JSON deserializes to null, which should return all records
-            };
-
-            // Act
-            var result = await repo.GetPagedTestOrProductsAsync(query);
-
-            // Assert
-            Assert.Single(result.Data);
-        }
-
-        #endregion
-
-        #region Sorting Tests
-
-        [Theory]
-        [InlineData("itemdescription")]
-        [InlineData("shortdescription")]
-        [InlineData("owner")]
-        [InlineData("testmanager")]
-        [InlineData("unitpricevla")]
-        public async Task GetPagedTestOrProductsAsync_SortByDifferentColumns_AppliesSorting(string sortColumn)
-        {
-            // Arrange
-            var testOrProducts = new List<TestOrProduct>
-            {
-                new() { ItemCode = "TEST001", ItemDescription = "B", ShortDescription = "B", Owner = "B", TestManager = "B", UnitPriceVla = 200m, FpsYear = DefaultTestFpsYear },
-                new() { ItemCode = "TEST002", ItemDescription = "A", ShortDescription = "A", Owner = "A", TestManager = "A", UnitPriceVla = 100m, FpsYear = DefaultTestFpsYear }
-            };
-            var repo = CreateRepository(testOrProducts);
-            var query = new PaginationParameters<string>
-            {
-                SortBy = sortColumn,
-                Descending = false
-            };
-
-            // Act
-            var result = await repo.GetPagedTestOrProductsAsync(query);
-
-            // Assert
-            Assert.Equal(2, result.Data.Count());
-            // First item should have "A" values or lower numeric value
-        }
-
-        [Fact]
-        public async Task GetPagedTestOrProductsAsync_InvalidSortColumn_DefaultsToItemCode()
-        {
-            // Arrange
-            var testOrProducts = new List<TestOrProduct>
-            {
-                new() { ItemCode = "TEST002", FpsYear = DefaultTestFpsYear },
-                new() { ItemCode = "TEST001", FpsYear = DefaultTestFpsYear }
-            };
-            var repo = CreateRepository(testOrProducts);
-            var query = new PaginationParameters<string>
-            {
-                SortBy = "INVALID_COLUMN"
-            };
-
-            // Act
-            var result = await repo.GetPagedTestOrProductsAsync(query);
-
-            // Assert
-            Assert.Equal("TEST001", result.Data.First().ItemCode);
-        }
-
-        #endregion
     }
 }

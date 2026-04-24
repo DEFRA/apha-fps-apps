@@ -15,16 +15,16 @@ namespace Apha.FPSApps.Application.Services.PACT
             _apiClient = apiClient;
         }
 
-        public async Task<ApiResponseDto<List<TestOrProductDto>>> GetPagedTestOrProductsAsync(QueryParameters<string> query)
+        public async Task<ApiResponseDto<List<TestorProductDto>>> GetPagedTestOrProductsAsync(QueryParameters<string> query)
             => await _apiClient.PactTestList.GetPagedTestOrProductsAsync(query);
 
-        public async Task<ApiResponseDto<TestOrProductDto>> GetTestOrProductByIdAsync(string itemCode)
+        public async Task<ApiResponseDto<TestorProductDto>> GetTestOrProductByIdAsync(string itemCode)
             => await _apiClient.PactTestList.GetTestOrProductByIdAsync(itemCode);
 
-        public async Task<ApiResponseDto<TestOrProductDto>> CreateTestOrProductAsync(TestOrProductDto dto)
+        public async Task<ApiResponseDto<TestorProductDto>> CreateTestOrProductAsync(TestorProductDto dto)
             => await _apiClient.PactTestList.CreateTestOrProductAsync(dto);
 
-        public async Task<ApiResponseDto<TestOrProductDto>> UpdateTestOrProductAsync(string itemCode, TestOrProductDto dto)
+        public async Task<ApiResponseDto<TestorProductDto>> UpdateTestOrProductAsync(string itemCode, TestorProductDto dto)
             => await _apiClient.PactTestList.UpdateTestOrProductAsync(itemCode, dto);
 
         public async Task<ApiResponseDto<bool>> DeleteTestOrProductAsync(string itemCode)
