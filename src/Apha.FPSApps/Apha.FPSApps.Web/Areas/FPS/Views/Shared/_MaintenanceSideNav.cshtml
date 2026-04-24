@@ -17,7 +17,15 @@
         <img src="../images/chevron-left-solid-full.svg" alt="side nav menu arrow" width="24">
     </button>
     <ul>
-        <li><a class="dropdown-item">Maintain Divisions</a></li>
+        <li>
+          
+                <a class="dropdown-item@(Model == "DivisionMaintenance" ? " sidenav-title" : "")"
+                       asp-area="FPS" asp-controller="DivisionMaintenance" asp-action="Index">
+                    Maintain Divisions
+                </a>
+           
+            
+        </li>
         <li>
             <a class="dropdown-item" href="#">
                 Maintain Resource Centres
