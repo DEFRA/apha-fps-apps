@@ -8,13 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Remove="Areas\FPS\Views\ProjectAddEdit.cshtml" />
-    <Content Remove="Areas\FPS\Views\Project\Index.cshtml" />
-    <Content Remove="Areas\FPS\Views\Project\_AddProgrammeNewProject.cshtml" />
-    <Content Remove="Areas\FPS\Views\Project\_EditProgrammeNewProject.cshtml" />
-  </ItemGroup>
-
-  <ItemGroup>
 	<PackageReference Include="AutoMapper" Version="16.1.1" />	
 	<PackageReference Include="Microsoft.Identity.Web" Version="4.7.0" />
 	<PackageReference Include="Microsoft.Identity.Web.UI" Version="4.7.0" />
