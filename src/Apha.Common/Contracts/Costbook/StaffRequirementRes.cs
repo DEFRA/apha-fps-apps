@@ -14,4 +14,11 @@ public class StaffRequirementRes
     public double? Payrate { get; set; }
     public double? Npr { get; set; }
     public double? Ohr { get; set; }
+
+    // Enriched from qryStaffReqGrade joins
+    public string? WorkGroup { get; set; }
+    public string? GradeCode { get; set; }
+    public string? Programme { get; set; }
+    public double? EuroConvRate { get; set; }
+    public string? EuGrade { get; set; }
 }

@@ -1,4 +1,4 @@
-using Apha.Costbook.DataAccess;
+using Apha.Costbook.Core.Entities;
 
 namespace Apha.Costbook.Core.Interfaces;
 

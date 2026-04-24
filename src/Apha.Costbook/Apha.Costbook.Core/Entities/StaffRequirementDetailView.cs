@@ -1,6 +1,10 @@
-namespace Apha.Costbook.Application.Dtos;
+namespace Apha.Costbook.Core.Entities;
 
-public class StaffRequirementDto
+/// <summary>
+/// Read model for the enriched staff requirement query
+/// (equivalent of MS Access qryStaffReqGrade).
+/// </summary>
+public class StaffRequirementDetailView
 {
     public int SrIdentity { get; set; }
     public string? Project { get; set; }
@@ -10,15 +14,18 @@ public class StaffRequirementDto
     public double? Nohours { get; set; }
     public double? Nodays { get; set; }
     public double? Chargerate { get; set; }
-    public double? StaffCost { get; set; }
     public double? Payrate { get; set; }
     public double? Npr { get; set; }
     public double? Ohr { get; set; }
 
-    // Enriched from qryStaffReqGrade joins
+    // From WorkGroupGrade join
     public string? WorkGroup { get; set; }
     public string? GradeCode { get; set; }
+
+    // From Project join
     public string? Programme { get; set; }
     public double? EuroConvRate { get; set; }
+
+    // From EuGradeConversion DLookup join
     public string? EuGrade { get; set; }
 }

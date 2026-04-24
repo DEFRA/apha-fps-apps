@@ -46,6 +46,8 @@ public partial class CostbookDbContext : DbContext
     public virtual DbSet<ProfitCentreGrade> ProfitCentreGrades { get; set; }
 
     public virtual DbSet<FpsAdditionalCost> FpsAdditionalCosts { get; set; }
+
+    public virtual DbSet<EuGradeConversion> EuGradeConversions { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Disease>(entity =>
@@ -427,6 +429,21 @@ public partial class CostbookDbContext : DbContext
                 .HasColumnName("profitcentre");
 
            
+        });
+
+        modelBuilder.Entity<EuGradeConversion>(entity =>
+        {
+            entity.HasKey(e => e.VlaGrade).HasName("pk_tbleugrade_conversion");
+
+            entity.ToTable("tbleugrade_conversion", "mabarchive");
+
+            entity.Property(e => e.VlaGrade)
+                .HasMaxLength(50)
+                .HasColumnName("vlagrade");
+
+            entity.Property(e => e.EuGrade)
+                .HasMaxLength(50)
+                .HasColumnName("eugrade");
         });
 
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(CostbookDbContext).Assembly);

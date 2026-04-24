@@ -1,7 +1,8 @@
 using Apha.Costbook.Core.Interfaces;
 using Apha.Costbook.DataAccess.Data;
-using Apha.Costbook.DataAccess;
+using Apha.Costbook.Core.Entities;
 using Microsoft.EntityFrameworkCore;
+using System.Web;
 
 namespace Apha.Costbook.DataAccess.Repositories;
 
@@ -12,11 +13,14 @@ public class TestRequirementRepository : ITestRequirementRepository
     public TestRequirementRepository(CostbookDbContext context) => _context = context;
 
     public async Task<IEnumerable<TestRequirement>> GetByProjectYearAsync(string project, int year)
-        => await _context.TestRequirements
+    {
+        var decodedProject = HttpUtility.UrlDecode(project);
+        return await _context.TestRequirements
             .AsNoTracking()
-            .Where(t => t.Project == project && t.Year == year)
+            .Where(t => t.Project == decodedProject && t.Year == year)
             .OrderBy(t => t.TestCode)
             .ToListAsync();
+    }
 
     public async Task<TestRequirement> AddAsync(TestRequirement testRequirement)
     {
@@ -34,8 +38,10 @@ public class TestRequirementRepository : ITestRequirementRepository
 
     public async Task<bool> DeleteAsync(string project, int year, string testCode)
     {
+        var decodedProject = HttpUtility.UrlDecode(project);
+        var decodedTestCode = HttpUtility.UrlDecode(testCode);
         var deleted = await _context.TestRequirements
-            .Where(t => t.Project == project && t.Year == year && t.TestCode == testCode)
+            .Where(t => t.Project == decodedProject && t.Year == year && t.TestCode == decodedTestCode)
             .ExecuteDeleteAsync();
         return deleted > 0;
     }

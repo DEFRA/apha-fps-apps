@@ -75,12 +75,20 @@ public class YearlyDetailsService : IYearlyDetailsService
             Nohours = r.Nohours,
             Nodays = r.Nodays,
             Chargerate = r.Chargerate,
-            StaffCost = r.Chargerate.HasValue && r.Nohours.HasValue ? r.Chargerate.Value * r.Nohours.Value : null,
+            StaffCost = r.Chargerate.HasValue && r.Nohours.HasValue
+                               ? r.Chargerate.Value * r.Nohours.Value
+                               : null,
             Payrate = r.Payrate,
             Npr = r.Npr,
-            Ohr = r.Ohr
+            Ohr = r.Ohr,
+            WorkGroup = r.WorkGroup,
+            GradeCode = r.GradeCode,
+            Programme = r.Programme,
+            EuroConvRate = r.EuroConvRate,
+            EuGrade = r.EuGrade
         });
     }
+
 
     public async Task<StaffRequirementDto> AddStaffRequirementAsync(StaffRequirementDto dto)
     {
@@ -233,12 +241,13 @@ public class YearlyDetailsService : IYearlyDetailsService
         Nohours = r.Nohours,
         Nodays = r.Nodays,
         Chargerate = r.Chargerate,
-        StaffCost = r.Chargerate.HasValue && r.Nohours.HasValue ? r.Chargerate.Value * r.Nohours.Value : null,
+        StaffCost = r.Chargerate.HasValue && r.Nohours.HasValue
+                      ? r.Chargerate.Value * r.Nohours.Value
+                      : null,
         Payrate = r.Payrate,
         Npr = r.Npr,
         Ohr = r.Ohr
     };
-
     private static TestRequirementDto MapTestToDto(TestRequirement r) => new()
     {
         Project = r.Project,

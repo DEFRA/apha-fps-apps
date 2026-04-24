@@ -2,6 +2,7 @@ using Apha.Costbook.Core.Entities;
 using Apha.Costbook.Core.Interfaces;
 using Apha.Costbook.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
+using System.Web;
 
 namespace Apha.Costbook.DataAccess.Repositories;
 
@@ -17,23 +18,31 @@ public class ProjectYearRepository : IProjectYearRepository
     }
 
     public async Task<IEnumerable<ProjectYear>> GetByProjectAsync(string project)
-        => await _context.ProjectYears
+    {
+        var decodedProject = HttpUtility.UrlDecode(project);
+        return await _context.ProjectYears
             .AsNoTracking()
-            .Where(py => py.Project == project)
+            .Where(py => py.Project == decodedProject)
             .OrderBy(py => py.YearValue)
             .ToListAsync();
+    }
 
     public async Task<int?> GetMaxProjectYearAsync(string project)
-        => await _context.ProjectYears
+    {
+        var decodedProject = HttpUtility.UrlDecode(project);
+        return await _context.ProjectYears
             .AsNoTracking()
-            .Where(py => py.Project == project)
+            .Where(py => py.Project == decodedProject)
             .MaxAsync(py => (int?)py.YearValue);
+    }
 
     public async Task<ProjectYear> AddProjectYearAsync(string project, int year)
     {
+        var decodedProject = HttpUtility.UrlDecode(project);
+
         var projectEntity = await _context.Projects
             .AsNoTracking()
-            .FirstOrDefaultAsync(p => p.ProjectId == project);
+            .FirstOrDefaultAsync(p => p.ProjectId == decodedProject);
 
         var isCommercial = projectEntity?.Programme == "Comm";
 
@@ -41,19 +50,19 @@ public class ProjectYearRepository : IProjectYearRepository
 
         if (!isCommercial)
         {
-            newYear = new ProjectYear { Project = project, YearValue = year };
+            newYear = new ProjectYear { Project = decodedProject, YearValue = year };
         }
         else
         {
             var previousYear = await _context.ProjectYears
                 .AsNoTracking()
-                .FirstOrDefaultAsync(py => py.Project == project && py.YearValue == year - 1);
+                .FirstOrDefaultAsync(py => py.Project == decodedProject && py.YearValue == year - 1);
 
             if (previousYear is null)
             {
                 newYear = new ProjectYear
                 {
-                    Project = project,
+                    Project = decodedProject,
                     YearValue = year,
                     ProfitTime = await GetSettingDoubleAsync("Profitstaff"),
                     ProfitTests = await GetSettingDoubleAsync("Profittests"),
@@ -69,7 +78,7 @@ public class ProjectYearRepository : IProjectYearRepository
             {
                 newYear = new ProjectYear
                 {
-                    Project = project,
+                    Project = decodedProject,
                     YearValue = year,
                     ProfitTime = previousYear.ProfitTime ?? await GetSettingDoubleAsync("Profitstaff"),
                     ProfitTests = previousYear.ProfitTests ?? await GetSettingDoubleAsync("Profittests"),

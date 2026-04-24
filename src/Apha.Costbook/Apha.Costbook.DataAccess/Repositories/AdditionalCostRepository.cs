@@ -3,6 +3,7 @@ using Apha.Costbook.Core.Interfaces;
 using Apha.Costbook.DataAccess.Data;
 using Apha.Costbook.DataAccess;
 using Microsoft.EntityFrameworkCore;
+using System.Web;
 
 namespace Apha.Costbook.DataAccess.Repositories;
 
@@ -13,11 +14,14 @@ public class AdditionalCostRepository : IAdditionalCostRepository
     public AdditionalCostRepository(CostbookDbContext context) => _context = context;
 
     public async Task<IEnumerable<AdditionalCost>> GetByProjectYearAsync(string project, int year)
-        => await _context.AdditionalCosts
+    {
+        var decodedProject = HttpUtility.UrlDecode(project);
+        return await _context.AdditionalCosts
             .AsNoTracking()
-            .Where(ac => ac.Project == project && ac.Year == year)
+            .Where(ac => ac.Project == decodedProject && ac.Year == year)
             .OrderBy(ac => ac.Description)
             .ToListAsync();
+    }
 
     public async Task<AdditionalCost> AddAsync(AdditionalCost additionalCost)
     {

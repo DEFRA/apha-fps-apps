@@ -1,7 +1,8 @@
 using Apha.Costbook.Core.Interfaces;
 using Apha.Costbook.DataAccess.Data;
-using Apha.Costbook.DataAccess;
+using Apha.Costbook.Core.Entities;
 using Microsoft.EntityFrameworkCore;
+using System.Web;
 
 namespace Apha.Costbook.DataAccess.Repositories;
 
@@ -12,11 +13,14 @@ public class AnimalRequirementRepository : IAnimalRequirementRepository
     public AnimalRequirementRepository(CostbookDbContext context) => _context = context;
 
     public async Task<IEnumerable<AnimalRequirement>> GetByProjectYearAsync(string project, int year)
-        => await _context.AnimalRequirements
+    {
+        var decodedProject = HttpUtility.UrlDecode(project);
+        return await _context.AnimalRequirements
             .AsNoTracking()
-            .Where(a => a.Project == project && a.Year == year)
+            .Where(a => a.Project == decodedProject && a.Year == year)
             .OrderBy(a => a.AnimalType)
             .ToListAsync();
+    }
 
     public async Task<AnimalRequirement> AddAsync(AnimalRequirement animalRequirement)
     {

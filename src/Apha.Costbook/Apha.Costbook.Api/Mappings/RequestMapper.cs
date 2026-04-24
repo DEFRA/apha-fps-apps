@@ -12,13 +12,18 @@ namespace Apha.Costbook.Api.Mappings
     {
         public RequestMapper()
         {
+            // ── Pagination ────────────────────────────────────────────────────
             CreateMap(typeof(PaginationReq<>), typeof(QueryParameters<>)).ReverseMap();
             CreateMap(typeof(PaginationRes<>), typeof(PaginatedResult<>)).ReverseMap();
-
             CreateMap<Pagination, PaginationDto>().ReverseMap();
+
+            // ── Project entity ↔ Dto/Res/Req ─────────────────────────────────
+            CreateMap<Project, ProjectDto>().ReverseMap();
+            CreateMap<Project, ProjectHeaderDto>();          // entity → header DTO (no reverse needed)
             CreateMap<ProjectDto, ProjectRes>().ReverseMap();
             CreateMap<ProjectDto, ProjectReq>().ReverseMap();
-            CreateMap<Project, ProjectDto>().ReverseMap();
+
+            // ── Lookup entities ───────────────────────────────────────────────
             CreateMap<Customer, CustomerDto>().ReverseMap();
             CreateMap<Disease, DiseaseDto>().ReverseMap();
             CreateMap<Program, ProgramDto>().ReverseMap();
@@ -28,7 +33,14 @@ namespace Apha.Costbook.Api.Mappings
             CreateMap<ProgramDto, ProgramRes>().ReverseMap();
             CreateMap<StaffDto, StaffRes>().ReverseMap();
 
-            // Project1 form mappings
+            // ── Yearly details: entity ↔ Dto (used by YearlyDetailsService) ──
+            CreateMap<ProjectYear, ProjectYearDto>().ReverseMap();
+            CreateMap<StaffRequirement, StaffRequirementDto>().ReverseMap();
+            CreateMap<TestRequirement, TestRequirementDto>().ReverseMap();
+            CreateMap<AnimalRequirement, AnimalRequirementDto>().ReverseMap();
+            CreateMap<AdditionalCost, AdditionalCostDto>().ReverseMap();
+
+            // ── Yearly details: Dto ↔ Res/Req (used by API controller) ───────
             CreateMap<ProjectHeaderDto, ProjectHeaderRes>().ReverseMap();
             CreateMap<ProjectYearDto, ProjectYearRes>().ReverseMap();
             CreateMap<ProjectYearDto, ProjectYearReq>().ReverseMap();
