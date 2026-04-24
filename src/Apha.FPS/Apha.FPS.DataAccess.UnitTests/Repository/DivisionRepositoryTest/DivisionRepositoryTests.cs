@@ -1,80 +1,142 @@
+﻿using Apha.Common.Helpers.Repository;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
+using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
 using Apha.FPS.DataAccess.Repositories;
 using Microsoft.EntityFrameworkCore;
-using MockQueryable.Moq;
 using Moq;
 
 namespace Apha.FPS.DataAccess.UnitTests.Repository.DivisionRepositoryTest
 {
     public class DivisionRepositoryTests
     {
-        private readonly Mock<FpsDbContext> _mockContext;
-        private readonly DivisionRepository _repository;
-        private readonly Mock<DbSet<Division>> _mockDivisionSet;
-        private readonly Mock<DbSet<ProfitCentre>> _mockProfitCentreSet;
-        private readonly Mock<DbSet<DivisionGrade>> _mockDivisionGradeSet;
+        #region Helpers
 
-        public DivisionRepositoryTests()
+        private static Division BuildDivision(string divName = "DIV001", int agencyId = 1, int? divisionId = 10, decimal? centOverhead = 500m) =>
+            new() { DivName = divName, AgencyId = agencyId, DivisionId = divisionId, CentOverhead = centOverhead };
+
+        private static DivisionRepository CreateRepository(
+            IEnumerable<Division>? divisions = null,
+            IEnumerable<ProfitCentre>? profitCentres = null,
+            IEnumerable<DivisionGrade>? divisionGrades = null)
         {
-            var options = new DbContextOptionsBuilder<FpsDbContext>()
-                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-                .Options;
+            var mockFpsYearContext = new Mock<IFpsRequestContext>();
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(mockFpsYearContext.Object);
 
-            var mockFpsContext = new Mock<IFpsRequestContext>();
-            mockFpsContext.Setup(c => c.FpsYear).Returns(2024);
-            mockFpsContext.Setup(c => c.UserEmailId).Returns("testuser@test.com");
+            if (divisions != null)
+            {
+                var mockSet = RepositoryTestHelper.CreateMockDbSet(divisions);
+                RepositoryTestHelper.SetupDbSetOperations(mockSet);
+                mockContext.Setup(x => x.Divisions).Returns(mockSet.Object);
+            }
 
-            _mockContext = new Mock<FpsDbContext>(options, mockFpsContext.Object) { CallBase = true };
-            _repository = new DivisionRepository(_mockContext.Object);
+            if (profitCentres != null)
+            {
+                var mockSet = RepositoryTestHelper.CreateMockDbSet(profitCentres);
+                RepositoryTestHelper.SetupDbSetOperations(mockSet);
+                mockContext.Setup(x => x.Set<ProfitCentre>()).Returns(mockSet.Object);
+            }
 
-            _mockDivisionSet = new Mock<DbSet<Division>>();
-            _mockProfitCentreSet = new Mock<DbSet<ProfitCentre>>();
-            _mockDivisionGradeSet = new Mock<DbSet<DivisionGrade>>();
+            if (divisionGrades != null)
+            {
+                var mockSet = RepositoryTestHelper.CreateMockDbSet(divisionGrades);
+                RepositoryTestHelper.SetupDbSetOperations(mockSet);
+                mockContext.Setup(x => x.Set<DivisionGrade>()).Returns(mockSet.Object);
+            }
 
-            _mockContext.Setup(c => c.Divisions).Returns(_mockDivisionSet.Object);
-            _mockContext.Setup(c => c.Set<ProfitCentre>()).Returns(_mockProfitCentreSet.Object);
-            _mockContext.Setup(c => c.Set<DivisionGrade>()).Returns(_mockDivisionGradeSet.Object);
+            RepositoryTestHelper.SetupSaveChanges(mockContext);
+
+            return new DivisionRepository(mockContext.Object);
         }
+
+        private static (
+            DivisionRepository Repo,
+            Mock<DbSet<Division>> DivisionsDbSet,
+            Mock<FpsDbContext> Context)
+            CreateRepositoryWithMocks(IEnumerable<Division>? divisions = null)
+        {
+            var mockFpsYearContext = new Mock<IFpsRequestContext>();
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(mockFpsYearContext.Object);
+
+            var divisionsMockSet = RepositoryTestHelper.CreateMockDbSet(divisions ?? []);
+            RepositoryTestHelper.SetupDbSetOperations(divisionsMockSet);
+            mockContext.Setup(x => x.Divisions).Returns(divisionsMockSet.Object);
+
+            RepositoryTestHelper.SetupSaveChanges(mockContext);
+
+            var repo = new DivisionRepository(mockContext.Object);
+            return (repo, divisionsMockSet, mockContext);
+        }
+
+        #endregion
+
+        #region Constructor Tests
+
+        [Fact]
+        public void Constructor_ThrowsArgumentNullException_WhenContextIsNull()
+        {
+            Assert.Throws<ArgumentNullException>(() => new DivisionRepository(null!));
+        }
+
+        #endregion
 
         #region GetAllDivisionsAsync Tests
 
         [Fact]
-        public async Task GetAllDivisionsAsync_ReturnsAllDivisions_OrderedByDivName()
+        public async Task GetAllDivisionsAsync_ReturnsEmptyList_WhenNoDivisions()
         {
-            // Arrange
-            var divisions = new List<Division>
-            {
-                new Division { DivName = "VSD", DivisionId = 2, AgencyId = 1 },
-                new Division { DivName = "ACDP", DivisionId = 1, AgencyId = 1 }
-            }.AsQueryable();
-
-            var mockSet = CreateMockDbSet(divisions);
-            _mockContext.Setup(c => c.Divisions).Returns(mockSet.Object);
-
-            // Act
-            var result = await _repository.GetAllDivisionsAsync();
-
-            // Assert
-            Assert.Equal(2, result.Count);
-            Assert.Equal("ACDP", result[0].DivName); // Ordered by DivName
-            Assert.Equal("VSD", result[1].DivName);
+            var repo = CreateRepository(divisions: []);
+            var result = await repo.GetAllDivisionsAsync();
+            Assert.NotNull(result);
+            Assert.Empty(result);
         }
 
         [Fact]
-        public async Task GetAllDivisionsAsync_ReturnsEmptyList_WhenNoDivisionsExist()
+        public async Task GetAllDivisionsAsync_ReturnsAllDivisions()
         {
-            // Arrange
-            var divisions = new List<Division>().AsQueryable();
-            var mockSet = CreateMockDbSet(divisions);
-            _mockContext.Setup(c => c.Divisions).Returns(mockSet.Object);
+            var divisions = new List<Division>
+            {
+                BuildDivision("ALPHA", 1, 10, 100m),
+                BuildDivision("BETA",  2, 20, 200m),
+                BuildDivision("GAMMA", 3, 30, 300m)
+            };
+            var repo = CreateRepository(divisions: divisions);
+            var result = await repo.GetAllDivisionsAsync();
+            Assert.NotNull(result);
+            Assert.Equal(3, result.Count);
+        }
 
-            // Act
-            var result = await _repository.GetAllDivisionsAsync();
+        [Fact]
+        public async Task GetAllDivisionsAsync_ReturnsDivisionsOrderedByDivName()
+        {
+            var divisions = new List<Division>
+            {
+                BuildDivision("ZETA"),
+                BuildDivision("ALPHA"),
+                BuildDivision("MANGO")
+            };
+            var repo = CreateRepository(divisions: divisions);
+            var result = await repo.GetAllDivisionsAsync();
+            Assert.Equal("ALPHA", result[0].DivName);
+            Assert.Equal("MANGO", result[1].DivName);
+            Assert.Equal("ZETA",  result[2].DivName);
+        }
 
-            // Assert
-            Assert.Empty(result);
+        [Fact]
+        public async Task GetAllDivisionsAsync_MapsDivisionFieldsCorrectly()
+        {
+            var divisions = new List<Division>
+            {
+                new() { DivName = "DIV001", AgencyId = 5, DivisionId = 42, CentOverhead = 750m }
+            };
+            var repo = CreateRepository(divisions: divisions);
+            var result = await repo.GetAllDivisionsAsync();
+            var division = Assert.Single(result);
+            Assert.Equal("DIV001", division.DivName);
+            Assert.Equal(5,        division.AgencyId);
+            Assert.Equal(42,       division.DivisionId);
+            Assert.Equal(750m,     division.CentOverhead);
         }
 
         #endregion
@@ -82,145 +144,190 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.DivisionRepositoryTest
         #region GetAllDivisionsPagedAsync Tests
 
         [Fact]
-        public async Task GetAllDivisionsPagedAsync_ReturnsPagedData_WithCorrectCounts()
+        public async Task GetAllDivisionsPagedAsync_ThrowsArgumentNullException_WhenQueryIsNull()
         {
-            // Arrange
+            var repo = CreateRepository(divisions: []);
+            await Assert.ThrowsAsync<ArgumentNullException>(() => repo.GetAllDivisionsPagedAsync(null!));
+        }
+
+        [Fact]
+        public async Task GetAllDivisionsPagedAsync_ReturnsEmptyPagedData_WhenNoDivisions()
+        {
+            var repo = CreateRepository(divisions: []);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+            var result = await repo.GetAllDivisionsPagedAsync(query);
+            Assert.NotNull(result);
+            Assert.Empty(result.Data);
+            Assert.Equal(0, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetAllDivisionsPagedAsync_ReturnsCorrectPage()
+        {
             var divisions = new List<Division>
             {
-                new Division { DivName = "VSD", DivisionId = 1, AgencyId = 1 },
-                new Division { DivName = "ACDP", DivisionId = 2, AgencyId = 1 },
-                new Division { DivName = "VCJD", DivisionId = 3, AgencyId = 2 }
-            }.AsQueryable();
-
-            var mockSet = CreateMockDbSet(divisions);
-            _mockContext.Setup(c => c.Divisions).Returns(mockSet.Object);
-
-            var query = new Core.Pagination.PaginationParameters<string>
-            {
-                Page = 1,
-                PageSize = 2,
-                SortBy = "DivName",
-                Descending = false
+                BuildDivision("DIV_A"), BuildDivision("DIV_B"), BuildDivision("DIV_C"),
+                BuildDivision("DIV_D"), BuildDivision("DIV_E")
             };
-
-            // Act
-            var result = await _repository.GetAllDivisionsPagedAsync(query);
-
-            // Assert
+            var repo = CreateRepository(divisions: divisions);
+            var query = new PaginationParameters<string> { Page = 2, PageSize = 2 };
+            var result = await repo.GetAllDivisionsPagedAsync(query);
             Assert.Equal(2, result.Data.Count());
-            Assert.Equal(3, result.PaginationData.TotalRecords);
-            Assert.Equal(2, result.PaginationData.TotalPages);
+            Assert.Equal(5, result.PaginationData.TotalRecords);
+            Assert.Equal(2, result.PaginationData.PageNumber);
+            Assert.Equal(2, result.PaginationData.PageSize);
+            Assert.Equal(3, result.PaginationData.TotalPages);
+        }
+
+        [Fact]
+        public async Task GetAllDivisionsPagedAsync_FiltersByDivName()
+        {
+            var divisions = new List<Division>
+            {
+                BuildDivision("ALPHA"), BuildDivision("BETA"), BuildDivision("ALPHABET")
+            };
+            var repo = CreateRepository(divisions: divisions);
+            var filter = System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, string> { { "DivName", "ALPHA" } });
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = filter };
+            var result = await repo.GetAllDivisionsPagedAsync(query);
+            Assert.Equal(2, result.Data.Count());
+            Assert.All(result.Data, d => Assert.Contains("ALPHA", d.DivName));
+        }
+
+        [Fact]
+        public async Task GetAllDivisionsPagedAsync_FiltersByDivisionId()
+        {
+            var divisions = new List<Division>
+            {
+                BuildDivision("DIV001", divisionId: 10),
+                BuildDivision("DIV002", divisionId: 20),
+                BuildDivision("DIV003", divisionId: 10)
+            };
+            var repo = CreateRepository(divisions: divisions);
+            var filter = System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, string> { { "DivisionId", "10" } });
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = filter };
+            var result = await repo.GetAllDivisionsPagedAsync(query);
+            Assert.Equal(2, result.Data.Count());
+            Assert.All(result.Data, d => Assert.Equal(10, d.DivisionId));
+        }
+
+        [Fact]
+        public async Task GetAllDivisionsPagedAsync_FiltersByAgencyId()
+        {
+            var divisions = new List<Division>
+            {
+                BuildDivision("DIV001", agencyId: 1),
+                BuildDivision("DIV002", agencyId: 2),
+                BuildDivision("DIV003", agencyId: 1)
+            };
+            var repo = CreateRepository(divisions: divisions);
+            var filter = System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, string> { { "AgencyId", "1" } });
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = filter };
+            var result = await repo.GetAllDivisionsPagedAsync(query);
+            Assert.Equal(2, result.Data.Count());
+            Assert.All(result.Data, d => Assert.Equal(1, d.AgencyId));
+        }
+
+        [Theory]
+        [InlineData("divname",      false)]
+        [InlineData("divname",      true)]
+        [InlineData("divisionid",   false)]
+        [InlineData("divisionid",   true)]
+        [InlineData("agencyid",     false)]
+        [InlineData("agencyid",     true)]
+        [InlineData("centoverhead", false)]
+        [InlineData("centoverhead", true)]
+        [InlineData("unknown",      false)]
+        public async Task GetAllDivisionsPagedAsync_AppliesSortingWithoutException(string sortBy, bool descending)
+        {
+            var divisions = new List<Division>
+            {
+                BuildDivision("DIV_C", agencyId: 3, divisionId: 30, centOverhead: 300m),
+                BuildDivision("DIV_A", agencyId: 1, divisionId: 10, centOverhead: 100m),
+                BuildDivision("DIV_B", agencyId: 2, divisionId: 20, centOverhead: 200m)
+            };
+            var repo = CreateRepository(divisions: divisions);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = sortBy, Descending = descending };
+            var result = await repo.GetAllDivisionsPagedAsync(query);
+            Assert.NotNull(result);
+            Assert.Equal(3, result.Data.Count());
+        }
+
+        [Fact]
+        public async Task GetAllDivisionsPagedAsync_DefaultSortsAscendingByDivName_WhenSortByIsEmpty()
+        {
+            var divisions = new List<Division>
+            {
+                BuildDivision("ZETA"), BuildDivision("ALPHA"), BuildDivision("MANGO")
+            };
+            var repo = CreateRepository(divisions: divisions);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+            var result = await repo.GetAllDivisionsPagedAsync(query);
+            Assert.Equal("ALPHA", result.Data.ElementAt(0).DivName);
+            Assert.Equal("MANGO", result.Data.ElementAt(1).DivName);
+            Assert.Equal("ZETA",  result.Data.ElementAt(2).DivName);
+        }
+
+        [Fact]
+        public async Task GetAllDivisionsPagedAsync_ReturnsCorrectPaginationMetadata()
+        {
+            var divisions = Enumerable.Range(1, 7).Select(i => BuildDivision($"DIV_{i:D3}")).ToList();
+            var repo = CreateRepository(divisions: divisions);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 3 };
+            var result = await repo.GetAllDivisionsPagedAsync(query);
+            Assert.Equal(7, result.PaginationData.TotalRecords);
+            Assert.Equal(3, result.PaginationData.TotalPages);
             Assert.Equal(1, result.PaginationData.PageNumber);
-        }
-
-        [Fact]
-        public async Task GetAllDivisionsPagedAsync_AppliesFiltering_ByDivName()
-        {
-            // Arrange
-            var divisions = new List<Division>
-            {
-                new Division { DivName = "VSD", DivisionId = 1, AgencyId = 1 },
-                new Division { DivName = "VCJD", DivisionId = 2, AgencyId = 1 },
-                new Division { DivName = "ACDP", DivisionId = 3, AgencyId = 2 }
-            }.AsQueryable();
-
-            var mockSet = CreateMockDbSet(divisions);
-            _mockContext.Setup(c => c.Divisions).Returns(mockSet.Object);
-
-            var query = new Core.Pagination.PaginationParameters<string>
-            {
-                Page = 1,
-                PageSize = 10,
-                Filter = "{\"DivName\":\"V\"}"
-            };
-
-            // Act
-            var result = await _repository.GetAllDivisionsPagedAsync(query);
-
-            // Assert
-            Assert.Equal(2, result.Data.Count());
-            Assert.All(result.Data, d => Assert.Contains("V", d.DivName));
-        }
-
-        [Fact]
-        public async Task GetAllDivisionsPagedAsync_AppliesSorting_ByDivisionId_Descending()
-        {
-            // Arrange
-            var divisions = new List<Division>
-            {
-                new Division { DivName = "VSD", DivisionId = 1, AgencyId = 1 },
-                new Division { DivName = "ACDP", DivisionId = 3, AgencyId = 1 },
-                new Division { DivName = "VCJD", DivisionId = 2, AgencyId = 2 }
-            }.AsQueryable();
-
-            var mockSet = CreateMockDbSet(divisions);
-            _mockContext.Setup(c => c.Divisions).Returns(mockSet.Object);
-
-            var query = new Core.Pagination.PaginationParameters<string>
-            {
-                Page = 1,
-                PageSize = 10,
-                SortBy = "DivisionId",
-                Descending = true
-            };
-
-            // Act
-            var result = await _repository.GetAllDivisionsPagedAsync(query);
-
-            // Assert
-            var dataList = result.Data.ToList();
-            Assert.Equal(3, dataList[0].DivisionId); // Highest first
-            Assert.Equal(2, dataList[1].DivisionId);
-            Assert.Equal(1, dataList[2].DivisionId);
+            Assert.Equal(3, result.PaginationData.PageSize);
         }
 
         #endregion
 
         #region GetDivisionByNameAsync Tests
 
-        [Fact]
-        public async Task GetDivisionByNameAsync_ReturnsDiv_WhenExists()
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task GetDivisionByNameAsync_ReturnsNull_WhenDivNameIsNullOrWhiteSpace(string? divName)
         {
-            // Arrange
+            var repo = CreateRepository(divisions: []);
+            var result = await repo.GetDivisionByNameAsync(divName!);
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public async Task GetDivisionByNameAsync_ReturnsNull_WhenDivisionDoesNotExist()
+        {
+            var repo = CreateRepository(divisions: [BuildDivision("DIV001")]);
+            var result = await repo.GetDivisionByNameAsync("MISSING");
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public async Task GetDivisionByNameAsync_ReturnsDivision_WhenFound()
+        {
+            var division = new Division { DivName = "DIV001", AgencyId = 5, DivisionId = 42, CentOverhead = 750m };
+            var repo = CreateRepository(divisions: [division]);
+            var result = await repo.GetDivisionByNameAsync("DIV001");
+            Assert.NotNull(result);
+            Assert.Equal("DIV001", result.DivName);
+            Assert.Equal(5,        result.AgencyId);
+            Assert.Equal(42,       result.DivisionId);
+            Assert.Equal(750m,     result.CentOverhead);
+        }
+
+        [Fact]
+        public async Task GetDivisionByNameAsync_ReturnsSingleMatch_WhenMultipleDivisionsExist()
+        {
             var divisions = new List<Division>
             {
-                new Division { DivName = "VSD", DivisionId = 1, AgencyId = 1 }
-            }.AsQueryable();
-
-            var mockSet = CreateMockDbSet(divisions);
-            _mockContext.Setup(c => c.Divisions).Returns(mockSet.Object);
-
-            // Act
-            var result = await _repository.GetDivisionByNameAsync("VSD");
-
-            // Assert
+                BuildDivision("DIV001"), BuildDivision("DIV002"), BuildDivision("DIV003")
+            };
+            var repo = CreateRepository(divisions: divisions);
+            var result = await repo.GetDivisionByNameAsync("DIV002");
             Assert.NotNull(result);
-            Assert.Equal("VSD", result.DivName);
-        }
-
-        [Fact]
-        public async Task GetDivisionByNameAsync_ReturnsNull_WhenNotFound()
-        {
-            // Arrange
-            var divisions = new List<Division>().AsQueryable();
-            var mockSet = CreateMockDbSet(divisions);
-            _mockContext.Setup(c => c.Divisions).Returns(mockSet.Object);
-
-            // Act
-            var result = await _repository.GetDivisionByNameAsync("NONEXISTENT");
-
-            // Assert
-            Assert.Null(result);
-        }
-
-        [Fact]
-        public async Task GetDivisionByNameAsync_ReturnsNull_WhenDivNameIsEmpty()
-        {
-            // Act
-            var result = await _repository.GetDivisionByNameAsync("");
-
-            // Assert
-            Assert.Null(result);
+            Assert.Equal("DIV002", result.DivName);
         }
 
         #endregion
@@ -228,30 +335,34 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.DivisionRepositoryTest
         #region CreateDivisionAsync Tests
 
         [Fact]
-        public async Task CreateDivisionAsync_AddsDivision_AndReturnsSavedEntity()
+        public async Task CreateDivisionAsync_ThrowsArgumentNullException_WhenDivisionIsNull()
         {
-            // Arrange
-            var division = new Division { DivName = "NEW", DivisionId = 99, AgencyId = 2 };
-            
-            _mockDivisionSet.Setup(m => m.Add(It.IsAny<Division>()));
-            _mockContext.Setup(m => m.SaveChangesAsync(default)).ReturnsAsync(1);
-
-            // Act
-            var result = await _repository.CreateDivisionAsync(division);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.Equal("NEW", result.DivName);
-            _mockDivisionSet.Verify(m => m.Add(It.Is<Division>(d => d.DivName == "NEW")), Times.Once);
-            _mockContext.Verify(m => m.SaveChangesAsync(default), Times.Once);
+            var repo = CreateRepository(divisions: []);
+            await Assert.ThrowsAsync<ArgumentNullException>(() => repo.CreateDivisionAsync(null!));
         }
 
         [Fact]
-        public async Task CreateDivisionAsync_ThrowsArgumentNullException_WhenDivisionIsNull()
+        public async Task CreateDivisionAsync_AddsDivision_WhenValid()
         {
-            // Act & Assert
-            await Assert.ThrowsAsync<ArgumentNullException>(() => 
-                _repository.CreateDivisionAsync(null!));
+            var (repo, divisionsMockSet, mockContext) = CreateRepositoryWithMocks([]);
+            var newDivision = BuildDivision("DIV_NEW", agencyId: 3, divisionId: 99, centOverhead: 1000m);
+            var result = await repo.CreateDivisionAsync(newDivision);
+            Assert.NotNull(result);
+            Assert.Equal("DIV_NEW", result.DivName);
+            Assert.Equal(3,         result.AgencyId);
+            Assert.Equal(99,        result.DivisionId);
+            Assert.Equal(1000m,     result.CentOverhead);
+            divisionsMockSet.Verify(x => x.Add(It.IsAny<Division>()), Times.Once);
+            RepositoryTestHelper.VerifySaveChanges(mockContext);
+        }
+
+        [Fact]
+        public async Task CreateDivisionAsync_ReturnsTheSameEntity_ThatWasAdded()
+        {
+            var (repo, _, _) = CreateRepositoryWithMocks([]);
+            var newDivision = BuildDivision("DIV_SAME");
+            var result = await repo.CreateDivisionAsync(newDivision);
+            Assert.Same(newDivision, result);
         }
 
         #endregion
@@ -259,244 +370,259 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.DivisionRepositoryTest
         #region UpdateDivisionAsync Tests
 
         [Fact]
-        public async Task UpdateDivisionAsync_UpdatesExistingDivision_WhenPrimaryKeyNotChanged()
+        public async Task UpdateDivisionAsync_ThrowsArgumentNullException_WhenDivisionIsNull()
         {
-            // Arrange
-            var originalDivision = new Division { DivName = "VSD", DivisionId = 1, AgencyId = 1, CentOverhead = 100 };
-            var updatedDivision = new Division { DivName = "VSD", DivisionId = 2, AgencyId = 2, CentOverhead = 200 };
+            var repo = CreateRepository(divisions: []);
+            await Assert.ThrowsAsync<ArgumentNullException>(() => repo.UpdateDivisionAsync("DIV001", null!));
+        }
 
-            var divisions = new List<Division> { originalDivision }.AsQueryable();
-            var mockSet = CreateMockDbSet(divisions);
-            _mockContext.Setup(c => c.Divisions).Returns(mockSet.Object);
-            _mockContext.Setup(m => m.SaveChangesAsync(default)).ReturnsAsync(1);
-
-            // Act
-            var result = await _repository.UpdateDivisionAsync("VSD", updatedDivision);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.Equal(2, result.DivisionId);
-            Assert.Equal(2, result.AgencyId);
-            Assert.Equal(200, result.CentOverhead);
-            _mockContext.Verify(m => m.SaveChangesAsync(default), Times.Once);
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task UpdateDivisionAsync_ThrowsArgumentException_WhenOriginalDivNameIsNullOrWhiteSpace(string? originalDivName)
+        {
+            var repo = CreateRepository(divisions: []);
+            var division = BuildDivision("DIV001");
+            await Assert.ThrowsAsync<ArgumentException>(() => repo.UpdateDivisionAsync(originalDivName!, division));
         }
 
         [Fact]
-        public async Task UpdateDivisionAsync_DeletesAndCreates_WhenPrimaryKeyChanges()
+        public async Task UpdateDivisionAsync_ThrowsInvalidOperationException_WhenDivisionNotFound_SamePrimaryKey()
         {
-            // Arrange
-            var originalDivision = new Division { DivName = "VSD", DivisionId = 1, AgencyId = 1 };
-            var updatedDivision = new Division { DivName = "NEWNAME", DivisionId = 1, AgencyId = 1 };
-
-            var divisions = new List<Division> { originalDivision }.AsQueryable();
-            var mockSet = CreateMockDbSet(divisions);
-            _mockContext.Setup(c => c.Divisions).Returns(mockSet.Object);
-            _mockContext.Setup(m => m.SaveChangesAsync(default)).ReturnsAsync(1);
-
-            // Act
-            var result = await _repository.UpdateDivisionAsync("VSD", updatedDivision);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.Equal("NEWNAME", result.DivName);
-            mockSet.Verify(m => m.Remove(It.IsAny<Division>()), Times.Once);
-            mockSet.Verify(m => m.Add(It.IsAny<Division>()), Times.Once);
-            _mockContext.Verify(m => m.SaveChangesAsync(default), Times.Exactly(2));
+            var repo = CreateRepository(divisions: []);
+            var division = BuildDivision("MISSING");
+            await Assert.ThrowsAsync<InvalidOperationException>(() => repo.UpdateDivisionAsync("MISSING", division));
         }
 
         [Fact]
-        public async Task UpdateDivisionAsync_ThrowsInvalidOperationException_WhenDivisionNotFound()
+        public async Task UpdateDivisionAsync_ThrowsInvalidOperationException_WhenDivisionNotFound_DifferentPrimaryKey()
         {
-            // Arrange
-            var divisions = new List<Division>().AsQueryable();
-            var mockSet = CreateMockDbSet(divisions);
-            _mockContext.Setup(c => c.Divisions).Returns(mockSet.Object);
+            var repo = CreateRepository(divisions: []);
+            var division = BuildDivision("NEW_NAME");
+            await Assert.ThrowsAsync<InvalidOperationException>(() => repo.UpdateDivisionAsync("OLD_NAME", division));
+        }
 
-            var updatedDivision = new Division { DivName = "VSD", DivisionId = 1, AgencyId = 1 };
+        [Fact]
+        public async Task UpdateDivisionAsync_UpdatesProperties_WhenPrimaryKeyIsUnchanged()
+        {
+            var existing = BuildDivision("DIV001", agencyId: 1, divisionId: 10, centOverhead: 100m);
+            var mockFpsYearContext = new Mock<IFpsRequestContext>();
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(mockFpsYearContext.Object);
+            var divisionsMockSet = RepositoryTestHelper.CreateMockDbSet<Division>([existing]);
+            RepositoryTestHelper.SetupDbSetOperations(divisionsMockSet);
+            mockContext.Setup(x => x.Divisions).Returns(divisionsMockSet.Object);
+            RepositoryTestHelper.SetupSaveChanges(mockContext);
 
-            // Act & Assert
-            await Assert.ThrowsAsync<InvalidOperationException>(() => 
-                _repository.UpdateDivisionAsync("NONEXISTENT", updatedDivision));
+            var repo = new DivisionRepository(mockContext.Object);
+            var updated = new Division { DivName = "DIV001", AgencyId = 9, DivisionId = 99, CentOverhead = 999m };
+
+            var result = await repo.UpdateDivisionAsync("DIV001", updated);
+
+            Assert.NotNull(result);
+            Assert.Equal("DIV001", result.DivName);
+            Assert.Equal(9,        result.AgencyId);
+            Assert.Equal(99,       result.DivisionId);
+            Assert.Equal(999m,     result.CentOverhead);
+            RepositoryTestHelper.VerifySaveChanges(mockContext);
+        }
+
+        [Fact]
+        public async Task UpdateDivisionAsync_DeletesAndReInserts_WhenPrimaryKeyChanges()
+        {
+            var existing = BuildDivision("OLD_NAME", agencyId: 1, divisionId: 10, centOverhead: 100m);
+            var mockFpsYearContext = new Mock<IFpsRequestContext>();
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(mockFpsYearContext.Object);
+            var divisionsMockSet = RepositoryTestHelper.CreateMockDbSet<Division>([existing]);
+            RepositoryTestHelper.SetupDbSetOperations(divisionsMockSet);
+            mockContext.Setup(x => x.Divisions).Returns(divisionsMockSet.Object);
+            RepositoryTestHelper.SetupSaveChanges(mockContext);
+
+            var repo = new DivisionRepository(mockContext.Object);
+            var updated = BuildDivision("NEW_NAME", agencyId: 2, divisionId: 20, centOverhead: 200m);
+
+            var result = await repo.UpdateDivisionAsync("OLD_NAME", updated);
+
+            Assert.NotNull(result);
+            Assert.Equal("NEW_NAME", result.DivName);
+            Assert.Equal(2,          result.AgencyId);
+            divisionsMockSet.Verify(x => x.Remove(It.IsAny<Division>()), Times.Once);
+            divisionsMockSet.Verify(x => x.Add(It.Is<Division>(d => d.DivName == "NEW_NAME")), Times.Once);
+            RepositoryTestHelper.VerifySaveChanges(mockContext, times: 2);
         }
 
         #endregion
 
         #region DeleteDivisionAsync Tests
 
-        [Fact]
-        public async Task DeleteDivisionAsync_RemovesDivision_AndReturnsTrue()
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task DeleteDivisionAsync_ReturnsFalse_WhenDivNameIsNullOrWhiteSpace(string? divName)
         {
-            // Arrange
-            var division = new Division { DivName = "VSD", DivisionId = 1, AgencyId = 1 };
-            var divisions = new List<Division> { division }.AsQueryable();
-            var mockSet = CreateMockDbSet(divisions);
-            _mockContext.Setup(c => c.Divisions).Returns(mockSet.Object);
-            _mockContext.Setup(m => m.SaveChangesAsync(default)).ReturnsAsync(1);
-
-            // Act
-            var result = await _repository.DeleteDivisionAsync("VSD");
-
-            // Assert
-            Assert.True(result);
-            mockSet.Verify(m => m.Remove(It.IsAny<Division>()), Times.Once);
-            _mockContext.Verify(m => m.SaveChangesAsync(default), Times.Once);
+            var repo = CreateRepository(divisions: []);
+            var result = await repo.DeleteDivisionAsync(divName!);
+            Assert.False(result);
         }
 
         [Fact]
         public async Task DeleteDivisionAsync_ReturnsFalse_WhenDivisionNotFound()
         {
-            // Arrange
-            var divisions = new List<Division>().AsQueryable();
-            var mockSet = CreateMockDbSet(divisions);
-            _mockContext.Setup(c => c.Divisions).Returns(mockSet.Object);
-
-            // Act
-            var result = await _repository.DeleteDivisionAsync("NONEXISTENT");
-
-            // Assert
+            var repo = CreateRepository(divisions: [BuildDivision("DIV001")]);
+            var result = await repo.DeleteDivisionAsync("MISSING");
             Assert.False(result);
         }
 
         [Fact]
-        public async Task DeleteDivisionAsync_ReturnsFalse_WhenDivNameIsEmpty()
+        public async Task DeleteDivisionAsync_ReturnsTrue_WhenDivisionFound()
         {
-            // Act
-            var result = await _repository.DeleteDivisionAsync("");
+            var (repo, _, _) = CreateRepositoryWithMocks([BuildDivision("DIV001")]);
+            var result = await repo.DeleteDivisionAsync("DIV001");
+            Assert.True(result);
+        }
 
-            // Assert
-            Assert.False(result);
+        [Fact]
+        public async Task DeleteDivisionAsync_CallsRemoveAndSave_WhenDivisionFound()
+        {
+            var (repo, divisionsMockSet, mockContext) = CreateRepositoryWithMocks([BuildDivision("DIV001")]);
+            await repo.DeleteDivisionAsync("DIV001");
+            divisionsMockSet.Verify(x => x.Remove(It.IsAny<Division>()), Times.Once);
+            RepositoryTestHelper.VerifySaveChanges(mockContext);
+        }
+
+        [Fact]
+        public async Task DeleteDivisionAsync_DoesNotCallRemove_WhenDivisionNotFound()
+        {
+            var (repo, divisionsMockSet, _) = CreateRepositoryWithMocks([BuildDivision("DIV001")]);
+            await repo.DeleteDivisionAsync("MISSING");
+            divisionsMockSet.Verify(x => x.Remove(It.IsAny<Division>()), Times.Never);
         }
 
         #endregion
 
         #region DivisionExistsAsync Tests
 
-        [Fact]
-        public async Task DivisionExistsAsync_ReturnsTrue_WhenDivisionExists()
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task DivisionExistsAsync_ReturnsFalse_WhenDivNameIsNullOrWhiteSpace(string? divName)
         {
-            // Arrange
-            var divisions = new List<Division>
-            {
-                new Division { DivName = "VSD", DivisionId = 1, AgencyId = 1 }
-            }.AsQueryable();
-
-            var mockSet = CreateMockDbSet(divisions);
-            _mockContext.Setup(c => c.Divisions).Returns(mockSet.Object);
-
-            // Act
-            var result = await _repository.DivisionExistsAsync("VSD");
-
-            // Assert
-            Assert.True(result);
+            var repo = CreateRepository(divisions: [BuildDivision("DIV001")]);
+            var result = await repo.DivisionExistsAsync(divName!);
+            Assert.False(result);
         }
 
         [Fact]
         public async Task DivisionExistsAsync_ReturnsFalse_WhenDivisionDoesNotExist()
         {
-            // Arrange
-            var divisions = new List<Division>().AsQueryable();
-            var mockSet = CreateMockDbSet(divisions);
-            _mockContext.Setup(c => c.Divisions).Returns(mockSet.Object);
-
-            // Act
-            var result = await _repository.DivisionExistsAsync("NONEXISTENT");
-
-            // Assert
+            var repo = CreateRepository(divisions: [BuildDivision("DIV001")]);
+            var result = await repo.DivisionExistsAsync("MISSING");
             Assert.False(result);
+        }
+
+        [Fact]
+        public async Task DivisionExistsAsync_ReturnsTrue_WhenDivisionExists()
+        {
+            var repo = CreateRepository(divisions: [BuildDivision("DIV001")]);
+            var result = await repo.DivisionExistsAsync("DIV001");
+            Assert.True(result);
+        }
+
+        [Fact]
+        public async Task DivisionExistsAsync_ReturnsTrue_OnlyForExactMatch()
+        {
+            var repo = CreateRepository(divisions: [BuildDivision("DIV001")]);
+            var exists    = await repo.DivisionExistsAsync("DIV001");
+            var notExists = await repo.DivisionExistsAsync("DIV002");
+            Assert.True(exists);
+            Assert.False(notExists);
         }
 
         #endregion
 
         #region GetDivisionForeignKeyReferencesAsync Tests
 
-        [Fact]
-        public async Task GetDivisionForeignKeyReferencesAsync_ReturnsEmpty_WhenNoReferences()
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task GetDivisionForeignKeyReferencesAsync_ReturnsEmptyList_WhenDivNameIsNullOrWhiteSpace(string? divName)
         {
-            // Arrange
-            var profitCentres = new List<ProfitCentre>().AsQueryable();
-            var divisionGrades = new List<DivisionGrade>().AsQueryable();
-
-            var mockPcSet = CreateMockDbSet(profitCentres);
-            var mockDgSet = CreateMockDbSet(divisionGrades);
-
-            _mockContext.Setup(c => c.Set<ProfitCentre>()).Returns(mockPcSet.Object);
-            _mockContext.Setup(c => c.Set<DivisionGrade>()).Returns(mockDgSet.Object);
-
-            // Act
-            var result = await _repository.GetDivisionForeignKeyReferencesAsync("VSD");
-
-            // Assert
+            var repo = CreateRepository(divisions: [], profitCentres: [], divisionGrades: []);
+            var result = await repo.GetDivisionForeignKeyReferencesAsync(divName!);
+            Assert.NotNull(result);
             Assert.Empty(result);
         }
 
         [Fact]
-        public async Task GetDivisionForeignKeyReferencesAsync_ReturnsProfitCentre_WhenReferenced()
+        public async Task GetDivisionForeignKeyReferencesAsync_ReturnsEmptyList_WhenNoReferences()
         {
-            // Arrange
-            var profitCentres = new List<ProfitCentre>
-            {
-                new ProfitCentre { Division = "VSD" }
-            }.AsQueryable();
-            var divisionGrades = new List<DivisionGrade>().AsQueryable();
-
-            var mockPcSet = CreateMockDbSet(profitCentres);
-            var mockDgSet = CreateMockDbSet(divisionGrades);
-
-            _mockContext.Setup(c => c.Set<ProfitCentre>()).Returns(mockPcSet.Object);
-            _mockContext.Setup(c => c.Set<DivisionGrade>()).Returns(mockDgSet.Object);
-
-            // Act
-            var result = await _repository.GetDivisionForeignKeyReferencesAsync("VSD");
-
-            // Assert
-            Assert.Single(result);
-            Assert.Contains("tblkpprofitcentre", result);
+            var repo = CreateRepository(
+                divisions:      [BuildDivision("DIV001")],
+                profitCentres:  [],
+                divisionGrades: []);
+            var result = await repo.GetDivisionForeignKeyReferencesAsync("DIV001");
+            Assert.NotNull(result);
+            Assert.Empty(result);
         }
 
         [Fact]
-        public async Task GetDivisionForeignKeyReferencesAsync_ReturnsBothTables_WhenReferencedInBoth()
+        public async Task GetDivisionForeignKeyReferencesAsync_ReturnsProfitCentreTable_WhenReferenced()
         {
-            // Arrange
-            var profitCentres = new List<ProfitCentre>
-            {
-                new ProfitCentre { Division = "VSD" }
-            }.AsQueryable();
-            var divisionGrades = new List<DivisionGrade>
-            {
-                new DivisionGrade { Division = "VSD" }
-            }.AsQueryable();
+            var profitCentres = new List<ProfitCentre> { new() { Division = "DIV001" } };
+            var repo = CreateRepository(
+                divisions:      [BuildDivision("DIV001")],
+                profitCentres:  profitCentres,
+                divisionGrades: []);
+            var result = await repo.GetDivisionForeignKeyReferencesAsync("DIV001");
+            Assert.Contains("tblkpprofitcentre", result);
+            Assert.DoesNotContain("divisiongrade", result);
+        }
 
-            var mockPcSet = CreateMockDbSet(profitCentres);
-            var mockDgSet = CreateMockDbSet(divisionGrades);
+        [Fact]
+        public async Task GetDivisionForeignKeyReferencesAsync_ReturnsDivisionGradeTable_WhenReferenced()
+        {
+            var divisionGrades = new List<DivisionGrade> { new() { Division = "DIV001", GradeCode = "GR01" } };
+            var repo = CreateRepository(
+                divisions:      [BuildDivision("DIV001")],
+                profitCentres:  [],
+                divisionGrades: divisionGrades);
+            var result = await repo.GetDivisionForeignKeyReferencesAsync("DIV001");
+            Assert.Contains("divisiongrade", result);
+            Assert.DoesNotContain("tblkpprofitcentre", result);
+        }
 
-            _mockContext.Setup(c => c.Set<ProfitCentre>()).Returns(mockPcSet.Object);
-            _mockContext.Setup(c => c.Set<DivisionGrade>()).Returns(mockDgSet.Object);
-
-            // Act
-            var result = await _repository.GetDivisionForeignKeyReferencesAsync("VSD");
-
-            // Assert
+        [Fact]
+        public async Task GetDivisionForeignKeyReferencesAsync_ReturnsBothTables_WhenBothReferenced()
+        {
+            var profitCentres  = new List<ProfitCentre>  { new() { Division = "DIV001" } };
+            var divisionGrades = new List<DivisionGrade> { new() { Division = "DIV001", GradeCode = "GR01" } };
+            var repo = CreateRepository(
+                divisions:      [BuildDivision("DIV001")],
+                profitCentres:  profitCentres,
+                divisionGrades: divisionGrades);
+            var result = await repo.GetDivisionForeignKeyReferencesAsync("DIV001");
             Assert.Equal(2, result.Count);
             Assert.Contains("tblkpprofitcentre", result);
-            Assert.Contains("divisiongrade", result);
+            Assert.Contains("divisiongrade",     result);
+        }
+
+        [Fact]
+        public async Task GetDivisionForeignKeyReferencesAsync_IgnoresReferences_WhenDivisionNameDoesNotMatch()
+        {
+            var profitCentres  = new List<ProfitCentre>  { new() { Division = "OTHER" } };
+            var divisionGrades = new List<DivisionGrade> { new() { Division = "OTHER", GradeCode = "GR01" } };
+            var repo = CreateRepository(
+                divisions:      [BuildDivision("DIV001")],
+                profitCentres:  profitCentres,
+                divisionGrades: divisionGrades);
+            var result = await repo.GetDivisionForeignKeyReferencesAsync("DIV001");
+            Assert.Empty(result);
         }
 
         #endregion
-
-        #region Helper Methods
-
-        private static Mock<DbSet<T>> CreateMockDbSet<T>(IQueryable<T> data) where T : class
-        {
-            return data.ToList().BuildMockDbSet();
-        }
-
-        #endregion
-
-        // Helper class for JSON parsing
-        private class JsonResponse
-        {
-            public bool success { get; set; }
-            public string? message { get; set; }
-        }
     }
 }
+

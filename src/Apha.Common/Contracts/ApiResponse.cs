@@ -21,7 +21,6 @@ namespace Apha.Common.Contracts
     {
         public string CorrelationId { get; set; } = string.Empty;
         public DateTime TimestampUtc { get; set; } = DateTime.UtcNow;
-        public string? Message { get; set; }
     }
 
     public class Pagination

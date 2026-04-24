@@ -14,7 +14,6 @@
     <PackageReference Include="Serilog.Sinks.AwsCloudWatch" Version="4.4.42" />
 	<PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.5" />
 	<PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.5" />
-	<PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.6" />
   </ItemGroup>
 
   <ItemGroup>    

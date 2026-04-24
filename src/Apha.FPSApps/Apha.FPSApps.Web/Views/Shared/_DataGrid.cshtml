@@ -68,10 +68,7 @@
 
     <div>
         <div class="grid-scroll-container">
-            <table id="@Model.GridId" 
-                   class="editable-grid-table govuk-table custom-table"
-                   data-current-page="@(Model.Pagination?.PageNumber ?? 1)"
-                   data-page-size="@(Model.Pagination?.PageSize ?? 10)">
+            <table id="@($"tbl_{Model.GridId}")" class="editable-grid-table govuk-table custom-table">
                 <thead class="govuk-table__head">
                     <tr class="govuk-table__row"> 
                         @if (Model.ShowCheckboxColumn)
