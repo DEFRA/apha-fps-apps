@@ -1,7 +1,8 @@
-﻿using System.Security.Claims;
+﻿using DocumentFormat.OpenXml.InkML;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.Identity.Web;
+using System.Security.Claims;
 
 namespace Apha.FPSApps.Web.Extensions
 {
@@ -9,6 +10,7 @@ namespace Apha.FPSApps.Web.Extensions
     {
         public static IServiceCollection AddAuthenticationServices(this IServiceCollection services, IConfiguration configuration)
         {
+            Console.WriteLine("In AddAuthenticationServices-");
             services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
              .AddMicrosoftIdentityWebApp(options =>
              {
@@ -58,13 +60,17 @@ namespace Apha.FPSApps.Web.Extensions
         /// <returns>A completed task.</returns>
         private static Task HandleRedirectToIdentityProvider(RedirectContext context)
         {
+
+            Console.WriteLine("In HandleRedirectToIdentityProvider-"+context.ProtocolMessage.RedirectUri);
             // Check if the redirect URI starts with "http://"
             if (context.ProtocolMessage.RedirectUri?.StartsWith("http://", StringComparison.OrdinalIgnoreCase) == true)
             {
                 // Replace "http://" with "https://"
                 context.ProtocolMessage.RedirectUri =
                     string.Concat("https://", context.ProtocolMessage.RedirectUri.AsSpan("http://".Length));
+                Console.WriteLine("After HandleRedirectToIdentityProvider-" + context.ProtocolMessage.RedirectUri);
             }
+            
             return Task.CompletedTask;
         }
 

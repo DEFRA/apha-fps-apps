@@ -108,14 +108,15 @@ namespace Apha.FPSApps.Web.Extensions
             });
 
             // Error handling
-            if (env.IsDevelopment() || env.IsEnvironment("local"))
-            {
-                app.UseDeveloperExceptionPage();
-            }
-            else
-            {
-                app.UseExceptionHandler("/Home/Error");
-            }
+            //if (env.IsDevelopment() || env.IsEnvironment("local"))
+            //{
+            //    app.UseDeveloperExceptionPage();
+            //}
+            //else
+            //{
+            //    app.UseExceptionHandler("/Home/Error");
+            //}
+            app.UseDeveloperExceptionPage();
 
             app.UseHsts();
             app.UseHttpsRedirection();
@@ -123,7 +124,7 @@ namespace Apha.FPSApps.Web.Extensions
             app.UseRouting();
 
             app.UseSession();
-            app.UseMiddleware<ExceptionMiddleware>();
+            //app.UseMiddleware<ExceptionMiddleware>();
 
             app.UseAuthentication();
             app.UseAuthorization();
