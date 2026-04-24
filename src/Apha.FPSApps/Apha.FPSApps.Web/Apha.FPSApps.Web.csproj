@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Remove="Areas\FPS\Views\ProjectAddEdit.cshtml" />
     <Content Remove="Areas\FPS\Views\Project\Index.cshtml" />
     <Content Remove="Areas\FPS\Views\Project\_AddProgrammeNewProject.cshtml" />
     <Content Remove="Areas\FPS\Views\Project\_EditProgrammeNewProject.cshtml" />
