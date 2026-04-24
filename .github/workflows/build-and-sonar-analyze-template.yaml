@@ -69,13 +69,13 @@ jobs:
       should_push: ${{ steps.check_commit.outputs.should_push }}
     steps:
       - name: Set up JDK 17
-        uses: actions/setup-java@v4.5.0
+        uses: actions/setup-java@v4
         with:
           java-version: 17
           distribution: zulu
 
       - name: Checkout repository
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: ${{ github.ref_name }}
