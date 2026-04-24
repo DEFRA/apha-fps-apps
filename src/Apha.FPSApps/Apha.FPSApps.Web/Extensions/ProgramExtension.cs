@@ -125,8 +125,8 @@ namespace Apha.FPSApps.Web.Extensions
             app.UseSession();
             app.UseMiddleware<ExceptionMiddleware>();
 
-            //app.UseAuthentication();
-            //app.UseAuthorization();
+            app.UseAuthentication();
+            app.UseAuthorization();
 
             // FpsYearMiddleware must run after authentication to access API with bearer token
             app.UseMiddleware<FpsYearMiddleware>();
