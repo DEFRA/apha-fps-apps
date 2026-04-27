@@ -46,3 +46,4 @@ docker-compose --profile nodb up --build
 - Worker runtime notes: Apha.BatchJobs.Worker/README.md
 - Database scripts and operations: database/README.md
 - Architecture and deployment summary: docs/README.md
+- Codespaces parity and AWS production flow: docs/CODESPACES_PRODUCTION_PARITY_AND_AWS_FLOW.md

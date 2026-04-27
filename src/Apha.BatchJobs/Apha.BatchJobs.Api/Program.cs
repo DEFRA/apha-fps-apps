@@ -9,6 +9,8 @@ var builder = WebApplication.CreateBuilder(args);
 // This wires up domain, infrastructure and application layers (repos, factories, etc.)
 ServiceCollectionSetup.ConfigureBatchJobServices(builder.Services, builder.Configuration);
 
+builder.Services.Configure<AwsEcsTriggerOptions>(builder.Configuration.GetSection("AwsEcsTrigger"));
+builder.Services.AddSingleton<IAmazonECS>(_ => new AmazonECSClient());
 builder.Services.AddScoped<IJobStatusService, JobStatusService>();
 builder.Services.AddAWSService<IAmazonECS>();
 builder.Services.AddScoped<IEcsTaskDispatcher, EcsTaskDispatcher>();
