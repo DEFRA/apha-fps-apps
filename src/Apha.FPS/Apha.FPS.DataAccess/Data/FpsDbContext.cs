@@ -62,6 +62,7 @@ namespace Apha.FPS.DataAccess.Data
 
         public virtual DbSet<Division> Divisions { get; set; }
         public virtual DbSet<Agency> Agencies { get; set; }
+        public virtual DbSet<Grade> Grades { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -180,6 +181,9 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new DivisionMap());
             modelBuilder.ApplyConfiguration(new DivisionGradeMap());
             modelBuilder.Entity<DivisionGrade>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new GradeMap());
+            modelBuilder.Entity<Grade>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
         }
     }
 }

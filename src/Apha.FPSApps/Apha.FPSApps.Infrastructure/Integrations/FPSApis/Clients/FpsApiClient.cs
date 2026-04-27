@@ -23,6 +23,8 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
         public IFpsAgencyApiClient FpsAgency { get; }
 
+        public IFpsWorkgroupGradeApiClient FpsWorkgroupGrade { get; }
+
         public FpsApiClient(IFpsHttpExecutor http, IMapper mapper)
         {
             FpsStaffJob = new FpsStaffJobApiClient(http, mapper);
@@ -37,6 +39,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             FpsProjectStaffPlanActual = new FpsProjectStaffPlanActualApiClient(http, mapper);
             FpsDivision = new FpsDivisionApiClient(http, mapper);
             FpsAgency = new FpsAgencyApiClient(http, mapper);
+            FpsWorkgroupGrade = new FpsWorkgroupGradeApiClient(http, mapper);
         }
     }
 }

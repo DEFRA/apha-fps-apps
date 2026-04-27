@@ -38,6 +38,7 @@ services.AddScoped<ITestorProductService, TestorProductService>();
             services.AddScoped<ITimeCostCalcsService, TimeCostCalcsService>();
             services.AddScoped<IDivisionService, DivisionService>();
             services.AddScoped<IAgencyService, AgencyService>();
+            services.AddScoped<IWorkgroupGradeService, WorkgroupGradeService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
@@ -60,6 +61,7 @@ services.AddScoped<ITestorProductRepository, TestorProductRepository>();
             services.AddScoped<ITimeCostCalcsRepository, TimeCostCalcsRepository>();
             services.AddScoped<IDivisionRepository, DivisionRepository>();
             services.AddScoped<IAgencyRepository, AgencyRepository>();
+            services.AddScoped<IWorkgroupGradeRepository, WorkgroupGradeRepository>();
             return services;
         }
     }

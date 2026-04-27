@@ -65,6 +65,10 @@ namespace Apha.FPSApps.Infrastructure.Mappings
 
             // Agency
             CreateMap<AgencyDto, AgencyRes>().ReverseMap();
+
+            // WorkgroupGrade
+            CreateMap<WorkgroupGradeDto, WorkgroupGradeReq>().ReverseMap();
+            CreateMap<WorkgroupGradeDto, WorkgroupGradeRes>().ReverseMap();
         }
     }
 }
