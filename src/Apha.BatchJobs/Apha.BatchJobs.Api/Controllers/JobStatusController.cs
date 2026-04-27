@@ -11,16 +11,16 @@ namespace Apha.BatchJobs.Api.Controllers;
 public sealed class JobStatusController : ControllerBase
 {
     private readonly IJobStatusService _statusService;
-    private readonly IJobTriggerService _triggerService;
+    private readonly IEcsTaskDispatcher _ecsTaskDispatcher;
     private readonly ILogger<JobStatusController> _logger;
 
     public JobStatusController(
         IJobStatusService statusService,
-        IJobTriggerService triggerService,
+        IEcsTaskDispatcher ecsTaskDispatcher,
         ILogger<JobStatusController> logger)
     {
         _statusService = statusService;
-        _triggerService = triggerService;
+        _ecsTaskDispatcher = ecsTaskDispatcher;
         _logger = logger;
     }
 
@@ -145,15 +145,13 @@ public sealed class JobStatusController : ControllerBase
             });
         }
 
-        var result = await _triggerService.TriggerAsync(jobName, cancellationToken);
+        var taskArn = await _ecsTaskDispatcher.RunBatchJobAsync(jobName, cancellationToken);
 
         return Accepted(new
         {
-            accepted = true,
-            operationId = result.OperationId,
-            acceptedAt = result.AcceptedAtUtc,
             jobName,
-            message = "Job accepted for execution. Poll status endpoint for progress."
+            taskArn,
+            acceptedAt = DateTime.UtcNow
         });
     }
 }

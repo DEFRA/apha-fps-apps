@@ -1,5 +1,6 @@
 using Apha.BatchJobs.Api.Services;
 using Apha.BatchJobs.Worker;
+using Amazon.ECS;
 using Microsoft.AspNetCore.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,7 +10,8 @@ var builder = WebApplication.CreateBuilder(args);
 ServiceCollectionSetup.ConfigureBatchJobServices(builder.Services, builder.Configuration);
 
 builder.Services.AddScoped<IJobStatusService, JobStatusService>();
-builder.Services.AddSingleton<IJobTriggerService, JobTriggerService>();
+builder.Services.AddAWSService<IAmazonECS>();
+builder.Services.AddScoped<IEcsTaskDispatcher, EcsTaskDispatcher>();
 builder.Services.AddControllers();
 
 var app = builder.Build();

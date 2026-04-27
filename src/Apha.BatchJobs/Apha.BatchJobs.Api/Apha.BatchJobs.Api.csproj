@@ -9,6 +9,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AWSSDK.ECS" Version="3.7.*" />
+    <PackageReference Include="AWSSDK.Extensions.NETCore.Setup" Version="3.7.*" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Reference the monorepo BatchJobs project but do not compile its Program.cs into this web app -->
     <ProjectReference Include="..\BatchJobs.csproj">
       <SkipGetTargetFrameworkProperties>true</SkipGetTargetFrameworkProperties>
