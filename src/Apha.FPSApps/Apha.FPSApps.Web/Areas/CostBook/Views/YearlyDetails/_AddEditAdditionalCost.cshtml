@@ -8,23 +8,23 @@
 <div class="modal-body">
     <form id="additionalCostForm">
         <div class="form-group mb-2">
-            <label asp-for="AccountCat" class="govuk-label"></label>
+            <label asp-for="AccountCat" class="govuk-label">Account Cat</label>
             <select asp-for="AccountCat" asp-items="@((List<SelectListItem>)ViewBag.AccountCatOptions)" class="govuk-select">
                 <option value="">-- Select Account Category --</option>
             </select>
             <span asp-validation-for="AccountCat" class="govuk-error-message"></span>
         </div>
         <div class="form-group mb-2">
-            <label asp-for="Description" class="govuk-label"></label>
+            <label asp-for="Description" class="govuk-label">Description</label>
             <input asp-for="Description" type="text" class="govuk-input">
             <span asp-validation-for="Description" class="govuk-error-message"></span>
         </div>
         <div class="form-group mb-2">
-            <label asp-for="CostEntered" class="govuk-label"></label>
+            <label asp-for="CostEntered" class="govuk-label">Cost No</label>
             <input asp-for="CostEntered" type="number" step="0.01" class="govuk-input">
         </div>
         <div class="form-group mb-2">
-            <label asp-for="ItemCost" class="govuk-label"></label>
+            <label asp-for="ItemCost" class="govuk-label">Cost(inf)</label>
             <input asp-for="ItemCost" type="text" readonly class="govuk-input">
         </div>
         <input asp-for="AcIdentity" type="hidden">

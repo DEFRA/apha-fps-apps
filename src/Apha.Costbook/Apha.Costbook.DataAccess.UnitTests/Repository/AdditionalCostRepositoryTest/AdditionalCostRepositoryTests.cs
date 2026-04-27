@@ -11,6 +11,7 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.AdditionalCostRepository
 public class AdditionalCostRepositoryTests
 {
     private const int DefaultFpsYear = 2025;
+    private static readonly string[] ProjectSpecificAccountCategories = ["TRAVEL", "STAFF"];
 
     /// <summary>
     /// Creates an AdditionalCostRepository with in-memory DbSets.
@@ -360,7 +361,7 @@ public class AdditionalCostRepositoryTests
 
         // Assert
         Assert.Equal(2, result.Count);
-        Assert.All(result, r => Assert.Contains(r.AccShortName, new[] { "TRAVEL", "STAFF" }));
+        Assert.All(result, r => Assert.Contains(r.AccShortName, ProjectSpecificAccountCategories));
     }
 
     [Fact]
