@@ -1,4 +1,4 @@
-﻿using Apha.FPS.Core.Enities;
+using Apha.FPS.Core.Enities;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -27,6 +27,7 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<Workgroup> Workgroups { get; set; }
         public virtual DbSet<WorkgroupGrade> WorkgroupGrades { get; set; }
         public virtual DbSet<ProfitCentreGrade> ProfitcentreGrades { get; set; }
+        public virtual DbSet<DivisionGrade> DivisionGrades { get; set; }
         public virtual DbSet<UserProfitcentre> UserProfitcentres { get; set; }
         public virtual DbSet<ProfitCentre> ProfitCentres { get; set; }
         public virtual DbSet<JobCode> JobCodes { get; set; }
@@ -57,6 +58,10 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<AnimalRequestLog> AnimalRequestLogs { get; set; }
         public virtual DbSet<TimeCostCalcsView> TimeCostCalcsViews { get; set; }
         public virtual DbSet<TimeCostCalcs> TimeCostCalcs { get; set; }
+
+        public virtual DbSet<Division> Divisions { get; set; }
+        public virtual DbSet<Agency> Agencies { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -154,7 +159,6 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.Entity<PactWorkGroupGradeView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new YearMasterMap());
-
             modelBuilder.ApplyConfiguration(new StaffJobLogMap());
             modelBuilder.Entity<StaffJobLog>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
@@ -168,6 +172,10 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.Entity<TimeCostCalcs>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
 
+
+            modelBuilder.ApplyConfiguration(new DivisionMap());
+            modelBuilder.ApplyConfiguration(new DivisionGradeMap());
+            modelBuilder.Entity<DivisionGrade>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
         }
     }
 }
