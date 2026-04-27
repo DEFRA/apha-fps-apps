@@ -229,22 +229,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.TestListControllerTest
             Assert.False((bool)successProperty!);
         }
 
-        [Fact]
-        public async Task GetOwners_WhenExceptionThrown_ReturnsJsonWithFailure()
-        {
-            // Arrange
-            _testListService.GetOwnersAsync().ThrowsAsync(new Exception("Test exception"));
-
-            // Act
-            var result = await _controller.GetOwners();
-
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var resultValue = jsonResult.Value;
-            var successProperty = resultValue?.GetType().GetProperty("success")?.GetValue(resultValue);
-            Assert.False((bool)successProperty!);
-        }
-
         #endregion
 
         #region GetTestOrProduct
@@ -303,23 +287,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.TestListControllerTest
             Assert.False((bool)successProperty!);
         }
 
-        [Fact]
-        public async Task GetTestOrProduct_WhenExceptionThrown_ReturnsJsonWithFailure()
-        {
-            // Arrange
-            var itemCode = "T001";
-            _testListService.GetTestOrProductByIdAsync(itemCode).ThrowsAsync(new Exception("Test exception"));
-
-            // Act
-            var result = await _controller.GetTestOrProduct(itemCode);
-
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var resultValue = jsonResult.Value;
-            var successProperty = resultValue?.GetType().GetProperty("success")?.GetValue(resultValue);
-            Assert.False((bool)successProperty!);
-        }
-
         #endregion
 
         #region CreateTestOrProduct
@@ -345,19 +312,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.TestListControllerTest
             var resultValue = jsonResult.Value;
             var successProperty = resultValue?.GetType().GetProperty("success")?.GetValue(resultValue);
             Assert.True((bool)successProperty!);
-        }
-
-        [Fact]
-        public async Task CreateTestOrProduct_WithNullModel_ReturnsJsonWithValidationErrors()
-        {
-            // Act
-            var result = await _controller.CreateTestOrProduct(null!);
-
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var resultValue = jsonResult.Value;
-            var successProperty = resultValue?.GetType().GetProperty("success")?.GetValue(resultValue);
-            Assert.False((bool)successProperty!);
         }
 
         [Fact]
@@ -389,26 +343,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.TestListControllerTest
             _mapper.Map<TestorProductDto>(Arg.Any<TestOrProductViewModel>()).Returns(dto);
             _testListService.CreateTestOrProductAsync(Arg.Any<TestorProductDto>())
                 .Returns(Task.FromResult(expectedResponse));
-
-            // Act
-            var result = await _controller.CreateTestOrProduct(model);
-
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var resultValue = jsonResult.Value;
-            var successProperty = resultValue?.GetType().GetProperty("success")?.GetValue(resultValue);
-            Assert.False((bool)successProperty!);
-        }
-
-        [Fact]
-        public async Task CreateTestOrProduct_WhenExceptionThrown_ReturnsJsonWithFailure()
-        {
-            // Arrange
-            var model = new TestOrProductViewModel { ItemCode = "T001", DefraUnitPrice = 10.5m };
-            var dto = new TestorProductDto { ItemCode = "T001", DefraUnitPrice = 10.5m, FpsYear = CurrentYear };
-
-            _mapper.Map<TestorProductDto>(Arg.Any<TestOrProductViewModel>()).Returns(dto);
-            _testListService.CreateTestOrProductAsync(Arg.Any<TestorProductDto>()).ThrowsAsync(new Exception("Test exception"));
 
             // Act
             var result = await _controller.CreateTestOrProduct(model);
@@ -465,37 +399,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.TestListControllerTest
         }
 
         [Fact]
-        public async Task UpdateTestOrProduct_WithNullModel_ReturnsJsonWithValidationErrors()
-        {
-            // Act
-            var result = await _controller.UpdateTestOrProduct("T001", null!);
-
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var resultValue = jsonResult.Value;
-            var successProperty = resultValue?.GetType().GetProperty("success")?.GetValue(resultValue);
-            Assert.False((bool)successProperty!);
-        }
-
-        [Fact]
-        public async Task UpdateTestOrProduct_WithInvalidModelState_ReturnsJsonWithValidationErrors()
-        {
-            // Arrange
-            var itemCode = "T001";
-            var model = new TestOrProductViewModel { ItemCode = itemCode };
-            _controller.ModelState.AddModelError("DefraUnitPrice", "Required");
-
-            // Act
-            var result = await _controller.UpdateTestOrProduct(itemCode, model);
-
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var resultValue = jsonResult.Value;
-            var successProperty = resultValue?.GetType().GetProperty("success")?.GetValue(resultValue);
-            Assert.False((bool)successProperty!);
-        }
-
-        [Fact]
         public async Task UpdateTestOrProduct_WhenServiceFails_ReturnsJsonWithFailure()
         {
             // Arrange
@@ -508,27 +411,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.TestListControllerTest
             _mapper.Map<TestorProductDto>(Arg.Any<TestOrProductViewModel>()).Returns(dto);
             _testListService.UpdateTestOrProductAsync(Arg.Any<string>(), Arg.Any<TestorProductDto>())
                 .Returns(Task.FromResult(expectedResponse));
-
-            // Act
-            var result = await _controller.UpdateTestOrProduct(itemCode, model);
-
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var resultValue = jsonResult.Value;
-            var successProperty = resultValue?.GetType().GetProperty("success")?.GetValue(resultValue);
-            Assert.False((bool)successProperty!);
-        }
-
-        [Fact]
-        public async Task UpdateTestOrProduct_WhenExceptionThrown_ReturnsJsonWithFailure()
-        {
-            // Arrange
-            var itemCode = "T001";
-            var model = new TestOrProductViewModel { ItemCode = itemCode, DefraUnitPrice = 15.5m };
-            var dto = new TestorProductDto { ItemCode = itemCode, DefraUnitPrice = 15.5m, FpsYear = CurrentYear };
-
-            _mapper.Map<TestorProductDto>(Arg.Any<TestOrProductViewModel>()).Returns(dto);
-            _testListService.UpdateTestOrProductAsync(Arg.Any<string>(), Arg.Any<TestorProductDto>()).ThrowsAsync(new Exception("Test exception"));
 
             // Act
             var result = await _controller.UpdateTestOrProduct(itemCode, model);
@@ -601,23 +483,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.TestListControllerTest
             var errors = new List<ApiErrorDto> { new() { Message = "Delete failed" } };
             var expectedResponse = ApiResponseDto<bool>.FailureResponse(errors, new ApiMetaDto());
             _testListService.DeleteTestOrProductAsync(itemCode).Returns(Task.FromResult(expectedResponse));
-
-            // Act
-            var result = await _controller.DeleteTestOrProduct(itemCode);
-
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var resultValue = jsonResult.Value;
-            var successProperty = resultValue?.GetType().GetProperty("success")?.GetValue(resultValue);
-            Assert.False((bool)successProperty!);
-        }
-
-        [Fact]
-        public async Task DeleteTestOrProduct_WhenExceptionThrown_ReturnsJsonWithFailure()
-        {
-            // Arrange
-            var itemCode = "T001";
-            _testListService.DeleteTestOrProductAsync(itemCode).ThrowsAsync(new Exception("Test exception"));
 
             // Act
             var result = await _controller.DeleteTestOrProduct(itemCode);

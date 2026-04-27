@@ -1,3 +1,4 @@
+using Apha.Common.Helpers.Repository;
 using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
@@ -23,26 +24,19 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestOrProductRepositoryTest
                 IEnumerable<TestorProduct> testorProducts = null!,
                 bool setupForModification = false)
         {
-            var mockContext = new Mock<FpsDbContext>();
             var fpsRequestContext = Substitute.For<IFpsRequestContext>();
             fpsRequestContext.FpsYear.Returns(fpsYear);
 
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
+
             var testorProductsList = (testorProducts ?? Enumerable.Empty<TestorProduct>()).ToList();
-            var testorProductsMockSet = CreateMockDbSet(testorProductsList);
+            var testorProductsMockSet = RepositoryTestHelper.CreateMockDbSet(testorProductsList);
 
             if (setupForModification)
             {
-                mockContext.Setup(m => m.SaveChangesAsync(default))
-                    .ReturnsAsync(1);
+                RepositoryTestHelper.SetupSaveChanges(mockContext);
                 mockContext.Setup(m => m.TestorProducts.AddAsync(It.IsAny<TestorProduct>(), default))
                     .Returns((TestorProduct _, CancellationToken __) => new ValueTask<EntityEntry<TestorProduct>>());
-                mockContext.Setup(m => m.Entry(It.IsAny<TestorProduct>()))
-                    .Returns((TestorProduct entity) =>
-                    {
-                        var entry = new Mock<EntityEntry<TestorProduct>>();
-                        entry.Object.State = EntityState.Modified;
-                        return entry.Object;
-                    });
             }
 
             mockContext.Setup(x => x.TestorProducts).Returns(testorProductsMockSet.Object);
@@ -56,28 +50,16 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestOrProductRepositoryTest
             Mock<FpsDbContext> mockContext = null!,
             IFpsRequestContext fpsRequestContext = null!)
         {
-            mockContext ??= new Mock<FpsDbContext>();
             fpsRequestContext ??= Substitute.For<IFpsRequestContext>();
             fpsRequestContext.FpsYear.Returns(2024);
 
+            mockContext ??= RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
+
             var testorProductsList = testorProducts.ToList();
-            var mockSet = CreateMockDbSet(testorProductsList);
+            var mockSet = RepositoryTestHelper.CreateMockDbSet(testorProductsList);
             mockContext.Setup(x => x.TestorProducts).Returns(mockSet.Object);
 
             return new TestorProductRepository(mockContext.Object, fpsRequestContext);
-        }
-
-        private static Mock<DbSet<T>> CreateMockDbSet<T>(List<T> data) where T : class
-        {
-            var queryable = data.AsQueryable();
-            var mockSet = new Mock<DbSet<T>>();
-            mockSet.As<IQueryable<T>>().Setup(m => m.Provider).Returns(queryable.Provider);
-            mockSet.As<IQueryable<T>>().Setup(m => m.Expression).Returns(queryable.Expression);
-            mockSet.As<IQueryable<T>>().Setup(m => m.ElementType).Returns(queryable.ElementType);
-            mockSet.As<IQueryable<T>>().Setup(m => m.GetEnumerator()).Returns(() => queryable.GetEnumerator());
-            mockSet.As<IAsyncEnumerable<T>>().Setup(m => m.GetAsyncEnumerator(default))
-                .Returns(new TestAsyncEnumerator<T>(queryable.GetEnumerator()));
-            return mockSet;
         }
 
         #region GetPagedTestOrProductsAsync
@@ -205,32 +187,51 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestOrProductRepositoryTest
 
         #region UpdateTestOrProductAsync
 
+        private static (FpsDbContext Context, TestorProductRepository Repo) CreateInMemoryContext(int fpsYear)
+        {
+            var options = new DbContextOptionsBuilder<FpsDbContext>()
+                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                .Options;
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            fpsRequestContext.FpsYear.Returns(fpsYear);
+            var context = new FpsDbContext(options, fpsRequestContext);
+            var repo = new TestorProductRepository(context, fpsRequestContext);
+            return (context, repo);
+        }
+
         [Fact]
         public async Task UpdateTestOrProductAsync_ValidEntity_ReturnsUpdatedEntity()
         {
             // Arrange
+            var (context, repo) = CreateInMemoryContext(2024);
+            context.TestorProducts.Add(new TestorProduct { ItemCode = "TEST001", ItemDescription = "Original", DefraUnitPrice = 100m, FpsYear = 2024 });
+            await context.SaveChangesAsync();
+            context.ChangeTracker.Clear();
+
             var entityToUpdate = new TestorProduct { ItemCode = "TEST001", ItemDescription = "Updated", DefraUnitPrice = 150m };
-            var context = CreateRepositoryContext(fpsYear: 2024, setupForModification: true);
 
             // Act
-            var result = await context.Repo.UpdateTestOrProductAsync(entityToUpdate);
+            var result = await repo.UpdateTestOrProductAsync(entityToUpdate);
 
             // Assert
             Assert.NotNull(result);
             Assert.Equal("TEST001", result.ItemCode);
             Assert.Equal(2024, result.FpsYear);
-            context.MockContext.Verify(x => x.SaveChangesAsync(default), Times.Once);
         }
 
         [Fact]
         public async Task UpdateTestOrProductAsync_UpdatesFpsYear()
         {
             // Arrange
+            var (context, repo) = CreateInMemoryContext(2025);
+            context.TestorProducts.Add(new TestorProduct { ItemCode = "TEST001", DefraUnitPrice = 150m, FpsYear = 2025 });
+            await context.SaveChangesAsync();
+            context.ChangeTracker.Clear();
+
             var entityToUpdate = new TestorProduct { ItemCode = "TEST001", DefraUnitPrice = 150m, FpsYear = 2023 };
-            var context = CreateRepositoryContext(fpsYear: 2025, setupForModification: true);
 
             // Act
-            var result = await context.Repo.UpdateTestOrProductAsync(entityToUpdate);
+            var result = await repo.UpdateTestOrProductAsync(entityToUpdate);
 
             // Assert
             Assert.Equal(2025, result.FpsYear);

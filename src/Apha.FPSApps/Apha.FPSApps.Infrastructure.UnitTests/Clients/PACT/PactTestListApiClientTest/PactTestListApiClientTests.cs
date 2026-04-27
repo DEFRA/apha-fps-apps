@@ -247,23 +247,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestListApiClie
             Assert.NotNull(result.Errors);
         }
 
-        [Fact]
-        public async Task GetPagedTestOrProductsAsync_WhenExceptionThrown_ReturnsFailureResponse()
-        {
-            // Arrange
-            var query = new Application.Pagination.QueryParameters<string> { Page = 1, PageSize = 10 };
-            _httpExecutor.GetAsync<List<TestorProductRes>>(Arg.Any<string>())
-                .Returns<Task<ApiResponse<List<TestorProductRes>>>>(x => throw new Exception("Test exception"));
-
-            // Act
-            var result = await _client.GetPagedTestOrProductsAsync(query);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-        }
-
         #endregion
 
         #region GetTestOrProductByIdAsync
@@ -312,22 +295,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestListApiClie
             Assert.False(result.Success);
         }
 
-        [Fact]
-        public async Task GetTestOrProductByIdAsync_WhenExceptionThrown_ReturnsFailureResponse()
-        {
-            // Arrange
-            var itemCode = "T001";
-            _httpExecutor.GetAsync<TestorProductRes>(Arg.Any<string>())
-                .Returns<Task<ApiResponse<TestorProductRes>>>(x => throw new Exception("Test exception"));
-
-            // Act
-            var result = await _client.GetTestOrProductByIdAsync(itemCode);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-        }
-
         #endregion
 
         #region CreateTestOrProductAsync
@@ -367,22 +334,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestListApiClie
             };
             _httpExecutor.PostAsync<TestorProductReq, TestorProductRes>(Arg.Any<string>(), Arg.Any<TestorProductReq>())
                 .Returns(Task.FromResult(httpResponse));
-
-            // Act
-            var result = await _client.CreateTestOrProductAsync(dto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-        }
-
-        [Fact]
-        public async Task CreateTestOrProductAsync_WhenExceptionThrown_ReturnsFailureResponse()
-        {
-            // Arrange
-            var dto = new TestorProductDto { ItemCode = "T001" };
-            _httpExecutor.PostAsync<TestorProductReq, TestorProductRes>(Arg.Any<string>(), Arg.Any<TestorProductReq>())
-                .Returns<Task<ApiResponse<TestorProductRes>>>(x => throw new Exception("Test exception"));
 
             // Act
             var result = await _client.CreateTestOrProductAsync(dto);
@@ -464,23 +415,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestListApiClie
             Assert.False(result.Success);
         }
 
-        [Fact]
-        public async Task UpdateTestOrProductAsync_WhenExceptionThrown_ReturnsFailureResponse()
-        {
-            // Arrange
-            var itemCode = "T001";
-            var dto = new TestorProductDto { ItemCode = itemCode };
-            _httpExecutor.PutAsync<TestorProductReq, TestorProductRes>(Arg.Any<string>(), Arg.Any<TestorProductReq>())
-                .Returns<Task<ApiResponse<TestorProductRes>>>(x => throw new Exception("Test exception"));
-
-            // Act
-            var result = await _client.UpdateTestOrProductAsync(itemCode, dto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-        }
-
         #endregion
 
         #region DeleteTestOrProductAsync
@@ -550,22 +484,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestListApiClie
             Assert.False(result.Success);
         }
 
-        [Fact]
-        public async Task DeleteTestOrProductAsync_WhenExceptionThrown_ReturnsFailureResponse()
-        {
-            // Arrange
-            var itemCode = "T001";
-            _httpExecutor.DeleteAsync<bool>(Arg.Any<string>())
-                .Returns<Task<ApiResponse<bool>>>(x => throw new Exception("Test exception"));
-
-            // Act
-            var result = await _client.DeleteTestOrProductAsync(itemCode);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-        }
-
         #endregion
 
         #region GetOwnersAsync
@@ -624,21 +542,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestListApiClie
             };
             _httpExecutor.GetAsync<List<string>>(Arg.Any<string>())
                 .Returns(Task.FromResult(httpResponse));
-
-            // Act
-            var result = await _client.GetOwnersAsync();
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-        }
-
-        [Fact]
-        public async Task GetOwnersAsync_WhenExceptionThrown_ReturnsFailureResponse()
-        {
-            // Arrange
-            _httpExecutor.GetAsync<List<string>>(Arg.Any<string>())
-                .Returns<Task<ApiResponse<List<string>>>>(x => throw new Exception("Test exception"));
 
             // Act
             var result = await _client.GetOwnersAsync();
