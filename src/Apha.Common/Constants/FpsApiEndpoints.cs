@@ -27,6 +27,14 @@ namespace Apha.Common.Constants
         public const string GetAllCustomers = "api/v1/customer";
         public const string GetAllContracts = "api/v1/contract";
 
+        // Division
+        public const string GetAllDivisions = "api/v1/division";
+        public const string GetPagedDivisions = "api/v1/division/paged";
+        public const string GetDivisionByName = "api/v1/division/{0}";
+        public const string CreateDivision = "api/v1/division";
+        public const string UpdateDivision = "api/v1/division/{0}";
+        public const string DeleteDivision = "api/v1/division/{0}";
+
         // Program
         public const string GetAllPrograms = "api/v1/program";
         public const string GetPagedPrograms = "api/v1/program/paged";
@@ -66,6 +74,11 @@ namespace Apha.Common.Constants
 
         // Testor Product
         public const string GetAllTestorProducts = "api/v1/testorproduct";
+
+        // View Project Plan vs Actual Staff
+        public const string GetTimeCostCalcsByProject = "api/v1/timecostcalcs?projectCode={0}";
+        public const string GetTimeCostCalcsTotalsByProject = "api/v1/timecostcalcs/totals?projectCode={0}";
+        public const string DeleteTimeCostCalcs = "api/v1/timecostcalcs";
 
         // Additional Cost
         public const string GetAdditionalCosts = "api/v1/additionalcost?jobCode={0}";

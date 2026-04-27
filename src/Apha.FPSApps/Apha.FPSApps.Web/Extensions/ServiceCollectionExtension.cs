@@ -1,4 +1,4 @@
-﻿using Apha.Common.Utilities.ExcelExport;
+using Apha.Common.Utilities.ExcelExport;
 using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Interfaces.Costbook;
 using Apha.FPSApps.Application.Interfaces.FPS;
@@ -40,11 +40,13 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<ICostBookStaffService, CostBookStaffService>();
             services.AddScoped<ICostBookContractService, CostBookContractService>();
             services.AddScoped<IYearMasterService, YearMasterService>();
+            services.AddScoped<IDivisionService, DivisionService>();
             services.AddScoped<IProjectInvoiceService, ProjectInvoiceService>();
             services.AddScoped<IProjectSubContractService, ProjectSubContractService>();
             services.AddScoped<ITestCapabilityService, TestCapabilityService>();
             services.AddScoped<ITestRequirementService, TestRequirementService>();
             services.AddScoped<ITestorProductService, TestorProductService>();
+            services.AddScoped<IProjectStaffPlanActualService, ProjectStaffPlanActualService>();
             services.AddScoped<IExcelExportService, ExcelExportService>();
             services.AddScoped<IAppStateService, AppStateService>();
             services.AddScoped<IAdditionalCostService, AdditionalCostService>();

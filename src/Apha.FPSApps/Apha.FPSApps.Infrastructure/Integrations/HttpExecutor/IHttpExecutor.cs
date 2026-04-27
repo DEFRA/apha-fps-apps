@@ -21,5 +21,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.HttpExecutor
             TRequest body);
 
         Task<ApiResponse<T>> DeleteAsync<T>(string url);
+
+        Task<ApiResponse<T>> DeleteAsync<TRequest, T>(string url, TRequest body);
     }
 }
