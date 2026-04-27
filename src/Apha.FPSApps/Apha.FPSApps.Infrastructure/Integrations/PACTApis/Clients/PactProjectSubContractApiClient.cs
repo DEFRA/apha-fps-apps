@@ -95,5 +95,34 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             var dto = _mapper.Map<ApiResponseDto<decimal>>(response);
             return ApiResponseDto<decimal>.FailureResponse(dto.Errors, dto.Meta);
         }
+
+        public async Task<ApiResponseDto<List<ProjectSubContractDto>>> GetAnimalSubContractsAsync(QueryParameters<string> query, string? project)
+        {
+            string baseUrl = string.IsNullOrWhiteSpace(project)
+                ? PactApiEndpoints.GetAnimalSubContracts
+                : QueryStringHelper.AddQueryString(PactApiEndpoints.GetAnimalSubContracts, new { project });
+            string url = QueryStringHelper.AddQueryString(baseUrl, query);
+
+            var response = await _http.GetAsync<List<ProjectSubContractRes>>(url);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<ProjectSubContractDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<ProjectSubContractDto>>>(response);
+            return ApiResponseDto<List<ProjectSubContractDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+        public async Task<ApiResponseDto<decimal>> GetAnimalTotalAmountAsync(string? project)
+        {
+            string url = string.IsNullOrWhiteSpace(project)
+                ? PactApiEndpoints.GetAnimalSubContractTotalAmount
+                : QueryStringHelper.AddQueryString(PactApiEndpoints.GetAnimalSubContractTotalAmount, new { project });
+
+            var response = await _http.GetAsync<decimal?>(url);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<decimal>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<decimal>>(response);
+            return ApiResponseDto<decimal>.FailureResponse(dto.Errors, dto.Meta);
+        }
     }
 }

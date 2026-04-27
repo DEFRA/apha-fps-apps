@@ -213,5 +213,73 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProjectSubContractControllerTest
         }
 
         #endregion
+
+        #region GetAnimalSubContracts
+
+        [Fact]
+        public async Task GetAnimalSubContracts_ValidQueryWithProject_ReturnsOk()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var dtos = new List<ProjectSubContractDto> { new ProjectSubContractDto { SubContCounter = 1, Project = "PRJ1", AcctCode = "LargeAnimals" } };
+            var paginationData = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1, TotalPages = 1 };
+            var serviceResult = new PaginatedResult<ProjectSubContractDto>(dtos, paginationData);
+            var expectedResponse = new PaginationRes<ProjectSubContractRes>
+            {
+                Data = new List<ProjectSubContractRes> { new ProjectSubContractRes { SubContCounter = 1, Project = "PRJ1" } },
+                PaginationData = new Pagination { PageNumber = 1, PageSize = 10, TotalRecords = 1, TotalPages = 1 }
+            };
+
+            _serviceMock.GetAnimalSubContractsAsync(query, "PRJ1").Returns(serviceResult);
+            _mapperMock.Map<PaginationRes<ProjectSubContractRes>>(serviceResult).Returns(expectedResponse);
+
+            var result = await _controller.GetAnimalSubContracts(query, "PRJ1");
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(expectedResponse, okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetAnimalSubContracts_NullProject_ReturnsOk()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var serviceResult = new PaginatedResult<ProjectSubContractDto>(Enumerable.Empty<ProjectSubContractDto>(), new PaginationDto());
+            var expectedResponse = new PaginationRes<ProjectSubContractRes>();
+
+            _serviceMock.GetAnimalSubContractsAsync(query, null).Returns(serviceResult);
+            _mapperMock.Map<PaginationRes<ProjectSubContractRes>>(serviceResult).Returns(expectedResponse);
+
+            var result = await _controller.GetAnimalSubContracts(query, null);
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(expectedResponse, okResult.Value);
+        }
+
+        #endregion
+
+        #region GetAnimalTotal
+
+        [Fact]
+        public async Task GetAnimalTotal_ValidProject_ReturnsOk()
+        {
+            _serviceMock.GetAnimalTotalAmountAsync("PRJ1").Returns(1500.00m);
+
+            var result = await _controller.GetAnimalTotal("PRJ1");
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(1500.00m, okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetAnimalTotal_NullProject_ReturnsOk()
+        {
+            _serviceMock.GetAnimalTotalAmountAsync(null).Returns(0m);
+
+            var result = await _controller.GetAnimalTotal(null);
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(0m, okResult.Value);
+        }
+
+        #endregion
     }
 }

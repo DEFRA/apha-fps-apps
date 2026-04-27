@@ -134,6 +134,108 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectSubContractRepository
 
         #endregion
 
+        #region GetAnimalSubContractsAsync
+
+        [Fact]
+        public async Task GetAnimalSubContractsAsync_WithProject_ReturnsOnlyAnimalRecordsForProject()
+        {
+            var subContracts = new List<ProjectSubContract>
+            {
+                new() { SubContCounter = 1, Project = "PRJ1", AcctCode = "LargeAnimals", FpsYear = DefaultTestFpsYear },
+                new() { SubContCounter = 2, Project = "PRJ1", AcctCode = "SmallAnimals", FpsYear = DefaultTestFpsYear },
+                new() { SubContCounter = 3, Project = "PRJ1", AcctCode = "SubContract",  FpsYear = DefaultTestFpsYear },
+                new() { SubContCounter = 4, Project = "PRJ2", AcctCode = "LargeAnimals", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(subContracts);
+            var query = new PaginationParameters<string>();
+
+            var result = await repo.GetAnimalSubContractsAsync(query, "PRJ1");
+
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+            Assert.All(result.Data, d => Assert.Equal("PRJ1", d.Project));
+        }
+
+        [Fact]
+        public async Task GetAnimalSubContractsAsync_NullProject_ReturnsAllAnimalRecords()
+        {
+            var subContracts = new List<ProjectSubContract>
+            {
+                new() { SubContCounter = 1, Project = "PRJ1", AcctCode = "LargeAnimals", FpsYear = DefaultTestFpsYear },
+                new() { SubContCounter = 2, Project = "PRJ2", AcctCode = "Mice",         FpsYear = DefaultTestFpsYear },
+                new() { SubContCounter = 3, Project = "PRJ1", AcctCode = "SubContract",  FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(subContracts);
+            var query = new PaginationParameters<string>();
+
+            var result = await repo.GetAnimalSubContractsAsync(query, null);
+
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetAnimalSubContractsAsync_NoAnimalRecords_ReturnsEmpty()
+        {
+            var subContracts = new List<ProjectSubContract>
+            {
+                new() { SubContCounter = 1, Project = "PRJ1", AcctCode = "SubContract", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(subContracts);
+            var query = new PaginationParameters<string>();
+
+            var result = await repo.GetAnimalSubContractsAsync(query, null);
+
+            Assert.Equal(0, result.PaginationData.TotalRecords);
+        }
+
+        #endregion
+
+        #region GetAnimalTotalAmountAsync
+
+        [Fact]
+        public async Task GetAnimalTotalAmountAsync_WithProject_ReturnsSumOfAnimalAmounts()
+        {
+            var subContracts = new List<ProjectSubContract>
+            {
+                new() { SubContCounter = 1, Project = "PRJ1", AcctCode = "LargeAnimals", Amount = 400m,  FpsYear = DefaultTestFpsYear },
+                new() { SubContCounter = 2, Project = "PRJ1", AcctCode = "SmallAnimals", Amount = 100m,  FpsYear = DefaultTestFpsYear },
+                new() { SubContCounter = 3, Project = "PRJ1", AcctCode = "SubContract",  Amount = 999m,  FpsYear = DefaultTestFpsYear },
+                new() { SubContCounter = 4, Project = "PRJ2", AcctCode = "LargeAnimals", Amount = 600m,  FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(subContracts);
+
+            var result = await repo.GetAnimalTotalAmountAsync("PRJ1");
+
+            Assert.Equal(500m, result);
+        }
+
+        [Fact]
+        public async Task GetAnimalTotalAmountAsync_NullProject_ReturnsTotalOfAllAnimalAmounts()
+        {
+            var subContracts = new List<ProjectSubContract>
+            {
+                new() { SubContCounter = 1, Project = "PRJ1", AcctCode = "LargeAnimals", Amount = 300m, FpsYear = DefaultTestFpsYear },
+                new() { SubContCounter = 2, Project = "PRJ2", AcctCode = "Mice",         Amount = 200m, FpsYear = DefaultTestFpsYear },
+                new() { SubContCounter = 3, Project = "PRJ1", AcctCode = "SubContract",  Amount = 999m, FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(subContracts);
+
+            var result = await repo.GetAnimalTotalAmountAsync(null);
+
+            Assert.Equal(500m, result);
+        }
+
+        [Fact]
+        public async Task GetAnimalTotalAmountAsync_NoAnimalRecords_ReturnsZero()
+        {
+            var repo = CreateRepository([]);
+
+            var result = await repo.GetAnimalTotalAmountAsync(null);
+
+            Assert.Equal(0m, result);
+        }
+
+        #endregion
+
         #region GetByIdAsync
 
         [Fact]

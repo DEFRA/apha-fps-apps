@@ -23,7 +23,7 @@
             };
         }
 
-        public static ApiResponseDto<T> FailureResponse(List<ApiErrorDto>? errors, ApiMetaDto meta)
+        public static ApiResponseDto<T> FailureResponse(List<ApiErrorDto>? errors, ApiMetaDto? meta)
         {
             return new ApiResponseDto<T>
             {
@@ -31,7 +31,7 @@
                 Errors = errors,
                 Meta = new ApiMetaDto
                 {
-                    CorrelationId = meta.CorrelationId,
+                    CorrelationId = meta?.CorrelationId,  // was: meta.CorrelationId
                     TimestampUtc = DateTime.UtcNow
                 }
             };

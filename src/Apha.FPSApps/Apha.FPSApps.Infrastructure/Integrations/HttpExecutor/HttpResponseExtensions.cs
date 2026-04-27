@@ -1,30 +1,30 @@
 ﻿using Apha.Common.Contracts;
-using System.Net.Http.Json;
 using System.Text.Json;
 
 namespace Apha.FPSApps.Infrastructure.Integrations.HttpExecutor
 {
     public static class HttpResponseExtensions
     {
-        private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true,
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        };
+        private static readonly JsonSerializerOptions _jsonOptions =
+            new JsonSerializerOptions(JsonSerializerDefaults.Web);
 
         public static async Task<ApiResponse<T>> ToApiResponse<T>(
          this HttpResponseMessage response)
         {
             try
             {
-                var apiResponse =
-                    await response.Content.ReadFromJsonAsync<ApiResponse<T>>(JsonOptions);
+                string content = await response.Content.ReadAsStringAsync();
 
-                if (apiResponse != null)
-                    return apiResponse;
-            }           
+                if (!string.IsNullOrWhiteSpace(content))
+                {
+                    var apiResponse = JsonSerializer.Deserialize<ApiResponse<T>>(content, _jsonOptions);
+
+                    if (apiResponse != null)
+                        return apiResponse;
+                }
+            }
             catch (Exception ex)
-            {                
+            {
                 throw new InvalidOperationException("An unexpected error occurred while processing the response.", ex);
             }
 
