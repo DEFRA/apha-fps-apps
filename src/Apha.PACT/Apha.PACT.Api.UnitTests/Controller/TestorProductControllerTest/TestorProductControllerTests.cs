@@ -9,23 +9,23 @@ using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 
-namespace Apha.PACT.Api.UnitTests.Controller.TestListControllerTest
+namespace Apha.PACT.Api.UnitTests.Controller.TestorProductControllerTest    
 {
     /// <summary>
     /// Unit tests for TestListController (API Layer).
     /// Tests API validation, mapping, and exception handling.
     /// </summary>
-    public class TestListControllerTests
+    public class TestorProductControllerTests
     {
-        private readonly ITestListService _serviceMock;
+        private readonly ITestorProductService _serviceMock;
         private readonly IMapper _mapperMock;
-        private readonly TestListController _controller;
+        private readonly TestorProductController _controller;
 
-        public TestListControllerTests()
+        public TestorProductControllerTests()
         {
-            _serviceMock = Substitute.For<ITestListService>();
+            _serviceMock = Substitute.For<ITestorProductService>();
             _mapperMock = Substitute.For<IMapper>();
-            _controller = new TestListController(_serviceMock, _mapperMock);
+            _controller = new TestorProductController(_serviceMock, _mapperMock);
         }
 
         #region GetPaged
@@ -154,7 +154,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestListControllerTest
 
             // Assert
             var createdResult = Assert.IsType<CreatedAtActionResult>(result);
-            Assert.Equal(nameof(TestListController.GetById), createdResult.ActionName);
+            Assert.Equal(nameof(TestorProductController.GetById), createdResult.ActionName);
             Assert.True(createdResult.RouteValues!.ContainsKey("itemCode"));
             Assert.Equal("TEST001", createdResult.RouteValues["itemCode"]);
             Assert.Equal(mapped, createdResult.Value);

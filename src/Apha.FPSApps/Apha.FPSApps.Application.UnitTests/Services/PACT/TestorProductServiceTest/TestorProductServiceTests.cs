@@ -8,13 +8,13 @@ using Xunit;
 
 namespace Apha.FPSApps.Application.UnitTests.Services.PACT.TestListServiceTest
 {
-    public class TestListServiceTests
+    public class TestorProductServiceTests
     {
         private readonly IPactApiClient _pactClient;
         private readonly IPactTestorProductApiClient _pactTestListApiClient;
         private readonly TestorProductService _service;
 
-        public TestListServiceTests()
+        public TestorProductServiceTests()
         {
             _pactClient = Substitute.For<IPactApiClient>();
             _pactTestListApiClient = Substitute.For<IPactTestorProductApiClient>();

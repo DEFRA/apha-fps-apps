@@ -11,13 +11,13 @@ using Xunit;
 
 namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestListApiClientTest
 {
-    public class PactTestListApiClientTests
+    public class PactTestorProductApiClientTests
     {
         private readonly IPactHttpExecutor _httpExecutor;
         private readonly IMapper _mapper;
         private readonly PactTestorProductApiClient _client;
 
-        public PactTestListApiClientTests()
+        public PactTestorProductApiClientTests()
         {
             _httpExecutor = Substitute.For<IPactHttpExecutor>();
             _mapper = Substitute.For<IMapper>();

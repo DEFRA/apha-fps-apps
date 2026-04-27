@@ -1,10 +1,7 @@
-using Apha.Common.Contracts;
-using Apha.Common.Contracts.PACT;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
-using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Web.Areas.PACT.Controllers;
 using Apha.FPSApps.Web.Areas.PACT.Models;
 using Apha.FPSApps.Web.Handler;
@@ -12,26 +9,24 @@ using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
-using System.Text.Json;
 
 namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.TestListControllerTest
 {
-    public class TestListControllerTests
+    public class TestorProductControllerTests
     {
         private readonly IMapper _mapper;   
         private readonly ITestorProductService _testListService;
         private readonly IFpsYearContext _fpsYearContext;
-        private readonly TestListController _controller;
+        private readonly TestorProductController _controller;
         private const int CurrentYear = 2025;
 
-        public TestListControllerTests()
+        public TestorProductControllerTests()
         {
             _mapper = Substitute.For<IMapper>();
             _testListService = Substitute.For<ITestorProductService>();
             _fpsYearContext = Substitute.For<IFpsYearContext>();
             _fpsYearContext.Year.Returns(CurrentYear);
-            _controller = new TestListController(_mapper, _testListService, _fpsYearContext);
+            _controller = new TestorProductController(_mapper, _testListService, _fpsYearContext);
         }
 
         #region Helper Methods
