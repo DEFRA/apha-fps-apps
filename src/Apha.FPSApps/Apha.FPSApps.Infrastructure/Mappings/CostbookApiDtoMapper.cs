@@ -36,6 +36,8 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<PayRateRes, PayRateDto>().ReverseMap();
             CreateMap<AnimalRateRes, AnimalRateDto>().ReverseMap();
             CreateMap<AccountCategoryRes, AccountCategoryDto>().ReverseMap();
+            CreateMap<TestCodeLookupRes, TestCodeLookupDto>().ReverseMap();
+            CreateMap<AnimalLookupRes, AnimalLookupDto>().ReverseMap();
         }
     }
 }

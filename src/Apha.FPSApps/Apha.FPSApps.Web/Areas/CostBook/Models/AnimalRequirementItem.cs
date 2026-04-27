@@ -10,7 +10,7 @@ public class AnimalRequirementItem
 
     [Display(Name = "Animal Type")]
     [Required(ErrorMessage = "Animal Type is required.")]
-    [GridColumn(Order = 1, Width = 160, Type = GridColumnType.Text, IsFilterable = true)]
+    [GridColumn(Order = 1, Width = 160, Type = GridColumnType.Text, IsFilterable = false)]
     public string AnimalType { get; set; } = null!;
 
     [Display(Name = "Rate")]

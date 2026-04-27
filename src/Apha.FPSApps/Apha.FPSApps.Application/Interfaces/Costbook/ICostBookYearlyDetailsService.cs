@@ -8,7 +8,7 @@ public interface ICostBookYearlyDetailsService
 {
     Task<ApiResponseDto<ProjectHeaderDto>> GetProjectHeaderAsync(string projectId);
     Task<ApiResponseDto<List<ProjectYearDto>>> GetProjectYearsAsync(string projectId);
-    Task<ApiResponseDto<ProjectYearDto>> AddProjectYearAsync(string projectId, int year);
+    Task<ApiResponseDto<ProjectYearDto>> AddProjectYearAsync(string projectId, int year, ProjectYearDto dto);
     Task<ApiResponseDto<ProjectYearDto>> UpdateProjectYearAsync(string projectId, int year, ProjectYearDto dto);
 
     // ── Staff — now paginated ─────────────────────────────────────────────────
@@ -35,4 +35,6 @@ public interface ICostBookYearlyDetailsService
     Task<ApiResponseDto<List<PayRateDto>>> GetPayRatesAsync(bool isDefra);
     Task<ApiResponseDto<List<AnimalRateDto>>> GetAnimalRatesAsync(bool isDefra);
     Task<ApiResponseDto<List<AccountCategoryDto>>> GetAccountCategoriesAsync();
+    Task<ApiResponseDto<List<TestCodeLookupDto>>> GetTestCodeLookupsAsync(bool isDefra);
+    Task<ApiResponseDto<List<AnimalLookupDto>>> GetAllAnimalsAsync();
 }

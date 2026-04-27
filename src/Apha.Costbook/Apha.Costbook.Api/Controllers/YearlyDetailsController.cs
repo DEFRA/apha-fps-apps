@@ -48,7 +48,10 @@ public class YearlyDetailsController : ControllerBase
     [HttpPost("{projectId}/years")]
     public async Task<IActionResult> AddProjectYear(string projectId, [FromBody] AddProjectYearReq req)
     {
-        var dto = await _service.AddProjectYearAsync(projectId, req.Year);
+        var yearDto = _mapper.Map<ProjectYearDto>(req);
+        yearDto.Project = projectId;
+        yearDto.YearValue = req.Year;
+        var dto = await _service.AddProjectYearAsync(projectId, req.Year, yearDto);
         return Ok(BuildOk(_mapper.Map<ProjectYearRes>(dto)));
     }
 
@@ -225,6 +228,7 @@ public class YearlyDetailsController : ControllerBase
     public async Task<IActionResult> GetAnimalRates([FromQuery] bool isDefra = false)
     {
         var dtos = await _service.GetAnimalRatesAsync(isDefra);
+
         return Ok(BuildOk(_mapper.Map<List<AnimalRateRes>>(dtos)));
     }
 
@@ -232,7 +236,22 @@ public class YearlyDetailsController : ControllerBase
     public async Task<IActionResult> GetAccountCategories()
     {
         var dtos = await _service.GetAccountCategoriesAsync();
+
         return Ok(BuildOk(_mapper.Map<List<AccountCategoryRes>>(dtos)));
+    }
+
+    [HttpGet("lookups/testcodes")]
+    public async Task<IActionResult> GetTestCodeLookups([FromQuery] bool isDefra = false)
+    {
+        var dtos = await _service.GetTestCodeLookupsAsync(isDefra);
+        return Ok(BuildOk(_mapper.Map<List<TestCodeLookupRes>>(dtos)));
+    }
+
+    [HttpGet("lookups/animals")]
+    public async Task<IActionResult> GetAllAnimals()
+    {
+        var dtos = await _service.GetAllAnimalsAsync();
+        return Ok(BuildOk(_mapper.Map<List<AnimalLookupRes>>(dtos)));
     }
 
     private static ApiResponse<T> BuildOk<T>(T data) => new()

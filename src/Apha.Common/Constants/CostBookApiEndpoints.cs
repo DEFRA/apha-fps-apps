@@ -51,5 +51,7 @@ namespace Apha.Common.Constants
         public const string GetPayRates = "api/v1/yearlydetails/lookups/payrates";
         public const string GetAnimalRates = "api/v1/yearlydetails/lookups/animalrates";
         public const string GetAccountCategories = "api/v1/yearlydetails/lookups/accountcategories";
+        public const string GetTestCodeLookups = "api/v1/yearlydetails/lookups/testcodes";
+        public const string GetAllAnimals = "api/v1/yearlydetails/lookups/animals";
     }
 }

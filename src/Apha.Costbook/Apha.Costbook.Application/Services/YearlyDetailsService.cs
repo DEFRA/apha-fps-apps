@@ -49,9 +49,10 @@ public class YearlyDetailsService : IYearlyDetailsService
         return _mapper.Map<IEnumerable<ProjectYearDto>>(years);
     }
 
-    public async Task<ProjectYearDto> AddProjectYearAsync(string projectId, int year)
+    public async Task<ProjectYearDto> AddProjectYearAsync(string projectId, int year, ProjectYearDto dto)
     {
-        var added = await _projectYearRepo.AddProjectYearAsync(projectId, year);
+        var entity = _mapper.Map<ProjectYear>(dto);
+        var added = await _projectYearRepo.AddProjectYearAsync(projectId, year, entity);
         return _mapper.Map<ProjectYearDto>(added);
     }
 
@@ -68,7 +69,7 @@ public class YearlyDetailsService : IYearlyDetailsService
         string projectId, int year, QueryParameters<string> query)
     {
         PaginationParameters<string> filter = _mapper.Map<PaginationParameters<string>>(query);
-        PagedData<StaffRequirementDetailView> result = await _staffRepo.GetByProjectYearAsync(projectId, year, filter);
+        PagedData<StaffRequirementDetailView> result = await _staffRepo.GetStaffRequirementsByProjectYearAsync(projectId, year, filter);
 
         var dtos = result.Data.Select(r => new StaffRequirementDto
         {
@@ -100,25 +101,25 @@ public class YearlyDetailsService : IYearlyDetailsService
     public async Task<StaffRequirementDto> AddStaffRequirementAsync(StaffRequirementDto dto)
     {
         var entity = _mapper.Map<StaffRequirement>(dto);
-        var result = await _staffRepo.AddAsync(entity);
+        var result = await _staffRepo.AddStaffRequirementAsync(entity);
         return MapStaffToDto(result);
     }
 
     public async Task<StaffRequirementDto> UpdateStaffRequirementAsync(StaffRequirementDto dto)
     {
         var entity = _mapper.Map<StaffRequirement>(dto);
-        var result = await _staffRepo.UpdateAsync(entity);
+        var result = await _staffRepo.UpdateStaffRequirementAsync(entity);
         return MapStaffToDto(result);
     }
 
     public async Task<bool> DeleteStaffRequirementAsync(int srIdentity)
-        => await _staffRepo.DeleteAsync(srIdentity);
+        => await _staffRepo.DeleteStaffRequirementAsync(srIdentity);
 
     // ── Tests ────────────────────────────────────────────────────────────────
 
     public async Task<IEnumerable<TestRequirementDto>> GetTestRequirementsAsync(string projectId, int year)
     {
-        var rows = await _testRepo.GetByProjectYearAsync(projectId, year);
+        var rows = await _testRepo.GetTestRequirementsByProjectYearAsync(projectId, year);
         return rows.Select(r => new TestRequirementDto
         {
             Project = r.Project,
@@ -126,32 +127,33 @@ public class YearlyDetailsService : IYearlyDetailsService
             TestCode = r.TestCode,
             NumberOfTests = r.NumberOfTests,
             UnitPrice = r.UnitPrice,
-            TestCost = r.UnitPrice.HasValue && r.NumberOfTests.HasValue ? r.UnitPrice.Value * r.NumberOfTests.Value : null
+            TestCost = r.TestCost,
+            TestDescription = r.TestDescription
         });
     }
 
     public async Task<TestRequirementDto> AddTestRequirementAsync(TestRequirementDto dto)
     {
         var entity = _mapper.Map<TestRequirement>(dto);
-        var result = await _testRepo.AddAsync(entity);
+        var result = await _testRepo.AddTestRequirementAsync(entity);
         return MapTestToDto(result);
     }
 
     public async Task<TestRequirementDto> UpdateTestRequirementAsync(TestRequirementDto dto)
     {
         var entity = _mapper.Map<TestRequirement>(dto);
-        var result = await _testRepo.UpdateAsync(entity);
+        var result = await _testRepo.UpdateTestRequirementAsync(entity);
         return MapTestToDto(result);
     }
 
     public async Task<bool> DeleteTestRequirementAsync(string projectId, int year, string testCode)
-        => await _testRepo.DeleteAsync(projectId, year, testCode);
+        => await _testRepo.DeleteTestRequirementAsync(projectId, year, testCode);
 
     // ── Animals ──────────────────────────────────────────────────────────────
 
     public async Task<IEnumerable<AnimalRequirementDto>> GetAnimalRequirementsAsync(string projectId, int year)
     {
-        var rows = await _animalRepo.GetByProjectYearAsync(projectId, year);
+        var rows = await _animalRepo.GetAnimalRequirementsByProjectYearAsync(projectId, year);
         return rows.Select(r => new AnimalRequirementDto
         {
             ArIdentity = r.ArIdentity,
@@ -161,53 +163,61 @@ public class YearlyDetailsService : IYearlyDetailsService
             NumberOfDays = r.NumberOfDays,
             NumberOfAnimals = r.NumberOfAnimals,
             DailyRate = r.DailyRate,
-            AnimalCost = r.NumberOfDays.HasValue && r.NumberOfAnimals.HasValue && r.DailyRate.HasValue
-                ? r.NumberOfDays.Value * r.NumberOfAnimals.Value * r.DailyRate.Value
-                : null
+            AnimalCost = r.AnimalCost
         });
     }
 
     public async Task<AnimalRequirementDto> AddAnimalRequirementAsync(AnimalRequirementDto dto)
     {
         var entity = _mapper.Map<AnimalRequirement>(dto);
-        var result = await _animalRepo.AddAsync(entity);
+        var result = await _animalRepo.AddAnimalRequirementAsync(entity);
         return MapAnimalToDto(result);
     }
 
     public async Task<AnimalRequirementDto> UpdateAnimalRequirementAsync(AnimalRequirementDto dto)
     {
         var entity = _mapper.Map<AnimalRequirement>(dto);
-        var result = await _animalRepo.UpdateAsync(entity);
+        var result = await _animalRepo.UpdateAnimalRequirementAsync(entity);
         return MapAnimalToDto(result);
     }
 
     public async Task<bool> DeleteAnimalRequirementAsync(int arIdentity)
-        => await _animalRepo.DeleteAsync(arIdentity);
+        => await _animalRepo.DeleteAnimalRequirementAsync(arIdentity);
 
     // ── Additional Costs ─────────────────────────────────────────────────────
 
     public async Task<IEnumerable<AdditionalCostDto>> GetAdditionalCostsAsync(string projectId, int year)
     {
-        var rows = await _additionalCostRepo.GetByProjectYearAsync(projectId, year);
-        return _mapper.Map<IEnumerable<AdditionalCostDto>>(rows);
+        var rows = await _additionalCostRepo.GetAdditionalCostsByProjectYearAsync(projectId, year);
+        return rows.Select(r => new AdditionalCostDto
+        {
+            AcIdentity  = r.AcIdentity,
+            Project     = r.Project,
+            Year        = r.Year,
+            AccountCat  = r.AccountCat,
+            Description = r.Description,
+            ItemCost    = r.ItemCost,
+            CostEntered = r.CostEntered,
+            Freq        = r.Freq
+        });
     }
 
     public async Task<AdditionalCostDto> AddAdditionalCostAsync(AdditionalCostDto dto)
     {
         var entity = _mapper.Map<AdditionalCost>(dto);
-        var result = await _additionalCostRepo.AddAsync(entity);
+        var result = await _additionalCostRepo.AddAdditionalCostAsync(entity);
         return _mapper.Map<AdditionalCostDto>(result);
     }
 
     public async Task<AdditionalCostDto> UpdateAdditionalCostAsync(AdditionalCostDto dto)
     {
         var entity = _mapper.Map<AdditionalCost>(dto);
-        var result = await _additionalCostRepo.UpdateAsync(entity);
+        var result = await _additionalCostRepo.UpdateAdditionalCostAsync(entity);
         return _mapper.Map<AdditionalCostDto>(result);
     }
 
     public async Task<bool> DeleteAdditionalCostAsync(int acIdentity)
-        => await _additionalCostRepo.DeleteAsync(acIdentity);
+        => await _additionalCostRepo.DeleteAdditionalCostAsync(acIdentity);
 
     // ── Lookups ──────────────────────────────────────────────────────────────
 
@@ -236,7 +246,32 @@ public class YearlyDetailsService : IYearlyDetailsService
         return cats.Select(c => new AccountCategoryDto { AccShortName = c.AccShortName, UseInflation = c.UseInflation });
     }
 
-    // ── Private helpers ──────────────────────────────────────────────────────
+    public async Task<IEnumerable<TestCodeLookupDto>> GetTestCodeLookupsAsync(bool isDefra)
+    {
+        var lookups = await _testRepo.GetTestCodeLookupsAsync(isDefra);
+        return lookups.Select(t => new TestCodeLookupDto
+        {
+            ItemCode = t.ItemCode,
+            ItemDescription = t.ItemDescription,
+            UnitPrice = t.UnitPrice
+        });
+    }
+
+    public async Task<IEnumerable<AnimalLookupDto>> GetAllAnimalsAsync()
+    {
+        var animals = await _animalRepo.GetAllAnimalsAsync();
+        return animals.Select(a => new AnimalLookupDto
+        {
+            AnimalType = a.AnimalType,
+            Species = a.Species,
+            SecurityLevel = a.SecurityLevel,
+            DailyRate = a.DailyRate,
+            PlanByWeek = a.PlanByWeek,
+            DefraDailyRate = a.DefraDailyRate
+        });
+    }
+
+    // ── Private helpers
 
     private static StaffRequirementDto MapStaffToDto(StaffRequirement r) => new()
     {

@@ -4,11 +4,12 @@ namespace Apha.Costbook.Core.Interfaces;
 
 public interface IAnimalRequirementRepository
 {
-    Task<IEnumerable<AnimalRequirement>> GetByProjectYearAsync(string project, int year);
-    Task<AnimalRequirement> AddAsync(AnimalRequirement animalRequirement);
-    Task<AnimalRequirement> UpdateAsync(AnimalRequirement animalRequirement);
-    Task<bool> DeleteAsync(int arIdentity);
+    Task<IEnumerable<AnimalRequirementDetailView>> GetAnimalRequirementsByProjectYearAsync(string project, int year);
+    Task<AnimalRequirement> AddAnimalRequirementAsync(AnimalRequirement animalRequirement);
+    Task<AnimalRequirement> UpdateAnimalRequirementAsync(AnimalRequirement animalRequirement);
+    Task<bool> DeleteAnimalRequirementAsync(int arIdentity);
     Task<IEnumerable<AnimalRateLookup>> GetAnimalRatesAsync(bool isDefra);
+    Task<IEnumerable<FpsAnimals>> GetAllAnimalsAsync();
 }
 
 public record AnimalRateLookup(string AnimalType, double? DailyRate);

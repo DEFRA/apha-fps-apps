@@ -4,7 +4,6 @@ using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.CostBook.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
-using Newtonsoft.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -41,37 +40,26 @@ public class YearlyDetailsController : Controller
         var isDefra = header.IsDefraProject == 1;
 
         var yearsResponse = await _service.GetProjectYearsAsync(decodedProjectId);
-        var years = yearsResponse.Success && yearsResponse.Data != null
+        var projectYears = yearsResponse.Success && yearsResponse.Data != null
             ? yearsResponse.Data.Select(y => y.YearValue).ToList()
             : new List<int>();
 
         if (selectedYear == 0)
-            selectedYear = years.FirstOrDefault();
+            selectedYear = projectYears.FirstOrDefault();
 
         var viewModel = new YearlyDetailsViewModel
         {
-            Code = header.ProjectId,
-            ProjectTitle = header.ProjectTitle,
-            StartDate = header.StartDate,
-            FinancialYears = header.FinancialYears,
-            Inflation = header.Inflation,
-            IsDefraProject = header.IsDefraProject,
-            EuroConvRate = header.EuroConvRate,
-            Programme = header.Programme,
+            ProjectHeaderDto = header,
             SelectedYear = selectedYear,
-            ProjectYears = years
+            ProjectYears = projectYears,
         };
 
         await PopulateDropdownsAsync(viewModel, isDefra);
 
         if (selectedYear > 0)
         {
-            viewModel.StaffGrid = await BuildStaffGridAsync(decodedProjectId, selectedYear);
-            viewModel.TestGrid = await BuildTestGridAsync(decodedProjectId, selectedYear);
-            viewModel.AnimalGrid = await BuildAnimalGridAsync(decodedProjectId, selectedYear);
-            viewModel.AdditionalCostGrid = await BuildAdditionalCostGridAsync(decodedProjectId, selectedYear);
-
             var ratesResponse = await _service.GetProjectYearsAsync(decodedProjectId);
+
             if (ratesResponse.Success && ratesResponse.Data != null)
                 viewModel.YearRates = _mapper.Map<List<ProjectYearRateItem>>(ratesResponse.Data);
         }
@@ -79,13 +67,47 @@ public class YearlyDetailsController : Controller
         return View(viewModel);
     }
 
+    private void CalculateYearTotals(YearlyDetailsViewModel viewModel)
+    {
+        viewModel.StaffCostTotal = viewModel.StaffGrid.Data.Sum(f => f.StaffCost ?? 0);
+        viewModel.TestCostTotal = viewModel.TestGrid.Data.Sum(f => f.TestCost ?? 0);
+        viewModel.AnimalCostTotal = viewModel.AnimalGrid.Data.Sum(f => f.AnimalCost ?? 0);
+        viewModel.AdditionalCostTotal = viewModel.AdditionalCostGrid.Data.Sum(f => f.CostEntered);
+    }
+
     // ── GRID LOADERS ──────────────────────────────────────────────────────
+
+    [HttpPost]
+    public async Task<IActionResult> GetYearTotals(string projectId, int year)
+    {
+        var decodedProjectId = HttpUtility.UrlDecode(projectId);
+        var viewModel = new YearlyDetailsViewModel();
+
+        // Fetch all staff rows (not just one page) so the total is correct
+        var allStaffQuery = new QueryParameters<string> { Page = 1, PageSize = int.MaxValue };
+        viewModel.StaffGrid = await BuildStaffGridAsync(decodedProjectId, year, allStaffQuery);
+        viewModel.TestGrid = await BuildTestGridAsync(decodedProjectId, year);
+        viewModel.AnimalGrid = await BuildAnimalGridAsync(decodedProjectId, year);
+        viewModel.AdditionalCostGrid = await BuildAdditionalCostGridAsync(decodedProjectId, year);
+
+        CalculateYearTotals(viewModel);
+
+        return Json(new
+        {
+            staffCostTotal = viewModel.StaffCostTotal,
+            testCostTotal = viewModel.TestCostTotal,
+            animalCostTotal = viewModel.AnimalCostTotal,
+            additionalCostTotal = viewModel.AdditionalCostTotal,
+            grandTotal = viewModel.GrandTotal
+        });
+    }
 
     [HttpPost]
     public async Task<IActionResult> LoadStaffGrid(PaginationFilter<string> request, string projectId, int year)
     {
         var query = _mapper.Map<QueryParameters<string>>(request);
         var gridConfig = await BuildStaffGridAsync(HttpUtility.UrlDecode(projectId), year, query);
+
         return PartialView("_DataGrid", gridConfig);
     }
 
@@ -110,12 +132,34 @@ public class YearlyDetailsController : Controller
         return PartialView("_DataGrid", gridConfig);
     }
 
-    // ── ADD PROJECT YEAR (btnAddProjectYear — fnAddProjectYear BAS) ───────
+    [HttpPost]
+    public async Task<IActionResult> LoadMarkupAndProfitGrid(PaginationFilter<string> request, string projectId, int year)
+    {
+        var gridConfig = await BuildMarkupAndProfitGridAsync(HttpUtility.UrlDecode(projectId), year);
+        return PartialView("_DataGrid", gridConfig);
+    }
+
+    // ── ADD PROJECT YEAR
+
+    [HttpGet]
+    [ActionName("AddProjectYear")]
+    public IActionResult AddProjectYearGet(string projectId, int year)
+    {
+        var model = new ProjectYearRateItem
+        {
+            Project = projectId,
+            YearValue = year
+        };
+        return PartialView("_AddProjectYear", model);
+    }
 
     [HttpPost]
-    public async Task<IActionResult> AddProjectYear(string projectId, int year)
+    public async Task<IActionResult> AddProjectYear(string projectId, int year, ProjectYearRateItem item)
     {
-        var response = await _service.AddProjectYearAsync(HttpUtility.UrlDecode(projectId), year);
+        var dto = _mapper.Map<ProjectYearDto>(item);
+        dto.Project = HttpUtility.UrlDecode(projectId);
+        dto.YearValue = year;
+        var response = await _service.AddProjectYearAsync(HttpUtility.UrlDecode(projectId), year, dto);
         if (!response.Success)
             return Json(new { success = false, message = "Failed to add project year." });
         return Json(new { success = true, year = response.Data?.YearValue });
@@ -126,7 +170,7 @@ public class YearlyDetailsController : Controller
     [HttpGet]
     public async Task<IActionResult> CreateStaff(string projectId, int year, bool isDefra)
     {
-        var payRates = await GetPayRateOptionsAsync(isDefra);
+        ViewBag.WgGradeOptions = await GetPayRateOptionsAsync(isDefra);
         return PartialView("_AddEditStaffRequirement", new StaffRequirementItem { WgGrade = string.Empty });
     }
 
@@ -134,8 +178,10 @@ public class YearlyDetailsController : Controller
     public async Task<IActionResult> CreateStaff(string projectId, int year, StaffRequirementItem item)
     {
         if (!ModelState.IsValid)
-            return PartialView("_AddEditStaffRequirement", item);
+            return Json(new { success = false, message = "Validation failed." });
         var dto = _mapper.Map<StaffRequirementDto>(item);
+        dto.Project = HttpUtility.UrlDecode(projectId);
+        dto.Year = year;
         var response = await _service.AddStaffRequirementAsync(HttpUtility.UrlDecode(projectId), year, dto);
         if (!response.Success)
             return Json(new { success = false });
@@ -145,7 +191,8 @@ public class YearlyDetailsController : Controller
     [HttpGet]
     public async Task<IActionResult> EditStaff(string projectId, int year, int srIdentity, bool isDefra)
     {
-        // Fetch full list (staff rows per project/year are few; pageSize 1000 covers all cases)
+        ViewBag.WgGradeOptions = await GetPayRateOptionsAsync(isDefra);
+
         var query = new QueryParameters<string> { Page = 1, PageSize = 1000 };
         var listResponse = await _service.GetStaffRequirementsAsync(
                                HttpUtility.UrlDecode(projectId), year, query);
@@ -160,8 +207,11 @@ public class YearlyDetailsController : Controller
     public async Task<IActionResult> EditStaff(string projectId, int year, int srIdentity, StaffRequirementItem item)
     {
         if (!ModelState.IsValid)
-            return PartialView("_AddEditStaffRequirement", item);
+            return Json(new { success = false, message = "Validation failed." });
         var dto = _mapper.Map<StaffRequirementDto>(item);
+        dto.Project = HttpUtility.UrlDecode(projectId);
+        dto.Year = year;
+        dto.SrIdentity = srIdentity;
         var response = await _service.UpdateStaffRequirementAsync(HttpUtility.UrlDecode(projectId), year, srIdentity, dto);
         if (!response.Success)
             return Json(new { success = false });
@@ -178,15 +228,20 @@ public class YearlyDetailsController : Controller
     // ── TEST CRUD ─────────────────────────────────────────────────────────
 
     [HttpGet]
-    public IActionResult CreateTest(string projectId, int year)
-        => PartialView("_AddEditTestRequirement", new TestRequirementItem { TestCode = string.Empty });
+    public async Task<IActionResult> CreateTest(string projectId, int year, bool isDefra)
+    {
+        ViewBag.TestCode = await GetTestCodeOptionsAsync(isDefra);
+        return PartialView("_AddEditTestRequirement", new TestRequirementItem { TestCode = string.Empty });
+    }
 
     [HttpPost]
     public async Task<IActionResult> CreateTest(string projectId, int year, TestRequirementItem item)
     {
         if (!ModelState.IsValid)
-            return PartialView("_AddEditTestRequirement", item);
+            return Json(new { success = false, message = "Validation failed." });
         var dto = _mapper.Map<TestRequirementDto>(item);
+        dto.Project = HttpUtility.UrlDecode(projectId);
+        dto.Year = year;
         var response = await _service.AddTestRequirementAsync(HttpUtility.UrlDecode(projectId), year, dto);
         if (!response.Success)
             return Json(new { success = false });
@@ -194,8 +249,9 @@ public class YearlyDetailsController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> EditTest(string projectId, int year, string testCode)
+    public async Task<IActionResult> EditTest(string projectId, int year, string testCode, bool isDefra)
     {
+        ViewBag.TestCode = await GetTestCodeOptionsAsync(isDefra);
         var listResponse = await _service.GetTestRequirementsAsync(HttpUtility.UrlDecode(projectId), year);
         var row = listResponse.Data?.FirstOrDefault(t => t.TestCode == testCode);
         if (row is null) return NotFound();
@@ -206,8 +262,11 @@ public class YearlyDetailsController : Controller
     public async Task<IActionResult> EditTest(string projectId, int year, string testCode, TestRequirementItem item)
     {
         if (!ModelState.IsValid)
-            return PartialView("_AddEditTestRequirement", item);
+            return Json(new { success = false, message = "Validation failed." });
         var dto = _mapper.Map<TestRequirementDto>(item);
+        dto.Project = HttpUtility.UrlDecode(projectId);
+        dto.Year = year;
+        dto.TestCode = testCode;
         var response = await _service.UpdateTestRequirementAsync(HttpUtility.UrlDecode(projectId), year, testCode, dto);
         if (!response.Success)
             return Json(new { success = false });
@@ -224,15 +283,20 @@ public class YearlyDetailsController : Controller
     // ── ANIMAL CRUD ───────────────────────────────────────────────────────
 
     [HttpGet]
-    public IActionResult CreateAnimal(string projectId, int year)
-        => PartialView("_AddEditAnimalRequirement", new AnimalRequirementItem { AnimalType = string.Empty });
+    public async Task<IActionResult> CreateAnimal(string projectId, int year, bool isDefra)
+    {
+        ViewBag.AnimalTypeOptions = await GetAnimalTypeOptionsAsync();
+        return PartialView("_AddEditAnimalRequirement", new AnimalRequirementItem { AnimalType = string.Empty });
+    }
 
     [HttpPost]
     public async Task<IActionResult> CreateAnimal(string projectId, int year, AnimalRequirementItem item)
     {
         if (!ModelState.IsValid)
-            return PartialView("_AddEditAnimalRequirement", item);
+            return Json(new { success = false, message = "Validation failed." });
         var dto = _mapper.Map<AnimalRequirementDto>(item);
+        dto.Project = HttpUtility.UrlDecode(projectId);
+        dto.Year = year;
         var response = await _service.AddAnimalRequirementAsync(HttpUtility.UrlDecode(projectId), year, dto);
         if (!response.Success)
             return Json(new { success = false });
@@ -240,8 +304,9 @@ public class YearlyDetailsController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> EditAnimal(string projectId, int year, int arIdentity)
+    public async Task<IActionResult> EditAnimal(string projectId, int year, int arIdentity, bool isDefra)
     {
+        ViewBag.AnimalTypeOptions = await GetAnimalTypeOptionsAsync();
         var listResponse = await _service.GetAnimalRequirementsAsync(HttpUtility.UrlDecode(projectId), year);
         var row = listResponse.Data?.FirstOrDefault(a => a.ArIdentity == arIdentity);
         if (row is null) return NotFound();
@@ -252,8 +317,11 @@ public class YearlyDetailsController : Controller
     public async Task<IActionResult> EditAnimal(string projectId, int year, int arIdentity, AnimalRequirementItem item)
     {
         if (!ModelState.IsValid)
-            return PartialView("_AddEditAnimalRequirement", item);
+            return Json(new { success = false, message = "Validation failed." });
         var dto = _mapper.Map<AnimalRequirementDto>(item);
+        dto.Project = HttpUtility.UrlDecode(projectId);
+        dto.Year = year;
+        dto.ArIdentity = arIdentity;
         var response = await _service.UpdateAnimalRequirementAsync(HttpUtility.UrlDecode(projectId), year, arIdentity, dto);
         if (!response.Success)
             return Json(new { success = false });
@@ -270,15 +338,21 @@ public class YearlyDetailsController : Controller
     // ── ADDITIONAL COST CRUD ──────────────────────────────────────────────
 
     [HttpGet]
-    public IActionResult CreateAdditionalCost(string projectId, int year)
-        => PartialView("_AddEditAdditionalCost", new AdditionalCostItem { Description = string.Empty, AccountCat = string.Empty });
+    public async Task<IActionResult> CreateAdditionalCost(string projectId, int year)
+    {
+        ViewBag.AccountCatOptions = await GetAccountCatOptionsAsync();
+        return PartialView("_AddEditAdditionalCost",
+            new AdditionalCostItem { Description = string.Empty, AccountCat = string.Empty });
+    }
 
     [HttpPost]
     public async Task<IActionResult> CreateAdditionalCost(string projectId, int year, AdditionalCostItem item)
     {
         if (!ModelState.IsValid)
-            return PartialView("_AddEditAdditionalCost", item);
+            return Json(new { success = false, message = "Validation failed." });
         var dto = _mapper.Map<AdditionalCostDto>(item);
+        dto.Project = HttpUtility.UrlDecode(projectId);
+        dto.Year = year;
         var response = await _service.AddAdditionalCostAsync(HttpUtility.UrlDecode(projectId), year, dto);
         if (!response.Success)
             return Json(new { success = false });
@@ -288,6 +362,7 @@ public class YearlyDetailsController : Controller
     [HttpGet]
     public async Task<IActionResult> EditAdditionalCost(string projectId, int year, int acIdentity)
     {
+        ViewBag.AccountCatOptions = await GetAccountCatOptionsAsync();
         var listResponse = await _service.GetAdditionalCostsAsync(HttpUtility.UrlDecode(projectId), year);
         var row = listResponse.Data?.FirstOrDefault(ac => ac.AcIdentity == acIdentity);
         if (row is null) return NotFound();
@@ -298,8 +373,11 @@ public class YearlyDetailsController : Controller
     public async Task<IActionResult> EditAdditionalCost(string projectId, int year, int acIdentity, AdditionalCostItem item)
     {
         if (!ModelState.IsValid)
-            return PartialView("_AddEditAdditionalCost", item);
+            return Json(new { success = false, message = "Validation failed." });
         var dto = _mapper.Map<AdditionalCostDto>(item);
+        dto.Project = HttpUtility.UrlDecode(projectId);
+        dto.Year = year;
+        dto.AcIdentity = acIdentity;
         var response = await _service.UpdateAdditionalCostAsync(HttpUtility.UrlDecode(projectId), year, acIdentity, dto);
         if (!response.Success)
             return Json(new { success = false });
@@ -314,6 +392,16 @@ public class YearlyDetailsController : Controller
     }
 
     // ── MARKUP/PROFIT UPDATE ──────────────────────────────────────────────
+
+    [HttpGet]
+    public async Task<IActionResult> EditMarkupAndProfit(string projectId, int year)
+    {
+        var response = await _service.GetProjectYearsAsync(HttpUtility.UrlDecode(projectId));
+        var yearDto = response.Data?.FirstOrDefault(y => y.YearValue == year);
+        if (yearDto is null) return NotFound();
+        var model = _mapper.Map<ProjectYearRateItem>(yearDto);
+        return PartialView("_AddProjectYear", model);
+    }
 
     [HttpPost]
     public async Task<IActionResult> UpdateProjectYearRate(string projectId, int year, ProjectYearRateItem item)
@@ -339,28 +427,28 @@ public class YearlyDetailsController : Controller
 
         return new DataGridConfig<StaffRequirementItem>
         {
-            GridId      = "staffGrid",
-            Title       = "Staff",
-            Data        = data,
+            GridId = "staffGrid",
+            Title = "Staff",
+            Data = data,
             KeyProperty = nameof(StaffRequirementItem.SrIdentity),
-            AllowAdd    = true,
-            AllowEdit   = true,
+            AllowAdd = true,
+            AllowEdit = true,
             AllowDelete = true,
-            AllowCopy   = false,
-            ShowPagination = true,
-            Pagination  = new PaginationModel
+            AllowCopy = false,
+            ShowPagination = false,
+            Pagination = new PaginationModel
             {
                 TotalRecords = pagedResult?.TotalCount ?? 0,
-                PageNumber   = query.Page,
-                PageSize     = query.PageSize,
-                SortColumn   = query.SortBy,
+                PageNumber = query.Page,
+                PageSize = query.PageSize,
+                SortColumn = query.SortBy,
                 SortDirection = query.Descending
             },
-            AddFunction  = $"openAddStaffModal('{projectId}', {year})",
-            EditFunction = $"openEditStaffModal('{projectId}', {year})",
-            DeleteFunction = $"deleteStaff('{projectId}', {year})",
-            BindGridUrl  = Url.Action("LoadStaffGrid", new { projectId, year }) ?? string.Empty,
-            Columns      = GridDataProvider.GetColumnsDefination<StaffRequirementItem>(null)
+            AddFunction = "gridAddStaff",
+            EditFunction = "gridEditStaff",
+            DeleteFunction = "gridDeleteStaff",
+            BindGridUrl = Url.Action("LoadStaffGrid", new { projectId, year }) ?? string.Empty,
+            Columns = GridDataProvider.GetColumnsDefination<StaffRequirementItem>(null)
         };
     }
 
@@ -382,9 +470,15 @@ public class YearlyDetailsController : Controller
             AllowDelete = true,
             AllowCopy = false,
             ShowPagination = false,
-            AddFunction = $"openAddTestModal('{projectId}', {year})",
-            EditFunction = $"openEditTestModal('{projectId}', {year})",
-            DeleteFunction = $"deleteTest('{projectId}', {year})",
+            Pagination = new PaginationModel
+            {
+                TotalRecords = data.Count,
+                PageNumber = 1,
+                PageSize = data.Count > 0 ? data.Count : 10
+            },
+            AddFunction = "gridAddTest",
+            EditFunction = "gridEditTest",
+            DeleteFunction = "gridDeleteTest",
             BindGridUrl = Url.Action("LoadTestGrid", new { projectId, year }) ?? string.Empty,
             Columns = GridDataProvider.GetColumnsDefination<TestRequirementItem>(null)
         };
@@ -408,9 +502,15 @@ public class YearlyDetailsController : Controller
             AllowDelete = true,
             AllowCopy = false,
             ShowPagination = false,
-            AddFunction = $"openAddAnimalModal('{projectId}', {year})",
-            EditFunction = $"openEditAnimalModal('{projectId}', {year})",
-            DeleteFunction = $"deleteAnimal('{projectId}', {year})",
+            Pagination = new PaginationModel
+            {
+                TotalRecords = data.Count,
+                PageNumber = 1,
+                PageSize = data.Count > 0 ? data.Count : 10
+            },
+            AddFunction = "gridAddAnimal",
+            EditFunction = "gridEditAnimal",
+            DeleteFunction = "gridDeleteAnimal",
             BindGridUrl = Url.Action("LoadAnimalGrid", new { projectId, year }) ?? string.Empty,
             Columns = GridDataProvider.GetColumnsDefination<AnimalRequirementItem>(null)
         };
@@ -434,11 +534,48 @@ public class YearlyDetailsController : Controller
             AllowDelete = true,
             AllowCopy = false,
             ShowPagination = false,
-            AddFunction = $"openAddAdditionalCostModal('{projectId}', {year})",
-            EditFunction = $"openEditAdditionalCostModal('{projectId}', {year})",
-            DeleteFunction = $"deleteAdditionalCost('{projectId}', {year})",
+            Pagination = new PaginationModel
+            {
+                TotalRecords = data.Count,
+                PageNumber = 1,
+                PageSize = data.Count > 0 ? data.Count : 10
+            },
+            AddFunction = "gridAddAdditionalCost",
+            EditFunction = "gridEditAdditionalCost",
+            DeleteFunction = "gridDeleteAdditionalCost",
             BindGridUrl = Url.Action("LoadAdditionalCostGrid", new { projectId, year }) ?? string.Empty,
             Columns = GridDataProvider.GetColumnsDefination<AdditionalCostItem>(null)
+        };
+    }
+
+    private async Task<DataGridConfig<ProjectYearRateItem>> BuildMarkupAndProfitGridAsync(string projectId, int year)
+    {
+        var response = await _service.GetProjectYearsAsync(projectId);
+        var data = response.Success && response.Data != null
+            ? _mapper.Map<List<ProjectYearRateItem>>(
+                  response.Data.ToList())
+            : new List<ProjectYearRateItem>();
+
+        return new DataGridConfig<ProjectYearRateItem>
+        {
+            GridId = "markupAndProfitGrid",
+            Title = "Markup and Profit",
+            Data = data,
+            KeyProperty = nameof(ProjectYearRateItem.YearValue),
+            AllowAdd = false,
+            AllowEdit = false,
+            AllowDelete = false,
+            AllowCopy = false,
+            ShowPagination = false,
+            Pagination = new PaginationModel
+            {
+                TotalRecords = data.Count,
+                PageNumber = 1,
+                PageSize = data.Count > 0 ? data.Count : 10
+            },
+            EditFunction = "gridEditMarkupAndProfit",
+            BindGridUrl = Url.Action("LoadMarkupAndProfitGrid", new { projectId, year }) ?? string.Empty,
+            Columns = GridDataProvider.GetColumnsDefination<ProjectYearRateItem>(null)
         };
     }
 
@@ -465,6 +602,30 @@ public class YearlyDetailsController : Controller
         var response = await _service.GetPayRatesAsync(isDefra);
         return response.Success && response.Data != null
             ? response.Data.Select(p => new SelectListItem(p.WgGrade, p.WgGrade)).ToList()
+            : new List<SelectListItem>();
+    }
+
+    private async Task<List<SelectListItem>> GetAnimalTypeOptionsAsync()
+    {
+        var response = await _service.GetAllAnimalsAsync();
+        return response.Success && response.Data != null
+            ? response.Data.Select(a => new SelectListItem(a.AnimalType, a.AnimalType)).ToList()
+            : new List<SelectListItem>();
+    }
+
+    private async Task<List<SelectListItem>> GetAccountCatOptionsAsync()
+    {
+        var response = await _service.GetAccountCategoriesAsync();
+        return response.Success && response.Data != null
+            ? response.Data.Select(c => new SelectListItem(c.AccShortName, c.AccShortName)).ToList()
+            : new List<SelectListItem>();
+    }
+
+    private async Task<List<SelectListItem>> GetTestCodeOptionsAsync(bool isDefra)
+    {
+        var response = await _service.GetTestCodeLookupsAsync(isDefra);
+        return response.Success && response.Data != null
+            ? response.Data.Select(t => new SelectListItem($"{t.ItemCode} - {t.ItemDescription}", t.ItemCode)).ToList()
             : new List<SelectListItem>();
     }
 }

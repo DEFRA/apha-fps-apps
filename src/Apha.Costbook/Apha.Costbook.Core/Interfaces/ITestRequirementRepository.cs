@@ -4,8 +4,11 @@ namespace Apha.Costbook.Core.Interfaces;
 
 public interface ITestRequirementRepository
 {
-    Task<IEnumerable<TestRequirement>> GetByProjectYearAsync(string project, int year);
-    Task<TestRequirement> AddAsync(TestRequirement testRequirement);
-    Task<TestRequirement> UpdateAsync(TestRequirement testRequirement);
-    Task<bool> DeleteAsync(string project, int year, string testCode);
+    Task<IEnumerable<TestRequirementDetailView>> GetTestRequirementsByProjectYearAsync(string project, int year);
+    Task<TestRequirement> AddTestRequirementAsync(TestRequirement testRequirement);
+    Task<TestRequirement> UpdateTestRequirementAsync(TestRequirement testRequirement);
+    Task<bool> DeleteTestRequirementAsync(string project, int year, string testCode);
+    Task<IEnumerable<TestCodeLookup>> GetTestCodeLookupsAsync(bool isDefra);
 }
+
+public record TestCodeLookup(string ItemCode, string? ItemDescription, decimal? UnitPrice);

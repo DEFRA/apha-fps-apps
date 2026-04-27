@@ -36,7 +36,7 @@ public class ProjectYearRepository : IProjectYearRepository
             .MaxAsync(py => (int?)py.YearValue);
     }
 
-    public async Task<ProjectYear> AddProjectYearAsync(string project, int year)
+    public async Task<ProjectYear> AddProjectYearAsync(string project, int year, ProjectYear yearData)
     {
         var decodedProject = HttpUtility.UrlDecode(project);
 
@@ -48,7 +48,29 @@ public class ProjectYearRepository : IProjectYearRepository
 
         ProjectYear newYear;
 
-        if (!isCommercial)
+        // If rate data is provided from the form, use it directly
+        var hasRateData = yearData.MarkupTime.HasValue || yearData.MarkupTests.HasValue
+                       || yearData.MarkupAnimals.HasValue || yearData.MarkupAdditional.HasValue
+                       || yearData.ProfitTime.HasValue || yearData.ProfitTests.HasValue
+                       || yearData.ProfitAnimals.HasValue || yearData.ProfitAdditional.HasValue;
+
+        if (hasRateData)
+        {
+            newYear = new ProjectYear
+            {
+                Project = decodedProject,
+                YearValue = year,
+                MarkupTime = yearData.MarkupTime,
+                MarkupTests = yearData.MarkupTests,
+                MarkupAnimals = yearData.MarkupAnimals,
+                MarkupAdditional = yearData.MarkupAdditional,
+                ProfitTime = yearData.ProfitTime,
+                ProfitTests = yearData.ProfitTests,
+                ProfitAnimals = yearData.ProfitAnimals,
+                ProfitAdditional = yearData.ProfitAdditional
+            };
+        }
+        else if (!isCommercial)
         {
             newYear = new ProjectYear { Project = decodedProject, YearValue = year };
         }

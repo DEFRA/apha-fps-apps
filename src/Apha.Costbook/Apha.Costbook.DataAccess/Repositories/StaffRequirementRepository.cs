@@ -20,7 +20,7 @@ public class StaffRequirementRepository : RepositoryBase<StaffRequirement>, ISta
     /// <summary>
     /// LINQ equivalent of MS Access qryStaffReqGrade — with server-side sorting and paging.
     /// </summary>
-    public async Task<PagedData<StaffRequirementDetailView>> GetByProjectYearAsync(
+    public async Task<PagedData<StaffRequirementDetailView>> GetStaffRequirementsByProjectYearAsync(
         string project, int year, PaginationParameters<string> query)
     {
         var decodedProject = HttpUtility.UrlDecode(project);
@@ -69,21 +69,25 @@ public class StaffRequirementRepository : RepositoryBase<StaffRequirement>, ISta
         return ApplyPaging(result, query.Page, query.PageSize);
     }
 
-    public async Task<StaffRequirement> AddAsync(StaffRequirement staffRequirement)
+    public async Task<StaffRequirement> AddStaffRequirementAsync(StaffRequirement staffRequirement)
     {
+        staffRequirement.Project = HttpUtility.UrlDecode(staffRequirement.Project);
+
         _context.StaffRequirements.Add(staffRequirement);
         await _context.SaveChangesAsync();
         return staffRequirement;
     }
 
-    public async Task<StaffRequirement> UpdateAsync(StaffRequirement staffRequirement)
+    public async Task<StaffRequirement> UpdateStaffRequirementAsync(StaffRequirement staffRequirement)
     {
+        staffRequirement.Project = HttpUtility.UrlDecode(staffRequirement.Project);
+
         _context.StaffRequirements.Update(staffRequirement);
         await _context.SaveChangesAsync();
         return staffRequirement;
     }
 
-    public async Task<bool> DeleteAsync(int srIdentity)
+    public async Task<bool> DeleteStaffRequirementAsync(int srIdentity)
     {
         var deleted = await _context.StaffRequirements
             .Where(s => s.SrIdentity == srIdentity)
@@ -101,14 +105,22 @@ public class StaffRequirementRepository : RepositoryBase<StaffRequirement>, ISta
 
         return sortBy.ToLower() switch
         {
-            "sridentity" => descending ? query.OrderByDescending(c => c.SrIdentity) : query.OrderBy(c => c.SrIdentity),
-            "project"    => descending ? query.OrderByDescending(c => c.Project)    : query.OrderBy(c => c.Project),
-            "year"       => descending ? query.OrderByDescending(c => c.Year)       : query.OrderBy(c => c.Year),
-            "wggrade"    => descending ? query.OrderByDescending(c => c.WgGrade)    : query.OrderBy(c => c.WgGrade),
-            "name"       => descending ? query.OrderByDescending(c => c.Name)       : query.OrderBy(c => c.Name),
-            "nohours"    => descending ? query.OrderByDescending(c => c.Nohours)    : query.OrderBy(c => c.Nohours),
-            "chargerate" => descending ? query.OrderByDescending(c => c.Chargerate) : query.OrderBy(c => c.Chargerate),
+            "sridentity" => ApplyOrder(query, c => c.SrIdentity, descending),
+            "project"    => ApplyOrder(query, c => c.Project, descending),
+            "year"       => ApplyOrder(query, c => c.Year, descending),
+            "wggrade"    => ApplyOrder(query, c => c.WgGrade, descending),
+            "name"       => ApplyOrder(query, c => c.Name, descending),
+            "nohours"    => ApplyOrder(query, c => c.Nohours, descending),
+            "chargerate" => ApplyOrder(query, c => c.Chargerate, descending),
             _            => query.OrderBy(c => c.WgGrade)
         };
+    }
+
+    private static IQueryable<StaffRequirementDetailView> ApplyOrder<TKey>(
+        IQueryable<StaffRequirementDetailView> query,
+        System.Linq.Expressions.Expression<Func<StaffRequirementDetailView, TKey>> keySelector,
+        bool descending)
+    {
+        return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
     }
 }

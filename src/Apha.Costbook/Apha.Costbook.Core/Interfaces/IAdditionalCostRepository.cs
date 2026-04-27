@@ -5,10 +5,10 @@ namespace Apha.Costbook.Core.Interfaces;
 
 public interface IAdditionalCostRepository
 {
-    Task<IEnumerable<AdditionalCost>> GetByProjectYearAsync(string project, int year);
-    Task<AdditionalCost> AddAsync(AdditionalCost additionalCost);
-    Task<AdditionalCost> UpdateAsync(AdditionalCost additionalCost);
-    Task<bool> DeleteAsync(int acIdentity);
+    Task<IEnumerable<AdditionalCostDetailView>> GetAdditionalCostsByProjectYearAsync(string project, int year);
+    Task<AdditionalCost> AddAdditionalCostAsync(AdditionalCost additionalCost);
+    Task<AdditionalCost> UpdateAdditionalCostAsync(AdditionalCost additionalCost);
+    Task<bool> DeleteAdditionalCostAsync(int acIdentity);
     Task<IEnumerable<AccountCategoryLookup>> GetProjectSpecificAccountCategoriesAsync();
 }
 

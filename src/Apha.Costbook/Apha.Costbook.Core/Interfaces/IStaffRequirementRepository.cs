@@ -5,8 +5,8 @@ namespace Apha.Costbook.Core.Interfaces;
 
 public interface IStaffRequirementRepository
 {
-    Task<PagedData<StaffRequirementDetailView>> GetByProjectYearAsync(string project, int year, PaginationParameters<string> query);
-    Task<StaffRequirement> AddAsync(StaffRequirement staffRequirement);
-    Task<StaffRequirement> UpdateAsync(StaffRequirement staffRequirement);
-    Task<bool> DeleteAsync(int srIdentity);
+    Task<PagedData<StaffRequirementDetailView>> GetStaffRequirementsByProjectYearAsync(string project, int year, PaginationParameters<string> query);
+    Task<StaffRequirement> AddStaffRequirementAsync(StaffRequirement staffRequirement);
+    Task<StaffRequirement> UpdateStaffRequirementAsync(StaffRequirement staffRequirement);
+    Task<bool> DeleteStaffRequirementAsync(int srIdentity);
 }

@@ -23,7 +23,8 @@ public class RequestMapper : Profile
 
         // ── Project entity ↔ Dto/Res/Req ─────────────────────────────────────
         CreateMap<Project, ProjectDto>().ReverseMap();
-        CreateMap<Project, ProjectHeaderDto>();
+        CreateMap<Project, ProjectHeaderDto>()
+            .ForMember(dest => dest.EuroConvRate, opt => opt.MapFrom(src => src.Euroconvrate));
         CreateMap<ProjectDto, ProjectRes>().ReverseMap();
         CreateMap<ProjectDto, ProjectReq>().ReverseMap();
 
@@ -48,6 +49,8 @@ public class RequestMapper : Profile
         CreateMap<ProjectHeaderDto,       ProjectHeaderRes>().ReverseMap();
         CreateMap<ProjectYearDto,         ProjectYearRes>().ReverseMap();
         CreateMap<ProjectYearDto,         ProjectYearReq>().ReverseMap();
+        CreateMap<AddProjectYearReq,      ProjectYearDto>()
+            .ForMember(dest => dest.YearValue, opt => opt.MapFrom(src => src.Year));
         CreateMap<StaffRequirementDto,    StaffRequirementRes>().ReverseMap();
         CreateMap<StaffRequirementDto,    StaffRequirementReq>().ReverseMap();
         CreateMap<TestRequirementDto,     TestRequirementRes>().ReverseMap();
@@ -59,5 +62,7 @@ public class RequestMapper : Profile
         CreateMap<PayRateDto,             PayRateRes>().ReverseMap();
         CreateMap<AnimalRateDto,          AnimalRateRes>().ReverseMap();
         CreateMap<AccountCategoryDto,     AccountCategoryRes>().ReverseMap();
+        CreateMap<TestCodeLookupDto,       TestCodeLookupRes>().ReverseMap();
+        CreateMap<AnimalLookupDto,         AnimalLookupRes>().ReverseMap();
     }
 }

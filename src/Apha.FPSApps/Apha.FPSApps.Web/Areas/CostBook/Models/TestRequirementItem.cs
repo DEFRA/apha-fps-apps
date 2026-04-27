@@ -7,7 +7,7 @@ public class TestRequirementItem
 {
     [Display(Name = "Code")]
     [Required(ErrorMessage = "Test Code is required.")]
-    [GridColumn(Order = 1, Width = 100, Type = GridColumnType.Text, IsFilterable = true)]
+    [GridColumn(Order = 1, Width = 100, Type = GridColumnType.Text, IsFilterable = false)]
     public string TestCode { get; set; } = null!;
 
     [Display(Name = "Unit Price")]

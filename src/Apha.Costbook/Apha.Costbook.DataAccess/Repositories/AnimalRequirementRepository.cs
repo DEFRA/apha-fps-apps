@@ -12,31 +12,58 @@ public class AnimalRequirementRepository : IAnimalRequirementRepository
 
     public AnimalRequirementRepository(CostbookDbContext context) => _context = context;
 
-    public async Task<IEnumerable<AnimalRequirement>> GetByProjectYearAsync(string project, int year)
+    public async Task<IEnumerable<AnimalRequirementDetailView>> GetAnimalRequirementsByProjectYearAsync(string project, int year)
     {
         var decodedProject = HttpUtility.UrlDecode(project);
+
         return await _context.AnimalRequirements
             .AsNoTracking()
-            .Where(a => a.Project == decodedProject && a.Year == year)
+            .Where(ar => ar.Project == decodedProject && ar.Year == year)
+            .GroupJoin(
+                _context.Projects.AsNoTracking(),
+                ar => ar.Project,
+                p => p.ProjectId,
+                (ar, projJoin) => new { ar, projJoin })
+            .SelectMany(
+                x => x.projJoin.DefaultIfEmpty(),
+                (x, p) => new AnimalRequirementDetailView
+                {
+                    ArIdentity = x.ar.ArIdentity,
+                    Project = x.ar.Project,
+                    Year = x.ar.Year,
+                    AnimalType = x.ar.AnimalType,
+                    NumberOfDays = x.ar.NumberOfDays,
+                    NumberOfAnimals = x.ar.NumberOfAnimals,
+                    DailyRate = x.ar.DailyRate,
+                    AnimalCost = x.ar.NumberOfDays * x.ar.NumberOfAnimals * x.ar.DailyRate,
+                    Programme = p != null ? p.Programme : null,
+                    EuroConvRate = p != null ? p.Euroconvrate : null
+                })
+            .Distinct()
             .OrderBy(a => a.AnimalType)
             .ToListAsync();
     }
 
-    public async Task<AnimalRequirement> AddAsync(AnimalRequirement animalRequirement)
+    public async Task<AnimalRequirement> AddAnimalRequirementAsync(AnimalRequirement animalRequirement)
     {
+        animalRequirement.Project = HttpUtility.UrlDecode(animalRequirement.Project);
         _context.AnimalRequirements.Add(animalRequirement);
         await _context.SaveChangesAsync();
+
         return animalRequirement;
     }
 
-    public async Task<AnimalRequirement> UpdateAsync(AnimalRequirement animalRequirement)
+    public async Task<AnimalRequirement> UpdateAnimalRequirementAsync(AnimalRequirement animalRequirement)
     {
+        animalRequirement.Project = HttpUtility.UrlDecode(animalRequirement.Project);
+
         _context.AnimalRequirements.Update(animalRequirement);
         await _context.SaveChangesAsync();
+
         return animalRequirement;
     }
 
-    public async Task<bool> DeleteAsync(int arIdentity)
+    public async Task<bool> DeleteAnimalRequirementAsync(int arIdentity)
     {
         var deleted = await _context.AnimalRequirements
             .Where(a => a.ArIdentity == arIdentity)
@@ -45,11 +72,27 @@ public class AnimalRequirementRepository : IAnimalRequirementRepository
     }
 
     public async Task<IEnumerable<AnimalRateLookup>> GetAnimalRatesAsync(bool isDefra)
-        => await _context.FpsAnimals
+    {
+        var results = await _context.FpsAnimals
             .AsNoTracking()
             .OrderBy(a => a.AnimalType)
-            .Select(a => new AnimalRateLookup(
+            .Select(a => new
+            {
                 a.AnimalType,
-                isDefra ? (double?)a.DefraDailyRate : (double?)a.DailyRate))
+                Rate = isDefra ? a.DefraDailyRate : a.DailyRate
+            })
             .ToListAsync();
+
+        return results.Select(a => new AnimalRateLookup(a.AnimalType, (double?)a.Rate));
+    }
+
+    public async Task<IEnumerable<FpsAnimals>> GetAllAnimalsAsync()
+    {
+        var result = await _context.FpsAnimals
+                .AsNoTracking()
+                .OrderBy(a => a.AnimalType)
+                .ToListAsync();
+
+        return result;
+    }
 }

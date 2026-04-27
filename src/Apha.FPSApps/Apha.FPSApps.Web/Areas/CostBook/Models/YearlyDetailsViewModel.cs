@@ -1,3 +1,4 @@
+using Apha.FPSApps.Application.Dtos.CostBook;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
@@ -6,14 +7,8 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Models;
 public class YearlyDetailsViewModel
 {
     // ── Header (read-only) ─────────────────────────────────────────────────
-    public string Code { get; set; } = string.Empty;
-    public string? ProjectTitle { get; set; }
-    public DateOnly? StartDate { get; set; }
-    public int? FinancialYears { get; set; }
-    public int? Inflation { get; set; }
-    public short? IsDefraProject { get; set; }
-    public double? EuroConvRate { get; set; }
-    public string? Programme { get; set; }
+    public ProjectHeaderDto ProjectHeaderDto { get; set; }= new();
+
 
     // ── Year navigation ────────────────────────────────────────────────────
     public int SelectedYear { get; set; }
@@ -31,6 +26,7 @@ public class YearlyDetailsViewModel
     public DataGridConfig<TestRequirementItem> TestGrid { get; set; } = new();
     public DataGridConfig<AnimalRequirementItem> AnimalGrid { get; set; } = new();
     public DataGridConfig<AdditionalCostItem> AdditionalCostGrid { get; set; } = new();
+    public DataGridConfig<ProjectYearRateItem> MarkupAndProfitGrid { get; set; } = new();
 
     // ── Markup/Profit table (sf_ProjectYearRates — all years, editable) ────
     public List<ProjectYearRateItem> YearRates { get; set; } = new();

@@ -1,431 +1,870 @@
-@model Apha.FPSApps.Web.Areas.CostBook.Models.YearlyDetailsViewModel
+﻿@model Apha.FPSApps.Web.Areas.CostBook.Models.YearlyDetailsViewModel
 @{
     ViewData["Title"] = "Project Requirements";
-    var projectId = Model.Code;
+    var projectId = Model.ProjectHeaderDto.ProjectId;
     var selectedYear = Model.SelectedYear;
-    var isDefra = Model.IsDefraProject == 1;
+    var isDefra = Model.ProjectHeaderDto.IsDefraProject == 1;
 }
-
-<div class="govuk-grid-row sup_margin_left_right_0 govuk-!-margin-top-2">
-    <div class="govuk-grid-column-full">
-        <h1 class="govuk-grid-row govuk-heading-s sup_border-bottom" style="padding:10px 0 0px 10px">
-            Project Requirements
-            <a asp-area="CostBook" asp-controller="Projects" asp-action="Index" class="govuk-back-link sup_align_right">Back</a>
-        </h1>
+<div class="govuk-template__body govuk-frontend-supported project-requirement-page">
+    <div class="govuk-grid-row sup_margin_left_right_0 govuk-!-margin-top-2">
+        <div class="govuk-grid-column-full">
+            <h1 class="govuk-grid-row govuk-heading-s sup_border-bottom" style="padding:10px 0 0px 10px">
+                Project Requirements
+                <a asp-area="CostBook" asp-controller="Projects" asp-action="Index" class="govuk-back-link sup_align_right">Back</a>
+            </h1>
+        </div>
     </div>
-</div>
 
-<div class="govuk-grid-row sup_margin_left_right_0 govuk-!-margin-top-2">
-    <div class="govuk-grid-column-full">
-        <div class="row">
-            <div class="container project-layout-container">
-                <div class="project-layout-row">
+    <div class="govuk-grid-row sup_margin_left_right_0 govuk-!-margin-top-2">
+        <div class="govuk-grid-column-full">
+            <div class="row">
+                <div class="container project-layout-container">
+                    <div class="project-layout-row">
 
-                    <!-- Side navigation -->
-                    <nav class="sidenav flex-column flex-shrink-0" id="shortnav">
-                        <button class="toggle-btn project-toggle-btn" onclick="toggleSidebar()" aria-label="Toggle side navigation">
-                            <img src="~/images/chevron-left-solid-full.svg" alt="side nav menu arrow" width="24">
-                        </button>
-                        <ul>
-                            <li><a class="dropdown-item sidenav-title">Reports</a></li>
-                            <li><a class="dropdown-item" href="#">Summary Report</a></li>
-                            <li><a class="dropdown-item" href="#">Detail Report</a></li>
-                            <li><a class="dropdown-item" href="#">SID3 Staff Effort</a></li>
-                            <li><a class="dropdown-item sidenav-title">Queries</a></li>
-                            <li><a class="dropdown-item" asp-area="CostBook" asp-controller="Projects" asp-action="ProjectCostsQuery" asp-route-projectId="@projectId">Project Cost Queries</a></li>
-                            <li><a class="dropdown-item" asp-area="CostBook" asp-controller="Projects" asp-action="Csg7StaffYears" asp-route-projectId="@projectId">CSG7 Staff Years</a></li>
-                            <li><a class="dropdown-item" asp-area="CostBook" asp-controller="Projects" asp-action="StaffEffort" asp-route-projectId="@projectId">SID3 Staff Effort</a></li>
-                            <li><a class="dropdown-item" asp-area="CostBook" asp-controller="Projects" asp-action="ProjectSummary" asp-route-projectId="@projectId">Project Summary</a></li>
-                            <li><a class="dropdown-item" href="#">Excel Report</a></li>
-                        </ul>
-                    </nav>
+                        <!-- Side navigation -->
+                        @await Html.PartialAsync("_SideNav", @Model)
 
-                    <!-- Main content -->
-                    <div class="project-main-column">
+                        <!-- Main content -->
+                        <div class="project-main-column">
 
-                        <!-- Header summary bar (read-only) -->
-                        <footer class="financial-summary project-financial-summary">
-                            <div class="summary-row project-summary-row">
-                                <div class="summary-item d-flex">
-                                    <label class="text-AlignRight govuk-label" for="summary-code">Code:</label>
-                                    <input asp-for="Code" id="summary-code" type="text" readonly class="govuk-input">
-                                </div>
-                                <div class="summary-item d-flex">
-                                    <label class="text-AlignRight govuk-label" for="summary-year-type">Year Type:</label>
-                                    <select asp-for="FinancialYears" id="summary-year-type" class="govuk-select" disabled>
-                                        <option value="-1">Financial Years</option>
-                                        <option value="0">Project Years</option>
-                                    </select>
-                                </div>
-                                <div class="summary-item d-flex">
-                                    <label class="govuk-label text-AlignRight" for="summary-start-date">Start Date:</label>
-                                    <input asp-for="StartDate" id="summary-start-date" type="text" readonly class="govuk-input">
-                                </div>
-                                <div class="summary-item d-flex ms-3">
-                                    <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
-                                        <div class="govuk-checkboxes__item">
-                                            <input id="summary-inflation" type="checkbox" class="govuk-checkboxes__input" disabled @(Model.Inflation == 1 ? "checked" : null)>
-                                            <label class="govuk-label govuk-checkboxes__label" for="summary-inflation">Inflation?</label>
+                            <!-- Header summary bar (read-only) -->
+                            <footer class="financial-summary project-financial-summary">
+                                <div class="summary-row project-summary-row">
+                                    <div class="summary-item d-flex">
+                                        <label class="text-AlignRight govuk-label" for="summary-code">Code:</label>
+                                        <input asp-for="ProjectHeaderDto.ProjectId" id="summary-code" type="text" readonly class="govuk-input">
+                                    </div>
+                                    <div class="summary-item d-flex">
+                                        <label class="text-AlignRight govuk-label" asp-for="ProjectHeaderDto.FinancialYears" for="summary-year-type">Year Type:</label>
+                                        <select asp-for="ProjectHeaderDto.FinancialYears" id="summary-year-type" class="govuk-select" disabled>
+                                            <option value="-1">Financial Years</option>
+                                            <option value="0">Project Years</option>
+                                        </select>
+                                    </div>
+                                    <div class="summary-item d-flex">
+                                        <label class="govuk-label text-AlignRight" for="summary-start-date">Start Date:</label>
+                                        <input asp-for="ProjectHeaderDto.StartDate" id="summary-start-date" type="text" readonly class="govuk-input">
+                                    </div>
+                                    <div class="summary-item d-flex ms-3">
+                                        <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
+                                            <div class="govuk-checkboxes__item">
+                                                <input id="summary-inflation" type="checkbox" class="govuk-checkboxes__input" disabled @(Model.ProjectHeaderDto.Inflation == -1 ? "checked" : null)>
+                                                <label class="govuk-label govuk-checkboxes__label" for="summary-inflation">Inflation?</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="summary-item d-flex project-summary-flag">
+                                        <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
+                                            <div class="govuk-checkboxes__item">
+                                                <input id="summary-defra" type="checkbox" class="govuk-checkboxes__input" disabled @(Model.ProjectHeaderDto.IsDefraProject == -1 ? "checked" : null)>
+                                                <label class="govuk-label govuk-checkboxes__label" for="summary-defra">Defra?</label>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="summary-item d-flex project-summary-flag">
-                                    <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
-                                        <div class="govuk-checkboxes__item">
-                                            <input id="summary-defra" type="checkbox" class="govuk-checkboxes__input" disabled @(Model.IsDefraProject == 1 ? "checked" : null)>
-                                            <label class="govuk-label govuk-checkboxes__label" for="summary-defra">Defra?</label>
+                                <div class="summary-row project-summary-row">
+                                    <div class="summary-item d-flex">
+                                        <label class="text-AlignRight govuk-label" for="summary-title">Title:</label>
+                                        <input asp-for="ProjectHeaderDto.ProjectTitle" id="summary-title" type="text" readonly class="govuk-input">
+                                    </div>
+                                    <div class="summary-item d-flex">
+                                        <label class="govuk-label text-AlignRight" for="summary-year">Year:</label>
+                                        <input value="@Model.ProjectHeaderDto.StartFYear" id="summary-year" type="text" readonly class="govuk-input">
+                                    </div>
+                                    <div class="summary-item d-flex">
+                                        <label class="govuk-label text-AlignRight" for="summary-rate-used">Rate Used (£):</label>
+                                        <input asp-for="ProjectHeaderDto.EuroConvRate" id="summary-rate-used" type="text" readonly class="govuk-input">
+                                    </div>
+                                </div>
+                            </footer>
+
+                            <!-- Year costs shell -->
+                            <div class="project-year-costs-shell">
+                                <div class="form-header project-year-costs-header">
+                                    <h3 class="govuk-heading-s">@selectedYear Year Costs</h3>
+                                </div>
+
+                                <div class="content-area">
+                                    <div class="user-grid-section project-year-grid">
+
+                                        <!-- Year list (fsubProjectYear navigation) -->
+                                        <div class="user-grid-section project-year-grid">
+                                            <div class="grid-container">
+                                                <div class="project-year-actions">
+                                                    <button class="govuk-button sup_margin_0 project-year-add-button"
+                                                            id="add_year">
+                                                        + Add New Year
+                                                    </button>
+                                                </div>
+                                                <table class="user-table project-year-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Project Years</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="userTableBody">
+                                                        @foreach (var year in Model.ProjectYears)
+                                                        {
+                                                            <tr class="project-year-row @(year == Model.SelectedYear ? "selected-table-rowbg" : "")" data-year="@year" style="cursor:pointer;">
+                                                                <td>@year</td>
+                                                            </tr>
+                                                        }
+                                                    </tbody>
+                                                </table>
+
+                                            </div>
                                         </div>
+
                                     </div>
-                                </div>
-                            </div>
-                            <div class="summary-row project-summary-row">
-                                <div class="summary-item d-flex">
-                                    <label class="text-AlignRight govuk-label" for="summary-title">Title:</label>
-                                    <input asp-for="ProjectTitle" id="summary-title" type="text" readonly class="govuk-input">
-                                </div>
-                                <div class="summary-item d-flex">
-                                    <label class="govuk-label text-AlignRight" for="summary-year">Year:</label>
-                                    <input asp-for="SelectedYear" id="summary-year" type="text" readonly class="govuk-input">
-                                </div>
-                                <div class="summary-item d-flex">
-                                    <label class="govuk-label text-AlignRight" for="summary-rate-used">Rate Used (£):</label>
-                                    <input asp-for="EuroConvRate" id="summary-rate-used" type="text" readonly class="govuk-input">
-                                </div>
-                            </div>
-                        </footer>
-
-                        <!-- Year costs shell -->
-                        <div class="project-year-costs-shell">
-                            <div class="form-header project-year-costs-header">
-                                <h3 class="govuk-heading-s">@selectedYear Year Costs</h3>
-                            </div>
-
-                            <div class="content-area">
-                                <div class="user-grid-section project-year-grid">
-
-                                    <!-- Year list (fsubProjectYear navigation) -->
-                                    <div class="col-3 project-year-list">
-                                        <label class="govuk-label">Project Years</label>
-                                        <ul id="projectYearList" class="list-group project-year-nav">
-                                            @foreach (var yr in Model.ProjectYears)
-                                            {
-                                                <li class="list-group-item @(yr == selectedYear ? "active" : "")"
-                                                    onclick="selectYear('@projectId', @yr)"
-                                                    data-year="@yr">@yr</li>
-                                            }
-                                        </ul>
-                                        <button class="govuk-button govuk-button--secondary govuk-!-margin-top-2"
-                                                onclick="addProjectYear('@projectId')"
-                                                aria-label="Add new year">
-                                            Add New Year
-                                        </button>
-                                    </div>
-
+                                    
                                     <!-- Tab panels -->
                                     <div class="permissions-section">
+
                                         <div class="govuk-tabs" data-module="govuk-tabs">
                                             <ul class="govuk-tabs__list">
                                                 <li class="govuk-tabs__list-item govuk-tabs__list-item--selected">
-                                                    <a class="govuk-tabs__tab" href="#Staff-tab">Staff</a>
+                                                    <a class="govuk-tabs__tab" href="#Staff-tab">
+                                                        Staff
+                                                    </a>
                                                 </li>
                                                 <li class="govuk-tabs__list-item">
-                                                    <a class="govuk-tabs__tab" href="#Tests-tab">Tests</a>
+                                                    <a class="govuk-tabs__tab" href="#Tests-tab">
+                                                        Tests
+                                                    </a>
                                                 </li>
                                                 <li class="govuk-tabs__list-item">
-                                                    <a class="govuk-tabs__tab" href="#Animals-tab">Animals</a>
+                                                    <a class="govuk-tabs__tab" href="#Animals-tab">
+                                                        Animals
+                                                    </a>
                                                 </li>
                                                 <li class="govuk-tabs__list-item">
-                                                    <a class="govuk-tabs__tab" href="#AdditionalCosts-tab">Additional Costs</a>
+                                                    <a class="govuk-tabs__tab" href="#AdditionalCosts-tab">
+                                                        Additional Costs
+                                                    </a>
                                                 </li>
-                                                @if (Model.Programme == "Comm")
-                                                {
-                                                    <li class="govuk-tabs__list-item">
-                                                        <a class="govuk-tabs__tab" href="#MarkupAndProfit-tab">Markup and Profit</a>
-                                                    </li>
-                                                }
+
+                                                <li class="govuk-tabs__list-item">
+                                                    <a class="govuk-tabs__tab" href="#MarkupAndProfit-tab">
+                                                        Markup and Profit
+                                                    </a>
+                                                </li>
                                             </ul>
-
-                                            <!-- Staff tab -->
-                                            <div class="govuk-tabs__panel" id="Staff-tab">
-                                                <section class="data-section">
-                                                    <div class="text-AlignRight govuk-!-margin-bottom-1">
-                                                        <button class="govuk-button sup_margin_0" id="addstaffbookedBtn"
-                                                                onclick="openAddStaffModal('@projectId', @selectedYear)"
-                                                                aria-label="Add staff">
-                                                            <img alt="plus icon" src="~/images/circle-plus-solid-full-white.svg" width="16px">&nbsp;Add
-                                                        </button>
-                                                    </div>
-                                                    @await Html.PartialAsync("~/Views/Shared/_DataGrid.cshtml", Model.StaffGrid)
-                                                    <div class="project-total-bar">
-                                                        <span class="govuk-label me-2">Year Staff Cost Total:</span>
-                                                        <input type="text" id="staffTotalAmount" value="@Model.StaffCostTotal.ToString("C")"
-                                                               aria-label="Total Staff Cost" class="govuk-input project-total-input" readonly>
-                                                    </div>
-                                                </section>
+                                            <div class="govuk-tabs__panel"
+                                                 id="Staff-tab">
                                             </div>
 
-                                            <!-- Tests tab -->
-                                            <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="Tests-tab">
-                                                <section class="data-section">
-                                                    <div class="text-AlignRight govuk-!-margin-bottom-1">
-                                                        <button class="govuk-button sup_margin_0" id="addtestBtn"
-                                                                onclick="openAddTestModal('@projectId', @selectedYear)"
-                                                                aria-label="Add test">
-                                                            <img alt="plus icon" src="~/images/circle-plus-solid-full-white.svg" width="16px">&nbsp;Add
-                                                        </button>
-                                                    </div>
-                                                    @await Html.PartialAsync("~/Views/Shared/_DataGrid.cshtml", Model.TestGrid)
-                                                    <div class="project-total-bar">
-                                                        <span class="govuk-label me-2">Year Test Cost Total:</span>
-                                                        <input type="text" id="testTotalAmount" value="@Model.TestCostTotal.ToString("C")"
-                                                               aria-label="Total Test Cost" class="govuk-input project-total-input" readonly>
-                                                    </div>
-                                                </section>
+                                            <div class="govuk-tabs__panel govuk-tabs__panel--hidden"
+                                                 id="Tests-tab">
                                             </div>
 
-                                            <!-- Animals tab -->
-                                            <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="Animals-tab">
-                                                <section class="data-section">
-                                                    <div class="text-AlignRight govuk-!-margin-bottom-1">
-                                                        <button class="govuk-button sup_margin_0" id="addanimalBtn"
-                                                                onclick="openAddAnimalModal('@projectId', @selectedYear)"
-                                                                aria-label="Add animal">
-                                                            <img alt="plus icon" src="~/images/circle-plus-solid-full-white.svg" width="16px">&nbsp;Add
-                                                        </button>
-                                                    </div>
-                                                    @await Html.PartialAsync("~/Views/Shared/_DataGrid.cshtml", Model.AnimalGrid)
-                                                    <div class="project-total-bar">
-                                                        <span class="govuk-label me-2">Year Animal Costs Total:</span>
-                                                        <input type="text" id="animalTotalAmount" value="@Model.AnimalCostTotal.ToString("C")"
-                                                               aria-label="Total Animal Cost" class="govuk-input project-total-input" readonly>
-                                                    </div>
-                                                </section>
+                                            <div class="govuk-tabs__panel govuk-tabs__panel--hidden"
+                                                 id="Animals-tab">
                                             </div>
 
-                                            <!-- Additional Costs tab -->
-                                            <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="AdditionalCosts-tab">
-                                                <section class="data-section">
-                                                    <div class="text-AlignRight govuk-!-margin-bottom-1">
-                                                        <button class="govuk-button sup_margin_0" id="addadditionalBtn"
-                                                                onclick="openAddAdditionalCostModal('@projectId', @selectedYear)"
-                                                                aria-label="Add additional cost">
-                                                            <img alt="plus icon" src="~/images/circle-plus-solid-full-white.svg" width="16px">&nbsp;Add
-                                                        </button>
-                                                    </div>
-                                                    @await Html.PartialAsync("~/Views/Shared/_DataGrid.cshtml", Model.AdditionalCostGrid)
-                                                    <div class="project-total-bar">
-                                                        <span class="govuk-label me-2">Year Total Additional Costs:</span>
-                                                        <input type="text" id="additionalTotalAmount" value="@Model.AdditionalCostTotal.ToString("C")"
-                                                               aria-label="Total Additional Cost" class="govuk-input project-total-input" readonly>
-                                                    </div>
-                                                </section>
+                                            <div class="govuk-tabs__panel govuk-tabs__panel--hidden"
+                                                 id="AdditionalCosts-tab">
                                             </div>
 
-                                            <!-- Markup and Profit tab (Commercial projects only) -->
-                                            @if (Model.Programme == "Comm")
-                                            {
-                                                <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="MarkupAndProfit-tab">
-                                                    <section class="data-section">
-                                                        <table class="govuk-table fps-sr-themed-table custom-table" id="markupProfitTable">
-                                                            <thead class="govuk-table__head">
-                                                                <tr class="govuk-table__row">
-                                                                    <th class="govuk-table__header">Year</th>
-                                                                    <th class="govuk-table__header" colspan="4" style="background-color:#acc8e0">Contingency Markup %</th>
-                                                                    <th class="govuk-table__header" colspan="4" style="background-color:#ffffbb">Profit Margin %</th>
-                                                                    <th class="govuk-table__header">Actions</th>
-                                                                </tr>
-                                                                <tr class="govuk-table__row">
-                                                                    <th class="govuk-table__header"></th>
-                                                                    <th class="govuk-table__header" style="background-color:#acc8e0">Time</th>
-                                                                    <th class="govuk-table__header" style="background-color:#acc8e0">Tests</th>
-                                                                    <th class="govuk-table__header" style="background-color:#acc8e0">Animal</th>
-                                                                    <th class="govuk-table__header" style="background-color:#acc8e0">Addit'al</th>
-                                                                    <th class="govuk-table__header" style="background-color:#ffffbb">Time</th>
-                                                                    <th class="govuk-table__header" style="background-color:#ffffbb">Tests</th>
-                                                                    <th class="govuk-table__header" style="background-color:#ffffbb">Animal</th>
-                                                                    <th class="govuk-table__header" style="background-color:#ffffbb">Addit'al</th>
-                                                                    <th class="govuk-table__header"></th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody class="govuk-table__body">
-                                                                @foreach (var rate in Model.YearRates)
-                                                                {
-                                                                    <tr class="govuk-table__row" data-year="@rate.YearValue" data-project="@rate.Project">
-                                                                        <td class="govuk-table__cell">@rate.YearValue</td>
-                                                                        <td class="govuk-table__cell"><input type="number" class="govuk-input govuk-input--width-4 rate-input" name="MarkupTime" value="@rate.MarkupTime" step="0.01"></td>
-                                                                        <td class="govuk-table__cell"><input type="number" class="govuk-input govuk-input--width-4 rate-input" name="MarkupTests" value="@rate.MarkupTests" step="0.01"></td>
-                                                                        <td class="govuk-table__cell"><input type="number" class="govuk-input govuk-input--width-4 rate-input" name="MarkupAnimals" value="@rate.MarkupAnimals" step="0.01"></td>
-                                                                        <td class="govuk-table__cell"><input type="number" class="govuk-input govuk-input--width-4 rate-input" name="MarkupAdditional" value="@rate.MarkupAdditional" step="0.01"></td>
-                                                                        <td class="govuk-table__cell"><input type="number" class="govuk-input govuk-input--width-4 rate-input" name="ProfitTime" value="@rate.ProfitTime" step="0.01"></td>
-                                                                        <td class="govuk-table__cell"><input type="number" class="govuk-input govuk-input--width-4 rate-input" name="ProfitTests" value="@rate.ProfitTests" step="0.01"></td>
-                                                                        <td class="govuk-table__cell"><input type="number" class="govuk-input govuk-input--width-4 rate-input" name="ProfitAnimals" value="@rate.ProfitAnimals" step="0.01"></td>
-                                                                        <td class="govuk-table__cell"><input type="number" class="govuk-input govuk-input--width-4 rate-input" name="ProfitAdditional" value="@rate.ProfitAdditional" step="0.01"></td>
-                                                                        <td class="govuk-table__cell">
-                                                                            <button class="btn btn-sm btn-outline-primary"
-                                                                                    onclick="saveYearRate('@rate.Project', @rate.YearValue, this.closest('tr'))"
-                                                                                    aria-label="Save rate for year @rate.YearValue">
-                                                                                Save
-                                                                            </button>
-                                                                        </td>
-                                                                    </tr>
-                                                                }
-                                                            </tbody>
-                                                        </table>
-                                                    </section>
+                                            <div class="govuk-tabs__panel govuk-tabs__panel--hidden"
+                                                 id="MarkupAndProfit-tab">
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                    <!-- Year totals panel -->
+                                    <div class="total-grid-section project-totals-panel">
+                                        <div class="grid-container">
+
+                                            <div class="right-panel">
+                                                <div class="year-totals">
+                                                    <div class="project-year-totals-title">@selectedYear Year Totals:</div>
+                                                    <div class="project-year-totals-body">
+                                                        <div class="totals-list">
+                                                            <div class="total-item">
+                                                                <label class="govuk-label--s"
+                                                                       for="year-total-staff">Staff Costs:</label>
+
+                                                                <input type="text"
+                                                                       class="govuk-input project-year-total-input"
+                                                                       id="year-total-staff" value="@Model.StaffCostTotal.ToString("£#,##0.00")"
+                                                                       readonly="">
+                                                            </div>
+                                                            <div class="total-item">
+                                                                <label class="govuk-label--s"
+                                                                       for="year-total-test">Test Costs:</label>
+
+                                                                <input type="text" value="@Model.TestCostTotal.ToString("£#,##0.00")" readonly=""
+                                                                       class="govuk-input project-year-total-input"
+                                                                       id="year-total-test">
+                                                            </div>
+                                                            <div class="total-item">
+                                                                <label class="govuk-label--s"
+                                                                       for="year-total-animal">Animal Costs:</label>
+                                                                <input type="text" value="@Model.AnimalCostTotal.ToString("£#,##0.00")" readonly=""
+                                                                       class="govuk-input project-year-total-input"
+                                                                       id="year-total-animal">
+                                                            </div>
+                                                            <div class="total-item">
+                                                                <label class="govuk-label--s"
+                                                                       for="year-total-additional">
+                                                                    Additional
+                                                                    Costs:
+                                                                </label>
+                                                                <input type="text" value="@Model.AdditionalCostTotal.ToString("£#,##0.00")" readonly=""
+                                                                       class="govuk-input project-year-total-input"
+                                                                       id="year-total-additional">
+                                                            </div>
+                                                            <div class="total-item grand-total">
+                                                                <label class="govuk-label--s"
+                                                                       for="year-total-grand">Grand Totals:</label>
+                                                                <input type="text" value="@Model.GrandTotal.ToString("£#,##0.00")" readonly=""
+                                                                       class="govuk-input project-year-total-input"
+                                                                       id="year-total-grand">
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                            }
+                                            </div>
+
                                         </div>
                                     </div>
                                 </div>
-
-                                <!-- Year totals panel -->
-                                <div class="project-year-totals-panel">
-                                    <label class="govuk-label govuk-!-font-weight-bold">Year Totals:</label>
-                                    <div class="totals-row">
-                                        <span class="govuk-label">Staff Costs:</span>
-                                        <input type="text" id="staffCostTotalDisplay" value="@Model.StaffCostTotal.ToString("C")" readonly class="govuk-input project-total-input">
-                                    </div>
-                                    <div class="totals-row">
-                                        <span class="govuk-label">Test Costs:</span>
-                                        <input type="text" id="testCostTotalDisplay" value="@Model.TestCostTotal.ToString("C")" readonly class="govuk-input project-total-input">
-                                    </div>
-                                    <div class="totals-row">
-                                        <span class="govuk-label">Animal Costs:</span>
-                                        <input type="text" id="animalCostTotalDisplay" value="@Model.AnimalCostTotal.ToString("C")" readonly class="govuk-input project-total-input">
-                                    </div>
-                                    <div class="totals-row">
-                                        <span class="govuk-label">Additional Costs:</span>
-                                        <input type="text" id="additionalCostTotalDisplay" value="@Model.AdditionalCostTotal.ToString("C")" readonly class="govuk-input project-total-input">
-                                    </div>
-                                    <hr>
-                                    <div class="totals-row">
-                                        <span class="govuk-label govuk-!-font-weight-bold">Grand Totals:</span>
-                                        <input type="text" id="year-total-grand" value="@Model.GrandTotal.ToString("C")" readonly class="govuk-input project-year-total-input">
-                                    </div>
-                                </div>
                             </div>
-                        </div>
 
-                    </div><!-- /.project-main-column -->
-                </div><!-- /.project-layout-row -->
-            </div><!-- /.container -->
-        </div><!-- /.row -->
-    </div>
-</div>
-
-<!-- Modal container for Add/Edit partials -->
-<div id="project1ModalContainer" class="modal project-modal-hidden" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content" id="project1ModalContent">
+                        </div><!-- /.project-main-column -->
+                    </div><!-- /.project-layout-row -->
+                </div><!-- /.container -->
+            </div><!-- /.row -->
         </div>
     </div>
+
+    <!-- Modal container for Add/Edit partials -->
+    <div id="project1ModalContainer" class="modal project-modal-hidden" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content" id="project1ModalContent">
+            </div>
+        </div>
+    </div>
+
 </div>
-
 @section Scripts {
-<script>
-    const antiForgeryToken = '@Html.AntiForgeryToken()';
+    <script>
+        const projectId = '@projectId';
+        let selectedYear = @selectedYear;
 
-    function selectYear(projectId, year) {
-        window.location.href = '@Url.Action("Index", "Project1", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&selectedYear=' + year;
-    }
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Wait for GOV.UK Frontend to initialize
+            setTimeout(function() {
+                if (typeof initializeTableFeatures === 'function') {
+                    initializeTableFeatures();
 
-    function addProjectYear(projectId) {
-        const years = Array.from(document.querySelectorAll('#projectYearList li')).map(li => parseInt(li.dataset.year));
-        const nextYear = years.length > 0 ? Math.max(...years) + 1 : new Date().getFullYear();
-        fetch('@Url.Action("AddProjectYear", "Project1", new { area = "CostBook" })', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '' },
-            body: 'projectId=' + encodeURIComponent(projectId) + '&year=' + nextYear
-        })
-        .then(r => r.json())
-        .then(data => { if (data.success) selectYear(projectId, data.year); });
-    }
+                    // Remove sort indicators from all headers
+                    const sortIndicators = document.querySelectorAll('.sort-indicator');
+                    sortIndicators.forEach(indicator => indicator.remove());
+                }
+            }, 200);
 
-    // ── Staff ────────────────────────────────────────────────────────────
-    function openAddStaffModal(projectId, year) {
-        fetch('@Url.Action("CreateStaff", "Project1", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&year=' + year + '&isDefra=@isDefra')
-            .then(r => r.text()).then(html => { document.getElementById('project1ModalContent').innerHTML = html; openModal(); });
-    }
-    function openEditStaffModal(projectId, year, srIdentity) {
-        fetch('@Url.Action("EditStaff", "Project1", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&year=' + year + '&srIdentity=' + srIdentity + '&isDefra=@isDefra')
-            .then(r => r.text()).then(html => { document.getElementById('project1ModalContent').innerHTML = html; openModal(); });
-    }
-    function deleteStaff(projectId, year, srIdentity) {
-        if (!confirm('Delete this staff entry?')) return;
-        fetch('@Url.Action("DeleteStaff", "Project1", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&year=' + year + '&srIdentity=' + srIdentity,
-            { method: 'DELETE', headers: { 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '' } })
-            .then(r => r.json()).then(d => { if (d.success) selectYear(projectId, year); });
-    }
+            // Remove filter rows from all grids on the page
+            removeFilterRows(document);
 
-    // ── Tests ────────────────────────────────────────────────────────────
-    function openAddTestModal(projectId, year) {
-        fetch('@Url.Action("CreateTest", "Project1", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&year=' + year)
-            .then(r => r.text()).then(html => { document.getElementById('project1ModalContent').innerHTML = html; openModal(); });
-    }
-    function openEditTestModal(projectId, year, testCode) {
-        fetch('@Url.Action("EditTest", "Project1", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&year=' + year + '&testCode=' + encodeURIComponent(testCode))
-            .then(r => r.text()).then(html => { document.getElementById('project1ModalContent').innerHTML = html; openModal(); });
-    }
-    function deleteTest(projectId, year, testCode) {
-        if (!confirm('Delete this test entry?')) return;
-        fetch('@Url.Action("DeleteTest", "Project1", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&year=' + year + '&testCode=' + encodeURIComponent(testCode),
-            { method: 'DELETE', headers: { 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '' } })
-            .then(r => r.json()).then(d => { if (d.success) selectYear(projectId, year); });
-    }
+            // Attach event listeners to Add buttons
+            attachButtonEventListeners();
+        });
 
-    // ── Animals ──────────────────────────────────────────────────────────
-    function openAddAnimalModal(projectId, year) {
-        fetch('@Url.Action("CreateAnimal", "Project1", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&year=' + year)
-            .then(r => r.text()).then(html => { document.getElementById('project1ModalContent').innerHTML = html; openModal(); });
-    }
-    function openEditAnimalModal(projectId, year, arIdentity) {
-        fetch('@Url.Action("EditAnimal", "Project1", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&year=' + year + '&arIdentity=' + arIdentity)
-            .then(r => r.text()).then(html => { document.getElementById('project1ModalContent').innerHTML = html; openModal(); });
-    }
-    function deleteAnimal(projectId, year, arIdentity) {
-        if (!confirm('Delete this animal entry?')) return;
-        fetch('@Url.Action("DeleteAnimal", "Project1", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&year=' + year + '&arIdentity=' + arIdentity,
-            { method: 'DELETE', headers: { 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '' } })
-            .then(r => r.json()).then(d => { if (d.success) selectYear(projectId, year); });
-    }
+        // Remove filter-row elements within a container
+        function removeFilterRows(container) {
+            container.querySelectorAll('tr.filter-row').forEach(function (row) {
+                row.remove();
+            });
+        }
 
-    // ── Additional Costs ─────────────────────────────────────────────────
-    function openAddAdditionalCostModal(projectId, year) {
-        fetch('@Url.Action("CreateAdditionalCost", "Project1", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&year=' + year)
-            .then(r => r.text()).then(html => { document.getElementById('project1ModalContent').innerHTML = html; openModal(); });
-    }
-    function openEditAdditionalCostModal(projectId, year, acIdentity) {
-        fetch('@Url.Action("EditAdditionalCost", "Project1", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&year=' + year + '&acIdentity=' + acIdentity)
-            .then(r => r.text()).then(html => { document.getElementById('project1ModalContent').innerHTML = html; openModal(); });
-    }
-    function deleteAdditionalCost(projectId, year, acIdentity) {
-        if (!confirm('Delete this additional cost entry?')) return;
-        fetch('@Url.Action("DeleteAdditionalCost", "Project1", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&year=' + year + '&acIdentity=' + acIdentity,
-            { method: 'DELETE', headers: { 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '' } })
-            .then(r => r.json()).then(d => { if (d.success) selectYear(projectId, year); });
-    }
+        // Attach event listeners to all Add buttons
+        function attachButtonEventListeners() {
+            // Add New Year button
+            const addYearBtn = document.getElementById('add_year');
+            if (addYearBtn) {
+                addYearBtn.addEventListener('click', function() {
+                    addProjectYear(projectId);
+                });
+            }
 
-    // ── Markup/Profit ─────────────────────────────────────────────────────
-    function saveYearRate(projectId, year, row) {
-        const data = {
-            Project: projectId, YearValue: year,
-            MarkupTime: row.querySelector('[name="MarkupTime"]').value,
-            MarkupTests: row.querySelector('[name="MarkupTests"]').value,
-            MarkupAnimals: row.querySelector('[name="MarkupAnimals"]').value,
-            MarkupAdditional: row.querySelector('[name="MarkupAdditional"]').value,
-            ProfitTime: row.querySelector('[name="ProfitTime"]').value,
-            ProfitTests: row.querySelector('[name="ProfitTests"]').value,
-            ProfitAnimals: row.querySelector('[name="ProfitAnimals"]').value,
-            ProfitAdditional: row.querySelector('[name="ProfitAdditional"]').value
+            // Add Staff button
+            const addStaffBtn = document.getElementById('addstaffbookedBtn');
+            if (addStaffBtn) {
+                addStaffBtn.addEventListener('click', function() {
+                    openAddStaffModal(projectId, selectedYear);
+                });
+            }
+
+            // Add Test button
+            const addTestBtn = document.getElementById('addtestbookedBtn');
+            if (addTestBtn) {
+                addTestBtn.addEventListener('click', function() {
+                    openAddTestModal(projectId, selectedYear);
+                });
+            }
+
+            // Add Animal button
+            const addAnimalBtn = document.getElementById('addanimalbookedBtn');
+            if (addAnimalBtn) {
+                addAnimalBtn.addEventListener('click', function() {
+                    openAddAnimalModal(projectId, selectedYear);
+                });
+            }
+
+            // Add Additional Cost button
+            const addAdditionalBtn = document.getElementById('addadditionalBtn');
+            if (addAdditionalBtn) {
+                addAdditionalBtn.addEventListener('click', function() {
+                    openAddAdditionalCostModal(projectId, selectedYear);
+                });
+            }
+        }
+
+        // Staff Edit/Delete handlers
+        function handleEdit(id) {
+            openEditStaffModal(projectId, selectedYear, id);
+        }
+
+        function handleDelete(id) {
+            deleteStaff(projectId, selectedYear, id);
+        }
+
+        // Animal Edit/Delete handlers
+        function handleAnimalEdit(id) {
+            openEditAnimalModal(projectId, selectedYear, id);
+        }
+
+        function handleAnimalDelete(id) {
+            deleteAnimal(projectId, selectedYear, id);
+        }
+
+        // Additional Cost Edit/Delete handlers
+        function handleAdditionalEdit(id) {
+            openEditAdditionalCostModal(projectId, selectedYear, id);
+        }
+
+        function handleAdditionalDelete(id) {
+            deleteAdditionalCost(projectId, selectedYear, id);
+        }
+
+        function selectYear(projectId, year) {
+            window.location.href = '@Url.Action("Index", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&selectedYear=' + year;
+        }
+
+        function addProjectYear(projectId) {
+            var years = Array.from(document.querySelectorAll('.project-year-row')).map(function(r) { return parseInt(r.getAttribute('data-year'), 10); });
+            var nextYear = years.length > 0 ? Math.max.apply(null, years) + 1 : new Date().getFullYear();
+            fetch('@Url.Action("AddProjectYear", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&year=' + nextYear)
+                .then(function(r) { return r.text(); })
+                .then(function(html) {
+                    document.getElementById('project1ModalContent').innerHTML = html;
+                    openModal();
+                    bindAddYearForm(projectId, nextYear);
+                });
+        }
+
+        function bindAddYearForm(pid, year) {
+            var form = document.getElementById('addNewProjectYearForm');
+            if (!form) return;
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                fetch('@Url.Action("AddProjectYear", "YearlyDetails", new { area = "CostBook" })', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': getAntiForgeryToken() },
+                    body: new URLSearchParams(new FormData(form)).toString() + '&projectId=' + encodeURIComponent(pid) + '&year=' + year
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.success) { closeModal(); selectYear(pid, data.year); }
+                    else { alert('Failed to add project year.'); }
+                });
+            });
+        }
+
+        function getAntiForgeryToken() {
+            var el = document.querySelector('input[name="__RequestVerificationToken"]');
+            return el ? el.value : '';
+        }
+
+        // ── DataGrid bridge functions (called by _DataGrid with button element) ──
+        function gridAddStaff()            { openAddStaffModal(projectId, selectedYear); }
+        function gridEditStaff(btn)        { var id = btn.getAttribute('data-id'); openEditStaffModal(projectId, selectedYear, id); }
+        function gridDeleteStaff(btn)      { var id = btn.getAttribute('data-id'); deleteStaff(projectId, selectedYear, id); }
+
+        function gridAddTest()             { openAddTestModal(projectId, selectedYear); }
+        function gridEditTest(btn)         { var id = btn.getAttribute('data-id'); openEditTestModal(projectId, selectedYear, id); }
+        function gridDeleteTest(btn)       { var id = btn.getAttribute('data-id'); deleteTest(projectId, selectedYear, id); }
+
+        function gridAddAnimal()           { openAddAnimalModal(projectId, selectedYear); }
+        function gridEditAnimal(btn)       { var id = btn.getAttribute('data-id'); openEditAnimalModal(projectId, selectedYear, id); }
+        function gridDeleteAnimal(btn)     { var id = btn.getAttribute('data-id'); deleteAnimal(projectId, selectedYear, id); }
+
+        function gridAddAdditionalCost()       { openAddAdditionalCostModal(projectId, selectedYear); }
+        function gridEditAdditionalCost(btn)   { var id = btn.getAttribute('data-id'); openEditAdditionalCostModal(projectId, selectedYear, id); }
+        function gridDeleteAdditionalCost(btn) { var id = btn.getAttribute('data-id'); deleteAdditionalCost(projectId, selectedYear, id); }
+
+        function gridEditMarkupAndProfit(btn)  { var yearVal = btn.getAttribute('data-id'); openEditMarkupAndProfitModal(projectId, yearVal); }
+
+        // ── Staff ────────────────────────────────────────────────────────────
+        function openAddStaffModal(pid, year) {
+            fetch('@Url.Action("CreateStaff", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&isDefra=@isDefra')
+                .then(function(r) { return r.text(); })
+                .then(function(html) {
+                    document.getElementById('project1ModalContent').innerHTML = html;
+                    openModal();
+                    bindStaffForm(pid, year, null);
+                });
+        }
+        function openEditStaffModal(pid, year, srIdentity) {
+            fetch('@Url.Action("EditStaff", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&srIdentity=' + srIdentity + '&isDefra=@isDefra')
+                .then(function(r) { return r.text(); })
+                .then(function(html) {
+                    document.getElementById('project1ModalContent').innerHTML = html;
+                    openModal();
+                    bindStaffForm(pid, year, srIdentity);
+                });
+        }
+        function bindStaffForm(pid, year, srIdentity) {
+            var form = document.getElementById('staffRequirementForm');
+            if (!form) return;
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                var url = srIdentity
+                    ? '@Url.Action("EditStaff", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&srIdentity=' + srIdentity
+                    : '@Url.Action("CreateStaff", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year;
+                fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': getAntiForgeryToken() },
+                    body: new URLSearchParams(new FormData(form)).toString()
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                    if (d.success) { closeModal(); loadStaffGrid(); }
+                    else { alert(d.message || 'Failed to save staff requirement.'); }
+                })
+                .catch(function(err) { console.error('Staff save error:', err); alert('Failed to save staff requirement.'); });
+            });
+        }
+        function deleteStaff(pid, year, srIdentity) {
+            if (!confirm('Delete this staff entry?')) return;
+            fetch('@Url.Action("DeleteStaff", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&srIdentity=' + srIdentity, {
+                method: 'DELETE',
+                headers: { 'RequestVerificationToken': getAntiForgeryToken() }
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(d) { if (d.success) loadStaffGrid(); });
+        }
+
+        // ── Tests ────────────────────────────────────────────────────────────
+        function openAddTestModal(pid, year) {
+            fetch('@Url.Action("CreateTest", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&isDefra=@isDefra')
+                .then(function(r) { return r.text(); })
+                .then(function(html) {
+                    document.getElementById('project1ModalContent').innerHTML = html;
+                    openModal();
+                    bindTestForm(pid, year, null);
+                });
+        }
+        function openEditTestModal(pid, year, testCode) {
+            fetch('@Url.Action("EditTest", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&testCode=' + encodeURIComponent(testCode) + '&isDefra=@isDefra')
+                .then(function(r) { return r.text(); })
+                .then(function(html) {
+                    document.getElementById('project1ModalContent').innerHTML = html;
+                    openModal();
+                    bindTestForm(pid, year, testCode);
+                });
+        }
+        function bindTestForm(pid, year, testCode) {
+            var form = document.getElementById('testRequirementForm');
+            if (!form) return;
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                var url = testCode
+                    ? '@Url.Action("EditTest", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&testCode=' + encodeURIComponent(testCode)
+                    : '@Url.Action("CreateTest", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year;
+                fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': getAntiForgeryToken() },
+                    body: new URLSearchParams(new FormData(form)).toString()
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                    if (d.success) { closeModal(); loadTestGrid(); }
+                    else { alert('Failed to save test requirement.'); }
+                });
+            });
+        }
+        function deleteTest(pid, year, testCode) {
+            if (!confirm('Delete this test entry?')) return;
+            fetch('@Url.Action("DeleteTest", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&testCode=' + encodeURIComponent(testCode), {
+                method: 'DELETE',
+                headers: { 'RequestVerificationToken': getAntiForgeryToken() }
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(d) { if (d.success) loadTestGrid(); });
+        }
+
+        // ── Animals ──────────────────────────────────────────────────────────
+        function openAddAnimalModal(pid, year) {
+            fetch('@Url.Action("CreateAnimal", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&isDefra=@isDefra')
+                .then(function(r) { return r.text(); })
+                .then(function(html) {
+                    document.getElementById('project1ModalContent').innerHTML = html;
+                    openModal();
+                    bindAnimalForm(pid, year, null);
+                });
+        }
+        function openEditAnimalModal(pid, year, arIdentity) {
+            fetch('@Url.Action("EditAnimal", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&arIdentity=' + arIdentity + '&isDefra=@isDefra')
+                .then(function(r) { return r.text(); })
+                .then(function(html) {
+                    document.getElementById('project1ModalContent').innerHTML = html;
+                    openModal();
+                    bindAnimalForm(pid, year, arIdentity);
+                });
+        }
+        function bindAnimalForm(pid, year, arIdentity) {
+            var form = document.getElementById('animalRequirementForm');
+            if (!form) return;
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                var url = arIdentity
+                    ? '@Url.Action("EditAnimal", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&arIdentity=' + arIdentity
+                    : '@Url.Action("CreateAnimal", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year;
+                fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': getAntiForgeryToken() },
+                    body: new URLSearchParams(new FormData(form)).toString()
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                    if (d.success) { closeModal(); loadAnimalGrid(); }
+                    else { alert('Failed to save animal requirement.'); }
+                });
+            });
+        }
+        function deleteAnimal(pid, year, arIdentity) {
+            if (!confirm('Delete this animal entry?')) return;
+            fetch('@Url.Action("DeleteAnimal", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&arIdentity=' + arIdentity, {
+                method: 'DELETE',
+                headers: { 'RequestVerificationToken': getAntiForgeryToken() }
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(d) { if (d.success) loadAnimalGrid(); });
+        }
+
+        // ── Additional Costs ─────────────────────────────────────────────────
+        function openAddAdditionalCostModal(pid, year) {
+            fetch('@Url.Action("CreateAdditionalCost", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year)
+                .then(function(r) { return r.text(); })
+                .then(function(html) {
+                    document.getElementById('project1ModalContent').innerHTML = html;
+                    openModal();
+                    bindAdditionalCostForm(pid, year, null);
+                });
+        }
+        function openEditAdditionalCostModal(pid, year, acIdentity) {
+            fetch('@Url.Action("EditAdditionalCost", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&acIdentity=' + acIdentity)
+                .then(function(r) { return r.text(); })
+                .then(function(html) {
+                    document.getElementById('project1ModalContent').innerHTML = html;
+                    openModal();
+                    bindAdditionalCostForm(pid, year, acIdentity);
+                });
+        }
+        function bindAdditionalCostForm(pid, year, acIdentity) {
+            var form = document.getElementById('additionalCostForm');
+            if (!form) return;
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                var url = acIdentity
+                    ? '@Url.Action("EditAdditionalCost", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&acIdentity=' + acIdentity
+                    : '@Url.Action("CreateAdditionalCost", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year;
+                fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': getAntiForgeryToken() },
+                    body: new URLSearchParams(new FormData(form)).toString()
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                    if (d.success) { closeModal(); loadAdditionalCostGrid(); }
+                    else { alert('Failed to save additional cost.'); }
+                });
+            });
+        }
+        function deleteAdditionalCost(pid, year, acIdentity) {
+            if (!confirm('Delete this additional cost entry?')) return;
+            fetch('@Url.Action("DeleteAdditionalCost", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&acIdentity=' + acIdentity, {
+                method: 'DELETE',
+                headers: { 'RequestVerificationToken': getAntiForgeryToken() }
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(d) { if (d.success) loadAdditionalCostGrid(); });
+        }
+
+        // ── Markup/Profit ─────────────────────────────────────────────────────
+        function saveYearRate(pid, year, row) {
+            var data = {
+                Project: pid, YearValue: year,
+                MarkupTime: row.querySelector('[name="MarkupTime"]').value,
+                MarkupTests: row.querySelector('[name="MarkupTests"]').value,
+                MarkupAnimals: row.querySelector('[name="MarkupAnimals"]').value,
+                MarkupAdditional: row.querySelector('[name="MarkupAdditional"]').value,
+                ProfitTime: row.querySelector('[name="ProfitTime"]').value,
+                ProfitTests: row.querySelector('[name="ProfitTests"]').value,
+                ProfitAnimals: row.querySelector('[name="ProfitAnimals"]').value,
+                ProfitAdditional: row.querySelector('[name="ProfitAdditional"]').value
+            };
+            fetch('@Url.Action("UpdateProjectYearRate", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': getAntiForgeryToken() },
+                body: JSON.stringify(data)
+            }).then(function(r) { return r.json(); }).then(function(d) { if (!d.success) alert('Failed to save rates.'); });
+        }
+
+        function openEditMarkupAndProfitModal(pid, yearVal) {
+            fetch('@Url.Action("EditMarkupAndProfit", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + yearVal)
+                .then(function(r) { return r.text(); })
+                .then(function(html) {
+                    document.getElementById('project1ModalContent').innerHTML = html;
+                    openModal();
+                    bindMarkupAndProfitForm(pid, yearVal);
+                });
+        }
+        function bindMarkupAndProfitForm(pid, yearVal) {
+            var form = document.getElementById('addNewProjectYearForm');
+            if (!form) return;
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                fetch('@Url.Action("UpdateProjectYearRate", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + yearVal, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': getAntiForgeryToken() },
+                    body: new URLSearchParams(new FormData(form)).toString()
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                    if (d.success) { closeModal(); loadMarkupAndProfitGrid(); }
+                    else { alert('Failed to save markup and profit rates.'); }
+                });
+            });
+        }
+
+        function openModal() {
+            var el = document.getElementById('project1ModalContainer');
+            el.classList.remove('project-modal-hidden');
+            el.classList.add('show');
+            el.style.display = 'block';
+            document.body.classList.add('modal-open');
+        }
+        function closeModal() {
+            var el = document.getElementById('project1ModalContainer');
+            el.classList.remove('show');
+            el.style.display = '';
+            el.classList.add('project-modal-hidden');
+            document.body.classList.remove('modal-open');
+        }
+
+        // ── Tab grid loaders ──────────────────────────────────────────────────
+        var tabGridEndpoints = {
+            'Staff-tab': '@Url.Action("LoadStaffGrid", "YearlyDetails", new { area = "CostBook" })',
+            'Tests-tab': '@Url.Action("LoadTestGrid", "YearlyDetails", new { area = "CostBook" })',
+            'Animals-tab': '@Url.Action("LoadAnimalGrid", "YearlyDetails", new { area = "CostBook" })',
+            'AdditionalCosts-tab': '@Url.Action("LoadAdditionalCostGrid", "YearlyDetails", new { area = "CostBook" })',
+            'MarkupAndProfit-tab': '@Url.Action("LoadMarkupAndProfitGrid", "YearlyDetails", new { area = "CostBook" })'
         };
-        fetch('@Url.Action("UpdateProjectYearRate", "Project1", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&year=' + year, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '' },
-            body: JSON.stringify(data)
-        }).then(r => r.json()).then(d => { if (!d.success) alert('Failed to save rates.'); });
-    }
 
-    function openModal() { document.getElementById('project1ModalContainer').classList.remove('project-modal-hidden'); }
-    function closeModal() { document.getElementById('project1ModalContainer').classList.add('project-modal-hidden'); }
-</script>
+        var tabGridIds = {
+            'Staff-tab': 'staffGrid',
+            'Tests-tab': 'testGrid',
+            'Animals-tab': 'animalGrid',
+            'AdditionalCosts-tab': 'additionalCostGrid',
+            'MarkupAndProfit-tab': 'markupAndProfitGrid'
+        };
+
+        function loadTabGrid(tabId, page, pageSize) {
+            var url = tabGridEndpoints[tabId];
+            if (!url) return;
+
+            var panel = document.getElementById(tabId);
+            if (!panel) return;
+
+            var params = new URLSearchParams();
+            params.append('projectId', projectId);
+            params.append('year', selectedYear);
+            params.append('Page', (page || 1).toString());
+            params.append('PageSize', (pageSize || 10).toString());
+
+            var token = document.querySelector('input[name="__RequestVerificationToken"]');
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': token ? token.value : ''
+                },
+                body: params.toString()
+            })
+            .then(function (response) { return response.text(); })
+            .then(function (html) {
+                var gridId = tabGridIds[tabId];
+                panel.innerHTML = '<div id="gridContainer_' + gridId + '">' + html + '</div>';
+                // Execute <script> tags injected via innerHTML (needed for _DataGrid event handlers)
+                panel.querySelectorAll('script').forEach(function (oldScript) {
+                    var newScript = document.createElement('script');
+                    if (oldScript.src) {
+                        newScript.src = oldScript.src;
+                    } else {
+                        newScript.textContent = oldScript.textContent;
+                    }
+                    oldScript.parentNode.replaceChild(newScript, oldScript);
+                });
+                // Remove filter rows from the loaded grid
+                removeFilterRows(panel);
+            })
+            .catch(function (err) {
+                console.error('Failed to load grid for ' + tabId, err);
+            });
+        }
+
+        // Convenience functions for each tab — call after CRUD to refresh
+        function loadStaffGrid(page, pageSize) { loadTabGrid('Staff-tab', page, pageSize); loadYearTotals(); }
+        function loadTestGrid(page, pageSize) { loadTabGrid('Tests-tab', page, pageSize); loadYearTotals(); }
+        function loadAnimalGrid(page, pageSize) { loadTabGrid('Animals-tab', page, pageSize); loadYearTotals(); }
+        function loadAdditionalCostGrid(page, pageSize) { loadTabGrid('AdditionalCosts-tab', page, pageSize); loadYearTotals(); }
+        function loadMarkupAndProfitGrid(page, pageSize) { loadTabGrid('MarkupAndProfit-tab', page, pageSize); }
+
+        // Fetch year totals from the server and update the totals panel
+        function loadYearTotals() {
+            var token = document.querySelector('input[name="__RequestVerificationToken"]');
+            var params = new URLSearchParams();
+            params.append('projectId', projectId);
+            params.append('year', selectedYear);
+
+            fetch('@Url.Action("GetYearTotals", "YearlyDetails", new { area = "CostBook" })', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': token ? token.value : ''
+                },
+                body: params.toString()
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                document.getElementById('year-total-staff').value = formatGbp(d.staffCostTotal);
+                document.getElementById('year-total-test').value = formatGbp(d.testCostTotal);
+                document.getElementById('year-total-animal').value = formatGbp(d.animalCostTotal);
+                document.getElementById('year-total-additional').value = formatGbp(d.additionalCostTotal);
+                document.getElementById('year-total-grand').value = formatGbp(d.grandTotal);
+            })
+            .catch(function (err) { console.error('Failed to load year totals', err); });
+        }
+
+        function formatGbp(value) {
+            return '\u00a3' + (value || 0).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        // Load the currently active tab's grid
+        function loadActiveTabGrid() {
+            var activeLink = document.querySelector('.govuk-tabs__list-item--selected .govuk-tabs__tab');
+            if (!activeLink) return;
+            var tabId = activeLink.getAttribute('href').replace('#', '');
+            if (tabGridEndpoints[tabId]) {
+                loadTabGrid(tabId);
+            }
+        }
+
+        // Reload all data grids (used when year changes)
+        function reloadAllGrids() {
+            Object.keys(tabGridEndpoints).forEach(function (tabId) {
+                var panel = document.getElementById(tabId);
+                if (panel && !panel.classList.contains('govuk-tabs__panel--hidden')) {
+                    loadTabGrid(tabId);
+                }
+            });
+        }
+
+        // Handle project year row click
+        function onYearRowClick(row) {
+            var year = parseInt(row.getAttribute('data-year'), 10);
+            if (isNaN(year) || year === selectedYear) return;
+
+            // Update the global selectedYear
+            selectedYear = year;
+
+            // Update the Year display in the header
+            // var yearInput = document.getElementById('summary-year');
+            // if (yearInput) yearInput.value = year;
+
+            // Update the year costs heading
+            var heading = document.querySelector('.project-year-costs-header h3');
+            if (heading) heading.textContent = year + ' Year Costs';
+
+            // Highlight the selected row
+            document.querySelectorAll('.project-year-row').forEach(function (r) {
+                r.classList.remove('selected-table-rowbg');
+            });
+            row.classList.add('selected-table-rowbg');
+
+            // Reload the active tab grid with the new year
+            loadActiveTabGrid();
+            loadYearTotals();
+
+            // Update the year totals title
+            var totalsTitle = document.querySelector('.project-year-totals-title');
+            if (totalsTitle) totalsTitle.textContent = year + ' Year Totals:';
+        }
+
+        // Attach click handlers to all tab links
+        (function initTabClickHandlers() {
+            document.addEventListener('DOMContentLoaded', function () {
+                var tabLinks = document.querySelectorAll('.govuk-tabs__tab');
+
+                tabLinks.forEach(function (link) {
+                    link.addEventListener('click', function (e) {
+                        var href = link.getAttribute('href');
+                        if (!href) return;
+                        var tabId = href.replace('#', '');
+
+                        // Load data grid for tabs that have an endpoint
+                        if (tabGridEndpoints[tabId]) {
+                            loadTabGrid(tabId);
+                        }
+
+                        // Update active tab styling
+                        document.querySelectorAll('.govuk-tabs__list-item').forEach(function (li) {
+                            li.classList.remove('govuk-tabs__list-item--selected');
+                        });
+                        link.closest('.govuk-tabs__list-item').classList.add('govuk-tabs__list-item--selected');
+
+                        // Show / hide panels
+                        document.querySelectorAll('.govuk-tabs__panel').forEach(function (p) {
+                            if (p.id === tabId) {
+                                p.classList.remove('govuk-tabs__panel--hidden');
+                            } else {
+                                p.classList.add('govuk-tabs__panel--hidden');
+                            }
+                        });
+
+                        e.preventDefault();
+                    });
+                });
+
+                // Load the Staff tab on initial page load since it is selected by default
+                if (selectedYear > 0) {
+                    loadStaffGrid();
+                }
+
+                // Attach click handlers to project year rows
+                document.querySelectorAll('.project-year-row').forEach(function (row) {
+                    row.addEventListener('click', function () {
+                        onYearRowClick(row);
+                    });
+                });
+            });
+        })();
+    </script>
 }

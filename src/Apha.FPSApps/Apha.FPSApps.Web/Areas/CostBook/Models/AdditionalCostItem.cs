@@ -22,6 +22,6 @@ public class AdditionalCostItem
     public double? ItemCost { get; set; }
 
     [Display(Name = "Account Cat")]
-    [GridColumn(Order = 4, Width = 130, Type = GridColumnType.Text, IsFilterable = true)]
+    [GridColumn(Order = 4, Width = 130, Type = GridColumnType.Text, IsFilterable = false)]
     public string AccountCat { get; set; } = null!;
 }

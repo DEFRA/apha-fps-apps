@@ -18,8 +18,8 @@ public class CostBookYearlyDetailsService : ICostBookYearlyDetailsService
     public Task<ApiResponseDto<List<ProjectYearDto>>> GetProjectYearsAsync(string projectId)
         => _client.GetProjectYearsAsync(projectId);
 
-    public Task<ApiResponseDto<ProjectYearDto>> AddProjectYearAsync(string projectId, int year)
-        => _client.AddProjectYearAsync(projectId, year);
+    public Task<ApiResponseDto<ProjectYearDto>> AddProjectYearAsync(string projectId, int year, ProjectYearDto dto)
+        => _client.AddProjectYearAsync(projectId, year, dto);
 
     public Task<ApiResponseDto<ProjectYearDto>> UpdateProjectYearAsync(string projectId, int year, ProjectYearDto dto)
         => _client.UpdateProjectYearAsync(projectId, year, dto);
@@ -81,4 +81,10 @@ public class CostBookYearlyDetailsService : ICostBookYearlyDetailsService
 
     public Task<ApiResponseDto<List<AccountCategoryDto>>> GetAccountCategoriesAsync()
         => _client.GetAccountCategoriesAsync();
+
+    public Task<ApiResponseDto<List<TestCodeLookupDto>>> GetTestCodeLookupsAsync(bool isDefra)
+        => _client.GetTestCodeLookupsAsync(isDefra);
+
+    public Task<ApiResponseDto<List<AnimalLookupDto>>> GetAllAnimalsAsync()
+        => _client.GetAllAnimalsAsync();
 }

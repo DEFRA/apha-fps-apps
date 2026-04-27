@@ -20,3 +20,20 @@ public class AccountCategoryDto
     public string AccShortName { get; set; } = null!;
     public bool UseInflation { get; set; }
 }
+
+public class TestCodeLookupDto
+{
+    public string ItemCode { get; set; } = null!;
+    public string? ItemDescription { get; set; }
+    public decimal? UnitPrice { get; set; }
+}
+
+public class AnimalLookupDto
+{
+    public string AnimalType { get; set; } = null!;
+    public string? Species { get; set; }
+    public string? SecurityLevel { get; set; }
+    public decimal? DailyRate { get; set; }
+    public bool PlanByWeek { get; set; }
+    public decimal? DefraDailyRate { get; set; }
+}

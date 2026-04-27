@@ -7,7 +7,7 @@ public interface IYearlyDetailsService
 {
     Task<ProjectHeaderDto?> GetProjectHeaderAsync(string projectId);
     Task<IEnumerable<ProjectYearDto>> GetProjectYearsAsync(string projectId);
-    Task<ProjectYearDto> AddProjectYearAsync(string projectId, int year);
+    Task<ProjectYearDto> AddProjectYearAsync(string projectId, int year, ProjectYearDto dto);
     Task<ProjectYearDto> UpdateProjectYearAsync(ProjectYearDto dto);
 
     // ?? Staff — now paginated ?????????????????????????????????????????????????
@@ -34,4 +34,6 @@ public interface IYearlyDetailsService
     Task<IEnumerable<PayRateDto>> GetPayRatesAsync(bool isDefra);
     Task<IEnumerable<AnimalRateDto>> GetAnimalRatesAsync(bool isDefra);
     Task<IEnumerable<AccountCategoryDto>> GetAccountCategoriesAsync();
+    Task<IEnumerable<TestCodeLookupDto>> GetTestCodeLookupsAsync(bool isDefra);
+    Task<IEnumerable<AnimalLookupDto>> GetAllAnimalsAsync();
 }

@@ -43,9 +43,22 @@ public class CostBookYearlyDetailsApiClient : ICostBookYearlyDetailsApiClient
         return ApiResponseDto<List<ProjectYearDto>>.FailureResponse(err.Errors, err.Meta);
     }
 
-    public async Task<ApiResponseDto<ProjectYearDto>> AddProjectYearAsync(string projectId, int year)
+    public async Task<ApiResponseDto<ProjectYearDto>> AddProjectYearAsync(string projectId, int year, ProjectYearDto dto)
     {
-        var req = new AddProjectYearReq { Project = projectId, Year = year };
+        var req = new AddProjectYearReq
+        {
+            Project = projectId,
+            Year = year,
+            YearValue = year,
+            MarkupTime = dto.MarkupTime,
+            MarkupTests = dto.MarkupTests,
+            MarkupAnimals = dto.MarkupAnimals,
+            MarkupAdditional = dto.MarkupAdditional,
+            ProfitTime = dto.ProfitTime,
+            ProfitTests = dto.ProfitTests,
+            ProfitAnimals = dto.ProfitAnimals,
+            ProfitAdditional = dto.ProfitAdditional
+        };
         var response = await _http.PostAsync<AddProjectYearReq, ProjectYearRes>(
             string.Format(CostBookApiEndpoints.AddProjectYear, HttpUtility.UrlEncode(projectId)), req);
         if (response.Success && response.Data != null)
@@ -287,5 +300,23 @@ public class CostBookYearlyDetailsApiClient : ICostBookYearlyDetailsApiClient
             return ApiResponseDto<List<AccountCategoryDto>>.SuccessResponse(_mapper.Map<List<AccountCategoryDto>>(response.Data));
         var err = _mapper.Map<ApiResponseDto<List<AccountCategoryDto>>>(response);
         return ApiResponseDto<List<AccountCategoryDto>>.FailureResponse(err.Errors, err.Meta);
+    }
+
+    public async Task<ApiResponseDto<List<TestCodeLookupDto>>> GetTestCodeLookupsAsync(bool isDefra)
+    {
+        var response = await _http.GetAsync<List<TestCodeLookupRes>>($"{CostBookApiEndpoints.GetTestCodeLookups}?isDefra={isDefra}");
+        if (response.Success && response.Data != null)
+            return ApiResponseDto<List<TestCodeLookupDto>>.SuccessResponse(_mapper.Map<List<TestCodeLookupDto>>(response.Data));
+        var err = _mapper.Map<ApiResponseDto<List<TestCodeLookupDto>>>(response);
+        return ApiResponseDto<List<TestCodeLookupDto>>.FailureResponse(err.Errors, err.Meta);
+    }
+
+    public async Task<ApiResponseDto<List<AnimalLookupDto>>> GetAllAnimalsAsync()
+    {
+        var response = await _http.GetAsync<List<AnimalLookupRes>>(CostBookApiEndpoints.GetAllAnimals);
+        if (response.Success && response.Data != null)
+            return ApiResponseDto<List<AnimalLookupDto>>.SuccessResponse(_mapper.Map<List<AnimalLookupDto>>(response.Data));
+        var err = _mapper.Map<ApiResponseDto<List<AnimalLookupDto>>>(response);
+        return ApiResponseDto<List<AnimalLookupDto>>.FailureResponse(err.Errors, err.Meta);
     }
 }
