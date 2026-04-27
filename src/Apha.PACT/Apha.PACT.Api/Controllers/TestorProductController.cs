@@ -3,6 +3,7 @@ using Apha.Common.Contracts.PACT;
 using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Interfaces;
 using Apha.PACT.Application.Pagination;
+using Apha.PACT.Application.Services;
 using Asp.Versioning;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -26,6 +27,17 @@ namespace Apha.PACT.Api.Controllers
         {
             _service = service;
             _mapper = mapper;
+        }
+
+        [HttpGet]
+        public async Task<ActionResult<List<TestorProductRes>>> GetAllTestorProductsAsync()
+        {
+            var items = await _service.GetAllTestorProductsAsync();
+            return Ok(items.Select(i => new TestorProductRes
+            {
+                ItemCode = i.ItemCode,
+                ItemDescription = i.ItemDescription
+            }).ToList());
         }
 
         /// <summary>Retrieves a paginated list of Test or Product records.</summary>

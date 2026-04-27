@@ -20,6 +20,14 @@ namespace Apha.PACT.Application.Services
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
+        public async Task<IEnumerable<TestorProductDto>> GetAllTestorProductsAsync()
+        {
+            var items = await _repository.GetAllTestorProductsAsync();
+            return _mapper.Map<IEnumerable<TestorProductDto>>(items);
+
+
+        }
+
         public async Task<PaginatedResult<TestorProductDto>> GetPagedTestOrProductsAsync(QueryParameters<string> query)
         {
             if (query == null)

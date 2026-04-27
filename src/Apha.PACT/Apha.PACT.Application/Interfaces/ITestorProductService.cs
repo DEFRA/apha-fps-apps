@@ -5,6 +5,7 @@ namespace Apha.PACT.Application.Interfaces
 {
     public interface ITestorProductService
     {
+        Task<IEnumerable<TestorProductDto>> GetAllTestorProductsAsync();
         Task<PaginatedResult<TestorProductDto>> GetPagedTestOrProductsAsync(QueryParameters<string> query);
         Task<TestorProductDto?> GetTestorProductByIdAsync(string itemCode);
         Task<TestorProductDto> CreateTestorProductAsync(TestorProductDto dto);
