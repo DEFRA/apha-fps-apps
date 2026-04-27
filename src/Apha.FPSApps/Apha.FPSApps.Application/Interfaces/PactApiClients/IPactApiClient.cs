@@ -9,6 +9,6 @@
         IPactProjectSubContractApiClient PactProjectSubContract { get; }
         IPactTestCapabilityApiClient PactWorkGroupTestCapability { get; }
         IPactTestRequirementApiClient PactTestRequirement { get; }
-        IPactTestListApiClient PactTestList { get; }
+        IPactTestorProductApiClient PactTestList { get; }
     }
 }

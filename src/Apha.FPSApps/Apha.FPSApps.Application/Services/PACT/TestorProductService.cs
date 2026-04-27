@@ -6,11 +6,11 @@ using Apha.FPSApps.Application.Pagination;
 
 namespace Apha.FPSApps.Application.Services.PACT
 {
-    public class TestListService : ITestListService
+    public class TestorProductService : ITestorProductService
     {
         private readonly IPactApiClient _apiClient;
 
-        public TestListService(IPactApiClient apiClient)
+        public TestorProductService(IPactApiClient apiClient)
         {
             _apiClient = apiClient;
         }

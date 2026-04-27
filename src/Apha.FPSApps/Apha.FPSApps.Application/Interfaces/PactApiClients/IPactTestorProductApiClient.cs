@@ -4,7 +4,7 @@ using Apha.FPSApps.Application.Pagination;
 
 namespace Apha.FPSApps.Application.Interfaces.PactApiClients
 {
-    public interface IPactTestListApiClient
+    public interface IPactTestorProductApiClient
     {
         Task<ApiResponseDto<List<TestorProductDto>>> GetPagedTestOrProductsAsync(QueryParameters<string> query);
         Task<ApiResponseDto<TestorProductDto>> GetTestOrProductByIdAsync(string itemCode);
