@@ -15,6 +15,9 @@ namespace Apha.FPSApps.Application.Services.PACT
             _apiClient = apiClient;
         }
 
+        public async Task<ApiResponseDto<List<TestorProductDto>>> GetAllTestorProductsAsync()
+           => await _apiClient.PactTestList.GetAllTestorProductsAsync();
+
         public async Task<ApiResponseDto<List<TestorProductDto>>> GetPagedTestOrProductsAsync(QueryParameters<string> query)
             => await _apiClient.PactTestList.GetPagedTestOrProductsAsync(query);
 

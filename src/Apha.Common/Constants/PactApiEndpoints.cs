@@ -36,6 +36,7 @@ namespace Apha.Common.Constants
         public const string UpdateTestOrProduct = "api/v1/testorproduct/{0}";
         public const string DeleteTestOrProduct = "api/v1/testorproduct/{0}";
         public const string GetTestListOwners = "api/v1/testorproduct/owners";
+        public const string GetAllTestorProducts = "api/v1/testorproduct";
 
         // Project Invoice
         public const string GetPagedProjectInvoices = "api/v1/projectinvoice?parentProject={0}";
@@ -71,7 +72,7 @@ namespace Apha.Common.Constants
         public const string DeleteTestReqmt = "api/v1/testrequirement/{0}/{1}";
 
         // Lookups
-        public const string GetAllTestorProducts = "api/v1/testcapability/testorproducts";
+        //public const string GetAllTestorProducts = "api/v1/testcapability/testorproducts";
         public const string GetTestReqmtPricing = "api/v1/testrequirement/pricing";
     }
 }

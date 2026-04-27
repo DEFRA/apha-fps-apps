@@ -15,14 +15,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestListApiClie
     {
         private readonly IPactHttpExecutor _httpExecutor;
         private readonly IMapper _mapper;
-        private readonly PactTestListApiClient _client;
+        private readonly PactTestorProductApiClient _client;
 
         public PactTestListApiClientTests()
         {
             _httpExecutor = Substitute.For<IPactHttpExecutor>();
             _mapper = Substitute.For<IMapper>();
             SetupMapper();
-            _client = new PactTestListApiClient(_httpExecutor, _mapper);
+            _client = new PactTestorProductApiClient(_httpExecutor, _mapper);
         }
 
         private void SetupMapper()

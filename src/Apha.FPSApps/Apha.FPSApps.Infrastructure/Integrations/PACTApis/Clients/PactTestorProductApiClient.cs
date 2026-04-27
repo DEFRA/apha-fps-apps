@@ -23,6 +23,16 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             _mapper = mapper;
         }
 
+        public async Task<ApiResponseDto<List<TestorProductDto>>> GetAllTestorProductsAsync()
+        {
+            var response = await _http.GetAsync<List<TestorProductRes>>(PactApiEndpoints.GetAllTestorProducts);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<TestorProductDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<TestorProductDto>>>(response);
+            return ApiResponseDto<List<TestorProductDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
         public async Task<ApiResponseDto<List<TestorProductDto>>> GetPagedTestOrProductsAsync(QueryParameters<string> query)
         {
 

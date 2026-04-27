@@ -11,10 +11,20 @@ namespace Apha.PACT.DataAccess.Repository
     public class TestorProductRepository : BaseRepository, ITestorProductRepository
     {
         private readonly IFpsRequestContext _fpsRequestContext;
+        private readonly FpsDbContext _dbContext;
 
-        public TestorProductRepository(FpsDbContext context, IFpsRequestContext fpsRequestContext) : base(context)
+        public TestorProductRepository(FpsDbContext dbContext, IFpsRequestContext fpsRequestContext) : base(dbContext)
         {
             _fpsRequestContext = fpsRequestContext;
+            _dbContext = dbContext;
+        }
+
+        public async Task<IEnumerable<TestorProduct>> GetAllTestorProductsAsync()
+        {
+            return await _dbContext.TestorProducts
+                .AsNoTracking()
+                .OrderBy(t => t.ItemCode)
+                .ToListAsync();
         }
 
         public async Task<PagedData<TestorProduct>> GetPagedTestOrProductsAsync(PaginationParameters<string> parameters)

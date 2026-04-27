@@ -4,6 +4,7 @@ using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
+using Apha.FPSApps.Application.Services.PACT;
 using Apha.FPSApps.Web.Areas.PACT.Models;
 using Apha.FPSApps.Web.Handler;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
@@ -22,10 +23,10 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
     public class TestListController : Controller
     {
         private readonly IMapper _mapper;
-        private readonly ITestListService _testListService;
+        private readonly ITestorProductService _testListService;
         private readonly IFpsYearContext _fpsYearContext;
 
-        public TestListController(IMapper mapper, ITestListService testListService, IFpsYearContext fpsYearContext)
+        public TestListController(IMapper mapper, ITestorProductService testListService, IFpsYearContext fpsYearContext)
         {
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _testListService = testListService ?? throw new ArgumentNullException(nameof(testListService));

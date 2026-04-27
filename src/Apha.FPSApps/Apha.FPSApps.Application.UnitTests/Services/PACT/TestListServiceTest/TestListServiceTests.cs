@@ -11,15 +11,15 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.TestListServiceTest
     public class TestListServiceTests
     {
         private readonly IPactApiClient _pactClient;
-        private readonly IPactTestListApiClient _pactTestListApiClient;
-        private readonly TestListService _service;
+        private readonly IPactTestorProductApiClient _pactTestListApiClient;
+        private readonly TestorProductService _service;
 
         public TestListServiceTests()
         {
             _pactClient = Substitute.For<IPactApiClient>();
-            _pactTestListApiClient = Substitute.For<IPactTestListApiClient>();
+            _pactTestListApiClient = Substitute.For<IPactTestorProductApiClient>();
             _pactClient.PactTestList.Returns(_pactTestListApiClient);
-            _service = new TestListService(_pactClient);
+            _service = new TestorProductService(_pactClient);
         }
 
         #region GetPagedTestOrProductsAsync

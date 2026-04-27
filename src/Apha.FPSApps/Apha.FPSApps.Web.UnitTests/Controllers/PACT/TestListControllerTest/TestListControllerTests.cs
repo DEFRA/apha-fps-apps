@@ -4,6 +4,7 @@ using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
+using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Web.Areas.PACT.Controllers;
 using Apha.FPSApps.Web.Areas.PACT.Models;
 using Apha.FPSApps.Web.Handler;
@@ -18,8 +19,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.TestListControllerTest
 {
     public class TestListControllerTests
     {
-        private readonly IMapper _mapper;
-        private readonly ITestListService _testListService;
+        private readonly IMapper _mapper;   
+        private readonly ITestorProductService _testListService;
         private readonly IFpsYearContext _fpsYearContext;
         private readonly TestListController _controller;
         private const int CurrentYear = 2025;
@@ -27,7 +28,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.TestListControllerTest
         public TestListControllerTests()
         {
             _mapper = Substitute.For<IMapper>();
-            _testListService = Substitute.For<ITestListService>();
+            _testListService = Substitute.For<ITestorProductService>();
             _fpsYearContext = Substitute.For<IFpsYearContext>();
             _fpsYearContext.Year.Returns(CurrentYear);
             _controller = new TestListController(_mapper, _testListService, _fpsYearContext);
