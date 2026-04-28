@@ -1,5 +1,3 @@
-using Apha.Common.Contracts;
-using Apha.Common.Contracts.PACT;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.PACT;
@@ -93,7 +91,6 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         public async Task<IActionResult> CreateTestOrProduct([FromBody] TestOrProductViewModel model)
         {
             if (!ModelState.IsValid)
-            {
                 return Json(new
                 {
                     success = false,
@@ -102,11 +99,12 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                         .Where(kvp => kvp.Value!.Errors.Any() && kvp.Key != "$")
                         .SelectMany(kvp => kvp.Value!.Errors.Select(e => new
                         {
+                            // Strip the JSON-path prefix ("$.Month" → "Month") produced
+                            // when System.Text.Json fails to deserialise a property value.
                             field = kvp.Key.StartsWith("$.") ? kvp.Key[2..] : kvp.Key,
                             message = e.ErrorMessage
                         }))
                 });
-            }
 
             model.FpsYear = _fpsYearContext.Year;
             var dto = _mapper.Map<TestorProductDto>(model);
@@ -199,7 +197,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             // Map pagination properties
             PaginationModel paginationModel = new PaginationModel
             {
-                TotalRecords = testItems.Count,
+                TotalRecords = response.Pagination?.TotalRecords ?? 0,
                 PageSize = request.PageSize,
                 PageNumber = request.Page
             };
@@ -219,7 +217,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 AddFunction = "addTestOrProduct",
                 EditFunction = "editTestOrProduct",
                 DeleteFunction = "deleteTestOrProduct",
-                BindGridUrl = "/PACT/TestList/LoadTestGrid",
+                BindGridUrl = "/PACT/TestorProduct/LoadTestGrid",
                 Data = testItems,
                 Columns = GridDataProvider.GetColumnsDefination<TestOrProductViewModel>(null),
                 Pagination = paginationModel,

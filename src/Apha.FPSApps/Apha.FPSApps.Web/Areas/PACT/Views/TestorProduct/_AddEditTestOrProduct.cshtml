@@ -1,5 +1,5 @@
 
-<div class="modal-body">
+<div class="modal-body" style="padding: 8px 16px 0 0px;">
     <div class="govuk-error-summary" role="alert"
          aria-labelledby="error-summary-title" tabindex="-1" style="display:none;">
         <h2 class="govuk-error-summary__title" id="error-summary-title">
@@ -11,96 +11,78 @@
         </div>
     </div>
 
-    <form id="testForm" novalidate>
+    <form class="govuk-grid-column-full" id="testForm" novalidate>
         <input type="hidden" id="isEdit" value="false" />
         <input type="hidden" id="originalItemCode" value="" />
 
-        <div class="row">
-            <div class="col-md-6">
-                <div class="govuk-form-group">
-                    <label for="itemCode" class="govuk-label">Item Code <span class="sup_color_red">*</span></label>
-                    <input type="text" class="form-control govuk-input" id="itemCode" name="ItemCode" required maxlength="20" />
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-one-half">
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label for="itemCode" class="govuk-label govuk-!-font-weight-bold">Item Code:</label>
+                    <input type="text" class="govuk-input govuk-!-font-size-16" id="itemCode" name="ItemCode" placeholder="Enter item code" required maxlength="20" />
                     <span class="govuk-error-message validation-message" data-valmsg-for="ItemCode" style="display:none;"></span>
                 </div>
             </div>
-            <div class="col-md-6">
-                <div class="govuk-form-group">
-                    <label for="shortDescription" class="govuk-label">Short Description</label>
-                    <input type="text" class="form-control govuk-input" id="shortDescription" name="ShortDescription" maxlength="18" />
+            <div class="govuk-grid-column-one-half">
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label for="testManager" class="govuk-label govuk-!-font-weight-bold">Test Manager:</label>
+                    <input type="text" class="govuk-input govuk-!-font-size-16" id="testManager" name="TestManager" placeholder="Enter test manager" maxlength="50" />
                 </div>
             </div>
         </div>
 
-        <div class="row">
-            <div class="col-md-12">
-                <div class="govuk-form-group">
-                    <label for="itemDescription" class="govuk-label">Item Description</label>
-                    <textarea class="form-control govuk-textarea" id="itemDescription" name="ItemDescription" rows="3" maxlength="200"></textarea>
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full">
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label for="itemDescription" class="govuk-label govuk-!-font-weight-bold">Item Description:</label>
+                    <input type="text" class="govuk-input govuk-!-font-size-16" id="itemDescription" name="ItemDescription" placeholder="Enter item description" maxlength="200" />
                 </div>
             </div>
         </div>
 
-        <div class="row">
-            <div class="col-md-6">
-                <div class="govuk-form-group">
-                    <label for="testManager" class="govuk-label">Test Manager</label>
-                    <input type="text" class="form-control govuk-input" id="testManager" name="TestManager" maxlength="50" />
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-one-half">
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label for="unitPriceVla" class="govuk-label govuk-!-font-weight-bold">Unit Price VLA:</label>
+                    <div class="govuk-input__wrapper">
+                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                        <input type="number" step="0.01" class="govuk-input govuk-!-font-size-16" id="unitPriceVla" name="UnitPriceVla" placeholder="0.00" />
+                    </div>
                 </div>
             </div>
-            <div class="col-md-6">
-                <div class="govuk-form-group">
-                    <label for="owner" class="govuk-label">Owner <span class="sup_color_red">*</span></label>
-                    <select class="form-control govuk-select" id="owner" name="Owner" required>
-                        <option value="">Select Owner</option>
+            <div class="govuk-grid-column-one-half">
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label for="defraUnitPrice" class="govuk-label govuk-!-font-weight-bold">Defra Unit Price:</label>
+                    <div class="govuk-input__wrapper">
+                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                        <input type="number" step="0.01" class="govuk-input govuk-!-font-size-16" id="defraUnitPrice" name="DefraUnitPrice" placeholder="0.00" required />
+                    </div>
+                </div>
+                <span class="govuk-error-message validation-message" data-valmsg-for="DefraUnitPrice" style="display:none;"></span>
+            </div>
+        </div>
+
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-one-half">
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label for="owner" class="govuk-label govuk-!-font-weight-bold">Owner:</label>
+                    <select class="govuk-select govuk-!-font-size-16 sup_width_100" id="owner" name="Owner" required>
+                        <option value="">--select owner--</option>
                     </select>
                     <span class="govuk-error-message validation-message" data-valmsg-for="Owner" style="display:none;"></span>
                 </div>
             </div>
-        </div>
-
-        <div class="row">
-            <div class="col-md-6">
-                <div class="govuk-form-group">
-                    <label for="jobStatus" class="govuk-label">Job Status</label>
-                    <input type="text" class="form-control govuk-input" id="jobStatus" name="JobStatus" maxlength="2" />
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="govuk-form-group">
-                    <label for="chargeMethod" class="govuk-label">Charge Method</label>
-                    <input type="text" class="form-control govuk-input" id="chargeMethod" name="ChargeMethod" maxlength="2" />
-                </div>
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col-md-4">
-                <div class="govuk-form-group">
-                    <label for="defraUnitPrice" class="govuk-label">DEFRA Unit Price <span class="sup_color_red">*</span></label>
-                    <input type="number" step="0.01" class="form-control govuk-input" id="defraUnitPrice" name="DefraUnitPrice" required />
-                    <span class="govuk-error-message validation-message" data-valmsg-for="DefraUnitPrice" style="display:none;"></span>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="govuk-form-group">
-                    <label for="unitPriceVla" class="govuk-label">Unit Price VLA</label>
-                    <input type="number" step="0.01" class="form-control govuk-input" id="unitPriceVla" name="UnitPriceVla" />
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="govuk-form-group">
-                    <label for="priceAhvg" class="govuk-label">Price AHVG</label>
-                    <input type="number" step="0.01" class="form-control govuk-input" id="priceAhvg" name="PriceAhvg" />
+            <div class="govuk-grid-column-one-half">
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label for="shortDescription" class="govuk-label govuk-!-font-weight-bold">Short Description:</label>
+                    <input type="text" class="govuk-input govuk-!-font-size-16" id="shortDescription" name="ShortDescription" placeholder="Enter short description" maxlength="18" />
                 </div>
             </div>
         </div>
     </form>
 </div>
 
-<div class="modal-footer">
-    <button type="button" class="govuk-button govuk-button--secondary" data-dismiss="modal"
-            onclick="closeTestModal()">
-        Cancel
-    </button>
-    <button type="button" class="govuk-button" onclick="saveTestOrProduct()">Save</button>
+<div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; flex-direction: row;">
+    <button class="govuk-button govuk-button--secondary sup_margin_0" aria-label="Cancel" data-dismiss="modal" onclick="closeTestModal()">Cancel</button>
+    <button class="govuk-button sup_margin_0" aria-label="Save" onclick="saveTestOrProduct()">Save</button>
 </div>
