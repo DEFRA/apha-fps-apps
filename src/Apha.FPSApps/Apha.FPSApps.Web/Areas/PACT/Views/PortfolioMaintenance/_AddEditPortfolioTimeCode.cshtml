@@ -2,7 +2,7 @@
 @using Microsoft.AspNetCore.Mvc.Rendering
 
 @{
-    var isEdit = !string.IsNullOrEmpty(Model.OriginalWorkGroup);
+    var isEdit = Model.IsEdit;
 }
 
 <div class="modal-header flex-space-center">
@@ -11,14 +11,9 @@
 </div>
 
 <div class="modal-body" style="overflow:hidden; padding:8px 16px 0 16px;">
-    <form id="timeCodeForm" class="govuk-grid-column-full">
+    <form id="timeCodeForm" class="govuk-grid-column-full" data-workgroup="@Model.WorkGroup">
 
         <input type="hidden" name="isEdit" value="@isEdit.ToString().ToLower()" />
-
-        @if (isEdit)
-        {
-            <input type="hidden" asp-for="OriginalWorkGroup" />
-        }
 
         <!-- Validation error summary -->
         <div class="govuk-error-summary" role="alert"
@@ -38,7 +33,8 @@
             </label>
             <select class="govuk-select govuk-!-font-size-16" asp-for="WorkGroup"
                     id="txtmodal-workgrp" style="width:100%;" required
-                    asp-items="@(ViewBag.WorkGroups as List<SelectListItem>)">
+                    asp-items="@(ViewBag.WorkGroups as List<SelectListItem>)"
+                    disabled="@(isEdit ? "disabled" : null)">
                 <option value="">--Select Work Group--</option>
             </select>
             <span asp-validation-for="WorkGroup" class="govuk-error-message"></span>
@@ -49,11 +45,16 @@
             <label class="govuk-label govuk-!-font-weight-bold" asp-for="TimeCode">
                 Time Code: <span class="sup_color_red">*</span>
             </label>
-            <select class="govuk-select govuk-!-font-size-16" asp-for="TimeCode"
-                    id="txtmodal-wg-timecode" style="width:100%;" required
-                    asp-items="@(ViewBag.TimeCodeOptions as List<SelectListItem>)">
-                <option value="">-- Select Time Code --</option>
-            </select>
+            @if (isEdit)
+            {
+                <input class="govuk-input govuk-!-font-size-16" asp-for="TimeCode"
+                       id="txtmodal-wg-timecode" placeholder="Time Code" disabled />
+            }
+            else
+            {
+                <input class="govuk-input govuk-!-font-size-16" asp-for="TimeCode"
+                       id="txtmodal-wg-timecode" placeholder="Time Code" />
+            }
             <span asp-validation-for="TimeCode" class="govuk-error-message"></span>
         </div>
 
@@ -64,7 +65,8 @@
             </label>
             <select class="govuk-select govuk-!-font-size-16" asp-for="ParentProject"
                     id="txtmodal-wg-project" style="width:100%;" required
-                    asp-items="@(ViewBag.ProjectOptions as List<SelectListItem>)">
+                    asp-items="@(ViewBag.ProjectOptions as List<SelectListItem>)"
+                    disabled="@(isEdit ? "disabled" : null)">
                 <option value="">-- Select Project --</option>
             </select>
             <span asp-validation-for="ParentProject" class="govuk-error-message"></span>

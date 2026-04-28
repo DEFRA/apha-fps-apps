@@ -9,7 +9,6 @@
         public bool ShowCheckboxColumn { get; set; }
         public bool ShowPagination { get; set; }
         public string KeyProperty { get; set; } = string.Empty;
-        public string SecondaryKeyProperty { get; set; } = string.Empty;
         public bool AllowAdd { get; set; }
         public bool AllowCopy { get; set; }
         public bool AllowEdit { get; set; }

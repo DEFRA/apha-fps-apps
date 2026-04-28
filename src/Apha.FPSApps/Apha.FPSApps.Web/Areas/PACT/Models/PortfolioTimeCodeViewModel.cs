@@ -38,6 +38,6 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         public string? Portfolio { get; set; }
 
         [GridColumn(IsVisible = false)]
-        public string? OriginalWorkGroup { get; set; }
+        public bool IsEdit { get; set; }
     }
 }

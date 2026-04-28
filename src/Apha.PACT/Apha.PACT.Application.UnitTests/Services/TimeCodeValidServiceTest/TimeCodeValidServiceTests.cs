@@ -17,6 +17,7 @@ namespace Apha.PACT.Application.UnitTests.Services.TimeCodeValidServiceTest
         private readonly IJobCodeRepository _mockJobCodeRepository;
         private readonly ITestCapabilityRepository _mockTestCapabilityRepository;
         private readonly IProjectRepository _mockProjectRepository;
+        private readonly IMonthlyTimeRepository _mockMonthlyTimeRepository;
         private readonly IMapper _mockMapper;
         private readonly TimeCodeValidService _sut;
 
@@ -26,12 +27,14 @@ namespace Apha.PACT.Application.UnitTests.Services.TimeCodeValidServiceTest
             _mockJobCodeRepository = Substitute.For<IJobCodeRepository>();
             _mockTestCapabilityRepository = Substitute.For<ITestCapabilityRepository>();
             _mockProjectRepository = Substitute.For<IProjectRepository>();
+            _mockMonthlyTimeRepository = Substitute.For<IMonthlyTimeRepository>();
             _mockMapper = Substitute.For<IMapper>();
             _sut = new TimeCodeValidService(
                 _mockRepository,
                 _mockJobCodeRepository,
                 _mockTestCapabilityRepository,
                 _mockProjectRepository,
+                _mockMonthlyTimeRepository,
                 _mockMapper);
         }
 

@@ -129,7 +129,6 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 AllowDelete = true,
                 AllowRowSelection = true,
                 KeyProperty = "TestCode",
-                SecondaryKeyProperty = "WorkGroup",
                 AddFunction = "addConstituentTest",
                 DeleteFunction = "deleteConstituentTest",
                 RowSelectFunction = "selectConstituentTest",
@@ -274,17 +273,15 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             List<PortfolioTimeCodeViewModel> items = [];
             PaginationModel pagination;
 
-            if (!string.IsNullOrEmpty(parentProject))
+            if (!string.IsNullOrEmpty(parentProject) && !string.IsNullOrEmpty(testCode))
             {
                 var query = _mapper.Map<QueryParameters<string>>(request);
-                var response = await _timeCodeService.GetPagedTimeCodesAsync(query, null, parentProject);
+                var response = await _timeCodeService.GetPagedByProjectAndTestCodeAsync(query, parentProject, testCode);
                 items = response.Data != null ? _mapper.Map<List<PortfolioTimeCodeViewModel>>(response.Data) : [];
 
-                // Fill in TestCode and Portfolio from context where the DB holds nulls
+                // Fill in Portfolio from context where the DB holds nulls
                 foreach (var item in items)
                 {
-                    if (string.IsNullOrEmpty(item.TestCode))
-                        item.TestCode = item.TimeCode;
                     if (string.IsNullOrEmpty(item.Portfolio))
                         item.Portfolio = parentProject;
                 }
@@ -304,8 +301,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             {
                 GridId = "portfolioTimeCodeGrid",
                 Title = "Work Groups who can record Time to this Portfolio Test",
-                KeyProperty = "WorkGroup",
-                SecondaryKeyProperty = "TimeCode",
+                KeyProperty = "TimeCode",
                 ShowCheckboxColumn = false,
                 AllowAdd = true,
                 AllowEdit = true,
@@ -326,16 +322,15 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         // ── TIME CODE CRUD ────────────────────────────────────────────────────
 
         [HttpGet]
-        public async Task<IActionResult> CreatePortfolioTimeCode(string parentProject, string? selectedTestCode)
+        public async Task<IActionResult> CreatePortfolioTimeCode(string parentProject, string? selectedTestCode, string? selectedPortfolio)
         {
             ViewBag.WorkGroups = await GetWorkGroupSelectListAsync();
-            ViewBag.TimeCodeOptions = GetTimeCodeSelectList();
             ViewBag.ProjectOptions = await GetProjectSelectListAsync();
             return PartialView("_AddEditPortfolioTimeCode", new PortfolioTimeCodeViewModel
             {
                 ParentProject = parentProject,
                 TestCode = selectedTestCode,
-                Portfolio = parentProject
+                Portfolio = selectedPortfolio
             });
         }
 
@@ -371,18 +366,23 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> EditPortfolioTimeCode(string workGroup, string timeCode, string parentProject)
+        public async Task<IActionResult> EditPortfolioTimeCode(string workGroup, string timeCode, string parentProject, string? selectedTestCode)
         {
             ViewBag.WorkGroups = await GetWorkGroupSelectListAsync();
-            ViewBag.TimeCodeOptions = GetTimeCodeSelectList();
             ViewBag.ProjectOptions = await GetProjectSelectListAsync();
+
+            var existing = await _timeCodeService.GetTimeCodeValidAsync(workGroup, timeCode, parentProject);
+            var data = existing.Success ? existing.Data : null;
+
             return PartialView("_AddEditPortfolioTimeCode", new PortfolioTimeCodeViewModel
             {
                 WorkGroup = workGroup,
                 TimeCode = timeCode,
                 ParentProject = parentProject,
-                Portfolio = parentProject,
-                OriginalWorkGroup = workGroup
+                Portfolio = data?.Portfolio,
+                Active = data?.Active ?? false,
+                IsEdit = true,
+                TestCode = selectedTestCode
             });
         }
 
@@ -458,10 +458,5 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                     $"{p.ParentProject} - {p.ProjectTitle}", p.ParentProject)).ToList()
                 : [];
         }
-
-        private static List<SelectListItem> GetTimeCodeSelectList() =>
-            Enumerable.Range(0, 16)
-                .Select(i => new SelectListItem($"PT{i:D4}", $"PT{i:D4}"))
-                .ToList();
     }
 }

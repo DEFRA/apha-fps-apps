@@ -221,16 +221,12 @@
                             <!-- Edit / Delete / View Buttons -->
                             @if (Model.AllowEdit || Model.AllowDelete || Model.AllowCopy || Model.AllowView)
                             {
-                                var secondaryKeyValue = !string.IsNullOrEmpty((string)Model.SecondaryKeyProperty)
-                                    ? GridHelpers.GetPropertyValue(row, (string)Model.SecondaryKeyProperty)?.ToString() ?? ""
-                                    : "";
                                 <td class="govuk-table__cell">
                                     @if (Model.AllowEdit)
                                     {
                                         <button type="button"
                                                 class="btn btn-sm edit-row-btn"
                                                 data-id="@GridHelpers.GetPropertyValue(row, Model.KeyProperty)"
-                                                data-secondary-key="@secondaryKeyValue"
                                                 data-edit-function="@Model.EditFunction">
                                             <img src="~/images/edit_gridicon.svg" alt="Edit icon" width="20" height="20" title="Edit">
                                         </button>
@@ -240,7 +236,6 @@
                                         <button type="button"
                                                 class="btn btn-sm copy-row-btn"
                                                 data-id="@GridHelpers.GetPropertyValue(row, Model.KeyProperty)"
-                                                data-secondary-key="@secondaryKeyValue"
                                                 data-copy-function="@Model.CopyFunction">
                                                 <img src="~/images/copy-regular-full.svg" alt="Copy icon" width="20" height="20" title="Copy">
                                         </button>
@@ -250,7 +245,6 @@
                                         <button type="button"
                                                 class="btn btn-sm delete-row-btn"
                                                 data-id="@GridHelpers.GetPropertyValue(row, Model.KeyProperty)"
-                                                data-secondary-key="@secondaryKeyValue"
                                                 data-delete-function="@Model.DeleteFunction">
                                             <img src="~/images/delete_gridicon.svg" alt="Delete icon" width="20" height="20" title="Delete">
                                         </button>
@@ -260,7 +254,6 @@
                                         <button type="button"
                                                 class="btn btn-sm delete-row-btn"
                                                 data-id="@GridHelpers.GetPropertyValue(row, Model.KeyProperty)"
-                                                data-secondary-key="@secondaryKeyValue"
                                                 data-delete-function="@Model.ViewFunction" allow-edit="true">
                                             <img src="~/images/view_icon.png" alt="View icon" width="20" height="20" title="View">
                                         </button>

@@ -14,6 +14,7 @@ namespace Apha.PACT.Application.Services
         private readonly IJobCodeRepository _jobCodeRepository;
         private readonly ITestCapabilityRepository _testCapabilityRepository;
         private readonly IProjectRepository _projectRepository;
+        private readonly IMonthlyTimeRepository _monthlyTimeRepository;
         private readonly IMapper _mapper;
 
         public TimeCodeValidService(
@@ -21,12 +22,14 @@ namespace Apha.PACT.Application.Services
             IJobCodeRepository jobCodeRepository,
             ITestCapabilityRepository testCapabilityRepository,
             IProjectRepository projectRepository,
+            IMonthlyTimeRepository monthlyTimeRepository,
             IMapper mapper)
         {
             _repository = repository;
             _jobCodeRepository = jobCodeRepository;
             _testCapabilityRepository = testCapabilityRepository;
             _projectRepository = projectRepository;
+            _monthlyTimeRepository = monthlyTimeRepository;
             _mapper = mapper;
         }
 
@@ -40,6 +43,13 @@ namespace Apha.PACT.Application.Services
         {
             var parameters = _mapper.Map<PaginationParameters<string>>(query);
             var pagedData = await _repository.GetPagedTimeCodesAsync(parameters, jobCode, parentProject);
+            return _mapper.Map<PaginatedResult<TimeCodeValidDto>>(pagedData);
+        }
+
+        public async Task<PaginatedResult<TimeCodeValidDto>> GetPagedByProjectAndTestCodeAsync(QueryParameters<string> query, string parentProject, string testCode)
+        {
+            var parameters = _mapper.Map<PaginationParameters<string>>(query);
+            var pagedData = await _repository.GetPagedByProjectAndTestCodeAsync(parameters, parentProject, testCode);
             return _mapper.Map<PaginatedResult<TimeCodeValidDto>>(pagedData);
         }
 
@@ -97,7 +107,6 @@ namespace Apha.PACT.Application.Services
         /// <summary>
         /// Validates FK combinations mirroring TimeCodeValid_ITrig (insert) and TimeCodeValid_UTrig (update).
         /// Pass <paramref name="existing"/> as null for insert validation; supply existing entity for update validation.
-        /// Note: the MonthlyTime dependency check from UTrig is not implemented here as that entity is not available.
         /// </summary>
         private async Task ValidateTimeCodeFieldsAsync(TimeCodeValidDto dto, TimeCodeValid? existing)
         {
@@ -106,6 +115,7 @@ namespace Apha.PACT.Application.Services
             bool isInsert = existing == null;
 
             await ValidateJobCodeAsync(dto, isInsert, existing);
+            await ValidateMonthlyTimeDependencyAsync(dto, isInsert, existing);
             await ValidateTestCapabilityAsync(dto, isInsert, existing);
             await ValidateParentProjectAsync(dto, isInsert, existing);
             await ValidateDuplicateAsync(dto, isInsert);
@@ -135,6 +145,25 @@ namespace Apha.PACT.Application.Services
             var jobCode = await _jobCodeRepository.GetJobCodeByIdAsync(dto.JobCode);
             if (jobCode == null)
                 throw new InvalidOperationException("Not a valid jobcode.");
+        }
+
+        private async Task ValidateMonthlyTimeDependencyAsync(TimeCodeValidDto dto, bool isInsert, TimeCodeValid? existing)
+        {
+            if (isInsert)
+                return;
+
+            bool workGroupChanged = existing!.WorkGroup != dto.WorkGroup;
+            bool timeCodeChanged = existing.TimeCode != dto.TimeCode;
+            bool parentProjectChanged = existing.ParentProject != dto.ParentProject;
+
+            if (!workGroupChanged && !timeCodeChanged && !parentProjectChanged)
+                return;
+
+            var hasDependentRows = await _monthlyTimeRepository.HasDependentRowsAsync(
+                existing.WorkGroup, existing.TimeCode, existing.ParentProject);
+
+            if (hasDependentRows)
+                throw new InvalidOperationException("Cannot update, existing data in MonthlyTime.");
         }
 
         private async Task ValidateTestCapabilityAsync(TimeCodeValidDto dto, bool isInsert, TimeCodeValid? existing)
