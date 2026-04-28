@@ -52,9 +52,8 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestorProductControllerTest
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var apiResponse = Assert.IsType<ApiResponse<PaginationRes<TestorProductRes>>>(okResult.Value);
-            Assert.True(apiResponse.Success);
-            Assert.Equal(mappedResult, apiResponse.Data);
+            var response = Assert.IsType<PaginationRes<TestorProductRes>>(okResult.Value);
+            Assert.Equal(mappedResult, response);
         }
 
         [Fact]
@@ -73,8 +72,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestorProductControllerTest
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var apiResponse = Assert.IsType<ApiResponse<PaginationRes<TestorProductRes>>>(okResult.Value);
-            Assert.True(apiResponse.Success);
+            Assert.IsType<PaginationRes<TestorProductRes>>(okResult.Value);
         }
 
         [Fact]

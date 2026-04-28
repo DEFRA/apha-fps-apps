@@ -5,7 +5,6 @@ using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
 using AutoMapper;
-using System.ComponentModel.DataAnnotations;
 
 namespace Apha.PACT.Application.Services
 {
@@ -68,6 +67,13 @@ namespace Apha.PACT.Application.Services
             if (string.IsNullOrWhiteSpace(dto.ItemCode))
             {
                 throw new ArgumentException("Item Code is required.", nameof(dto.ItemCode));
+            }
+
+            // Check for duplicate primary key
+            var existing = await _repository.GetTestOrProductByIdAsync(dto.ItemCode);
+            if (existing != null)
+            {
+                throw new InvalidOperationException($"A Test/Product with Item Code '{dto.ItemCode}' already exists.");
             }
 
             // Validate business rules
