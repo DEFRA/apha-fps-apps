@@ -67,7 +67,7 @@ public class YearlyDetailsController : Controller
         return View(viewModel);
     }
 
-    private void CalculateYearTotals(YearlyDetailsViewModel viewModel)
+    private static void CalculateYearTotals(YearlyDetailsViewModel viewModel)
     {
         viewModel.StaffCostTotal = viewModel.StaffGrid.Data.Sum(f => f.StaffCost ?? 0);
         viewModel.TestCostTotal = viewModel.TestGrid.Data.Sum(f => f.TestCost ?? 0);
