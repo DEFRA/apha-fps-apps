@@ -23,6 +23,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
 
         public DataGridConfig<AnimalPlanItem> AnimalPlanGrid { get; set; } = new DataGridConfig<AnimalPlanItem>();
 
-        public DataGridConfig<ActualAnimalCostItem> ActualAnimalCostGrid { get; set; } = new DataGridConfig<ActualAnimalCostItem>();
+        public DataGridConfig<ActualProjectCostItem> ActualAnimalCostGrid { get; set; } = new DataGridConfig<ActualProjectCostItem>();
     }
 }

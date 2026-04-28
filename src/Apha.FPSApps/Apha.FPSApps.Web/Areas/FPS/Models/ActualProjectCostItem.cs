@@ -2,7 +2,7 @@ using Apha.FPSApps.Web.Models.Components.DataGrid;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Models
 {
-    public class ActualAnimalCostItem
+    public class ActualProjectCostItem
     {
         [GridColumn(IsVisible = false)]
         public int SubContCounter { get; set; }

@@ -50,12 +50,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ActualAnimalCostControllerT
             };
             var paginationDto = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1 };
             var serviceResponse = ApiResponseDto<List<ProjectSubContractDto>>.SuccessResponse(subContracts, paginationDto);
-            var items = new List<ActualAnimalCostItem> { new() { AcctCode = "LargeAnimals", Amount = 500m } };
+            var items = new List<ActualProjectCostItem> { new() { AcctCode = "LargeAnimals", Amount = 500m } };
             var paginationModel = new PaginationModel { PageNumber = 1, PageSize = 10, TotalRecords = 1 };
 
             _mapper.Map<QueryParameters<string>>(request).Returns(queryParameters);
             _projectSubContractService.GetAnimalSubContractsAsync(queryParameters, projectCode).Returns(serviceResponse);
-            _mapper.Map<List<ActualAnimalCostItem>>(Arg.Any<List<ProjectSubContractDto>>()).Returns(items);
+            _mapper.Map<List<ActualProjectCostItem>>(Arg.Any<List<ProjectSubContractDto>>()).Returns(items);
             _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(paginationModel);
 
             // Act
@@ -64,7 +64,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ActualAnimalCostControllerT
             // Assert
             var partialView = Assert.IsType<PartialViewResult>(result);
             Assert.Equal("_DataGrid", partialView.ViewName);
-            var gridConfig = Assert.IsType<DataGridConfig<ActualAnimalCostItem>>(partialView.Model);
+            var gridConfig = Assert.IsType<DataGridConfig<ActualProjectCostItem>>(partialView.Model);
             Assert.Equal("actualAnimalCostGrid", gridConfig.GridId);
             Assert.Equal("Actual Animal Costs (PACT)", gridConfig.Title);
             Assert.Single(gridConfig.Data);
@@ -106,9 +106,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ActualAnimalCostControllerT
 
             // Assert
             var partialView = Assert.IsType<PartialViewResult>(result);
-            var gridConfig = Assert.IsType<DataGridConfig<ActualAnimalCostItem>>(partialView.Model);
+            var gridConfig = Assert.IsType<DataGridConfig<ActualProjectCostItem>>(partialView.Model);
             Assert.Empty(gridConfig.Data);
-            _mapper.DidNotReceive().Map<List<ActualAnimalCostItem>>(Arg.Any<List<ProjectSubContractDto>>());
+            _mapper.DidNotReceive().Map<List<ActualProjectCostItem>>(Arg.Any<List<ProjectSubContractDto>>());
         }
 
         [Fact]
@@ -129,7 +129,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ActualAnimalCostControllerT
 
             // Assert
             var partialView = Assert.IsType<PartialViewResult>(result);
-            Assert.IsType<DataGridConfig<ActualAnimalCostItem>>(partialView.Model);
+            Assert.IsType<DataGridConfig<ActualProjectCostItem>>(partialView.Model);
             await _projectSubContractService.Received(1).GetAnimalSubContractsAsync(queryParameters, null);
         }
 
@@ -151,7 +151,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ActualAnimalCostControllerT
 
             // Assert
             var partialView = Assert.IsType<PartialViewResult>(result);
-            var gridConfig = Assert.IsType<DataGridConfig<ActualAnimalCostItem>>(partialView.Model);
+            var gridConfig = Assert.IsType<DataGridConfig<ActualProjectCostItem>>(partialView.Model);
             Assert.NotNull(gridConfig.Pagination);
         }
 
@@ -173,9 +173,61 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ActualAnimalCostControllerT
 
             // Assert
             var partialView = Assert.IsType<PartialViewResult>(result);
-            var gridConfig = Assert.IsType<DataGridConfig<ActualAnimalCostItem>>(partialView.Model);
+            var gridConfig = Assert.IsType<DataGridConfig<ActualProjectCostItem>>(partialView.Model);
             Assert.Equal("Amount", gridConfig.Pagination.SortColumn);
             Assert.True(gridConfig.Pagination.SortDirection);
+        }
+
+        [Fact]
+        public async Task LoadActualAnimalCostGrid_GridConfigHasDeleteOnlySettings()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
+            var queryParameters = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var serviceResponse = ApiResponseDto<List<ProjectSubContractDto>>.SuccessResponse(new List<ProjectSubContractDto>(), new PaginationDto());
+            var paginationModel = new PaginationModel();
+
+            _mapper.Map<QueryParameters<string>>(request).Returns(queryParameters);
+            _projectSubContractService.GetAnimalSubContractsAsync(queryParameters, "PROJ001").Returns(serviceResponse);
+            _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(paginationModel);
+
+            // Act
+            var result = await _controller.LoadActualAnimalCostGrid(request, "PROJ001");
+
+            // Assert
+            var partialView = Assert.IsType<PartialViewResult>(result);
+            var gridConfig = Assert.IsType<DataGridConfig<ActualProjectCostItem>>(partialView.Model);
+            Assert.False(gridConfig.AllowAdd);
+            Assert.False(gridConfig.AllowEdit);
+            Assert.True(gridConfig.AllowDelete);
+            Assert.Equal("SubContCounter", gridConfig.KeyProperty);
+            Assert.Equal("deleteActualAnimalCost", gridConfig.DeleteFunction);
+            Assert.Equal("getActualAnimalExtraFilters", gridConfig.ExtraFilterMethod);
+            Assert.Equal("/FPS/ActualAnimalCost/LoadActualAnimalCostGrid", gridConfig.BindGridUrl);
+        }
+
+        [Fact]
+        public async Task LoadActualAnimalCostGrid_WithFilterJson_ParsesFilterDictionary()
+        {
+            // Arrange
+            var filterJson = "{\"AcctCode\":\"LargeAnimals\"}";
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = filterJson };
+            var queryParameters = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var serviceResponse = ApiResponseDto<List<ProjectSubContractDto>>.SuccessResponse(new List<ProjectSubContractDto>(), new PaginationDto());
+            var paginationModel = new PaginationModel();
+
+            _mapper.Map<QueryParameters<string>>(request).Returns(queryParameters);
+            _projectSubContractService.GetAnimalSubContractsAsync(queryParameters, "PROJ001").Returns(serviceResponse);
+            _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(paginationModel);
+
+            // Act
+            var result = await _controller.LoadActualAnimalCostGrid(request, "PROJ001");
+
+            // Assert
+            var partialView = Assert.IsType<PartialViewResult>(result);
+            var gridConfig = Assert.IsType<DataGridConfig<ActualProjectCostItem>>(partialView.Model);
+            Assert.True(gridConfig.CurrentFilters.ContainsKey("AcctCode"));
+            Assert.Equal("LargeAnimals", gridConfig.CurrentFilters["AcctCode"]);
         }
 
         #endregion
@@ -255,9 +307,55 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ActualAnimalCostControllerT
             Assert.False(value.GetProperty("success").GetBoolean());
         }
 
+        [Fact]
+        public async Task GetProjectInfo_WithWhitespaceProjectCode_ReturnsFailureJson()
+        {
+            // Act
+            var result = await _controller.GetProjectInfo("   ");
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultElement(jsonResult);
+            Assert.False(value.GetProperty("success").GetBoolean());
+            await _projectService.DidNotReceive().GetProjectByIdAsync(Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task GetProjectInfo_WhenServiceFailsWithNullErrors_ReturnsFallbackMessage()
+        {
+            // Arrange
+            var projectCode = "PROJ001";
+            var serviceResponse = ApiResponseDto<ProjectDto>.FailureResponse(null, new ApiMetaDto());
+
+            _projectService.GetProjectByIdAsync(projectCode).Returns(serviceResponse);
+
+            // Act
+            var result = await _controller.GetProjectInfo(projectCode);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultElement(jsonResult);
+            Assert.False(value.GetProperty("success").GetBoolean());
+            Assert.Equal("Project not found.", value.GetProperty("message").GetString());
+        }
+
         #endregion
 
         #region GetTotalActualCost Tests
+
+        [Fact]
+        public async Task GetTotalActualCost_WithWhitespaceProjectCode_ReturnsFailureJson()
+        {
+            // Act
+            var result = await _controller.GetTotalActualCost("   ");
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultElement(jsonResult);
+            Assert.False(value.GetProperty("success").GetBoolean());
+            Assert.Equal(0, value.GetProperty("totalActualCost").GetInt32());
+            await _projectSubContractService.DidNotReceive().GetAnimalTotalAmountAsync(Arg.Any<string>());
+        }
 
         [Fact]
         public async Task GetTotalActualCost_WithValidProjectCode_ReturnsTotalCost()

@@ -56,16 +56,16 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             var pagedData = await _projectSubContractService.GetAnimalSubContractsAsync(queryParameters, projectCode);
 
-            List<ActualAnimalCostItem> items = pagedData.Data != null
-                ? _mapper.Map<List<ActualAnimalCostItem>>(pagedData.Data)
-                : new List<ActualAnimalCostItem>();
+            List<ActualProjectCostItem> items = pagedData.Data != null
+                ? _mapper.Map<List<ActualProjectCostItem>>(pagedData.Data)
+                : new List<ActualProjectCostItem>();
 
             PaginationModel paginationModel = _mapper.Map<PaginationModel>(pagedData.Pagination) ?? new PaginationModel();
 
             paginationModel.SortColumn = request.SortBy;
             paginationModel.SortDirection = request.Descending;
 
-            var gridConfig = new DataGridConfig<ActualAnimalCostItem>
+            var gridConfig = new DataGridConfig<ActualProjectCostItem>
             {
                 GridId = "actualAnimalCostGrid",
                 Title = "Actual Animal Costs (PACT)",
@@ -79,7 +79,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ExtraFilterMethod = "getActualAnimalExtraFilters",
                 BindGridUrl = "/FPS/ActualAnimalCost/LoadActualAnimalCostGrid",
                 Data = items,
-                Columns = GridDataProvider.GetColumnsDefination<ActualAnimalCostItem>(null),
+                Columns = GridDataProvider.GetColumnsDefination<ActualProjectCostItem>(null),
                 Pagination = paginationModel,
                 CurrentFilters = filterDict
             };

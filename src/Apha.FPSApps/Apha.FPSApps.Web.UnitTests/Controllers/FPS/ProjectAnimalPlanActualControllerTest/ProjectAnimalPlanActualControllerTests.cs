@@ -3,7 +3,6 @@ using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Web.Areas.FPS.Controllers;
 using Apha.FPSApps.Web.Areas.FPS.Models;
-using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using System.Text.Json;
@@ -12,17 +11,15 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectAnimalPlanActualCont
 {
     public class ProjectAnimalPlanActualControllerTests
     {
-        private readonly IMapper _mapper;
         private readonly IAnimalPlanService _animalPlanService;
         private readonly IProjectService _projectService;
         private readonly ProjectAnimalPlanActualController _controller;
 
         public ProjectAnimalPlanActualControllerTests()
         {
-            _mapper = Substitute.For<IMapper>();
             _animalPlanService = Substitute.For<IAnimalPlanService>();
             _projectService = Substitute.For<IProjectService>();
-            _controller = new ProjectAnimalPlanActualController(_mapper, _animalPlanService, _projectService);
+            _controller = new ProjectAnimalPlanActualController(_animalPlanService, _projectService);
         }
 
         private static JsonElement GetJsonResultElement(JsonResult jsonResult)
@@ -30,95 +27,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectAnimalPlanActualCont
             var json = JsonSerializer.Serialize(jsonResult.Value);
             return JsonSerializer.Deserialize<JsonElement>(json);
         }
-
-        #region Create (GET) Tests
-
-        [Fact]
-        public async Task Create_Get_ReturnsPartialViewWithPopulatedAnimalDropdown()
-        {
-            // Arrange
-            var animals = new List<AnimalDto>
-            {
-                new() { AnimalType = "Cattle", DailyRate = 25m },
-                new() { AnimalType = "Sheep",  DailyRate = 15m }
-            };
-            _animalPlanService.GetAnimalLookupAsync()
-                .Returns(ApiResponseDto<List<AnimalDto>>.SuccessResponse(animals));
-
-            // Act
-            var result = await _controller.Create();
-
-            // Assert
-            var partialView = Assert.IsType<PartialViewResult>(result);
-            Assert.Equal("_AddEditAnimalPlan", partialView.ViewName);
-            var model = Assert.IsType<AnimalPlanItem>(partialView.Model);
-            Assert.Equal(2, model.AnimalTypeList.Count);
-        }
-
-        [Fact]
-        public async Task Create_Get_WhenAnimalLookupFails_ReturnsEmptyDropdown()
-        {
-            // Arrange
-            var errors = new List<ApiErrorDto> { new() { Message = "Error", Code = "ERROR" } };
-            _animalPlanService.GetAnimalLookupAsync()
-                .Returns(ApiResponseDto<List<AnimalDto>>.FailureResponse(errors, new ApiMetaDto()));
-
-            // Act
-            var result = await _controller.Create();
-
-            // Assert
-            var partialView = Assert.IsType<PartialViewResult>(result);
-            var model = Assert.IsType<AnimalPlanItem>(partialView.Model);
-            Assert.Empty(model.AnimalTypeList);
-        }
-
-        #endregion
-
-        #region Edit (GET) Tests
-
-        [Fact]
-        public async Task Edit_Get_WithValidId_ReturnsPartialViewWithModel()
-        {
-            // Arrange
-            var indCounter = 1;
-            var jobCode = "JOB001";
-            var dto = new AnimalCostViewDto { IndCounter = indCounter, JobCode = jobCode, AnimalType = "Cattle" };
-            var serviceResponse = ApiResponseDto<AnimalCostViewDto?>.SuccessResponse(dto);
-            var model = new AnimalPlanItem { IndCounter = indCounter, JobCode = jobCode, AnimalType = "Cattle" };
-
-            _animalPlanService.GetAnimalCostViewByIdAsync(indCounter, jobCode).Returns(serviceResponse);
-            _mapper.Map<AnimalPlanItem>(dto).Returns(model);
-            _animalPlanService.GetAnimalLookupAsync()
-                .Returns(ApiResponseDto<List<AnimalDto>>.SuccessResponse(new List<AnimalDto>()));
-
-            // Act
-            var result = await _controller.Edit(indCounter, jobCode);
-
-            // Assert
-            var partialView = Assert.IsType<PartialViewResult>(result);
-            Assert.Equal("_AddEditAnimalPlan", partialView.ViewName);
-            var resultModel = Assert.IsType<AnimalPlanItem>(partialView.Model);
-            Assert.Equal(indCounter, resultModel.IndCounter);
-        }
-
-        [Fact]
-        public async Task Edit_Get_WhenNotFound_ReturnsFailureJson()
-        {
-            // Arrange
-            var errors = new List<ApiErrorDto> { new() { Message = "Not found", Code = "NOT_FOUND" } };
-            _animalPlanService.GetAnimalCostViewByIdAsync(99, string.Empty)
-                .Returns(ApiResponseDto<AnimalCostViewDto?>.FailureResponse(errors, new ApiMetaDto()));
-
-            // Act
-            var result = await _controller.Edit(99);
-
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var value = GetJsonResultElement(jsonResult);
-            Assert.False(value.GetProperty("success").GetBoolean());
-        }
-
-        #endregion
 
         #region Index Tests
 

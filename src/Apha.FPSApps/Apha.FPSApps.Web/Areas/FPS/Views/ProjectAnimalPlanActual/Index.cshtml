@@ -140,11 +140,10 @@
 </div>
 
 @section Scripts {
+    <script src="~/js/fps_js/ajax-form-validation.js"></script>
     <script src="~/js/ajax-form-validation.js"></script>
     <script src="~/js/fps_js/AnimalJob.js"></script>
     <script>
-        var currentProjectCode = '@Html.Raw(Model.SelectedProjectCode)';
-
         AnimalJobConfig.getJobCode = function () { return currentProjectCode; };
         AnimalJobConfig.requireJobCodeForAdd = true;
         AnimalJobConfig.onSaved = function () {
@@ -159,48 +158,9 @@
             window['gridManager_@Model.AnimalPlanGrid.GridId'].reloadGrid({ page: 1 });
             refreshPlannedCost();
         };
-
-        function addAnimalPlan(btn) {
-            if (AnimalJobConfig.requireJobCodeForAdd && !AnimalJobConfig.getJobCode()) {
-                alert('Please select a project first.');
-                return;
-            }
-            $.ajax({
-                url: '/FPS/ProjectAnimalPlanActual/Create',
-                type: 'GET',
-                success: function (html) {
-                    $('#modaPopupBody').html(html);
-                    $('#modalPopup').addClass('show');
-                },
-                error: function (xhr) {
-                    if (xhr.status === 400 && xhr.responseJSON) {
-                        displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
-                    } else {
-                        alert('An error occurred while opening the form.');
-                    }
-                }
-            });
-        }
-
-        function editAnimalPlan(btn) {
-            var indCounter = $(btn).data('id');
-            $.ajax({
-                url: '/FPS/ProjectAnimalPlanActual/Edit',
-                type: 'GET',
-                data: { indCounter: indCounter, jobCode: AnimalJobConfig.getJobCode() },
-                success: function (html) {
-                    $('#modaPopupBody').html(html);
-                    $('#modalPopup').addClass('show');
-                },
-                error: function (xhr) {
-                    if (xhr.status === 400 && xhr.responseJSON) {
-                        displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
-                    } else {
-                        alert('An error occurred while fetching the record.');
-                    }
-                }
-            });
-        }
+    </script>
+    <script>
+        var currentProjectCode = '@Html.Raw(Model.SelectedProjectCode)';
 
         $(document).ready(function () {
             if (currentProjectCode) {
