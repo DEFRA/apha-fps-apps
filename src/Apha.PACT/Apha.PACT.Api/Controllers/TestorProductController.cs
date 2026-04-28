@@ -46,14 +46,8 @@ namespace Apha.PACT.Api.Controllers
         {
             var pagedResult = await _service.GetPagedTestOrProductsAsync(query);
             var mappedResult = _mapper.Map<PaginationRes<TestorProductRes>>(pagedResult);
-            // Wrap in ApiResponse to match expected format by Web application
-            var response = new ApiResponse<PaginationRes<TestorProductRes>>
-            {
-                Success = true,
-                Data = mappedResult,
-            };
-
-            return Ok(response);
+ 
+            return Ok(mappedResult);
         }
 
         /// <summary>Retrieves a Test or Product record by ItemCode.</summary>
