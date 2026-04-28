@@ -59,48 +59,6 @@ namespace Apha.PACT.DataAccess.Data
             modelBuilder.ApplyConfiguration(new ProjectInvoiceMap());
             modelBuilder.Entity<ProjectInvoice>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
-            modelBuilder.Entity<TestorProduct>(entity =>
-            {
-                entity.HasKey(e => new { e.ItemCode, e.FpsYear }).HasName("pk_testorproduct");
-
-                entity.ToTable("testorproduct", "fps");
-
-                entity.Property(e => e.ItemCode)
-                    .HasMaxLength(50)
-                    .HasColumnName("itemcode");
-                //entity.Property(e => e.FpsYear).HasColumnName(fpsYear); pradeep
-                entity.Property(e => e.ItemDescription)
-                    .HasMaxLength(255)
-                    .HasColumnName("itemdescription");
-                entity.Property(e => e.TestManager)
-                    .HasMaxLength(50)
-                    .HasColumnName("testmanager");
-                entity.Property(e => e.JobStatus)
-                    .HasMaxLength(50)
-                    .HasColumnName("jobstatus");
-                entity.Property(e => e.UnitPriceVla)
-                    .HasColumnType("money")
-                    .HasColumnName("unitpricevla");
-                entity.Property(e => e.PriceAhvg)
-                    .HasColumnType("money")
-                    .HasColumnName("priceahvg");
-                entity.Property(e => e.Owner)
-                    .HasMaxLength(10)
-                    .HasColumnName("owner");
-                entity.Property(e => e.ChargeMethod)
-                    .HasMaxLength(50)
-                    .HasColumnName("chargemethod");
-                entity.Property(e => e.ShortDescription)
-                    .HasMaxLength(100)
-                    .HasColumnName("shortdescription");
-                entity.Property(e => e.DefraUnitPrice)
-                    .HasColumnType("money")
-                    .HasColumnName("defraunitprice");
-
-                //entity.HasQueryFilter(e => e.FpsYear == _fPSYearContext.FPSYear); pradeep
-            });
-
-
             modelBuilder.ApplyConfiguration(new ProjectSubContractMap());
             modelBuilder.Entity<ProjectSubContract>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
         }

@@ -34,12 +34,12 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         public string? TestManager { get; set; }
        
         [Display(Name = "Unit Price")]
-        [GridColumn(Order = 9, Width = 100, Type = GridColumnType.Currency)]
+        [GridColumn(Order = 9, Width = 100, Type = GridColumnType.GbpValue)]
         public decimal? UnitPriceVla { get; set; }
 
         [Display(Name = "DEFRA Unit Price")]
         [Required(ErrorMessage = "DEFRA Unit Price is required")]
-        [GridColumn(Order = 8, Width = 100, Type = GridColumnType.Currency)]
+        [GridColumn(Order = 8, Width = 100, Type = GridColumnType.GbpValue)]
         public decimal DefraUnitPrice { get; set; }
         public int FpsYear { get; set; }
     }
