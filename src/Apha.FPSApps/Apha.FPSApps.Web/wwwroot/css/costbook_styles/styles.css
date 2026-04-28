@@ -391,8 +391,18 @@ footer {
 	
 
 	text-align:right;
-	
-   
+
+
+}
+
+/* ── Modal popup ───────────────────────────────────────────────────── */
+.project-modal-hidden {
+    display: none !important;
+}
+
+.modal:not(.project-modal-hidden) {
+    display: block;
+    background-color: rgba(0, 0, 0, 0.5);
 }
 
 
@@ -502,6 +512,17 @@ footer {
     flex-direction: column;
 }
 
+/* Costbook datagrid scroll — vertical and horizontal */
+.project-requirement-page .grid-scroll-container {
+    max-height: 400px;
+    height: 400px;
+    overflow-x: auto;
+    overflow-y: auto;
+}
+
+.project-requirement-page .editable-grid-table {
+    min-width: max-content;
+}
 .tab-buttons {
     display: flex;
     background: #F0F0F0;
@@ -1300,6 +1321,14 @@ main {
     flex: none;
     width: 100%;
     font-size: 13px;
+}
+
+.project-requirement-page .project-year-table tbody tr:hover td {
+    background-color: #e0e0e0;
+}
+
+.project-requirement-page .project-year-table .selected-table-rowbg > td {
+    background-color: #cecece !important;
 }
 
 .project-requirement-page .project-year-table th {

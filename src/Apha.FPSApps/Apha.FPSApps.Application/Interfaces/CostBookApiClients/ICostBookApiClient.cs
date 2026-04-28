@@ -8,5 +8,6 @@
         ICostBookProgramApiClient Programs { get; }
         ICostBookStaffApiClient Staff { get; }
         ICostBookContractApiClient Contracts { get; }
+        ICostBookYearlyDetailsApiClient YearlyDetails { get; }
     }
 }

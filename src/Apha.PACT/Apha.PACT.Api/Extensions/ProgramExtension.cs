@@ -130,17 +130,17 @@ namespace Apha.PACT.Api.Extensions
                 {
                     options.SwaggerEndpoint("/swagger/v1/swagger.json", "PACT API v1");
                 });
-            }
+            }            
 
-            app.UseMiddleware<ExceptionMiddleware>();
             app.UseHsts();
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseRouting();
 
+            app.UseMiddleware<ExceptionMiddleware>();
+            app.UseMiddleware<RequestContextMiddleware>();
 
             app.UseAuthentication();
-            app.UseMiddleware<RequestContextMiddleware>();
             app.UseAuthorization();
 
             // Default route

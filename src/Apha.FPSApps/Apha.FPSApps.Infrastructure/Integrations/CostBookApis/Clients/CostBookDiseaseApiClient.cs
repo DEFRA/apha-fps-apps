@@ -1,14 +1,10 @@
-﻿using Apha.Common.Contracts.Costbook;
+﻿using Apha.Common.Constants;
+using Apha.Common.Contracts.Costbook;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.CostBook;
 using Apha.FPSApps.Application.Interfaces.CostBookApiClients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Apha.FPSApps.Infrastructure.Integrations.CostBookApis.Clients
 {
@@ -16,6 +12,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.CostBookApis.Clients
     {
         private readonly ICostBookHttpExecutor _http;
         private readonly IMapper _mapper;
+        private const string InternalCodeError = "INTERNAL_ERROR";
 
         public CostBookDiseaseApiClient(ICostBookHttpExecutor http, IMapper mapper)
         {
@@ -27,28 +24,19 @@ namespace Apha.FPSApps.Infrastructure.Integrations.CostBookApis.Clients
         {
             try
             {
-                var response = await _http.GetAsync<List<DiseaseRes>>("api/projects/diseases");
+                var response = await _http.GetAsync<List<DiseaseRes>>(CostBookApiEndpoints.GetAllDiseases);
 
                 if (response.Success && response.Data != null)
-                {
                     return _mapper.Map<ApiResponseDto<List<DiseaseDto>>>(response);
-                }
-                else
-                {
-                    var responseDto = _mapper.Map<ApiResponseDto<List<DiseaseDto>>>(response);
-                    return ApiResponseDto<List<DiseaseDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
-                }
+
+                var responseDto = _mapper.Map<ApiResponseDto<List<DiseaseDto>>>(response);
+                return ApiResponseDto<List<DiseaseDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
             }
             catch (Exception ex)
             {
-                var apiErrorsDto = new List<ApiErrorDto> {
-                   new ApiErrorDto {
-                        Message = "Failed to retrieve diseases",
-                        Code = "INTERNAL_ERROR",
-                        Details = ex.Message
-                    }
-                };
-                return ApiResponseDto<List<DiseaseDto>>.FailureResponse(apiErrorsDto, new ApiMetaDto());
+                return ApiResponseDto<List<DiseaseDto>>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to retrieve diseases", Code = InternalCodeError, Details = ex.Message }],
+                    new ApiMetaDto());
             }
         }
     }

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Apha.Costbook.DataAccess;
+﻿namespace Apha.Costbook.Core.Entities;
 
 public partial class AdditionalCost
 {

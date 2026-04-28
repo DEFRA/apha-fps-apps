@@ -39,6 +39,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<ICostBookProgramService, CostBookProgramService>();
             services.AddScoped<ICostBookStaffService, CostBookStaffService>();
             services.AddScoped<ICostBookContractService, CostBookContractService>();
+            services.AddScoped<ICostBookYearlyDetailsService, CostBookYearlyDetailsService>();
             services.AddScoped<IYearMasterService, YearMasterService>();
             services.AddScoped<IDivisionService, DivisionService>();
             services.AddScoped<IProjectInvoiceService, ProjectInvoiceService>();
