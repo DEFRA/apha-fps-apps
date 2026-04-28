@@ -31,7 +31,7 @@
                 Errors = errors,
                 Meta = new ApiMetaDto
                 {
-                    CorrelationId = meta?.CorrelationId,  // was: meta.CorrelationId
+                    CorrelationId = meta?.CorrelationId ?? string.Empty,
                     TimestampUtc = DateTime.UtcNow
                 }
             };
