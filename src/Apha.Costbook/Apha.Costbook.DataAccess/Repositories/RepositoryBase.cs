@@ -1,4 +1,5 @@
-﻿using Apha.Costbook.DataAccess.Data;
+﻿using Apha.Costbook.Core.Pagination;
+using Apha.Costbook.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -18,28 +19,39 @@ namespace Apha.Costbook.DataAccess.Repositories
         }
 
         protected virtual IQueryable<TEntity> GetQueryableResult(string sql, params object[] parameters)
-        {
-            return _context.Set<TEntity>().FromSqlRaw(sql, parameters);
-        }
+            => _context.Set<TEntity>().FromSqlRaw(sql, parameters);
 
         // allows querying for any arbitrary type (like Project, Staff, etc.)
         protected virtual IQueryable<T> GetQueryableResultFor<T>(string sql, params object[] parameters) where T : class
-        {
-            return _context.Set<T>().FromSqlRaw(sql, parameters);
-        }
+            => _context.Set<T>().FromSqlRaw(sql, parameters);
 
         protected virtual IQueryable<T> GetDbSetFor<T>() where T : class
-        {
-            return _context.Set<T>();
-        }
+            => _context.Set<T>();
         protected virtual DbSet<T> GetDbSet<T>() where T : class
-        {
-            return _context.Set<T>();
-        }
+            => _context.Set<T>();
 
         protected virtual Task<int> ExecuteSqlAsync(string sql, params object[] parameters)
+            => _context.Database.ExecuteSqlRawAsync(sql, parameters);
+
+        protected PagedData<T> ApplyPaging<T>(IEnumerable<T> source, int page, int pageSize)
         {
-            return _context.Database.ExecuteSqlRawAsync(sql, parameters);
+            var list = source.ToList();
+            var totalRecords = list.Count;
+
+            var result = list
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            var pagination = new PaginationData
+            {
+                PageNumber = page,
+                PageSize = pageSize,
+                TotalPages = (int)Math.Ceiling((double)totalRecords / pageSize),
+                TotalRecords = totalRecords
+            };
+
+            return new PagedData<T>(result, pagination);
         }
     }
 }
