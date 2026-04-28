@@ -1,6 +1,6 @@
-namespace Apha.PACT.Application.Dtos
+namespace Apha.Common.Contracts.PACT
 {
-    public class TestorProductDto
+    public class TestorProductReq
     {
         public string ItemCode { get; set; } = null!;
         public string? ItemDescription { get; set; }
