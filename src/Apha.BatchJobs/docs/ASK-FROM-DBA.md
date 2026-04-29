@@ -106,3 +106,23 @@ These are currently empty by design in local foundation DB. Runtime execution re
 1. Confirm whether `fps` and `mabarchive` should remain schema-only in local runtime DB, or if a minimum set of contract tables should also be provisioned locally.
 2. Confirm required ownership/grants for these schemas in cloud and non-prod environments.
 3. Confirm whether application `search_path` should include only `operational` (recommended), or include `fps/mabarchive` for read scenarios.
+
+## New Ask: `qrytotaltestcosts` Must Include `fpsyear` (Blocking)
+
+Please confirm and correct the canonical object definition for `fps.qrytotaltestcosts` so it includes:
+- `jobcode`
+- `fpsyear`
+- `totaltestcosts`
+
+Why this is blocking:
+- Engineering must implement year-safe parity joins for ScheduledLoadFromFps.
+- Without `fpsyear` in `qrytotaltestcosts`, test-cost joins can cross fiscal years and break strict parity.
+
+Requested DBA action:
+1. Verify live cloud definition for `fps.qrytotaltestcosts`.
+2. If `fpsyear` is missing, update the object definition to include it.
+3. Re-export schema metadata so `latest-cloud-schema-columns.csv` reflects the corrected contract.
+
+Validation expected back from DBA:
+- Object definition/DDL extract for `fps.qrytotaltestcosts`.
+- Sample metadata row set showing columns: `jobcode`, `fpsyear`, `totaltestcosts`.

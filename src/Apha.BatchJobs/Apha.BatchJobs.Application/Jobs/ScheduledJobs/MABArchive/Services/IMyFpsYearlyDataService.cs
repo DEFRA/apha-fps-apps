@@ -6,6 +6,14 @@ namespace Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services;
 public interface IMyFpsYearlyDataService
 {
     /// <summary>
+    /// Checks whether the specified FPS year is registered and available for processing.
+    /// </summary>
+    /// <param name="year">The FPS year to check.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True when the year is available; otherwise false.</returns>
+    Task<bool> IsYearAvailableAsync(int year, CancellationToken cancellationToken);
+
+    /// <summary>
     /// Deletes all archive data for the specified year in dependency order.
     /// </summary>
     /// <param name="year">The year to delete archive data for.</param>

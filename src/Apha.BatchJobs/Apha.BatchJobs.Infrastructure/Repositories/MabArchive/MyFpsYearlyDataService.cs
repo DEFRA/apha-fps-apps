@@ -26,6 +26,33 @@ public sealed class MyFpsYearlyDataService : IMyFpsYearlyDataService
     }
 
     /// <summary>
+    /// Checks whether the supplied year exists in the fiscal year master table.
+    /// </summary>
+    /// <param name="year">Target year to verify.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True if the year is available for processing.</returns>
+    public async Task<bool> IsYearAvailableAsync(int year, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var exists = await _context.Database.SqlQuery<bool>($@"
+SELECT EXISTS(
+    SELECT 1
+    FROM fps.tblyearmaster
+    WHERE fpsyear = {year}
+)").SingleAsync(cancellationToken);
+
+            _logger.LogInformation("Year availability check for {Year}: {Exists}", year, exists);
+            return exists;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed year availability check for {Year}", year);
+            throw;
+        }
+    }
+
+    /// <summary>
     /// Deletes archive data for the specified year across archive tables in dependency order.
     /// </summary>
     /// <param name="year">Target year to delete.</param>

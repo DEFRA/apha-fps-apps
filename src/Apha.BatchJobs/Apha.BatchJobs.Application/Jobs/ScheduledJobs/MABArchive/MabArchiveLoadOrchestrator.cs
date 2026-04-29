@@ -94,25 +94,49 @@ public sealed class MabArchiveLoadOrchestrator
         {
             await transactionWrapper(async () =>
             {
-                // Execute Full Load for primary year
-                _logger.LogInformation("Executing Full Load for primary year {PrimaryYear}", context.PrimaryYear);
-
-                await _totalsService.RebuildSourceTotalsAsync(context.PrimaryYear, cancellationToken);
-                _logger.LogInformation("Rebuilt source totals for year {PrimaryYear}", context.PrimaryYear);
-
-                await _dataService.DeleteYearDataAsync(context.PrimaryYear, cancellationToken);
-                _logger.LogInformation("Deleted archive data for year {PrimaryYear}", context.PrimaryYear);
-
-                await _dataService.LoadYearDataAsync(context.PrimaryYear, cancellationToken);
-                _logger.LogInformation("Loaded archive data for year {PrimaryYear}", context.PrimaryYear);
-
-                // Execute Partial Refresh for current year if applicable (month ≤ 4)
-                if (context.IncludePartialRefreshYear && context.PartialRefreshYear.HasValue)
+                async Task ExecuteFullYearCycleAsync(int year)
                 {
-                    _logger.LogInformation("Executing Partial Refresh for current year {CurrentYear}", context.PartialRefreshYear.Value);
+                    var isAvailable = await _dataService.IsYearAvailableAsync(year, cancellationToken);
+                    if (!isAvailable)
+                    {
+                        _logger.LogInformation("Skipping year {Year} full cycle because year is not available", year);
+                        return;
+                    }
 
-                    await _dataService.RefreshProjectAllOnlyAsync(context.PartialRefreshYear.Value, cancellationToken);
-                    _logger.LogInformation("Refreshed project all for year {CurrentYear}", context.PartialRefreshYear.Value);
+                    _logger.LogInformation("Executing full cycle for year {Year}", year);
+
+                    await _totalsService.RebuildSourceTotalsAsync(year, cancellationToken);
+                    _logger.LogInformation("Rebuilt source totals for year {Year}", year);
+
+                    await _dataService.DeleteYearDataAsync(year, cancellationToken);
+                    _logger.LogInformation("Deleted archive data for year {Year}", year);
+
+                    await _dataService.LoadYearDataAsync(year, cancellationToken);
+                    _logger.LogInformation("Loaded archive data for year {Year}", year);
+                }
+
+                // Legacy parity: previous year full cycle is always attempted first.
+                await ExecuteFullYearCycleAsync(context.PreviousYear);
+
+                if (context.CurrentMonth > 4)
+                {
+                    // Legacy parity: after April, current year also runs full cycle.
+                    await ExecuteFullYearCycleAsync(context.CurrentYear);
+                }
+                else
+                {
+                    // Legacy parity: before May, current year runs project-all-only refresh.
+                    var currentYearAvailable = await _dataService.IsYearAvailableAsync(context.CurrentYear, cancellationToken);
+                    if (!currentYearAvailable)
+                    {
+                        _logger.LogInformation("Skipping current-year partial refresh because year {Year} is not available", context.CurrentYear);
+                    }
+                    else
+                    {
+                        _logger.LogInformation("Executing partial refresh for current year {CurrentYear}", context.CurrentYear);
+                        await _dataService.RefreshProjectAllOnlyAsync(context.CurrentYear, cancellationToken);
+                        _logger.LogInformation("Refreshed project all for year {CurrentYear}", context.CurrentYear);
+                    }
                 }
 
                 _logger.LogInformation("MABArchive orchestration completed successfully");
