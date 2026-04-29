@@ -226,6 +226,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ActualAnimalCostControllerT
             // Assert
             var partialView = Assert.IsType<PartialViewResult>(result);
             var gridConfig = Assert.IsType<DataGridConfig<ActualProjectCostItem>>(partialView.Model);
+            Assert.NotNull(gridConfig.CurrentFilters);
             Assert.True(gridConfig.CurrentFilters.ContainsKey("AcctCode"));
             Assert.Equal("LargeAnimals", gridConfig.CurrentFilters["AcctCode"]);
         }
