@@ -87,7 +87,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestOrProductRepositoryTest
 
             // Assert
             Assert.NotNull(result);
-            Assert.Equal(10, result.Data.Count());
+            Assert.Equal(10, result.Data.Count);
             Assert.Equal(25, result.PaginationData.TotalRecords);
             Assert.Equal(3, result.PaginationData.TotalPages);
         }
