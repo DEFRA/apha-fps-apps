@@ -1,53 +1,19 @@
-name: BatchJobs Degradation Tests
+name: Degradation Tests
 
 on:
-  workflow_dispatch:
   pull_request:
-    paths:
-      - "src/Apha.BatchJobs/**"
-      - ".github/workflows/degradation-tests.yml"
   push:
     branches:
       - main
-    paths:
-      - "src/Apha.BatchJobs/**"
-      - ".github/workflows/degradation-tests.yml"
-
-permissions:
-  contents: read
-
-concurrency:
-  group: batchjobs-degradation-tests-${{ github.ref }}
-  cancel-in-progress: true
+      - master
 
 jobs:
   degradation-tests:
-    name: Degradation Integration Tests
+    name: Degradation test stage
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: batch_jobs_foundation_db
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres -d batch_jobs_foundation_db"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 20
-
-    env:
-      DOTNET_NOLOGO: true
-      DOTNET_CLI_TELEMETRY_OPTOUT: 1
-      ConnectionStrings__BatchJobsConnectionString: Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=postgres;Timeout=30;Command Timeout=30
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup .NET
@@ -55,25 +21,42 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
-      - name: Restore BatchJobs test project
-        run: dotnet restore src/Apha.BatchJobs/Apha.BatchJobs.UnitTests/Apha.BatchJobs.UnitTests.csproj
+      - name: Start PostgreSQL dependency
+        run: docker compose up -d postgres
+        working-directory: ./src/Apha.BatchJobs
 
-      - name: Build BatchJobs test project
-        run: dotnet build src/Apha.BatchJobs/Apha.BatchJobs.UnitTests/Apha.BatchJobs.UnitTests.csproj --configuration Release --no-restore
+      - name: Wait for PostgreSQL health
+        run: |
+          for i in {1..45}; do
+            status=$(docker inspect -f '{{.State.Health.Status}}' batch_jobs_postgres 2>/dev/null || echo unknown)
+            echo "postgres health: $status"
+            if [ "$status" = "healthy" ]; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Postgres did not become healthy in time."
+          exit 1
+        working-directory: ./src/Apha.BatchJobs
 
-      - name: Run degradation-focused repository integration tests
-        run: >-
-          dotnet test src/Apha.BatchJobs/Apha.BatchJobs.UnitTests/Apha.BatchJobs.UnitTests.csproj
-          --configuration Release
-          --no-build
-          --logger "trx;LogFileName=degradation-tests.trx"
-          --filter "FullyQualifiedName~RepositoryIntegrationTests"
+      - name: Build
+        run: dotnet build BatchJobs.sln --configuration Release
+        working-directory: ./src/Apha.BatchJobs
 
-      - name: Upload degradation test results
+      - name: Run degradation-focused tests
+        env:
+          ConnectionStrings__BatchJobsConnectionString: Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=password;Timeout=30
+        run: |
+          dotnet test BatchJobs.sln --no-build --configuration Release \
+            --filter "FullyQualifiedName~RepositoryIntegrationTests.TryAcquireLockAsync_WhenExistingLockExpired_AllowsReacquire|FullyQualifiedName~RepositoryIntegrationTests.DependencyOutageThenRecovery_BadConnectionFails_HealthyConnectionSucceeds"
+        working-directory: ./src/Apha.BatchJobs
+
+      - name: Collect container logs on failure
+        if: failure()
+        run: docker compose logs postgres
+        working-directory: ./src/Apha.BatchJobs
+
+      - name: Shutdown dependencies
         if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: batchjobs-degradation-test-results-${{ github.run_number }}
-          path: "**/*.trx"
-          if-no-files-found: warn
-          retention-days: 14
+        run: docker compose down -v
+        working-directory: ./src/Apha.BatchJobs

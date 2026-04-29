@@ -1,8 +1,9 @@
-using Apha.BatchJobs.Application.Interfaces;
+﻿using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Domain.Enums;
-using Apha.BatchJobs.Worker;
+using Apha.BatchJobs.Application.DependencyInjection;
 using Apha.BatchJobs.Worker.Extensions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -10,6 +11,12 @@ using Npgsql;
 using Serilog;
 
 var builder = Host.CreateApplicationBuilder(args);
+builder.Configuration
+    .SetBasePath(AppContext.BaseDirectory)
+    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
+    .AddJsonFile("appsettings.local.json", optional: true, reloadOnChange: true)
+    .AddEnvironmentVariables();
 var startedAt = DateTime.UtcNow;
 const int ExitCodeSuccess = 0;
 const int ExitCodeBusinessFailure = 1;
@@ -18,7 +25,7 @@ const int ExitCodeCancelled = 3;
 const int ExitCodeSkipped = 4;
 const int ExitCodeDependencyOutage = 5;
 
-// ECS SIGTERM → forced-stop window is typically 30 s.
+// ECS SIGTERM â†’ forced-stop window is typically 30 s.
 // We allow 25 s for graceful cleanup before the host forces termination.
 const int GracefulShutdownWindowSeconds = 25;
 
@@ -33,7 +40,7 @@ else
 {
     Log.Logger = new LoggerConfiguration()
         .ReadFrom.Configuration(builder.Configuration)
-        .UseStructuredConsoleLogging()
+        .UseStructuredConsoleLogging(builder.Configuration)
         .CreateLogger();
 }
 
@@ -48,7 +55,7 @@ ILoggerFactory? loggerFactory = null;
 string failureCategory = "BusinessFailure";
 string runOutcome = "Failed";
 string? requestedJobName = null;
-string requestedRunMode = "AdHoc";
+string requestedRunMode = "Manual";
 string? capturedRunId = null;
 int? capturedExecutionId = null;
 var exitCode = ExitCodeBusinessFailure;
@@ -68,18 +75,21 @@ try
     logger.LogInformation("Timestamp: {StartTime:yyyy-MM-dd HH:mm:ss.fff}", startedAt);
     logger.LogInformation("ProcessId: {ProcessId}", Environment.ProcessId);
     logger.LogInformation("Environment: {EnvironmentName}", builder.Environment.EnvironmentName);
-    
+
+    var config = serviceProvider.GetRequiredService<IConfiguration>();
+    logger.LogInformation("Flow checkpoint: Program.Main -> Host.Started -> Resolving JobOrchestrator");
+
     // Get job name from args or environment variable
     var jobName = args.Length > 0 ? args[0] : (Environment.GetEnvironmentVariable("BATCH_JOB_NAME") ?? "HealthCheck");
-    var runModeEnv = Environment.GetEnvironmentVariable("BATCH_RUN_MODE") ?? "AdHoc";
-    var runMode = Enum.TryParse<RunMode>(runModeEnv, ignoreCase: true, out var parsedMode) ? parsedMode : RunMode.AdHoc;
+    var runModeEnv = Environment.GetEnvironmentVariable("BATCH_RUN_MODE") ?? "Manual";
+    var runMode = Enum.TryParse<RunMode>(runModeEnv, ignoreCase: true, out var parsedMode) ? parsedMode : RunMode.Manual;
     requestedJobName = jobName;
     requestedRunMode = runMode.ToString();
 
     logger.LogInformation("Requested job: {JobName} | RunMode: {RunMode}", jobName, runMode);
 
     // Link host shutdown with a bounded graceful-window timeout.
-    // This ensures the job is cancelled well within the ECS SIGTERM → forced-stop window.
+    // This ensures the job is cancelled well within the ECS SIGTERM â†’ forced-stop window.
     using var shutdownWindowCts = new CancellationTokenSource(TimeSpan.FromSeconds(GracefulShutdownWindowSeconds));
     using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
         hostLifetime.ApplicationStopping,
@@ -88,7 +98,7 @@ try
     if (hostLifetime.ApplicationStopping.IsCancellationRequested)
     {
         logger.LogWarning(
-            "Host stopping signal was already set before job start — skipping execution | JobName={JobName} | GracefulWindowSeconds={GracefulWindowSeconds}",
+            "Host stopping signal was already set before job start â€” skipping execution | JobName={JobName} | GracefulWindowSeconds={GracefulWindowSeconds}",
             jobName, GracefulShutdownWindowSeconds);
         exitCode = ExitCodeCancelled;
         failureCategory = "Cancellation";
@@ -97,7 +107,8 @@ try
     else
     {
         // Run through orchestrator (handles lock, execution records, and job execution)
-        var orchestrator = serviceProvider.GetRequiredService<IJobOrchestrator>();
+        await using var executionScope = serviceProvider.CreateAsyncScope();
+        var orchestrator = executionScope.ServiceProvider.GetRequiredService<IJobOrchestrator>();
         var result = await orchestrator.RunAsync(jobName, runMode, linkedCts.Token);
 
         capturedRunId = result.RunId;
@@ -110,7 +121,7 @@ try
         var computedExitCode = result.Status == JobStatus.Skipped ? ExitCodeSkipped : ExitCodeSuccess;
         logger.LogInformation("===========================================");
 
-        // Exit 4 = skipped (lock already held) — not a failure
+        // Exit 4 = skipped (lock already held) â€” not a failure
         exitCode = computedExitCode;
         if (result.Status == JobStatus.Skipped)
         {
@@ -127,8 +138,9 @@ try
 catch (InvalidOperationException ex)
 {
     var logger = loggerFactory?.CreateLogger("BatchJobs.Error");
-    logger?.LogError(ex, "Job factory error: {ErrorMessage}", ex.Message);
-    Console.Error.WriteLine($"ERROR: {ex.Message}");
+    var exceptionPrefix = GetExceptionTypePrefix(ex, builder.Configuration);
+    logger?.LogError(ex, "{ExceptionType} Job factory error: {ErrorMessage}", exceptionPrefix, ex.Message);
+    Console.Error.WriteLine($"ERROR: {exceptionPrefix} {ex.Message}");
     exitCode = ExitCodeConfigurationError;
     failureCategory = "ConfigurationError";
     runOutcome = "Failed";
@@ -152,15 +164,16 @@ catch (OperationCanceledException ex)
 catch (Exception ex)
 {
     var logger = loggerFactory?.CreateLogger("BatchJobs.Error");
+    var exceptionPrefix = GetExceptionTypePrefix(ex, builder.Configuration);
     if (IsDependencyOutage(ex))
     {
-        logger?.LogError(ex, "Dependency outage detected: {ErrorMessage}", ex.Message);
+        logger?.LogError(ex, "{ExceptionType} Dependency outage detected: {ErrorMessage}", exceptionPrefix, ex.Message);
         exitCode = ExitCodeDependencyOutage;
         failureCategory = "DependencyOutage";
     }
     else
     {
-        logger?.LogError(ex, "Unhandled business/runtime exception: {ErrorMessage}", ex.Message);
+        logger?.LogError(ex, "{ExceptionType} Unhandled business/runtime exception: {ErrorMessage}", exceptionPrefix, ex.Message);
         exitCode = ExitCodeBusinessFailure;
         failureCategory = "BusinessFailure";
     }
@@ -316,3 +329,36 @@ static bool IsDependencyOutage(Exception ex)
 
     return false;
 }
+
+static string GetExceptionTypePrefix(Exception ex, IConfiguration? config = null)
+{
+    // Load exception type mappings from configuration
+    var exceptionTypes = config?.GetSection("ExceptionTypes").Get<Dictionary<string, string>>()
+        ?? new Dictionary<string, string>
+        {
+            { "General", "APHA_BATCH.GENERAL_EXCEPTION" },
+            { "Sql", "APHA_BATCH.SQL_EXCEPTION" },
+            { "Authorization", "APHA_BATCH.AUTHORIZATION_EXCEPTION" },
+            { "Timeout", "APHA_BATCH.TIMEOUT_EXCEPTION" }
+        };
+
+    // Scan exception chain for specific exception types
+    for (Exception? current = ex; current != null; current = current.InnerException)
+    {
+        if (current is NpgsqlException)
+            return $"[[{exceptionTypes.GetValueOrDefault("Sql", "APHA_BATCH.SQL_EXCEPTION")}]]";
+
+        if (current is TimeoutException)
+            return $"[[{exceptionTypes.GetValueOrDefault("Timeout", "APHA_BATCH.TIMEOUT_EXCEPTION")}]]";
+
+        if (current is UnauthorizedAccessException)
+            return $"[[{exceptionTypes.GetValueOrDefault("Authorization", "APHA_BATCH.AUTHORIZATION_EXCEPTION")}]]";
+
+        if (current is DbUpdateException)
+            return $"[[{exceptionTypes.GetValueOrDefault("Sql", "APHA_BATCH.SQL_EXCEPTION")}]]";
+    }
+
+    // Default to general exception
+    return $"[[{exceptionTypes.GetValueOrDefault("General", "APHA_BATCH.GENERAL_EXCEPTION")}]]";
+}
+

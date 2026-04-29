@@ -24,6 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BatchJobs.csproj" />
+    <ProjectReference Include="..\Apha.BatchJobs.Api\Apha.BatchJobs.Api.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -24,7 +24,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         public async Task<IActionResult> Index(string? programNo = null)
         {
             var programmeList = await GetProgrammeListAsync();
-            var selectedProgramNo = programNo ?? programmeList.FirstOrDefault()?.Value ?? string.Empty;
+            var selectedProgramNo = programNo ?? string.Empty;
             var programInfo = await GetProgramInfoAsync(selectedProgramNo);
 
             var projectsGrid = new DataGridConfig<ProjectViewModel>

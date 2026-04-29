@@ -85,15 +85,5 @@ namespace Apha.PACT.Api.Controllers
             var deleted = await _service.DeleteTestCapabilityAsync(testCode, workGroup);
             return Ok(deleted);
         }
-
-        // ── LOOKUPS ───────────────────────────────────────────────────────────
-
-        /// <summary>Retrieves all TestorProduct items for dropdown population.</summary>
-        [HttpGet("testorproducts")]
-        public async Task<IActionResult> GetAllTestorProducts()
-        {
-            var items = await _service.GetAllTestorProductsAsync();
-            return Ok(_mapper.Map<IEnumerable<TestorProductRes>>(items));
-        }
     }
 }

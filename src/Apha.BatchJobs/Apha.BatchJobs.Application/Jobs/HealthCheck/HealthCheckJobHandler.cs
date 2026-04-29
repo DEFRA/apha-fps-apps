@@ -1,5 +1,7 @@
 using Apha.BatchJobs.Application.Interfaces;
+using Apha.BatchJobs.Domain.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Apha.BatchJobs.Application.Jobs.HealthCheck;
 
@@ -10,6 +12,7 @@ namespace Apha.BatchJobs.Application.Jobs.HealthCheck;
 public sealed class HealthCheckJobHandler : IBatchJob
 {
     private readonly ILogger<HealthCheckJobHandler> _logger;
+    private readonly BatchJobSettings _settings;
 
     /// <summary>
     /// Name of this job.
@@ -23,12 +26,32 @@ public sealed class HealthCheckJobHandler : IBatchJob
     public string IdempotencyStrategy => "NoWriteValidation";
 
     /// <summary>
+    /// No schedule expression: HealthCheck is ad-hoc or manually triggered.
+    /// Can be invoked from deployment automation or monitoring dashboards.
+    /// </summary>
+    public string? ScheduleExpression => null;
+
+    /// <summary>
+    /// Human-readable description for ad-hoc validation job.
+    /// </summary>
+    public string? ScheduleDescription => "On-demand health check (no schedule)";
+
+    /// <summary>
+    /// Maximum execution timeout for this light-weight validation job: 5 minutes.
+    /// </summary>
+    public int? MaxExecutionSeconds => 300;
+
+    /// <summary>
     /// Initializes a new instance of the HealthCheckJobHandler.
     /// </summary>
     /// <param name="logger">Logger instance.</param>
-    public HealthCheckJobHandler(ILogger<HealthCheckJobHandler> logger)
+    /// <param name="settings">Batch job runtime settings.</param>
+    public HealthCheckJobHandler(
+        ILogger<HealthCheckJobHandler> logger,
+        IOptions<BatchJobSettings> settings)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _settings = settings?.Value ?? new BatchJobSettings();
     }
 
     /// <summary>
@@ -47,7 +70,9 @@ public sealed class HealthCheckJobHandler : IBatchJob
             // Phase 1: Validate configuration
             _logger.LogInformation("Phase 1: Validating configuration...");
             var envName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Not Set";
+            var executionMode = envName.Equals("Demo", StringComparison.OrdinalIgnoreCase) ? "NoDb (In-Memory)" : "WithDb (PostgreSQL)";
             _logger.LogInformation("  Environment: {Environment}", envName);
+            _logger.LogInformation("  Execution Mode: {ExecutionMode}", executionMode);
             _logger.LogInformation("  .NET Version: {DotNetVersion}", System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription);
             _logger.LogInformation("  OS: {OS}", System.Runtime.InteropServices.RuntimeInformation.OSDescription);
 
@@ -75,9 +100,17 @@ public sealed class HealthCheckJobHandler : IBatchJob
                 await Task.Delay(50, cancellationToken);
             }
 
-            // Phase 3: Validate database connectivity
-            _logger.LogInformation("Phase 3: Validating database connectivity...");
-            _logger.LogInformation("  Database operations will be tested in execution repository write");
+            // Phase 3: Validate the active execution path
+            if (envName.Equals("Demo", StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.LogInformation("Phase 3: Validating in-memory execution path...");
+                _logger.LogInformation("  In-memory repositories are active for NoDb execution");
+            }
+            else
+            {
+                _logger.LogInformation("Phase 3: Validating database connectivity path...");
+                _logger.LogInformation("  Repository write path will validate database access");
+            }
 
             // Phase 4: Report results
             _logger.LogInformation("Phase 4: Job completion report");

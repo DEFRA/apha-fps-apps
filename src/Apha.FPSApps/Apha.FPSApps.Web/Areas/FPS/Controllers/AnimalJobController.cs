@@ -113,7 +113,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return Json(new
             {
                 success = false,
-                message = "Failed to create animal cost.",
+                message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to create animal cost.",
                 errors = (result.Errors ?? new List<ApiErrorDto>()).Select(e => new
                 {
                     field = e.Code ?? string.Empty,
@@ -178,7 +178,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return Json(new
             {
                 success = false,
-                message = "Failed to update animal cost.",
+                message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to update animal cost.",
                 errors = (result.Errors ?? new List<ApiErrorDto>()).Select(e => new
                 {
                     field = e.Code ?? string.Empty,
@@ -199,7 +199,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return Json(new
             {
                 success = false,
-                message = "Failed to delete animal cost.",
+                message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to delete animal cost.",
                 errors = (result.Errors ?? new List<ApiErrorDto>()).Select(e => new
                 {
                     field = e.Code ?? string.Empty,
@@ -209,14 +209,14 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAnimalRate(string animalType)
+        public async Task<IActionResult> GetAnimalRate(string animalType, string jobCode)
         {
             if (string.IsNullOrWhiteSpace(animalType))
             {
                 return Json(new { success = false, message = "Animal type is required", dailyRate = 0 });
             }
 
-            ApiResponseDto<decimal?> result = await _animalPlanService.GetAnimalRateAsync(animalType);
+            ApiResponseDto<decimal?> result = await _animalPlanService.GetAnimalRateAsync(animalType, jobCode);
 
             if (result.Success)
             {

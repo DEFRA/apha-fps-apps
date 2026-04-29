@@ -171,7 +171,7 @@ public class JobExecutionRepository : IJobExecutionRepository
             JobName = last.JobName,
             RunId = last.JobQueueId.ToString("N"),
             JobType = JobType.Unknown,
-            RunMode = RunMode.AdHoc,
+            RunMode = RunMode.Manual,
             Status = parsedStatus,
             StartedAt = last.StartDateTime,
             CompletedAt = last.EndDateTime,

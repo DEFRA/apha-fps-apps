@@ -309,7 +309,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
     /// Only explicit transient infrastructure failures (timeouts, connectivity) are retryable.
     /// Default is now false to avoid overly broad retry surface.
     /// </summary>
-    internal static bool IsRetryable(Exception ex) => ex switch
+    public static bool IsRetryable(Exception ex) => ex switch
     {
         // Never retry on cancellation or operational errors
         OperationCanceledException => false,           // cancellation: never retry

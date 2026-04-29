@@ -61,7 +61,7 @@ public sealed class JobOrchestratorTests
                  .Returns(Task.CompletedTask);
 
         // Act
-        var result = await _orchestrator.RunAsync("TestJob", RunMode.AdHoc);
+        var result = await _orchestrator.RunAsync("TestJob", RunMode.Manual);
 
         // Assert — job was called
         await job.Received(1).ExecuteAsync(Arg.Any<CancellationToken>());
@@ -176,7 +176,7 @@ public sealed class JobOrchestratorTests
 
         // Act — should re-throw as OperationCanceledException
         await Assert.ThrowsAsync<OperationCanceledException>(
-            () => _orchestrator.RunAsync("CancellableJob", RunMode.AdHoc));
+            () => _orchestrator.RunAsync("CancellableJob", RunMode.Manual));
 
         // Assert — cancelled record written
         Assert.Single(capturedUpdateStatus);
@@ -204,8 +204,8 @@ public sealed class JobOrchestratorTests
                  .Returns(1);
 
         // Act
-        var result1 = await _orchestrator.RunAsync("IdJob", RunMode.AdHoc);
-        var result2 = await _orchestrator.RunAsync("IdJob", RunMode.AdHoc);
+        var result1 = await _orchestrator.RunAsync("IdJob", RunMode.Manual);
+        var result2 = await _orchestrator.RunAsync("IdJob", RunMode.Manual);
 
         // Assert — each run gets a different RunId
         Assert.NotEqual(result2.RunId, result1.RunId);
@@ -321,7 +321,7 @@ public sealed class JobOrchestratorTests
             .Returns(Task.CompletedTask);
 
         // Act
-        var result = await orchestrator.RunAsync("RetrySuccessJob", RunMode.AdHoc);
+        var result = await orchestrator.RunAsync("RetrySuccessJob", RunMode.Manual);
 
         // Assert
         Assert.Equal(JobStatus.Completed, result.Status);
@@ -408,7 +408,7 @@ public sealed class JobOrchestratorTests
 
         // Act
         await Assert.ThrowsAsync(exceptionType,
-            () => orchestrator.RunAsync("NonRetryableJob", RunMode.AdHoc));
+            () => orchestrator.RunAsync("NonRetryableJob", RunMode.Manual));
 
         // Assert — only one attempt, no retries
         await job.Received(1).ExecuteAsync(Arg.Any<CancellationToken>());

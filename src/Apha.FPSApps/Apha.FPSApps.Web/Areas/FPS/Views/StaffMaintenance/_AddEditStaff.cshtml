@@ -21,7 +21,7 @@
         <input type="hidden" id="isEditMode" value="@(!string.IsNullOrEmpty(Model?.SPNumber) ? "true" : "false")" />
         <div class="row g-3">
             <div class="govuk-form-group sup_margin_0">
-                <label class="govuk-label" asp-for="SPNumber">SP Number</label>
+                <label class="govuk-label" asp-for="SPNumber">SP Number <span class="sup_color_red">*</span></label>
                 <input type="text" class="govuk-input" maxlength="10" required asp-for="SPNumber" />
                 <span asp-validation-for="SPNumber" class="govuk-error-message" style="display:none;"></span>
             </div>
@@ -49,5 +49,5 @@
 
 <div class="modal-footer">
     <button class="govuk-button govuk-button--secondary sup_margin_0" data-module="govuk-button" onclick="closeModal()">Cancel</button>
-    <button class="govuk-button sup_margin_0" data-module="govuk-button" onclick="savestaffplan()">Save</button>
+    <button class="govuk-button sup_margin_0" data-module="govuk-button" onclick="savestaffplan()">@(string.IsNullOrEmpty(Model?.SPNumber) ? "Save" : "Update")</button>
 </div>

@@ -226,39 +226,6 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestCapabilityControllerTest
         }
 
         #endregion
-
-        #region GetAllTestorProducts
-
-        [Fact]
-        public async Task GetAllTestorProducts_HappyPath_ReturnsOkWithMappedList()
-        {
-            var dtos = new List<TestorProductDto> { new() { ItemCode = "BLOOD" } };
-            var mapped = new List<TestorProductRes> { new() { ItemCode = "BLOOD" } };
-
-            _service.GetAllTestorProductsAsync().Returns(dtos);
-            _mapper.Map<IEnumerable<TestorProductRes>>(dtos).Returns(mapped);
-
-            var result = await _controller.GetAllTestorProducts();
-
-            var ok = Assert.IsType<OkObjectResult>(result);
-            ok.Value.Should().Be(mapped);
-        }
-
-        [Fact]
-        public async Task GetAllTestorProducts_EmptyList_ReturnsOkWithEmptyCollection()
-        {
-            var dtos = new List<TestorProductDto>();
-            var mapped = new List<TestorProductRes>();
-
-            _service.GetAllTestorProductsAsync().Returns(dtos);
-            _mapper.Map<IEnumerable<TestorProductRes>>(dtos).Returns(mapped);
-
-            var result = await _controller.GetAllTestorProducts();
-
-            var ok = Assert.IsType<OkObjectResult>(result);
-            ok.Value.Should().Be(mapped);
-        }
-
-        #endregion
+        
     }
 }

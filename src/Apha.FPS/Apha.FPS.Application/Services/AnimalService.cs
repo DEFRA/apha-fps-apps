@@ -32,40 +32,26 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<List<AnimalDto>>(animalLookup);
         }
 
-        public async Task<decimal?> GetAnimalRateByIdAsync(string animalType)
+        public async Task<decimal?> GetAnimalRateByIdAsync(string animalType, string jobCode)
         {
-            var animalCostViews = await _animalRepository.GetAnimalRateByIdAsync(animalType);
+            var animalCostViews = await _animalRepository.GetAnimalRateByIdAsync(animalType, jobCode);
             return animalCostViews;
         }
         public async Task<AnimalRequestDto> AddAnimalCostAsync(AnimalRequestDto animalReq)
         {
             ArgumentNullException.ThrowIfNull(animalReq);
-           
-            if (animalReq.NumberOfDays < 0)
-            {
-                throw new ArgumentException("You have entered a negative number for Number of day.");
-            }
-            
-            if (animalReq.NumberOfAnimals < 0)
-            {
-                throw new ArgumentException("You have entered a negative number Number of animal.");
-            }
+            ArgumentOutOfRangeException.ThrowIfNegative(animalReq.NumberOfDays);
+            ArgumentOutOfRangeException.ThrowIfNegative(animalReq.NumberOfAnimals);
 
             var mapAnimalReq = _mapper.Map<AnimalRequest>(animalReq);
-            var animalRequest  = await _animalRepository.AddAnimalCostAsync(mapAnimalReq);
+            var animalRequest = await _animalRepository.AddAnimalCostAsync(mapAnimalReq);
             return _mapper.Map<AnimalRequestDto>(animalRequest);
         }
         public async Task<AnimalRequestDto> UpdateAnimalCostAsync(AnimalRequestDto animalReq)
         {
-            if (animalReq.NumberOfDays < 0)
-            {
-                throw new ArgumentException("You have entered a negative number for Number of day.");
-            }
-
-            if (animalReq.NumberOfAnimals < 0)
-            {
-                throw new ArgumentException("You have entered a negative number Number of animal.");
-            }
+            ArgumentNullException.ThrowIfNull(animalReq);
+            ArgumentOutOfRangeException.ThrowIfNegative(animalReq.NumberOfDays);
+            ArgumentOutOfRangeException.ThrowIfNegative(animalReq.NumberOfAnimals);
 
             var mapAnimalReq = _mapper.Map<AnimalRequest>(animalReq);
             var animalRequest = await _animalRepository.UpdateAnimalCostAsync(mapAnimalReq);
@@ -73,12 +59,8 @@ namespace Apha.FPS.Application.Services
         }
         public async Task<bool> DeleteAnimalCostAsync(int indCounter)
         {
-            if (indCounter < 0)
-            {
-                throw new ArgumentException("Not found any records.");
-            }
-            var isDeleted = await _animalRepository.DeleteJobAnimalCostAsync(indCounter);
-            return isDeleted;
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(indCounter);
+            return await _animalRepository.DeleteJobAnimalCostAsync(indCounter);
         }
 
         public async Task<decimal> GetTotalAnimalCostAsync(string jobCode)

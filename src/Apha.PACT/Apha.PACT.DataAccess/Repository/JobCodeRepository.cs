@@ -11,11 +11,11 @@ namespace Apha.PACT.DataAccess.Repository
 {
     public class JobCodeRepository : BaseRepository, IJobCodeRepository
     {
-        private readonly IFpsYearContext _fpsYearContext;
+        private readonly IFpsRequestContext _fpsRequestContext;
 
-        public JobCodeRepository(FpsDbContext context, IFpsYearContext fpsYearContext) : base(context)
+        public JobCodeRepository(FpsDbContext context, IFpsRequestContext fpsRequestContext) : base(context)
         {
-            _fpsYearContext = fpsYearContext;
+            _fpsRequestContext = fpsRequestContext;
         }
 
         public async Task<IEnumerable<JobCode>> GetJobCodesByProjectAsync(string parentProject)
@@ -70,7 +70,7 @@ namespace Apha.PACT.DataAccess.Repository
 
         public async Task<JobCode> CreateJobCodeAsync(JobCode jobCode)
         {
-            jobCode.FpsYear = _fpsYearContext.FPSYear;
+            jobCode.FpsYear = _fpsRequestContext.FpsYear;
             await _context.JobCodes.AddAsync(jobCode);
             await _context.SaveChangesAsync();
             return jobCode;
@@ -78,7 +78,7 @@ namespace Apha.PACT.DataAccess.Repository
 
         public async Task<JobCode> UpdateJobCodeAsync(JobCode jobCode)
         {
-            jobCode.FpsYear = _fpsYearContext.FPSYear;
+            jobCode.FpsYear = _fpsRequestContext.FpsYear;
             _context.Entry(jobCode).State = EntityState.Modified;
             await _context.SaveChangesAsync();
             return jobCode;
@@ -87,7 +87,7 @@ namespace Apha.PACT.DataAccess.Repository
         public async Task<bool> DeleteJobCodeAsync(string jobCodeId)
         {
             var jobCode = await _context.JobCodes
-                .FirstOrDefaultAsync(j => j.JobCodeId == jobCodeId && j.FpsYear == _fpsYearContext.FPSYear);
+                .FirstOrDefaultAsync(j => j.JobCodeId == jobCodeId && j.FpsYear == _fpsRequestContext.FpsYear);
             if (jobCode == null) return false;
             _context.JobCodes.Remove(jobCode);
             await _context.SaveChangesAsync();

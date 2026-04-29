@@ -9,7 +9,8 @@ namespace Apha.FPS.Core.Interfaces
         Task<PagedData<Program>> GetAllProgramsAsync(PaginationParameters<string> query);
         Task<Program?> GetProgramByIdAsync(string id);       
         Task<Program> AddProgramAsync(Program entity);
-        Task<Program> UpdateProgramAsync(Program entity);
+        Task<Program> UpdateProgramAsync(Program entity, string originalProgramNo);
         Task<bool> DeleteProgramAsync(string id);
+        Task<bool> HasLinkedProjectsAsync(string programNo);
     }
 }

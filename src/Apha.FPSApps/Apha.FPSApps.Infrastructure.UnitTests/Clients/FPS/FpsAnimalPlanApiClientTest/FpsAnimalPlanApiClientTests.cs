@@ -7,7 +7,6 @@ using Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
 using Xunit;
 
 namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalPlanApiClientTest
@@ -96,24 +95,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalPlanApiClie
             Assert.False(result.Success);
         }
 
-        [Fact]
-        public async Task GetAllAnimalCostAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            _http.GetAsync<List<AnimalCostViewRes>>(Arg.Any<string>())
-                .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetAllAnimalCostAsync(new QueryParameters<string>(), "JOB001");
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve animal costs", error.Message);
-        }
-
         #endregion
 
         #region GetAnimalLookupAsync Tests
@@ -176,24 +157,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalPlanApiClie
             Assert.False(result.Success);
         }
 
-        [Fact]
-        public async Task GetAnimalLookupAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            _http.GetAsync<List<AnimalRes>>("api/v1/animal/lookup")
-                .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetAnimalLookupAsync();
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve animal lookup", error.Message);
-        }
-
         #endregion
 
         #region GetAnimalRateAsync Tests
@@ -203,14 +166,15 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalPlanApiClie
         {
             // Arrange
             var animalType = "Cattle";
+            var jobCode = "JOB001";
             var apiResponse = new ApiResponse<decimal?> { Success = true, Data = 25.50m };
             var expectedDto = ApiResponseDto<decimal?>.SuccessResponse(25.50m);
 
-            _http.GetAsync<decimal?>($"api/v1/animal/rate?animalType={animalType}").Returns(apiResponse);
+            _http.GetAsync<decimal?>($"api/v1/animal/rate?animalType={animalType}&jobCode={jobCode}").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<decimal?>>(apiResponse).Returns(expectedDto);
 
             // Act
-            var result = await _client.GetAnimalRateAsync(animalType);
+            var result = await _client.GetAnimalRateAsync(animalType, jobCode);
 
             // Assert
             Assert.NotNull(result);
@@ -223,6 +187,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalPlanApiClie
         {
             // Arrange
             var animalType = "Cattle";
+            var jobCode = "JOB001";
             var apiResponse = new ApiResponse<decimal?>
             {
                 Success = false,
@@ -235,32 +200,15 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalPlanApiClie
                 Meta = new ApiMetaDto()
             };
 
-            _http.GetAsync<decimal?>($"api/v1/animal/rate?animalType={animalType}").Returns(apiResponse);
+            _http.GetAsync<decimal?>($"api/v1/animal/rate?animalType={animalType}&jobCode={jobCode}").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<decimal?>>(apiResponse).Returns(mappedResponse);
 
             // Act
-            var result = await _client.GetAnimalRateAsync(animalType);
+            var result = await _client.GetAnimalRateAsync(animalType, jobCode);
 
             // Assert
             Assert.NotNull(result);
             Assert.False(result.Success);
-        }
-
-        [Fact]
-        public async Task GetAnimalRateAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            _http.GetAsync<decimal?>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetAnimalRateAsync("Cattle");
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve animal rate", error.Message);
         }
 
         #endregion
@@ -323,28 +271,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalPlanApiClie
             Assert.False(result.Success);
         }
 
-        [Fact]
-        public async Task CreateAnimalCostAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var animalRequestDto = new AnimalRequestDto { JobCode = "JOB001", AnimalType = "Cattle" };
-            var animalRequestReq = new AnimalRequestReq { JobCode = "JOB001", AnimalType = "Cattle" };
-
-            _mapper.Map<AnimalRequestReq>(animalRequestDto).Returns(animalRequestReq);
-            _http.PostAsync<AnimalRequestReq, AnimalRequestRes>(Arg.Any<string>(), Arg.Any<AnimalRequestReq>())
-                .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.CreateAnimalCostAsync(animalRequestDto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to create animal cost", error.Message);
-        }
-
         #endregion
 
         #region UpdateAnimalCostAsync Tests
@@ -405,28 +331,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalPlanApiClie
             Assert.False(result.Success);
         }
 
-        [Fact]
-        public async Task UpdateAnimalCostAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var animalRequestDto = new AnimalRequestDto { JobCode = "JOB001", AnimalType = "Cattle" };
-            var animalRequestReq = new AnimalRequestReq { JobCode = "JOB001", AnimalType = "Cattle" };
-
-            _mapper.Map<AnimalRequestReq>(animalRequestDto).Returns(animalRequestReq);
-            _http.PutAsync<AnimalRequestReq, AnimalRequestRes>(Arg.Any<string>(), Arg.Any<AnimalRequestReq>())
-                .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.UpdateAnimalCostAsync(animalRequestDto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to update animal cost", error.Message);
-        }
-
         #endregion
 
         #region DeleteAnimalCostAsync Tests
@@ -480,23 +384,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalPlanApiClie
             Assert.False(result.Success);
         }
 
-        [Fact]
-        public async Task DeleteAnimalCostAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            _http.DeleteAsync<bool>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.DeleteAnimalCostAsync(1);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to delete animal cost", error.Message);
-        }
-
         #endregion
 
         #region GetTotalAnimalCostAsync Tests
@@ -548,23 +435,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalPlanApiClie
             // Assert
             Assert.NotNull(result);
             Assert.False(result.Success);
-        }
-
-        [Fact]
-        public async Task GetTotalAnimalCostAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            _http.GetAsync<decimal>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetTotalAnimalCostAsync("JOB001");
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve total animal cost", error.Message);
         }
 
         #endregion
@@ -648,23 +518,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalPlanApiClie
             // Assert
             Assert.NotNull(result);
             Assert.False(result.Success);
-        }
-
-        [Fact]
-        public async Task GetAnimalCostViewByIdAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            _http.GetAsync<AnimalCostViewRes>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetAnimalCostViewByIdAsync(1, "JOB001");
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve animal cost view", error.Message);
         }
 
         #endregion

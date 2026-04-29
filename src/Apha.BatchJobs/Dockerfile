@@ -10,9 +10,9 @@ COPY appsettings.json ./
 # appsettings.Development.json is intentionally NOT copied — production secrets
 # are supplied via ECS task environment variables / Secrets Manager at runtime.
 
-RUN dotnet publish BatchJobs.csproj -c Release -o /app/publish
+RUN dotnet publish Apha.BatchJobs.Worker/Apha.BatchJobs.Worker.csproj -c Release -o /app/publish
 
-FROM mcr.microsoft.com/dotnet/runtime:10.0 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 
 # Copy published application (does not contain appsettings.Development.json)
@@ -26,6 +26,11 @@ ENV ASPNETCORE_ENVIRONMENT=Production
 ENV DOTNET_EnableDiagnostics=0
 ENV DOTNET_GCConserveMemory=1
 
+# Npgsql may probe Kerberos/GSSAPI support at runtime.
+RUN apt-get update \
+	&& apt-get install -y --no-install-recommends libgssapi-krb5-2 \
+	&& rm -rf /var/lib/apt/lists/*
+
 # Run as non-root user
 RUN useradd -m -u 10001 batchjobs && chown -R batchjobs:batchjobs /app
 USER batchjobs
@@ -35,5 +40,5 @@ LABEL managed="true"
 LABEL application="batch-jobs"
 LABEL description="Containerized .NET 10 batch jobs worker for FPS application"
 
-ENTRYPOINT ["dotnet", "BatchJobs.dll"]
+ENTRYPOINT ["dotnet", "Apha.BatchJobs.Worker.dll"]
 CMD []

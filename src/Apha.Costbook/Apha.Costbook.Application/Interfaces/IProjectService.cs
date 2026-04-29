@@ -8,7 +8,7 @@ namespace Apha.Costbook.Application.Interfaces
        
         Task<PaginatedResult<ProjectDto>> GetPaginatedProjectsAsync(QueryParameters<string> queryFilter);
         
-        Task<ProjectDto> GetProjectByIdAsync(string id);
+        Task<ProjectDto?> GetProjectByIdAsync(string id);
         Task<ProjectDto> AddProjectAsync(ProjectDto dto);
         Task<ProjectDto> UpdateProjectAsync(string id, ProjectDto dto);
         Task<bool> DeleteProjectAsync(string id);

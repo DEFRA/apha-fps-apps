@@ -28,7 +28,7 @@ public sealed class JobExecutionRecord
     public required JobType JobType { get; set; }
 
     /// <summary>
-    /// Execution mode (Scheduled or AdHoc).
+    /// Execution mode (Scheduled or Manual).
     /// </summary>
     public required RunMode RunMode { get; set; }
 

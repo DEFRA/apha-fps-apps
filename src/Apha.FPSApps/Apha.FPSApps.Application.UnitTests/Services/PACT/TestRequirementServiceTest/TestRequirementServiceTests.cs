@@ -40,6 +40,50 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.TestRequirementServic
 
         #endregion
 
+        #region GetPagedTestReqmtbyProjectAsync
+
+        [Fact]
+        public async Task GetPagedTestReqmtbyProjectAsync_DelegatesToApiClient_ReturnsResult()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var expected = ApiResponseDto<List<TestRequirementDto>>.SuccessResponse(
+                [new TestRequirementDto { TestCode = "BLOOD", Buyer = "PRJ1" }]);
+            _apiClient.GetPagedTestReqmtbyProjectAsync(query, "PRJ1").Returns(expected);
+
+            var result = await _service.GetPagedTestReqmtbyProjectAsync(query, "PRJ1");
+
+            Assert.Equal(expected, result);
+            await _apiClient.Received(1).GetPagedTestReqmtbyProjectAsync(query, "PRJ1");
+        }
+
+        [Fact]
+        public async Task GetPagedTestReqmtbyProjectAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var errors = new List<ApiErrorDto> { new() { Code = "NOT_FOUND" } };
+            var expected = ApiResponseDto<List<TestRequirementDto>>.FailureResponse(errors, new ApiMetaDto());
+            _apiClient.GetPagedTestReqmtbyProjectAsync(query, "MISSING").Returns(expected);
+
+            var result = await _service.GetPagedTestReqmtbyProjectAsync(query, "MISSING");
+
+            Assert.False(result.Success);
+        }
+
+        [Fact]
+        public async Task GetPagedTestReqmtbyProjectAsync_EmptyResult_ReturnsSuccessWithEmptyList()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var expected = ApiResponseDto<List<TestRequirementDto>>.SuccessResponse([]);
+            _apiClient.GetPagedTestReqmtbyProjectAsync(query, "PRJ1").Returns(expected);
+
+            var result = await _service.GetPagedTestReqmtbyProjectAsync(query, "PRJ1");
+
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!);
+        }
+
+        #endregion
+
         #region GetAllTestReqmtForExportAsync
 
         [Fact]

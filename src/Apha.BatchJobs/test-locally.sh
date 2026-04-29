@@ -15,6 +15,7 @@ JOB_NAME="HealthCheck"
 NO_PROMPT="false"
 NATIVE="false"
 EXECUTION_MODE=""
+DOCKER_PROFILE="withdb"
 
 # Colors for output
 RED='\033[0;31m'
@@ -64,7 +65,12 @@ function detect_execution_mode() {
         return
     fi
 
-    if ! test_docker; then
+    if ! command -v docker &> /dev/null; then
+        echo "native"
+        return
+    fi
+
+    if ! docker ps &> /dev/null; then
         echo "native"
         return
     fi
@@ -76,9 +82,9 @@ function detect_execution_mode() {
     fi
 
     if [ "$DOCKER_OS_TYPE" = "windows" ]; then
-        print_info "Docker daemon is running in Windows container mode; native .NET mode will be used instead."
+        print_info "Docker daemon is running in Windows container mode; native .NET mode will be used instead." >&2
     else
-        print_info "Unable to determine Docker container mode; native .NET mode will be used instead."
+        print_info "Unable to determine Docker container mode; native .NET mode will be used instead." >&2
     fi
 
     echo "native"
@@ -87,7 +93,7 @@ function detect_execution_mode() {
 function stop_containers() {
     print_header "Stopping Containers"
     pushd "$SCRIPT_DIR" > /dev/null
-    docker-compose down 2>/dev/null || true
+    docker-compose --profile "$DOCKER_PROFILE" down --remove-orphans 2>/dev/null || true
     popd > /dev/null
     print_success "Containers stopped"
 }
@@ -96,16 +102,20 @@ function clean_environment() {
     print_header "Cleaning Environment"
     print_info "Removing containers and volumes..."
     pushd "$SCRIPT_DIR" > /dev/null
-    docker-compose down -v 2>/dev/null || true
-    docker-compose rm -f 2>/dev/null || true
+    docker-compose --profile "$DOCKER_PROFILE" down -v --remove-orphans 2>/dev/null || true
+    docker-compose --profile "$DOCKER_PROFILE" rm -f 2>/dev/null || true
     popd > /dev/null
     print_success "Environment cleaned"
 }
 
 function show_logs() {
     print_header "Showing Logs"
+    SERVICE_NAME="batch-jobs-withdb"
+    if [ "$DOCKER_PROFILE" = "nodb" ]; then
+        SERVICE_NAME="batch-jobs-nodb"
+    fi
     pushd "$SCRIPT_DIR" > /dev/null
-    docker-compose logs -f batch-jobs
+    docker-compose --profile "$DOCKER_PROFILE" logs -f "$SERVICE_NAME"
     popd > /dev/null
 }
 
@@ -114,7 +124,7 @@ function build_and_run() {
     
     pushd "$SCRIPT_DIR" > /dev/null
     
-    if ! docker-compose build; then
+    if ! docker-compose --profile "$DOCKER_PROFILE" build; then
         popd > /dev/null
         print_error "Docker build failed"
         exit 1
@@ -124,11 +134,18 @@ function build_and_run() {
     
     print_header "Starting Services with docker-compose"
     echo ""
-    print_info "Starting PostgreSQL and Batch Job..."
-    print_info "Press Ctrl+C to stop viewing logs (containers keep running)"
+    SERVICE_NAME="batch-jobs-withdb"
+    if [ "$DOCKER_PROFILE" = "nodb" ]; then
+        SERVICE_NAME="batch-jobs-nodb"
+        print_info "Starting Batch Job container in NoDb mode..."
+    else
+        SERVICE_NAME="batch-jobs-withdb"
+        print_info "Starting PostgreSQL and Batch Job..."
+    fi
+    print_info "Streaming logs until the batch job exits..."
     echo ""
-    
-    docker-compose up --no-build
+
+    docker-compose --profile "$DOCKER_PROFILE" up --no-build --remove-orphans --abort-on-container-exit --exit-code-from "$SERVICE_NAME"
     popd > /dev/null
 }
 
@@ -147,12 +164,16 @@ function show_status() {
     
     pushd "$SCRIPT_DIR" > /dev/null
     
-    if docker-compose ps -q | grep -q .; then
-        docker-compose ps
+    if docker-compose --profile "$DOCKER_PROFILE" ps -q | grep -q .; then
+        docker-compose --profile "$DOCKER_PROFILE" ps
         echo ""
         
         # Try to get exit code of batch-jobs container
-        EXIT_CODE=$(docker wait batch-jobs-app 2>/dev/null || echo "")
+        CONTAINER_NAME="batch_jobs_withdb"
+        if [ "$DOCKER_PROFILE" = "nodb" ]; then
+            CONTAINER_NAME="batch_jobs_nodb"
+        fi
+        EXIT_CODE=$(docker wait "$CONTAINER_NAME" 2>/dev/null || echo "")
         if [ -n "$EXIT_CODE" ]; then
             echo "Batch job exit code: $EXIT_CODE"
             if [ "$EXIT_CODE" = "0" ]; then
@@ -191,6 +212,10 @@ while [[ $# -gt 0 ]]; do
             NO_PROMPT="true"
             shift
             ;;
+        --docker-profile)
+            DOCKER_PROFILE="$2"
+            shift 2
+            ;;
         --job)
             JOB_NAME="$2"
             shift 2
@@ -204,8 +229,14 @@ done
 clear
 echo -e "${CYAN}Batch Jobs - Local Testing Script${NC} $(date '+%Y-%m-%d %H:%M:%S')"
 
+if [ "$DOCKER_PROFILE" != "withdb" ] && [ "$DOCKER_PROFILE" != "nodb" ]; then
+    print_error "Invalid --docker-profile value '$DOCKER_PROFILE'. Use withdb or nodb."
+    exit 1
+fi
+
 EXECUTION_MODE=$(detect_execution_mode)
 print_info "Execution mode: $EXECUTION_MODE"
+print_info "Docker profile: $DOCKER_PROFILE"
 
 if [ "$ACTION" = "stop" ]; then
     if [ "$EXECUTION_MODE" = "docker" ]; then
@@ -233,8 +264,13 @@ echo ""
 print_info "This script will:"
 if [ "$EXECUTION_MODE" = "docker" ]; then
     print_info "  1. Build Docker image (BatchJobs)"
-    print_info "  2. Start PostgreSQL container"
-    print_info "  3. Run $JOB_NAME batch job"
+    if [ "$DOCKER_PROFILE" = "nodb" ]; then
+        print_info "  2. Start BatchJobs container in NoDb mode"
+        print_info "  3. Run $JOB_NAME batch job"
+    else
+        print_info "  2. Start PostgreSQL container"
+        print_info "  3. Run $JOB_NAME batch job"
+    fi
     print_info "  4. Stream logs to console"
     print_info "  5. Exit when job completes"
 else
@@ -245,7 +281,7 @@ else
 fi
 echo ""
 if [ "$EXECUTION_MODE" = "docker" ]; then
-    print_info "You can Ctrl+C to stop viewing logs (containers keep running)"
+    print_info "Run will end automatically when the batch job container exits"
 fi
 echo ""
 if [ "$NO_PROMPT" != "true" ]; then

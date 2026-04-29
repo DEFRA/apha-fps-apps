@@ -1,0 +1,390 @@
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.PACT.Models.TestCapabilityViewModel
+
+@{
+    ViewData["Title"] = "PACT : WorkGroup Test Capability";
+}
+
+@* Breadcrumb *@
+<div class="govuk-grid-row sup_margin_left_right_0">
+    <div class="govuk-grid-column-full">
+        <h1 class="heading_with_txtbox govuk-heading-s sup_border-bottom sup_margin_bottom_10">
+            <div class="sup_flex_left_center" style="display: flex; font-size: 14px; align-items: center;">
+                <nav aria-label="Breadcrumb">
+                    <a href="@Url.Action("Index", "Home", new { area = "PACT" })">Home</a>
+                    &gt; WorkGroup Test Capability
+                </nav>
+            </div>
+            <div> <a id="backlink" href="home.html" class="govuk-back-link">Back</a></div>
+        </h1>
+    </div>
+</div>
+
+@* Page Title *@
+<div class="govuk-grid-row sup_margin_left_right_0">
+    <div class="govuk-grid-column-full">
+        <h1 class="heading_with_txtbox govuk-heading-s sup_border-bottom sup_margin_bottom_10">
+            <div class="sup_flex_left_center">
+                WorkGroup Test Capability
+            </div>            
+        </h1>
+    </div>
+</div>
+
+@* Filter Header: Select by WorkGroup or Test *@
+<div class="govuk-grid-row sup_margin_left_right_0 sup_flex_left_center sup_padding_bottom_10 sup_border-bottom" style="margin-top:10px;">
+
+    @* WorkGroup dropdown *@
+    <div class="govuk-grid-column-one-third">
+        <label for="workGroupPick" class="govuk-label govuk-!-font-weight-bold">Select a Workgroup:</label>
+        <select id="workGroupPick" class="govuk-select govuk-!-font-size-16" style="width:100%;"
+                onchange="onWorkGroupPickChange(this.value)">
+            <option value="">-- Select --</option>
+            @foreach (var item in Model.WorkGroupOptions)
+            {
+                <option value="@item.Value">@item.Text</option>
+            }
+        </select>
+    </div>
+
+    @* OR separator *@
+    <div class="govuk-grid-column-two-third sup_margin_top_20" style="text-align:center;">
+        OR
+    </div>
+
+    @* Test dropdown *@
+    <div class="govuk-grid-column-one-third">
+        <label for="mainTestPick" class="govuk-label govuk-!-font-weight-bold">Select a Test:</label>
+        <select id="mainTestPick" class="govuk-select govuk-!-font-size-16" style="width:100%;"
+                onchange="onTestPickChange(this.value)">
+            <option value="">-- Select --</option>
+            @foreach (var item in Model.TestorProductOptions)
+            {
+                <option value="@item.Value">@item.Text</option>
+            }
+        </select>
+    </div>
+
+    @* Portfolio Maintenance button *@
+    <div class="govuk-grid-column-one-third sup_p_0_mt_24">
+        <div class="govuk-button-group sup_margin_0 sup_float_right">
+            <button type="button" class="govuk-button sup_margin_0 sup_p_8 sup_flex"
+                    id="btnPortfolioMaintenance"
+                    data-module="govuk-button" allow-edit="true">
+                &nbsp;Portfolio Maintenance
+            </button>
+        </div>
+    </div>
+
+</div>
+
+@* TestCode info row *@
+<div class="govuk-grid-row sup_margin_left_right_0 sup_p_8 sup_border-bottom sup_margin_bottom_10">
+    <div class="govuk-grid-column-full sup_flex_center_center_center">
+        <label for="divTestcode" class="govuk-label govuk-!-font-weight-bold">Test Requirement records for Test</label>
+        <div class="govuk-grid-column-one-third">
+            <input type="text" id="divTestcode" class="govuk-input govuk-!-font-size-16" readonly>
+        </div>
+    </div>
+    <div class="govuk-grid-column-full sup_flex_center_center_center sup_p_8">
+        <p class="govuk-body sup_margin_0">------------Buyer Defaulter------------</p>
+    </div>
+</div>
+
+@* Two-column grid layout *@
+<div class="govuk-grid-row sup_margin_0">
+
+    @* Grid 1: Test Capabilities (left) *@
+    <div class="govuk-grid-column-one-half col-5" style="padding-right:8px;">
+        <div id="gridContainer_testCapabilityGrid">
+            @await Html.PartialAsync("_DataGrid", Model.TestCapabilityGrid)
+        </div>
+    </div>
+
+    @* Grid 2: Test Requirements (right) *@
+    <div class="govuk-grid-column-one-half col-7" style="padding-left:8px;">
+        <div id="gridContainer_testReqmtGrid">
+            @await Html.PartialAsync("_DataGrid", Model.TestReqmtGrid)
+        </div>
+    </div>
+
+</div>
+
+
+@section Scripts {
+    <script src="~/js/ajax-form-validation.js"></script>
+    <script>
+        // ── State ──────────────────────────────────────────────────────────────
+        var currentViewBy = 1;
+        var currentFilterValue = null;
+        var currentSelectedTestCode = null;
+
+        var testCapabilityGridId = '@Model.TestCapabilityGrid.GridId';
+        var testReqmtGridId      = '@Model.TestReqmtGrid.GridId';
+
+        function getCapabilityGridManager() {
+            return window['gridManager_' + testCapabilityGridId];
+        }
+
+        function getReqmtGridManager() {
+            return window['gridManager_' + testReqmtGridId];
+        }
+
+        // ── WorkGroup dropdown change ──────────────────────────────────────────
+        function onWorkGroupPickChange(value) {
+            document.getElementById('mainTestPick').value = '';
+            currentViewBy = 1;
+            currentFilterValue = value || null;
+            currentSelectedTestCode = null;
+            document.getElementById('divTestcode').value = '';
+            reloadTestCapabilityGrid(currentFilterValue);
+            clearTestReqmtGrid();
+        }
+
+        // ── Test dropdown change ───────────────────────────────────────────────
+        function onTestPickChange(value) {
+            document.getElementById('workGroupPick').value = '';
+            currentViewBy = 2;
+            currentFilterValue = value || null;
+            currentSelectedTestCode = null;
+            document.getElementById('divTestcode').value = '';
+            reloadTestCapabilityGrid(currentFilterValue);
+            clearTestReqmtGrid();
+        }
+
+        // ── Grid 1: reload ─────────────────────────────────────────────────────
+        function reloadTestCapabilityGrid(filterValue) {
+            $.ajax({
+                url: '/PACT/TestCapability/LoadTestCapabilityGrid',
+                type: 'POST',
+                headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
+                data: {
+                    Page: 1,
+                    PageSize: 10,
+                    Filter: '{}',
+                    viewBy: currentViewBy,
+                    filterValue: filterValue || ''
+                },
+                success: function (html) {
+                    $('#gridContainer_testCapabilityGrid').html(html);
+                },
+                error: function () {
+                    console.error('Failed to load Test Capability grid.');
+                }
+            });
+        }
+
+        // ── Grid 1 row select → populate divTestcode + reload Grid 2 ───────────
+        function onTestCapabilityRowSelect(rowData) {
+            currentSelectedTestCode = $(rowData).data('id');
+            if (!currentSelectedTestCode) return;
+            document.getElementById('divTestcode').value = currentSelectedTestCode;
+            reloadTestReqmtGrid(currentSelectedTestCode);
+        }
+
+        // ── Grid 2: reload ─────────────────────────────────────────────────────
+        function reloadTestReqmtGrid(testCode) {
+            $.ajax({
+                url: '/PACT/TestCapability/LoadTestReqmtGrid',
+                type: 'POST',
+                headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
+                data: {
+                    Page: 1,
+                    PageSize: 10,
+                    Filter: '{}',
+                    testCode: testCode
+                },
+                success: function (html) {
+                    $('#gridContainer_testReqmtGrid').html(html);
+                },
+                error: function () {
+                    console.error('Failed to load Test Reqmt grid.');
+                }
+            });
+        }
+
+        function clearTestReqmtGrid() {
+            currentSelectedTestCode = null;
+            document.getElementById('divTestcode').value = '';
+            $('#tbl_' + testReqmtGridId + ' tbody').html(
+                '<tr><td colspan="100" class="govuk-table__cell" ' +
+                'style="text-align:center;color:#505a5f;font-style:italic;padding:16px;">' +
+                'No records found.</td></tr>'
+            );
+        }
+
+        // ── Grid 1 CRUD ────────────────────────────────────────────────────────
+        function addTestCapability() {
+            $.get('/PACT/TestCapability/CreateTestCapability', function (html) {
+                $('#modaPopupBody').html(html);
+                $('#modalPopup').addClass('show');
+            });
+        }
+
+        function editTestCapability(rowData) {
+            var testCode  = encodeURIComponent($(rowData).data('id') || '');
+            var workGroup = encodeURIComponent(
+                $(rowData).closest('tr').find('[data-property="WorkGroup"]').text().trim());
+            $.get('/PACT/TestCapability/EditTestCapability?testCode=' + testCode + '&workGroup=' + workGroup,
+                function (html) {
+                    $('#modaPopupBody').html(html);
+                    $('#modalPopup').addClass('show');
+                });
+        }
+
+        function saveTestCapability() {
+            clearValidationErrors('#modaPopupBody');
+            var form = $('#testCapabilityForm');
+            if (!isFormValid(form)) {
+                displayClientValidationErrors(form, '#modaPopupBody');
+                return;
+            }
+            var isEdit = form.find('[name="isEdit"]').val() === 'true';
+            var data = {
+                TestCode:      form.find('[name="TestCode"]').val(),
+                WorkGroup:     form.find('[name="WorkGroup"]').val(),
+                PlanPortfolio: form.find('[name="PlanPortfolio"]').val()
+            };
+            var url = isEdit
+                ? '/PACT/TestCapability/EditTestCapability'
+                : '/PACT/TestCapability/CreateTestCapability';
+            $.ajax({
+                url: url, type: 'POST',
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify(data),
+                success: function (result) {
+                    if (result.success) {
+                        $('#modalPopup').removeClass('show');
+                        showGovukAlert(isEdit ? 'Record updated successfully.' : 'Record saved successfully.');
+                        reloadTestCapabilityGrid(currentFilterValue);
+                    } else {
+                        displayServerValidationErrors(result.errors, result.message, '#modaPopupBody');
+                    }
+                },
+                error: function () { showGovukAlert('Request failed. Please try again.'); }
+            });
+        }
+
+        function deleteTestCapability(rowData) {
+            var testCode  = encodeURIComponent($(rowData).data('id') || '');
+            var workGroup = encodeURIComponent(
+                $(rowData).closest('tr').find('[data-property="WorkGroup"]').text().trim());
+            showGovukConfirm('Delete this Test Capability record?').then(function (confirmed) {
+                if (!confirmed) return;
+                $.ajax({
+                    url: '/PACT/TestCapability/DeleteTestCapability?testCode=' + testCode + '&workGroup=' + workGroup,
+                    type: 'DELETE',
+                    headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
+                    success: function (result) {
+                        if (result.success) {
+                            reloadTestCapabilityGrid(currentFilterValue);
+                            clearTestReqmtGrid();
+                            showGovukAlert('Test Capability record deleted successfully.');
+                        } else {
+                            showGovukAlert(result.message ? result.message : 'Delete failed.');
+                        }
+                    },
+                    error: function () { showGovukAlert('An error occurred while deleting.'); }
+                });
+            });
+        }
+
+        // ── Grid 2 CRUD ────────────────────────────────────────────────────────
+        function addTestReqmt() {           
+            $.get('/PACT/TestCapability/CreateTestReqmt?testCode=' + encodeURIComponent(currentSelectedTestCode),
+                function (html) {
+                    $('#modaPopupBody').html(html);
+                    $('#modalPopup').addClass('show');
+                });
+        }
+
+        function editTestReqmt(rowData) {
+            var testCode = encodeURIComponent(currentSelectedTestCode || '');
+            var buyer    = encodeURIComponent($(rowData).data('id') || '');
+            $.get('/PACT/TestCapability/EditTestReqmt?testCode=' + testCode + '&buyer=' + buyer,
+                function (html) {
+                    $('#modaPopupBody').html(html);
+                    $('#modalPopup').addClass('show');
+                });
+        }
+
+        function saveTestReqmt() {
+            clearValidationErrors('#modaPopupBody');
+            var form = $('#testReqmtForm');
+            if (!isFormValid(form)) {
+                displayClientValidationErrors(form, '#modaPopupBody');
+                return;
+            }
+            var isEdit        = form.find('[name="isEdit"]').val() === 'true';
+            var rawUnitPrice  = form.find('[name="UnitPrice"]').val();
+            var rawNoRequired = form.find('[name="NoRequired"]').val();
+            var rawActive     = form.find('[name="Active"]').val();
+            var data = {
+                TestCode:        form.find('[name="TestCode"]').val(),
+                Buyer:           form.find('[name="Buyer"]').val(),
+                ProjectBuyerCode: form.find('[name="ProjectBuyerCode"]').val(),
+                TestBuyerCode:   form.find('[name="TestBuyerCode"]').val(),
+                UnitPrice:       rawUnitPrice  !== '' ? parseFloat(rawUnitPrice)  : null,
+                NoRequired:      rawNoRequired !== '' ? parseFloat(rawNoRequired) : null,
+                Active:          rawActive     !== '' ? parseInt(rawActive, 10)   : null
+            };
+            var url = isEdit
+                ? '/PACT/TestCapability/EditTestReqmt'
+                : '/PACT/TestCapability/CreateTestReqmt';
+            $.ajax({
+                url: url, type: 'POST',
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify(data),
+                success: function (result) {
+                    if (result.success) {
+                        $('#modalPopup').removeClass('show');
+                        showGovukAlert(isEdit ? 'Record updated successfully.' : 'Record saved successfully.');
+                        reloadTestReqmtGrid(currentSelectedTestCode);
+                    } else {
+                        displayServerValidationErrors(result.errors, result.message, '#modaPopupBody');
+                    }
+                },
+                error: function () { showGovukAlert('Request failed. Please try again.'); }
+            });
+        }
+
+        function deleteTestReqmt(rowData) {
+            var testCode = encodeURIComponent(currentSelectedTestCode || '');
+            var buyer    = encodeURIComponent($(rowData).data('id') || '');
+            showGovukConfirm('Delete this Test Requirement record?').then(function (confirmed) {
+                if (!confirmed) return;
+                $.ajax({
+                    url: '/PACT/TestCapability/DeleteTestReqmt?testCode=' + testCode + '&buyer=' + buyer,
+                    type: 'DELETE',
+                    headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
+                    success: function (result) {
+                        if (result.success) {
+                            reloadTestReqmtGrid(currentSelectedTestCode);
+                            showGovukAlert('Test Requirement record deleted successfully.');
+                        } else {
+                            showGovukAlert(result.message ? result.message : 'Delete failed.');
+                        }
+                    },
+                    error: function () { showGovukAlert('An error occurred while deleting.'); }
+                });
+            });
+        }
+
+        // ── Extra filter methods (passed to gridManager for pagination/sort) ───
+        function getTestCapabilityExtraFilters() {
+            return {
+                viewBy: currentViewBy,
+                filterValue: currentFilterValue || ''
+            };
+        }
+
+        function getTestReqmtExtraFilters() {
+            return {
+                testCode: currentSelectedTestCode || ''
+            };
+        }
+
+            </script>
+
+            @Html.AntiForgeryToken()
+        }

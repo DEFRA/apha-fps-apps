@@ -1,0 +1,145 @@
+﻿@using System.Security.Claims
+@{
+    // Get display name from claims (try multiple claim types)
+    var displayName = User.FindFirst("name")?.Value
+                      ?? User.FindFirst(ClaimTypes.GivenName)?.Value
+                      ?? User.FindFirst(ClaimTypes.Name)?.Value?.Split('@')[0]
+                      ?? "Unknown User";
+   
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/css/govuk-frontend-6.0.0.min.css" />
+    <link rel="stylesheet" href="~/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/pims_style/nav_menu/navstyle.css" />
+    <link rel="stylesheet" href="~/css/pims_style/style.css" />
+    <link rel="stylesheet" href="~/css/suppliement_style_over_gov.uk_style.css" />
+    <link rel="stylesheet" href="~/DataGrid/editable-grid.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+          rel="stylesheet" />
+    <script src="~/lib/jquery/dist/jquery.js"></script>
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+
+    <!-- ── Header ──────────────────────────────────────────────────────── -->
+    <header>
+        <div class="header-nav">
+            <div class="pims-log-wrapper">
+                <div>
+                    <img alt="DEFRA Logo" src="~/images/defra_logo.png" width="80px" />
+                </div>
+                <div class="pims-log">
+                    <span>PIMS</span>
+                </div>
+                <p>Project Information Management System</p>
+            </div>
+
+            <div class="btn-group flex-center font-size-16">
+                @displayName
+                <button type="button"
+                        aria-label="User menu — go to home page"
+                        class="btn btn-secondary dropdown-toggle user-menu border-0"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                    <img src="~/images/circle-user-regular-full.svg"
+                         alt="User icon" width="24" />
+                    <img src="~/images/down-arrow.png"
+                         alt="Dropdown arrow"
+                         width="30px" height="30px" />
+                </button>
+
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li>
+                        <a asp-area="PIMS"
+                               asp-controller="Home"
+                               asp-action="Index"
+                               class="dropdown-item">
+                            <img src="~/images/house-user-solid-full.svg"
+                                 alt="Home icon" width="22px" />
+                            Home
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <!-- ── Navigation ──────────────────────────────────────────────────── -->
+    <nav class="navbar navbar-expand-lg main-nav" aria-label="PIMS main navigation">
+        <div class="nav-item dropdown">
+            <a class="nav-button dropdown-toggle"
+                   asp-area="PIMS"
+                   asp-controller="ProjectList"
+                   asp-action="Index"
+                   aria-label="Choose Project">
+                <div class="align-menu-text">
+                    <span>Choose Project</span>
+                </div>
+            </a>
+        </div>
+
+        <div class="nav-item dropdown">
+            <button class="nav-button dropdown-toggle"
+                    data-dropdown="print-reports"
+                    aria-label="Print Reports">
+                <div class="align-menu-text">
+                    <span>Print Reports</span>
+                </div>
+            </button>
+        </div>
+
+        <div class="nav-item dropdown">
+            <button class="nav-button dropdown-toggle"
+                    data-dropdown="publications"
+                    aria-label="Publications">
+                <div class="align-menu-text">
+                    <span>Publications</span>
+                </div>
+            </button>
+        </div>
+
+        <div class="nav-item dropdown">
+            <button class="nav-button dropdown-toggle"
+                    data-dropdown="maintenance"
+                    aria-label="Maintenance">
+                <div class="align-menu-text">
+                    <span>Maintenance</span>
+                </div>
+            </button>
+        </div>
+
+        <div class="nav-item dropdown">
+            <button class="nav-button dropdown-toggle"
+                    data-dropdown="popup-data-check"
+                    aria-label="Pop-up Data Check">
+                <div class="align-menu-text">
+                    <span>Pop-up Data Check</span>
+                </div>
+            </button>
+        </div>
+    </nav>
+
+    <!-- ── Page content ────────────────────────────────────────────────── -->
+    <div>
+        @RenderBody()
+    </div>
+
+    <!-- ── Footer ──────────────────────────────────────────────────────── -->
+    <div class="govuk-footer sup_p_0 sup_margin_left_right_0">
+        <div class="govuk-width-container sup_p_8 text-center">
+            <span>&copy; Copyright Defra 2025</span>
+        </div>
+    </div>
+
+    <!-- ── Scripts ─────────────────────────────────────────────────────── -->
+    <script src="~/js/bootstrap.bundle.min.js"></script>
+    <script src="~/DataGrid/editable-grid.js"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

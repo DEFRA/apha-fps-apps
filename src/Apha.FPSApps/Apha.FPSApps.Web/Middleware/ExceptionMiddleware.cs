@@ -58,9 +58,9 @@ namespace Apha.FPSApps.Web.Middleware
             context.Response.StatusCode = statusCode;
 
             //Pending to create a user friendly error page and redirect to that page
-            if (!context.Request.Path.StartsWithSegments("/Home/Error"))
+            if (!context.Request.Path.StartsWithSegments("/Error"))
             {
-                context.Response.Redirect("/Home/Error");
+                context.Response.Redirect("/Error/Index");
             }
 
             await context.Response.CompleteAsync();

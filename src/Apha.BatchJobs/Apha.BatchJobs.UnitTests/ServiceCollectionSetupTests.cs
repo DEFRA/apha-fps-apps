@@ -1,5 +1,5 @@
-using Apha.BatchJobs.Application.Interfaces;
-using Apha.BatchJobs.Worker;
+﻿using Apha.BatchJobs.Application.Interfaces;
+using Apha.BatchJobs.Application.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -59,3 +59,4 @@ public sealed class ServiceCollectionSetupTests
         throw new DirectoryNotFoundException("Could not locate the BatchJobs project root.");
     }
 }
+
