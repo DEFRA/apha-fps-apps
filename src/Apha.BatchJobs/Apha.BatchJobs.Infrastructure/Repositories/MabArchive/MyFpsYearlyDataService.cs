@@ -327,7 +327,44 @@ SET volume = EXCLUDED.volume, cost = EXCLUDED.cost, wip = EXCLUDED.wip,
             totalRowsAffected += projectMonthFinalRows;
             _logger.LogInformation("Loaded {RowCount} rows into my_projectmonthfinal for year {Year}", projectMonthFinalRows, year);
 
-            // Note: Remaining 20 loaders (invoices, subcontracts, costs, staffing, etc.) pending implementation
+            // Step 7: Project invoices
+            var projInvoiceRows = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+INSERT INTO mabarchive.my_proj_invoice (
+    year, projectparent, month, amount, costofwork, wip, profitloss, detail,
+    invoicecounter, type
+)
+SELECT
+    {year}, i.projectparent, i.month, i.amount, i.costofwork, i.wip, i.profitloss,
+    i.detail, i.invoicecounter, i.type
+FROM fps.proj_invoice i
+WHERE i.fpsyear = {year}
+ON CONFLICT (year, projectparent, month, invoicecounter, type) DO UPDATE
+SET amount = EXCLUDED.amount, costofwork = EXCLUDED.costofwork,
+    wip = EXCLUDED.wip, profitloss = EXCLUDED.profitloss
+", cancellationToken);
+
+            totalRowsAffected += projInvoiceRows;
+            _logger.LogInformation("Loaded {RowCount} rows into my_proj_invoice for year {Year}", projInvoiceRows, year);
+
+            // Step 8: Project subcontracts
+            var projSubcontractRows = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+INSERT INTO mabarchive.my_proj_subcontract (
+    year, subcontcounter, project, testjob, month, amount, workgroup, acctcode,
+    supplier, description, suppliernumber, dailyrate, animaldays
+)
+SELECT
+    {year}, s.subcontcounter, s.project, s.testjob, s.month, s.amount, s.workgroup,
+    s.acctcode, s.supplier, s.description, s.suppliernumber, s.dailyrate, s.animaldays
+FROM fps.proj_subcontract s
+WHERE s.fpsyear = {year}
+ON CONFLICT (year, subcontcounter) DO UPDATE
+SET amount = EXCLUDED.amount, month = EXCLUDED.month, workgroup = EXCLUDED.workgroup
+", cancellationToken);
+
+            totalRowsAffected += projSubcontractRows;
+            _logger.LogInformation("Loaded {RowCount} rows into my_proj_subcontract for year {Year}", projSubcontractRows, year);
+
+            // Note: Remaining 18 loaders pending implementation
 
             _logger.LogInformation("Loaded {TotalRowCount} total rows into archive tables for year {Year} (Step 1a complete)", totalRowsAffected, year);
             return totalRowsAffected;

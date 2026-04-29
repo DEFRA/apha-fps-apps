@@ -37,7 +37,7 @@ public sealed class ReloadFpsTotalsService : IReloadFpsTotalsService
 
         try
         {
-            // Delete existing totals for the year
+            // In consolidated multiyear storage, clear only the target year before rebuild.
             var deleteRows = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 DELETE FROM fps.fpsyeartotals
 WHERE fpsyear = {year}
@@ -45,8 +45,7 @@ WHERE fpsyear = {year}
 
             _logger.LogInformation("Deleted {RowCount} existing totals rows for year {Year}", deleteRows, year);
 
-            // Rebuild totals from source (mirrors legacy sp_createFPSTotals logic)
-            // This implementation is a placeholder; full formula parity to be implemented in next phase
+            // Rebuild totals from source using legacy sp_createFPSTotals formulas and null handling.
             var insertRows = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 INSERT INTO fps.fpsyeartotals (
     parentproject,
@@ -69,43 +68,80 @@ INSERT INTO fps.fpsyeartotals (
     totalpaycosts,
     fpsyear
 )
-SELECT
-    LEFT(t.parentproject::text, 20),
-    LEFT(t.program::text, 10),
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    COALESCE(t.feccost, 0::money)::double precision,
+SELECT DISTINCT
+    t.parentproject,
+    t.program,
+    CASE
+        WHEN a.totaladditionalcosts IS NULL THEN 0::money
+        ELSE a.totaladditionalcosts
+    END AS totaladditionalcosts,
+    CASE
+        WHEN an.totalanimalcosts IS NULL THEN 0
+        ELSE an.totalanimalcosts::double precision
+    END AS totalanimalcosts,
+    CASE
+        WHEN s.totalstaffcosts IS NULL THEN 0
+        ELSE s.totalstaffcosts::double precision
+    END AS totalstaffcosts,
+    CASE
+        WHEN tst.totaltestcosts IS NULL THEN 0
+        ELSE tst.totaltestcosts::double precision
+    END AS totaltestcosts,
+    (CASE
+        WHEN a.totaladditionalcosts IS NULL THEN 0
+        ELSE a.totaladditionalcosts::double precision
+    END) +
+    (CASE
+        WHEN an.totalanimalcosts IS NULL THEN 0
+        ELSE an.totalanimalcosts::double precision
+    END) +
+    (CASE
+        WHEN s.totalstaffcosts IS NULL THEN 0
+        ELSE s.totalstaffcosts::double precision
+    END) +
+    (CASE
+        WHEN tst.totaltestcosts IS NULL THEN 0
+        ELSE tst.totaltestcosts::double precision
+    END) +
+    (CASE
+        WHEN t.plancaseworkdebit IS NULL THEN 0
+        ELSE t.plancaseworkdebit::double precision
+    END) AS totalcosts,
     t.custincome,
     t.transferincome,
-    (t.custincome + t.transferincome),
+    t.custincome + t.transferincome AS totalincome,
     t.budget_cvl,
-    t.profit,
+    t.profit AS requiredprofit,
     t.manager,
-    LEFT(t.customer::text, 50),
-    LEFT(t.projectstatus::text, 50),
-    t.pvsincome,
-    t.plancaseworkdebit,
-    NULL,
+    t.customer,
+    t.projectstatus,
+    CASE
+        WHEN t.pvsincome IS NULL THEN 0::money
+        ELSE t.pvsincome
+    END AS pvsincome,
+    CASE
+        WHEN t.plancaseworkdebit IS NULL THEN 0::money
+        ELSE t.plancaseworkdebit
+    END AS plancaseworkdebit,
+    CASE
+        WHEN s.totalpaycosts IS NULL THEN 0
+        ELSE s.totalpaycosts::double precision
+    END AS totalpaycosts,
     t.fpsyear
 FROM fps.tlkpproject t
+LEFT JOIN fps.qrytotaladditionalcosts a
+    ON t.parentproject = a.jobcode
+    AND t.fpsyear = a.fpsyear
+LEFT JOIN fps.qrytotalanimalcosts an
+    ON t.parentproject = an.jobcode
+    AND t.fpsyear = an.fpsyear
+LEFT JOIN fps.qrytotalstaffcosts s
+    ON t.parentproject = s.jobcode
+    AND t.fpsyear = s.fpsyear
+LEFT JOIN fps.qrytotaltestcosts tst
+    ON t.parentproject = tst.jobcode
+    AND t.fpsyear = tst.fpsyear
 WHERE t.fpsyear = {year}
-ON CONFLICT (parentproject) DO UPDATE
-SET
-    program = EXCLUDED.program,
-    totalcosts = EXCLUDED.totalcosts,
-    custincome = EXCLUDED.custincome,
-    transferincome = EXCLUDED.transferincome,
-    totalincome = EXCLUDED.totalincome,
-    budget_cvl = EXCLUDED.budget_cvl,
-    requiredprofit = EXCLUDED.requiredprofit,
-    manager = EXCLUDED.manager,
-    customer = EXCLUDED.customer,
-    projectstatus = EXCLUDED.projectstatus,
-    pvsincome = EXCLUDED.pvsincome,
-    plancaseworkdebit = EXCLUDED.plancaseworkdebit,
-    fpsyear = EXCLUDED.fpsyear
 ", cancellationToken);
 
             _logger.LogInformation("Inserted {RowCount} rebuilt totals rows for year {Year}", insertRows, year);
