@@ -52,7 +52,7 @@ namespace Apha.PACT.Api.Controllers
 
         /// <summary>Retrieves a paged list of TestCapability records filtered by PlanPortfolio.</summary>
         [HttpGet("paged/portfolio")]
-        public async Task<IActionResult> GetPagedByPortfolio(
+        public async Task<IActionResult> GetPagedTestCapabilityByPortfolio(
             [FromQuery] QueryParameters<string> query,
             [FromQuery] string? portfolio)
         {
