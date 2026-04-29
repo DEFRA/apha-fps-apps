@@ -67,7 +67,7 @@ Goal: 100% logic integrity with executable parity evidence
 |---|---|---|---|
 | Totals rebuild proof | Legacy formulas now implemented | Partial | Needs fixture-based proof for null behavior and joins |
 | Staff security filter semantics | Batch load copies all year rows | Partial | Legacy SQL scopes by executing SQL user's accessible workgroups/profit centres; likely intentional runtime adaptation but not yet formally approved |
-| End-to-end validation evidence | Implementation compiles and has been cross-checked against SQL and DDL | Partial | Task 7 parity branch/order tests now added and passing; still needs broader Task 8 run and fixture-level checks |
+| End-to-end validation evidence | Implementation compiles and has been cross-checked against SQL and DDL | Partial | Task 7 and Task 8 targeted runs passed; still needs fixture-level parity checks and final evidence pack |
 
 ## Evidence Sources
 - Legacy procedure text: `docs/ScheduledJobs.txt`
@@ -85,11 +85,16 @@ Goal: 100% logic integrity with executable parity evidence
 - `74df9c8e` - orchestration parity and year-availability guard
 - `9edf4dd4` - delete-years parity across legacy archive footprint
 - `7f6cca98` - full 24-loader `sp_AddYearsFPSData` fan-out parity
-- pending commit - full-table delete parity for `sp_deleteFPSTotals` + Task 7 parity tests
+- `b700d443` - full-table delete parity for `sp_deleteFPSTotals` + Task 7 parity tests
+
+## Task 8 Execution Evidence (2026-04-29)
+- Build: `dotnet build BatchJobs.sln` -> succeeded (0 warnings, 0 errors)
+- Targeted tests: `MabArchiveLoadOrchestratorParityTests` -> passed (5/5)
+- Complementary scheduler tests: `JobOrchestratorTests` -> passed (14/14)
+- Aggregate targeted test pass count: 19/19
 
 ## Closure Checklist to Reach 100%
 - Add targeted parity tests for branch order, delete coverage, totals formulas, and loader order/coverage.
-- Run focused build/test suite and capture executable evidence.
 - Reclassify validated rows from Partial to Converted only after tests pass.
 
 ## Owner Notes
