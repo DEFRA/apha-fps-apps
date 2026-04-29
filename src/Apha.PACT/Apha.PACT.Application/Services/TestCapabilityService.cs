@@ -69,6 +69,8 @@ namespace Apha.PACT.Application.Services
 
         public async Task<TestCapabilityDto> AddTestCapabilityAsync(TestCapabilityDto dto)
         {
+            ValidateRequiredFields(dto);
+
             var existing = await _testCapabilityRepository.GetByIdAsync(dto.TestCode, dto.WorkGroup);
             if (existing is not null)
                 throw new InvalidOperationException(
@@ -81,6 +83,8 @@ namespace Apha.PACT.Application.Services
 
         public async Task<TestCapabilityDto> UpdateTestCapabilityAsync(TestCapabilityDto dto)
         {
+            ValidateRequiredFields(dto);
+
             var existing = await _testCapabilityRepository.GetByIdAsync(dto.TestCode, dto.WorkGroup);
             if (existing is null)
                 throw new KeyNotFoundException(
@@ -93,6 +97,23 @@ namespace Apha.PACT.Application.Services
             var entity = _mapper.Map<TestCapability>(dto);
             var updated = await _testCapabilityRepository.UpdateAsync(entity);
             return _mapper.Map<TestCapabilityDto>(updated);
+        }
+
+        private static void ValidateRequiredFields(TestCapabilityDto dto)
+        {
+            var errors = new List<string>();
+
+            if (string.IsNullOrWhiteSpace(dto.TestCode))
+                errors.Add("Test Code is required.");
+
+            if (string.IsNullOrWhiteSpace(dto.WorkGroup))
+                errors.Add("Work Group is required.");
+
+            if (string.IsNullOrWhiteSpace(dto.PlanPortfolio))
+                errors.Add("Plan Portfolio is required.");
+
+            if (errors.Count > 0)
+                throw new ArgumentException(string.Join(" ", errors));
         }
 
         public async Task<bool> DeleteTestCapabilityAsync(string testCode, string workGroup)

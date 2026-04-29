@@ -136,13 +136,21 @@
         <ul>
             <li class="sidebar-link-two"
                 style="border-radius:0 8px 8px 0; cursor:pointer; background-color:#1d70b8;">
-                <a id="sideNavTestPurchase" style="color:#fff;" href="#">
+                <a id="sideNavTestPurchase" style="color:#fff;"
+                       asp-area="PACT"
+                       asp-controller="TestPurchaseRequirement"
+                       asp-action="Index"
+                       asp-route-parentProject="">
                     Portfolio's Requirement to BUY Test
                 </a>
             </li>
             <li class="sidebar-link-two"
                 style="border-radius:0 8px 8px 0; cursor:pointer; background-color:#1d70b8;">
-                <a id="sideNavInvoices" style="color:#fff;" href="#">
+                <a id="sideNavInvoices" style="color:#fff;"
+                       asp-area="PACT"
+                       asp-controller="ProjectInvoiceSubContract"
+                       asp-action="Index"
+                       asp-route-parentProject="">
                     Invoices &amp; SubContracts
                 </a>
             </li>

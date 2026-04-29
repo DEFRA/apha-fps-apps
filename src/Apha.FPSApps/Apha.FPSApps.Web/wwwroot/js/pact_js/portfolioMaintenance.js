@@ -100,6 +100,15 @@ $(document).ready(function () {
 // ── Wrap a plain message string into the errors-array format ─────────────
 function errMsg(msg) { return [{ field: '', message: msg }]; }
 
+// ── Update a nav link href, preserving existing query params ─────────────
+function updateNavHref(id, parentProject) {
+    var current = $(id).attr('href') || '';
+    var parts = current.split('?');
+    var params = new URLSearchParams(parts[1] || '');
+    params.set('parentProject', parentProject);
+    $(id).attr('href', parts[0] + '?' + params.toString());
+}
+
 // ── Load all data for a portfolio ────────────────────────────────────────
 function loadPortfolioData(parentProject) {
     currentParentProject = parentProject;
@@ -123,11 +132,9 @@ function loadPortfolioData(parentProject) {
                 $('#txtTransferIncome').val(d.transferIncome || '');
                 $('#txtComments').val(d.comments || '');
 
-                // Update sidebar nav links
-                $('#sideNavTestPurchase').attr('href',
-                    '/PACT/TestPurchaseRequirement/Index?parentProject=' + encodeURIComponent(parentProject));
-                $('#sideNavInvoices').attr('href',
-                    '/PACT/ProjectInvoiceSubContract/Index?parentProject=' + encodeURIComponent(parentProject));
+                // Update sidebar nav links — preserves existing query params (e.g. year)
+                updateNavHref('#sideNavTestPurchase', parentProject);
+                updateNavHref('#sideNavInvoices', parentProject);
 
                 resetFormButtons(true);
                 loadConstituentTestGrid(parentProject);

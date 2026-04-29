@@ -29,7 +29,7 @@
         <!-- Work Group -->
         <div class="govuk-form-group sup_margin_bottom_10">
             <label class="govuk-label govuk-!-font-weight-bold" asp-for="WorkGroup">
-                Work Group: <span class="sup_color_red">*</span>
+                Work Group <span class="sup_color_red">*</span>
             </label>
             <select class="govuk-select govuk-!-font-size-16" asp-for="WorkGroup"
                     id="txtmodal-workgrp" style="width:100%;" required
@@ -43,7 +43,7 @@
         <!-- Time Code -->
         <div class="govuk-form-group sup_margin_bottom_10">
             <label class="govuk-label govuk-!-font-weight-bold" asp-for="TimeCode">
-                Time Code: <span class="sup_color_red">*</span>
+                Time Code <span class="sup_color_red">*</span>
             </label>
             @if (isEdit)
             {
@@ -61,7 +61,7 @@
         <!-- Project -->
         <div class="govuk-form-group sup_margin_bottom_10">
             <label class="govuk-label govuk-!-font-weight-bold" asp-for="ParentProject">
-                Project: <span class="sup_color_red">*</span>
+                Project <span class="sup_color_red">*</span>
             </label>
             <select class="govuk-select govuk-!-font-size-16" asp-for="ParentProject"
                     id="txtmodal-wg-project" style="width:100%;" required
@@ -75,7 +75,7 @@
         <!-- Test Code (readonly) -->
         <div class="govuk-form-group sup_margin_bottom_10">
             <label class="govuk-label govuk-!-font-weight-bold" asp-for="TestCode">
-                Test Code: <span class="sup_color_red">*</span>
+                Test Code <span class="sup_color_red">*</span>
             </label>
             <input class="govuk-input govuk-!-font-size-16" asp-for="TestCode"
                    id="txtmodal-wg-testcode" placeholder="Test Code" disabled />
@@ -85,7 +85,7 @@
         <!-- Portfolio (readonly) -->
         <div class="govuk-form-group sup_margin_bottom_10">
             <label class="govuk-label govuk-!-font-weight-bold" asp-for="Portfolio">
-                Portfolio: <span class="sup_color_red">*</span>
+                Portfolio <span class="sup_color_red">*</span>
             </label>
             <input class="govuk-input govuk-!-font-size-16" asp-for="Portfolio"
                    id="txtmodal-wg-portfolio" placeholder="Portfolio" disabled />
@@ -94,7 +94,7 @@
 
         <!-- Active -->
         <div class="govuk-form-group sup_margin_bottom_10">
-            <label class="govuk-label govuk-!-font-weight-bold" asp-for="Active">Active:</label>
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="Active">Active</label>
             <div class="govuk-checkboxes govuk-checkboxes--small sup_margin_0" data-module="govuk-checkboxes">
                 <div class="govuk-checkboxes__item">
                     <input class="govuk-checkboxes__input"
