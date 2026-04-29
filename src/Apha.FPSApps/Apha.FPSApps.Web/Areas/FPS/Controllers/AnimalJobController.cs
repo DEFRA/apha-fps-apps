@@ -28,7 +28,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> LoadAnimalPlanGrid(PaginationFilter<string> request, string? jobCode = null)
+        public async Task<IActionResult> LoadAnimalPlanGrid(PaginationFilter<string> request, string? jobCode = null, string? title = null)
         {
             if (!ModelState.IsValid)
             {
@@ -54,10 +54,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             paginationModel.SortColumn = request.SortBy;
             paginationModel.SortDirection = request.Descending;
 
+            var gridTitle = title ?? "Animal Plan";
             var animalCostGrid = new DataGridConfig<AnimalPlanItem>
             {
                 GridId = "animalBookedGrid",
-                Title = "Animal Plan",
+                Title = gridTitle,
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "IndCounter",
@@ -65,7 +66,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 EditFunction = "editAnimalPlan",
                 DeleteFunction = "deleteAnimalPlan",
                 ExtraFilterMethod = "getAnimalPlanExtraFilters",
-                BindGridUrl = "/FPS/AnimalJob/LoadAnimalPlanGrid",
+                BindGridUrl = $"/FPS/AnimalJob/LoadAnimalPlanGrid?title={Uri.EscapeDataString(gridTitle)}",
                 Data = animalItems,
                 Columns = GridDataProvider.GetColumnsDefination<AnimalPlanItem>(null),
                 Pagination = paginationModel,

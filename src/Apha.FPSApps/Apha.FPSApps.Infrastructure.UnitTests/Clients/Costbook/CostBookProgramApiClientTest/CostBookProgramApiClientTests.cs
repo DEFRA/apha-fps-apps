@@ -47,7 +47,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Costbook.CostBookProgramApiClien
             };
             var expectedDto = ApiResponseDto<List<ProgramDto>>.SuccessResponse(mappedProgramDto);
 
-            _http.GetAsync<List<ProgramRes>>("api/projects/programs").Returns(apiResponse);
+            _http.GetAsync<List<ProgramRes>>("api/v1/projects/programs").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<ProgramDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -58,7 +58,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Costbook.CostBookProgramApiClien
             Assert.True(result.Success);
             Assert.NotNull(result.Data);
             Assert.Equal(2, result.Data.Count);
-            await _http.Received(1).GetAsync<List<ProgramRes>>("api/projects/programs");
+            await _http.Received(1).GetAsync<List<ProgramRes>>("api/v1/projects/programs");
             _mapper.Received(1).Map<ApiResponseDto<List<ProgramDto>>>(apiResponse);
         }
 
@@ -78,7 +78,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Costbook.CostBookProgramApiClien
                 Meta = new ApiMetaDto()
             };
 
-            _http.GetAsync<List<ProgramRes>>("api/projects/programs").Returns(apiResponse);
+            _http.GetAsync<List<ProgramRes>>("api/v1/projects/programs").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<ProgramDto>>>(apiResponse).Returns(mappedResponse);
 
             // Act
@@ -89,7 +89,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Costbook.CostBookProgramApiClien
             Assert.False(result.Success);
             Assert.NotNull(result.Errors);
             Assert.NotNull(result.Meta);
-            await _http.Received(1).GetAsync<List<ProgramRes>>("api/projects/programs");
+            await _http.Received(1).GetAsync<List<ProgramRes>>("api/v1/projects/programs");
             _mapper.Received(1).Map<ApiResponseDto<List<ProgramDto>>>(apiResponse);
         }
 
@@ -119,7 +119,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Costbook.CostBookProgramApiClien
                 Meta = new ApiMetaDto()
             };
 
-            _http.GetAsync<List<ProgramRes>>("api/projects/programs").Returns(apiResponse);
+            _http.GetAsync<List<ProgramRes>>("api/v1/projects/programs").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<ProgramDto>>>(apiResponse).Returns(mappedResponse);
 
             // Act
@@ -134,7 +134,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Costbook.CostBookProgramApiClien
             Assert.Equal("API Error", result.Errors[0].Message);
             Assert.Equal("ERROR_CODE", result.Errors[0].Code);
             Assert.NotNull(result.Meta);
-            await _http.Received(1).GetAsync<List<ProgramRes>>("api/projects/programs");
+            await _http.Received(1).GetAsync<List<ProgramRes>>("api/v1/projects/programs");
             _mapper.Received(1).Map<ApiResponseDto<List<ProgramDto>>>(apiResponse);
         }
 
@@ -143,7 +143,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Costbook.CostBookProgramApiClien
         {
             // Arrange
             var exceptionMessage = "Network connection failed";
-            _http.GetAsync<List<ProgramRes>>("api/projects/programs")
+            _http.GetAsync<List<ProgramRes>>("api/v1/projects/programs")
                 .ThrowsAsync(new Exception(exceptionMessage));
 
             // Act
@@ -159,7 +159,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Costbook.CostBookProgramApiClien
             Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
             Assert.Equal(exceptionMessage, result.Errors[0].Details);
             Assert.NotNull(result.Meta);
-            await _http.Received(1).GetAsync<List<ProgramRes>>("api/projects/programs");
+            await _http.Received(1).GetAsync<List<ProgramRes>>("api/v1/projects/programs");
         }
 
         [Fact]
@@ -177,7 +177,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Costbook.CostBookProgramApiClien
             };
             var mappingException = new AutoMapperMappingException("Mapping failed");
 
-            _http.GetAsync<List<ProgramRes>>("api/projects/programs").Returns(apiResponse);
+            _http.GetAsync<List<ProgramRes>>("api/v1/projects/programs").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<ProgramDto>>>(apiResponse).Throws(mappingException);
 
             // Act
@@ -191,7 +191,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Costbook.CostBookProgramApiClien
             Assert.Single(result.Errors);
             Assert.Equal("Failed to retrieve programs", result.Errors[0].Message);
             Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-            await _http.Received(1).GetAsync<List<ProgramRes>>("api/projects/programs");
+            await _http.Received(1).GetAsync<List<ProgramRes>>("api/v1/projects/programs");
         }
 
         [Fact]
@@ -206,7 +206,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Costbook.CostBookProgramApiClien
             };
             var mappedEmptyDto = ApiResponseDto<List<ProgramDto>>.SuccessResponse(new List<ProgramDto>());
 
-            _http.GetAsync<List<ProgramRes>>("api/projects/programs").Returns(apiResponse);
+            _http.GetAsync<List<ProgramRes>>("api/v1/projects/programs").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<ProgramDto>>>(apiResponse).Returns(mappedEmptyDto);
 
             // Act
@@ -217,7 +217,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Costbook.CostBookProgramApiClien
             Assert.True(result.Success);
             Assert.NotNull(result.Data);
             Assert.Empty(result.Data);
-            await _http.Received(1).GetAsync<List<ProgramRes>>("api/projects/programs");
+            await _http.Received(1).GetAsync<List<ProgramRes>>("api/v1/projects/programs");
         }
 
         [Fact]
@@ -231,14 +231,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Costbook.CostBookProgramApiClien
             };
             var mappedDto = ApiResponseDto<List<ProgramDto>>.SuccessResponse(new List<ProgramDto>());
 
-            _http.GetAsync<List<ProgramRes>>("api/projects/programs").Returns(apiResponse);
+            _http.GetAsync<List<ProgramRes>>("api/v1/projects/programs").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<ProgramDto>>>(apiResponse).Returns(mappedDto);
 
             // Act
             await _client.GetAllProgramsAsync();
 
             // Assert
-            await _http.Received(1).GetAsync<List<ProgramRes>>(Arg.Is<string>(s => s == "api/projects/programs"));
+            await _http.Received(1).GetAsync<List<ProgramRes>>(Arg.Is<string>(s => s == "api/v1/projects/programs"));
         }
 
         #endregion

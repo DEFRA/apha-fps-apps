@@ -43,7 +43,12 @@ namespace Apha.FPS.Api.Mappings
                 .ForMember(d => d.ContractNo, o => o.MapFrom(s => s.Contractno))
                 .ForMember(d => d.Category, o => o.MapFrom(s => s.Category));
             CreateMap<YearMasterRes, YearMasterDto>().ReverseMap();
+            CreateMap<DivisionReq, DivisionDto>().ReverseMap();
+            CreateMap<DivisionRes, DivisionDto>().ReverseMap();
+            CreateMap<AgencyRes, AgencyDto>().ReverseMap();
             CreateMap<ProjectGroupDto, ProjectGroupRes>().ReverseMap();
+            CreateMap<TimeCostCalcsViewDto, TimeCostCalcsViewRes>().ReverseMap();
+            CreateMap<TimeCostCalcsTotalsDto, TimeCostCalcsTotalsRes>().ReverseMap();
         }
     }
 }

@@ -1,0 +1,40 @@
+@using Microsoft.AspNetCore.Mvc.Rendering
+@model Apha.FPSApps.Web.Areas.CostBook.Models.StaffRequirementItem
+
+<div class="modal-header">
+    <h5 class="modal-title">@(Model.SrIdentity == 0 ? "Add" : "Edit") Staff Requirement</h5>
+    <button type="button" class="close project-close-btn" aria-label="Close" onclick="closeModal()">×</button>
+</div>
+<div class="modal-body">
+    <form id="staffRequirementForm">
+        <div class="form-group mb-2">
+            <label asp-for="WgGrade" class="govuk-label">WG Grade</label>
+            <select asp-for="WgGrade" asp-items="@((List<SelectListItem>)ViewBag.WgGradeOptions)" class="govuk-select">
+                <option value="">-- Select Grade --</option>
+            </select>
+            <span asp-validation-for="WgGrade" class="govuk-error-message"></span>
+        </div>
+        <div class="form-group mb-2">
+            <label asp-for="Nohours" class="govuk-label">Hrs</label>
+            <input asp-for="Nohours" type="number" step="0.01" class="govuk-input">
+        </div>
+        <div class="form-group mb-2">
+            <label asp-for="Nodays" class="govuk-label">Days</label>
+            <input asp-for="Nodays" type="number" step="0.01" class="govuk-input">
+        </div>
+        <div class="form-group mb-2">
+            <label asp-for="Chargerate" class="govuk-label">Rate</label>
+            <input asp-for="Chargerate" type="text" readonly class="govuk-input">
+        </div>
+        <div class="form-group mb-2">
+            <label asp-for="StaffCost" class="govuk-label">Cost</label>
+            <input asp-for="StaffCost" type="text" readonly class="govuk-input">
+        </div>
+        <input asp-for="SrIdentity" type="hidden">
+        <input asp-for="Payrate" type="hidden">
+        <input asp-for="Npr" type="hidden">
+        <input asp-for="Ohr" type="hidden">
+        <button type="submit" class="govuk-button">Save</button>
+        <button type="button" class="govuk-button govuk-button--secondary sup_margin_0" onclick="closeModal()">Cancel</button>
+    </form>
+</div>

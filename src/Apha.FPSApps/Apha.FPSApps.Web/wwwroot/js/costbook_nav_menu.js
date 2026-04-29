@@ -10,7 +10,7 @@ const htmlmenu = `
                 <ul class="navbar-nav">
 
                 
-				  <li class="nav-item"><a class="nav-link" href="costbookhome.html">Choose Project </a></li>
+				  <li class="nav-item"><a class="nav-link" asp-area="Costbook" asp-controller="Projects" asp-action="Index"">Choose Project </a></li>
 				  
                   
 					 <li class="nav-item">

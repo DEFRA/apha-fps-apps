@@ -116,6 +116,7 @@ function loadPortfolioData(parentProject) {
     currentWorkGroup = '';
     currentPortfolio = '';
     $('#txtSelectedPortfolioTest').val('');
+    clearValidationErrors('#portfolioDetailForm');
     resetFormButtons(false);
 
     $.get('/PACT/PortfolioMaintenance/GetPortfolio', { parentProject: parentProject })
@@ -195,7 +196,7 @@ function addConstituentTest() {
 }
 
 function saveConstituentTest() {
-    clearValidationErrors('#portfolioDetailForm');
+    clearValidationErrors('#formAddTest');
     var form = $('#formAddTest');
     var payload = {
         testCode: form.find('#txtmodal-testcode').val(),
@@ -286,7 +287,7 @@ function addPortfolioTimeCode() {
 }
 
 function savePortfolioTimeCode() {
-    clearValidationErrors('#portfolioDetailForm');
+    clearValidationErrors('#timeCodeForm');
     var form = $('#timeCodeForm');
     var payload = {
         workGroup: form.find('[name=WorkGroup]').val(),
@@ -326,7 +327,7 @@ function editPortfolioTimeCode(btn) {
 }
 
 function updatePortfolioTimeCode() {
-    clearValidationErrors('#portfolioDetailForm');
+    clearValidationErrors('#timeCodeForm');
     var form = $('#timeCodeForm');
     var workGroup = form.data('workgroup');
     var payload = {

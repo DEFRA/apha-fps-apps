@@ -60,7 +60,7 @@
                     <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow for dropdown menu" width="12"></span>
                 </button>
                 <div class="dropdown-menu" id="project-management">
-                    <a class="dropdown-item" href="#">Program Maintenance</a>                    
+                    <a class="dropdown-item" asp-area="PACT" asp-controller="ProgramMaintenance" asp-action="Index">Program Maintenance</a>
                     <a class="dropdown-item" asp-area="PACT" asp-controller="ProjectMaintenance" asp-action="Index">Project Maintenance</a>
                     <a class="dropdown-item" asp-area="PACT" asp-controller="PortfolioMaintenance" asp-action="Index">Portfolio Maintenance</a>
                 </div>
@@ -98,7 +98,7 @@
                 <div class="dropdown-menu" id="work-group">
                     <a href="#" class="dropdown-item">Work Group People</a>
                     <a class="dropdown-item" asp-area="PACT" asp-controller="TestCapability" asp-action="Index">Test Capabilities</a>
-                    <a href="#" class="dropdown-item">Test Maintenance List</a>
+                    <a class="dropdown-item" asp-area="PACT" asp-controller="TestorProduct" asp-action="Index">Test Maintenance List</a>
                 </div>
             </div>
 		
@@ -144,10 +144,10 @@
     </div>
 
     <!-- ── Page Body ─────────────────────────────────────────────────── -->
-    <div>
+        <div class="sup_margin_bottom_10 content-wrapper">
         @RenderBody()
     </div>    
-
+    <!-- ── Footer ────────────────────────────────────────────────────── -->
     <div class="govuk-footer sup_p_0 sup_margin_left_right_0">
         <div class="govuk-width-container sup_p_8 sup_text_center">
             <span>
@@ -155,13 +155,6 @@
             </span>
         </div>
     </div>
-
-   
-
-    <!-- ── Footer ────────────────────────────────────────────────────── -->
-    <footer class="pact-footer" role="contentinfo">
-        &copy; Copyright Defra @DateTime.UtcNow.Year
-    </footer>
 
     <!-- ── Shared modal popup (for add/edit forms) ───────────────────── -->
     <div id="modalPopup" tabindex="-1" aria-labelledby="modalPopupLabel"         
@@ -199,7 +192,7 @@
 
             modal.addEventListener('click', function (e) {
                 if (e.target === modal) {
-                    return false;
+                    return false; 
                 }
             });
 
