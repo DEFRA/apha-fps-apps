@@ -1,4 +1,5 @@
-﻿using Apha.FPSApps.Application.Dtos.FPS;
+﻿using Apha.Common.Contracts.PACT;
+using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Web.Areas.PACT.Models;
 using AutoMapper;
@@ -29,6 +30,7 @@ namespace Apha.FPSApps.Web.Mappings
             
             CreateMap<ProgramViewModel, ProgramDto>().ReverseMap();
             CreateMap<ProgramProjectItem, ProjectDto>().ReverseMap();
+            CreateMap<TestorProductDto, TestOrProductViewModel>().ReverseMap();
         }
     }
 }

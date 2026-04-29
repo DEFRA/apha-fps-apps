@@ -13,6 +13,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
         public IPactProjectSubContractApiClient PactProjectSubContract { get; }
         public IPactTestCapabilityApiClient PactWorkGroupTestCapability { get; }
         public IPactTestRequirementApiClient PactTestRequirement { get; }
+        public IPactTestorProductApiClient PactTestList { get; }
 
         public PactApiClient(IPactHttpExecutor http, IMapper mapper)
         {
@@ -23,6 +24,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             PactProjectSubContract = new PactProjectSubContractApiClient(http, mapper);
             PactWorkGroupTestCapability = new PactTestCapabilityApiClient(http, mapper);
             PactTestRequirement = new PactTestRequirementApiClient(http, mapper);
+            PactTestList = new PactTestorProductApiClient(http, mapper);
         }
     }
 }

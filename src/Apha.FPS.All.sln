@@ -33,6 +33,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Apha.PACT", "Apha.PACT", "{
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Apha.PIMS", "Apha.PIMS", "{98904118-11E4-45B4-910F-1AFD4225E234}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Apha.Common", "Apha.Common", "{ED19AC3D-C93E-4F34-8034-956E4795F6D0}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Apha.Costbook.DataAccess", "Apha.Costbook\Apha.Costbook.DataAccess\Apha.Costbook.DataAccess.csproj", "{D1D74C6B-A46A-8C27-8FCD-6F53339AD2D4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Apha.Costbook.Core", "Apha.Costbook\Apha.Costbook.Core\Apha.Costbook.Core.csproj", "{0EBC449D-F099-E29D-3D47-D399CEE86DC3}"
@@ -56,8 +58,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Apha.PIMS.Application", "Apha.PIMS\Apha.PIMS.Application\Apha.PIMS.Application.csproj", "{159C8418-DF52-9DC8-5135-F57FADDEFA77}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Apha.PIMS.Api", "Apha.PIMS\Apha.PIMS.Api\Apha.PIMS.Api.csproj", "{BFA7BFDD-1E73-CE44-38C2-31146F9A94C7}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Apha.Common", "Apha.Common", "{ED19AC3D-C93E-4F34-8034-956E4795F6D0}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Apha.Common", "Apha.Common\Apha.Common.csproj", "{45D86254-16A2-6BB5-5141-F46DCD297FD3}"
 EndProject

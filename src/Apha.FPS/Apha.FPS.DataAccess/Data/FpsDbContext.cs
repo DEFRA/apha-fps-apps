@@ -56,7 +56,6 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<YearMaster> YearMasters { get; set; }
         public virtual DbSet<StaffJobLog> StaffJobLogs { get; set; }
         public virtual DbSet<AnimalRequestLog> AnimalRequestLogs { get; set; }
-        public virtual DbSet<TestorProduct> TestorProducts { get; set; }
         public virtual DbSet<TimeCostCalcsView> TimeCostCalcsViews { get; set; }
         public virtual DbSet<TimeCostCalcs> TimeCostCalcs { get; set; }
 
@@ -91,9 +90,6 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new FpsSettingMap());
             modelBuilder.Entity<FpsSetting>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
-
-            modelBuilder.ApplyConfiguration(new TestorProductMap());
-            modelBuilder.Entity<TestorProduct>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new WorkgroupMap());
             modelBuilder.Entity<Workgroup>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
