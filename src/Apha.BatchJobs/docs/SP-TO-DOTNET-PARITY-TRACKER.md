@@ -1,82 +1,97 @@
-# SP to .NET Parity Tracker (ScheduledLoadFromFps)
+# SP to .NET Parity Tracker (MABArchive Scheduled Load)
 
-Status date: 2026-04-17
-Scope: legacy stored procedure chain for LoadFromFPS and yearly archive reload
-Goal: 100% logic integrity (apple-to-apple parity)
+Status date: 2026-04-29
+Scope: legacy `sp_LoadFromFPS` chain and yearly MABArchive refresh flow
+Goal: 100% logic integrity with executable parity evidence
 
 ## Status Legend
-- Converted: equivalent behavior implemented and validated.
-- Partial: some behavior implemented, but not full legacy equivalent.
+- Converted: behavior matches legacy and has executable validation evidence.
+- Partial: behavior is implemented and cross-checked against legacy SQL/DDL, but not yet fully proven by targeted parity tests.
 - Missing: no equivalent implementation found.
-
 ## Summary
-- Converted: 2
-- Partial: 5
-- Missing: 22
-- Overall parity completion: 6.9% (2/29 fully converted)
+- Converted: 0
+- Partial: 29
+- Missing: 0
+- Overall implementation coverage: 100% (29/29 procedures mapped)
+- Overall validated parity: 0% pending Task 7 and Task 8 evidence
+
+## Why Drift Happened
+- Earlier .NET work inferred behavior from current schema and existing repository code instead of treating the legacy stored procedure text as the controlling source of truth.
+- That produced modernized behavior in places where strict parity was required: `ON CONFLICT` upserts, defaulting `projectstatus`, injecting `source = 'FPS'`, partial delete coverage, and incomplete loader fan-out.
+- The corrections in this tracker were made by cross-checking three anchors together:
+	- legacy procedure text in `docs/ScheduledJobs.txt`
+	- behavior baseline in `docs/SCHEDULED-LOAD-FPS-DATA-FLOW-AND-CALCULATIONS.md`
+	- PostgreSQL source/target DDL in `dbscript/schemas/01fps/01tables` and `dbscript/schemas/02mabarchive/01tables`
 
 ## Master Procedure Parity
-
 | Legacy SP | Expected Legacy Behavior | .NET Equivalent | Status | Gap / Note |
 |---|---|---|---|---|
-| sp_LoadFromFPS | Orchestrates yearly flow with conditional current-year branch | ScheduledLoadFromFpsJobHandler + plan builder | Partial | Sequence exists, but full fan-out parity and transactional parity are incomplete |
-| sp_deleteFPSTotals | Clears FPSYearTotals before rebuild | RebuildYearTotalsAsync deletes fps.fpsyeartotals by year | Partial | Legacy delete semantics not fully proven equivalent across historical usage |
-| sp_createFPSTotals | Rebuilds totals from source/calculated queries with legacy formulas | RebuildYearTotalsAsync | Partial | Uses simplified source mapping and null placeholders for cost components |
-| sp_DeleteYearsFPSData | Broad year-slice wipe across archive footprint | DeleteArchiveYearSliceAsync | Partial | Only 3 archive tables deleted; legacy expects full archive table set |
-| sp_AddYearsFPSData | Broad fan-out yearly reload by calling SP chain | AddArchiveYearSliceAsync + RefreshCurrentYearProjectAllAsync | Partial | Only subset of legacy loader targets implemented |
+| `sp_LoadFromFPS` | Previous year always runs first; current year full cycle only when month > 4; before May only `MY_tlkpProject_all` refreshes | `MabArchiveLoadOrchestrator` | Partial | Branch order and year-availability guard implemented; still awaiting executable parity tests |
+| `sp_deleteFPSTotals` | Clears `FPSYearTotals` before rebuild | `ReloadFpsTotalsService.RebuildYearTotalsAsync` | Partial | Current implementation deletes by `fpsyear`; legacy SQL is full-table delete |
+| `sp_createFPSTotals` | Rebuilds totals with legacy joins, null handling, and formulas | `ReloadFpsTotalsService.RebuildYearTotalsAsync` | Partial | Formula parity implemented; still awaiting executable data-shape verification |
+| `sp_DeleteYearsFPSData` | Broad year-specific delete across archive footprint plus project-based delete from `G_tlkpProject` | `MyFpsYearlyDataService.DeleteYearDataAsync` | Partial | Legacy table coverage implemented; still awaiting per-table row-count tests |
+| `sp_AddYearsFPSData` | 24-loader archive rebuild in fixed sequence | `MyFpsYearlyDataService.LoadYearDataAsync` | Partial | All 24 loaders implemented in legacy order; still awaiting targeted parity tests |
 
-## Yearly Loader Chain Parity (sp_AddYearsFPSData children)
+## Yearly Loader Chain Parity (`sp_AddYearsFPSData` children)
 
-| Legacy SP | Target Pattern | .NET Equivalent | Status | Gap / Note |
+| Legacy SP | Legacy Source -> Target | .NET Equivalent | Status | Gap / Note |
 |---|---|---|---|---|
-| sp_AddMY_tlkpProgram | year-scoped load to my_tlkpprogram | none found | Missing | Not implemented |
-| sp_AddG_tlkpProject | grouped project reference load | RefreshCurrentYearProjectAllAsync (g_tlkpproject upsert) | Converted | Implemented for current-year refresh path |
-| sp_AddMY_tlkpProject | year-scoped load to my_tlkpproject | AddArchiveYearSliceAsync | Converted | Implemented for selected years |
-| sp_AddMY_FPSYearTotals | year-scoped load to my_fpsyeartotals | AddArchiveYearSliceAsync | Partial | Loader exists but source/transformation parity not fully proven |
-| sp_AddMY_MonthlyOutput | year-scoped load to my_monthlyoutput | none found | Missing | Not implemented |
-| sp_AddMY_MonthlyTime | year-scoped load to my_monthlytime | none found | Missing | Not implemented |
-| sp_AddMY_Proj_Invoice | year-scoped load to my_proj_invoice | none found | Missing | Not implemented |
-| sp_AddMY_Proj_SubContract | year-scoped load to my_proj_subcontract | none found | Missing | Not implemented |
-| sp_AddMY_ProjectMonthFinal | year-scoped load to my_projectmonthfinal | none found | Missing | Not implemented |
-| sp_AddMY_tblAdditionalCosts | year-scoped load to my_tbladditionalcosts | none found | Missing | Not implemented |
-| sp_AddMY_tblAnimalReq | year-scoped load to my_tblanimalreq | none found | Missing | Not implemented |
-| sp_AddMY_tblContract | year-scoped load to my_tblcontract | none found | Missing | Not implemented |
-| sp_AddMY_tblStaffJob | year-scoped load to my_tblstaffjob | none found | Missing | Not implemented |
-| sp_AddMY_TimeCostCalcs | year-scoped load to my_timecostcalcs | none found | Missing | Not implemented |
-| sp_AddMY_tlkpTestReqmt | year-scoped load to my_tlkptestreqmt | none found | Missing | Not implemented |
-| sp_addMY_YearDetails | year-scoped load to tlkpyear and related year metadata | none found | Missing | Not implemented |
-| sp_addMY_WorkGroupGrade | year-scoped load to my_workgroupgrade | none found | Missing | Not implemented |
-| sp_addMY_ProfitCentreGrade | year-scoped load to my_profitcentregrade | none found | Missing | Not implemented |
-| sp_AddMY_tblProfitCentre | year-scoped load to my_tblprofitcentre | none found | Missing | Not implemented |
-| sp_AddMY_TestOrProduct | year-scoped load to my_testorproduct | none found | Missing | Not implemented |
-| sp_AddMY_Staff | year-scoped load to my_staff | none found | Missing | Not implemented |
-| sp_AddMY_Workgroup | year-scoped load to my_workgroup | none found | Missing | Not implemented |
-| sp_AddMY_tblAnimals | year-scoped load to my_tblanimals | none found | Missing | Not implemented |
-| sp_AddMY_tlkpProject_All | year-scoped load to my_tlkpproject_all | RefreshCurrentYearProjectAllAsync | Partial | Current-year path implemented, but full yearly fan-out parity incomplete |
+| `sp_AddMY_tlkpProgram` | `fps.tlkpprogram` -> `mabarchive.my_tlkpprogram` | `LoadYearDataAsync` loader 1 | Partial | Implemented; pending row-count/value tests |
+| `sp_AddG_tlkpProject` | `fps.tlkpproject` grouped -> `mabarchive.g_tlkpproject` | `LoadYearDataAsync` loader 2 | Partial | `GROUP BY` parity implemented; pending duplicate behavior test |
+| `sp_AddMY_tlkpProject` | `fps.tlkpproject` -> `mabarchive.my_tlkpproject` | `LoadYearDataAsync` loader 3 | Partial | Legacy shape restored; `source` no longer injected |
+| `sp_AddMY_FPSYearTotals` | `fps.fpsyeartotals` -> `mabarchive.my_fpsyeartotals` | `LoadYearDataAsync` loader 4 | Partial | Plain copy implemented; pending totals fixture checks |
+| `sp_AddMY_MonthlyOutput` | `fps.monthlyoutput` -> `mabarchive.my_monthlyoutput` | `LoadYearDataAsync` loader 5 | Partial | Implemented; pending row-count tests |
+| `sp_AddMY_MonthlyTime` | `fps.monthlytime` -> `mabarchive.my_monthlytime` | `LoadYearDataAsync` loader 6 | Partial | `pactstaffid` column corrected; pending value tests |
+| `sp_AddMY_Proj_Invoice` | `fps.proj_invoice` -> `mabarchive.my_proj_invoice` | `LoadYearDataAsync` loader 7 | Partial | Implemented; pending row-count tests |
+| `sp_AddMY_Proj_SubContract` | `fps.proj_subcontract` -> `mabarchive.my_proj_subcontract` | `LoadYearDataAsync` loader 8 | Partial | Implemented; pending row-count tests |
+| `sp_AddMY_ProjectMonthFinal` | `fps.projectmonthfinal` -> `mabarchive.my_projectmonthfinal` | `LoadYearDataAsync` loader 9 | Partial | 36-column legacy shape restored; pending fixture verification |
+| `sp_AddMY_tblAdditionalCosts` | `fps.tbladditionalcosts` -> `mabarchive.my_tbladditionalcosts` | `LoadYearDataAsync` loader 10 | Partial | Implemented; pending row-count tests |
+| `sp_AddMY_tblAnimalReq` | `fps.tblanimalreq` -> `mabarchive.my_tblanimalreq` | `LoadYearDataAsync` loader 11 | Partial | Implemented; pending row-count tests |
+| `sp_AddMY_tblContract` | `fps.tblcontract` -> `mabarchive.my_tblcontract` | `LoadYearDataAsync` loader 12 | Partial | Implemented; pending row-count tests |
+| `sp_AddMY_tblStaffJob` | `fps.tblstaffjob` -> `mabarchive.my_tblstaffjob` | `LoadYearDataAsync` loader 13 | Partial | Legacy insert shape restored; `systimestamp` intentionally left null |
+| `sp_AddMY_TimeCostCalcs` | `fps.timecostcalcs` -> `mabarchive.my_timecostcalcs` | `LoadYearDataAsync` loader 14 | Partial | Full legacy column set restored |
+| `sp_AddMY_tlkpTestReqmt` | `fps.tlkptestreqmt` -> `mabarchive.my_tlkptestreqmt` | `LoadYearDataAsync` loader 15 | Partial | Legacy insert shape restored; `source` intentionally left null |
+| `sp_addMY_YearDetails` | `fps.tbldb_variables` -> `mabarchive.tlkpyear` | `LoadYearDataAsync` loader 16 | Partial | Uses `db_var_name = 'month'`; pending data-shape verification |
+| `sp_addMY_WorkGroupGrade` | `fps.workgroupgrade` -> `mabarchive.my_workgroupgrade` | `LoadYearDataAsync` loader 17 | Partial | Implemented; pending row-count tests |
+| `sp_addMY_ProfitCentreGrade` | `fps.profitcentregrade` -> `mabarchive.my_profitcentregrade` | `LoadYearDataAsync` loader 18 | Partial | Implemented; pending row-count tests |
+| `sp_AddMY_tblProfitCentre` | `fps.tblkpprofitcentre` -> `mabarchive.my_tblprofitcentre` | `LoadYearDataAsync` loader 19 | Partial | No `fpsyear` filter by design because source table has no `fpsyear` |
+| `sp_AddMY_TestOrProduct` | `fps.testorproduct` -> `mabarchive.my_testorproduct` | `LoadYearDataAsync` loader 20 | Partial | Implemented; pending row-count tests |
+| `sp_AddMY_Staff` | `fps.tblwgemployee` join `fps.tblemployee` -> `mabarchive.my_staff` | `LoadYearDataAsync` loader 21 | Partial | Batch implementation loads all year rows; legacy SQL had per-user security filter |
+| `sp_AddMY_Workgroup` | `fps.workgroup` -> `mabarchive.my_workgroup` | `LoadYearDataAsync` loader 22 | Partial | Implemented; pending row-count tests |
+| `sp_AddMY_tblAnimals` | `fps.tblanimals` -> `mabarchive.my_tblanimals` | `LoadYearDataAsync` loader 23 | Partial | Implemented; pending row-count tests |
+| `sp_AddMY_tlkpProject_All` | `fps.tlkpproject` -> `mabarchive.my_tlkpproject_all` | `LoadYearDataAsync` loader 24 and `RefreshProjectAllOnlyAsync` | Partial | Legacy full-year and pre-May refresh paths implemented; pending targeted tests |
 
-## Cross-Validation Integrity
+## Residual Gaps Still Open
 
 | Area | Current State | Status | Gap / Note |
 |---|---|---|---|
-| Validation assertion persistence | RunCrossValidationAsync writes assertion rows | Partial | Assertions exist but not tied to full legacy SP coverage |
-| E2E validation fidelity | E2E uses pass-through/stub engines in key scenarios | Partial | Does not fully prove real DB validation integrity |
-| Release gate behavior | Job fails when any assertion fails | Converted | Implemented in orchestrator |
+| `sp_deleteFPSTotals` delete breadth | Deletes only the target year in consolidated storage | Partial | Legacy SQL does full-table delete; requires explicit decision or final parity fix |
+| Totals rebuild proof | Legacy formulas now implemented | Partial | Needs fixture-based proof for null behavior and joins |
+| Staff security filter semantics | Batch load copies all year rows | Partial | Legacy SQL scopes by executing SQL user's accessible workgroups/profit centres; likely intentional runtime adaptation but not yet formally approved |
+| End-to-end validation evidence | Implementation compiles and has been cross-checked against SQL and DDL | Partial | Needs Task 7 and Task 8 tests/results before any row can move to Converted |
 
 ## Evidence Sources
-- Legacy SP chain and parity expectations: docs/SCHEDULED-LOAD-FPS-DATA-FLOW-AND-CALCULATIONS.md
-- Legacy breadth statements (26 tables, 24+ loaders): docs/LEGACY-TO-CURRENT-TABLE-MAPPING.md
-- Current implementation: Apha.BatchJobs.Infrastructure/Repositories/ScheduledLoadFromFpsRepository.cs
-- Orchestrator/release gate: Apha.BatchJobs.Application/Jobs/ScheduledLoadFromFps/ScheduledLoadFromFpsJobHandler.cs
-- E2E tests: Apha.BatchJobs.UnitTests/ScheduledLoadFromFps/E2E/ScheduledLoadE2ETests.cs
+- Legacy procedure text: `docs/ScheduledJobs.txt`
+- Legacy behavior baseline: `docs/SCHEDULED-LOAD-FPS-DATA-FLOW-AND-CALCULATIONS.md`
+- Execution control / drift plan: `docs/MABARCHIVE-100-PERCENT-PARITY-PLAN.md`
+- Orchestrator: `Apha.BatchJobs.Application/Jobs/ScheduledJobs/MABArchive/MabArchiveLoadOrchestrator.cs`
+- Yearly data service contract: `Apha.BatchJobs.Application/Jobs/ScheduledJobs/MABArchive/Services/IMyFpsYearlyDataService.cs`
+- Archive delete/load implementation: `Apha.BatchJobs.Infrastructure/Repositories/MabArchive/MyFpsYearlyDataService.cs`
+- Totals rebuild implementation: `Apha.BatchJobs.Infrastructure/Repositories/MabArchive/ReloadFpsTotalsService.cs`
+- PostgreSQL source schema: `dbscript/schemas/01fps/01tables`
+- PostgreSQL archive schema: `dbscript/schemas/02mabarchive/01tables`
+
+## Implementation Change Evidence
+- `74df9c8e` - orchestration parity and year-availability guard
+- `9edf4dd4` - delete-years parity across legacy archive footprint
+- `7f6cca98` - full 24-loader `sp_AddYearsFPSData` fan-out parity
 
 ## Closure Checklist to Reach 100%
-- Implement full year-slice delete parity across the complete legacy archive footprint.
-- Implement missing yearly loaders for all legacy sp_AddMY_* targets.
-- Align create totals logic with legacy source/calculation semantics.
-- Validate transaction boundaries for delete/load fan-out parity.
-- Replace pass-through E2E validation with real assertion-engine execution.
-- Execute full build/test parity suite in environment with dotnet available.
+- Decide and implement final parity position for `sp_deleteFPSTotals` full-table delete semantics.
+- Add targeted parity tests for branch order, delete coverage, totals formulas, and loader order/coverage.
+- Run focused build/test suite and capture executable evidence.
+- Reclassify validated rows from Partial to Converted only after tests pass.
 
 ## Owner Notes
-- This tracker is intentionally strict: only full equivalence is marked Converted.
-- Partial marks indicate logic exists but is not yet proven apple-to-apple.
+- This tracker is intentionally strict: implementation without executable evidence remains Partial.
+- The current state is materially different from the earlier tracker: nothing is missing anymore, but validation still remains to be done.
