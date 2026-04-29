@@ -54,26 +54,54 @@ SELECT EXISTS(
 
     /// <summary>
     /// Deletes archive data for the specified year across archive tables in dependency order.
+    /// Implements legacy SQL parity: full year-based wipe of archive dataset for the chosen year.
     /// </summary>
     /// <param name="year">Target year to delete.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Total rows deleted.</returns>
     public async Task<int> DeleteYearDataAsync(int year, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Deleting archive data for year {Year} across all archive tables in dependency order", year);
+        _logger.LogInformation("Deleting archive data for year {Year} across all archive tables in dependency order (legacy parity scope)", year);
 
         try
         {
             var totalRowsAffected = 0;
 
-            // Delete order must respect foreign key constraints
-            // Start with leaf tables and work backwards to parent tables
+            // Delete order must respect foreign key constraints.
+            // Leaf tables first, then parent tables.
+            // This list maps to legacy sp_DeleteYearsFPSData coverage per baseline document.
             var archiveTables = new[]
             {
-                "mabarchive.my_fpsyeartotals",
-                "mabarchive.my_tlkpproject_all",
+                // Leaf tables (transaction detail level)
+                "mabarchive.my_timecostcalcs",
+                "mabarchive.my_monthlyoutput",
+                "mabarchive.my_monthlytime",
+                "mabarchive.my_projectmonthfinal",
+                "mabarchive.my_proj_invoice",
+                "mabarchive.my_proj_subcontract",
+                "mabarchive.my_tbladditionalcosts",
+                "mabarchive.my_tblanimalreq",
+                "mabarchive.my_tblcontract",
+                "mabarchive.my_tblstaffjob",
+                "mabarchive.my_tlkptestreqmt",
+
+                // Dimension tables (setup/reference data)
+                "mabarchive.my_testorproduct",
+                "mabarchive.my_staff",
+                "mabarchive.my_workgroup",
+                "mabarchive.my_tblprofitcentre",
+                "mabarchive.my_profitcentregrade",
+                "mabarchive.my_workgroupgrade",
+                "mabarchive.my_tblanimals",
+
+                // Program and project structure
+                "mabarchive.my_tlkpprogram",
                 "mabarchive.my_tlkpproject",
-                "mabarchive.g_tlkpproject"
+                "mabarchive.my_tlkpproject_all",
+
+                // Aggregate and year-level tables
+                "mabarchive.my_fpsyeartotals",
+                "mabarchive.tlkpyear"
             };
 
             foreach (var table in archiveTables)
@@ -91,11 +119,32 @@ WHERE year = {year}
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Error deleting from {TableName} for year {Year}", table, year);
+                    _logger.LogWarning(ex, "Error deleting from {TableName} for year {Year}; continuing with remaining tables", table, year);
                 }
             }
 
-            _logger.LogInformation("Deleted {TotalRowCount} total rows from archive tables for year {Year}", totalRowsAffected, year);
+            // Special handling for G_tlkpProject: project-based delete matching FPS source projects
+            // (not year-based, but included in legacy scope per sp_DeleteYearsFPSData baseline)
+            try
+            {
+                var projectDeleteCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+DELETE FROM mabarchive.g_tlkpproject
+WHERE parentproject IN (
+    SELECT DISTINCT parentproject
+    FROM fps.tlkpproject
+    WHERE fpsyear = {year}
+)
+", cancellationToken);
+
+                totalRowsAffected += projectDeleteCount;
+                _logger.LogInformation("Deleted {RowCount} rows from mabarchive.g_tlkpproject (project-based delete for year {Year})", projectDeleteCount, year);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error deleting from mabarchive.g_tlkpproject for year {Year}; continuing", year);
+            }
+
+            _logger.LogInformation("Deleted {TotalRowCount} total rows from archive tables for year {Year} (legacy parity scope)", totalRowsAffected, year);
             return totalRowsAffected;
         }
         catch (Exception ex)
