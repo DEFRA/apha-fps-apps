@@ -9,11 +9,11 @@ Goal: 100% logic integrity with executable parity evidence
 - Partial: behavior is implemented and cross-checked against legacy SQL/DDL, but not yet fully proven by targeted parity tests.
 - Missing: no equivalent implementation found.
 ## Summary
-- Converted: 0
-- Partial: 29
+- Converted: 1
+- Partial: 28
 - Missing: 0
 - Overall implementation coverage: 100% (29/29 procedures mapped)
-- Overall validated parity: 0% pending Task 7 and Task 8 evidence
+- Overall validated parity: targeted orchestration parity validated; data-shape fixture parity still pending
 
 ## Why Drift Happened
 - Earlier .NET work inferred behavior from current schema and existing repository code instead of treating the legacy stored procedure text as the controlling source of truth.
@@ -26,7 +26,7 @@ Goal: 100% logic integrity with executable parity evidence
 ## Master Procedure Parity
 | Legacy SP | Expected Legacy Behavior | .NET Equivalent | Status | Gap / Note |
 |---|---|---|---|---|
-| `sp_LoadFromFPS` | Previous year always runs first; current year full cycle only when month > 4; before May only `MY_tlkpProject_all` refreshes | `MabArchiveLoadOrchestrator` | Partial | Branch order and year-availability guard implemented; still awaiting executable parity tests |
+| `sp_LoadFromFPS` | Previous year always runs first; current year full cycle only when month > 4; before May only `MY_tlkpProject_all` refreshes | `MabArchiveLoadOrchestrator` | Converted | Branch order, year-availability checks, and skip behavior validated by `MabArchiveLoadOrchestratorParityTests` |
 | `sp_deleteFPSTotals` | Clears `FPSYearTotals` before rebuild | `ReloadFpsTotalsService.RebuildYearTotalsAsync` | Partial | Full-table delete parity implemented; still awaiting fixture-based behavioral proof |
 | `sp_createFPSTotals` | Rebuilds totals with legacy joins, null handling, and formulas | `ReloadFpsTotalsService.RebuildYearTotalsAsync` | Partial | Formula parity implemented; still awaiting executable data-shape verification |
 | `sp_DeleteYearsFPSData` | Broad year-specific delete across archive footprint plus project-based delete from `G_tlkpProject` | `MyFpsYearlyDataService.DeleteYearDataAsync` | Partial | Legacy table coverage implemented; still awaiting per-table row-count tests |
@@ -92,6 +92,31 @@ Goal: 100% logic integrity with executable parity evidence
 - Targeted tests: `MabArchiveLoadOrchestratorParityTests` -> passed (5/5)
 - Complementary scheduler tests: `JobOrchestratorTests` -> passed (14/14)
 - Aggregate targeted test pass count: 19/19
+
+## Final Parity Evidence Report (Task 9)
+
+### Invariant Evidence Matrix
+
+| Invariant | Status | Evidence |
+|---|---|---|
+| 1. Previous year cycle is always attempted first | Proven | `MabArchiveLoadOrchestratorParityTests` order assertions (`month > 4` and `month <= 4` paths) |
+| 2. Full current-year cycle runs only when month > 4 | Proven | `ExecuteAsync_WhenMonthGreaterThan4_RunsPreviousYearThenCurrentYearFullCycle` |
+| 3. Before May, current year only refreshes `MY_tlkpProject_all` | Proven | `ExecuteAsync_WhenMonthLessOrEqual4_RunsPreviousYearFullCycleThenCurrentYearProjectAllOnly` |
+| 4. `sp_createFPSTotals` formulas/null behavior parity | Implemented, not fully proven | SQL in `ReloadFpsTotalsService.RebuildSourceTotalsAsync` cross-checked to `ScheduledJobs.txt`; fixture-level value proof pending |
+| 5. `sp_deleteFPSTotals` full-table delete semantics | Implemented, not fully proven | Full-table delete now implemented in `ReloadFpsTotalsService`; fixture-level behavioral proof pending |
+| 6. `sp_DeleteYearsFPSData` broad year wipe + `G_tlkpProject` project-delete | Implemented, not fully proven | 23 year-based + 1 project-based delete in `DeleteYearDataAsync`; per-table row-count proof pending |
+| 7. `sp_AddYearsFPSData` full fan-out | Implemented, not fully proven | All 24 loaders present in legacy order in `LoadYearDataAsync`; loader-by-loader fixture proof pending |
+| 8. Per-year existence check before cycle | Proven | `IsYearAvailableAsync` gate exercised in parity tests |
+| 9. Missing year is skipped non-fatally | Proven | `ExecuteAsync_WhenPreviousYearUnavailable...` and `...CurrentYearUnavailable...` |
+| 10. Insert-only semantics in archive load paths | Implemented, not fully proven | `ON CONFLICT` removed from main fan-out loaders; duplicate-key behavior under fixtures pending |
+
+### What Is Proven vs Pending
+- Proven by executable tests: orchestration branch logic, execution order, year availability checks, non-fatal skip behavior, failure notification behavior.
+- Implemented and cross-checked against legacy SQL/DDL but still pending fixture proof: totals numeric formula equivalence, delete row-count equivalence by table, and loader row/value equivalence across all 24 loaders.
+
+### Overall Conclusion
+- Implementation parity for scope is complete (all legacy procedures mapped, all known drifts addressed in code).
+- Validation parity is partially complete: orchestration behavior is test-proven, while data-shape/value parity requires fixture-backed verification before full conversion of all rows from Partial to Converted.
 
 ## Closure Checklist to Reach 100%
 - Add targeted parity tests for branch order, delete coverage, totals formulas, and loader order/coverage.
