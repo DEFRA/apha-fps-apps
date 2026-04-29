@@ -53,6 +53,8 @@ namespace Apha.Common.Constants
         public const string CreateProjectSubContract = "api/v1/projectsubcontract";
         public const string UpdateProjectSubContract = "api/v1/projectsubcontract/{0}";
         public const string DeleteProjectSubContract = "api/v1/projectsubcontract/{0}";
+        public const string GetFpsProjectSubContracts = "api/v1/projectsubcontract/animals";
+        public const string GetFpsProjectSubContractTotalAmount = "api/v1/projectsubcontract/animals/total";
 
         // WorkGroup Test Capability
         public const string GetPagedTestCapabilityByWorkGroup = "api/v1/testcapability/paged/workgroup";

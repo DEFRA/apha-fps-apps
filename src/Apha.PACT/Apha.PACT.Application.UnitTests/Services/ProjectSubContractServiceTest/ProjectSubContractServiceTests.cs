@@ -1,4 +1,4 @@
-﻿using Apha.PACT.Application.Dtos;
+using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Pagination;
 using Apha.PACT.Application.Services;
 using Apha.PACT.Application.Validation;
@@ -247,6 +247,85 @@ namespace Apha.PACT.Application.UnitTests.Services.ProjectSubContractServiceTest
             _mockRepository.UpdateAsync(entity).ThrowsAsync(new Exception("DB error"));
 
             await Assert.ThrowsAsync<Exception>(() => _sut.UpdateAsync(dto));
+        }
+
+        #endregion
+
+        #region GetFpsProjectSubContractsAsync
+
+        [Fact]
+        public async Task GetFpsProjectSubContractsAsync_ValidQuery_ReturnsPaginatedResult()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string>();
+            var entities = new List<ProjectSubContract> { new ProjectSubContract { SubContCounter = 1, Project = "PRJ1", AcctCode = "LargeAnimals" } };
+            var pagedData = new PagedData<ProjectSubContract>(entities, new PaginationData());
+            var pagedResult = new PaginatedResult<ProjectSubContractDto>();
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetFpsProjectSubContractsAsync(mappedParams, "PRJ1").Returns(pagedData);
+            _mockMapper.Map<PaginatedResult<ProjectSubContractDto>>(pagedData).Returns(pagedResult);
+
+            var result = await _sut.GetFpsProjectSubContractsAsync(query, "PRJ1");
+
+            result.Should().Be(pagedResult);
+            await _mockRepository.Received(1).GetFpsProjectSubContractsAsync(mappedParams, "PRJ1");
+        }
+
+        [Fact]
+        public async Task GetFpsProjectSubContractsAsync_NullProject_PassesNullToRepository()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string>();
+            var pagedData = new PagedData<ProjectSubContract>(new List<ProjectSubContract>(), new PaginationData());
+            var pagedResult = new PaginatedResult<ProjectSubContractDto>();
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetFpsProjectSubContractsAsync(mappedParams, null).Returns(pagedData);
+            _mockMapper.Map<PaginatedResult<ProjectSubContractDto>>(pagedData).Returns(pagedResult);
+
+            var result = await _sut.GetFpsProjectSubContractsAsync(query, null);
+
+            result.Should().Be(pagedResult);
+            await _mockRepository.Received(1).GetFpsProjectSubContractsAsync(mappedParams, null);
+        }
+
+        [Fact]
+        public async Task GetFpsProjectSubContractsAsync_RepositoryThrows_PropagatesException()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string>();
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetFpsProjectSubContractsAsync(mappedParams, "PRJ1").ThrowsAsync(new Exception("DB error"));
+
+            await Assert.ThrowsAsync<Exception>(() => _sut.GetFpsProjectSubContractsAsync(query, "PRJ1"));
+        }
+
+        #endregion
+
+        #region GetFpsProjectSubContractTotalAmountAsync
+
+        [Fact]
+        public async Task GetFpsProjectSubContractTotalAmountAsync_ValidProject_ReturnsTotalAmount()
+        {
+            _mockRepository.GetFpsProjectSubContractTotalAmountAsync("PRJ1").Returns(1500.00m);
+
+            var result = await _sut.GetFpsProjectSubContractTotalAmountAsync("PRJ1");
+
+            result.Should().Be(1500.00m);
+            await _mockRepository.Received(1).GetFpsProjectSubContractTotalAmountAsync("PRJ1");
+        }
+
+        [Fact]
+        public async Task GetFpsProjectSubContractTotalAmountAsync_NullProject_ReturnsTotalAmount()
+        {
+            _mockRepository.GetFpsProjectSubContractTotalAmountAsync(null).Returns(0m);
+
+            var result = await _sut.GetFpsProjectSubContractTotalAmountAsync(null);
+
+            result.Should().Be(0m);
+            await _mockRepository.Received(1).GetFpsProjectSubContractTotalAmountAsync(null);
         }
 
         #endregion

@@ -42,6 +42,37 @@ namespace Apha.PACT.DataAccess.Repository
             return (await query.SumAsync(s => s.Amount)) ?? 0m;
         }
 
+        private static readonly IReadOnlyList<string> AnimalAcctCodes =
+            new[] { "LargeAnimals", "SmallAnimals", "Mice" };
+
+        public async Task<PagedData<ProjectSubContract>> GetFpsProjectSubContractsAsync(PaginationParameters<string> query, string? project)
+        {
+            IQueryable<ProjectSubContract> q = _context.ProjectSubContracts
+                .AsNoTracking()
+                .Where(s => AnimalAcctCodes.Contains(s.AcctCode));
+
+            if (!string.IsNullOrEmpty(project))
+                q = q.Where(s => s.Project == project);
+
+            q = ApplySubContractFilter(q, query.Filter);
+            q = (IQueryable<ProjectSubContract>)ApplySorting(q, query.SortBy, query.Descending);
+
+            List<ProjectSubContract> result = await q.ToListAsync();
+            return ApplyPaging(result, query.Page, query.PageSize);
+        }
+
+        public async Task<decimal> GetFpsProjectSubContractTotalAmountAsync(string? project)
+        {
+            IQueryable<ProjectSubContract> q = _context.ProjectSubContracts
+                .AsNoTracking()
+                .Where(s => AnimalAcctCodes.Contains(s.AcctCode));
+
+            if (!string.IsNullOrEmpty(project))
+                q = q.Where(s => s.Project == project);
+
+            return (await q.SumAsync(s => s.Amount)) ?? 0m;
+        }
+
         public async Task<ProjectSubContract?> GetByIdAsync(int subContCounter)
         {
             return await _context.ProjectSubContracts
