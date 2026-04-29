@@ -12,6 +12,7 @@ public static class ProgramExtension
     /// </summary>
     public static void ConfigureServices(this HostApplicationBuilder builder)
     {
-        ServiceCollectionSetup.ConfigureBatchJobServices(builder.Services, builder.Configuration);
+        Apha.BatchJobs.Application.DependencyInjection.ServiceCollectionSetup
+            .ConfigureBatchJobServices(builder.Services, builder.Configuration);
     }
 }

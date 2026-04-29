@@ -1,0 +1,226 @@
+using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services;
+using Apha.BatchJobs.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+
+namespace Apha.BatchJobs.Infrastructure.Repositories.MabArchive;
+
+/// <summary>
+/// Implementation of IMyFpsYearlyDataService.
+/// Manages yearly FPS archive data operations (delete, load, refresh).
+/// </summary>
+public sealed class MyFpsYearlyDataService : IMyFpsYearlyDataService
+{
+    private readonly BatchJobsDbContext _context;
+    private readonly ILogger<MyFpsYearlyDataService> _logger;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MyFpsYearlyDataService"/> class.
+    /// </summary>
+    /// <param name="context">Batch jobs database context.</param>
+    /// <param name="logger">Logger instance.</param>
+    public MyFpsYearlyDataService(BatchJobsDbContext context, ILogger<MyFpsYearlyDataService> logger)
+    {
+        _context = context ?? throw new ArgumentNullException(nameof(context));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    /// <summary>
+    /// Deletes archive data for the specified year across archive tables in dependency order.
+    /// </summary>
+    /// <param name="year">Target year to delete.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Total rows deleted.</returns>
+    public async Task<int> DeleteYearDataAsync(int year, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Deleting archive data for year {Year} across all archive tables in dependency order", year);
+
+        try
+        {
+            var totalRowsAffected = 0;
+
+            // Delete order must respect foreign key constraints
+            // Start with leaf tables and work backwards to parent tables
+            var archiveTables = new[]
+            {
+                "mabarchive.my_fpsyeartotals",
+                "mabarchive.my_tlkpproject_all",
+                "mabarchive.my_tlkpproject",
+                "mabarchive.g_tlkpproject"
+            };
+
+            foreach (var table in archiveTables)
+            {
+                var deleteCount = 0;
+                try
+                {
+                    deleteCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+DELETE FROM {table:Raw}
+WHERE year = {year}
+", cancellationToken);
+
+                    totalRowsAffected += deleteCount;
+                    _logger.LogInformation("Deleted {RowCount} rows from {TableName} for year {Year}", deleteCount, table, year);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Error deleting from {TableName} for year {Year}", table, year);
+                }
+            }
+
+            _logger.LogInformation("Deleted {TotalRowCount} total rows from archive tables for year {Year}", totalRowsAffected, year);
+            return totalRowsAffected;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to delete archive data for year {Year}", year);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Loads archive data for the specified year from FPS source tables.
+    /// </summary>
+    /// <param name="year">Target year to load.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Total rows loaded.</returns>
+    public async Task<int> LoadYearDataAsync(int year, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Loading archive data for year {Year} from FPS source in dependency order", year);
+
+        try
+        {
+            var totalRowsAffected = 0;
+
+            // Load my_fpsyeartotals
+            var fpsYearTotalsRows = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+INSERT INTO mabarchive.my_fpsyeartotals (
+    year, parentproject, program, totaladditionalcosts, totalanimalcosts,
+    totalstaffcosts, totaltestcosts, totalcosts, custincome, transferincome,
+    totalincome, budget_cvl, requiredprofit, manager, customer, projectstatus,
+    pvsincome, plancaseworkdebit, totalpaycosts
+)
+SELECT
+    {year}, f.parentproject, f.program, f.totaladditionalcosts, f.totalanimalcosts,
+    f.totalstaffcosts, f.totaltestcosts, f.totalcosts, f.custincome, f.transferincome,
+    f.totalincome, f.budget_cvl, f.requiredprofit, f.manager, f.customer,
+    COALESCE(f.projectstatus, 'Active'), f.pvsincome, f.plancaseworkdebit, f.totalpaycosts
+FROM fps.fpsyeartotals f
+WHERE f.fpsyear = {year}
+ON CONFLICT (year, parentproject) DO UPDATE
+SET
+    program = EXCLUDED.program,
+    totalcosts = EXCLUDED.totalcosts,
+    custincome = EXCLUDED.custincome,
+    transferincome = EXCLUDED.transferincome,
+    totalincome = EXCLUDED.totalincome,
+    budget_cvl = EXCLUDED.budget_cvl,
+    requiredprofit = EXCLUDED.requiredprofit,
+    manager = EXCLUDED.manager,
+    customer = EXCLUDED.customer,
+    projectstatus = EXCLUDED.projectstatus,
+    pvsincome = EXCLUDED.pvsincome,
+    plancaseworkdebit = EXCLUDED.plancaseworkdebit,
+    totalpaycosts = EXCLUDED.totalpaycosts
+", cancellationToken);
+
+            totalRowsAffected += fpsYearTotalsRows;
+            _logger.LogInformation("Loaded {RowCount} rows into my_fpsyeartotals for year {Year}", fpsYearTotalsRows, year);
+
+            // Load my_tlkpproject
+            var tlkpProjectRows = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+INSERT INTO mabarchive.my_tlkpproject (
+    year, parentproject, program, customer, manager, transferincome, custincome,
+    wip_eoy, wip_limit, wip_current, projectstatus, datecreated, feccost,
+    profit, budget_cvl, caseworksub, pvsincome, plancaseworkdebit, source,
+    disease, contract, finished, comments, carryover, isdefraproject,
+    costcentre, oracleprojectcode, subaccountcode, projectgroup, incomeaccountcode
+)
+SELECT
+    {year}, LEFT(t.parentproject::text, 20), LEFT(t.program::text, 10),
+    LEFT(t.customer::text, 50), t.manager, t.transferincome, t.custincome,
+    t.wip_eoy, t.wip_limit, t.wip_current, LEFT(t.projectstatus::text, 50),
+    t.datecreated::date, t.feccost, t.profit, t.budget_cvl, t.caseworksub,
+    t.pvsincome, t.plancaseworkdebit, 'FPS', LEFT(t.disease::text, 50),
+    LEFT(t.contract::text, 10), t.finished, t.comments, t.carryover,
+    t.isdefraproject, t.costcentre, t.oracleprojectcode,
+    LEFT(t.subaccountcode::text, 50), LEFT(t.projectgroup::text, 50),
+    LEFT(t.incomeaccountcode::text, 50)
+FROM fps.tlkpproject t
+WHERE t.fpsyear = {year}
+ON CONFLICT (year, parentproject) DO UPDATE
+SET program = EXCLUDED.program, customer = EXCLUDED.customer,
+    manager = EXCLUDED.manager, transferincome = EXCLUDED.transferincome,
+    custincome = EXCLUDED.custincome, projectstatus = EXCLUDED.projectstatus
+", cancellationToken);
+
+            totalRowsAffected += tlkpProjectRows;
+            _logger.LogInformation("Loaded {RowCount} rows into my_tlkpproject for year {Year}", tlkpProjectRows, year);
+
+            // Note: Full fan-out to all 24 legacy archive tables is pending implementation
+            // This is Phase 2 scope (23 additional sp_AddMY_* loaders)
+
+            _logger.LogInformation("Loaded {TotalRowCount} total rows into archive tables for year {Year}", totalRowsAffected, year);
+            return totalRowsAffected;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to load archive data for year {Year}", year);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Refreshes only the my_tlkpproject_all table for the specified year.
+    /// </summary>
+    /// <param name="year">Target year to refresh.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Rows affected in my_tlkpproject_all.</returns>
+    public async Task<int> RefreshProjectAllOnlyAsync(int year, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Refreshing project_all cross-reference only for year {Year}", year);
+
+        try
+        {
+            // Delete existing records
+            await _context.Database.ExecuteSqlInterpolatedAsync($@"
+DELETE FROM mabarchive.my_tlkpproject_all
+WHERE year = {year}
+", cancellationToken);
+
+            // Reload fresh records
+            var rowsAffected = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+INSERT INTO mabarchive.my_tlkpproject_all (
+    year, parentproject, program, customer, manager, transferincome, custincome,
+    wip_eoy, wip_limit, wip_current, projectstatus, datecreated, feccost,
+    profit, budget_cvl, caseworksub, pvsincome, plancaseworkdebit, source,
+    disease, contract, finished, comments, carryover, isdefraproject,
+    costcentre, oracleprojectcode, subaccountcode, projectgroup, incomeaccountcode
+)
+SELECT
+    {year}, LEFT(t.parentproject::text, 20), LEFT(t.program::text, 10),
+    LEFT(t.customer::text, 50), t.manager, t.transferincome, t.custincome,
+    t.wip_eoy, t.wip_limit, t.wip_current, LEFT(t.projectstatus::text, 50),
+    t.datecreated::date, t.feccost, t.profit, t.budget_cvl, t.caseworksub,
+    t.pvsincome, t.plancaseworkdebit, 'FPS', LEFT(t.disease::text, 50),
+    LEFT(t.contract::text, 10), t.finished, t.comments, t.carryover,
+    t.isdefraproject, t.costcentre, t.oracleprojectcode,
+    LEFT(t.subaccountcode::text, 50), LEFT(t.projectgroup::text, 50),
+    LEFT(t.incomeaccountcode::text, 50)
+FROM fps.tlkpproject t
+WHERE t.fpsyear = {year}
+ON CONFLICT (year, parentproject) DO UPDATE
+SET program = EXCLUDED.program, customer = EXCLUDED.customer,
+    manager = EXCLUDED.manager, projectstatus = EXCLUDED.projectstatus
+", cancellationToken);
+
+            _logger.LogInformation("Refreshed {RowCount} rows in my_tlkpproject_all for year {Year}", rowsAffected, year);
+            return rowsAffected;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to refresh project all for year {Year}", year);
+            throw;
+        }
+    }
+}

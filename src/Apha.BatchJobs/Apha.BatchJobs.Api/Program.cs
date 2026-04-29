@@ -1,5 +1,5 @@
 using Apha.BatchJobs.Api.Services;
-using Apha.BatchJobs.Worker;
+using Apha.BatchJobs.Application.DependencyInjection;
 using Amazon.ECS;
 using Microsoft.AspNetCore.Diagnostics;
 

@@ -1,10 +1,14 @@
 using Apha.BatchJobs.Application.Factory;
 using Apha.BatchJobs.Application.Interfaces;
+using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive;
+using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services;
 using Apha.BatchJobs.Domain.Configuration;
 using Apha.BatchJobs.Domain.Entities;
 using Apha.BatchJobs.Domain.Interfaces;
 using Apha.BatchJobs.Infrastructure.Data;
 using Apha.BatchJobs.Infrastructure.Repositories;
+using Apha.BatchJobs.Infrastructure.Repositories.MabArchive;
+using Apha.BatchJobs.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -80,6 +84,31 @@ public static class ServiceCollectionSetup
         services.AddScoped<IBatchJobFactory>(sp => new BatchJobFactory(sp));
         services.AddScoped<IJobOrchestrator, JobOrchestrator>();
         services.AddSingleton(config);
+        services.AddSingleton<ICorrelationService, CorrelationService>();
+
+        services.AddScoped<Func<Func<Task>, Task>>(sp =>
+        {
+            return async action =>
+            {
+                var dbContext = sp.GetService<BatchJobsDbContext>();
+                if (dbContext is null)
+                {
+                    await action();
+                    return;
+                }
+
+                await using var transaction = await dbContext.Database.BeginTransactionAsync();
+                await action();
+                await transaction.CommitAsync();
+            };
+        });
+
+        // MABArchive Configuration and Services
+        services.Configure<MabArchiveSettings>(config.GetSection("MabArchive"));
+        services.AddScoped<IReloadFpsTotalsService, ReloadFpsTotalsService>();
+        services.AddScoped<IMyFpsYearlyDataService, MyFpsYearlyDataService>();
+        services.AddScoped<IEmailNotificationService, EmailNotificationService>();
+        services.AddScoped<MabArchiveLoadOrchestrator>();
     }
 
     private sealed class NoDbBatchLockRepository : IBatchLockRepository
@@ -113,7 +142,9 @@ public static class ServiceCollectionSetup
 
         var jobTypes = applicationAssembly
             .GetTypes()
-            .Where(t => t is { IsClass: true, IsAbstract: false } && batchJobType.IsAssignableFrom(t))
+            .Where(t =>
+                t is { IsClass: true, IsAbstract: false } &&
+                batchJobType.IsAssignableFrom(t))
             .ToList();
 
         foreach (var jobType in jobTypes)
