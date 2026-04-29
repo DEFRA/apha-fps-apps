@@ -156,58 +156,76 @@ WHERE parentproject IN (
 
     /// <summary>
     /// Loads archive data for the specified year from FPS source tables.
-    /// Implements legacy sp_AddYearsFPSData fan-out logic in dependency order.
+    /// Implements full legacy sp_AddYearsFPSData fan-out in the exact same 24-loader execution order.
+    /// All inserts are insert-only (no upsert); delete-then-insert is the idempotency mechanism per Assumption A3.
     /// </summary>
     /// <param name="year">Target year to load.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Total rows loaded.</returns>
     public async Task<int> LoadYearDataAsync(int year, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Loading archive data for year {Year} from FPS source in dependency order (legacy sp_AddYearsFPSData parity)", year);
+        _logger.LogInformation("Loading archive data for year {Year} — full sp_AddYearsFPSData fan-out (24 loaders, legacy parity order)", year);
 
         try
         {
             var totalRowsAffected = 0;
+            int rowCount;
 
-            // Step 1: Reference data — Programs (foundational for project references)
-            var programsRows = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+            // ── Loader 1: sp_AddMY_tlkpProgram ─────────────────────────────────────────
+            rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 INSERT INTO mabarchive.my_tlkpprogram (
     year, programno, programname, directorate, minim, sector_name, customer, target, manager
 )
-SELECT DISTINCT
+SELECT
     {year}, p.programno, p.programname, p.directorate, p.minim, p.sector_name,
     p.customer, p.target, p.manager
 FROM fps.tlkpprogram p
 WHERE p.fpsyear = {year}
-ON CONFLICT (year, programno) DO UPDATE
-SET programname = EXCLUDED.programname, directorate = EXCLUDED.directorate,
-    customer = EXCLUDED.customer, manager = EXCLUDED.manager
 ", cancellationToken);
+            totalRowsAffected += rowCount;
+            _logger.LogInformation("[1/24] my_tlkpprogram: {RowCount} rows for year {Year}", rowCount, year);
 
-            totalRowsAffected += programsRows;
-            _logger.LogInformation("Loaded {RowCount} rows into my_tlkpprogram for year {Year}", programsRows, year);
-
-            // Step 2: Project groups (G_tlkpProject) — aggregated reference across projects in this year
-            var projectGroupRows = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+            // ── Loader 2: sp_AddG_tlkpProject ──────────────────────────────────────────
+            rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 INSERT INTO mabarchive.g_tlkpproject (
     parentproject, projecttitle, costbookno, disease, contract, shorttitle, projectstatus
 )
-SELECT DISTINCT
+SELECT
     t.parentproject, t.projecttitle, t.costbookno, t.disease, t.contract,
     t.shorttitle, t.projectstatus
 FROM fps.tlkpproject t
 WHERE t.fpsyear = {year}
-ON CONFLICT (parentproject) DO UPDATE
-SET projecttitle = EXCLUDED.projecttitle, disease = EXCLUDED.disease,
-    projectstatus = EXCLUDED.projectstatus
+GROUP BY t.parentproject, t.projecttitle, t.costbookno, t.disease,
+         t.contract, t.shorttitle, t.projectstatus
 ", cancellationToken);
+            totalRowsAffected += rowCount;
+            _logger.LogInformation("[2/24] g_tlkpproject: {RowCount} rows for year {Year}", rowCount, year);
 
-            totalRowsAffected += projectGroupRows;
-            _logger.LogInformation("Loaded {RowCount} rows into g_tlkpproject for year {Year}", projectGroupRows, year);
+            // ── Loader 3: sp_AddMY_tlkpProject ─────────────────────────────────────────
+            // source column exists in DDL but legacy sp_AddMY_tlkpProject does not populate it
+            rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+INSERT INTO mabarchive.my_tlkpproject (
+    year, parentproject, program, customer, manager, transferincome, custincome,
+    wip_eoy, wip_limit, wip_current, projectstatus, datecreated, feccost,
+    profit, budget_cvl, caseworksub, pvsincome, plancaseworkdebit,
+    disease, contract, finished, comments, carryover, isdefraproject,
+    costcentre, oracleprojectcode, subaccountcode, projectgroup, incomeaccountcode
+)
+SELECT
+    {year}, t.parentproject, t.program, t.customer, t.manager, t.transferincome, t.custincome,
+    t.wip_eoy, t.wip_limit, t.wip_current, t.projectstatus, t.datecreated, t.feccost,
+    t.profit, t.budget_cvl, t.caseworksub, t.pvsincome, t.plancaseworkdebit,
+    t.disease, t.contract, t.finished, t.comments, t.carryover, t.isdefraproject,
+    t.costcentre, t.oracleprojectcode, t.subaccountcode, t.projectgroup, t.incomeaccountcode
+FROM fps.tlkpproject t
+WHERE t.fpsyear = {year}
+", cancellationToken);
+            totalRowsAffected += rowCount;
+            _logger.LogInformation("[3/24] my_tlkpproject: {RowCount} rows for year {Year}", rowCount, year);
 
-            // Step 3: Project yearly records (my_tlkpproject)
-            // Load my_fpsyeartotals
-            var fpsYearTotalsRows = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+            // ── Loader 4: sp_AddMY_FPSYearTotals ───────────────────────────────────────
+            // Plain copy from fps.fpsyeartotals — no defaults applied (legacy does not set any)
+            rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 INSERT INTO mabarchive.my_fpsyeartotals (
     year, parentproject, program, totaladditionalcosts, totalanimalcosts,
     totalstaffcosts, totaltestcosts, totalcosts, custincome, transferincome,
@@ -218,61 +236,15 @@ SELECT
     {year}, f.parentproject, f.program, f.totaladditionalcosts, f.totalanimalcosts,
     f.totalstaffcosts, f.totaltestcosts, f.totalcosts, f.custincome, f.transferincome,
     f.totalincome, f.budget_cvl, f.requiredprofit, f.manager, f.customer,
-    COALESCE(f.projectstatus, 'Active'), f.pvsincome, f.plancaseworkdebit, f.totalpaycosts
+    f.projectstatus, f.pvsincome, f.plancaseworkdebit, f.totalpaycosts
 FROM fps.fpsyeartotals f
 WHERE f.fpsyear = {year}
-ON CONFLICT (year, parentproject) DO UPDATE
-SET
-    program = EXCLUDED.program,
-    totalcosts = EXCLUDED.totalcosts,
-    custincome = EXCLUDED.custincome,
-    transferincome = EXCLUDED.transferincome,
-    totalincome = EXCLUDED.totalincome,
-    budget_cvl = EXCLUDED.budget_cvl,
-    requiredprofit = EXCLUDED.requiredprofit,
-    manager = EXCLUDED.manager,
-    customer = EXCLUDED.customer,
-    projectstatus = EXCLUDED.projectstatus,
-    pvsincome = EXCLUDED.pvsincome,
-    plancaseworkdebit = EXCLUDED.plancaseworkdebit,
-    totalpaycosts = EXCLUDED.totalpaycosts
 ", cancellationToken);
+            totalRowsAffected += rowCount;
+            _logger.LogInformation("[4/24] my_fpsyeartotals: {RowCount} rows for year {Year}", rowCount, year);
 
-            totalRowsAffected += fpsYearTotalsRows;
-            _logger.LogInformation("Loaded {RowCount} rows into my_fpsyeartotals for year {Year}", fpsYearTotalsRows, year);
-
-            // Load my_tlkpproject
-            var tlkpProjectRows = await _context.Database.ExecuteSqlInterpolatedAsync($@"
-INSERT INTO mabarchive.my_tlkpproject (
-    year, parentproject, program, customer, manager, transferincome, custincome,
-    wip_eoy, wip_limit, wip_current, projectstatus, datecreated, feccost,
-    profit, budget_cvl, caseworksub, pvsincome, plancaseworkdebit, source,
-    disease, contract, finished, comments, carryover, isdefraproject,
-    costcentre, oracleprojectcode, subaccountcode, projectgroup, incomeaccountcode
-)
-SELECT
-    {year}, LEFT(t.parentproject::text, 20), LEFT(t.program::text, 10),
-    LEFT(t.customer::text, 50), t.manager, t.transferincome, t.custincome,
-    t.wip_eoy, t.wip_limit, t.wip_current, LEFT(t.projectstatus::text, 50),
-    t.datecreated::date, t.feccost, t.profit, t.budget_cvl, t.caseworksub,
-    t.pvsincome, t.plancaseworkdebit, 'FPS', LEFT(t.disease::text, 50),
-    LEFT(t.contract::text, 10), t.finished, t.comments, t.carryover,
-    t.isdefraproject, t.costcentre, t.oracleprojectcode,
-    LEFT(t.subaccountcode::text, 50), LEFT(t.projectgroup::text, 50),
-    LEFT(t.incomeaccountcode::text, 50)
-FROM fps.tlkpproject t
-WHERE t.fpsyear = {year}
-ON CONFLICT (year, parentproject) DO UPDATE
-SET program = EXCLUDED.program, customer = EXCLUDED.customer,
-    manager = EXCLUDED.manager, transferincome = EXCLUDED.transferincome,
-    custincome = EXCLUDED.custincome, projectstatus = EXCLUDED.projectstatus
-", cancellationToken);
-
-            totalRowsAffected += tlkpProjectRows;
-            _logger.LogInformation("Loaded {RowCount} rows into my_tlkpproject for year {Year}", tlkpProjectRows, year);
-
-            // Step 4: Monthly output summary (test volume by test/buyer/month/workgroup)
-            var monthlyOutputRows = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+            // ── Loader 5: sp_AddMY_MonthlyOutput ───────────────────────────────────────
+            rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 INSERT INTO mabarchive.my_monthlyoutput (
     year, testcode, buyer, month, workgroup, volume, wgbuyer
 )
@@ -280,55 +252,26 @@ SELECT
     {year}, m.testcode, m.buyer, m.month, m.workgroup, m.volume, m.wgbuyer
 FROM fps.monthlyoutput m
 WHERE m.fpsyear = {year}
-ON CONFLICT (year, testcode, buyer, month, workgroup) DO UPDATE
-SET volume = EXCLUDED.volume, wgbuyer = EXCLUDED.wgbuyer
 ", cancellationToken);
+            totalRowsAffected += rowCount;
+            _logger.LogInformation("[5/24] my_monthlyoutput: {RowCount} rows for year {Year}", rowCount, year);
 
-            totalRowsAffected += monthlyOutputRows;
-            _logger.LogInformation("Loaded {RowCount} rows into my_monthlyoutput for year {Year}", monthlyOutputRows, year);
-
-            // Step 5: Monthly time summary (staff time allocation)
-            var monthlyTimeRows = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+            // ── Loader 6: sp_AddMY_MonthlyTime ─────────────────────────────────────────
+            // column is pactstaffid (no underscore) per both DDL and fps.monthlytime source
+            rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 INSERT INTO mabarchive.my_monthlytime (
-    year, pact_staffid, timecode, month, parentproject, workgroup, hours
+    year, pactstaffid, timecode, month, parentproject, workgroup, hours
 )
 SELECT
-    {year}, m.pact_staffid, m.timecode, m.month, m.parentproject, m.workgroup, m.hours
+    {year}, m.pactstaffid, m.timecode, m.month, m.parentproject, m.workgroup, m.hours
 FROM fps.monthlytime m
 WHERE m.fpsyear = {year}
-ON CONFLICT (year, pact_staffid, timecode, month, parentproject, workgroup) DO UPDATE
-SET hours = EXCLUDED.hours
 ", cancellationToken);
+            totalRowsAffected += rowCount;
+            _logger.LogInformation("[6/24] my_monthlytime: {RowCount} rows for year {Year}", rowCount, year);
 
-            totalRowsAffected += monthlyTimeRows;
-            _logger.LogInformation("Loaded {RowCount} rows into my_monthlytime for year {Year}", monthlyTimeRows, year);
-
-            // Step 6: Project month final (comprehensive project financials by month)
-            var projectMonthFinalRows = await _context.Database.ExecuteSqlInterpolatedAsync($@"
-INSERT INTO mabarchive.my_projectmonthfinal (
-    year, parentproject, month, volume, cost, wip, profitloss, detail,
-    invoicecounter, type, invoiceamount, costofwork, costofworkdebit,
-    profitmargin, profitmarginpct, cumvolume, cumcost, cumwip,
-    cumprofitloss, description, comments
-)
-SELECT
-    {year}, p.parentproject, p.month, p.volume, p.cost, p.wip, p.profitloss,
-    p.detail, p.invoicecounter, p.type, p.invoiceamount, p.costofwork,
-    p.costofworkdebit, p.profitmargin, p.profitmarginpct, p.cumvolume,
-    p.cumcost, p.cumwip, p.cumprofitloss, p.description, p.comments
-FROM fps.projectmonthfinal p
-WHERE p.fpsyear = {year}
-ON CONFLICT (year, parentproject, month, type) DO UPDATE
-SET volume = EXCLUDED.volume, cost = EXCLUDED.cost, wip = EXCLUDED.wip,
-    profitloss = EXCLUDED.profitloss, cumvolume = EXCLUDED.cumvolume,
-    cumcost = EXCLUDED.cumcost, cumprofitloss = EXCLUDED.cumprofitloss
-", cancellationToken);
-
-            totalRowsAffected += projectMonthFinalRows;
-            _logger.LogInformation("Loaded {RowCount} rows into my_projectmonthfinal for year {Year}", projectMonthFinalRows, year);
-
-            // Step 7: Project invoices
-            var projInvoiceRows = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+            // ── Loader 7: sp_AddMY_Proj_Invoice ────────────────────────────────────────
+            rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 INSERT INTO mabarchive.my_proj_invoice (
     year, projectparent, month, amount, costofwork, wip, profitloss, detail,
     invoicecounter, type
@@ -338,16 +281,12 @@ SELECT
     i.detail, i.invoicecounter, i.type
 FROM fps.proj_invoice i
 WHERE i.fpsyear = {year}
-ON CONFLICT (year, projectparent, month, invoicecounter, type) DO UPDATE
-SET amount = EXCLUDED.amount, costofwork = EXCLUDED.costofwork,
-    wip = EXCLUDED.wip, profitloss = EXCLUDED.profitloss
 ", cancellationToken);
+            totalRowsAffected += rowCount;
+            _logger.LogInformation("[7/24] my_proj_invoice: {RowCount} rows for year {Year}", rowCount, year);
 
-            totalRowsAffected += projInvoiceRows;
-            _logger.LogInformation("Loaded {RowCount} rows into my_proj_invoice for year {Year}", projInvoiceRows, year);
-
-            // Step 8: Project subcontracts
-            var projSubcontractRows = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+            // ── Loader 8: sp_AddMY_Proj_SubContract ────────────────────────────────────
+            rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 INSERT INTO mabarchive.my_proj_subcontract (
     year, subcontcounter, project, testjob, month, amount, workgroup, acctcode,
     supplier, description, suppliernumber, dailyrate, animaldays
@@ -357,16 +296,267 @@ SELECT
     s.acctcode, s.supplier, s.description, s.suppliernumber, s.dailyrate, s.animaldays
 FROM fps.proj_subcontract s
 WHERE s.fpsyear = {year}
-ON CONFLICT (year, subcontcounter) DO UPDATE
-SET amount = EXCLUDED.amount, month = EXCLUDED.month, workgroup = EXCLUDED.workgroup
 ", cancellationToken);
+            totalRowsAffected += rowCount;
+            _logger.LogInformation("[8/24] my_proj_subcontract: {RowCount} rows for year {Year}", rowCount, year);
 
-            totalRowsAffected += projSubcontractRows;
-            _logger.LogInformation("Loaded {RowCount} rows into my_proj_subcontract for year {Year}", projSubcontractRows, year);
+            // ── Loader 9: sp_AddMY_ProjectMonthFinal ───────────────────────────────────
+            // 36 columns per legacy SQL; fps.projectmonthfinal has an extra 'x' column — omitted
+            rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+INSERT INTO mabarchive.my_projectmonthfinal (
+    year, project, monthno, periodname, cumflag, costprofile, subcontracts, animals,
+    nonanimals, timecosts, transfercosts, totalcost, invoices, coiw, portsales,
+    cumcost, cumprofile, sumofcostprofile, cuminvoices, cumcoiw, cumportsales,
+    mstonedue, due__done, ontime, sumofmstonedue, sumofdue__done, sumofontime,
+    cwdebit, cwcredit, cumcwdebit, cumcwcredit, totalhours, cumtotalhours,
+    cumsubcontracts, cumtestcosts, paycosts, cumpaycosts
+)
+SELECT
+    {year}, p.project, p.monthno, p.periodname, p.cumflag, p.costprofile, p.subcontracts,
+    p.animals, p.nonanimals, p.timecosts, p.transfercosts, p.totalcost, p.invoices,
+    p.coiw, p.portsales, p.cumcost, p.cumprofile, p.sumofcostprofile, p.cuminvoices,
+    p.cumcoiw, p.cumportsales, p.mstonedue, p.due__done, p.ontime, p.sumofmstonedue,
+    p.sumofdue__done, p.sumofontime, p.cwdebit, p.cwcredit, p.cumcwdebit, p.cumcwcredit,
+    p.totalhours, p.cumtotalhours, p.cumsubcontracts, p.cumtestcosts, p.paycosts, p.cumpaycosts
+FROM fps.projectmonthfinal p
+WHERE p.fpsyear = {year}
+", cancellationToken);
+            totalRowsAffected += rowCount;
+            _logger.LogInformation("[9/24] my_projectmonthfinal: {RowCount} rows for year {Year}", rowCount, year);
 
-            // Note: Remaining 18 loaders pending implementation
+            // ── Loader 10: sp_AddMY_tblAdditionalCosts ─────────────────────────────────
+            rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+INSERT INTO mabarchive.my_tbladditionalcosts (
+    year, jobcode, account, description, itemcost, freq, supplier
+)
+SELECT
+    {year}, a.jobcode, a.account, a.description, a.itemcost, a.freq, a.supplier
+FROM fps.tbladditionalcosts a
+WHERE a.fpsyear = {year}
+", cancellationToken);
+            totalRowsAffected += rowCount;
+            _logger.LogInformation("[10/24] my_tbladditionalcosts: {RowCount} rows for year {Year}", rowCount, year);
 
-            _logger.LogInformation("Loaded {TotalRowCount} total rows into archive tables for year {Year} (Step 1a complete)", totalRowsAffected, year);
+            // ── Loader 11: sp_AddMY_tblAnimalReq ───────────────────────────────────────
+            rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+INSERT INTO mabarchive.my_tblanimalreq (
+    year, jobcode, animaltype, numberofdays, numberofanimals
+)
+SELECT
+    {year}, a.jobcode, a.animaltype, a.numberofdays, a.numberofanimals
+FROM fps.tblanimalreq a
+WHERE a.fpsyear = {year}
+", cancellationToken);
+            totalRowsAffected += rowCount;
+            _logger.LogInformation("[11/24] my_tblanimalreq: {RowCount} rows for year {Year}", rowCount, year);
+
+            // ── Loader 12: sp_AddMY_tblContract ────────────────────────────────────────
+            rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+INSERT INTO mabarchive.my_tblcontract (
+    year, contractno, category, manager, customer, title,
+    registereddate, startdate, enddate, contractdoc, duration
+)
+SELECT
+    {year}, c.contractno, c.category, c.manager, c.customer, c.title,
+    c.registereddate, c.startdate, c.enddate, c.contractdoc, c.duration
+FROM fps.tblcontract c
+WHERE c.fpsyear = {year}
+", cancellationToken);
+            totalRowsAffected += rowCount;
+            _logger.LogInformation("[12/24] my_tblcontract: {RowCount} rows for year {Year}", rowCount, year);
+
+            // ── Loader 13: sp_AddMY_tblStaffJob ────────────────────────────────────────
+            // systimestamp (bytea) column in target DDL not populated by legacy procedure — left NULL
+            rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+INSERT INTO mabarchive.my_tblstaffjob (
+    year, staffid, jobcode, plannedhours
+)
+SELECT
+    {year}, s.staffid, s.jobcode, s.plannedhours
+FROM fps.tblstaffjob s
+WHERE s.fpsyear = {year}
+", cancellationToken);
+            totalRowsAffected += rowCount;
+            _logger.LogInformation("[13/24] my_tblstaffjob: {RowCount} rows for year {Year}", rowCount, year);
+
+            // ── Loader 14: sp_AddMY_TimeCostCalcs ──────────────────────────────────────
+            // All 16 source columns per legacy SQL
+            rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+INSERT INTO mabarchive.my_timecostcalcs (
+    year, workgroup, jobcode, project, month, staffid,
+    gradecode, name, chargerate, class, time, cost,
+    division, jobcodeold, pay, nonpay, overhead
+)
+SELECT
+    {year}, t.workgroup, t.jobcode, t.project, t.month, t.staffid,
+    t.gradecode, t.name, t.chargerate, t.class, t.time, t.cost,
+    t.division, t.jobcodeold, t.pay, t.nonpay, t.overhead
+FROM fps.timecostcalcs t
+WHERE t.fpsyear = {year}
+", cancellationToken);
+            totalRowsAffected += rowCount;
+            _logger.LogInformation("[14/24] my_timecostcalcs: {RowCount} rows for year {Year}", rowCount, year);
+
+            // ── Loader 15: sp_AddMY_tlkpTestReqmt ──────────────────────────────────────
+            // source column in target DDL not populated by legacy procedure — left NULL
+            rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+INSERT INTO mabarchive.my_tlkptestreqmt (
+    year, testcode, buyer, unitprice, norequired, projectbuyercode, testbuyercode
+)
+SELECT
+    {year}, r.testcode, r.buyer, r.unitprice, r.norequired, r.projectbuyercode, r.testbuyercode
+FROM fps.tlkptestreqmt r
+WHERE r.fpsyear = {year}
+", cancellationToken);
+            totalRowsAffected += rowCount;
+            _logger.LogInformation("[15/24] my_tlkptestreqmt: {RowCount} rows for year {Year}", rowCount, year);
+
+            // ── Loader 16: sp_addMY_YearDetails ────────────────────────────────────────
+            // fps.tbldb_variables has no fpsyear; reads the shared current-month setting
+            rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+INSERT INTO mabarchive.tlkpyear (year, latestmonthreleased)
+SELECT {year}, CAST(v.db_var_value AS integer)
+FROM fps.tbldb_variables v
+WHERE v.db_var_name = 'month'
+", cancellationToken);
+            totalRowsAffected += rowCount;
+            _logger.LogInformation("[16/24] tlkpyear: {RowCount} rows for year {Year}", rowCount, year);
+
+            // ── Loader 17: sp_addMY_WorkGroupGrade ─────────────────────────────────────
+            rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+INSERT INTO mabarchive.my_workgroupgrade (
+    year, wggrade, profitcentregrade, gradecode, workgroup
+)
+SELECT
+    {year}, w.wggrade, w.profitcentregrade, w.gradecode, w.workgroup
+FROM fps.workgroupgrade w
+WHERE w.fpsyear = {year}
+", cancellationToken);
+            totalRowsAffected += rowCount;
+            _logger.LogInformation("[17/24] my_workgroupgrade: {RowCount} rows for year {Year}", rowCount, year);
+
+            // ── Loader 18: sp_addMY_ProfitCentreGrade ──────────────────────────────────
+            rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+INSERT INTO mabarchive.my_profitcentregrade (
+    year, pcgrade, divisiongrade, gradecode, profitcentre,
+    chargerate, directrate, payrate, npr, ohr
+)
+SELECT
+    {year}, p.pcgrade, p.divisiongrade, p.gradecode, p.profitcentre,
+    p.chargerate, p.directrate, p.payrate, p.npr, p.ohr
+FROM fps.profitcentregrade p
+WHERE p.fpsyear = {year}
+", cancellationToken);
+            totalRowsAffected += rowCount;
+            _logger.LogInformation("[18/24] my_profitcentregrade: {RowCount} rows for year {Year}", rowCount, year);
+
+            // ── Loader 19: sp_AddMY_tblProfitCentre ────────────────────────────────────
+            // fps.tblkpprofitcentre has no fpsyear column (shared reference); copy all rows
+            rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+INSERT INTO mabarchive.my_tblprofitcentre (
+    year, profitcentre, profitcentrename, division, conttarget, profitcentrehead, divisionid
+)
+SELECT
+    {year}, p.profitcentre, p.profitcentrename, p.division,
+    p.conttarget, p.profitcentrehead, p.divisionid
+FROM fps.tblkpprofitcentre p
+", cancellationToken);
+            totalRowsAffected += rowCount;
+            _logger.LogInformation("[19/24] my_tblprofitcentre: {RowCount} rows for year {Year}", rowCount, year);
+
+            // ── Loader 20: sp_AddMY_TestOrProduct ──────────────────────────────────────
+            rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+INSERT INTO mabarchive.my_testorproduct (
+    year, itemcode, itemdescription, testmanager, jobstatus,
+    unitpricevla, priceahvg, owner, chargemethod, shortdescription, defraunitprice
+)
+SELECT
+    {year}, t.itemcode, t.itemdescription, t.testmanager, t.jobstatus,
+    t.unitpricevla, t.priceahvg, t.owner, t.chargemethod, t.shortdescription, t.defraunitprice
+FROM fps.testorproduct t
+WHERE t.fpsyear = {year}
+", cancellationToken);
+            totalRowsAffected += rowCount;
+            _logger.LogInformation("[20/24] my_testorproduct: {RowCount} rows for year {Year}", rowCount, year);
+
+            // ── Loader 21: sp_AddMY_Staff ───────────────────────────────────────────────
+            // Legacy applies a per-user WorkGroup/ProfitCentre security filter. In batch job
+            // context there is no user principal; all staff for the year are loaded.
+            rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+INSERT INTO mabarchive.my_staff (
+    year, staffid, name, workgroupgrade, title,
+    personstatus, personclass, hrspaid, leave, sickspecial, hrsavail
+)
+SELECT
+    {year},
+    wge.pactid,
+    COALESCE(e.lastname, '') || ', ' || COALESCE(e.firstname, ''),
+    wge.workgroupgrade,
+    e.title,
+    wge.personstatus,
+    wge.personclass,
+    wge.hrspaid,
+    wge.leave,
+    wge.sickspecial,
+    wge.hrsavail
+FROM fps.tblwgemployee wge
+JOIN fps.tblemployee e ON wge.spnumber = e.spnumber
+WHERE wge.fpsyear = {year}
+", cancellationToken);
+            totalRowsAffected += rowCount;
+            _logger.LogInformation("[21/24] my_staff: {RowCount} rows for year {Year}", rowCount, year);
+
+            // ── Loader 22: sp_AddMY_Workgroup ───────────────────────────────────────────
+            rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+INSERT INTO mabarchive.my_workgroup (
+    year, workgroup, profitcentre, costcentre, owner,
+    description, centraloverhead, sendemail, cos90, costcentreold, email_recipient
+)
+SELECT
+    {year}, w.workgroup, w.profitcentre, w.costcentre, w.owner,
+    w.description, w.centraloverhead, w.sendemail, w.cos90, w.costcentreold, w.email_recipient
+FROM fps.workgroup w
+WHERE w.fpsyear = {year}
+", cancellationToken);
+            totalRowsAffected += rowCount;
+            _logger.LogInformation("[22/24] my_workgroup: {RowCount} rows for year {Year}", rowCount, year);
+
+            // ── Loader 23: sp_AddMY_tblAnimals ─────────────────────────────────────────
+            rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+INSERT INTO mabarchive.my_tblanimals (
+    year, animaltype, species, security_level, dailyrate, planbyweek, defradailyrate
+)
+SELECT
+    {year}, a.animaltype, a.species, a.security_level, a.dailyrate, a.planbyweek, a.defradailyrate
+FROM fps.tblanimals a
+WHERE a.fpsyear = {year}
+", cancellationToken);
+            totalRowsAffected += rowCount;
+            _logger.LogInformation("[23/24] my_tblanimals: {RowCount} rows for year {Year}", rowCount, year);
+
+            // ── Loader 24: sp_AddMY_tlkpProject_All ────────────────────────────────────
+            // Same shape as my_tlkpproject; source column left NULL per legacy
+            rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+INSERT INTO mabarchive.my_tlkpproject_all (
+    year, parentproject, program, customer, manager, transferincome, custincome,
+    wip_eoy, wip_limit, wip_current, projectstatus, datecreated, feccost,
+    profit, budget_cvl, caseworksub, pvsincome, plancaseworkdebit,
+    disease, contract, finished, comments, carryover, isdefraproject,
+    costcentre, oracleprojectcode, subaccountcode, projectgroup, incomeaccountcode
+)
+SELECT
+    {year}, t.parentproject, t.program, t.customer, t.manager, t.transferincome, t.custincome,
+    t.wip_eoy, t.wip_limit, t.wip_current, t.projectstatus, t.datecreated, t.feccost,
+    t.profit, t.budget_cvl, t.caseworksub, t.pvsincome, t.plancaseworkdebit,
+    t.disease, t.contract, t.finished, t.comments, t.carryover, t.isdefraproject,
+    t.costcentre, t.oracleprojectcode, t.subaccountcode, t.projectgroup, t.incomeaccountcode
+FROM fps.tlkpproject t
+WHERE t.fpsyear = {year}
+", cancellationToken);
+            totalRowsAffected += rowCount;
+            _logger.LogInformation("[24/24] my_tlkpproject_all: {RowCount} rows for year {Year}", rowCount, year);
+
+            _logger.LogInformation("LoadYearDataAsync complete: {TotalRowCount} total rows loaded for year {Year}", totalRowsAffected, year);
             return totalRowsAffected;
         }
         catch (Exception ex)
@@ -394,30 +584,23 @@ DELETE FROM mabarchive.my_tlkpproject_all
 WHERE year = {year}
 ", cancellationToken);
 
-            // Reload fresh records
+            // Reload fresh records (source column left NULL per legacy sp_AddMY_tlkpProject_All)
             var rowsAffected = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 INSERT INTO mabarchive.my_tlkpproject_all (
     year, parentproject, program, customer, manager, transferincome, custincome,
     wip_eoy, wip_limit, wip_current, projectstatus, datecreated, feccost,
-    profit, budget_cvl, caseworksub, pvsincome, plancaseworkdebit, source,
+    profit, budget_cvl, caseworksub, pvsincome, plancaseworkdebit,
     disease, contract, finished, comments, carryover, isdefraproject,
     costcentre, oracleprojectcode, subaccountcode, projectgroup, incomeaccountcode
 )
 SELECT
-    {year}, LEFT(t.parentproject::text, 20), LEFT(t.program::text, 10),
-    LEFT(t.customer::text, 50), t.manager, t.transferincome, t.custincome,
-    t.wip_eoy, t.wip_limit, t.wip_current, LEFT(t.projectstatus::text, 50),
-    t.datecreated::date, t.feccost, t.profit, t.budget_cvl, t.caseworksub,
-    t.pvsincome, t.plancaseworkdebit, 'FPS', LEFT(t.disease::text, 50),
-    LEFT(t.contract::text, 10), t.finished, t.comments, t.carryover,
-    t.isdefraproject, t.costcentre, t.oracleprojectcode,
-    LEFT(t.subaccountcode::text, 50), LEFT(t.projectgroup::text, 50),
-    LEFT(t.incomeaccountcode::text, 50)
+    {year}, t.parentproject, t.program, t.customer, t.manager, t.transferincome, t.custincome,
+    t.wip_eoy, t.wip_limit, t.wip_current, t.projectstatus, t.datecreated, t.feccost,
+    t.profit, t.budget_cvl, t.caseworksub, t.pvsincome, t.plancaseworkdebit,
+    t.disease, t.contract, t.finished, t.comments, t.carryover, t.isdefraproject,
+    t.costcentre, t.oracleprojectcode, t.subaccountcode, t.projectgroup, t.incomeaccountcode
 FROM fps.tlkpproject t
 WHERE t.fpsyear = {year}
-ON CONFLICT (year, parentproject) DO UPDATE
-SET program = EXCLUDED.program, customer = EXCLUDED.customer,
-    manager = EXCLUDED.manager, projectstatus = EXCLUDED.projectstatus
 ", cancellationToken);
 
             _logger.LogInformation("Refreshed {RowCount} rows in my_tlkpproject_all for year {Year}", rowsAffected, year);
