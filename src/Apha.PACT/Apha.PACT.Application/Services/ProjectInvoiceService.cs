@@ -74,5 +74,34 @@ namespace Apha.PACT.Application.Services
         {
             return await _repository.DeleteAsync(invoiceCounter);
         }
+
+        public async Task<MonthlyInvoicesPivotDto> GetMonthlyInvoicesSummaryAsync()
+        {
+            List<Core.Entities.MonthlyInvoicesSummary> data = await _repository.GetMonthlyInvoicesSummaryAsync();
+
+            List<int> months = data
+                .Select(x => x.Month)
+                .Distinct()
+                .OrderBy(m => m)
+                .ToList();
+
+            List<MonthlyInvoicesSummaryDto> rows = data
+                .GroupBy(x => new { x.Program, x.Parentproject })
+                .Select(g => new MonthlyInvoicesSummaryDto
+                {
+                    Program = g.Key.Program,
+                    ParentProject = g.Key.Parentproject,
+                    MonthlyAmounts = g.ToDictionary(x => x.Month, x => x.Monthlyamount ?? 0m)
+                })
+                .OrderBy(r => r.Program)
+                .ThenBy(r => r.ParentProject)
+                .ToList();
+
+            return new MonthlyInvoicesPivotDto
+            {
+                Months = months,
+                Rows = rows
+            };
+        }
     }
 }

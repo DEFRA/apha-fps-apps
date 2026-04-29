@@ -124,5 +124,15 @@ namespace Apha.PACT.DataAccess.Repository
         {
             return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
         }
+
+        public async Task<List<MonthlyInvoicesSummary>> GetMonthlyInvoicesSummaryAsync()
+        {
+            return await _context.MonthlyInvoicesSummary
+                .AsNoTracking()
+                .OrderBy(x => x.Program)
+                .ThenBy(x => x.Parentproject)
+                .ThenBy(x => x.Month)
+                .ToListAsync();
+        }
     }
 }

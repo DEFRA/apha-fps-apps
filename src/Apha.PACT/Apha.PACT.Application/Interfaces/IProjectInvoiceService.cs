@@ -11,5 +11,6 @@ namespace Apha.PACT.Application.Interfaces
         Task<ProjectInvoiceDto> CreateAsync(ProjectInvoiceDto dto);
         Task<ProjectInvoiceDto> UpdateAsync(ProjectInvoiceDto dto);
         Task<bool> DeleteAsync(int invoiceCounter);
+        Task<MonthlyInvoicesPivotDto> GetMonthlyInvoicesSummaryAsync();
     }
 }
