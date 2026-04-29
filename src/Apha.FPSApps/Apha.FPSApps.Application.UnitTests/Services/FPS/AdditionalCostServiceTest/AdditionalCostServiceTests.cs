@@ -305,20 +305,18 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.AdditionalCostServiceT
         public async Task DeleteAdditionalCostAsync_WithValidKeys_ReturnsSuccess()
         {
             // Arrange
-            var jobCode = "JOB001";
-            var account = "ACC001";
-            var description = "Test Cost";
+            var dto = new AdditionalCostDto { JobCode = "JOB001", Account = "ACC001", Description = "Test Cost" };
             var expectedResponse = ApiResponseDto<bool>.SuccessResponse(true);
-            _fpsAdditionalCostApiClient.DeleteAdditionalCostAsync(jobCode, account, description).Returns(expectedResponse);
+            _fpsAdditionalCostApiClient.DeleteAdditionalCostAsync(dto).Returns(expectedResponse);
 
             // Act
-            var result = await _sut.DeleteAdditionalCostAsync(jobCode, account, description);
+            var result = await _sut.DeleteAdditionalCostAsync(dto);
 
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.True(result.Data);
-            await _fpsAdditionalCostApiClient.Received(1).DeleteAdditionalCostAsync(jobCode, account, description);
+            await _fpsAdditionalCostApiClient.Received(1).DeleteAdditionalCostAsync(dto);
         }
 
         [Fact]
@@ -327,10 +325,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.AdditionalCostServiceT
             // Arrange
             var errors = new List<ApiErrorDto> { new() { Message = "Delete failed", Code = "DELETE_ERROR" } };
             var expectedResponse = ApiResponseDto<bool>.FailureResponse(errors, new ApiMetaDto());
-            _fpsAdditionalCostApiClient.DeleteAdditionalCostAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>()).Returns(expectedResponse);
+            _fpsAdditionalCostApiClient.DeleteAdditionalCostAsync(Arg.Any<AdditionalCostDto>()).Returns(expectedResponse);
 
             // Act
-            var result = await _sut.DeleteAdditionalCostAsync("JOB001", "ACC001", "Test Cost");
+            var result = await _sut.DeleteAdditionalCostAsync(new AdditionalCostDto { JobCode = "JOB001", Account = "ACC001", Description = "Test Cost" });
 
             // Assert
             Assert.NotNull(result);

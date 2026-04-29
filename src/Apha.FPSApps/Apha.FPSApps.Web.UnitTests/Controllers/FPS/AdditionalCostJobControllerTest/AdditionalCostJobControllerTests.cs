@@ -357,7 +357,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.AdditionalCostJobController
             var jobCode = "JOB001";
             var account = "ACC001";
             var description = "Test Cost";
-            _additionalCostService.DeleteAdditionalCostAsync(jobCode, account, description)
+            _additionalCostService.DeleteAdditionalCostAsync(Arg.Any<AdditionalCostDto>())
                 .Returns(ApiResponseDto<bool>.SuccessResponse(true));
 
             // Act
@@ -368,7 +368,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.AdditionalCostJobController
             var value = GetJsonResultElement(jsonResult);
             Assert.True(value.GetProperty("success").GetBoolean());
             Assert.Equal("Additional cost deleted successfully.", value.GetProperty("message").GetString());
-            await _additionalCostService.Received(1).DeleteAdditionalCostAsync(jobCode, account, description);
+            await _additionalCostService.Received(1).DeleteAdditionalCostAsync(
+                Arg.Is<AdditionalCostDto>(d => d.JobCode == jobCode && d.Account == account && d.Description == description));
         }
 
         [Fact]
@@ -376,7 +377,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.AdditionalCostJobController
         {
             // Arrange
             var errors = new List<ApiErrorDto> { new() { Message = "Delete failed", Code = "DELETE_ERROR" } };
-            _additionalCostService.DeleteAdditionalCostAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
+            _additionalCostService.DeleteAdditionalCostAsync(Arg.Any<AdditionalCostDto>())
                 .Returns(ApiResponseDto<bool>.FailureResponse(errors, new ApiMetaDto()));
 
             // Act

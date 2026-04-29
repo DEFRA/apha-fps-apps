@@ -96,10 +96,7 @@ namespace Apha.FPS.Api.Controllers
         {
             var dto = _mapper.Map<AdditionalCostDto>(req);
             var result = await _service.AddAsync(dto);
-            return CreatedAtAction(
-                nameof(GetByIdAsync),
-                new { jobCode = result.JobCode, account = result.Account, description = result.Description },
-                _mapper.Map<AdditionalCostRes>(result));
+            return Ok(_mapper.Map<AdditionalCostRes>(result));
         }
 
         /// <summary>
@@ -118,14 +115,12 @@ namespace Apha.FPS.Api.Controllers
         /// <summary>
         /// Deletes an additional cost record by composite key.
         /// </summary>
-        /// <param name="jobCode">The job code.</param>
-        /// <param name="account">The account short name.</param>
-        /// <param name="description">The description.</param>
+        /// <param name="req">The additional cost request containing JobCode, Account and Description.</param>
         /// <returns>No content if deletion is successful; NotFound if not found.</returns>
         [HttpDelete]
-        public async Task<IActionResult> DeleteAsync([FromQuery] string jobCode, [FromQuery] string account, [FromQuery] string description)
+        public async Task<IActionResult> DeleteAsync([FromQuery] AdditionalCostReq req)
         {
-            var isDeleted = await _service.DeleteAsync(jobCode, account, description);
+            var isDeleted = await _service.DeleteAsync(req.JobCode, req.Account, req.Description);
             if (!isDeleted)
                 throw new KeyNotFoundException("Data not found.");
             return Ok(isDeleted);

@@ -191,7 +191,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         [HttpDelete]
         public async Task<IActionResult> Delete(string jobCode, string account, string description)
         {
-            var result = await _additionalCostService.DeleteAdditionalCostAsync(jobCode, account, description);
+            var dto = new AdditionalCostDto { JobCode = jobCode, Account = account, Description = description };
+            var result = await _additionalCostService.DeleteAdditionalCostAsync(dto);
 
             if (result.Success)
             {

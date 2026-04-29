@@ -102,9 +102,9 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             return ApiResponseDto<AdditionalCostDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
-        public async Task<ApiResponseDto<bool>> DeleteAdditionalCostAsync(string jobCode, string account, string description)
+        public async Task<ApiResponseDto<bool>> DeleteAdditionalCostAsync(AdditionalCostDto additionalCost)
         {
-            var response = await _http.DeleteAsync<bool?>(string.Format(FpsApiEndpoints.DeleteAdditionalCost, jobCode, account, description));
+            var response = await _http.DeleteAsync<bool?>(string.Format(FpsApiEndpoints.DeleteAdditionalCost, additionalCost.JobCode, additionalCost.Account, additionalCost.Description));
 
             if (response.Success)
             {

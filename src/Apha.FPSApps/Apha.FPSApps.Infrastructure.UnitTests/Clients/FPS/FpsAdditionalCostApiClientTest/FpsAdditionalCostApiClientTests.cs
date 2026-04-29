@@ -394,19 +394,17 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAdditionalCostApi
         public async Task DeleteAdditionalCostAsync_WithValidKeys_ReturnsMappedResult()
         {
             // Arrange
-            var jobCode = "JOB001";
-            var account = "ACC001";
-            var description = "Test Cost";
+            var additionalCost = new AdditionalCostDto { JobCode = "JOB001", Account = "ACC001", Description = "Test Cost" };
             var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
             var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
 
             _http.DeleteAsync<bool?>(Arg.Is<string>(url =>
-                    url.Contains($"jobCode={jobCode}") && url.Contains($"account={account}") && url.Contains($"description={description}")))
+                    url.Contains($"jobCode={additionalCost.JobCode}") && url.Contains($"account={additionalCost.Account}") && url.Contains($"description={additionalCost.Description}")))
                 .Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
 
             // Act
-            var result = await _client.DeleteAdditionalCostAsync(jobCode, account, description);
+            var result = await _client.DeleteAdditionalCostAsync(additionalCost);
 
             // Assert
             Assert.NotNull(result);
@@ -434,7 +432,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAdditionalCostApi
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedResponse);
 
             // Act
-            var result = await _client.DeleteAdditionalCostAsync("JOB001", "ACC001", "Test Cost");
+            var result = await _client.DeleteAdditionalCostAsync(new AdditionalCostDto { JobCode = "JOB001", Account = "ACC001", Description = "Test Cost" });
 
             // Assert
             Assert.NotNull(result);

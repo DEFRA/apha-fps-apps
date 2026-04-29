@@ -12,6 +12,6 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         Task<ApiResponseDto<AdditionalCostDto>> GetByIdAsync(string jobCode, string account, string description);
         Task<ApiResponseDto<AdditionalCostDto>> CreateAdditionalCostAsync(AdditionalCostDto additionalCost);
         Task<ApiResponseDto<AdditionalCostDto>> UpdateAdditionalCostAsync(AdditionalCostDto additionalCost);
-        Task<ApiResponseDto<bool>> DeleteAdditionalCostAsync(string jobCode, string account, string description);
+        Task<ApiResponseDto<bool>> DeleteAdditionalCostAsync(AdditionalCostDto additionalCost);
     }
 }

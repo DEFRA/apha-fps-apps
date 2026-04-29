@@ -221,8 +221,8 @@ namespace Apha.FPS.Api.UnitTests.Controller.AdditionalCostControllerTest
             var result = await _controller.AddAsync(req);
 
             // Assert
-            var createdResult = Assert.IsType<CreatedAtActionResult>(result);
-            Assert.Equal(res, createdResult.Value);
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(res, okResult.Value);
         }
 
         [Fact]
@@ -298,7 +298,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.AdditionalCostControllerTest
             _serviceMock.DeleteAsync("JOB001", "ACC1", "Desc1").Returns(true);
 
             // Act
-            var result = await _controller.DeleteAsync("JOB001", "ACC1", "Desc1");
+            var result = await _controller.DeleteAsync(new AdditionalCostReq { JobCode = "JOB001", Account = "ACC1", Description = "Desc1" });
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -313,7 +313,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.AdditionalCostControllerTest
 
             // Act & Assert
             await Assert.ThrowsAsync<KeyNotFoundException>(() =>
-                _controller.DeleteAsync("JOB999", "ACC999", "NoExist"));
+                _controller.DeleteAsync(new AdditionalCostReq { JobCode = "JOB999", Account = "ACC999", Description = "NoExist" }));
         }
 
         [Fact]
@@ -324,7 +324,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.AdditionalCostControllerTest
                 .Throws(new Exception("Service error"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _controller.DeleteAsync("JOB001", "ACC1", "Desc1"));
+            await Assert.ThrowsAsync<Exception>(() => _controller.DeleteAsync(new AdditionalCostReq { JobCode = "JOB001", Account = "ACC1", Description = "Desc1" }));
         }
 
         #endregion

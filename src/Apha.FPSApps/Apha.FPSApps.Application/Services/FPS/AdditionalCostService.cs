@@ -45,9 +45,9 @@ namespace Apha.FPSApps.Application.Services.FPS
             return await _fpsClient.FpsAdditionalCost.UpdateAdditionalCostAsync(additionalCost);
         }
 
-        public async Task<ApiResponseDto<bool>> DeleteAdditionalCostAsync(string jobCode, string account, string description)
+        public async Task<ApiResponseDto<bool>> DeleteAdditionalCostAsync(AdditionalCostDto additionalCost)
         {
-            return await _fpsClient.FpsAdditionalCost.DeleteAdditionalCostAsync(jobCode, account, description);
+            return await _fpsClient.FpsAdditionalCost.DeleteAdditionalCostAsync(additionalCost);
         }
     }
 }

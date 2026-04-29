@@ -60,6 +60,7 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<ITestorProductRepository, TestorProductRepository>();
             services.AddScoped<ITimeCostCalcsRepository, TimeCostCalcsRepository>();
             services.AddScoped<IDivisionRepository, DivisionRepository>();
+            services.AddScoped<IAgencyRepository, AgencyRepository>();
             services.AddScoped<IAdditionalCostRepository, AdditionalCostRepository>();
             return services;
 
