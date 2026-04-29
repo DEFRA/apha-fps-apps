@@ -1,4 +1,4 @@
-﻿using Apha.Common.Contracts;
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.PACT;
 using Apha.PACT.Api.Controllers;
 using Apha.PACT.Application.Dtos;
@@ -214,10 +214,10 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProjectSubContractControllerTest
 
         #endregion
 
-        #region GetAnimalSubContracts
+        #region GetFpsProjectSubContracts
 
         [Fact]
-        public async Task GetAnimalSubContracts_ValidQueryWithProject_ReturnsOk()
+        public async Task GetFpsProjectSubContracts_ValidQueryWithProject_ReturnsOk()
         {
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var dtos = new List<ProjectSubContractDto> { new ProjectSubContractDto { SubContCounter = 1, Project = "PRJ1", AcctCode = "LargeAnimals" } };
@@ -229,26 +229,26 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProjectSubContractControllerTest
                 PaginationData = new Pagination { PageNumber = 1, PageSize = 10, TotalRecords = 1, TotalPages = 1 }
             };
 
-            _serviceMock.GetAnimalSubContractsAsync(query, "PRJ1").Returns(serviceResult);
+            _serviceMock.GetFpsProjectSubContractsAsync(query, "PRJ1").Returns(serviceResult);
             _mapperMock.Map<PaginationRes<ProjectSubContractRes>>(serviceResult).Returns(expectedResponse);
 
-            var result = await _controller.GetAnimalSubContracts(query, "PRJ1");
+            var result = await _controller.GetFpsProjectSubContracts(query, "PRJ1");
 
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(expectedResponse, okResult.Value);
         }
 
         [Fact]
-        public async Task GetAnimalSubContracts_NullProject_ReturnsOk()
+        public async Task GetFpsProjectSubContracts_NullProject_ReturnsOk()
         {
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var serviceResult = new PaginatedResult<ProjectSubContractDto>(Enumerable.Empty<ProjectSubContractDto>(), new PaginationDto());
             var expectedResponse = new PaginationRes<ProjectSubContractRes>();
 
-            _serviceMock.GetAnimalSubContractsAsync(query, null).Returns(serviceResult);
+            _serviceMock.GetFpsProjectSubContractsAsync(query, null).Returns(serviceResult);
             _mapperMock.Map<PaginationRes<ProjectSubContractRes>>(serviceResult).Returns(expectedResponse);
 
-            var result = await _controller.GetAnimalSubContracts(query, null);
+            var result = await _controller.GetFpsProjectSubContracts(query, null);
 
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(expectedResponse, okResult.Value);
@@ -256,25 +256,25 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProjectSubContractControllerTest
 
         #endregion
 
-        #region GetAnimalTotal
+        #region GetFpsProjectTotal
 
         [Fact]
-        public async Task GetAnimalTotal_ValidProject_ReturnsOk()
+        public async Task GetFpsProjectTotal_ValidProject_ReturnsOk()
         {
-            _serviceMock.GetAnimalTotalAmountAsync("PRJ1").Returns(1500.00m);
+            _serviceMock.GetFpsProjectSubContractTotalAmountAsync("PRJ1").Returns(1500.00m);
 
-            var result = await _controller.GetAnimalTotal("PRJ1");
+            var result = await _controller.GetFpsProjectTotal("PRJ1");
 
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(1500.00m, okResult.Value);
         }
 
         [Fact]
-        public async Task GetAnimalTotal_NullProject_ReturnsOk()
+        public async Task GetFpsProjectTotal_NullProject_ReturnsOk()
         {
-            _serviceMock.GetAnimalTotalAmountAsync(null).Returns(0m);
+            _serviceMock.GetFpsProjectSubContractTotalAmountAsync(null).Returns(0m);
 
-            var result = await _controller.GetAnimalTotal(null);
+            var result = await _controller.GetFpsProjectTotal(null);
 
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(0m, okResult.Value);

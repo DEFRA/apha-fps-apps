@@ -45,7 +45,7 @@ namespace Apha.PACT.DataAccess.Repository
         private static readonly IReadOnlyList<string> AnimalAcctCodes =
             new[] { "LargeAnimals", "SmallAnimals", "Mice" };
 
-        public async Task<PagedData<ProjectSubContract>> GetAnimalSubContractsAsync(PaginationParameters<string> query, string? project)
+        public async Task<PagedData<ProjectSubContract>> GetFpsProjectSubContractsAsync(PaginationParameters<string> query, string? project)
         {
             IQueryable<ProjectSubContract> q = _context.ProjectSubContracts
                 .AsNoTracking()
@@ -61,7 +61,7 @@ namespace Apha.PACT.DataAccess.Repository
             return ApplyPaging(result, query.Page, query.PageSize);
         }
 
-        public async Task<decimal> GetAnimalTotalAmountAsync(string? project)
+        public async Task<decimal> GetFpsProjectSubContractTotalAmountAsync(string? project)
         {
             IQueryable<ProjectSubContract> q = _context.ProjectSubContracts
                 .AsNoTracking()

@@ -7,8 +7,8 @@ namespace Apha.PACT.Application.Interfaces
     {
         Task<PaginatedResult<ProjectSubContractDto>> GetPagedProjectSubContractsAsync(QueryParameters<string> query, string? project);
         Task<decimal> GetTotalAmountAsync(string? project);
-        Task<PaginatedResult<ProjectSubContractDto>> GetAnimalSubContractsAsync(QueryParameters<string> query, string? project);
-        Task<decimal> GetAnimalTotalAmountAsync(string? project);
+        Task<PaginatedResult<ProjectSubContractDto>> GetFpsProjectSubContractsAsync(QueryParameters<string> query, string? project);
+        Task<decimal> GetFpsProjectSubContractTotalAmountAsync(string? project);
         Task<ProjectSubContractDto?> GetByIdAsync(int subContCounter);
         Task<ProjectSubContractDto> CreateAsync(ProjectSubContractDto dto);
         Task<ProjectSubContractDto> UpdateAsync(ProjectSubContractDto dto);

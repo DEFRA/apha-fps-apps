@@ -169,13 +169,6 @@
                 refreshPlannedCost();
                 refreshActualCost();
             }
-
-            var actualGridContainer = document.getElementById('gridContainer_@Model.ActualAnimalCostGrid.GridId');
-            if (actualGridContainer) {
-                new MutationObserver(function () {
-                    refreshActualCost();
-                }).observe(actualGridContainer, { childList: true, subtree: true });
-            }
         });
 
         $('#projectSelect').on('change', function () {

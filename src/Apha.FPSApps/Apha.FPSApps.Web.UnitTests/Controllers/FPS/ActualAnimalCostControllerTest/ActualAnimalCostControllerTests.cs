@@ -54,7 +54,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ActualAnimalCostControllerT
             var paginationModel = new PaginationModel { PageNumber = 1, PageSize = 10, TotalRecords = 1 };
 
             _mapper.Map<QueryParameters<string>>(request).Returns(queryParameters);
-            _projectSubContractService.GetAnimalSubContractsAsync(queryParameters, projectCode).Returns(serviceResponse);
+            _projectSubContractService.GetFpsProjectSubContractsAsync(queryParameters, projectCode).Returns(serviceResponse);
             _mapper.Map<List<ActualProjectCostItem>>(Arg.Any<List<ProjectSubContractDto>>()).Returns(items);
             _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(paginationModel);
 
@@ -86,7 +86,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ActualAnimalCostControllerT
             Assert.False(value.GetProperty("success").GetBoolean());
             Assert.Equal("Invalid request data", value.GetProperty("message").GetString());
             await _projectSubContractService.DidNotReceive()
-                .GetAnimalSubContractsAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
+                .GetFpsProjectSubContractsAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
         }
 
         [Fact]
@@ -99,7 +99,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ActualAnimalCostControllerT
             var serviceResponse = ApiResponseDto<List<ProjectSubContractDto>>.FailureResponse(errors, new ApiMetaDto());
 
             _mapper.Map<QueryParameters<string>>(request).Returns(queryParameters);
-            _projectSubContractService.GetAnimalSubContractsAsync(queryParameters, "PROJ001").Returns(serviceResponse);
+            _projectSubContractService.GetFpsProjectSubContractsAsync(queryParameters, "PROJ001").Returns(serviceResponse);
 
             // Act
             var result = await _controller.LoadActualAnimalCostGrid(request, "PROJ001");
@@ -121,7 +121,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ActualAnimalCostControllerT
             var paginationModel = new PaginationModel();
 
             _mapper.Map<QueryParameters<string>>(request).Returns(queryParameters);
-            _projectSubContractService.GetAnimalSubContractsAsync(queryParameters, null).Returns(serviceResponse);
+            _projectSubContractService.GetFpsProjectSubContractsAsync(queryParameters, null).Returns(serviceResponse);
             _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(paginationModel);
 
             // Act
@@ -130,7 +130,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ActualAnimalCostControllerT
             // Assert
             var partialView = Assert.IsType<PartialViewResult>(result);
             Assert.IsType<DataGridConfig<ActualProjectCostItem>>(partialView.Model);
-            await _projectSubContractService.Received(1).GetAnimalSubContractsAsync(queryParameters, null);
+            await _projectSubContractService.Received(1).GetFpsProjectSubContractsAsync(queryParameters, null);
         }
 
         [Fact]
@@ -143,7 +143,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ActualAnimalCostControllerT
             var serviceResponse = ApiResponseDto<List<ProjectSubContractDto>>.SuccessResponse(new List<ProjectSubContractDto>(), paginationDto);
 
             _mapper.Map<QueryParameters<string>>(request).Returns(queryParameters);
-            _projectSubContractService.GetAnimalSubContractsAsync(queryParameters, "PROJ001").Returns(serviceResponse);
+            _projectSubContractService.GetFpsProjectSubContractsAsync(queryParameters, "PROJ001").Returns(serviceResponse);
             _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns((PaginationModel?)null);
 
             // Act
@@ -165,7 +165,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ActualAnimalCostControllerT
             var paginationModel = new PaginationModel();
 
             _mapper.Map<QueryParameters<string>>(request).Returns(queryParameters);
-            _projectSubContractService.GetAnimalSubContractsAsync(queryParameters, "PROJ001").Returns(serviceResponse);
+            _projectSubContractService.GetFpsProjectSubContractsAsync(queryParameters, "PROJ001").Returns(serviceResponse);
             _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(paginationModel);
 
             // Act
@@ -188,7 +188,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ActualAnimalCostControllerT
             var paginationModel = new PaginationModel();
 
             _mapper.Map<QueryParameters<string>>(request).Returns(queryParameters);
-            _projectSubContractService.GetAnimalSubContractsAsync(queryParameters, "PROJ001").Returns(serviceResponse);
+            _projectSubContractService.GetFpsProjectSubContractsAsync(queryParameters, "PROJ001").Returns(serviceResponse);
             _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(paginationModel);
 
             // Act
@@ -217,7 +217,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ActualAnimalCostControllerT
             var paginationModel = new PaginationModel();
 
             _mapper.Map<QueryParameters<string>>(request).Returns(queryParameters);
-            _projectSubContractService.GetAnimalSubContractsAsync(queryParameters, "PROJ001").Returns(serviceResponse);
+            _projectSubContractService.GetFpsProjectSubContractsAsync(queryParameters, "PROJ001").Returns(serviceResponse);
             _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(paginationModel);
 
             // Act
@@ -355,7 +355,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ActualAnimalCostControllerT
             var value = GetJsonResultElement(jsonResult);
             Assert.False(value.GetProperty("success").GetBoolean());
             Assert.Equal(0, value.GetProperty("totalActualCost").GetInt32());
-            await _projectSubContractService.DidNotReceive().GetAnimalTotalAmountAsync(Arg.Any<string>());
+            await _projectSubContractService.DidNotReceive().GetFpsProjectSubContractTotalAmountAsync(Arg.Any<string>());
         }
 
         [Fact]
@@ -364,7 +364,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ActualAnimalCostControllerT
             // Arrange
             var projectCode = "PROJ001";
             var serviceResponse = ApiResponseDto<decimal>.SuccessResponse(1250.50m);
-            _projectSubContractService.GetAnimalTotalAmountAsync(projectCode).Returns(serviceResponse);
+            _projectSubContractService.GetFpsProjectSubContractTotalAmountAsync(projectCode).Returns(serviceResponse);
 
             // Act
             var result = await _controller.GetTotalActualCost(projectCode);
@@ -387,7 +387,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ActualAnimalCostControllerT
             var value = GetJsonResultElement(jsonResult);
             Assert.False(value.GetProperty("success").GetBoolean());
             Assert.Equal(0, value.GetProperty("totalActualCost").GetInt32());
-            await _projectSubContractService.DidNotReceive().GetAnimalTotalAmountAsync(Arg.Any<string>());
+            await _projectSubContractService.DidNotReceive().GetFpsProjectSubContractTotalAmountAsync(Arg.Any<string>());
         }
 
         [Fact]
@@ -397,7 +397,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ActualAnimalCostControllerT
             var projectCode = "PROJ001";
             var errors = new List<ApiErrorDto> { new() { Message = "Service error", Code = "ERR" } };
             var serviceResponse = ApiResponseDto<decimal>.FailureResponse(errors, new ApiMetaDto());
-            _projectSubContractService.GetAnimalTotalAmountAsync(projectCode).Returns(serviceResponse);
+            _projectSubContractService.GetFpsProjectSubContractTotalAmountAsync(projectCode).Returns(serviceResponse);
 
             // Act
             var result = await _controller.GetTotalActualCost(projectCode);
@@ -415,7 +415,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ActualAnimalCostControllerT
             // Arrange
             var projectCode = "PROJ001";
             var serviceResponse = ApiResponseDto<decimal>.FailureResponse(new List<ApiErrorDto>(), new ApiMetaDto());
-            _projectSubContractService.GetAnimalTotalAmountAsync(projectCode).Returns(serviceResponse);
+            _projectSubContractService.GetFpsProjectSubContractTotalAmountAsync(projectCode).Returns(serviceResponse);
 
             // Act
             var result = await _controller.GetTotalActualCost(projectCode);

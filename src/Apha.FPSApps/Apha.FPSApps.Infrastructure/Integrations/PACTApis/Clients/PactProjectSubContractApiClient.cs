@@ -98,11 +98,11 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             return ApiResponseDto<decimal>.FailureResponse(dto.Errors, dto.Meta ?? new ApiMetaDto());
         }
 
-        public async Task<ApiResponseDto<List<ProjectSubContractDto>>> GetAnimalSubContractsAsync(QueryParameters<string> query, string? project)
+        public async Task<ApiResponseDto<List<ProjectSubContractDto>>> GetFpsProjectSubContractsAsync(QueryParameters<string> query, string? project)
         {
             string baseUrl = string.IsNullOrWhiteSpace(project)
-                ? PactApiEndpoints.GetAnimalSubContracts
-                : QueryStringHelper.AddQueryString(PactApiEndpoints.GetAnimalSubContracts, new { project });
+                ? PactApiEndpoints.GetFpsProjectSubContracts
+                : QueryStringHelper.AddQueryString(PactApiEndpoints.GetFpsProjectSubContracts, new { project });
             string url = QueryStringHelper.AddQueryString(baseUrl, query);
 
             var response = await _http.GetAsync<List<ProjectSubContractRes>>(url);
@@ -113,11 +113,11 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             return ApiResponseDto<List<ProjectSubContractDto>>.FailureResponse(dto.Errors, dto.Meta ?? new ApiMetaDto());
         }
 
-        public async Task<ApiResponseDto<decimal>> GetAnimalTotalAmountAsync(string? project)
+        public async Task<ApiResponseDto<decimal>> GetFpsProjectSubContractTotalAmountAsync(string? project)
         {
             string url = string.IsNullOrWhiteSpace(project)
-                ? PactApiEndpoints.GetAnimalSubContractTotalAmount
-                : QueryStringHelper.AddQueryString(PactApiEndpoints.GetAnimalSubContractTotalAmount, new { project });
+                ? PactApiEndpoints.GetFpsProjectSubContractTotalAmount
+                : QueryStringHelper.AddQueryString(PactApiEndpoints.GetFpsProjectSubContractTotalAmount, new { project });
 
             try
             {

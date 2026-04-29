@@ -12,7 +12,7 @@ namespace Apha.FPSApps.Application.Interfaces.PactApiClients
         Task<ApiResponseDto<ProjectSubContractDto>> CreateAsync(ProjectSubContractDto dto);
         Task<ApiResponseDto<ProjectSubContractDto>> UpdateAsync(int subContCounter, ProjectSubContractDto dto);
         Task<ApiResponseDto<bool>> DeleteAsync(int subContCounter);
-        Task<ApiResponseDto<List<ProjectSubContractDto>>> GetAnimalSubContractsAsync(QueryParameters<string> query, string? project);
-        Task<ApiResponseDto<decimal>> GetAnimalTotalAmountAsync(string? project);
+        Task<ApiResponseDto<List<ProjectSubContractDto>>> GetFpsProjectSubContractsAsync(QueryParameters<string> query, string? project);
+        Task<ApiResponseDto<decimal>> GetFpsProjectSubContractTotalAmountAsync(string? project);
     }
 }

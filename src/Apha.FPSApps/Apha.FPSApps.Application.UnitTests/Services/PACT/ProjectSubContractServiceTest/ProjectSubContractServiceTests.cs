@@ -1,4 +1,4 @@
-﻿using Apha.FPSApps.Application.Dtos;
+using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.PactApiClients;
 using Apha.FPSApps.Application.Pagination;
@@ -263,10 +263,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectSubContractSer
 
         #endregion
 
-        #region GetAnimalSubContractsAsync Tests
+        #region GetFpsProjectSubContractsAsync Tests
 
         [Fact]
-        public async Task GetAnimalSubContractsAsync_WithValidQuery_ReturnsPaginatedSubContracts()
+        public async Task GetFpsProjectSubContractsAsync_WithValidQuery_ReturnsPaginatedSubContracts()
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
@@ -280,28 +280,28 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectSubContractSer
                 subContracts,
                 new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 2 }
             );
-            _pactProjectSubContractApiClient.GetAnimalSubContractsAsync(query, project).Returns(expectedResponse);
+            _pactProjectSubContractApiClient.GetFpsProjectSubContractsAsync(query, project).Returns(expectedResponse);
 
             // Act
-            var result = await _service.GetAnimalSubContractsAsync(query, project);
+            var result = await _service.GetFpsProjectSubContractsAsync(query, project);
 
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(2, result.Data?.Count);
-            await _pactProjectSubContractApiClient.Received(1).GetAnimalSubContractsAsync(query, project);
+            await _pactProjectSubContractApiClient.Received(1).GetFpsProjectSubContractsAsync(query, project);
         }
 
         [Fact]
-        public async Task GetAnimalSubContractsAsync_WithNullProject_ReturnsSuccessWithEmptyList()
+        public async Task GetFpsProjectSubContractsAsync_WithNullProject_ReturnsSuccessWithEmptyList()
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var expectedResponse = ApiResponseDto<List<ProjectSubContractDto>>.SuccessResponse(new List<ProjectSubContractDto>());
-            _pactProjectSubContractApiClient.GetAnimalSubContractsAsync(query, null).Returns(expectedResponse);
+            _pactProjectSubContractApiClient.GetFpsProjectSubContractsAsync(query, null).Returns(expectedResponse);
 
             // Act
-            var result = await _service.GetAnimalSubContractsAsync(query, null);
+            var result = await _service.GetFpsProjectSubContractsAsync(query, null);
 
             // Assert
             Assert.NotNull(result);
@@ -310,16 +310,16 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectSubContractSer
         }
 
         [Fact]
-        public async Task GetAnimalSubContractsAsync_WhenApiFails_ReturnsFailureResponse()
+        public async Task GetFpsProjectSubContractsAsync_WhenApiFails_ReturnsFailureResponse()
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "API Error", Code = "API_ERROR" } };
             var expectedResponse = ApiResponseDto<List<ProjectSubContractDto>>.FailureResponse(errors, new ApiMetaDto());
-            _pactProjectSubContractApiClient.GetAnimalSubContractsAsync(query, null).Returns(expectedResponse);
+            _pactProjectSubContractApiClient.GetFpsProjectSubContractsAsync(query, null).Returns(expectedResponse);
 
             // Act
-            var result = await _service.GetAnimalSubContractsAsync(query, null);
+            var result = await _service.GetFpsProjectSubContractsAsync(query, null);
 
             // Assert
             Assert.NotNull(result);
@@ -330,36 +330,36 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectSubContractSer
 
         #endregion
 
-        #region GetAnimalTotalAmountAsync Tests
+        #region GetFpsProjectSubContractTotalAmountAsync Tests
 
         [Fact]
-        public async Task GetAnimalTotalAmountAsync_WithValidProject_ReturnsTotalAmount()
+        public async Task GetFpsProjectSubContractTotalAmountAsync_WithValidProject_ReturnsTotalAmount()
         {
             // Arrange
             var project = "PP001";
             var expectedResponse = ApiResponseDto<decimal>.SuccessResponse(1500.00m);
-            _pactProjectSubContractApiClient.GetAnimalTotalAmountAsync(project).Returns(expectedResponse);
+            _pactProjectSubContractApiClient.GetFpsProjectSubContractTotalAmountAsync(project).Returns(expectedResponse);
 
             // Act
-            var result = await _service.GetAnimalTotalAmountAsync(project);
+            var result = await _service.GetFpsProjectSubContractTotalAmountAsync(project);
 
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(1500.00m, result.Data);
-            await _pactProjectSubContractApiClient.Received(1).GetAnimalTotalAmountAsync(project);
+            await _pactProjectSubContractApiClient.Received(1).GetFpsProjectSubContractTotalAmountAsync(project);
         }
 
         [Fact]
-        public async Task GetAnimalTotalAmountAsync_WhenApiFails_ReturnsFailureResponse()
+        public async Task GetFpsProjectSubContractTotalAmountAsync_WhenApiFails_ReturnsFailureResponse()
         {
             // Arrange
             var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "API Error", Code = "API_ERROR" } };
             var expectedResponse = ApiResponseDto<decimal>.FailureResponse(errors, new ApiMetaDto());
-            _pactProjectSubContractApiClient.GetAnimalTotalAmountAsync(null).Returns(expectedResponse);
+            _pactProjectSubContractApiClient.GetFpsProjectSubContractTotalAmountAsync(null).Returns(expectedResponse);
 
             // Act
-            var result = await _service.GetAnimalTotalAmountAsync(null);
+            var result = await _service.GetFpsProjectSubContractTotalAmountAsync(null);
 
             // Assert
             Assert.NotNull(result);

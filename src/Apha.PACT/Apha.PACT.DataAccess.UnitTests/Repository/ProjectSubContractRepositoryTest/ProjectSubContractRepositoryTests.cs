@@ -1,4 +1,4 @@
-﻿using Apha.Common.Helpers.Repository;
+using Apha.Common.Helpers.Repository;
 using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
@@ -18,7 +18,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectSubContractRepository
         /// <summary>
         /// Creates a ProjectSubContractRepository alongside mocked DbSet and context for call verification.
         /// AddAsync is set up explicitly since it differs from the base SetupDbSetOperations.
-        /// UpdateAsync uses Entry().State — tested via Callback+Throws pattern (mirrors JobCodeRepositoryTests).
+        /// UpdateAsync uses Entry().State � tested via Callback+Throws pattern (mirrors JobCodeRepositoryTests).
         /// </summary>
         private static (
             ProjectSubContractRepository Repo,
@@ -134,10 +134,10 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectSubContractRepository
 
         #endregion
 
-        #region GetAnimalSubContractsAsync
+        #region GetFpsProjectSubContractsAsync
 
         [Fact]
-        public async Task GetAnimalSubContractsAsync_WithProject_ReturnsOnlyAnimalRecordsForProject()
+        public async Task GetFpsProjectSubContractsAsync_WithProject_ReturnsOnlyAnimalRecordsForProject()
         {
             var subContracts = new List<ProjectSubContract>
             {
@@ -149,14 +149,14 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectSubContractRepository
             var repo = CreateRepository(subContracts);
             var query = new PaginationParameters<string>();
 
-            var result = await repo.GetAnimalSubContractsAsync(query, "PRJ1");
+            var result = await repo.GetFpsProjectSubContractsAsync(query, "PRJ1");
 
             Assert.Equal(2, result.PaginationData.TotalRecords);
             Assert.All(result.Data, d => Assert.Equal("PRJ1", d.Project));
         }
 
         [Fact]
-        public async Task GetAnimalSubContractsAsync_NullProject_ReturnsAllAnimalRecords()
+        public async Task GetFpsProjectSubContractsAsync_NullProject_ReturnsAllAnimalRecords()
         {
             var subContracts = new List<ProjectSubContract>
             {
@@ -167,13 +167,13 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectSubContractRepository
             var repo = CreateRepository(subContracts);
             var query = new PaginationParameters<string>();
 
-            var result = await repo.GetAnimalSubContractsAsync(query, null);
+            var result = await repo.GetFpsProjectSubContractsAsync(query, null);
 
             Assert.Equal(2, result.PaginationData.TotalRecords);
         }
 
         [Fact]
-        public async Task GetAnimalSubContractsAsync_NoAnimalRecords_ReturnsEmpty()
+        public async Task GetFpsProjectSubContractsAsync_NoAnimalRecords_ReturnsEmpty()
         {
             var subContracts = new List<ProjectSubContract>
             {
@@ -182,17 +182,17 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectSubContractRepository
             var repo = CreateRepository(subContracts);
             var query = new PaginationParameters<string>();
 
-            var result = await repo.GetAnimalSubContractsAsync(query, null);
+            var result = await repo.GetFpsProjectSubContractsAsync(query, null);
 
             Assert.Equal(0, result.PaginationData.TotalRecords);
         }
 
         #endregion
 
-        #region GetAnimalTotalAmountAsync
+        #region GetFpsProjectSubContractTotalAmountAsync
 
         [Fact]
-        public async Task GetAnimalTotalAmountAsync_WithProject_ReturnsSumOfAnimalAmounts()
+        public async Task GetFpsProjectSubContractTotalAmountAsync_WithProject_ReturnsSumOfAnimalAmounts()
         {
             var subContracts = new List<ProjectSubContract>
             {
@@ -203,13 +203,13 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectSubContractRepository
             };
             var repo = CreateRepository(subContracts);
 
-            var result = await repo.GetAnimalTotalAmountAsync("PRJ1");
+            var result = await repo.GetFpsProjectSubContractTotalAmountAsync("PRJ1");
 
             Assert.Equal(500m, result);
         }
 
         [Fact]
-        public async Task GetAnimalTotalAmountAsync_NullProject_ReturnsTotalOfAllAnimalAmounts()
+        public async Task GetFpsProjectSubContractTotalAmountAsync_NullProject_ReturnsTotalOfAllAnimalAmounts()
         {
             var subContracts = new List<ProjectSubContract>
             {
@@ -219,17 +219,17 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectSubContractRepository
             };
             var repo = CreateRepository(subContracts);
 
-            var result = await repo.GetAnimalTotalAmountAsync(null);
+            var result = await repo.GetFpsProjectSubContractTotalAmountAsync(null);
 
             Assert.Equal(500m, result);
         }
 
         [Fact]
-        public async Task GetAnimalTotalAmountAsync_NoAnimalRecords_ReturnsZero()
+        public async Task GetFpsProjectSubContractTotalAmountAsync_NoAnimalRecords_ReturnsZero()
         {
             var repo = CreateRepository([]);
 
-            var result = await repo.GetAnimalTotalAmountAsync(null);
+            var result = await repo.GetFpsProjectSubContractTotalAmountAsync(null);
 
             Assert.Equal(0m, result);
         }
