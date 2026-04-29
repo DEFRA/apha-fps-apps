@@ -159,7 +159,7 @@ namespace Apha.PACT.Application.Services
             if (!workGroupChanged && !timeCodeChanged && !parentProjectChanged)
                 return;
 
-            var hasDependentRows = await _monthlyTimeRepository.HasDependentRowsAsync(
+            var hasDependentRows = await _monthlyTimeRepository.HasMonthlyTimeEntriesAsync(
                 existing.WorkGroup, existing.TimeCode, existing.ParentProject);
 
             if (hasDependentRows)

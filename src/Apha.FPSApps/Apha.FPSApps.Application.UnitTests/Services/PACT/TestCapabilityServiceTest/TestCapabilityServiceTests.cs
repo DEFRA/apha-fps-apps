@@ -188,33 +188,33 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.TestCapabilityService
 
         #endregion       
                 
-        #region GetPagedByPortfolioAsync
+        #region GetPagedTestCapabilityByPortfolioAsync
 
         [Fact]
-        public async Task GetPagedByPortfolioAsync_DelegatesToApiClient_ReturnsResult()
+        public async Task GetPagedTestCapabilityByPortfolioAsync_DelegatesToApiClient_ReturnsResult()
         {
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var expected = ApiResponseDto<List<TestCapabilityDto>>.SuccessResponse(
                 [new TestCapabilityDto { TestCode = "TC1" }]);
-            _apiClient.GetPagedByPortfolioAsync(query, "PP1").Returns(expected);
+            _apiClient.GetPagedTestCapabilityByPortfolioAsync(query, "PP1").Returns(expected);
 
-            var result = await _service.GetPagedByPortfolioAsync(query, "PP1");
+            var result = await _service.GetPagedTestCapabilityByPortfolioAsync(query, "PP1");
 
             Assert.Equal(expected, result);
-            await _apiClient.Received(1).GetPagedByPortfolioAsync(query, "PP1");
+            await _apiClient.Received(1).GetPagedTestCapabilityByPortfolioAsync(query, "PP1");
         }
 
         [Fact]
-        public async Task GetPagedByPortfolioAsync_WithNullPortfolio_PassesNullToClient()
+        public async Task GetPagedTestCapabilityByPortfolioAsync_WithNullPortfolio_PassesNullToClient()
         {
             var query = new QueryParameters<string>();
             var expected = ApiResponseDto<List<TestCapabilityDto>>.SuccessResponse([]);
-            _apiClient.GetPagedByPortfolioAsync(query, null).Returns(expected);
+            _apiClient.GetPagedTestCapabilityByPortfolioAsync(query, null).Returns(expected);
 
-            var result = await _service.GetPagedByPortfolioAsync(query, null);
+            var result = await _service.GetPagedTestCapabilityByPortfolioAsync(query, null);
 
             Assert.Equal(expected, result);
-            await _apiClient.Received(1).GetPagedByPortfolioAsync(query, null);
+            await _apiClient.Received(1).GetPagedTestCapabilityByPortfolioAsync(query, null);
         }
 
         #endregion

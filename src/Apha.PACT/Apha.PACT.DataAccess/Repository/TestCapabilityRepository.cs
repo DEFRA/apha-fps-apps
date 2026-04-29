@@ -57,7 +57,7 @@ namespace Apha.PACT.DataAccess.Repository
             return ApplyPaging(result, query.Page, query.PageSize);
         }
 
-        public async Task<PagedData<TestCapability>> GetPagedByPortfolioAsync(
+        public async Task<PagedData<TestCapability>> GetPagedTestCapabilityByPortfolioAsync(
             PaginationParameters<string> query, string? portfolio)
         {
             var baseQuery = _context.TestCapabilities.AsNoTracking().AsQueryable();

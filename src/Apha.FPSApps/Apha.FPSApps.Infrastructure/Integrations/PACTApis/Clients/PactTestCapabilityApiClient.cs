@@ -99,7 +99,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             return ApiResponseDto<bool>.FailureResponse(dto.Errors, dto.Meta);
         }
 
-        public async Task<ApiResponseDto<List<TestCapabilityDto>>> GetPagedByPortfolioAsync(
+        public async Task<ApiResponseDto<List<TestCapabilityDto>>> GetPagedTestCapabilityByPortfolioAsync(
             QueryParameters<string> query, string? portfolio)
         {
             var url = QueryStringHelper.AddQueryString(PactApiEndpoints.GetPagedTestCapabilityByPortfolio, query);

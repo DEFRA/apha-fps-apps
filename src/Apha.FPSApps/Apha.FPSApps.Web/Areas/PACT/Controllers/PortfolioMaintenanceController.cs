@@ -104,7 +104,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             if (!string.IsNullOrEmpty(parentProject))
             {
                 var query = _mapper.Map<QueryParameters<string>>(request);
-                var response = await _testCapabilityService.GetPagedByPortfolioAsync(query, parentProject);
+                var response = await _testCapabilityService.GetPagedTestCapabilityByPortfolioAsync(query, parentProject);
                 items = response.Data != null ? _mapper.Map<List<ConstituentTestItem>>(response.Data) : [];
                 pagination = response.Pagination != null
                     ? _mapper.Map<PaginationModel>(response.Pagination)

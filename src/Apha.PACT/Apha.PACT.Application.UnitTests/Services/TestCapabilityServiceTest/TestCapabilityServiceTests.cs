@@ -29,10 +29,10 @@ namespace Apha.PACT.Application.UnitTests.Services.TestCapabilityServiceTest
                 _testCapabilityRepo, _testReqmtRepo, _testorProductRepo, _mapper);
         }
 
-        #region GetPagedByPortfolioAsync
+        #region GetPagedTestCapabilityByPortfolioAsync
 
         [Fact]
-        public async Task GetPagedByPortfolioAsync_ValidQuery_ReturnsMappedResultWithDescriptions()
+        public async Task GetPagedTestCapabilityByPortfolioAsync_ValidQuery_ReturnsMappedResultWithDescriptions()
         {
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var mappedParams = new PaginationParameters<string>();
@@ -43,19 +43,19 @@ namespace Apha.PACT.Application.UnitTests.Services.TestCapabilityServiceTest
             var descriptions = new Dictionary<string, string?> { ["TC1"] = "Test Description" };
 
             _mapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
-            _testCapabilityRepo.GetPagedByPortfolioAsync(mappedParams, "PP1").Returns(pagedData);
+            _testCapabilityRepo.GetPagedTestCapabilityByPortfolioAsync(mappedParams, "PP1").Returns(pagedData);
             _mapper.Map<PaginatedResult<TestCapabilityDto>>(pagedData).Returns(pagedResult);
             _testorProductRepo.GetDescriptionsByCodesAsync(Arg.Any<IEnumerable<string>>()).Returns(descriptions);
 
-            var result = await _sut.GetPagedByPortfolioAsync(query, "PP1");
+            var result = await _sut.GetPagedTestCapabilityByPortfolioAsync(query, "PP1");
 
             result.Should().Be(pagedResult);
             Assert.Equal("Test Description", result.Data!.First().ItemDescription);
-            await _testCapabilityRepo.Received(1).GetPagedByPortfolioAsync(mappedParams, "PP1");
+            await _testCapabilityRepo.Received(1).GetPagedTestCapabilityByPortfolioAsync(mappedParams, "PP1");
         }
 
         [Fact]
-        public async Task GetPagedByPortfolioAsync_EmptyData_DoesNotCallDescriptions()
+        public async Task GetPagedTestCapabilityByPortfolioAsync_EmptyData_DoesNotCallDescriptions()
         {
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var mappedParams = new PaginationParameters<string>();
@@ -63,10 +63,10 @@ namespace Apha.PACT.Application.UnitTests.Services.TestCapabilityServiceTest
             var pagedResult = new PaginatedResult<TestCapabilityDto> { Data = [] };
 
             _mapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
-            _testCapabilityRepo.GetPagedByPortfolioAsync(mappedParams, "PP1").Returns(pagedData);
+            _testCapabilityRepo.GetPagedTestCapabilityByPortfolioAsync(mappedParams, "PP1").Returns(pagedData);
             _mapper.Map<PaginatedResult<TestCapabilityDto>>(pagedData).Returns(pagedResult);
 
-            var result = await _sut.GetPagedByPortfolioAsync(query, "PP1");
+            var result = await _sut.GetPagedTestCapabilityByPortfolioAsync(query, "PP1");
 
             result.Should().Be(pagedResult);
             await _testorProductRepo.DidNotReceive().GetDescriptionsByCodesAsync(Arg.Any<IEnumerable<string>>());

@@ -158,7 +158,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioMaintenanceContro
             var request = new PaginationFilter<string> { Filter = "{}" };
             var query = new QueryParameters<string>();
             _mapper.Map<QueryParameters<string>>(request).Returns(query);
-            _testCapabilityService.GetPagedByPortfolioAsync(query, "PP1")
+            _testCapabilityService.GetPagedTestCapabilityByPortfolioAsync(query, "PP1")
                 .Returns(ApiResponseDto<List<TestCapabilityDto>>.SuccessResponse(
                     [new TestCapabilityDto { TestCode = "TC1", WorkGroup = "WG1" }],
                     new PaginationDto()));

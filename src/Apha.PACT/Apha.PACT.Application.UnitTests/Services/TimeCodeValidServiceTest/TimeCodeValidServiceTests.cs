@@ -1,4 +1,4 @@
-ï»¿using Apha.PACT.Application.Dtos;
+using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Pagination;
 using Apha.PACT.Application.Services;
 using Apha.PACT.Core.Entities;
@@ -72,7 +72,7 @@ namespace Apha.PACT.Application.UnitTests.Services.TimeCodeValidServiceTest
 
         #endregion
 
-        #region UpdateTimeCodeValidAsync â€” MonthlyTime dependency path
+        #region UpdateTimeCodeValidAsync — MonthlyTime dependency path
 
         [Fact]
         public async Task UpdateTimeCodeValidAsync_WorkGroupChangedWithDependentMonthlyTime_ThrowsInvalidOperationException()
@@ -81,7 +81,7 @@ namespace Apha.PACT.Application.UnitTests.Services.TimeCodeValidServiceTest
             var existing = new TimeCodeValid { TimeCode = "TC1", WorkGroup = "WG_OLD", ParentProject = "PRJ1", JobCode = "JC1" };
 
             _mockRepository.GetTimeCodeValidAsync("WG_NEW", "TC1", "PRJ1").Returns(existing);
-            _mockMonthlyTimeRepository.HasDependentRowsAsync("WG_OLD", "TC1", "PRJ1").Returns(true);
+            _mockMonthlyTimeRepository.HasMonthlyTimeEntriesAsync("WG_OLD", "TC1", "PRJ1").Returns(true);
 
             var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.UpdateTimeCodeValidAsync(dto));
             ex.Message.Should().Be("Cannot update, existing data in MonthlyTime.");
@@ -104,7 +104,7 @@ namespace Apha.PACT.Application.UnitTests.Services.TimeCodeValidServiceTest
             var result = await _sut.UpdateTimeCodeValidAsync(dto);
 
             result.Should().Be(expected);
-            await _mockMonthlyTimeRepository.DidNotReceive().HasDependentRowsAsync(
+            await _mockMonthlyTimeRepository.DidNotReceive().HasMonthlyTimeEntriesAsync(
                 Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
         }
 
@@ -356,7 +356,7 @@ namespace Apha.PACT.Application.UnitTests.Services.TimeCodeValidServiceTest
             var expected = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC1", Active = true };
 
             _mockRepository.GetTimeCodeValidAsync("WG1", "TC1", "PRJ1").Returns(existing);
-            // JobCode unchanged â€” no FK call needed
+            // JobCode unchanged — no FK call needed
             _mockMapper.Map<TimeCodeValid>(dto).Returns(entity);
             _mockRepository.UpdateTimeCodeValidAsync(entity).Returns(updated);
             _mockMapper.Map<TimeCodeValidDto>(updated).Returns(expected);
@@ -600,7 +600,7 @@ namespace Apha.PACT.Application.UnitTests.Services.TimeCodeValidServiceTest
         [Fact]
         public async Task DeleteBulkAsync_WithEmptyItems_ReturnsTrue()
         {
-            // Arrange â€” repository always returns true even for an empty list
+            // Arrange — repository always returns true even for an empty list
             var items = Enumerable.Empty<(string WorkGroup, string TimeCode)>();
 
             _mockRepository
@@ -669,7 +669,7 @@ namespace Apha.PACT.Application.UnitTests.Services.TimeCodeValidServiceTest
         [Fact]
         public async Task CopySelectedWorkGroupsAsync_WithEmptyWorkGroups_ReturnsEmptyCollection()
         {
-            // Arrange â€” no work groups selected; repository returns empty, mapper returns empty
+            // Arrange — no work groups selected; repository returns empty, mapper returns empty
             var workGroups = new List<string>();
             var entities = new List<TimeCodeValid>();
             var dtos = new List<TimeCodeValidDto>();

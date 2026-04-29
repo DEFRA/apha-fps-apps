@@ -56,7 +56,7 @@ namespace Apha.PACT.Api.Controllers
             [FromQuery] QueryParameters<string> query,
             [FromQuery] string? portfolio)
         {
-            var result = await _service.GetPagedByPortfolioAsync(query, portfolio);
+            var result = await _service.GetPagedTestCapabilityByPortfolioAsync(query, portfolio);
             return Ok(_mapper.Map<PaginationRes<TestCapabilityRes>>(result));
         }
 

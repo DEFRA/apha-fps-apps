@@ -7,7 +7,7 @@ namespace Apha.PACT.Application.Interfaces
     {
         Task<PaginatedResult<TestCapabilityDto>> GetPagedByWorkGroupAsync(QueryParameters<string> query, string? workGroup);
         Task<PaginatedResult<TestCapabilityDto>> GetPagedByTestCodeAsync(QueryParameters<string> query, string? testCode);
-        Task<PaginatedResult<TestCapabilityDto>> GetPagedByPortfolioAsync(QueryParameters<string> query, string? portfolio);
+        Task<PaginatedResult<TestCapabilityDto>> GetPagedTestCapabilityByPortfolioAsync(QueryParameters<string> query, string? portfolio);
         Task<TestCapabilityDto?> GetTestCapabilityByIdAsync(string testCode, string workGroup);
         Task<TestCapabilityDto> AddTestCapabilityAsync(TestCapabilityDto dto);
         Task<TestCapabilityDto> UpdateTestCapabilityAsync(TestCapabilityDto dto);

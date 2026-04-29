@@ -41,10 +41,10 @@ namespace Apha.PACT.Application.Services
             return _mapper.Map<PaginatedResult<TestCapabilityDto>>(pagedData);
         }
 
-        public async Task<PaginatedResult<TestCapabilityDto>> GetPagedByPortfolioAsync(QueryParameters<string> query, string? portfolio)
+        public async Task<PaginatedResult<TestCapabilityDto>> GetPagedTestCapabilityByPortfolioAsync(QueryParameters<string> query, string? portfolio)
         {
             var parameters = _mapper.Map<PaginationParameters<string>>(query);
-            var pagedData = await _testCapabilityRepository.GetPagedByPortfolioAsync(parameters, portfolio);
+            var pagedData = await _testCapabilityRepository.GetPagedTestCapabilityByPortfolioAsync(parameters, portfolio);
             var result = _mapper.Map<PaginatedResult<TestCapabilityDto>>(pagedData);
 
             if (result.Data != null && result.Data.Any())

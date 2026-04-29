@@ -25,10 +25,10 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
             return new MonthlyTimeRepository(mockContext.Object);
         }
 
-        #region HasDependentRowsAsync
+        #region HasMonthlyTimeEntriesAsync
 
         [Fact]
-        public async Task HasDependentRowsAsync_MatchingAllThreeFields_ReturnsTrue()
+        public async Task HasMonthlyTimeEntriesAsync_MatchingAllThreeFields_ReturnsTrue()
         {
             var monthlyTimes = new List<MonthlyTime>
             {
@@ -37,13 +37,13 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
 
             var repo = CreateRepository(monthlyTimes);
 
-            var result = await repo.HasDependentRowsAsync("WG1", "TC1", "PP1");
+            var result = await repo.HasMonthlyTimeEntriesAsync("WG1", "TC1", "PP1");
 
             Assert.True(result);
         }
 
         [Fact]
-        public async Task HasDependentRowsAsync_NoMatchingRows_ReturnsFalse()
+        public async Task HasMonthlyTimeEntriesAsync_NoMatchingRows_ReturnsFalse()
         {
             var monthlyTimes = new List<MonthlyTime>
             {
@@ -52,13 +52,13 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
 
             var repo = CreateRepository(monthlyTimes);
 
-            var result = await repo.HasDependentRowsAsync("WG2", "TC2", "PP2");
+            var result = await repo.HasMonthlyTimeEntriesAsync("WG2", "TC2", "PP2");
 
             Assert.False(result);
         }
 
         [Fact]
-        public async Task HasDependentRowsAsync_WorkGroupDiffers_ReturnsFalse()
+        public async Task HasMonthlyTimeEntriesAsync_WorkGroupDiffers_ReturnsFalse()
         {
             var monthlyTimes = new List<MonthlyTime>
             {
@@ -67,13 +67,13 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
 
             var repo = CreateRepository(monthlyTimes);
 
-            var result = await repo.HasDependentRowsAsync("WG_DIFFERENT", "TC1", "PP1");
+            var result = await repo.HasMonthlyTimeEntriesAsync("WG_DIFFERENT", "TC1", "PP1");
 
             Assert.False(result);
         }
 
         [Fact]
-        public async Task HasDependentRowsAsync_TimeCodeDiffers_ReturnsFalse()
+        public async Task HasMonthlyTimeEntriesAsync_TimeCodeDiffers_ReturnsFalse()
         {
             var monthlyTimes = new List<MonthlyTime>
             {
@@ -82,13 +82,13 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
 
             var repo = CreateRepository(monthlyTimes);
 
-            var result = await repo.HasDependentRowsAsync("WG1", "TC_DIFFERENT", "PP1");
+            var result = await repo.HasMonthlyTimeEntriesAsync("WG1", "TC_DIFFERENT", "PP1");
 
             Assert.False(result);
         }
 
         [Fact]
-        public async Task HasDependentRowsAsync_ParentProjectDiffers_ReturnsFalse()
+        public async Task HasMonthlyTimeEntriesAsync_ParentProjectDiffers_ReturnsFalse()
         {
             var monthlyTimes = new List<MonthlyTime>
             {
@@ -97,23 +97,23 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
 
             var repo = CreateRepository(monthlyTimes);
 
-            var result = await repo.HasDependentRowsAsync("WG1", "TC1", "PP_DIFFERENT");
+            var result = await repo.HasMonthlyTimeEntriesAsync("WG1", "TC1", "PP_DIFFERENT");
 
             Assert.False(result);
         }
 
         [Fact]
-        public async Task HasDependentRowsAsync_EmptyRepository_ReturnsFalse()
+        public async Task HasMonthlyTimeEntriesAsync_EmptyRepository_ReturnsFalse()
         {
             var repo = CreateRepository(Enumerable.Empty<MonthlyTime>());
 
-            var result = await repo.HasDependentRowsAsync("WG1", "TC1", "PP1");
+            var result = await repo.HasMonthlyTimeEntriesAsync("WG1", "TC1", "PP1");
 
             Assert.False(result);
         }
 
         [Fact]
-        public async Task HasDependentRowsAsync_MultipleRows_OnlyOneMatches_ReturnsTrue()
+        public async Task HasMonthlyTimeEntriesAsync_MultipleRows_OnlyOneMatches_ReturnsTrue()
         {
             var monthlyTimes = new List<MonthlyTime>
             {
@@ -123,13 +123,13 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
 
             var repo = CreateRepository(monthlyTimes);
 
-            var result = await repo.HasDependentRowsAsync("WG1", "TC1", "PP1");
+            var result = await repo.HasMonthlyTimeEntriesAsync("WG1", "TC1", "PP1");
 
             Assert.True(result);
         }
 
         [Fact]
-        public async Task HasDependentRowsAsync_MultipleMatchingRows_ReturnsTrue()
+        public async Task HasMonthlyTimeEntriesAsync_MultipleMatchingRows_ReturnsTrue()
         {
             var monthlyTimes = new List<MonthlyTime>
             {
@@ -139,7 +139,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
 
             var repo = CreateRepository(monthlyTimes);
 
-            var result = await repo.HasDependentRowsAsync("WG1", "TC1", "PP1");
+            var result = await repo.HasMonthlyTimeEntriesAsync("WG1", "TC1", "PP1");
 
             Assert.True(result);
         }

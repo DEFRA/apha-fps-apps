@@ -8,7 +8,7 @@ namespace Apha.PACT.DataAccess.Repository
     {
         public MonthlyTimeRepository(FpsDbContext context) : base(context) { }
 
-        public async Task<bool> HasDependentRowsAsync(string workGroup, string timeCode, string parentProject)
+        public async Task<bool> HasMonthlyTimeEntriesAsync(string workGroup, string timeCode, string parentProject)
         {
             return await _context.MonthlyTimes
                 .AsNoTracking()
