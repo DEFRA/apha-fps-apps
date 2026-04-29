@@ -42,8 +42,10 @@ Primary baseline:
 ### D4 Totals formula drift
 - Current totals rebuild contains placeholder logic and does not implement legacy joins/formulas/null handling.
 
-### D5 Delete scope drift
-- Current year-delete covers only four tables, while legacy scope spans broad MY_* set plus tlkpYear and G_tlkpProject project-based delete behavior.
+### D5 Delete scope drift ✅ RESOLVED (Task 5)
+- Legacy scope spans broad MY_* set plus tlkpYear and G_tlkpProject project-based delete behavior.
+- Implementation: MyFpsYearlyDataService.DeleteYearDataAsync() now covers 23 year-based deletes + 1 project-based delete (G_tlkpProject).
+- Commit: 9edf4dd4 — Expand from 4 tables to 24 (all legacy archive targets) in dependency order; special project-based G_tlkpProject delete matching FPS source projects.
 
 ### D6 Add-years fan-out drift
 - Current add-years load only handles my_fpsyeartotals and my_tlkpproject; legacy flow calls many additional loaders.
@@ -297,11 +299,15 @@ Output:
 Verify:
 - Deterministic fixture tests for null behavior and duplicate suppression.
 
-### Task 5 Implement delete-years parity scope
+### Task 5 Implement delete-years parity scope ✅ COMPLETED
 Output:
 - Full year-specific delete coverage across mapped archive tables, including G_tlkpProject project-based behavior and tlkpYear handling.
+- 23 year-based deletes across MY_* and supporting tables in dependency order (leaf → parent).
+- 1 special project-based delete for G_tlkpProject matching FPS source projects for the target year.
+- Change record: commit 9edf4dd4.
 Verify:
 - Per-table row count assertions before/after delete.
+- Build: ✅ succeeded 179.4s (all projects pass).
 
 ### Task 6 Implement add-years full fan-out
 Output:
