@@ -1,0 +1,80 @@
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@using Microsoft.AspNetCore.Mvc.Rendering
+@model Apha.FPSApps.Web.Areas.PACT.Models.InvoiceRecordingViewModel
+
+@{
+    ViewData["Title"] = "Invoice Records";
+}
+
+<div class="govuk-grid-row sup_margin_left_right_0">
+    <div class="govuk-grid-column-full">
+        <h1 class="govuk-heading-l">Invoice Records</h1>
+    </div>
+</div>
+
+<div class="govuk-grid-row sup_margin_left_right_0 sup_margin_bottom_20">
+    <div class="govuk-grid-column-full">
+        <div class="govuk-form-group">
+            <fieldset class="govuk-fieldset">
+                <div style="display: flex; gap: 20px; align-items: flex-end;">
+                    <div class="govuk-form-group" style="margin-bottom: 0; flex: 1;">
+                        <label class="govuk-label govuk-!-font-weight-bold" for="projectPick">
+                            Project
+                        </label>
+                        <select id="projectPick"
+                                class="govuk-select"
+                                style="width: 100%;"
+                                onchange="applyFilters()">
+                            <option value="">-- All Projects --</option>
+                            @foreach (var project in Model.FilterProjects)
+                            {
+                                <option value="@project.Value" selected="@(project.Value == Model.ParentProject)">@project.Text</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="govuk-form-group" style="margin-bottom: 0; flex: 1;">
+                        <label class="govuk-label govuk-!-font-weight-bold" for="monthPick">
+                            Month
+                        </label>
+                        <select id="monthPick" 
+                                class="govuk-select"
+                                style="width: 200px;"
+                                onchange="applyFilters()">
+                            <option value="">All Months</option>
+                            <option value="1" selected="@(Model.Month == 1 ? "selected" : null)">1 - January</option>
+                            <option value="2" selected="@(Model.Month == 2 ? "selected" : null)">2 - February</option>
+                            <option value="3" selected="@(Model.Month == 3 ? "selected" : null)">3 - March</option>
+                            <option value="4" selected="@(Model.Month == 4 ? "selected" : null)">4 - April</option>
+                            <option value="5" selected="@(Model.Month == 5 ? "selected" : null)">5 - May</option>
+                            <option value="6" selected="@(Model.Month == 6 ? "selected" : null)">6 - June</option>
+                            <option value="7" selected="@(Model.Month == 7 ? "selected" : null)">7 - July</option>
+                            <option value="8" selected="@(Model.Month == 8 ? "selected" : null)">8 - August</option>
+                            <option value="9" selected="@(Model.Month == 9 ? "selected" : null)">9 - September</option>
+                            <option value="10" selected="@(Model.Month == 10 ? "selected" : null)">10 - October</option>
+                            <option value="11" selected="@(Model.Month == 11 ? "selected" : null)">11 - November</option>
+                            <option value="12" selected="@(Model.Month == 12 ? "selected" : null)">12 - December</option>
+                        </select>
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+    </div>
+</div>
+<div class="govuk-grid-row sup_margin_left_right_0">
+    <div class="govuk-grid-column-full">
+        <div id="gridContainer_invoicesGrid">
+            @await Html.PartialAsync("_DataGrid", Model.InvoicesGrid)
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/ajax-form-validation.js"></script>
+    <script src="~/js/pact_js/invoice-recording.js"></script>
+    <script>
+        // Initialize page-specific variables
+        var invoicesGridId = '@Model.InvoicesGrid.GridId';
+        var parentProject = '@Uri.EscapeDataString(Model.ParentProject ?? string.Empty)';
+        var currentMonth = '@(Model.Month?.ToString() ?? "")';
+    </script>
+}

@@ -30,7 +30,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         
         [GridColumn(Order = 6, Width = 109, Type = GridColumnType.GbpValue)]
         public decimal? ProfitLoss { get; set; }
-        
+
+        [StringLength(100)]
         [GridColumn(Order = 7, Width = 177, Type = GridColumnType.Text, IsFilterable = true)]
         public string? Detail { get; set; }
 

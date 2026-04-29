@@ -58,13 +58,13 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddControllersWithViews();
 
             // Authentication
-            //services.AddAuthenticationServices(configuration);
+            services.AddAuthenticationServices(configuration);
 
             // Save tokens in cookie
-            //services.Configure<OpenIdConnectOptions>(OpenIdConnectDefaults.AuthenticationScheme, options =>
-            //{
-            //    options.SaveTokens = true;
-            //});
+            services.Configure<OpenIdConnectOptions>(OpenIdConnectDefaults.AuthenticationScheme, options =>
+            {
+                options.SaveTokens = true;
+            });
 
             // Configure cookie expiration
             services.ConfigureApplicationCookie(options =>

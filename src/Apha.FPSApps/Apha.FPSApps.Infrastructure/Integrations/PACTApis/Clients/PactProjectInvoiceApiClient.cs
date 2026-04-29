@@ -23,11 +23,16 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
 
         public async Task<ApiResponseDto<List<ProjectInvoiceDto>>> GetPagedProjectInvoicesAsync(QueryParameters<string> query, string? parentProject)
         {
-            string baseUrl = string.IsNullOrWhiteSpace(parentProject)
-                ? PactApiEndpoints.GetPagedProjectInvoices
-                : string.Format(PactApiEndpoints.GetPagedProjectInvoices, Uri.EscapeDataString(parentProject));
+            string baseUrl = PactApiEndpoints.GetPagedProjectInvoices;
+
+            // Add parentProject as query parameter if provided
+            if (!string.IsNullOrWhiteSpace(parentProject))
+            {
+                baseUrl += $"?parentProject={Uri.EscapeDataString(parentProject)}";
+            }
+
             string url = QueryStringHelper.AddQueryString(baseUrl, query);
-            
+
             var response = await _http.GetAsync<List<ProjectInvoiceRes>>(url);
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<List<ProjectInvoiceDto>>>(response);
