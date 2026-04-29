@@ -27,7 +27,7 @@ Goal: 100% logic integrity with executable parity evidence
 | Legacy SP | Expected Legacy Behavior | .NET Equivalent | Status | Gap / Note |
 |---|---|---|---|---|
 | `sp_LoadFromFPS` | Previous year always runs first; current year full cycle only when month > 4; before May only `MY_tlkpProject_all` refreshes | `MabArchiveLoadOrchestrator` | Partial | Branch order and year-availability guard implemented; still awaiting executable parity tests |
-| `sp_deleteFPSTotals` | Clears `FPSYearTotals` before rebuild | `ReloadFpsTotalsService.RebuildYearTotalsAsync` | Partial | Current implementation deletes by `fpsyear`; legacy SQL is full-table delete |
+| `sp_deleteFPSTotals` | Clears `FPSYearTotals` before rebuild | `ReloadFpsTotalsService.RebuildYearTotalsAsync` | Partial | Full-table delete parity implemented; still awaiting fixture-based behavioral proof |
 | `sp_createFPSTotals` | Rebuilds totals with legacy joins, null handling, and formulas | `ReloadFpsTotalsService.RebuildYearTotalsAsync` | Partial | Formula parity implemented; still awaiting executable data-shape verification |
 | `sp_DeleteYearsFPSData` | Broad year-specific delete across archive footprint plus project-based delete from `G_tlkpProject` | `MyFpsYearlyDataService.DeleteYearDataAsync` | Partial | Legacy table coverage implemented; still awaiting per-table row-count tests |
 | `sp_AddYearsFPSData` | 24-loader archive rebuild in fixed sequence | `MyFpsYearlyDataService.LoadYearDataAsync` | Partial | All 24 loaders implemented in legacy order; still awaiting targeted parity tests |
@@ -65,10 +65,9 @@ Goal: 100% logic integrity with executable parity evidence
 
 | Area | Current State | Status | Gap / Note |
 |---|---|---|---|
-| `sp_deleteFPSTotals` delete breadth | Deletes only the target year in consolidated storage | Partial | Legacy SQL does full-table delete; requires explicit decision or final parity fix |
 | Totals rebuild proof | Legacy formulas now implemented | Partial | Needs fixture-based proof for null behavior and joins |
 | Staff security filter semantics | Batch load copies all year rows | Partial | Legacy SQL scopes by executing SQL user's accessible workgroups/profit centres; likely intentional runtime adaptation but not yet formally approved |
-| End-to-end validation evidence | Implementation compiles and has been cross-checked against SQL and DDL | Partial | Needs Task 7 and Task 8 tests/results before any row can move to Converted |
+| End-to-end validation evidence | Implementation compiles and has been cross-checked against SQL and DDL | Partial | Task 7 parity branch/order tests now added and passing; still needs broader Task 8 run and fixture-level checks |
 
 ## Evidence Sources
 - Legacy procedure text: `docs/ScheduledJobs.txt`
@@ -78,6 +77,7 @@ Goal: 100% logic integrity with executable parity evidence
 - Yearly data service contract: `Apha.BatchJobs.Application/Jobs/ScheduledJobs/MABArchive/Services/IMyFpsYearlyDataService.cs`
 - Archive delete/load implementation: `Apha.BatchJobs.Infrastructure/Repositories/MabArchive/MyFpsYearlyDataService.cs`
 - Totals rebuild implementation: `Apha.BatchJobs.Infrastructure/Repositories/MabArchive/ReloadFpsTotalsService.cs`
+- Task 7 parity tests: `Apha.BatchJobs.UnitTests/MabArchiveLoadOrchestratorParityTests.cs`
 - PostgreSQL source schema: `dbscript/schemas/01fps/01tables`
 - PostgreSQL archive schema: `dbscript/schemas/02mabarchive/01tables`
 
@@ -85,9 +85,9 @@ Goal: 100% logic integrity with executable parity evidence
 - `74df9c8e` - orchestration parity and year-availability guard
 - `9edf4dd4` - delete-years parity across legacy archive footprint
 - `7f6cca98` - full 24-loader `sp_AddYearsFPSData` fan-out parity
+- pending commit - full-table delete parity for `sp_deleteFPSTotals` + Task 7 parity tests
 
 ## Closure Checklist to Reach 100%
-- Decide and implement final parity position for `sp_deleteFPSTotals` full-table delete semantics.
 - Add targeted parity tests for branch order, delete coverage, totals formulas, and loader order/coverage.
 - Run focused build/test suite and capture executable evidence.
 - Reclassify validated rows from Partial to Converted only after tests pass.

@@ -37,10 +37,9 @@ public sealed class ReloadFpsTotalsService : IReloadFpsTotalsService
 
         try
         {
-            // In consolidated multiyear storage, clear only the target year before rebuild.
+            // Legacy sp_deleteFPSTotals semantics: clear the whole table before rebuild.
             var deleteRows = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 DELETE FROM fps.fpsyeartotals
-WHERE fpsyear = {year}
 ", cancellationToken);
 
             _logger.LogInformation("Deleted {RowCount} existing totals rows for year {Year}", deleteRows, year);
