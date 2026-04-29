@@ -1,0 +1,59 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowEcrImagePull",
+      "Effect": "Allow",
+      "Action": [
+        "ecr:GetAuthorizationToken",
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:BatchGetImage"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "AllowSecretsRead",
+      "Effect": "Allow",
+      "Action": [
+        "secretsmanager:GetSecretValue"
+      ],
+      "Resource": [
+        "arn:aws:secretsmanager:eu-west-2:<account-id>:secret:devldnfps/*"
+      ]
+    },
+    {
+      "Sid": "AllowEnvFileReadFromS3",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject"
+      ],
+      "Resource": [
+        "arn:aws:s3:::devldnfps-env/*"
+      ]
+    },
+    {
+      "Sid": "AllowEnvBucketList",
+      "Effect": "Allow",
+      "Action": [
+        "s3:ListBucket"
+      ],
+      "Resource": "arn:aws:s3:::devldnfps-env"
+    },
+    {
+      "Sid": "AllowCloudWatchLogsWrite",
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents",
+        "logs:DescribeLogGroups",
+        "logs:DescribeLogStreams"
+      ],
+      "Resource": [
+        "arn:aws:logs:eu-west-2:<account-id>:log-group:devldnfps-app-*",
+        "arn:aws:logs:eu-west-2:<account-id>:log-group:devldnfps-app-*:log-stream:*"
+      ]
+    }
+  ]
+}
