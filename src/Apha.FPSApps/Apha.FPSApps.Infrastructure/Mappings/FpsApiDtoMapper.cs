@@ -53,11 +53,18 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<YearMasterDto, YearMasterReq>().ReverseMap();
 
             // Testor Product
-            CreateMap<TestorProductDto, TestorProductRes>().ReverseMap();
+            CreateMap<TestorProductDto, Apha.Common.Contracts.FPS.TestorProductRes>().ReverseMap();
 
             // View Project Plan vs Actual Staff
             CreateMap<TimeCostCalcsViewDto, TimeCostCalcsViewRes>().ReverseMap();
             CreateMap<TimeCostCalcsTotalsDto, TimeCostCalcsTotalsRes>().ReverseMap();
+
+            // Division
+            CreateMap<DivisionDto, DivisionRes>().ReverseMap();
+            CreateMap<DivisionDto, DivisionReq>().ReverseMap();
+
+            // Agency
+            CreateMap<AgencyDto, AgencyRes>().ReverseMap();
         }
     }
 }
