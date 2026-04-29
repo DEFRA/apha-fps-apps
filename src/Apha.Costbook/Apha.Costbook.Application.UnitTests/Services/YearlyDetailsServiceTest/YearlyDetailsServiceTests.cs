@@ -1,6 +1,7 @@
 using Apha.Costbook.Application.Dtos;
 using Apha.Costbook.Application.Pagination;
 using Apha.Costbook.Application.Services;
+using Apha.Costbook.Application.Validation;
 using Apha.Costbook.Core.Entities;
 using Apha.Costbook.Core.Interfaces;
 using Apha.Costbook.Core.Pagination;
@@ -212,7 +213,7 @@ public class YearlyDetailsServiceTests
     public async Task AddStaffRequirementAsync_MapsAndCallsRepo_ReturnsDto()
     {
         // Arrange
-        var dto = new StaffRequirementDto { WgGrade = "HEO", Chargerate = 50, Nohours = 100 };
+        var dto = new StaffRequirementDto { WgGrade = "HEO", Project = "P1", Year = 1, Name = "Test", Nohours = 100, Nodays = 10, Chargerate = 50, StaffCost = 5000 };
         var entity = new StaffRequirement { WgGrade = "HEO", Chargerate = 50, Nohours = 100 };
 
         _mapper.Map<StaffRequirement>(dto).Returns(entity);
@@ -236,7 +237,7 @@ public class YearlyDetailsServiceTests
     public async Task UpdateStaffRequirementAsync_MapsAndCallsRepo_ReturnsDto()
     {
         // Arrange
-        var dto = new StaffRequirementDto { SrIdentity = 1, WgGrade = "HEO" };
+        var dto = new StaffRequirementDto { SrIdentity = 1, WgGrade = "HEO", Project = "P1", Year = 1, Name = "Test", Nohours = 10, Nodays = 1, Chargerate = 50, StaffCost = 500 };
         var entity = new StaffRequirement { SrIdentity = 1, WgGrade = "HEO" };
 
         _mapper.Map<StaffRequirement>(dto).Returns(entity);
@@ -316,7 +317,7 @@ public class YearlyDetailsServiceTests
     [Fact]
     public async Task AddTestRequirementAsync_MapsAndCallsRepo_ReturnsDtoWithTestCost()
     {
-        var dto = new TestRequirementDto { TestCode = "TC001", UnitPrice = 100, NumberOfTests = 5 };
+        var dto = new TestRequirementDto { TestCode = "TC001", Project = "P1", Year = 1, UnitPrice = 100, NumberOfTests = 5, TestCost = 500 };
         var entity = new TestRequirement { TestCode = "TC001", UnitPrice = 100, NumberOfTests = 5 };
 
         _mapper.Map<TestRequirement>(dto).Returns(entity);
@@ -336,7 +337,7 @@ public class YearlyDetailsServiceTests
     [Fact]
     public async Task UpdateTestRequirementAsync_MapsAndCallsRepo()
     {
-        var dto = new TestRequirementDto { TestCode = "TC001" };
+        var dto = new TestRequirementDto { TestCode = "TC001", Project = "P1", Year = 1, UnitPrice = 100, NumberOfTests = 5, TestCost = 500 };
         var entity = new TestRequirement { TestCode = "TC001" };
 
         _mapper.Map<TestRequirement>(dto).Returns(entity);
@@ -390,7 +391,7 @@ public class YearlyDetailsServiceTests
     [Fact]
     public async Task AddAnimalRequirementAsync_MapsAndCallsRepo_ReturnsDtoWithAnimalCost()
     {
-        var dto = new AnimalRequirementDto { AnimalType = "CAT" };
+        var dto = new AnimalRequirementDto { AnimalType = "CAT", Project = "P1", Year = 1, NumberOfDays = 5, NumberOfAnimals = 3, DailyRate = 10, AnimalCost = 150 };
         var entity = new AnimalRequirement { AnimalType = "CAT", NumberOfDays = 5, NumberOfAnimals = 3, DailyRate = 10 };
 
         _mapper.Map<AnimalRequirement>(dto).Returns(entity);
@@ -404,17 +405,16 @@ public class YearlyDetailsServiceTests
     }
 
     [Fact]
-    public async Task AddAnimalRequirementAsync_AnimalCostIsNull_WhenAnyFactorIsNull()
+    public async Task AddAnimalRequirementAsync_ThrowsValidation_WhenNumberOfDaysIsNull()
     {
-        var dto = new AnimalRequirementDto();
+        var dto = new AnimalRequirementDto { AnimalType = "CAT", Project = "P1", Year = 1, NumberOfDays = null, NumberOfAnimals = 3, DailyRate = 10, AnimalCost = null };
         var entity = new AnimalRequirement { NumberOfDays = null, NumberOfAnimals = 3, DailyRate = 10 };
 
         _mapper.Map<AnimalRequirement>(dto).Returns(entity);
         _animalRepo.AddAnimalRequirementAsync(entity).Returns(entity);
 
-        var result = await _sut.AddAnimalRequirementAsync(dto);
-
-        Assert.Null(result.AnimalCost);
+        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.AddAnimalRequirementAsync(dto));
+        Assert.NotEmpty(ex.Errors);
     }
 
     #endregion
@@ -424,7 +424,7 @@ public class YearlyDetailsServiceTests
     [Fact]
     public async Task UpdateAnimalRequirementAsync_MapsAndCallsRepo()
     {
-        var dto = new AnimalRequirementDto { ArIdentity = 1, AnimalType = "DOG" };
+        var dto = new AnimalRequirementDto { ArIdentity = 1, AnimalType = "DOG", Project = "P1", Year = 1, NumberOfDays = 5, NumberOfAnimals = 2, DailyRate = 10, AnimalCost = 100 };
         var entity = new AnimalRequirement { ArIdentity = 1, AnimalType = "DOG" };
 
         _mapper.Map<AnimalRequirement>(dto).Returns(entity);
@@ -478,7 +478,7 @@ public class YearlyDetailsServiceTests
     [Fact]
     public async Task AddAdditionalCostAsync_MapsAndCallsRepo()
     {
-        var dto = new AdditionalCostDto { Description = "Travel" };
+        var dto = new AdditionalCostDto { Description = "Travel", AccountCat = "TRAVEL", Project = "P1", Year = 1, CostEntered = 500 };
         var entity = new AdditionalCost { Description = "Travel" };
         var resultDto = new AdditionalCostDto { Description = "Travel" };
 
@@ -499,7 +499,7 @@ public class YearlyDetailsServiceTests
     [Fact]
     public async Task UpdateAdditionalCostAsync_MapsAndCallsRepo()
     {
-        var dto = new AdditionalCostDto { AcIdentity = 1 };
+        var dto = new AdditionalCostDto { AcIdentity = 1, Description = "Travel", AccountCat = "TRAVEL", Project = "P1", Year = 1, CostEntered = 500 };
         var entity = new AdditionalCost { AcIdentity = 1 };
         var resultDto = new AdditionalCostDto { AcIdentity = 1 };
 
@@ -632,6 +632,620 @@ public class YearlyDetailsServiceTests
         Assert.Equal(10m, result[0].DailyRate);
         Assert.True(result[0].PlanByWeek);
         Assert.Equal(15m, result[0].DefraDailyRate);
+    }
+
+    #endregion
+
+    #region ValidateStaffRequirement
+
+    [Fact]
+    public async Task AddStaffRequirementAsync_ThrowsValidation_WhenWgGradeIsEmpty()
+    {
+        var dto = new StaffRequirementDto { WgGrade = "", Project = "P1", Year = 1, Name = "Test", Nohours = 10, Nodays = 1, Chargerate = 50, StaffCost = 500 };
+
+        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.AddStaffRequirementAsync(dto));
+        Assert.Contains(ex.Errors, e => e.Code == "STAFF_WGGRADE_REQUIRED");
+    }
+
+    [Fact]
+    public async Task AddStaffRequirementAsync_ThrowsValidation_WhenNohoursIsNegative()
+    {
+        var dto = new StaffRequirementDto { WgGrade = "HEO", Project = "P1", Year = 1, Name = "Test", Nohours = -1, Nodays = 1, Chargerate = 50, StaffCost = 500 };
+
+        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.AddStaffRequirementAsync(dto));
+        Assert.Contains(ex.Errors, e => e.Code == "STAFF_NOHOURS_INVALID");
+    }
+
+    [Fact]
+    public async Task AddStaffRequirementAsync_ThrowsValidation_WhenChargerateIsNegative()
+    {
+        var dto = new StaffRequirementDto { WgGrade = "HEO", Project = "P1", Year = 1, Name = "Test", Nohours = 10, Nodays = 1, Chargerate = -50, StaffCost = 500 };
+
+        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.AddStaffRequirementAsync(dto));
+        Assert.Contains(ex.Errors, e => e.Code == "STAFF_CHARGERATE_INVALID");
+    }
+
+    [Fact]
+    public async Task UpdateStaffRequirementAsync_ThrowsValidation_WhenWgGradeIsEmpty()
+    {
+        var dto = new StaffRequirementDto { SrIdentity = 1, WgGrade = "", Project = "P1", Year = 1, Name = "Test", Nohours = 10, Nodays = 1, Chargerate = 50, StaffCost = 500 };
+
+        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.UpdateStaffRequirementAsync(dto));
+        Assert.Contains(ex.Errors, e => e.Code == "STAFF_WGGRADE_REQUIRED");
+    }
+
+    [Fact]
+    public async Task AddStaffRequirementAsync_ThrowsValidation_WhenRequiredFieldsMissing()
+    {
+        var dto = new StaffRequirementDto { WgGrade = "HEO" }; // Missing Project, Name, Year, etc.
+
+        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.AddStaffRequirementAsync(dto));
+        Assert.NotEmpty(ex.Errors);
+    }
+
+    #endregion
+
+    #region ValidateTestRequirement
+
+    [Fact]
+    public async Task AddTestRequirementAsync_ThrowsValidation_WhenTestCodeIsEmpty()
+    {
+        var dto = new TestRequirementDto { TestCode = "", Project = "P1", Year = 1, NumberOfTests = 5, UnitPrice = 100, TestCost = 500 };
+
+        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.AddTestRequirementAsync(dto));
+        Assert.Contains(ex.Errors, e => e.Code == "TEST_TESTCODE_REQUIRED");
+    }
+
+    [Fact]
+    public async Task AddTestRequirementAsync_ThrowsValidation_WhenNumberOfTestsIsNegative()
+    {
+        var dto = new TestRequirementDto { TestCode = "TC001", Project = "P1", Year = 1, NumberOfTests = -1, UnitPrice = 100, TestCost = 500 };
+
+        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.AddTestRequirementAsync(dto));
+        Assert.Contains(ex.Errors, e => e.Code == "TEST_NUMBEROFTESTS_INVALID");
+    }
+
+    [Fact]
+    public async Task AddTestRequirementAsync_ThrowsValidation_WhenUnitPriceIsNegative()
+    {
+        var dto = new TestRequirementDto { TestCode = "TC001", Project = "P1", Year = 1, NumberOfTests = 5, UnitPrice = -100, TestCost = 500 };
+
+        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.AddTestRequirementAsync(dto));
+        Assert.Contains(ex.Errors, e => e.Code == "TEST_UNITPRICE_INVALID");
+    }
+
+    [Fact]
+    public async Task UpdateTestRequirementAsync_ThrowsValidation_WhenTestCodeIsEmpty()
+    {
+        var dto = new TestRequirementDto { TestCode = "", Project = "P1", Year = 1, NumberOfTests = 5, UnitPrice = 100, TestCost = 500 };
+
+        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.UpdateTestRequirementAsync(dto));
+        Assert.Contains(ex.Errors, e => e.Code == "TEST_TESTCODE_REQUIRED");
+    }
+
+    [Fact]
+    public async Task AddTestRequirementAsync_ThrowsValidation_WhenRequiredFieldsMissing()
+    {
+        var dto = new TestRequirementDto { TestCode = "TC001" }; // Missing Project, Year, etc.
+
+        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.AddTestRequirementAsync(dto));
+        Assert.NotEmpty(ex.Errors);
+    }
+
+    #endregion
+
+    #region ValidateAnimalRequirement
+
+    [Fact]
+    public async Task AddAnimalRequirementAsync_ThrowsValidation_WhenAnimalTypeIsEmpty()
+    {
+        var dto = new AnimalRequirementDto { AnimalType = "", Project = "P1", Year = 1, NumberOfAnimals = 3, NumberOfDays = 5, DailyRate = 10, AnimalCost = 150 };
+
+        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.AddAnimalRequirementAsync(dto));
+        Assert.Contains(ex.Errors, e => e.Code == "ANIMAL_ANIMALTYPE_REQUIRED");
+    }
+
+    [Fact]
+    public async Task AddAnimalRequirementAsync_ThrowsValidation_WhenNumberOfAnimalsIsNegative()
+    {
+        var dto = new AnimalRequirementDto { AnimalType = "CAT", Project = "P1", Year = 1, NumberOfAnimals = -1, NumberOfDays = 5, DailyRate = 10, AnimalCost = 150 };
+
+        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.AddAnimalRequirementAsync(dto));
+        Assert.Contains(ex.Errors, e => e.Code == "ANIMAL_NUMBEROFANIMALS_INVALID");
+    }
+
+    [Fact]
+    public async Task AddAnimalRequirementAsync_ThrowsValidation_WhenNumberOfDaysIsNegative()
+    {
+        var dto = new AnimalRequirementDto { AnimalType = "CAT", Project = "P1", Year = 1, NumberOfAnimals = 3, NumberOfDays = -5, DailyRate = 10, AnimalCost = 150 };
+
+        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.AddAnimalRequirementAsync(dto));
+        Assert.Contains(ex.Errors, e => e.Code == "ANIMAL_NUMBEROFDAYS_INVALID");
+    }
+
+    [Fact]
+    public async Task AddAnimalRequirementAsync_ThrowsValidation_WhenDailyRateIsNegative()
+    {
+        var dto = new AnimalRequirementDto { AnimalType = "CAT", Project = "P1", Year = 1, NumberOfAnimals = 3, NumberOfDays = 5, DailyRate = -10, AnimalCost = 150 };
+
+        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.AddAnimalRequirementAsync(dto));
+        Assert.Contains(ex.Errors, e => e.Code == "ANIMAL_DAILYRATE_INVALID");
+    }
+
+    [Fact]
+    public async Task UpdateAnimalRequirementAsync_ThrowsValidation_WhenAnimalTypeIsEmpty()
+    {
+        var dto = new AnimalRequirementDto { ArIdentity = 1, AnimalType = "", Project = "P1", Year = 1, NumberOfAnimals = 3, NumberOfDays = 5, DailyRate = 10, AnimalCost = 150 };
+
+        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.UpdateAnimalRequirementAsync(dto));
+        Assert.Contains(ex.Errors, e => e.Code == "ANIMAL_ANIMALTYPE_REQUIRED");
+    }
+
+    [Fact]
+    public async Task AddAnimalRequirementAsync_ThrowsValidation_WhenRequiredFieldsMissing()
+    {
+        var dto = new AnimalRequirementDto { AnimalType = "CAT" }; // Missing Project, Year, etc.
+
+        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.AddAnimalRequirementAsync(dto));
+        Assert.NotEmpty(ex.Errors);
+    }
+
+    #endregion
+
+    #region ValidateAdditionalCost
+
+    [Fact]
+    public async Task AddAdditionalCostAsync_ThrowsValidation_WhenAccountCatIsEmpty()
+    {
+        var dto = new AdditionalCostDto { AccountCat = "", Description = "Test", Project = "P1", Year = 1, CostEntered = 100 };
+
+        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.AddAdditionalCostAsync(dto));
+        Assert.Contains(ex.Errors, e => e.Code == "ADDITIONALCOST_ACCOUNTCAT_REQUIRED");
+    }
+
+    [Fact]
+    public async Task AddAdditionalCostAsync_ThrowsValidation_WhenDescriptionIsEmpty()
+    {
+        var dto = new AdditionalCostDto { AccountCat = "TRAVEL", Description = "", Project = "P1", Year = 1, CostEntered = 100 };
+
+        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.AddAdditionalCostAsync(dto));
+        Assert.Contains(ex.Errors, e => e.Code == "ADDITIONALCOST_DESCRIPTION_REQUIRED");
+    }
+
+    [Fact]
+    public async Task AddAdditionalCostAsync_ThrowsValidation_WhenCostEnteredIsNegative()
+    {
+        var dto = new AdditionalCostDto { AccountCat = "TRAVEL", Description = "Test", Project = "P1", Year = 1, CostEntered = -100 };
+
+        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.AddAdditionalCostAsync(dto));
+        Assert.Contains(ex.Errors, e => e.Code == "ADDITIONALCOST_COSTENTERED_INVALID");
+    }
+
+    [Fact]
+    public async Task UpdateAdditionalCostAsync_ThrowsValidation_WhenAccountCatIsEmpty()
+    {
+        var dto = new AdditionalCostDto { AcIdentity = 1, AccountCat = "", Description = "Test", Project = "P1", Year = 1, CostEntered = 100 };
+
+        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.UpdateAdditionalCostAsync(dto));
+        Assert.Contains(ex.Errors, e => e.Code == "ADDITIONALCOST_ACCOUNTCAT_REQUIRED");
+    }
+
+    [Fact]
+    public async Task AddAdditionalCostAsync_ThrowsValidation_WhenRequiredFieldsMissing()
+    {
+        var dto = new AdditionalCostDto { AccountCat = "TRAVEL", Description = "Test" }; // Missing Project, Year
+
+        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.AddAdditionalCostAsync(dto));
+        Assert.NotEmpty(ex.Errors);
+    }
+
+    #endregion
+
+    #region Additional Coverage - MapTestToDto null cost via GetTestRequirementsAsync
+
+    [Fact]
+    public async Task GetTestRequirementsAsync_TestCostIsNull_WhenUnitPriceIsNull()
+    {
+        var rows = new List<TestRequirementDetailView>
+        {
+            new() { Project = "P1", Year = 1, TestCode = "TC001", UnitPrice = null, NumberOfTests = 5, TestCost = null }
+        };
+        _testRepo.GetTestRequirementsByProjectYearAsync("P1", 1).Returns(rows);
+
+        var result = (await _sut.GetTestRequirementsAsync("P1", 1)).ToList();
+
+        Assert.Null(result[0].TestCost);
+    }
+
+    [Fact]
+    public async Task GetTestRequirementsAsync_TestCostIsNull_WhenNumberOfTestsIsNull()
+    {
+        var rows = new List<TestRequirementDetailView>
+        {
+            new() { Project = "P1", Year = 1, TestCode = "TC001", UnitPrice = 100, NumberOfTests = null, TestCost = null }
+        };
+        _testRepo.GetTestRequirementsByProjectYearAsync("P1", 1).Returns(rows);
+
+        var result = (await _sut.GetTestRequirementsAsync("P1", 1)).ToList();
+
+        Assert.Null(result[0].TestCost);
+    }
+
+    #endregion
+
+    #region Additional Coverage - Update validation negative values
+
+    [Fact]
+    public async Task UpdateStaffRequirementAsync_ThrowsValidation_WhenNohoursIsNegative()
+    {
+        var dto = new StaffRequirementDto { SrIdentity = 1, WgGrade = "HEO", Project = "P1", Year = 1, Name = "Test", Nohours = -5, Nodays = 1, Chargerate = 50, StaffCost = 500 };
+
+        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.UpdateStaffRequirementAsync(dto));
+        Assert.Contains(ex.Errors, e => e.Code == "STAFF_NOHOURS_INVALID");
+    }
+
+    [Fact]
+    public async Task UpdateStaffRequirementAsync_ThrowsValidation_WhenChargerateIsNegative()
+    {
+        var dto = new StaffRequirementDto { SrIdentity = 1, WgGrade = "HEO", Project = "P1", Year = 1, Name = "Test", Nohours = 10, Nodays = 1, Chargerate = -50, StaffCost = 500 };
+
+        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.UpdateStaffRequirementAsync(dto));
+        Assert.Contains(ex.Errors, e => e.Code == "STAFF_CHARGERATE_INVALID");
+    }
+
+    [Fact]
+    public async Task UpdateTestRequirementAsync_ThrowsValidation_WhenNumberOfTestsIsNegative()
+    {
+        var dto = new TestRequirementDto { TestCode = "TC001", Project = "P1", Year = 1, NumberOfTests = -1, UnitPrice = 100, TestCost = 500 };
+
+        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.UpdateTestRequirementAsync(dto));
+        Assert.Contains(ex.Errors, e => e.Code == "TEST_NUMBEROFTESTS_INVALID");
+    }
+
+    [Fact]
+    public async Task UpdateTestRequirementAsync_ThrowsValidation_WhenUnitPriceIsNegative()
+    {
+        var dto = new TestRequirementDto { TestCode = "TC001", Project = "P1", Year = 1, NumberOfTests = 5, UnitPrice = -100, TestCost = 500 };
+
+        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.UpdateTestRequirementAsync(dto));
+        Assert.Contains(ex.Errors, e => e.Code == "TEST_UNITPRICE_INVALID");
+    }
+
+    [Fact]
+    public async Task UpdateAnimalRequirementAsync_ThrowsValidation_WhenNumberOfAnimalsIsNegative()
+    {
+        var dto = new AnimalRequirementDto { ArIdentity = 1, AnimalType = "CAT", Project = "P1", Year = 1, NumberOfAnimals = -1, NumberOfDays = 5, DailyRate = 10, AnimalCost = 150 };
+
+        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.UpdateAnimalRequirementAsync(dto));
+        Assert.Contains(ex.Errors, e => e.Code == "ANIMAL_NUMBEROFANIMALS_INVALID");
+    }
+
+    [Fact]
+    public async Task UpdateAnimalRequirementAsync_ThrowsValidation_WhenNumberOfDaysIsNegative()
+    {
+        var dto = new AnimalRequirementDto { ArIdentity = 1, AnimalType = "CAT", Project = "P1", Year = 1, NumberOfAnimals = 3, NumberOfDays = -5, DailyRate = 10, AnimalCost = 150 };
+
+        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.UpdateAnimalRequirementAsync(dto));
+        Assert.Contains(ex.Errors, e => e.Code == "ANIMAL_NUMBEROFDAYS_INVALID");
+    }
+
+    [Fact]
+    public async Task UpdateAnimalRequirementAsync_ThrowsValidation_WhenDailyRateIsNegative()
+    {
+        var dto = new AnimalRequirementDto { ArIdentity = 1, AnimalType = "CAT", Project = "P1", Year = 1, NumberOfAnimals = 3, NumberOfDays = 5, DailyRate = -10, AnimalCost = 150 };
+
+        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.UpdateAnimalRequirementAsync(dto));
+        Assert.Contains(ex.Errors, e => e.Code == "ANIMAL_DAILYRATE_INVALID");
+    }
+
+    [Fact]
+    public async Task UpdateAdditionalCostAsync_ThrowsValidation_WhenDescriptionIsEmpty()
+    {
+        var dto = new AdditionalCostDto { AcIdentity = 1, AccountCat = "TRAVEL", Description = "", Project = "P1", Year = 1, CostEntered = 100 };
+
+        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.UpdateAdditionalCostAsync(dto));
+        Assert.Contains(ex.Errors, e => e.Code == "ADDITIONALCOST_DESCRIPTION_REQUIRED");
+    }
+
+    [Fact]
+    public async Task UpdateAdditionalCostAsync_ThrowsValidation_WhenCostEnteredIsNegative()
+    {
+        var dto = new AdditionalCostDto { AcIdentity = 1, AccountCat = "TRAVEL", Description = "Test", Project = "P1", Year = 1, CostEntered = -100 };
+
+        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.UpdateAdditionalCostAsync(dto));
+        Assert.Contains(ex.Errors, e => e.Code == "ADDITIONALCOST_COSTENTERED_INVALID");
+    }
+
+    #endregion
+
+    #region Additional Coverage - Delete returns false
+
+    [Fact]
+    public async Task DeleteTestRequirementAsync_ReturnsFalse_WhenNotFound()
+    {
+        _testRepo.DeleteTestRequirementAsync("P1", 1, "NOTFOUND").Returns(false);
+
+        var result = await _sut.DeleteTestRequirementAsync("P1", 1, "NOTFOUND");
+
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task DeleteAnimalRequirementAsync_ReturnsFalse_WhenNotFound()
+    {
+        _animalRepo.DeleteAnimalRequirementAsync(999).Returns(false);
+
+        var result = await _sut.DeleteAnimalRequirementAsync(999);
+
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task DeleteAdditionalCostAsync_ReturnsFalse_WhenNotFound()
+    {
+        _additionalCostRepo.DeleteAdditionalCostAsync(999).Returns(false);
+
+        var result = await _sut.DeleteAdditionalCostAsync(999);
+
+        Assert.False(result);
+    }
+
+    #endregion
+
+    #region Additional Coverage - GetStaffRequirementsAsync enriched fields
+
+    [Fact]
+    public async Task GetStaffRequirementsAsync_MapsEnrichedFields()
+    {
+        var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+        var filter = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+        var repoResult = new PagedData<StaffRequirementDetailView>
+        {
+            Data = new List<StaffRequirementDetailView>
+            {
+                new() { SrIdentity = 1, Project = "P1", Year = 1, WgGrade = "HEO", Name = "John",
+                         Nohours = 10, Nodays = 2, Chargerate = 50, Payrate = 30, Npr = 5, Ohr = 10,
+                         WorkGroup = "WG1", GradeCode = "G1", Programme = "Prog1", EuroConvRate = 1.2, EuGrade = "EU1" }
+            },
+            PaginationData = new PaginationData()
+        };
+
+        _mapper.Map<PaginationParameters<string>>(query).Returns(filter);
+        _staffRepo.GetStaffRequirementsByProjectYearAsync("P1", 1, filter).Returns(repoResult);
+        _mapper.Map<PaginationDto>(Arg.Any<PaginationData>()).Returns(new PaginationDto());
+
+        var result = await _sut.GetStaffRequirementsAsync("P1", 1, query);
+        var staff = result.Data.First();
+
+        Assert.Equal("WG1", staff.WorkGroup);
+        Assert.Equal("G1", staff.GradeCode);
+        Assert.Equal("Prog1", staff.Programme);
+        Assert.Equal(1.2, staff.EuroConvRate);
+        Assert.Equal("EU1", staff.EuGrade);
+        Assert.Equal("John", staff.Name);
+        Assert.Equal(10.0, staff.Nohours);
+        Assert.Equal(2.0, staff.Nodays);
+        Assert.Equal(30.0, staff.Payrate);
+        Assert.Equal(5.0, staff.Npr);
+        Assert.Equal(10.0, staff.Ohr);
+    }
+
+    #endregion
+
+    #region Additional Coverage - GetAdditionalCostsAsync all fields
+
+    [Fact]
+    public async Task GetAdditionalCostsAsync_MapsAllFields()
+    {
+        var rows = new List<AdditionalCostDetailView>
+        {
+            new() { AcIdentity = 5, Project = "P1", Year = 2, AccountCat = "EQUIP", Description = "Equipment", ItemCost = 200, CostEntered = 150, Freq = "Monthly" }
+        };
+        _additionalCostRepo.GetAdditionalCostsByProjectYearAsync("P1", 2).Returns(rows);
+
+        var result = (await _sut.GetAdditionalCostsAsync("P1", 2)).ToList();
+
+        Assert.Equal(5, result[0].AcIdentity);
+        Assert.Equal("P1", result[0].Project);
+        Assert.Equal(2, result[0].Year);
+        Assert.Equal("EQUIP", result[0].AccountCat);
+        Assert.Equal("Equipment", result[0].Description);
+        Assert.Equal(200.0, result[0].ItemCost);
+        Assert.Equal(150.0, result[0].CostEntered);
+        Assert.Equal("Monthly", result[0].Freq);
+    }
+
+    #endregion
+
+    #region Additional Coverage - GetAnimalRequirementsAsync all fields
+
+    [Fact]
+    public async Task GetAnimalRequirementsAsync_MapsAllFields()
+    {
+        var rows = new List<AnimalRequirementDetailView>
+        {
+            new() { ArIdentity = 3, Project = "P1", Year = 2, AnimalType = "DOG", NumberOfDays = 7, NumberOfAnimals = 2, DailyRate = 15, AnimalCost = 210 }
+        };
+        _animalRepo.GetAnimalRequirementsByProjectYearAsync("P1", 2).Returns(rows);
+
+        var result = (await _sut.GetAnimalRequirementsAsync("P1", 2)).ToList();
+
+        Assert.Equal(3, result[0].ArIdentity);
+        Assert.Equal("P1", result[0].Project);
+        Assert.Equal(2, result[0].Year);
+        Assert.Equal("DOG", result[0].AnimalType);
+        Assert.Equal(7.0, result[0].NumberOfDays);
+        Assert.Equal(2.0, result[0].NumberOfAnimals);
+        Assert.Equal(15.0, result[0].DailyRate);
+        Assert.Equal(210.0, result[0].AnimalCost);
+    }
+
+    #endregion
+
+    #region Additional Coverage - MapStaffToDto null StaffCost branch
+
+    [Fact]
+    public async Task AddStaffRequirementAsync_StaffCostIsNull_WhenRepoReturnsNullChargerate()
+    {
+        var dto = new StaffRequirementDto { WgGrade = "HEO", Project = "P1", Year = 1, Name = "Test", Nohours = 10, Nodays = 1, Chargerate = 50, StaffCost = 500 };
+        var entity = new StaffRequirement { WgGrade = "HEO" };
+        var returned = new StaffRequirement { WgGrade = "HEO", Chargerate = null, Nohours = 10 };
+
+        _mapper.Map<StaffRequirement>(dto).Returns(entity);
+        _staffRepo.AddStaffRequirementAsync(entity).Returns(returned);
+
+        var result = await _sut.AddStaffRequirementAsync(dto);
+
+        Assert.Null(result.StaffCost);
+    }
+
+    [Fact]
+    public async Task AddStaffRequirementAsync_StaffCostIsNull_WhenRepoReturnsNullNohours()
+    {
+        var dto = new StaffRequirementDto { WgGrade = "HEO", Project = "P1", Year = 1, Name = "Test", Nohours = 10, Nodays = 1, Chargerate = 50, StaffCost = 500 };
+        var entity = new StaffRequirement { WgGrade = "HEO" };
+        var returned = new StaffRequirement { WgGrade = "HEO", Chargerate = 50, Nohours = null };
+
+        _mapper.Map<StaffRequirement>(dto).Returns(entity);
+        _staffRepo.AddStaffRequirementAsync(entity).Returns(returned);
+
+        var result = await _sut.AddStaffRequirementAsync(dto);
+
+        Assert.Null(result.StaffCost);
+    }
+
+    #endregion
+
+    #region Additional Coverage - MapTestToDto null TestCost branch via Add
+
+    [Fact]
+    public async Task AddTestRequirementAsync_TestCostIsNull_WhenRepoReturnsNullUnitPrice()
+    {
+        var dto = new TestRequirementDto { TestCode = "TC001", Project = "P1", Year = 1, UnitPrice = 100, NumberOfTests = 5, TestCost = 500 };
+        var entity = new TestRequirement { TestCode = "TC001" };
+        var returned = new TestRequirement { TestCode = "TC001", UnitPrice = null, NumberOfTests = 5 };
+
+        _mapper.Map<TestRequirement>(dto).Returns(entity);
+        _testRepo.AddTestRequirementAsync(entity).Returns(returned);
+
+        var result = await _sut.AddTestRequirementAsync(dto);
+
+        Assert.Null(result.TestCost);
+    }
+
+    [Fact]
+    public async Task AddTestRequirementAsync_TestCostIsNull_WhenRepoReturnsNullNumberOfTests()
+    {
+        var dto = new TestRequirementDto { TestCode = "TC001", Project = "P1", Year = 1, UnitPrice = 100, NumberOfTests = 5, TestCost = 500 };
+        var entity = new TestRequirement { TestCode = "TC001" };
+        var returned = new TestRequirement { TestCode = "TC001", UnitPrice = 100, NumberOfTests = null };
+
+        _mapper.Map<TestRequirement>(dto).Returns(entity);
+        _testRepo.AddTestRequirementAsync(entity).Returns(returned);
+
+        var result = await _sut.AddTestRequirementAsync(dto);
+
+        Assert.Null(result.TestCost);
+    }
+
+    #endregion
+
+    #region Additional Coverage - MapAnimalToDto null AnimalCost branch via Add
+
+    [Fact]
+    public async Task AddAnimalRequirementAsync_AnimalCostIsNull_WhenRepoReturnsNullNumberOfAnimals()
+    {
+        var dto = new AnimalRequirementDto { AnimalType = "CAT", Project = "P1", Year = 1, NumberOfDays = 5, NumberOfAnimals = 3, DailyRate = 10, AnimalCost = 150 };
+        var entity = new AnimalRequirement { AnimalType = "CAT" };
+        var returned = new AnimalRequirement { AnimalType = "CAT", NumberOfDays = 5, NumberOfAnimals = null, DailyRate = 10 };
+
+        _mapper.Map<AnimalRequirement>(dto).Returns(entity);
+        _animalRepo.AddAnimalRequirementAsync(entity).Returns(returned);
+
+        var result = await _sut.AddAnimalRequirementAsync(dto);
+
+        Assert.Null(result.AnimalCost);
+    }
+
+    [Fact]
+    public async Task AddAnimalRequirementAsync_AnimalCostIsNull_WhenRepoReturnsNullDailyRate()
+    {
+        var dto = new AnimalRequirementDto { AnimalType = "CAT", Project = "P1", Year = 1, NumberOfDays = 5, NumberOfAnimals = 3, DailyRate = 10, AnimalCost = 150 };
+        var entity = new AnimalRequirement { AnimalType = "CAT" };
+        var returned = new AnimalRequirement { AnimalType = "CAT", NumberOfDays = 5, NumberOfAnimals = 3, DailyRate = null };
+
+        _mapper.Map<AnimalRequirement>(dto).Returns(entity);
+        _animalRepo.AddAnimalRequirementAsync(entity).Returns(returned);
+
+        var result = await _sut.AddAnimalRequirementAsync(dto);
+
+        Assert.Null(result.AnimalCost);
+    }
+
+    #endregion
+
+    #region Additional Coverage - Validation pass-through (no errors)
+
+    [Fact]
+    public async Task AddStaffRequirementAsync_PassesValidation_WhenAllFieldsValid()
+    {
+        var dto = new StaffRequirementDto { WgGrade = "HEO", Project = "P1", Year = 1, Name = "Test", Nohours = 0, Nodays = 0, Chargerate = 0, StaffCost = 0 };
+        var entity = new StaffRequirement { WgGrade = "HEO", Chargerate = 0, Nohours = 0 };
+
+        _mapper.Map<StaffRequirement>(dto).Returns(entity);
+        _staffRepo.AddStaffRequirementAsync(entity).Returns(entity);
+
+        var result = await _sut.AddStaffRequirementAsync(dto);
+
+        Assert.NotNull(result);
+        Assert.Equal(0.0, result.StaffCost);
+    }
+
+    [Fact]
+    public async Task AddTestRequirementAsync_PassesValidation_WhenAllFieldsValid()
+    {
+        var dto = new TestRequirementDto { TestCode = "TC001", Project = "P1", Year = 1, UnitPrice = 0, NumberOfTests = 0, TestCost = 0 };
+        var entity = new TestRequirement { TestCode = "TC001", UnitPrice = 0, NumberOfTests = 0 };
+
+        _mapper.Map<TestRequirement>(dto).Returns(entity);
+        _testRepo.AddTestRequirementAsync(entity).Returns(entity);
+
+        var result = await _sut.AddTestRequirementAsync(dto);
+
+        Assert.NotNull(result);
+        Assert.Equal(0.0, result.TestCost);
+    }
+
+    [Fact]
+    public async Task AddAnimalRequirementAsync_PassesValidation_WhenAllFieldsValid()
+    {
+        var dto = new AnimalRequirementDto { AnimalType = "CAT", Project = "P1", Year = 1, NumberOfDays = 0, NumberOfAnimals = 0, DailyRate = 0, AnimalCost = 0 };
+        var entity = new AnimalRequirement { AnimalType = "CAT", NumberOfDays = 0, NumberOfAnimals = 0, DailyRate = 0 };
+
+        _mapper.Map<AnimalRequirement>(dto).Returns(entity);
+        _animalRepo.AddAnimalRequirementAsync(entity).Returns(entity);
+
+        var result = await _sut.AddAnimalRequirementAsync(dto);
+
+        Assert.NotNull(result);
+        Assert.Equal(0.0, result.AnimalCost);
+    }
+
+    [Fact]
+    public async Task AddAdditionalCostAsync_PassesValidation_WhenAllFieldsValid()
+    {
+        var dto = new AdditionalCostDto { AccountCat = "TRAVEL", Description = "Valid", Project = "P1", Year = 1, CostEntered = 0 };
+        var entity = new AdditionalCost { AccountCat = "TRAVEL", Description = "Valid" };
+        var resultDto = new AdditionalCostDto { AccountCat = "TRAVEL", Description = "Valid" };
+
+        _mapper.Map<AdditionalCost>(dto).Returns(entity);
+        _additionalCostRepo.AddAdditionalCostAsync(entity).Returns(entity);
+        _mapper.Map<AdditionalCostDto>(entity).Returns(resultDto);
+
+        var result = await _sut.AddAdditionalCostAsync(dto);
+
+        Assert.NotNull(result);
+        Assert.Equal("TRAVEL", result.AccountCat);
     }
 
     #endregion

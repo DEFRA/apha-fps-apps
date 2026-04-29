@@ -1,6 +1,8 @@
+using System.ComponentModel.DataAnnotations;
 using Apha.Costbook.Application.Dtos;
 using Apha.Costbook.Application.Interfaces;
 using Apha.Costbook.Application.Pagination;
+using Apha.Costbook.Application.Validation;
 using Apha.Costbook.Core.Entities;
 using Apha.Costbook.Core.Interfaces;
 using Apha.Costbook.Core.Pagination;
@@ -100,6 +102,7 @@ public class YearlyDetailsService : IYearlyDetailsService
 
     public async Task<StaffRequirementDto> AddStaffRequirementAsync(StaffRequirementDto dto)
     {
+        ValidateStaffRequirement(dto);
         var entity = _mapper.Map<StaffRequirement>(dto);
         var result = await _staffRepo.AddStaffRequirementAsync(entity);
         return MapStaffToDto(result);
@@ -107,6 +110,7 @@ public class YearlyDetailsService : IYearlyDetailsService
 
     public async Task<StaffRequirementDto> UpdateStaffRequirementAsync(StaffRequirementDto dto)
     {
+        ValidateStaffRequirement(dto);
         var entity = _mapper.Map<StaffRequirement>(dto);
         var result = await _staffRepo.UpdateStaffRequirementAsync(entity);
         return MapStaffToDto(result);
@@ -134,6 +138,7 @@ public class YearlyDetailsService : IYearlyDetailsService
 
     public async Task<TestRequirementDto> AddTestRequirementAsync(TestRequirementDto dto)
     {
+        ValidateTestRequirement(dto);
         var entity = _mapper.Map<TestRequirement>(dto);
         var result = await _testRepo.AddTestRequirementAsync(entity);
         return MapTestToDto(result);
@@ -141,6 +146,7 @@ public class YearlyDetailsService : IYearlyDetailsService
 
     public async Task<TestRequirementDto> UpdateTestRequirementAsync(TestRequirementDto dto)
     {
+        ValidateTestRequirement(dto);
         var entity = _mapper.Map<TestRequirement>(dto);
         var result = await _testRepo.UpdateTestRequirementAsync(entity);
         return MapTestToDto(result);
@@ -169,6 +175,7 @@ public class YearlyDetailsService : IYearlyDetailsService
 
     public async Task<AnimalRequirementDto> AddAnimalRequirementAsync(AnimalRequirementDto dto)
     {
+        ValidateAnimalRequirement(dto);
         var entity = _mapper.Map<AnimalRequirement>(dto);
         var result = await _animalRepo.AddAnimalRequirementAsync(entity);
         return MapAnimalToDto(result);
@@ -176,6 +183,7 @@ public class YearlyDetailsService : IYearlyDetailsService
 
     public async Task<AnimalRequirementDto> UpdateAnimalRequirementAsync(AnimalRequirementDto dto)
     {
+        ValidateAnimalRequirement(dto);
         var entity = _mapper.Map<AnimalRequirement>(dto);
         var result = await _animalRepo.UpdateAnimalRequirementAsync(entity);
         return MapAnimalToDto(result);
@@ -204,6 +212,7 @@ public class YearlyDetailsService : IYearlyDetailsService
 
     public async Task<AdditionalCostDto> AddAdditionalCostAsync(AdditionalCostDto dto)
     {
+        ValidateAdditionalCost(dto);
         var entity = _mapper.Map<AdditionalCost>(dto);
         var result = await _additionalCostRepo.AddAdditionalCostAsync(entity);
         return _mapper.Map<AdditionalCostDto>(result);
@@ -211,6 +220,7 @@ public class YearlyDetailsService : IYearlyDetailsService
 
     public async Task<AdditionalCostDto> UpdateAdditionalCostAsync(AdditionalCostDto dto)
     {
+        ValidateAdditionalCost(dto);
         var entity = _mapper.Map<AdditionalCost>(dto);
         var result = await _additionalCostRepo.UpdateAdditionalCostAsync(entity);
         return _mapper.Map<AdditionalCostDto>(result);
@@ -272,6 +282,189 @@ public class YearlyDetailsService : IYearlyDetailsService
     }
 
     // ── Private helpers
+
+    private static void ValidateStaffRequirement(StaffRequirementDto dto)
+    {
+        var errors = new List<BusinessValidationError>();
+        var context = new ValidationContext(dto);
+        var results = new List<ValidationResult>();
+
+        if (!Validator.TryValidateObject(dto, context, results, validateAllProperties: true))
+        {
+            foreach (var result in results)
+            {
+                var field = result.MemberNames.FirstOrDefault() ?? "Unknown";
+                errors.Add(new BusinessValidationError(
+                    result.ErrorMessage ?? $"{field} is invalid.",
+                    $"STAFF_{field.ToUpperInvariant()}_REQUIRED"));
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(dto.WgGrade))
+        {
+            errors.Add(new BusinessValidationError(
+                "Work Group Grade is required.",
+                "STAFF_WGGRADE_REQUIRED"));
+        }
+
+        if (dto.Nohours.HasValue && dto.Nohours.Value < 0)
+        {
+            errors.Add(new BusinessValidationError(
+                "Number of hours cannot be negative.",
+                "STAFF_NOHOURS_INVALID"));
+        }
+
+        if (dto.Chargerate.HasValue && dto.Chargerate.Value < 0)
+        {
+            errors.Add(new BusinessValidationError(
+                "Charge rate cannot be negative.",
+                "STAFF_CHARGERATE_INVALID"));
+        }
+
+        if (errors.Count > 0)
+        {
+            throw new BusinessValidationErrorException(errors);
+        }
+    }
+
+    private static void ValidateTestRequirement(TestRequirementDto dto)
+    {
+        var errors = new List<BusinessValidationError>();
+        var context = new ValidationContext(dto);
+        var results = new List<ValidationResult>();
+
+        if (!Validator.TryValidateObject(dto, context, results, validateAllProperties: true))
+        {
+            foreach (var result in results)
+            {
+                var field = result.MemberNames.FirstOrDefault() ?? "Unknown";
+                errors.Add(new BusinessValidationError(
+                    result.ErrorMessage ?? $"{field} is invalid.",
+                    $"TEST_{field.ToUpperInvariant()}_REQUIRED"));
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(dto.TestCode))
+        {
+            errors.Add(new BusinessValidationError(
+                "Test Code is required.",
+                "TEST_TESTCODE_REQUIRED"));
+        }
+
+        if (dto.NumberOfTests.HasValue && dto.NumberOfTests.Value < 0)
+        {
+            errors.Add(new BusinessValidationError(
+                "Number of Tests cannot be negative.",
+                "TEST_NUMBEROFTESTS_INVALID"));
+        }
+
+        if (dto.UnitPrice.HasValue && dto.UnitPrice.Value < 0)
+        {
+            errors.Add(new BusinessValidationError(
+                "Unit Price cannot be negative.",
+                "TEST_UNITPRICE_INVALID"));
+        }
+
+        if (errors.Count > 0)
+        {
+            throw new BusinessValidationErrorException(errors);
+        }
+    }
+
+    private static void ValidateAnimalRequirement(AnimalRequirementDto dto)
+    {
+        var errors = new List<BusinessValidationError>();
+        var context = new ValidationContext(dto);
+        var results = new List<ValidationResult>();
+
+        if (!Validator.TryValidateObject(dto, context, results, validateAllProperties: true))
+        {
+            foreach (var result in results)
+            {
+                var field = result.MemberNames.FirstOrDefault() ?? "Unknown";
+                errors.Add(new BusinessValidationError(
+                    result.ErrorMessage ?? $"{field} is invalid.",
+                    $"ANIMAL_{field.ToUpperInvariant()}_REQUIRED"));
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(dto.AnimalType))
+        {
+            errors.Add(new BusinessValidationError(
+                "Animal Type is required.",
+                "ANIMAL_ANIMALTYPE_REQUIRED"));
+        }
+
+        if (dto.NumberOfAnimals.HasValue && dto.NumberOfAnimals.Value < 0)
+        {
+            errors.Add(new BusinessValidationError(
+                "Number of Animals cannot be negative.",
+                "ANIMAL_NUMBEROFANIMALS_INVALID"));
+        }
+
+        if (dto.NumberOfDays.HasValue && dto.NumberOfDays.Value < 0)
+        {
+            errors.Add(new BusinessValidationError(
+                "Number of Days cannot be negative.",
+                "ANIMAL_NUMBEROFDAYS_INVALID"));
+        }
+
+        if (dto.DailyRate.HasValue && dto.DailyRate.Value < 0)
+        {
+            errors.Add(new BusinessValidationError(
+                "Daily Rate cannot be negative.",
+                "ANIMAL_DAILYRATE_INVALID"));
+        }
+
+        if (errors.Count > 0)
+        {
+            throw new BusinessValidationErrorException(errors);
+        }
+    }
+
+    private static void ValidateAdditionalCost(AdditionalCostDto dto)
+    {
+        var errors = new List<BusinessValidationError>();
+        var context = new ValidationContext(dto);
+        var results = new List<ValidationResult>();
+
+        if (!Validator.TryValidateObject(dto, context, results, validateAllProperties: true))
+        {
+            foreach (var result in results)
+            {
+                var field = result.MemberNames.FirstOrDefault() ?? "Unknown";
+                errors.Add(new BusinessValidationError(
+                    result.ErrorMessage ?? $"{field} is invalid.",
+                    $"ADDITIONALCOST_{field.ToUpperInvariant()}_REQUIRED"));
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(dto.AccountCat))
+        {
+            errors.Add(new BusinessValidationError(
+                "Account Category is required.",
+                "ADDITIONALCOST_ACCOUNTCAT_REQUIRED"));
+        }
+
+        if (string.IsNullOrWhiteSpace(dto.Description))
+        {
+            errors.Add(new BusinessValidationError(
+                "Description is required.",
+                "ADDITIONALCOST_DESCRIPTION_REQUIRED"));
+        }
+
+        if (dto.CostEntered < 0)
+        {
+            errors.Add(new BusinessValidationError(
+                "Cost cannot be negative.",
+                "ADDITIONALCOST_COSTENTERED_INVALID"));
+        }
+
+        if (errors.Count > 0)
+        {
+            throw new BusinessValidationErrorException(errors);
+        }
+    }
 
     private static StaffRequirementDto MapStaffToDto(StaffRequirement r) => new()
     {

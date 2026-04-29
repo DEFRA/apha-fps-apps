@@ -149,8 +149,25 @@
                                                     </a>
                                                 </li>
                                             </ul>
-                                            <div class="govuk-tabs__panel"
+                                            <div>
+                                            <div class="govuk-tabs__panel fps-sr-fixedheader-wrap"
                                                  id="Staff-tab">
+                                            </div>
+                                                <div class="project-total-bar">
+
+                                                    <span class="project-total-label-wrap">
+                                                        <span class="govuk-label me-2">
+                                                            Total Staff Cost:
+                                                        </span>
+                                                    </span>
+                                                    <span class="project-total-value-wrap">
+                                                        <span class="total-amount">
+
+                                                            <input type="text" id="staffTotalAmount"  aria-label="Total Staff Cost" class="govuk-input project-total-input" readonly="">
+                                                        </span>
+                                                    </span>
+
+                                                </div>
                                             </div>
 
                                             <div class="govuk-tabs__panel govuk-tabs__panel--hidden"
@@ -250,6 +267,7 @@
 
 </div>
 @section Scripts {
+    <script src="~/js/ajax-form-validation.js"></script>
     <script>
         const projectId = '@projectId';
         let selectedYear = @selectedYear;
@@ -410,13 +428,17 @@
         function gridEditMarkupAndProfit(btn)  { var yearVal = btn.getAttribute('data-id'); openEditMarkupAndProfitModal(projectId, yearVal); }
 
         // ── Staff ────────────────────────────────────────────────────────────
+        var _staffIsAddingNew = true;
+        var _staffCurrentIdentity = null;
+
         function openAddStaffModal(pid, year) {
             fetch('@Url.Action("CreateStaff", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&isDefra=@isDefra')
                 .then(function(r) { return r.text(); })
                 .then(function(html) {
                     document.getElementById('project1ModalContent').innerHTML = html;
+                    _staffIsAddingNew = true;
+                    _staffCurrentIdentity = null;
                     openModal();
-                    bindStaffForm(pid, year, null);
                 });
         }
         function openEditStaffModal(pid, year, srIdentity) {
@@ -424,30 +446,51 @@
                 .then(function(r) { return r.text(); })
                 .then(function(html) {
                     document.getElementById('project1ModalContent').innerHTML = html;
+                    _staffIsAddingNew = false;
+                    _staffCurrentIdentity = srIdentity;
                     openModal();
-                    bindStaffForm(pid, year, srIdentity);
                 });
         }
-        function bindStaffForm(pid, year, srIdentity) {
-            var form = document.getElementById('staffRequirementForm');
-            if (!form) return;
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                var url = srIdentity
-                    ? '@Url.Action("EditStaff", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&srIdentity=' + srIdentity
-                    : '@Url.Action("CreateStaff", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year;
-                fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': getAntiForgeryToken() },
-                    body: new URLSearchParams(new FormData(form)).toString()
-                })
-                .then(function(r) { return r.json(); })
-                .then(function(d) {
-                    if (d.success) { closeModal(); loadStaffGrid(); }
-                    else { alert(d.message || 'Failed to save staff requirement.'); }
-                })
-                .catch(function(err) { console.error('Staff save error:', err); alert('Failed to save staff requirement.'); });
-            });
+        function saveStaff() {
+            var $form = $('#staffRequirementForm');
+            var $modal = $('#project1ModalContent');
+
+            clearValidationErrors($modal);
+
+            if (!isFormValid($form)) {
+                displayClientValidationErrors($form, $modal);
+                return;
+            }
+
+            var form  = $form[0];
+            var token = form.querySelector('input[name="__RequestVerificationToken"]').value;
+            var url   = _staffIsAddingNew
+                ? '@Url.Action("CreateStaff", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&year=' + selectedYear
+                : '@Url.Action("EditStaff", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&year=' + selectedYear + '&srIdentity=' + _staffCurrentIdentity;
+
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': token },
+                body: new URLSearchParams(new FormData(form)).toString()
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (d.success) { closeModal(); loadStaffGrid(); }
+                else if (d.errors) {
+                    displayServerValidationErrors(d.errors, 'Please correct the errors below.', $modal);
+                    var $summary = $modal.find('.govuk-error-summary');
+                    var $list = $summary.find('.govuk-error-summary__list');
+                    $summary.find('.govuk-error-summary__title').text('There is a problem');
+                    d.errors.forEach(function(e) {
+                        if ($list.find('a[href="#' + e.field + '"]').length === 0) {
+                            $list.append('<li><a href="#' + e.field + '">' + e.message + '</a></li>');
+                        }
+                    });
+                    $summary.show().focus();
+                }
+                else { alert(d.message || 'Failed to save staff requirement.'); }
+            })
+            .catch(function(err) { console.error('Staff save error:', err); alert('Failed to save staff requirement.'); });
         }
         function deleteStaff(pid, year, srIdentity) {
             if (!confirm('Delete this staff entry?')) return;
@@ -460,13 +503,17 @@
         }
 
         // ── Tests ────────────────────────────────────────────────────────────
+        var _testIsAddingNew = true;
+        var _testCurrentCode = null;
+
         function openAddTestModal(pid, year) {
             fetch('@Url.Action("CreateTest", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&isDefra=@isDefra')
                 .then(function(r) { return r.text(); })
                 .then(function(html) {
                     document.getElementById('project1ModalContent').innerHTML = html;
+                    _testIsAddingNew = true;
+                    _testCurrentCode = null;
                     openModal();
-                    bindTestForm(pid, year, null);
                 });
         }
         function openEditTestModal(pid, year, testCode) {
@@ -474,29 +521,51 @@
                 .then(function(r) { return r.text(); })
                 .then(function(html) {
                     document.getElementById('project1ModalContent').innerHTML = html;
+                    _testIsAddingNew = false;
+                    _testCurrentCode = testCode;
                     openModal();
-                    bindTestForm(pid, year, testCode);
                 });
         }
-        function bindTestForm(pid, year, testCode) {
-            var form = document.getElementById('testRequirementForm');
-            if (!form) return;
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                var url = testCode
-                    ? '@Url.Action("EditTest", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&testCode=' + encodeURIComponent(testCode)
-                    : '@Url.Action("CreateTest", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year;
-                fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': getAntiForgeryToken() },
-                    body: new URLSearchParams(new FormData(form)).toString()
-                })
-                .then(function(r) { return r.json(); })
-                .then(function(d) {
-                    if (d.success) { closeModal(); loadTestGrid(); }
-                    else { alert('Failed to save test requirement.'); }
-                });
-            });
+        function saveTest() {
+            var $form = $('#testRequirementForm');
+            var $modal = $('#project1ModalContent');
+
+            clearValidationErrors($modal);
+
+            if (!isFormValid($form)) {
+                displayClientValidationErrors($form, $modal);
+                return;
+            }
+
+            var form  = $form[0];
+            var token = form.querySelector('input[name="__RequestVerificationToken"]').value;
+            var url   = _testIsAddingNew
+                ? '@Url.Action("CreateTest", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&year=' + selectedYear
+                : '@Url.Action("EditTest", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&year=' + selectedYear + '&testCode=' + encodeURIComponent(_testCurrentCode);
+
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': token },
+                body: new URLSearchParams(new FormData(form)).toString()
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (d.success) { closeModal(); loadTestGrid(); }
+                else if (d.errors) {
+                    displayServerValidationErrors(d.errors, 'Please correct the errors below.', $modal);
+                    var $summary = $modal.find('.govuk-error-summary');
+                    var $list = $summary.find('.govuk-error-summary__list');
+                    $summary.find('.govuk-error-summary__title').text('There is a problem');
+                    d.errors.forEach(function(e) {
+                        if ($list.find('a[href="#' + e.field + '"]').length === 0) {
+                            $list.append('<li><a href="#' + e.field + '">' + e.message + '</a></li>');
+                        }
+                    });
+                    $summary.show().focus();
+                }
+                else { alert(d.message || 'Failed to save test requirement.'); }
+            })
+            .catch(function(err) { console.error('Test save error:', err); alert('Failed to save test requirement.'); });
         }
         function deleteTest(pid, year, testCode) {
             if (!confirm('Delete this test entry?')) return;
@@ -509,13 +578,17 @@
         }
 
         // ── Animals ──────────────────────────────────────────────────────────
+        var _animalIsAddingNew = true;
+        var _animalCurrentIdentity = null;
+
         function openAddAnimalModal(pid, year) {
             fetch('@Url.Action("CreateAnimal", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&isDefra=@isDefra')
                 .then(function(r) { return r.text(); })
                 .then(function(html) {
                     document.getElementById('project1ModalContent').innerHTML = html;
+                    _animalIsAddingNew = true;
+                    _animalCurrentIdentity = null;
                     openModal();
-                    bindAnimalForm(pid, year, null);
                 });
         }
         function openEditAnimalModal(pid, year, arIdentity) {
@@ -523,29 +596,51 @@
                 .then(function(r) { return r.text(); })
                 .then(function(html) {
                     document.getElementById('project1ModalContent').innerHTML = html;
+                    _animalIsAddingNew = false;
+                    _animalCurrentIdentity = arIdentity;
                     openModal();
-                    bindAnimalForm(pid, year, arIdentity);
                 });
         }
-        function bindAnimalForm(pid, year, arIdentity) {
-            var form = document.getElementById('animalRequirementForm');
-            if (!form) return;
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                var url = arIdentity
-                    ? '@Url.Action("EditAnimal", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&arIdentity=' + arIdentity
-                    : '@Url.Action("CreateAnimal", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year;
-                fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': getAntiForgeryToken() },
-                    body: new URLSearchParams(new FormData(form)).toString()
-                })
-                .then(function(r) { return r.json(); })
-                .then(function(d) {
-                    if (d.success) { closeModal(); loadAnimalGrid(); }
-                    else { alert('Failed to save animal requirement.'); }
-                });
-            });
+        function saveAnimal() {
+            var $form = $('#animalRequirementForm');
+            var $modal = $('#project1ModalContent');
+
+            clearValidationErrors($modal);
+
+            if (!isFormValid($form)) {
+                displayClientValidationErrors($form, $modal);
+                return;
+            }
+
+            var form  = $form[0];
+            var token = form.querySelector('input[name="__RequestVerificationToken"]').value;
+            var url   = _animalIsAddingNew
+                ? '@Url.Action("CreateAnimal", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&year=' + selectedYear
+                : '@Url.Action("EditAnimal", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&year=' + selectedYear + '&arIdentity=' + _animalCurrentIdentity;
+
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': token },
+                body: new URLSearchParams(new FormData(form)).toString()
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (d.success) { closeModal(); loadAnimalGrid(); }
+                else if (d.errors) {
+                    displayServerValidationErrors(d.errors, 'Please correct the errors below.', $modal);
+                    var $summary = $modal.find('.govuk-error-summary');
+                    var $list = $summary.find('.govuk-error-summary__list');
+                    $summary.find('.govuk-error-summary__title').text('There is a problem');
+                    d.errors.forEach(function(e) {
+                        if ($list.find('a[href="#' + e.field + '"]').length === 0) {
+                            $list.append('<li><a href="#' + e.field + '">' + e.message + '</a></li>');
+                        }
+                    });
+                    $summary.show().focus();
+                }
+                else { alert(d.message || 'Failed to save animal requirement.'); }
+            })
+            .catch(function(err) { console.error('Animal save error:', err); alert('Failed to save animal requirement.'); });
         }
         function deleteAnimal(pid, year, arIdentity) {
             if (!confirm('Delete this animal entry?')) return;
@@ -558,13 +653,17 @@
         }
 
         // ── Additional Costs ─────────────────────────────────────────────────
+        var _additionalCostIsAddingNew = true;
+        var _additionalCostCurrentIdentity = null;
+
         function openAddAdditionalCostModal(pid, year) {
             fetch('@Url.Action("CreateAdditionalCost", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year)
                 .then(function(r) { return r.text(); })
                 .then(function(html) {
                     document.getElementById('project1ModalContent').innerHTML = html;
+                    _additionalCostIsAddingNew = true;
+                    _additionalCostCurrentIdentity = null;
                     openModal();
-                    bindAdditionalCostForm(pid, year, null);
                 });
         }
         function openEditAdditionalCostModal(pid, year, acIdentity) {
@@ -572,29 +671,51 @@
                 .then(function(r) { return r.text(); })
                 .then(function(html) {
                     document.getElementById('project1ModalContent').innerHTML = html;
+                    _additionalCostIsAddingNew = false;
+                    _additionalCostCurrentIdentity = acIdentity;
                     openModal();
-                    bindAdditionalCostForm(pid, year, acIdentity);
                 });
         }
-        function bindAdditionalCostForm(pid, year, acIdentity) {
-            var form = document.getElementById('additionalCostForm');
-            if (!form) return;
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                var url = acIdentity
-                    ? '@Url.Action("EditAdditionalCost", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&acIdentity=' + acIdentity
-                    : '@Url.Action("CreateAdditionalCost", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year;
-                fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': getAntiForgeryToken() },
-                    body: new URLSearchParams(new FormData(form)).toString()
-                })
-                .then(function(r) { return r.json(); })
-                .then(function(d) {
-                    if (d.success) { closeModal(); loadAdditionalCostGrid(); }
-                    else { alert('Failed to save additional cost.'); }
-                });
-            });
+        function saveAdditionalCost() {
+            var $form = $('#additionalCostForm');
+            var $modal = $('#project1ModalContent');
+
+            clearValidationErrors($modal);
+
+            if (!isFormValid($form)) {
+                displayClientValidationErrors($form, $modal);
+                return;
+            }
+
+            var form  = $form[0];
+            var token = form.querySelector('input[name="__RequestVerificationToken"]').value;
+            var url   = _additionalCostIsAddingNew
+                ? '@Url.Action("CreateAdditionalCost", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&year=' + selectedYear
+                : '@Url.Action("EditAdditionalCost", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&year=' + selectedYear + '&acIdentity=' + _additionalCostCurrentIdentity;
+
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': token },
+                body: new URLSearchParams(new FormData(form)).toString()
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (d.success) { closeModal(); loadAdditionalCostGrid(); }
+                else if (d.errors) {
+                    displayServerValidationErrors(d.errors, 'Please correct the errors below.', $modal);
+                    var $summary = $modal.find('.govuk-error-summary');
+                    var $list = $summary.find('.govuk-error-summary__list');
+                    $summary.find('.govuk-error-summary__title').text('There is a problem');
+                    d.errors.forEach(function(e) {
+                        if ($list.find('a[href="#' + e.field + '"]').length === 0) {
+                            $list.append('<li><a href="#' + e.field + '">' + e.message + '</a></li>');
+                        }
+                    });
+                    $summary.show().focus();
+                }
+                else { alert(d.message || 'Failed to save additional cost.'); }
+            })
+            .catch(function(err) { console.error('Additional cost save error:', err); alert('Failed to save additional cost.'); });
         }
         function deleteAdditionalCost(pid, year, acIdentity) {
             if (!confirm('Delete this additional cost entry?')) return;
@@ -755,6 +876,8 @@
             .then(function (r) { return r.json(); })
             .then(function (d) {
                 document.getElementById('year-total-staff').value = formatGbp(d.staffCostTotal);
+                document.getElementById('staffTotalAmount').value = formatGbp(d.staffCostTotal);
+                
                 document.getElementById('year-total-test').value = formatGbp(d.testCostTotal);
                 document.getElementById('year-total-animal').value = formatGbp(d.animalCostTotal);
                 document.getElementById('year-total-additional').value = formatGbp(d.additionalCostTotal);

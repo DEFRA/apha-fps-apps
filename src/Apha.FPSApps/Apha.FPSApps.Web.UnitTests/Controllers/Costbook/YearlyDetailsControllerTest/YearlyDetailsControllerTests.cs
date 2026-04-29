@@ -515,4 +515,313 @@ public class YearlyDetailsControllerTests
     }
 
     #endregion
+
+    #region CreateStaff GET
+
+    [Fact]
+    public async Task CreateStaff_Get_ReturnsPartialView()
+    {
+        _service.GetPayRatesAsync(Arg.Any<bool>())
+            .Returns(ApiResponseDto<List<PayRateDto>>.SuccessResponse(new List<PayRateDto>()));
+
+        var result = await _controller.CreateStaff("2024/001", 2024, false);
+
+        var partialResult = Assert.IsType<PartialViewResult>(result);
+        Assert.Equal("_AddEditStaffRequirement", partialResult.ViewName);
+    }
+
+    #endregion
+
+    #region CreateTest GET
+
+    [Fact]
+    public async Task CreateTest_Get_ReturnsPartialView()
+    {
+        _service.GetTestCodeLookupsAsync(Arg.Any<bool>())
+            .Returns(ApiResponseDto<List<TestCodeLookupDto>>.SuccessResponse(new List<TestCodeLookupDto>()));
+
+        var result = await _controller.CreateTest("2024/001", 2024, false);
+
+        var partialResult = Assert.IsType<PartialViewResult>(result);
+        Assert.Equal("_AddEditTestRequirement", partialResult.ViewName);
+    }
+
+    #endregion
+
+    #region CreateAnimal GET
+
+    [Fact]
+    public async Task CreateAnimal_Get_ReturnsPartialView()
+    {
+        _service.GetAllAnimalsAsync()
+            .Returns(ApiResponseDto<List<AnimalLookupDto>>.SuccessResponse(new List<AnimalLookupDto>()));
+
+        var result = await _controller.CreateAnimal("2024/001", 2024, false);
+
+        var partialResult = Assert.IsType<PartialViewResult>(result);
+        Assert.Equal("_AddEditAnimalRequirement", partialResult.ViewName);
+    }
+
+    #endregion
+
+    #region ModelState Invalid Tests
+
+    [Fact]
+    public async Task CreateStaff_Post_ReturnsErrors_WhenModelStateInvalid()
+    {
+        _controller.ModelState.AddModelError("WgGrade", "WG Grade is required.");
+
+        var result = await _controller.CreateStaff("2024/001", 2024, new StaffRequirementItem());
+
+        var jsonResult = Assert.IsType<JsonResult>(result);
+        var element = GetJsonResultElement(jsonResult);
+        Assert.False(element.GetProperty("success").GetBoolean());
+        Assert.True(element.GetProperty("errors").GetArrayLength() > 0);
+    }
+
+    [Fact]
+    public async Task EditStaff_Post_ReturnsErrors_WhenModelStateInvalid()
+    {
+        _controller.ModelState.AddModelError("WgGrade", "WG Grade is required.");
+
+        var result = await _controller.EditStaff("2024/001", 2024, 1, new StaffRequirementItem());
+
+        var jsonResult = Assert.IsType<JsonResult>(result);
+        var element = GetJsonResultElement(jsonResult);
+        Assert.False(element.GetProperty("success").GetBoolean());
+        Assert.True(element.GetProperty("errors").GetArrayLength() > 0);
+    }
+
+    [Fact]
+    public async Task CreateTest_Post_ReturnsErrors_WhenModelStateInvalid()
+    {
+        _controller.ModelState.AddModelError("TestCode", "Test Code is required.");
+
+        var result = await _controller.CreateTest("2024/001", 2024, new TestRequirementItem { TestCode = "" });
+
+        var jsonResult = Assert.IsType<JsonResult>(result);
+        var element = GetJsonResultElement(jsonResult);
+        Assert.False(element.GetProperty("success").GetBoolean());
+        Assert.True(element.GetProperty("errors").GetArrayLength() > 0);
+    }
+
+    [Fact]
+    public async Task EditTest_Post_ReturnsErrors_WhenModelStateInvalid()
+    {
+        _controller.ModelState.AddModelError("TestCode", "Test Code is required.");
+
+        var result = await _controller.EditTest("2024/001", 2024, "TC001", new TestRequirementItem { TestCode = "" });
+
+        var jsonResult = Assert.IsType<JsonResult>(result);
+        var element = GetJsonResultElement(jsonResult);
+        Assert.False(element.GetProperty("success").GetBoolean());
+    }
+
+    [Fact]
+    public async Task CreateAnimal_Post_ReturnsErrors_WhenModelStateInvalid()
+    {
+        _controller.ModelState.AddModelError("AnimalType", "Animal Type is required.");
+
+        var result = await _controller.CreateAnimal("2024/001", 2024, new AnimalRequirementItem { AnimalType = "" });
+
+        var jsonResult = Assert.IsType<JsonResult>(result);
+        var element = GetJsonResultElement(jsonResult);
+        Assert.False(element.GetProperty("success").GetBoolean());
+    }
+
+    [Fact]
+    public async Task EditAnimal_Post_ReturnsErrors_WhenModelStateInvalid()
+    {
+        _controller.ModelState.AddModelError("AnimalType", "Animal Type is required.");
+
+        var result = await _controller.EditAnimal("2024/001", 2024, 1, new AnimalRequirementItem { AnimalType = "" });
+
+        var jsonResult = Assert.IsType<JsonResult>(result);
+        var element = GetJsonResultElement(jsonResult);
+        Assert.False(element.GetProperty("success").GetBoolean());
+    }
+
+    [Fact]
+    public async Task CreateAdditionalCost_Post_ReturnsErrors_WhenModelStateInvalid()
+    {
+        _controller.ModelState.AddModelError("Description", "Description is required.");
+
+        var result = await _controller.CreateAdditionalCost("2024/001", 2024, new AdditionalCostItem { Description = "", AccountCat = "" });
+
+        var jsonResult = Assert.IsType<JsonResult>(result);
+        var element = GetJsonResultElement(jsonResult);
+        Assert.False(element.GetProperty("success").GetBoolean());
+    }
+
+    [Fact]
+    public async Task EditAdditionalCost_Post_ReturnsErrors_WhenModelStateInvalid()
+    {
+        _controller.ModelState.AddModelError("Description", "Description is required.");
+
+        var result = await _controller.EditAdditionalCost("2024/001", 2024, 1, new AdditionalCostItem { Description = "", AccountCat = "" });
+
+        var jsonResult = Assert.IsType<JsonResult>(result);
+        var element = GetJsonResultElement(jsonResult);
+        Assert.False(element.GetProperty("success").GetBoolean());
+    }
+
+    #endregion
+
+    #region Service Failure Tests
+
+    [Fact]
+    public async Task EditStaff_Post_ReturnsErrors_WhenServiceFails()
+    {
+        _mapper.Map<StaffRequirementDto>(Arg.Any<StaffRequirementItem>()).Returns(new StaffRequirementDto());
+        _service.UpdateStaffRequirementAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<StaffRequirementDto>())
+            .Returns(ApiResponseDto<StaffRequirementDto>.FailureResponse(
+                new List<ApiErrorDto> { new() { Code = "ERR", Message = "Update failed" } }, new ApiMetaDto()));
+
+        var result = await _controller.EditStaff("2024/001", 2024, 1, new StaffRequirementItem { WgGrade = "HEO" });
+
+        var jsonResult = Assert.IsType<JsonResult>(result);
+        var element = GetJsonResultElement(jsonResult);
+        Assert.False(element.GetProperty("success").GetBoolean());
+        Assert.True(element.GetProperty("errors").GetArrayLength() > 0);
+    }
+
+    [Fact]
+    public async Task CreateTest_Post_ReturnsErrors_WhenServiceFails()
+    {
+        _mapper.Map<TestRequirementDto>(Arg.Any<TestRequirementItem>()).Returns(new TestRequirementDto());
+        _service.AddTestRequirementAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<TestRequirementDto>())
+            .Returns(ApiResponseDto<TestRequirementDto>.FailureResponse(
+                new List<ApiErrorDto> { new() { Code = "ERR", Message = "Failed" } }, new ApiMetaDto()));
+
+        var result = await _controller.CreateTest("2024/001", 2024, new TestRequirementItem { TestCode = "TC001" });
+
+        var jsonResult = Assert.IsType<JsonResult>(result);
+        Assert.False(GetJsonResultElement(jsonResult).GetProperty("success").GetBoolean());
+    }
+
+    [Fact]
+    public async Task EditTest_Post_ReturnsErrors_WhenServiceFails()
+    {
+        _mapper.Map<TestRequirementDto>(Arg.Any<TestRequirementItem>()).Returns(new TestRequirementDto());
+        _service.UpdateTestRequirementAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<string>(), Arg.Any<TestRequirementDto>())
+            .Returns(ApiResponseDto<TestRequirementDto>.FailureResponse(
+                new List<ApiErrorDto> { new() { Code = "ERR", Message = "Failed" } }, new ApiMetaDto()));
+
+        var result = await _controller.EditTest("2024/001", 2024, "TC001", new TestRequirementItem { TestCode = "TC001" });
+
+        var jsonResult = Assert.IsType<JsonResult>(result);
+        Assert.False(GetJsonResultElement(jsonResult).GetProperty("success").GetBoolean());
+    }
+
+    [Fact]
+    public async Task CreateAnimal_Post_ReturnsErrors_WhenServiceFails()
+    {
+        _mapper.Map<AnimalRequirementDto>(Arg.Any<AnimalRequirementItem>()).Returns(new AnimalRequirementDto());
+        _service.AddAnimalRequirementAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<AnimalRequirementDto>())
+            .Returns(ApiResponseDto<AnimalRequirementDto>.FailureResponse(
+                new List<ApiErrorDto> { new() { Code = "ERR", Message = "Failed" } }, new ApiMetaDto()));
+
+        var result = await _controller.CreateAnimal("2024/001", 2024, new AnimalRequirementItem { AnimalType = "CAT" });
+
+        var jsonResult = Assert.IsType<JsonResult>(result);
+        Assert.False(GetJsonResultElement(jsonResult).GetProperty("success").GetBoolean());
+    }
+
+    [Fact]
+    public async Task EditAnimal_Post_ReturnsErrors_WhenServiceFails()
+    {
+        _mapper.Map<AnimalRequirementDto>(Arg.Any<AnimalRequirementItem>()).Returns(new AnimalRequirementDto());
+        _service.UpdateAnimalRequirementAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<AnimalRequirementDto>())
+            .Returns(ApiResponseDto<AnimalRequirementDto>.FailureResponse(
+                new List<ApiErrorDto> { new() { Code = "ERR", Message = "Failed" } }, new ApiMetaDto()));
+
+        var result = await _controller.EditAnimal("2024/001", 2024, 1, new AnimalRequirementItem { AnimalType = "CAT" });
+
+        var jsonResult = Assert.IsType<JsonResult>(result);
+        Assert.False(GetJsonResultElement(jsonResult).GetProperty("success").GetBoolean());
+    }
+
+    [Fact]
+    public async Task CreateAdditionalCost_Post_ReturnsErrors_WhenServiceFails()
+    {
+        _mapper.Map<AdditionalCostDto>(Arg.Any<AdditionalCostItem>()).Returns(new AdditionalCostDto());
+        _service.AddAdditionalCostAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<AdditionalCostDto>())
+            .Returns(ApiResponseDto<AdditionalCostDto>.FailureResponse(
+                new List<ApiErrorDto> { new() { Code = "ERR", Message = "Failed" } }, new ApiMetaDto()));
+
+        var result = await _controller.CreateAdditionalCost("2024/001", 2024,
+            new AdditionalCostItem { Description = "Travel", AccountCat = "TRAVEL" });
+
+        var jsonResult = Assert.IsType<JsonResult>(result);
+        Assert.False(GetJsonResultElement(jsonResult).GetProperty("success").GetBoolean());
+    }
+
+    [Fact]
+    public async Task EditAdditionalCost_Post_ReturnsErrors_WhenServiceFails()
+    {
+        _mapper.Map<AdditionalCostDto>(Arg.Any<AdditionalCostItem>()).Returns(new AdditionalCostDto());
+        _service.UpdateAdditionalCostAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<AdditionalCostDto>())
+            .Returns(ApiResponseDto<AdditionalCostDto>.FailureResponse(
+                new List<ApiErrorDto> { new() { Code = "ERR", Message = "Failed" } }, new ApiMetaDto()));
+
+        var result = await _controller.EditAdditionalCost("2024/001", 2024, 1,
+            new AdditionalCostItem { Description = "Travel", AccountCat = "TRAVEL" });
+
+        var jsonResult = Assert.IsType<JsonResult>(result);
+        Assert.False(GetJsonResultElement(jsonResult).GetProperty("success").GetBoolean());
+    }
+
+    #endregion
+
+    #region EditTest/Animal/AdditionalCost GET Success
+
+    [Fact]
+    public async Task EditTest_Get_ReturnsPartialView_WhenRowExists()
+    {
+        var testDto = new TestRequirementDto { TestCode = "TC001" };
+        _service.GetTestRequirementsAsync(Arg.Any<string>(), Arg.Any<int>())
+            .Returns(ApiResponseDto<List<TestRequirementDto>>.SuccessResponse(new List<TestRequirementDto> { testDto }));
+        _service.GetTestCodeLookupsAsync(Arg.Any<bool>())
+            .Returns(ApiResponseDto<List<TestCodeLookupDto>>.SuccessResponse(new List<TestCodeLookupDto>()));
+        _mapper.Map<TestRequirementItem>(testDto).Returns(new TestRequirementItem { TestCode = "TC001" });
+
+        var result = await _controller.EditTest("2024/001", 2024, "TC001", false);
+
+        var partialResult = Assert.IsType<PartialViewResult>(result);
+        Assert.Equal("_AddEditTestRequirement", partialResult.ViewName);
+    }
+
+    [Fact]
+    public async Task EditAnimal_Get_ReturnsPartialView_WhenRowExists()
+    {
+        var animalDto = new AnimalRequirementDto { ArIdentity = 1, AnimalType = "CAT" };
+        _service.GetAnimalRequirementsAsync(Arg.Any<string>(), Arg.Any<int>())
+            .Returns(ApiResponseDto<List<AnimalRequirementDto>>.SuccessResponse(new List<AnimalRequirementDto> { animalDto }));
+        _service.GetAllAnimalsAsync()
+            .Returns(ApiResponseDto<List<AnimalLookupDto>>.SuccessResponse(new List<AnimalLookupDto>()));
+        _mapper.Map<AnimalRequirementItem>(animalDto).Returns(new AnimalRequirementItem { ArIdentity = 1 });
+
+        var result = await _controller.EditAnimal("2024/001", 2024, 1, false);
+
+        var partialResult = Assert.IsType<PartialViewResult>(result);
+        Assert.Equal("_AddEditAnimalRequirement", partialResult.ViewName);
+    }
+
+    [Fact]
+    public async Task EditAdditionalCost_Get_ReturnsPartialView_WhenRowExists()
+    {
+        var acDto = new AdditionalCostDto { AcIdentity = 1, Description = "Travel" };
+        _service.GetAdditionalCostsAsync(Arg.Any<string>(), Arg.Any<int>())
+            .Returns(ApiResponseDto<List<AdditionalCostDto>>.SuccessResponse(new List<AdditionalCostDto> { acDto }));
+        _service.GetAccountCategoriesAsync()
+            .Returns(ApiResponseDto<List<AccountCategoryDto>>.SuccessResponse(new List<AccountCategoryDto>()));
+        _mapper.Map<AdditionalCostItem>(acDto).Returns(new AdditionalCostItem { AcIdentity = 1 });
+
+        var result = await _controller.EditAdditionalCost("2024/001", 2024, 1);
+
+        var partialResult = Assert.IsType<PartialViewResult>(result);
+        Assert.Equal("_AddEditAdditionalCost", partialResult.ViewName);
+    }
+
+    #endregion
 }
