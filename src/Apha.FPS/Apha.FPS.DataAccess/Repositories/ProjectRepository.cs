@@ -163,6 +163,26 @@ namespace Apha.FPS.DataAccess.Repositories
             return entity;
         }
 
+        public async Task<Project?> UpdatePactPortfolioDetailsAsync(Project project)
+        {
+            var entity = await _dbContext.Projects
+                .FirstOrDefaultAsync(p => p.ParentProject == project.ParentProject
+                    && p.FpsYear == _requestContext.FpsYear);
+
+            if (entity == null) return null;
+
+            entity.ProjectTitle = project.ProjectTitle;
+            entity.Program = project.Program;
+            entity.Manager = project.Manager;
+            entity.Finished = project.Finished;
+            entity.Comments = project.Comments;
+            entity.BudgetCvl = project.BudgetCvl;
+            entity.TransferIncome = project.TransferIncome;
+
+            await _dbContext.SaveChangesAsync();
+            return entity;
+        }
+
         public async Task<bool> DeleteProjectAsync(string parentProject)
         {
             var project = await _dbContext.Projects

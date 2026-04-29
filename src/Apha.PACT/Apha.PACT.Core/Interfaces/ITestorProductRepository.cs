@@ -12,5 +12,6 @@ namespace Apha.PACT.Core.Interfaces
         Task<TestorProduct> UpdateTestOrProductAsync(TestorProduct entity);
         Task<bool> DeleteTestOrProductAsync(string itemCode);
         Task<IEnumerable<string>> GetOwnersAsync();
+        Task<Dictionary<string, string?>> GetDescriptionsByCodesAsync(IEnumerable<string> itemCodes);
     }
 }

@@ -21,6 +21,9 @@ namespace Apha.FPSApps.Application.Services.PACT
         public async Task<ApiResponseDto<List<TestCapabilityDto>>> GetPagedByTestCodeAsync(QueryParameters<string> query, string? testCode)
             => await _pactClient.PactWorkGroupTestCapability.GetPagedByTestCodeAsync(query, testCode);
 
+        public async Task<ApiResponseDto<List<TestCapabilityDto>>> GetPagedTestCapabilityByPortfolioAsync(QueryParameters<string> query, string? portfolio)
+            => await _pactClient.PactWorkGroupTestCapability.GetPagedTestCapabilityByPortfolioAsync(query, portfolio);
+
         public async Task<ApiResponseDto<TestCapabilityDto>> GetTestCapabilityByIdAsync(string testCode, string workGroup)
             => await _pactClient.PactWorkGroupTestCapability.GetTestCapabilityByIdAsync(testCode, workGroup);
 

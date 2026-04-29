@@ -15,6 +15,7 @@ namespace Apha.PACT.Application.UnitTests.Services.TestCapabilityServiceTest
     {
         private readonly ITestCapabilityRepository _testCapabilityRepo;
         private readonly ITestRequirementRepository _testReqmtRepo;
+        private readonly ITestorProductRepository _testorProductRepo;
         private readonly IMapper _mapper;
         private readonly TestCapabilityService _sut;
 
@@ -22,10 +23,90 @@ namespace Apha.PACT.Application.UnitTests.Services.TestCapabilityServiceTest
         {
             _testCapabilityRepo = Substitute.For<ITestCapabilityRepository>();
             _testReqmtRepo = Substitute.For<ITestRequirementRepository>();
+            _testorProductRepo = Substitute.For<ITestorProductRepository>();
             _mapper = Substitute.For<IMapper>();
             _sut = new TestCapabilityService(
-                _testCapabilityRepo, _testReqmtRepo, _mapper);
+                _testCapabilityRepo, _testReqmtRepo, _testorProductRepo, _mapper);
         }
+
+        #region GetPagedTestCapabilityByPortfolioAsync
+
+        [Fact]
+        public async Task GetPagedTestCapabilityByPortfolioAsync_ValidQuery_ReturnsMappedResultWithDescriptions()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string>();
+            var entity = new TestCapability { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" };
+            var pagedData = new PagedData<TestCapability>([entity], new PaginationData { TotalRecords = 1 });
+            var dto = new TestCapabilityDto { TestCode = "TC1", WorkGroup = "WG1" };
+            var pagedResult = new PaginatedResult<TestCapabilityDto> { Data = [dto] };
+            var descriptions = new Dictionary<string, string?> { ["TC1"] = "Test Description" };
+
+            _mapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _testCapabilityRepo.GetPagedTestCapabilityByPortfolioAsync(mappedParams, "PP1").Returns(pagedData);
+            _mapper.Map<PaginatedResult<TestCapabilityDto>>(pagedData).Returns(pagedResult);
+            _testorProductRepo.GetDescriptionsByCodesAsync(Arg.Any<IEnumerable<string>>()).Returns(descriptions);
+
+            var result = await _sut.GetPagedTestCapabilityByPortfolioAsync(query, "PP1");
+
+            result.Should().Be(pagedResult);
+            Assert.Equal("Test Description", result.Data!.First().ItemDescription);
+            await _testCapabilityRepo.Received(1).GetPagedTestCapabilityByPortfolioAsync(mappedParams, "PP1");
+        }
+
+        [Fact]
+        public async Task GetPagedTestCapabilityByPortfolioAsync_EmptyData_DoesNotCallDescriptions()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string>();
+            var pagedData = new PagedData<TestCapability>([], new PaginationData());
+            var pagedResult = new PaginatedResult<TestCapabilityDto> { Data = [] };
+
+            _mapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _testCapabilityRepo.GetPagedTestCapabilityByPortfolioAsync(mappedParams, "PP1").Returns(pagedData);
+            _mapper.Map<PaginatedResult<TestCapabilityDto>>(pagedData).Returns(pagedResult);
+
+            var result = await _sut.GetPagedTestCapabilityByPortfolioAsync(query, "PP1");
+
+            result.Should().Be(pagedResult);
+            await _testorProductRepo.DidNotReceive().GetDescriptionsByCodesAsync(Arg.Any<IEnumerable<string>>());
+        }
+
+        #endregion
+
+        #region AddTestCapabilityAsync — ValidateRequiredFields paths
+
+        [Fact]
+        public async Task AddTestCapabilityAsync_MissingTestCode_ThrowsArgumentException()
+        {
+            var dto = new TestCapabilityDto { TestCode = "", WorkGroup = "WG1", PlanPortfolio = "PP1" };
+
+            await Assert.ThrowsAsync<ArgumentException>(() => _sut.AddTestCapabilityAsync(dto));
+            await _testCapabilityRepo.DidNotReceive().AddAsync(Arg.Any<TestCapability>());
+        }
+
+        [Fact]
+        public async Task AddTestCapabilityAsync_MissingPlanPortfolio_ThrowsArgumentException()
+        {
+            var dto = new TestCapabilityDto { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "" };
+
+            await Assert.ThrowsAsync<ArgumentException>(() => _sut.AddTestCapabilityAsync(dto));
+        }
+
+        #endregion
+
+        #region UpdateTestCapabilityAsync — ValidateRequiredFields paths
+
+        [Fact]
+        public async Task UpdateTestCapabilityAsync_MissingWorkGroup_ThrowsArgumentException()
+        {
+            var dto = new TestCapabilityDto { TestCode = "TC1", WorkGroup = "", PlanPortfolio = "PP1" };
+
+            await Assert.ThrowsAsync<ArgumentException>(() => _sut.UpdateTestCapabilityAsync(dto));
+            await _testCapabilityRepo.DidNotReceive().UpdateAsync(Arg.Any<TestCapability>());
+        }
+
+        #endregion
 
         #region GetPagedByWorkGroupAsync
 
