@@ -271,8 +271,63 @@ SET program = EXCLUDED.program, customer = EXCLUDED.customer,
             totalRowsAffected += tlkpProjectRows;
             _logger.LogInformation("Loaded {RowCount} rows into my_tlkpproject for year {Year}", tlkpProjectRows, year);
 
-            // Note: Remaining 20 loaders (monthly data, staffing, costs, etc.) pending implementation
-            // Phase 2 scope: Add in small batches with build verification
+            // Step 4: Monthly output summary (test volume by test/buyer/month/workgroup)
+            var monthlyOutputRows = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+INSERT INTO mabarchive.my_monthlyoutput (
+    year, testcode, buyer, month, workgroup, volume, wgbuyer
+)
+SELECT
+    {year}, m.testcode, m.buyer, m.month, m.workgroup, m.volume, m.wgbuyer
+FROM fps.monthlyoutput m
+WHERE m.fpsyear = {year}
+ON CONFLICT (year, testcode, buyer, month, workgroup) DO UPDATE
+SET volume = EXCLUDED.volume, wgbuyer = EXCLUDED.wgbuyer
+", cancellationToken);
+
+            totalRowsAffected += monthlyOutputRows;
+            _logger.LogInformation("Loaded {RowCount} rows into my_monthlyoutput for year {Year}", monthlyOutputRows, year);
+
+            // Step 5: Monthly time summary (staff time allocation)
+            var monthlyTimeRows = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+INSERT INTO mabarchive.my_monthlytime (
+    year, pact_staffid, timecode, month, parentproject, workgroup, hours
+)
+SELECT
+    {year}, m.pact_staffid, m.timecode, m.month, m.parentproject, m.workgroup, m.hours
+FROM fps.monthlytime m
+WHERE m.fpsyear = {year}
+ON CONFLICT (year, pact_staffid, timecode, month, parentproject, workgroup) DO UPDATE
+SET hours = EXCLUDED.hours
+", cancellationToken);
+
+            totalRowsAffected += monthlyTimeRows;
+            _logger.LogInformation("Loaded {RowCount} rows into my_monthlytime for year {Year}", monthlyTimeRows, year);
+
+            // Step 6: Project month final (comprehensive project financials by month)
+            var projectMonthFinalRows = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+INSERT INTO mabarchive.my_projectmonthfinal (
+    year, parentproject, month, volume, cost, wip, profitloss, detail,
+    invoicecounter, type, invoiceamount, costofwork, costofworkdebit,
+    profitmargin, profitmarginpct, cumvolume, cumcost, cumwip,
+    cumprofitloss, description, comments
+)
+SELECT
+    {year}, p.parentproject, p.month, p.volume, p.cost, p.wip, p.profitloss,
+    p.detail, p.invoicecounter, p.type, p.invoiceamount, p.costofwork,
+    p.costofworkdebit, p.profitmargin, p.profitmarginpct, p.cumvolume,
+    p.cumcost, p.cumwip, p.cumprofitloss, p.description, p.comments
+FROM fps.projectmonthfinal p
+WHERE p.fpsyear = {year}
+ON CONFLICT (year, parentproject, month, type) DO UPDATE
+SET volume = EXCLUDED.volume, cost = EXCLUDED.cost, wip = EXCLUDED.wip,
+    profitloss = EXCLUDED.profitloss, cumvolume = EXCLUDED.cumvolume,
+    cumcost = EXCLUDED.cumcost, cumprofitloss = EXCLUDED.cumprofitloss
+", cancellationToken);
+
+            totalRowsAffected += projectMonthFinalRows;
+            _logger.LogInformation("Loaded {RowCount} rows into my_projectmonthfinal for year {Year}", projectMonthFinalRows, year);
+
+            // Note: Remaining 20 loaders (invoices, subcontracts, costs, staffing, etc.) pending implementation
 
             _logger.LogInformation("Loaded {TotalRowCount} total rows into archive tables for year {Year} (Step 1a complete)", totalRowsAffected, year);
             return totalRowsAffected;
