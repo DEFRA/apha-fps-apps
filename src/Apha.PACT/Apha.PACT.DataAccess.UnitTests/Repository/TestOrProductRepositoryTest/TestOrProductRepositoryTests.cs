@@ -312,6 +312,108 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestOrProductRepositoryTest
 
         #endregion
 
+        #region GetAllTestorProductsAsync
+
+        [Fact]
+        public async Task GetAllTestorProductsAsync_WithData_ReturnsAllOrderedByItemCode()
+        {
+            var products = new List<TestorProduct>
+            {
+                new() { ItemCode = "Z001", DefraUnitPrice = 10m, FpsYear = 2024 },
+                new() { ItemCode = "A001", DefraUnitPrice = 20m, FpsYear = 2024 }
+            };
+            var repo = CreateRepository(products);
+
+            var result = (await repo.GetAllTestorProductsAsync()).ToList();
+
+            Assert.Equal(2, result.Count);
+            Assert.Equal("A001", result[0].ItemCode);
+            Assert.Equal("Z001", result[1].ItemCode);
+        }
+
+        [Fact]
+        public async Task GetAllTestorProductsAsync_WithNoData_ReturnsEmptyList()
+        {
+            var repo = CreateRepository([]);
+
+            var result = await repo.GetAllTestorProductsAsync();
+
+            Assert.Empty(result);
+        }
+
+        #endregion
+
+        #region GetPagedTestOrProductsAsync — filtering
+
+        [Fact]
+        public async Task GetPagedTestOrProductsAsync_WithItemCodeFilter_ReturnsFilteredResult()
+        {
+            var products = new List<TestorProduct>
+            {
+                new() { ItemCode = "ALPHA", ItemDescription = "Alpha", DefraUnitPrice = 10m, FpsYear = 2024 },
+                new() { ItemCode = "BETA",  ItemDescription = "Beta",  DefraUnitPrice = 20m, FpsYear = 2024 }
+            };
+            var repo = CreateRepository(products);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = """{"ItemCode":"ALPHA"}"""
+            };
+
+            var result = await repo.GetPagedTestOrProductsAsync(query);
+
+            Assert.Single(result.Data);
+            Assert.Equal("ALPHA", result.Data.First().ItemCode);
+        }
+
+        #endregion
+
+        #region GetDescriptionsByCodesAsync
+
+        [Fact]
+        public async Task GetDescriptionsByCodesAsync_WithMatchingCodes_ReturnsDictionary()
+        {
+            var products = new List<TestorProduct>
+            {
+                new() { ItemCode = "T001", ItemDescription = "Desc One", DefraUnitPrice = 10m, FpsYear = 2024 },
+                new() { ItemCode = "T002", ItemDescription = "Desc Two", DefraUnitPrice = 20m, FpsYear = 2024 }
+            };
+            var repo = CreateRepository(products);
+
+            var result = await repo.GetDescriptionsByCodesAsync(["T001", "T002"]);
+
+            Assert.Equal(2, result.Count);
+            Assert.Equal("Desc One", result["T001"]);
+            Assert.Equal("Desc Two", result["T002"]);
+        }
+
+        [Fact]
+        public async Task GetDescriptionsByCodesAsync_WithNoMatchingCodes_ReturnsEmptyDictionary()
+        {
+            var repo = CreateRepository([]);
+
+            var result = await repo.GetDescriptionsByCodesAsync(["NONE"]);
+
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetDescriptionsByCodesAsync_WithNullDescription_ReturnsNullValue()
+        {
+            var products = new List<TestorProduct>
+            {
+                new() { ItemCode = "T001", ItemDescription = null, DefraUnitPrice = 10m, FpsYear = 2024 }
+            };
+            var repo = CreateRepository(products);
+
+            var result = await repo.GetDescriptionsByCodesAsync(["T001"]);
+
+            Assert.True(result.ContainsKey("T001"));
+            Assert.Null(result["T001"]);
+        }
+
+        #endregion
+
         #region GetOwnersAsync
 
         [Fact]

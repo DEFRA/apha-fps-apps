@@ -38,6 +38,78 @@ namespace Apha.PACT.Application.UnitTests.Services.TimeCodeValidServiceTest
                 _mockMapper);
         }
 
+        #region GetPagedByProjectAndTestCodeAsync
+
+        [Fact]
+        public async Task GetPagedByProjectAndTestCodeAsync_ValidQuery_ReturnsMappedPaginatedResult()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string>();
+            var pagedData = new PagedData<TimeCodeValid>(new List<TimeCodeValid>(), new PaginationData());
+            var pagedResult = new PaginatedResult<TimeCodeValidDto>();
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetPagedByProjectAndTestCodeAsync(mappedParams, "PRJ1", "TST1").Returns(pagedData);
+            _mockMapper.Map<PaginatedResult<TimeCodeValidDto>>(pagedData).Returns(pagedResult);
+
+            var result = await _sut.GetPagedByProjectAndTestCodeAsync(query, "PRJ1", "TST1");
+
+            result.Should().Be(pagedResult);
+            await _mockRepository.Received(1).GetPagedByProjectAndTestCodeAsync(mappedParams, "PRJ1", "TST1");
+        }
+
+        [Fact]
+        public async Task GetPagedByProjectAndTestCodeAsync_RepositoryThrows_PropagatesException()
+        {
+            var query = new QueryParameters<string>();
+            var mappedParams = new PaginationParameters<string>();
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetPagedByProjectAndTestCodeAsync(mappedParams, "PRJ1", "TST1")
+                .ThrowsAsync(new Exception("DB error"));
+
+            await Assert.ThrowsAsync<Exception>(() => _sut.GetPagedByProjectAndTestCodeAsync(query, "PRJ1", "TST1"));
+        }
+
+        #endregion
+
+        #region UpdateTimeCodeValidAsync — MonthlyTime dependency path
+
+        [Fact]
+        public async Task UpdateTimeCodeValidAsync_WorkGroupChangedWithDependentMonthlyTime_ThrowsInvalidOperationException()
+        {
+            var dto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG_NEW", ParentProject = "PRJ1", JobCode = "JC1" };
+            var existing = new TimeCodeValid { TimeCode = "TC1", WorkGroup = "WG_OLD", ParentProject = "PRJ1", JobCode = "JC1" };
+
+            _mockRepository.GetTimeCodeValidAsync("WG_NEW", "TC1", "PRJ1").Returns(existing);
+            _mockMonthlyTimeRepository.HasDependentRowsAsync("WG_OLD", "TC1", "PRJ1").Returns(true);
+
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.UpdateTimeCodeValidAsync(dto));
+            ex.Message.Should().Be("Cannot update, existing data in MonthlyTime.");
+            await _mockRepository.DidNotReceive().UpdateTimeCodeValidAsync(Arg.Any<TimeCodeValid>());
+        }
+
+        [Fact]
+        public async Task UpdateTimeCodeValidAsync_NoFieldChanged_SkipsMonthlyTimeDependencyCheck()
+        {
+            var dto = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC1" };
+            var existing = new TimeCodeValid { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC1" };
+            var entity = new TimeCodeValid { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC1" };
+            var expected = new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC1" };
+
+            _mockRepository.GetTimeCodeValidAsync("WG1", "TC1", "PRJ1").Returns(existing);
+            _mockMapper.Map<TimeCodeValid>(dto).Returns(entity);
+            _mockRepository.UpdateTimeCodeValidAsync(entity).Returns(entity);
+            _mockMapper.Map<TimeCodeValidDto>(entity).Returns(expected);
+
+            var result = await _sut.UpdateTimeCodeValidAsync(dto);
+
+            result.Should().Be(expected);
+            await _mockMonthlyTimeRepository.DidNotReceive().HasDependentRowsAsync(
+                Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+        }
+
+        #endregion
+
         #region GetByJobCodeAsync
 
         [Fact]

@@ -5,6 +5,7 @@ using Apha.PACT.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using System.Dynamic;
+using System.Linq.Expressions;
 
 namespace Apha.PACT.DataAccess.Repository
 {
@@ -136,22 +137,22 @@ namespace Apha.PACT.DataAccess.Repository
 
         private static IQueryable<TestorProduct> ApplySorting(IQueryable<TestorProduct> query, string? sortBy, bool descending)
         {
-            if (string.IsNullOrEmpty(sortBy))
+            var sortMap = new Dictionary<string, Expression<Func<TestorProduct, object?>>>
             {
-                return query.OrderBy(e => e.ItemCode);
-            }
-
-            return sortBy.ToLower() switch
-            {
-                "itemcode" => descending ? query.OrderByDescending(e => e.ItemCode) : query.OrderBy(e => e.ItemCode),
-                "itemdescription" => descending ? query.OrderByDescending(e => e.ItemDescription) : query.OrderBy(e => e.ItemDescription),
-                "shortdescription" => descending ? query.OrderByDescending(e => e.ShortDescription) : query.OrderBy(e => e.ShortDescription),
-                "owner" => descending ? query.OrderByDescending(e => e.Owner) : query.OrderBy(e => e.Owner),
-                "testmanager" => descending ? query.OrderByDescending(e => e.TestManager) : query.OrderBy(e => e.TestManager),
-                "unitpricevla" => descending ? query.OrderByDescending(e => e.UnitPriceVla) : query.OrderBy(e => e.UnitPriceVla),
-                "defraunitprice" => descending ? query.OrderByDescending(e => e.DefraUnitPrice) : query.OrderBy(e => e.DefraUnitPrice),
-                _ => query.OrderBy(e => e.ItemCode),
+                ["itemcode"]        = e => e.ItemCode,
+                ["itemdescription"] = e => e.ItemDescription,
+                ["shortdescription"]= e => e.ShortDescription,
+                ["owner"]           = e => e.Owner,
+                ["testmanager"]     = e => e.TestManager,
+                ["unitpricevla"]    = e => e.UnitPriceVla,
+                ["defraunitprice"]  = e => e.DefraUnitPrice,
             };
+
+            var key = sortBy?.ToLower() ?? string.Empty;
+            if (!sortMap.TryGetValue(key, out var keySelector))
+                keySelector = e => e.ItemCode;
+
+            return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
         }
     }
 }
