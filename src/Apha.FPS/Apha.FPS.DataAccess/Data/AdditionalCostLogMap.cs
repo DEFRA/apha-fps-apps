@@ -8,13 +8,7 @@ namespace Apha.FPS.DataAccess.Data
     {
         public void Configure(EntityTypeBuilder<AdditionalCostLog> entity)
         {
-            entity.HasKey(e => new { e.SequenceNo, e.FpsYear }).HasName("pk_additionalcosts_log");
-
-            //entity.ToTable("additionalcosts_log", "fps");
-
-            //entity.HasIndex(e => e.DateTime, "additionalcost_log_ind_dt");
-            //entity.HasIndex(e => e.JobCode, "additionalcost_log_ind_jc");
-            //entity.HasIndex(e => e.SequenceNo, "additionalcost_log_pk_idx");
+            entity.HasKey(e => new { e.SequenceNo, e.FpsYear }).HasName("pk_additionalcosts_log");            
 
             entity.ToTable("additionalcosts_log", "fps");
 
