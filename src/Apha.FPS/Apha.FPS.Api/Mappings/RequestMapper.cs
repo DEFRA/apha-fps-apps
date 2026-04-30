@@ -49,6 +49,8 @@ namespace Apha.FPS.Api.Mappings
             CreateMap<ProjectGroupDto, ProjectGroupRes>().ReverseMap();
             CreateMap<TimeCostCalcsViewDto, TimeCostCalcsViewRes>().ReverseMap();
             CreateMap<TimeCostCalcsTotalsDto, TimeCostCalcsTotalsRes>().ReverseMap();
+            CreateMap<MonthlyOutputCalcsViewDto, MonthlyOutputCalcsViewRes>().ReverseMap();
+            CreateMap<MonthlyOutputCalcsTotalsDto, MonthlyOutputCalcsTotalsRes>().ReverseMap();
         }
     }
 }

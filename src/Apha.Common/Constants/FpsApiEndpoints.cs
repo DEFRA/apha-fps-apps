@@ -76,5 +76,10 @@ namespace Apha.Common.Constants
         public const string GetTimeCostCalcsByProject = "api/v1/timecostcalcs?projectCode={0}";
         public const string GetTimeCostCalcsTotalsByProject = "api/v1/timecostcalcs/totals?projectCode={0}";
         public const string DeleteTimeCostCalcs = "api/v1/timecostcalcs";
+
+        // View Project Plan vs Actual Tests
+        public const string GetMonthlyOutputCalcsByProject = "api/v1/monthlyoutputcalcs?projectCode={0}";
+        public const string GetMonthlyOutputCalcsTotalsByProject = "api/v1/monthlyoutputcalcs/totals?projectCode={0}";
+        public const string DeleteMonthlyOutputCalcs = "api/v1/monthlyoutputcalcs";
     }
 }

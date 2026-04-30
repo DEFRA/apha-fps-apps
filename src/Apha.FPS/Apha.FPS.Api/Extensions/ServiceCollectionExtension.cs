@@ -37,6 +37,7 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<ITimeCostCalcsService, TimeCostCalcsService>();
             services.AddScoped<IDivisionService, DivisionService>();
             services.AddScoped<IAgencyService, AgencyService>();
+            services.AddScoped<IMonthlyOutputCalcsService, MonthlyOutputCalcsService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
@@ -58,6 +59,7 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<ITimeCostCalcsRepository, TimeCostCalcsRepository>();
             services.AddScoped<IDivisionRepository, DivisionRepository>();
             services.AddScoped<IAgencyRepository, AgencyRepository>();
+            services.AddScoped<IMonthlyOutputCalcsRepository, MonthlyOutputCalcsRepository>();
             return services;
         }
     }

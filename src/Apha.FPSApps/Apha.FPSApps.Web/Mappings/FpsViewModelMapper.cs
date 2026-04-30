@@ -27,6 +27,8 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<CompareStaff2Item, TimeCostCalcsViewDto>().ReverseMap();
             CreateMap<DivisionViewModel, DivisionDto>().ReverseMap();
             CreateMap<TestPlanItem, TestRequirementDto>().ReverseMap();
+            CreateMap<TestPlanActualItem, TestRequirementDto>().ReverseMap();
+            CreateMap<CompareTests2Item, MonthlyOutputCalcsViewDto>().ReverseMap();
         }
     }
 }
