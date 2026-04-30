@@ -150,79 +150,71 @@ The process executes SQL statements directly from application code.
 - src/Apha.BatchJobs/Apha.BatchJobs.Infrastructure/Repositories/JobExecutionRepository.cs
 - src/Apha.BatchJobs/Apha.BatchJobs.Infrastructure/Data/BatchJobsDbContext.cs
 
-## 11) Local DB assessment (batch_jobs_foundation_db)
+## 11) Local DB final status (batch_jobs_foundation_db)
 
-Checked on 2026-04-30 in local database: batch_jobs_foundation_db.
+Final verification completed on 2026-04-30 in local database: batch_jobs_foundation_db.
 
-Current runtime objects found:
-- schema operational exists
-- tables in operational:
+### Schemas present
+- fps
+- mabarchive
+- operational
+
+### Runtime migration status
+- operational legacy runtime tables were migrated to fps runtime tables:
+  - operational.batch_lock -> fps.job_lock
+  - operational.tbljobmaster -> fps.job_master
+  - operational.tbljobstatus -> fps.job_status
+  - operational.tbljobqueue -> fps.job_queue
+  - operational.tbljobqueue_log -> fps.job_queue_log
+- backward-compatibility views exist in operational:
   - operational.batch_lock
   - operational.tbljobmaster
   - operational.tbljobstatus
   - operational.tbljobqueue
   - operational.tbljobqueue_log
 
-Not found in this DB at check time:
-- schema fps
-- runtime tables named fps.job_lock, fps.job_master, fps.job_status, fps.job_queue, fps.job_queue_log
+### FPS source footprint status for MAB Archive
+- all required fps source tables are present (including dependency chain tables created from dbscript/schemas/01fps/01tables)
+- all required totals views are present:
+  - fps.qrytotaladditionalcosts
+  - fps.qrytotalanimalcosts
+  - fps.qrytotalstaffcosts
+  - fps.qrytotaltestcosts
 
-## 12) Can we move operational runtime tables to fps schema?
+### Notes on strict source usage
+- dependency tables were created using canonical SQL files from dbscript/schemas/01fps/01tables.
+- tblyearmaster does not have a canonical table SQL file under dbscript/schemas/01fps/01tables in this repository, so it was created to match EF mapping expectations (fpsyear PK, unique fpsyearcode, status/active/audit columns).
 
-Short answer: yes, this can be done, and it is recommended for consistency with current code expectations.
+## 12) Consolidated verification checklist result
 
-Important clarity:
-- This is not only a schema move.
-- Your local objects use legacy names (batch_lock, tbljob*).
-- Current runtime code expects modern names (job_lock, job_*).
+A single checklist query was executed across required schemas, tables, and views.
 
-Required target naming for alignment:
-- operational.batch_lock -> fps.job_lock
-- operational.tbljobmaster -> fps.job_master
-- operational.tbljobstatus -> fps.job_status
-- operational.tbljobqueue -> fps.job_queue
-- operational.tbljobqueue_log -> fps.job_queue_log
+- Total checked: 41 objects
+- Present: 41
+- Missing: 0
 
-Also required after move/rename:
-- recreate/validate all expected foreign keys and indexes
-- especially the active lock uniqueness behavior on fps.job_lock
-- verify application can insert/update queue and queue_log rows end to end
+This includes:
+- 3 required schemas
+- 29 required tables (runtime + MAB Archive source)
+- 9 required views (fps totals views + operational compatibility views)
 
-## 13) Recommended migration approach
+## 13) Operational conclusion
 
-Use a controlled migration script in this order:
-1. Create schema fps if missing.
-2. Create/rename target tables to expected names in fps schema.
-3. Copy data from operational legacy tables to fps tables.
-4. Recreate constraints and indexes with expected names.
-5. Validate record counts and FK integrity.
-6. Run one test job execution and verify lock + queue + queue_log writes.
-7. Keep operational tables as backup for one release window, then retire.
+The local DB is now aligned with the long-term target model for this workflow:
 
-If you want, the next step can be a concrete SQL migration script for this exact local state.
+- runtime orchestration uses fps.job_* tables
+- MAB Archive source objects in fps are available
+- MAB Archive target tables in mabarchive are available
+- compatibility layer remains available under operational views
 
-## Migration Status: ✅ COMPLETED
+The environment is ready for end-to-end ScheduledLoadFromFps and MAB Archive execution.
 
-**Date:** 2026-04-30  
-**Database:** batch_jobs_foundation_db
+## 14) Migration assets used
 
-The migration from operational legacy schema to fps modern schema has been successfully completed:
+Migration and validation SQL scripts:
+- database/sql/100_migrate_operational_to_fps_runtime_tables.sql
+- database/sql/101_rollback_operational_to_fps_migration.sql
+- database/sql/102_validate_operational_to_fps_migration.sql
 
-- ✅ fps schema created
-- ✅ 5 runtime tables created with normalized names (job_lock, job_master, job_status, job_queue, job_queue_log)
-- ✅ All 47 data rows migrated with 100% integrity
-- ✅ All constraints, indexes, and foreign keys recreated
-- ✅ Backward-compatibility views established in operational schema
-- ✅ All referential integrity checks pass (0 orphaned records)
-- ✅ All check constraints valid (0 violations)
-
-**Migration Scripts:**
-- `database/sql/100_migrate_operational_to_fps_runtime_tables.sql` — Primary migration with 14 sequential steps
-- `database/sql/101_rollback_operational_to_fps_migration.sql` — Safe rollback procedure
-- `database/sql/102_validate_operational_to_fps_migration.sql` — Comprehensive validation script
-
-**Documentation:**
-- `docs/MIGRATION_OPERATIONAL_TO_FPS_COMPLETION.md` — Full migration report with data counts and object inventory
-
-### Result
-The runtime orchestration layer is now properly aligned with EF Core's expected schema structure. All job execution, locking, and queue operations can now use fps schema directly. Legacy operational tables have been preserved as `*_legacy` for a transition period.
+Supporting local helper script used for dependency/object completion:
+- src/Apha.BatchJobs/database/sql/apply_needed_fps_dependencies.ps1
