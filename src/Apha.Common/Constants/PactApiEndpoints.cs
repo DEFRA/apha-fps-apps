@@ -14,10 +14,12 @@ namespace Apha.Common.Constants
 
         // Time Code Valid
         public const string GetTimeCodesByJobCode = "api/v1/timecodevalid/jobcode/{0}/project/{1}";
+        public const string GetTimeCodeValidById = "api/v1/timecodevalid/{0}/{1}/{2}";
         public const string GetPagedTimeCodes = "api/v1/timecodevalid/paged";
         public const string GetPagedTimeCodesByJobCode = "api/v1/timecodevalid/paged?jobCode={0}";
         public const string GetPagedTimeCodesByProject = "api/v1/timecodevalid/paged?parentProject={0}";
         public const string GetPagedTimeCodesByJobCodeAndProject = "api/v1/timecodevalid/paged?jobCode={0}&parentProject={1}";
+        public const string GetPagedTimeCodesByProjectAndTestCode = "api/v1/timecodevalid/paged/project/{0}/testcode/{1}";
         public const string CreateTimeCodeValid = "api/v1/timecodevalid";
         public const string UpdateTimeCodeValid = "api/v1/timecodevalid";
         public const string DeleteTimeCodeValid = "api/v1/timecodevalid/{0}/{1}/{2}";
@@ -53,10 +55,13 @@ namespace Apha.Common.Constants
         public const string CreateProjectSubContract = "api/v1/projectsubcontract";
         public const string UpdateProjectSubContract = "api/v1/projectsubcontract/{0}";
         public const string DeleteProjectSubContract = "api/v1/projectsubcontract/{0}";
+        public const string GetFpsProjectSubContracts = "api/v1/projectsubcontract/animals";
+        public const string GetFpsProjectSubContractTotalAmount = "api/v1/projectsubcontract/animals/total";
 
         // WorkGroup Test Capability
         public const string GetPagedTestCapabilityByWorkGroup = "api/v1/testcapability/paged/workgroup";
         public const string GetPagedTestCapabilityByTestCode = "api/v1/testcapability/paged/testcode";
+        public const string GetPagedTestCapabilityByPortfolio = "api/v1/testcapability/paged/portfolio";
         public const string GetTestCapabilityById = "api/v1/testcapability/testcapability/{0}/{1}";
         public const string CreateTestCapability = "api/v1/testcapability/testcapability";
         public const string UpdateTestCapability = "api/v1/testcapability/testcapability";

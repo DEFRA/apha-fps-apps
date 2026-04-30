@@ -11,7 +11,7 @@
     <h3 class="modal-title" style="margin: 0;" id="testPlanModalLabel">@title</h3>
     <button type="button" class="btn-close btn-red" onclick="closeModal()">X</button>
 </div>
-<div class="modal-body" style="padding-top: 5px;">
+<div class="modal-body" style="overflow-y: auto; max-height: calc(80vh - 120px);">
     <div asp-validation-summary="ModelOnly" class="govuk-error-summary" role="alert"
          aria-labelledby="tp-error-summary-title" tabindex="-1" style="display:none;">
         <h2 class="govuk-error-summary__title" id="tp-error-summary-title">
@@ -117,7 +117,7 @@
                 </div>
             </form>
         </div>
-        <div class="modal-footer">
+        <div class="modal-footer sup_flex_space_center">
             <button class="govuk-button govuk-button--secondary sup_margin_0" data-module="govuk-button" onclick="closeModal()">Cancel</button>
             <button class="govuk-button sup_margin_0" data-module="govuk-button" onclick="@saveAction">@saveLabel</button>
         </div>

@@ -68,8 +68,9 @@
                                                        href="@Url.Action("Index", "ProjectTestPlanActual", new { area = "FPS", programNo = Model.SelectedProgramNo })">Tests</a>
                                                 </li>
                                             <li><a class="dropdown-item"
-                                                   data-nav-program="@Url.Action("Index", "ProgramAnimalPlan", new { area = "FPS" })"
-                                                   href="@Url.Action("Index", "ProgramAnimalPlan", new { area = "FPS", programNo = Model.SelectedProgramNo })">Animals</a></li>
+                                                   data-nav-program="@Url.Action("Index", "ProjectAnimalPlanActual", new { area = "FPS" })"
+                                                       href="@Url.Action("Index", "ProjectAnimalPlanActual", new { area = "FPS", programNo = Model.SelectedProgramNo })">Animals</a>
+                                                </li>
                                             <li><a class="dropdown-item" href="#">Additional</a></li>
                                         </ul>
                                     </nav>
@@ -145,6 +146,7 @@
     <script src="~/js/ajax-form-validation.js"></script>
     <script>
         var currentProgramNo = '@Html.Raw(Model.SelectedProgramNo)';
+        var currentProjectCode = '';
 
         function toggleSidebar() {
             const sidebar = document.querySelector('.sidenav');
@@ -154,7 +156,9 @@
         function updateNavLinks(programNo) {
             document.querySelectorAll('a[data-nav-program]').forEach(function (link) {
                 const base = link.getAttribute('data-nav-program');
-                link.href = base + '?programNo=' + encodeURIComponent(programNo);
+                var url = base + '?programNo=' + encodeURIComponent(programNo);
+                if (currentProjectCode) url += '&projectCode=' + encodeURIComponent(currentProjectCode);
+                link.href = url;
             });
         }
 
@@ -176,6 +180,8 @@
             const id = $(btn).data('id');
             document.getElementById('selected-project-input').value = id;
             document.getElementById('hdnSelectedProject').value     = id;
+            currentProjectCode = id;
+            updateNavLinks(currentProgramNo);
 
             const planBtn = document.getElementById('btnPlan');
             if (planBtn) {
@@ -192,6 +198,8 @@
         function resetSelectedProject() {
             document.getElementById('selected-project-input').value = '';
             document.getElementById('hdnSelectedProject').value     = '';
+            currentProjectCode = '';
+            updateNavLinks(currentProgramNo);
             const planBtn = document.getElementById('btnPlan');
             if (planBtn) planBtn.style.display = 'none';
         }

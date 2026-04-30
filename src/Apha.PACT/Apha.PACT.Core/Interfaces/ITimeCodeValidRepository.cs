@@ -7,6 +7,7 @@ namespace Apha.PACT.Core.Interfaces
     {
         Task<IEnumerable<TimeCodeValid>> GetByJobCodeAsync(string jobCode, string parentProject);
         Task<PagedData<TimeCodeValid>> GetPagedTimeCodesAsync(PaginationParameters<string> query, string? jobCode, string? parentProject);
+        Task<PagedData<TimeCodeValid>> GetPagedByProjectAndTestCodeAsync(PaginationParameters<string> query, string parentProject, string testCode);
         Task<TimeCodeValid?> GetTimeCodeValidAsync(string workGroup, string timeCode, string parentProject);
         Task<TimeCodeValid> CreateTimeCodeValidAsync(TimeCodeValid timeCodeValid);
         Task<TimeCodeValid> UpdateTimeCodeValidAsync(TimeCodeValid timeCodeValid);

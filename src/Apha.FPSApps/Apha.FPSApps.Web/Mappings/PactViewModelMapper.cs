@@ -24,6 +24,8 @@ namespace Apha.FPSApps.Web.Mappings
                 .ForMember(dest => dest.Counter, opt => opt.MapFrom(src => src.SubContCounter));
 
             CreateMap<TestCapabilityItem, TestCapabilityDto>().ReverseMap();
+            CreateMap<ConstituentTestItem, TestCapabilityDto>().ReverseMap();
+            CreateMap<PortfolioTimeCodeViewModel, TimeCodeValidDto>().ReverseMap();
 
             CreateMap<TestRequirementItem, TestRequirementDto>().ReverseMap();
             CreateMap<TestPurchaseRequirementItem, TestRequirementDto>().ReverseMap();

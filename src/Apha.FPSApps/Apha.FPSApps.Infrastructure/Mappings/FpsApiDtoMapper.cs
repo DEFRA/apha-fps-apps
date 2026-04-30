@@ -66,6 +66,11 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             // Agency
             CreateMap<AgencyDto, AgencyRes>().ReverseMap();
 
+            // Additional Cost
+            CreateMap<AdditionalCostDto, AdditionalCostReq>().ReverseMap();
+            CreateMap<AdditionalCostDto, AdditionalCostRes>().ReverseMap();
+            CreateMap<AccountCategoryDto, AccountCategoryRes>().ReverseMap();
+
             // View Project Plan vs Actual Tests
             CreateMap<MonthlyOutputCalcsViewDto, MonthlyOutputCalcsViewRes>().ReverseMap();
             CreateMap<MonthlyOutputCalcsTotalsDto, MonthlyOutputCalcsTotalsRes>().ReverseMap();

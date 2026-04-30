@@ -14,5 +14,6 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         IFpsMonthlyOutputCalcsApiClient FpsMonthlyOutputCalcs { get; }
         IFpsDivisionApiClient FpsDivision { get; }
         IFpsAgencyApiClient FpsAgency { get; }
+        IFpsAdditionalCostApiClient FpsAdditionalCost { get; }
     }
 }
