@@ -436,7 +436,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.Costbook.CostBookProject
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.Null(result.Data);
-            Assert.Equal("Copy failed", result.Errors[0].Message);
+            Assert.Equal("Copy failed", result.Errors![0].Message);
         }
 
         #endregion

@@ -28,6 +28,18 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
 
         private readonly IMapper _mapper;
 
+        private static readonly List<(string Value, string Text)> FinancialYearOptions =
+        [
+            ("-1", "Financial Years"),
+            ("0",  "Project Years")
+        ];
+
+        private static readonly List<(string Value, string Text)> DefraProjectOptions =
+        [
+            ("-1", "Yes"),
+            ("0",  "No")
+        ];
+
         public ProjectsController(
             ICostBookProjectService projectService,
             ICostBookCustomerService customerService,
@@ -389,7 +401,7 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
             return true;
         }
 
-        private void PopulateViewModelOptions(ProjectViewModel viewModel)
+        private  static void PopulateViewModelOptions(ProjectViewModel viewModel)
         {
             viewModel.RecordsPerPageOptions = new List<SelectListItem>
             {
@@ -508,11 +520,7 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
 
             // Available Financial Years with selected value
             var selectedFinancialYear = viewModel.FinancialYears?.ToString() ?? "-1";
-            viewModel.AvailableFinancialYears = new List<(string Value, string Text)>
-                {
-                    ("-1", "Financial Years"),
-                    ("0", "Project Years")
-                }
+            viewModel.AvailableFinancialYears = FinancialYearOptions
                 .Select(item => new SelectListItem
                 {
                     Value = item.Value,
@@ -523,11 +531,7 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
 
             // Available Defra Project Options with selected value
             var selectedDefraProject = viewModel.IsDefraProject?.ToString() ?? string.Empty;  // ← was ?? "-1"
-            viewModel.AvailableDefraProjectOptions = new List<(string Value, string Text)>
-                {
-                    ("-1", "Yes"),
-                    ("0", "No")
-                }
+            viewModel.AvailableDefraProjectOptions = DefraProjectOptions
                 .Select(item => new SelectListItem
                 {
                     Value = item.Value,
