@@ -75,7 +75,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             // Merge month filter into request filter
             if (month.HasValue)
             {
-                var filterDict = string.IsNullOrEmpty(request.Filter) 
+                var filterDict = string.IsNullOrEmpty(request.Filter)
                     ? new Dictionary<string, string>()
                     : JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter) ?? new Dictionary<string, string>();
 
@@ -218,38 +218,33 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 Data = items,
                 Columns = GridDataProvider.GetColumnsDefination<ProjectInvoiceItem>(),
                 Pagination = pagination,
-               CurrentFilters = filterDict
+                CurrentFilters = filterDict
             };
         }
 
         private async Task<List<SelectListItem>> GetProjectsListAsync()
         {
-            try
+
+            var result = await _projectService.GetAllPactProjectsAsync();
+
+            if (result != null && result.Success && result.Data != null && result.Data.Count > 0)
             {
-                var result = await _projectService.GetAllPactProjectsAsync();
+                var projectList = result.Data
+                    .OrderBy(p => p.ParentProject)
+                    .Select(p => new SelectListItem
+                    {
+                        Value = p.ParentProject,
+                        Text = p.ParentProject
+                    })
+                    .ToList();
 
-                if (result != null && result.Success && result.Data != null && result.Data.Any())
-                {
-                    var projectList = result.Data
-                        .OrderBy(p => p.ParentProject)
-                        .Select(p => new SelectListItem
-                        {
-                            Value = p.ParentProject,
-                            Text = p.ParentProject
-                        })
-                        .ToList();
-
-                    return projectList;
-                }
-                else
-                {
-                    return new List<SelectListItem>();
-                }
+                return projectList;
             }
-            catch (Exception ex)
+            else
             {
                 return new List<SelectListItem>();
             }
+
         }
 
         private async Task PopulateProjectsViewBagAsync()
