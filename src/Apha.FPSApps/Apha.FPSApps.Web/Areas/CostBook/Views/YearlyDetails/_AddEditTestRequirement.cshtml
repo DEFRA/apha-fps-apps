@@ -1,4 +1,9 @@
+@using Apha.FPSApps.Application.Dtos.CostBook
 @model Apha.FPSApps.Web.Areas.CostBook.Models.TestRequirementItem
+
+@{
+    var testCodes = ViewBag.TestCodeOptions as List<TestCodeLookupDto> ?? new List<TestCodeLookupDto>();
+}
 
 <div class="modal-header">
     <h5 class="modal-title">@(string.IsNullOrEmpty(Model.TestDescription) ? "Add" : "Edit") Test Requirement</h5>
@@ -8,6 +13,7 @@
     <form id="testRequirementForm">
         @Html.AntiForgeryToken()
         <input asp-for="TestDescription" type="hidden" />
+        <input type="hidden" id="TestCode" name="TestCode" value="@Model.TestCode" />
         <div class="govuk-error-summary" role="alert"
              aria-labelledby="testFormErrorTitle" tabindex="-1" style="display: none;">
             <h2 class="govuk-error-summary__title" id="testFormErrorTitle"></h2>
@@ -16,13 +22,42 @@
             </div>
         </div>
         <div class="govuk-form-group govuk-!-margin-bottom-4">
-            <label asp-for="TestCode" class="govuk-label">
+            <label class="govuk-label">
                 Code <span class="sup_color_red">*</span>
             </label>
-            <select asp-for="TestCode" asp-items="@((List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)ViewBag.TestCode)"
-                    class="govuk-select" required style="width: stretch;">
-                <option value="">-- Select Test Code --</option>
-            </select>
+            <div style="position: relative; z-index: 50;">
+                <input type="text" id="testCodeSelect" placeholder="-- Select Test Code --" autocomplete="off"
+                       class="govuk-input govuk-!-font-size-16 down-arrow-img" style="width: 100%; cursor: pointer;"
+                       value="@Model.TestCode" readonly />
+                <div id="testCodeDropdownPanel" style="display:none; position:absolute; top:100%; left:0; width:100%;
+                        max-height:220px; overflow-y:auto; background:#fff; border:1px solid #b1b4b6;
+                        box-shadow:0 4px 8px rgba(0,0,0,.2); z-index:2000;">
+                    <input type="text" id="testCodeSearchBox" placeholder="Type to search code"
+                           style="width:100%; padding:6px 8px; border:0; border-bottom:1px solid #b1b4b6; outline:none; box-sizing:border-box;" />
+                    <table style="width:100%; border-collapse:collapse; font-size:14px;">
+                        <thead style="background:#f3f2f1; position:sticky; top:0; z-index:10;">
+                            <tr>
+                                <th style="padding:6px 8px; text-align:left;">Code</th>
+                                <th style="padding:6px 8px; text-align:left;">Description</th>
+                                <th style="padding:6px 8px; text-align:left;">Unit Price</th>
+                            </tr>
+                        </thead>
+                        <tbody id="testCodeDropdownBody">
+                            @foreach (var t in testCodes)
+                            {
+                                <tr data-value="@t.ItemCode"
+                                    data-description="@t.ItemDescription"
+                                    data-unitprice="@(t.UnitPrice?.ToString("F2") ?? "")"
+                                    style="cursor:pointer;">
+                                    <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@t.ItemCode</td>
+                                    <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@t.ItemDescription</td>
+                                    <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@(t.UnitPrice?.ToString("F2") ?? "N/A")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
             <span asp-validation-for="TestCode" class="govuk-error-message" style="display:none;"></span>
         </div>
         <div class="govuk-form-group govuk-!-margin-bottom-4">

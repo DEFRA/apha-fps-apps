@@ -5,6 +5,7 @@ using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.CostBook.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
+using Azure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -171,7 +172,7 @@ public class YearlyDetailsController : Controller
     [HttpGet]
     public async Task<IActionResult> CreateStaff(string projectId, int year, bool isDefra)
     {
-        ViewBag.WgGradeOptions = await GetPayRateOptionsAsync(isDefra);
+        await GetPayRateOptionsAsync(isDefra);
         return PartialView("_AddEditStaffRequirement", new StaffRequirementItem { WgGrade = string.Empty });
     }
 
@@ -193,7 +194,7 @@ public class YearlyDetailsController : Controller
     [HttpGet]
     public async Task<IActionResult> EditStaff(string projectId, int year, int srIdentity, bool isDefra)
     {
-        ViewBag.WgGradeOptions = await GetPayRateOptionsAsync(isDefra);
+        await GetPayRateOptionsAsync(isDefra);
 
         var query = new QueryParameters<string> { Page = 1, PageSize = int.MaxValue };
         var listResponse = await _service.GetStaffRequirementsAsync(
@@ -233,7 +234,7 @@ public class YearlyDetailsController : Controller
     [HttpGet]
     public async Task<IActionResult> CreateTest(string projectId, int year, bool isDefra)
     {
-        ViewBag.TestCode = await GetTestCodeOptionsAsync(isDefra);
+        await GetTestCodeOptionsAsync(isDefra);
         return PartialView("_AddEditTestRequirement", new TestRequirementItem { TestCode = string.Empty });
     }
 
@@ -255,7 +256,7 @@ public class YearlyDetailsController : Controller
     [HttpGet]
     public async Task<IActionResult> EditTest(string projectId, int year, string testCode, bool isDefra)
     {
-        ViewBag.TestCode = await GetTestCodeOptionsAsync(isDefra);
+        await GetTestCodeOptionsAsync(isDefra);
         var listResponse = await _service.GetTestRequirementsAsync(HttpUtility.UrlDecode(projectId), year);
         var row = listResponse.Data?.FirstOrDefault(t => t.TestCode == testCode);
         if (row is null) return NotFound();
@@ -290,7 +291,7 @@ public class YearlyDetailsController : Controller
     [HttpGet]
     public async Task<IActionResult> CreateAnimal(string projectId, int year, bool isDefra)
     {
-        ViewBag.AnimalTypeOptions = await GetAnimalTypeOptionsAsync();
+        await GetAnimalTypeOptionsAsync();
         return PartialView("_AddEditAnimalRequirement", new AnimalRequirementItem { AnimalType = string.Empty });
     }
 
@@ -312,7 +313,7 @@ public class YearlyDetailsController : Controller
     [HttpGet]
     public async Task<IActionResult> EditAnimal(string projectId, int year, int arIdentity, bool isDefra)
     {
-        ViewBag.AnimalTypeOptions = await GetAnimalTypeOptionsAsync();
+        await GetAnimalTypeOptionsAsync();
         var listResponse = await _service.GetAnimalRequirementsAsync(HttpUtility.UrlDecode(projectId), year);
         var row = listResponse.Data?.FirstOrDefault(a => a.ArIdentity == arIdentity);
         if (row is null) return NotFound();
@@ -347,7 +348,7 @@ public class YearlyDetailsController : Controller
     [HttpGet]
     public async Task<IActionResult> CreateAdditionalCost(string projectId, int year)
     {
-        ViewBag.AccountCatOptions = await GetAccountCatOptionsAsync();
+        await GetAccountCatOptionsAsync();
         return PartialView("_AddEditAdditionalCost",
             new AdditionalCostItem { Description = string.Empty, AccountCat = string.Empty });
     }
@@ -370,7 +371,7 @@ public class YearlyDetailsController : Controller
     [HttpGet]
     public async Task<IActionResult> EditAdditionalCost(string projectId, int year, int acIdentity)
     {
-        ViewBag.AccountCatOptions = await GetAccountCatOptionsAsync();
+        await GetAccountCatOptionsAsync();
         var listResponse = await _service.GetAdditionalCostsAsync(HttpUtility.UrlDecode(projectId), year);
         var row = listResponse.Data?.FirstOrDefault(ac => ac.AcIdentity == acIdentity);
         if (row is null) return NotFound();
@@ -650,40 +651,36 @@ public class YearlyDetailsController : Controller
             : new List<SelectListItem>();
     }
 
-    private async Task<List<SelectListItem>> GetPayRateOptionsAsync(bool isDefra)
+    private async Task GetPayRateOptionsAsync(bool isDefra)
     {
         var response = await _service.GetPayRatesAsync(isDefra);
-        if (!response.Success || response.Data is null)
-            return new List<SelectListItem>();
-
-        ViewBag.PayRates = response.Data;
-
-        return response.Data.Select(p => new SelectListItem(
-            $"{p.WgGrade,-12} | Rate: {p.ChargeRate?.ToString("F2") ?? "N/A",-10} | Pay: {p.PayRate?.ToString("F2") ?? "N/A",-10}",
-            p.WgGrade)).ToList();
+        ViewBag.WgGradeOptions = response.Data;
     }
 
-    private async Task<List<SelectListItem>> GetAnimalTypeOptionsAsync()
+    private async Task GetAnimalTypeOptionsAsync()
     {
         var response = await _service.GetAllAnimalsAsync();
-        return response.Success && response.Data != null
-            ? response.Data.Select(a => new SelectListItem(a.AnimalType, a.AnimalType)).ToList()
-            : new List<SelectListItem>();
+        ViewBag.AnimalTypeOptions = response.Success && response.Data != null
+            ? response.Data
+            : new List<AnimalLookupDto>();
     }
 
-    private async Task<List<SelectListItem>> GetAccountCatOptionsAsync()
+    private async Task GetAccountCatOptionsAsync()
     {
         var response = await _service.GetAccountCategoriesAsync();
-        return response.Success && response.Data != null
-            ? response.Data.Select(c => new SelectListItem(c.AccShortName, c.AccShortName)).ToList()
-            : new List<SelectListItem>();
+        ViewBag.AccountCatOptions = response.Success && response.Data != null
+            ? response.Data
+            : new List<AccountCategoryDto>();
     }
 
-    private async Task<List<SelectListItem>> GetTestCodeOptionsAsync(bool isDefra)
+    private async Task GetTestCodeOptionsAsync(bool isDefra)
     {
         var response = await _service.GetTestCodeLookupsAsync(isDefra);
-        return response.Success && response.Data != null
-            ? response.Data.Select(t => new SelectListItem($"{t.ItemCode} - {t.ItemDescription}", t.ItemCode)).ToList()
-            : new List<SelectListItem>();
+        if (!response.Success || response.Data is null)
+        {
+            ViewBag.TestCodeOptions = new List<TestCodeLookupDto>();
+            return;
+        }
+        ViewBag.TestCodeOptions = response.Data;
     }
 }

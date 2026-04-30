@@ -1,5 +1,10 @@
 @using Microsoft.AspNetCore.Mvc.Rendering
+@using Apha.FPSApps.Application.Dtos.CostBook
 @model Apha.FPSApps.Web.Areas.CostBook.Models.AdditionalCostItem
+
+@{
+    var accountCats = ViewBag.AccountCatOptions as List<AccountCategoryDto> ?? new List<AccountCategoryDto>();
+}
 
 <div class="modal-header">
     <h5 class="modal-title">@(Model.AcIdentity == 0 ? "Add" : "Edit") Additional Cost</h5>
@@ -9,6 +14,7 @@
     <form id="additionalCostForm">
         @Html.AntiForgeryToken()
         <input asp-for="AcIdentity" type="hidden" />
+        <input type="hidden" id="AccountCat" name="AccountCat" value="@Model.AccountCat" />
         <div class="govuk-error-summary" role="alert"
              aria-labelledby="additionalCostFormErrorTitle" tabindex="-1" style="display: none;">
             <h2 class="govuk-error-summary__title" id="additionalCostFormErrorTitle"></h2>
@@ -17,13 +23,39 @@
             </div>
         </div>
         <div class="govuk-form-group govuk-!-margin-bottom-4">
-            <label asp-for="AccountCat" class="govuk-label">
+            <label class="govuk-label">
                 Account Cat <span class="sup_color_red">*</span>
             </label>
-            <select asp-for="AccountCat" asp-items="@((List<SelectListItem>)ViewBag.AccountCatOptions)"
-                    class="govuk-select" required style="width: stretch;">
-                <option value="">-- Select Account Category --</option>
-            </select>
+            <div style="position: relative; z-index: 50;">
+                <input type="text" id="accountCatSelect" placeholder="-- Select Account Category --" autocomplete="off"
+                       class="govuk-input govuk-!-font-size-16 down-arrow-img" style="width: 100%; cursor: pointer;"
+                       value="@Model.AccountCat" readonly />
+                <div id="accountCatDropdownPanel" style="display:none; position:absolute; top:100%; left:0; width:100%;
+                        max-height:220px; overflow-y:auto; background:#fff; border:1px solid #b1b4b6;
+                        box-shadow:0 4px 8px rgba(0,0,0,.2); z-index:2000;">
+                    <input type="text" id="accountCatSearchBox" placeholder="Type to search category"
+                           style="width:100%; padding:6px 8px; border:0; border-bottom:1px solid #b1b4b6; outline:none; box-sizing:border-box;" />
+                    <table style="width:100%; border-collapse:collapse; font-size:14px;">
+                        <thead style="background:#f3f2f1; position:sticky; top:0; z-index:10;">
+                            <tr>
+                                <th style="padding:6px 8px; text-align:left;">Category</th>
+                                <th style="padding:6px 8px; text-align:left;">Use Inflation</th>
+                            </tr>
+                        </thead>
+                        <tbody id="accountCatDropdownBody">
+                            @foreach (var c in accountCats)
+                            {
+                                <tr data-value="@c.AccShortName"
+                                    data-useinflation="@c.UseInflation.ToString().ToLower()"
+                                    style="cursor:pointer;">
+                                    <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@c.AccShortName</td>
+                                    <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@(c.UseInflation ? "Yes" : "No")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
             <span asp-validation-for="AccountCat" class="govuk-error-message" style="display:none;"></span>
         </div>
         <div class="govuk-form-group govuk-!-margin-bottom-4">
