@@ -76,35 +76,35 @@ SELECT DISTINCT
     END AS totaladditionalcosts,
     CASE
         WHEN an.totalanimalcosts IS NULL THEN 0
-        ELSE an.totalanimalcosts::double precision
+        ELSE an.totalanimalcosts::numeric::double precision
     END AS totalanimalcosts,
     CASE
         WHEN s.totalstaffcosts IS NULL THEN 0
-        ELSE s.totalstaffcosts::double precision
+        ELSE s.totalstaffcosts::numeric::double precision
     END AS totalstaffcosts,
     CASE
         WHEN tst.totaltestcosts IS NULL THEN 0
-        ELSE tst.totaltestcosts::double precision
+        ELSE tst.totaltestcosts::numeric::double precision
     END AS totaltestcosts,
     (CASE
         WHEN a.totaladditionalcosts IS NULL THEN 0
-        ELSE a.totaladditionalcosts::double precision
+        ELSE a.totaladditionalcosts::numeric::double precision
     END) +
     (CASE
         WHEN an.totalanimalcosts IS NULL THEN 0
-        ELSE an.totalanimalcosts::double precision
+        ELSE an.totalanimalcosts::numeric::double precision
     END) +
     (CASE
         WHEN s.totalstaffcosts IS NULL THEN 0
-        ELSE s.totalstaffcosts::double precision
+        ELSE s.totalstaffcosts::numeric::double precision
     END) +
     (CASE
         WHEN tst.totaltestcosts IS NULL THEN 0
-        ELSE tst.totaltestcosts::double precision
+        ELSE tst.totaltestcosts::numeric::double precision
     END) +
     (CASE
         WHEN t.plancaseworkdebit IS NULL THEN 0
-        ELSE t.plancaseworkdebit::double precision
+        ELSE t.plancaseworkdebit::numeric::double precision
     END) AS totalcosts,
     t.custincome,
     t.transferincome,
@@ -124,22 +124,18 @@ SELECT DISTINCT
     END AS plancaseworkdebit,
     CASE
         WHEN s.totalpaycosts IS NULL THEN 0
-        ELSE s.totalpaycosts::double precision
+        ELSE s.totalpaycosts::numeric::double precision
     END AS totalpaycosts,
     t.fpsyear
 FROM fps.tlkpproject t
 LEFT JOIN fps.qrytotaladditionalcosts a
     ON t.parentproject = a.jobcode
-    AND t.fpsyear = a.fpsyear
 LEFT JOIN fps.qrytotalanimalcosts an
     ON t.parentproject = an.jobcode
-    AND t.fpsyear = an.fpsyear
 LEFT JOIN fps.qrytotalstaffcosts s
     ON t.parentproject = s.jobcode
-    AND t.fpsyear = s.fpsyear
 LEFT JOIN fps.qrytotaltestcosts tst
     ON t.parentproject = tst.jobcode
-    AND t.fpsyear = tst.fpsyear
 WHERE t.fpsyear = {year}
 ", cancellationToken);
 

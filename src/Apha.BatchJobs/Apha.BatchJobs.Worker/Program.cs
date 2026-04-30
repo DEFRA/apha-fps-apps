@@ -27,7 +27,11 @@ const int ExitCodeDependencyOutage = 5;
 
 // ECS SIGTERM â†’ forced-stop window is typically 30 s.
 // We allow 25 s for graceful cleanup before the host forces termination.
-const int GracefulShutdownWindowSeconds = 25;
+var gracefulShutdownWindowSeconds = ResolveIntSetting(
+    builder.Configuration,
+    "BatchJobs:GracefulShutdownWindowSeconds",
+    "BATCH_GRACEFUL_SHUTDOWN_WINDOW_SECONDS",
+    25);
 
 if (builder.Environment.IsEnvironment("local"))
 {
@@ -77,7 +81,29 @@ try
     logger.LogInformation("Environment: {EnvironmentName}", builder.Environment.EnvironmentName);
 
     var config = serviceProvider.GetRequiredService<IConfiguration>();
+    var dbCommandTimeoutSeconds = ResolveIntSetting(
+        config,
+        "BatchJobs:DbCommandTimeoutSeconds",
+        "BATCH_DB_COMMAND_TIMEOUT_SECONDS",
+        30);
+    var lockTimeoutSeconds = ResolveIntSetting(
+        config,
+        "BatchJobs:LockTimeoutSeconds",
+        "BATCH_LOCK_TIMEOUT_SECONDS",
+        3600);
+    var jobTimeoutSeconds = ResolveIntSetting(
+        config,
+        "BatchJobs:JobTimeout",
+        "BATCH_JOB_TIMEOUT_SECONDS",
+        3600);
+
     logger.LogInformation("Flow checkpoint: Program.Main -> Host.Started -> Resolving JobOrchestrator");
+    logger.LogInformation(
+        "Runtime tolerance | GracefulShutdownWindowSeconds={GracefulShutdownWindowSeconds} | DbCommandTimeoutSeconds={DbCommandTimeoutSeconds} | LockTimeoutSeconds={LockTimeoutSeconds} | JobTimeoutSeconds={JobTimeoutSeconds}",
+        gracefulShutdownWindowSeconds,
+        dbCommandTimeoutSeconds,
+        lockTimeoutSeconds,
+        jobTimeoutSeconds);
 
     // Get job name from args or environment variable
     var jobName = args.Length > 0 ? args[0] : (Environment.GetEnvironmentVariable("BATCH_JOB_NAME") ?? "HealthCheck");
@@ -90,7 +116,7 @@ try
 
     // Link host shutdown with a bounded graceful-window timeout.
     // This ensures the job is cancelled well within the ECS SIGTERM â†’ forced-stop window.
-    using var shutdownWindowCts = new CancellationTokenSource(TimeSpan.FromSeconds(GracefulShutdownWindowSeconds));
+    using var shutdownWindowCts = new CancellationTokenSource(TimeSpan.FromSeconds(gracefulShutdownWindowSeconds));
     using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
         hostLifetime.ApplicationStopping,
         shutdownWindowCts.Token);
@@ -99,7 +125,7 @@ try
     {
         logger.LogWarning(
             "Host stopping signal was already set before job start â€” skipping execution | JobName={JobName} | GracefulWindowSeconds={GracefulWindowSeconds}",
-            jobName, GracefulShutdownWindowSeconds);
+            jobName, gracefulShutdownWindowSeconds);
         exitCode = ExitCodeCancelled;
         failureCategory = "Cancellation";
         runOutcome = "Cancelled";
@@ -148,7 +174,7 @@ catch (InvalidOperationException ex)
 catch (OperationCanceledException ex)
 {
     var logger = loggerFactory?.CreateLogger("BatchJobs.Error");
-    var remainingWindowMs = Math.Max(0, (int)(GracefulShutdownWindowSeconds * 1000 - (DateTime.UtcNow - startedAt).TotalMilliseconds));
+    var remainingWindowMs = Math.Max(0, (int)(gracefulShutdownWindowSeconds * 1000 - (DateTime.UtcNow - startedAt).TotalMilliseconds));
     logger?.LogWarning(ex,
         "Job was cancelled | JobName={JobName} | RunId={RunId} | RemainingShutdownWindowMs={RemainingWindowMs}",
         requestedJobName ?? "Unknown", capturedRunId ?? "N/A", remainingWindowMs);
@@ -360,5 +386,22 @@ static string GetExceptionTypePrefix(Exception ex, IConfiguration? config = null
 
     // Default to general exception
     return $"[[{exceptionTypes.GetValueOrDefault("General", "APHA_BATCH.GENERAL_EXCEPTION")}]]";
+}
+
+static int ResolveIntSetting(IConfiguration configuration, string configKey, string envVarName, int defaultValue)
+{
+    var envValue = Environment.GetEnvironmentVariable(envVarName);
+    if (!string.IsNullOrWhiteSpace(envValue) && int.TryParse(envValue, out var parsedEnv) && parsedEnv > 0)
+    {
+        return parsedEnv;
+    }
+
+    var configValue = configuration.GetValue<int?>(configKey);
+    if (configValue.HasValue && configValue.Value > 0)
+    {
+        return configValue.Value;
+    }
+
+    return defaultValue;
 }
 

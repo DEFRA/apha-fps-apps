@@ -46,6 +46,19 @@ public sealed class MabArchiveLoadOrchestrator
     public MabArchiveExecutionContext BuildExecutionContext()
     {
         var utcNow = DateTime.UtcNow;
+
+        // Optional test hook for deterministic local verification of month-branch behavior.
+        var overrideUtcNow = Environment.GetEnvironmentVariable("MABARCHIVE_TEST_UTCNOW");
+        if (!string.IsNullOrWhiteSpace(overrideUtcNow)
+            && DateTime.TryParse(
+                overrideUtcNow,
+                System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.AdjustToUniversal | System.Globalization.DateTimeStyles.AssumeUniversal,
+                out var parsedUtcNow))
+        {
+            utcNow = parsedUtcNow;
+        }
+
         var currentYear = utcNow.Year;
         var currentMonth = utcNow.Month;
         var previousYear = currentYear - 1;

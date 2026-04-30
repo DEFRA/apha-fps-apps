@@ -2,6 +2,7 @@ using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services;
 using Apha.BatchJobs.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Npgsql;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.MabArchive;
 
@@ -40,7 +41,8 @@ SELECT EXISTS(
     SELECT 1
     FROM fps.tblyearmaster
     WHERE fpsyear = {year}
-)").SingleAsync(cancellationToken);
+) AS ""Value""
+").SingleAsync(cancellationToken);
 
             _logger.LogInformation("Year availability check for {Year}: {Exists}", year, exists);
             return exists;
@@ -107,12 +109,17 @@ SELECT EXISTS(
             foreach (var table in archiveTables)
             {
                 var deleteCount = 0;
+                _logger.LogInformation("Deleting table {TableName} for year {Year}", table, year);
                 try
                 {
-                    deleteCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
-DELETE FROM {table:Raw}
-WHERE year = {year}
-", cancellationToken);
+                    var deleteSql = $@"
+DELETE FROM {table}
+WHERE year = @year
+";
+                    deleteCount = await _context.Database.ExecuteSqlRawAsync(
+                        deleteSql,
+                        [new NpgsqlParameter("year", year)],
+                        cancellationToken);
 
                     totalRowsAffected += deleteCount;
                     _logger.LogInformation("Deleted {RowCount} rows from {TableName} for year {Year}", deleteCount, table, year);
@@ -127,6 +134,7 @@ WHERE year = {year}
             // (not year-based, but included in legacy scope per sp_DeleteYearsFPSData baseline)
             try
             {
+                _logger.LogInformation("Deleting table mabarchive.g_tlkpproject using project keys for year {Year}", year);
                 var projectDeleteCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 DELETE FROM mabarchive.g_tlkpproject
 WHERE parentproject IN (
@@ -166,12 +174,24 @@ WHERE parentproject IN (
     {
         _logger.LogInformation("Loading archive data for year {Year} — full sp_AddYearsFPSData fan-out (24 loaders, legacy parity order)", year);
 
+        var currentLoaderNumber = 0;
+        var currentLoaderName = "NotStarted";
+        const int totalLoaders = 24;
+
         try
         {
             var totalRowsAffected = 0;
             int rowCount;
 
+            void StartLoader(int loaderNumber, string loaderName)
+            {
+                currentLoaderNumber = loaderNumber;
+                currentLoaderName = loaderName;
+                _logger.LogInformation("[{LoaderNumber}/{TotalLoaders}] Starting {LoaderName} for year {Year}", loaderNumber, totalLoaders, loaderName, year);
+            }
+
             // ── Loader 1: sp_AddMY_tlkpProgram ─────────────────────────────────────────
+            StartLoader(1, "my_tlkpprogram");
             rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 INSERT INTO mabarchive.my_tlkpprogram (
     year, programno, programname, directorate, minim, sector_name, customer, target, manager
@@ -186,6 +206,7 @@ WHERE p.fpsyear = {year}
             _logger.LogInformation("[1/24] my_tlkpprogram: {RowCount} rows for year {Year}", rowCount, year);
 
             // ── Loader 2: sp_AddG_tlkpProject ──────────────────────────────────────────
+            StartLoader(2, "g_tlkpproject");
             rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 INSERT INTO mabarchive.g_tlkpproject (
     parentproject, projecttitle, costbookno, disease, contract, shorttitle, projectstatus
@@ -203,6 +224,7 @@ GROUP BY t.parentproject, t.projecttitle, t.costbookno, t.disease,
 
             // ── Loader 3: sp_AddMY_tlkpProject ─────────────────────────────────────────
             // source column exists in DDL but legacy sp_AddMY_tlkpProject does not populate it
+            StartLoader(3, "my_tlkpproject");
             rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 INSERT INTO mabarchive.my_tlkpproject (
     year, parentproject, program, customer, manager, transferincome, custincome,
@@ -225,6 +247,7 @@ WHERE t.fpsyear = {year}
 
             // ── Loader 4: sp_AddMY_FPSYearTotals ───────────────────────────────────────
             // Plain copy from fps.fpsyeartotals — no defaults applied (legacy does not set any)
+            StartLoader(4, "my_fpsyeartotals");
             rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 INSERT INTO mabarchive.my_fpsyeartotals (
     year, parentproject, program, totaladditionalcosts, totalanimalcosts,
@@ -244,6 +267,7 @@ WHERE f.fpsyear = {year}
             _logger.LogInformation("[4/24] my_fpsyeartotals: {RowCount} rows for year {Year}", rowCount, year);
 
             // ── Loader 5: sp_AddMY_MonthlyOutput ───────────────────────────────────────
+            StartLoader(5, "my_monthlyoutput");
             rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 INSERT INTO mabarchive.my_monthlyoutput (
     year, testcode, buyer, month, workgroup, volume, wgbuyer
@@ -258,6 +282,7 @@ WHERE m.fpsyear = {year}
 
             // ── Loader 6: sp_AddMY_MonthlyTime ─────────────────────────────────────────
             // column is pactstaffid (no underscore) per both DDL and fps.monthlytime source
+            StartLoader(6, "my_monthlytime");
             rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 INSERT INTO mabarchive.my_monthlytime (
     year, pactstaffid, timecode, month, parentproject, workgroup, hours
@@ -271,6 +296,7 @@ WHERE m.fpsyear = {year}
             _logger.LogInformation("[6/24] my_monthlytime: {RowCount} rows for year {Year}", rowCount, year);
 
             // ── Loader 7: sp_AddMY_Proj_Invoice ────────────────────────────────────────
+            StartLoader(7, "my_proj_invoice");
             rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 INSERT INTO mabarchive.my_proj_invoice (
     year, projectparent, month, amount, costofwork, wip, profitloss, detail,
@@ -286,6 +312,7 @@ WHERE i.fpsyear = {year}
             _logger.LogInformation("[7/24] my_proj_invoice: {RowCount} rows for year {Year}", rowCount, year);
 
             // ── Loader 8: sp_AddMY_Proj_SubContract ────────────────────────────────────
+            StartLoader(8, "my_proj_subcontract");
             rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 INSERT INTO mabarchive.my_proj_subcontract (
     year, subcontcounter, project, testjob, month, amount, workgroup, acctcode,
@@ -302,6 +329,7 @@ WHERE s.fpsyear = {year}
 
             // ── Loader 9: sp_AddMY_ProjectMonthFinal ───────────────────────────────────
             // 36 columns per legacy SQL; fps.projectmonthfinal has an extra 'x' column — omitted
+            StartLoader(9, "my_projectmonthfinal");
             rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 INSERT INTO mabarchive.my_projectmonthfinal (
     year, project, monthno, periodname, cumflag, costprofile, subcontracts, animals,
@@ -325,12 +353,15 @@ WHERE p.fpsyear = {year}
             _logger.LogInformation("[9/24] my_projectmonthfinal: {RowCount} rows for year {Year}", rowCount, year);
 
             // ── Loader 10: sp_AddMY_tblAdditionalCosts ─────────────────────────────────
+            StartLoader(10, "my_tbladditionalcosts");
             rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 INSERT INTO mabarchive.my_tbladditionalcosts (
-    year, jobcode, account, description, itemcost, freq, supplier
+    year, jobcode, account, description, itemcost, freq, supplier, ac_counter
 )
 SELECT
-    {year}, a.jobcode, a.account, a.description, a.itemcost, a.freq, a.supplier
+    {year}, a.jobcode, a.account, a.description, a.itemcost, a.freq, a.supplier,
+    ROW_NUMBER() OVER (ORDER BY a.jobcode, a.account, a.description)
+        + COALESCE((SELECT MAX(ac_counter) FROM mabarchive.my_tbladditionalcosts), 0)
 FROM fps.tbladditionalcosts a
 WHERE a.fpsyear = {year}
 ", cancellationToken);
@@ -338,6 +369,7 @@ WHERE a.fpsyear = {year}
             _logger.LogInformation("[10/24] my_tbladditionalcosts: {RowCount} rows for year {Year}", rowCount, year);
 
             // ── Loader 11: sp_AddMY_tblAnimalReq ───────────────────────────────────────
+            StartLoader(11, "my_tblanimalreq");
             rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 INSERT INTO mabarchive.my_tblanimalreq (
     year, jobcode, animaltype, numberofdays, numberofanimals
@@ -351,6 +383,7 @@ WHERE a.fpsyear = {year}
             _logger.LogInformation("[11/24] my_tblanimalreq: {RowCount} rows for year {Year}", rowCount, year);
 
             // ── Loader 12: sp_AddMY_tblContract ────────────────────────────────────────
+            StartLoader(12, "my_tblcontract");
             rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 INSERT INTO mabarchive.my_tblcontract (
     year, contractno, category, manager, customer, title,
@@ -367,6 +400,7 @@ WHERE c.fpsyear = {year}
 
             // ── Loader 13: sp_AddMY_tblStaffJob ────────────────────────────────────────
             // systimestamp (bytea) column in target DDL not populated by legacy procedure — left NULL
+            StartLoader(13, "my_tblstaffjob");
             rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 INSERT INTO mabarchive.my_tblstaffjob (
     year, staffid, jobcode, plannedhours
@@ -381,6 +415,7 @@ WHERE s.fpsyear = {year}
 
             // ── Loader 14: sp_AddMY_TimeCostCalcs ──────────────────────────────────────
             // All 16 source columns per legacy SQL
+            StartLoader(14, "my_timecostcalcs");
             rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 INSERT INTO mabarchive.my_timecostcalcs (
     year, workgroup, jobcode, project, month, staffid,
@@ -399,6 +434,7 @@ WHERE t.fpsyear = {year}
 
             // ── Loader 15: sp_AddMY_tlkpTestReqmt ──────────────────────────────────────
             // source column in target DDL not populated by legacy procedure — left NULL
+            StartLoader(15, "my_tlkptestreqmt");
             rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 INSERT INTO mabarchive.my_tlkptestreqmt (
     year, testcode, buyer, unitprice, norequired, projectbuyercode, testbuyercode
@@ -413,6 +449,7 @@ WHERE r.fpsyear = {year}
 
             // ── Loader 16: sp_addMY_YearDetails ────────────────────────────────────────
             // fps.tbldb_variables has no fpsyear; reads the shared current-month setting
+            StartLoader(16, "tlkpyear");
             rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 INSERT INTO mabarchive.tlkpyear (year, latestmonthreleased)
 SELECT {year}, CAST(v.db_var_value AS integer)
@@ -423,6 +460,7 @@ WHERE v.db_var_name = 'month'
             _logger.LogInformation("[16/24] tlkpyear: {RowCount} rows for year {Year}", rowCount, year);
 
             // ── Loader 17: sp_addMY_WorkGroupGrade ─────────────────────────────────────
+            StartLoader(17, "my_workgroupgrade");
             rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 INSERT INTO mabarchive.my_workgroupgrade (
     year, wggrade, profitcentregrade, gradecode, workgroup
@@ -436,6 +474,7 @@ WHERE w.fpsyear = {year}
             _logger.LogInformation("[17/24] my_workgroupgrade: {RowCount} rows for year {Year}", rowCount, year);
 
             // ── Loader 18: sp_addMY_ProfitCentreGrade ──────────────────────────────────
+            StartLoader(18, "my_profitcentregrade");
             rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 INSERT INTO mabarchive.my_profitcentregrade (
     year, pcgrade, divisiongrade, gradecode, profitcentre,
@@ -452,6 +491,7 @@ WHERE p.fpsyear = {year}
 
             // ── Loader 19: sp_AddMY_tblProfitCentre ────────────────────────────────────
             // fps.tblkpprofitcentre has no fpsyear column (shared reference); copy all rows
+            StartLoader(19, "my_tblprofitcentre");
             rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 INSERT INTO mabarchive.my_tblprofitcentre (
     year, profitcentre, profitcentrename, division, conttarget, profitcentrehead, divisionid
@@ -465,6 +505,7 @@ FROM fps.tblkpprofitcentre p
             _logger.LogInformation("[19/24] my_tblprofitcentre: {RowCount} rows for year {Year}", rowCount, year);
 
             // ── Loader 20: sp_AddMY_TestOrProduct ──────────────────────────────────────
+            StartLoader(20, "my_testorproduct");
             rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 INSERT INTO mabarchive.my_testorproduct (
     year, itemcode, itemdescription, testmanager, jobstatus,
@@ -482,6 +523,7 @@ WHERE t.fpsyear = {year}
             // ── Loader 21: sp_AddMY_Staff ───────────────────────────────────────────────
             // Legacy applies a per-user WorkGroup/ProfitCentre security filter. In batch job
             // context there is no user principal; all staff for the year are loaded.
+            StartLoader(21, "my_staff");
             rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 INSERT INTO mabarchive.my_staff (
     year, staffid, name, workgroupgrade, title,
@@ -507,6 +549,7 @@ WHERE wge.fpsyear = {year}
             _logger.LogInformation("[21/24] my_staff: {RowCount} rows for year {Year}", rowCount, year);
 
             // ── Loader 22: sp_AddMY_Workgroup ───────────────────────────────────────────
+            StartLoader(22, "my_workgroup");
             rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 INSERT INTO mabarchive.my_workgroup (
     year, workgroup, profitcentre, costcentre, owner,
@@ -522,6 +565,7 @@ WHERE w.fpsyear = {year}
             _logger.LogInformation("[22/24] my_workgroup: {RowCount} rows for year {Year}", rowCount, year);
 
             // ── Loader 23: sp_AddMY_tblAnimals ─────────────────────────────────────────
+            StartLoader(23, "my_tblanimals");
             rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 INSERT INTO mabarchive.my_tblanimals (
     year, animaltype, species, security_level, dailyrate, planbyweek, defradailyrate
@@ -536,6 +580,7 @@ WHERE a.fpsyear = {year}
 
             // ── Loader 24: sp_AddMY_tlkpProject_All ────────────────────────────────────
             // Same shape as my_tlkpproject; source column left NULL per legacy
+            StartLoader(24, "my_tlkpproject_all");
             rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 INSERT INTO mabarchive.my_tlkpproject_all (
     year, parentproject, program, customer, manager, transferincome, custincome,
@@ -561,7 +606,12 @@ WHERE t.fpsyear = {year}
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to load archive data for year {Year}", year);
+            _logger.LogError(
+                ex,
+                "Failed to load archive data for year {Year} while executing loader [{LoaderNumber}/24] {LoaderName}",
+                year,
+                currentLoaderNumber,
+                currentLoaderName);
             throw;
         }
     }

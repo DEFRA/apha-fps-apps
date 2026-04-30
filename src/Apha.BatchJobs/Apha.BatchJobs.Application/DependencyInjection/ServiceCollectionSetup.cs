@@ -61,6 +61,7 @@ public static class ServiceCollectionSetup
             // Production mode: Use PostgreSQL database
             var connectionString = config.GetConnectionString("BatchJobsConnectionString")
                 ?? throw new InvalidOperationException("Connection string 'BatchJobsConnectionString' not found.");
+            var dbCommandTimeoutSeconds = config.GetValue<int?>("BatchJobs:DbCommandTimeoutSeconds") is int v && v > 0 ? v : 30;
 
             services.AddDbContext<BatchJobsDbContext>(options =>
             {
@@ -72,7 +73,7 @@ public static class ServiceCollectionSetup
                             maxRetryCount: 5,
                             maxRetryDelay: TimeSpan.FromSeconds(10),
                             errorCodesToAdd: null);
-                        npgsqlOptions.CommandTimeout(30);
+                        npgsqlOptions.CommandTimeout(dbCommandTimeoutSeconds);
                     });
             });
 
@@ -97,9 +98,13 @@ public static class ServiceCollectionSetup
                     return;
                 }
 
-                await using var transaction = await dbContext.Database.BeginTransactionAsync();
-                await action();
-                await transaction.CommitAsync();
+                var executionStrategy = dbContext.Database.CreateExecutionStrategy();
+                await executionStrategy.ExecuteAsync(async () =>
+                {
+                    await using var transaction = await dbContext.Database.BeginTransactionAsync();
+                    await action();
+                    await transaction.CommitAsync();
+                });
             };
         });
 
