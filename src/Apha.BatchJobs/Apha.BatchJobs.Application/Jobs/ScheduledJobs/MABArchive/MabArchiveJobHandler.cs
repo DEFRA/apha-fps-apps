@@ -136,7 +136,7 @@ public sealed class MabArchiveJobHandler : IBatchJob
                 // Release lock
                 try
                 {
-                    await _lockRepository.ReleaseLockAsync(Name, runId, cancellationToken);
+                    await _lockRepository.ReleaseLockAsync(Name, runId, CancellationToken.None);
                     _logger.LogInformation("Lock released for MABArchive job | RunId={RunId}", runId);
                 }
                 catch (Exception ex)

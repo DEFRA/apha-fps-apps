@@ -259,7 +259,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
 
             try
             {
-                await _executionRepository.UpdateExecutionRecordAsync(record, cancellationToken);
+                await _executionRepository.UpdateExecutionRecordAsync(record, CancellationToken.None);
                 _logger.LogInformation(
                     "Execution record updated | Status={Status} | Duration={DurationSeconds}s",
                     finalStatus, record.DurationSeconds);
@@ -272,7 +272,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
             // Step 5 — Release lock (always)
             try
             {
-                await _lockRepository.ReleaseLockAsync(jobName, runId, cancellationToken);
+                await _lockRepository.ReleaseLockAsync(jobName, runId, CancellationToken.None);
                 _logger.LogInformation("Lock released for '{JobName}' | RunId={RunId}", jobName, runId);
             }
             catch (Exception ex)

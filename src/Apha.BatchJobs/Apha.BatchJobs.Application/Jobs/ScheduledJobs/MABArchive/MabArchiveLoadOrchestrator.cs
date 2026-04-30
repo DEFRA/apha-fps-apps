@@ -155,6 +155,11 @@ public sealed class MabArchiveLoadOrchestrator
                 _logger.LogInformation("MABArchive orchestration completed successfully");
             });
         }
+        catch (OperationCanceledException ex) when (cancellationToken.IsCancellationRequested)
+        {
+            _logger.LogWarning(ex, "MABArchive orchestration cancelled | RunId={RunId}", runId);
+            throw;
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "MABArchive orchestration failed | RunId={RunId}", runId);
@@ -167,7 +172,7 @@ public sealed class MabArchiveLoadOrchestrator
                     "MABArchive",
                     ex.Message,
                     DateTime.UtcNow,
-                    cancellationToken);
+                    CancellationToken.None);
             }
             catch (Exception notificationEx)
             {

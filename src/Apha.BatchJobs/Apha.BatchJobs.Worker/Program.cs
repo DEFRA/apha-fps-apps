@@ -114,12 +114,10 @@ try
 
     logger.LogInformation("Requested job: {JobName} | RunMode: {RunMode}", jobName, runMode);
 
-    // Link host shutdown with a bounded graceful-window timeout.
-    // This ensures the job is cancelled well within the ECS SIGTERM â†’ forced-stop window.
-    using var shutdownWindowCts = new CancellationTokenSource(TimeSpan.FromSeconds(gracefulShutdownWindowSeconds));
+    // Cancel job execution only when the host is stopping.
+    // Do not use GracefulShutdownWindowSeconds as a hard runtime cap.
     using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
-        hostLifetime.ApplicationStopping,
-        shutdownWindowCts.Token);
+        hostLifetime.ApplicationStopping);
 
     if (hostLifetime.ApplicationStopping.IsCancellationRequested)
     {
