@@ -126,3 +126,32 @@ Requested DBA action:
 Validation expected back from DBA:
 - Object definition/DDL extract for `fps.qrytotaltestcosts`.
 - Sample metadata row set showing columns: `jobcode`, `fpsyear`, `totaltestcosts`.
+
+## New Ask: Post-Alignment DDL Parity Confirmation (Required)
+
+Engineering has now aligned local required MABArchive tables to cloud **column metadata** parity using:
+- table_schema
+- table_name
+- ordinal_position
+- column_name
+- data_type
+- is_nullable
+- column_default
+
+Please provide canonical DDL confirmation for the same required table set covering metadata not present in the CSV export:
+
+1. Primary keys, foreign keys, unique constraints, and check constraints.
+2. Index definitions (including partial indexes) and expected index names.
+3. Sequence ownership and increment/cache settings for identity/serial columns.
+4. Table/column collation, storage parameters, and ownership/grants.
+5. Any trigger/function dependencies required for parity in cloud.
+
+Reason:
+- The CSV reference is column-level only.
+- We need full structural parity (constraints + indexes + sequence behavior) to guarantee runtime equivalence.
+
+Requested DBA output:
+- `pg_get_constraintdef` extract for required tables.
+- `pg_indexes` extract for required tables.
+- `information_schema.sequences` + ownership mapping for required schemas.
+- Role/grant matrix for `fps` and `mabarchive`.

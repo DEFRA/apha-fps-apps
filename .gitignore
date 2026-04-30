@@ -115,4 +115,5 @@ src/Apha.BatchJobs/database/sql/validate/*
 !src/Apha.BatchJobs/database/sql/101_rollback_operational_to_fps_migration.sql
 !src/Apha.BatchJobs/database/sql/102_validate_operational_to_fps_migration.sql
 !src/Apha.BatchJobs/database/sql/103_align_mabarchive_required_tables_to_cloud_schema.sql
+!src/Apha.BatchJobs/database/sql/apply_needed_fps_dependencies.ps1
 !src/Apha.BatchJobs/database/sql/validate/001_verify_scheduledload_required_tables.sql
