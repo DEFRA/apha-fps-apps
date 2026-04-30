@@ -75,9 +75,21 @@ namespace Apha.PACT.Application.Services
             return await _repository.DeleteAsync(invoiceCounter);
         }
 
-        public async Task<MonthlyInvoicesPivotDto> GetMonthlyInvoicesSummaryAsync()
+        public async Task<MonthlyInvoicesPivotDto> GetMonthlyInvoicesSummaryAsync(QueryParameters<string> query)
         {
-            List<Core.Entities.MonthlyInvoicesSummary> data = await _repository.GetMonthlyInvoicesSummaryAsync();
+            // Parse the DataGrid JSON filter string: {"Program":"ADMIN","ParentProject":"AH"}
+            string? program = null;
+            string? parentProject = null;
+            if (!string.IsNullOrWhiteSpace(query.Filter))
+            {
+                var dict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(query.Filter)
+                           ?? new Dictionary<string, string>();
+                dict.TryGetValue("Program", out program);
+                dict.TryGetValue("ParentProject", out parentProject);
+            }
+
+            List<Core.Entities.MonthlyInvoicesSummary> data =
+                await _repository.GetMonthlyInvoicesSummaryAsync(program, parentProject);
 
             List<int> months = data
                 .Select(x => x.Month)
@@ -85,22 +97,50 @@ namespace Apha.PACT.Application.Services
                 .OrderBy(m => m)
                 .ToList();
 
-            List<MonthlyInvoicesSummaryDto> rows = data
+            IEnumerable<MonthlyInvoicesSummaryDto> rows = data
                 .GroupBy(x => new { x.Program, x.Parentproject })
                 .Select(g => new MonthlyInvoicesSummaryDto
                 {
                     Program = g.Key.Program,
                     ParentProject = g.Key.Parentproject,
                     MonthlyAmounts = g.ToDictionary(x => x.Month, x => x.Monthlyamount ?? 0m)
-                })
-                .OrderBy(r => r.Program)
-                .ThenBy(r => r.ParentProject)
-                .ToList();
+                });
+
+            rows = SortPivotRows(rows, query.SortBy, query.Descending);
 
             return new MonthlyInvoicesPivotDto
             {
                 Months = months,
-                Rows = rows
+                Rows = rows.ToList()
+            };
+        }
+
+        private static IEnumerable<MonthlyInvoicesSummaryDto> SortPivotRows(
+            IEnumerable<MonthlyInvoicesSummaryDto> rows, string? sortBy, bool descending)
+        {
+            if (string.IsNullOrWhiteSpace(sortBy))
+                return rows.OrderBy(r => r.Program).ThenBy(r => r.ParentProject);
+
+            // Dynamic month column: PropertyName is "M1" … "M12"
+            // Parse the month number and sort by the corresponding amount value
+            if (sortBy.StartsWith("M", StringComparison.OrdinalIgnoreCase)
+                && int.TryParse(sortBy[1..], out int month)
+                && month is >= 1 and <= 12)
+            {
+                return descending
+                    ? rows.OrderByDescending(r => r.MonthlyAmounts.GetValueOrDefault(month))
+                          .ThenBy(r => r.Program)
+                    : rows.OrderBy(r => r.MonthlyAmounts.GetValueOrDefault(month))
+                          .ThenBy(r => r.Program);
+            }
+
+            return sortBy.ToLower() switch
+            {
+                "program"       when descending => rows.OrderByDescending(r => r.Program).ThenByDescending(r => r.ParentProject),
+                "program"                       => rows.OrderBy(r => r.Program).ThenBy(r => r.ParentProject),
+                "parentproject" when descending => rows.OrderByDescending(r => r.ParentProject).ThenByDescending(r => r.Program),
+                "parentproject"                 => rows.OrderBy(r => r.ParentProject).ThenBy(r => r.Program),
+                _                               => rows.OrderBy(r => r.Program).ThenBy(r => r.ParentProject)
             };
         }
     }

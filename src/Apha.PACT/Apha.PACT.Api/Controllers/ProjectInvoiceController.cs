@@ -81,11 +81,17 @@ namespace Apha.PACT.Api.Controllers
             return Ok(deleted);
         }
 
-        /// <summary>Retrieves monthly invoices summary pivoted by month.</summary>
+        /// <summary>Retrieves monthly invoices summary pivoted by month, with optional filter and sort.</summary>
         [HttpGet("monthly-summary")]
-        public async Task<IActionResult> GetMonthlyInvoicesSummary()
+        public async Task<IActionResult> GetMonthlyInvoicesSummary([FromQuery] string? sortBy, [FromQuery] bool descending = false, [FromQuery] string? filter = null)
         {
-            MonthlyInvoicesPivotDto result = await _service.GetMonthlyInvoicesSummaryAsync();
+            var parameters = new Apha.PACT.Application.Pagination.QueryParameters<string>
+            {
+                SortBy = sortBy,
+                Descending = descending,
+                Filter = filter
+            };
+            MonthlyInvoicesPivotDto result = await _service.GetMonthlyInvoicesSummaryAsync(parameters);
             return Ok(_mapper.Map<MonthlyInvoicesPivotRes>(result));
         }
     }

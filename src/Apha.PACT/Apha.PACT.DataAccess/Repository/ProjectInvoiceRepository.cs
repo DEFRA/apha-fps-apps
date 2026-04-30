@@ -125,10 +125,17 @@ namespace Apha.PACT.DataAccess.Repository
             return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
         }
 
-        public async Task<List<MonthlyInvoicesSummary>> GetMonthlyInvoicesSummaryAsync()
+        public async Task<List<MonthlyInvoicesSummary>> GetMonthlyInvoicesSummaryAsync(string? program, string? parentProject)
         {
-            return await _context.MonthlyInvoicesSummary
-                .AsNoTracking()
+            IQueryable<MonthlyInvoicesSummary> query = _context.MonthlyInvoicesSummary.AsNoTracking();
+
+            if (!string.IsNullOrWhiteSpace(program))
+                query = query.Where(x => x.Program.Contains(program));
+
+            if (!string.IsNullOrWhiteSpace(parentProject))
+                query = query.Where(x => x.Parentproject.Contains(parentProject));
+
+            return await query
                 .OrderBy(x => x.Program)
                 .ThenBy(x => x.Parentproject)
                 .ThenBy(x => x.Month)

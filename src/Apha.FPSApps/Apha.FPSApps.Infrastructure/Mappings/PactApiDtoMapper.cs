@@ -16,6 +16,8 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<WorkGroupDto, WorkGroupRes>().ReverseMap();
             CreateMap<ProjectInvoiceDto, ProjectInvoiceReq>().ReverseMap();
             CreateMap<ProjectInvoiceDto, ProjectInvoiceRes>().ReverseMap();
+            CreateMap<MonthlyInvoicesSummaryRowDto, MonthlyInvoicesSummaryRowRes>().ReverseMap();
+            CreateMap<MonthlyInvoicesPivotDto, MonthlyInvoicesPivotRes>().ReverseMap();
             CreateMap<ProjectSubContractDto, ProjectSubContractReq>().ReverseMap();
             CreateMap<ProjectSubContractDto, ProjectSubContractRes>().ReverseMap();
             CreateMap<TestCapabilityDto, TestCapabilityReq>().ReverseMap();
