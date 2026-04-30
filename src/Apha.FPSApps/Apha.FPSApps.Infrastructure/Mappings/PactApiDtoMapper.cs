@@ -22,6 +22,8 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<TestCapabilityDto, TestCapabilityRes>().ReverseMap();
             CreateMap<TestRequirementDto, TestRequirementReq>().ReverseMap();
             CreateMap<TestRequirementDto, TestRequirementtRes>().ReverseMap();            
+            CreateMap<TestorProductDto, TestorProductReq>().ReverseMap();
+            CreateMap<TestorProductDto, TestorProductRes>().ReverseMap();
         }
     }
 }

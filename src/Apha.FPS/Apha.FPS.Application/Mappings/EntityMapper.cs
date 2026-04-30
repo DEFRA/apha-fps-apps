@@ -39,7 +39,9 @@ namespace Apha.FPS.Application.Mappings
                 .ReverseMap()
                 .ForMember(d => d.FpsYear, o => o.MapFrom(s => s.FpsCalYear));
             CreateMap<YearMaster, YearMasterDto>().ReverseMap();
-            CreateMap<TestorProduct, TestorProductDto>().ReverseMap();
+            CreateMap<Division, DivisionDto>().ReverseMap();
+            CreateMap<Agency, AgencyDto>().ReverseMap();
+            CreateMap<TimeCostCalcsView, TimeCostCalcsViewDto>().ReverseMap();
         }
     }
 }

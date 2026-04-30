@@ -10,7 +10,7 @@ namespace Apha.PIMS.Api.Controllers
 {
 
     [ApiController]
-    //[Authorize(Roles = "API-PIMSUser,API-PIMSAdmin")]
+    [Authorize(Roles = "API-PIMSUser,API-PIMSAdmin")]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/projectdetails")]
     public class ProjectDetailsController : ControllerBase

@@ -1,4 +1,4 @@
-﻿namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
+namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
 {
     public interface IFpsApiClient
     {
@@ -10,6 +10,8 @@
         IFpsAnimalPlanApiClient FpsAnimalPlan { get; }
         IFpsSettingApiClient FpsSetting { get; }
         IFpsYearMasterApiClient FpsYearMaster { get; }
-        IFpsTestorProductApiClient FpsTestorProduct { get; }
+        IFpsProjectStaffPlanActualApiClient FpsProjectStaffPlanActual { get; }
+        IFpsDivisionApiClient FpsDivision { get; }
+        IFpsAgencyApiClient FpsAgency { get; }
     }
 }
