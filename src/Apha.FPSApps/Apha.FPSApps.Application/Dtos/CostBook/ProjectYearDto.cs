@@ -12,4 +12,5 @@ public class ProjectYearDto
     public double? ProfitTests { get; set; }
     public double? ProfitAnimals { get; set; }
     public double? ProfitAdditional { get; set; }
+    public string? Programme { get; set; }
 }

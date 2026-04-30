@@ -519,4 +519,173 @@ public class TestRequirementRepositoryTests
     }
 
     #endregion
+
+    #region GetTestRequirementsByProjectYearAsync - additional cases
+
+    [Fact]
+    public async Task GetTestRequirementsByProjectYearAsync_TestCostIsNull_WhenUnitPriceIsNull()
+    {
+        var reqs = new List<TestRequirement>
+        {
+            new() { Project = "2024/001", Year = 2024, TestCode = "TC001", UnitPrice = null, NumberOfTests = 5 }
+        };
+        var (repo, _, _) = CreateRepository(testRequirements: reqs);
+
+        var result = (await repo.GetTestRequirementsByProjectYearAsync("2024/001", 2024)).ToList();
+
+        Assert.Single(result);
+        Assert.Null(result[0].TestCost);
+    }
+
+    [Fact]
+    public async Task GetTestRequirementsByProjectYearAsync_TestCostIsNull_WhenNumberOfTestsIsNull()
+    {
+        var reqs = new List<TestRequirement>
+        {
+            new() { Project = "2024/001", Year = 2024, TestCode = "TC001", UnitPrice = 100, NumberOfTests = null }
+        };
+        var (repo, _, _) = CreateRepository(testRequirements: reqs);
+
+        var result = (await repo.GetTestRequirementsByProjectYearAsync("2024/001", 2024)).ToList();
+
+        Assert.Single(result);
+        Assert.Null(result[0].TestCost);
+    }
+
+    [Fact]
+    public async Task GetTestRequirementsByProjectYearAsync_ReturnsMultipleRecords_WhenMultipleExist()
+    {
+        var reqs = new List<TestRequirement>
+        {
+            new() { Project = "2024/001", Year = 2024, TestCode = "AA001", UnitPrice = 10, NumberOfTests = 1 },
+            new() { Project = "2024/001", Year = 2024, TestCode = "BB001", UnitPrice = 20, NumberOfTests = 2 },
+            new() { Project = "2024/001", Year = 2024, TestCode = "CC001", UnitPrice = 30, NumberOfTests = 3 }
+        };
+        var (repo, _, _) = CreateRepository(testRequirements: reqs);
+
+        var result = (await repo.GetTestRequirementsByProjectYearAsync("2024/001", 2024)).ToList();
+
+        Assert.Equal(3, result.Count);
+    }
+
+    [Fact]
+    public async Task GetTestRequirementsByProjectYearAsync_ReturnsNullDescription_WhenProductFpsYearDoesNotMatch()
+    {
+        var reqs = new List<TestRequirement>
+        {
+            new() { Project = "2024/001", Year = 2024, TestCode = "TC001", UnitPrice = 100, NumberOfTests = 5 }
+        };
+        var products = new List<FpsTestOrProduct>
+        {
+            new() { ItemCode = "TC001", ItemDescription = "Old Year Product", FpsYear = 9999, UnitPriceVla = 100m, DefraUnitPrice = 150m }
+        };
+        var (repo, _, _) = CreateRepository(testRequirements: reqs, fpsTestorProducts: products);
+
+        var result = (await repo.GetTestRequirementsByProjectYearAsync("2024/001", 2024)).ToList();
+
+        Assert.Single(result);
+        Assert.Null(result[0].TestDescription);
+    }
+
+    [Fact]
+    public async Task GetTestRequirementsByProjectYearAsync_MapsProjectProgrammeAndEuroConvRate()
+    {
+        var reqs = new List<TestRequirement>
+        {
+            new() { Project = "2024/001", Year = 2024, TestCode = "TC001", UnitPrice = 50, NumberOfTests = 2 }
+        };
+        var projects = new List<Project>
+        {
+            new() { ProjectId = "2024/001", Programme = "PRG-A", Euroconvrate = 1.25 }
+        };
+        var (repo, _, _) = CreateRepository(testRequirements: reqs, projects: projects);
+
+        var result = (await repo.GetTestRequirementsByProjectYearAsync("2024/001", 2024)).ToList();
+
+        Assert.Single(result);
+        Assert.Equal("PRG-A", result[0].Programme);
+        Assert.Equal(1.25, result[0].EuroConvRate);
+    }
+
+    #endregion
+
+    #region UpdateTestRequirementAsync - additional cases
+
+    [Fact]
+    public async Task UpdateTestRequirementAsync_ReturnsSameEntityReference()
+    {
+        var (repo, _, _) = CreateRepository();
+        var entity = new TestRequirement
+        {
+            Project = "2024/001",
+            Year = 2024,
+            TestCode = "TC001"
+        };
+
+        var result = await repo.UpdateTestRequirementAsync(entity);
+
+        Assert.Same(entity, result);
+    }
+
+    #endregion
+
+    #region AddTestRequirementAsync - additional cases
+
+    [Fact]
+    public async Task AddTestRequirementAsync_WithNullOptionalFields_Succeeds()
+    {
+        var (repo, _, _) = CreateRepository();
+        var newReq = new TestRequirement
+        {
+            Project = "2024/001",
+            Year = 2024,
+            TestCode = "TC001",
+            UnitPrice = null,
+            NumberOfTests = null
+        };
+
+        var result = await repo.AddTestRequirementAsync(newReq);
+
+        Assert.NotNull(result);
+        Assert.Null(result.UnitPrice);
+        Assert.Null(result.NumberOfTests);
+    }
+
+    #endregion
+
+    #region GetTestCodeLookupsAsync - additional cases
+
+    [Fact]
+    public async Task GetTestCodeLookupsAsync_ReturnsNullUnitPrice_WhenUnitPriceVlaIsNull()
+    {
+        var products = new List<FpsTestOrProduct>
+        {
+            new() { ItemCode = "TC001", ItemDescription = "Test", UnitPriceVla = null, DefraUnitPrice = 0m, FpsYear = DefaultFpsYear }
+        };
+        var (repo, _, _) = CreateRepository(fpsTestorProducts: products);
+
+        var result = (await repo.GetTestCodeLookupsAsync(isDefra: false)).ToList();
+
+        Assert.Single(result);
+        Assert.Null(result[0].UnitPrice);
+    }
+
+    [Fact]
+    public async Task GetTestCodeLookupsAsync_ReturnsMultipleRecords_WithCorrectPriceSelection()
+    {
+        var products = new List<FpsTestOrProduct>
+        {
+            new() { ItemCode = "AA001", ItemDescription = "First", UnitPriceVla = 10m, DefraUnitPrice = 15m, FpsYear = DefaultFpsYear },
+            new() { ItemCode = "BB001", ItemDescription = "Second", UnitPriceVla = 20m, DefraUnitPrice = 25m, FpsYear = DefaultFpsYear }
+        };
+        var (repo, _, _) = CreateRepository(fpsTestorProducts: products);
+
+        var result = (await repo.GetTestCodeLookupsAsync(isDefra: true)).ToList();
+
+        Assert.Equal(2, result.Count);
+        Assert.Equal(15m, result[0].UnitPrice);
+        Assert.Equal(25m, result[1].UnitPrice);
+    }
+
+    #endregion
 }

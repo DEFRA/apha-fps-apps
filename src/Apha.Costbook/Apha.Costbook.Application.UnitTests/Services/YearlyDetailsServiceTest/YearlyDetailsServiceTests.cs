@@ -1249,4 +1249,317 @@ public class YearlyDetailsServiceTests
     }
 
     #endregion
+
+    #region DeleteProjectYearAsync
+
+    [Fact]
+    public async Task DeleteProjectYearAsync_ReturnsSuccessResult_WhenDeletedSuccessfully()
+    {
+        var expected = (Deleted: true, Errors: (IReadOnlyList<string>)new List<string>());
+        _projectYearRepo.DeleteProjectYearAsync("2024/001", 2024).Returns(expected);
+
+        var result = await _sut.DeleteProjectYearAsync("2024/001", 2024);
+
+        Assert.True(result.Deleted);
+        Assert.Empty(result.Errors);
+        await _projectYearRepo.Received(1).DeleteProjectYearAsync("2024/001", 2024);
+    }
+
+    [Fact]
+    public async Task DeleteProjectYearAsync_ReturnsFailureResult_WhenChildRecordsExist()
+    {
+        var errors = new List<string> { "Staff records exist.", "Animal records exist." };
+        var expected = (Deleted: false, Errors: (IReadOnlyList<string>)errors);
+        _projectYearRepo.DeleteProjectYearAsync("2024/001", 2024).Returns(expected);
+
+        var result = await _sut.DeleteProjectYearAsync("2024/001", 2024);
+
+        Assert.False(result.Deleted);
+        Assert.Equal(2, result.Errors.Count);
+        Assert.Contains("Staff records exist.", result.Errors);
+        Assert.Contains("Animal records exist.", result.Errors);
+    }
+
+    [Fact]
+    public async Task DeleteProjectYearAsync_ReturnsFailureResult_WhenYearNotFound()
+    {
+        var expected = (Deleted: false, Errors: (IReadOnlyList<string>)new List<string> { "Year not found." });
+        _projectYearRepo.DeleteProjectYearAsync("2024/001", 9999).Returns(expected);
+
+        var result = await _sut.DeleteProjectYearAsync("2024/001", 9999);
+
+        Assert.False(result.Deleted);
+        Assert.Single(result.Errors);
+    }
+
+    #endregion
+
+    #region GetProjectYearsAsync - empty result
+
+    [Fact]
+    public async Task GetProjectYearsAsync_ReturnsEmpty_WhenNoYearsExist()
+    {
+        var empty = new List<ProjectYear>();
+        var emptyDtos = new List<ProjectYearDto>();
+
+        _projectYearRepo.GetByProjectAsync("2024/001").Returns(empty);
+        _mapper.Map<IEnumerable<ProjectYearDto>>(empty).Returns(emptyDtos);
+
+        var result = await _sut.GetProjectYearsAsync("2024/001");
+
+        Assert.Empty(result);
+    }
+
+    #endregion
+
+    #region GetAdditionalCostsAsync - empty result
+
+    [Fact]
+    public async Task GetAdditionalCostsAsync_ReturnsEmpty_WhenNoData()
+    {
+        _additionalCostRepo.GetAdditionalCostsByProjectYearAsync("P1", 1).Returns(new List<AdditionalCostDetailView>());
+
+        var result = await _sut.GetAdditionalCostsAsync("P1", 1);
+
+        Assert.Empty(result);
+    }
+
+    #endregion
+
+    #region GetAnimalRequirementsAsync - empty result
+
+    [Fact]
+    public async Task GetAnimalRequirementsAsync_ReturnsEmpty_WhenNoData()
+    {
+        _animalRepo.GetAnimalRequirementsByProjectYearAsync("P1", 1).Returns(new List<AnimalRequirementDetailView>());
+
+        var result = await _sut.GetAnimalRequirementsAsync("P1", 1);
+
+        Assert.Empty(result);
+    }
+
+    #endregion
+
+    #region GetPayRatesAsync - isDefra variants
+
+    [Fact]
+    public async Task GetPayRatesAsync_ReturnsRates_WhenIsDefraTrue()
+    {
+        var rates = new List<PayRateLookup> { new("SEO", 55.0, 40.0, 6.0, 12.0) };
+        _projectYearRepo.GetPayRatesAsync(true).Returns(rates);
+
+        var result = (await _sut.GetPayRatesAsync(true)).ToList();
+
+        Assert.Single(result);
+        Assert.Equal("SEO", result[0].WgGrade);
+        await _projectYearRepo.Received(1).GetPayRatesAsync(true);
+    }
+
+    [Fact]
+    public async Task GetPayRatesAsync_ReturnsEmpty_WhenNoRatesExist()
+    {
+        _projectYearRepo.GetPayRatesAsync(false).Returns(new List<PayRateLookup>());
+
+        var result = await _sut.GetPayRatesAsync(false);
+
+        Assert.Empty(result);
+    }
+
+    #endregion
+
+    #region GetAnimalRatesAsync - isDefra variants
+
+    [Fact]
+    public async Task GetAnimalRatesAsync_ReturnsRates_WhenIsDefraFalse()
+    {
+        var rates = new List<AnimalRateLookup> { new("DOG", 8.50) };
+        _animalRepo.GetAnimalRatesAsync(false).Returns(rates);
+
+        var result = (await _sut.GetAnimalRatesAsync(false)).ToList();
+
+        Assert.Single(result);
+        Assert.Equal("DOG", result[0].AnimalType);
+        Assert.Equal(8.50, result[0].DailyRate);
+        await _animalRepo.Received(1).GetAnimalRatesAsync(false);
+    }
+
+    [Fact]
+    public async Task GetAnimalRatesAsync_ReturnsEmpty_WhenNoRatesExist()
+    {
+        _animalRepo.GetAnimalRatesAsync(true).Returns(new List<AnimalRateLookup>());
+
+        var result = await _sut.GetAnimalRatesAsync(true);
+
+        Assert.Empty(result);
+    }
+
+    #endregion
+
+    #region GetAccountCategoriesAsync - empty result
+
+    [Fact]
+    public async Task GetAccountCategoriesAsync_ReturnsEmpty_WhenNoCategories()
+    {
+        _additionalCostRepo.GetProjectSpecificAccountCategoriesAsync().Returns(new List<AccountCategoryLookup>());
+
+        var result = await _sut.GetAccountCategoriesAsync();
+
+        Assert.Empty(result);
+    }
+
+    #endregion
+
+    #region GetTestCodeLookupsAsync - isDefra variants
+
+    [Fact]
+    public async Task GetTestCodeLookupsAsync_ReturnsLookups_WhenIsDefraTrue()
+    {
+        var lookups = new List<TestCodeLookup> { new("TC002", "Virus Screen", 200m) };
+        _testRepo.GetTestCodeLookupsAsync(true).Returns(lookups);
+
+        var result = (await _sut.GetTestCodeLookupsAsync(true)).ToList();
+
+        Assert.Single(result);
+        Assert.Equal("TC002", result[0].ItemCode);
+        await _testRepo.Received(1).GetTestCodeLookupsAsync(true);
+    }
+
+    [Fact]
+    public async Task GetTestCodeLookupsAsync_ReturnsEmpty_WhenNoLookups()
+    {
+        _testRepo.GetTestCodeLookupsAsync(false).Returns(new List<TestCodeLookup>());
+
+        var result = await _sut.GetTestCodeLookupsAsync(false);
+
+        Assert.Empty(result);
+    }
+
+    #endregion
+
+    #region GetAllAnimalsAsync - empty result
+
+    [Fact]
+    public async Task GetAllAnimalsAsync_ReturnsEmpty_WhenNoAnimals()
+    {
+        _animalRepo.GetAllAnimalsAsync().Returns(new List<FpsAnimals>());
+
+        var result = await _sut.GetAllAnimalsAsync();
+
+        Assert.Empty(result);
+    }
+
+    #endregion
+
+    #region GetStaffRequirementsAsync - empty result
+
+    [Fact]
+    public async Task GetStaffRequirementsAsync_ReturnsEmptyData_WhenNoRecords()
+    {
+        var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+        var filter = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+        var repoResult = new PagedData<StaffRequirementDetailView>
+        {
+            Data = new List<StaffRequirementDetailView>(),
+            PaginationData = new PaginationData { TotalRecords = 0, PageNumber = 1, PageSize = 10, TotalPages = 0 }
+        };
+        var paginationDto = new PaginationDto { TotalRecords = 0 };
+
+        _mapper.Map<PaginationParameters<string>>(query).Returns(filter);
+        _staffRepo.GetStaffRequirementsByProjectYearAsync("P1", 1, filter).Returns(repoResult);
+        _mapper.Map<PaginationDto>(repoResult.PaginationData).Returns(paginationDto);
+
+        var result = await _sut.GetStaffRequirementsAsync("P1", 1, query);
+
+        Assert.Empty(result.Data);
+        Assert.Equal(0, result.PaginationData.TotalRecords);
+    }
+
+    #endregion
+
+    #region UpdateAnimalRequirementAsync - AnimalCost null branch
+
+    [Fact]
+    public async Task UpdateAnimalRequirementAsync_AnimalCostIsNull_WhenRepoReturnsNullNumberOfDays()
+    {
+        var dto = new AnimalRequirementDto { ArIdentity = 1, AnimalType = "CAT", Project = "P1", Year = 1, NumberOfDays = 5, NumberOfAnimals = 3, DailyRate = 10, AnimalCost = 150 };
+        var entity = new AnimalRequirement { ArIdentity = 1, AnimalType = "CAT" };
+        var returned = new AnimalRequirement { ArIdentity = 1, AnimalType = "CAT", NumberOfDays = null, NumberOfAnimals = 3, DailyRate = 10 };
+
+        _mapper.Map<AnimalRequirement>(dto).Returns(entity);
+        _animalRepo.UpdateAnimalRequirementAsync(entity).Returns(returned);
+
+        var result = await _sut.UpdateAnimalRequirementAsync(dto);
+
+        Assert.Null(result.AnimalCost);
+    }
+
+    #endregion
+
+    #region UpdateTestRequirementAsync - TestCost null branch
+
+    [Fact]
+    public async Task UpdateTestRequirementAsync_TestCostIsNull_WhenRepoReturnsNullUnitPrice()
+    {
+        var dto = new TestRequirementDto { TestCode = "TC001", Project = "P1", Year = 1, UnitPrice = 100, NumberOfTests = 5, TestCost = 500 };
+        var entity = new TestRequirement { TestCode = "TC001" };
+        var returned = new TestRequirement { TestCode = "TC001", UnitPrice = null, NumberOfTests = 5 };
+
+        _mapper.Map<TestRequirement>(dto).Returns(entity);
+        _testRepo.UpdateTestRequirementAsync(entity).Returns(returned);
+
+        var result = await _sut.UpdateTestRequirementAsync(dto);
+
+        Assert.Null(result.TestCost);
+    }
+
+    [Fact]
+    public async Task UpdateTestRequirementAsync_TestCostIsCalculated_WhenBothValuesPresent()
+    {
+        var dto = new TestRequirementDto { TestCode = "TC001", Project = "P1", Year = 1, UnitPrice = 50, NumberOfTests = 4, TestCost = 200 };
+        var entity = new TestRequirement { TestCode = "TC001" };
+        var returned = new TestRequirement { TestCode = "TC001", UnitPrice = 50, NumberOfTests = 4 };
+
+        _mapper.Map<TestRequirement>(dto).Returns(entity);
+        _testRepo.UpdateTestRequirementAsync(entity).Returns(returned);
+
+        var result = await _sut.UpdateTestRequirementAsync(dto);
+
+        Assert.Equal(200.0, result.TestCost); // 50 * 4
+    }
+
+    #endregion
+
+    #region UpdateStaffRequirementAsync - StaffCost null branch
+
+    [Fact]
+    public async Task UpdateStaffRequirementAsync_StaffCostIsNull_WhenRepoReturnsNullChargerate()
+    {
+        var dto = new StaffRequirementDto { SrIdentity = 1, WgGrade = "HEO", Project = "P1", Year = 1, Name = "Test", Nohours = 10, Nodays = 1, Chargerate = 50, StaffCost = 500 };
+        var entity = new StaffRequirement { SrIdentity = 1, WgGrade = "HEO" };
+        var returned = new StaffRequirement { SrIdentity = 1, WgGrade = "HEO", Chargerate = null, Nohours = 10 };
+
+        _mapper.Map<StaffRequirement>(dto).Returns(entity);
+        _staffRepo.UpdateStaffRequirementAsync(entity).Returns(returned);
+
+        var result = await _sut.UpdateStaffRequirementAsync(dto);
+
+        Assert.Null(result.StaffCost);
+    }
+
+    [Fact]
+    public async Task UpdateStaffRequirementAsync_StaffCostIsCalculated_WhenBothValuesPresent()
+    {
+        var dto = new StaffRequirementDto { SrIdentity = 1, WgGrade = "HEO", Project = "P1", Year = 1, Name = "Test", Nohours = 8, Nodays = 1, Chargerate = 25, StaffCost = 200 };
+        var entity = new StaffRequirement { SrIdentity = 1, WgGrade = "HEO" };
+        var returned = new StaffRequirement { SrIdentity = 1, WgGrade = "HEO", Chargerate = 25, Nohours = 8 };
+
+        _mapper.Map<StaffRequirement>(dto).Returns(entity);
+        _staffRepo.UpdateStaffRequirementAsync(entity).Returns(returned);
+
+        var result = await _sut.UpdateStaffRequirementAsync(dto);
+
+        Assert.Equal(200.0, result.StaffCost); // 25 * 8
+    }
+
+    #endregion
 }

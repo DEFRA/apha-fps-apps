@@ -142,12 +142,13 @@ public class YearlyDetailsController : Controller
 
     [HttpGet]
     [ActionName("AddProjectYear")]
-    public IActionResult AddProjectYearGet(string projectId, int year)
+    public IActionResult AddProjectYearGet(string projectId, int year, string? programme = null)
     {
         var model = new ProjectYearRateItem
         {
             Project = projectId,
-            YearValue = year
+            YearValue = year,
+            Programme = programme
         };
         return PartialView("_AddProjectYear", model);
     }
@@ -165,6 +166,20 @@ public class YearlyDetailsController : Controller
         if (!response.Success)
             return Json(new { success = false, message = "Failed to add project year." });
         return Json(new { success = true, year = response.Data?.YearValue });
+    }
+
+    [HttpDelete]
+    public async Task<IActionResult> DeleteProjectYear(string projectId, int year)
+    {
+        var decodedProjectId = HttpUtility.UrlDecode(projectId);
+        var response = await _service.DeleteProjectYearAsync(decodedProjectId, year);
+        if (!response.Success)
+        {
+            var message = response.Errors?.FirstOrDefault()?.Message
+                          ?? "Failed to delete project year.";
+            return Json(new { success = false, message });
+        }
+        return Json(new { success = true });
     }
 
     // ── STAFF CRUD ────────────────────────────────────────────────────────
@@ -425,7 +440,7 @@ public class YearlyDetailsController : Controller
 
     // ── PRIVATE HELPERS ───────────────────────────────────────────────────
 
-    private IActionResult? ValidateModel()
+    private JsonResult? ValidateModel()
     {
         if (!ModelState.IsValid)
         {

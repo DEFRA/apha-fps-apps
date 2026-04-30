@@ -552,4 +552,284 @@ public class YearlyDetailsControllerTests
     }
 
     #endregion
+
+    #region DeleteProjectYear
+
+    [Fact]
+    public async Task DeleteProjectYear_ReturnsOk_WhenDeletedSuccessfully()
+    {
+        _service.DeleteProjectYearAsync("2024/001", 2024)
+            .Returns((true, (IReadOnlyList<string>)Array.Empty<string>()));
+
+        var result = await _controller.DeleteProjectYear("2024/001", 2024);
+
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var apiResponse = Assert.IsType<ApiResponse<bool>>(okResult.Value);
+        Assert.True(apiResponse.Success);
+        Assert.True(apiResponse.Data);
+        await _service.Received(1).DeleteProjectYearAsync("2024/001", 2024);
+    }
+
+    [Fact]
+    public async Task DeleteProjectYear_ReturnsBadRequest_WhenChildRecordsExist()
+    {
+        var errors = new List<string> { "Year has 2 staff requirements. Remove them first." };
+        _service.DeleteProjectYearAsync("2024/001", 2024)
+            .Returns((false, (IReadOnlyList<string>)errors));
+
+        var result = await _controller.DeleteProjectYear("2024/001", 2024);
+
+        var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+        var apiResponse = Assert.IsType<ApiResponse<bool>>(badRequest.Value);
+        Assert.False(apiResponse.Success);
+        Assert.Single(apiResponse.Errors!);
+        Assert.Contains("staff requirements", apiResponse.Errors![0].Message);
+    }
+
+    [Fact]
+    public async Task DeleteProjectYear_ReturnsBadRequest_WithJoinedErrors_WhenMultipleChildTypesExist()
+    {
+        var errors = new List<string>
+        {
+            "Year has 1 staff requirements. Remove them first.",
+            "Year has 1 test requirements. Remove them first."
+        };
+        _service.DeleteProjectYearAsync("2024/001", 2024)
+            .Returns((false, (IReadOnlyList<string>)errors));
+
+        var result = await _controller.DeleteProjectYear("2024/001", 2024);
+
+        var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+        var apiResponse = Assert.IsType<ApiResponse<bool>>(badRequest.Value);
+        Assert.False(apiResponse.Success);
+        Assert.Contains("\n", apiResponse.Errors![0].Message);
+    }
+
+    [Fact]
+    public async Task DeleteProjectYear_ReturnsOk_WhenYearNotFoundButNoErrors()
+    {
+        _service.DeleteProjectYearAsync("2024/001", 9999)
+            .Returns((false, (IReadOnlyList<string>)Array.Empty<string>()));
+
+        var result = await _controller.DeleteProjectYear("2024/001", 9999);
+
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var apiResponse = Assert.IsType<ApiResponse<bool>>(okResult.Value);
+        Assert.True(apiResponse.Success);
+        Assert.False(apiResponse.Data);
+    }
+
+    #endregion
+
+    #region DeleteStaffRequirement - false result
+
+    [Fact]
+    public async Task DeleteStaffRequirement_ReturnsOk_WithFalse_WhenNotFound()
+    {
+        _service.DeleteStaffRequirementAsync(99).Returns(false);
+
+        var result = await _controller.DeleteStaffRequirement("2024/001", 2024, 99);
+
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var apiResponse = Assert.IsType<ApiResponse<bool>>(okResult.Value);
+        Assert.True(apiResponse.Success);
+        Assert.False(apiResponse.Data);
+    }
+
+    #endregion
+
+    #region DeleteTestRequirement - false result
+
+    [Fact]
+    public async Task DeleteTestRequirement_ReturnsOk_WithFalse_WhenNotFound()
+    {
+        _service.DeleteTestRequirementAsync("2024/001", 2024, "TC001").Returns(false);
+
+        var result = await _controller.DeleteTestRequirement("2024/001", 2024, "TC001");
+
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var apiResponse = Assert.IsType<ApiResponse<bool>>(okResult.Value);
+        Assert.True(apiResponse.Success);
+        Assert.False(apiResponse.Data);
+    }
+
+    #endregion
+
+    #region DeleteAnimalRequirement - false result
+
+    [Fact]
+    public async Task DeleteAnimalRequirement_ReturnsOk_WithFalse_WhenNotFound()
+    {
+        _service.DeleteAnimalRequirementAsync(99).Returns(false);
+
+        var result = await _controller.DeleteAnimalRequirement("2024/001", 2024, 99);
+
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var apiResponse = Assert.IsType<ApiResponse<bool>>(okResult.Value);
+        Assert.True(apiResponse.Success);
+        Assert.False(apiResponse.Data);
+    }
+
+    #endregion
+
+    #region DeleteAdditionalCost - false result
+
+    [Fact]
+    public async Task DeleteAdditionalCost_ReturnsOk_WithFalse_WhenNotFound()
+    {
+        _service.DeleteAdditionalCostAsync(55).Returns(false);
+
+        var result = await _controller.DeleteAdditionalCost("2024/001", 2024, 55);
+
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var apiResponse = Assert.IsType<ApiResponse<bool>>(okResult.Value);
+        Assert.True(apiResponse.Success);
+        Assert.False(apiResponse.Data);
+    }
+
+    #endregion
+
+    #region Lookups - isDefra variants and service delegation
+
+    [Fact]
+    public async Task GetPayRates_Defra_DelegatesToService_WithIsDefraTrue()
+    {
+        var dtos = new List<PayRateDto>();
+        _service.GetPayRatesAsync(true).Returns(dtos);
+        _mapper.Map<List<PayRateRes>>(dtos).Returns(new List<PayRateRes>());
+
+        await _controller.GetPayRates(true);
+
+        await _service.Received(1).GetPayRatesAsync(true);
+    }
+
+    [Fact]
+    public async Task GetPayRates_DefaultsToNonDefra()
+    {
+        var dtos = new List<PayRateDto>();
+        _service.GetPayRatesAsync(false).Returns(dtos);
+        _mapper.Map<List<PayRateRes>>(dtos).Returns(new List<PayRateRes>());
+
+        var result = await _controller.GetPayRates();
+
+        Assert.IsType<OkObjectResult>(result);
+        await _service.Received(1).GetPayRatesAsync(false);
+    }
+
+    [Fact]
+    public async Task GetAnimalRates_DefaultsToNonDefra()
+    {
+        var dtos = new List<AnimalRateDto>();
+        _service.GetAnimalRatesAsync(false).Returns(dtos);
+        _mapper.Map<List<AnimalRateRes>>(dtos).Returns(new List<AnimalRateRes>());
+
+        var result = await _controller.GetAnimalRates();
+
+        Assert.IsType<OkObjectResult>(result);
+        await _service.Received(1).GetAnimalRatesAsync(false);
+    }
+
+    [Fact]
+    public async Task GetAnimalRates_NonDefra_DelegatesToService()
+    {
+        var dtos = new List<AnimalRateDto> { new() { AnimalType = "DOG" } };
+        _service.GetAnimalRatesAsync(false).Returns(dtos);
+        _mapper.Map<List<AnimalRateRes>>(dtos).Returns(new List<AnimalRateRes> { new() { AnimalType = "DOG" } });
+
+        var result = await _controller.GetAnimalRates(false);
+
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var apiResponse = Assert.IsType<ApiResponse<List<AnimalRateRes>>>(okResult.Value);
+        Assert.True(apiResponse.Success);
+    }
+
+    [Fact]
+    public async Task GetTestCodeLookups_DefaultsToNonDefra()
+    {
+        var dtos = new List<TestCodeLookupDto>();
+        _service.GetTestCodeLookupsAsync(false).Returns(dtos);
+        _mapper.Map<List<TestCodeLookupRes>>(dtos).Returns(new List<TestCodeLookupRes>());
+
+        var result = await _controller.GetTestCodeLookups();
+
+        Assert.IsType<OkObjectResult>(result);
+        await _service.Received(1).GetTestCodeLookupsAsync(false);
+    }
+
+    [Fact]
+    public async Task GetTestCodeLookups_Defra_DelegatesToService_WithIsDefraTrue()
+    {
+        var dtos = new List<TestCodeLookupDto>();
+        _service.GetTestCodeLookupsAsync(true).Returns(dtos);
+        _mapper.Map<List<TestCodeLookupRes>>(dtos).Returns(new List<TestCodeLookupRes>());
+
+        await _controller.GetTestCodeLookups(true);
+
+        await _service.Received(1).GetTestCodeLookupsAsync(true);
+    }
+
+    [Fact]
+    public async Task GetAccountCategories_ReturnsOk_AndApiResponseSuccessTrue()
+    {
+        var dtos = new List<AccountCategoryDto>();
+        _service.GetAccountCategoriesAsync().Returns(dtos);
+        _mapper.Map<List<AccountCategoryRes>>(dtos).Returns(new List<AccountCategoryRes>());
+
+        var result = await _controller.GetAccountCategories();
+
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var apiResponse = Assert.IsType<ApiResponse<List<AccountCategoryRes>>>(okResult.Value);
+        Assert.True(apiResponse.Success);
+        Assert.Empty(apiResponse.Errors!);
+    }
+
+    [Fact]
+    public async Task GetAllAnimals_ReturnsOk_AndApiResponseSuccessTrue()
+    {
+        var dtos = new List<AnimalLookupDto>();
+        _service.GetAllAnimalsAsync().Returns(dtos);
+        _mapper.Map<List<AnimalLookupRes>>(dtos).Returns(new List<AnimalLookupRes>());
+
+        var result = await _controller.GetAllAnimals();
+
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var apiResponse = Assert.IsType<ApiResponse<List<AnimalLookupRes>>>(okResult.Value);
+        Assert.True(apiResponse.Success);
+    }
+
+    #endregion
+
+    #region ApiResponse structure
+
+    [Fact]
+    public async Task GetProjectYears_ReturnsOk_WithSuccessTrueAndEmptyErrors()
+    {
+        var dtos = new List<ProjectYearDto>();
+        _service.GetProjectYearsAsync("P1").Returns(dtos);
+        _mapper.Map<List<ProjectYearRes>>(dtos).Returns(new List<ProjectYearRes>());
+
+        var result = await _controller.GetProjectYears("P1");
+
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var apiResponse = Assert.IsType<ApiResponse<List<ProjectYearRes>>>(okResult.Value);
+        Assert.True(apiResponse.Success);
+        Assert.Empty(apiResponse.Errors!);
+        Assert.NotNull(apiResponse.Meta);
+    }
+
+    [Fact]
+    public async Task DeleteProjectYear_BadRequest_HasNonNullMeta()
+    {
+        var errors = new List<string> { "Some error." };
+        _service.DeleteProjectYearAsync("P1", 1)
+            .Returns((false, (IReadOnlyList<string>)errors));
+
+        var result = await _controller.DeleteProjectYear("P1", 1);
+
+        var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+        var apiResponse = Assert.IsType<ApiResponse<bool>>(badRequest.Value);
+        Assert.NotNull(apiResponse.Meta);
+    }
+
+    #endregion
 }

@@ -6,6 +6,7 @@ using Apha.FPSApps.Web.Areas.CostBook.Controllers;
 using Apha.FPSApps.Web.Areas.CostBook.Models;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using NSubstitute;
 using System.Text.Json;
@@ -24,6 +25,10 @@ public class YearlyDetailsControllerTests
         _mapper = Substitute.For<IMapper>();
         _controller = new YearlyDetailsController(_service, _mapper);
         _controller.TempData = Substitute.For<ITempDataDictionary>();
+
+        var urlHelper = Substitute.For<IUrlHelper>();
+        urlHelper.Action(Arg.Any<UrlActionContext>()).Returns(string.Empty);
+        _controller.Url = urlHelper;
     }
 
     private static JsonElement GetJsonResultElement(JsonResult jsonResult)
@@ -769,6 +774,185 @@ public class YearlyDetailsControllerTests
 
         var jsonResult = Assert.IsType<JsonResult>(result);
         Assert.False(GetJsonResultElement(jsonResult).GetProperty("success").GetBoolean());
+    }
+
+    #endregion
+
+    #region DeleteProjectYear Tests
+
+    [Fact]
+    public async Task DeleteProjectYear_ReturnsSuccess_WhenServiceSucceeds()
+    {
+        _service.DeleteProjectYearAsync(Arg.Any<string>(), Arg.Any<int>())
+            .Returns(ApiResponseDto<bool>.SuccessResponse(true));
+
+        var result = await _controller.DeleteProjectYear("2024/001", 1);
+
+        var jsonResult = Assert.IsType<JsonResult>(result);
+        Assert.True(GetJsonResultElement(jsonResult).GetProperty("success").GetBoolean());
+    }
+
+    [Fact]
+    public async Task DeleteProjectYear_ReturnsFailure_WhenServiceFails()
+    {
+        _service.DeleteProjectYearAsync(Arg.Any<string>(), Arg.Any<int>())
+            .Returns(ApiResponseDto<bool>.FailureResponse(
+                new List<ApiErrorDto> { new() { Code = "CHILD_RECORDS", Message = "Year has 2 staff requirements. Remove them first." } },
+                new ApiMetaDto()));
+
+        var result = await _controller.DeleteProjectYear("2024/001", 1);
+
+        var jsonResult = Assert.IsType<JsonResult>(result);
+        var element = GetJsonResultElement(jsonResult);
+        Assert.False(element.GetProperty("success").GetBoolean());
+        Assert.Contains("staff requirements", element.GetProperty("message").GetString());
+    }
+
+    [Fact]
+    public async Task DeleteProjectYear_ReturnsDefaultMessage_WhenNoErrorsProvided()
+    {
+        _service.DeleteProjectYearAsync(Arg.Any<string>(), Arg.Any<int>())
+            .Returns(ApiResponseDto<bool>.FailureResponse(null, new ApiMetaDto()));
+
+        var result = await _controller.DeleteProjectYear("2024/001", 1);
+
+        var jsonResult = Assert.IsType<JsonResult>(result);
+        var element = GetJsonResultElement(jsonResult);
+        Assert.False(element.GetProperty("success").GetBoolean());
+        Assert.Equal("Failed to delete project year.", element.GetProperty("message").GetString());
+    }
+
+    #endregion
+
+    #region GetYearTotals Tests
+
+    [Fact]
+    public async Task GetYearTotals_ReturnsJsonWithTotals()
+    {
+        var staffDto = new StaffRequirementDto { StaffCost = 100d };
+        var pagedResult = new PaginatedResult<StaffRequirementDto>(new List<StaffRequirementDto> { staffDto }, 1);
+        _service.GetStaffRequirementsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<QueryParameters<string>>())
+            .Returns(ApiResponseDto<PaginatedResult<StaffRequirementDto>>.SuccessResponse(pagedResult));
+        _mapper.Map<List<StaffRequirementItem>>(Arg.Any<IEnumerable<StaffRequirementDto>>())
+            .Returns(new List<StaffRequirementItem> { new() { StaffCost = 100d } });
+
+        _service.GetTestRequirementsAsync(Arg.Any<string>(), Arg.Any<int>())
+            .Returns(ApiResponseDto<List<TestRequirementDto>>.SuccessResponse(new List<TestRequirementDto>()));
+        _mapper.Map<List<TestRequirementItem>>(Arg.Any<IEnumerable<TestRequirementDto>>())
+            .Returns(new List<TestRequirementItem>());
+
+        _service.GetAnimalRequirementsAsync(Arg.Any<string>(), Arg.Any<int>())
+            .Returns(ApiResponseDto<List<AnimalRequirementDto>>.SuccessResponse(new List<AnimalRequirementDto>()));
+        _mapper.Map<List<AnimalRequirementItem>>(Arg.Any<IEnumerable<AnimalRequirementDto>>())
+            .Returns(new List<AnimalRequirementItem>());
+
+        _service.GetAdditionalCostsAsync(Arg.Any<string>(), Arg.Any<int>())
+            .Returns(ApiResponseDto<List<AdditionalCostDto>>.SuccessResponse(new List<AdditionalCostDto>()));
+        _mapper.Map<List<AdditionalCostItem>>(Arg.Any<IEnumerable<AdditionalCostDto>>())
+            .Returns(new List<AdditionalCostItem>());
+
+        var result = await _controller.GetYearTotals("2024/001", 1);
+
+        var jsonResult = Assert.IsType<JsonResult>(result);
+        var element = GetJsonResultElement(jsonResult);
+        Assert.True(element.TryGetProperty("staffCostTotal", out _));
+        Assert.True(element.TryGetProperty("testCostTotal", out _));
+        Assert.True(element.TryGetProperty("animalCostTotal", out _));
+        Assert.True(element.TryGetProperty("additionalCostTotal", out _));
+        Assert.True(element.TryGetProperty("grandTotal", out _));
+    }
+
+    #endregion
+
+    #region Delete Failure Tests
+
+    [Fact]
+    public async Task DeleteStaff_ReturnsFailure_WhenServiceFails()
+    {
+        _service.DeleteStaffRequirementAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int>())
+            .Returns(ApiResponseDto<bool>.SuccessResponse(false));
+
+        var result = await _controller.DeleteStaff("2024/001", 2024, 1);
+
+        var jsonResult = Assert.IsType<JsonResult>(result);
+        Assert.False(GetJsonResultElement(jsonResult).GetProperty("success").GetBoolean());
+    }
+
+    [Fact]
+    public async Task DeleteTest_ReturnsFailure_WhenServiceFails()
+    {
+        _service.DeleteTestRequirementAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<string>())
+            .Returns(ApiResponseDto<bool>.SuccessResponse(false));
+
+        var result = await _controller.DeleteTest("2024/001", 2024, "TC001");
+
+        var jsonResult = Assert.IsType<JsonResult>(result);
+        Assert.False(GetJsonResultElement(jsonResult).GetProperty("success").GetBoolean());
+    }
+
+    [Fact]
+    public async Task DeleteAnimal_ReturnsFailure_WhenServiceFails()
+    {
+        _service.DeleteAnimalRequirementAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int>())
+            .Returns(ApiResponseDto<bool>.SuccessResponse(false));
+
+        var result = await _controller.DeleteAnimal("2024/001", 2024, 1);
+
+        var jsonResult = Assert.IsType<JsonResult>(result);
+        Assert.False(GetJsonResultElement(jsonResult).GetProperty("success").GetBoolean());
+    }
+
+    [Fact]
+    public async Task DeleteAdditionalCost_ReturnsFailure_WhenServiceFails()
+    {
+        _service.DeleteAdditionalCostAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int>())
+            .Returns(ApiResponseDto<bool>.SuccessResponse(false));
+
+        var result = await _controller.DeleteAdditionalCost("2024/001", 2024, 1);
+
+        var jsonResult = Assert.IsType<JsonResult>(result);
+        Assert.False(GetJsonResultElement(jsonResult).GetProperty("success").GetBoolean());
+    }
+
+    #endregion
+
+    #region UpdateProjectYearRate Failure
+
+    [Fact]
+    public async Task UpdateProjectYearRate_ReturnsFailure_WhenServiceFails()
+    {
+        _mapper.Map<ProjectYearDto>(Arg.Any<ProjectYearRateItem>()).Returns(new ProjectYearDto());
+        _service.UpdateProjectYearAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<ProjectYearDto>())
+            .Returns(ApiResponseDto<ProjectYearDto>.FailureResponse(null, new ApiMetaDto()));
+
+        var result = await _controller.UpdateProjectYearRate("2024/001", 1, new ProjectYearRateItem());
+
+        var jsonResult = Assert.IsType<JsonResult>(result);
+        Assert.False(GetJsonResultElement(jsonResult).GetProperty("success").GetBoolean());
+    }
+
+    #endregion
+
+    #region AddProjectYearGet with Programme
+
+    [Fact]
+    public void AddProjectYearGet_IncludesProgramme_WhenProvided()
+    {
+        var result = _controller.AddProjectYearGet("2024/001", 2, "DEFRA-PROG");
+
+        var partialResult = Assert.IsType<PartialViewResult>(result);
+        var model = Assert.IsType<ProjectYearRateItem>(partialResult.Model);
+        Assert.Equal("DEFRA-PROG", model.Programme);
+    }
+
+    [Fact]
+    public void AddProjectYearGet_ProgrammeIsNull_WhenNotProvided()
+    {
+        var result = _controller.AddProjectYearGet("2024/001", 2);
+
+        var partialResult = Assert.IsType<PartialViewResult>(result);
+        var model = Assert.IsType<ProjectYearRateItem>(partialResult.Model);
+        Assert.Null(model.Programme);
     }
 
     #endregion

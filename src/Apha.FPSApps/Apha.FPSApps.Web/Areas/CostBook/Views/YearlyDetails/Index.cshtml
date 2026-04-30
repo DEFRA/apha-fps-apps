@@ -4,6 +4,7 @@
     var projectId = Model.ProjectHeaderDto.ProjectId;
     var selectedYear = Model.SelectedYear;
     var isDefra = Model.ProjectHeaderDto.IsDefraProject == 1;
+    var programme = (Model.ProjectHeaderDto.Programme ?? "").ToLower() == "comm";
 }
 <div class="govuk-template__body govuk-frontend-supported project-requirement-page">
     <div class="govuk-grid-row sup_margin_left_right_0 govuk-!-margin-top-2">
@@ -100,14 +101,20 @@
                                                     <thead>
                                                         <tr>
                                                             <th>Project Years</th>
+                                                            <th>Action</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody id="userTableBody">
                                                         @foreach (var year in Model.ProjectYears)
                                                         {
                                                             <tr class="project-year-row @(year == Model.SelectedYear ? "selected-table-rowbg" : "")" data-year="@year" style="cursor:pointer;">
-                                                                <td>@year</td>
-                                                            </tr>
+                                                                    <td>@year</td>
+                                                                    <td>
+                                                                        <button type="button" class="btn btn-sm delete-row-btn" data-year="@year" onclick="deletetblProjectYear(this)">
+                                                                            <img src="/images/delete_gridicon.svg" alt="Delete icon" width="20" height="20" title="Delete Project Year">
+                                                                        </button>
+                                                                    </td>
+                                                                </tr>
                                                         }
                                                     </tbody>
                                                 </table>
@@ -120,7 +127,7 @@
                                     <!-- Tab panels -->
                                     <div class="permissions-section">
 
-                                        <div class="govuk-tabs" data-module="govuk-tabs">
+                                        <div class="govuk-tabs">
                                             <ul class="govuk-tabs__list">
                                                 <li class="govuk-tabs__list-item govuk-tabs__list-item--selected">
                                                     <a class="govuk-tabs__tab" href="#Staff-tab">
@@ -142,48 +149,75 @@
                                                         Additional Costs
                                                     </a>
                                                 </li>
+                                                @if (programme)
+                                                {
+                                                    
+                                                    <li class="govuk-tabs__list-item">
+                                                        <a class="govuk-tabs__tab" href="#MarkupAndProfit-tab">
+                                                            Markup and Profit
+                                                        </a>
+                                                    </li>
+                                                }
 
-                                                <li class="govuk-tabs__list-item">
-                                                    <a class="govuk-tabs__tab" href="#MarkupAndProfit-tab">
-                                                        Markup and Profit
-                                                    </a>
-                                                </li>
                                             </ul>
-                                            <div>
-                                            <div class="govuk-tabs__panel fps-sr-fixedheader-wrap"
-                                                 id="Staff-tab">
-                                            </div>
+                                            <div class="govuk-tabs__panel " id="Staff-tab">
+                                                <div id="gridContainer_staffGrid" class="tab-grid-scroll fps-sr-fixedheader-wrap"></div>
                                                 <div class="project-total-bar">
-
                                                     <span class="project-total-label-wrap">
-                                                        <span class="govuk-label me-2">
-                                                            Total Staff Cost:
-                                                        </span>
+                                                        <span class="govuk-label me-2">Total Staff Cost:</span>
                                                     </span>
                                                     <span class="project-total-value-wrap">
                                                         <span class="total-amount">
-
-                                                            <input type="text" id="staffTotalAmount"  aria-label="Total Staff Cost" class="govuk-input project-total-input" readonly="">
+                                                            <input type="text" id="staffTotalAmount" aria-label="Total Staff Cost" class="govuk-input project-total-input" readonly="">
                                                         </span>
                                                     </span>
-
                                                 </div>
                                             </div>
 
-                                            <div class="govuk-tabs__panel govuk-tabs__panel--hidden"
-                                                 id="Tests-tab">
+                                            <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="Tests-tab">
+                                                <div id="gridContainer_testGrid" class="tab-grid-scroll fps-sr-fixedheader-wrap"></div>
+                                                <div class="project-total-bar">
+                                                    <span class="project-total-label-wrap">
+                                                        <span class="govuk-label me-2">Total Test Cost:</span>
+                                                    </span>
+                                                    <span class="project-total-value-wrap">
+                                                        <span class="total-amount">
+                                                            <input type="text" id="testTotalAmount" aria-label="Total Test Cost" class="govuk-input project-total-input" readonly="">
+                                                        </span>
+                                                    </span>
+                                                </div>
                                             </div>
 
-                                            <div class="govuk-tabs__panel govuk-tabs__panel--hidden"
-                                                 id="Animals-tab">
+                                            <div class="govuk-tabs__panel govuk-tabs__panel--hidden " id="Animals-tab">
+                                                <div id="gridContainer_animalGrid" class="fps-sr-fixedheader-wrap"></div>
+                                                <div class="project-total-bar">
+                                                    <span class="project-total-label-wrap">
+                                                        <span class="govuk-label me-2">Total Animal Cost:</span>
+                                                    </span>
+                                                    <span class="project-total-value-wrap">
+                                                        <span class="total-amount">
+                                                            <input type="text" id="animalTotalAmount" aria-label="Total Animal Cost" class="govuk-input project-total-input" readonly="">
+                                                        </span>
+                                                    </span>
+                                                </div>
                                             </div>
 
-                                            <div class="govuk-tabs__panel govuk-tabs__panel--hidden"
-                                                 id="AdditionalCosts-tab">
+                                            <div class="govuk-tabs__panel govuk-tabs__panel--hidden " id="AdditionalCosts-tab">
+                                                <div id="gridContainer_additionalCostGrid" class="fps-sr-fixedheader-wrap"></div>
+                                                <div class="project-total-bar">
+                                                    <span class="project-total-label-wrap">
+                                                        <span class="govuk-label me-2">Total Additional Cost:</span>
+                                                    </span>
+                                                    <span class="project-total-value-wrap">
+                                                        <span class="total-amount">
+                                                            <input type="text" id="additionalTotalAmount" aria-label="Total Animal Cost" class="govuk-input project-total-input" readonly="">
+                                                        </span>
+                                                    </span>
+                                                </div>
                                             </div>
 
-                                            <div class="govuk-tabs__panel govuk-tabs__panel--hidden"
-                                                 id="MarkupAndProfit-tab">
+                                            <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="MarkupAndProfit-tab">
+                                                <div id="gridContainer_markupAndProfitGrid"></div>
                                             </div>
 
                                         </div>
@@ -266,11 +300,18 @@
     </div>
 
 </div>
+<style>
+    .tab-grid-scroll {
+        overflow-y: auto;
+        max-height: 400px;
+    }
+</style>
 @section Scripts {
     <script src="~/js/ajax-form-validation.js"></script>
     <script>
         const projectId = '@projectId';
         let selectedYear = @selectedYear;
+        const programme = '@Model.ProjectHeaderDto.Programme';
 
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
@@ -373,10 +414,38 @@
             window.location.href = '@Url.Action("Index", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&selectedYear=' + year;
         }
 
+        function deletetblProjectYear(btn) {
+            var year = parseInt(btn.getAttribute('data-year'), 10);
+            if (!confirm('Delete year ' + year + ' and all its data?')) return;
+            fetch('@Url.Action("DeleteProjectYear", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&year=' + year, {
+                method: 'DELETE',
+                headers: { 'RequestVerificationToken': getAntiForgeryToken() }
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (d.success) {
+                    var row = btn.closest('.project-year-row');
+                    if (row) row.remove();
+                    // If deleted year was the selected year, redirect to first remaining year
+                    if (year === selectedYear) {
+                        var firstRow = document.querySelector('.project-year-row');
+                        if (firstRow) {
+                            selectYear(projectId, parseInt(firstRow.getAttribute('data-year'), 10));
+                        } else {
+                            window.location.href = '@Url.Action("Index", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId);
+                        }
+                    }
+                } else {
+                    alert(d.message || 'Failed to delete project year.');
+                }
+            })
+            .catch(function(err) { console.error('Delete year error:', err); alert('Failed to delete project year.'); });
+        }
+
         function addProjectYear(projectId) {
             var years = Array.from(document.querySelectorAll('.project-year-row')).map(function(r) { return parseInt(r.getAttribute('data-year'), 10); });
             var nextYear = years.length > 0 ? Math.max.apply(null, years) + 1 : new Date().getFullYear();
-            fetch('@Url.Action("AddProjectYear", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&year=' + nextYear)
+            fetch('@Url.Action("AddProjectYear", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&year=' + nextYear + '&programme=' + encodeURIComponent(programme))
                 .then(function(r) { return r.text(); })
                 .then(function(html) {
                     document.getElementById('project1ModalContent').innerHTML = html;
@@ -393,7 +462,7 @@
                 fetch('@Url.Action("AddProjectYear", "YearlyDetails", new { area = "CostBook" })', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': getAntiForgeryToken() },
-                    body: new URLSearchParams(new FormData(form)).toString() + '&projectId=' + encodeURIComponent(pid) + '&year=' + year
+                    body: new URLSearchParams(new FormData(form)).toString() + '&projectId=' + encodeURIComponent(pid) + '&year=' + year + '&programme=' + encodeURIComponent(programme)
                 })
                 .then(function(r) { return r.json(); })
                 .then(function(data) {
@@ -880,9 +949,11 @@
             .then(function (response) { return response.text(); })
             .then(function (html) {
                 var gridId = tabGridIds[tabId];
-                panel.innerHTML = '<div id="gridContainer_' + gridId + '">' + html + '</div>';
+                var gridContainer = document.getElementById('gridContainer_' + gridId);
+                if (!gridContainer) return;
+                gridContainer.innerHTML = html;
                 // Execute <script> tags injected via innerHTML (needed for _DataGrid event handlers)
-                panel.querySelectorAll('script').forEach(function (oldScript) {
+                gridContainer.querySelectorAll('script').forEach(function (oldScript) {
                     var newScript = document.createElement('script');
                     if (oldScript.src) {
                         newScript.src = oldScript.src;
@@ -892,7 +963,7 @@
                     oldScript.parentNode.replaceChild(newScript, oldScript);
                 });
                 // Remove filter rows from the loaded grid
-                removeFilterRows(panel);
+                removeFilterRows(gridContainer);
             })
             .catch(function (err) {
                 console.error('Failed to load grid for ' + tabId, err);
@@ -923,13 +994,19 @@
             })
             .then(function (r) { return r.json(); })
             .then(function (d) {
-                document.getElementById('year-total-staff').value = formatGbp(d.staffCostTotal);
-                document.getElementById('staffTotalAmount').value = formatGbp(d.staffCostTotal);
-                
-                document.getElementById('year-total-test').value = formatGbp(d.testCostTotal);
-                document.getElementById('year-total-animal').value = formatGbp(d.animalCostTotal);
+                document.getElementById('year-total-staff').value     = formatGbp(d.staffCostTotal);
+                document.getElementById('staffTotalAmount').value      = formatGbp(d.staffCostTotal);
+
+                document.getElementById('year-total-test').value      = formatGbp(d.testCostTotal);
+                document.getElementById('testTotalAmount').value       = formatGbp(d.testCostTotal);
+
+                document.getElementById('year-total-animal').value    = formatGbp(d.animalCostTotal);
+                document.getElementById('animalTotalAmount').value     = formatGbp(d.animalCostTotal);
+
                 document.getElementById('year-total-additional').value = formatGbp(d.additionalCostTotal);
-                document.getElementById('year-total-grand').value = formatGbp(d.grandTotal);
+                document.getElementById('additionalTotalAmount').value  = formatGbp(d.additionalCostTotal);
+
+                document.getElementById('year-total-grand').value     = formatGbp(d.grandTotal);
             })
             .catch(function (err) { console.error('Failed to load year totals', err); });
         }
@@ -1005,18 +1082,23 @@
                             loadTabGrid(tabId);
                         }
 
+                        // Always refresh totals when switching tabs
+                        loadYearTotals();
+
                         // Update active tab styling
                         document.querySelectorAll('.govuk-tabs__list-item').forEach(function (li) {
                             li.classList.remove('govuk-tabs__list-item--selected');
                         });
                         link.closest('.govuk-tabs__list-item').classList.add('govuk-tabs__list-item--selected');
 
-                        // Show / hide panels
+                        // Show / hide panels — explicitly set display to override GOV.UK CSS
                         document.querySelectorAll('.govuk-tabs__panel').forEach(function (p) {
                             if (p.id === tabId) {
                                 p.classList.remove('govuk-tabs__panel--hidden');
+                                p.style.display = 'block';
                             } else {
                                 p.classList.add('govuk-tabs__panel--hidden');
+                                p.style.display = 'none';
                             }
                         });
 
@@ -1026,7 +1108,18 @@
 
                 // Load the Staff tab on initial page load since it is selected by default
                 if (selectedYear > 0) {
+                    // Ensure all panels are hidden first, then show Staff
+                    document.querySelectorAll('.govuk-tabs__panel').forEach(function (p) {
+                        p.classList.add('govuk-tabs__panel--hidden');
+                        p.style.display = 'none';
+                    });
+                    var staffPanel = document.getElementById('Staff-tab');
+                    if (staffPanel) {
+                        staffPanel.classList.remove('govuk-tabs__panel--hidden');
+                        staffPanel.style.display = 'block';
+                    }
                     loadStaffGrid();
+                    loadYearTotals();
                 }
 
                 // Attach click handlers to project year rows

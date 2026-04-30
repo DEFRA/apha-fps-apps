@@ -65,6 +65,9 @@ public class YearlyDetailsService : IYearlyDetailsService
         return _mapper.Map<ProjectYearDto>(updated);
     }
 
+    public async Task<(bool Deleted, IReadOnlyList<string> Errors)> DeleteProjectYearAsync(string projectId, int year)
+        => await _projectYearRepo.DeleteProjectYearAsync(projectId, year);
+
     // ── Staff ─────────────────────────────────────────────────────────────────────
 
     public async Task<PaginatedResult<StaffRequirementDto>> GetStaffRequirementsAsync(
