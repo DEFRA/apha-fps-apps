@@ -51,9 +51,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.Costbook.ProjectsControllerTest
         {
             var json = JsonSerializer.Serialize(jsonResult.Value);
             return JsonSerializer.Deserialize<JsonElement>(json);
-        }
-
-       
+        }       
 
         #region Index Tests
 
@@ -262,7 +260,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.Costbook.ProjectsControllerTest
         {
             // Arrange
             var viewModel = new ProjectCreateEditViewModel();
-            _controller.ModelState.AddModelError("ProjectId", "Required");
+            _controller.ModelState.AddModelError("ProjectTitle", "Required"); // "ProjectId" is removed by the controller, use a different key
 
             _programService.GetAllProgramsAsync().Returns(ApiResponseDto<List<ProgramDto>>.SuccessResponse(new List<ProgramDto>()));
             _customerService.GetAllCustomersAsync().Returns(ApiResponseDto<List<CustomerDto>>.SuccessResponse(new List<CustomerDto>()));
@@ -409,24 +407,25 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.Costbook.ProjectsControllerTest
         #region Delete Tests
 
         [Fact]
-        public async Task Delete_Get_WithValidId_ReturnsViewWithProject()
+        public async Task DeleteConfirmed_WithValidId_ReturnsJsonSuccessTrue()
         {
             // Arrange
             var projectId = "P001";
-            var projectDto = new ProjectDto { ProjectId = projectId, ProjectTitle = "Test Project" };
-            var serviceResponse = ApiResponseDto<ProjectDto>.SuccessResponse(projectDto);
-            var viewModel = new ProjectDetailViewModel { ProjectId = projectId, Projecttitle = "Test Project" };
+            var serviceResponse = ApiResponseDto<bool>.SuccessResponse(true);
 
-            _projectService.GetProjectByIdAsync(projectId).Returns(serviceResponse);
-            _mapper.Map<ProjectDetailViewModel>(projectDto).Returns(viewModel);
+            _projectService.DeleteProjectAsync(projectId).Returns(serviceResponse);
 
             // Act
-            var result = await _controller.Delete(projectId);
+            var result = await _controller.DeleteConfirmed(projectId);
 
             // Assert
-            var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<ProjectDetailViewModel>(viewResult.Model);
-            Assert.Equal(projectId, model.ProjectId);
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var json = JsonSerializer.Serialize(jsonResult.Value);
+            using var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
+
+            Assert.True(root.GetProperty("success").GetBoolean());
+            Assert.Equal("Project deleted successfully!", root.GetProperty("message").GetString());
         }
 
         [Fact]
@@ -458,7 +457,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.Costbook.ProjectsControllerTest
             var jsonResult = Assert.IsType<JsonResult>(result);
             var value = GetJsonResultElement(jsonResult);
             Assert.False(value.GetProperty("success").GetBoolean());
-            Assert.Equal("Project ID is required", value.GetProperty("message").GetString());
+            Assert.Equal("Project ID is required.", value.GetProperty("message").GetString());
         }
 
         [Fact]

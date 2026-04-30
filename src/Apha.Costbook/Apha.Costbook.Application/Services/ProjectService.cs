@@ -41,16 +41,28 @@ namespace Apha.Costbook.Application.Services
         }
         public async Task<ProjectDto> AddProjectAsync(ProjectDto dto)
         {
-          
-            var validationMsg = ValidateProject(dto);
-            if (!string.IsNullOrEmpty(validationMsg))
-                throw new ArgumentException(validationMsg);
-                        
+            var errors = new List<BusinessValidationError>();
+
+            if (dto.Startdate == null)
+                errors.Add(new BusinessValidationError("Please enter Start Date", "Please enter Start Date"));           
+
+            if (string.IsNullOrEmpty(dto.ProjectTitle))
+                errors.Add(new BusinessValidationError("Please enter a title", "Please enter a title"));
+
+            if (!string.IsNullOrEmpty(dto.ProjectTitle) && dto.ProjectTitle.Length > 255)
+                errors.Add(new BusinessValidationError("Please enter a title of less than 255 characters", "Please enter a title of less than 255 characters"));
+
+            if (!dto.IsDefraProject.HasValue)
+                errors.Add(new BusinessValidationError("Please choose Defra/Non-Defra", "Please choose Defra/Non-Defra"));
+
+            if (errors.Count > 0)
+                throw new BusinessValidationErrorException(errors);
+
             if (string.IsNullOrEmpty(dto.ProjectId))
             {
                 dto.ProjectId = await GetNextProjectNumberAsync("");
             }
-            
+
             if (!dto.Inflation.HasValue)
                 dto.Inflation = 1;
 
