@@ -19,6 +19,7 @@ public class YearlyDetailsControllerTests
     private readonly ICostBookYearlyDetailsService _service;
     private readonly IMapper _mapper;
     private readonly YearlyDetailsController _controller;
+    private static readonly string[] value = ["WgGrade is required."];
 
     public YearlyDetailsControllerTests()
     {
@@ -1571,14 +1572,14 @@ public class YearlyDetailsControllerTests
 
         var validationDetails = new Dictionary<string, string[]>
         {
-            { "WgGrade", new[] { "WgGrade is required." } }
+            { "WgGrade", value }
         };
         var apiError = new ApiErrorDto { Code = "VALIDATION", Message = "Validation failed" };
         apiError.Details = validationDetails;
 
         _service.AddStaffRequirementAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<StaffRequirementDto>())
             .Returns(ApiResponseDto<StaffRequirementDto>.FailureResponse(
-                new List<ApiErrorDto> { apiError }, new ApiMetaDto()));
+                [apiError], new ApiMetaDto()));
 
         var result = await _controller.CreateStaff("2024/001", 2024, new StaffRequirementItem { WgGrade = "HEO" });
 
