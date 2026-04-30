@@ -667,7 +667,7 @@ public class CostBookYearlyDetailsApiClientTests
     {
         var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
         var staffResList = new List<StaffRequirementRes> { new() { SrIdentity = 1 } };
-        var paginationRes = new PaginationRes<StaffRequirementRes> { Data = staffResList, PaginationData = null };
+        var paginationRes = new PaginationRes<StaffRequirementRes> { Data = staffResList, PaginationData = null! };
         var apiResponse = new ApiResponse<PaginationRes<StaffRequirementRes>> { Success = true, Data = paginationRes };
         var mappedDtos = new List<StaffRequirementDto> { new() { SrIdentity = 1 } };
 
