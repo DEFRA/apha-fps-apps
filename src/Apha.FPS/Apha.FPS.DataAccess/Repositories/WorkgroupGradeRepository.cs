@@ -3,6 +3,8 @@ using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using System.Dynamic;
 using System.Linq.Expressions;
 
 namespace Apha.FPS.DataAccess.Repositories
@@ -152,12 +154,25 @@ namespace Apha.FPS.DataAccess.Repositories
             if (string.IsNullOrWhiteSpace(filter) || filter.Trim() == "{}")
                 return query;
 
-            var lf = filter.ToLower();
-            return query.Where(e =>
-                e.WgGrade.ToLower().Contains(lf) ||
-                e.ProfitCentreGrade.ToLower().Contains(lf) ||
-                e.GradeCode.ToLower().Contains(lf) ||
-                e.Workgroup.ToLower().Contains(lf));
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            if (filterModel == null)
+                return query;
+
+            var dict = (IDictionary<string, object>)filterModel;
+
+            if (dict.TryGetValue("WgGrade", out var wgGrade) && wgGrade != null)
+                query = query.Where(e => e.WgGrade.Contains(wgGrade.ToString()!));
+
+            if (dict.TryGetValue("ProfitCentreGrade", out var pcGrade) && pcGrade != null)
+                query = query.Where(e => e.ProfitCentreGrade.Contains(pcGrade.ToString()!));
+
+            if (dict.TryGetValue("GradeCode", out var gradeCode) && gradeCode != null)
+                query = query.Where(e => e.GradeCode.Contains(gradeCode.ToString()!));
+
+            if (dict.TryGetValue("Workgroup", out var workgroup) && workgroup != null)
+                query = query.Where(e => e.Workgroup.Contains(workgroup.ToString()!));
+
+            return query;
         }
     }
 }
