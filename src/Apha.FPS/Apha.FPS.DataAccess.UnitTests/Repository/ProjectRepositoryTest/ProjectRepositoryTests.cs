@@ -749,5 +749,141 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         }
 
         #endregion
+
+        #region UpdatePactPortfolioDetailsAsync Tests
+
+        [Fact]
+        public async Task UpdatePactPortfolioDetailsAsync_MatchingProjectAndYear_UpdatesFieldsAndReturnsEntity()
+        {
+            // Arrange
+            var projects = new List<Project>
+            {
+                new()
+                {
+                    ParentProject = "PP001", FpsYear = 2024,
+                    ProjectTitle = "Old Title", Program = "P001", Manager = "Old Manager",
+                    Finished = 0, Comments = "Old Comment", BudgetCvl = 100m, TransferIncome = 200m,
+                    Customer = "DEFRA", ProjectStatus = "A", Disease = "D", Contract = "C", IncomeAccountCode = "IA"
+                }
+            };
+            var repo = CreateRepository(projects: projects, fpsYear: 2024);
+            var updated = new Project
+            {
+                ParentProject = "PP001", ProjectTitle = "New Title", Program = "P002", Manager = "New Manager",
+                Finished = 1, Comments = "New Comment", BudgetCvl = 500m, TransferIncome = 600m,
+                Customer = "DEFRA", ProjectStatus = "A", Disease = "D", Contract = "C", IncomeAccountCode = "IA"
+            };
+
+            // Act
+            var result = await repo.UpdatePactPortfolioDetailsAsync(updated);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("New Title", result.ProjectTitle);
+            Assert.Equal("P002", result.Program);
+            Assert.Equal("New Manager", result.Manager);
+            Assert.Equal((short)1, result.Finished);
+            Assert.Equal("New Comment", result.Comments);
+            Assert.Equal(500m, result.BudgetCvl);
+            Assert.Equal(600m, result.TransferIncome);
+        }
+
+        [Fact]
+        public async Task UpdatePactPortfolioDetailsAsync_ProjectNotFound_ReturnsNull()
+        {
+            // Arrange
+            var projects = new List<Project>
+            {
+                new()
+                {
+                    ParentProject = "PP001", FpsYear = 2024,
+                    ProjectTitle = "Title", Program = "P001", Customer = "DEFRA",
+                    ProjectStatus = "A", Disease = "D", Contract = "C", IncomeAccountCode = "IA"
+                }
+            };
+            var repo = CreateRepository(projects: projects, fpsYear: 2024);
+            var updated = new Project { ParentProject = "PP_NONEXISTENT" };
+
+            // Act
+            var result = await repo.UpdatePactPortfolioDetailsAsync(updated);
+
+            // Assert
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public async Task UpdatePactPortfolioDetailsAsync_WrongFpsYear_ReturnsNull()
+        {
+            // Arrange
+            var projects = new List<Project>
+            {
+                new()
+                {
+                    ParentProject = "PP001", FpsYear = 2023,
+                    ProjectTitle = "Title", Program = "P001", Customer = "DEFRA",
+                    ProjectStatus = "A", Disease = "D", Contract = "C", IncomeAccountCode = "IA"
+                }
+            };
+            var repo = CreateRepository(projects: projects, fpsYear: 2024); // context year = 2024, row year = 2023
+            var updated = new Project { ParentProject = "PP001" };
+
+            // Act
+            var result = await repo.UpdatePactPortfolioDetailsAsync(updated);
+
+            // Assert
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public async Task UpdatePactPortfolioDetailsAsync_EmptyRepository_ReturnsNull()
+        {
+            // Arrange
+            var repo = CreateRepository(projects: new List<Project>(), fpsYear: 2024);
+            var updated = new Project { ParentProject = "PP001" };
+
+            // Act
+            var result = await repo.UpdatePactPortfolioDetailsAsync(updated);
+
+            // Assert
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public async Task UpdatePactPortfolioDetailsAsync_MultipleProjects_UpdatesOnlyMatchingOne()
+        {
+            // Arrange
+            var projects = new List<Project>
+            {
+                new()
+                {
+                    ParentProject = "PP001", FpsYear = 2024, ProjectTitle = "Title A",
+                    Program = "P001", Customer = "DEFRA", ProjectStatus = "A",
+                    Disease = "D", Contract = "C", IncomeAccountCode = "IA"
+                },
+                new()
+                {
+                    ParentProject = "PP002", FpsYear = 2024, ProjectTitle = "Title B",
+                    Program = "P001", Customer = "DEFRA", ProjectStatus = "A",
+                    Disease = "D", Contract = "C", IncomeAccountCode = "IA"
+                }
+            };
+            var repo = CreateRepository(projects: projects, fpsYear: 2024);
+            var updated = new Project
+            {
+                ParentProject = "PP001", ProjectTitle = "Updated Title",
+                Program = "P002", Customer = "DEFRA", ProjectStatus = "A",
+                Disease = "D", Contract = "C", IncomeAccountCode = "IA"
+            };
+
+            // Act
+            var result = await repo.UpdatePactPortfolioDetailsAsync(updated);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("PP001", result.ParentProject);
+            Assert.Equal("Updated Title", result.ProjectTitle);
+        }
+
+        #endregion
     }
 }

@@ -21,19 +21,21 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             _mapper = mapper;
         }
 
+        private const string InternalCodeError = "INTERNAL_ERROR";
+
         public async Task<ApiResponseDto<List<ProjectSubContractDto>>> GetPagedProjectSubContractsAsync(QueryParameters<string> query, string? project)
         {
             string baseUrl = string.IsNullOrWhiteSpace(project)
                 ? PactApiEndpoints.GetPagedProjectSubContracts
                 : QueryStringHelper.AddQueryString(PactApiEndpoints.GetPagedProjectSubContracts, new { project });
             string url = QueryStringHelper.AddQueryString(baseUrl, query);
-           
+
             var response = await _http.GetAsync<List<ProjectSubContractRes>>(url);
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<List<ProjectSubContractDto>>>(response);
 
             var dto = _mapper.Map<ApiResponseDto<List<ProjectSubContractDto>>>(response);
-            return ApiResponseDto<List<ProjectSubContractDto>>.FailureResponse(dto.Errors, dto.Meta);
+            return ApiResponseDto<List<ProjectSubContractDto>>.FailureResponse(dto.Errors, dto.Meta ?? new ApiMetaDto());
         }
 
         public async Task<ApiResponseDto<ProjectSubContractDto>> GetByIdAsync(int subContCounter)
@@ -44,7 +46,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
                 return _mapper.Map<ApiResponseDto<ProjectSubContractDto>>(response);
 
             var dto = _mapper.Map<ApiResponseDto<ProjectSubContractDto>>(response);
-            return ApiResponseDto<ProjectSubContractDto>.FailureResponse(dto.Errors, dto.Meta);
+            return ApiResponseDto<ProjectSubContractDto>.FailureResponse(dto.Errors, dto.Meta ?? new ApiMetaDto());
         }
 
         public async Task<ApiResponseDto<ProjectSubContractDto>> CreateAsync(ProjectSubContractDto dto)
@@ -56,7 +58,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
                 return _mapper.Map<ApiResponseDto<ProjectSubContractDto>>(response);
 
             var responseDto = _mapper.Map<ApiResponseDto<ProjectSubContractDto>>(response);
-            return ApiResponseDto<ProjectSubContractDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            return ApiResponseDto<ProjectSubContractDto>.FailureResponse(responseDto.Errors, responseDto.Meta ?? new ApiMetaDto());
         }
 
         public async Task<ApiResponseDto<ProjectSubContractDto>> UpdateAsync(int subContCounter, ProjectSubContractDto dto)
@@ -68,7 +70,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
                 return _mapper.Map<ApiResponseDto<ProjectSubContractDto>>(response);
 
             var responseDto = _mapper.Map<ApiResponseDto<ProjectSubContractDto>>(response);
-            return ApiResponseDto<ProjectSubContractDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            return ApiResponseDto<ProjectSubContractDto>.FailureResponse(responseDto.Errors, responseDto.Meta ?? new ApiMetaDto());
         }
 
         public async Task<ApiResponseDto<bool>> DeleteAsync(int subContCounter)
@@ -79,7 +81,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
                 return _mapper.Map<ApiResponseDto<bool>>(response);
 
             var dto = _mapper.Map<ApiResponseDto<bool>>(response);
-            return ApiResponseDto<bool>.FailureResponse(dto.Errors, dto.Meta);
+            return ApiResponseDto<bool>.FailureResponse(dto.Errors, dto.Meta ?? new ApiMetaDto());
         }
 
         public async Task<ApiResponseDto<decimal>> GetTotalAmountAsync(string? project)
@@ -93,7 +95,45 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
                 return _mapper.Map<ApiResponseDto<decimal>>(response);
 
             var dto = _mapper.Map<ApiResponseDto<decimal>>(response);
-            return ApiResponseDto<decimal>.FailureResponse(dto.Errors, dto.Meta);
+            return ApiResponseDto<decimal>.FailureResponse(dto.Errors, dto.Meta ?? new ApiMetaDto());
+        }
+
+        public async Task<ApiResponseDto<List<ProjectSubContractDto>>> GetFpsProjectSubContractsAsync(QueryParameters<string> query, string? project)
+        {
+            string baseUrl = string.IsNullOrWhiteSpace(project)
+                ? PactApiEndpoints.GetFpsProjectSubContracts
+                : QueryStringHelper.AddQueryString(PactApiEndpoints.GetFpsProjectSubContracts, new { project });
+            string url = QueryStringHelper.AddQueryString(baseUrl, query);
+
+            var response = await _http.GetAsync<List<ProjectSubContractRes>>(url);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<ProjectSubContractDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<ProjectSubContractDto>>>(response);
+            return ApiResponseDto<List<ProjectSubContractDto>>.FailureResponse(dto.Errors, dto.Meta ?? new ApiMetaDto());
+        }
+
+        public async Task<ApiResponseDto<decimal>> GetFpsProjectSubContractTotalAmountAsync(string? project)
+        {
+            string url = string.IsNullOrWhiteSpace(project)
+                ? PactApiEndpoints.GetFpsProjectSubContractTotalAmount
+                : QueryStringHelper.AddQueryString(PactApiEndpoints.GetFpsProjectSubContractTotalAmount, new { project });
+
+            try
+            {
+                var response = await _http.GetAsync<decimal?>(url);
+                if (response.Success)
+                    return _mapper.Map<ApiResponseDto<decimal>>(response);
+
+                var dto = _mapper.Map<ApiResponseDto<decimal>>(response);
+                return ApiResponseDto<decimal>.FailureResponse(dto.Errors, dto.Meta ?? new ApiMetaDto());
+            }
+            catch (InvalidOperationException ex)
+            {
+                return ApiResponseDto<decimal>.FailureResponse(
+                    new List<ApiErrorDto> { new ApiErrorDto { Code = InternalCodeError, Message = ex.Message } },
+                    new ApiMetaDto { CorrelationId = Guid.NewGuid().ToString(), TimestampUtc = DateTime.UtcNow });
+            }
         }
     }
 }
