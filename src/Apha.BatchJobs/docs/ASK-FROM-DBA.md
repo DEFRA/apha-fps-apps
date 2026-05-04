@@ -274,3 +274,77 @@ Please confirm canonical cloud contract for `mabarchive.my_tbladditionalcosts.ac
 1. Should this column be backed by a sequence/default in canonical DDL?
 2. If yes, provide the expected default expression and sequence ownership settings.
 3. If no, confirm loader/application is expected to supply `ac_counter` explicitly.
+
+## Engineering Change Log Delta (2026-05-04)
+
+### DDL Executed by Engineering
+
+No permanent DDL was executed in local PostgreSQL as part of this update.
+
+- No `CREATE TABLE`
+- No `ALTER TABLE`
+- No `DROP TABLE`
+- No `CREATE VIEW` / `ALTER VIEW`
+
+### DB Runtime Contract Changes Applied in Application Layer
+
+1. Totals rebuild delete scope was changed to year-scoped delete only:
+  - `DELETE FROM fps.fpsyeartotals WHERE fpsyear = @year`
+  - This replaces prior full-table delete behavior.
+
+2. Totals rebuild joins are now year-isolated:
+  - Join condition now requires both `parentproject` and `fpsyear` for all four totals source views:
+    - `fps.qrytotaladditionalcosts`
+    - `fps.qrytotalanimalcosts`
+    - `fps.qrytotalstaffcosts`
+    - `fps.qrytotaltestcosts`
+
+3. Strict year-isolation guard was enabled by configuration (`MabArchive.StrictYearIsolation=true`):
+  - Before totals rebuild executes, runtime validates that each `qrytotal*costs` view exposes `fpsyear`.
+  - If any view is missing `fpsyear`, job fails fast with explicit error.
+
+4. Archive delete behavior was hardened to fail-fast:
+  - Any table delete failure now throws (no warn-and-continue).
+  - `mabarchive.g_tlkpproject` project-key delete also throws on failure.
+
+5. Partial refresh observability was improved:
+  - `mabarchive.my_tlkpproject_all` refresh now logs both delete row count and insert row count.
+
+### Runtime Validation Outcome (Branch Parity Runs)
+
+1. Jan-Apr branch (`MABARCHIVE_TEST_UTCNOW=2026-03-15`) succeeded in local runtime.
+2. May-Dec branch (`MABARCHIVE_TEST_UTCNOW=2026-05-15`) failed fast by design due to strict-year-isolation guard.
+3. Failure reason:
+  - Missing `fpsyear` in all four `qrytotal*costs` views:
+    - `qrytotaladditionalcosts`
+    - `qrytotalanimalcosts`
+    - `qrytotalstaffcosts`
+    - `qrytotaltestcosts`
+
+### DBA Action Required (Now Blocking May-Dec Full Cycle)
+
+Please provide canonical view definitions (or update views) so all four `qrytotal*costs` objects include `fpsyear` and remain safe for year-isolated joins.
+
+Requested confirmation artifacts:
+1. View DDL for each of the four views.
+2. Column metadata showing at least: `jobcode`, `fpsyear`, and the respective total column.
+3. Any indexing/performance guidance for these view sources to keep nightly totals rebuild stable.
+
+### Local Engineering Hotfix Applied (2026-05-04)
+
+For local parity testing only, engineering updated local `dbscript` view definitions so these views now project `fpsyear`:
+- `fps.qrytotaladditionalcosts`
+- `fps.qrytotalanimalcosts`
+- `fps.qrytotalstaffcosts`
+- `fps.qrytotaltestcosts`
+
+Local DB apply status:
+- Executed in local PostgreSQL via `CREATE OR REPLACE VIEW` for all four views.
+- Purpose: unblock strict year-isolated joins in MABArchive totals rebuild for local parity validation.
+
+This is a local contract alignment step to support strict year-isolated joins in totals rebuild.
+
+DBA follow-up still required:
+1. Apply/confirm the same `fpsyear` projection in canonical cloud view definitions.
+2. Confirm canonical join logic used to derive `fpsyear` in these aggregate views.
+3. Re-export canonical metadata after change so cloud parity references stay accurate.

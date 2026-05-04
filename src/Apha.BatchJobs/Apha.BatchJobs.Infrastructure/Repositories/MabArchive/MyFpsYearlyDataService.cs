@@ -9,11 +9,48 @@ namespace Apha.BatchJobs.Infrastructure.Repositories.MabArchive;
 /// <summary>
 /// Implementation of IMyFpsYearlyDataService.
 /// Manages yearly FPS archive data operations (delete, load, refresh).
+/// Contract: delete/load/refresh operations are designed to run inside the orchestration transaction
+/// provided by the caller so the full year cycle remains atomic.
 /// </summary>
 public sealed class MyFpsYearlyDataService : IMyFpsYearlyDataService
 {
     private readonly BatchJobsDbContext _context;
     private readonly ILogger<MyFpsYearlyDataService> _logger;
+    private const int TotalLoaders = 24;
+
+    private static readonly string[] ArchiveDeleteTables =
+    {
+        // Leaf tables (transaction detail level)
+        "mabarchive.my_timecostcalcs",
+        "mabarchive.my_monthlyoutput",
+        "mabarchive.my_monthlytime",
+        "mabarchive.my_projectmonthfinal",
+        "mabarchive.my_proj_invoice",
+        "mabarchive.my_proj_subcontract",
+        "mabarchive.my_tbladditionalcosts",
+        "mabarchive.my_tblanimalreq",
+        "mabarchive.my_tblcontract",
+        "mabarchive.my_tblstaffjob",
+        "mabarchive.my_tlkptestreqmt",
+
+        // Dimension tables (setup/reference data)
+        "mabarchive.my_testorproduct",
+        "mabarchive.my_staff",
+        "mabarchive.my_workgroup",
+        "mabarchive.my_tblprofitcentre",
+        "mabarchive.my_profitcentregrade",
+        "mabarchive.my_workgroupgrade",
+        "mabarchive.my_tblanimals",
+
+        // Program and project structure
+        "mabarchive.my_tlkpprogram",
+        "mabarchive.my_tlkpproject",
+        "mabarchive.my_tlkpproject_all",
+
+        // Aggregate and year-level tables
+        "mabarchive.my_fpsyeartotals",
+        "mabarchive.tlkpyear"
+    };
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MyFpsYearlyDataService"/> class.
@@ -57,6 +94,7 @@ SELECT EXISTS(
     /// <summary>
     /// Deletes archive data for the specified year across archive tables in dependency order.
     /// Implements legacy SQL parity: full year-based wipe of archive dataset for the chosen year.
+    /// Must be executed inside the caller's orchestration transaction.
     /// </summary>
     /// <param name="year">Target year to delete.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
@@ -72,70 +110,26 @@ SELECT EXISTS(
             // Delete order must respect foreign key constraints.
             // Leaf tables first, then parent tables.
             // This list maps to legacy sp_DeleteYearsFPSData coverage per baseline document.
-            var archiveTables = new[]
+            foreach (var table in ArchiveDeleteTables)
             {
-                // Leaf tables (transaction detail level)
-                "mabarchive.my_timecostcalcs",
-                "mabarchive.my_monthlyoutput",
-                "mabarchive.my_monthlytime",
-                "mabarchive.my_projectmonthfinal",
-                "mabarchive.my_proj_invoice",
-                "mabarchive.my_proj_subcontract",
-                "mabarchive.my_tbladditionalcosts",
-                "mabarchive.my_tblanimalreq",
-                "mabarchive.my_tblcontract",
-                "mabarchive.my_tblstaffjob",
-                "mabarchive.my_tlkptestreqmt",
-
-                // Dimension tables (setup/reference data)
-                "mabarchive.my_testorproduct",
-                "mabarchive.my_staff",
-                "mabarchive.my_workgroup",
-                "mabarchive.my_tblprofitcentre",
-                "mabarchive.my_profitcentregrade",
-                "mabarchive.my_workgroupgrade",
-                "mabarchive.my_tblanimals",
-
-                // Program and project structure
-                "mabarchive.my_tlkpprogram",
-                "mabarchive.my_tlkpproject",
-                "mabarchive.my_tlkpproject_all",
-
-                // Aggregate and year-level tables
-                "mabarchive.my_fpsyeartotals",
-                "mabarchive.tlkpyear"
-            };
-
-            foreach (var table in archiveTables)
-            {
-                var deleteCount = 0;
                 _logger.LogInformation("Deleting table {TableName} for year {Year}", table, year);
-                try
-                {
-                    var deleteSql = $@"
+                var deleteSql = $@"
 DELETE FROM {table}
 WHERE year = @year
 ";
-                    deleteCount = await _context.Database.ExecuteSqlRawAsync(
-                        deleteSql,
-                        [new NpgsqlParameter("year", year)],
-                        cancellationToken);
+                var deleteCount = await _context.Database.ExecuteSqlRawAsync(
+                    deleteSql,
+                    [new NpgsqlParameter("year", year)],
+                    cancellationToken);
 
-                    totalRowsAffected += deleteCount;
-                    _logger.LogInformation("Deleted {RowCount} rows from {TableName} for year {Year}", deleteCount, table, year);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Error deleting from {TableName} for year {Year}; continuing with remaining tables", table, year);
-                }
+                totalRowsAffected += deleteCount;
+                _logger.LogInformation("Deleted {RowCount} rows from {TableName} for year {Year}", deleteCount, table, year);
             }
 
             // Special handling for G_tlkpProject: project-based delete matching FPS source projects
             // (not year-based, but included in legacy scope per sp_DeleteYearsFPSData baseline)
-            try
-            {
-                _logger.LogInformation("Deleting table mabarchive.g_tlkpproject using project keys for year {Year}", year);
-                var projectDeleteCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+            _logger.LogInformation("Deleting table mabarchive.g_tlkpproject using project keys for year {Year}", year);
+            var projectDeleteCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 DELETE FROM mabarchive.g_tlkpproject
 WHERE parentproject IN (
     SELECT DISTINCT parentproject
@@ -144,13 +138,8 @@ WHERE parentproject IN (
 )
 ", cancellationToken);
 
-                totalRowsAffected += projectDeleteCount;
-                _logger.LogInformation("Deleted {RowCount} rows from mabarchive.g_tlkpproject (project-based delete for year {Year})", projectDeleteCount, year);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Error deleting from mabarchive.g_tlkpproject for year {Year}; continuing", year);
-            }
+            totalRowsAffected += projectDeleteCount;
+            _logger.LogInformation("Deleted {RowCount} rows from mabarchive.g_tlkpproject (project-based delete for year {Year})", projectDeleteCount, year);
 
             _logger.LogInformation("Deleted {TotalRowCount} total rows from archive tables for year {Year} (legacy parity scope)", totalRowsAffected, year);
             return totalRowsAffected;
@@ -166,6 +155,7 @@ WHERE parentproject IN (
     /// Loads archive data for the specified year from FPS source tables.
     /// Implements full legacy sp_AddYearsFPSData fan-out in the exact same 24-loader execution order.
     /// All inserts are insert-only (no upsert); delete-then-insert is the idempotency mechanism per Assumption A3.
+    /// Must be executed inside the caller's orchestration transaction.
     /// </summary>
     /// <param name="year">Target year to load.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
@@ -176,7 +166,6 @@ WHERE parentproject IN (
 
         var currentLoaderNumber = 0;
         var currentLoaderName = "NotStarted";
-        const int totalLoaders = 24;
 
         try
         {
@@ -187,7 +176,7 @@ WHERE parentproject IN (
             {
                 currentLoaderNumber = loaderNumber;
                 currentLoaderName = loaderName;
-                _logger.LogInformation("[{LoaderNumber}/{TotalLoaders}] Starting {LoaderName} for year {Year}", loaderNumber, totalLoaders, loaderName, year);
+                _logger.LogInformation("[{LoaderNumber}/{TotalLoaders}] Starting {LoaderName} for year {Year}", loaderNumber, TotalLoaders, loaderName, year);
             }
 
             // ── Loader 1: sp_AddMY_tlkpProgram ─────────────────────────────────────────
@@ -522,7 +511,9 @@ WHERE t.fpsyear = {year}
 
             // ── Loader 21: sp_AddMY_Staff ───────────────────────────────────────────────
             // Legacy applies a per-user WorkGroup/ProfitCentre security filter. In batch job
-            // context there is no user principal; all staff for the year are loaded.
+            // context there is no user principal. The current implementation intentionally
+            // loads all staff for the requested year; retain unless business explicitly
+            // requires restoring user-scoped filtering semantics.
             StartLoader(21, "my_staff");
             rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 INSERT INTO mabarchive.my_staff (
@@ -581,23 +572,7 @@ WHERE a.fpsyear = {year}
             // ── Loader 24: sp_AddMY_tlkpProject_All ────────────────────────────────────
             // Same shape as my_tlkpproject; source column left NULL per legacy
             StartLoader(24, "my_tlkpproject_all");
-            rowCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
-INSERT INTO mabarchive.my_tlkpproject_all (
-    year, parentproject, program, customer, manager, transferincome, custincome,
-    wip_eoy, wip_limit, wip_current, projectstatus, datecreated, feccost,
-    profit, budget_cvl, caseworksub, pvsincome, plancaseworkdebit,
-    disease, contract, finished, comments, carryover, isdefraproject,
-    costcentre, oracleprojectcode, subaccountcode, projectgroup, incomeaccountcode
-)
-SELECT
-    {year}, t.parentproject, t.program, t.customer, t.manager, t.transferincome, t.custincome,
-    t.wip_eoy, t.wip_limit, t.wip_current, t.projectstatus, t.datecreated, t.feccost,
-    t.profit, t.budget_cvl, t.caseworksub, t.pvsincome, t.plancaseworkdebit,
-    t.disease, t.contract, t.finished, t.comments, t.carryover, t.isdefraproject,
-    t.costcentre, t.oracleprojectcode, t.subaccountcode, t.projectgroup, t.incomeaccountcode
-FROM fps.tlkpproject t
-WHERE t.fpsyear = {year}
-", cancellationToken);
+            rowCount = await InsertMyTlkpProjectAllAsync(year, cancellationToken);
             totalRowsAffected += rowCount;
             _logger.LogInformation("[24/24] my_tlkpproject_all: {RowCount} rows for year {Year}", rowCount, year);
 
@@ -618,6 +593,7 @@ WHERE t.fpsyear = {year}
 
     /// <summary>
     /// Refreshes only the my_tlkpproject_all table for the specified year.
+    /// Must be executed inside the caller's orchestration transaction.
     /// </summary>
     /// <param name="year">Target year to refresh.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
@@ -629,13 +605,28 @@ WHERE t.fpsyear = {year}
         try
         {
             // Delete existing records
-            await _context.Database.ExecuteSqlInterpolatedAsync($@"
+            var deletedRows = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 DELETE FROM mabarchive.my_tlkpproject_all
 WHERE year = {year}
 ", cancellationToken);
+            _logger.LogInformation("Deleted {RowCount} rows in my_tlkpproject_all for year {Year} prior to refresh", deletedRows, year);
 
             // Reload fresh records (source column left NULL per legacy sp_AddMY_tlkpProject_All)
-            var rowsAffected = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+            var rowsAffected = await InsertMyTlkpProjectAllAsync(year, cancellationToken);
+
+            _logger.LogInformation("Refreshed {RowCount} rows in my_tlkpproject_all for year {Year}", rowsAffected, year);
+            return rowsAffected;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to refresh project all for year {Year}", year);
+            throw;
+        }
+    }
+
+    private Task<int> InsertMyTlkpProjectAllAsync(int year, CancellationToken cancellationToken)
+    {
+        return _context.Database.ExecuteSqlInterpolatedAsync($@"
 INSERT INTO mabarchive.my_tlkpproject_all (
     year, parentproject, program, customer, manager, transferincome, custincome,
     wip_eoy, wip_limit, wip_current, projectstatus, datecreated, feccost,
@@ -652,14 +643,5 @@ SELECT
 FROM fps.tlkpproject t
 WHERE t.fpsyear = {year}
 ", cancellationToken);
-
-            _logger.LogInformation("Refreshed {RowCount} rows in my_tlkpproject_all for year {Year}", rowsAffected, year);
-            return rowsAffected;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to refresh project all for year {Year}", year);
-            throw;
-        }
     }
 }

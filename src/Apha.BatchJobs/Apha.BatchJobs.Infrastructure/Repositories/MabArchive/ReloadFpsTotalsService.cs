@@ -1,7 +1,9 @@
 using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services;
+using Apha.BatchJobs.Domain.Configuration;
 using Apha.BatchJobs.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.MabArchive;
 
@@ -13,16 +15,29 @@ public sealed class ReloadFpsTotalsService : IReloadFpsTotalsService
 {
     private readonly BatchJobsDbContext _context;
     private readonly ILogger<ReloadFpsTotalsService> _logger;
+    private readonly MabArchiveSettings _settings;
+
+    private static readonly string[] TotalsSourceViews =
+    {
+        "qrytotaladditionalcosts",
+        "qrytotalanimalcosts",
+        "qrytotalstaffcosts",
+        "qrytotaltestcosts"
+    };
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ReloadFpsTotalsService"/> class.
     /// </summary>
     /// <param name="context">Batch jobs database context.</param>
     /// <param name="logger">Logger instance.</param>
-    public ReloadFpsTotalsService(BatchJobsDbContext context, ILogger<ReloadFpsTotalsService> logger)
+    public ReloadFpsTotalsService(
+        BatchJobsDbContext context,
+        ILogger<ReloadFpsTotalsService> logger,
+        IOptions<MabArchiveSettings> settings)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _settings = settings?.Value ?? new MabArchiveSettings();
     }
 
     /// <summary>
@@ -37,9 +52,16 @@ public sealed class ReloadFpsTotalsService : IReloadFpsTotalsService
 
         try
         {
-            // Legacy sp_deleteFPSTotals semantics: clear the whole table before rebuild.
+            if (_settings.StrictYearIsolation)
+            {
+                await EnsureTotalsViewsAreYearScopedAsync(cancellationToken);
+                _logger.LogInformation("Strict year isolation check passed for totals source views");
+            }
+
+            // Year-scoped delete to avoid cross-year data loss in multi-year databases.
             var deleteRows = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 DELETE FROM fps.fpsyeartotals
+WHERE fpsyear = {year}
 ", cancellationToken);
 
             _logger.LogInformation("Deleted {RowCount} existing totals rows for year {Year}", deleteRows, year);
@@ -130,12 +152,16 @@ SELECT DISTINCT
 FROM fps.tlkpproject t
 LEFT JOIN fps.qrytotaladditionalcosts a
     ON t.parentproject = a.jobcode
+    AND t.fpsyear = a.fpsyear
 LEFT JOIN fps.qrytotalanimalcosts an
     ON t.parentproject = an.jobcode
+    AND t.fpsyear = an.fpsyear
 LEFT JOIN fps.qrytotalstaffcosts s
     ON t.parentproject = s.jobcode
+    AND t.fpsyear = s.fpsyear
 LEFT JOIN fps.qrytotaltestcosts tst
     ON t.parentproject = tst.jobcode
+    AND t.fpsyear = tst.fpsyear
 WHERE t.fpsyear = {year}
 ", cancellationToken);
 
@@ -148,5 +174,34 @@ WHERE t.fpsyear = {year}
             _logger.LogError(ex, "Failed to rebuild FPS source totals for year {Year}", year);
             throw;
         }
+    }
+
+    private async Task EnsureTotalsViewsAreYearScopedAsync(CancellationToken cancellationToken)
+    {
+        var missingViews = await _context.Database.SqlQuery<string>($@"
+SELECT v.view_name AS ""Value""
+FROM (VALUES
+    ('qrytotaladditionalcosts'),
+    ('qrytotalanimalcosts'),
+    ('qrytotalstaffcosts'),
+    ('qrytotaltestcosts')
+) AS v(view_name)
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM information_schema.columns c
+    WHERE c.table_schema = 'fps'
+      AND c.table_name = v.view_name
+      AND c.column_name = 'fpsyear'
+)
+").ToListAsync(cancellationToken);
+
+        if (missingViews.Count == 0)
+        {
+            return;
+        }
+
+        throw new InvalidOperationException(
+            $"Strict year isolation is enabled, but these fps source views are missing fpsyear: {string.Join(", ", missingViews)}. " +
+            "Update source views to expose fpsyear before running MABArchive totals rebuild.");
     }
 }

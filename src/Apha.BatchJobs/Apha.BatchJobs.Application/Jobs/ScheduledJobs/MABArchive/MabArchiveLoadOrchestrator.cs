@@ -118,14 +118,14 @@ public sealed class MabArchiveLoadOrchestrator
 
                     _logger.LogInformation("Executing full cycle for year {Year}", year);
 
-                    await _totalsService.RebuildSourceTotalsAsync(year, cancellationToken);
-                    _logger.LogInformation("Rebuilt source totals for year {Year}", year);
+                    var totalsRows = await _totalsService.RebuildSourceTotalsAsync(year, cancellationToken);
+                    _logger.LogInformation("Rebuilt source totals for year {Year} | RowsInserted={RowsInserted}", year, totalsRows);
 
-                    await _dataService.DeleteYearDataAsync(year, cancellationToken);
-                    _logger.LogInformation("Deleted archive data for year {Year}", year);
+                    var deletedRows = await _dataService.DeleteYearDataAsync(year, cancellationToken);
+                    _logger.LogInformation("Deleted archive data for year {Year} | RowsDeleted={RowsDeleted}", year, deletedRows);
 
-                    await _dataService.LoadYearDataAsync(year, cancellationToken);
-                    _logger.LogInformation("Loaded archive data for year {Year}", year);
+                    var loadedRows = await _dataService.LoadYearDataAsync(year, cancellationToken);
+                    _logger.LogInformation("Loaded archive data for year {Year} | RowsLoaded={RowsLoaded}", year, loadedRows);
                 }
 
                 // Legacy parity: previous year full cycle is always attempted first.
@@ -147,8 +147,8 @@ public sealed class MabArchiveLoadOrchestrator
                     else
                     {
                         _logger.LogInformation("Executing partial refresh for current year {CurrentYear}", context.CurrentYear);
-                        await _dataService.RefreshProjectAllOnlyAsync(context.CurrentYear, cancellationToken);
-                        _logger.LogInformation("Refreshed project all for year {CurrentYear}", context.CurrentYear);
+                        var refreshedRows = await _dataService.RefreshProjectAllOnlyAsync(context.CurrentYear, cancellationToken);
+                        _logger.LogInformation("Refreshed project all for year {CurrentYear} | RowsRefreshed={RowsRefreshed}", context.CurrentYear, refreshedRows);
                     }
                 }
 

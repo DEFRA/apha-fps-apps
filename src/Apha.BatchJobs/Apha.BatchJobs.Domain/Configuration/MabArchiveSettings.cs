@@ -16,6 +16,12 @@ public class MabArchiveSettings
     public int TransactionTimeoutSeconds { get; set; } = 1800;
 
     /// <summary>
+    /// Enforces year-aware joins and source view contracts for totals rebuild.
+    /// When true, totals source views must expose fpsyear and joins must include fpsyear.
+    /// </summary>
+    public bool StrictYearIsolation { get; set; } = true;
+
+    /// <summary>
     /// Email recipient for failure notifications.
     /// </summary>
     public string? AdminNotificationEmail { get; set; }
