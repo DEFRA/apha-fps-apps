@@ -58,25 +58,25 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public DataGridConfig<StaffJobItemViewModel> StaffBookedGrid { get; set; } = new DataGridConfig<StaffJobItemViewModel>();
 
         /// <summary>
-        /// Gets or sets the list of animals booked records with AnimalType, Day, NoReq, DailyRt, and Cost fields.
+        /// Gets or sets the data grid configuration for animals booked.
         /// Contains all animal resources required for the project.
         /// </summary>
         [Display(Name = "Animals Booked")]
-        public List<AnimalBookedItem> AnimalsBookedList { get; set; } = new List<AnimalBookedItem>();
+        public DataGridConfig<AnimalPlanItem> AnimalsBookedGrid { get; set; } = new DataGridConfig<AnimalPlanItem>();
 
         /// <summary>
-        /// Gets or sets the list of tests booked records with Test, Description, ReCUP, Num, AgrUP, and TestCost fields.
+        /// Gets or sets the data grid configuration for tests booked.
         /// Contains all laboratory tests and procedures planned for the project.
         /// </summary>
         [Display(Name = "Tests Booked")]
-        public List<TestBookedItem> TestsBookedList { get; set; } = new List<TestBookedItem>();
+        public DataGridConfig<TestPlanItem> TestsBookedGrid { get; set; } = new DataGridConfig<TestPlanItem>();
 
         /// <summary>
-        /// Gets or sets the list of exceptional costs records with Description, Account, TotalCost, FreqOrMnth, and Supplier fields.
+        /// Gets or sets the data grid configuration for exceptional costs.
         /// Contains all additional costs not covered by standard staff, animal, or test expenses.
         /// </summary>
         [Display(Name = "Exceptional Costs")]
-        public List<ExceptionalCostItem> ExceptionalCostsList { get; set; } = new List<ExceptionalCostItem>();
+        public DataGridConfig<AdditionalCostItemViewModel> ExceptionalCostsGrid { get; set; } = new DataGridConfig<AdditionalCostItemViewModel>();
 
         /// <summary>
         /// Gets or sets the total staff cost calculation.
