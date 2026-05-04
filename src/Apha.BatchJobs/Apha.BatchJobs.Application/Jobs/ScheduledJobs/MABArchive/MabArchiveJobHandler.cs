@@ -1,7 +1,6 @@
 using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Domain.Configuration;
 using Apha.BatchJobs.Domain.Interfaces;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -12,11 +11,13 @@ namespace Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive;
 /// Loads FPS data from the current and previous calendar years to support financial year reporting
 /// into the MABArchive schema within PostgreSQL database.
 /// Runs weekly on weekdays at 8:00 PM UTC.
+///
+/// Lock lifecycle is owned exclusively by JobOrchestrator. This handler must not
+/// acquire or release the distributed lock.
 /// </summary>
 public sealed class MabArchiveJobHandler : IBatchJob
 {
     private readonly MabArchiveLoadOrchestrator _orchestrator;
-    private readonly IBatchLockRepository _lockRepository;
     private readonly Func<Func<Task>, Task> _transactionWrapper;
     private readonly ILogger<MabArchiveJobHandler> _logger;
     private readonly ICorrelationService _correlationService;
@@ -52,14 +53,12 @@ public sealed class MabArchiveJobHandler : IBatchJob
     /// </summary>
     public MabArchiveJobHandler(
         MabArchiveLoadOrchestrator orchestrator,
-        IBatchLockRepository lockRepository,
         Func<Func<Task>, Task> transactionWrapper,
         ICorrelationService correlationService,
         ILogger<MabArchiveJobHandler> logger,
         IOptions<MabArchiveSettings> settings)
     {
         _orchestrator = orchestrator ?? throw new ArgumentNullException(nameof(orchestrator));
-        _lockRepository = lockRepository ?? throw new ArgumentNullException(nameof(lockRepository));
         _transactionWrapper = transactionWrapper ?? throw new ArgumentNullException(nameof(transactionWrapper));
         _correlationService = correlationService ?? throw new ArgumentNullException(nameof(correlationService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -68,6 +67,7 @@ public sealed class MabArchiveJobHandler : IBatchJob
 
     /// <summary>
     /// Executes the MABArchive load job.
+    /// Lock acquisition and release are handled by JobOrchestrator before this is called.
     /// </summary>
     public async Task ExecuteAsync(CancellationToken cancellationToken = default)
     {
@@ -90,60 +90,25 @@ public sealed class MabArchiveJobHandler : IBatchJob
 
         try
         {
-            // Attempt to acquire lock
-            var lockAcquired = await _lockRepository.TryAcquireLockAsync(
-                Name,
+            var context = _orchestrator.BuildExecutionContext();
+            _logger.LogInformation(
+                "Execution context built | PrimaryYear={PrimaryYear} | CurrentMonth={CurrentMonth}",
+                context.PrimaryYear,
+                context.CurrentMonth);
+
+            await _orchestrator.ExecuteAsync(
                 runId,
-                _settings.LockTimeoutSeconds,
+                context,
+                _transactionWrapper,
                 cancellationToken);
 
-            if (!lockAcquired)
-            {
-                _logger.LogWarning(
-                    "MABArchive job is already running (lock held by another process). Skipping this run.");
-                return;
-            }
-
-            _logger.LogInformation("Lock acquired for MABArchive job | RunId={RunId}", runId);
-
-            try
-            {
-                // Build execution context
-                var context = _orchestrator.BuildExecutionContext();
-                _logger.LogInformation(
-                    "Execution context built | PrimaryYear={PrimaryYear} | CurrentMonth={CurrentMonth}",
-                    context.PrimaryYear,
-                    context.CurrentMonth);
-
-                // Execute orchestration within transaction
-                await _orchestrator.ExecuteAsync(
-                    runId,
-                    context,
-                    _transactionWrapper,
-                    cancellationToken);
-
-                var duration = DateTime.UtcNow - startedAt;
-                _logger.LogInformation(
-                    "===========================================");
-                _logger.LogInformation(
-                    "MABArchive Job - Completed Successfully | RunId={RunId} | Duration={DurationSeconds}s",
-                    runId,
-                    (int)duration.TotalSeconds);
-                _logger.LogInformation("===========================================");
-            }
-            finally
-            {
-                // Release lock
-                try
-                {
-                    await _lockRepository.ReleaseLockAsync(Name, runId, CancellationToken.None);
-                    _logger.LogInformation("Lock released for MABArchive job | RunId={RunId}", runId);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to release lock for MABArchive job | RunId={RunId}", runId);
-                }
-            }
+            var duration = DateTime.UtcNow - startedAt;
+            _logger.LogInformation("===========================================");
+            _logger.LogInformation(
+                "MABArchive Job - Completed Successfully | RunId={RunId} | Duration={DurationSeconds}s",
+                runId,
+                (int)duration.TotalSeconds);
+            _logger.LogInformation("===========================================");
         }
         catch (OperationCanceledException ex)
         {
