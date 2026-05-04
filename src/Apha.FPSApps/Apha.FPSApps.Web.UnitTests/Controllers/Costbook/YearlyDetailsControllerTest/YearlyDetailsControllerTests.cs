@@ -469,7 +469,7 @@ public class YearlyDetailsControllerTests
         _service.GetProjectYearsAsync(Arg.Any<string>())
             .Returns(ApiResponseDto<List<ProjectYearDto>>.SuccessResponse(new List<ProjectYearDto>()));
 
-        var result = await _controller.EditMarkupAndProfit("2024/001", 99);
+        var result = await _controller.EditMarkupAndProfit("2024/001", 99,"");
 
         Assert.IsType<NotFoundResult>(result);
     }
@@ -484,7 +484,7 @@ public class YearlyDetailsControllerTests
             .Returns(ApiResponseDto<List<ProjectYearDto>>.SuccessResponse(new List<ProjectYearDto> { yearDto }));
         _mapper.Map<ProjectYearRateItem>(yearDto).Returns(rateItem);
 
-        var result = await _controller.EditMarkupAndProfit("2024/001", 1);
+        var result = await _controller.EditMarkupAndProfit("2024/001", 1,"");
 
         var partialResult = Assert.IsType<PartialViewResult>(result);
         Assert.Equal("_AddProjectYear", partialResult.ViewName);
