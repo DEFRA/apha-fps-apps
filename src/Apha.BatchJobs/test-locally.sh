@@ -154,7 +154,7 @@ function run_native() {
     pushd "$SCRIPT_DIR" > /dev/null
     dotnet build
     dotnet test ./Apha.BatchJobs.UnitTests/Apha.BatchJobs.UnitTests.csproj --no-build
-    dotnet run --project BatchJobs.csproj -- "$JOB_NAME"
+    dotnet run --project ./Apha.BatchJobs.Worker/Apha.BatchJobs.Worker.csproj -- "$JOB_NAME"
     popd > /dev/null
 }
 

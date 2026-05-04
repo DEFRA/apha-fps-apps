@@ -127,7 +127,7 @@ function Run-Native {
     try {
         dotnet build
         dotnet test .\Apha.BatchJobs.UnitTests\Apha.BatchJobs.UnitTests.csproj --no-build
-        dotnet run --project BatchJobs.csproj -- $JobName
+        dotnet run --project .\Apha.BatchJobs.Worker\Apha.BatchJobs.Worker.csproj -- $JobName
     } finally {
         Pop-Location
     }
