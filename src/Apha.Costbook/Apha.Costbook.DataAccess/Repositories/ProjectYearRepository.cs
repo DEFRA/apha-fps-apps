@@ -122,6 +122,7 @@ public class ProjectYearRepository : IProjectYearRepository
 
     public async Task<ProjectYear> UpdateProjectYearAsync(ProjectYear projectYear)
     {
+        projectYear.Project = HttpUtility.UrlDecode(projectYear.Project);
         _context.ProjectYears.Update(projectYear);
         await _context.SaveChangesAsync();
         return projectYear;

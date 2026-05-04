@@ -871,7 +871,7 @@
         }
 
         function openEditMarkupAndProfitModal(pid, yearVal) {
-            fetch('@Url.Action("EditMarkupAndProfit", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + yearVal)
+            fetch('@Url.Action("EditMarkupAndProfit", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + yearVal + '&programme=' + encodeURIComponent(programme))
                 .then(function(r) { return r.text(); })
                 .then(function(html) {
                     document.getElementById('project1ModalContent').innerHTML = html;

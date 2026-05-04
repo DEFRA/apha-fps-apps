@@ -419,12 +419,13 @@ public class YearlyDetailsController : Controller
     // ── MARKUP/PROFIT UPDATE ──────────────────────────────────────────────
 
     [HttpGet]
-    public async Task<IActionResult> EditMarkupAndProfit(string projectId, int year)
+    public async Task<IActionResult> EditMarkupAndProfit(string projectId, int year, string? programme)
     {
         var response = await _service.GetProjectYearsAsync(HttpUtility.UrlDecode(projectId));
         var yearDto = response.Data?.FirstOrDefault(y => y.YearValue == year);
         if (yearDto is null) return NotFound();
         var model = _mapper.Map<ProjectYearRateItem>(yearDto);
+        model.Programme = programme;
         return PartialView("_AddProjectYear", model);
     }
 
@@ -632,7 +633,7 @@ public class YearlyDetailsController : Controller
             Data = data,
             KeyProperty = nameof(ProjectYearRateItem.YearValue),
             AllowAdd = false,
-            AllowEdit = false,
+            AllowEdit = true,
             AllowDelete = false,
             AllowCopy = false,
             ShowPagination = false,
