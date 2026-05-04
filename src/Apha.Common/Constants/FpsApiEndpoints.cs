@@ -5,7 +5,7 @@ namespace Apha.Common.Constants
         // Animal
         public const string GetAnimalCosts = "api/v1/animal?jobCode={0}";
         public const string GetAnimalLookup = "api/v1/animal/lookup";
-        public const string GetAnimalRate = "api/v1/animal/rate?animalType={0}";
+        public const string GetAnimalRate = "api/v1/animal/rate?animalType={0}&jobCode={1}";
         public const string CreateAnimalCost = "api/v1/animal";
         public const string UpdateAnimalCost = "api/v1/animal";
         public const string DeleteAnimalCost = "api/v1/animal?indCounter={0}";
@@ -27,6 +27,14 @@ namespace Apha.Common.Constants
         public const string GetAllCustomers = "api/v1/customer";
         public const string GetAllContracts = "api/v1/contract";
 
+        // Division
+        public const string GetAllDivisions = "api/v1/division";
+        public const string GetPagedDivisions = "api/v1/division/paged";
+        public const string GetDivisionByName = "api/v1/division/{0}";
+        public const string CreateDivision = "api/v1/division";
+        public const string UpdateDivision = "api/v1/division/{0}";
+        public const string DeleteDivision = "api/v1/division/{0}";
+
         // Program
         public const string GetAllPrograms = "api/v1/program";
         public const string GetPagedPrograms = "api/v1/program/paged";
@@ -44,8 +52,12 @@ namespace Apha.Common.Constants
         public const string CreateProject = "api/v1/project";
         public const string UpdateProject = "api/v1/project";
         public const string UpdatePactProject = "api/v1/project/external/pact";
+        public const string UpdatePactPortfolio = "api/v1/project/external/portfolio";
         public const string DeleteProject = "api/v1/project/{0}";
         public const string GetProjectsByProgram = "api/v1/project/paged?programNo={0}";
+
+        // Project Group
+        public const string GetAllProjectGroups = "api/v1/projectgroup";
 
         // Setting
         public const string GetHoursPerDay = "api/v1/setting/hoursperday";
@@ -60,5 +72,19 @@ namespace Apha.Common.Constants
         public const string UpdateStaffJob = "api/v1/staffjob";
         public const string DeleteStaffJob = "api/v1/staffjob?staffId={0}&jobcode={1}";
         public const string GetStaffJobViewById = "api/v1/staffjob/view?staffId={0}&jobcode={1}";
+
+        // View Project Plan vs Actual Staff
+        public const string GetTimeCostCalcsByProject = "api/v1/timecostcalcs?projectCode={0}";
+        public const string GetTimeCostCalcsTotalsByProject = "api/v1/timecostcalcs/totals?projectCode={0}";
+        public const string DeleteTimeCostCalcs = "api/v1/timecostcalcs";
+
+        // Additional Cost
+        public const string GetAdditionalCosts = "api/v1/additionalcost?jobCode={0}";
+        public const string GetTotalItemCost = "api/v1/additionalcost/totalitemcost?jobCode={0}";
+        public const string GetAccountCategories = "api/v1/additionalcost/accountcategories";
+        public const string GetAdditionalCostById = "api/v1/additionalcost/{0}/{1}/{2}";
+        public const string CreateAdditionalCost = "api/v1/additionalcost";
+        public const string UpdateAdditionalCost = "api/v1/additionalcost";
+        public const string DeleteAdditionalCost = "api/v1/additionalcost?jobCode={0}&account={1}&description={2}";
     }
 }

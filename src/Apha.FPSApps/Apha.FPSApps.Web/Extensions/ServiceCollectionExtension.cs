@@ -1,11 +1,13 @@
-﻿using Apha.Common.Utilities.ExcelExport;
+using Apha.Common.Utilities.ExcelExport;
+using Apha.Common.Utilities.StateManagement;
+using Apha.FPSApps.Application.Interfaces.Costbook;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.PACT;
+using Apha.FPSApps.Application.Interfaces.PIMS;
+using Apha.FPSApps.Application.Services.Costbook;
 using Apha.FPSApps.Application.Services.FPS;
 using Apha.FPSApps.Application.Services.PACT;
-using Apha.FPSApps.Application.Services.Costbook;
-using Apha.FPSApps.Application.Interfaces.Costbook;
-
+using Apha.FPSApps.Application.Services.PIMS;
 using Apha.FPSApps.Web.Handler;
 namespace Apha.FPSApps.Web.Extensions
 {
@@ -37,12 +39,23 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<ICostBookProgramService, CostBookProgramService>();
             services.AddScoped<ICostBookStaffService, CostBookStaffService>();
             services.AddScoped<ICostBookContractService, CostBookContractService>();
+            services.AddScoped<ICostBookYearlyDetailsService, CostBookYearlyDetailsService>();
             services.AddScoped<IYearMasterService, YearMasterService>();
+            services.AddScoped<IDivisionService, DivisionService>();
             services.AddScoped<IProjectInvoiceService, ProjectInvoiceService>();
             services.AddScoped<IProjectSubContractService, ProjectSubContractService>();
-            services.AddScoped<IWorkGroupTestCapabilityService, WorkGroupTestCapabilityService>();
+            services.AddScoped<ITestCapabilityService, TestCapabilityService>();
             services.AddScoped<ITestRequirementService, TestRequirementService>();
+            services.AddScoped<IProjectStaffPlanActualService, ProjectStaffPlanActualService>();
             services.AddScoped<IExcelExportService, ExcelExportService>();
+            services.AddScoped<IAppStateService, AppStateService>();
+            services.AddScoped<IAdditionalCostService, AdditionalCostService>();
+            // PIMS
+            services.AddScoped<IProjectListService, ProjectListService>();
+            services.AddScoped<IProjectDetailsService, ProjectDetailsService>();
+            services.AddScoped<IProjectCommentService, ProjectCommentService>();
+
+            services.AddScoped<ITestorProductService, TestorProductService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)

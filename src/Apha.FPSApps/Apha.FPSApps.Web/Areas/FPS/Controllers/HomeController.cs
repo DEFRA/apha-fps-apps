@@ -5,7 +5,7 @@ using Microsoft.Identity.Web;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 {
-    [Area("FPS")]    
+    [Area("FPS")]
     [Authorize(Roles = "FPSAdmin,FPSUser")]
     [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")]
     public class HomeController : Controller

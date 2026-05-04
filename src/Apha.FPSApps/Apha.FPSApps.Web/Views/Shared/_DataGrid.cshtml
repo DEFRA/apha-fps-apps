@@ -1,43 +1,46 @@
 ﻿@using Apha.FPSApps.Web.Models.Components.DataGrid
 @model dynamic
 
-<div class="editable-grid-container sup_border">
+<div class="editable-grid-container">
     <div class="sup_border_bottom_0">
-        <h2 class="sup_border-bottom sup_text_color sup_heading_bg_color govuk-heading-s sup_margin_0 sup_align_heading">
-            <div class="sup_flex_space_between">
-                @Model.Title
-                <div>
-                    @if (Model.AllowExport)
-                    {
-                        <button type="button" class="govuk-button govuk-button--secondary sup_gov_blue_bg sup_margin_0 sup_p_8"
-                                id="@($"{Model.GridId}_exportBtn")" data-export-url="@Model.ExportUrl">
-                            <i class="fa fa-file-excel-o"></i> Excel Export
-                        </button>
-                    }
-                    @if (Model.AllowAdd)
-                    {
-                        <button type="button" class="govuk-button sup_margin_0 sup_p_8"
-                                              id="@($"{Model.GridId}_addRowBtn")" data-add-function="@Model.AddFunction">
-                            <i class="fa fa-plus"></i> Add
-                        </button>
-                    }
-                    @if (Model.AllowBulkCopy)
-                    {
-                        <button type="button" class="govuk-button sup_margin_0 sup_p_8"
-                                              id="@($"{Model.GridId}_bulkCopyBtn")" data-bulkcopy-function="@Model.BulkCopyFunction">
-                            <i class="fa fa-copy"></i> @Model.BulkCopyButtonText
-                        </button>
-                    }
-                    @if (Model.AllowBulkDelete)
-                    {
-                        <button type="button" class="govuk-button govuk-button--warning sup_margin_0 sup_p_8"
-                                              id="@($"{Model.GridId}_bulkDeleteBtn")" data-bulkdelete-function="@Model.BulkDeleteFunction">
-                            <i class="fa fa-trash"></i> Delete All
-                        </button>
-                    }                    
+        @if (!string.IsNullOrWhiteSpace(Model.Title))
+        {
+            <h2 class="sup_border-bottom sup_text_color sup_heading_bg_color govuk-heading-s sup_margin_0 sup_align_heading">
+                <div class="sup_flex_space_between">
+                    @Model.Title
+                    <div>
+                        @if (Model.AllowExport)
+                        {
+                            <button type="button" class="govuk-button govuk-button--secondary sup_gov_blue_bg sup_margin_0 sup_p_8"
+                                    id="@($"{Model.GridId}_exportBtn")" data-export-url="@Model.ExportUrl" allow-edit ="true">
+                                <i class="fa fa-file-excel-o"></i> Excel Export
+                            </button>
+                        }
+                        @if (Model.AllowAdd)
+                        {
+                            <button type="button" class="govuk-button sup_margin_0 sup_p_8"
+                                                  id="@($"{Model.GridId}_addRowBtn")" data-add-function="@Model.AddFunction">
+                                <i class="fa fa-plus"></i> Add
+                            </button>
+                        }
+                        @if (Model.AllowBulkCopy)
+                        {
+                            <button type="button" class="govuk-button sup_margin_0 sup_p_8"
+                                                  id="@($"{Model.GridId}_bulkCopyBtn")" data-bulkcopy-function="@Model.BulkCopyFunction">
+                                <i class="fa fa-copy"></i> @Model.BulkCopyButtonText
+                            </button>
+                        }
+                        @if (Model.AllowBulkDelete)
+                        {
+                            <button type="button" class="govuk-button govuk-button--warning sup_margin_0 sup_p_8"
+                                                  id="@($"{Model.GridId}_bulkDeleteBtn")" data-bulkdelete-function="@Model.BulkDeleteFunction">
+                                <i class="fa fa-trash"></i> Delete All
+                            </button>
+                        }                    
+                    </div>
                 </div>
-            </div>
-        </h2>
+            </h2>
+        }
         <div class="grid-toolbar">
             <div class="sup_flex_center_gap_0">
                 <!-- Page Size Dropdown START -->
@@ -72,7 +75,7 @@
                         {
                             <th scope="col" class="govuk-table__header sup_p_0">
 
-                                <div class="govuk-checkboxes govuk-checkboxes--small sup_margin_0 cust-abs-top-right" data-module="govuk-checkboxes">
+                                <div class="govuk-checkboxes govuk-checkboxes--small sup_margin_0" data-module="govuk-checkboxes">
                                     <div class="govuk-checkboxes__item">
                                         <input type="checkbox" id="@($"{Model.GridId}_selectAll")" class="govuk-checkboxes__input govuk-!-font-size-16" />
                                         @*        <input class="govuk-checkboxes__input govuk-!-font-size-16" id="chkfinished" name="chkfinished" type="checkbox" value="finished"> *@
@@ -202,10 +205,17 @@
                                     var value = GridHelpers.GetPropertyValue(row, column.PropertyName);
                                     if (column.ColumnType == GridColumnType.Checkbox)
                                     {
-                                        <td class="checkbox-cell govuk-table__cell" data-property="@column.PropertyName" data-type="@column.ColumnType">
-                                            <input readonly type="checkbox" name="@column.PropertyName"
-                                                   id="@($"{Model.GridId}_{column.PropertyName}_{rowIndex}")" class="@GridHelpers.GetTypeCssClass(column)"
-                                                   @(Convert.ToBoolean(value) ? "checked" : "") @(column.IsEditable ? "" : "disabled") />
+                                        <td class="checkbox-cell govuk-table__cell" data-property="@column.PropertyName" data-type="@column.ColumnType" style="text-align:center; vertical-align:middle;">
+                                            <div class="govuk-checkboxes govuk-checkboxes--small sup_margin_0" data-module="govuk-checkboxes" style="display:flex; justify-content:center; align-items:center;">
+                                                <div class="govuk-checkboxes__item sup_chk_margin" style="pointer-events:none;">
+                                                    <input type="checkbox" name="@column.PropertyName"
+                                                           id="@($"{Model.GridId}_{column.PropertyName}_{rowIndex}")" class="govuk-checkboxes__input govuk-!-font-size-16 @GridHelpers.GetTypeCssClass(column)"
+                                                           @(Convert.ToBoolean(value) ? "checked" : "") />
+                                                    <label class="govuk-label govuk-checkboxes__label sup_label_auto_width sup_p_0 sup_w_h_0" for="@($"{Model.GridId}_{column.PropertyName}_{rowIndex}")">
+                                                        <span class="govuk-visually-hidden">@column.DisplayName</span>
+                                                    </label>
+                                                </div>
+                                            </div>
                                         </td>
                                     }
                                     else
@@ -234,7 +244,7 @@
                                     @if (Model.AllowCopy)
                                     {
                                         <button type="button"
-                                                class="btn btn-sm btn-secondary copy-row-btn"
+                                                class="btn btn-sm copy-row-btn"
                                                 data-id="@GridHelpers.GetPropertyValue(row, Model.KeyProperty)"
                                                 data-copy-function="@Model.CopyFunction">
                                                 <img src="~/images/copy-regular-full.svg" alt="Copy icon" width="20" height="20" title="Copy">
@@ -249,15 +259,15 @@
                                             <img src="~/images/delete_gridicon.svg" alt="Delete icon" width="20" height="20" title="Delete">
                                         </button>
                                     }
-                                                @if (Model.AllowView)
-                                                {
-                                                    <button type="button"
-                                                            class="btn btn-sm delete-row-btn"
-                                                            data-id="@GridHelpers.GetPropertyValue(row, Model.KeyProperty)"
-                                                            data-delete-function="@Model.ViewFunction">
-                                                        <img src="~/images/view_icon.png" alt="View icon" width="20" height="20" title="View">
-                                                        </button>
-                                                    }
+                                    @if (Model.AllowView)
+                                    {
+                                        <button type="button"
+                                                class="btn btn-sm delete-row-btn"
+                                                data-id="@GridHelpers.GetPropertyValue(row, Model.KeyProperty)"
+                                                data-delete-function="@Model.ViewFunction" allow-edit="true">
+                                            <img src="~/images/view_icon.png" alt="View icon" width="20" height="20" title="View">
+                                        </button>
+                                    }
                                 </td>
                             }
                         </tr>
@@ -368,6 +378,7 @@
                         $(gridContainerSelector).html(htmlData);
                         self.applyGridColumnWidths();
                         self.deselectAllCheckboxes();
+                        document.dispatchEvent(new CustomEvent('gridReloaded', { detail: { gridId: gridId } }));
                     })
                     .fail(function(xhr, status, error) {
                         console.error('Grid reload failed:', error);

@@ -187,24 +187,26 @@
 
         function deleteStaff(btn) {
             var spNumber = $(btn).data('id');
-            if (confirm('Are you sure you want to delete this employee?')) {
+            showGovukConfirm('Are you sure you want to delete this employee?').then(function (result) {
+                if (!result) return;
                 $.ajax({
                     url: '/FPS/StaffMaintenance/Delete',
                     type: 'DELETE',
                     data: { spNumber: spNumber },
-                    success: function(response) {
+                    success: function (response) {
                         if (response.success) {
-                            alert('Employee deleted successfully');
-                            window.location.reload();
+                            showGovukAlert('Employee deleted successfully').then(function () {
+                                getGridManager().reloadGrid({ page: 1 });
+                            });
                         } else {
-                            alert('Error: ' + response.message);
+                            showGovukAlert('Error: ' + response.message);
                         }
                     },
-                    error: function() {
-                        alert('An error occurred while deleting');
+                    error: function () {
+                        showGovukAlert('An error occurred while deleting');
                     }
                 });
-            }
+            });
         }
 
         // Save staff plan (from modal)
@@ -238,7 +240,7 @@
                     if (response.success) {
                         alert(response.message);
                         closeModal();
-                        window.location.reload();
+                        getGridManager().reloadGrid({ page: 1 });
                     } else {
                         // Show validation errors from server
                         displayServerValidationErrors(response.errors, response.message, '#modaPopupBody')

@@ -121,13 +121,13 @@ namespace Apha.FPS.Application.UnitTests.Services.ProgramServiceTest
 
             _mockRepository.GetProgramByIdAsync(dto.ProgramNo).Returns(entity);
             _mockMapper.Map(dto, entity).Returns(entity);
-            _mockRepository.UpdateProgramAsync(entity).Returns(updated);
+            _mockRepository.UpdateProgramAsync(entity, "P1").Returns(updated);
             _mockMapper.Map<ProgramDto>(updated).Returns(expected);
 
             var result = await _sut.UpdateProgramAsync(dto);
 
             result.Should().Be(expected);
-            await _mockRepository.Received(1).UpdateProgramAsync(entity);
+            await _mockRepository.Received(1).UpdateProgramAsync(entity, "P1");
         }
 
         [Fact]

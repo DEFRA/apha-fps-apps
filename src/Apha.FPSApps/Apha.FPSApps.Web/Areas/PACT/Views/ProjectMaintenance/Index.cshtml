@@ -106,32 +106,9 @@
             };
         }
 
-        function editProject(btn) {
+        function viewProject(btn) {
             var parentProject = $(btn).data('id');
-            debugger;
-            window.location.href = '/PACT/ProjectMaintenance/Details/' + encodeURIComponent(parentProject);
-        }
-
-        function saveProject() {
-            var form = $('#projectForm');
-            if (!form.valid()) return;
-
-            $.ajax({
-                url: '/PACT/ProjectMaintenance/Create',
-                type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify(form.serializeObject()),
-                success: function (response) {
-                    if (response.success) {
-                        $('#modalPopup').removeClass('show');
-                        var gm = getGridManager();
-                        if (gm) gm.reloadGrid({ page: 1 });
-                    } else {
-                        alert(response.message || 'Save failed.');
-                    }
-                },
-                error: function () { alert('An error occurred while saving.'); }
-            });
+            fpsNavigateTo('/PACT/ProjectMaintenance/Details/' + encodeURIComponent(parentProject));
         }
     </script>
 }

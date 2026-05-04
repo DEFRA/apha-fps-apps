@@ -1,0 +1,40 @@
+﻿@model Apha.FPSApps.Web.Areas.PIMS.Models.ProjectDetailsViewModel
+
+<!-- ── Side Navigation ─────────────────────────────────────────── -->
+<nav class="sidenav flex-column flex-shrink-0" id="shortnav">
+    <button class="toggle-btn" onclick="toggleSidebar()" style="right: -8px; top: 30px"
+            aria-label="Toggle side navigation">
+        <img src="~/images/chevron-left-solid-full.svg" width="20"
+             alt="side menu left arrow" style="margin: -2px 5px 0 0px" />
+    </button>
+    <ul>
+        <li class="sidebar-link-two" style="border-radius: 0 8px 8px 0; cursor: pointer; background-color: #1d70b8;">
+            <a href="@Url.Action("Index", "ProjectDetails", new { area = "PIMS", @Model.Parentproject })"
+               style="color: #fff">Project Details</a>
+        </li>
+        <li class="sidebar-link-two" style="border-radius: 0 8px 8px 0; cursor: pointer; background-color: #1d70b8;">
+            <a href="#" style="color: #fff">Yearly Financial Details</a>
+        </li>
+        <li class="sidebar-link-two" style="border-radius: 0 8px 8px 0; cursor: pointer; background-color: #1d70b8;">
+            <a href="#" style="color: #fff">A&amp;F Report Data</a>
+        </li>
+        <li class="sidebar-link-two" style="border-radius: 0 8px 8px 0; cursor: pointer; background-color: #1d70b8;">
+            <a href="#" style="color: #fff">Milestones</a>
+        </li>
+        <li class="sidebar-link-two" style="border-radius: 0 8px 8px 0; cursor: pointer; background-color: #1d70b8;">
+            <a href="#" style="color: #fff">Yearly Finances</a>
+        </li>
+        <li class="sidebar-link-two" style="border-radius: 0 8px 8px 0; cursor: pointer; background-color: #1d70b8;">
+            <a href="#" style="color: #fff">Invoices</a>
+        </li>
+        <li class="sidebar-link-two" style="border-radius: 0 8px 8px 0; cursor: pointer; background-color: #1d70b8;">
+            <a href="#" style="color: #fff">Comments</a>
+        </li>
+        <li class="sidebar-link-two" style="border-radius: 0 8px 8px 0; cursor: pointer; background-color: #1d70b8;">
+            <a href="#" style="color: #fff">Project Review</a>
+        </li>
+        <li class="sidebar-link-two" style="border-radius: 0 8px 8px 0; cursor: pointer; background-color: #1d70b8;">
+            <a href="#" style="color: #fff">PMD Milestone</a>
+        </li>
+    </ul>
+</nav>

@@ -27,6 +27,8 @@ namespace Apha.Costbook.Api.Extensions
             services.AddScoped<IProgramService, ProgramService>();
             services.AddScoped<ICustomerService, CustomerService>();
             services.AddScoped<IStaffService, StaffService>();
+            services.AddScoped<IYearlyDetailsService, YearlyDetailsService>();
+
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
@@ -39,7 +41,12 @@ namespace Apha.Costbook.Api.Extensions
             services.AddScoped<IProgramRepository, ProgramRepository>();
             services.AddScoped<ICustomerRepository, CustomerRepository>();
             services.AddScoped<IStaffRepository, StaffRepository>();
-
+            services.AddScoped<ISettingsRepository, SettingsRepository>();
+            services.AddScoped<IProjectYearRepository, ProjectYearRepository>();
+            services.AddScoped<IStaffRequirementRepository, StaffRequirementRepository>();
+            services.AddScoped<ITestRequirementRepository, TestRequirementRepository>();
+            services.AddScoped<IAnimalRequirementRepository, AnimalRequirementRepository>();
+            services.AddScoped<IAdditionalCostRepository, AdditionalCostRepository>();
             return services;
         }
     }

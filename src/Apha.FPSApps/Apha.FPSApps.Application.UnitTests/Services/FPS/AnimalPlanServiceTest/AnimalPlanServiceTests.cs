@@ -159,28 +159,30 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.AnimalPlanServiceTest
         {
             // Arrange
             var animalType = "Cattle";
+            var jobCode = "JOB001";
             var expectedResponse = ApiResponseDto<decimal?>.SuccessResponse(25.50m);
-            _fpsAnimalPlanApiClient.GetAnimalRateAsync(animalType).Returns(expectedResponse);
+            _fpsAnimalPlanApiClient.GetAnimalRateAsync(animalType, jobCode).Returns(expectedResponse);
 
             // Act
-            var result = await _animalPlanService.GetAnimalRateAsync(animalType);
+            var result = await _animalPlanService.GetAnimalRateAsync(animalType, jobCode);
 
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(25.50m, result.Data);
-            await _fpsAnimalPlanApiClient.Received(1).GetAnimalRateAsync(animalType);
+            await _fpsAnimalPlanApiClient.Received(1).GetAnimalRateAsync(animalType, jobCode);
         }
 
         [Fact]
         public async Task GetAnimalRateAsync_WhenRateIsNull_ReturnsSuccessWithNullData()
         {
             // Arrange
+            var jobCode = "JOB001";
             var expectedResponse = ApiResponseDto<decimal?>.SuccessResponse(null);
-            _fpsAnimalPlanApiClient.GetAnimalRateAsync("Unknown").Returns(expectedResponse);
+            _fpsAnimalPlanApiClient.GetAnimalRateAsync("Unknown", jobCode).Returns(expectedResponse);
 
             // Act
-            var result = await _animalPlanService.GetAnimalRateAsync("Unknown");
+            var result = await _animalPlanService.GetAnimalRateAsync("Unknown", jobCode);
 
             // Assert
             Assert.NotNull(result);
@@ -192,12 +194,13 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.AnimalPlanServiceTest
         public async Task GetAnimalRateAsync_WhenApiFails_ReturnsFailureResponse()
         {
             // Arrange
+            var jobCode = "JOB001";
             var errors = new List<ApiErrorDto> { new() { Message = "Not Found", Code = "NOT_FOUND" } };
             var expectedResponse = ApiResponseDto<decimal?>.FailureResponse(errors, new ApiMetaDto());
-            _fpsAnimalPlanApiClient.GetAnimalRateAsync("Cattle").Returns(expectedResponse);
+            _fpsAnimalPlanApiClient.GetAnimalRateAsync("Cattle", jobCode).Returns(expectedResponse);
 
             // Act
-            var result = await _animalPlanService.GetAnimalRateAsync("Cattle");
+            var result = await _animalPlanService.GetAnimalRateAsync("Cattle", jobCode);
 
             // Assert
             Assert.NotNull(result);

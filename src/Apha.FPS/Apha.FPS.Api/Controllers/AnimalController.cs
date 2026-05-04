@@ -64,11 +64,12 @@ namespace Apha.FPS.Api.Controllers
         /// Gets the rate for a specific animal type.
         /// </summary>
         /// <param name="animalType">The animal type identifier.</param>
+        /// <param name="jobCode">The job code to determine the project rate.</param>
         /// <returns>The rate for the specified animal type, or NotFound if not found.</returns>
         [HttpGet("rate")]
-        public async Task<IActionResult> GetAnimalRateByIdAsync(string animalType)
+        public async Task<IActionResult> GetAnimalRateByIdAsync(string animalType, string jobCode)
         {
-            var result = await _animalService.GetAnimalRateByIdAsync(animalType);
+            var result = await _animalService.GetAnimalRateByIdAsync(animalType, jobCode);
             if (result.HasValue)
             {
                 return Ok(result.Value);

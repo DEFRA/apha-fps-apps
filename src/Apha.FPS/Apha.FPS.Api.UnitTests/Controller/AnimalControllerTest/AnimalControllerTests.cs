@@ -167,10 +167,10 @@ namespace Apha.FPS.Api.UnitTests.Controller.AnimalControllerTest
         public async Task GetAnimalRateByIdAsync_HappyPath_ReturnsOk()
         {
             // Arrange
-            _serviceMock.GetAnimalRateByIdAsync("CAT").Returns(Task.FromResult<decimal?>(75.50m));
+            _serviceMock.GetAnimalRateByIdAsync("CAT", "JOB001").Returns(Task.FromResult<decimal?>(75.50m));
 
             // Act
-            var result = await _controller.GetAnimalRateByIdAsync("CAT");
+            var result = await _controller.GetAnimalRateByIdAsync("CAT", "JOB001");
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -181,10 +181,10 @@ namespace Apha.FPS.Api.UnitTests.Controller.AnimalControllerTest
         public async Task GetAnimalRateByIdAsync_NotFound_ReturnsNotFound()
         {
             // Arrange
-            _serviceMock.GetAnimalRateByIdAsync("UNKNOWN").Returns(Task.FromResult<decimal?>(null));
+            _serviceMock.GetAnimalRateByIdAsync("UNKNOWN", "JOB001").Returns(Task.FromResult<decimal?>(null));
 
             // Act
-            var result = await _controller.GetAnimalRateByIdAsync("UNKNOWN");
+            var result = await _controller.GetAnimalRateByIdAsync("UNKNOWN", "JOB001");
 
             // Assert
             Assert.IsType<NotFoundResult>(result);
@@ -194,10 +194,10 @@ namespace Apha.FPS.Api.UnitTests.Controller.AnimalControllerTest
         public async Task GetAnimalRateByIdAsync_ServiceThrows_PropagatesException()
         {
             // Arrange
-            _serviceMock.GetAnimalRateByIdAsync("CAT").Throws(new Exception("Service error"));
+            _serviceMock.GetAnimalRateByIdAsync("CAT", "JOB001").Throws(new Exception("Service error"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _controller.GetAnimalRateByIdAsync("CAT"));
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetAnimalRateByIdAsync("CAT", "JOB001"));
         }
 
         #endregion

@@ -25,13 +25,10 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
                 IEnumerable<MonthlyOutput>? monthlyOutputs = null,
                 int fpsYear = DefaultFpsYear)
         {
-            var fpsYearContext = Substitute.For<IFpsYearContext>();
-            fpsYearContext.FPSYear.Returns(fpsYear);
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            fpsRequestContext.FpsYear.Returns(fpsYear);
 
-            var currentUserContext = Substitute.For<ICurrentUserContext>();
-            currentUserContext.UserId.Returns("test-user");
-
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
 
             var testReqmtsMockSet = RepositoryTestHelper.CreateMockDbSet(testReqmts ?? []);
             RepositoryTestHelper.SetupDbSetOperations(testReqmtsMockSet);
@@ -53,9 +50,181 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
             mockContext.Setup(x => x.MonthlyOutputs).Returns(monthlyOutputsMockSet.Object);
             mockContext.Setup(x => x.TestRequirementLogs).Returns(testReqLogsMockSet.Object);
 
-            var repo = new TestRequirementRepository(mockContext.Object, fpsYearContext, currentUserContext);
+            var repo = new TestRequirementRepository(mockContext.Object, fpsRequestContext);
             return (repo, testReqmtsMockSet, monthlyOutputsMockSet, mockContext);
         }
+
+        private static TestRequirementRepository CreateRepositoryWithJoinMocks(
+            IEnumerable<TestRequirement>? testReqmts = null,
+            IEnumerable<TestorProduct>? testorProducts = null,
+            IEnumerable<Project>? projects = null,
+            int fpsYear = DefaultFpsYear)
+        {
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            fpsRequestContext.FpsYear.Returns(fpsYear);
+
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
+
+            var testReqmtsMockSet = RepositoryTestHelper.CreateMockDbSet(testReqmts ?? []);
+            RepositoryTestHelper.SetupDbSetOperations(testReqmtsMockSet);
+
+            var testorProductsMockSet = RepositoryTestHelper.CreateMockDbSet(testorProducts ?? []);
+            RepositoryTestHelper.SetupDbSetOperations(testorProductsMockSet);
+
+            var projectsMockSet = RepositoryTestHelper.CreateMockDbSet(projects ?? []);
+            RepositoryTestHelper.SetupDbSetOperations(projectsMockSet);
+
+            var monthlyOutputsMockSet = RepositoryTestHelper.CreateMockDbSet(new List<MonthlyOutput>());
+            var testReqLogsMockSet = RepositoryTestHelper.CreateMockDbSet(new List<TestRequirementLog>());
+
+            RepositoryTestHelper.SetupSaveChanges(mockContext);
+
+            mockContext.Setup(x => x.TestRequirements).Returns(testReqmtsMockSet.Object);
+            mockContext.Setup(x => x.TestorProducts).Returns(testorProductsMockSet.Object);
+            mockContext.Setup(x => x.Projects).Returns(projectsMockSet.Object);
+            mockContext.Setup(x => x.MonthlyOutputs).Returns(monthlyOutputsMockSet.Object);
+            mockContext.Setup(x => x.TestRequirementLogs).Returns(testReqLogsMockSet.Object);
+
+            return new TestRequirementRepository(mockContext.Object, fpsRequestContext);
+        }
+
+        #region GetPagedByProjectAsync
+
+        [Fact]
+        public async Task GetPagedByProjectAsync_MatchingBuyer_ReturnsMatchingRecords()
+        {
+            var testorProduct = new TestorProduct { ItemCode = "BLOOD", UnitPriceVla = 10m, DefraUnitPrice = 12m };
+            var project = new Project { ParentProject = "PRJ1", IsDefraProject = 0, ProjectTitle = "Test", Program = "P1", Customer = "C1", Disease = "D1", Contract = "CT1", IncomeAccountCode = "INC1" };
+            var testReqmts = new List<TestRequirement>
+            {
+                new() { TestCode = "BLOOD", Buyer = "PRJ1", FpsYear = DefaultFpsYear },
+                new() { TestCode = "URINE", Buyer = "PRJ2", FpsYear = DefaultFpsYear }
+            };
+
+            var repo = CreateRepositoryWithJoinMocks(
+                testReqmts: testReqmts,
+                testorProducts: [testorProduct],
+                projects: [project]);
+
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetPagedByProjectAsync(query, "PRJ1");
+
+            Assert.Single(result.Data);
+            Assert.Equal("BLOOD", result.Data.First().TestCode);
+            Assert.Equal("PRJ1", result.Data.First().Buyer);
+        }
+
+        [Fact]
+        public async Task GetPagedByProjectAsync_NoMatchingBuyer_ReturnsEmptyList()
+        {
+            var testorProduct = new TestorProduct { ItemCode = "BLOOD", UnitPriceVla = 10m, DefraUnitPrice = 12m };
+            var project = new Project { ParentProject = "PRJ1", IsDefraProject = 0, ProjectTitle = "Test", Program = "P1", Customer = "C1", Disease = "D1", Contract = "CT1", IncomeAccountCode = "INC1" };
+            var testReqmts = new List<TestRequirement>
+            {
+                new() { TestCode = "BLOOD", Buyer = "PRJ1", FpsYear = DefaultFpsYear }
+            };
+
+            var repo = CreateRepositoryWithJoinMocks(
+                testReqmts: testReqmts,
+                testorProducts: [testorProduct],
+                projects: [project]);
+
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetPagedByProjectAsync(query, "MISSING");
+
+            Assert.Empty(result.Data);
+        }
+
+        [Fact]
+        public async Task GetPagedByProjectAsync_MultipleTestsForSameBuyer_ReturnsAll()
+        {
+            var testorProducts = new List<TestorProduct>
+            {
+                new() { ItemCode = "BLOOD", UnitPriceVla = 10m, DefraUnitPrice = 12m },
+                new() { ItemCode = "URINE", UnitPriceVla = 8m,  DefraUnitPrice = 9m  }
+            };
+            var project = new Project { ParentProject = "PRJ1", IsDefraProject = 0, ProjectTitle = "Test", Program = "P1", Customer = "C1", Disease = "D1", Contract = "CT1", IncomeAccountCode = "INC1" };
+            var testReqmts = new List<TestRequirement>
+            {
+                new() { TestCode = "BLOOD", Buyer = "PRJ1", FpsYear = DefaultFpsYear },
+                new() { TestCode = "URINE", Buyer = "PRJ1", FpsYear = DefaultFpsYear },
+                new() { TestCode = "BLOOD", Buyer = "PRJ2", FpsYear = DefaultFpsYear }
+            };
+
+            var repo = CreateRepositoryWithJoinMocks(
+                testReqmts: testReqmts,
+                testorProducts: testorProducts,
+                projects: [project]);
+
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetPagedByProjectAsync(query, "PRJ1");
+
+            Assert.Equal(2, result.Data.Count);
+            Assert.All(result.Data, d => Assert.Equal("PRJ1", d.Buyer));
+        }
+
+        [Fact]
+        public async Task GetPagedByProjectAsync_DefraProject_UsesDefraUnitPrice()
+        {
+            var testorProduct = new TestorProduct { ItemCode = "BLOOD", UnitPriceVla = 10m, DefraUnitPrice = 20m };
+            var project = new Project { ParentProject = "PRJ1", IsDefraProject = 1, ProjectTitle = "Test", Program = "P1", Customer = "C1", Disease = "D1", Contract = "CT1", IncomeAccountCode = "INC1" };
+            var testReqmts = new List<TestRequirement>
+            {
+                new() { TestCode = "BLOOD", Buyer = "PRJ1", FpsYear = DefaultFpsYear }
+            };
+
+            var repo = CreateRepositoryWithJoinMocks(
+                testReqmts: testReqmts,
+                testorProducts: [testorProduct],
+                projects: [project]);
+
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetPagedByProjectAsync(query, "PRJ1");
+
+            Assert.Single(result.Data);
+            Assert.Equal(20m, result.Data.First().RecUnitPrice);
+            Assert.Equal((short)1, result.Data.First().IsDefraProject);
+        }
+
+        [Fact]
+        public async Task GetPagedByProjectAsync_NonDefraProject_UsesVlaUnitPrice()
+        {
+            var testorProduct = new TestorProduct { ItemCode = "BLOOD", UnitPriceVla = 10m, DefraUnitPrice = 20m };
+            var project = new Project { ParentProject = "PRJ1", IsDefraProject = 0, ProjectTitle = "Test", Program = "P1", Customer = "C1", Disease = "D1", Contract = "CT1", IncomeAccountCode = "INC1" };
+            var testReqmts = new List<TestRequirement>
+            {
+                new() { TestCode = "BLOOD", Buyer = "PRJ1", FpsYear = DefaultFpsYear }
+            };
+
+            var repo = CreateRepositoryWithJoinMocks(
+                testReqmts: testReqmts,
+                testorProducts: [testorProduct],
+                projects: [project]);
+
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetPagedByProjectAsync(query, "PRJ1");
+
+            Assert.Single(result.Data);
+            Assert.Equal(10m, result.Data.First().RecUnitPrice);
+        }
+
+        [Fact]
+        public async Task GetPagedByProjectAsync_EmptyRepository_ReturnsEmpty()
+        {
+            var repo = CreateRepositoryWithJoinMocks();
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetPagedByProjectAsync(query, "PRJ1");
+
+            Assert.Empty(result.Data);
+        }
+
+        #endregion
 
         #region GetPagedByTestCodeAsync
 
@@ -267,6 +436,114 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
             var result = await repo.ExistsByTestCodeAndBuyerInMonthlyOutputAsync("URINE", "PRJ1");
 
             Assert.False(result);
+        }
+
+        #endregion
+
+        #region GetPagedByProjectAsync — ItemDescription projection
+
+        [Fact]
+        public async Task GetPagedByProjectAsync_ProjectsItemDescription_FromTestorProduct()
+        {
+            var testorProduct = new TestorProduct
+            {
+                ItemCode = "BLOOD",
+                ItemDescription = "Blood Test Analysis",
+                UnitPriceVla = 10m,
+                DefraUnitPrice = 12m
+            };
+            var project = new Project { ParentProject = "PRJ1", IsDefraProject = 0, ProjectTitle = "Test", Program = "P1", Customer = "C1", Disease = "D1", Contract = "CT1", IncomeAccountCode = "INC1" };
+            var testReqmts = new List<TestRequirement>
+            {
+                new() { TestCode = "BLOOD", Buyer = "PRJ1", FpsYear = DefaultFpsYear }
+            };
+
+            var repo = CreateRepositoryWithJoinMocks(testReqmts, [testorProduct], [project]);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetPagedByProjectAsync(query, "PRJ1");
+
+            Assert.Single(result.Data);
+            Assert.Equal("Blood Test Analysis", result.Data.First().ItemDescription);
+        }
+
+        [Fact]
+        public async Task GetPagedByProjectAsync_WhenItemDescriptionIsNull_ProjectsNull()
+        {
+            var testorProduct = new TestorProduct
+            {
+                ItemCode = "BLOOD",
+                ItemDescription = null,
+                UnitPriceVla = 10m,
+                DefraUnitPrice = 12m
+            };
+            var project = new Project { ParentProject = "PRJ1", IsDefraProject = 0, ProjectTitle = "Test", Program = "P1", Customer = "C1", Disease = "D1", Contract = "CT1", IncomeAccountCode = "INC1" };
+            var testReqmts = new List<TestRequirement>
+            {
+                new() { TestCode = "BLOOD", Buyer = "PRJ1", FpsYear = DefaultFpsYear }
+            };
+
+            var repo = CreateRepositoryWithJoinMocks(testReqmts, [testorProduct], [project]);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetPagedByProjectAsync(query, "PRJ1");
+
+            Assert.Single(result.Data);
+            Assert.Null(result.Data.First().ItemDescription);
+        }
+
+        [Fact]
+        public async Task GetPagedByProjectAsync_MultipleItems_EachHasCorrectItemDescription()
+        {
+            var testorProducts = new List<TestorProduct>
+            {
+                new() { ItemCode = "BLOOD", ItemDescription = "Blood Test Analysis", UnitPriceVla = 10m, DefraUnitPrice = 12m },
+                new() { ItemCode = "URINE", ItemDescription = "Urine Test Analysis", UnitPriceVla = 8m,  DefraUnitPrice = 9m  }
+            };
+            var project = new Project { ParentProject = "PRJ1", IsDefraProject = 0, ProjectTitle = "Test", Program = "P1", Customer = "C1", Disease = "D1", Contract = "CT1", IncomeAccountCode = "INC1" };
+            var testReqmts = new List<TestRequirement>
+            {
+                new() { TestCode = "BLOOD", Buyer = "PRJ1", FpsYear = DefaultFpsYear },
+                new() { TestCode = "URINE", Buyer = "PRJ1", FpsYear = DefaultFpsYear }
+            };
+
+            var repo = CreateRepositoryWithJoinMocks(testReqmts, testorProducts, [project]);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetPagedByProjectAsync(query, "PRJ1");
+
+            Assert.Equal(2, result.Data.Count);
+            var blood = result.Data.First(d => d.TestCode == "BLOOD");
+            var urine = result.Data.First(d => d.TestCode == "URINE");
+            Assert.Equal("Blood Test Analysis", blood.ItemDescription);
+            Assert.Equal("Urine Test Analysis", urine.ItemDescription);
+        }
+
+        [Fact]
+        public async Task GetPagedByProjectAsync_ItemDescription_IndependentOfUnitPriceLogic()
+        {
+            // Defra project uses DefraUnitPrice but description still comes from TestorProduct
+            var testorProduct = new TestorProduct
+            {
+                ItemCode = "BLOOD",
+                ItemDescription = "Blood Test Analysis",
+                UnitPriceVla = 10m,
+                DefraUnitPrice = 20m
+            };
+            var project = new Project { ParentProject = "PRJ1", IsDefraProject = 1, ProjectTitle = "Test", Program = "P1", Customer = "C1", Disease = "D1", Contract = "CT1", IncomeAccountCode = "INC1" };
+            var testReqmts = new List<TestRequirement>
+            {
+                new() { TestCode = "BLOOD", Buyer = "PRJ1", FpsYear = DefaultFpsYear }
+            };
+
+            var repo = CreateRepositoryWithJoinMocks(testReqmts, [testorProduct], [project]);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetPagedByProjectAsync(query, "PRJ1");
+
+            Assert.Single(result.Data);
+            Assert.Equal("Blood Test Analysis", result.Data.First().ItemDescription);
+            Assert.Equal(20m,                   result.Data.First().RecUnitPrice);
         }
 
         #endregion

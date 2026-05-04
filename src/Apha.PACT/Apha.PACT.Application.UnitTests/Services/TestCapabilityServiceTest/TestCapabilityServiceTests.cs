@@ -29,6 +29,85 @@ namespace Apha.PACT.Application.UnitTests.Services.TestCapabilityServiceTest
                 _testCapabilityRepo, _testReqmtRepo, _testorProductRepo, _mapper);
         }
 
+        #region GetPagedTestCapabilityByPortfolioAsync
+
+        [Fact]
+        public async Task GetPagedTestCapabilityByPortfolioAsync_ValidQuery_ReturnsMappedResultWithDescriptions()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string>();
+            var entity = new TestCapability { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" };
+            var pagedData = new PagedData<TestCapability>([entity], new PaginationData { TotalRecords = 1 });
+            var dto = new TestCapabilityDto { TestCode = "TC1", WorkGroup = "WG1" };
+            var pagedResult = new PaginatedResult<TestCapabilityDto> { Data = [dto] };
+            var descriptions = new Dictionary<string, string?> { ["TC1"] = "Test Description" };
+
+            _mapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _testCapabilityRepo.GetPagedTestCapabilityByPortfolioAsync(mappedParams, "PP1").Returns(pagedData);
+            _mapper.Map<PaginatedResult<TestCapabilityDto>>(pagedData).Returns(pagedResult);
+            _testorProductRepo.GetDescriptionsByCodesAsync(Arg.Any<IEnumerable<string>>()).Returns(descriptions);
+
+            var result = await _sut.GetPagedTestCapabilityByPortfolioAsync(query, "PP1");
+
+            result.Should().Be(pagedResult);
+            Assert.Equal("Test Description", result.Data!.First().ItemDescription);
+            await _testCapabilityRepo.Received(1).GetPagedTestCapabilityByPortfolioAsync(mappedParams, "PP1");
+        }
+
+        [Fact]
+        public async Task GetPagedTestCapabilityByPortfolioAsync_EmptyData_DoesNotCallDescriptions()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string>();
+            var pagedData = new PagedData<TestCapability>([], new PaginationData());
+            var pagedResult = new PaginatedResult<TestCapabilityDto> { Data = [] };
+
+            _mapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _testCapabilityRepo.GetPagedTestCapabilityByPortfolioAsync(mappedParams, "PP1").Returns(pagedData);
+            _mapper.Map<PaginatedResult<TestCapabilityDto>>(pagedData).Returns(pagedResult);
+
+            var result = await _sut.GetPagedTestCapabilityByPortfolioAsync(query, "PP1");
+
+            result.Should().Be(pagedResult);
+            await _testorProductRepo.DidNotReceive().GetDescriptionsByCodesAsync(Arg.Any<IEnumerable<string>>());
+        }
+
+        #endregion
+
+        #region AddTestCapabilityAsync — ValidateRequiredFields paths
+
+        [Fact]
+        public async Task AddTestCapabilityAsync_MissingTestCode_ThrowsArgumentException()
+        {
+            var dto = new TestCapabilityDto { TestCode = "", WorkGroup = "WG1", PlanPortfolio = "PP1" };
+
+            await Assert.ThrowsAsync<ArgumentException>(() => _sut.AddTestCapabilityAsync(dto));
+            await _testCapabilityRepo.DidNotReceive().AddAsync(Arg.Any<TestCapability>());
+        }
+
+        [Fact]
+        public async Task AddTestCapabilityAsync_MissingPlanPortfolio_ThrowsArgumentException()
+        {
+            var dto = new TestCapabilityDto { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "" };
+
+            await Assert.ThrowsAsync<ArgumentException>(() => _sut.AddTestCapabilityAsync(dto));
+        }
+
+        #endregion
+
+        #region UpdateTestCapabilityAsync — ValidateRequiredFields paths
+
+        [Fact]
+        public async Task UpdateTestCapabilityAsync_MissingWorkGroup_ThrowsArgumentException()
+        {
+            var dto = new TestCapabilityDto { TestCode = "TC1", WorkGroup = "", PlanPortfolio = "PP1" };
+
+            await Assert.ThrowsAsync<ArgumentException>(() => _sut.UpdateTestCapabilityAsync(dto));
+            await _testCapabilityRepo.DidNotReceive().UpdateAsync(Arg.Any<TestCapability>());
+        }
+
+        #endregion
+
         #region GetPagedByWorkGroupAsync
 
         [Fact]
@@ -236,53 +315,6 @@ namespace Apha.PACT.Application.UnitTests.Services.TestCapabilityServiceTest
 
         #endregion
 
-        #region GetAllTestorProductsAsync
-
-        [Fact]
-        public async Task GetAllTestorProductsAsync_WithData_ReturnsMappedDtos()
-        {
-            var entities = new List<TestorProduct>
-            {
-                new() { ItemCode = "BLOOD", ItemDescription = "Blood Test" },
-                new() { ItemCode = "URINE", ItemDescription = "Urine Test" }
-            };
-            var dtos = new List<TestorProductDto>
-            {
-                new() { ItemCode = "BLOOD" },
-                new() { ItemCode = "URINE" }
-            };
-
-            _testorProductRepo.GetAllAsync().Returns(entities);
-            _mapper.Map<IEnumerable<TestorProductDto>>(entities).Returns(dtos);
-
-            var result = await _sut.GetAllTestorProductsAsync();
-
-            result.Should().BeEquivalentTo(dtos);
-            await _testorProductRepo.Received(1).GetAllAsync();
-        }
-
-        [Fact]
-        public async Task GetAllTestorProductsAsync_EmptyRepository_ReturnsEmptyCollection()
-        {
-            var entities = new List<TestorProduct>();
-            var dtos = new List<TestorProductDto>();
-
-            _testorProductRepo.GetAllAsync().Returns(entities);
-            _mapper.Map<IEnumerable<TestorProductDto>>(entities).Returns(dtos);
-
-            var result = await _sut.GetAllTestorProductsAsync();
-
-            result.Should().BeEmpty();
-        }
-
-        [Fact]
-        public async Task GetAllTestorProductsAsync_RepositoryThrows_PropagatesException()
-        {
-            _testorProductRepo.GetAllAsync().ThrowsAsync(new Exception("DB error"));
-
-            await Assert.ThrowsAsync<Exception>(() => _sut.GetAllTestorProductsAsync());
-        }
-
-        #endregion
+        
     }
 }

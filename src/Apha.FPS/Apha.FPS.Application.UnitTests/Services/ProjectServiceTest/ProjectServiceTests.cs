@@ -1,6 +1,7 @@
 ﻿using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Application.Services;
+using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -768,6 +769,75 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
 
         #endregion
 
+        #region UpdatePactPortfolioDetailsAsync
+
+        [Fact]
+        public async Task UpdatePactPortfolioDetailsAsync_WithValidDto_ReturnsMappedUpdatedDto()
+        {
+            // Arrange
+            var inputDto = new ProjectDto { ParentProject = "PP001", ProjectTitle = "Portfolio Update", Program = "P002", Manager = "Manager A", Finished = 1, Comments = "Done", BudgetCvl = 500m, TransferIncome = 600m };
+            var projectEntity = new Project { ParentProject = "PP001", ProjectTitle = "Portfolio Update", Program = "P002", Manager = "Manager A", Finished = 1, Comments = "Done", BudgetCvl = 500m, TransferIncome = 600m };
+            var updatedEntity = new Project { ParentProject = "PP001", ProjectTitle = "Portfolio Update", Program = "P002", Manager = "Manager A", Finished = 1, Comments = "Done", BudgetCvl = 500m, TransferIncome = 600m };
+            var expectedDto = new ProjectDto { ParentProject = "PP001", ProjectTitle = "Portfolio Update" };
+
+            _mockMapper.Map<Project>(inputDto).Returns(projectEntity);
+            _mockRepository.UpdatePactPortfolioDetailsAsync(projectEntity).Returns(updatedEntity);
+            _mockMapper.Map<ProjectDto>(updatedEntity).Returns(expectedDto);
+
+            // Act
+            var result = await _sut.UpdatePactPortfolioDetailsAsync(inputDto);
+
+            // Assert
+            result.Should().NotBeNull();
+            result!.ParentProject.Should().Be("PP001");
+            result.ProjectTitle.Should().Be("Portfolio Update");
+            _mockMapper.Received(1).Map<Project>(inputDto);
+            await _mockRepository.Received(1).UpdatePactPortfolioDetailsAsync(projectEntity);
+            _mockMapper.Received(1).Map<ProjectDto>(updatedEntity);
+        }
+
+        [Fact]
+        public async Task UpdatePactPortfolioDetailsAsync_WhenProjectNotFound_ReturnsNull()
+        {
+            // Arrange
+            var inputDto = new ProjectDto { ParentProject = "PP999", Program = "P001", Customer = "DEFRA", ProjectStatus = "Active" };
+            var projectEntity = new Project { ParentProject = "PP999", Program = "P001", Customer = "DEFRA", ProjectStatus = "Active" };
+
+            _mockMapper.Map<Project>(inputDto).Returns(projectEntity);
+            _mockRepository.UpdatePactPortfolioDetailsAsync(projectEntity).Returns((Project?)null);
+
+            // Act
+            var result = await _sut.UpdatePactPortfolioDetailsAsync(inputDto);
+
+            // Assert
+            result.Should().BeNull();
+            await _mockRepository.Received(1).UpdatePactPortfolioDetailsAsync(projectEntity);
+            _mockMapper.DidNotReceive().Map<ProjectDto>(Arg.Any<Project>());
+        }
+
+        [Fact]
+        public async Task UpdatePactPortfolioDetailsAsync_WhenRepositoryThrowsException_PropagatesException()
+        {
+            // Arrange
+            var inputDto = new ProjectDto { ParentProject = "PP001", Program = "P001", Customer = "DEFRA", ProjectStatus = "Active" };
+            var projectEntity = new Project { ParentProject = "PP001", Program = "P001", Customer = "DEFRA", ProjectStatus = "Active" };
+
+            _mockMapper.Map<Project>(inputDto).Returns(projectEntity);
+            _mockRepository.UpdatePactPortfolioDetailsAsync(projectEntity)
+                .Returns(Task.FromException<Project?>(new Exception("Database connection failed")));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(
+                async () => await _sut.UpdatePactPortfolioDetailsAsync(inputDto)
+            );
+
+            exception.Message.Should().Be("Database connection failed");
+            await _mockRepository.Received(1).UpdatePactPortfolioDetailsAsync(projectEntity);
+            _mockMapper.DidNotReceive().Map<ProjectDto>(Arg.Any<Project>());
+        }
+
+        #endregion
+
         #region DeleteProjectAsync
 
         [Fact]
@@ -775,6 +845,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
         {
             // Arrange
             var parentProject = "PP001";
+            _mockRepository.HasAssociatedJobCodesAsync(parentProject).Returns(false);
             _mockRepository.DeleteProjectAsync(parentProject).Returns(true);
 
             // Act
@@ -782,6 +853,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
 
             // Assert
             result.Should().BeTrue();
+            await _mockRepository.Received(1).HasAssociatedJobCodesAsync(parentProject);
             await _mockRepository.Received(1).DeleteProjectAsync(parentProject);
         }
 
@@ -790,6 +862,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
         {
             // Arrange
             var parentProject = "PP999";
+            _mockRepository.HasAssociatedJobCodesAsync(parentProject).Returns(false);
             _mockRepository.DeleteProjectAsync(parentProject).Returns(false);
 
             // Act
@@ -797,7 +870,27 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
 
             // Assert
             result.Should().BeFalse();
+            await _mockRepository.Received(1).HasAssociatedJobCodesAsync(parentProject);
             await _mockRepository.Received(1).DeleteProjectAsync(parentProject);
+        }
+
+        [Fact]
+        public async Task DeleteProjectAsync_WhenProjectHasAssociatedJobCodes_ThrowsBusinessValidationErrorException()
+        {
+            // Arrange
+            var parentProject = "PP001";
+            _mockRepository.HasAssociatedJobCodesAsync(parentProject).Returns(true);
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                async () => await _sut.DeleteProjectAsync(parentProject)
+            );
+
+            exception.Errors.Should().HaveCount(1);
+            exception.Errors[0].Code.Should().Be("PROJECT_HAS_ASSOCIATIONS");
+            exception.Errors[0].Message.Should().Contain(parentProject);
+            await _mockRepository.Received(1).HasAssociatedJobCodesAsync(parentProject);
+            await _mockRepository.DidNotReceive().DeleteProjectAsync(Arg.Any<string>());
         }
 
         [Fact]
@@ -805,6 +898,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
         {
             // Arrange
             var parentProject = "PP001";
+            _mockRepository.HasAssociatedJobCodesAsync(parentProject).Returns(false);
             _mockRepository.DeleteProjectAsync(parentProject)
                 .Returns(Task.FromException<bool>(new Exception("Database connection failed")));
 
@@ -814,6 +908,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
             );
 
             exception.Message.Should().Be("Database connection failed");
+            await _mockRepository.Received(1).HasAssociatedJobCodesAsync(parentProject);
             await _mockRepository.Received(1).DeleteProjectAsync(parentProject);
         }
 

@@ -22,6 +22,80 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.PactTimeCodeValidServ
             _service = new PactTimeCodeValidService(_pactClient);
         }
 
+        #region GetPagedByProjectAndTestCodeAsync Tests
+
+        [Fact]
+        public async Task GetPagedByProjectAndTestCodeAsync_WithValidParams_ReturnsPaginatedResult()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var timeCodes = new List<TimeCodeValidDto>
+            {
+                new TimeCodeValidDto { TimeCode = "TC001", WorkGroup = "WG001", ParentProject = "PP001" }
+            };
+            var expectedResponse = ApiResponseDto<List<TimeCodeValidDto>>.SuccessResponse(
+                timeCodes, new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1 });
+            _pactTimeCodeValidApiClient.GetPagedByProjectAndTestCodeAsync(query, "PP001", "TST001")
+                .Returns(expectedResponse);
+
+            var result = await _service.GetPagedByProjectAndTestCodeAsync(query, "PP001", "TST001");
+
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+            await _pactTimeCodeValidApiClient.Received(1).GetPagedByProjectAndTestCodeAsync(query, "PP001", "TST001");
+        }
+
+        [Fact]
+        public async Task GetPagedByProjectAndTestCodeAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "API Error", Code = "API_ERROR" } };
+            var expectedResponse = ApiResponseDto<List<TimeCodeValidDto>>.FailureResponse(errors, new ApiMetaDto());
+            _pactTimeCodeValidApiClient.GetPagedByProjectAndTestCodeAsync(query, "PP001", "TST001")
+                .Returns(expectedResponse);
+
+            var result = await _service.GetPagedByProjectAndTestCodeAsync(query, "PP001", "TST001");
+
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+        }
+
+        #endregion
+
+        #region GetTimeCodeValidAsync Tests
+
+        [Fact]
+        public async Task GetTimeCodeValidAsync_WithValidKey_ReturnsSingleTimeCode()
+        {
+            var dto = new TimeCodeValidDto { TimeCode = "TC001", WorkGroup = "WG001", ParentProject = "PP001" };
+            var expectedResponse = ApiResponseDto<TimeCodeValidDto>.SuccessResponse(dto);
+            _pactTimeCodeValidApiClient.GetTimeCodeValidAsync("WG001", "TC001", "PP001")
+                .Returns(expectedResponse);
+
+            var result = await _service.GetTimeCodeValidAsync("WG001", "TC001", "PP001");
+
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal("TC001", result.Data?.TimeCode);
+            await _pactTimeCodeValidApiClient.Received(1).GetTimeCodeValidAsync("WG001", "TC001", "PP001");
+        }
+
+        [Fact]
+        public async Task GetTimeCodeValidAsync_WhenNotFound_ReturnsFailureResponse()
+        {
+            var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "Not Found", Code = "NOT_FOUND" } };
+            var expectedResponse = ApiResponseDto<TimeCodeValidDto>.FailureResponse(errors, new ApiMetaDto());
+            _pactTimeCodeValidApiClient.GetTimeCodeValidAsync("WG_NONE", "TC_NONE", "PP001")
+                .Returns(expectedResponse);
+
+            var result = await _service.GetTimeCodeValidAsync("WG_NONE", "TC_NONE", "PP001");
+
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+        }
+
+        #endregion
+
         #region GetByJobCodeAsync Tests
 
         [Fact]

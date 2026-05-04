@@ -1,14 +1,10 @@
-﻿using Apha.Common.Contracts.Costbook;
+﻿using Apha.Common.Constants;
+using Apha.Common.Contracts.Costbook;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.CostBook;
 using Apha.FPSApps.Application.Interfaces.CostBookApiClients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Apha.FPSApps.Infrastructure.Integrations.CostBookApis.Clients
 {
@@ -16,6 +12,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.CostBookApis.Clients
     {
         private readonly ICostBookHttpExecutor _http;
         private readonly IMapper _mapper;
+        private const string InternalCodeError = "INTERNAL_ERROR";
 
         public CostBookCustomerApiClient(ICostBookHttpExecutor http, IMapper mapper)
         {
@@ -27,28 +24,19 @@ namespace Apha.FPSApps.Infrastructure.Integrations.CostBookApis.Clients
         {
             try
             {
-                var response = await _http.GetAsync<List<CustomerRes>>("api/projects/customers");
+                var response = await _http.GetAsync<List<CustomerRes>>(CostBookApiEndpoints.GetAllCustomers);
 
                 if (response.Success && response.Data != null)
-                {
                     return _mapper.Map<ApiResponseDto<List<CustomerDto>>>(response);
-                }
-                else
-                {
-                    var responseDto = _mapper.Map<ApiResponseDto<List<CustomerDto>>>(response);
-                    return ApiResponseDto<List<CustomerDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
-                }
+
+                var responseDto = _mapper.Map<ApiResponseDto<List<CustomerDto>>>(response);
+                return ApiResponseDto<List<CustomerDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
             }
             catch (Exception ex)
             {
-                var apiErrorsDto = new List<ApiErrorDto> {
-                   new ApiErrorDto {
-                        Message = "Failed to retrieve customers",
-                        Code = "INTERNAL_ERROR",
-                        Details = ex.Message
-                    }
-                };
-                return ApiResponseDto<List<CustomerDto>>.FailureResponse(apiErrorsDto, new ApiMetaDto());
+                return ApiResponseDto<List<CustomerDto>>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to retrieve customers", Code = InternalCodeError, Details = ex.Message }],
+                    new ApiMetaDto());
             }
         }
     }

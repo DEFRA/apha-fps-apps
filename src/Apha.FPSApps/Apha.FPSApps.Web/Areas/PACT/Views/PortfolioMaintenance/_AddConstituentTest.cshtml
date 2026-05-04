@@ -1,0 +1,89 @@
+@model Apha.FPSApps.Web.Areas.PACT.Models.ConstituentTestItem
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    var testorProducts = ViewBag.TestorProductOptions as List<SelectListItem> ?? [];
+}
+
+<div class="modal-header flex-space-center">
+    <h3 class="govuk-heading-s" style="margin:0;">Add New Test</h3>
+    <button type="button" class="btn-close" onclick="$('#modalPopup').removeClass('show')">×</button>
+</div>
+
+<div class="modal-body" style="overflow:hidden; padding:8px 16px 0 16px;">
+    <form id="formAddTest" class="govuk-grid-column-full">
+
+        <input type="hidden" asp-for="PlanPortfolio" />
+
+        <!-- Validation error summary -->
+        <div class="govuk-error-summary" role="alert"
+             aria-labelledby="error-summary-title" tabindex="-1" style="display:none;">
+            <h2 class="govuk-error-summary__title" id="error-summary-title">
+                There is a problem
+            </h2>
+            <div class="govuk-error-summary__body">
+                <ul class="govuk-list govuk-error-summary__list"></ul>
+            </div>
+        </div>
+
+        <!-- Test Code -->
+        <div class="govuk-form-group sup_margin_bottom_10">
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="TestCode">
+                Test Code <span class="sup_color_red">*</span>
+            </label>
+            <select class="govuk-select govuk-!-font-size-16" asp-for="TestCode"
+                    id="txtmodal-testcode" style="width:100%;" required>
+                <option value="">--Select Test Code--</option>
+                @foreach (var item in testorProducts)
+                {
+                    <option value="@item.Value" data-description="@item.Text">@item.Value</option>
+                }
+            </select>
+            <span asp-validation-for="TestCode" class="govuk-error-message"></span>
+        </div>
+
+        <!-- Item Description -->
+        <div class="govuk-form-group sup_margin_bottom_10">
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="ItemDescription">
+                Item Description <span class="sup_color_red">*</span>
+            </label>
+            <input type="text" class="govuk-input govuk-!-font-size-16" asp-for="ItemDescription"
+                   id="txtmodal-description" placeholder="Description" disabled />
+            <span asp-validation-for="ItemDescription" class="govuk-error-message"></span>
+        </div>
+
+        <!-- Work Group -->
+        <div class="govuk-form-group sup_margin_bottom_10">
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="WorkGroup">
+                Work Group <span class="sup_color_red">*</span>
+            </label>
+            <select class="govuk-select govuk-!-font-size-16" asp-for="WorkGroup"
+                    id="txtmodal-workgroup" style="width:100%;" required
+                    asp-items="@(ViewBag.WorkGroupOptions as List<SelectListItem>)">
+                <option value="">--Select Work Group--</option>
+            </select>
+            <span asp-validation-for="WorkGroup" class="govuk-error-message"></span>
+        </div>
+
+    </form>
+</div>
+
+<div class="modal-footer" style="padding:8px 16px;">
+    <button type="button" class="govuk-button govuk-button--secondary sup_margin_0"
+            onclick="$('#modalPopup').removeClass('show')">
+        Cancel
+    </button>
+    <button type="button" class="govuk-button sup_margin_0"
+            onclick="saveConstituentTest()">
+        Save
+    </button>
+</div>
+
+<script>
+    (function () {
+        $('#txtmodal-testcode').on('change', function () {
+            var desc = $(this).find('option:selected').data('description') || '';
+            $('#txtmodal-description').val(desc);
+        });
+    })();
+</script>

@@ -1,5 +1,7 @@
 ﻿using Apha.Common.Contracts;
 using System.Net.Http.Json;
+using System.Text;
+using System.Text.Json;
 
 namespace Apha.FPSApps.Infrastructure.Integrations.HttpExecutor
 {
@@ -51,6 +53,19 @@ namespace Apha.FPSApps.Infrastructure.Integrations.HttpExecutor
         public async Task<ApiResponse<T>> DeleteAsync<T>(string url)
         {
             var response = await _http.DeleteAsync(url);
+            return await response.ToApiResponse<T>();
+        }
+
+        public async Task<ApiResponse<T>> DeleteAsync<TRequest, T>(string url, TRequest body)
+        {
+            var request = new HttpRequestMessage(HttpMethod.Delete, url)
+            {
+                Content = new StringContent(
+                    JsonSerializer.Serialize(body),
+                    Encoding.UTF8,
+                    "application/json")
+            };
+            var response = await _http.SendAsync(request);
             return await response.ToApiResponse<T>();
         }
     }

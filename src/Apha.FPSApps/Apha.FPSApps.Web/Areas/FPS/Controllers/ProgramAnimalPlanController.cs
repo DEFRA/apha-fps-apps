@@ -24,7 +24,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         public async Task<IActionResult> Index(string? programNo = null)
         {
             List<SelectListItem> programmeList = await GetProgrammeListAsync();
-            string selectedProgramNo = programNo ?? programmeList.FirstOrDefault()?.Value ?? string.Empty;
+            string selectedProgramNo = programNo ?? string.Empty;
             ProgramDto? programInfo = await GetProgramInfoAsync(selectedProgramNo);
 
             var projectsGrid = new DataGridConfig<ProjectViewModel>
@@ -59,7 +59,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 EditFunction = "editAnimalPlan",
                 DeleteFunction = "deleteAnimalPlan",
                 ExtraFilterMethod = "getAnimalPlanExtraFilters",
-                BindGridUrl = "/FPS/AnimalJob/LoadAnimalPlanGrid",
+                BindGridUrl = $"/FPS/AnimalJob/LoadAnimalPlanGrid?title={Uri.EscapeDataString("Animal Plan")}", 
                 Data = new List<AnimalPlanItem>(),
                 Columns = GridDataProvider.GetColumnsDefination<AnimalPlanItem>(null),
                 Pagination = new PaginationModel()

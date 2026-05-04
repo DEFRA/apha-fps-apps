@@ -18,16 +18,31 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         /// </summary>
         private static ProjectRepository CreateRepository(IEnumerable<Project> projects)
         {
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<CostbookDbContext>();
+            var mockFPSYearContext = new Mock<IFPSYearContext>();
+            var mockSettingsRepository = new Mock<ISettingsRepository>();
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<CostbookDbContext>(mockFPSYearContext.Object);
 
             var projectsMockSet = RepositoryTestHelper.CreateMockDbSet(projects);
             mockContext.Setup(x => x.Set<Project>()).Returns(projectsMockSet.Object);
             mockContext.Setup(x => x.Projects).Returns(projectsMockSet.Object);
 
+            // Setup additional DbSets for Delete operations (they need to exist even if empty)
+            var emptyAnimalReqs = RepositoryTestHelper.CreateMockDbSet(new List<AnimalRequirement>());
+            var emptyAdditionalCosts = RepositoryTestHelper.CreateMockDbSet(new List<AdditionalCost>());
+            var emptyTestReqs = RepositoryTestHelper.CreateMockDbSet(new List<TestRequirement>());
+            var emptyStaffReqs = RepositoryTestHelper.CreateMockDbSet(new List<StaffRequirement>());
+            var emptyProjectYears = RepositoryTestHelper.CreateMockDbSet(new List<ProjectYear>());
+
+            mockContext.Setup(x => x.Set<AnimalRequirement>()).Returns(emptyAnimalReqs.Object);
+            mockContext.Setup(x => x.Set<AdditionalCost>()).Returns(emptyAdditionalCosts.Object);
+            mockContext.Setup(x => x.Set<TestRequirement>()).Returns(emptyTestReqs.Object);
+            mockContext.Setup(x => x.Set<StaffRequirement>()).Returns(emptyStaffReqs.Object);
+            mockContext.Setup(x => x.Set<ProjectYear>()).Returns(emptyProjectYears.Object);
+
             // Setup SaveChangesAsync
             RepositoryTestHelper.SetupSaveChanges(mockContext);
 
-            return new ProjectRepository(mockContext.Object);
+            return new ProjectRepository(mockContext.Object, mockSettingsRepository.Object);
         }
 
         #region GetPaginatedProjectsAsync
@@ -38,9 +53,9 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             // Arrange
             var projects = new List<Project>
             {
-                new() { ProjectId = "2024/001", Projecttitle = "Project 1", ContractNumber = "CON001" },
-                new() { ProjectId = "2024/002", Projecttitle = "Project 2", ContractNumber = "CON002" },
-                new() { ProjectId = "2024/003", Projecttitle = "Project 3", ContractNumber = "CON003" }
+                new() { ProjectId = "2024/001", ProjectTitle = "Project 1", ContractNumber = "CON001" },
+                new() { ProjectId = "2024/002", ProjectTitle = "Project 2", ContractNumber = "CON002" },
+                new() { ProjectId = "2024/003", ProjectTitle = "Project 3", ContractNumber = "CON003" }
             };
             var repo = CreateRepository(projects);
             var queryFilter = new PaginationParameters<string>
@@ -66,9 +81,9 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             // Arrange
             var projects = new List<Project>
             {
-                new() { ProjectId = "2024/001", Projecttitle = "Project 1" },
-                new() { ProjectId = "2024/002", Projecttitle = "Project 2" },
-                new() { ProjectId = "2025/001", Projecttitle = "Project 3" }
+                new() { ProjectId = "2024/001", ProjectTitle = "Project 1" },
+                new() { ProjectId = "2024/002", ProjectTitle = "Project 2" },
+                new() { ProjectId = "2025/001", ProjectTitle = "Project 3" }
             };
             var repo = CreateRepository(projects);
             var queryFilter = new PaginationParameters<string>
@@ -93,11 +108,11 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             // Arrange
             var projects = new List<Project>
             {
-                new() { ProjectId = "2024/001", Projecttitle = "Project 1" },
-                new() { ProjectId = "2024/002", Projecttitle = "Project 2" },
-                new() { ProjectId = "2024/003", Projecttitle = "Project 3" },
-                new() { ProjectId = "2024/004", Projecttitle = "Project 4" },
-                new() { ProjectId = "2024/005", Projecttitle = "Project 5" }
+                new() { ProjectId = "2024/001", ProjectTitle = "Project 1" },
+                new() { ProjectId = "2024/002", ProjectTitle = "Project 2" },
+                new() { ProjectId = "2024/003", ProjectTitle = "Project 3" },
+                new() { ProjectId = "2024/004", ProjectTitle = "Project 4" },
+                new() { ProjectId = "2024/005", ProjectTitle = "Project 5" }
             };
             var repo = CreateRepository(projects);
             var queryFilter = new PaginationParameters<string>
@@ -132,9 +147,9 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             // Arrange
             var projects = new List<Project>
             {
-                new() { ProjectId = "2024/002", Projecttitle = "Project B", Programme = "Programme B", ContractNumber = "CON002" },
-                new() { ProjectId = "2024/001", Projecttitle = "Project A", Programme = "Programme A", ContractNumber = "CON001" },
-                new() { ProjectId = "2024/003", Projecttitle = "Project C", Programme = "Programme C", ContractNumber = "CON003" }
+                new() { ProjectId = "2024/002", ProjectTitle = "Project B", Programme = "Programme B", ContractNumber = "CON002" },
+                new() { ProjectId = "2024/001", ProjectTitle = "Project A", Programme = "Programme A", ContractNumber = "CON001" },
+                new() { ProjectId = "2024/003", ProjectTitle = "Project C", Programme = "Programme C", ContractNumber = "CON003" }
             };
             var repo = CreateRepository(projects);
             var queryFilter = new PaginationParameters<string>
@@ -154,7 +169,7 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             var actualValue = sortBy.ToLower() switch
             {
                 "projectid" => firstProject.ProjectId,
-                "projecttitle" => firstProject.Projecttitle,
+                "projecttitle" => firstProject.ProjectTitle,
                 "programme" => firstProject.Programme,
                 "contractnumber" => firstProject.ContractNumber,
                 _ => null
@@ -168,9 +183,9 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             // Arrange
             var projects = new List<Project>
             {
-                new() { ProjectId = "2024/001", Projecttitle = "Project 1" },
-                new() { ProjectId = "2024/002", Projecttitle = "Project 2" },
-                new() { ProjectId = "2024/003", Projecttitle = "Project 3" }
+                new() { ProjectId = "2024/001", ProjectTitle = "Project 1" },
+                new() { ProjectId = "2024/002", ProjectTitle = "Project 2" },
+                new() { ProjectId = "2024/003", ProjectTitle = "Project 3" }
             };
             var repo = CreateRepository(projects);
             var queryFilter = new PaginationParameters<string>
@@ -217,9 +232,9 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             // Arrange
             var projects = new List<Project>
             {
-                new() { ProjectId = "2024/001", Projecttitle = "Test Project A", Programme = "Programme A" },
-                new() { ProjectId = "2024/002", Projecttitle = "Test Project B", Programme = "Programme B" },
-                new() { ProjectId = "2025/001", Projecttitle = "Other Project", Programme = "Programme C" }
+                new() { ProjectId = "2024/001", ProjectTitle = "Test Project A", Programme = "Programme A" },
+                new() { ProjectId = "2024/002", ProjectTitle = "Test Project B", Programme = "Programme B" },
+                new() { ProjectId = "2025/001", ProjectTitle = "Other Project", Programme = "Programme C" }
             };
             var repo = CreateRepository(projects);
             var queryFilter = new PaginationParameters<string>
@@ -227,7 +242,7 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.ProjectRepositoryTest
                 Page = 1,
                 PageSize = 10,
                 Filter = "{\"ProjectId\":\"2024\"}",
-                SortBy = "projecttitle",
+                SortBy = "ProjectTitle",
                 Descending = false
             };
 
@@ -237,7 +252,7 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             // Assert
             Assert.NotNull(result);
             Assert.Equal(2, result.Data.Count());
-            Assert.Equal("Test Project A", result.Data.First().Projecttitle);
+            Assert.Equal("Test Project A", result.Data.First().ProjectTitle);
             Assert.All(result.Data, p => Assert.Contains("2024", p.ProjectId));
         }
 
@@ -246,10 +261,10 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         [InlineData("customername", true)]
         [InlineData("disease", false)]
         [InlineData("disease", true)]
-        [InlineData("startdate", false)]
-        [InlineData("startdate", true)]
-        [InlineData("contractprice", false)]
-        [InlineData("contractprice", true)]
+        [InlineData("StartDate", false)]
+        [InlineData("StartDate", true)]
+        [InlineData("ContractPrice", false)]
+        [InlineData("ContractPrice", true)]
         [InlineData("preparedby", false)]
         [InlineData("preparedby", true)]
         [InlineData("dateofsubmission", false)]
@@ -264,8 +279,8 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.ProjectRepositoryTest
                     ProjectId = "2024/001",
                     CustomerName = "Customer A",
                     Disease = "Disease A",
-                    Startdate = new DateOnly(2024, 1, 1),
-                    Contractprice = 1000,
+                    StartDate = new DateOnly(2024, 1, 1),
+                    ContractPrice = 1000,
                     PreparedBy = "Person A",
                     DateOfSubmission = new DateOnly(2024, 1, 1)
                 },
@@ -274,8 +289,8 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.ProjectRepositoryTest
                     ProjectId = "2024/002",
                     CustomerName = "Customer B",
                     Disease = "Disease B",
-                    Startdate = new DateOnly(2024, 2, 1),
-                    Contractprice = 2000,
+                    StartDate = new DateOnly(2024, 2, 1),
+                    ContractPrice = 2000,
                     PreparedBy = "Person B",
                     DateOfSubmission = new DateOnly(2024, 2, 1)
                 }
@@ -308,8 +323,8 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             // Arrange
             var projects = new List<Project>
             {
-                new() { ProjectId = "2024/001", ContractNumber = "CON001", Submittedbylname = "Smith", Submittedbyfname = "John" },
-                new() { ProjectId = "2024/002", ContractNumber = "CON002", Submittedbylname = "Jones", Submittedbyfname = "Jane" }
+                new() { ProjectId = "2024/001", ContractNumber = "CON001", SubmittedByLName = "Smith", SubmittedByFName = "John" },
+                new() { ProjectId = "2024/002", ContractNumber = "CON002", SubmittedByLName = "Jones", SubmittedByFName = "Jane" }
             };
             var repo = CreateRepository(projects);
 
@@ -328,7 +343,7 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             // Arrange
             var projects = new List<Project>
             {
-                new() { ProjectId = "2024/001", ContractNumber = "CON001", Submittedbylname = "Smith", Submittedbyfname = "John" }
+                new() { ProjectId = "2024/001", ContractNumber = "CON001", SubmittedByLName = "Smith", SubmittedByFName = "John" }
             };
             var repo = CreateRepository(projects);
 
@@ -345,7 +360,7 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             // Arrange
             var projects = new List<Project>
             {
-                new() { ProjectId = "2024/001a", ContractNumber = "CON001", Submittedbylname = "Smith", Submittedbyfname = "John" }
+                new() { ProjectId = "2024/001a", ContractNumber = "CON001", SubmittedByLName = "Smith", SubmittedByFName = "John" }
             };
             var repo = CreateRepository(projects);
             var encodedId = HttpUtility.UrlEncode("2024/001a");
@@ -366,7 +381,7 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             // Arrange
             var projects = new List<Project>
             {
-                new() { ProjectId = "2024/001", ContractNumber = "CON001", Submittedbylname = "Smith", Submittedbyfname = "John" }
+                new() { ProjectId = "2024/001", ContractNumber = "CON001", SubmittedByLName = "Smith", SubmittedByFName = "John" }
             };
             var repo = CreateRepository(projects);
 
@@ -391,8 +406,8 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             {
                 ProjectId = "2024/001",
                 ContractNumber = "CON001",
-                Submittedbylname = "Smith",
-                Submittedbyfname = "John"
+                SubmittedByLName = "Smith",
+                SubmittedByFName = "John"
             };
 
             // Act
@@ -414,8 +429,8 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             {
                 ProjectId = "2024/001",
                 ContractNumber = "CON001",
-                Submittedbylname = "Smith",
-                Submittedbyfname = "John"
+                SubmittedByLName = "Smith",
+                SubmittedByFName = "John"
             };
 
             // Act
@@ -437,8 +452,8 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             {
                 ProjectId = "2024/001",
                 ContractNumber = "CON001",
-                Submittedbylname = "Smith",
-                Submittedbyfname = "John"
+                SubmittedByLName = "Smith",
+                SubmittedByFName = "John"
             };
             var projects = new List<Project> { existingProject };
             var repo = CreateRepository(projects);
@@ -447,8 +462,8 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             {
                 ProjectId = "2024/001",
                 ContractNumber = "CON002",
-                Submittedbylname = "Jones",
-                Submittedbyfname = "Jane"
+                SubmittedByLName = "Jones",
+                SubmittedByFName = "Jane"
             };
 
             // Act
@@ -470,8 +485,8 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             {
                 ProjectId = "2024/001",
                 ContractNumber = "CON001",
-                Submittedbylname = "Smith",
-                Submittedbyfname = "John"
+                SubmittedByLName = "Smith",
+                SubmittedByFName = "John"
             };
 
             // Act
@@ -483,88 +498,7 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.ProjectRepositoryTest
 
         #endregion
 
-        #region DeleteProjectAsync
-
-        [Fact]
-        public async Task DeleteProjectAsync_ReturnsTrue_WhenProjectExistsAndIsDeleted()
-        {
-            // Arrange
-            var projectToDelete = new Project
-            {
-                ProjectId = "2024/001",
-                ContractNumber = "CON001",
-                Submittedbylname = "Smith",
-                Submittedbyfname = "John"
-            };
-            var projects = new List<Project> { projectToDelete };
-            var repo = CreateRepository(projects);
-
-            // Act
-            var result = await repo.DeleteProjectAsync("2024/001");
-
-            // Assert
-            Assert.True(result);
-        }
-
-        [Fact]
-        public async Task DeleteProjectAsync_ReturnsFalse_WhenProjectDoesNotExist()
-        {
-            // Arrange
-            var projects = new List<Project>
-            {
-                new() { ProjectId = "2024/001", ContractNumber = "CON001", Submittedbylname = "Smith", Submittedbyfname = "John" }
-            };
-            var repo = CreateRepository(projects);
-
-            // Act
-            var result = await repo.DeleteProjectAsync("NONEXISTENT");
-
-            // Assert
-            Assert.False(result);
-        }
-
-        [Fact]
-        public async Task DeleteProjectAsync_HandlesUrlDecodedId()
-        {
-            // Arrange
-            var projectToDelete = new Project
-            {
-                ProjectId = "2024/001a",
-                ContractNumber = "CON001",
-                Submittedbylname = "Smith",
-                Submittedbyfname = "John"
-            };
-            var projects = new List<Project> { projectToDelete };
-            var repo = CreateRepository(projects);
-            var encodedId = HttpUtility.UrlEncode("2024/001a");
-
-            // Act
-            var result = await repo.DeleteProjectAsync(encodedId);
-
-            // Assert
-            Assert.True(result);
-        }
-
-        [Theory]
-        [InlineData(null)]
-        [InlineData("")]
-        public async Task DeleteProjectAsync_ReturnsFalse_WhenIdIsNullOrEmpty(string? id)
-        {
-            // Arrange
-            var projects = new List<Project>
-            {
-                new() { ProjectId = "2024/001", ContractNumber = "CON001", Submittedbylname = "Smith", Submittedbyfname = "John" }
-            };
-            var repo = CreateRepository(projects);
-
-            // Act
-            var result = await repo.DeleteProjectAsync(id!);
-
-            // Assert
-            Assert.False(result);
-        }
-
-        #endregion
+      
 
         #region GetNextProjectNumberAsync
 

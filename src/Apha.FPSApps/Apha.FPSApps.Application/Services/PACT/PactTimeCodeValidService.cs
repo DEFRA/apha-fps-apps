@@ -18,8 +18,14 @@ namespace Apha.FPSApps.Application.Services.PACT
         public async Task<ApiResponseDto<List<TimeCodeValidDto>>> GetByJobCodeAsync(string jobCode, string parentProject)
             => await _pactClient.PactTimeCodeValid.GetByJobCodeAsync(jobCode, parentProject);
 
+        public async Task<ApiResponseDto<TimeCodeValidDto>> GetTimeCodeValidAsync(string workGroup, string timeCode, string parentProject)
+            => await _pactClient.PactTimeCodeValid.GetTimeCodeValidAsync(workGroup, timeCode, parentProject);
+
         public async Task<ApiResponseDto<List<TimeCodeValidDto>>> GetPagedTimeCodesAsync(QueryParameters<string> query, string? jobCode, string? parentProject)
             => await _pactClient.PactTimeCodeValid.GetPagedTimeCodesAsync(query, jobCode, parentProject);
+
+        public async Task<ApiResponseDto<List<TimeCodeValidDto>>> GetPagedByProjectAndTestCodeAsync(QueryParameters<string> query, string parentProject, string testCode)
+            => await _pactClient.PactTimeCodeValid.GetPagedByProjectAndTestCodeAsync(query, parentProject, testCode);
 
         public async Task<ApiResponseDto<TimeCodeValidDto>> CreateTimeCodeValidAsync(TimeCodeValidDto item)
             => await _pactClient.PactTimeCodeValid.CreateTimeCodeValidAsync(item);

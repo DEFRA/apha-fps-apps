@@ -1,7 +1,15 @@
 ﻿@{
     Layout = null;
 }
-
+@using System.Security.Claims
+@{
+    // Get display name from claims (try multiple claim types)
+    var displayName = User.FindFirst("name")?.Value
+                      ?? User.FindFirst(ClaimTypes.GivenName)?.Value
+                      ?? User.FindFirst(ClaimTypes.Name)?.Value?.Split('@')[0]
+                      ?? "Unknown User";
+   
+}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,7 +23,8 @@
     <link rel="stylesheet" href="~/css/bootstrap.min.css">
     <link rel="stylesheet" href="~/css/costbook_styles/styles.css">
     <link rel="stylesheet" href="~/css/main_style.css">
-    <link rel="stylesheet" href="`~/css/costbook_styles/suppliement_style_costbook.css" /> 
+    <link rel="stylesheet" href="~/css/costbook_styles/suppliement_style_costbook.css" />
+    <link rel="stylesheet" href="~/css/suppliement_style_over_gov.uk_style.css" />
     <link rel="stylesheet" href="~/css/costbook_styles/layout_style.css" />
 
             <link rel="stylesheet" href="~/DataGrid/editable-grid.css" />
@@ -43,13 +52,13 @@
           
 			
                     <div class="btn-group home-user-menu">
-                        Ken Rod <button type="button" aria-label="user dropdown arrow to go home page" class="btn btn-secondary dropdown-toggle user-menu home-user-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                                @displayName<button type="button" aria-label="user dropdown arrow to go home page" class="btn btn-secondary dropdown-toggle user-menu home-user-btn" data-bs-toggle="dropdown" aria-expanded="false">
                         <img src="~/images/circle-user-regular-full.svg" alt="user icon" width="24"> <img src="~/images/down-arrow.png" alt="dropdown arrow for logout of application" width="30px" height="30px">
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
                     
                         <li>
-                            <a href="../index.html" class="dropdown-item" type="button" aria-hidden="true">
+                            <a href="/" class="dropdown-item" type="button">
                                 <img src="~/images/house-user-solid-full.svg" alt="dropdown home icon" width="22px">  Home
                             </a>
                         </li>
@@ -65,30 +74,86 @@
             btn();
         </script>
 
-    
+
 
     <!-- Body Content Container -->
+         <div class="sup_margin_bottom_10 content-wrapper">
         <main class="govuk-main-wrapper govuk-!-padding-top-0" id="main-content" role="main">
-    <div class="container-fluid" style="min-height: 415px;">
-        @RenderBody()
-    </div>
-   
-    <!-- Footer Section -->
-   
-            <div class="govuk-footer sup_p_0 sup_margin_left_right_0 fps-sr-page-footer">
-                <div class="govuk-width-container sup_p_8 sup_text_center fps-sr-page-footer-inner">
-                    <span class="fps-sr-page-footer-text">
-                        © copyright Defra 2025
-                    </span>
-                </div>
+            <div class="sup_margin_bottom_10 content-wrapper">
+                @RenderBody()
             </div>
-   
+
+
 
     <!-- Bootstrap JS Reference -->
-    <script src="~/js/bootstrap.bundle.min.js"></script>
+                                <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+                            <!-- ── Shared modal popup (for add/edit forms) ───────────────────── -->
+                            <div id="modalPopup" tabindex="-1" aria-labelledby="modalPopupLabel"
+                                 style="display:none; position:fixed; inset:0; z-index:1050;
+                                background:rgba(0,0,0,0.5); align-items:center; justify-content:center;">
+                                <div class="modal-dialog modal-md" style="margin:auto; width:100%; max-width:700px;">
+                                    <div id="modaPopupBody" class="modal-content" style="border-radius:4px;">
+                                    </div>
+                                </div>
+                            </div>
 
+                            <!-- ── Scripts ───────────────────────────────────────────────────── -->
+                           
+                            <script src="~/lib/jquery-validation/dist/jquery.validate.js"></script>
+                            <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.js"></script>
+                            
+
+                            <script>
+                                        // ── Modal open / close helpers ────────────────────────────────────
+                                        (function () {
+                                            var modal = document.getElementById('modalPopup');
+                                            if (!modal) return;
+
+                                            var observer = new MutationObserver(function () {
+                                                if (modal.classList.contains('show')) {
+                                                    modal.style.display = 'flex';
+                                                    document.body.style.overflow = 'hidden';
+                                                } else {
+                                                    modal.style.display = 'none';
+                                                    document.body.style.overflow = '';
+                                                }
+                                            });
+                                            observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
+
+                                            modal.addEventListener('click', function (e) {
+                                                if (e.target === modal) {
+                                                    return false;
+                                                }
+                                            });
+
+                                            document.addEventListener('keydown', function (e) {
+                                                if (e.key === 'Escape' && modal.classList.contains('show')) {
+                                                    modal.classList.remove('show');
+                                                }
+                                            });
+                                        })();
+
+                                        // ── jQuery.fn.serializeObject helper ─────────────────────────────
+                                        $.fn.serializeObject = function () {
+                                            var obj = {};
+                                            this.serializeArray().forEach(function (item) {
+                                                obj[item.name] = item.value;
+                                            });
+                                            return obj;
+                                        };
+                            </script>
     <!-- Scripts Section for page-specific JavaScript -->
     @RenderSection("Scripts", required: false)
         </main>
+        </div>
+                        <!-- Footer Section -->
+
+                        <div class="govuk-footer sup_p_0 sup_margin_left_right_0">
+                            <div class="govuk-width-container sup_p_8 sup_text_center">
+                                <span class="fps-sr-page-footer-text">
+                                    © copyright Defra 2025
+                                </span>
+                            </div>
+                        </div>
 </body>
 </html>
