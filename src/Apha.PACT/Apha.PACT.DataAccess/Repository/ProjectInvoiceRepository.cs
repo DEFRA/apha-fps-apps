@@ -125,16 +125,27 @@ namespace Apha.PACT.DataAccess.Repository
             return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
         }
 
-        public async Task<List<MonthlyInvoicesSummary>> GetMonthlyInvoicesSummaryAsync(string? program, string? parentProject)
+        public async Task<List<MonthlyInvoicesSummary>> GetMonthlyInvoicesSummaryAsync(PaginationParameters<string> parameters)
         {
             IQueryable<MonthlyInvoicesSummary> query = _context.MonthlyInvoicesSummary.AsNoTracking();
 
-            if (!string.IsNullOrWhiteSpace(program))
-                query = query.Where(x => x.Program.Contains(program));
+            // Parse filter JSON from DataGrid: {"Program":"ADMIN","ParentProject":"AH"}
+            if (!string.IsNullOrWhiteSpace(parameters.Filter))
+            {
+                dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(parameters.Filter);
+                if (filterModel != null)
+                {
+                    IDictionary<string, object> dict = (IDictionary<string, object>)filterModel;
 
-            if (!string.IsNullOrWhiteSpace(parentProject))
-                query = query.Where(x => x.Parentproject.Contains(parentProject));
+                    if (dict.TryGetValue("Program", out object? program) && program != null)
+                        query = query.Where(x => x.Program.Contains(program.ToString()!));
 
+                    if (dict.TryGetValue("ParentProject", out object? parentProject) && parentProject != null)
+                        query = query.Where(x => x.Parentproject.Contains(parentProject.ToString()!));
+                }
+            }
+
+            // Always order raw rows by Program, Project, Month so grouping is stable
             return await query
                 .OrderBy(x => x.Program)
                 .ThenBy(x => x.Parentproject)

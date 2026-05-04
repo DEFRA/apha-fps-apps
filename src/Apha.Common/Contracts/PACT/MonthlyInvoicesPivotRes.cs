@@ -1,3 +1,5 @@
+using Apha.Common.Contracts;
+
 namespace Apha.Common.Contracts.PACT
 {
     public class MonthlyInvoicesSummaryRowRes
@@ -11,5 +13,6 @@ namespace Apha.Common.Contracts.PACT
     {
         public List<int> Months { get; set; } = [];
         public List<MonthlyInvoicesSummaryRowRes> Rows { get; set; } = [];
+        public Pagination Pagination { get; set; } = new();
     }
 }

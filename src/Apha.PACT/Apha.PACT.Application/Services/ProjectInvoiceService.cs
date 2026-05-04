@@ -77,26 +77,19 @@ namespace Apha.PACT.Application.Services
 
         public async Task<MonthlyInvoicesPivotDto> GetMonthlyInvoicesSummaryAsync(QueryParameters<string> query)
         {
-            // Parse the DataGrid JSON filter string: {"Program":"ADMIN","ParentProject":"AH"}
-            string? program = null;
-            string? parentProject = null;
-            if (!string.IsNullOrWhiteSpace(query.Filter))
-            {
-                var dict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(query.Filter)
-                           ?? new Dictionary<string, string>();
-                dict.TryGetValue("Program", out program);
-                dict.TryGetValue("ParentProject", out parentProject);
-            }
-
+            // Push filter to the repository so the DB query is already filtered
+            PaginationParameters<string> parameters = _mapper.Map<PaginationParameters<string>>(query);
             List<Core.Entities.MonthlyInvoicesSummary> data =
-                await _repository.GetMonthlyInvoicesSummaryAsync(program, parentProject);
+                await _repository.GetMonthlyInvoicesSummaryAsync(parameters);
 
+            // Discover all months present in filtered data (used to build columns)
             List<int> months = data
                 .Select(x => x.Month)
                 .Distinct()
                 .OrderBy(m => m)
                 .ToList();
 
+            // Group flat rows into pivot rows (must be done in-memory: dict per row)
             IEnumerable<MonthlyInvoicesSummaryDto> rows = data
                 .GroupBy(x => new { x.Program, x.Parentproject })
                 .Select(g => new MonthlyInvoicesSummaryDto
@@ -106,12 +99,32 @@ namespace Apha.PACT.Application.Services
                     MonthlyAmounts = g.ToDictionary(x => x.Month, x => x.Monthlyamount ?? 0m)
                 });
 
+            // Sort grouped pivot rows (including dynamic month columns M1..M12)
             rows = SortPivotRows(rows, query.SortBy, query.Descending);
+
+            // Paginate grouped rows in-memory
+            var allRows = rows.ToList();
+            int totalRecords = allRows.Count;
+            int page = query.Page < 1 ? 1 : query.Page;
+            int pageSize = query.PageSize < 1 ? 10 : query.PageSize;
+            int totalPages = (int)Math.Ceiling((double)totalRecords / pageSize);
+
+            List<MonthlyInvoicesSummaryDto> pagedRows = allRows
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
 
             return new MonthlyInvoicesPivotDto
             {
                 Months = months,
-                Rows = rows.ToList()
+                Rows = pagedRows,
+                Pagination = new Apha.PACT.Application.Pagination.PaginationDto
+                {
+                    PageNumber = page,
+                    PageSize = pageSize,
+                    TotalPages = totalPages,
+                    TotalRecords = totalRecords
+                }
             };
         }
 

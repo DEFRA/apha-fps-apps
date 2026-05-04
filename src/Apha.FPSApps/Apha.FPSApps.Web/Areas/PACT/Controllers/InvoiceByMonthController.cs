@@ -95,15 +95,25 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
             foreach (int month in pivot.Months)
             {
+                // Financial year: period 1 = Apr, 2 = May, ... 9 = Dec, 10 = Jan, 11 = Feb, 12 = Mar
+                int calendarMonth = ((month + 2) % 12) + 1;
+                string monthAbbr = new DateTime(2000, calendarMonth, 1, 0, 0, 0, DateTimeKind.Unspecified).ToString("MMM");
+
                 columns.Add(new DataGridColumn
                 {
                     PropertyName = $"M{month}",
-                    DisplayName  = new DateTime(2000, month, 1, 0, 0, 0, DateTimeKind.Unspecified).ToString("MMM"),
+                    DisplayName  = $"{month}-{monthAbbr}",
                     ColumnType   = GridColumnType.GbpValue,
                     IsFilterable = false,
                     Width        = 90
                 });
             }
+
+            var pagination = pivot.Pagination != null
+                ? _mapper.Map<PaginationModel>(pivot.Pagination)
+                : new PaginationModel();
+            pagination.SortColumn    = request.SortBy;
+            pagination.SortDirection = request.Descending;
 
             return new DataGridConfig<MonthlyInvoicePivotRow>
             {
@@ -112,16 +122,12 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 AllowAdd       = false,
                 AllowEdit      = false,
                 AllowDelete    = false,
-                ShowPagination = false,
+                ShowPagination = true,
                 BindGridUrl    = "/PACT/InvoiceByMonth/LoadGrid",
                 Columns        = columns,
                 Data           = rows,
                 CurrentFilters = filterDict,
-                Pagination     = new PaginationModel
-                {
-                    SortColumn    = request.SortBy,
-                    SortDirection = request.Descending
-                }
+                Pagination     = pagination
             };
         }
     }

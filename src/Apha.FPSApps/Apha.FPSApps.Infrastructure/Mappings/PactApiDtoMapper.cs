@@ -1,4 +1,6 @@
 ﻿using Apha.FPSApps.Application.Dtos.PACT;
+using Apha.FPSApps.Application.Dtos;
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.PACT;
 using AutoMapper;
 
@@ -17,6 +19,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<ProjectInvoiceDto, ProjectInvoiceReq>().ReverseMap();
             CreateMap<ProjectInvoiceDto, ProjectInvoiceRes>().ReverseMap();
             CreateMap<MonthlyInvoicesSummaryRowDto, MonthlyInvoicesSummaryRowRes>().ReverseMap();
+            CreateMap<PaginationDto, Pagination>().ReverseMap();
             CreateMap<MonthlyInvoicesPivotDto, MonthlyInvoicesPivotRes>().ReverseMap();
             CreateMap<ProjectSubContractDto, ProjectSubContractReq>().ReverseMap();
             CreateMap<ProjectSubContractDto, ProjectSubContractRes>().ReverseMap();
