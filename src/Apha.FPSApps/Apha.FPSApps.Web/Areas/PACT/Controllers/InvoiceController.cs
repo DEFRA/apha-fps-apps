@@ -17,13 +17,13 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
     [Area("PACT")]
     [Authorize(Roles = "PACTAdmin,PACTUser")]
     [AuthorizeForScopes(ScopeKeySection = "PACTApiSettings:Scope")]
-    public class InvoiceRecordingController : Controller
+    public class InvoiceController : Controller
     {
         private readonly IMapper _mapper;
         private readonly IProjectInvoiceService _invoiceService;
         private readonly IProjectService _projectService;
 
-        public InvoiceRecordingController(
+        public InvoiceController(
             IMapper mapper,
             IProjectInvoiceService invoiceService,
             IProjectService projectService)
@@ -48,7 +48,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 defaultRequest.Filter = $"{{\"Month\":\"{month.Value}\"}}";
             }
 
-            var gridConfig = await BuildInvoicesGridAsync(defaultRequest, parentProject, month);
+            var gridConfig = await BuildInvoiceManualGridAsync(defaultRequest, parentProject, month);
 
             // Populate project dropdown for filter panel
             var projectsList = await GetProjectsListAsync();
@@ -57,7 +57,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             ViewBag.Projects = projectsList;
             ViewBag.FilterProjects = projectsList;
 
-            return View(new InvoiceRecordingViewModel
+            return View(new InvoiceViewModel
             {
                 ParentProject = parentProject ?? string.Empty,
                 Month = month,
@@ -83,7 +83,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 request.Filter = JsonConvert.SerializeObject(filterDict);
             }
 
-            var gridConfig = await BuildInvoicesGridAsync(request, parentProject, month);
+            var gridConfig = await BuildInvoiceManualGridAsync(request, parentProject, month);
             return PartialView("_DataGrid", gridConfig);
         }
 
@@ -172,7 +172,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
         // ── PRIVATE GRID BUILDERS ─────────────────────────────────────────────
 
-        private async Task<DataGridConfig<ProjectInvoiceItem>> BuildInvoicesGridAsync(
+        private async Task<DataGridConfig<ProjectInvoiceItem>> BuildInvoiceManualGridAsync(
             PaginationFilter<string> request, string? parentProject, int? month = null)
         {
             var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}")
@@ -186,7 +186,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             }
 
             var query = _mapper.Map<QueryParameters<string>>(request);
-            var response = await _invoiceService.GetPagedProjectInvoicesAsync(query, parentProject);
+            var response = await _invoiceService.GetPagedProjectInvoiceManualAsync(query, parentProject);
 
             var items = response.Data != null
                 ? _mapper.Map<List<ProjectInvoiceItem>>(response.Data)
@@ -214,7 +214,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 AddFunction = "addInvoice",
                 EditFunction = "editInvoice",
                 DeleteFunction = "deleteInvoice",
-                BindGridUrl = $"/PACT/InvoiceRecording/LoadInvoicesGrid{queryString}",
+                BindGridUrl = $"/PACT/Invoice/LoadInvoicesGrid{queryString}",
                 Data = items,
                 Columns = GridDataProvider.GetColumnsDefination<ProjectInvoiceItem>(),
                 Pagination = pagination,

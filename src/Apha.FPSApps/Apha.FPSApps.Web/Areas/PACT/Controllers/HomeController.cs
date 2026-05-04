@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 {
     [Area("PACT")]
-    [AllowAnonymous]
     public class HomeController : Controller
     {
         public IActionResult Index()

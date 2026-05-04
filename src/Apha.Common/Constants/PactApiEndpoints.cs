@@ -41,7 +41,8 @@ namespace Apha.Common.Constants
         public const string GetAllTestorProducts = "api/v1/testorproduct";
 
         // Project Invoice
-        public const string GetPagedProjectInvoices = "api/v1/projectinvoice";
+        public const string GetPagedProjectInvoices = "api/v1/projectinvoice?parentProject={0}";
+        public const string GetPagedProjectInvoiceManual = "api/v1/projectinvoice";
         public const string GetProjectInvoiceTotalAmount = "api/v1/projectinvoice/total";
         public const string GetProjectInvoiceById = "api/v1/projectinvoice/{0}";
         public const string CreateProjectInvoice = "api/v1/projectinvoice";

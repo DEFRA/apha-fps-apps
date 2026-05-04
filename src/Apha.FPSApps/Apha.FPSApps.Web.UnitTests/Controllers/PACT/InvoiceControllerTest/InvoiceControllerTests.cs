@@ -12,21 +12,21 @@ using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using System.Text.Json;
 
-namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceRecordingControllerTest
+namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceControllerTest
 {
-    public class InvoiceRecordingControllerTests
+    public class InvoiceControllerTests
     {
         private readonly IMapper _mapper;
         private readonly IProjectInvoiceService _invoiceService;
         private readonly IProjectService _projectService;
-        private readonly InvoiceRecordingController _controller;
+        private readonly InvoiceController _controller;
 
-        public InvoiceRecordingControllerTests()
+        public InvoiceControllerTests()
         {
             _mapper = Substitute.For<IMapper>();
             _invoiceService = Substitute.For<IProjectInvoiceService>();
             _projectService = Substitute.For<IProjectService>();
-            _controller = new InvoiceRecordingController(
+            _controller = new InvoiceController(
                 _mapper,
                 _invoiceService,
                 _projectService);
@@ -91,7 +91,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceRecordingController
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<InvoiceRecordingViewModel>(viewResult.Model);
+            var model = Assert.IsType<InvoiceViewModel>(viewResult.Model);
             Assert.Equal(parentProject, model.ParentProject);
             Assert.Equal(month, model.Month);
             Assert.NotNull(model.FilterProjects);
@@ -111,7 +111,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceRecordingController
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<InvoiceRecordingViewModel>(viewResult.Model);
+            var model = Assert.IsType<InvoiceViewModel>(viewResult.Model);
             Assert.Equal(string.Empty, model.ParentProject);
             Assert.Null(model.Month);
         }
@@ -137,7 +137,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceRecordingController
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<InvoiceRecordingViewModel>(viewResult.Model);
+            var model = Assert.IsType<InvoiceViewModel>(viewResult.Model);
             Assert.NotNull(_controller.ViewBag.Projects);
             Assert.NotNull(_controller.ViewBag.FilterProjects);
             Assert.NotEmpty(model.FilterProjects);
@@ -540,7 +540,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceRecordingController
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<InvoiceRecordingViewModel>(viewResult.Model);
+            var model = Assert.IsType<InvoiceViewModel>(viewResult.Model);
             Assert.Empty(model.FilterProjects);
         }
 
@@ -567,7 +567,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceRecordingController
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<InvoiceRecordingViewModel>(viewResult.Model);
+            var model = Assert.IsType<InvoiceViewModel>(viewResult.Model);
             Assert.Equal(3, model.FilterProjects.Count);
             Assert.Equal("PRJ001", model.FilterProjects[0].Value);
             Assert.Equal("PRJ002", model.FilterProjects[1].Value);
@@ -592,7 +592,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceRecordingController
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<InvoiceRecordingViewModel>(viewResult.Model);
+            var model = Assert.IsType<InvoiceViewModel>(viewResult.Model);
             Assert.Empty(model.FilterProjects);
         }
 
