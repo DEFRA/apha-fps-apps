@@ -1,4 +1,4 @@
-﻿using Apha.FPSApps.Application.Dtos;
+using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.FpsApiClients;
@@ -29,9 +29,9 @@ namespace Apha.FPSApps.Application.Services.FPS
             return new ApiResponseDto<decimal> { Success = true, Data = total };
         }
 
-        public async Task<ApiResponseDto<List<MonthlyOutputCalcsViewDto>>> GetMonthlyOutputCalcsByProjectAsync(QueryParameters<string> query, string projectCode)
+        public async Task<ApiResponseDto<List<MonthlyOutputDto>>> GetMonthlyOutputByProjectAsync(QueryParameters<string> query, string projectCode)
         {
-            var result = await _fpsClient.FpsMonthlyOutputCalcs.GetByProjectAsync(query, projectCode);
+            var result = await _fpsClient.FpsMonthlyOutput.GetByProjectAsync(query, projectCode);
             if (!result.Success || result.Data == null)
                 return result;
 
@@ -39,20 +39,20 @@ namespace Apha.FPSApps.Application.Services.FPS
             return result;
         }
 
-        public async Task<ApiResponseDto<MonthlyOutputCalcsTotalsDto>> GetTotalActualByProjectAsync(string projectCode)
+        public async Task<ApiResponseDto<MonthlyOutputTotalsDto>> GetTotalActualByProjectAsync(string projectCode)
         {
             var allQuery = new QueryParameters<string> { Page = 1, PageSize = 9999 };
-            var dataResult = await _fpsClient.FpsMonthlyOutputCalcs.GetByProjectAsync(allQuery, projectCode);
+            var dataResult = await _fpsClient.FpsMonthlyOutput.GetByProjectAsync(allQuery, projectCode);
 
             if (!dataResult.Success || dataResult.Data == null)
-                return new ApiResponseDto<MonthlyOutputCalcsTotalsDto> { Success = false };
+                return new ApiResponseDto<MonthlyOutputTotalsDto> { Success = false };
 
             await EnrichWithPricesAsync(dataResult.Data, projectCode);
 
-            return new ApiResponseDto<MonthlyOutputCalcsTotalsDto>
+            return new ApiResponseDto<MonthlyOutputTotalsDto>
             {
                 Success = true,
-                Data = new MonthlyOutputCalcsTotalsDto
+                Data = new MonthlyOutputTotalsDto
                 {
                     TotalVolume = dataResult.Data.Sum(x => x.Volume   ?? 0),
                     TotalCost   = dataResult.Data.Sum(x => x.Charge   ?? 0)
@@ -60,10 +60,10 @@ namespace Apha.FPSApps.Application.Services.FPS
             };
         }
 
-        public async Task<ApiResponseDto<bool>> DeleteMonthlyOutputCalcsAsync(string buyer, string testCode, double month, string workGroup)
-            => await _fpsClient.FpsMonthlyOutputCalcs.DeleteMonthlyOutputCalcsAsync(buyer, testCode, month, workGroup);
+        public async Task<ApiResponseDto<bool>> DeleteMonthlyOutputAsync(string buyer, string testCode, double month, string workGroup)
+            => await _fpsClient.FpsMonthlyOutput.DeleteMonthlyOutputAsync(buyer, testCode, month, workGroup);
 
-        private async Task EnrichWithPricesAsync(List<MonthlyOutputCalcsViewDto> items, string projectCode)
+        private async Task EnrichWithPricesAsync(List<MonthlyOutputDto> items, string projectCode)
         {
             var pactResult = await _testRequirementService.GetPagedTestReqmtbyProjectAsync(
                 new QueryParameters<string> { Page = 1, PageSize = 9999 }, projectCode);

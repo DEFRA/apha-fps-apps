@@ -1,4 +1,4 @@
-﻿using Apha.FPS.Application.Dtos;
+using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Application.Services;
 using Apha.FPS.Core.Entities;
@@ -9,47 +9,47 @@ using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 
-namespace Apha.FPS.Application.UnitTests.Services.MonthlyOutputCalcsServiceTest
+namespace Apha.FPS.Application.UnitTests.Services.MonthlyOutputServiceTest
 {
-    public class MonthlyOutputCalcsServiceTests
+    public class MonthlyOutputServiceTests
     {
-        private readonly IMonthlyOutputCalcsRepository _mockRepository;
+        private readonly IMonthlyOutputRepository _mockRepository;
         private readonly IMapper _mockMapper;
-        private readonly MonthlyOutputCalcsService _sut;
+        private readonly MonthlyOutputService _sut;
 
-        public MonthlyOutputCalcsServiceTests()
+        public MonthlyOutputServiceTests()
         {
-            _mockRepository = Substitute.For<IMonthlyOutputCalcsRepository>();
+            _mockRepository = Substitute.For<IMonthlyOutputRepository>();
             _mockMapper     = Substitute.For<IMapper>();
-            _sut            = new MonthlyOutputCalcsService(_mockRepository, _mockMapper);
+            _sut            = new MonthlyOutputService(_mockRepository, _mockMapper);
         }
 
         private static QueryParameters<string> DefaultQuery() => new() { Page = 1, PageSize = 10 };
         private static PaginationParameters<string> DefaultFilter() => new() { Page = 1, PageSize = 10 };
 
-        private static PagedData<MonthlyOutputCalcsView> MakePagedData(IEnumerable<MonthlyOutputCalcsView> items)
+        private static PagedData<MonthlyOutput> MakePagedData(IEnumerable<MonthlyOutput> items)
         {
             var list = items.ToList();
-            return new PagedData<MonthlyOutputCalcsView>(list, new PaginationData { PageNumber = 1, PageSize = 10, TotalRecords = list.Count });
+            return new PagedData<MonthlyOutput>(list, new PaginationData { PageNumber = 1, PageSize = 10, TotalRecords = list.Count });
         }
 
-        private static PaginatedResult<MonthlyOutputCalcsViewDto> MakePaginatedResult(IEnumerable<MonthlyOutputCalcsViewDto> items)
+        private static PaginatedResult<MonthlyOutputDto> MakePaginatedResult(IEnumerable<MonthlyOutputDto> items)
         {
             var list = items.ToList();
-            return new PaginatedResult<MonthlyOutputCalcsViewDto>(list, new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = list.Count });
+            return new PaginatedResult<MonthlyOutputDto>(list, new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = list.Count });
         }
 
         [Fact]
         public async Task GetByProjectAsync_WithValidData_ReturnsMappedDtoList()
         {
             var query = DefaultQuery(); var filter = DefaultFilter(); var projectCode = "AH0033";
-            var entities = new List<MonthlyOutputCalcsView> { new() { Buyer = projectCode, TestCode = "TC01" }, new() { Buyer = projectCode, TestCode = "TC02" } };
+            var entities = new List<MonthlyOutput> { new() { Buyer = projectCode, TestCode = "TC01" }, new() { Buyer = projectCode, TestCode = "TC02" } };
             var pagedData = MakePagedData(entities);
-            var expectedDtos = new List<MonthlyOutputCalcsViewDto> { new() { Buyer = projectCode, TestCode = "TC01" }, new() { Buyer = projectCode, TestCode = "TC02" } };
+            var expectedDtos = new List<MonthlyOutputDto> { new() { Buyer = projectCode, TestCode = "TC01" }, new() { Buyer = projectCode, TestCode = "TC02" } };
             var expectedResult = MakePaginatedResult(expectedDtos);
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(filter);
             _mockRepository.GetByProjectAsync(filter, projectCode).Returns(pagedData);
-            _mockMapper.Map<PaginatedResult<MonthlyOutputCalcsViewDto>>(pagedData).Returns(expectedResult);
+            _mockMapper.Map<PaginatedResult<MonthlyOutputDto>>(pagedData).Returns(expectedResult);
             var result = await _sut.GetByProjectAsync(query, projectCode);
             result.Should().NotBeNull();
             result.Data.Should().HaveCount(2);
@@ -60,11 +60,11 @@ namespace Apha.FPS.Application.UnitTests.Services.MonthlyOutputCalcsServiceTest
         public async Task GetByProjectAsync_WithEmptyData_ReturnsMappedEmptyList()
         {
             var query = DefaultQuery(); var filter = DefaultFilter(); var projectCode = "AH0033";
-            var pagedData = MakePagedData(Enumerable.Empty<MonthlyOutputCalcsView>());
-            var emptyResult = MakePaginatedResult(Enumerable.Empty<MonthlyOutputCalcsViewDto>());
+            var pagedData = MakePagedData(Enumerable.Empty<MonthlyOutput>());
+            var emptyResult = MakePaginatedResult(Enumerable.Empty<MonthlyOutputDto>());
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(filter);
             _mockRepository.GetByProjectAsync(filter, projectCode).Returns(pagedData);
-            _mockMapper.Map<PaginatedResult<MonthlyOutputCalcsViewDto>>(pagedData).Returns(emptyResult);
+            _mockMapper.Map<PaginatedResult<MonthlyOutputDto>>(pagedData).Returns(emptyResult);
             var result = await _sut.GetByProjectAsync(query, projectCode);
             result.Data.Should().BeEmpty();
         }
@@ -80,12 +80,11 @@ namespace Apha.FPS.Application.UnitTests.Services.MonthlyOutputCalcsServiceTest
         }
 
         [Fact]
-        public async Task GetTotalActualByProjectAsync_WithValidData_ReturnsMappedTotalsDto()
+        public async Task GetTotalActualByProjectAsync_WithValidData_ReturnsTotalVolume()
         {
-            _mockRepository.GetTotalActualByProjectAsync("AH0033").Returns((TotalVolume: 10.0, TotalCost: 1200.0));
+            _mockRepository.GetTotalActualByProjectAsync("AH0033").Returns(10.0);
             var result = await _sut.GetTotalActualByProjectAsync("AH0033");
-            result.TotalVolume.Should().Be(10);
-            result.TotalCost.Should().Be(1200);
+            result.Should().Be(10.0);
         }
 
         [Fact]

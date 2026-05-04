@@ -1,6 +1,6 @@
-﻿namespace Apha.Common.Contracts.FPS
+namespace Apha.FPSApps.Application.Dtos.FPS
 {
-    public class MonthlyOutputCalcsTotalsRes
+    public class MonthlyOutputTotalsDto
     {
         public double TotalVolume { get; set; }
         public double TotalCost   { get; set; }

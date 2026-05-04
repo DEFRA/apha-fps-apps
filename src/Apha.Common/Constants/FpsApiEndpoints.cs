@@ -88,8 +88,8 @@ namespace Apha.Common.Constants
         public const string DeleteAdditionalCost = "api/v1/additionalcost?jobCode={0}&account={1}&description={2}";
 
         // View Project Plan vs Actual Tests
-        public const string GetMonthlyOutputCalcsByProject = "api/v1/monthlyoutputcalcs?projectCode={0}";
-        public const string GetMonthlyOutputCalcsTotalsByProject = "api/v1/monthlyoutputcalcs/totals?projectCode={0}";
-        public const string DeleteMonthlyOutputCalcs = "api/v1/monthlyoutputcalcs";
+        public const string GetMonthlyOutputByProject = "api/v1/MonthlyOutput?projectCode={0}";
+        public const string GetMonthlyOutputTotalsByProject = "api/v1/MonthlyOutput/totals?projectCode={0}";
+        public const string DeleteMonthlyOutput = "api/v1/MonthlyOutput";
     }
 }

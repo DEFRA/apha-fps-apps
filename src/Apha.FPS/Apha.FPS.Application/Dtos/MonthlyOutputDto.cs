@@ -1,6 +1,6 @@
-﻿namespace Apha.FPS.Core.Entities
+namespace Apha.FPS.Application.Dtos
 {
-    public class MonthlyOutputCalcsView
+    public class MonthlyOutputDto
     {
         public string? Buyer     { get; set; }
         public string? TestCode  { get; set; }

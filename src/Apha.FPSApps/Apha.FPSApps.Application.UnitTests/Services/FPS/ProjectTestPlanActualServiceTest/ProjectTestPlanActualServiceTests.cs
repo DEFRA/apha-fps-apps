@@ -1,4 +1,4 @@
-﻿using Apha.FPSApps.Application.Dtos;
+using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.FpsApiClients;
@@ -13,15 +13,15 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProjectTestPlanActualS
     public class ProjectTestPlanActualServiceTests
     {
         private readonly IFpsApiClient _fpsClient;
-        private readonly IFpsMonthlyOutputCalcsApiClient _apiClient;
+        private readonly IFpsMonthlyOutputApiClient _apiClient;
         private readonly ITestRequirementService _testRequirementService;
         private readonly ProjectTestPlanActualService _service;
 
         public ProjectTestPlanActualServiceTests()
         {
             _fpsClient = Substitute.For<IFpsApiClient>();
-            _apiClient = Substitute.For<IFpsMonthlyOutputCalcsApiClient>();
-            _fpsClient.FpsMonthlyOutputCalcs.Returns(_apiClient);
+            _apiClient = Substitute.For<IFpsMonthlyOutputApiClient>();
+            _fpsClient.FpsMonthlyOutput.Returns(_apiClient);
             _testRequirementService = Substitute.For<ITestRequirementService>();
             _service = new ProjectTestPlanActualService(_fpsClient, _testRequirementService);
         }
@@ -32,75 +32,75 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProjectTestPlanActualS
             => _testRequirementService.GetPagedTestReqmtbyProjectAsync(Arg.Any<QueryParameters<string>>(), projectCode)
                 .Returns(ApiResponseDto<List<TestRequirementDto>>.SuccessResponse(new List<TestRequirementDto>()));
 
-        #region GetMonthlyOutputCalcsByProjectAsync
+        #region GetMonthlyOutputByProjectAsync
 
         [Fact]
-        public async Task GetMonthlyOutputCalcsByProjectAsync_WithSuccessResponse_ReturnsDtoList()
+        public async Task GetMonthlyOutputByProjectAsync_WithSuccessResponse_ReturnsDtoList()
         {
-            var items = new List<MonthlyOutputCalcsViewDto> { new() { Buyer = "AH0033", TestCode = "TC01" }, new() { Buyer = "AH0033", TestCode = "TC02" } };
-            var resp = ApiResponseDto<List<MonthlyOutputCalcsViewDto>>.SuccessResponse(items, new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 2 });
+            var items = new List<MonthlyOutputDto> { new() { Buyer = "AH0033", TestCode = "TC01" }, new() { Buyer = "AH0033", TestCode = "TC02" } };
+            var resp = ApiResponseDto<List<MonthlyOutputDto>>.SuccessResponse(items, new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 2 });
             _apiClient.GetByProjectAsync(Arg.Any<QueryParameters<string>>(), "AH0033").Returns(resp);
             SetupEmptyPactPrices("AH0033");
 
-            var result = await _service.GetMonthlyOutputCalcsByProjectAsync(Q(), "AH0033");
+            var result = await _service.GetMonthlyOutputByProjectAsync(Q(), "AH0033");
 
             Assert.True(result.Success);
             Assert.Equal(2, result.Data?.Count);
         }
 
         [Fact]
-        public async Task GetMonthlyOutputCalcsByProjectAsync_WithEmptyResult_ReturnsSuccessWithEmptyList()
+        public async Task GetMonthlyOutputByProjectAsync_WithEmptyResult_ReturnsSuccessWithEmptyList()
         {
-            var resp = ApiResponseDto<List<MonthlyOutputCalcsViewDto>>.SuccessResponse(new List<MonthlyOutputCalcsViewDto>());
+            var resp = ApiResponseDto<List<MonthlyOutputDto>>.SuccessResponse(new List<MonthlyOutputDto>());
             _apiClient.GetByProjectAsync(Arg.Any<QueryParameters<string>>(), "AH0033").Returns(resp);
             SetupEmptyPactPrices("AH0033");
 
-            var result = await _service.GetMonthlyOutputCalcsByProjectAsync(Q(), "AH0033");
+            var result = await _service.GetMonthlyOutputByProjectAsync(Q(), "AH0033");
 
             Assert.True(result.Success);
             Assert.Empty(result.Data!);
         }
 
         [Fact]
-        public async Task GetMonthlyOutputCalcsByProjectAsync_WhenApiFails_ReturnsFailureResponse()
+        public async Task GetMonthlyOutputByProjectAsync_WhenApiFails_ReturnsFailureResponse()
         {
             var errors = new List<ApiErrorDto> { new() { Message = "err" } };
             _apiClient.GetByProjectAsync(Arg.Any<QueryParameters<string>>(), "AH0033")
-                .Returns(ApiResponseDto<List<MonthlyOutputCalcsViewDto>>.FailureResponse(errors, new ApiMetaDto()));
+                .Returns(ApiResponseDto<List<MonthlyOutputDto>>.FailureResponse(errors, new ApiMetaDto()));
 
-            var result = await _service.GetMonthlyOutputCalcsByProjectAsync(Q(), "AH0033");
+            var result = await _service.GetMonthlyOutputByProjectAsync(Q(), "AH0033");
 
             Assert.False(result.Success);
         }
 
         [Fact]
-        public async Task GetMonthlyOutputCalcsByProjectAsync_EnrichesItemsWithPricesFromPact()
+        public async Task GetMonthlyOutputByProjectAsync_EnrichesItemsWithPricesFromPact()
         {
-            var items = new List<MonthlyOutputCalcsViewDto> { new() { Buyer = "AH0033", TestCode = "TC01", Volume = 4 } };
+            var items = new List<MonthlyOutputDto> { new() { Buyer = "AH0033", TestCode = "TC01", Volume = 4 } };
             _apiClient.GetByProjectAsync(Arg.Any<QueryParameters<string>>(), "AH0033")
-                .Returns(ApiResponseDto<List<MonthlyOutputCalcsViewDto>>.SuccessResponse(items));
+                .Returns(ApiResponseDto<List<MonthlyOutputDto>>.SuccessResponse(items));
 
             var prices = new List<TestRequirementDto> { new() { TestCode = "TC01", Buyer = "AH0033", UnitPrice = 100m } };
             _testRequirementService.GetPagedTestReqmtbyProjectAsync(Arg.Any<QueryParameters<string>>(), "AH0033")
                 .Returns(ApiResponseDto<List<TestRequirementDto>>.SuccessResponse(prices));
 
-            var result = await _service.GetMonthlyOutputCalcsByProjectAsync(Q(), "AH0033");
+            var result = await _service.GetMonthlyOutputByProjectAsync(Q(), "AH0033");
 
             Assert.Equal(100.0, result.Data![0].TestPrice);
             Assert.Equal(400.0, result.Data![0].Charge);
         }
 
         [Fact]
-        public async Task GetMonthlyOutputCalcsByProjectAsync_DelegatesToFpsMonthlyOutputCalcsApiClient()
+        public async Task GetMonthlyOutputByProjectAsync_DelegatesToFpsMonthlyOutputApiClient()
         {
-            var resp = ApiResponseDto<List<MonthlyOutputCalcsViewDto>>.SuccessResponse(new List<MonthlyOutputCalcsViewDto>());
+            var resp = ApiResponseDto<List<MonthlyOutputDto>>.SuccessResponse(new List<MonthlyOutputDto>());
             _apiClient.GetByProjectAsync(Arg.Any<QueryParameters<string>>(), "AH0033").Returns(resp);
             SetupEmptyPactPrices("AH0033");
 
-            await _service.GetMonthlyOutputCalcsByProjectAsync(Q(), "AH0033");
+            await _service.GetMonthlyOutputByProjectAsync(Q(), "AH0033");
 
             await _apiClient.Received(1).GetByProjectAsync(Arg.Any<QueryParameters<string>>(), "AH0033");
-            _ = _fpsClient.Received(1).FpsMonthlyOutputCalcs;
+            _ = _fpsClient.Received(1).FpsMonthlyOutput;
         }
 
         #endregion
@@ -110,9 +110,9 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProjectTestPlanActualS
         [Fact]
         public async Task GetTotalActualByProjectAsync_WithSuccessResponse_ReturnsEnrichedTotals()
         {
-            var items = new List<MonthlyOutputCalcsViewDto> { new() { Buyer = "AH0033", TestCode = "TC01", Volume = 5 } };
+            var items = new List<MonthlyOutputDto> { new() { Buyer = "AH0033", TestCode = "TC01", Volume = 5 } };
             _apiClient.GetByProjectAsync(Arg.Any<QueryParameters<string>>(), "AH0033")
-                .Returns(ApiResponseDto<List<MonthlyOutputCalcsViewDto>>.SuccessResponse(items));
+                .Returns(ApiResponseDto<List<MonthlyOutputDto>>.SuccessResponse(items));
 
             var prices = new List<TestRequirementDto> { new() { TestCode = "TC01", Buyer = "AH0033", UnitPrice = 100m } };
             _testRequirementService.GetPagedTestReqmtbyProjectAsync(Arg.Any<QueryParameters<string>>(), "AH0033")
@@ -129,7 +129,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProjectTestPlanActualS
         public async Task GetTotalActualByProjectAsync_WhenApiFails_ReturnsFailureResponse()
         {
             _apiClient.GetByProjectAsync(Arg.Any<QueryParameters<string>>(), "AH0033")
-                .Returns(ApiResponseDto<List<MonthlyOutputCalcsViewDto>>.FailureResponse(
+                .Returns(ApiResponseDto<List<MonthlyOutputDto>>.FailureResponse(
                     new List<ApiErrorDto> { new() { Message = "err" } }, new ApiMetaDto()));
 
             Assert.False((await _service.GetTotalActualByProjectAsync("AH0033")).Success);
@@ -138,9 +138,9 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProjectTestPlanActualS
         [Fact]
         public async Task GetTotalActualByProjectAsync_WithNoPriceMatch_TotalCostIsZero()
         {
-            var items = new List<MonthlyOutputCalcsViewDto> { new() { Buyer = "AH0033", TestCode = "TC01", Volume = 5 } };
+            var items = new List<MonthlyOutputDto> { new() { Buyer = "AH0033", TestCode = "TC01", Volume = 5 } };
             _apiClient.GetByProjectAsync(Arg.Any<QueryParameters<string>>(), "AH0033")
-                .Returns(ApiResponseDto<List<MonthlyOutputCalcsViewDto>>.SuccessResponse(items));
+                .Returns(ApiResponseDto<List<MonthlyOutputDto>>.SuccessResponse(items));
             SetupEmptyPactPrices("AH0033");
 
             var result = await _service.GetTotalActualByProjectAsync("AH0033");
@@ -214,27 +214,27 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProjectTestPlanActualS
 
         #endregion
 
-        #region DeleteMonthlyOutputCalcsAsync
+        #region DeleteMonthlyOutputAsync
 
         [Fact]
-        public async Task DeleteMonthlyOutputCalcsAsync_WithValidKey_ReturnsTrueResponse()
+        public async Task DeleteMonthlyOutputAsync_WithValidKey_ReturnsTrueResponse()
         {
-            _apiClient.DeleteMonthlyOutputCalcsAsync("AH0033", "TC01", 1.0, "WG1")
+            _apiClient.DeleteMonthlyOutputAsync("AH0033", "TC01", 1.0, "WG1")
                 .Returns(ApiResponseDto<bool>.SuccessResponse(true));
 
-            var result = await _service.DeleteMonthlyOutputCalcsAsync("AH0033", "TC01", 1.0, "WG1");
+            var result = await _service.DeleteMonthlyOutputAsync("AH0033", "TC01", 1.0, "WG1");
 
             Assert.True(result.Success);
         }
 
         [Fact]
-        public async Task DeleteMonthlyOutputCalcsAsync_WhenApiFails_ReturnsFailureResponse()
+        public async Task DeleteMonthlyOutputAsync_WhenApiFails_ReturnsFailureResponse()
         {
-            _apiClient.DeleteMonthlyOutputCalcsAsync("AH0033", "TC01", 1.0, "WG1")
+            _apiClient.DeleteMonthlyOutputAsync("AH0033", "TC01", 1.0, "WG1")
                 .Returns(ApiResponseDto<bool>.FailureResponse(
                     new List<ApiErrorDto> { new() { Message = "err" } }, new ApiMetaDto()));
 
-            Assert.False((await _service.DeleteMonthlyOutputCalcsAsync("AH0033", "TC01", 1.0, "WG1")).Success);
+            Assert.False((await _service.DeleteMonthlyOutputAsync("AH0033", "TC01", 1.0, "WG1")).Success);
         }
 
         #endregion

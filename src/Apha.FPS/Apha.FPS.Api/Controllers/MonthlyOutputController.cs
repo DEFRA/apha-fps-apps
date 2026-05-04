@@ -1,4 +1,4 @@
-﻿using Apha.Common.Contracts;
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
@@ -13,13 +13,13 @@ namespace Apha.FPS.Api.Controllers
     [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
     [ApiController]
     [ApiVersion("1.0")]
-    [Route("api/v{version:apiVersion}/monthlyoutputcalcs")]
-    public class MonthlyOutputCalcsController : ControllerBase
+    [Route("api/v{version:apiVersion}/MonthlyOutput")]
+    public class MonthlyOutputController : ControllerBase
     {
-        private readonly IMonthlyOutputCalcsService _service;
+        private readonly IMonthlyOutputService _service;
         private readonly IMapper _mapper;
 
-        public MonthlyOutputCalcsController(IMonthlyOutputCalcsService service, IMapper mapper)
+        public MonthlyOutputController(IMonthlyOutputService service, IMapper mapper)
         {
             _service = service;
             _mapper  = mapper;
@@ -34,7 +34,7 @@ namespace Apha.FPS.Api.Controllers
                 throw new ArgumentException("projectCode is required.");
 
             var result = await _service.GetByProjectAsync(query, projectCode);
-            return Ok(_mapper.Map<PaginationRes<MonthlyOutputCalcsViewRes>>(result));
+            return Ok(_mapper.Map<PaginationRes<MonthlyOutputRes>>(result));
         }
 
         [HttpGet("totals")]
@@ -44,11 +44,11 @@ namespace Apha.FPS.Api.Controllers
                 throw new ArgumentException("projectCode is required.");
 
             var result = await _service.GetTotalActualByProjectAsync(projectCode);
-            return Ok(_mapper.Map<MonthlyOutputCalcsTotalsRes>(result));
+            return Ok(result);
         }
 
         [HttpDelete]
-        public async Task<IActionResult> DeleteAsync([FromBody] MonthlyOutputCalcsReq req)
+        public async Task<IActionResult> DeleteAsync([FromBody] MonthlyOutputReq req)
         {
             if (req == null)
                 throw new ArgumentException("Request body is required.");

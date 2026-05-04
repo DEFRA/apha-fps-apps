@@ -1,6 +1,6 @@
-﻿namespace Apha.FPS.Application.Dtos
+namespace Apha.FPSApps.Application.Dtos.FPS
 {
-    public class MonthlyOutputCalcsViewDto
+    public class MonthlyOutputDto
     {
         public string? Buyer     { get; set; }
         public string? TestCode  { get; set; }

@@ -1,4 +1,4 @@
-﻿using Apha.Common.Contracts;
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.Common.Contracts.PACT;
 using Apha.FPSApps.Application.Dtos;
@@ -72,8 +72,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<AccountCategoryDto, AccountCategoryRes>().ReverseMap();
 
             // View Project Plan vs Actual Tests
-            CreateMap<MonthlyOutputCalcsViewDto, MonthlyOutputCalcsViewRes>().ReverseMap();
-            CreateMap<MonthlyOutputCalcsTotalsDto, MonthlyOutputCalcsTotalsRes>().ReverseMap();
+            CreateMap<MonthlyOutputDto, MonthlyOutputRes>().ReverseMap();
         }
     }
 }

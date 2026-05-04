@@ -1,9 +1,9 @@
-﻿using Apha.FPSApps.Web.Models.Components.DataGrid;
+using Apha.FPSApps.Web.Models.Components.DataGrid;
 using System.ComponentModel.DataAnnotations;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Models
 {
-    public class CompareTests2Item
+    public class ActualTestOutputItem
     {
         [GridColumn(IsVisible = false)]
         public string? Buyer { get; set; }
@@ -13,10 +13,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public string? TestCode { get; set; }
 
         [Display(Name = "WG")]
-        [GridColumn(Width = 60, Type = GridColumnType.ReadOnly)]
+        [GridColumn(Width = 60, Type = GridColumnType.ReadOnly, IsFilterable = true)]
         public string? WorkGroup { get; set; }
 
-        [GridColumn(Width = 60, Type = GridColumnType.ReadOnly)]
+        [Display(Name = "Month")]
+        [GridColumn(Width = 60, Type = GridColumnType.ReadOnly, IsFilterable = true)]
         public double? Month { get; set; }
 
         [Display(Name = "Number")]

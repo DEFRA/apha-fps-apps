@@ -15,7 +15,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public IFpsSettingApiClient FpsSetting { get; }
         public IFpsYearMasterApiClient FpsYearMaster { get; }
         public IFpsProjectStaffPlanActualApiClient FpsProjectStaffPlanActual { get; }
-        public IFpsMonthlyOutputCalcsApiClient FpsMonthlyOutputCalcs { get; }
+        public IFpsMonthlyOutputApiClient FpsMonthlyOutput { get; }
         public IFpsDivisionApiClient FpsDivision { get; }
 
         public IFpsAgencyApiClient FpsAgency { get; }
@@ -32,7 +32,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             FpsSetting = new FpsSettingApiClient(http, mapper);
             FpsYearMaster = new FpsYearMasterApiClient(http, mapper);
             FpsProjectStaffPlanActual = new FpsProjectStaffPlanActualApiClient(http, mapper);
-            FpsMonthlyOutputCalcs = new FpsMonthlyOutputCalcsApiClient(http, mapper);
+            FpsMonthlyOutput = new FpsMonthlyOutputApiClient(http, mapper);
             FpsDivision = new FpsDivisionApiClient(http, mapper);
             FpsAgency = new FpsAgencyApiClient(http, mapper);
             FpsAdditionalCost = new FpsAdditionalCostApiClient(http, mapper);

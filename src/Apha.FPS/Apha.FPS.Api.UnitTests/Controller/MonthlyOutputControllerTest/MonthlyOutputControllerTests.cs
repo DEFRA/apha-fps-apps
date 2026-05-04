@@ -1,4 +1,4 @@
-﻿using Apha.Common.Contracts;
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Api.Controllers;
 using Apha.FPS.Application.Dtos;
@@ -10,25 +10,25 @@ using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Xunit;
 
-namespace Apha.FPS.Api.UnitTests.Controller.MonthlyOutputCalcsControllerTest
+namespace Apha.FPS.Api.UnitTests.Controller.MonthlyOutputControllerTest
 {
-    public class MonthlyOutputCalcsControllerTests
+    public class MonthlyOutputControllerTests
     {
-        private readonly IMonthlyOutputCalcsService _serviceMock;
+        private readonly IMonthlyOutputService _serviceMock;
         private readonly IMapper _mapperMock;
-        private readonly MonthlyOutputCalcsController _controller;
+        private readonly MonthlyOutputController _controller;
 
-        public MonthlyOutputCalcsControllerTests()
+        public MonthlyOutputControllerTests()
         {
-            _serviceMock = Substitute.For<IMonthlyOutputCalcsService>();
+            _serviceMock = Substitute.For<IMonthlyOutputService>();
             _mapperMock  = Substitute.For<IMapper>();
-            _controller  = new MonthlyOutputCalcsController(_serviceMock, _mapperMock);
+            _controller  = new MonthlyOutputController(_serviceMock, _mapperMock);
         }
 
         private static QueryParameters<string> DefaultQuery() => new() { Page = 1, PageSize = 10 };
 
-        private static PaginatedResult<MonthlyOutputCalcsViewDto> MakeResult(int count) =>
-            new(Enumerable.Range(1, count).Select(i => new MonthlyOutputCalcsViewDto { Buyer = "AH0033", TestCode = $"TC{i:D2}" }).ToList(),
+        private static PaginatedResult<MonthlyOutputDto> MakeResult(int count) =>
+            new(Enumerable.Range(1, count).Select(i => new MonthlyOutputDto { Buyer = "AH0033", TestCode = $"TC{i:D2}" }).ToList(),
                 new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = count });
 
         [Fact]
@@ -36,9 +36,9 @@ namespace Apha.FPS.Api.UnitTests.Controller.MonthlyOutputCalcsControllerTest
         {
             var query = DefaultQuery(); var projectCode = "AH0033";
             var serviceResult = MakeResult(2);
-            var mappedResult  = new PaginationRes<MonthlyOutputCalcsViewRes> { Data = new List<MonthlyOutputCalcsViewRes> { new() { Buyer = "AH0033", TestCode = "TC01" }, new() { Buyer = "AH0033", TestCode = "TC02" } } };
+            var mappedResult  = new PaginationRes<MonthlyOutputRes> { Data = new List<MonthlyOutputRes> { new() { Buyer = "AH0033", TestCode = "TC01" }, new() { Buyer = "AH0033", TestCode = "TC02" } } };
             _serviceMock.GetByProjectAsync(query, projectCode).Returns(serviceResult);
-            _mapperMock.Map<PaginationRes<MonthlyOutputCalcsViewRes>>(serviceResult).Returns(mappedResult);
+            _mapperMock.Map<PaginationRes<MonthlyOutputRes>>(serviceResult).Returns(mappedResult);
             var result = await _controller.GetByProjectAsync(query, projectCode);
             var ok = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(mappedResult, ok.Value);
@@ -49,11 +49,11 @@ namespace Apha.FPS.Api.UnitTests.Controller.MonthlyOutputCalcsControllerTest
         {
             var query = DefaultQuery(); var projectCode = "AH0033";
             var serviceResult = MakeResult(0);
-            var mappedResult  = new PaginationRes<MonthlyOutputCalcsViewRes> { Data = new List<MonthlyOutputCalcsViewRes>() };
+            var mappedResult  = new PaginationRes<MonthlyOutputRes> { Data = new List<MonthlyOutputRes>() };
             _serviceMock.GetByProjectAsync(query, projectCode).Returns(serviceResult);
-            _mapperMock.Map<PaginationRes<MonthlyOutputCalcsViewRes>>(serviceResult).Returns(mappedResult);
+            _mapperMock.Map<PaginationRes<MonthlyOutputRes>>(serviceResult).Returns(mappedResult);
             var result = await _controller.GetByProjectAsync(query, projectCode);
-            var value = Assert.IsType<PaginationRes<MonthlyOutputCalcsViewRes>>(Assert.IsType<OkObjectResult>(result).Value);
+            var value = Assert.IsType<PaginationRes<MonthlyOutputRes>>(Assert.IsType<OkObjectResult>(result).Value);
             Assert.Empty(value.Data);
         }
 
@@ -68,12 +68,9 @@ namespace Apha.FPS.Api.UnitTests.Controller.MonthlyOutputCalcsControllerTest
         [Fact]
         public async Task GetTotalActualByProjectAsync_HappyPath_ReturnsOk()
         {
-            var serviceResult = new MonthlyOutputCalcsTotalsDto { TotalVolume = 10, TotalCost = 1200 };
-            var mappedResult  = new MonthlyOutputCalcsTotalsRes { TotalVolume = 10, TotalCost = 1200 };
-            _serviceMock.GetTotalActualByProjectAsync("AH0033").Returns(serviceResult);
-            _mapperMock.Map<MonthlyOutputCalcsTotalsRes>(serviceResult).Returns(mappedResult);
+            _serviceMock.GetTotalActualByProjectAsync("AH0033").Returns(10.0);
             var result = await _controller.GetTotalActualByProjectAsync("AH0033");
-            Assert.Equal(mappedResult, Assert.IsType<OkObjectResult>(result).Value);
+            Assert.Equal(10.0, Assert.IsType<OkObjectResult>(result).Value);
         }
 
         [Theory]
@@ -87,7 +84,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.MonthlyOutputCalcsControllerTest
         [Fact]
         public async Task DeleteAsync_WithValidRequest_ReturnsOk()
         {
-            var req = new MonthlyOutputCalcsReq { Buyer = "AH0033", TestCode = "TC01", Month = 1, WorkGroup = "WG1" };
+            var req = new MonthlyOutputReq { Buyer = "AH0033", TestCode = "TC01", Month = 1, WorkGroup = "WG1" };
             _serviceMock.DeleteAsync(req.Buyer, req.TestCode, req.Month, req.WorkGroup).Returns(true);
             Assert.IsType<OkObjectResult>(await _controller.DeleteAsync(req));
         }
@@ -95,7 +92,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.MonthlyOutputCalcsControllerTest
         [Fact]
         public async Task DeleteAsync_WhenRecordNotFound_ThrowsKeyNotFoundException()
         {
-            var req = new MonthlyOutputCalcsReq { Buyer = "XX", TestCode = "XX", Month = 1, WorkGroup = "XX" };
+            var req = new MonthlyOutputReq { Buyer = "XX", TestCode = "XX", Month = 1, WorkGroup = "XX" };
             _serviceMock.DeleteAsync(req.Buyer, req.TestCode, req.Month, req.WorkGroup).Returns(false);
             await Assert.ThrowsAsync<KeyNotFoundException>(() => _controller.DeleteAsync(req));
         }
@@ -111,7 +108,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.MonthlyOutputCalcsControllerTest
         [InlineData("", "TC01", "WG1")][InlineData("AH0033", "", "WG1")][InlineData("AH0033", "TC01", "")]
         public async Task DeleteAsync_WhenRequiredFieldsMissing_ThrowsArgumentException(string buyer, string testCode, string workGroup)
         {
-            var req = new MonthlyOutputCalcsReq { Buyer = buyer, TestCode = testCode, Month = 1, WorkGroup = workGroup };
+            var req = new MonthlyOutputReq { Buyer = buyer, TestCode = testCode, Month = 1, WorkGroup = workGroup };
             var ex = await Assert.ThrowsAsync<ArgumentException>(() => _controller.DeleteAsync(req));
             Assert.Equal("Buyer, TestCode and WorkGroup are required.", ex.Message);
         }

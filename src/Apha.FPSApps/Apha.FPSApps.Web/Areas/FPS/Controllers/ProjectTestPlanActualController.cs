@@ -1,4 +1,4 @@
-﻿using Apha.FPSApps.Application.Dtos;
+using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.PACT;
@@ -64,7 +64,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 Pagination = new PaginationModel()
             };
 
-            var compareTests2Grid = new DataGridConfig<CompareTests2Item>
+            var compareTests2Grid = new DataGridConfig<ActualTestOutputItem>
             {
                 GridId = "compareTests2Grid",
                 Title = "Actual Tests (PACT)",
@@ -77,8 +77,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 DeleteFunction = "deleteCompareTests2",
                 ExtraFilterMethod = "getCompareTests2ExtraFilters",
                 BindGridUrl = "/FPS/ProjectTestPlanActual/LoadCompareTests2Grid",
-                Data = new List<CompareTests2Item>(),
-                Columns = GridDataProvider.GetColumnsDefination<CompareTests2Item>(),
+                Data = new List<ActualTestOutputItem>(),
+                Columns = GridDataProvider.GetColumnsDefination<ActualTestOutputItem>(),
                 Pagination = new PaginationModel()
             };
 
@@ -151,14 +151,14 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}") ?? new Dictionary<string, string>();
             var queryParameters = _mapper.Map<QueryParameters<string>>(request);
-            var pagedData = await _projTestPlanActualService.GetMonthlyOutputCalcsByProjectAsync(queryParameters, projectCode ?? string.Empty);
+            var pagedData = await _projTestPlanActualService.GetMonthlyOutputByProjectAsync(queryParameters, projectCode ?? string.Empty);
 
-            var items = pagedData.Data != null ? _mapper.Map<List<CompareTests2Item>>(pagedData.Data) : new List<CompareTests2Item>();
+            var items = pagedData.Data != null ? _mapper.Map<List<ActualTestOutputItem>>(pagedData.Data) : new List<ActualTestOutputItem>();
             var paginationModel = _mapper.Map<PaginationModel>(pagedData.Pagination) ?? new PaginationModel();
             paginationModel.SortColumn = request.SortBy;
             paginationModel.SortDirection = request.Descending;
 
-            var gridConfig = new DataGridConfig<CompareTests2Item>
+            var gridConfig = new DataGridConfig<ActualTestOutputItem>
             {
                 GridId = "compareTests2Grid",
                 Title = "Actual Tests (FPS)",
@@ -172,7 +172,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ExtraFilterMethod = "getCompareTests2ExtraFilters",
                 BindGridUrl = "/FPS/ProjectTestPlanActual/LoadCompareTests2Grid",
                 Data = items,
-                Columns = GridDataProvider.GetColumnsDefination<CompareTests2Item>(null),
+                Columns = GridDataProvider.GetColumnsDefination<ActualTestOutputItem>(null),
                 Pagination = paginationModel,
                 CurrentFilters = filterDict
             };
@@ -220,7 +220,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         [HttpDelete]
-        public async Task<IActionResult> DeleteMonthlyOutputCalcs(string rowKey)
+        public async Task<IActionResult> DeleteMonthlyOutput(string rowKey)
         {
             if (string.IsNullOrWhiteSpace(rowKey))
                 return Json(new { success = false, message = "Row key is required." });
@@ -234,7 +234,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var month     = double.TryParse(parts[2], out var m) ? m : 0;
             var workGroup = parts[3];
 
-            var result = await _projTestPlanActualService.DeleteMonthlyOutputCalcsAsync(buyer, testCode, month, workGroup);
+            var result = await _projTestPlanActualService.DeleteMonthlyOutputAsync(buyer, testCode, month, workGroup);
             if (result.Success)
                 return Json(new { success = true, message = "Record deleted successfully" });
 

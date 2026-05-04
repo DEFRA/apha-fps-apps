@@ -1,4 +1,4 @@
-ï»¿@using Apha.FPSApps.Web.Models.Components.DataGrid
+@using Apha.FPSApps.Web.Models.Components.DataGrid
 @model Apha.FPSApps.Web.Areas.FPS.Models.ProjectTestPlanActualViewModel
 @{
     ViewData["Title"] = "FPS Plan v. PACT Actuals - TESTS Bought";
@@ -100,7 +100,7 @@
         currentProjectCode = $(this).val();
         $('#summary-project-code').val(currentProjectCode);
         ['summary-project-description','summary-program','summary-contract'].forEach(function(id){ $('#'+id).val(''); });
-        $('#planned-total-cost').val('Â£0.00'); $('#project-total-volume').val('0'); $('#project-total-cost').val('Â£0'); $('#project-percent-plan').val('0%');
+        $('#planned-total-cost').val('£0.00'); $('#project-total-volume').val('0'); $('#project-total-cost').val('£0'); $('#project-percent-plan').val('0%');
         if (currentProjectCode) {
             $.get('@Url.Action("GetProjectInfo","ProjectTestPlanActual",new{area="FPS"})', { projectCode: currentProjectCode }, function (r) { if (r.success) { $('#summary-project-description').val(r.projectTitle); $('#summary-program').val(r.program); $('#summary-contract').val(r.contract); } });
             window['gridManager_@Model.TestPlanGrid.GridId'].reloadGrid({ page: 1 });
@@ -120,15 +120,15 @@
     }
     function formatCurrency(v) { return '\u00A3' + parseFloat(v||0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,','); }
     function calculatePercentOfPlan() {
-        var p = parseFloat($('#planned-total-cost').val().replace(/[Â£,\s]/g,''))||0;
-        var a = parseFloat($('#project-total-cost').val().replace(/[Â£,\s]/g,''))||0;
+        var p = parseFloat($('#planned-total-cost').val().replace(/[£,\s]/g,''))||0;
+        var a = parseFloat($('#project-total-cost').val().replace(/[£,\s]/g,''))||0;
         $('#project-percent-plan').val((p>0?Math.round((a/p)*100):0)+'%');
     }
     function deleteCompareTests2(btn) {
         var rowKey = $(btn).data('id'); if (!rowKey) return;
         showGovukConfirm('Are you sure you want to delete this record?').then(function (ok) {
             if (!ok) return;
-            $.ajax({ url: '@Url.Action("DeleteMonthlyOutputCalcs","ProjectTestPlanActual",new{area="FPS"})', type: 'DELETE', data: { rowKey: rowKey },
+            $.ajax({ url: '@Url.Action("DeleteMonthlyOutput","ProjectTestPlanActual",new{area="FPS"})', type: 'DELETE', data: { rowKey: rowKey },
                 success: function (r) { if (r.success) { window['gridManager_@Model.CompareTests2Grid.GridId'].reloadGrid({ page: 1 }); refreshActualTotals(); showGovukAlert('Record deleted successfully.'); } else { showGovukAlert('Delete failed: '+(r.message||'Unknown error')); } },
                 error: function () { showGovukAlert('An error occurred while deleting the record.'); }
             });

@@ -1,6 +1,6 @@
-﻿namespace Apha.Common.Contracts.FPS
+namespace Apha.Common.Contracts.FPS
 {
-    public class MonthlyOutputCalcsViewRes
+    public class MonthlyOutputRes
     {
         public string? Buyer     { get; set; }
         public string? TestCode  { get; set; }

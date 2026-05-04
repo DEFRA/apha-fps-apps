@@ -1,4 +1,4 @@
-﻿using Apha.FPSApps.Application.Dtos;
+using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Pagination;
@@ -30,7 +30,7 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<TestPlanItem, TestRequirementDto>().ReverseMap();
             CreateMap<AdditionalCostItemViewModel, AdditionalCostDto>().ReverseMap();
             CreateMap<TestPlanActualItem, TestRequirementDto>().ReverseMap();
-            CreateMap<CompareTests2Item, MonthlyOutputCalcsViewDto>().ReverseMap();
+            CreateMap<ActualTestOutputItem, MonthlyOutputDto>().ReverseMap();
         }
     }
 }

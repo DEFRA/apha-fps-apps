@@ -1,4 +1,4 @@
-﻿using Apha.FPSApps.Application.Dtos;
+using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.FPS;
@@ -110,7 +110,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectTestPlanActualContro
         [Fact]
         public async Task GetTotalActualCost_WithValidProjectCode_ReturnsSuccessJson()
         {
-            _projTestPlanActualService.GetTotalActualByProjectAsync("AH0033").Returns(ApiResponseDto<MonthlyOutputCalcsTotalsDto>.SuccessResponse(new MonthlyOutputCalcsTotalsDto { TotalVolume = 8, TotalCost = 900 }));
+            _projTestPlanActualService.GetTotalActualByProjectAsync("AH0033").Returns(ApiResponseDto<MonthlyOutputTotalsDto>.SuccessResponse(new MonthlyOutputTotalsDto { TotalVolume = 8, TotalCost = 900 }));
             Assert.True(Deserialize<JR>(Assert.IsType<JsonResult>(await _controller.GetTotalActualCost("AH0033")))?.success);
         }
 
@@ -118,17 +118,17 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectTestPlanActualContro
         public async Task GetTotalActualCost_WhenProjectCodeMissing_ReturnsFailureJson(string? code) => Assert.False(Deserialize<JR>(Assert.IsType<JsonResult>(await _controller.GetTotalActualCost(code!)))?.success);
 
         [Fact]
-        public async Task DeleteMonthlyOutputCalcs_WithValidRowKey_ReturnsSuccessJson()
+        public async Task DeleteMonthlyOutput_WithValidRowKey_ReturnsSuccessJson()
         {
-            _projTestPlanActualService.DeleteMonthlyOutputCalcsAsync("AH0033", "TC01", 1.0, "WG1").Returns(ApiResponseDto<bool>.SuccessResponse(true));
-            Assert.True(Deserialize<JR>(Assert.IsType<JsonResult>(await _controller.DeleteMonthlyOutputCalcs("TC01|AH0033|1|WG1")))?.success);
+            _projTestPlanActualService.DeleteMonthlyOutputAsync("AH0033", "TC01", 1.0, "WG1").Returns(ApiResponseDto<bool>.SuccessResponse(true));
+            Assert.True(Deserialize<JR>(Assert.IsType<JsonResult>(await _controller.DeleteMonthlyOutput("TC01|AH0033|1|WG1")))?.success);
         }
 
         [Theory][InlineData(null)][InlineData("")]
-        public async Task DeleteMonthlyOutputCalcs_WhenRowKeyMissing_ReturnsFailureJson(string? rowKey) => Assert.False(Deserialize<JR>(Assert.IsType<JsonResult>(await _controller.DeleteMonthlyOutputCalcs(rowKey!)))?.success);
+        public async Task DeleteMonthlyOutput_WhenRowKeyMissing_ReturnsFailureJson(string? rowKey) => Assert.False(Deserialize<JR>(Assert.IsType<JsonResult>(await _controller.DeleteMonthlyOutput(rowKey!)))?.success);
 
         [Fact]
-        public async Task DeleteMonthlyOutputCalcs_WhenRowKeyHasWrongPartCount_ReturnsFailureJson() => Assert.False(Deserialize<JR>(Assert.IsType<JsonResult>(await _controller.DeleteMonthlyOutputCalcs("TC01|AH0033")))?.success);
+        public async Task DeleteMonthlyOutput_WhenRowKeyHasWrongPartCount_ReturnsFailureJson() => Assert.False(Deserialize<JR>(Assert.IsType<JsonResult>(await _controller.DeleteMonthlyOutput("TC01|AH0033")))?.success);
 
         #region LoadTestPlanGrid
 
@@ -188,9 +188,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectTestPlanActualContro
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
             var query   = new QueryParameters<string> { Page = 1, PageSize = 10 };
             _mapper.Map<QueryParameters<string>>(request).Returns(query);
-            _projTestPlanActualService.GetMonthlyOutputCalcsByProjectAsync(query, "AH0033")
-                .Returns(ApiResponseDto<List<MonthlyOutputCalcsViewDto>>.SuccessResponse(new List<MonthlyOutputCalcsViewDto>()));
-            _mapper.Map<List<CompareTests2Item>>(Arg.Any<List<MonthlyOutputCalcsViewDto>>()).Returns(new List<CompareTests2Item>());
+            _projTestPlanActualService.GetMonthlyOutputByProjectAsync(query, "AH0033")
+                .Returns(ApiResponseDto<List<MonthlyOutputDto>>.SuccessResponse(new List<MonthlyOutputDto>()));
+            _mapper.Map<List<ActualTestOutputItem>>(Arg.Any<List<MonthlyOutputDto>>()).Returns(new List<ActualTestOutputItem>());
             _mapper.Map<PaginationModel>(Arg.Any<object>()).Returns(new PaginationModel());
 
             var result = await _controller.LoadCompareTests2Grid(request, "AH0033");
@@ -215,13 +215,13 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectTestPlanActualContro
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
             var query   = new QueryParameters<string> { Page = 1, PageSize = 10 };
             _mapper.Map<QueryParameters<string>>(request).Returns(query);
-            _projTestPlanActualService.GetMonthlyOutputCalcsByProjectAsync(query, "AH0033")
-                .Returns(ApiResponseDto<List<MonthlyOutputCalcsViewDto>>.SuccessResponse(new List<MonthlyOutputCalcsViewDto>()));
-            _mapper.Map<List<CompareTests2Item>>(Arg.Any<List<MonthlyOutputCalcsViewDto>>()).Returns(new List<CompareTests2Item>());
+            _projTestPlanActualService.GetMonthlyOutputByProjectAsync(query, "AH0033")
+                .Returns(ApiResponseDto<List<MonthlyOutputDto>>.SuccessResponse(new List<MonthlyOutputDto>()));
+            _mapper.Map<List<ActualTestOutputItem>>(Arg.Any<List<MonthlyOutputDto>>()).Returns(new List<ActualTestOutputItem>());
             _mapper.Map<PaginationModel>(Arg.Any<object>()).Returns(new PaginationModel());
 
             var partial = Assert.IsType<PartialViewResult>(await _controller.LoadCompareTests2Grid(request, "AH0033"));
-            var grid    = Assert.IsType<DataGridConfig<CompareTests2Item>>(partial.Model);
+            var grid    = Assert.IsType<DataGridConfig<ActualTestOutputItem>>(partial.Model);
 
             Assert.False(grid.AllowAdd);
             Assert.False(grid.AllowEdit);
