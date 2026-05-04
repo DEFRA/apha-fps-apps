@@ -8,6 +8,7 @@ using Apha.BatchJobs.Domain.Interfaces;
 using Apha.BatchJobs.Infrastructure.Data;
 using Apha.BatchJobs.Infrastructure.Repositories;
 using Apha.BatchJobs.Infrastructure.Repositories.MabArchive;
+using Apha.BatchJobs.Infrastructure.Repositories.MabArchive.Loaders;
 using Apha.BatchJobs.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -110,10 +111,27 @@ public static class ServiceCollectionSetup
 
         // MABArchive Configuration and Services
         services.Configure<MabArchiveSettings>(config.GetSection("MabArchive"));
+        RegisterMabArchiveLoaders(services);
         services.AddScoped<IReloadFpsTotalsService, ReloadFpsTotalsService>();
         services.AddScoped<IMyFpsYearlyDataService, MyFpsYearlyDataService>();
         services.AddScoped<IEmailNotificationService, EmailNotificationService>();
         services.AddScoped<MabArchiveLoadOrchestrator>();
+    }
+
+    private static void RegisterMabArchiveLoaders(IServiceCollection services)
+    {
+        var loaderType = typeof(IMabArchiveLoader);
+        var loaderAssembly = typeof(MyTlkpProgramLoader).Assembly;
+
+        var loaderImplementations = loaderAssembly
+            .GetTypes()
+            .Where(t => t is { IsClass: true, IsAbstract: false } && loaderType.IsAssignableFrom(t))
+            .ToList();
+
+        foreach (var loader in loaderImplementations)
+        {
+            services.AddScoped(typeof(IMabArchiveLoader), loader);
+        }
     }
 
     private sealed class NoDbBatchLockRepository : IBatchLockRepository
