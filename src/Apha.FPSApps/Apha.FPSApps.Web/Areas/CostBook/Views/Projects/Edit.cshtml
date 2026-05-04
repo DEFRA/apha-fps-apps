@@ -74,7 +74,9 @@
                             <div class="action-buttons edit-action-buttons">
                                 <button type="button" class="govuk-button govuk-button--warning sup_margin_0" onclick="confirmDelete()">Delete</button>
                                 <button type="button" class="govuk-button sup_margin_0" onclick="copyProject()">Copy</button>
-                                <button type="button" class="govuk-button sup_margin_0">Yearly Details</button>
+                                <a class="govuk-button sup_margin_0" asp-area="CostBook" asp-controller="YearlyDetails" asp-action="Index" asp-route-projectId="@Model.ProjectId">
+                                    Yearly Details
+                                </a>
                             </div>
 
                             <!-- Costing Book Code -->
