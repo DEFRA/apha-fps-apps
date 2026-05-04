@@ -86,7 +86,7 @@
                                 </div>
 
                                 <div class="content-area">
-                                    <div class="user-grid-section project-year-grid">
+                                    <div class="user-grid-section project-year-grid tab-grid-scroll">
 
                                         <!-- Year list (fsubProjectYear navigation) -->
                                         <div class="user-grid-section project-year-grid">
@@ -161,7 +161,7 @@
 
                                             </ul>
                                             <div class="govuk-tabs__panel " id="Staff-tab">
-                                                <div id="gridContainer_staffGrid" class="tab-grid-scroll fps-sr-fixedheader-wrap"></div>
+                                                <div id="gridContainer_staffGrid" class="fps-sr-fixedheader-wrap"></div>
                                                 <div class="project-total-bar">
                                                     <span class="project-total-label-wrap">
                                                         <span class="govuk-label me-2">Total Staff Cost:</span>
@@ -175,7 +175,7 @@
                                             </div>
 
                                             <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="Tests-tab">
-                                                <div id="gridContainer_testGrid" class="tab-grid-scroll fps-sr-fixedheader-wrap"></div>
+                                                <div id="gridContainer_testGrid" class="fps-sr-fixedheader-wrap"></div>
                                                 <div class="project-total-bar">
                                                     <span class="project-total-label-wrap">
                                                         <span class="govuk-label me-2">Total Test Cost:</span>
@@ -215,9 +215,9 @@
                                                     </span>
                                                 </div>
                                             </div>
-
-                                            <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="MarkupAndProfit-tab">
-                                                <div id="gridContainer_markupAndProfitGrid"></div>
+                                             
+                                            <div class="govuk-tabs__panel govuk-tabs__panel--hidden " id="MarkupAndProfit-tab">
+                                                <div id="gridContainer_markupAndProfitGrid" class="fps-sr-fixedheader-wrap"></div>
                                             </div>
 
                                         </div>
@@ -301,9 +301,9 @@
 
 </div>
 <style>
-    .tab-grid-scroll {
-        overflow-y: auto;
-        max-height: 400px;
+    .tab-grid-scroll, .grid-scroll-container, .fps-sr-fixedheader-wrap {
+        overflow-y: auto!important;
+        max-height: 400px!important;
     }
 </style>
 @section Scripts {
@@ -327,9 +327,14 @@
             }, 200);
 
             // Remove filter rows from all grids on the page
-            removeFilterRows(document);
+                removeFilterRows(document);
 
-            // Attach event listeners to Add buttons
+                // Hide pagination footers on all grids
+                document.querySelectorAll('.sup_pagination_footer.sup_p_0').forEach(function (el) {
+                    el.hidden = true;
+                });
+
+                // Attach event listeners to Add buttons
             attachButtonEventListeners();
         });
 
@@ -964,6 +969,11 @@
                 });
                 // Remove filter rows from the loaded grid
                 removeFilterRows(gridContainer);
+
+                // Hide pagination footers in the loaded grid
+                gridContainer.querySelectorAll('.sup_pagination_footer.sup_p_0').forEach(function (el) {
+                    el.hidden = true;
+                });
             })
             .catch(function (err) {
                 console.error('Failed to load grid for ' + tabId, err);
