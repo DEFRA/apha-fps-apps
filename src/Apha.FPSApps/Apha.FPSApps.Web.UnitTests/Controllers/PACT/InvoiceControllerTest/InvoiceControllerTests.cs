@@ -76,7 +76,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceControllerTest
                 new() { ProjectParent = parentProject, Month = month, Amount = 1000m }
             };
 
-            _invoiceService.GetPagedProjectInvoicesAsync(Arg.Any<QueryParameters<string>>(), parentProject)
+            _invoiceService.GetPagedProjectInvoiceManualAsync(Arg.Any<QueryParameters<string>>(), parentProject)
                 .Returns(ApiResponseDto<List<ProjectInvoiceDto>>.SuccessResponse(invoices, new PaginationDto()));
             SetupProjectsList(projects);
             _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
@@ -101,7 +101,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceControllerTest
         public async Task Index_WithNullParameters_ReturnsViewWithEmptyFilters()
         {
             // Arrange
-            _invoiceService.GetPagedProjectInvoicesAsync(Arg.Any<QueryParameters<string>>(), null)
+            _invoiceService.GetPagedProjectInvoiceManualAsync(Arg.Any<QueryParameters<string>>(), null)
                 .Returns(ApiResponseDto<List<ProjectInvoiceDto>>.SuccessResponse([], new PaginationDto()));
             SetupProjectsList([]);
             SetupInvoicesGridMapper();
@@ -127,7 +127,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceControllerTest
                 new() { ParentProject = "PRJ003" }
             };
 
-            _invoiceService.GetPagedProjectInvoicesAsync(Arg.Any<QueryParameters<string>>(), null)
+            _invoiceService.GetPagedProjectInvoiceManualAsync(Arg.Any<QueryParameters<string>>(), null)
                 .Returns(ApiResponseDto<List<ProjectInvoiceDto>>.SuccessResponse([], new PaginationDto()));
             SetupProjectsList(projects);
             SetupInvoicesGridMapper();
@@ -158,7 +158,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceControllerTest
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = "{}" };
             const string parentProject = "PRJ001";
 
-            _invoiceService.GetPagedProjectInvoicesAsync(Arg.Any<QueryParameters<string>>(), parentProject)
+            _invoiceService.GetPagedProjectInvoiceManualAsync(Arg.Any<QueryParameters<string>>(), parentProject)
                 .Returns(ApiResponseDto<List<ProjectInvoiceDto>>.SuccessResponse([], new PaginationDto()));
             SetupInvoicesGridMapper();
 
@@ -178,7 +178,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceControllerTest
             var request = new PaginationFilter<string> { Filter = "{}" };
             const int month = 7;
 
-            _invoiceService.GetPagedProjectInvoicesAsync(Arg.Any<QueryParameters<string>>(), null)
+            _invoiceService.GetPagedProjectInvoiceManualAsync(Arg.Any<QueryParameters<string>>(), null)
                 .Returns(ApiResponseDto<List<ProjectInvoiceDto>>.SuccessResponse([], new PaginationDto()));
             SetupInvoicesGridMapper();
 
@@ -210,7 +210,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceControllerTest
             var request = new PaginationFilter<string> { Filter = "{\"ProjectParent\":\"PRJ001\"}" };
             const int month = 3;
 
-            _invoiceService.GetPagedProjectInvoicesAsync(Arg.Any<QueryParameters<string>>(), null)
+            _invoiceService.GetPagedProjectInvoiceManualAsync(Arg.Any<QueryParameters<string>>(), null)
                 .Returns(ApiResponseDto<List<ProjectInvoiceDto>>.SuccessResponse([], new PaginationDto()));
             SetupInvoicesGridMapper();
 
@@ -528,7 +528,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceControllerTest
         public async Task Index_ProjectServiceReturnsEmpty_ViewModelHasEmptyProjectsList()
         {
             // Arrange
-            _invoiceService.GetPagedProjectInvoicesAsync(Arg.Any<QueryParameters<string>>(), null)
+            _invoiceService.GetPagedProjectInvoiceManualAsync(Arg.Any<QueryParameters<string>>(), null)
                 .Returns(ApiResponseDto<List<ProjectInvoiceDto>>.SuccessResponse([], new PaginationDto()));
             _invoiceService.GetTotalAmountAsync(null)
                 .Returns(ApiResponseDto<decimal>.SuccessResponse(0m));
@@ -555,7 +555,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceControllerTest
                 new() { ParentProject = "PRJ002" }
             };
 
-            _invoiceService.GetPagedProjectInvoicesAsync(Arg.Any<QueryParameters<string>>(), null)
+            _invoiceService.GetPagedProjectInvoiceManualAsync(Arg.Any<QueryParameters<string>>(), null)
                 .Returns(ApiResponseDto<List<ProjectInvoiceDto>>.SuccessResponse([], new PaginationDto()));
             _invoiceService.GetTotalAmountAsync(null)
                 .Returns(ApiResponseDto<decimal>.SuccessResponse(0m));
@@ -581,7 +581,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceControllerTest
             var errors = new List<ApiErrorDto> { new() { Message = "Service error" } };
             _projectService.GetAllPactProjectsAsync()
                 .Returns(ApiResponseDto<List<ProjectDto>>.FailureResponse(errors, new ApiMetaDto()));
-            _invoiceService.GetPagedProjectInvoicesAsync(Arg.Any<QueryParameters<string>>(), null)
+            _invoiceService.GetPagedProjectInvoiceManualAsync(Arg.Any<QueryParameters<string>>(), null)
                 .Returns(ApiResponseDto<List<ProjectInvoiceDto>>.SuccessResponse([], new PaginationDto()));
             _invoiceService.GetTotalAmountAsync(null)
                 .Returns(ApiResponseDto<decimal>.SuccessResponse(0m));

@@ -20,9 +20,7 @@ namespace Apha.PACT.DataAccess.Repository
 
         public async Task<PagedData<ProjectInvoice>> GetPagedProjectInvoicesAsync(PaginationParameters<string> query, string? parentProject)
         {
-            IQueryable<ProjectInvoice> queryInvoices = _context.ProjectInvoices
-                .AsNoTracking()
-                .Where(i => i.FpsYear == _fpsRequestContext.FpsYear);
+            IQueryable<ProjectInvoice> queryInvoices = _context.ProjectInvoices.AsNoTracking().AsQueryable();
 
             if (!string.IsNullOrEmpty(parentProject))
             {
@@ -33,19 +31,14 @@ namespace Apha.PACT.DataAccess.Repository
             queryInvoices = (IQueryable<ProjectInvoice>)ApplySorting(queryInvoices, query.SortBy, query.Descending);
 
             List<ProjectInvoice> result = await queryInvoices.ToListAsync();
-
             return ApplyPaging(result, query.Page, query.PageSize);
         }
 
         public async Task<decimal> GetTotalAmountAsync(string? parentProject)
         {
-            IQueryable<ProjectInvoice> query = _context.ProjectInvoices
-                .AsNoTracking()
-                .Where(i => i.FpsYear == _fpsRequestContext.FpsYear);
-
+            IQueryable<ProjectInvoice> query = _context.ProjectInvoices.AsNoTracking();
             if (!string.IsNullOrEmpty(parentProject))
                 query = query.Where(i => i.ProjectParent == parentProject);
-
             return (await query.SumAsync(i => i.Amount)) ?? 0m;
         }
 
@@ -53,19 +46,12 @@ namespace Apha.PACT.DataAccess.Repository
         {
             return await _context.ProjectInvoices
                 .AsNoTracking()
-                .FirstOrDefaultAsync(i => i.InvoiceCounter == invoiceCounter && i.FpsYear == _fpsRequestContext.FpsYear);
+                      .FirstOrDefaultAsync(i => i.InvoiceCounter == invoiceCounter);
         }
 
         public async Task<ProjectInvoice> CreateAsync(ProjectInvoice entity)
         {
             entity.FpsYear = _fpsRequestContext.FpsYear;
-
-            // Calculate next InvoiceCounter for the current FpsYear
-            var maxCounter = await _context.ProjectInvoices
-                .Where(i => i.FpsYear == _fpsRequestContext.FpsYear)
-                .MaxAsync(i => (int?)i.InvoiceCounter) ?? 0;
-
-            entity.InvoiceCounter = maxCounter + 1;
 
             await _context.ProjectInvoices.AddAsync(entity);
             await _context.SaveChangesAsync();
