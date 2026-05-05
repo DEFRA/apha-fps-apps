@@ -13,12 +13,12 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public IFpsLookupApiClient FpsLookup { get; }
         public IFpsAnimalPlanApiClient FpsAnimalPlan { get; }
         public IFpsSettingApiClient FpsSetting { get; }
-
         public IFpsYearMasterApiClient FpsYearMaster { get; }
         public IFpsProjectStaffPlanActualApiClient FpsProjectStaffPlanActual { get; }
         public IFpsDivisionApiClient FpsDivision { get; }
 
         public IFpsAgencyApiClient FpsAgency { get; }
+        public IFpsAdditionalCostApiClient FpsAdditionalCost { get; }
 
         public FpsApiClient(IFpsHttpExecutor http, IMapper mapper)
         {
@@ -33,6 +33,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             FpsProjectStaffPlanActual = new FpsProjectStaffPlanActualApiClient(http, mapper);
             FpsDivision = new FpsDivisionApiClient(http, mapper);
             FpsAgency = new FpsAgencyApiClient(http, mapper);
+            FpsAdditionalCost = new FpsAdditionalCostApiClient(http, mapper);
         }
     }
 }

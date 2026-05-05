@@ -188,6 +188,37 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.TestCapabilityService
 
         #endregion       
                 
+        #region GetPagedTestCapabilityByPortfolioAsync
+
+        [Fact]
+        public async Task GetPagedTestCapabilityByPortfolioAsync_DelegatesToApiClient_ReturnsResult()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var expected = ApiResponseDto<List<TestCapabilityDto>>.SuccessResponse(
+                [new TestCapabilityDto { TestCode = "TC1" }]);
+            _apiClient.GetPagedTestCapabilityByPortfolioAsync(query, "PP1").Returns(expected);
+
+            var result = await _service.GetPagedTestCapabilityByPortfolioAsync(query, "PP1");
+
+            Assert.Equal(expected, result);
+            await _apiClient.Received(1).GetPagedTestCapabilityByPortfolioAsync(query, "PP1");
+        }
+
+        [Fact]
+        public async Task GetPagedTestCapabilityByPortfolioAsync_WithNullPortfolio_PassesNullToClient()
+        {
+            var query = new QueryParameters<string>();
+            var expected = ApiResponseDto<List<TestCapabilityDto>>.SuccessResponse([]);
+            _apiClient.GetPagedTestCapabilityByPortfolioAsync(query, null).Returns(expected);
+
+            var result = await _service.GetPagedTestCapabilityByPortfolioAsync(query, null);
+
+            Assert.Equal(expected, result);
+            await _apiClient.Received(1).GetPagedTestCapabilityByPortfolioAsync(query, null);
+        }
+
+        #endregion
+
         #region GetAllWorkGroupsAsync
 
         [Fact]

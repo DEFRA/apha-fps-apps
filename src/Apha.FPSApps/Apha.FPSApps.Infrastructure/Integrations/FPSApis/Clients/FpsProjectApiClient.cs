@@ -107,6 +107,17 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             return ApiResponseDto<ProjectDto>.FailureResponse(dto.Errors, dto.Meta);
         }
 
+        public async Task<ApiResponseDto<ProjectDto>> UpdatePactPortfolioAsync(ProjectDto project)
+        {
+            var request = _mapper.Map<ProjectReq>(project);
+            var response = await _http.PatchAsync<ProjectReq, ProjectRes>(FpsApiEndpoints.UpdatePactPortfolio, request);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<ProjectDto>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<ProjectDto>>(response);
+            return ApiResponseDto<ProjectDto>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
         public async Task<ApiResponseDto<bool>> DeleteProjectAsync(string parentProject)
         {
             var response = await _http.DeleteAsync<bool?>(string.Format(FpsApiEndpoints.DeleteProject, Uri.EscapeDataString(parentProject)));

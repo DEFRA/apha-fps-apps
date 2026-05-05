@@ -42,6 +42,8 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<Division, DivisionDto>().ReverseMap();
             CreateMap<Agency, AgencyDto>().ReverseMap();
             CreateMap<TimeCostCalcsView, TimeCostCalcsViewDto>().ReverseMap();
+            CreateMap<AdditionalCost, AdditionalCostDto>().ReverseMap();
+            CreateMap<AccountCategory, AccountCategoryDto>().ReverseMap();
         }
     }
 }

@@ -24,6 +24,44 @@ namespace Apha.PACT.Api.UnitTests.Controller.TimeCodeValidControllerTest
             _controller = new TimeCodeValidController(_serviceMock, _mapperMock);
         }
 
+        #region GetPagedByProjectAndTestCode
+
+        [Fact]
+        public async Task GetPagedByProjectAndTestCode_HappyPath_ReturnsOk()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var dtos = new List<TimeCodeValidDto>
+            {
+                new TimeCodeValidDto { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1" }
+            };
+            var serviceResult = new PaginatedResult<TimeCodeValidDto>(dtos, new PaginationDto { TotalRecords = 1 });
+            var expectedResponse = new PaginationRes<TimeCodeValidRes>
+            {
+                Data = new List<TimeCodeValidRes> { new TimeCodeValidRes { TimeCode = "TC1" } }
+            };
+
+            _serviceMock.GetPagedByProjectAndTestCodeAsync(query, "PRJ1", "TST1").Returns(serviceResult);
+            _mapperMock.Map<PaginationRes<TimeCodeValidRes>>(serviceResult).Returns(expectedResponse);
+
+            var result = await _controller.GetPagedByProjectAndTestCode(query, "PRJ1", "TST1");
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(expectedResponse, okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetPagedByProjectAndTestCode_ServiceThrows_PropagatesException()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            _serviceMock.GetPagedByProjectAndTestCodeAsync(query, "PRJ1", "TST1")
+                .ThrowsAsync(new Exception("Service error"));
+
+            await Assert.ThrowsAsync<Exception>(() =>
+                _controller.GetPagedByProjectAndTestCode(query, "PRJ1", "TST1"));
+        }
+
+        #endregion
+
         #region GetByJobCode
 
         [Fact]

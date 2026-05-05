@@ -36,10 +36,30 @@ namespace Apha.PACT.DataAccess.Repository
                 queryTimeCode = queryTimeCode.Where(t => t.JobCode == jobCode);
             }
 
-            if(!string.IsNullOrEmpty(parentProject))
+            if (!string.IsNullOrEmpty(parentProject))
             {
                 queryTimeCode = queryTimeCode.Where(t => t.ParentProject == parentProject);
             }
+
+            // Apply filtering
+            queryTimeCode = ApplyTimeCodeFilter(queryTimeCode, query.Filter);
+
+            // Apply sorting
+            queryTimeCode = (IQueryable<TimeCodeValid>)ApplySorting(queryTimeCode, query.SortBy, query.Descending);
+
+            // Execute query
+            var result = await queryTimeCode.ToListAsync();
+
+            // Apply paging
+            return ApplyPaging(result, query.Page, query.PageSize);
+        }
+
+        public async Task<PagedData<TimeCodeValid>> GetPagedByProjectAndTestCodeAsync(
+            PaginationParameters<string> query, string parentProject, string testCode)
+        {
+            var queryTimeCode = _context.TimeCodeValids
+                .AsNoTracking()
+                .Where(t => t.ParentProject == parentProject && t.TestCode == testCode);
 
             // Apply filtering
             queryTimeCode = ApplyTimeCodeFilter(queryTimeCode, query.Filter);

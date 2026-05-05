@@ -226,6 +226,48 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestCapabilityControllerTest
         }
 
         #endregion
-        
+
+        #region GetPagedTestCapabilityByPortfolio
+
+        [Fact]
+        public async Task GetPagedTestCapabilityByPortfolio_HappyPath_ReturnsOkWithPaginatedResult()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var serviceResult = new PaginatedResult<TestCapabilityDto>();
+            var mapped = new PaginationRes<TestCapabilityRes>();
+
+            _service.GetPagedTestCapabilityByPortfolioAsync(query, "PF1").Returns(serviceResult);
+            _mapper.Map<PaginationRes<TestCapabilityRes>>(serviceResult).Returns(mapped);
+
+            var result = await _controller.GetPagedTestCapabilityByPortfolio(query, "PF1");
+
+            var ok = Assert.IsType<OkObjectResult>(result);
+            ok.Value.Should().Be(mapped);
+        }
+
+        [Fact]
+        public async Task GetPagedTestCapabilityByPortfolio_NullPortfolio_ReturnsOk()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            _service.GetPagedTestCapabilityByPortfolioAsync(query, null).Returns(new PaginatedResult<TestCapabilityDto>());
+            _mapper.Map<PaginationRes<TestCapabilityRes>>(Arg.Any<PaginatedResult<TestCapabilityDto>>())
+                .Returns(new PaginationRes<TestCapabilityRes>());
+
+            var result = await _controller.GetPagedTestCapabilityByPortfolio(query, null);
+
+            Assert.IsType<OkObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task GetPagedTestCapabilityByPortfolio_ServiceThrows_PropagatesException()
+        {
+            var query = new QueryParameters<string>();
+            _service.GetPagedTestCapabilityByPortfolioAsync(query, null).ThrowsAsync(new Exception("Service error"));
+
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetPagedTestCapabilityByPortfolio(query, null));
+        }
+
+        #endregion
+
     }
 }
