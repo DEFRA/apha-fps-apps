@@ -9,12 +9,16 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Models
         public string ProjectId { get; set; } = string.Empty;
         public string? PlanCategory { get; set; }
 
-        [Required(ErrorMessage = "Project title is required")]
-        public string ProjectTitle { get; set; }= string.Empty;
+        [Required(ErrorMessage = "Please enter a title")]
+        public string ProjectTitle { get; set; } = string.Empty;    
+
         public string? Programme { get; set; }
         public string? ProjectWorkgroup { get; set; }
         public double? ContractPrice { get; set; }
+
+        [Required(ErrorMessage = "Please enter Start Date")]
         public DateOnly? StartDate { get; set; }
+
         public string? Disease { get; set; }
         public double? StartFYear { get; set; }
         public string? CustomerName { get; set; }
@@ -27,7 +31,10 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Models
         public int? FinancialYears { get; set; }
         public string? Notes { get; set; }
         public double? Euroconvrate { get; set; }
+
+        [Required(ErrorMessage = "Please choose Defra/Non-Defra")]
         public short? IsDefraProject { get; set; }
+
         public DateTime? EndDate { get; set; }
         public decimal? BudgetAmount { get; set; }
         public decimal? ActualCost { get; set; }

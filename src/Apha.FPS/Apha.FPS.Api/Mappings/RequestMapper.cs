@@ -1,4 +1,4 @@
-﻿using Apha.Common.Contracts;
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
@@ -52,6 +52,7 @@ namespace Apha.FPS.Api.Mappings
             CreateMap<AdditionalCostDto, AdditionalCostReq>().ReverseMap();
             CreateMap<AdditionalCostDto, AdditionalCostRes>().ReverseMap();
             CreateMap<AccountCategoryDto, AccountCategoryRes>().ReverseMap();
+            CreateMap<MonthlyOutputDto, MonthlyOutputRes>().ReverseMap();
             CreateMap<WorkgroupGradeDto, WorkgroupGradeReq>().ReverseMap();
             CreateMap<WorkgroupGradeDto, WorkgroupGradeRes>().ReverseMap();
         }
