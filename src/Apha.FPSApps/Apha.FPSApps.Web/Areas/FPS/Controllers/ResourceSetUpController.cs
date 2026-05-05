@@ -20,22 +20,22 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
     {
         private readonly IMapper _mapper;
         private readonly IProfitCentreService _profitCentreService;
-        private readonly IRcGradeService _rcGradeService;
-        private readonly IWgGradeService _wgGradeService;
-        private readonly IWgStaffService _wgStaffService;
+        private readonly IResourceCentreGradeService _rcGradeService;
+        private readonly IWorkGroupGradeService _wgGradeService;
+        private readonly IWorkGroupEmployeeService _WorkGroupEmployeeService;
 
         public ResourceSetUpController(
             IMapper mapper,
             IProfitCentreService profitCentreService,
-            IRcGradeService rcGradeService,
-            IWgGradeService wgGradeService,
-            IWgStaffService wgStaffService)
+            IResourceCentreGradeService rcGradeService,
+            IWorkGroupGradeService wgGradeService,
+            IWorkGroupEmployeeService WorkGroupEmployeeService)
         {
             _mapper = mapper;
             _profitCentreService = profitCentreService;
             _rcGradeService = rcGradeService;
             _wgGradeService = wgGradeService;
-            _wgStaffService = wgStaffService;
+            _WorkGroupEmployeeService = WorkGroupEmployeeService;
         }
 
         public async Task<IActionResult> Index(string? profitCentre = null)
@@ -53,7 +53,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var rcGradeItems = new List<RcGradeItem>();
             if (!string.IsNullOrWhiteSpace(selectedProfitCentre))
             {
-                var rcResponse = await _rcGradeService.GetRcGradesAsync(selectedProfitCentre);
+                var rcResponse = await _rcGradeService.GetResourceCentreGradesAsync(selectedProfitCentre);
                 if (rcResponse.Success && rcResponse.Data != null)
                 {
                     rcGradeItems = rcResponse.Data
@@ -75,11 +75,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ShowPagination     = true,
                 KeyProperty        = "PcGrade",
                 AllowAdd           = false,
-                AddFunction        = null,
                 AllowEdit          = false,
-                EditFunction       = null,
                 AllowDelete        = false,
-                DeleteFunction     = null,
                 ExtraFilterMethod  = "getRcGradeExtraFilters",
                 BindGridUrl        = "/FPS/ResourceSetUp/LoadRcGradeGrid",
                 Data               = rcGradeItems.Take(10).ToList(),
@@ -95,11 +92,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ShowPagination     = true,
                 KeyProperty        = "WgGrade",
                 AllowAdd           = false,
-                AddFunction        = null,
                 AllowEdit          = false,
-                EditFunction       = null,
                 AllowDelete        = false,
-                DeleteFunction     = null,
                 ExtraFilterMethod  = "getWgGradeExtraFilters",
                 BindGridUrl        = "/FPS/ResourceSetUp/LoadWgGradeGrid",
                 Data               = new List<WgGradeItem>(),
@@ -115,11 +109,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ShowPagination     = true,
                 KeyProperty        = "PactId",
                 AllowAdd           = false,
-                AddFunction        = null,
                 AllowEdit          = true,
                 EditFunction       = "editWgStaff",
                 AllowDelete        = false,
-                DeleteFunction     = null,
                 ExtraFilterMethod  = "getWgStaffExtraFilters",
                 BindGridUrl        = "/FPS/ResourceSetUp/LoadWgStaffGrid",
                 Data               = new List<WgStaffItem>(),
@@ -138,7 +130,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 return Json(new { success = false, message = "Profit Centre is required." });
             }
 
-            var response = await _rcGradeService.GetRcGradesAsync(profitCentre);
+            var response = await _rcGradeService.GetResourceCentreGradesAsync(profitCentre);
             if (!response.Success)
             {
                 return Json(new { success = false, message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to load RC grades." });
@@ -175,11 +167,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ShowPagination     = true,
                 KeyProperty        = "PcGrade",
                 AllowAdd           = false,
-                AddFunction        = null,
                 AllowEdit          = false,
-                EditFunction       = null,
                 AllowDelete        = false,
-                DeleteFunction     = null,
                 ExtraFilterMethod  = "getRcGradeExtraFilters",
                 BindGridUrl        = "/FPS/ResourceSetUp/LoadRcGradeGrid",
                 Data               = pagedItems,
@@ -199,7 +188,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 return Json(new { success = false, message = "RC Grade is required." });
             }
 
-            var response = await _wgGradeService.GetWgGradesAsync(pcGrade);
+            var response = await _wgGradeService.GetWorkGroupGradeAsync(pcGrade);
             if (!response.Success)
             {
                 return Json(new { success = false, message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to load WG grades." });
@@ -234,11 +223,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ShowPagination     = true,
                 KeyProperty        = "WgGrade",
                 AllowAdd           = false,
-                AddFunction        = null,
                 AllowEdit          = false,
-                EditFunction       = null,
                 AllowDelete        = false,
-                DeleteFunction     = null,
                 ExtraFilterMethod  = "getWgGradeExtraFilters",
                 BindGridUrl        = "/FPS/ResourceSetUp/LoadWgGradeGrid",
                 Data               = pagedItems,
@@ -270,7 +256,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             var filterDict = ParseFilterJson(request.Filter);
             var queryParameters = _mapper.Map<QueryParameters<string>>(request);
-            var response = await _wgStaffService.GetWgStaffAsync(queryParameters, wgGrade);
+            var response = await _WorkGroupEmployeeService.GetWorkGroupEmployeeAsync(queryParameters, wgGrade);
 
             if (!response.Success)
             {
@@ -304,11 +290,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ShowPagination     = true,
                 KeyProperty        = "PactId",
                 AllowAdd           = false,
-                AddFunction        = null,
                 AllowEdit          = true,
                 EditFunction       = "editWgStaff",
                 AllowDelete        = false,
-                DeleteFunction     = null,
                 ExtraFilterMethod  = "getWgStaffExtraFilters",
                 BindGridUrl        = "/FPS/ResourceSetUp/LoadWgStaffGrid",
                 Data               = staffItems,
@@ -328,7 +312,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 return Json(new { success = false, message = "PACTid is required." });
             }
 
-            var response = await _wgStaffService.GetWgEmployeeByIdAsync(pactId);
+            var response = await _WorkGroupEmployeeService.GetWorkGroupEmployeeByIdAsync(pactId);
             if (!response.Success || response.Data == null)
             {
                 return Json(new { success = false, message = "WG Employee not found." });
@@ -380,7 +364,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 PersonClass    = item.PersonClass
             };
 
-            var result = await _wgStaffService.UpdateWgEmployeeAsync(dto);
+            var result = await _WorkGroupEmployeeService.UpdateWorkGroupEmployeeAsync(dto);
             if (result.Success)
             {
                 return Json(new { success = true, data = result.Data, message = "Staff record updated successfully." });

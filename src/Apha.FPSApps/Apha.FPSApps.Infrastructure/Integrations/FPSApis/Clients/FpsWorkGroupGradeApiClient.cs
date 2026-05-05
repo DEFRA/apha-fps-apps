@@ -9,18 +9,18 @@ using AutoMapper;
 
 namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 {
-    public class FpsWgGradeApiClient : IFpsWgGradeApiClient
+    public class FpsWorkGroupGradeApiClient : IFpsWorkGroupGradeApiClient
     {
         private readonly IFpsHttpExecutor _http;
         private readonly IMapper _mapper;
 
-        public FpsWgGradeApiClient(IFpsHttpExecutor http, IMapper mapper)
+        public FpsWorkGroupGradeApiClient(IFpsHttpExecutor http, IMapper mapper)
         {
             _http = http;
             _mapper = mapper;
         }
 
-        public async Task<ApiResponseDto<List<WorkgroupGradeDto>>> GetWgGradesAsync(QueryParameters<string> query, string pcGrade)
+        public async Task<ApiResponseDto<List<WorkgroupGradeDto>>> GetWorkGroupGradeAsync(QueryParameters<string> query, string pcGrade)
         {
             var url = string.Format(FpsApiEndpoints.GetWgGrades, Uri.EscapeDataString(pcGrade));
             var response = await _http.GetAsync<List<WorkgroupGradeRes>>(url);
@@ -35,7 +35,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        public async Task<ApiResponseDto<bool>> DeleteWgGradeAsync(string wgGrade)
+        public async Task<ApiResponseDto<bool>> DeleteWorkGroupGradeAsync(string wgGrade)
         {
             var url = string.Format(FpsApiEndpoints.DeleteWgGrade, Uri.EscapeDataString(wgGrade));
             var response = await _http.DeleteAsync<bool>(url);

@@ -1,4 +1,4 @@
-﻿using Apha.Common.Utilities.StateManagement;
+using Apha.Common.Utilities.StateManagement;
 using Apha.Common.Utilities.ExcelExport;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Services;
@@ -39,9 +39,9 @@ services.AddScoped<ITestorProductService, TestorProductService>();
             services.AddScoped<IDivisionService, DivisionService>();
             services.AddScoped<IAgencyService, AgencyService>();
             services.AddScoped<IProfitCentreService, ProfitCentreService>();
-            services.AddScoped<IRcGradeService, RcGradeService>();
-            services.AddScoped<IWgGradeService, WgGradeService>();
-            services.AddScoped<IWgStaffService, WgStaffService>();
+            services.AddScoped<IResourceCentreGradeService, ResourceCentreGradeService>();
+            services.AddScoped<IWorkGroupGradeService, WorkGroupGradeService>();
+            services.AddScoped<IWorkGroupEmployeeService, WorkGroupEmployeeService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
@@ -65,9 +65,9 @@ services.AddScoped<ITestorProductRepository, TestorProductRepository>();
             services.AddScoped<IDivisionRepository, DivisionRepository>();
             services.AddScoped<IAgencyRepository, AgencyRepository>();
             services.AddScoped<IProfitCentreRepository, ProfitCentreRepository>();
-            services.AddScoped<IRcGradeRepository, RcGradeRepository>();
-            services.AddScoped<IWgGradeRepository, WgGradeRepository>();
-            services.AddScoped<IWgStaffRepository, WgStaffRepository>();
+            services.AddScoped<IResourceCentreGradeRepository, ResourceCentreGradeRepository>();
+            services.AddScoped<IWorkGroupGradeRepository, WorkGroupGradeRepository>();
+            services.AddScoped<IWorkGroupEmployeeRepository, WorkGroupEmployeeRepository>();
             return services;
         }
     }

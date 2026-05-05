@@ -6,29 +6,29 @@ using AutoMapper;
 
 namespace Apha.FPS.Application.Services
 {
-    public class WgGradeService : IWgGradeService
+    public class WorkGroupGradeService : IWorkGroupGradeService
     {
-        private readonly IWgGradeRepository _repository;
+        private readonly IWorkGroupGradeRepository _repository;
         private readonly IMapper _mapper;
 
-        public WgGradeService(IWgGradeRepository repository, IMapper mapper)
+        public WorkGroupGradeService(IWorkGroupGradeRepository repository, IMapper mapper)
         {
             _repository = repository;
             _mapper = mapper;
         }
 
-        public async Task<PaginatedResult<WorkgroupGradeDto>> GetWgGradesAsync(QueryParameters<string> query, string pcGrade, CancellationToken cancellationToken = default)
+        public async Task<PaginatedResult<WorkgroupGradeDto>> GetWorkGroupGradeAsync(QueryParameters<string> query, string pcGrade)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(pcGrade);
             var filter = _mapper.Map<Apha.FPS.Core.Pagination.PaginationParameters<string>>(query);
-            var pagedData = await _repository.GetWgGradesAsync(filter, pcGrade, cancellationToken);
+            var pagedData = await _repository.GetWorkGroupGradeAsync(filter, pcGrade);
             return _mapper.Map<PaginatedResult<WorkgroupGradeDto>>(pagedData);
         }
 
-        public async Task DeleteWgGradeAsync(string wgGrade, CancellationToken cancellationToken = default)
+        public async Task DeleteWorkGroupGradeAsync(string wgGrade)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(wgGrade);
-            await _repository.DeleteWgGradeAsync(wgGrade, cancellationToken);
+            await _repository.DeleteWorkGroupGradeAsync(wgGrade);
         }
     }
 }

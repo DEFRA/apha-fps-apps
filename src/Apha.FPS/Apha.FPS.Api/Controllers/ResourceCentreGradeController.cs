@@ -16,14 +16,14 @@ namespace Apha.FPS.Api.Controllers
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/rcgrades")]
-    public class RcGradeController : ControllerBase
+    public class ResourceCentreGradeController : ControllerBase
     {
-        private readonly IRcGradeService _rcGradeService;
+        private readonly IResourceCentreGradeService _resourceCentreGradeService;
         private readonly IMapper _mapper;
 
-        public RcGradeController(IRcGradeService rcGradeService, IMapper mapper)
+        public ResourceCentreGradeController(IResourceCentreGradeService resourceCentreGradeService, IMapper mapper)
         {
-            _rcGradeService = rcGradeService ?? throw new ArgumentNullException(nameof(rcGradeService));
+            _resourceCentreGradeService = resourceCentreGradeService ?? throw new ArgumentNullException(nameof(resourceCentreGradeService));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
@@ -33,10 +33,10 @@ namespace Apha.FPS.Api.Controllers
         /// <param name="query">Pagination and filter parameters.</param>
         /// <param name="profitCentre">The profit centre code.</param>
         [HttpGet]
-        public async Task<IActionResult> GetRcGradesAsync([FromQuery] PaginationReq<string> query, [FromQuery] string profitCentre, CancellationToken cancellationToken)
+        public async Task<IActionResult> GetResourceCentreGradesAsync([FromQuery] PaginationReq<string> query, [FromQuery] string profitCentre)
         {
             var filter = _mapper.Map<QueryParameters<string>>(query);
-            var result = await _rcGradeService.GetRcGradesAsync(filter, profitCentre, cancellationToken);
+            var result = await _resourceCentreGradeService.GetResourceCentreGradesAsync(filter, profitCentre);
             return Ok(_mapper.Map<PaginationRes<ProfitCentreGradeRes>>(result));
         }
     }

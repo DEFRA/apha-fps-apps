@@ -6,22 +6,22 @@ using AutoMapper;
 
 namespace Apha.FPS.Application.Services
 {
-    public class RcGradeService : IRcGradeService
+    public class ResourceCentreGradeService : IResourceCentreGradeService
     {
-        private readonly IRcGradeRepository _repository;
+        private readonly IResourceCentreGradeRepository _repository;
         private readonly IMapper _mapper;
 
-        public RcGradeService(IRcGradeRepository repository, IMapper mapper)
+        public ResourceCentreGradeService(IResourceCentreGradeRepository repository, IMapper mapper)
         {
             _repository = repository;
             _mapper = mapper;
         }
 
-        public async Task<PaginatedResult<ProfitCentreGradeDto>> GetRcGradesAsync(QueryParameters<string> query, string profitCentre, CancellationToken cancellationToken = default)
+        public async Task<PaginatedResult<ProfitCentreGradeDto>> GetResourceCentreGradesAsync(QueryParameters<string> query, string profitCentre)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(profitCentre);
             var filter = _mapper.Map<Apha.FPS.Core.Pagination.PaginationParameters<string>>(query);
-            var pagedData = await _repository.GetRcGradesAsync(filter, profitCentre, cancellationToken);
+            var pagedData = await _repository.GetResourceCentreGradesAsync(filter, profitCentre);
             return _mapper.Map<PaginatedResult<ProfitCentreGradeDto>>(pagedData);
         }
     }

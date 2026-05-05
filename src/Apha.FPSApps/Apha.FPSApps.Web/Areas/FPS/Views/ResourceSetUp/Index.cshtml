@@ -18,6 +18,9 @@
         height: 240px;
         max-height: 240px;
     }
+    #gridContainer_wgGradeGrid .editable-grid-container {
+        min-height: unset;
+    }
     #gridContainer_wgGradeGrid table thead th,
     #gridContainer_wgGradeGrid table tbody td { text-align: left !important; }
 </style>
@@ -71,7 +74,7 @@
                 <div class="data-table-container sup_border govuk-!-margin-left-2 govuk-!-padding-3">
 
                     <!-- Top row: RC Grades (55%) + WG Grades (45%) -->
-                    <div class="row govuk-!-margin-bottom-4">
+                    <div class="row govuk-!-margin-bottom-4" style="align-items: flex-start;">
                         <!-- RC Grades Available -->
                         <div class="col-7" style="border-right: 1px solid #b1b4b6;">
                             <div id="gridContainer_@Model.RcGradeGrid.GridId">
@@ -265,12 +268,23 @@
             }
         });
 
+        // Clears all filter inputs inside a grid container and resets the gridManager's filter state
+        function clearGridFilters(gridId) {
+            $('#gridContainer_' + gridId + ' .grid-filter').val('');
+        }
+
         // Called when user clicks an RC grade row
         function onRcGradeRowClick(pcGrade) {
             currentPcGrade = pcGrade;
             document.getElementById('fpsSrRcFilter').value = pcGrade;
             currentWgGrade = '';
             document.getElementById('fpsSrSelectedWg').value = '';
+            document.getElementById('fpsSrPersonName').value = '';
+            document.getElementById('fpsSrSelectedPactId').value = '';
+
+            // Clear any active filters on both dependent grids before reloading
+            clearGridFilters(wgGradeGridId);
+            clearGridFilters(wgStaffGridId);
 
             var mgr = getWgGradeGridManager();
             if (mgr) {
@@ -282,6 +296,11 @@
         function onWgGradeRowClick(wgGrade) {
             currentWgGrade = wgGrade;
             document.getElementById('fpsSrSelectedWg').value = wgGrade;
+            document.getElementById('fpsSrPersonName').value = '';
+            document.getElementById('fpsSrSelectedPactId').value = '';
+
+            // Clear any active filters on the staff grid before reloading
+            clearGridFilters(wgStaffGridId);
 
             var mgr = getWgStaffGridManager();
             if (mgr) {

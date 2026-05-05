@@ -6,11 +6,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Apha.FPS.DataAccess.Repositories
 {
-    public class WgGradeRepository : BaseRepository, IWgGradeRepository
+    public class WorkGroupGradeRepository : BaseRepository, IWorkGroupGradeRepository
     {
         private readonly FpsDbContext _dbContext;
 
-        public WgGradeRepository(FpsDbContext dbContext) : base(dbContext)
+        public WorkGroupGradeRepository(FpsDbContext dbContext) : base(dbContext)
         {
             _dbContext = dbContext;
         }
@@ -18,13 +18,13 @@ namespace Apha.FPS.DataAccess.Repositories
         /// <summary>
         /// Returns a paginated list of WG grades for the given PC grade.
         /// </summary>
-        public async Task<PagedData<WorkgroupGrade>> GetWgGradesAsync(PaginationParameters<string> query, string pcGrade, CancellationToken cancellationToken = default)
+        public async Task<PagedData<WorkgroupGrade>> GetWorkGroupGradeAsync(PaginationParameters<string> query, string pcGrade)
         {
             var all = await _dbContext.WorkgroupGrades
                 .AsNoTracking()
                 .Where(x => x.ProfitCentreGrade == pcGrade)
                 .OrderBy(x => x.WgGrade)
-                .ToListAsync(cancellationToken);
+                .ToListAsync(default);
 
             return ApplyPaging(all, query.Page, query.PageSize);
         }
@@ -32,15 +32,15 @@ namespace Apha.FPS.DataAccess.Repositories
         /// <summary>
         /// Deletes a WG grade by its grade code.
         /// </summary>
-        public async Task DeleteWgGradeAsync(string wgGrade, CancellationToken cancellationToken = default)
+        public async Task DeleteWorkGroupGradeAsync(string wgGrade)
         {
             var entity = await _dbContext.WorkgroupGrades
-                .FirstOrDefaultAsync(x => x.WgGrade == wgGrade, cancellationToken);
+                .FirstOrDefaultAsync(x => x.WgGrade == wgGrade);
             if (entity == null)
                 throw new KeyNotFoundException($"WG grade '{wgGrade}' was not found.");
 
             _dbContext.WorkgroupGrades.Remove(entity);
-            await _dbContext.SaveChangesAsync(cancellationToken);
+            await _dbContext.SaveChangesAsync(default);
         }
     }
 }

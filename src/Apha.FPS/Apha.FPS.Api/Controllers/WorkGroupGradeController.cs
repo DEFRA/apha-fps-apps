@@ -16,14 +16,14 @@ namespace Apha.FPS.Api.Controllers
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/wggrades")]
-    public class WgGradeController : ControllerBase
+    public class WorkGroupGradeController : ControllerBase
     {
-        private readonly IWgGradeService _wgGradeService;
+        private readonly IWorkGroupGradeService _WorkGroupGradeService;
         private readonly IMapper _mapper;
 
-        public WgGradeController(IWgGradeService wgGradeService, IMapper mapper)
+        public WorkGroupGradeController(IWorkGroupGradeService WorkGroupGradeService, IMapper mapper)
         {
-            _wgGradeService = wgGradeService ?? throw new ArgumentNullException(nameof(wgGradeService));
+            _WorkGroupGradeService = WorkGroupGradeService ?? throw new ArgumentNullException(nameof(WorkGroupGradeService));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
@@ -33,10 +33,10 @@ namespace Apha.FPS.Api.Controllers
         /// <param name="query">Pagination and filter parameters.</param>
         /// <param name="pcGrade">The profit centre grade code.</param>
         [HttpGet]
-        public async Task<IActionResult> GetWgGradesAsync([FromQuery] PaginationReq<string> query, [FromQuery] string pcGrade, CancellationToken cancellationToken)
+        public async Task<IActionResult> GetWorkGroupGradeAsync([FromQuery] PaginationReq<string> query, [FromQuery] string pcGrade)
         {
             var filter = _mapper.Map<QueryParameters<string>>(query);
-            var result = await _wgGradeService.GetWgGradesAsync(filter, pcGrade, cancellationToken);
+            var result = await _WorkGroupGradeService.GetWorkGroupGradeAsync(filter, pcGrade);
             return Ok(_mapper.Map<PaginationRes<WorkgroupGradeRes>>(result));
         }
 
@@ -45,9 +45,9 @@ namespace Apha.FPS.Api.Controllers
         /// </summary>
         /// <param name="wgGrade">The WG grade code to delete.</param>
         [HttpDelete("{wgGrade}")]
-        public async Task<IActionResult> DeleteWgGradeAsync(string wgGrade, CancellationToken cancellationToken)
+        public async Task<IActionResult> DeleteWorkGroupGradeAsync(string wgGrade)
         {
-            await _wgGradeService.DeleteWgGradeAsync(wgGrade, cancellationToken);
+            await _WorkGroupGradeService.DeleteWorkGroupGradeAsync(wgGrade);
             return NoContent();
         }
     }

@@ -10,18 +10,18 @@ using AutoMapper;
 
 namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 {
-    public class FpsWgStaffApiClient : IFpsWgStaffApiClient
+    public class FpsWorkGroupEmployeeApiClient : IFpsWorkGroupEmployeeApiClient
     {
         private readonly IFpsHttpExecutor _http;
         private readonly IMapper _mapper;
 
-        public FpsWgStaffApiClient(IFpsHttpExecutor http, IMapper mapper)
+        public FpsWorkGroupEmployeeApiClient(IFpsHttpExecutor http, IMapper mapper)
         {
             _http = http;
             _mapper = mapper;
         }
 
-        public async Task<ApiResponseDto<List<WgEmployeeViewDto>>> GetWgStaffAsync(QueryParameters<string> query, string wgGrade)
+        public async Task<ApiResponseDto<List<WgEmployeeViewDto>>> GetWorkGroupEmployeeAsync(QueryParameters<string> query, string wgGrade)
         {
             var baseUrl = string.Format(FpsApiEndpoints.GetWgStaff, Uri.EscapeDataString(wgGrade));
             var url = QueryStringHelper.AddQueryString(baseUrl, query);
@@ -37,7 +37,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        public async Task<ApiResponseDto<WgEmployeeDto>> GetWgEmployeeByIdAsync(string pactId)
+        public async Task<ApiResponseDto<WgEmployeeDto>> GetWorkGroupEmployeeByIdAsync(string pactId)
         {
             var url = string.Format(FpsApiEndpoints.GetWgEmployeeById, Uri.EscapeDataString(pactId));
             var response = await _http.GetAsync<WgEmployeeRes>(url);
@@ -52,7 +52,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        public async Task<ApiResponseDto<WgEmployeeDto>> UpdateWgEmployeeAsync(WgEmployeeDto dto)
+        public async Task<ApiResponseDto<WgEmployeeDto>> UpdateWorkGroupEmployeeAsync(WgEmployeeDto dto)
         {
             var req = _mapper.Map<WgEmployeeReq>(dto);
             var response = await _http.PutAsync<WgEmployeeReq, WgEmployeeRes>(FpsApiEndpoints.UpdateWgEmployee, req);
@@ -67,7 +67,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        public async Task<ApiResponseDto<bool>> DeleteWgEmployeeAsync(string pactId)
+        public async Task<ApiResponseDto<bool>> DeleteWorkGroupEmployeeAsync(string pactId)
         {
             var url = string.Format(FpsApiEndpoints.DeleteWgEmployee, Uri.EscapeDataString(pactId));
             var response = await _http.DeleteAsync<bool>(url);

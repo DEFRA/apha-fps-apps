@@ -8,11 +8,11 @@ using Newtonsoft.Json;
 
 namespace Apha.FPS.DataAccess.Repositories
 {
-    public class WgStaffRepository : BaseRepository, IWgStaffRepository
+    public class WorkGroupEmployeeRepository : BaseRepository, IWorkGroupEmployeeRepository
     {
         private readonly FpsDbContext _dbContext;
 
-        public WgStaffRepository(FpsDbContext dbContext) : base(dbContext)
+        public WorkGroupEmployeeRepository(FpsDbContext dbContext) : base(dbContext)
         {
             _dbContext = dbContext;
         }
@@ -20,10 +20,9 @@ namespace Apha.FPS.DataAccess.Repositories
         /// <summary>
         /// Returns a paginated list of staff for the given WG grade, excluding inactive employees.
         /// </summary>
-        public async Task<PagedData<WgEmployeeView>> GetWgStaffAsync(
+        public async Task<PagedData<WgEmployeeView>> GetWorkGroupEmployeeAsync(
             PaginationParameters<string> query,
-            string wgGrade,
-            CancellationToken cancellationToken = default)
+            string wgGrade)
         {
             var raw = await _dbContext.WgEmployees
                 .AsNoTracking()
@@ -46,7 +45,7 @@ namespace Apha.FPS.DataAccess.Repositories
                         HrsAvail       = wg.HrsAvail,
                         MakeAvailable  = wg.MakeAvailable,
                     })
-                .ToListAsync(cancellationToken);
+                .ToListAsync(default);
 
             var filtered = ApplyFilter(raw.AsQueryable(), query.Filter);
             var sorted   = ApplySorting(filtered, query.SortBy, query.Descending);
@@ -57,7 +56,7 @@ namespace Apha.FPS.DataAccess.Repositories
         /// <summary>
         /// Returns a single WG employee by PACTid, joined with Employee to include Name.
         /// </summary>
-        public async Task<WgEmployeeView?> GetWgEmployeeByIdAsync(string pactId, CancellationToken cancellationToken = default)
+        public async Task<WgEmployeeView?> GetWorkGroupEmployeeByIdAsync(string pactId)
         {
             return await _dbContext.WgEmployees
                 .AsNoTracking()
@@ -80,17 +79,17 @@ namespace Apha.FPS.DataAccess.Repositories
                         HrsAvail       = wg.HrsAvail,
                         MakeAvailable  = wg.MakeAvailable,
                     })
-                .FirstOrDefaultAsync(cancellationToken);
+                .FirstOrDefaultAsync(default);
         }
 
         /// <summary>
         /// Updates WgEmployee; computes HrsAvail = HrsPaid - (Leave + SickSpecial).
         /// </summary>
-        public async Task<WgEmployee> UpdateWgEmployeeAsync(WgEmployee entity, CancellationToken cancellationToken = default)
+        public async Task<WgEmployee> UpdateWorkGroupEmployeeAsync(WgEmployee entity)
         {
             ArgumentNullException.ThrowIfNull(entity);
             var existing = await _dbContext.WgEmployees
-                .FirstOrDefaultAsync(x => x.PactId == entity.PactId, cancellationToken);
+                .FirstOrDefaultAsync(x => x.PactId == entity.PactId);
             if (existing == null)
                 throw new KeyNotFoundException($"WgEmployee with PACTid '{entity.PactId}' was not found.");
 
@@ -102,22 +101,22 @@ namespace Apha.FPS.DataAccess.Repositories
             existing.PersonClass   = entity.PersonClass;
             existing.MakeAvailable = entity.MakeAvailable;
 
-            await _dbContext.SaveChangesAsync(cancellationToken);
+            await _dbContext.SaveChangesAsync(default);
             return existing;
         }
 
         /// <summary>
         /// Deletes a WG employee by PACTid.
         /// </summary>
-        public async Task DeleteWgEmployeeAsync(string pactId, CancellationToken cancellationToken = default)
+        public async Task DeleteWorkGroupEmployeeAsync(string pactId)
         {
             var entity = await _dbContext.WgEmployees
-                .FirstOrDefaultAsync(x => x.PactId == pactId, cancellationToken);
+                .FirstOrDefaultAsync(x => x.PactId == pactId);
             if (entity == null)
                 throw new KeyNotFoundException($"WgEmployee with PACTid '{pactId}' was not found.");
 
             _dbContext.WgEmployees.Remove(entity);
-            await _dbContext.SaveChangesAsync(cancellationToken);
+            await _dbContext.SaveChangesAsync(default);
         }
 
         private static IQueryable<WgEmployeeView> ApplyFilter(IQueryable<WgEmployeeView> query, string? filter)
