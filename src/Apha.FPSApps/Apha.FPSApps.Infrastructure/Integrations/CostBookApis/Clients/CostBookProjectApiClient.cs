@@ -49,8 +49,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.CostBookApis.Clients
 
         public async Task<ApiResponseDto<ProjectDto>> AddProjectAsync(ProjectDto project)
         {
-            try
-            {
+          
                 var request = _mapper.Map<ProjectReq>(project);
                 var response = await _http.PostAsync<ProjectReq, ProjectRes>(CostBookApiEndpoints.AddProject, request);
 
@@ -59,13 +58,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.CostBookApis.Clients
 
                 var responseDto = _mapper.Map<ApiResponseDto<ProjectDto>>(response);
                 return ApiResponseDto<ProjectDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
-            }
-            catch (Exception ex)
-            {
-                return ApiResponseDto<ProjectDto>.FailureResponse(
-                    [new ApiErrorDto { Message = "Failed to add project", Code = InternalCodeError, Details = ex.Message }],
-                    new ApiMetaDto());
-            }
+           
         }
 
         public async Task<ApiResponseDto<ProjectDto>> UpdateProjectAsync(string id, ProjectDto project)

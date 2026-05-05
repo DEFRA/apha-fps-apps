@@ -1,5 +1,10 @@
 @using Microsoft.AspNetCore.Mvc.Rendering
+@using Apha.FPSApps.Application.Dtos.CostBook
 @model Apha.FPSApps.Web.Areas.CostBook.Models.AnimalRequirementItem
+
+@{
+    var animalTypes = ViewBag.AnimalTypeOptions as List<AnimalLookupDto> ?? new List<AnimalLookupDto>();
+}
 
 <div class="modal-header">
     <h5 class="modal-title">@(Model.ArIdentity == 0 ? "Add" : "Edit") Animal Requirement</h5>
@@ -7,31 +12,85 @@
 </div>
 <div class="modal-body">
     <form id="animalRequirementForm">
-        <div class="form-group mb-2">
-            <label asp-for="AnimalType" class="govuk-label">Animal Type</label>
-            <select asp-for="AnimalType" asp-items="@((List<SelectListItem>)ViewBag.AnimalTypeOptions)" class="govuk-select">
-                <option value="">-- Select Animal Type --</option>
-            </select>
-            <span asp-validation-for="AnimalType" class="govuk-error-message"></span>
+        @Html.AntiForgeryToken()
+        <input asp-for="ArIdentity" type="hidden" />
+        <input type="hidden" id="AnimalType" name="AnimalType" value="@Model.AnimalType" />
+        <div class="govuk-error-summary" role="alert"
+             aria-labelledby="animalFormErrorTitle" tabindex="-1" style="display: none;">
+            <h2 class="govuk-error-summary__title" id="animalFormErrorTitle"></h2>
+            <div class="govuk-error-summary__body">
+                <ul class="govuk-list govuk-error-summary__list"></ul>
+            </div>
         </div>
-        <div class="form-group mb-2">
-            <label asp-for="NumberOfAnimals" class="govuk-label">No</label>
-            <input asp-for="NumberOfAnimals" type="number" step="1" class="govuk-input">
+        <div class="govuk-form-group govuk-!-margin-bottom-4">
+            <label class="govuk-label">
+                Animal Type <span class="sup_color_red">*</span>
+            </label>
+            <div style="position: relative; z-index: 50;">
+                <input type="text" id="animalTypeSelect" placeholder="-- Select Animal Type --" autocomplete="off"
+                       class="govuk-input govuk-!-font-size-16 down-arrow-img" style="width: 100%; cursor: pointer;"
+                       value="@Model.AnimalType" readonly />
+                <div id="animalTypeDropdownPanel" style="display:none; position:absolute; top:100%; left:0; width:100%;
+                        max-height:220px; overflow-y:auto; background:#fff; border:1px solid #b1b4b6;
+                        box-shadow:0 4px 8px rgba(0,0,0,.2); z-index:2000;">
+                    <input type="text" id="animalTypeSearchBox" placeholder="Type to search animal type"
+                           style="width:100%; padding:6px 8px; border:0; border-bottom:1px solid #b1b4b6; outline:none; box-sizing:border-box;" />
+                    <table style="width:100%; border-collapse:collapse; font-size:14px;">
+                        <thead style="background:#f3f2f1; position:sticky; top:0; z-index:10;">
+                            <tr>
+                                <th style="padding:6px 8px; text-align:left;">Animal Type</th>
+                                <th style="padding:6px 8px; text-align:left;">Daily Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody id="animalTypeDropdownBody">
+                            @foreach (var a in animalTypes)
+                            {
+                                <tr data-value="@a.AnimalType"
+                                    data-dailyrate="@(a.DailyRate?.ToString("F2") ?? "")"
+                                    style="cursor:pointer;">
+                                    <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@a.AnimalType</td>
+                                    <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@(a.DailyRate?.ToString("F2") ?? "N/A")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <span asp-validation-for="AnimalType" class="govuk-error-message" style="display:none;"></span>
         </div>
-        <div class="form-group mb-2">
-            <label asp-for="NumberOfDays" class="govuk-label">Days</label>
-            <input asp-for="NumberOfDays" type="number" step="1" class="govuk-input">
+        <div class="govuk-form-group govuk-!-margin-bottom-4">
+            <label asp-for="NumberOfAnimals" class="govuk-label">
+                No <span class="sup_color_red">*</span>
+            </label>
+            <input asp-for="NumberOfAnimals" type="number" step="1" class="govuk-input" required />
+            <span asp-validation-for="NumberOfAnimals" class="govuk-error-message" style="display:none;"></span>
         </div>
-        <div class="form-group mb-2">
-            <label asp-for="DailyRate" class="govuk-label">Rate</label>
-            <input asp-for="DailyRate" type="text" readonly class="govuk-input">
+        <div class="govuk-form-group govuk-!-margin-bottom-4">
+            <label asp-for="NumberOfDays" class="govuk-label">
+                Days <span class="sup_color_red">*</span>
+            </label>
+            <input asp-for="NumberOfDays" type="number" step="1" class="govuk-input" required />
+            <span asp-validation-for="NumberOfDays" class="govuk-error-message" style="display:none;"></span>
         </div>
-        <div class="form-group mb-2">
-            <label asp-for="AnimalCost" class="govuk-label">Cost</label>
-            <input asp-for="AnimalCost" type="text" readonly class="govuk-input">
+        <div class="govuk-form-group govuk-!-margin-bottom-4">
+            <label asp-for="DailyRate" class="govuk-label">
+                Rate <span class="sup_color_red">*</span>
+            </label>
+            <input asp-for="DailyRate" type="text" readonly class="govuk-input" />
+            <span asp-validation-for="DailyRate" class="govuk-error-message" style="display:none;"></span>
         </div>
-        <input asp-for="ArIdentity" type="hidden">
-        <button type="submit" class="govuk-button">Save</button>
-        <button type="button" class="govuk-button govuk-button--secondary sup_margin_0" onclick="closeModal()">Cancel</button>
+        <div class="govuk-form-group govuk-!-margin-bottom-4">
+            <label asp-for="AnimalCost" class="govuk-label">
+                Cost <span class="sup_color_red">*</span>
+            </label>
+            <input asp-for="AnimalCost" type="text" readonly class="govuk-input" />
+            <span asp-validation-for="AnimalCost" class="govuk-error-message" style="display:none;"></span>
+        </div>
     </form>
+</div>
+<div class="modal-footer">
+    <button type="button" class="govuk-button govuk-button--secondary sup_margin_0" onclick="closeModal()">Cancel</button>
+    <button type="button" class="govuk-button sup_margin_0" onclick="saveAnimal()">
+        @(Model.ArIdentity == 0 ? "Save" : "Update")
+    </button>
 </div>
