@@ -1,0 +1,94 @@
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@using Microsoft.AspNetCore.Mvc.Rendering
+@model Apha.FPSApps.Web.Areas.PACT.Models.InvoiceViewModel
+
+@{
+    ViewData["Title"] = "Invoice Records";
+}
+
+<div class="govuk-grid-row sup_margin_left_right_0">
+    <div class="govuk-grid-column-full">
+        <h1 class="govuk-heading-l">Invoice Records</h1>
+    </div>
+</div>
+
+<div class="govuk-grid-row sup_margin_left_right_0 sup_margin_bottom_20">
+    <div class="govuk-grid-column-full">
+        <div class="govuk-form-group">
+            <fieldset class="govuk-fieldset">
+                <div style="display: flex; gap: 20px; align-items: flex-end;">
+                    <div class="govuk-form-group" style="margin-bottom: 0; flex: 1;">
+                        <label class="govuk-label govuk-!-font-weight-bold" for="projectPick">
+                            Project
+                        </label>
+                        <select id="projectPick"
+                                class="govuk-select"
+                                style="width: 100%;"
+                                onchange="onProjectPickChange(this.value)">
+                            <option value="">-- All Projects --</option>
+                            @foreach (var project in Model.FilterProjects)
+                            {
+                                @if (project.Value == Model.ParentProject)
+                                {
+                                    <option value="@project.Value" selected>@project.Text</option>
+                                }
+                                else
+                                {
+                                    <option value="@project.Value">@project.Text</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="govuk-form-group" style="margin-bottom: 0; flex: 1;">
+                        <label class="govuk-label govuk-!-font-weight-bold" for="monthPick">
+                            Month
+                        </label>
+                        <select id="monthPick" 
+                                class="govuk-select"
+                                style="width: 200px;"
+                                onchange="onMonthPickChange(this.value)">
+                            <option value="">All Months</option>
+                            @foreach (var month in Model.FilterMonths)
+                            {
+                                @if (month.Value == Model.Month?.ToString())
+                                {
+                                    <option value="@month.Value" selected>@month.Text</option>
+                                }
+                                else
+                                {
+                                    <option value="@month.Value">@month.Text</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+    </div>
+</div>
+<div class="govuk-grid-row sup_margin_left_right_0">
+    <div class="govuk-grid-column-full">
+        <div id="gridContainer_invoicesGrid">
+            @await Html.PartialAsync("_DataGrid", Model.InvoicesGrid)
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/ajax-form-validation.js"></script>
+    <script src="~/js/pact_js/invoice.js"></script>
+    <script>
+        // ?? State ??????????????????????????????????????????????????????????
+        var currentParentProject = '@(Model.ParentProject ?? "")';
+        var currentMonth = '@(Model.Month?.ToString() ?? "")';
+        var invoicesGridId = '@Model.InvoicesGrid.GridId';
+
+        // Initialize state
+        if (currentParentProject) {
+            document.getElementById('projectPick').value = currentParentProject;
+        }
+        if (currentMonth) {
+            document.getElementById('monthPick').value = currentMonth;
+        }
+    </script>
+}

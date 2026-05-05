@@ -77,5 +77,19 @@ namespace Apha.Common.Constants
         public const string GetTimeCostCalcsByProject = "api/v1/timecostcalcs?projectCode={0}";
         public const string GetTimeCostCalcsTotalsByProject = "api/v1/timecostcalcs/totals?projectCode={0}";
         public const string DeleteTimeCostCalcs = "api/v1/timecostcalcs";
+
+        // Additional Cost
+        public const string GetAdditionalCosts = "api/v1/additionalcost?jobCode={0}";
+        public const string GetTotalItemCost = "api/v1/additionalcost/totalitemcost?jobCode={0}";
+        public const string GetAccountCategories = "api/v1/additionalcost/accountcategories";
+        public const string GetAdditionalCostById = "api/v1/additionalcost/{0}/{1}/{2}";
+        public const string CreateAdditionalCost = "api/v1/additionalcost";
+        public const string UpdateAdditionalCost = "api/v1/additionalcost";
+        public const string DeleteAdditionalCost = "api/v1/additionalcost?jobCode={0}&account={1}&description={2}";
+
+        // View Project Plan vs Actual Tests
+        public const string GetMonthlyOutputByProject = "api/v1/MonthlyOutput?projectCode={0}";
+        public const string GetMonthlyOutputTotalsByProject = "api/v1/MonthlyOutput/totals?projectCode={0}";
+        public const string DeleteMonthlyOutput = "api/v1/MonthlyOutput";
     }
 }

@@ -46,12 +46,13 @@ namespace Apha.PACT.DataAccess.Repository
         {
             return await _context.ProjectInvoices
                 .AsNoTracking()
-                .FirstOrDefaultAsync(i => i.InvoiceCounter == invoiceCounter);
+                      .FirstOrDefaultAsync(i => i.InvoiceCounter == invoiceCounter);
         }
 
         public async Task<ProjectInvoice> CreateAsync(ProjectInvoice entity)
         {
             entity.FpsYear = _fpsRequestContext.FpsYear;
+
             await _context.ProjectInvoices.AddAsync(entity);
             await _context.SaveChangesAsync();
             return entity;

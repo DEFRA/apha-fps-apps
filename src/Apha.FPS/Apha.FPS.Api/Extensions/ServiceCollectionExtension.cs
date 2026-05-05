@@ -1,4 +1,4 @@
-﻿using Apha.Common.Utilities.StateManagement;
+using Apha.Common.Utilities.StateManagement;
 using Apha.Common.Utilities.ExcelExport;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Services;
@@ -37,6 +37,8 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<ITimeCostCalcsService, TimeCostCalcsService>();
             services.AddScoped<IDivisionService, DivisionService>();
             services.AddScoped<IAgencyService, AgencyService>();
+            services.AddScoped<IAdditionalCostService, AdditionalCostService>();
+            services.AddScoped<IMonthlyOutputService, MonthlyOutputService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
@@ -58,7 +60,10 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<ITimeCostCalcsRepository, TimeCostCalcsRepository>();
             services.AddScoped<IDivisionRepository, DivisionRepository>();
             services.AddScoped<IAgencyRepository, AgencyRepository>();
+            services.AddScoped<IAdditionalCostRepository, AdditionalCostRepository>();
+            services.AddScoped<IMonthlyOutputRepository, MonthlyOutputRepository>();
             return services;
+
         }
     }
 }
