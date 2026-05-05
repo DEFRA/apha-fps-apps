@@ -31,6 +31,9 @@ namespace Apha.Common.Constants
         // Work Group
         public const string GetAllWorkGroups = "api/v1/workgroup";
 
+        // Month
+        public const string GetAllMonths = "api/v1/month";
+
         // Test List
         public const string GetPagedTestOrProducts = "api/v1/testorproduct/paged";
         public const string GetTestOrProductById = "api/v1/testorproduct/{0}";

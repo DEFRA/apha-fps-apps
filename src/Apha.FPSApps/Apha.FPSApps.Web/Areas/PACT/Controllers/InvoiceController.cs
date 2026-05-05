@@ -22,15 +22,18 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         private readonly IMapper _mapper;
         private readonly IProjectInvoiceService _invoiceService;
         private readonly IProjectService _projectService;
+        private readonly IMonthService _monthService;
 
         public InvoiceController(
             IMapper mapper,
             IProjectInvoiceService invoiceService,
-            IProjectService projectService)
+            IProjectService projectService,
+            IMonthService monthService)
         {
             _mapper = mapper;
             _invoiceService = invoiceService;
             _projectService = projectService;
+            _monthService = monthService;
         }
         public async Task<IActionResult> Index(string? parentProject, int? month)
         {
@@ -53,6 +56,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             // Populate project dropdown for filter panel
             var projectsList = await GetProjectsListAsync();
 
+            // Populate months dropdown
+            var monthsList = await GetMonthsListAsync();
+
             // Also set ViewBag for modal form compatibility
             ViewBag.Projects = projectsList;
             ViewBag.FilterProjects = projectsList;
@@ -62,7 +68,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 ParentProject = parentProject ?? string.Empty,
                 Month = month,
                 InvoicesGrid = gridConfig,
-                FilterProjects = projectsList
+                FilterProjects = projectsList,
+                FilterMonths = monthsList
             });
         }
 
@@ -245,6 +252,29 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 return new List<SelectListItem>();
             }
 
+        }
+
+        private async Task<List<SelectListItem>> GetMonthsListAsync()
+        {
+            var result = await _monthService.GetAllMonthsAsync();
+
+            if (result != null && result.Success && result.Data != null && result.Data.Count > 0)
+            {
+                var monthList = result.Data
+                    .OrderBy(m => m.Monthnumber)
+                    .Select(m => new SelectListItem
+                    {
+                        Value = m.Monthnumber.ToString(),
+                        Text = $"{m.Monthnumber} - {m.Monthname}"
+                    })
+                    .ToList();
+
+                return monthList;
+            }
+            else
+            {
+                return new List<SelectListItem>();
+            }
         }
 
         private async Task PopulateProjectsViewBagAsync()

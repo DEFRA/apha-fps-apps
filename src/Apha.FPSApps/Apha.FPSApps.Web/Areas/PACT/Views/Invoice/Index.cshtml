@@ -48,18 +48,17 @@
                                 style="width: 200px;"
                                 onchange="onMonthPickChange(this.value)">
                             <option value="">All Months</option>
-                            @if (Model.Month == 1) { <option value="1" selected>1 - January</option> } else { <option value="1">1 - January</option> }
-                            @if (Model.Month == 2) { <option value="2" selected>2 - February</option> } else { <option value="2">2 - February</option> }
-                            @if (Model.Month == 3) { <option value="3" selected>3 - March</option> } else { <option value="3">3 - March</option> }
-                            @if (Model.Month == 4) { <option value="4" selected>4 - April</option> } else { <option value="4">4 - April</option> }
-                            @if (Model.Month == 5) { <option value="5" selected>5 - May</option> } else { <option value="5">5 - May</option> }
-                            @if (Model.Month == 6) { <option value="6" selected>6 - June</option> } else { <option value="6">6 - June</option> }
-                            @if (Model.Month == 7) { <option value="7" selected>7 - July</option> } else { <option value="7">7 - July</option> }
-                            @if (Model.Month == 8) { <option value="8" selected>8 - August</option> } else { <option value="8">8 - August</option> }
-                            @if (Model.Month == 9) { <option value="9" selected>9 - September</option> } else { <option value="9">9 - September</option> }
-                            @if (Model.Month == 10) { <option value="10" selected>10 - October</option> } else { <option value="10">10 - October</option> }
-                            @if (Model.Month == 11) { <option value="11" selected>11 - November</option> } else { <option value="11">11 - November</option> }
-                            @if (Model.Month == 12) { <option value="12" selected>12 - December</option> } else { <option value="12">12 - December</option> }
+                            @foreach (var month in Model.FilterMonths)
+                            {
+                                @if (month.Value == Model.Month?.ToString())
+                                {
+                                    <option value="@month.Value" selected>@month.Text</option>
+                                }
+                                else
+                                {
+                                    <option value="@month.Value">@month.Text</option>
+                                }
+                            }
                         </select>
                     </div>
                 </div>

@@ -44,6 +44,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IDivisionService, DivisionService>();
             services.AddScoped<IProjectInvoiceService, ProjectInvoiceService>();
             services.AddScoped<IProjectSubContractService, ProjectSubContractService>();
+            services.AddScoped<IMonthService, MonthService>();
             services.AddScoped<ITestCapabilityService, TestCapabilityService>();
             services.AddScoped<ITestRequirementService, TestRequirementService>();
             services.AddScoped<IProjectStaffPlanActualService, ProjectStaffPlanActualService>();

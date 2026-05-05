@@ -99,3 +99,5 @@ web.*.config
 
 # exclude files which shouldnt be git ignored
 !*.slnLaunch.user
+/src/MONTH_API_IMPLEMENTATION.md
+/src/MONTH_API_INTEGRATION_SUMMARY.md

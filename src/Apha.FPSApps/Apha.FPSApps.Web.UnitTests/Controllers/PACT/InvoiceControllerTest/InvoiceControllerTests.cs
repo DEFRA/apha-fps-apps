@@ -19,6 +19,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceControllerTest
         private readonly IMapper _mapper;
         private readonly IProjectInvoiceService _invoiceService;
         private readonly IProjectService _projectService;
+        private readonly IMonthService _monthService;
         private readonly InvoiceController _controller;
 
         public InvoiceControllerTests()
@@ -26,10 +27,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceControllerTest
             _mapper = Substitute.For<IMapper>();
             _invoiceService = Substitute.For<IProjectInvoiceService>();
             _projectService = Substitute.For<IProjectService>();
+            _monthService = Substitute.For<IMonthService>();
             _controller = new InvoiceController(
                 _mapper,
                 _invoiceService,
-                _projectService);
+                _projectService,
+                _monthService);
         }
 
         private static JsonElement GetJsonResultElement(JsonResult jsonResult)
@@ -52,6 +55,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceControllerTest
         {
             _projectService.GetAllPactProjectsAsync()
                 .Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse(projects));
+        }
+
+        private void SetupMonthsList(List<MonthDto> months)
+        {
+            _monthService.GetAllMonthsAsync()
+                .Returns(ApiResponseDto<List<MonthDto>>.SuccessResponse(months));
         }
 
         #region Index
@@ -79,6 +88,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceControllerTest
             _invoiceService.GetPagedProjectInvoiceManualAsync(Arg.Any<QueryParameters<string>>(), parentProject)
                 .Returns(ApiResponseDto<List<ProjectInvoiceDto>>.SuccessResponse(invoices, new PaginationDto()));
             SetupProjectsList(projects);
+            SetupMonthsList([]);
             _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string>());
             _mapper.Map<List<ProjectInvoiceItem>>(invoices)
@@ -104,6 +114,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceControllerTest
             _invoiceService.GetPagedProjectInvoiceManualAsync(Arg.Any<QueryParameters<string>>(), null)
                 .Returns(ApiResponseDto<List<ProjectInvoiceDto>>.SuccessResponse([], new PaginationDto()));
             SetupProjectsList([]);
+            SetupMonthsList([]);
             SetupInvoicesGridMapper();
 
             // Act
@@ -130,6 +141,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceControllerTest
             _invoiceService.GetPagedProjectInvoiceManualAsync(Arg.Any<QueryParameters<string>>(), null)
                 .Returns(ApiResponseDto<List<ProjectInvoiceDto>>.SuccessResponse([], new PaginationDto()));
             SetupProjectsList(projects);
+            SetupMonthsList([]);
             SetupInvoicesGridMapper();
 
             // Act
@@ -533,6 +545,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceControllerTest
             _invoiceService.GetTotalAmountAsync(null)
                 .Returns(ApiResponseDto<decimal>.SuccessResponse(0m));
             SetupProjectsList([]);
+            SetupMonthsList([]);
             SetupInvoicesGridMapper();
 
             // Act
@@ -560,6 +573,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceControllerTest
             _invoiceService.GetTotalAmountAsync(null)
                 .Returns(ApiResponseDto<decimal>.SuccessResponse(0m));
             SetupProjectsList(projects);
+            SetupMonthsList([]);
             SetupInvoicesGridMapper();
 
             // Act
@@ -585,6 +599,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceControllerTest
                 .Returns(ApiResponseDto<List<ProjectInvoiceDto>>.SuccessResponse([], new PaginationDto()));
             _invoiceService.GetTotalAmountAsync(null)
                 .Returns(ApiResponseDto<decimal>.SuccessResponse(0m));
+            SetupMonthsList([]);
             SetupInvoicesGridMapper();
 
             // Act

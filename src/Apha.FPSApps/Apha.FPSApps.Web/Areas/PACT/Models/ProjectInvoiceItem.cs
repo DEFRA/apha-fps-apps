@@ -10,7 +10,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
 
         [Required(ErrorMessage = "Project is required")]
         [Display(Name = "Project")]
-        [GridColumn(Order = 1, Width = 289, Type = GridColumnType.Text, IsFilterable = true)]
+        [GridColumn(Order = 1, Width = 289, Type = GridColumnType.Text, IsFilterable = false)]
         public string ProjectParent { get; set; } = null!;
 
         [Required(ErrorMessage = "Month is required")]        
@@ -32,7 +32,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         public decimal? ProfitLoss { get; set; }
 
         [StringLength(100)]
-        [GridColumn(Order = 7, Width = 177, Type = GridColumnType.Text, IsFilterable = true)]
+        [GridColumn(Order = 7, Width = 177, Type = GridColumnType.Text, IsFilterable = false)]
         public string? Detail { get; set; }
     }
 }

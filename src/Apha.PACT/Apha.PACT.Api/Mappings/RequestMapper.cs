@@ -20,6 +20,7 @@ namespace Apha.PACT.Api.Mappings
             CreateMap<TimeCodeValidReq, TimeCodeValidDto>().ReverseMap();
             CreateMap<TimeCodeValidRes, TimeCodeValidDto>().ReverseMap();
             CreateMap<WorkGroupRes, WorkGroupDto>().ReverseMap();
+            CreateMap<MonthRes, MonthDto>().ReverseMap();
             CreateMap<ProjectInvoiceReq, ProjectInvoiceDto>().ReverseMap();
             CreateMap<ProjectInvoiceRes, ProjectInvoiceDto>().ReverseMap();
             CreateMap<ProjectSubContractReq, ProjectSubContractDto>().ReverseMap();

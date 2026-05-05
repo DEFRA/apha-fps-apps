@@ -18,6 +18,7 @@ namespace Apha.PACT.Application.Mappings
             CreateMap<JobCode, JobCodeDto>().ReverseMap();
             CreateMap<TimeCodeValid, TimeCodeValidDto>().ReverseMap();
             CreateMap<WorkGroup, WorkGroupDto>().ReverseMap();
+            CreateMap<Month, MonthDto>().ReverseMap();
             CreateMap<ProjectInvoice, ProjectInvoiceDto>().ReverseMap();
             CreateMap<ProjectSubContract, ProjectSubContractDto>().ReverseMap();
             CreateMap<TestCapability, TestCapabilityDto>().ReverseMap();
