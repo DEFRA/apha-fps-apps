@@ -1,0 +1,65 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: batch_jobs_postgres
+    profiles:
+      - withdb
+    environment:
+      POSTGRES_DB: batchjobs
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/sql:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - batch_jobs_network
+
+  batch-jobs-withdb:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: batch_jobs_withdb
+    profiles:
+      - withdb
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      DOTNET_ENVIRONMENT: Development
+      ConnectionStrings__BatchJobsConnectionString: "Host=postgres;Port=5432;Database=batchjobs;Username=postgres;Password=postgres"
+      BATCH_JOB_NAME: HealthCheck
+      BATCH_RUN_MODE: Manual
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - batch_jobs_network
+
+  batch-jobs-nodb:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: batch_jobs_nodb
+    profiles:
+      - nodb
+    environment:
+      ASPNETCORE_ENVIRONMENT: Demo
+      DOTNET_ENVIRONMENT: Demo
+      BATCH_JOB_NAME: HealthCheck
+      BATCH_RUN_MODE: Manual
+    networks:
+      - batch_jobs_network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  batch_jobs_network:
+    driver: bridge

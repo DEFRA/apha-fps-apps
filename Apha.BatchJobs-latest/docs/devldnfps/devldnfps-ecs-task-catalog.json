@@ -1,0 +1,63 @@
+{
+  "region": "eu-west-2",
+  "launchType": "FARGATE",
+  "networkMode": "awsvpc",
+  "cpu": "1024",
+  "memory": "2048",
+  "executionRoleName": "devldnfps-ecs-execution-role",
+  "taskRoleName": "devldnfps-ecs-task-role",
+  "services": [
+    {
+      "taskDefinitionName": "DEVLDNFPS_FPS",
+      "containerName": "fps",
+      "image": "<defra-shared-account-id>.dkr.ecr.eu-west-2.amazonaws.com/apha/fps:<tag>",
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "hostPort": 8080,
+          "protocol": "tcp"
+        }
+      ],
+      "environmentFiles": [
+        "arn:aws:s3:::devldnfps-env/fps.env"
+      ],
+      "secrets": [
+        "ConnectionStrings__FPSConnectionString",
+        "AzureAd__ClientId",
+        "AzureAd__ClientSecret"
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "logGroup": "devldnfps-app-fps",
+        "logRegion": "eu-west-2",
+        "logStreamPrefix": "Container"
+      }
+    },
+    {
+      "taskDefinitionName": "DEVLDNFPS_BATCHJOBS",
+      "containerName": "batchjobs",
+      "image": "<defra-shared-account-id>.dkr.ecr.eu-west-2.amazonaws.com/apha/batchjobs:<tag>",
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "hostPort": 8080,
+          "protocol": "tcp"
+        }
+      ],
+      "environmentFiles": [
+        "arn:aws:s3:::devldnfps-env/batchjobs.env"
+      ],
+      "secrets": [
+        "ConnectionStrings__FPSConnectionString",
+        "AzureAd__ClientId",
+        "AzureAd__ClientSecret"
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "logGroup": "devldnfps-app-batchjobs",
+        "logRegion": "eu-west-2",
+        "logStreamPrefix": "Container"
+      }
+    }
+  ]
+}

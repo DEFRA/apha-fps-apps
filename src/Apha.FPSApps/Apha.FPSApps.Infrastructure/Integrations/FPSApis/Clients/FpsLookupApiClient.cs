@@ -22,76 +22,59 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
         public async Task<ApiResponseDto<List<StatusDto>>> GetAllStatusesAsync()
         {
-            try
-            {
-                var response = await _http.GetAsync<List<StatusRes>>(FpsApiEndpoints.GetAllStatuses);
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<List<StatusDto>>>(response);
+            var response = await _http.GetAsync<List<StatusRes>>(FpsApiEndpoints.GetAllStatuses);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<StatusDto>>>(response);
 
-                var dto = _mapper.Map<ApiResponseDto<List<StatusDto>>>(response);
-                return ApiResponseDto<List<StatusDto>>.FailureResponse(dto.Errors, dto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<List<StatusDto>>.FailureResponse(
-                    [new ApiErrorDto { Message = "Failed to retrieve statuses", Code = InternalCodeError }],
-                    new ApiMetaDto());
-            }
+            var dto = _mapper.Map<ApiResponseDto<List<StatusDto>>>(response);
+            return ApiResponseDto<List<StatusDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
 
         public async Task<ApiResponseDto<List<DiseaseDto>>> GetAllDiseasesAsync()
         {
-            try
-            {
-                var response = await _http.GetAsync<List<DiseaseRes>>(FpsApiEndpoints.GetAllDiseases);
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<List<DiseaseDto>>>(response);
+            var response = await _http.GetAsync<List<DiseaseRes>>(FpsApiEndpoints.GetAllDiseases);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<DiseaseDto>>>(response);
 
-                var dto = _mapper.Map<ApiResponseDto<List<DiseaseDto>>>(response);
-                return ApiResponseDto<List<DiseaseDto>>.FailureResponse(dto.Errors, dto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<List<DiseaseDto>>.FailureResponse(
-                    [new ApiErrorDto { Message = "Failed to retrieve diseases", Code = InternalCodeError }],
-                    new ApiMetaDto());
-            }
+            var dto = _mapper.Map<ApiResponseDto<List<DiseaseDto>>>(response);
+            return ApiResponseDto<List<DiseaseDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
 
         public async Task<ApiResponseDto<List<CustomerDto>>> GetAllCustomersAsync()
         {
-            try
-            {
-                var response = await _http.GetAsync<List<CustomerRes>>(FpsApiEndpoints.GetAllCustomers);
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<List<CustomerDto>>>(response);
+            var response = await _http.GetAsync<List<CustomerRes>>(FpsApiEndpoints.GetAllCustomers);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<CustomerDto>>>(response);
 
-                var dto = _mapper.Map<ApiResponseDto<List<CustomerDto>>>(response);
-                return ApiResponseDto<List<CustomerDto>>.FailureResponse(dto.Errors, dto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<List<CustomerDto>>.FailureResponse(
-                    [new ApiErrorDto { Message = "Failed to retrieve customers", Code = InternalCodeError }],
-                    new ApiMetaDto());
-            }
+            var dto = _mapper.Map<ApiResponseDto<List<CustomerDto>>>(response);
+            return ApiResponseDto<List<CustomerDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
 
         public async Task<ApiResponseDto<List<ContractDto>>> GetAllContractsAsync()
         {
+            var response = await _http.GetAsync<List<ContractRes>>(FpsApiEndpoints.GetAllContracts);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<ContractDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<ContractDto>>>(response);
+            return ApiResponseDto<List<ContractDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+        public async Task<ApiResponseDto<List<ProjectGroupDto>>> GetAllProjectGroupsAsync()
+        {
             try
             {
-                var response = await _http.GetAsync<List<ContractRes>>(FpsApiEndpoints.GetAllContracts);
+                var response = await _http.GetAsync<List<ProjectGroupRes>>(FpsApiEndpoints.GetAllProjectGroups);
                 if (response.Success)
-                    return _mapper.Map<ApiResponseDto<List<ContractDto>>>(response);
+                    return _mapper.Map<ApiResponseDto<List<ProjectGroupDto>>>(response);
 
-                var dto = _mapper.Map<ApiResponseDto<List<ContractDto>>>(response);
-                return ApiResponseDto<List<ContractDto>>.FailureResponse(dto.Errors, dto.Meta);
+                var dto = _mapper.Map<ApiResponseDto<List<ProjectGroupDto>>>(response);
+                return ApiResponseDto<List<ProjectGroupDto>>.FailureResponse(dto.Errors, dto.Meta);
             }
             catch (Exception)
             {
-                return ApiResponseDto<List<ContractDto>>.FailureResponse(
-                    [new ApiErrorDto { Message = "Failed to retrieve contracts", Code = InternalCodeError }],
+                return ApiResponseDto<List<ProjectGroupDto>>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to retrieve project groups", Code = InternalCodeError }],
                     new ApiMetaDto());
             }
         }

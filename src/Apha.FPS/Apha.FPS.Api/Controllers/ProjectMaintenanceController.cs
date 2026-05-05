@@ -40,6 +40,13 @@ namespace Apha.FPS.Api.Controllers
             return Ok(_mapper.Map<PaginationRes<ProjectRes>>(pagedResult));
         }
 
+        [HttpGet("pactview/all")]
+        public async Task<ActionResult<List<ProjectRes>>> GetAllPactProjectsAsync()
+        {
+            var projects = await _projectService.GetAllPactProjectsAsync();
+            return Ok(_mapper.Map<List<ProjectRes>>(projects));
+        }
+
         [HttpGet("{parentProject}")]
         public async Task<ActionResult<ProjectRes>> GetProjectByIdAsync(string parentProject)
         {
@@ -72,6 +79,16 @@ namespace Apha.FPS.Api.Controllers
         {
             var projectDto = _mapper.Map<ProjectDto>(request);
             var updated = await _projectService.UpdatePactProjectDetailsAsync(projectDto);
+            if (updated == null)
+                return NotFound();
+            return Ok(_mapper.Map<ProjectRes>(updated));
+        }
+
+        [HttpPatch("external/portfolio")]
+        public async Task<ActionResult<ProjectRes>> UpdatePactPortfolioDetailsAsync([FromBody] ProjectReq request)
+        {
+            var projectDto = _mapper.Map<ProjectDto>(request);
+            var updated = await _projectService.UpdatePactPortfolioDetailsAsync(projectDto);
             if (updated == null)
                 return NotFound();
             return Ok(_mapper.Map<ProjectRes>(updated));

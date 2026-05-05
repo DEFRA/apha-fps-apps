@@ -1,12 +1,10 @@
 ﻿.editable-grid-container {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f5f5f5;
-    /*border: 1px solid #ccc;*/
     display: flex;
     flex-direction: column;
     /*height: 100vh; */
     position: relative;
     min-height: 350px;
+    border: 1px solid var(--govuk-border-colour) !important; 
 }
 
 .filter-row th {
@@ -52,9 +50,12 @@
 }
 
 .grid-scroll-container {
-    flex: 1;
+  /*  flex: 1;
     overflow: auto;
-    background-color: #fff;
+    background-color: #fff;*/
+    max-height: 400px;
+    height: 400px;
+    overflow-y: auto;
 }
 
 .editable-grid-table {
@@ -71,8 +72,8 @@
     }
 
     .editable-grid-table th {
-        background-color: #c0c0c0;
-        border: 1px solid #999;
+        border: 1px solid var(--govuk-border-colour);
+        border-top: 0;
         padding: 6px 8px;
         text-align: center;
         font-weight: bold !important;
@@ -167,7 +168,7 @@
 .grid-readonly {
     display: block;
     padding: 2px 4px;
-    color: #666;
+   /* color: #666;*/
 }
 
 .grid-footer {
@@ -230,11 +231,11 @@
     position: absolute;
     right: 0;
     top: 0;
-    width: 8px;
+    width: 5px;
     height: 100%;
     cursor: col-resize;
     z-index: 100;
-    background: rgba(0,0,0,0.05); /* subtle background for visibility */
+    background: transparent; /* subtle background for visibility */
     pointer-events: auto;
 }
 
@@ -243,3 +244,18 @@
 }
 
 /*End CSS class for the resize handle */
+
+/*new and updated classes for grid */
+.editable-grid-table > tbody > tr > td:last-child > button {
+    padding: 0;
+    text-align: center; 
+}
+
+.editable-grid-table > tbody > tr > td:last-child {
+    text-align: center;
+}
+
+/*bootstrap giving bydefault border to table to avoid this below class added */
+.grid-scroll-container > table > tbody > tr > td, .grid-scroll-container > table > thead > tr > th {
+    border-left: 0;
+}

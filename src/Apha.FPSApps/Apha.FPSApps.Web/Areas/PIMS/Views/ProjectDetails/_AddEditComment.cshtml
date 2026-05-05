@@ -1,0 +1,68 @@
+﻿@model Apha.FPSApps.Web.Areas.PIMS.Models.AddEditCommentViewModel
+
+<div id="editRecordModal" class="govuk-edit-modal">
+    <div class="govuk-edit-modal-dialog">
+        <div class="govuk-edit-modal__header">
+            <h3 class="govuk-edit-modal__title">@(Model.IsAddingNew ? "Add Comment" : "Edit Record")</h3>
+            <button type="button" onclick="closeEditModal()"
+                    aria-label="Close" class="govuk-edit-modal__close-btn">
+                ✕
+            </button>
+        </div>
+        <div class="govuk-edit-modal__body">
+            <form id="editRecordForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Commentno" />
+                <input type="hidden" asp-for="Project" />
+                <input type="hidden" asp-for="IsAddingNew" />
+                <div class="govuk-error-summary" role="alert"
+                     aria-labelledby="editFormErrorTitle" tabindex="-1" style="display: none;">
+                    <h2 class="govuk-error-summary__title" id="editFormErrorTitle">
+                    </h2>
+                    <div class="govuk-error-summary__body">
+                        <ul class="govuk-list govuk-error-summary__list"></ul>
+                    </div>
+                </div>
+                <div class="govuk-form-group govuk-!-margin-bottom-6">
+                    <label class="govuk-label font-size-16" asp-for="Year">
+                        Year
+                        <span class="sup_color_red">*</span>
+                    </label>
+                    <select class="govuk-select" asp-for="Year" required
+                            asp-items="Model.YearOptions" style="width: stretch;">
+                        <option value="">Select a Year</option>
+                    </select>
+                    <span asp-validation-for="Year" class="govuk-error-message" style="display:none;"></span>
+                </div>
+                <div class="govuk-form-group govuk-!-margin-bottom-6">
+                    <label class="govuk-label font-size-16" asp-for="Topic">Topic
+                        <span class="sup_color_red">*</span>
+                    </label>
+                    <select class="govuk-select" asp-for="Topic" required
+                            asp-items="Model.TopicOptions" style="width: stretch;">
+                    </select>
+                    <span asp-validation-for="Topic" class="govuk-error-message" style="display:none;"></span>
+                </div>
+                <div class="govuk-form-group govuk-!-margin-bottom-6">
+                    <label class="govuk-label font-size-16" asp-for="Commenttext">Comment</label>
+                    <textarea class="govuk-textarea" asp-for="Commenttext"
+                              rows="4" placeholder="Enter your comments"></textarea>
+                    <span asp-validation-for="Commenttext" class="govuk-error-message" style="display:none;"></span>
+                </div>
+            </form>
+        </div>
+        <div class="govuk-edit-modal__footer">
+            <button type="button"
+                    class="govuk-button govuk-button--secondary font-size-16"
+                    onclick="closeEditModal()">
+                Cancel
+            </button>
+            <button type="button"
+                    class="govuk-button font-size-16"
+                    id="saveRecordBtn"
+                    onclick="saveRecord()">
+                    @(Model.IsAddingNew ? "Save" : "Update")
+            </button>
+        </div>
+    </div>
+</div>

@@ -2,9 +2,12 @@
 using Apha.PIMS.Api.Mappings;
 using Apha.PIMS.Api.Middleware;
 using Apha.PIMS.Application.Mappings;
+using Apha.PIMS.DataAccess.Data;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi;
 using System.Globalization;
 
 namespace Apha.PIMS.Api.Extensions
@@ -17,13 +20,34 @@ namespace Apha.PIMS.Api.Extensions
             var configuration = builder.Configuration;
 
             // Add database context
-
-            services.AddStackExchangeRedisCache(options =>
+            services.AddDbContext<PimsDbContext>(options =>
             {
-                options.Configuration = builder.Configuration.GetConnectionString("RedisConnectionString");
-                options.InstanceName = "RedisInstance";
+                var connectionString = builder.Configuration.GetConnectionString("FPSConnectionString")
+                    ?? throw new InvalidOperationException("Connection string 'FPSConnectionString' not found.");
+
+                options.UseNpgsql(connectionString, npgsqlOptions =>
+                {
+                    npgsqlOptions.EnableRetryOnFailure(
+                        maxRetryCount: 5,
+                        maxRetryDelay: TimeSpan.FromSeconds(10),
+                        errorCodesToAdd: null);
+
+                    npgsqlOptions.CommandTimeout(60);
+                });
             });
 
+            if (builder.Environment.IsEnvironment("local"))
+            {
+                services.AddDistributedMemoryCache();
+            }
+            else
+            {
+                services.AddStackExchangeRedisCache(options =>
+                {
+                    options.Configuration = configuration.GetConnectionString("RedisConnectionString");
+                    options.InstanceName = "RedisInstance";
+                });
+            }
 
             // AutoMapper
             services.AddAutoMapper(config =>
@@ -38,11 +62,25 @@ namespace Apha.PIMS.Api.Extensions
                 options.Filters.Add<ApiResponseActionFilter>();
             });
 
+            // API Versioning
+            services.AddApiVersioning(options =>
+            {
+                options.DefaultApiVersion = new ApiVersion(1, 0);
+                options.AssumeDefaultVersionWhenUnspecified = true;
+                options.ReportApiVersions = true;
+                options.ApiVersionReader = new UrlSegmentApiVersionReader();
+            })
+            .AddApiExplorer(options =>
+            {
+                options.GroupNameFormat = "'v'VVV";
+                options.SubstituteApiVersionInUrl = true;
+            });
+
             // Application services
             services.AddApplicationServices();
 
             // Authentication
-            services.AddAuthenticationServices(configuration);
+           services.AddAuthenticationServices(configuration);
 
             // HTTP Context
             services.AddHttpContextAccessor();
@@ -50,8 +88,16 @@ namespace Apha.PIMS.Api.Extensions
             // Health checks
             services.AddHealthChecks();
 
-            //Swagger
-            services.AddSwaggerGen();    
+            // Swagger
+            services.AddSwaggerGen(options =>
+            {
+                options.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Title = "PIMS API",
+                    Version = "v1",
+                    Description = "Pathogen Information Management System (PIMS) Web API"
+                });
+            });
         }
 
         public static void ConfigureMiddleware(this WebApplication app)
@@ -82,7 +128,7 @@ namespace Apha.PIMS.Api.Extensions
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();
                 app.UseSwaggerUI();
-            }            
+            }
 
             app.UseHsts();
             app.UseHttpsRedirection();

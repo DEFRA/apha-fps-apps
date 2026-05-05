@@ -650,8 +650,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControll
         public async Task DeleteJobCode_JobCodeExists_ReturnsJsonSuccess()
         {
             // Arrange
-            _timeCodeService.DeleteAllByJobCodeAsync("JC1", "PRJ001")
-                .Returns(ApiResponseDto<bool>.SuccessResponse(true));
             _jobCodeService.DeleteJobCodeAsync("JC1")
                 .Returns(ApiResponseDto<bool>.SuccessResponse(true));
 
@@ -662,14 +660,13 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControll
             var jsonResult = Assert.IsType<JsonResult>(result);
             var value = GetJsonResultElement(jsonResult);
             Assert.True(value.GetProperty("success").GetBoolean());
+            await _jobCodeService.Received(1).DeleteJobCodeAsync("JC1");
         }
 
         [Fact]
         public async Task DeleteJobCode_ServiceFails_ReturnsJsonFailure()
         {
             // Arrange
-            _timeCodeService.DeleteAllByJobCodeAsync("JC1", "PRJ001")
-                .Returns(ApiResponseDto<bool>.SuccessResponse(true));
             var errors = new List<ApiErrorDto> { new() { Message = "Delete failed" } };
             _jobCodeService.DeleteJobCodeAsync("JC1")
                 .Returns(ApiResponseDto<bool>.FailureResponse(errors, new ApiMetaDto()));
@@ -681,6 +678,27 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControll
             var jsonResult = Assert.IsType<JsonResult>(result);
             var value = GetJsonResultElement(jsonResult);
             Assert.False(value.GetProperty("success").GetBoolean());
+        }
+
+        [Fact]
+        public async Task DeleteJobCode_HasRelatedTimeCodeValidRecords_ReturnsJsonFailure()
+        {
+            // Arrange — API returns 409 BUSINESS_RULE_VIOLATION when related TimeCodeValid records exist
+            var errors = new List<ApiErrorDto>
+            {
+                new() { Code = "BUSINESS_RULE_VIOLATION", Message = "This JobCode has related records in TimeCodeValid and cannot be deleted." }
+            };
+            _jobCodeService.DeleteJobCodeAsync("JC1")
+                .Returns(ApiResponseDto<bool>.FailureResponse(errors, new ApiMetaDto()));
+
+            // Act
+            var result = await _controller.DeleteJobCode("JC1", "PRJ001");
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultElement(jsonResult);
+            Assert.False(value.GetProperty("success").GetBoolean());
+            await _timeCodeService.DidNotReceive().DeleteAllByJobCodeAsync(Arg.Any<string>(), Arg.Any<string>());
         }
 
         #endregion

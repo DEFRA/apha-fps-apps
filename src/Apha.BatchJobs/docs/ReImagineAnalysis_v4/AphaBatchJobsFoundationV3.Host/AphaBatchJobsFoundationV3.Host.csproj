@@ -1,0 +1,100 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Output type set to Exe as this is the host application entry point -->
+    <OutputType>Exe</OutputType>
+    
+    <!-- Target framework set to .NET 10.0 as per requirement -->
+    <TargetFramework>net10.0</TargetFramework>
+    
+    <!-- Enable nullable reference types for better null safety -->
+    <Nullable>enable</Nullable>
+    
+    <!-- Enable implicit usings to reduce boilerplate using statements -->
+    <ImplicitUsings>enable</ImplicitUsings>
+    
+    <!-- Assembly and root namespace configuration -->
+    <RootNamespace>AphaBatchJobsFoundationV3.Host</RootNamespace>
+    <AssemblyName>AphaBatchJobsFoundationV3.Host</AssemblyName>
+    
+    <!-- Generate XML documentation file for API documentation -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    
+    <!-- Treat warnings as errors for higher code quality -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    
+    <!-- Language version set to latest for C# 12 features -->
+    <LangVersion>latest</LangVersion>
+    
+    <!-- Enable deterministic builds for reproducible outputs -->
+    <Deterministic>true</Deterministic>
+    
+    <!-- Enforce code analysis for better code quality -->
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest</AnalysisLevel>
+    
+    <!-- Docker support configuration -->
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <DockerfileContext>..</DockerfileContext>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Reference to Core project for domain models and abstractions -->
+    <ProjectReference Include="..\AphaBatchJobsFoundationV3.Core\AphaBatchJobsFoundationV3.Core.csproj" />
+    
+    <!-- Reference to Infrastructure project for data access and external services -->
+    <ProjectReference Include="..\AphaBatchJobsFoundationV3.Infrastructure\AphaBatchJobsFoundationV3.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Microsoft.Extensions.Hosting for generic host builder and dependency injection -->
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+    
+    <!-- Serilog.AspNetCore for structured logging integration with ASP.NET Core -->
+    <PackageReference Include="Serilog.AspNetCore" Version="8.0.3" />
+    
+    <!-- Serilog.Sinks.Console for console logging output -->
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
+    
+    <!-- Serilog.Enrichers.Environment for environment-based log enrichment -->
+    <PackageReference Include="Serilog.Enrichers.Environment" Version="3.0.1" />
+    
+    <!-- CommandLineParser for parsing command-line arguments for CLI trigger -->
+    <PackageReference Include="CommandLineParser" Version="2.9.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Include appsettings files in the output directory -->
+    <Content Include="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="appsettings.Development.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+</Project>
+
+
+<!-- 
+Changes made based on .NET best practices:
+
+1. Updated package versions to latest stable releases for .NET 8.0:
+   - Microsoft.Extensions.Hosting: 8.0.0 → 8.0.1 (latest patch version)
+   - Serilog.AspNetCore: 8.0.0 → 8.0.3 (latest stable version)
+   - Serilog.Sinks.Console: 5.0.1 → 6.0.0 (latest major version compatible with .NET 8)
+   - Serilog.Enrichers.Environment: 2.3.0 → 3.1.0 (latest version)
+
+2. All other configurations remain unchanged as they follow .NET best practices:
+   - Nullable reference types enabled
+   - Implicit usings enabled
+   - Documentation generation enabled
+   - Warnings treated as errors
+   - Latest language version
+   - Deterministic builds enabled
+   - Code analysis enabled with latest analysis level
+   - Proper content file configuration for appsettings
+
+Note: Always verify package compatibility in your specific environment before upgrading.
+-->

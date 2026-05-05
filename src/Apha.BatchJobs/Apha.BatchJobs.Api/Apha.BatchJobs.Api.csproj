@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Apha.BatchJobs.Api</RootNamespace>
+    <AssemblyName>BatchJobs.Api</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AWSSDK.ECS" Version="3.7.*" />
+    <PackageReference Include="AWSSDK.Extensions.NETCore.Setup" Version="3.7.*" />
+    <!-- Reference the monorepo BatchJobs project but do not compile its Program.cs into this web app -->
+    <ProjectReference Include="..\BatchJobs.csproj">
+      <SkipGetTargetFrameworkProperties>true</SkipGetTargetFrameworkProperties>
+    </ProjectReference>
+    <ProjectReference Include="..\Apha.BatchJobs.Worker\Apha.BatchJobs.Worker.csproj" />
+  </ItemGroup>
+
+  <!-- Exclude the Worker's Program.cs from being compiled into this project -->
+  <ItemGroup>
+    <Compile Remove="..\Apha.BatchJobs.Worker\Program.cs" />
+  </ItemGroup>
+
+</Project>

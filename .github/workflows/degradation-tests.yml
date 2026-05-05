@@ -1,0 +1,62 @@
+name: Degradation Tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  degradation-tests:
+    name: Degradation test stage
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Start PostgreSQL dependency
+        run: docker compose up -d postgres
+        working-directory: ./src/Apha.BatchJobs
+
+      - name: Wait for PostgreSQL health
+        run: |
+          for i in {1..45}; do
+            status=$(docker inspect -f '{{.State.Health.Status}}' batch_jobs_postgres 2>/dev/null || echo unknown)
+            echo "postgres health: $status"
+            if [ "$status" = "healthy" ]; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Postgres did not become healthy in time."
+          exit 1
+        working-directory: ./src/Apha.BatchJobs
+
+      - name: Build
+        run: dotnet build BatchJobs.sln --configuration Release
+        working-directory: ./src/Apha.BatchJobs
+
+      - name: Run degradation-focused tests
+        env:
+          ConnectionStrings__BatchJobsConnectionString: Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=password;Timeout=30
+        run: |
+          dotnet test BatchJobs.sln --no-build --configuration Release \
+            --filter "FullyQualifiedName~RepositoryIntegrationTests.TryAcquireLockAsync_WhenExistingLockExpired_AllowsReacquire|FullyQualifiedName~RepositoryIntegrationTests.DependencyOutageThenRecovery_BadConnectionFails_HealthyConnectionSucceeds"
+        working-directory: ./src/Apha.BatchJobs
+
+      - name: Collect container logs on failure
+        if: failure()
+        run: docker compose logs postgres
+        working-directory: ./src/Apha.BatchJobs
+
+      - name: Shutdown dependencies
+        if: always()
+        run: docker compose down -v
+        working-directory: ./src/Apha.BatchJobs

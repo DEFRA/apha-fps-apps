@@ -1,0 +1,39 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDEs
+.vs
+.vscode
+*.sln.user
+*.code-workspace
+.idea
+
+# Build outputs
+bin/
+obj/
+publish/
+*.nupkg
+*.snupkg
+
+# Test results
+TestResults/
+.coverage
+
+# Documentation
+*.md
+docs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# NuGet
+.nuget
+*.nuspec
+
+# Misc
+.env
+*.log
+*.trx

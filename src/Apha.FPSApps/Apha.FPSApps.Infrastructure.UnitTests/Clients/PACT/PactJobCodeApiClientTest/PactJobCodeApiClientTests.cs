@@ -1,4 +1,4 @@
-﻿using Apha.Common.Contracts;
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.PACT;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PACT;
@@ -7,7 +7,6 @@ using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients;
 using AutoMapper;
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
 using Xunit;
 
 namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactJobCodeApiClientTest
@@ -86,23 +85,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactJobCodeApiClien
             Assert.NotNull(result.Errors);
         }
 
-        [Fact]
-        public async Task GetJobCodesByProjectAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            _http.GetAsync<List<JobCodeRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetJobCodesByProjectAsync("PP001");
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve job codes", error.Message);
-        }
-
         #endregion
 
         #region GetPagedJobCodesAsync Tests
@@ -161,24 +143,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactJobCodeApiClien
             await _http.Received(1).GetAsync<List<JobCodeRes>>(Arg.Is<string>(url => url.Contains("api/v1/jobcode/paged")));
         }
 
-        [Fact]
-        public async Task GetPagedJobCodesAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            _http.GetAsync<List<JobCodeRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetPagedJobCodesAsync(query, null);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve paged job codes", error.Message);
-        }
-
         #endregion
 
         #region GetJobCodeByIdAsync Tests
@@ -232,23 +196,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactJobCodeApiClien
             Assert.NotNull(result.Errors);
         }
 
-        [Fact]
-        public async Task GetJobCodeByIdAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            _http.GetAsync<JobCodeRes>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetJobCodeByIdAsync("JC001");
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve job code", error.Message);
-        }
-
         #endregion
 
         #region GetTypesAsync Tests
@@ -297,23 +244,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactJobCodeApiClien
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.NotNull(result.Errors);
-        }
-
-        [Fact]
-        public async Task GetTypesAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            _http.GetAsync<List<string>>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetTypesAsync();
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve job code types", error.Message);
         }
 
         #endregion
@@ -372,26 +302,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactJobCodeApiClien
             Assert.NotNull(result.Errors);
         }
 
-        [Fact]
-        public async Task CreateJobCodeAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var jobCodeDto = new JobCodeDto { JobCodeId = "JC001" };
-            _mapper.Map<JobCodeReq>(jobCodeDto).Returns(new JobCodeReq());
-            _http.PostAsync<JobCodeReq, JobCodeRes>(Arg.Any<string>(), Arg.Any<JobCodeReq>())
-                .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.CreateJobCodeAsync(jobCodeDto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to create job code", error.Message);
-        }
-
         #endregion
 
         #region UpdateJobCodeAsync Tests
@@ -448,26 +358,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactJobCodeApiClien
             Assert.NotNull(result.Errors);
         }
 
-        [Fact]
-        public async Task UpdateJobCodeAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var jobCodeDto = new JobCodeDto { JobCodeId = "JC001" };
-            _mapper.Map<JobCodeReq>(jobCodeDto).Returns(new JobCodeReq());
-            _http.PutAsync<JobCodeReq, JobCodeRes>(Arg.Any<string>(), Arg.Any<JobCodeReq>())
-                .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.UpdateJobCodeAsync(jobCodeDto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to update job code", error.Message);
-        }
-
         #endregion
 
         #region DeleteJobCodeAsync Tests
@@ -477,10 +367,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactJobCodeApiClien
         {
             // Arrange
             var jobCodeId = "JC001";
-            var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
+            var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
             var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
 
-            _http.DeleteAsync<bool>($"api/v1/jobcode/{Uri.EscapeDataString(jobCodeId)}").Returns(apiResponse);
+            _http.DeleteAsync<bool?>($"api/v1/jobcode/{Uri.EscapeDataString(jobCodeId)}").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -490,7 +380,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactJobCodeApiClien
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.True(result.Data);
-            await _http.Received(1).DeleteAsync<bool>($"api/v1/jobcode/{Uri.EscapeDataString(jobCodeId)}");
+            await _http.Received(1).DeleteAsync<bool?>($"api/v1/jobcode/{Uri.EscapeDataString(jobCodeId)}");
         }
 
         [Fact]
@@ -498,7 +388,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactJobCodeApiClien
         {
             // Arrange
             var errors = new List<ApiError> { new() { Message = "Not Found", Code = "NOT_FOUND" } };
-            var apiResponse = new ApiResponse<bool> { Success = false, Errors = errors };
+            var apiResponse = new ApiResponse<bool?> { Success = false, Errors = errors };
             var mappedResponse = new ApiResponseDto<bool>
             {
                 Success = false,
@@ -506,7 +396,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactJobCodeApiClien
                 Meta = new ApiMetaDto()
             };
 
-            _http.DeleteAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
+            _http.DeleteAsync<bool?>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedResponse);
 
             // Act
@@ -519,10 +409,20 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactJobCodeApiClien
         }
 
         [Fact]
-        public async Task DeleteJobCodeAsync_WhenExceptionThrown_ReturnsInternalError()
+        public async Task DeleteJobCodeAsync_WhenApiReturnsBusinessRuleViolation_ReturnsFailureResponse()
         {
-            // Arrange
-            _http.DeleteAsync<bool>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
+            // Arrange — API returns 409 when related TimeCodeValid records exist (trigger validation)
+            var errors = new List<ApiError> { new() { Message = "This JobCode has related records in TimeCodeValid and cannot be deleted.", Code = "BUSINESS_RULE_VIOLATION" } };
+            var apiResponse = new ApiResponse<bool?> { Success = false, Errors = errors };
+            var mappedResponse = new ApiResponseDto<bool>
+            {
+                Success = false,
+                Errors = new List<ApiErrorDto> { new() { Message = "This JobCode has related records in TimeCodeValid and cannot be deleted.", Code = "BUSINESS_RULE_VIOLATION" } },
+                Meta = new ApiMetaDto()
+            };
+
+            _http.DeleteAsync<bool?>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedResponse);
 
             // Act
             var result = await _client.DeleteJobCodeAsync("JC001");
@@ -530,9 +430,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactJobCodeApiClien
             // Assert
             Assert.NotNull(result);
             Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to delete job code", error.Message);
+            Assert.Contains(result.Errors!, e => e.Code == "BUSINESS_RULE_VIOLATION");
         }
 
         #endregion

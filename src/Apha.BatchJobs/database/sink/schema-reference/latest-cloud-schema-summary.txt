@@ -1,0 +1,10 @@
+Schema Table Counts (read-only snapshot)
+CapturedAtUtc: 2026-04-17T07:09:39.8756214Z
+
+fps: 94 tables
+mabarchive: 80 tables
+public: 3 tables
+sink_meta: 2 tables
+sink_raw: 177 tables
+
+Total column rows exported: 5662

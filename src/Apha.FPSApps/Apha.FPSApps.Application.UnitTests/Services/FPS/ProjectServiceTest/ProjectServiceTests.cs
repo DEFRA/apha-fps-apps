@@ -120,6 +120,128 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProjectServiceTest
 
         #endregion
 
+        #region GetAllProjectsAsync Tests
+
+        [Fact]
+        public async Task GetAllProjectsAsync_WithSuccessResponse_ReturnsProjectList()
+        {
+            // Arrange
+            var projects = new List<ProjectDto>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Alpha Project", Program = "P001" },
+                new() { ParentProject = "PP002", ProjectTitle = "Beta Project",  Program = "P001" }
+            };
+            var expectedResponse = ApiResponseDto<List<ProjectDto>>.SuccessResponse(projects);
+            _fpsProjectApiClient.GetAllProjectsAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _projectService.GetAllProjectsAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data?.Count);
+            await _fpsProjectApiClient.Received(1).GetAllProjectsAsync();
+        }
+
+        [Fact]
+        public async Task GetAllProjectsAsync_WithEmptyResult_ReturnsSuccessWithEmptyList()
+        {
+            // Arrange
+            var expectedResponse = ApiResponseDto<List<ProjectDto>>.SuccessResponse(new List<ProjectDto>());
+            _fpsProjectApiClient.GetAllProjectsAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _projectService.GetAllProjectsAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!);
+            await _fpsProjectApiClient.Received(1).GetAllProjectsAsync();
+        }
+
+        [Fact]
+        public async Task GetAllProjectsAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "API_ERROR" } };
+            var expectedResponse = ApiResponseDto<List<ProjectDto>>.FailureResponse(errors, new ApiMetaDto());
+            _fpsProjectApiClient.GetAllProjectsAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _projectService.GetAllProjectsAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+            await _fpsProjectApiClient.Received(1).GetAllProjectsAsync();
+        }
+
+        #endregion
+
+        #region GetAllPactProjectsAsync Tests
+
+        [Fact]
+        public async Task GetAllPactProjectsAsync_WithSuccessResponse_ReturnsProjectList()
+        {
+            // Arrange
+            var projects = new List<ProjectDto>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "PACT Project One" },
+                new() { ParentProject = "PP002", ProjectTitle = "PACT Project Two" }
+            };
+            var expectedResponse = ApiResponseDto<List<ProjectDto>>.SuccessResponse(projects);
+            _fpsProjectApiClient.GetAllPactProjectsAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _projectService.GetAllPactProjectsAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data?.Count);
+            await _fpsProjectApiClient.Received(1).GetAllPactProjectsAsync();
+        }
+
+        [Fact]
+        public async Task GetAllPactProjectsAsync_WithEmptyResult_ReturnsSuccessWithEmptyList()
+        {
+            // Arrange
+            var expectedResponse = ApiResponseDto<List<ProjectDto>>.SuccessResponse(new List<ProjectDto>());
+            _fpsProjectApiClient.GetAllPactProjectsAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _projectService.GetAllPactProjectsAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!);
+        }
+
+        [Fact]
+        public async Task GetAllPactProjectsAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "API_ERROR" } };
+            var expectedResponse = ApiResponseDto<List<ProjectDto>>.FailureResponse(errors, new ApiMetaDto());
+            _fpsProjectApiClient.GetAllPactProjectsAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _projectService.GetAllPactProjectsAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+        }
+
+        #endregion
+
         #region GetPagedProjectsAsync Tests
 
         [Fact]
@@ -524,6 +646,49 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProjectServiceTest
 
             // Act
             var result = await _projectService.GetAllCustomersAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+        }
+
+        #endregion
+
+        #region GetAllProjectGroupsAsync Tests
+
+        [Fact]
+        public async Task GetAllProjectGroupsAsync_WithSuccessResponse_ReturnsProjectGroupList()
+        {
+            // Arrange
+            var projectGroups = new List<ProjectGroupDto>
+            {
+                new() { ProjectGroupName = "Surveillance" },
+                new() { ProjectGroupName = "Research" }
+            };
+            var expectedResponse = ApiResponseDto<List<ProjectGroupDto>>.SuccessResponse(projectGroups);
+            _fpsLookupApiClient.GetAllProjectGroupsAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _projectService.GetAllProjectGroupsAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data?.Count);
+            await _fpsLookupApiClient.Received(1).GetAllProjectGroupsAsync();
+        }
+
+        [Fact]
+        public async Task GetAllProjectGroupsAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "API_ERROR" } };
+            var expectedResponse = ApiResponseDto<List<ProjectGroupDto>>.FailureResponse(errors, new ApiMetaDto());
+            _fpsLookupApiClient.GetAllProjectGroupsAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _projectService.GetAllProjectGroupsAsync();
 
             // Assert
             Assert.NotNull(result);

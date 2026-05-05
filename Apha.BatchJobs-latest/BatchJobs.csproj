@@ -1,0 +1,71 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Apha.BatchJobs</RootNamespace>
+    <AssemblyName>BatchJobs</AssemblyName>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <LangVersion>latest</LangVersion>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+    <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Apha.BatchJobs.UnitTests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Archive\**\*.cs" />
+    <Compile Remove="ReImagineAnalysis_v4\**\*.cs" />
+    <Compile Remove="docs\**\*.cs" />
+    <Compile Remove="docs\legacy\**\*.cs" />
+    <Compile Remove="Apha.BatchJobs.UnitTests\**\*.cs" />
+    <Compile Remove="Apha.BatchJobs.Api\**\*.cs" />
+    <Compile Remove="Apha.BatchJobs.Worker\**\*.cs" />
+    <EmbeddedResource Remove="Archive\**\*" />
+    <EmbeddedResource Remove="ReImagineAnalysis_v4\**\*" />
+    <EmbeddedResource Remove="docs\**\*" />
+    <EmbeddedResource Remove="docs\legacy\**\*" />
+    <EmbeddedResource Remove="Apha.BatchJobs.UnitTests\**\*" />
+    <EmbeddedResource Remove="Apha.BatchJobs.Api\**\*" />
+    <EmbeddedResource Remove="Apha.BatchJobs.Worker\**\*" />
+    <None Remove="Apha.BatchJobs.UnitTests\**\*" />
+    <None Remove="Apha.BatchJobs.Api\**\*" />
+    <None Remove="Apha.BatchJobs.Worker\**\*" />
+    <None Include="Archive\**\*" />
+    <None Include="ReImagineAnalysis_v4\**\*" />
+    <None Include="docs\**\*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
+    <PackageReference Include="Serilog" Version="4.3.0" />
+    <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
+    <PackageReference Include="Serilog.Extensions.Logging" Version="10.0.0" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
+    <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+    <PackageReference Include="Serilog.Settings.Configuration" Version="10.0.0" />
+    <PackageReference Include="Serilog.Sinks.ApplicationInsights" Version="4.1.0" />
+    <PackageReference Include="Microsoft.ApplicationInsights" Version="2.23.0" />
+    <PackageReference Include="System.Security.Cryptography.Xml" Version="9.0.15" />
+  </ItemGroup>
+
+</Project>

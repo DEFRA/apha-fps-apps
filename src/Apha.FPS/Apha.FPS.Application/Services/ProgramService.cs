@@ -1,6 +1,7 @@
 ﻿using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
+using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
 using AutoMapper;
@@ -58,13 +59,14 @@ namespace Apha.FPS.Application.Services
                 throw new ArgumentException("Program number is required.");
             }            
            
-            var existingProgram = await _programRepository.GetProgramByIdAsync(programDto.ProgramNo);
+            var originalProgramNo = programDto.ProgramNo;
+            var existingProgram = await _programRepository.GetProgramByIdAsync(originalProgramNo);
             if (existingProgram == null)
             {
-                throw new KeyNotFoundException($"Program with ID '{programDto.ProgramNo}' not found.");
+                throw new KeyNotFoundException($"Program with ID '{originalProgramNo}' not found.");
             }
             _mapper.Map(programDto, existingProgram);
-            var updatedProgram = await _programRepository.UpdateProgramAsync(existingProgram);
+            var updatedProgram = await _programRepository.UpdateProgramAsync(existingProgram, originalProgramNo);
             return _mapper.Map<ProgramDto>(updatedProgram);
         }
 
@@ -77,6 +79,17 @@ namespace Apha.FPS.Application.Services
             if (existingEntity == null)
             {
                 throw new KeyNotFoundException($"Program with ID '{programNo}' was not found.");
+            }
+
+            // DTrig: Restrict deletion when linked Projects exist
+            if (await _programRepository.HasLinkedProjectsAsync(programNo))
+            {
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"Cannot delete Program '{programNo}' because linked Projects exist.",
+                        "PROGRAM_HAS_LINKED_PROJECTS")
+                ]);
             }
 
             return await _programRepository.DeleteProgramAsync(programNo);

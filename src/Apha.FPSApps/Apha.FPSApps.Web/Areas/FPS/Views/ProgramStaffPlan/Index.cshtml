@@ -5,7 +5,7 @@
 }
 
 <style type="text/css">
-    #gridContainer_staffBookedGrid .grid-wrapper {
+    #gridContainer_staffBookedGrid .grid-scroll-container {
         height: 255px;
         max-height: 255px;
     }
@@ -25,7 +25,7 @@
                     <div style="display: flex; justify-content: flex-end;" class="col-md-6">
                         <label class="fw-bold mt-2" for="programmeSelect">Programme:</label>
                         <select id="programmeSelect" asp-items="Model.ProgrammeList" asp-for="SelectedProgramNo"
-                                class="form-select form-select-sm" style="width: auto; min-width: 260px;">
+                                class="govuk-select govuk-!-font-size-16" style="width: auto; min-width: 260px;">
                             <option value="">-- Select Programme --</option>
                         </select>
                     </div>
@@ -59,8 +59,10 @@
                     </div>
                     <div class="col-lg-5">
                         <label class="govuk-label--s" for="Target" style="color:#3e3e3e">Target </label>
-                        <input type="text" value="@Model.Target.ToString("C")" id="Target" class="projectplan-code govuk-input">
-			
+                        <div class="govuk-input__wrapper">
+                            <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                            <input type="text" value="@Model.Target.ToString("C")" id="Target" readonly class="projectplan-code govuk-input">
+                        </div>
                     </div>
                 </div>
             </div>
@@ -171,7 +173,7 @@
         function selectProject(btn) {
             var jobCode = $(btn).data('id');
             var row = $(btn).closest('tr');
-            var budgetText = row.find('td[data-property="Budget_cvl"] span').text().replace(/[£,\s]/g, '');
+            var budgetText = row.find('td[data-property="BudgetCvl"] span').text().replace(/[£,\s]/g, '');
             var budget = parseFloat(budgetText) || 0;
 
             currentJobCode = jobCode;

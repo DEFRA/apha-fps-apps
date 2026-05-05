@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Apha.PACT.Api.Controllers
 {
-    [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
+    [Authorize(Roles = "API-PACTUser,API-PACTAdmin")]
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/timecodevalid")]
@@ -36,6 +36,14 @@ namespace Apha.PACT.Api.Controllers
         public async Task<IActionResult> GetPaged([FromQuery] QueryParameters<string> query, [FromQuery] string? jobCode, [FromQuery] string? parentProject)
         {
             var pagedResult = await _service.GetPagedTimeCodesAsync(query, jobCode, parentProject);            
+            return Ok(_mapper.Map<PaginationRes<TimeCodeValidRes>>(pagedResult));
+        }
+
+        [HttpGet("paged/project/{parentProject}/testcode/{testCode}")]
+        public async Task<IActionResult> GetPagedByProjectAndTestCode(
+            [FromQuery] QueryParameters<string> query, string parentProject, string testCode)
+        {
+            var pagedResult = await _service.GetPagedByProjectAndTestCodeAsync(query, parentProject, testCode);
             return Ok(_mapper.Map<PaginationRes<TimeCodeValidRes>>(pagedResult));
         }
 

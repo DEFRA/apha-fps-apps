@@ -83,15 +83,24 @@ namespace Apha.FPS.DataAccess.Repositories
         }
 
         public async Task<bool> DeleteEmployeeAsync(string spNumber)
-        {  
+        {
+            var existingWgEmployee = await _dbContext.WgEmployees
+                      .AsNoTracking()
+                      .Where(e => e.SpNumber == spNumber && e.FpsYear == _fpsYearContext.FpsYear)
+                      .FirstOrDefaultAsync();
+
+            if (existingWgEmployee is not null)
+                throw new InvalidOperationException(
+                     $"Cannot delete SPNumber {spNumber} because linked Employee exist.");
+
             var employee = await _dbContext.Employees
+                .AsNoTracking()
                 .Where(e => e.SPNumber == spNumber && e.FpsYear == _fpsYearContext.FpsYear)
                 .FirstOrDefaultAsync();
 
-            if (employee == null)
-            {
-                return false;
-            }
+            if (employee is null)
+                throw new InvalidOperationException(
+                    $"Employee with SPNumber {spNumber} does not exist.");                                           
 
             _dbContext.Employees.Remove(employee);
             await _dbContext.SaveChangesAsync();

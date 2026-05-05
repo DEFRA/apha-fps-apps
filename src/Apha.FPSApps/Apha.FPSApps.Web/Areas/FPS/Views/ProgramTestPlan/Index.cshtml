@@ -1,0 +1,231 @@
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.FPS.Models.ProgramTestPlanViewModel
+@{
+    ViewData["Title"] = "Programme Test Purchase Plan";
+}
+
+<style type="text/css">
+    #gridContainer_testPlanGrid .grid-scroll-container {
+        height: 255px;
+        max-height: 255px;
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- Breadcrumb section -->
+    <div class="govuk-grid-row">
+        <div class="govuk-grid-column-full">
+            <div style="padding: 5px 5px; border-bottom: 1px solid #b4b4b4" class="row">
+                <div style="display: flex; font-size: 14px; align-items: center; justify-content: space-between;">
+                    <div class="col-md-6">
+                        <nav aria-label="Breadcrumb">
+                            <a class="" href="@Url.Action("Index", "Home", new { area = "FPS" })">Home</a> &gt; Programme Management &gt; Programme Test Purchase Plan
+                        </nav>
+                    </div>
+                    <div style="display: flex; justify-content: flex-end;" class="col-md-6">
+                        <label class="fw-bold mt-2" for="programmeSelect">Programme:</label>
+                        <select id="programmeSelect" asp-items="Model.ProgrammeList" asp-for="SelectedProgramNo"
+                                class="govuk-select govuk-!-font-size-16" style="width: auto; min-width: 260px;">
+                            <option value="">-- Select Programme --</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Title section -->
+    <div class="govuk-grid-row">
+        <div class="govuk-grid-column-full">
+            <div class="row" style="display:flex; align-items: center;">
+                <div class="col-sm-12" style="padding:0px;">
+                    <div style="border-bottom: 2px solid #1d70b8; height:48px;">
+                        <h1 style="padding: 15px 0 5px 17px; font-size:16px; width: 50%; font-weight: 700; float:left; margin: 0;">
+                            Plan All Test Purchases for Programme
+                        </h1>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="govuk-grid-row">
+        <div class="govuk-grid-column-one-half mt-2">
+            <div class="" style="border-radius: 5px; justify-content: flex-start; margin-bottom:10px; background-color: #edf4ff; border: 1px solid #1d70b8; padding: 4px;">
+                <div class="row">
+                    <div class="col-lg-7">
+                        <label class="govuk-label--s" for="managerName" style="color:#3e3e3e">Programme Manager</label>
+                        <input type="text" value="@Model.Manager" id="managerName" class="projectplan-code govuk-input">
+                    </div>
+                    <div class="col-lg-5">
+                        <label class="govuk-label--s" for="Target" style="color:#3e3e3e">Target</label>
+                        <div class="govuk-input__wrapper">
+                            <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                            <input type="text" value="@Model.Target.ToString("C")" id="Target" readonly class="projectplan-code govuk-input">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="govuk-grid-row">
+                <div class="govuk-grid-column-full mt-2">
+                    <div id="gridContainer_@Model.ProjectsGrid.GridId" style="padding: 5px;">
+                        @await Html.PartialAsync("_DataGrid", Model.ProjectsGrid)
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="govuk-grid-column-one-half mt-2">
+            <div class="" style="border-radius: 5px; justify-content: flex-start; margin-bottom: 10px; background-color: #edf4ff; border: 1px solid #1d70b8; padding: 4px;">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <label class="govuk-label--s" for="txtSelectedProject" style="color:#3e3e3e">Test Purchase Plan for</label>
+                        <input type="text" id="txtSelectedProject" value="" class="projectplan-code govuk-input">
+                        <input type="hidden" id="hdnJobCode" value="" />
+                    </div>
+                </div>
+            </div>
+            <div class="govuk-grid-row">
+                <div class="govuk-grid-column-full mt-2">
+                    <div id="gridContainer_@Model.TestPlanGrid.GridId" style="padding: 5px;">
+                        @await Html.PartialAsync("_DataGrid", Model.TestPlanGrid)
+                    </div>
+                </div>
+                <div class="govuk-grid-column-full mt-2">
+                    <div class="financial-summary mt-2">
+                        <div class="summary-row">
+                            <div class="summary-item">
+                                <label class="govuk-label--s" for="for_project">For Project:</label>
+                                <input type="text" aria-label="for_project" id="for_project" readonly class="govuk-input">
+                            </div>
+                            <div class="summary-item">
+                                <label class="govuk-label--s" for="Test_Cost">Test Cost:</label>
+                                <input type="text" aria-label="Test_Cost" id="Test_Cost" readonly class="govuk-input text-AlignRight" value="@Model.TestCost.ToString("C")">
+                            </div>
+                            <div class="summary-item">
+                                <label class="govuk-label--s" for="BudgetCVL">Predicted Income:</label>
+                                <input type="text" value="£0" aria-label="BudgetCVL" id="BudgetCVL" readonly class="govuk-input text-AlignRight">
+                            </div>
+                            <div class="summary-item">
+                                <label class="govuk-label--s" for="Remainder">Remainder:</label>
+                                <input type="text" value="£0" aria-label="Remainder" id="Remainder" readonly class="govuk-input text-AlignRight">
+                            </div>
+                        </div>                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/ajax-form-validation.js"></script>
+    <script src="~/js/fps_js/TestPlanJob.js"></script>
+    <script>
+        var currentProgramNo = '@Html.Raw(Model.SelectedProgramNo)';
+        var currentJobCode = '';
+
+        TestPlanJobConfig.getJobCode = function () { return currentJobCode; };
+        TestPlanJobConfig.requireJobCodeForAdd = true;
+        TestPlanJobConfig.onSaved = function () { window['gridManager_@Model.TestPlanGrid.GridId'].reloadGrid({ page: 1 }); };
+        TestPlanJobConfig.onUpdated = function () { window['gridManager_@Model.TestPlanGrid.GridId'].reloadGrid({ page: 1 }); };
+        TestPlanJobConfig.onDeleted = function () { window['gridManager_@Model.TestPlanGrid.GridId'].reloadGrid({ page: 1 }); };
+
+        $(document).ready(function () {
+            if (currentProgramNo) {
+                window['gridManager_@Model.ProjectsGrid.GridId'].reloadGrid({ page: 1 });
+            }
+
+            var testGridContainer = document.getElementById('gridContainer_@Model.TestPlanGrid.GridId');
+            if (testGridContainer) {
+                new MutationObserver(function () {
+                    calculateTestCostTotal();
+                }).observe(testGridContainer, { childList: true });
+            }
+        });
+
+        $('#programmeSelect').on('change', function () {
+            currentProgramNo = $(this).val();
+            currentJobCode = '';
+            $('#hdnJobCode').val('');
+            $('#txtSelectedProject').val('');
+            $('#for_project').val('');
+            $('#Test_Cost').val('£0');
+            $('#BudgetCVL').val('£0');
+            $('#Remainder').val('£0');
+
+            if (currentProgramNo) {
+                $.get('@Url.Action("GetProgramInfo", "ProgramTestPlan", new { area = "FPS" })',
+                    { programNo: currentProgramNo },
+                    function (result) {
+                        if (result.success) {
+                            $('#managerName').val(result.manager);
+                            $('#Target').val(formatCurrency(result.target));
+                        }
+                    }
+                );
+            }
+
+            window['gridManager_@Model.ProjectsGrid.GridId'].reloadGrid({ page: 1 });
+        });
+
+        function selectProject(btn) {
+            var jobCode = $(btn).data('id');
+            var row = $(btn).closest('tr');
+            var budgetText = row.find('td[data-property="BudgetCvl"] span').text().replace(/[£,\s]/g, '');
+            var budget = parseFloat(budgetText) || 0;
+
+            currentJobCode = jobCode;
+            $('#hdnJobCode').val(jobCode);
+            $('#txtSelectedProject').val(jobCode);
+            $('#for_project').val(jobCode);
+            $('#BudgetCVL').val(formatCurrency(budget));
+            $('#Test_Cost').val(formatCurrency(0));
+            $('#Remainder').val(formatCurrency(budget));
+
+            $('#tbl_@Model.ProjectsGrid.GridId tbody tr').removeClass('selected-row');
+            row.addClass('selected-row');
+
+            $.get('@Url.Action("GetTotalTestCost", "TestPlanJob", new { area = "FPS" })',
+                { jobCode: jobCode },
+                function (result) {
+                    if (result.success) {
+                        var total = parseFloat(result.totalTestCost) || 0;
+                        $('#Test_Cost').val(formatCurrency(total));
+                        $('#Remainder').val(formatCurrency(budget - total));
+                    }
+                }
+            );
+
+            window['gridManager_@Model.TestPlanGrid.GridId'].reloadGrid({ page: 1 });
+        }
+
+        function getProjectExtraFilters() {
+            return { programNo: currentProgramNo };
+        }
+
+        function getTestPlanExtraFilters() {
+            return { jobCode: currentJobCode };
+        }
+
+        function calculateTestCostTotal() {
+            if (!currentJobCode) { return; }
+
+            var total = 0;
+            $('#gridContainer_@Model.TestPlanGrid.GridId td[data-property="UnitPrice"] span').each(function (index) {
+                var unitPrice = parseFloat($(this).text().replace(/[£,\s]/g, '')) || 0;
+                var noRequired = parseFloat(
+                    $(this).closest('tr').find('td[data-property="NoRequired"] span').text()
+                ) || 0;
+                total += unitPrice * noRequired;
+            });
+
+            $('#Test_Cost').val(formatCurrency(total));
+
+            var budget = parseFloat($('#BudgetCVL').val().replace(/[£,\s]/g, '')) || 0;
+            $('#Remainder').val(formatCurrency(budget - total));
+        }
+
+        function formatCurrency(value) {
+            return '\u00A3' + parseFloat(value || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+    </script>
+}

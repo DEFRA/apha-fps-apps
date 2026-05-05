@@ -28,10 +28,10 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.JobCodeRepositoryTest
                 IEnumerable<JobCode> jobCodes,
                 int fpsYear = DefaultTestFpsYear)
         {
-            var fpsYearContext = Substitute.For<IFpsYearContext>();
-            fpsYearContext.FPSYear.Returns(fpsYear);
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            fpsRequestContext.FpsYear.Returns(fpsYear);
 
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
             var jobCodesMockSet = RepositoryTestHelper.CreateMockDbSet(jobCodes);
 
             RepositoryTestHelper.SetupDbSetOperations(jobCodesMockSet);
@@ -42,7 +42,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.JobCodeRepositoryTest
 
             mockContext.Setup(x => x.JobCodes).Returns(jobCodesMockSet.Object);
 
-            var repo = new JobCodeRepository(mockContext.Object, fpsYearContext);
+            var repo = new JobCodeRepository(mockContext.Object, fpsRequestContext);
             return (repo, jobCodesMockSet, mockContext);
         }
 
@@ -226,10 +226,10 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.JobCodeRepositoryTest
         {
             // Arrange — Entry() cannot be proxied by Moq; use Callback+Throws to verify
             // FpsYear is stamped on the entity BEFORE Entry() is invoked (mirrors EmployeeRepositoryTests pattern)
-            var fpsYearContext = Substitute.For<IFpsYearContext>();
-            fpsYearContext.FPSYear.Returns(DefaultTestFpsYear);
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            fpsRequestContext.FpsYear.Returns(DefaultTestFpsYear);
 
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
             var jobCodesMockSet = RepositoryTestHelper.CreateMockDbSet<JobCode>([]);
             mockContext.Setup(x => x.JobCodes).Returns(jobCodesMockSet.Object);
 
@@ -238,7 +238,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.JobCodeRepositoryTest
                 .Callback(() => entryWasCalled = true)
                 .Throws(new NotSupportedException("Entry() is not supported in mocked DbContext"));
 
-            var repo = new JobCodeRepository(mockContext.Object, fpsYearContext);
+            var repo = new JobCodeRepository(mockContext.Object, fpsRequestContext);
             var jobCode = new JobCode { JobCodeId = "JC1", ParentProject = "PRJ1" };
 
             // Act & Assert
@@ -253,17 +253,17 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.JobCodeRepositoryTest
         public async Task UpdateJobCodeAsync_SetsFpsYear_FromYearContext()
         {
             const int customYear = 2025;
-            var fpsYearContext = Substitute.For<IFpsYearContext>();
-            fpsYearContext.FPSYear.Returns(customYear);
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            fpsRequestContext.FpsYear.Returns(customYear);
 
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
             var jobCodesMockSet = RepositoryTestHelper.CreateMockDbSet<JobCode>([]);
             mockContext.Setup(x => x.JobCodes).Returns(jobCodesMockSet.Object);
 
             mockContext.Setup(x => x.Entry(It.IsAny<JobCode>()))
                 .Throws(new NotSupportedException("Entry() is not supported in mocked DbContext"));
 
-            var repo = new JobCodeRepository(mockContext.Object, fpsYearContext);
+            var repo = new JobCodeRepository(mockContext.Object, fpsRequestContext);
             var jobCode = new JobCode { JobCodeId = "JC1" };
 
             await Assert.ThrowsAsync<NotSupportedException>(() => repo.UpdateJobCodeAsync(jobCode));

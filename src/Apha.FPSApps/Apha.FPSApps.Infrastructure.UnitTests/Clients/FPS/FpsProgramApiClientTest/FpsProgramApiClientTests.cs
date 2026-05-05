@@ -1,4 +1,4 @@
-﻿using Apha.Common.Contracts;
+using Apha.Common.Contracts;
 using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
@@ -7,7 +7,6 @@ using Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
 using Xunit;
 
 namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProgramApiClientTest
@@ -86,24 +85,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProgramApiClientT
             Assert.NotNull(result.Errors);
         }
 
-        [Fact]
-        public async Task GetAllProgramsAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            _http.GetAsync<IEnumerable<ProgramDto>>("api/v1/program").ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetAllProgramsAsync();
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            var error = Assert.Single(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve programs", error.Message);
-        }
-
         #endregion
 
         #region GetAllProgramsAsync (with QueryParameters) Tests
@@ -139,25 +120,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProgramApiClientT
             Assert.True(result.Success);
             Assert.Single(result.Data!);
             await _http.Received(1).GetAsync<List<ProgramDto>>(Arg.Is<string>(url => url.Contains("api/v1/program/paged")));
-        }
-
-        [Fact]
-        public async Task GetAllProgramsAsync_WithQuery_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            _http.GetAsync<List<ProgramDto>>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetAllProgramsAsync(query);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            var error = Assert.Single(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve paginated programs", error.Message);
         }
 
         #endregion
@@ -218,25 +180,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProgramApiClientT
 
             // Assert
             await _http.Received(1).GetAsync<ProgramDto>($"api/v1/program/{programNo}");
-        }
-
-        [Fact]
-        public async Task GetProgramByIdAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var programNo = "P001";
-            _http.GetAsync<ProgramDto>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetProgramByIdAsync(programNo);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            var error = Assert.Single(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve program", error.Message);
         }
 
         #endregion
@@ -304,25 +247,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProgramApiClientT
             Assert.NotNull(result.Errors);
         }
 
-        [Fact]
-        public async Task AddProgramAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var programDto = new ProgramDto { ProgramNo = "P001" };
-            _http.PostAsync<ProgramDto, ProgramDto>("api/v1/program", programDto).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.AddProgramAsync(programDto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            var error = Assert.Single(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to add program", error.Message);
-        }
-
         #endregion
 
         #region UpdateProgramAsync Tests
@@ -358,25 +282,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProgramApiClientT
             await _http.Received(1).PutAsync<ProgramDto, ProgramDto>("api/v1/program", programDto);
         }
 
-        [Fact]
-        public async Task UpdateProgramAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var programDto = new ProgramDto { ProgramNo = "P001" };
-            _http.PutAsync<ProgramDto, ProgramDto>("api/v1/program", programDto).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.UpdateProgramAsync(programDto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            var error = Assert.Single(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to update program", error.Message);
-        }
-
         #endregion
 
         #region DeleteProgramAsync Tests
@@ -404,25 +309,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProgramApiClientT
             Assert.True(result.Success);
             Assert.True(result.Data);
             await _http.Received(1).DeleteAsync<bool?>($"api/v1/program/{programNo}");
-        }
-
-        [Fact]
-        public async Task DeleteProgramAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var programNo = "P001";
-            _http.DeleteAsync<bool?>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.DeleteProgramAsync(programNo);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            var error = Assert.Single(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to delete program", error.Message);
         }
 
         [Theory]

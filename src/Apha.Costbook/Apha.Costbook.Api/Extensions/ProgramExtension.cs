@@ -1,15 +1,14 @@
 ﻿using Apha.Costbook.Api.Filters;
 using Apha.Costbook.Api.Mappings;
 using Apha.Costbook.Api.Middleware;
-using Apha.Costbook.Application.Interfaces;
 using Apha.Costbook.Application.Mappings;
-using Apha.Costbook.Application.Services;
-using Apha.Costbook.Core.Interfaces;
 using Apha.Costbook.DataAccess.Data;
-using Apha.Costbook.DataAccess.Repositories;
+using Asp.Versioning;
+using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi;
 using System.Globalization;
 
 namespace Apha.Costbook.Api.Extensions
@@ -38,17 +37,21 @@ namespace Apha.Costbook.Api.Extensions
                 });
             });
 
-            services.AddStackExchangeRedisCache(options =>
+            if (builder.Environment.IsEnvironment("local"))
             {
-                options.Configuration = builder.Configuration.GetConnectionString("RedisConnectionString");
-                options.InstanceName = "RedisInstance";
-            });
+                services.AddDistributedMemoryCache();
+            }
+            else
+            {
+                services.AddStackExchangeRedisCache(options =>
+                {
+                    options.Configuration = configuration.GetConnectionString("RedisConnectionString");
+                    options.InstanceName = "RedisInstance";
+                });
+            }
 
-            
-           
 
-
-            // AutoMapper            
+            // AutoMapper
             services.AddAutoMapper(config =>
             {
                 config.AddMaps(typeof(EntityMapper).Assembly);
@@ -59,6 +62,20 @@ namespace Apha.Costbook.Api.Extensions
             services.AddControllers(options =>
             {
                 options.Filters.Add<ApiResponseActionFilter>();
+            });
+
+            // API Versioning
+            services.AddApiVersioning(options =>
+            {
+                options.DefaultApiVersion = new ApiVersion(1, 0);
+                options.AssumeDefaultVersionWhenUnspecified = true;
+                options.ReportApiVersions = true;
+                options.ApiVersionReader = new UrlSegmentApiVersionReader();
+            })
+            .AddApiExplorer(options =>
+            {
+                options.GroupNameFormat = "'v'VVV";
+                options.SubstituteApiVersionInUrl = true;
             });
 
             // Application services
@@ -72,6 +89,18 @@ namespace Apha.Costbook.Api.Extensions
 
             // Health checks
             services.AddHealthChecks();
+
+            // Swagger
+            services.AddSwaggerGen(options =>
+            {
+                options.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Title = "Costbook API",
+                    Version = "v1",
+                    Description = "Costbook Web API"
+                });
+            });
+
 
             //Swagger
             services.AddSwaggerGen();    
@@ -99,6 +128,7 @@ namespace Apha.Costbook.Api.Extensions
                 Predicate = _ => false
             });
 
+            
             // Error handling
             if (env.IsDevelopment() || env.IsEnvironment("local"))
             {

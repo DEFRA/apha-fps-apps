@@ -1,0 +1,12 @@
+{
+  "name": "apha-batchjobs-codespaces",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "."
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
+  },
+  "remoteUser": "vscode",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}/src/Apha.BatchJobs"
+}

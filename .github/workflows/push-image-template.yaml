@@ -21,6 +21,10 @@ on:
         description: "Short description for the git tag"
         required: true
         type: string  
+      dockerfile_path:
+        description: "Relative path to the Dockerfile from repo root"
+        required: true
+        type: string
   
     secrets:
       AWS_ENV_REGION:
@@ -32,6 +36,7 @@ on:
 
 env:
   REPOSITORY: ${{ inputs.repository }}
+  DOCKERFILE_PATH: ${{ inputs.dockerfile_path }}
 jobs:
   push-image:
     name: Push Docker Image
@@ -40,9 +45,7 @@ jobs:
     permissions:
       id-token: write
       contents: write
-    
     steps:
-
       - name: Checkout code
         uses: actions/checkout@v4
         with:
@@ -54,22 +57,31 @@ jobs:
         shell: bash
         env:
           DEV_IMAGE_VERSION_RELEASE: ${{ inputs.dev_image_version_release }}
-          DEV_IMAGE_VERSION: ${{ github.event.inputs.DEVIMAGEVERSION }}
+          DEV_IMAGE_VERSION: ${{ inputs.IMAGE_VERSION }}
         run: |
-          if [ "$DEV_IMAGE_VERSION_RELEASE" = "false" ]; then
-             # Fetch tags
-            git fetch --tags
-            # get latest tag
-            latest_tag=$(git describe --tags "$(git rev-list --tags --max-count=1)" 2>/dev/null || echo "")
+          # Derive short app name from repository input (e.g. "apha/fpsapps" -> "fpsapps")
+          app_name="${REPOSITORY##*/}"
 
-            # Default if no tag found
-            if [ -z "$latest_tag" ]; then
-              latest_tag="v0.0.0"
+          if [ "$DEV_IMAGE_VERSION_RELEASE" = "false" ]; then
+            git fetch --tags
+            # Search backwards through rollout-v* tags to find the latest one that
+            # includes this app (handles partial rollouts where not all apps are released)
+            app_version=""
+            for rollout_tag in $(git tag --list "rollout-v*" --sort=-version:refname); do
+              app_version=$(git tag -l --format='%(contents)' "$rollout_tag" | grep "^${app_name}=" | cut -d= -f2)
+              if [ -n "$app_version" ]; then
+                echo "Found version ${app_version} for ${app_name} in ${rollout_tag}"
+                break
+              fi
+            done
+
+            if [ -z "$app_version" ]; then
+              app_version="0.0.0"
+              echo "No rollout tag found for ${app_name}, defaulting to ${app_version}"
             fi
-            echo "Latest Git Tag: $latest_tag"
+
             sha="${GITHUB_SHA::8}"
-            echo "sha = $sha"
-            image_tag="${latest_tag}-dev-${sha}"
+            image_tag="v${app_version}-dev-${sha}"
             echo "image_tag = $image_tag"
           else
             image_tag="v$DEV_IMAGE_VERSION"
@@ -83,7 +95,7 @@ jobs:
           echo "Image Tag: $IMAGE_TAG"
       
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
         with:
           aws-region: ${{ secrets.AWS_ENV_REGION }}
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ENV_ACCOUNT }}:role/${{
@@ -107,6 +119,37 @@ jobs:
           labels: |
             org.opencontainers.image.licenses=OGL-UK-3.0
 
+      - name: Run container locally
+        env:
+          IMAGE_TAG: ${{ steps.imgtag.outputs.image_tag }}
+        run: |
+          docker build -t $REPOSITORY:$IMAGE_TAG --file $DOCKERFILE_PATH .
+          echo "Running local image: $IMAGE_TAG"
+          docker run -d --name test-container -p 8080:8080 -e ASPNETCORE_ENVIRONMENT=local $REPOSITORY:$IMAGE_TAG
+      - name: Wait for service to start
+        run: >
+          echo "Waiting for the service to start..."
+
+          for i in {1..10}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/health || echo "000")
+            echo "HTTP Status: $STATUS"
+            if [ "$STATUS" -eq 200 ]; then
+              echo "Service is healthy..."
+              break
+            fi
+            echo "--- Last 5 log lines from container ---"
+            docker logs test-container --tail 5 || true
+            echo "---------------------------------------"
+            sleep 3
+          done
+      - name: Test application response
+        run: |
+          curl -i http://localhost:8080/health
+      - name: Cleanup container
+        if: always()
+        run: |
+          docker rm -f test-container
+
       - name: Build and push Docker image manually
         env:
           IMAGE_TAG: ${{ steps.imgtag.outputs.image_tag }}
@@ -123,7 +166,7 @@ jobs:
 
           echo "Building Docker image $IMAGE_NAME:$IMAGE_TAG"
           docker build \
-            --file ./Dockerfile \
+            --file $DOCKERFILE_PATH \
             --build-arg GIT_COMMIT="$META_REVISION" \
             --label org.opencontainers.image.source="$META_SOURCE" \
             --label org.opencontainers.image.revision="$META_REVISION" \
@@ -165,54 +208,5 @@ jobs:
             echo "| url        | $META_URL |"
             echo "| version    | $META_VERSION |"
           } >> $GITHUB_STEP_SUMMARY
-      - name: Run container locally
-        env:
-          IMAGE_TAG: ${{ steps.imgtag.outputs.image_tag }}
-        run: |
-          docker build -t bst:$IMAGE_TAG .
-          echo "Running local image: $IMAGE_TAG"
-          docker run -d --name test-container -p 8080:8080 -e ASPNETCORE_ENVIRONMENT=local bst:$IMAGE_TAG
-      - name: Wait for service to start
-        run: >
-          echo "Waiting for the service to start..."
 
-          for i in {1..10}; do
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/health || echo "000")
-            echo "HTTP Status: $STATUS"
-            if [ "$STATUS" -eq 200 ]; then
-              echo "Service is healthy..."
-              break
-            fi
-            echo "--- Last 5 log lines from container ---"
-            docker logs test-container --tail 5 || true
-            echo "---------------------------------------"
-            sleep 3
-          done
-      - name: Test application response
-        run: |
-          curl -i http://localhost:8080/health
-      - name: Cleanup container
-        if: always()
-        run: |
-          docker rm -f test-container
-
-
-      - name: Create and push git tag
-        if: ${{ inputs.dev_image_version_release == true }}
-        env:
-          IMAGE_TAG: ${{ steps.imgtag.outputs.image_tag }}
-          TAG_MESSAGE: ${{ inputs.tag_short_description }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          # Create the tag only if it doesn't already exist
-          if git ls-remote --tags origin | grep -q "refs/tags/$IMAGE_TAG"; then
-            echo "Tag $IMAGE_TAG already exists. error..."
-            exit 1
-          else
-            echo "Creating and pushing tag $IMAGE_TAG"
-            git tag -a "$IMAGE_TAG" -m "$TAG_MESSAGE"
-            git push origin "$IMAGE_TAG"
-          fi    
+    

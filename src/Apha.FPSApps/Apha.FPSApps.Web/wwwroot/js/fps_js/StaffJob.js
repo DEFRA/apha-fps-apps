@@ -141,24 +141,26 @@ function updateStaffJob() {
 
 function deleteStaffJob(btn) {
     var staffJobId = $(btn).data('id');
-    if (confirm('Are you sure you want to delete this record?')) {
+    showGovukConfirm('Are you sure you want to delete this record?').then(function (confirmed) {
+        if (!confirmed) { return; }
         $.ajax({
             url: '/FPS/StaffJob/Delete',
             type: 'DELETE',
             data: { staffId: staffJobId, jobCode: StaffJobConfig.getJobCode() },
             success: function (response) {
                 if (response.success) {
-                    alert('Deleted successfully.');
-                    StaffJobConfig.onDeleted();
+                    showGovukAlert('Deleted successfully.').then(function () {
+                        StaffJobConfig.onDeleted();
+                    });
                 } else {
-                    alert('Error: ' + response.message);
+                    showGovukAlert(response.message);
                 }
             },
             error: function () {
-                alert('An error occurred while deleting.');
+                showGovukAlert('An error occurred while deleting.');
             }
         });
-    }
+    });
 }
 
 function getStaffJobExtraFilters() {
@@ -168,7 +170,6 @@ function getStaffJobExtraFilters() {
 // ---- Charge rate calculation ----
 
 function onStaffSelected(selectElement) {
-    debugger;
     var staffId = $(selectElement).val();
     var staffName = $(selectElement).find('option:selected').data('name');
     $('#StaffID').val(staffId);
