@@ -27,13 +27,13 @@ namespace Apha.PACT.Api.UnitTests.Controller.MonthControllerTest
             // Arrange
             var months = new List<MonthDto>
             {
-                new() { Monthnumber = 1, Monthname = "January" },
-                new() { Monthnumber = 2, Monthname = "February" }
+                new() { MonthNumber = 1, MonthName = "January" },
+                new() { MonthNumber = 2, MonthName = "February" }
             };
             var monthsRes = new List<MonthRes>
             {
-                new() { Monthnumber = 1, Monthname = "January" },
-                new() { Monthnumber = 2, Monthname = "February" }
+                new() { MonthNumber = 1, MonthName = "January" },
+                new() { MonthNumber = 2, MonthName = "February" }
             };
 
             _service.GetAllMonthsAsync()
@@ -46,7 +46,8 @@ namespace Apha.PACT.Api.UnitTests.Controller.MonthControllerTest
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var returnValue = Assert.IsAssignableFrom<IEnumerable<MonthRes>>(okResult.Value);
+            var returnValue = okResult.Value as IEnumerable<MonthRes>;
+            Assert.NotNull(returnValue);
             Assert.Equal(2, returnValue.Count());
             await _service.Received(1).GetAllMonthsAsync();
         }
@@ -66,7 +67,8 @@ namespace Apha.PACT.Api.UnitTests.Controller.MonthControllerTest
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var returnValue = Assert.IsAssignableFrom<IEnumerable<MonthRes>>(okResult.Value);
+            var returnValue = okResult.Value as IEnumerable<MonthRes>;
+            Assert.NotNull(returnValue);
             Assert.Empty(returnValue);
         }
     }

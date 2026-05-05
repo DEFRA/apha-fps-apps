@@ -31,8 +31,8 @@ namespace Apha.PACT.Application.UnitTests.Services.MonthServiceTest
             };
             var dtos = new List<MonthDto>
             {
-                new() { Monthnumber = 1, Monthname = "January" },
-                new() { Monthnumber = 2, Monthname = "February" }
+                new() { MonthNumber = 1, MonthName = "January" },
+                new() { MonthNumber = 2, MonthName = "February" }
             };
 
             _repository.GetAllMonthsAsync()
