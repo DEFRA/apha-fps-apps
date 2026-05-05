@@ -62,7 +62,8 @@
             </a>
         </li>
         <li>
-            <a class="dropdown-item" href="#">
+            <a class="dropdown-item@(Model == "WorkGroupGradeMaintenance" ? " sidenav-title" : "")"
+               asp-area="FPS" asp-controller="WorkGroupGradeMaintenance" asp-action="Index">
                 Maintain WG Grades
             </a>
         </li>
