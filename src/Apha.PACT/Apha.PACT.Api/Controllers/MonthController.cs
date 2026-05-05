@@ -14,7 +14,7 @@ namespace Apha.PACT.Api.Controllers
     [Authorize(Roles = "API-PACTUser,API-PACTAdmin")]
     [ApiController]
     [ApiVersion("1.0")]
-    [Route("api/v{version:apiVersion}/month")]
+    [Route("api/v{version:apiVersion}/months")]
     public class MonthController : ControllerBase
     {
         private readonly IMonthService _service;

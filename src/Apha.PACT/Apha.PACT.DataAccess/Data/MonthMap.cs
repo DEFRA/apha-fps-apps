@@ -9,12 +9,12 @@ namespace Apha.PACT.DataAccess.Data
         public void Configure(EntityTypeBuilder<Month> builder)
         {
             builder.ToTable("tblkpmonth", "fps");
-            builder.HasKey(e => e.Monthnumber);
+            builder.HasKey(e => e.MonthNumber);
 
-            builder.Property(e => e.Monthnumber)
+            builder.Property(e => e.MonthNumber)
                 .HasColumnName("monthnumber");
 
-            builder.Property(e => e.Monthname)
+            builder.Property(e => e.MonthName)
                 .HasMaxLength(20)
                 .HasColumnName("monthname");
         }

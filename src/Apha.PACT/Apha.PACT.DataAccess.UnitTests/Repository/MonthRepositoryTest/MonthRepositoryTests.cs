@@ -32,9 +32,9 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthRepositoryTest
             // Arrange
             var months = new List<Month>
             {
-                new() { Monthnumber = 3, Monthname = "March" },
-                new() { Monthnumber = 1, Monthname = "January" },
-                new() { Monthnumber = 2, Monthname = "February" }
+                new() { MonthNumber = 3, MonthName = "March" },
+                new() { MonthNumber = 1, MonthName = "January" },
+                new() { MonthNumber = 2, MonthName = "February" }
             };
 
             await _context.Months.AddRangeAsync(months);
@@ -45,9 +45,9 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthRepositoryTest
 
             // Assert
             Assert.Equal(3, result.Count);
-            Assert.Equal((short)1, result[0].Monthnumber);
-            Assert.Equal((short)2, result[1].Monthnumber);
-            Assert.Equal((short)3, result[2].Monthnumber);
+            Assert.Equal((short)1, result[0].MonthNumber);
+            Assert.Equal((short)2, result[1].MonthNumber);
+            Assert.Equal((short)3, result[2].MonthNumber);
         }
 
         [Fact]

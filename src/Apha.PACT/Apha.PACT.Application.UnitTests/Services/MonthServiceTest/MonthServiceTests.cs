@@ -26,8 +26,8 @@ namespace Apha.PACT.Application.UnitTests.Services.MonthServiceTest
             // Arrange
             var entities = new List<Month>
             {
-                new() { Monthnumber = 1, Monthname = "January" },
-                new() { Monthnumber = 2, Monthname = "February" }
+                new() { MonthNumber = 1, MonthName = "January" },
+                new() { MonthNumber = 2, MonthName = "February" }
             };
             var dtos = new List<MonthDto>
             {
