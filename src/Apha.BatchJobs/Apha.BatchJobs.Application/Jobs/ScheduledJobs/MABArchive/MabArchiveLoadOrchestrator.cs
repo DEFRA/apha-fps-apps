@@ -13,6 +13,7 @@ public sealed class MabArchiveLoadOrchestrator
 {
     private readonly IReloadFpsTotalsService _totalsService;
     private readonly IMyFpsYearlyDataService _dataService;
+    private readonly IExecutionYearContext _executionYearContext;
     private readonly IEmailNotificationService _notificationService;
     private readonly IBatchLockRepository _lockRepository;
     private readonly ILogger<MabArchiveLoadOrchestrator> _logger;
@@ -28,12 +29,14 @@ public sealed class MabArchiveLoadOrchestrator
     public MabArchiveLoadOrchestrator(
         IReloadFpsTotalsService totalsService,
         IMyFpsYearlyDataService dataService,
+        IExecutionYearContext executionYearContext,
         IEmailNotificationService notificationService,
         IBatchLockRepository lockRepository,
         ILogger<MabArchiveLoadOrchestrator> logger)
     {
         _totalsService = totalsService ?? throw new ArgumentNullException(nameof(totalsService));
         _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _executionYearContext = executionYearContext ?? throw new ArgumentNullException(nameof(executionYearContext));
         _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
         _lockRepository = lockRepository ?? throw new ArgumentNullException(nameof(lockRepository));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -109,7 +112,10 @@ public sealed class MabArchiveLoadOrchestrator
             {
                 async Task ExecuteFullYearCycleAsync(int year)
                 {
-                    var isAvailable = await _dataService.IsYearAvailableAsync(year, cancellationToken);
+                    _executionYearContext.FpsYear = year;
+                    _executionYearContext.YearSource = "MABArchive.FullYearCycle";
+
+                    var isAvailable = await _dataService.IsYearAvailableAsync(null, cancellationToken);
                     if (!isAvailable)
                     {
                         _logger.LogInformation("Skipping year {Year} full cycle because year is not available", year);
@@ -118,13 +124,13 @@ public sealed class MabArchiveLoadOrchestrator
 
                     _logger.LogInformation("Executing full cycle for year {Year}", year);
 
-                    var totalsRows = await _totalsService.RebuildSourceTotalsAsync(year, cancellationToken);
+                    var totalsRows = await _totalsService.RebuildSourceTotalsAsync(null, cancellationToken);
                     _logger.LogInformation("Rebuilt source totals for year {Year} | RowsInserted={RowsInserted}", year, totalsRows);
 
-                    var deletedRows = await _dataService.DeleteYearDataAsync(year, cancellationToken);
+                    var deletedRows = await _dataService.DeleteYearDataAsync(null, cancellationToken);
                     _logger.LogInformation("Deleted archive data for year {Year} | RowsDeleted={RowsDeleted}", year, deletedRows);
 
-                    var loadedRows = await _dataService.LoadYearDataAsync(year, cancellationToken);
+                    var loadedRows = await _dataService.LoadYearDataAsync(null, cancellationToken);
                     _logger.LogInformation("Loaded archive data for year {Year} | RowsLoaded={RowsLoaded}", year, loadedRows);
                 }
 
@@ -139,7 +145,10 @@ public sealed class MabArchiveLoadOrchestrator
                 else
                 {
                     // Legacy parity: before May, current year runs project-all-only refresh.
-                    var currentYearAvailable = await _dataService.IsYearAvailableAsync(context.CurrentYear, cancellationToken);
+                    _executionYearContext.FpsYear = context.CurrentYear;
+                    _executionYearContext.YearSource = "MABArchive.PartialRefresh";
+
+                    var currentYearAvailable = await _dataService.IsYearAvailableAsync(null, cancellationToken);
                     if (!currentYearAvailable)
                     {
                         _logger.LogInformation("Skipping current-year partial refresh because year {Year} is not available", context.CurrentYear);
@@ -147,7 +156,7 @@ public sealed class MabArchiveLoadOrchestrator
                     else
                     {
                         _logger.LogInformation("Executing partial refresh for current year {CurrentYear}", context.CurrentYear);
-                        var refreshedRows = await _dataService.RefreshProjectAllOnlyAsync(context.CurrentYear, cancellationToken);
+                        var refreshedRows = await _dataService.RefreshProjectAllOnlyAsync(null, cancellationToken);
                         _logger.LogInformation("Refreshed project all for year {CurrentYear} | RowsRefreshed={RowsRefreshed}", context.CurrentYear, refreshedRows);
                     }
                 }

@@ -18,6 +18,7 @@ namespace Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive;
 public sealed class MabArchiveJobHandler : IBatchJob
 {
     private readonly MabArchiveLoadOrchestrator _orchestrator;
+    private readonly IExecutionYearContext _executionYearContext;
     private readonly Func<Func<Task>, Task> _transactionWrapper;
     private readonly ILogger<MabArchiveJobHandler> _logger;
     private readonly ICorrelationService _correlationService;
@@ -53,12 +54,14 @@ public sealed class MabArchiveJobHandler : IBatchJob
     /// </summary>
     public MabArchiveJobHandler(
         MabArchiveLoadOrchestrator orchestrator,
+        IExecutionYearContext executionYearContext,
         Func<Func<Task>, Task> transactionWrapper,
         ICorrelationService correlationService,
         ILogger<MabArchiveJobHandler> logger,
         IOptions<MabArchiveSettings> settings)
     {
         _orchestrator = orchestrator ?? throw new ArgumentNullException(nameof(orchestrator));
+        _executionYearContext = executionYearContext ?? throw new ArgumentNullException(nameof(executionYearContext));
         _transactionWrapper = transactionWrapper ?? throw new ArgumentNullException(nameof(transactionWrapper));
         _correlationService = correlationService ?? throw new ArgumentNullException(nameof(correlationService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -91,6 +94,8 @@ public sealed class MabArchiveJobHandler : IBatchJob
         try
         {
             var context = _orchestrator.BuildExecutionContext();
+            _executionYearContext.FpsYear = context.PrimaryYear;
+            _executionYearContext.YearSource = "MABArchive.BuildExecutionContext";
             _logger.LogInformation(
                 "Execution context built | PrimaryYear={PrimaryYear} | CurrentMonth={CurrentMonth}",
                 context.PrimaryYear,

@@ -1,4 +1,5 @@
 using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services;
+using Apha.BatchJobs.Domain.Interfaces;
 using Apha.BatchJobs.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -15,6 +16,7 @@ namespace Apha.BatchJobs.Infrastructure.Repositories.MabArchive;
 public sealed class MyFpsYearlyDataService : IMyFpsYearlyDataService
 {
     private readonly BatchJobsDbContext _context;
+    private readonly IExecutionYearContext _executionYearContext;
     private readonly ILogger<MyFpsYearlyDataService> _logger;
     private readonly IReadOnlyList<IMabArchiveLoader> _orderedLoaders;
     private readonly IMabArchiveLoader _projectAllLoader;
@@ -62,10 +64,12 @@ public sealed class MyFpsYearlyDataService : IMyFpsYearlyDataService
     /// <param name="loaders">Registered MABArchive loaders in metadata-defined sequence.</param>
     public MyFpsYearlyDataService(
         BatchJobsDbContext context,
+        IExecutionYearContext executionYearContext,
         ILogger<MyFpsYearlyDataService> logger,
         IEnumerable<IMabArchiveLoader> loaders)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
+        _executionYearContext = executionYearContext ?? throw new ArgumentNullException(nameof(executionYearContext));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
         var loaderList = (loaders ?? throw new ArgumentNullException(nameof(loaders)))
@@ -104,24 +108,26 @@ public sealed class MyFpsYearlyDataService : IMyFpsYearlyDataService
     /// <param name="year">Target year to verify.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>True if the year is available for processing.</returns>
-    public async Task<bool> IsYearAvailableAsync(int year, CancellationToken cancellationToken)
+    public async Task<bool> IsYearAvailableAsync(int? year, CancellationToken cancellationToken)
     {
+        var targetYear = ResolveYear(year);
+
         try
         {
             var exists = await _context.Database.SqlQuery<bool>($@"
 SELECT EXISTS(
     SELECT 1
     FROM fps.tblyearmaster
-    WHERE fpsyear = {year}
+    WHERE fpsyear = {targetYear}
 ) AS ""Value""
 ").SingleAsync(cancellationToken);
 
-            _logger.LogInformation("Year availability check for {Year}: {Exists}", year, exists);
+            _logger.LogInformation("Year availability check for {Year}: {Exists}", targetYear, exists);
             return exists;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed year availability check for {Year}", year);
+            _logger.LogError(ex, "Failed year availability check for {Year}", targetYear);
             throw;
         }
     }
@@ -134,9 +140,11 @@ SELECT EXISTS(
     /// <param name="year">Target year to delete.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Total rows deleted.</returns>
-    public async Task<int> DeleteYearDataAsync(int year, CancellationToken cancellationToken)
+    public async Task<int> DeleteYearDataAsync(int? year, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Deleting archive data for year {Year} across all archive tables in dependency order (legacy parity scope)", year);
+        var targetYear = ResolveYear(year);
+
+        _logger.LogInformation("Deleting archive data for year {Year} across all archive tables in dependency order (legacy parity scope)", targetYear);
 
         try
         {
@@ -147,41 +155,41 @@ SELECT EXISTS(
             // This list maps to legacy sp_DeleteYearsFPSData coverage per baseline document.
             foreach (var table in ArchiveDeleteTables)
             {
-                _logger.LogInformation("Deleting table {TableName} for year {Year}", table, year);
+                _logger.LogInformation("Deleting table {TableName} for year {Year}", table, targetYear);
                 var deleteSql = $@"
 DELETE FROM {table}
 WHERE year = @year
 ";
                 var deleteCount = await _context.Database.ExecuteSqlRawAsync(
                     deleteSql,
-                    [new NpgsqlParameter("year", year)],
+                    [new NpgsqlParameter("year", targetYear)],
                     cancellationToken);
 
                 totalRowsAffected += deleteCount;
-                _logger.LogInformation("Deleted {RowCount} rows from {TableName} for year {Year}", deleteCount, table, year);
+                _logger.LogInformation("Deleted {RowCount} rows from {TableName} for year {Year}", deleteCount, table, targetYear);
             }
 
             // Special handling for G_tlkpProject: project-based delete matching FPS source projects
             // (not year-based, but included in legacy scope per sp_DeleteYearsFPSData baseline)
-            _logger.LogInformation("Deleting table mabarchive.g_tlkpproject using project keys for year {Year}", year);
+            _logger.LogInformation("Deleting table mabarchive.g_tlkpproject using project keys for year {Year}", targetYear);
             var projectDeleteCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 DELETE FROM mabarchive.g_tlkpproject
 WHERE parentproject IN (
     SELECT DISTINCT parentproject
     FROM fps.tlkpproject
-    WHERE fpsyear = {year}
+    WHERE fpsyear = {targetYear}
 )
 ", cancellationToken);
 
             totalRowsAffected += projectDeleteCount;
-            _logger.LogInformation("Deleted {RowCount} rows from mabarchive.g_tlkpproject (project-based delete for year {Year})", projectDeleteCount, year);
+            _logger.LogInformation("Deleted {RowCount} rows from mabarchive.g_tlkpproject (project-based delete for year {Year})", projectDeleteCount, targetYear);
 
-            _logger.LogInformation("Deleted {TotalRowCount} total rows from archive tables for year {Year} (legacy parity scope)", totalRowsAffected, year);
+            _logger.LogInformation("Deleted {TotalRowCount} total rows from archive tables for year {Year} (legacy parity scope)", totalRowsAffected, targetYear);
             return totalRowsAffected;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to delete archive data for year {Year}", year);
+            _logger.LogError(ex, "Failed to delete archive data for year {Year}", targetYear);
             throw;
         }
     }
@@ -195,9 +203,11 @@ WHERE parentproject IN (
     /// <param name="year">Target year to load.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Total rows loaded.</returns>
-    public async Task<int> LoadYearDataAsync(int year, CancellationToken cancellationToken)
+    public async Task<int> LoadYearDataAsync(int? year, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Loading archive data for year {Year} - full sp_AddYearsFPSData fan-out ({LoaderCount} loaders, metadata sequence)", year, _orderedLoaders.Count);
+        var targetYear = ResolveYear(year);
+
+        _logger.LogInformation("Loading archive data for year {Year} - full sp_AddYearsFPSData fan-out ({LoaderCount} loaders, metadata sequence)", targetYear, _orderedLoaders.Count);
 
         var currentLoaderNumber = 0;
         var currentLoaderName = "NotStarted";
@@ -211,15 +221,15 @@ WHERE parentproject IN (
                 currentLoaderNumber = loader.Sequence;
                 currentLoaderName = loader.Name;
 
-                _logger.LogInformation("[{LoaderNumber}/{TotalLoaders}] Starting {LoaderName} for year {Year}", loader.Sequence, _orderedLoaders.Count, loader.Name, year);
+                _logger.LogInformation("[{LoaderNumber}/{TotalLoaders}] Starting {LoaderName} for year {Year}", loader.Sequence, _orderedLoaders.Count, loader.Name, targetYear);
 
-                var rowCount = await loader.LoadAsync(_context, year, cancellationToken);
+                var rowCount = await loader.LoadAsync(_context, targetYear, cancellationToken);
                 totalRowsAffected += rowCount;
 
-                _logger.LogInformation("[{LoaderNumber}/{TotalLoaders}] {LoaderName}: {RowCount} rows for year {Year}", loader.Sequence, _orderedLoaders.Count, loader.Name, rowCount, year);
+                _logger.LogInformation("[{LoaderNumber}/{TotalLoaders}] {LoaderName}: {RowCount} rows for year {Year}", loader.Sequence, _orderedLoaders.Count, loader.Name, rowCount, targetYear);
             }
 
-            _logger.LogInformation("LoadYearDataAsync complete: {TotalRowCount} total rows loaded for year {Year}", totalRowsAffected, year);
+            _logger.LogInformation("LoadYearDataAsync complete: {TotalRowCount} total rows loaded for year {Year}", totalRowsAffected, targetYear);
             return totalRowsAffected;
         }
         catch (Exception ex)
@@ -227,7 +237,7 @@ WHERE parentproject IN (
             _logger.LogError(
                 ex,
                 "Failed to load archive data for year {Year} while executing loader [{LoaderNumber}/{TotalLoaders}] {LoaderName}",
-                year,
+                targetYear,
                 currentLoaderNumber,
                 _orderedLoaders.Count,
                 currentLoaderName);
@@ -242,27 +252,44 @@ WHERE parentproject IN (
     /// <param name="year">Target year to refresh.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Rows affected in my_tlkpproject_all.</returns>
-    public async Task<int> RefreshProjectAllOnlyAsync(int year, CancellationToken cancellationToken)
+    public async Task<int> RefreshProjectAllOnlyAsync(int? year, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Refreshing project_all cross-reference only for year {Year}", year);
+        var targetYear = ResolveYear(year);
+
+        _logger.LogInformation("Refreshing project_all cross-reference only for year {Year}", targetYear);
 
         try
         {
             var deletedRows = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 DELETE FROM mabarchive.my_tlkpproject_all
-WHERE year = {year}
+WHERE year = {targetYear}
 ", cancellationToken);
-            _logger.LogInformation("Deleted {RowCount} rows in my_tlkpproject_all for year {Year} prior to refresh", deletedRows, year);
+            _logger.LogInformation("Deleted {RowCount} rows in my_tlkpproject_all for year {Year} prior to refresh", deletedRows, targetYear);
 
-            var rowsAffected = await _projectAllLoader.LoadAsync(_context, year, cancellationToken);
+            var rowsAffected = await _projectAllLoader.LoadAsync(_context, targetYear, cancellationToken);
 
-            _logger.LogInformation("Refreshed {RowCount} rows in my_tlkpproject_all for year {Year}", rowsAffected, year);
+            _logger.LogInformation("Refreshed {RowCount} rows in my_tlkpproject_all for year {Year}", rowsAffected, targetYear);
             return rowsAffected;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to refresh project all for year {Year}", year);
+            _logger.LogError(ex, "Failed to refresh project all for year {Year}", targetYear);
             throw;
         }
+    }
+
+    private int ResolveYear(int? explicitYear)
+    {
+        if (explicitYear.HasValue)
+        {
+            return explicitYear.Value;
+        }
+
+        if (_executionYearContext.FpsYear.HasValue)
+        {
+            return _executionYearContext.FpsYear.Value;
+        }
+
+        throw new InvalidOperationException("Execution year is not set in scoped context and no explicit year was provided.");
     }
 }

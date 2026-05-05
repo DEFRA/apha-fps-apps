@@ -1,5 +1,6 @@
 using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services;
 using Apha.BatchJobs.Domain.Configuration;
+using Apha.BatchJobs.Domain.Interfaces;
 using Apha.BatchJobs.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -14,6 +15,7 @@ namespace Apha.BatchJobs.Infrastructure.Repositories.MabArchive;
 public sealed class ReloadFpsTotalsService : IReloadFpsTotalsService
 {
     private readonly BatchJobsDbContext _context;
+    private readonly IExecutionYearContext _executionYearContext;
     private readonly ILogger<ReloadFpsTotalsService> _logger;
     private readonly MabArchiveSettings _settings;
 
@@ -32,10 +34,12 @@ public sealed class ReloadFpsTotalsService : IReloadFpsTotalsService
     /// <param name="logger">Logger instance.</param>
     public ReloadFpsTotalsService(
         BatchJobsDbContext context,
+        IExecutionYearContext executionYearContext,
         ILogger<ReloadFpsTotalsService> logger,
         IOptions<MabArchiveSettings> settings)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
+        _executionYearContext = executionYearContext ?? throw new ArgumentNullException(nameof(executionYearContext));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _settings = settings?.Value ?? new MabArchiveSettings();
     }
@@ -46,9 +50,11 @@ public sealed class ReloadFpsTotalsService : IReloadFpsTotalsService
     /// <param name="year">Target FPS year.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The number of rows inserted into fps.fpsyeartotals.</returns>
-    public async Task<int> RebuildSourceTotalsAsync(int year, CancellationToken cancellationToken)
+    public async Task<int> RebuildSourceTotalsAsync(int? year, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Rebuilding FPS source totals for year {Year}", year);
+        var targetYear = ResolveYear(year);
+
+        _logger.LogInformation("Rebuilding FPS source totals for year {Year}", targetYear);
 
         try
         {
@@ -61,10 +67,10 @@ public sealed class ReloadFpsTotalsService : IReloadFpsTotalsService
             // Year-scoped delete to avoid cross-year data loss in multi-year databases.
             var deleteRows = await _context.Database.ExecuteSqlInterpolatedAsync($@"
 DELETE FROM fps.fpsyeartotals
-WHERE fpsyear = {year}
+WHERE fpsyear = {targetYear}
 ", cancellationToken);
 
-            _logger.LogInformation("Deleted {RowCount} existing totals rows for year {Year}", deleteRows, year);
+            _logger.LogInformation("Deleted {RowCount} existing totals rows for year {Year}", deleteRows, targetYear);
 
             // Rebuild totals from source using legacy sp_createFPSTotals formulas and null handling.
             var insertRows = await _context.Database.ExecuteSqlInterpolatedAsync($@"
@@ -162,18 +168,33 @@ LEFT JOIN fps.qrytotalstaffcosts s
 LEFT JOIN fps.qrytotaltestcosts tst
     ON t.parentproject = tst.jobcode
     AND t.fpsyear = tst.fpsyear
-WHERE t.fpsyear = {year}
+WHERE t.fpsyear = {targetYear}
 ", cancellationToken);
 
-            _logger.LogInformation("Inserted {RowCount} rebuilt totals rows for year {Year}", insertRows, year);
+            _logger.LogInformation("Inserted {RowCount} rebuilt totals rows for year {Year}", insertRows, targetYear);
 
             return insertRows;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to rebuild FPS source totals for year {Year}", year);
+            _logger.LogError(ex, "Failed to rebuild FPS source totals for year {Year}", targetYear);
             throw;
         }
+    }
+
+    private int ResolveYear(int? explicitYear)
+    {
+        if (explicitYear.HasValue)
+        {
+            return explicitYear.Value;
+        }
+
+        if (_executionYearContext.FpsYear.HasValue)
+        {
+            return _executionYearContext.FpsYear.Value;
+        }
+
+        throw new InvalidOperationException("Execution year is not set in scoped context and no explicit year was provided.");
     }
 
     private async Task EnsureTotalsViewsAreYearScopedAsync(CancellationToken cancellationToken)

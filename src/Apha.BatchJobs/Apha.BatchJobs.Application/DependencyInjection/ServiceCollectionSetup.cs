@@ -6,6 +6,7 @@ using Apha.BatchJobs.Domain.Configuration;
 using Apha.BatchJobs.Domain.Entities;
 using Apha.BatchJobs.Domain.Interfaces;
 using Apha.BatchJobs.Infrastructure.Data;
+using Apha.BatchJobs.Infrastructure.Context;
 using Apha.BatchJobs.Infrastructure.Repositories;
 using Apha.BatchJobs.Infrastructure.Repositories.MabArchive;
 using Apha.BatchJobs.Infrastructure.Repositories.MabArchive.Loaders;
@@ -85,6 +86,7 @@ public static class ServiceCollectionSetup
         RegisterBatchJobs(services);
         services.AddScoped<IBatchJobFactory>(sp => new BatchJobFactory(sp));
         services.AddScoped<IJobOrchestrator, JobOrchestrator>();
+        services.AddScoped<IExecutionYearContext, ExecutionYearContext>();
         services.AddSingleton(config);
         services.AddSingleton<ICorrelationService, CorrelationService>();
 
