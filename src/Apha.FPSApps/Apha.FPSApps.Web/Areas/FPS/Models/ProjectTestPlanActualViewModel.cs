@@ -11,7 +11,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public string Program { get; set; } = string.Empty;
         public string Contract { get; set; } = string.Empty;
         public decimal TotalPlannedCost { get; set; }
-        public double TotalActualVolume { get; set; }
         public double TotalActualCost { get; set; }
         public double PercentOfPlan { get; set; }
         public List<SelectListItem> ProjectList { get; set; } = new List<SelectListItem>();

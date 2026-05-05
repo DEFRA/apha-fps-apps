@@ -20,13 +20,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
     public class ProjectTestPlanActualController : Controller
     {
         private readonly IMapper _mapper;
-        private readonly IProjectTestPlanActualService _projTestPlanActualService;
+        private readonly IMonthlyOutputService _projTestPlanActualService;
         private readonly IProjectService _projectService;
         private readonly ITestRequirementService _testRequirementService;
 
         public ProjectTestPlanActualController(
             IMapper mapper,
-            IProjectTestPlanActualService projTestPlanActualService,
+            IMonthlyOutputService projTestPlanActualService,
             IProjectService projectService,
             ITestRequirementService testRequirementService)
         {
@@ -83,7 +83,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             };
 
             var totalPlannedCost = selectedProjectCode != string.Empty
-                ? (await _projTestPlanActualService.GetTotalPlannedCostAsync(selectedProjectCode)).Data
+                ? await ComputeTotalPlannedCostAsync(selectedProjectCode)
                 : 0m;
 
             var model = new ProjectTestPlanActualViewModel
@@ -151,7 +151,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}") ?? new Dictionary<string, string>();
             var queryParameters = _mapper.Map<QueryParameters<string>>(request);
-            var pagedData = await _projTestPlanActualService.GetMonthlyOutputByProjectAsync(queryParameters, projectCode ?? string.Empty);
+            var priceLookup = await GetPriceLookupAsync(projectCode ?? string.Empty);
+            var pagedData = await _projTestPlanActualService.GetMonthlyOutputByProjectAsync(queryParameters, projectCode ?? string.Empty, priceLookup);
 
             var items = pagedData.Data != null ? _mapper.Map<List<ActualTestOutputItem>>(pagedData.Data) : new List<ActualTestOutputItem>();
             var paginationModel = _mapper.Map<PaginationModel>(pagedData.Pagination) ?? new PaginationModel();
@@ -199,11 +200,25 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             if (string.IsNullOrWhiteSpace(projectCode))
                 return Json(new { success = false, message = "Project code is required." });
 
-            var result = await _projTestPlanActualService.GetTotalPlannedCostAsync(projectCode);
-            if (result.Success)
-                return Json(new { success = true, totalPlannedCost = result.Data });
+            var totalPlannedCost = await ComputeTotalPlannedCostAsync(projectCode);
+            return Json(new { success = true, totalPlannedCost });
+        }
 
-            return Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Could not retrieve planned cost.", totalPlannedCost = 0, errors = (result.Errors ?? new List<ApiErrorDto>()).Select(e => new { field = e.Code ?? string.Empty, message = e.Message ?? "An unexpected error occurred." }) });
+        private async Task<decimal> ComputeTotalPlannedCostAsync(string projectCode)
+        {
+            var allQuery = new QueryParameters<string> { Page = 1, PageSize = 9999 };
+            var result = await _testRequirementService.GetPagedTestReqmtbyProjectAsync(allQuery, projectCode);
+            if (!result.Success || result.Data == null) return 0m;
+            return result.Data.Sum(t => (t.UnitPrice ?? 0m) * (decimal)(t.NoRequired ?? 0.0));
+        }
+
+        private async Task<Dictionary<(string, string), decimal>> GetPriceLookupAsync(string projectCode)
+        {
+            var allQuery = new QueryParameters<string> { Page = 1, PageSize = 9999 };
+            var result = await _testRequirementService.GetPagedTestReqmtbyProjectAsync(allQuery, projectCode);
+            return result.Data?
+                .ToDictionary(t => (t.TestCode ?? string.Empty, t.Buyer ?? string.Empty), t => t.UnitPrice ?? 0m)
+                ?? new Dictionary<(string, string), decimal>();
         }
 
         [HttpGet]
@@ -212,11 +227,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             if (string.IsNullOrWhiteSpace(projectCode))
                 return Json(new { success = false, message = "Project code is required." });
 
-            var result = await _projTestPlanActualService.GetTotalActualByProjectAsync(projectCode);
-            if (result.Success && result.Data != null)
-                return Json(new { success = true, totalVolume = result.Data.TotalVolume, totalCost = result.Data.TotalCost });
+            var priceLookup = await GetPriceLookupAsync(projectCode);
+            var result = await _projTestPlanActualService.GetTotalActualByProjectAsync(projectCode, priceLookup);
+            if (result.Success)
+                return Json(new { success = true, totalCost = result.Data });
 
-            return Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Could not retrieve actual totals.", totalVolume = 0, totalCost = 0, errors = (result.Errors ?? new List<ApiErrorDto>()).Select(e => new { field = e.Code ?? string.Empty, message = e.Message ?? "An unexpected error occurred." }) });
+            return Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Could not retrieve actual totals.", totalCost = 0, errors = (result.Errors ?? new List<ApiErrorDto>()).Select(e => new { field = e.Code ?? string.Empty, message = e.Message ?? "An unexpected error occurred." }) });
         }
 
         [HttpDelete]

@@ -100,7 +100,7 @@
         currentProjectCode = $(this).val();
         $('#summary-project-code').val(currentProjectCode);
         ['summary-project-description','summary-program','summary-contract'].forEach(function(id){ $('#'+id).val(''); });
-        $('#planned-total-cost').val('£0.00'); $('#project-total-volume').val('0'); $('#project-total-cost').val('£0'); $('#project-percent-plan').val('0%');
+        $('#planned-total-cost').val('£0.00'); $('#project-total-cost').val('£0'); $('#project-percent-plan').val('0%');
         if (currentProjectCode) {
             $.get('@Url.Action("GetProjectInfo","ProjectTestPlanActual",new{area="FPS"})', { projectCode: currentProjectCode }, function (r) { if (r.success) { $('#summary-project-description').val(r.projectTitle); $('#summary-program').val(r.program); $('#summary-contract').val(r.contract); } });
             window['gridManager_@Model.TestPlanGrid.GridId'].reloadGrid({ page: 1 });
@@ -116,7 +116,7 @@
     }
     function refreshActualTotals() {
         if (!currentProjectCode) return;
-        $.get('@Url.Action("GetTotalActualCost","ProjectTestPlanActual",new{area="FPS"})', { projectCode: currentProjectCode }, function (r) { if (r.success) { $('#project-total-volume').val(parseFloat(r.totalVolume||0).toFixed(0)); $('#project-total-cost').val(formatCurrency(r.totalCost)); calculatePercentOfPlan(); } });
+        $.get('@Url.Action("GetTotalActualCost","ProjectTestPlanActual",new{area="FPS"})', { projectCode: currentProjectCode }, function (r) { if (r.success) { $('#project-total-cost').val(formatCurrency(r.totalCost)); calculatePercentOfPlan(); } });
     }
     function formatCurrency(v) { return '\u00A3' + parseFloat(v||0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,','); }
     function calculatePercentOfPlan() {

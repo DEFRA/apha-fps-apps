@@ -18,7 +18,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectTestPlanActualContro
     public class ProjectTestPlanActualControllerTests
     {
         private readonly IMapper _mapper;
-        private readonly IProjectTestPlanActualService _projTestPlanActualService;
+        private readonly IMonthlyOutputService _projTestPlanActualService;
         private readonly IProjectService _projectService;
         private readonly ITestRequirementService _testRequirementService;
         private readonly ProjectTestPlanActualController _controller;
@@ -26,7 +26,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectTestPlanActualContro
         public ProjectTestPlanActualControllerTests()
         {
             _mapper = Substitute.For<IMapper>();
-            _projTestPlanActualService = Substitute.For<IProjectTestPlanActualService>();
+            _projTestPlanActualService = Substitute.For<IMonthlyOutputService>();
             _projectService = Substitute.For<IProjectService>();
             _testRequirementService = Substitute.For<ITestRequirementService>();
             _controller = new ProjectTestPlanActualController(_mapper, _projTestPlanActualService, _projectService, _testRequirementService);
@@ -45,12 +45,19 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectTestPlanActualContro
             dto ??= new ProjectDto { ParentProject = code, ProjectTitle = "Test Project", Program = "P001", Contract = "C001" };
             _projectService.GetProjectByIdAsync(code).Returns(ApiResponseDto<ProjectDto>.SuccessResponse(dto));
         }
-        private void SetupPlannedCost(string code, decimal cost = 500m) => _projTestPlanActualService.GetTotalPlannedCostAsync(code).Returns(ApiResponseDto<decimal>.SuccessResponse(cost));
+        private void SetupTestReqmts(string code, decimal totalCost = 500m)
+        {
+            var reqs = totalCost > 0
+                ? new List<TestRequirementDto> { new() { UnitPrice = totalCost, NoRequired = 1 } }
+                : new List<TestRequirementDto>();
+            _testRequirementService.GetPagedTestReqmtbyProjectAsync(Arg.Any<QueryParameters<string>>(), code)
+                .Returns(ApiResponseDto<List<TestRequirementDto>>.SuccessResponse(reqs));
+        }
 
         [Fact]
         public async Task Index_WithValidProjectCode_ReturnsViewWithPopulatedModel()
         {
-            SetupProjectList(); SetupProjectById("AH0033"); SetupPlannedCost("AH0033");
+            SetupProjectList(); SetupProjectById("AH0033"); SetupTestReqmts("AH0033");
             var result = await _controller.Index("AH0033");
             var model = Assert.IsType<ProjectTestPlanActualViewModel>(Assert.IsType<ViewResult>(result).Model);
             Assert.Equal("AH0033", model.SelectedProjectCode);
@@ -62,7 +69,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectTestPlanActualContro
         public async Task Index_WithNoProjectCode_SelectsFirstProjectFromList()
         {
             var projects = new List<ProjectDto> { new() { ParentProject = "AH0001", ProjectTitle = "First", Program = "P001", Contract = "C001" }, new() { ParentProject = "AH0002", ProjectTitle = "Second", Program = "P002", Contract = "C002" } };
-            SetupProjectList(projects); SetupProjectById("AH0001", projects[0]); SetupPlannedCost("AH0001");
+            SetupProjectList(projects); SetupProjectById("AH0001", projects[0]); SetupTestReqmts("AH0001");
             var model = Assert.IsType<ProjectTestPlanActualViewModel>(Assert.IsType<ViewResult>(await _controller.Index(null)).Model);
             Assert.Equal("AH0001", model.SelectedProjectCode);
         }
@@ -70,7 +77,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectTestPlanActualContro
         [Fact]
         public async Task Index_WithInvalidProjectCode_FallsBackToFirstProject()
         {
-            SetupProjectList(); SetupProjectById("AH0033"); SetupPlannedCost("AH0033");
+            SetupProjectList(); SetupProjectById("AH0033"); SetupTestReqmts("AH0033");
             var model = Assert.IsType<ProjectTestPlanActualViewModel>(Assert.IsType<ViewResult>(await _controller.Index("INVALID")).Model);
             Assert.Equal("AH0033", model.SelectedProjectCode);
         }
@@ -78,7 +85,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectTestPlanActualContro
         [Fact]
         public async Task Index_ReturnsTestPlanGridAndCompareTests2Grid()
         {
-            SetupProjectList(); SetupProjectById("AH0033"); SetupPlannedCost("AH0033");
+            SetupProjectList(); SetupProjectById("AH0033"); SetupTestReqmts("AH0033");
             var model = Assert.IsType<ProjectTestPlanActualViewModel>(Assert.IsType<ViewResult>(await _controller.Index("AH0033")).Model);
             Assert.Equal("testPlanGrid", model.TestPlanGrid.GridId);
             Assert.Equal("compareTests2Grid", model.CompareTests2Grid.GridId);
@@ -100,7 +107,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectTestPlanActualContro
         [Fact]
         public async Task GetTotalPlannedCost_WithValidProjectCode_ReturnsSuccessJson()
         {
-            SetupPlannedCost("AH0033", 750m);
+            SetupTestReqmts("AH0033", 750m);
             Assert.True(Deserialize<JR>(Assert.IsType<JsonResult>(await _controller.GetTotalPlannedCost("AH0033")))?.success);
         }
 
@@ -110,7 +117,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectTestPlanActualContro
         [Fact]
         public async Task GetTotalActualCost_WithValidProjectCode_ReturnsSuccessJson()
         {
-            _projTestPlanActualService.GetTotalActualByProjectAsync("AH0033").Returns(ApiResponseDto<MonthlyOutputTotalsDto>.SuccessResponse(new MonthlyOutputTotalsDto { TotalVolume = 8, TotalCost = 900 }));
+            SetupTestReqmts("AH0033");
+            _projTestPlanActualService.GetTotalActualByProjectAsync("AH0033", Arg.Any<Dictionary<(string, string), decimal>>()).Returns(ApiResponseDto<double>.SuccessResponse(900));
             Assert.True(Deserialize<JR>(Assert.IsType<JsonResult>(await _controller.GetTotalActualCost("AH0033")))?.success);
         }
 
@@ -188,7 +196,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectTestPlanActualContro
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
             var query   = new QueryParameters<string> { Page = 1, PageSize = 10 };
             _mapper.Map<QueryParameters<string>>(request).Returns(query);
-            _projTestPlanActualService.GetMonthlyOutputByProjectAsync(query, "AH0033")
+            SetupTestReqmts("AH0033");
+            _projTestPlanActualService.GetMonthlyOutputByProjectAsync(query, "AH0033", Arg.Any<Dictionary<(string, string), decimal>>())
                 .Returns(ApiResponseDto<List<MonthlyOutputDto>>.SuccessResponse(new List<MonthlyOutputDto>()));
             _mapper.Map<List<ActualTestOutputItem>>(Arg.Any<List<MonthlyOutputDto>>()).Returns(new List<ActualTestOutputItem>());
             _mapper.Map<PaginationModel>(Arg.Any<object>()).Returns(new PaginationModel());
@@ -215,7 +224,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectTestPlanActualContro
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
             var query   = new QueryParameters<string> { Page = 1, PageSize = 10 };
             _mapper.Map<QueryParameters<string>>(request).Returns(query);
-            _projTestPlanActualService.GetMonthlyOutputByProjectAsync(query, "AH0033")
+            SetupTestReqmts("AH0033");
+            _projTestPlanActualService.GetMonthlyOutputByProjectAsync(query, "AH0033", Arg.Any<Dictionary<(string, string), decimal>>())
                 .Returns(ApiResponseDto<List<MonthlyOutputDto>>.SuccessResponse(new List<MonthlyOutputDto>()));
             _mapper.Map<List<ActualTestOutputItem>>(Arg.Any<List<MonthlyOutputDto>>()).Returns(new List<ActualTestOutputItem>());
             _mapper.Map<PaginationModel>(Arg.Any<object>()).Returns(new PaginationModel());

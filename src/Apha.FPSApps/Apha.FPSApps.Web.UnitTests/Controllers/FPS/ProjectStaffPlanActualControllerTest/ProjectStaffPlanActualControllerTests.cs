@@ -16,7 +16,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectStaffPlanActualContr
     public class ProjectStaffPlanActualControllerTests
     {
         private readonly IMapper _mapper;
-        private readonly IProjectStaffPlanActualService _projPlanVsActualsStaffService;
+        private readonly ITimeCostCalcsService _projPlanVsActualsStaffService;
         private readonly IProjectService _projectService;
         private readonly IStaffJobService _staffJobService;
         private readonly ProjectStaffPlanActualController _controller;
@@ -24,7 +24,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectStaffPlanActualContr
         public ProjectStaffPlanActualControllerTests()
         {
             _mapper = Substitute.For<IMapper>();
-            _projPlanVsActualsStaffService = Substitute.For<IProjectStaffPlanActualService>();
+            _projPlanVsActualsStaffService = Substitute.For<ITimeCostCalcsService>();
             _projectService = Substitute.For<IProjectService>();
             _staffJobService = Substitute.For<IStaffJobService>();
             _controller = new ProjectStaffPlanActualController(

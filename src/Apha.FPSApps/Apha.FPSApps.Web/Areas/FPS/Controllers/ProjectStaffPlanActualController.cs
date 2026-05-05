@@ -19,13 +19,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
     public class ProjectStaffPlanActualController : Controller
     {
         private readonly IMapper _mapper;
-        private readonly IProjectStaffPlanActualService _projPlanVsActualsStaffService;
+        private readonly ITimeCostCalcsService _projPlanVsActualsStaffService;
         private readonly IProjectService _projectService;
         private readonly IStaffJobService _staffJobService;
 
         public ProjectStaffPlanActualController(
             IMapper mapper,
-            IProjectStaffPlanActualService projPlanVsActualsStaffService,
+            ITimeCostCalcsService projPlanVsActualsStaffService,
             IProjectService projectService,
             IStaffJobService staffJobService)
         {
