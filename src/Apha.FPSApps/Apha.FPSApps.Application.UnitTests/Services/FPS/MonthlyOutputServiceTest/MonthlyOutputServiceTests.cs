@@ -80,6 +80,51 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.MonthlyOutputServiceTe
         }
 
         [Fact]
+        public async Task GetMonthlyOutputByProjectAsync_WithNullTestCodeAndBuyer_FallsBackToEmptyStringKey()
+        {
+            var items = new List<MonthlyOutputDto> { new() { TestCode = null, Buyer = null, Volume = 2 } };
+            _apiClient.GetByProjectAsync(Arg.Any<QueryParameters<string>>(), "AH0033")
+                .Returns(ApiResponseDto<List<MonthlyOutputDto>>.SuccessResponse(items));
+            var lookup = new Dictionary<(string, string), decimal> { { (string.Empty, string.Empty), 50m } };
+
+            var result = await _service.GetMonthlyOutputByProjectAsync(Q(), "AH0033", lookup);
+
+            Assert.Equal(50.0,  result.Data![0].TestPrice);
+            Assert.Equal(100.0, result.Data![0].Charge);
+        }
+
+        [Fact]
+        public async Task GetMonthlyOutputByProjectAsync_WithNullVolume_ChargeIsZero()
+        {
+            var items = new List<MonthlyOutputDto> { new() { Buyer = "AH0033", TestCode = "TC01", Volume = null } };
+            _apiClient.GetByProjectAsync(Arg.Any<QueryParameters<string>>(), "AH0033")
+                .Returns(ApiResponseDto<List<MonthlyOutputDto>>.SuccessResponse(items));
+
+            var result = await _service.GetMonthlyOutputByProjectAsync(Q(), "AH0033", PriceLookup("TC01", "AH0033", 100m));
+
+            Assert.Equal(100.0, result.Data![0].TestPrice);
+            Assert.Equal(0.0,   result.Data![0].Charge);
+        }
+
+        [Fact]
+        public async Task GetMonthlyOutputByProjectAsync_SetsAllDtoProperties()
+        {
+            var items = new List<MonthlyOutputDto>
+            {
+                new() { Buyer = "AH0033", TestCode = "TC01", Volume = 3, Month = 1.0, WorkGroup = "WG1", FpsYear = 2024 }
+            };
+            _apiClient.GetByProjectAsync(Arg.Any<QueryParameters<string>>(), "AH0033")
+                .Returns(ApiResponseDto<List<MonthlyOutputDto>>.SuccessResponse(items));
+
+            var result = await _service.GetMonthlyOutputByProjectAsync(Q(), "AH0033", EmptyLookup());
+
+            var item = result.Data![0];
+            Assert.Equal(1.0,   item.Month);
+            Assert.Equal("WG1", item.WorkGroup);
+            Assert.Equal(2024,  item.FpsYear);
+        }
+
+        [Fact]
         public async Task GetMonthlyOutputByProjectAsync_DelegatesToFpsMonthlyOutputApiClient()
         {
             var resp = ApiResponseDto<List<MonthlyOutputDto>>.SuccessResponse(new List<MonthlyOutputDto>());
@@ -129,6 +174,33 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.MonthlyOutputServiceTe
                 .Returns(ApiResponseDto<List<MonthlyOutputDto>>.SuccessResponse(items));
 
             var result = await _service.GetTotalActualByProjectAsync("AH0033", EmptyLookup());
+
+            Assert.True(result.Success);
+            Assert.Equal(0, result.Data);
+        }
+
+        [Fact]
+        public async Task GetTotalActualByProjectAsync_WithNullTestCodeAndBuyer_TreatsAsEmptyStringKey()
+        {
+            var items = new List<MonthlyOutputDto> { new() { TestCode = null, Buyer = null, Volume = 3 } };
+            _apiClient.GetByProjectAsync(Arg.Any<QueryParameters<string>>(), "AH0033")
+                .Returns(ApiResponseDto<List<MonthlyOutputDto>>.SuccessResponse(items));
+            var lookup = new Dictionary<(string, string), decimal> { { (string.Empty, string.Empty), 10m } };
+
+            var result = await _service.GetTotalActualByProjectAsync("AH0033", lookup);
+
+            Assert.True(result.Success);
+            Assert.Equal(30, result.Data);
+        }
+
+        [Fact]
+        public async Task GetTotalActualByProjectAsync_WithNullVolume_TreatsAsZero()
+        {
+            var items = new List<MonthlyOutputDto> { new() { Buyer = "AH0033", TestCode = "TC01", Volume = null } };
+            _apiClient.GetByProjectAsync(Arg.Any<QueryParameters<string>>(), "AH0033")
+                .Returns(ApiResponseDto<List<MonthlyOutputDto>>.SuccessResponse(items));
+
+            var result = await _service.GetTotalActualByProjectAsync("AH0033", PriceLookup("TC01", "AH0033", 100m));
 
             Assert.True(result.Success);
             Assert.Equal(0, result.Data);
