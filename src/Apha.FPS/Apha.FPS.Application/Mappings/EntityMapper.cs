@@ -43,6 +43,15 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<Agency, AgencyDto>().ReverseMap();
             CreateMap<TestorProduct, TestorProductDto>().ReverseMap();
             CreateMap<TimeCostCalcsView, TimeCostCalcsViewDto>().ReverseMap();
+
+            // ResourceSetUp
+            CreateMap<ProfitCentre, ProfitCentreDto>()
+                .ForMember(d => d.ProfitCentreId, o => o.MapFrom(s => s.ProfitCentreId))
+                .ForMember(d => d.ProfitCentreName, o => o.MapFrom(s => s.ProfitCentreName));
+            CreateMap<ProfitCentreGrade, ProfitCentreGradeDto>().ReverseMap();
+            CreateMap<WorkgroupGrade, WorkgroupGradeDto>().ReverseMap();
+            CreateMap<WgEmployee, WgEmployeeDto>().ReverseMap();
+            CreateMap<WgEmployeeView, WgEmployeeViewDto>().ReverseMap();
         }
     }
 }

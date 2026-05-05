@@ -53,6 +53,10 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IProjectListService, ProjectListService>();
             services.AddScoped<IProjectDetailsService, ProjectDetailsService>();
             services.AddScoped<IProjectCommentService, ProjectCommentService>();
+            services.AddScoped<IProfitCentreService, ProfitCentreService>();
+            services.AddScoped<IRcGradeService, RcGradeService>();
+            services.AddScoped<IWgGradeService, WgGradeService>();
+            services.AddScoped<IWgStaffService, WgStaffService>();
 
             return services;
         }

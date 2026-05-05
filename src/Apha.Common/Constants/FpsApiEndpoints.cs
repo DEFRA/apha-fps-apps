@@ -79,5 +79,21 @@ namespace Apha.Common.Constants
         public const string GetTimeCostCalcsByProject = "api/v1/timecostcalcs?projectCode={0}";
         public const string GetTimeCostCalcsTotalsByProject = "api/v1/timecostcalcs/totals?projectCode={0}";
         public const string DeleteTimeCostCalcs = "api/v1/timecostcalcs";
+
+        // Resource Set-Up — Profit Centres
+        public const string GetProfitCentres = "api/v1/profitcentres";
+
+        // Resource Set-Up — RC Grades
+        public const string GetRcGrades = "api/v1/rcgrades?profitCentre={0}";
+
+        // Resource Set-Up — WG Grades
+        public const string GetWgGrades = "api/v1/wggrades?pcGrade={0}";
+
+        // Resource Set-Up — WG Staff
+        public const string GetWgStaff = "api/v1/wgstaff?wgGrade={0}";
+        public const string GetWgEmployeeById = "api/v1/wgstaff/{0}";
+        public const string UpdateWgEmployee = "api/v1/wgstaff";
+        public const string DeleteWgEmployee = "api/v1/wgstaff/{0}";
+        public const string DeleteWgGrade = "api/v1/wggrades/{0}";
     }
 }
