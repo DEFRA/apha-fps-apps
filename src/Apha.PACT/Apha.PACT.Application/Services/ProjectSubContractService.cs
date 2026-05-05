@@ -30,6 +30,16 @@ namespace Apha.PACT.Application.Services
         public async Task<decimal> GetTotalAmountAsync(string? project)
             => await _repository.GetTotalAmountAsync(project);
 
+        public async Task<PaginatedResult<ProjectSubContractDto>> GetFpsProjectSubContractsAsync(QueryParameters<string> query, string? project)
+        {
+            PaginationParameters<string> parameters = _mapper.Map<PaginationParameters<string>>(query);
+            PagedData<ProjectSubContract> pagedData = await _repository.GetFpsProjectSubContractsAsync(parameters, project);
+            return _mapper.Map<PaginatedResult<ProjectSubContractDto>>(pagedData);
+        }
+
+        public async Task<decimal> GetFpsProjectSubContractTotalAmountAsync(string? project)
+            => await _repository.GetFpsProjectSubContractTotalAmountAsync(project);
+
         public async Task<ProjectSubContractDto?> GetByIdAsync(int subContCounter)
         {
             ProjectSubContract? entity = await _repository.GetByIdAsync(subContCounter);

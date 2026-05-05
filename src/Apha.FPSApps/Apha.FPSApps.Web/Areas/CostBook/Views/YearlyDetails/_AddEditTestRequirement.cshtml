@@ -1,0 +1,32 @@
+@model Apha.FPSApps.Web.Areas.CostBook.Models.TestRequirementItem
+
+<div class="modal-header">
+    <h5 class="modal-title">@(string.IsNullOrEmpty(Model.TestDescription) ? "Add" : "Edit") Test Requirement</h5>
+    <button type="button" class="close project-close-btn" aria-label="Close" onclick="closeModal()">×</button>
+</div>
+<div class="modal-body">
+    <form id="testRequirementForm">
+        <div class="form-group mb-2">
+            <label asp-for="TestCode" class="govuk-label">Code</label>
+            <select asp-for="TestCode" asp-items="@((List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)ViewBag.TestCode)" class="govuk-select">
+                <option value="">-- Select Test Code --</option>
+            </select>
+            <span asp-validation-for="TestCode" class="govuk-error-message"></span>
+        </div>
+        <div class="form-group mb-2">
+            <label asp-for="UnitPrice" class="govuk-label">Unit Price</label>
+            <input asp-for="UnitPrice" type="text" readonly class="govuk-input">
+        </div>
+        <div class="form-group mb-2">
+            <label asp-for="NumberOfTests" class="govuk-label">No</label>
+            <input asp-for="NumberOfTests" type="number" step="0.01" class="govuk-input">
+        </div>
+        <div class="form-group mb-2">
+            <label asp-for="TestCost" class="govuk-label">Cost</label>
+            <input asp-for="TestCost" type="text" readonly class="govuk-input">
+        </div>
+        <input asp-for="TestDescription" type="hidden">
+        <button type="submit" class="govuk-button">Save</button>
+        <button type="button" class="govuk-button govuk-button--secondary sup_margin_0" onclick="closeModal()">Cancel</button>
+    </form>
+</div>

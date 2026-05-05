@@ -13,8 +13,8 @@ namespace Apha.FPS.Api.Controllers
     /// <summary>
     /// API controller for managing project data.
     /// </summary>
-    [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
-    [ApiController]
+   [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
+   [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/project")]
     public class ProjectController : ControllerBase

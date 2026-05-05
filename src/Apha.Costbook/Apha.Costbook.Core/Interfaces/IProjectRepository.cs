@@ -19,5 +19,6 @@ namespace Apha.Costbook.Core.Interfaces
         Task<Project> UpdateProjectAsync(Project project);
         Task<bool> DeleteProjectAsync(string id);
         Task<string> GetNextProjectNumberAsync(string? baseNumber);
+        Task<bool> RecostProjectAsync(string projectID);
     }
 }

@@ -170,10 +170,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramAnimalPlanController
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<ProgramAnimalPlanViewModel>(viewResult.Model);
 
-            Assert.Equal("/FPS/ProgramProject/LoadProjectGrid",    model.ProjectsGrid.BindGridUrl);
-            Assert.Equal("ParentProject",                          model.ProjectsGrid.KeyProperty);
-            Assert.Equal("/FPS/AnimalJob/LoadAnimalPlanGrid",      model.AnimalCostGrid.BindGridUrl);
-            Assert.Equal("IndCounter",                             model.AnimalCostGrid.KeyProperty);
+            Assert.Equal("/FPS/ProgramProject/LoadProjectGrid",              model.ProjectsGrid.BindGridUrl);
+            Assert.Equal("ParentProject",                                     model.ProjectsGrid.KeyProperty);
+            Assert.Equal($"/FPS/AnimalJob/LoadAnimalPlanGrid?title={Uri.EscapeDataString("Animal Plan")}", model.AnimalCostGrid.BindGridUrl);
+            Assert.Equal("IndCounter",                                        model.AnimalCostGrid.KeyProperty);
         }
 
         #endregion

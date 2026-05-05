@@ -1,4 +1,4 @@
-﻿using Apha.FPS.Core.Enities;
+using Apha.FPS.Core.Enities;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -27,6 +27,7 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<Workgroup> Workgroups { get; set; }
         public virtual DbSet<WorkgroupGrade> WorkgroupGrades { get; set; }
         public virtual DbSet<ProfitCentreGrade> ProfitcentreGrades { get; set; }
+        public virtual DbSet<DivisionGrade> DivisionGrades { get; set; }
         public virtual DbSet<UserProfitcentre> UserProfitcentres { get; set; }
         public virtual DbSet<ProfitCentre> ProfitCentres { get; set; }
         public virtual DbSet<JobCode> JobCodes { get; set; }
@@ -55,7 +56,16 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<YearMaster> YearMasters { get; set; }
         public virtual DbSet<StaffJobLog> StaffJobLogs { get; set; }
         public virtual DbSet<AnimalRequestLog> AnimalRequestLogs { get; set; }
-        public virtual DbSet<TestorProduct> TestorProducts { get; set; }
+        public virtual DbSet<TimeCostCalcsView> TimeCostCalcsViews { get; set; }
+        public virtual DbSet<TimeCostCalcs> TimeCostCalcs { get; set; }
+
+        public virtual DbSet<Division> Divisions { get; set; }
+        public virtual DbSet<Agency> Agencies { get; set; }
+
+
+        public virtual DbSet<AdditionalCost> AdditionalCosts { get; set; }
+        public virtual DbSet<AdditionalCostLog> AdditionalCostLogs { get; set; }
+        public virtual DbSet<AccountCategory> AccountCategories { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new UserMap());
@@ -80,9 +90,6 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new FpsSettingMap());
             modelBuilder.Entity<FpsSetting>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
-
-            modelBuilder.ApplyConfiguration(new TestorProductMap());
-            modelBuilder.Entity<TestorProduct>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new WorkgroupMap());
             modelBuilder.Entity<Workgroup>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
@@ -155,12 +162,31 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.Entity<PactWorkGroupGradeView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new YearMasterMap());
-
             modelBuilder.ApplyConfiguration(new StaffJobLogMap());
             modelBuilder.Entity<StaffJobLog>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new AnimalRequestLogMap());
             modelBuilder.Entity<AnimalRequestLog>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new TimeCostCalcsViewMap());
+            modelBuilder.Entity<TimeCostCalcsView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new TimeCostCalcsMap());
+            modelBuilder.Entity<TimeCostCalcs>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+
+
+            modelBuilder.ApplyConfiguration(new DivisionMap());
+            modelBuilder.ApplyConfiguration(new DivisionGradeMap());
+            modelBuilder.Entity<DivisionGrade>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new AdditionalCostMap());
+            modelBuilder.Entity<AdditionalCost>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new AdditionalCostLogMap());
+            modelBuilder.Entity<AdditionalCostLog>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new AccountCategoryMap());
         }
     }
 }

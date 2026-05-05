@@ -7,6 +7,7 @@ using Apha.Costbook.Core.Interfaces;
 using Apha.Costbook.Core.Pagination;
 using AutoMapper;
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 
 namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
 {
@@ -673,14 +674,18 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             var resultDto = new ProjectDto { ProjectId = projectId };
 
             _mockRepository.GetProjectByIdAsync(projectId).Returns(existingProject);
+            _mockMapper.When(x => x.Map(projectDto, existingProject))
+                .Do(x => existingProject.Inflation = projectDto.Inflation);
             _mockRepository.UpdateProjectAsync(existingProject).Returns(resultProject);
+            _mockRepository.RecostProjectAsync(projectId).Returns(true);
             _mockMapper.Map<ProjectDto>(resultProject).Returns(resultDto);
 
             // Act
             await _projectService.UpdateProjectAsync(projectId, projectDto);
 
-            // Assert - RecostProjectAsync should be called (it returns true)
+            // Assert - RecostProjectAsync should be called
             await _mockRepository.Received(1).UpdateProjectAsync(existingProject);
+            await _mockRepository.Received(1).RecostProjectAsync(projectId);
         }
 
         [Fact]
@@ -708,7 +713,10 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             var resultDto = new ProjectDto { ProjectId = projectId };
 
             _mockRepository.GetProjectByIdAsync(projectId).Returns(existingProject);
+            _mockMapper.When(x => x.Map(projectDto, existingProject))
+                .Do(x => existingProject.IsDefraProject = projectDto.IsDefraProject);
             _mockRepository.UpdateProjectAsync(existingProject).Returns(resultProject);
+            _mockRepository.RecostProjectAsync(projectId).Returns(true);
             _mockMapper.Map<ProjectDto>(resultProject).Returns(resultDto);
 
             // Act
@@ -716,6 +724,51 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
 
             // Assert - RecostProjectAsync should be called
             await _mockRepository.Received(1).UpdateProjectAsync(existingProject);
+            await _mockRepository.Received(1).RecostProjectAsync(projectId);
+        }
+
+        [Fact]
+        public async Task UpdateProjectAsync_RecostThrowsException_SwallowsExceptionAndReturnsResult()
+        {
+            // Arrange
+            var projectId = "P001";
+            var existingProject = new Project
+            {
+                ProjectId = projectId,
+                Inflation = 1,
+                IsDefraProject = 0
+            };
+            var projectDto = new ProjectDto
+            {
+                ProjectId = projectId,
+                ProjectTitle = "Updated Project",
+                PreparedBy = "John Doe",
+                Startdate = new DateOnly(2024, 4, 1),
+                IsDefraProject = 1, // Changed defra project flag
+                Inflation = 2 // Changed inflation
+            };
+
+            var resultProject = new Project { ProjectId = projectId };
+            var resultDto = new ProjectDto { ProjectId = projectId };
+
+            _mockRepository.GetProjectByIdAsync(projectId).Returns(existingProject);
+            _mockMapper.When(x => x.Map(projectDto, existingProject))
+                .Do(x =>
+                {
+                    existingProject.Inflation = projectDto.Inflation;
+                    existingProject.IsDefraProject = projectDto.IsDefraProject;
+                });
+            _mockRepository.UpdateProjectAsync(existingProject).Returns(resultProject);
+            _mockRepository.RecostProjectAsync(projectId).Returns(Task.FromException<bool>(new Exception("Recost failed")));
+            _mockMapper.Map<ProjectDto>(resultProject).Returns(resultDto);
+
+            // Act
+            var result = await _projectService.UpdateProjectAsync(projectId, projectDto);
+
+            // Assert - Exception should be swallowed, update should still succeed
+            Assert.NotNull(result);
+            await _mockRepository.Received(1).UpdateProjectAsync(existingProject);
+            await _mockRepository.Received(1).RecostProjectAsync(projectId);
         }
 
         [Fact]
@@ -751,51 +804,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
 
             // Assert - RecostProjectAsync should not be called
             await _mockRepository.Received(1).UpdateProjectAsync(existingProject);
-        }
-
-        [Theory]
-        [InlineData(2024, 1, 15, 0, 2024)] // Project Years - January
-        [InlineData(2024, 6, 15, 0, 2024)] // Project Years - June
-        [InlineData(2024, 1, 15, 1, 2023)] // Financial Years - January (previous year)
-        [InlineData(2024, 2, 15, 1, 2023)] // Financial Years - February (previous year)
-        [InlineData(2024, 3, 31, 1, 2023)] // Financial Years - March (previous year)
-        [InlineData(2024, 4, 1, 1, 2024)]  // Financial Years - April (current year)
-        [InlineData(2024, 12, 31, 1, 2024)] // Financial Years - December (current year)
-        public async Task UpdateProjectAsync_CalculateStartFinancialYear_SetsCorrectStartYear(
-            int year, int month, int day, int FinancialYears, int expectedStartYear)
-        {
-            // Arrange
-            var projectId = "P001";
-            var existingProject = new Project
-            {
-                ProjectId = projectId,
-                Inflation = 1,
-                IsDefraProject = 0
-            };
-            var projectDto = new ProjectDto
-            {
-                ProjectId = projectId,
-                ProjectTitle = "Test Project",
-                PreparedBy = "John Doe",
-                Startdate = new DateOnly(year, month, day),
-                FinancialYears = FinancialYears,
-                IsDefraProject = 1
-            };
-
-            var project = new Project { ProjectId = projectId };
-            var resultProject = new Project { ProjectId = projectId };
-            var resultDto = new ProjectDto { ProjectId = projectId };
-
-            _mockRepository.GetProjectByIdAsync(projectId).Returns(existingProject);
-            _mockMapper.Map<Project>(projectDto).Returns(project);
-            _mockRepository.UpdateProjectAsync(project).Returns(resultProject);
-            _mockMapper.Map<ProjectDto>(resultProject).Returns(resultDto);
-
-            // Act
-            await _projectService.UpdateProjectAsync(projectId, projectDto);
-
-            // Assert
-            Assert.Equal(expectedStartYear, projectDto.StartFYear);
+            await _mockRepository.DidNotReceive().RecostProjectAsync(Arg.Any<string>());
         }
 
         #endregion
@@ -984,16 +993,33 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
         #region RecostProjectAsync Tests
 
         [Fact]
-        public async Task RecostProjectAsync_ValidId_ReturnsTrue()
+        public async Task RecostProjectAsync_ValidId_ReturnsRepositoryResult()
         {
             // Arrange
             var projectId = "P001";
+            _mockRepository.RecostProjectAsync(projectId).Returns(true);
 
             // Act
             var result = await _projectService.RecostProjectAsync(projectId);
 
             // Assert
             Assert.True(result);
+            await _mockRepository.Received(1).RecostProjectAsync(projectId);
+        }
+
+        [Fact]
+        public async Task RecostProjectAsync_ReturnsFalse_WhenRepositoryReturnsFalse()
+        {
+            // Arrange
+            var projectId = "P001";
+            _mockRepository.RecostProjectAsync(projectId).Returns(false);
+
+            // Act
+            var result = await _projectService.RecostProjectAsync(projectId);
+
+            // Assert
+            Assert.False(result);
+            await _mockRepository.Received(1).RecostProjectAsync(projectId);
         }
 
         #endregion

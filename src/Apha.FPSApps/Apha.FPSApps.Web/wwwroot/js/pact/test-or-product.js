@@ -1,0 +1,332 @@
+/**
+ * test-or-product.js
+ *
+ * Client-side logic for the Test/Product Maintenance page.
+ * Depends on: jQuery, Bootstrap modal, ajax-form-validation.js
+ *
+ * The view must supply endpoint URLs via data attributes on a
+ * configuration element:
+ *
+ *   <div id="testOrProductConfig"
+ *        data-url-get-owners="..."
+ *        data-url-get="..."
+ *        data-url-create="..."
+ *        data-url-update="..."
+ *        data-url-delete="..."></div>
+ */
+(function ($) {
+    'use strict';
+
+    var owners = [];
+    var urls = {};
+
+    // ── URL helpers ──────────────────────────────────────────────────────────
+
+    function loadUrls() {
+        var $cfg = $('#testOrProductConfig');
+        urls = {
+            getOwners: $cfg.data('url-get-owners'),
+            get:       $cfg.data('url-get'),
+            create:    $cfg.data('url-create'),
+            update:    $cfg.data('url-update'),
+            delete:    $cfg.data('url-delete')
+        };
+    }
+
+    // ── Owner dropdown ───────────────────────────────────────────────────────
+
+    function loadOwners() {
+        $.ajax({
+            url: urls.getOwners,
+            type: 'GET',
+            success: function (response) {
+                if (response.success) {
+                    owners = response.data;
+                    populateOwnerDropdown();
+                }
+            },
+            error: function () {
+                // Error loading owners
+            }
+        });
+    }
+
+    function populateOwnerDropdown() {
+        var ownerSelect = $('#owner');
+        ownerSelect.empty();
+        ownerSelect.append('<option value="">Select Owner</option>');
+
+        owners.forEach(function (owner) {
+            ownerSelect.append($('<option></option>').val(owner).text(owner));
+        });
+    }
+
+    // ── Required-field helpers ───────────────────────────────────────────────
+
+    function setRequiredFields() {
+        $('#itemCode').prop('required', true);
+        $('#owner').prop('required', true);
+        $('#defraUnitPrice').prop('required', true);
+    }
+
+    // ── Add / Edit / Save / Delete ───────────────────────────────────────────
+
+    function addTestOrProduct() {
+        $('#testModalLabel').text('Add Test or Product');
+        $('#isEdit').val('false');
+        $('#originalItemCode').val('');
+        $('#testForm')[0].reset();
+        $('#itemCode').prop('readonly', false);
+
+        setRequiredFields();
+        populateOwnerDropdown();
+        clearValidationErrors('#testModal');
+        $('#testModal').modal('show');
+    }
+
+    function editTestOrProduct(btn) {
+        var itemCode = $(btn).data('id');
+
+        if (!itemCode) {
+            showNotification('Error', 'Item code not found', 'error');
+            return;
+        }
+
+        $('#testForm')[0].reset();
+        clearValidationErrors('#testModal');
+
+        // Temporarily disable required validation during data load
+        $('#testForm [required]').prop('required', false);
+
+        $.ajax({
+            url: urls.get,
+            type: 'GET',
+            data: { itemCode: itemCode },
+            success: function (response) {
+                if (response.success) {
+                    var data = response.data;
+
+                    $('#testModalLabel').text('Edit Test or Product');
+                    $('#isEdit').val('true');
+                    $('#originalItemCode').val(itemCode);
+
+                    // Populate form fields — support both PascalCase and camelCase
+                    $('#itemCode').val(data.ItemCode || data.itemCode || '').prop('readonly', true);
+                    $('#shortDescription').val(data.ShortDescription || data.shortDescription || '');
+                    $('#itemDescription').val(data.ItemDescription || data.itemDescription || '');
+                    $('#testManager').val(data.TestManager || data.testManager || '');
+                    $('#owner').val(data.Owner || data.owner || '');
+                    $('#jobStatus').val(data.JobStatus || data.jobStatus || '');
+                    $('#chargeMethod').val(data.ChargeMethod || data.chargeMethod || '');
+
+                    var defraPrice = data.DefraUnitPrice !== undefined ? data.DefraUnitPrice : data.defraUnitPrice;
+                    if (defraPrice !== null && defraPrice !== undefined) {
+                        $('#defraUnitPrice').val(defraPrice);
+                    }
+
+                    var unitPriceVla = data.UnitPriceVla !== undefined ? data.UnitPriceVla : data.unitPriceVla;
+                    if (unitPriceVla !== null && unitPriceVla !== undefined) {
+                        $('#unitPriceVla').val(unitPriceVla);
+                    }
+
+                    var priceAhvg = data.PriceAhvg !== undefined ? data.PriceAhvg : data.priceAhvg;
+                    if (priceAhvg !== null && priceAhvg !== undefined) {
+                        $('#priceAhvg').val(priceAhvg);
+                    }
+
+                    setRequiredFields();
+                    clearValidationErrors('#testModal');
+
+                    setTimeout(function () {
+                        clearValidationErrors('#testModal');
+                        $('#testModal .govuk-error-summary').hide();
+                        $('#testModal .govuk-form-group').removeClass('govuk-form-group--error');
+                        $('#testModal .govuk-input').removeClass('govuk-input--error');
+                        $('#testModal').modal('show');
+                    }, 50);
+                } else {
+                    setRequiredFields();
+                    showNotification('Error', response.message, 'error');
+                }
+            },
+            error: function () {
+                setRequiredFields();
+                showNotification('Error', 'Failed to load test/product details', 'error');
+            }
+        });
+    }
+
+    function closeTestModal() {
+        $('#testForm')[0].reset();
+        clearValidationErrors('#testModal');
+        $('#isEdit').val('false');
+        $('#originalItemCode').val('');
+        $('#itemCode').prop('readonly', false);
+        $('#testModal').modal('hide');
+        $('.modal-backdrop').remove();
+        $('body').removeClass('modal-open');
+        $('body').css({ 'padding-right': '', 'overflow': '' });
+    }
+
+    function saveTestOrProduct() {
+        clearValidationErrors('#testModal');
+        var form = $('#testForm');
+
+        if (!isFormValid(form)) {
+            displayClientValidationErrors(form, '#testModal');
+            return;
+        }
+
+        var isEdit = $('#isEdit').val() === 'true';
+        var itemCode = $('#originalItemCode').val() || $('#itemCode').val();
+
+        var formData = {
+            ItemCode: $('#itemCode').val(),
+            ShortDescription: $('#shortDescription').val(),
+            ItemDescription: $('#itemDescription').val(),
+            TestManager: $('#testManager').val(),
+            Owner: $('#owner').val(),
+            JobStatus: $('#jobStatus').val(),
+            ChargeMethod: $('#chargeMethod').val(),
+            DefraUnitPrice: parseFloat($('#defraUnitPrice').val()) || 0,
+            UnitPriceVla: $('#unitPriceVla').val() ? parseFloat($('#unitPriceVla').val()) : null,
+            PriceAhvg: $('#priceAhvg').val() ? parseFloat($('#priceAhvg').val()) : null
+        };
+
+        var url = isEdit
+            ? urls.update + '?itemCode=' + encodeURIComponent(itemCode)
+            : urls.create;
+
+        $.ajax({
+            url: url,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(formData),
+            success: function (response) {
+                if (response.success) {
+                    closeTestModal();
+                    showNotification('Success', response.message, 'success');
+                    reloadGrid('testGrid');
+                } else {
+                    if (response.errors) {
+                        displayServerValidationErrors(response.errors, response.message, '#testModal');
+                    } else {
+                        showNotification('Error', response.message, 'error');
+                    }
+                }
+            },
+            error: function (xhr) {
+                if (xhr.status === 400 && xhr.responseJSON) {
+                    displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message || 'There is a problem', '#testModal');
+                } else {
+                    var message = xhr.responseJSON ? xhr.responseJSON.message : 'An error occurred while saving';
+                    showNotification('Error', message || 'An error occurred while saving', 'error');
+                }
+            }
+        });
+    }
+
+    function deleteTestOrProduct(btn) {
+        var itemCode = $(btn).data('id');
+
+        if (!itemCode) {
+            showNotification('Error', 'Item code not found', 'error');
+            return;
+        }
+
+        if (!confirm('Are you sure you want to delete test/product ' + itemCode + '?')) {
+            return;
+        }
+
+        $.ajax({
+            url: urls.delete,
+            type: 'POST',
+            data: { itemCode: itemCode },
+            success: function (response) {
+                if (response.success) {
+                    showNotification('Success', response.message, 'success');
+                    reloadGrid('testGrid');
+                } else {
+                    showNotification('Error', response.message, 'error');
+                }
+            },
+            error: function (xhr) {
+                var message = xhr.responseJSON ? xhr.responseJSON.message : 'An error occurred while deleting';
+                showNotification('Error', message || 'An error occurred while deleting', 'error');
+            }
+        });
+    }
+
+    // ── Utilities ─────────────────────────────────────────────────────────────
+
+    function showNotification(title, message, type) {
+        var icon = type === 'success' ? '✓' : '✗';
+        alert(icon + ' ' + title + ': ' + message);
+    }
+
+    function reloadGrid(gridId) {
+        var gridManager = window['gridManager_' + gridId];
+        if (gridManager && typeof gridManager.reloadGrid === 'function') {
+            gridManager.reloadGrid({ page: 1 });
+        } else if (typeof bindGrid === 'function') {
+            bindGrid(gridId, 1);
+        } else {
+            location.reload();
+        }
+    }
+
+    // ── Public API ────────────────────────────────────────────────────────────
+
+    window.addTestOrProduct = addTestOrProduct;
+    window.editTestOrProduct = editTestOrProduct;
+    window.closeTestModal = closeTestModal;
+    window.saveTestOrProduct = saveTestOrProduct;
+    window.deleteTestOrProduct = deleteTestOrProduct;
+    window.reloadGrid = reloadGrid;
+
+    // ── Initialisation ────────────────────────────────────────────────────────
+
+    $(document).ready(function () {
+        loadUrls();
+        loadOwners();
+
+        // Disable jQuery Unobtrusive Validation for this form
+        if ($.validator && $.validator.unobtrusive) {
+            var form = $('#testForm');
+            if (form.data('validator')) {
+                form.removeData('validator');
+            }
+            if (form.data('unobtrusiveValidation')) {
+                form.removeData('unobtrusiveValidation');
+            }
+        }
+
+        $('#testForm').on('submit', function (e) {
+            e.preventDefault();
+            saveTestOrProduct();
+        });
+
+        $('#testModal').on('show.bs.modal', function () {
+            clearValidationErrors('#testModal');
+        });
+
+        $('#testModal').on('shown.bs.modal', function () {
+            clearValidationErrors('#testModal');
+            $('#testModal .govuk-error-summary').hide().css('display', 'none');
+            $('#testModal .govuk-error-summary__list').empty();
+            $('#testModal .govuk-form-group').removeClass('govuk-form-group--error');
+            $('#testModal .govuk-input').removeClass('govuk-input--error');
+            $('#testModal .govuk-textarea').removeClass('govuk-textarea--error');
+            $('#testModal .govuk-error-message').hide().css('display', 'none');
+        });
+
+        $('#testModal').on('hidden.bs.modal', function () {
+            closeTestModal();
+        });
+
+        $(document).on('click', '.govuk-button--secondary[data-dismiss="modal"]', function () {
+            closeTestModal();
+        });
+    });
+
+}(jQuery));

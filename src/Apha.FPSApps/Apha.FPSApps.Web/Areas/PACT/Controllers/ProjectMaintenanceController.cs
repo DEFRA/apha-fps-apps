@@ -256,6 +256,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var pagination = response.Pagination != null
                 ? _mapper.Map<PaginationModel>(response.Pagination)
                 : new PaginationModel();
+            pagination.SortColumn = request.SortBy;
+            pagination.SortDirection = request.Descending;
 
             var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}")
                 ?? new Dictionary<string, string>();

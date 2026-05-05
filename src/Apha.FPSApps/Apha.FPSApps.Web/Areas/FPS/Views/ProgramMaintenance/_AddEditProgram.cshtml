@@ -11,7 +11,7 @@
     <h5 class="modal-title" id="programModalTitle">@title</h5>
     <button type="button" class="btn-close btn-red" onclick="closeModal()" data-bs-dismiss="modal">X</button>
 </div>
-<div class="modal-body">
+<div class="modal-body" style="overflow-y: auto; max-height: calc(80vh - 120px);">
     <div class="govuk-error-summary" role="alert"
          aria-labelledby="error-summary-title" tabindex="-1" style="display:none;">
         <h2 class="govuk-error-summary__title" id="error-summary-title">
@@ -36,25 +36,28 @@
             </div>
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label" asp-for="Directorate">Directorate</label>
-                <select id="Directorate" asp-for="Directorate" asp-items="@Model.DirectorateOptions" class="govuk-select">
+                        <select id="Directorate" asp-for="Directorate" asp-items="@Model.DirectorateOptions" class="govuk-select govuk-!-font-size-16 sup_width_100">
                 </select>
                         <span asp-validation-for="Directorate" class="govuk-error-message" style="display:none;"></span>
             </div>
             <div class="govuk-form-group sup_margin_0">
-                <label class="govuk-label" asp-for="Target">Target</label>
-                <input type="text" asp-for="Target" class="govuk-input" value="@Model.Target">
+                <label class="govuk-label" asp-for="Target">Target</label> 
+                 <div class="govuk-input__wrapper">
+                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                            <input type="text" asp-for="Target" class="govuk-input" value="@Model.Target">
+                         </div> 
                             <span asp-validation-for="Target" class="govuk-error-message" style="display:none;"></span>
             </div>
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label" asp-for="Manager">Manager</label>
-                <select asp-for="Manager" asp-items="@Model.ManagerList" class="govuk-select">
+                            <select asp-for="Manager" asp-items="@Model.ManagerList" class="govuk-select govuk-!-font-size-16 sup_width_100">
                 </select>
                             <span asp-validation-for="Manager" class="govuk-error-message" style="display:none;"></span>
             </div>
         </form>
     </div>
 </div>
-<div class="modal-footer">
+            <div class="modal-footer sup_flex_space_center">
     <button class="govuk-button govuk-button--secondary sup_margin_0" data-module="govuk-button" data-bs-dismiss="modal" onclick="closeModal()">Cancel</button>
     <button class="govuk-button sup_margin_0" data-module="govuk-button" type="button" onclick="@saveAction">@saveLabel</button>
 </div>
