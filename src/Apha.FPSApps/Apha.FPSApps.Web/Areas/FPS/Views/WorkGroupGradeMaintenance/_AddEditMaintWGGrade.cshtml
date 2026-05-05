@@ -92,7 +92,7 @@
         var $select = $('#ProfitCentreGrade');
         var current = '@Html.Raw(Model?.ProfitCentreGrade ?? string.Empty)';
         $.ajax({
-            url: '@Url.Action("GetPcGrades", "MaintWGGrade", new { area = "FPS" })',
+            url: '@Url.Action("GetPcGrades", "WorkGroupGradeMaintenance", new { area = "FPS" })',
             type: 'GET',
             success: function (response) {
                 if (response.success && response.data) {
@@ -109,7 +109,7 @@
         var $select = $('#GradeCode');
         var current = '@Html.Raw(Model?.GradeCode ?? string.Empty)';
         $.ajax({
-            url: '@Url.Action("GetGradeCodes", "MaintWGGrade", new { area = "FPS" })',
+            url: '@Url.Action("GetGradeCodes", "WorkGroupGradeMaintenance", new { area = "FPS" })',
             type: 'GET',
             success: function (response) {
                 if (response.success && response.data) {
@@ -126,7 +126,7 @@
         var $select = $('#Workgroup');
         var current = '@Html.Raw(Model?.Workgroup ?? string.Empty)';
         $.ajax({
-            url: '@Url.Action("GetWorkgroups", "MaintWGGrade", new { area = "FPS" })',
+            url: '@Url.Action("GetWorkgroups", "WorkGroupGradeMaintenance", new { area = "FPS" })',
             type: 'GET',
             success: function (response) {
                 if (response.success && response.data) {

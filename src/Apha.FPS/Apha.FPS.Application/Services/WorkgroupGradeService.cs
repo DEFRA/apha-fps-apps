@@ -1,6 +1,7 @@
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
+using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -25,7 +26,13 @@ namespace Apha.FPS.Application.Services
         public async Task<PaginatedResult<WorkgroupGradeDto>> GetAllWorkgroupGradesPagedAsync(
             QueryParameters<string> query, CancellationToken cancellationToken = default)
         {
-            ArgumentNullException.ThrowIfNull(query);
+            if (query is null)
+            {
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError("Query parameters cannot be null.", "WORKGROUPGRADE_INVALID_QUERY")
+                ]);
+            }
 
             var filter = _mapper.Map<PaginationParameters<string>>(query);
             var result = await _repository.GetAllWorkgroupGradesPagedAsync(filter, cancellationToken);
@@ -35,7 +42,12 @@ namespace Apha.FPS.Application.Services
         public async Task<WorkgroupGradeDto?> GetByWgGradeAsync(string wgGrade, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(wgGrade))
-                throw new ArgumentException("WgGrade cannot be null or empty.", nameof(wgGrade));
+            {
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError("WgGrade cannot be null or empty.", "WORKGROUPGRADE_INVALID_CODE")
+                ]);
+            }
 
             var entity = await _repository.GetByWgGradeAsync(wgGrade, cancellationToken);
             return entity is null ? null : _mapper.Map<WorkgroupGradeDto>(entity);
@@ -43,7 +55,13 @@ namespace Apha.FPS.Application.Services
 
         public async Task<WorkgroupGradeDto> CreateAsync(WorkgroupGradeDto dto, CancellationToken cancellationToken = default)
         {
-            ArgumentNullException.ThrowIfNull(dto);
+            if (dto is null)
+            {
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError("WorkgroupGrade data cannot be null.", "WORKGROUPGRADE_INVALID_DATA")
+                ]);
+            }
 
             var entity = _mapper.Map<WorkgroupGrade>(dto);
             var created = await _repository.CreateAsync(entity, cancellationToken);
@@ -52,7 +70,13 @@ namespace Apha.FPS.Application.Services
 
         public async Task<WorkgroupGradeDto> UpdateAsync(WorkgroupGradeDto dto, CancellationToken cancellationToken = default)
         {
-            ArgumentNullException.ThrowIfNull(dto);
+            if (dto is null)
+            {
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError("WorkgroupGrade data cannot be null.", "WORKGROUPGRADE_INVALID_DATA")
+                ]);
+            }
 
             var entity = _mapper.Map<WorkgroupGrade>(dto);
             var updated = await _repository.UpdateAsync(entity, cancellationToken);
@@ -62,7 +86,23 @@ namespace Apha.FPS.Application.Services
         public async Task<bool> DeleteAsync(string wgGrade, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(wgGrade))
-                throw new ArgumentException("WgGrade cannot be null or empty.", nameof(wgGrade));
+            {
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError("WgGrade cannot be null or empty.", "WORKGROUPGRADE_INVALID_CODE")
+                ]);
+            }
+
+            var hasAssociations = await _repository.HasAssociatedStaffAsync(wgGrade, cancellationToken);
+            if (hasAssociations)
+            {
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"WorkgroupGrade '{wgGrade}' is associated with existing staff records and cannot be deleted.",
+                        "WORKGROUPGRADE_HAS_ASSOCIATIONS")
+                ]);
+            }
 
             return await _repository.DeleteAsync(wgGrade, cancellationToken);
         }

@@ -16,14 +16,14 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
     /// MVC controller for WorkgroupGrade maintenance operations.
     /// </summary>
     [Area("FPS")]
-    [Authorize(Roles = "FPSAdmin,FPSUser")]
+    [Authorize(Roles = "FPSAdmin")]
     [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")]
-    public class MaintWGGradeController : Controller
+    public class WorkGroupGradeMaintenanceController : Controller
     {
         private readonly IMapper _mapper;
         private readonly IWorkgroupGradeService _wgGradeService;
 
-        public MaintWGGradeController(IMapper mapper, IWorkgroupGradeService wgGradeService)
+        public WorkGroupGradeMaintenanceController(IMapper mapper, IWorkgroupGradeService wgGradeService)
         {
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _wgGradeService = wgGradeService ?? throw new ArgumentNullException(nameof(wgGradeService));
@@ -93,7 +93,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 AllowDelete = true,
                 DeleteFunction = "deleteWGGrade",
                 ExtraFilterMethod = "getWGGradeExtraFilters",
-                BindGridUrl = "/FPS/MaintWGGrade/LoadMaintWGGradeGrid",
+                BindGridUrl = "/FPS/WorkGroupGradeMaintenance/LoadMaintWGGradeGrid",
                 Data = items,
                 Columns = GridDataProvider.GetColumnsDefination<MaintWGGradeItem>(null),
                 Pagination = paginationModel,

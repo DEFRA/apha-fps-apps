@@ -23,6 +23,9 @@ namespace Apha.FPS.Core.Interfaces
         /// <summary>Deletes a WorkgroupGrade record by WgGrade code.</summary>
         Task<bool> DeleteAsync(string wgGrade, CancellationToken cancellationToken = default);
 
+        /// <summary>Checks whether a WorkgroupGrade is associated with any staff records.</summary>
+        Task<bool> HasAssociatedStaffAsync(string wgGrade, CancellationToken cancellationToken = default);
+
         /// <summary>Returns all Profit Centre Grade codes for dropdown population.</summary>
         Task<List<string>> GetAllPcGradesAsync(CancellationToken cancellationToken = default);
 

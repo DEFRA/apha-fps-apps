@@ -39,4 +39,10 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Controller\AccountCodeControllerTest\" />
+    <Folder Include="Controller\CostCentreControllerTest\" />
+    <Folder Include="Controller\SubAccountControllerTest\" />
+  </ItemGroup>
+
 </Project>

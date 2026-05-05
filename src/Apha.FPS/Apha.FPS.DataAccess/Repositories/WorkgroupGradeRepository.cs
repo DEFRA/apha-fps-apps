@@ -90,6 +90,15 @@ namespace Apha.FPS.DataAccess.Repositories
             return deleted > 0;
         }
 
+        public async Task<bool> HasAssociatedStaffAsync(string wgGrade, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(wgGrade))
+                return false;
+
+            return await _dbContext.WgEmployees
+                .AnyAsync(e => e.WorkGroupGrade == wgGrade, cancellationToken);
+        }
+
         public async Task<List<string>> GetAllPcGradesAsync(CancellationToken cancellationToken = default)
         {
             return await _dbContext.ProfitcentreGrades

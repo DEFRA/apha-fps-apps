@@ -13,7 +13,7 @@ namespace Apha.FPS.Api.Controllers
     /// <summary>
     /// API controller for WorkgroupGrade maintenance operations.
     /// </summary>
-    [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
+    [Authorize(Roles = "API-FPSAdmin")]
     [Route("api/v{version:apiVersion}/workgroupgrade")]
     [ApiController]
     [ApiVersion("1.0")]
