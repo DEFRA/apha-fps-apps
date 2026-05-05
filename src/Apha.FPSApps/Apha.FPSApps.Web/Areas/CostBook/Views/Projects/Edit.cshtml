@@ -57,18 +57,9 @@
                             <div asp-validation-summary="All" class="govuk-error-summary" aria-labelledby="error-summary-title" role="alert" data-module="govuk-error-summary">
                                 <h2 class="govuk-error-summary__title" id="error-summary-title">There is a problem</h2>
                             </div>
-                        }
+                        }                        
 
-                        @if (TempData["Success"] != null)
-                        {
-                            <div class="alert alert-success" role="alert">@TempData["Success"]</div>
-                        }
-                        @if (TempData["Error"] != null)
-                        {
-                            <div class="alert alert-danger" role="alert">@TempData["Error"]</div>
-                        }
-
-                        <div style="costbook-edit-page edit-form-container">
+                        <div class="costbook-edit-page edit-form-container">
 
                             <!-- Action buttons -->
                             <div class="action-buttons edit-action-buttons">
@@ -101,7 +92,7 @@
                             <!-- Title -->
                             <div class="govuk-form-group d-flex align-items-start mb-2">
                                 <label asp-for="ProjectTitle" class="govuk-label label_width mb-0 pt-1">Title:</label>
-                                <div style="width: 61%; margin_left_5">
+                                <div class="margin_left_5" style="width: 61%;">
                                     <textarea asp-for="ProjectTitle" class="govuk-textarea w-100 sup_margin_0 margin_left_5"></textarea>
                                     <span asp-validation-for="ProjectTitle" class="govuk-error-message"></span>
                                 </div>
@@ -146,7 +137,7 @@
                             <div class="govuk-form-group d-flex align-items-start mb-2">
                                 <label for="StartdateDisplay" class="govuk-label label_width mb-0 pt-1">Start Date:</label>
                                 <div class="me-4">
-                                    <div style="position:relative; display:inline-block; margin_left_5">
+                                    <div class="margin_left_5" style="position:relative; display:inline-block;">
                                         <input type="text"
                                                id="StartdateDisplay"
                                                class="govuk-input width-200 "
@@ -274,7 +265,7 @@
                             <!-- Save / Cancel -->
                             <div class="action-buttons edit-action-buttons">
                                 <button type="submit" class="govuk-button">Save</button>
-                                <a asp-area="CostBook" asp-controller="Projects" asp-action="Details" asp-route-id="@Model.ProjectId" class="govuk-button govuk-button--secondary">Cancel</a>
+                                <a asp-area="CostBook" asp-controller="Projects" asp-action="Index" class="govuk-button govuk-button--secondary">Cancel</a>
                             </div>
 
                         </div>
@@ -287,110 +278,132 @@
 
 @section Scripts {
     <script>
-        function confirmDelete() {
-            if (!confirm('Are you sure you want to delete this project?')) return;
-
-            document.body.style.cursor = 'wait';
-            var deleteBtn = event.target;
-            if (deleteBtn) { deleteBtn.disabled = true; deleteBtn.textContent = 'Deleting...'; }
-
-            var projectId = '@Html.Raw(Model.ProjectId)';
-            if (!projectId || projectId === '') {
-                alert('Project ID is missing. Cannot delete project.');
-                if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.textContent = 'Delete'; }
-                document.body.style.cursor = 'default';
-                return;
+         $(document).ready(function () {
+            @if (TempData["Success"] != null)
+            {
+                <text>showGovukAlert('@Html.Raw(TempData["Success"])');</text>
+            }
+            @if (TempData["Error"] != null)
+            {
+                <text>showGovukAlert('@Html.Raw(TempData["Error"])');</text>
             }
 
-            $.ajax({
-                url: '@Url.Action("Delete", "Projects", new { area = "CostBook" })' + '/' + encodeURIComponent(projectId),
-                type: 'POST',
-                data: {
-                    id: projectId,
-                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
-                },
-                success: function (response) {
-                    if (response.success) {
-                        window.location.href = '@Url.Action("Index", "Projects", new { area = "CostBook" })';
-                    } else {
-                        alert('Failed to delete project: ' + (response.message || 'Unknown error'));
+        });
+
+        function confirmDelete() {
+                                    showGovukConfirm('This will delete all details for this project.  Are you sure?').then(function (result) {
+                if (!result) return;
+
+                document.body.style.cursor = 'wait';
+                var deleteBtn = event.target;
+                if (deleteBtn) { deleteBtn.disabled = true; deleteBtn.textContent = 'Deleting...'; }
+
+                var projectId = '@Html.Raw(Model.ProjectId)';
+                if (!projectId || projectId === '') {
+                    showGovukAlert('Project ID is missing. Cannot delete project.');
+                    if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.textContent = 'Delete'; }
+                    document.body.style.cursor = 'default';
+                    return;
+                }
+
+                $.ajax({
+                    url: '@Url.Action("Delete", "Projects", new { area = "CostBook" })' + '/' + encodeURIComponent(projectId),
+                    type: 'POST',
+                    data: {
+                        id: projectId,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            showGovukAlert('Project deleted successfully.').then(function () {
+                                window.location.href = '@Url.Action("Index", "Projects", new { area = "CostBook" })';
+                            });
+                        } else {
+                            showGovukAlert('Failed to delete project: ' + (response.message || 'Unknown error'));
+                            if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.textContent = 'Delete'; }
+                            document.body.style.cursor = 'default';
+                        }
+                    },
+                    error: function () {
+                        showGovukAlert('An error occurred while deleting the project.');
                         if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.textContent = 'Delete'; }
                         document.body.style.cursor = 'default';
                     }
-                },
-                error: function () {
-                    alert('An error occurred while deleting the project.');
-                    if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.textContent = 'Delete'; }
-                    document.body.style.cursor = 'default';
-                }
+                });
             });
         }
 
         function copyProject() {
         var projectId = '@Html.Raw(Model.ProjectId)';
-        if (!confirm('Copy project "' + projectId + '"?')) return;
+        showGovukConfirm('Copy project "' + projectId + '"?').then(function (result) {
+            if (!result) return;
 
-        var copyBtn = event.target;
-        if (copyBtn) { copyBtn.disabled = true; copyBtn.textContent = 'Copying...'; }
+            var copyBtn = event.target;
+            if (copyBtn) { copyBtn.disabled = true; copyBtn.textContent = 'Copying...'; }
 
-        $.ajax({
-            url: '@Url.Action("Copy", "Projects", new { area = "CostBook" })',
-            type: 'POST',
-            data: {
-                sourceProjectId: projectId,
-                __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
-            },
-            success: function (data) {
-                if (data.success) {
-                    var newId = data.generatedId || data.projectId;
+            $.ajax({
+                url: '@Url.Action("Copy", "Projects", new { area = "CostBook" })',
+                type: 'POST',
+                data: {
+                    sourceProjectId: projectId,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function (data) {
+                    if (data.success) {
+                        var newId = data.generatedId || data.projectId;
 
-                    // Ask user if they want to recost the project
-                    if (confirm('Do you want to recost this project at todays rates, (including inflation if specified)?')) {
-                        // Call Recost method
-                        if (copyBtn) { copyBtn.textContent = 'Recosting...'; }
+                        // Ask user if they want to recost the project
+                        showGovukConfirm('Do you want to recost this project at todays rates, (including inflation if specified)?').then(function (recostResult) {
+                            if (recostResult) {
+                                // Call Recost method
+                                if (copyBtn) { copyBtn.textContent = 'Recosting...'; }
 
-                        $.ajax({
-                            url: '@Url.Action("Recost", "Projects", new { area = "CostBook" })',
-                            type: 'POST',
-                            data: {
-                                id: newId,
-                                __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
-                            },
-                            success: function (recostData) {
-                                if (recostData.success) {
-                                    // Navigate to edit page after successful recost
-                                    var editUrl = '@Url.Action("Edit", "Projects", new { area = "CostBook", id = "PLACEHOLDER" })';
-                                    editUrl = editUrl.replace('PLACEHOLDER', encodeURIComponent(newId));
-                                    window.location.href = editUrl;
-                                } else {
-                                    alert('Failed to recost project. Redirecting to edit page.');
-                                    var editUrl = '@Url.Action("Edit", "Projects", new { area = "CostBook", id = "PLACEHOLDER" })';
-                                    editUrl = editUrl.replace('PLACEHOLDER', encodeURIComponent(newId));
-                                    window.location.href = editUrl;
-                                }
-                            },
-                            error: function () {
-                                alert('Error occurred during recost. Redirecting to edit page.');
+                                $.ajax({
+                                    url: '@Url.Action("Recost", "Projects", new { area = "CostBook" })',
+                                    type: 'POST',
+                                    data: {
+                                        id: newId,
+                                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                                    },
+                                    success: function (recostData) {
+                                        if (recostData.success) {
+                                            // Navigate to edit page after successful recost
+                                            var editUrl = '@Url.Action("Edit", "Projects", new { area = "CostBook", id = "PLACEHOLDER" })';
+                                            editUrl = editUrl.replace('PLACEHOLDER', encodeURIComponent(newId));
+                                            window.location.href = editUrl;
+                                        } else {
+                                            showGovukAlert('Failed to recost project. Redirecting to edit page.').then(function () {
+                                                var editUrl = '@Url.Action("Edit", "Projects", new { area = "CostBook", id = "PLACEHOLDER" })';
+                                                editUrl = editUrl.replace('PLACEHOLDER', encodeURIComponent(newId));
+                                                window.location.href = editUrl;
+                                            });
+                                        }
+                                    },
+                                    error: function () {
+                                        showGovukAlert('Error occurred during recost. Redirecting to edit page.').then(function () {
+                                            var editUrl = '@Url.Action("Edit", "Projects", new { area = "CostBook", id = "PLACEHOLDER" })';
+                                            editUrl = editUrl.replace('PLACEHOLDER', encodeURIComponent(newId));
+                                            window.location.href = editUrl;
+                                        });
+                                    }
+                                });
+                            } else {
+                                // User chose not to recost, navigate directly to edit page
                                 var editUrl = '@Url.Action("Edit", "Projects", new { area = "CostBook", id = "PLACEHOLDER" })';
                                 editUrl = editUrl.replace('PLACEHOLDER', encodeURIComponent(newId));
                                 window.location.href = editUrl;
                             }
                         });
                     } else {
-                        // User chose not to recost, navigate directly to edit page
-                        var editUrl = '@Url.Action("Edit", "Projects", new { area = "CostBook", id = "PLACEHOLDER" })';
-                        editUrl = editUrl.replace('PLACEHOLDER', encodeURIComponent(newId));
-                        window.location.href = editUrl;
+                        showGovukAlert('Failed to copy project: ' + (data.errors ? data.errors.join(', ') : 'Unknown error'));
+                        if (copyBtn) { copyBtn.disabled = false; copyBtn.textContent = 'Copy'; }
                     }
-                } else {
-                    alert('Failed to copy project: ' + (data.errors ? data.errors.join(', ') : 'Unknown error'));
+                },
+                error: function () {
+                    showGovukAlert('Failed to copy project. Please try again.');
                     if (copyBtn) { copyBtn.disabled = false; copyBtn.textContent = 'Copy'; }
                 }
-            },
-            error: function () {
-                alert('Failed to copy project. Please try again.');
-                if (copyBtn) { copyBtn.disabled = false; copyBtn.textContent = 'Copy'; }
-            }
+            });
         });
         }
     </script>

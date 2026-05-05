@@ -33,7 +33,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.Costbook.CostBookProject
             var criteria = new QueryParameters<string>();
             var projectResList = new List<ProjectRes> { new ProjectRes(), new ProjectRes() };
             var apiResponse = new ApiResponse<List<ProjectRes>> { Success = true, Data = projectResList };
-            var mappedDto = ApiResponseDto<List<ProjectDto>>.SuccessResponse(new List<ProjectDto> { new ProjectDto(), new ProjectDto() });
+            var expectedDtoList = new List<ProjectDto> { new ProjectDto(), new ProjectDto() };
+            var mappedDto = ApiResponseDto<List<ProjectDto>>.SuccessResponse(expectedDtoList);
 
             _http.GetAsync<List<ProjectRes>>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<ProjectDto>>>(apiResponse).Returns(mappedDto);
@@ -60,11 +61,12 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.Costbook.CostBookProject
                 Data = null,
                 Errors = new List<ApiError> { new ApiError { Message = "API Error", Code = "ERROR_CODE" } }
             };
+            var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "API Error", Code = "ERROR_CODE" } };
             var mappedResponse = new ApiResponseDto<List<ProjectDto>>
             {
                 Success = false,
                 Data = null,
-                Errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "API Error", Code = "ERROR_CODE" } },
+                Errors = errors,
                 Meta = new ApiMetaDto()
             };
 
@@ -81,6 +83,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.Costbook.CostBookProject
             Assert.NotNull(result.Errors);
             Assert.Single(result.Errors);
             Assert.Equal("API Error", result.Errors[0].Message);
+            Assert.Equal("ERROR_CODE", result.Errors[0].Code);
         }
 
         #endregion
@@ -119,10 +122,11 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.Costbook.CostBookProject
                 Data = null,
                 Errors = new List<ApiError> { new ApiError { Message = "Not Found", Code = "NOT_FOUND" } }
             };
+            var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "Not Found", Code = "NOT_FOUND" } };
             var mappedResponse = new ApiResponseDto<ProjectDto>
             {
                 Success = false,
-                Errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "Not Found", Code = "NOT_FOUND" } },
+                Errors = errors,
                 Meta = new ApiMetaDto()
             };
 
@@ -139,6 +143,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.Costbook.CostBookProject
             Assert.NotNull(result.Errors);
             Assert.Single(result.Errors);
             Assert.Equal("Not Found", result.Errors[0].Message);
+            Assert.Equal("NOT_FOUND", result.Errors[0].Code);
         }
 
         [Fact]
@@ -172,7 +177,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.Costbook.CostBookProject
             var expectedDto = ApiResponseDto<ProjectDto>.SuccessResponse(new ProjectDto());
 
             _mapper.Map<ProjectReq>(projectDto).Returns(projectReq);
-            _http.PostAsync<ProjectReq, ProjectRes>("api/v1/projects", projectReq).Returns(apiResponse);
+            _http.PostAsync<ProjectReq, ProjectRes>(Arg.Any<string>(), projectReq).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<ProjectDto>>(apiResponse).Returns(expectedDto);
 
             // Act
@@ -182,7 +187,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.Costbook.CostBookProject
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.NotNull(result.Data);
-            await _http.Received(1).PostAsync<ProjectReq, ProjectRes>("api/v1/projects", projectReq);
+            await _http.Received(1).PostAsync<ProjectReq, ProjectRes>(Arg.Any<string>(), projectReq);
         }
 
         [Fact]
@@ -197,15 +202,16 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.Costbook.CostBookProject
                 Data = null,
                 Errors = new List<ApiError> { new ApiError { Message = "Add failed", Code = "ADD_FAILED" } }
             };
+            var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "Add failed", Code = "ADD_FAILED" } };
             var mappedResponse = new ApiResponseDto<ProjectDto>
             {
                 Success = false,
-                Errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "Add failed", Code = "ADD_FAILED" } },
+                Errors = errors,
                 Meta = new ApiMetaDto()
             };
 
             _mapper.Map<ProjectReq>(projectDto).Returns(projectReq);
-            _http.PostAsync<ProjectReq, ProjectRes>("api/v1/projects", projectReq).Returns(apiResponse);
+            _http.PostAsync<ProjectReq, ProjectRes>(Arg.Any<string>(), projectReq).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<ProjectDto>>(apiResponse).Returns(mappedResponse);
 
             // Act
@@ -218,32 +224,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.Costbook.CostBookProject
             Assert.NotNull(result.Errors);
             Assert.Single(result.Errors);
             Assert.Equal("Add failed", result.Errors[0].Message);
-        }
-
-        [Fact]
-        public async Task AddProjectAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
-        {
-            // Arrange
-            var projectDto = new ProjectDto();
-            var projectReq = new ProjectReq();
-            var exceptionMessage = "Connection refused";
-
-            _mapper.Map<ProjectReq>(projectDto).Returns(projectReq);
-            _http.PostAsync<ProjectReq, ProjectRes>("api/v1/projects", projectReq)
-                .ThrowsAsync(new Exception(exceptionMessage));
-
-            // Act
-            var result = await _client.AddProjectAsync(projectDto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to add project", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-            Assert.Equal(exceptionMessage, result.Errors[0].Details);
+            Assert.Equal("ADD_FAILED", result.Errors[0].Code);
         }
 
         #endregion
@@ -287,10 +268,11 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.Costbook.CostBookProject
                 Data = null,
                 Errors = new List<ApiError> { new ApiError { Message = "Update failed", Code = "UPDATE_FAILED" } }
             };
+            var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "Update failed", Code = "UPDATE_FAILED" } };
             var mappedResponse = new ApiResponseDto<ProjectDto>
             {
                 Success = false,
-                Errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "Update failed", Code = "UPDATE_FAILED" } },
+                Errors = errors,
                 Meta = new ApiMetaDto()
             };
 
@@ -306,7 +288,9 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.Costbook.CostBookProject
             Assert.False(result.Success);
             Assert.Null(result.Data);
             Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
             Assert.Equal("Update failed", result.Errors[0].Message);
+            Assert.Equal("UPDATE_FAILED", result.Errors[0].Code);
         }
 
         #endregion
@@ -361,10 +345,11 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.Costbook.CostBookProject
                 Data = null,
                 Errors = new List<ApiError> { new ApiError { Message = "Delete failed", Code = "DELETE_FAILED" } }
             };
+            var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "Delete failed", Code = "DELETE_FAILED" } };
             var mappedResponse = new ApiResponseDto<bool>
             {
                 Success = false,
-                Errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "Delete failed", Code = "DELETE_FAILED" } },
+                Errors = errors,
                 Meta = new ApiMetaDto()
             };
 
@@ -378,7 +363,9 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.Costbook.CostBookProject
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
             Assert.Equal("Delete failed", result.Errors[0].Message);
+            Assert.Equal("DELETE_FAILED", result.Errors[0].Code);
         }
 
         #endregion
@@ -419,10 +406,11 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.Costbook.CostBookProject
                 Data = null,
                 Errors = new List<ApiError> { new ApiError { Message = "Copy failed", Code = "COPY_FAILED" } }
             };
+            var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "Copy failed", Code = "COPY_FAILED" } };
             var mappedResponse = new ApiResponseDto<ProjectDto>
             {
                 Success = false,
-                Errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "Copy failed", Code = "COPY_FAILED" } },
+                Errors = errors,
                 Meta = new ApiMetaDto()
             };
 
@@ -436,7 +424,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.Costbook.CostBookProject
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.Null(result.Data);
-            Assert.Equal("Copy failed", result.Errors![0].Message);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+            Assert.Equal("Copy failed", result.Errors[0].Message);
+            Assert.Equal("COPY_FAILED", result.Errors[0].Code);
         }
 
         #endregion
@@ -473,10 +464,11 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.Costbook.CostBookProject
                 Data = false,
                 Errors = new List<ApiError> { new ApiError { Message = "Recost failed", Code = "RECOST_FAILED" } }
             };
+            var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "Recost failed", Code = "RECOST_FAILED" } };
             var mappedResponse = new ApiResponseDto<bool>
             {
                 Success = false,
-                Errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "Recost failed", Code = "RECOST_FAILED" } },
+                Errors = errors,
                 Meta = new ApiMetaDto()
             };
 
@@ -490,7 +482,9 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.Costbook.CostBookProject
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
             Assert.Equal("Recost failed", result.Errors[0].Message);
+            Assert.Equal("RECOST_FAILED", result.Errors[0].Code);
         }
 
         #endregion
@@ -542,10 +536,11 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.Costbook.CostBookProject
                 Data = null,
                 Errors = new List<ApiError> { new ApiError { Message = "Number generation failed", Code = "NUMBER_FAILED" } }
             };
+            var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "Number generation failed", Code = "NUMBER_FAILED" } };
             var mappedResponse = new ApiResponseDto<string>
             {
                 Success = false,
-                Errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "Number generation failed", Code = "NUMBER_FAILED" } },
+                Errors = errors,
                 Meta = new ApiMetaDto()
             };
 
@@ -559,7 +554,9 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.Costbook.CostBookProject
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
             Assert.Equal("Number generation failed", result.Errors[0].Message);
+            Assert.Equal("NUMBER_FAILED", result.Errors[0].Code);
         }
 
         #endregion

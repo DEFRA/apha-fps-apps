@@ -180,9 +180,11 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.Costbook.ProjectsControllerTest
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = "{}" };
             var errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "API_ERROR" } };
             var serviceResponse = ApiResponseDto<List<ProjectDto>>.FailureResponse(errors, new ApiMetaDto());
+            var paginationModel = new PaginationModel();
 
             _mapper.Map<QueryParameters<string>>(request).Returns(new QueryParameters<string>());
             _projectService.GetFilteredProjectsAsync(Arg.Any<QueryParameters<string>>()).Returns(serviceResponse);
+            _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(paginationModel);
 
             // Act
             var result = await _controller.LoadProjectGrid(request);
@@ -260,7 +262,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.Costbook.ProjectsControllerTest
         {
             // Arrange
             var viewModel = new ProjectCreateEditViewModel();
-            _controller.ModelState.AddModelError("ProjectTitle", "Required"); // "ProjectId" is removed by the controller, use a different key
+            _controller.ModelState.AddModelError("ProjectTitle", "Required");
 
             _programService.GetAllProgramsAsync().Returns(ApiResponseDto<List<ProgramDto>>.SuccessResponse(new List<ProgramDto>()));
             _customerService.GetAllCustomersAsync().Returns(ApiResponseDto<List<CustomerDto>>.SuccessResponse(new List<CustomerDto>()));
@@ -405,28 +407,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.Costbook.ProjectsControllerTest
         #endregion
 
         #region Delete Tests
-
-        [Fact]
-        public async Task DeleteConfirmed_WithValidId_ReturnsJsonSuccessTrue()
-        {
-            // Arrange
-            var projectId = "P001";
-            var serviceResponse = ApiResponseDto<bool>.SuccessResponse(true);
-
-            _projectService.DeleteProjectAsync(projectId).Returns(serviceResponse);
-
-            // Act
-            var result = await _controller.DeleteConfirmed(projectId);
-
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var json = JsonSerializer.Serialize(jsonResult.Value);
-            using var doc = JsonDocument.Parse(json);
-            var root = doc.RootElement;
-
-            Assert.True(root.GetProperty("success").GetBoolean());
-            Assert.Equal("Project deleted successfully!", root.GetProperty("message").GetString());
-        }
 
         [Fact]
         public async Task DeleteConfirmed_WithValidId_ReturnsSuccessJson()

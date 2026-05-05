@@ -102,8 +102,7 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
 
             var queryParameters = _mapper.Map<QueryParameters<string>>(request);
 
-            try
-            {
+           
                 var projectPagedData = await _projectService.GetFilteredProjectsAsync(queryParameters);
 
                 List<ProjectItemViewModel> projectItems = new List<ProjectItemViewModel>();
@@ -144,22 +143,8 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
                     Pagination = paginationModel,
                     CurrentFilters = filterDict
                 };
-            }
-            catch
-            {
-                return new DataGridConfig<ProjectItemViewModel>
-                {
-                    GridId = "projectGrid",
-                    Title = "Project List",
-                    ShowCheckboxColumn = false,
-                    ShowPagination = true,
-                    KeyProperty = "ProjectCode",
-                    Data = new List<ProjectItemViewModel>(),
-                    Columns = GridDataProvider.GetColumnsDefination<ProjectItemViewModel>(null),
-                    Pagination = new PaginationModel(),
-                    CurrentFilters = filterDict
-                };
-            }
+            
+            
         }       
 
        
