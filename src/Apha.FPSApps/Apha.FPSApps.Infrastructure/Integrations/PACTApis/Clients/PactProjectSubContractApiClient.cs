@@ -135,5 +135,19 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
                     new ApiMetaDto { CorrelationId = Guid.NewGuid().ToString(), TimestampUtc = DateTime.UtcNow });
             }
         }
+
+        public async Task<ApiResponseDto<MonthlySubContractsPivotDto>> GetMonthlySubContractsSummaryAsync(QueryParameters<string> query)
+        {
+            string url = QueryStringHelper.AddQueryString(PactApiEndpoints.GetMonthlyInvoicesSummary, query);
+            var response = await _http.GetAsync<MonthlySubContractsPivotRes>(url);
+            if (response.Success)
+            {
+                var dto = _mapper.Map<MonthlySubContractsPivotDto>(response.Data);
+                return ApiResponseDto<MonthlySubContractsPivotDto>.SuccessResponse(dto);
+            }
+
+            var failresponseDto = _mapper.Map<ApiResponseDto<MonthlySubContractsPivotDto>>(response);
+            return ApiResponseDto<MonthlySubContractsPivotDto>.FailureResponse(failresponseDto.Errors, failresponseDto.Meta);
+        }
     }
 }
