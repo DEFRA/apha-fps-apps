@@ -33,7 +33,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
             IEnumerable<StaffView>? staffViews = null,
             IEnumerable<StaffPickView>? staffPickViews = null,
             IEnumerable<FpsSetting>? settings = null,
-            IEnumerable<WgEmployee>? wgEmployees = null,
+            IEnumerable<WorkGroupEmployee>? wgEmployees = null,
             IEnumerable<Employee>? employees = null,
             IEnumerable<Project>? projects = null,
             int fpsYear = DefaultTestFpsYear)

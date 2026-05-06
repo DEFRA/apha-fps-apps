@@ -1,4 +1,4 @@
-﻿using Apha.Common.Helpers.Repository;
+using Apha.Common.Helpers.Repository;
 using Apha.FPS.Core.Enities;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
@@ -6,6 +6,7 @@ using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
 using Apha.FPS.DataAccess.Repositories;
 using Moq;
+using NSubstitute;
 
 namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
 {
@@ -30,7 +31,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             IEnumerable<Employee> employees,
             IEnumerable<StaffActiveView>? staffActiveViews = null,
             IEnumerable<WorkgroupGradeGeneralView>? workgroupGrades = null,
-            IEnumerable<WgEmployee>? wgEmployees = null,
+            IEnumerable<WorkGroupEmployee>? wgEmployees = null,
             int fpsYear = DefaultTestFpsYear)
         {
             var mockFpsYearContext = CreateMockFpsYearContext(fpsYear);
@@ -41,7 +42,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             mockContext.Setup(x => x.Employees).Returns(employeesMockSet.Object);
 
             // Setup WgEmployees DbSet (for DeleteEmployeeAsync guard)
-            var wgEmployeesMockSet = RepositoryTestHelper.CreateMockDbSet(wgEmployees ?? Enumerable.Empty<WgEmployee>());
+            var wgEmployeesMockSet = RepositoryTestHelper.CreateMockDbSet(wgEmployees ?? Enumerable.Empty<WorkGroupEmployee>());
             mockContext.Setup(x => x.WgEmployees).Returns(wgEmployeesMockSet.Object);
 
             // Setup StaffActiveView DbSet (for GetAllManagersAsync)
@@ -374,7 +375,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             Assert.NotNull(result);
             Assert.Equal(3, result.Data.Count());
             var firstEmployee = result.Data.First();
-            var actualValue = sortBy.ToLower() switch
+            string? actualValue = sortBy.ToLower() switch
             {
                 "spnumber" => firstEmployee.SPNumber,
                 "firstname" => firstEmployee.FirstName,
@@ -497,11 +498,11 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         {
             // Arrange
             var mockFpsYearContext = CreateMockFpsYearContext(2025);
-            var (mockContext, employeesMockSet) = 
+            var (mockContext, employeesMockSet) =
                 RepositoryTestHelper.CreateRepositoryContext<FpsDbContext, Employee>(
-                    new List<Employee>(), 
+                    new List<Employee>(),
                     mockFpsYearContext.Object);
-            
+
             mockContext.Setup(x => x.Employees).Returns(employeesMockSet.Object);
 
             var repo = new EmployeeRepository(mockContext.Object, mockFpsYearContext.Object);
@@ -529,11 +530,11 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         {
             // Arrange
             var mockFpsYearContext = CreateMockFpsYearContext(2026);
-            var (mockContext, employeesMockSet) = 
+            var (mockContext, employeesMockSet) =
                 RepositoryTestHelper.CreateRepositoryContext<FpsDbContext, Employee>(
-                    new List<Employee>(), 
+                    new List<Employee>(),
                     mockFpsYearContext.Object);
-            
+
             mockContext.Setup(x => x.Employees).Returns(employeesMockSet.Object);
 
             var repo = new EmployeeRepository(mockContext.Object, mockFpsYearContext.Object);
@@ -570,13 +571,13 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
                 FpsYear = 2023
             };
             var employees = new List<Employee> { existingEmployee };
-            
+
             var mockFpsYearContext = CreateMockFpsYearContext(2025);
-            var (mockContext, employeesMockSet) = 
+            var (mockContext, employeesMockSet) =
                 RepositoryTestHelper.CreateRepositoryContext<FpsDbContext, Employee>(
-                    employees, 
+                    employees,
                     mockFpsYearContext.Object);
-            
+
             mockContext.Setup(x => x.Employees).Returns(employeesMockSet.Object);
 
             // Don't setup Entry - just verify it gets called and handle the exception
@@ -596,7 +597,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
 
             // Act & Assert
             await Assert.ThrowsAsync<NotSupportedException>(() => repo.UpdateEmployeeAsync(updatedEmployee));
-            
+
             // Verify the FPS year was set before Entry was called
             Assert.Equal(2025, updatedEmployee.FpsYear);
             Assert.True(entryWasCalled);
@@ -626,7 +627,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
 
             mockContext.Setup(x => x.Employees).Returns(employeesMockSet.Object);
 
-            var wgEmployeesMockSet = RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<WgEmployee>());
+            var wgEmployeesMockSet = RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<WorkGroupEmployee>());
             mockContext.Setup(x => x.WgEmployees).Returns(wgEmployeesMockSet.Object);
 
             var repo = new EmployeeRepository(mockContext.Object, mockFpsYearContext.Object);
@@ -680,14 +681,14 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
                 LastName = "Smith",
                 FpsYear = DefaultTestFpsYear
             };
-            var linkedWgEmployee = new WgEmployee
+            var linkedWgEmployee = new WorkGroupEmployee
             {
                 SpNumber = "SP001",
                 FpsYear = DefaultTestFpsYear
             };
             var repo = CreateRepository(
                 new List<Employee> { employee },
-                wgEmployees: new List<WgEmployee> { linkedWgEmployee });
+                wgEmployees: new List<WorkGroupEmployee> { linkedWgEmployee });
 
             // Act & Assert
             var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
@@ -822,7 +823,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             Assert.Single(resultList);
             Assert.Equal("Manager One", resultList[0].Name);
         }
-        
+
         [Fact]
         public async Task GetAllManagersAsync_ReturnsOrderedByName()
         {
