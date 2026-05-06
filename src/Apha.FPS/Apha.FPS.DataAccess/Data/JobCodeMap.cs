@@ -10,7 +10,7 @@ namespace Apha.FPS.DataAccess.Data
 
         public void Configure(EntityTypeBuilder<JobCode> entity)
         {
-            entity.HasKey(e => e.JobCodeId).HasName("tlkpjobcode_pk_tlkpjobcode_new_1__15");
+            entity.HasKey(e => new { e.JobCodeId, e.FpsYear }).HasName("pk_tlkpjobcode");
 
             entity.ToTable("tlkpjobcode", "fps");
 

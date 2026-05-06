@@ -24,14 +24,14 @@ namespace Apha.PACT.DataAccess.Data
             entity.HasIndex(e => e.TestCode, "testcode");
 
             entity.Property(e => e.TestCode)
-                .HasColumnType("citext")
+                .HasMaxLength(20)
                 .HasColumnName("testcode");
             entity.Property(e => e.Buyer)
-                .HasColumnType("citext")
+                .HasMaxLength(20)
                 .HasColumnName("buyer");
             entity.Property(e => e.Month).HasColumnName("month");
             entity.Property(e => e.WorkGroup)
-                .HasColumnType("citext")
+                .HasMaxLength(50)
                 .HasColumnName("workgroup");
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.Volume).HasColumnName("volume");

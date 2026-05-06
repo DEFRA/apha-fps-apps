@@ -16,7 +16,6 @@ namespace Apha.FPS.DataAccess.Data
 
             entity.Property(e => e.Dt2Username)
                 .HasMaxLength(50)
-                .UseCollation("latin1_general_ci_as")
                 .HasColumnName("dt2username");
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.HrsAvail).HasColumnName("hrsavail");
@@ -32,7 +31,7 @@ namespace Apha.FPS.DataAccess.Data
                 .HasColumnName("personstatus");
             entity.Property(e => e.SickSpecial).HasColumnName("sickspecial");
             entity.Property(e => e.StaffId)
-                .HasColumnType("citext")
+                .HasMaxLength(50)
                 .HasColumnName("staffid");
             entity.Property(e => e.Title)
                 .HasMaxLength(4)
@@ -40,10 +39,9 @@ namespace Apha.FPS.DataAccess.Data
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.UserEmail)
                 .HasMaxLength(255)
-                .UseCollation("latin1_general_ci_as")
                 .HasColumnName("useremail");
             entity.Property(e => e.WorkgroupGrade)
-                .HasColumnType("citext")
+                .HasMaxLength(50)
                 .HasColumnName("workgroupgrade");
         }
     }

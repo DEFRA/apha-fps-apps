@@ -13,8 +13,7 @@ namespace Apha.FPS.DataAccess.Data
             entity.ToTable("tlkpdivision", "fps", tb => tb.HasComment("Organizational divisions within agencies for cost allocation and reporting."));
 
             entity.Property(e => e.DivName)
-                .HasMaxLength(255)
-                .HasColumnType("citext")
+                .HasMaxLength(10)
                 .HasComment("Division name. Primary key (case-insensitive text).")
                 .HasColumnName("divname");
 

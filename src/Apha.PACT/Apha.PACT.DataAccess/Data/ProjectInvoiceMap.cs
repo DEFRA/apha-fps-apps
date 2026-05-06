@@ -14,7 +14,9 @@ namespace Apha.PACT.DataAccess.Data
             entity.ToTable("proj_invoice", "fps");
 
             entity.Property(e => e.InvoiceCounter)
-                 .ValueGeneratedOnAdd().HasColumnName("invoicecounter");
+                 .ValueGeneratedOnAdd()
+                 .UseIdentityAlwaysColumn()
+                 .HasColumnName("invoicecounter");
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.Amount)
                 .HasColumnType("money")
@@ -30,7 +32,7 @@ namespace Apha.PACT.DataAccess.Data
                 .HasColumnType("money")
                 .HasColumnName("profitloss");
             entity.Property(e => e.ProjectParent)
-                .HasColumnType("citext")
+                .HasMaxLength(20)
                 .HasColumnName("projectparent");
             entity.Property(e => e.Type)
                 .HasMaxLength(10)

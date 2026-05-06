@@ -10,7 +10,7 @@ namespace Apha.FPS.DataAccess.Data
 
         public void Configure(EntityTypeBuilder<WorkgroupGrade> entity)
         {
-            entity.HasKey(e => e.WgGrade).HasName("workgroupgrade_pk__workgroupgrade__2de6d218");
+            entity.HasKey(e => new { e.WgGrade, e.FpsYear }).HasName("pk_workgroupgrade");
 
             entity.ToTable("workgroupgrade", "fps");
 
@@ -30,8 +30,7 @@ namespace Apha.FPS.DataAccess.Data
                 .HasColumnName("directratewg");
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.GradeCode)
-                .HasMaxLength(50)
-                .UseCollation("latin1_general_ci_as")
+                .HasMaxLength(10)
                 .HasColumnName("gradecode");
             entity.Property(e => e.HrsChangedBy)
                 .HasMaxLength(50)

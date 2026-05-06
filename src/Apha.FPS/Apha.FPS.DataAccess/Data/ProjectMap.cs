@@ -10,16 +10,17 @@ namespace Apha.FPS.DataAccess.Data
 
         public void Configure(EntityTypeBuilder<Project> entity)
         {
-            entity.HasKey(e => e.ParentProject).HasName("tlkpproject_pk__tlkpproject__6c83230f");
+            entity.HasKey(e => new { e.ParentProject, e.FpsYear }).HasName("pk_tlkpproject");
 
             entity.ToTable("tlkpproject", "fps");
 
-            entity.HasIndex(e => e.ProjectStatus, "dbo_tlkpproject_projectstatus");
+            entity.HasIndex(e => e.ProjectStatus, "projectstatus");
 
             entity.Property(e => e.ParentProject)
                 .HasMaxLength(20)
                 .HasColumnName("parentproject");
             entity.Property(e => e.BudgetCvl)
+                .HasDefaultValueSql("0")
                 .HasColumnType("money")
                 .HasColumnName("budget_cvl");
             entity.Property(e => e.CarryOver)
