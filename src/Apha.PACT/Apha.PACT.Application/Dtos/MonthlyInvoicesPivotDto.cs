@@ -1,11 +1,11 @@
-using Apha.FPSApps.Application.Dtos;
+﻿using Apha.PACT.Application.Pagination;
 
-namespace Apha.FPSApps.Application.Dtos.PACT
+namespace Apha.PACT.Application.Dtos
 {
     public class MonthlyInvoicesPivotDto
     {
         public List<int> Months { get; set; } = [];
-        public List<MonthlyInvoicesSummaryItemDto> Rows { get; set; } = [];
+        public List<MonthlyInvoicesSummaryDto> Rows { get; set; } = [];
         public PaginationDto Pagination { get; set; } = new();
     }
 }
