@@ -122,5 +122,17 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             var dto = _mapper.Map<ApiResponseDto<decimal>>(response);
             return ApiResponseDto<decimal>.FailureResponse(dto.Errors, dto.Meta);
         }
+
+        public async Task<ApiResponseDto<MonthlyInvoicesPivotDto>> GetMonthlyInvoicesSummaryAsync(QueryParameters<string> query)
+        {
+            string url = QueryStringHelper.AddQueryString(PactApiEndpoints.GetMonthlyInvoicesSummary, query);
+            var response = await _http.GetAsync<MonthlyInvoicesPivotRes>(url);
+
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<MonthlyInvoicesPivotDto>>(response);            
+
+            var responseDto = _mapper.Map<ApiResponseDto<MonthlyInvoicesPivotDto>>(response);
+            return ApiResponseDto<MonthlyInvoicesPivotDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+        }
     }
 }

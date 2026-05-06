@@ -98,3 +98,4 @@ web.*.config
 *.orig
 
 # exclude files which shouldnt be git ignored
+!*.slnLaunch.user
