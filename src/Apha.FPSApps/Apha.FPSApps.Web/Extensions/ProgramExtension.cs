@@ -3,6 +3,7 @@ using Apha.FPSApps.Web.Mappings;
 using Apha.FPSApps.Web.Middleware;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
 using System.Globalization;
 
@@ -59,19 +60,7 @@ namespace Apha.FPSApps.Web.Extensions
 
             // Authentication
             services.AddAuthenticationServices(configuration);
-
-            // Save tokens in cookie
-            services.Configure<OpenIdConnectOptions>(OpenIdConnectDefaults.AuthenticationScheme, options =>
-            {
-                options.SaveTokens = true;
-            });
-
-            // Configure cookie expiration
-            services.ConfigureApplicationCookie(options =>
-            {
-                options.ExpireTimeSpan = TimeSpan.FromHours(8);
-                options.SlidingExpiration = true;
-            });
+           
             //API clients
             services.AddApiClient(builder.Configuration);
 
@@ -80,6 +69,14 @@ namespace Apha.FPSApps.Web.Extensions
 
             // In-memory cache (used by FpsYearMiddleware)
             services.AddMemoryCache();
+
+            // Configure forwarded headers for proxy/load balancer support
+            services.Configure<ForwardedHeadersOptions>(options =>
+            {
+                options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+                options.KnownIPNetworks.Clear();
+                options.KnownProxies.Clear();
+            });
 
             // Health checks
             services.AddHealthChecks();
@@ -110,7 +107,7 @@ namespace Apha.FPSApps.Web.Extensions
             // Error handling
             if (env.IsDevelopment() || env.IsEnvironment("local"))
             {
-                app.UseDeveloperExceptionPage();
+            app.UseDeveloperExceptionPage();
             }
             else
             {
@@ -119,6 +116,10 @@ namespace Apha.FPSApps.Web.Extensions
 
             app.UseHsts();
             app.UseHttpsRedirection();
+
+            // Use forwarded headers - must be before authentication
+            app.UseForwardedHeaders();
+
             app.UseStaticFiles();
             app.UseRouting();
 

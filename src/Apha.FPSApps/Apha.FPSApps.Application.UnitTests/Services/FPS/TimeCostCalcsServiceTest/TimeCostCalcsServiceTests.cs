@@ -6,20 +6,20 @@ using Apha.FPSApps.Application.Services.FPS;
 using NSubstitute;
 using Xunit;
 
-namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProjectStaffPlanActualServiceTest
+namespace Apha.FPSApps.Application.UnitTests.Services.FPS.TimeCostCalcsServiceTest
 {
-    public class ProjectStaffPlanActualServiceTests
+    public class TimeCostCalcsServiceTests
     {
         private readonly IFpsApiClient _fpsClient;
         private readonly IFpsProjectStaffPlanActualApiClient _apiClient;
-        private readonly ProjectStaffPlanActualService _service;
+        private readonly TimeCostCalcsService _service;
 
-        public ProjectStaffPlanActualServiceTests()
+        public TimeCostCalcsServiceTests()
         {
             _fpsClient = Substitute.For<IFpsApiClient>();
             _apiClient = Substitute.For<IFpsProjectStaffPlanActualApiClient>();
             _fpsClient.FpsProjectStaffPlanActual.Returns(_apiClient);
-            _service   = new ProjectStaffPlanActualService(_fpsClient);
+            _service   = new TimeCostCalcsService(_fpsClient);
         }
 
         private static QueryParameters<string> DefaultQuery(int page = 1, int pageSize = 10)

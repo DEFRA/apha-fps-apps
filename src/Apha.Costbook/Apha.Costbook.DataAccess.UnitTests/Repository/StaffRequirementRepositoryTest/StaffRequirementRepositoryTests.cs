@@ -549,4 +549,206 @@ public class StaffRequirementRepositoryTests
     }
 
     #endregion
+
+    #region UpdateStaffRequirementAsync - additional cases
+
+    [Fact]
+    public async Task UpdateStaffRequirementAsync_ReturnsSameEntityReference()
+    {
+        var (repo, _, _) = CreateRepository();
+        var entity = new StaffRequirement
+        {
+            Project = "2024/001",
+            Year = 2024,
+            WgGrade = "EO"
+        };
+
+        var result = await repo.UpdateStaffRequirementAsync(entity);
+
+        Assert.Same(entity, result);
+    }
+
+    #endregion
+
+    #region AddStaffRequirementAsync - additional cases
+
+    [Fact]
+    public async Task AddStaffRequirementAsync_WithNullOptionalFields_Succeeds()
+    {
+        var (repo, _, _) = CreateRepository();
+        var newReq = new StaffRequirement
+        {
+            Project = "2024/001",
+            Year = 2024,
+            WgGrade = "HEO",
+            Name = null,
+            Nohours = null,
+            Nodays = null,
+            Chargerate = null,
+            Payrate = null,
+            Npr = null,
+            Ohr = null
+        };
+
+        var result = await repo.AddStaffRequirementAsync(newReq);
+
+        Assert.NotNull(result);
+        Assert.Null(result.Name);
+        Assert.Null(result.Nohours);
+        Assert.Null(result.Chargerate);
+    }
+
+    #endregion
+
+    #region GetStaffRequirementsByProjectYearAsync - additional cases
+
+    [Fact]
+    public async Task GetStaffRequirementsByProjectYearAsync_ReturnsMultipleRecords_WhenMultipleExist()
+    {
+        var reqs = new List<StaffRequirement>
+        {
+            new() { SrIdentity = 1, Project = "2024/001", Year = 2024, WgGrade = "HEO" },
+            new() { SrIdentity = 2, Project = "2024/001", Year = 2024, WgGrade = "EO" },
+            new() { SrIdentity = 3, Project = "2024/001", Year = 2024, WgGrade = "SEO" }
+        };
+        var wggs = new List<WorkGroupGrade> { CreateWgg("HEO"), CreateWgg("EO"), CreateWgg("SEO") };
+        var (repo, _, _) = CreateRepository(staffRequirements: reqs, workGroupGrades: wggs);
+
+        var result = await repo.GetStaffRequirementsByProjectYearAsync("2024/001", 2024, DefaultQuery());
+
+        Assert.Equal(3, result.Data.Count());
+    }
+
+    [Fact]
+    public async Task GetStaffRequirementsByProjectYearAsync_SortsByName_Ascending()
+    {
+        var reqs = new List<StaffRequirement>
+        {
+            new() { SrIdentity = 1, Project = "2024/001", Year = 2024, WgGrade = "HEO", Name = "Charlie" },
+            new() { SrIdentity = 2, Project = "2024/001", Year = 2024, WgGrade = "EO",  Name = "Alice" },
+            new() { SrIdentity = 3, Project = "2024/001", Year = 2024, WgGrade = "SEO", Name = "Bob" }
+        };
+        var wggs = new List<WorkGroupGrade> { CreateWgg("HEO"), CreateWgg("EO"), CreateWgg("SEO") };
+        var query = new PaginationParameters<string> { Page = 1, PageSize = 100, SortBy = "name", Descending = false };
+        var (repo, _, _) = CreateRepository(staffRequirements: reqs, workGroupGrades: wggs);
+
+        var result = await repo.GetStaffRequirementsByProjectYearAsync("2024/001", 2024, query);
+
+        Assert.Equal("Alice",   result.Data.First().Name);
+        Assert.Equal("Charlie", result.Data.Last().Name);
+    }
+
+    [Fact]
+    public async Task GetStaffRequirementsByProjectYearAsync_SortsBySrIdentity_Ascending()
+    {
+        var reqs = new List<StaffRequirement>
+        {
+            new() { SrIdentity = 3, Project = "2024/001", Year = 2024, WgGrade = "SEO" },
+            new() { SrIdentity = 1, Project = "2024/001", Year = 2024, WgGrade = "HEO" },
+            new() { SrIdentity = 2, Project = "2024/001", Year = 2024, WgGrade = "EO"  }
+        };
+        var wggs = new List<WorkGroupGrade> { CreateWgg("SEO"), CreateWgg("HEO"), CreateWgg("EO") };
+        var query = new PaginationParameters<string> { Page = 1, PageSize = 100, SortBy = "sridentity", Descending = false };
+        var (repo, _, _) = CreateRepository(staffRequirements: reqs, workGroupGrades: wggs);
+
+        var result = await repo.GetStaffRequirementsByProjectYearAsync("2024/001", 2024, query);
+
+        Assert.Equal(1, result.Data.First().SrIdentity);
+        Assert.Equal(3, result.Data.Last().SrIdentity);
+    }
+
+    [Fact]
+    public async Task GetStaffRequirementsByProjectYearAsync_SortsBySrIdentity_Descending()
+    {
+        var reqs = new List<StaffRequirement>
+        {
+            new() { SrIdentity = 1, Project = "2024/001", Year = 2024, WgGrade = "HEO" },
+            new() { SrIdentity = 3, Project = "2024/001", Year = 2024, WgGrade = "SEO" },
+            new() { SrIdentity = 2, Project = "2024/001", Year = 2024, WgGrade = "EO"  }
+        };
+        var wggs = new List<WorkGroupGrade> { CreateWgg("HEO"), CreateWgg("SEO"), CreateWgg("EO") };
+        var query = new PaginationParameters<string> { Page = 1, PageSize = 100, SortBy = "sridentity", Descending = true };
+        var (repo, _, _) = CreateRepository(staffRequirements: reqs, workGroupGrades: wggs);
+
+        var result = await repo.GetStaffRequirementsByProjectYearAsync("2024/001", 2024, query);
+
+        Assert.Equal(3, result.Data.First().SrIdentity);
+        Assert.Equal(1, result.Data.Last().SrIdentity);
+    }
+
+    [Fact]
+    public async Task GetStaffRequirementsByProjectYearAsync_SortsByNohours_Ascending()
+    {
+        var reqs = new List<StaffRequirement>
+        {
+            new() { SrIdentity = 1, Project = "2024/001", Year = 2024, WgGrade = "HEO", Nohours = 300 },
+            new() { SrIdentity = 2, Project = "2024/001", Year = 2024, WgGrade = "EO",  Nohours = 100 },
+            new() { SrIdentity = 3, Project = "2024/001", Year = 2024, WgGrade = "SEO", Nohours = 200 }
+        };
+        var wggs = new List<WorkGroupGrade> { CreateWgg("HEO"), CreateWgg("EO"), CreateWgg("SEO") };
+        var query = new PaginationParameters<string> { Page = 1, PageSize = 100, SortBy = "nohours", Descending = false };
+        var (repo, _, _) = CreateRepository(staffRequirements: reqs, workGroupGrades: wggs);
+
+        var result = await repo.GetStaffRequirementsByProjectYearAsync("2024/001", 2024, query);
+
+        Assert.Equal(100, result.Data.First().Nohours);
+        Assert.Equal(300, result.Data.Last().Nohours);
+    }
+
+    [Fact]
+    public async Task GetStaffRequirementsByProjectYearAsync_SortsByChargerate_Descending()
+    {
+        var reqs = new List<StaffRequirement>
+        {
+            new() { SrIdentity = 1, Project = "2024/001", Year = 2024, WgGrade = "HEO", Chargerate = 20 },
+            new() { SrIdentity = 2, Project = "2024/001", Year = 2024, WgGrade = "EO",  Chargerate = 80 },
+            new() { SrIdentity = 3, Project = "2024/001", Year = 2024, WgGrade = "SEO", Chargerate = 50 }
+        };
+        var wggs = new List<WorkGroupGrade> { CreateWgg("HEO"), CreateWgg("EO"), CreateWgg("SEO") };
+        var query = new PaginationParameters<string> { Page = 1, PageSize = 100, SortBy = "chargerate", Descending = true };
+        var (repo, _, _) = CreateRepository(staffRequirements: reqs, workGroupGrades: wggs);
+
+        var result = await repo.GetStaffRequirementsByProjectYearAsync("2024/001", 2024, query);
+
+        Assert.Equal(80, result.Data.First().Chargerate);
+        Assert.Equal(20, result.Data.Last().Chargerate);
+    }
+
+    [Fact]
+    public async Task GetStaffRequirementsByProjectYearAsync_SortsByWgGrade_Descending()
+    {
+        var reqs = new List<StaffRequirement>
+        {
+            new() { SrIdentity = 1, Project = "2024/001", Year = 2024, WgGrade = "A" },
+            new() { SrIdentity = 2, Project = "2024/001", Year = 2024, WgGrade = "C" },
+            new() { SrIdentity = 3, Project = "2024/001", Year = 2024, WgGrade = "B" }
+        };
+        var wggs = new List<WorkGroupGrade> { CreateWgg("A"), CreateWgg("C"), CreateWgg("B") };
+        var query = new PaginationParameters<string> { Page = 1, PageSize = 100, SortBy = "wggrade", Descending = true };
+        var (repo, _, _) = CreateRepository(staffRequirements: reqs, workGroupGrades: wggs);
+
+        var result = await repo.GetStaffRequirementsByProjectYearAsync("2024/001", 2024, query);
+
+        Assert.Equal("C", result.Data.First().WgGrade);
+        Assert.Equal("A", result.Data.Last().WgGrade);
+    }
+
+    [Fact]
+    public async Task GetStaffRequirementsByProjectYearAsync_PaginationData_IsPopulatedCorrectly()
+    {
+        var reqs = Enumerable.Range(1, 7).Select(i =>
+            new StaffRequirement { SrIdentity = i, Project = "2024/001", Year = 2024, WgGrade = $"G{i:D2}" }).ToList();
+        var wggs = reqs.Select(r => CreateWgg(r.WgGrade)).ToList();
+        var query = new PaginationParameters<string> { Page = 1, PageSize = 3 };
+        var (repo, _, _) = CreateRepository(staffRequirements: reqs, workGroupGrades: wggs);
+
+        var result = await repo.GetStaffRequirementsByProjectYearAsync("2024/001", 2024, query);
+
+        Assert.Equal(3, result.Data.Count());
+        Assert.Equal(7, result.PaginationData.TotalRecords);
+        Assert.Equal(1, result.PaginationData.PageNumber);
+        Assert.Equal(3, result.PaginationData.TotalPages);
+    }
+
+    #endregion
 }

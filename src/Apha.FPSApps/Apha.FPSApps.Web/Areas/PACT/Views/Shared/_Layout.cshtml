@@ -84,7 +84,8 @@
                     <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow for dropdown menu" width="12"></span>
                 </button>
                 <div class="dropdown-menu" id="monthly-data">
-                    <a class="dropdown-item" href="#">Project Invoices (Manual)</a>
+                    <a class="dropdown-item" asp-area="PACT" asp-controller="Invoice" asp-action="Index">Project Invoices (Manual)</a>
+
                     <a class="dropdown-item" href="#">OM, OG, FT & UT Invoices (Batch Mode from RMS)</a>
 
                     <a class="dropdown-item" href="invoicebymonth.html">Invoices by Month</a>

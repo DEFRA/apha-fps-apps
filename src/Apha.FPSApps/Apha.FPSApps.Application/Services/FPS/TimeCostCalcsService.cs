@@ -6,11 +6,11 @@ using Apha.FPSApps.Application.Pagination;
 
 namespace Apha.FPSApps.Application.Services.FPS
 {
-    public class ProjectStaffPlanActualService : IProjectStaffPlanActualService
+    public class TimeCostCalcsService : ITimeCostCalcsService
     {
         private readonly IFpsApiClient _fpsClient;
 
-        public ProjectStaffPlanActualService(IFpsApiClient fpsClient)
+        public TimeCostCalcsService(IFpsApiClient fpsClient)
         {
             _fpsClient = fpsClient;
         }
