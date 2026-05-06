@@ -29,7 +29,8 @@ namespace Apha.PACT.DataAccess.Data
         public virtual DbSet<MonthlyOutput> MonthlyOutputs { get; set; }
         public virtual DbSet<MonthlyTime> MonthlyTimes { get; set; }
         public virtual DbSet<MonthlyInvoicesSummary> MonthlyInvoicesSummary { get; set; }
-
+        public virtual DbSet<MonthlySubContractsSummary> MonthlySubContractsSummary { get; set; }
+        
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new ProjectMap());
@@ -73,6 +74,9 @@ namespace Apha.PACT.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new MonthlyInvoicesSummaryMap());
             modelBuilder.Entity<MonthlyInvoicesSummary>().HasQueryFilter(e => e.Fpsyear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new MonthlySubContractSummaryMap());
+            modelBuilder.Entity<MonthlySubContractsSummary>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
         }
     }
 }
