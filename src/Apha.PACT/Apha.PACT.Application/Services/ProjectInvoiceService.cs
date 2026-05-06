@@ -91,12 +91,12 @@ namespace Apha.PACT.Application.Services
 
             // Group flat rows into pivot rows (must be done in-memory: dict per row)
             IEnumerable<MonthlyInvoicesSummaryDto> rows = data
-                .GroupBy(x => new { x.Program, x.Parentproject })
+                .GroupBy(x => new { x.Program, x.ParentProject })
                 .Select(g => new MonthlyInvoicesSummaryDto
                 {
                     Program = g.Key.Program,
-                    ParentProject = g.Key.Parentproject,
-                    MonthlyAmounts = g.ToDictionary(x => x.Month, x => x.Monthlyamount ?? 0m)
+                    ParentProject = g.Key.ParentProject,
+                    MonthlyAmounts = g.ToDictionary(x => x.Month, x => x.MonthlyAmount ?? 0m)
                 });
 
             // Sort grouped pivot rows (including dynamic month columns M1..M12)

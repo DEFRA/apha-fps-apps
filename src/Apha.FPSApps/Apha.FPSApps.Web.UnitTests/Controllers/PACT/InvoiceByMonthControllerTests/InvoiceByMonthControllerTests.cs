@@ -45,7 +45,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceByMonthControllerTe
             {
                 dto.Rows =
                 [
-                    new MonthlyInvoicesSummaryRowDto
+                    new MonthlyInvoicesSummaryItemDto
                     {
                         Program = "PROG1",
                         ParentProject = "PRJ001",

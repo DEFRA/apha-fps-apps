@@ -142,14 +142,14 @@ namespace Apha.PACT.DataAccess.Repository
                         query = query.Where(x => x.Program.Contains(program.ToString()!));
 
                     if (dict.TryGetValue("ParentProject", out object? parentProject) && parentProject != null)
-                        query = query.Where(x => x.Parentproject.Contains(parentProject.ToString()!));
+                        query = query.Where(x => x.ParentProject.Contains(parentProject.ToString()!));
                 }
             }
 
             // Always order raw rows by Program, Project, Month so grouping is stable
             return await query
                 .OrderBy(x => x.Program)
-                .ThenBy(x => x.Parentproject)
+                .ThenBy(x => x.ParentProject)
                 .ThenBy(x => x.Month)
                 .ToListAsync();
         }

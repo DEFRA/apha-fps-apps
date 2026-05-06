@@ -24,8 +24,7 @@ namespace Apha.FPSApps.Web.Handler
              HttpRequestMessage request,
              CancellationToken cancellationToken)
         {
-            try
-            {
+           
                 var user = _httpContextAccessor.HttpContext?.User;
 
                 if (user == null || !user.Identity?.IsAuthenticated == true)
@@ -38,11 +37,7 @@ namespace Apha.FPSApps.Web.Handler
                     new AuthenticationHeaderValue("Bearer", accessToken);
 
                 return await base.SendAsync(request, cancellationToken);
-            }
-            catch(Exception ex)
-            {
-                throw new UnauthorizedAccessException("Error in BearerTokenHandler", ex); 
-            }
+           
         }
     }
 }

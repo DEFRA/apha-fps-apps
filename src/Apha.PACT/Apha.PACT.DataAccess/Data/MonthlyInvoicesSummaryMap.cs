@@ -12,12 +12,12 @@ namespace Apha.PACT.DataAccess.Data
                .HasNoKey()
                .ToView("vwinvoicebymonth", "fps");
 
-            entity.Property(e => e.Fpsyear).HasColumnName("fpsyear");
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.Month).HasColumnName("month");
-            entity.Property(e => e.Monthlyamount)
+            entity.Property(e => e.MonthlyAmount)
                 .HasColumnType("money")
                 .HasColumnName("monthlyamount");
-            entity.Property(e => e.Parentproject)
+            entity.Property(e => e.ParentProject)
                 .HasMaxLength(20)
                 .HasColumnName("parentproject");
             entity.Property(e => e.Program)

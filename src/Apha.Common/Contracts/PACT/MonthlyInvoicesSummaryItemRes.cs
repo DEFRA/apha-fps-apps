@@ -1,12 +1,9 @@
-using Apha.PACT.Application.Pagination;
-
-namespace Apha.PACT.Application.Dtos
+﻿namespace Apha.Common.Contracts.PACT
 {
-    public class MonthlyInvoicesSummaryDto
+    public class MonthlyInvoicesSummaryItemRes
     {
         public string Program { get; set; } = null!;
         public string ParentProject { get; set; } = null!;
         public Dictionary<int, decimal> MonthlyAmounts { get; set; } = [];
     }
-    
 }

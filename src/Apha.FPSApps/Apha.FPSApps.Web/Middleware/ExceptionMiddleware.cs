@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.Identity.Web;
+using System.Net.Sockets;
 
 namespace Apha.FPSApps.Web.Middleware
 {
@@ -80,6 +81,10 @@ namespace Apha.FPSApps.Web.Middleware
                     errorCode = "403 - Forbidden";
                     statusCode = StatusCodes.Status403Forbidden;
                     errorType = _configuration["ExceptionTypes:Authorization"] ?? errorType;
+                    break;
+                case HttpRequestException httpEx when httpEx.InnerException is SocketException socketEx && socketEx.ErrorCode == 10061:
+                    errorCode = "SERVICE_UNAVAILABLE";
+                    statusCode = StatusCodes.Status503ServiceUnavailable;
                     break;
                 case InvalidOperationException:
                 case ArgumentException:

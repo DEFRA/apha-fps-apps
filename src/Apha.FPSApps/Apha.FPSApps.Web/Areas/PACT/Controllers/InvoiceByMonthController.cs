@@ -23,18 +23,24 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         {
             _mapper = mapper;
             _invoiceService = invoiceService;
-        }
+        }        
 
-        // ── INDEX ────────────────────────────────────────────────────────────
-
+        /// <summary>
+        /// Displays the invoice-by-month pivot summary page with a dynamically columned data grid
+        /// showing monthly invoice amounts grouped by program and parent project.
+        /// </summary>
+        /// <returns>The InvoiceByMonth Index view populated with the initial pivot grid configuration.</returns>
         public async Task<IActionResult> Index()
         {
             var grid = await BuildGridAsync(new PaginationFilter<string>());
             return View(new InvoiceByMonthViewModel { Grid = grid });
-        }
+        }       
 
-        // ── GRID RELOAD (called by DataGrid JS on sort / filter) ─────────────
-
+        /// <summary>
+        /// Reloads the invoice-by-month pivot grid partial view based on the supplied pagination, sort, and filter parameters.
+        /// </summary>
+        /// <param name="request">Pagination and filter parameters submitted from the data grid.</param>
+        /// <returns>A partial view containing the refreshed pivot grid, or <see cref="BadRequestResult"/> if the model state is invalid.</returns>
         [HttpPost]
         public async Task<IActionResult> LoadGrid(PaginationFilter<string> request)
         {
@@ -43,10 +49,19 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
             var grid = await BuildGridAsync(request);
             return PartialView("_DataGrid", grid);
-        }
+        }        
 
-        // ── PRIVATE ──────────────────────────────────────────────────────────
-
+        /// <summary>
+        /// Builds the monthly invoice pivot grid configuration by fetching summary data from the service,
+        /// mapping flat rows into pivot row models, and generating dynamic month columns based on the
+        /// months present in the returned data.
+        /// </summary>
+        /// <remarks>
+        /// Month columns are derived from the financial year period where period 1 = April through period 12 = March.
+        /// Each column is labelled in the format "period-MonthAbbr" (e.g. "1-Apr").
+        /// </remarks>
+        /// <param name="request">Pagination and filter parameters for the grid query.</param>
+        /// <returns>A fully configured <see cref="DataGridConfig{T}"/> with dynamic month columns ready for rendering.</returns>
         private async Task<DataGridConfig<MonthlyInvoicePivotRow>> BuildGridAsync(
             PaginationFilter<string> request)
         {

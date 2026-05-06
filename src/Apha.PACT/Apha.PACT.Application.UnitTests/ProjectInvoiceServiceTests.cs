@@ -24,7 +24,7 @@ namespace Apha.PACT.Application.UnitTests
         }
 
         private static MonthlyInvoicesSummary MakeSummaryRow(string program, string project, int month, decimal amount)
-            => new() { Fpsyear = 2025, Program = program, Parentproject = project, Month = month, Monthlyamount = amount };
+            => new() { FpsYear = 2025, Program = program, ParentProject = project, Month = month, MonthlyAmount = amount };
 
         #region GetMonthlyInvoicesSummaryAsync
 
@@ -180,7 +180,7 @@ namespace Apha.PACT.Application.UnitTests
             _mapper.Map<PaginationParameters<string>>(query).Returns(new PaginationParameters<string>());
             _repository.GetMonthlyInvoicesSummaryAsync(Arg.Any<PaginationParameters<string>>()).Returns(
             [
-                new MonthlyInvoicesSummary { Fpsyear = 2025, Program = "A", Parentproject = "PRJ1", Month = 1, Monthlyamount = null }
+                new MonthlyInvoicesSummary { FpsYear = 2025, Program = "A", ParentProject = "PRJ1", Month = 1, MonthlyAmount = null }
             ]);
 
             // Act

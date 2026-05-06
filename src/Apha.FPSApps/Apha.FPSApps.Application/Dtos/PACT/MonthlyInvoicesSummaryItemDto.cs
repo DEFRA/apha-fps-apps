@@ -1,6 +1,6 @@
 namespace Apha.FPSApps.Application.Dtos.PACT
 {
-    public class MonthlyInvoicesSummaryRowDto
+    public class MonthlyInvoicesSummaryItemDto
     {
         public string Program { get; set; } = null!;
         public string ParentProject { get; set; } = null!;

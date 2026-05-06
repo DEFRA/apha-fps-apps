@@ -104,7 +104,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository
             => new() { InvoiceCounter = id, ProjectParent = project, FpsYear = fpsYear, Month = month, Amount = amount };
 
         private static MonthlyInvoicesSummary MakeSummary(string program, string project, int month, decimal amount)
-            => new() { Fpsyear = 2025, Program = program, Parentproject = project, Month = month, Monthlyamount = amount };
+            => new() { FpsYear = 2025, Program = program, ParentProject = project, Month = month, MonthlyAmount = amount };
 
         private void SetupInvoiceDbSet(List<ProjectInvoice> data)
         {
@@ -396,7 +396,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository
 
             // Assert
             Assert.Single(result);
-            Assert.Equal("ALPHA001", result[0].Parentproject);
+            Assert.Equal("ALPHA001", result[0].ParentProject);
         }
 
         [Fact]
@@ -420,7 +420,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository
             // Assert
             Assert.Single(result);
             Assert.Equal("ADMIN", result[0].Program);
-            Assert.Equal("AH001", result[0].Parentproject);
+            Assert.Equal("AH001", result[0].ParentProject);
         }
 
         [Fact]
