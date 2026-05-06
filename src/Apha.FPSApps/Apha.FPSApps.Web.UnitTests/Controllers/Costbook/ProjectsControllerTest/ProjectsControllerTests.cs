@@ -505,6 +505,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.Costbook.ProjectsControllerTest
             var value = GetJsonResultElement(jsonResult);
             Assert.True(value.GetProperty("success").GetBoolean());
             Assert.Equal(newId, value.GetProperty("generatedId").GetString());
+            Assert.Equal(newId, value.GetProperty("projectId").GetString());
         }
 
         [Fact]

@@ -48,9 +48,7 @@ namespace Apha.PIMS.Api.Controllers
         [HttpGet("{parentproject}/fps")]
         public async Task<IActionResult> GetFpsProjectById(string parentproject)
         {
-            ProjectDto? result = await _service.GetFpsProjectByIdAsync(parentproject);
-            if (result is null)
-                throw new KeyNotFoundException($"FPS project '{parentproject}' not found.");
+            ProjectDto? result = await _service.GetFpsProjectByIdAsync(parentproject);           
             return Ok(_mapper.Map<ProjectRes>(result));
         }
 
@@ -58,9 +56,7 @@ namespace Apha.PIMS.Api.Controllers
         [HttpGet("{parentproject}/proposed")]
         public async Task<IActionResult> GetProposedProjectById(string parentproject)
         {
-            ProposedProjectDto? result = await _service.GetProposedProjectByIdAsync(parentproject);
-            if (result is null)
-                throw new KeyNotFoundException($"Proposed project '{parentproject}' not found.");
+            ProposedProjectDto? result = await _service.GetProposedProjectByIdAsync(parentproject);            
             return Ok(_mapper.Map<ProposedProjectRes>(result));
         }
 
