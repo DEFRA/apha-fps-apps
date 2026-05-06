@@ -207,7 +207,7 @@
                                 </div>
                                 <label for="chkInflation" class="govuk-label label_width mb-0 pt-1">Include Inflation?:</label>
                                 <div class="d-flex align-items-center gap-2 margin_left_5">
-                      
+
                                     <div class="govuk-checkboxes govuk-checkboxes--small">
                                         <div class="govuk-checkboxes__item">
                                             <input type="checkbox"
@@ -216,7 +216,9 @@
                                                    value="-1"
                                                    class="govuk-checkboxes__input"
                                             @(Model.Inflation.HasValue && Model.Inflation.Value == -1 ? "checked=\"checked\"" : "") />
-                                            <label class="govuk-checkboxes__label" for="chkInflation"></label>
+                                            <label class="govuk-checkboxes__label" for="chkInflation">
+                                                <span class="govuk-visually-hidden">Include Inflation</span>
+                                            </label>
                                         </div>
                                     </div>
                                     <span class="warning-text" style="font-size:13px; width:286px; color:#353535; border:1px dashed #0d6efd; border-radius:4px; padding:2px;">
