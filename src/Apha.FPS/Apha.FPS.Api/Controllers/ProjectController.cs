@@ -46,7 +46,8 @@ namespace Apha.FPS.Api.Controllers
         {
             var projectDto = _mapper.Map<ProjectDto>(request);
             var created = await _projectService.CreateProjectAsync(projectDto);
-            return Ok(_mapper.Map<ProjectRes>(created));
+            var response = _mapper.Map<ProjectRes>(created);
+            return CreatedAtAction(nameof(GetProjectByIdAsync), new { parentProject = response.ParentProject }, response);
         }
 
         [HttpPut("{parentProject}")]

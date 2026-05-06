@@ -7,7 +7,6 @@ using Apha.FPSApps.Application.Interfaces.FpsApiClients;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
-using Microsoft.Identity.Web;
 
 namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 {

@@ -4,8 +4,6 @@ using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
-using Npgsql;
-using NpgsqlTypes;
 using System.Dynamic;
 using System.Linq.Expressions;
 
@@ -122,7 +120,8 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<Project> CreateProjectAsync(Project project)
         {
             project.FpsYear = _requestContext.FpsYear;
-            project.DateCreated = DateTime.Now;
+            project.DateCreated = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
+            NormalizeDateTimesToUnspecified(project);
             await _dbContext.Projects.AddAsync(project);
             // Converted trigger logic — UITrig_tlkpProject FOR INSERT: stage audit log in same unit of work
             _dbContext.ProjectLogs.Add(MapProjectToLog(project, "I", _requestContext.UserEmailId));
@@ -134,12 +133,22 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<Project> UpdateProjectAsync(Project project)
         {
             project.FpsYear = _requestContext.FpsYear;
+            NormalizeDateTimesToUnspecified(project);
             _dbContext.Entry(project).State = EntityState.Modified;
             _dbContext.Entry(project).Property(p => p.IncomeAccountCode).IsModified = false;
             // Converted trigger logic — UITrig_tlkpProject FOR UPDATE: stage audit log in same unit of work
             _dbContext.ProjectLogs.Add(MapProjectToLog(project, "U", _requestContext.UserEmailId));
             await _dbContext.SaveChangesAsync();
             return project;
+        }
+
+        private static void NormalizeDateTimesToUnspecified(Project p)
+        {
+            if (p.DateCreated.HasValue && p.DateCreated.Value.Kind != DateTimeKind.Unspecified)
+                p.DateCreated = DateTime.SpecifyKind(p.DateCreated.Value, DateTimeKind.Unspecified);
+
+            if (p.DateCosted.HasValue && p.DateCosted.Value.Kind != DateTimeKind.Unspecified)
+                p.DateCosted = DateTime.SpecifyKind(p.DateCosted.Value, DateTimeKind.Unspecified);
         }
 
         public async Task<Project?> UpdatePactProjectDetailsAsync(Project project)
@@ -168,6 +177,7 @@ namespace Apha.FPS.DataAccess.Repositories
             entity.WipCurrent = project.WipCurrent;
             entity.FecCost = project.FecCost;
 
+            NormalizeDateTimesToUnspecified (entity);
             // Converted trigger logic — UITrig_tlkpProject FOR UPDATE: stage audit log in same unit of work
             _dbContext.ProjectLogs.Add(MapProjectToLog(entity, "U", _requestContext.UserEmailId));
             await _dbContext.SaveChangesAsync();
@@ -180,6 +190,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 .FirstOrDefaultAsync(p => p.ParentProject == parentProject
                     && p.FpsYear == _requestContext.FpsYear);
             if (project == null) return false;
+            NormalizeDateTimesToUnspecified (project);
             // Converted trigger logic — DTrig_tlkpProject FOR DELETE: stage audit log before delete in same unit of work
             _dbContext.ProjectLogs.Add(MapProjectToLog(project, "D", _requestContext.UserEmailId));
             _dbContext.Projects.Remove(project);
@@ -414,6 +425,8 @@ namespace Apha.FPS.DataAccess.Repositories
                         FpsYear           = oldProject.FpsYear
                     };
 
+                    NormalizeDateTimesToUnspecified         (newProject);
+
                     await _dbContext.Projects.AddAsync(newProject);
                     // Converted trigger logic — UITrig_tlkpProject FOR INSERT: stage audit log in same unit of work
                     _dbContext.ProjectLogs.Add(MapProjectToLog(newProject, "I", _requestContext.UserEmailId));
@@ -545,6 +558,9 @@ namespace Apha.FPS.DataAccess.Repositories
                     await _dbContext.JobCodes
                         .Where(jc => jc.ParentProject == oldCode)
                         .ExecuteDeleteAsync();
+                    // Note: No "D" audit log is staged for the old project row here — this mirrors the
+                    // original usp_ChangeProjectCode stored procedure which only logged an "I" for the
+                    // new code. The old row removal is part of the rename, not a user-initiated delete.
                     await _dbContext.Projects
                         .Where(p => p.ParentProject == oldCode)
                         .ExecuteDeleteAsync();
@@ -576,7 +592,10 @@ namespace Apha.FPS.DataAccess.Repositories
                     var project = await _dbContext.Projects
                         .FirstOrDefaultAsync(p => p.ParentProject == parentProject);
                     if (project != null)
-                        _dbContext.ProjectLogs.Add(MapProjectToLog(project, "D", _requestContext.UserEmailId));
+                    { 
+                        NormalizeDateTimesToUnspecified (project);
+                    _dbContext.ProjectLogs.Add(MapProjectToLog(project, "D", _requestContext.UserEmailId));
+                    }
                     await _dbContext.SaveChangesAsync();
 
                     // sp_Delete_tcv
@@ -640,11 +659,11 @@ namespace Apha.FPS.DataAccess.Repositories
             WipCurrent = p.WipCurrent,
             ProjectStatus = p.ProjectStatus,
             CostBookNo = p.CostBookNo,
-            DateCreated = p.DateCreated.HasValue ? DateTime.SpecifyKind(p.DateCreated.Value, DateTimeKind.Utc) : null,
+            DateCreated = p.DateCreated,
             FecCost = p.FecCost,
             Profit = p.Profit,
             BudgetCvl = p.BudgetCvl,
-            DateCosted = p.DateCosted.HasValue ? DateTime.SpecifyKind(p.DateCosted.Value, DateTimeKind.Utc) : null,
+            DateCosted = p.DateCosted,
             Disease = p.Disease,
             Contract = p.Contract,
             ProjectParent = p.ProjectParent,
@@ -657,7 +676,7 @@ namespace Apha.FPS.DataAccess.Repositories
             Comments = p.Comments,
             CarryOver = p.CarryOver,
             CarryOverSeed = p.CarryOverSeed,
-            DateTime = DateTime.UtcNow,
+            DateTime = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified), 
             InsertDelete = operation,
             JobCode = p.ParentProject,
             IsDefraProject = p.IsDefraProject,

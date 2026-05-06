@@ -6,9 +6,6 @@
     
     var formId = isEditMode ? "editProgrammeNewProjectForm" : "addProgrammeNewProjectForm";
     var submitButtonText = isEditMode ? "Update" : "Save";
-    var submitFunction = isEditMode
-        ? $"updateProject('{Model.ParentProject}', '{formId}')"
-        : $"saveProject('{formId}')";
 }
 
 <main id="main-content">
@@ -68,7 +65,7 @@
                     </div>
 
                     <!-- Form -->
-                    <form id="@formId">
+                    <form id="@formId" data-parent-project="@(isEditMode ? Html.Encode(Model.ParentProject) : string.Empty)" data-is-edit="@isEditMode.ToString().ToLower()">
                         @Html.AntiForgeryToken()
 
                         @* Hidden field to store original project code - Edit mode only *@
@@ -85,9 +82,9 @@
                             </div>
                             <div class="col-lg-6">
                                 <div class="action-buttons">
-                                    <button class="govuk-button sup_margin_0" type="button" onclick="@submitFunction">
-                                        @submitButtonText
-                                    </button>
+                                    <button class="govuk-button sup_margin_0" type="button" onclick="submitProject()">
+                                         @submitButtonText
+                                     </button>
                                     <button class="govuk-button govuk-button--secondary sup_margin_0" type="button"
                                             onclick="window.location.href='@Url.Action("Index", "Project", new { area = "FPS" })'">
                                         Cancel
@@ -95,9 +92,9 @@
                                     @if (isEditMode)
                                     {
                                         <button class="govuk-button govuk-button--warning sup_margin_0" type="button"
-                                                onclick="deleteProject('@Model.ParentProject')">
-                                            Delete this Project
-                                        </button>
+                                                onclick="handleDeleteProject()">
+                                             Delete this Project
+                                         </button>
                                     }
                                 </div>
                             </div>
@@ -123,7 +120,14 @@
                             <div class="form-left">
                                 <div class="govuk-form-group sup_margin_0">
                                     <label class="govuk-label required" asp-for="ParentProject">Project Code:</label>
-                                    <input type="text" asp-for="ParentProject" class="govuk-input" required readonly="@isEditMode" />
+                                    @if (isEditMode)
+                                    {
+                                        <input type="text" asp-for="ParentProject" class="govuk-input" required readonly />
+                                    }
+                                    else
+                                    {
+                                        <input type="text" asp-for="ParentProject" class="govuk-input" required />
+                                    }
                                     <span asp-validation-for="ParentProject" class="govuk-error-message" style="display:none;"></span>
                                 </div>
 
@@ -307,8 +311,6 @@
 </main>
 
 @section Scripts {
-    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
-    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
     <script src="~/js/ajax-form-validation.js"></script>
     <script>
         if (typeof $ !== 'undefined' && $.validator && $.validator.unobtrusive) {
@@ -389,20 +391,22 @@
             });
         }
 
-        window.saveProject = function(formId) {
+        window.submitProject = function() {
+            const form = document.querySelector('form[data-parent-project]');
+            const formId = form.id;
+            const isEdit = form.dataset.isEdit === 'true';
+            const parentProject = form.dataset.parentProject;
             clearValidationErrors('#main-content');
             stripCurrencyFormatting();
-            const form = $('#' + formId);
-            if (!form.valid()) { displayClientValidationErrors(form, '#main-content'); return; }
-            submitForm(formId, false);
+            const $form = $('#' + formId);
+            if (!$form.valid()) { displayClientValidationErrors($form, '#main-content'); return; }
+            submitForm(formId, isEdit, parentProject);
         };
 
-        window.updateProject = function(parentProject, formId) {
-            clearValidationErrors('#main-content');
-            stripCurrencyFormatting();
-            const form = $('#' + formId);
-            if (!form.valid()) { displayClientValidationErrors(form, '#main-content'); return; }
-            submitForm(formId, true, parentProject);
+        window.handleDeleteProject = function() {
+            const form = document.querySelector('form[data-parent-project]');
+            const parentProject = form.dataset.parentProject;
+            deleteProject(parentProject);
         };
 
         function submitForm(formId, isEdit, parentProject) {

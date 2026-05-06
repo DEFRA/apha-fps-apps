@@ -15,8 +15,10 @@ namespace Apha.FPS.DataAccess.Data
             entity.Property(e => e.SequenceNo).HasColumnName("sequenceno");
             entity.Property(e => e.ParentProject).HasMaxLength(20).HasColumnName("parentproject");
             entity.Property(e => e.InsertDelete).HasMaxLength(2).HasColumnName("insert_delete");
-            entity.Property(e => e.DateTime).HasColumnName("date_time");
-            entity.Property(e => e.UserId).HasMaxLength(20).HasColumnName("user_id");
+            entity.Property(e => e.DateTime)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("date_time");
+            entity.Property(e => e.UserId).HasMaxLength(255).HasColumnName("user_id");
             entity.Property(e => e.JobCode).HasMaxLength(20).HasColumnName("jobcode");
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.ProjectTitle).HasColumnName("projecttitle");
@@ -30,11 +32,15 @@ namespace Apha.FPS.DataAccess.Data
             entity.Property(e => e.WipCurrent).HasColumnName("wip_current");
             entity.Property(e => e.ProjectStatus).HasColumnName("projectstatus");
             entity.Property(e => e.CostBookNo).HasColumnName("costbookno");
-            entity.Property(e => e.DateCreated).HasColumnName("datecreated");
+            entity.Property(e => e.DateCreated)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("datecreated");
             entity.Property(e => e.FecCost).HasColumnName("feccost");
             entity.Property(e => e.Profit).HasColumnName("profit");
             entity.Property(e => e.BudgetCvl).HasColumnName("budget_cvl");
-            entity.Property(e => e.DateCosted).HasColumnName("datecosted");
+            entity.Property(e => e.DateCosted)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("datecosted");
             entity.Property(e => e.Disease).HasColumnName("disease");
             entity.Property(e => e.Contract).HasColumnName("contract");
             entity.Property(e => e.ProjectParent).HasColumnName("projectparent");
