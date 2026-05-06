@@ -403,6 +403,7 @@ namespace Apha.FPS.DataAccess.Repositories
                         FecCost           = oldProject.FecCost,
                         Profit            = oldProject.Profit,
                         BudgetCvl         = oldProject.BudgetCvl,
+                        DateCreated       = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
                         DateCosted        = oldProject.DateCosted,
                         Disease           = oldProject.Disease,
                         Contract          = oldProject.Contract,
@@ -425,7 +426,7 @@ namespace Apha.FPS.DataAccess.Repositories
                         FpsYear           = oldProject.FpsYear
                     };
 
-                    NormalizeDateTimesToUnspecified         (newProject);
+                    NormalizeDateTimesToUnspecified(newProject);
 
                     await _dbContext.Projects.AddAsync(newProject);
                     // Converted trigger logic — UITrig_tlkpProject FOR INSERT: stage audit log in same unit of work
@@ -558,12 +559,16 @@ namespace Apha.FPS.DataAccess.Repositories
                     await _dbContext.JobCodes
                         .Where(jc => jc.ParentProject == oldCode)
                         .ExecuteDeleteAsync();
-                    // Note: No "D" audit log is staged for the old project row here — this mirrors the
-                    // original usp_ChangeProjectCode stored procedure which only logged an "I" for the
-                    // new code. The old row removal is part of the rename, not a user-initiated delete.
-                    await _dbContext.Projects
-                        .Where(p => p.ParentProject == oldCode)
-                        .ExecuteDeleteAsync();
+                    // Stage "D" audit log for the old project before deleting
+                    var projectToDelete = await _dbContext.Projects
+                        .FirstOrDefaultAsync(p => p.ParentProject == oldCode);
+                    if (projectToDelete != null)
+                    {
+                        NormalizeDateTimesToUnspecified(projectToDelete);
+                        _dbContext.ProjectLogs.Add(MapProjectToLog(projectToDelete, "D", _requestContext.UserEmailId));
+                        _dbContext.Projects.Remove(projectToDelete);
+                        await _dbContext.SaveChangesAsync();
+                    }
 
                     await tx.CommitAsync();
                 }
