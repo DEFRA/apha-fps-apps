@@ -1,4 +1,4 @@
-﻿using Apha.Common.Contracts;
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.Common.Contracts.PACT;
 using Apha.FPSApps.Application.Dtos;
@@ -70,9 +70,9 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<ProfitCentreDto, ProfitCentreRes>().ReverseMap();
             CreateMap<ProfitCentreGradeDto, ProfitCentreGradeRes>().ReverseMap();
             CreateMap<WorkgroupGradeDto, WorkgroupGradeRes>().ReverseMap();
-            CreateMap<WgEmployeeDto, WgEmployeeReq>().ReverseMap();
-            CreateMap<WgEmployeeDto, WgEmployeeRes>().ReverseMap();
-            CreateMap<WgEmployeeViewDto, WgEmployeeViewRes>().ReverseMap();
+            CreateMap<WorkGroupEmployeeDto, WorkGroupEmployeeReq>().ReverseMap();
+            CreateMap<WorkGroupEmployeeDto, WorkGroupEmployeeRes>().ReverseMap();
+            CreateMap<WorkGroupEmployeeViewDto, WorkGroupEmployeeViewRes>().ReverseMap();
         }
     }
 }

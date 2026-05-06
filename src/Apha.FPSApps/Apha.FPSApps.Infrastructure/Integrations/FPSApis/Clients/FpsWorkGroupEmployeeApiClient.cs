@@ -21,49 +21,49 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             _mapper = mapper;
         }
 
-        public async Task<ApiResponseDto<List<WgEmployeeViewDto>>> GetWorkGroupEmployeeAsync(QueryParameters<string> query, string wgGrade)
+        public async Task<ApiResponseDto<List<WorkGroupEmployeeViewDto>>> GetWorkGroupEmployeeAsync(QueryParameters<string> query, string wgGrade)
         {
             var baseUrl = string.Format(FpsApiEndpoints.GetWgStaff, Uri.EscapeDataString(wgGrade));
             var url = QueryStringHelper.AddQueryString(baseUrl, query);
-            var response = await _http.GetAsync<List<WgEmployeeViewRes>>(url);
+            var response = await _http.GetAsync<List<WorkGroupEmployeeViewRes>>(url);
             if (response.Success)
             {
-                return _mapper.Map<ApiResponseDto<List<WgEmployeeViewDto>>>(response);
+                return _mapper.Map<ApiResponseDto<List<WorkGroupEmployeeViewDto>>>(response);
             }
             else
             {
-                var responseDto = _mapper.Map<ApiResponseDto<List<WgEmployeeViewDto>>>(response);
-                return ApiResponseDto<List<WgEmployeeViewDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+                var responseDto = _mapper.Map<ApiResponseDto<List<WorkGroupEmployeeViewDto>>>(response);
+                return ApiResponseDto<List<WorkGroupEmployeeViewDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
             }
         }
 
-        public async Task<ApiResponseDto<WgEmployeeDto>> GetWorkGroupEmployeeByIdAsync(string pactId)
+        public async Task<ApiResponseDto<WorkGroupEmployeeDto>> GetWorkGroupEmployeeByIdAsync(string pactId)
         {
             var url = string.Format(FpsApiEndpoints.GetWgEmployeeById, Uri.EscapeDataString(pactId));
-            var response = await _http.GetAsync<WgEmployeeRes>(url);
+            var response = await _http.GetAsync<WorkGroupEmployeeRes>(url);
             if (response.Success)
             {
-                return _mapper.Map<ApiResponseDto<WgEmployeeDto>>(response);
+                return _mapper.Map<ApiResponseDto<WorkGroupEmployeeDto>>(response);
             }
             else
             {
-                var responseDto = _mapper.Map<ApiResponseDto<WgEmployeeDto>>(response);
-                return ApiResponseDto<WgEmployeeDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+                var responseDto = _mapper.Map<ApiResponseDto<WorkGroupEmployeeDto>>(response);
+                return ApiResponseDto<WorkGroupEmployeeDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
             }
         }
 
-        public async Task<ApiResponseDto<WgEmployeeDto>> UpdateWorkGroupEmployeeAsync(WgEmployeeDto dto)
+        public async Task<ApiResponseDto<WorkGroupEmployeeDto>> UpdateWorkGroupEmployeeAsync(WorkGroupEmployeeDto dto)
         {
-            var req = _mapper.Map<WgEmployeeReq>(dto);
-            var response = await _http.PutAsync<WgEmployeeReq, WgEmployeeRes>(FpsApiEndpoints.UpdateWgEmployee, req);
+            var req = _mapper.Map<WorkGroupEmployeeReq>(dto);
+            var response = await _http.PutAsync<WorkGroupEmployeeReq, WorkGroupEmployeeRes>(FpsApiEndpoints.UpdateWgEmployee, req);
             if (response.Success)
             {
-                return _mapper.Map<ApiResponseDto<WgEmployeeDto>>(response);
+                return _mapper.Map<ApiResponseDto<WorkGroupEmployeeDto>>(response);
             }
             else
             {
-                var responseDto = _mapper.Map<ApiResponseDto<WgEmployeeDto>>(response);
-                return ApiResponseDto<WgEmployeeDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+                var responseDto = _mapper.Map<ApiResponseDto<WorkGroupEmployeeDto>>(response);
+                return ApiResponseDto<WorkGroupEmployeeDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
             }
         }
 

@@ -5,9 +5,9 @@ namespace Apha.FPS.Core.Interfaces
 {
     public interface IWorkGroupEmployeeRepository
     {
-        Task<PagedData<WgEmployeeView>> GetWorkGroupEmployeeAsync(PaginationParameters<string> query, string wgGrade);
-        Task<WgEmployeeView?> GetWorkGroupEmployeeByIdAsync(string pactId);
-        Task<WgEmployee> UpdateWorkGroupEmployeeAsync(WgEmployee entity);
+        Task<PagedData<WorkGroupEmployeeView>> GetWorkGroupEmployeeAsync(PaginationParameters<string> query, string wgGrade);
+        Task<WorkGroupEmployeeView?> GetWorkGroupEmployeeByIdAsync(string pactId);
+        Task<WorkGroupEmployee> UpdateWorkGroupEmployeeAsync(WorkGroupEmployee entity);
         Task DeleteWorkGroupEmployeeAsync(string pactId);
     }
 }

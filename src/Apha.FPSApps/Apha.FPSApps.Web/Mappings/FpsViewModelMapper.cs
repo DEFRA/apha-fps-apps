@@ -29,8 +29,8 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<TestPlanItem, TestRequirementDto>().ReverseMap();
 
             // Resource Set-Up
-            CreateMap<WgStaffItem, WgEmployeeViewDto>().ReverseMap();
-            CreateMap<WgStaffItem, WgEmployeeDto>().ReverseMap();
+            CreateMap<WorkGroupEmployeeItem, WorkGroupEmployeeViewDto>().ReverseMap();
+            CreateMap<WorkGroupEmployeeItem, WorkGroupEmployeeDto>().ReverseMap();
         }
     }
 }

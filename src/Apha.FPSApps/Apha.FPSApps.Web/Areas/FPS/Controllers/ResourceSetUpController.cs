@@ -50,14 +50,14 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             };
 
             // Load RC grades server-side when a profit centre is selected (same pattern as ProgramStaffPlan)
-            var rcGradeItems = new List<RcGradeItem>();
+            var rcGradeItems = new List<ResourceCentreGradeItem>();
             if (!string.IsNullOrWhiteSpace(selectedProfitCentre))
             {
                 var rcResponse = await _rcGradeService.GetResourceCentreGradesAsync(selectedProfitCentre);
                 if (rcResponse.Success && rcResponse.Data != null)
                 {
                     rcGradeItems = rcResponse.Data
-                        .Select(d => new RcGradeItem
+                        .Select(d => new ResourceCentreGradeItem
                         {
                             PcGrade        = d.PcGrade,
                             RcGradeDisplay = d.PcGrade,
@@ -67,7 +67,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 }
             }
 
-            viewModel.RcGradeGrid = new DataGridConfig<RcGradeItem>
+            viewModel.RcGradeGrid = new DataGridConfig<ResourceCentreGradeItem>
             {
                 GridId             = "rcGradeGrid",
                 Title              = "RC Grades Available",
@@ -80,11 +80,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ExtraFilterMethod  = "getRcGradeExtraFilters",
                 BindGridUrl        = "/FPS/ResourceSetUp/LoadRcGradeGrid",
                 Data               = rcGradeItems.Take(10).ToList(),
-                Columns            = GridDataProvider.GetColumnsDefination<RcGradeItem>(),
+                Columns            = GridDataProvider.GetColumnsDefination<ResourceCentreGradeItem>(),
                 Pagination         = new PaginationModel { TotalRecords = rcGradeItems.Count, PageNumber = 1, PageSize = 10 }
             };
 
-            viewModel.WgGradeGrid = new DataGridConfig<WgGradeItem>
+            viewModel.WgGradeGrid = new DataGridConfig<WorkGroupGradeItem>
             {
                 GridId             = "wgGradeGrid",
                 Title              = string.Empty,
@@ -96,12 +96,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 AllowDelete        = false,
                 ExtraFilterMethod  = "getWgGradeExtraFilters",
                 BindGridUrl        = "/FPS/ResourceSetUp/LoadWgGradeGrid",
-                Data               = new List<WgGradeItem>(),
-                Columns            = GridDataProvider.GetColumnsDefination<WgGradeItem>(),
+                Data               = new List<WorkGroupGradeItem>(),
+                Columns            = GridDataProvider.GetColumnsDefination<WorkGroupGradeItem>(),
                 Pagination         = new PaginationModel()
             };
 
-            viewModel.WgStaffGrid = new DataGridConfig<WgStaffItem>
+            viewModel.WgStaffGrid = new DataGridConfig<WorkGroupEmployeeItem>
             {
                 GridId             = "wgStaffGrid",
                 Title              = "Staff of WG Grade",
@@ -114,8 +114,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 AllowDelete        = false,
                 ExtraFilterMethod  = "getWgStaffExtraFilters",
                 BindGridUrl        = "/FPS/ResourceSetUp/LoadWgStaffGrid",
-                Data               = new List<WgStaffItem>(),
-                Columns            = GridDataProvider.GetColumnsDefination<WgStaffItem>(),
+                Data               = new List<WorkGroupEmployeeItem>(),
+                Columns            = GridDataProvider.GetColumnsDefination<WorkGroupEmployeeItem>(),
                 Pagination         = new PaginationModel()
             };
 
@@ -137,7 +137,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             }
 
             var items = (response.Data ?? new List<ProfitCentreGradeDto>())
-                .Select(d => new RcGradeItem
+                .Select(d => new ResourceCentreGradeItem
                 {
                     PcGrade        = d.PcGrade,
                     RcGradeDisplay = d.PcGrade,
@@ -159,7 +159,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var totalRecords = items.Count();
             var pagedItems = items.Skip((page - 1) * pageSize).Take(pageSize).ToList();
 
-            var gridConfig = new DataGridConfig<RcGradeItem>
+            var gridConfig = new DataGridConfig<ResourceCentreGradeItem>
             {
                 GridId             = "rcGradeGrid",
                 Title              = "RC Grades Available",
@@ -172,7 +172,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ExtraFilterMethod  = "getRcGradeExtraFilters",
                 BindGridUrl        = "/FPS/ResourceSetUp/LoadRcGradeGrid",
                 Data               = pagedItems,
-                Columns            = GridDataProvider.GetColumnsDefination<RcGradeItem>(),
+                Columns            = GridDataProvider.GetColumnsDefination<ResourceCentreGradeItem>(),
                 Pagination         = new PaginationModel { TotalRecords = totalRecords, PageNumber = page, PageSize = pageSize, SortColumn = sortBy, SortDirection = descending },
                 CurrentFilters     = filterDict
             };
@@ -195,7 +195,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             }
 
             var items = (response.Data ?? new List<WorkgroupGradeDto>())
-                .Select(d => new WgGradeItem
+                .Select(d => new WorkGroupGradeItem
                 {
                     ProfitCentreGrade = d.ProfitCentreGrade,
                     WgGrade           = d.WgGrade
@@ -215,7 +215,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var totalRecords = items.Count();
             var pagedItems = items.Skip((page - 1) * pageSize).Take(pageSize).ToList();
 
-            var gridConfig = new DataGridConfig<WgGradeItem>
+            var gridConfig = new DataGridConfig<WorkGroupGradeItem>
             {
                 GridId             = "wgGradeGrid",
                 Title              = string.Empty,
@@ -228,7 +228,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ExtraFilterMethod  = "getWgGradeExtraFilters",
                 BindGridUrl        = "/FPS/ResourceSetUp/LoadWgGradeGrid",
                 Data               = pagedItems,
-                Columns            = GridDataProvider.GetColumnsDefination<WgGradeItem>(),
+                Columns            = GridDataProvider.GetColumnsDefination<WorkGroupGradeItem>(),
                 Pagination         = new PaginationModel { TotalRecords = totalRecords, PageNumber = page, PageSize = pageSize, SortColumn = sortBy, SortDirection = descending },
                 CurrentFilters     = filterDict
             };
@@ -263,8 +263,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 return Json(new { success = false, message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to load WG staff." });
             }
 
-            var rawData = response.Data ?? new List<WgEmployeeViewDto>();
-            var staffItems = rawData.Select(d => new WgStaffItem
+            var rawData = response.Data ?? new List<WorkGroupEmployeeViewDto>();
+            var staffItems = rawData.Select(d => new WorkGroupEmployeeItem
             {
                 PactId        = d.PactId,
                 SpNumber      = d.SpNumber,
@@ -282,7 +282,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             paginationModel.SortColumn    = request.SortBy;
             paginationModel.SortDirection = request.Descending;
 
-            var gridConfig = new DataGridConfig<WgStaffItem>
+            var gridConfig = new DataGridConfig<WorkGroupEmployeeItem>
             {
                 GridId             = "wgStaffGrid",
                 Title              = "Staff of WG Grade",
@@ -296,7 +296,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ExtraFilterMethod  = "getWgStaffExtraFilters",
                 BindGridUrl        = "/FPS/ResourceSetUp/LoadWgStaffGrid",
                 Data               = staffItems,
-                Columns            = GridDataProvider.GetColumnsDefination<WgStaffItem>(),
+                Columns            = GridDataProvider.GetColumnsDefination<WorkGroupEmployeeItem>(),
                 Pagination         = paginationModel,
                 CurrentFilters     = filterDict
             };
@@ -318,7 +318,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 return Json(new { success = false, message = "WG Employee not found." });
             }
 
-            var item = new WgStaffItem
+            var item = new WorkGroupEmployeeItem
             {
                 PactId        = response.Data.PactId,
                 SpNumber      = response.Data.SpNumber,
@@ -336,7 +336,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         [HttpPut]
-        public async Task<IActionResult> UpdateWgStaff([FromBody] WgStaffItem item)
+        public async Task<IActionResult> UpdateWgStaff([FromBody] WorkGroupEmployeeItem item)
         {
             if (!ModelState.IsValid)
             {
@@ -350,7 +350,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 });
             }
 
-            var dto = new WgEmployeeDto
+            var dto = new WorkGroupEmployeeDto
             {
                 PactId         = item.PactId,
                 SpNumber       = item.SpNumber,

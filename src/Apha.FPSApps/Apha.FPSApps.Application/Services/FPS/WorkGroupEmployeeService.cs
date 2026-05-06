@@ -15,17 +15,17 @@ namespace Apha.FPSApps.Application.Services.FPS
             _fpsClient = fpsClient;
         }
 
-        public async Task<ApiResponseDto<List<WgEmployeeViewDto>>> GetWorkGroupEmployeeAsync(QueryParameters<string> query, string wgGrade)
+        public async Task<ApiResponseDto<List<WorkGroupEmployeeViewDto>>> GetWorkGroupEmployeeAsync(QueryParameters<string> query, string wgGrade)
         {
             return await _fpsClient.FpsWorkGroupEmployee.GetWorkGroupEmployeeAsync(query, wgGrade);
         }
 
-        public async Task<ApiResponseDto<WgEmployeeDto>> GetWorkGroupEmployeeByIdAsync(string pactId)
+        public async Task<ApiResponseDto<WorkGroupEmployeeDto>> GetWorkGroupEmployeeByIdAsync(string pactId)
         {
             return await _fpsClient.FpsWorkGroupEmployee.GetWorkGroupEmployeeByIdAsync(pactId);
         }
 
-        public async Task<ApiResponseDto<WgEmployeeDto>> UpdateWorkGroupEmployeeAsync(WgEmployeeDto dto)
+        public async Task<ApiResponseDto<WorkGroupEmployeeDto>> UpdateWorkGroupEmployeeAsync(WorkGroupEmployeeDto dto)
         {
             return await _fpsClient.FpsWorkGroupEmployee.UpdateWorkGroupEmployeeAsync(dto);
         }

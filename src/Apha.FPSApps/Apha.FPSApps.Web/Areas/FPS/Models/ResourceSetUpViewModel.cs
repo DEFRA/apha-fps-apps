@@ -17,13 +17,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public List<SelectListItem> ProfitCentreList { get; set; } = new();
 
         /// <summary>RC Grades Available grid (fsubpCGrade — read-only).</summary>
-        public DataGridConfig<RcGradeItem> RcGradeGrid { get; set; } = new DataGridConfig<RcGradeItem>();
+        public DataGridConfig<ResourceCentreGradeItem> RcGradeGrid { get; set; } = new DataGridConfig<ResourceCentreGradeItem>();
 
         /// <summary>WG Grades Available grid (fsubWGGrade — delete only).</summary>
-        public DataGridConfig<WgGradeItem> WgGradeGrid { get; set; } = new DataGridConfig<WgGradeItem>();
+        public DataGridConfig<WorkGroupGradeItem> WgGradeGrid { get; set; } = new DataGridConfig<WorkGroupGradeItem>();
 
         /// <summary>Staff of WG Grade grid (fsubWGStaff — edit + delete).</summary>
-        public DataGridConfig<WgStaffItem> WgStaffGrid { get; set; } = new DataGridConfig<WgStaffItem>();
+        public DataGridConfig<WorkGroupEmployeeItem> WgStaffGrid { get; set; } = new DataGridConfig<WorkGroupEmployeeItem>();
 
         /// <summary>
         /// Name of the selected person for the "Person Selected" aside panel.

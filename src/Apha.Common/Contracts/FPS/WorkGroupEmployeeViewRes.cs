@@ -1,6 +1,9 @@
-namespace Apha.FPS.Application.Dtos
+namespace Apha.Common.Contracts.FPS
 {
-    public class WgEmployeeViewDto
+    /// <summary>
+    /// Response shape for the qryStaffEdit join (WorkGroupEmployee + Employee Name).
+    /// </summary>
+    public class WorkGroupEmployeeViewRes
     {
         public string PactId { get; set; } = null!;
         public string SpNumber { get; set; } = null!;

@@ -1,4 +1,4 @@
-﻿using Apha.Common.Contracts.FPS;
+using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Core.Enities;
@@ -45,13 +45,11 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<TimeCostCalcsView, TimeCostCalcsViewDto>().ReverseMap();
 
             // ResourceSetUp
-            CreateMap<ProfitCentre, ProfitCentreDto>()
-                .ForMember(d => d.ProfitCentreId, o => o.MapFrom(s => s.ProfitCentreId))
-                .ForMember(d => d.ProfitCentreName, o => o.MapFrom(s => s.ProfitCentreName));
+            CreateMap<ProfitCentre, ProfitCentreDto>().ReverseMap();
             CreateMap<ProfitCentreGrade, ProfitCentreGradeDto>().ReverseMap();
             CreateMap<WorkgroupGrade, WorkgroupGradeDto>().ReverseMap();
-            CreateMap<WgEmployee, WgEmployeeDto>().ReverseMap();
-            CreateMap<WgEmployeeView, WgEmployeeViewDto>().ReverseMap();
+            CreateMap<WorkGroupEmployee, WorkGroupEmployeeDto>().ReverseMap();
+            CreateMap<WorkGroupEmployeeView, WorkGroupEmployeeViewDto>().ReverseMap();
         }
     }
 }

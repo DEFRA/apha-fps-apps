@@ -6,7 +6,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
     /// <summary>
     /// Grid item for the WG Grades Available table (fsubWGGrade — delete only, no add/edit).
     /// </summary>
-    public class WgGradeItem
+    public class WorkGroupGradeItem
     {
         [GridColumn(Type = GridColumnType.ReadOnly, IsVisible = false)]
         public string ProfitCentreGrade { get; set; } = null!;

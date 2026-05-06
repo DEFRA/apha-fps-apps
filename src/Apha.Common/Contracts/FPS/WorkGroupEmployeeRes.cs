@@ -1,9 +1,6 @@
 namespace Apha.Common.Contracts.FPS
 {
-    /// <summary>
-    /// Response shape for the qryStaffEdit join (WgEmployee + Employee Name).
-    /// </summary>
-    public class WgEmployeeViewRes
+    public class WorkGroupEmployeeRes
     {
         public string PactId { get; set; } = null!;
         public string SpNumber { get; set; } = null!;

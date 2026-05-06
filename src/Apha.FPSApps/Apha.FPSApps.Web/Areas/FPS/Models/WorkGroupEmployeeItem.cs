@@ -7,7 +7,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
     /// Grid item for the Staff of WG Grade table (fsubWGStaff — edit + delete; no add).
     /// AllowAdd: false  AllowEdit: true  AllowDelete: true
     /// </summary>
-    public class WgStaffItem
+    public class WorkGroupEmployeeItem
     {
         /// <summary>PACTid — hidden primary key used as KeyProperty.</summary>
         [GridColumn(Type = GridColumnType.ReadOnly, IsVisible = false)]

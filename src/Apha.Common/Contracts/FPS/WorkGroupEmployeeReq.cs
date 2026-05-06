@@ -1,6 +1,6 @@
 namespace Apha.Common.Contracts.FPS
 {
-    public class WgEmployeeReq
+    public class WorkGroupEmployeeReq
     {
         public string PactId { get; set; } = null!;
         public double HrsPaid { get; set; }

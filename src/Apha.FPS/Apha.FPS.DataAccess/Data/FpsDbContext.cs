@@ -21,7 +21,7 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<Program> Programs { get; set; }
         public virtual DbSet<Project> Projects { get; set; }
         public virtual DbSet<StaffJob> StaffJobs { get; set; }
-        public virtual DbSet<WgEmployee> WgEmployees { get; set; }
+        public virtual DbSet<WorkGroupEmployee> WgEmployees { get; set; }
         public virtual DbSet<Employee> Employees { get; set; }
         public virtual DbSet<FpsSetting> TblSettings { get; set; }
         public virtual DbSet<Workgroup> Workgroups { get; set; }
@@ -81,7 +81,7 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.Entity<StaffJob>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new WgEmployeeMap());
-            modelBuilder.Entity<WgEmployee>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+            modelBuilder.Entity<WorkGroupEmployee>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new EmployeeMap());
             modelBuilder.Entity<Employee>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);

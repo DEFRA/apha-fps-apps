@@ -20,7 +20,7 @@ namespace Apha.FPS.DataAccess.Repositories
         /// <summary>
         /// Returns a paginated list of staff for the given WG grade, excluding inactive employees.
         /// </summary>
-        public async Task<PagedData<WgEmployeeView>> GetWorkGroupEmployeeAsync(
+        public async Task<PagedData<WorkGroupEmployeeView>> GetWorkGroupEmployeeAsync(
             PaginationParameters<string> query,
             string wgGrade)
         {
@@ -31,7 +31,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     _dbContext.Employees.AsNoTracking(),
                     wg => wg.SpNumber,
                     e => e.SPNumber,
-                    (wg, e) => new WgEmployeeView
+                    (wg, e) => new WorkGroupEmployeeView
                     {
                         PactId         = wg.PactId,
                         SpNumber       = wg.SpNumber,
@@ -56,7 +56,7 @@ namespace Apha.FPS.DataAccess.Repositories
         /// <summary>
         /// Returns a single WG employee by PACTid, joined with Employee to include Name.
         /// </summary>
-        public async Task<WgEmployeeView?> GetWorkGroupEmployeeByIdAsync(string pactId)
+        public async Task<WorkGroupEmployeeView?> GetWorkGroupEmployeeByIdAsync(string pactId)
         {
             return await _dbContext.WgEmployees
                 .AsNoTracking()
@@ -65,7 +65,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     _dbContext.Employees.AsNoTracking(),
                     wg => wg.SpNumber,
                     e => e.SPNumber,
-                    (wg, e) => new WgEmployeeView
+                    (wg, e) => new WorkGroupEmployeeView
                     {
                         PactId         = wg.PactId,
                         SpNumber       = wg.SpNumber,
@@ -83,15 +83,15 @@ namespace Apha.FPS.DataAccess.Repositories
         }
 
         /// <summary>
-        /// Updates WgEmployee; computes HrsAvail = HrsPaid - (Leave + SickSpecial).
+        /// Updates WorkGroupEmployee; computes HrsAvail = HrsPaid - (Leave + SickSpecial).
         /// </summary>
-        public async Task<WgEmployee> UpdateWorkGroupEmployeeAsync(WgEmployee entity)
+        public async Task<WorkGroupEmployee> UpdateWorkGroupEmployeeAsync(WorkGroupEmployee entity)
         {
             ArgumentNullException.ThrowIfNull(entity);
             var existing = await _dbContext.WgEmployees
                 .FirstOrDefaultAsync(x => x.PactId == entity.PactId);
             if (existing == null)
-                throw new KeyNotFoundException($"WgEmployee with PACTid '{entity.PactId}' was not found.");
+                throw new KeyNotFoundException($"WorkGroupEmployee with PACTid '{entity.PactId}' was not found.");
 
             existing.HrsPaid       = entity.HrsPaid;
             existing.Leave         = entity.Leave;
@@ -113,13 +113,13 @@ namespace Apha.FPS.DataAccess.Repositories
             var entity = await _dbContext.WgEmployees
                 .FirstOrDefaultAsync(x => x.PactId == pactId);
             if (entity == null)
-                throw new KeyNotFoundException($"WgEmployee with PACTid '{pactId}' was not found.");
+                throw new KeyNotFoundException($"WorkGroupEmployee with PACTid '{pactId}' was not found.");
 
             _dbContext.WgEmployees.Remove(entity);
             await _dbContext.SaveChangesAsync(default);
         }
 
-        private static IQueryable<WgEmployeeView> ApplyFilter(IQueryable<WgEmployeeView> query, string? filter)
+        private static IQueryable<WorkGroupEmployeeView> ApplyFilter(IQueryable<WorkGroupEmployeeView> query, string? filter)
         {
             if (string.IsNullOrWhiteSpace(filter))
                 return query;
@@ -139,7 +139,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return query;
         }
 
-        private static IQueryable<WgEmployeeView> ApplySorting(IQueryable<WgEmployeeView> query, string? sortBy, bool descending)
+        private static IQueryable<WorkGroupEmployeeView> ApplySorting(IQueryable<WorkGroupEmployeeView> query, string? sortBy, bool descending)
         {
             return sortBy?.ToLower() switch
             {

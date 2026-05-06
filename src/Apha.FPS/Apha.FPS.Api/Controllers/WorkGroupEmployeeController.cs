@@ -38,7 +38,7 @@ namespace Apha.FPS.Api.Controllers
         {
             var filter = _mapper.Map<QueryParameters<string>>(query);
             var result = await _WorkGroupEmployeeService.GetWorkGroupEmployeeAsync(filter, wgGrade);
-            return Ok(_mapper.Map<PaginationRes<WgEmployeeViewRes>>(result));
+            return Ok(_mapper.Map<PaginationRes<WorkGroupEmployeeViewRes>>(result));
         }
 
         /// <summary>
@@ -50,8 +50,8 @@ namespace Apha.FPS.Api.Controllers
         {
             var result = await _WorkGroupEmployeeService.GetWorkGroupEmployeeByIdAsync(pactId);
             if (result == null)
-                throw new KeyNotFoundException("WgEmployee not found.");
-            return Ok(_mapper.Map<WgEmployeeRes>(result));
+                throw new KeyNotFoundException("WorkGroupEmployee not found.");
+            return Ok(_mapper.Map<WorkGroupEmployeeRes>(result));
         }
 
         /// <summary>
@@ -59,11 +59,11 @@ namespace Apha.FPS.Api.Controllers
         /// </summary>
         /// <param name="req">The WG employee update request.</param>
         [HttpPut]
-        public async Task<IActionResult> UpdateWorkGroupEmployeeAsync([FromBody] WgEmployeeReq req)
+        public async Task<IActionResult> UpdateWorkGroupEmployeeAsync([FromBody] WorkGroupEmployeeReq req)
         {
-            var dto = _mapper.Map<WgEmployeeDto>(req);
+            var dto = _mapper.Map<WorkGroupEmployeeDto>(req);
             var result = await _WorkGroupEmployeeService.UpdateWorkGroupEmployeeAsync(dto);
-            return Ok(_mapper.Map<WgEmployeeRes>(result));
+            return Ok(_mapper.Map<WorkGroupEmployeeRes>(result));
         }
 
         /// <summary>

@@ -1,6 +1,6 @@
 namespace Apha.FPSApps.Application.Dtos.FPS
 {
-    public class WgEmployeeViewDto
+    public class WorkGroupEmployeeViewDto
     {
         public string PactId { get; set; } = null!;
         public string SpNumber { get; set; } = null!;

@@ -1,15 +1,10 @@
-namespace Apha.FPS.Core.Entities
+namespace Apha.FPS.Application.Dtos
 {
-    /// <summary>
-    /// LINQ join result shape for qryStaffEdit (WgEmployee joined with Employee to include computed Name).
-    /// Not an EF entity — produced by a repository join projection.
-    /// </summary>
-    public class WgEmployeeView
+    public class WorkGroupEmployeeDto
     {
         public string PactId { get; set; } = null!;
         public string SpNumber { get; set; } = null!;
         public string WorkGroupGrade { get; set; } = null!;
-        public string Name { get; set; } = null!;
         public string PersonStatus { get; set; } = null!;
         public string? PersonClass { get; set; }
         public double HrsPaid { get; set; }

@@ -23,6 +23,26 @@
     }
     #gridContainer_wgGradeGrid table thead th,
     #gridContainer_wgGradeGrid table tbody td { text-align: left !important; }
+
+    /* Right-align numeric columns in wgStaffGrid (HrsPaid, Leave, SickSp, AtWork = columns 3-6) */
+    #gridContainer_wgStaffGrid table thead th:nth-child(3),
+    #gridContainer_wgStaffGrid table thead th:nth-child(4),
+    #gridContainer_wgStaffGrid table thead th:nth-child(5),
+    #gridContainer_wgStaffGrid table thead th:nth-child(6),
+    #gridContainer_wgStaffGrid table tbody td:nth-child(3),
+    #gridContainer_wgStaffGrid table tbody td:nth-child(4),
+    #gridContainer_wgStaffGrid table tbody td:nth-child(5),
+    #gridContainer_wgStaffGrid table tbody td:nth-child(6) {
+        text-align: right !important;
+    }
+
+    /* Border on the 4 numeric total cells */
+    #fpsSrTotalHrsPaid,
+    #fpsSrTotalLeave,
+    #fpsSrTotalSick,
+    #fpsSrTotalAtWork {
+        border: 1px solid #b1b4b6 !important;
+    }
 </style>
 
 <main id="main-content">
@@ -112,19 +132,20 @@
                                 @await Html.PartialAsync("_DataGrid", Model.WgStaffGrid)
                             </div>
 
-                            <!-- Footer totals row -->
-                            <table class="govuk-table govuk-!-margin-top-0 govuk-!-margin-bottom-0" style="table-layout: fixed;">
-                                <tfoot class="govuk-table__foot">
-                                    <tr class="govuk-table__row">
-                                        <td class="govuk-table__cell" colspan="2"><strong>Totals</strong></td>
-                                        <td class="govuk-table__cell govuk-table__cell--numeric" id="fpsSrTotalHrsPaid">@Model.WgHrsPaid</td>
-                                        <td class="govuk-table__cell govuk-table__cell--numeric" id="fpsSrTotalLeave">@Model.WgLeave</td>
-                                        <td class="govuk-table__cell govuk-table__cell--numeric" id="fpsSrTotalSick">@Model.WgSickSpecial</td>
-                                        <td class="govuk-table__cell govuk-table__cell--numeric" id="fpsSrTotalAtWork">@Model.WgHrsAvail</td>
-                                        <td class="govuk-table__cell"></td>
-                                        <td class="govuk-table__cell"></td>
+                            <!-- Footer totals row — widths synced to grid columns via syncTotalsRow() -->
+                            <table id="tbl_wgStaffTotals" class="govuk-table govuk-!-margin-top-0 govuk-!-margin-bottom-0" style="table-layout: fixed; width: 100%; border-top: 2px solid #b1b4b6;">
+                                <tbody>
+                                    <tr class="govuk-table__row" style="background-color: #f3f2f1;">
+                                        <td class="govuk-table__cell" id="fpsSrTotalsLabelCol1" style="font-weight:bold;">Totals</td>
+                                        <td class="govuk-table__cell" id="fpsSrTotalsLabelCol2"></td>
+                                        <td class="govuk-table__cell" id="fpsSrTotalHrsPaid" style="text-align:right; font-weight:bold;">@Model.WgHrsPaid</td>
+                                        <td class="govuk-table__cell" id="fpsSrTotalLeave"   style="text-align:right; font-weight:bold;">@Model.WgLeave</td>
+                                        <td class="govuk-table__cell" id="fpsSrTotalSick"    style="text-align:right; font-weight:bold;">@Model.WgSickSpecial</td>
+                                        <td class="govuk-table__cell" id="fpsSrTotalAtWork"  style="text-align:right; font-weight:bold;">@Model.WgHrsAvail</td>
+                                        <td class="govuk-table__cell" id="fpsSrTotalsPlana"></td>
+                                        <td class="govuk-table__cell" id="fpsSrTotalsAction"></td>
                                     </tr>
-                                </tfoot>
+                                </tbody>
                             </table>
                         </div>
 
@@ -196,6 +217,7 @@
                     onRcGradeRowClick(pcGrade);
                 });
             }
+            syncTotalsRow();
         });
 
         // Resource Centre dropdown change — handled by form GET submit (onchange="this.form.submit()").
@@ -244,6 +266,8 @@
             }
 
             if (e.detail.gridId === wgStaffGridId) {
+                syncTotalsRow();
+                updateStaffTotals();
                 var firstStaffRow = $('#gridContainer_' + wgStaffGridId + ' table tbody tr:first');
                 if (firstStaffRow.length && firstStaffRow.data('id')) {
                     selectFirstRow(wgStaffGridId, function (row) {
@@ -406,13 +430,24 @@
             $('#modaPopupBody').html('');
         }
 
+        // Syncs totals footer cell widths to match the actual rendered wgStaffGrid header columns
+        function syncTotalsRow() {
+            var $headerCols = $('#tbl_' + wgStaffGridId + ' thead tr:first th');
+            var $totalCols  = $('#tbl_wgStaffTotals tbody tr:first td');
+            if ($headerCols.length === $totalCols.length) {
+                $headerCols.each(function (i) {
+                    $totalCols.eq(i).css('width', $(this).outerWidth() + 'px');
+                });
+                $('#tbl_wgStaffTotals').css('width', $('#tbl_' + wgStaffGridId).outerWidth() + 'px');
+            }
+        }
+
         // Recompute footer totals from currently loaded grid rows
         function updateStaffTotals() {
             var totalHrsPaid   = 0;
             var totalLeave     = 0;
             var totalSick      = 0;
             var totalAtWork    = 0;
-            // DataGrid renders rows — sum visible numeric cells by column index
             $('#gridContainer_wgStaffGrid tbody tr').each(function () {
                 var cells = $(this).find('td');
                 totalHrsPaid += parseFloat($(cells[2]).text()) || 0;
@@ -424,6 +459,7 @@
             $('#fpsSrTotalLeave').text(totalLeave.toFixed(2));
             $('#fpsSrTotalSick').text(totalSick.toFixed(2));
             $('#fpsSrTotalAtWork').text(totalAtWork.toFixed(2));
+            syncTotalsRow();
         }
     </script>
 }
