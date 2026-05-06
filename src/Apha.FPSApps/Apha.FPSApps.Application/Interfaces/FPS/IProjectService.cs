@@ -14,6 +14,7 @@ namespace Apha.FPSApps.Application.Interfaces.FPS
         Task<ApiResponseDto<ProjectDto>> CreateProjectAsync(ProjectDto project);
         Task<ApiResponseDto<ProjectDto>> UpdateProjectAsync(ProjectDto project);
         Task<ApiResponseDto<ProjectDto>> UpdatePactProjectAsync(ProjectDto project);
+        Task<ApiResponseDto<ProjectDto>> UpdatePactPortfolioAsync(ProjectDto project);
         Task<ApiResponseDto<bool>> DeleteProjectAsync(string parentProject);
         Task<ApiResponseDto<List<StatusDto>>> GetAllStatusesAsync();
         Task<ApiResponseDto<List<DiseaseDto>>> GetAllDiseasesAsync();

@@ -84,6 +84,16 @@ namespace Apha.FPS.Api.Controllers
             return Ok(_mapper.Map<ProjectRes>(updated));
         }
 
+        [HttpPatch("external/portfolio")]
+        public async Task<ActionResult<ProjectRes>> UpdatePactPortfolioDetailsAsync([FromBody] ProjectReq request)
+        {
+            var projectDto = _mapper.Map<ProjectDto>(request);
+            var updated = await _projectService.UpdatePactPortfolioDetailsAsync(projectDto);
+            if (updated == null)
+                return NotFound();
+            return Ok(_mapper.Map<ProjectRes>(updated));
+        }
+
         [HttpDelete("{parentProject}")]
         public async Task<IActionResult> DeleteProjectAsync(string parentProject)
         {

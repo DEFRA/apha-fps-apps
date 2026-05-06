@@ -46,12 +46,13 @@ namespace Apha.PACT.DataAccess.Repository
         {
             return await _context.ProjectInvoices
                 .AsNoTracking()
-                .FirstOrDefaultAsync(i => i.InvoiceCounter == invoiceCounter);
+                      .FirstOrDefaultAsync(i => i.InvoiceCounter == invoiceCounter);
         }
 
         public async Task<ProjectInvoice> CreateAsync(ProjectInvoice entity)
         {
             entity.FpsYear = _fpsRequestContext.FpsYear;
+
             await _context.ProjectInvoices.AddAsync(entity);
             await _context.SaveChangesAsync();
             return entity;
@@ -123,6 +124,34 @@ namespace Apha.PACT.DataAccess.Repository
         private static IQueryable ApplyOrder<T>(IQueryable<ProjectInvoice> query, Expression<Func<ProjectInvoice, T>> keySelector, bool descending)
         {
             return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
+        }
+
+        public async Task<List<MonthlyInvoicesSummary>> GetMonthlyInvoicesSummaryAsync(PaginationParameters<string> parameters)
+        {
+            IQueryable<MonthlyInvoicesSummary> query = _context.MonthlyInvoicesSummary.AsNoTracking();
+
+            // Parse filter JSON from DataGrid: {"Program":"ADMIN","ParentProject":"AH"}
+            if (!string.IsNullOrWhiteSpace(parameters.Filter))
+            {
+                dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(parameters.Filter);
+                if (filterModel != null)
+                {
+                    IDictionary<string, object> dict = (IDictionary<string, object>)filterModel;
+
+                    if (dict.TryGetValue("Program", out object? program) && program != null)
+                        query = query.Where(x => x.Program.Contains(program.ToString()!));
+
+                    if (dict.TryGetValue("ParentProject", out object? parentProject) && parentProject != null)
+                        query = query.Where(x => x.ParentProject.Contains(parentProject.ToString()!));
+                }
+            }
+
+            // Always order raw rows by Program, Project, Month so grouping is stable
+            return await query
+                .OrderBy(x => x.Program)
+                .ThenBy(x => x.ParentProject)
+                .ThenBy(x => x.Month)
+                .ToListAsync();
         }
     }
 }

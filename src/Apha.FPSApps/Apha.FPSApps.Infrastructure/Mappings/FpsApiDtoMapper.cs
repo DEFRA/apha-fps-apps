@@ -1,4 +1,4 @@
-﻿using Apha.Common.Contracts;
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.Common.Contracts.PACT;
 using Apha.FPSApps.Application.Dtos;
@@ -53,7 +53,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<YearMasterDto, YearMasterReq>().ReverseMap();
 
             // Testor Product
-            CreateMap<TestorProductDto, TestorProductRes>().ReverseMap();
+            CreateMap<TestorProductDto, Apha.Common.Contracts.FPS.TestorProductRes>().ReverseMap();
 
             // View Project Plan vs Actual Staff
             CreateMap<TimeCostCalcsViewDto, TimeCostCalcsViewRes>().ReverseMap();
@@ -65,6 +65,14 @@ namespace Apha.FPSApps.Infrastructure.Mappings
 
             // Agency
             CreateMap<AgencyDto, AgencyRes>().ReverseMap();
+
+            // Additional Cost
+            CreateMap<AdditionalCostDto, AdditionalCostReq>().ReverseMap();
+            CreateMap<AdditionalCostDto, AdditionalCostRes>().ReverseMap();
+            CreateMap<AccountCategoryDto, AccountCategoryRes>().ReverseMap();
+
+            // View Project Plan vs Actual Tests
+            CreateMap<MonthlyOutputDto, MonthlyOutputRes>().ReverseMap();
         }
     }
 }
