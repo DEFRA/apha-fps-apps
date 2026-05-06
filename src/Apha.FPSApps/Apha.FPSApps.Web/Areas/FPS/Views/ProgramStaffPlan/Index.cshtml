@@ -8,7 +8,7 @@
     #gridContainer_staffBookedGrid .grid-scroll-container {
         height: 255px;
         max-height: 255px;
-    }
+    }   
 </style>
 
 <div class="container-fluid">
@@ -54,7 +54,7 @@
                 <div class="row">
                     <div class="col-lg-7">
                         <label class="govuk-label--s" for="managerName"  style="color:#3e3e3e">Programme Manager </label>
-                        <input type="text" value="@Model.Manager" id="managerName" class="projectplan-code govuk-input">
+                        <input type="text" value="@Model.Manager" id="managerName" class="projectplan-code govuk-input" readonly>
 			
                     </div>
                     <div class="col-lg-5">
@@ -182,7 +182,7 @@
             $('#for_project').val(jobCode);
             $('#BudgetCVL').val(formatCurrency(budget));
             $('#External_Income').val(formatCurrency(0));
-            $('#Total_Costs').val(formatCurrency(budget));
+            setTotalCosts(budget);
 
             $('#tbl_@Model.ProjectsGrid.GridId tbody tr').removeClass('selected-row');
             row.addClass('selected-row');
@@ -193,7 +193,7 @@
                     if (result.success) {
                         var total = parseFloat(result.totalStaffCost) || 0;
                         $('#External_Income').val(formatCurrency(total));
-                        $('#Total_Costs').val(formatCurrency(budget - total));
+                        setTotalCosts(budget - total);
                     }
                 }
             );
@@ -217,11 +217,25 @@
             $('#External_Income').val(formatCurrency(total));
 
             var budget = parseFloat($('#BudgetCVL').val().replace(/[£,\s]/g, '')) || 0;
-            $('#Total_Costs').val(formatCurrency(budget - total));
+            setTotalCosts(budget - total);
         }
 
         function formatCurrency(value) {
             return '\u00A3' + parseFloat(value || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+
+        function setTotalCosts(value) {
+            var num = parseFloat(value) || 0;
+            var $el = $('#Total_Costs');
+            if (num < 0) {
+                $el.val('-(' + formatCurrency(Math.abs(num)) + ')');
+                $el.addClass('text-danger');
+                $el.removeClass('text-primary');
+            } else {
+                $el.val(formatCurrency(num));
+                $el.removeClass('text-danger');
+                $el.addClass('text-primary');
+            }
         }
     </script>
 }
