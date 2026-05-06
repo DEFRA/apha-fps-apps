@@ -502,6 +502,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
         [Fact]
         public async Task AddProjectAsync_InvalidProject_ThrowsArgumentException()
         {
+
             // Arrange
             var projectDto = new ProjectDto
             {
@@ -513,10 +514,10 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             };
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<ArgumentException>(() => _projectService.AddProjectAsync(projectDto));
-            Assert.Contains("Please enter Start Date", exception.Message);
-            Assert.Contains("Please enter a title", exception.Message);
-            Assert.Contains("Please choose Defra/Non-Defra", exception.Message);
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _projectService.AddProjectAsync(projectDto));
+            Assert.Contains(exception.Errors, e => e.Message == "Please enter Start Date");
+            Assert.Contains(exception.Errors, e => e.Message == "Please enter a title");
+            Assert.Contains(exception.Errors, e => e.Message == "Please choose Defra/Non-Defra");
         }
 
         [Fact]
@@ -534,8 +535,8 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             };
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<ArgumentException>(() => _projectService.AddProjectAsync(projectDto));
-            Assert.Contains("Please enter a title of less than 255 characters", exception.Message);
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _projectService.AddProjectAsync(projectDto));
+            Assert.Contains(exception.Errors, e => e.Message == "Please enter a title of less than 255 characters");
         }
 
         #endregion
@@ -1129,7 +1130,8 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             };
 
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => _projectService.AddProjectAsync(projectDto));
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _projectService.AddProjectAsync(projectDto));
+            Assert.Contains(exception.Errors, e => e.Message == "Please enter Start Date");
         }
 
         #endregion
@@ -1178,12 +1180,11 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             };
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<ArgumentException>(() => _projectService.AddProjectAsync(projectDto));
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _projectService.AddProjectAsync(projectDto));
 
-            Assert.Contains("Please enter Start Date", exception.Message);
-            Assert.Contains("Please enter who has prepared this", exception.Message);
-            Assert.Contains("Please enter a title", exception.Message);
-            Assert.Contains("Please choose Defra/Non-Defra", exception.Message);
+            Assert.Contains(exception.Errors, e => e.Message == "Please enter Start Date");
+            Assert.Contains(exception.Errors, e => e.Message == "Please enter a title");
+            Assert.Contains(exception.Errors, e => e.Message == "Please choose Defra/Non-Defra");
         }
 
         #endregion

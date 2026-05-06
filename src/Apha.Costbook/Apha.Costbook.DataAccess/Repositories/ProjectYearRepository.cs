@@ -2,6 +2,7 @@ using Apha.Costbook.Core.Entities;
 using Apha.Costbook.Core.Interfaces;
 using Apha.Costbook.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 using System.Web;
 
 namespace Apha.Costbook.DataAccess.Repositories;
@@ -121,9 +122,50 @@ public class ProjectYearRepository : IProjectYearRepository
 
     public async Task<ProjectYear> UpdateProjectYearAsync(ProjectYear projectYear)
     {
+        projectYear.Project = HttpUtility.UrlDecode(projectYear.Project);
         _context.ProjectYears.Update(projectYear);
         await _context.SaveChangesAsync();
         return projectYear;
+    }
+
+    public async Task<(bool Deleted, IReadOnlyList<string> Errors)> DeleteProjectYearAsync(string project, int year)
+    {
+        var decodedProject = HttpUtility.UrlDecode(project);
+
+        var validationErrors = await GetChildValidationErrorsAsync(decodedProject, year);
+        if (validationErrors.Count > 0)
+            return (false, validationErrors);
+
+        var entity = await _context.ProjectYears
+            .FirstOrDefaultAsync(py => py.Project == decodedProject && py.YearValue == year);
+        if (entity is null)
+            return (false, Array.Empty<string>());
+        _context.ProjectYears.Remove(entity);
+        await _context.SaveChangesAsync();
+        return (true, Array.Empty<string>());
+    }
+
+    private async Task<List<string>> GetChildValidationErrorsAsync(string project, int year)
+    {
+        var errors = new List<string>();
+
+        await CheckChildRecordsAsync(_context.StaffRequirements, s => s.Project == project && s.Year == year, "staff requirements", errors);
+        await CheckChildRecordsAsync(_context.TestRequirements, t => t.Project == project && t.Year == year, "test requirements", errors);
+        await CheckChildRecordsAsync(_context.AnimalRequirements, a => a.Project == project && a.Year == year, "animal requirements", errors);
+        await CheckChildRecordsAsync(_context.AdditionalCosts, ac => ac.Project == project && ac.Year == year, "additional costs", errors);
+
+        return errors;
+    }
+
+    private static async Task CheckChildRecordsAsync<T>(
+        IQueryable<T> dbSet,
+        Expression<Func<T, bool>> predicate,
+        string label,
+        List<string> errors) where T : class
+    {
+        var count = await dbSet.AsNoTracking().CountAsync(predicate);
+        if (count > 0)
+            errors.Add($"Year has {count} {label}. Remove them first.");
     }
 
     public async Task<IEnumerable<PayRateLookup>> GetPayRatesAsync(bool isDefra)

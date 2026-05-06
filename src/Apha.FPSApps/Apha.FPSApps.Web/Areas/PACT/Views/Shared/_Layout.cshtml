@@ -1,3 +1,12 @@
+@using System.Security.Claims
+@{
+    // Get display name from claims (try multiple claim types)
+    var displayName = User.FindFirst("name")?.Value
+                      ?? User.FindFirst(ClaimTypes.GivenName)?.Value
+                      ?? User.FindFirst(ClaimTypes.Name)?.Value?.Split('@')[0]
+                      ?? "Unknown User";
+   
+}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -37,7 +46,7 @@
     <!-- ── Main Navigation ───────────────────────────────────────────── -->
     <div id="header">
         <div style="display: flex; flex-direction: row;">
-            <button class="userdropdownbtn" style="border: 0; margin-right: 20px;" id="userdropdownbtn" allow-edit="true">Meg Ved &nbsp; <img src="~/images/circle-user-regular-full.svg" alt="user icon" width="24" /></button>
+            <button class="userdropdownbtn" style="border: 0; margin-right: 20px;" id="userdropdownbtn" allow-edit="true">@displayName &nbsp; <img src="~/images/circle-user-regular-full.svg" alt="user icon" width="24" /></button>
         </div>
         <div class="userdropdown" id="userdropdowndp">
             <ul>                   
@@ -75,7 +84,8 @@
                     <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow for dropdown menu" width="12"></span>
                 </button>
                 <div class="dropdown-menu" id="monthly-data">
-                    <a class="dropdown-item" href="#">Project Invoices (Manual)</a>
+                    <a class="dropdown-item" asp-area="PACT" asp-controller="Invoice" asp-action="Index">Project Invoices (Manual)</a>
+
                     <a class="dropdown-item" href="#">OM, OG, FT & UT Invoices (Batch Mode from RMS)</a>
 
                     <a class="dropdown-item" href="invoicebymonth.html">Invoices by Month</a>
