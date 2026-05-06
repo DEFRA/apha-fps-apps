@@ -124,6 +124,26 @@ namespace Apha.PACT.DataAccess.Repository
             if (dict.TryGetValue("TestJob", out object? testJob) && testJob != null)
                 query = query.Where(x => x.TestJob != null && x.TestJob.Contains(testJob.ToString()!));
 
+            if (dict.TryGetValue("Month", out object? month) && month != null)
+            {
+                if (double.TryParse(month.ToString(), out double monthValue))
+                    query = query.Where(x => x.Month == monthValue);
+            }
+            if (dict.TryGetValue("WorkGroup", out object? workGroup) && workGroup != null)
+                query = query.Where(x => x.WorkGroup != null && x.WorkGroup.Contains(workGroup.ToString()!));
+
+            if (dict.TryGetValue("Description", out object? description) && description != null)
+                query = query.Where(x => x.Description != null && x.Description.Contains(description.ToString()!));
+
+            if (dict.TryGetValue("Supplier", out object? supplier) && acctCode != null)
+                query = query.Where(x => x.Supplier != null && x.Supplier.Contains(supplier.ToString()!));
+
+            if (dict.TryGetValue("SupplierNumber", out object? supplierNumber) && supplierNumber != null)
+            {
+                if (int.TryParse(supplierNumber.ToString(), out int supplierNumberValue))
+                    query = query.Where(x => x.SupplierNumber == supplierNumberValue);
+            }
+
             return query;
         }
 
