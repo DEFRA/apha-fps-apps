@@ -222,18 +222,40 @@
             }
 
             if (e.detail.gridId === wgGradeGridId) {
-                selectFirstRow(wgGradeGridId, function (row) {
-                    var wgGrade = row.data('id');
-                    onWgGradeRowClick(wgGrade);
-                });
+                var firstWgRow = $('#gridContainer_' + wgGradeGridId + ' table tbody tr:first');
+                if (firstWgRow.length && firstWgRow.data('id')) {
+                    selectFirstRow(wgGradeGridId, function (row) {
+                        var wgGrade = row.data('id');
+                        onWgGradeRowClick(wgGrade);
+                    });
+                } else {
+                    // No WG grade rows — reset dependent state and show empty highlighted row in staff grid
+                    currentWgGrade = '';
+                    document.getElementById('fpsSrSelectedWg').value = '';
+                    document.getElementById('fpsSrPersonName').value = '';
+                    document.getElementById('fpsSrSelectedPactId').value = '';
+                    clearGridFilters(wgStaffGridId);
+                    var $staffTbody = $('#gridContainer_' + wgStaffGridId + ' table tbody');
+                    if ($staffTbody.length) {
+                        var colCount = $('#gridContainer_' + wgStaffGridId + ' table thead tr:first th').length;
+                        $staffTbody.html('<tr class="selected-row"><td colspan="' + colCount + '" style="padding:6px;"></td></tr>');
+                    }
+                }
             }
 
             if (e.detail.gridId === wgStaffGridId) {
-                selectFirstRow(wgStaffGridId, function (row) {
-                    var pactId = row.data('id');
-                    var name   = row.find('td').eq(1).text().trim();
-                    onWgStaffRowClick(pactId, name);
-                });
+                var firstStaffRow = $('#gridContainer_' + wgStaffGridId + ' table tbody tr:first');
+                if (firstStaffRow.length && firstStaffRow.data('id')) {
+                    selectFirstRow(wgStaffGridId, function (row) {
+                        var pactId = row.data('id');
+                        var name   = row.find('td').eq(1).text().trim();
+                        onWgStaffRowClick(pactId, name);
+                    });
+                } else {
+                    // No staff rows — clear Person Selected panel
+                    document.getElementById('fpsSrPersonName').value = '';
+                    document.getElementById('fpsSrSelectedPactId').value = '';
+                }
             }
         });
 
