@@ -34,7 +34,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return View();
         }
 
-        // GET: ProgrammeNewProject/Add
+        // GET: ProgrammeNewProject/Add for new project (with model for dropdowns)
         public async Task<IActionResult> Add()
         {
             var model = new ProgrammeNewProjectViewModel { Disease = "Not Specified" };

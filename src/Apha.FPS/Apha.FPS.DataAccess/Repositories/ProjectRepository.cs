@@ -118,6 +118,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return ApplyPaging(result, query.Page, query.PageSize);
         }
 
+        //Create Project with trigger code
         public async Task<Project> CreateProjectAsync(Project project)
         {
             project.FpsYear = _requestContext.FpsYear;
@@ -129,6 +130,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return project;
         }
 
+        //Update Project with trigger code
         public async Task<Project> UpdateProjectAsync(Project project)
         {
             project.FpsYear = _requestContext.FpsYear;
