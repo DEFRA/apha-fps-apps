@@ -1,11 +1,13 @@
 ﻿using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.CostBook;
+using Apha.FPSApps.Application.Interfaces;
 using Apha.FPSApps.Application.Interfaces.Costbook;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.CostBook.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Identity.Web;
@@ -27,18 +29,6 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
         private readonly ICostBookContractService _contractService;
 
         private readonly IMapper _mapper;
-
-        private static readonly List<(string Value, string Text)> FinancialYearOptions =
-        [
-            ("-1", "Financial Years"),
-            ("0",  "Project Years")
-        ];
-
-        private static readonly List<(string Value, string Text)> DefraProjectOptions =
-        [
-            ("-1", "Yes"),
-            ("0",  "No")
-        ];
 
         public ProjectsController(
             ICostBookProjectService projectService,
@@ -65,14 +55,19 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
             var defaultRequest = new PaginationFilter<string> { Filter = "{}" };
 
             var projectGridConfig = await GetProjectGridConfigAsync(defaultRequest);
+
+            // Create hybrid view model that supports both patterns
             var viewModel = new ProjectViewModel
             {
                 ProjectGrid = projectGridConfig,
+                // Preserve original properties for backward compatibility
                 SearchTerm = searchTerm ?? string.Empty,
                 SelectedYear = selectedYear,
                 RecordsPerPage = recordsPerPage,
                 CurrentPage = currentPage
             };
+
+            // MS Access RowSource equivalent for fixed dropdowns - PRESERVED
             PopulateViewModelOptions(viewModel);
 
             return View(viewModel);
@@ -102,7 +97,8 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
 
             var queryParameters = _mapper.Map<QueryParameters<string>>(request);
 
-           
+            try
+            {
                 var projectPagedData = await _projectService.GetFilteredProjectsAsync(queryParameters);
 
                 List<ProjectItemViewModel> projectItems = new List<ProjectItemViewModel>();
@@ -111,11 +107,13 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
                     projectItems = _mapper.Map<List<ProjectItemViewModel>>(projectPagedData.Data.ToList());
                 }
                 else
-                {                   
+                {
+                    // Handle errors in MS Access style - log but don't crash
                     if (projectPagedData.Errors != null)
                     {
                         foreach (var error in projectPagedData.Errors)
-                        {                            
+                        {
+                            // Could log these errors or handle them as needed
                             Console.WriteLine($"Project data error: {error.Message}");
                         }
                     }
@@ -128,6 +126,7 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
                 return new DataGridConfig<ProjectItemViewModel>
                 {
                     GridId = "projectGrid",
+                    //Title = "Choose Existing Project",
                     ShowCheckboxColumn = false,
                     ShowPagination = true,
                     KeyProperty = "ProjectId",
@@ -143,19 +142,38 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
                     Pagination = paginationModel,
                     CurrentFilters = filterDict
                 };
-            
-            
-        }       
+            }
+            catch
+            {
+                // MS Access style error handling - return empty grid instead of crashing
+                return new DataGridConfig<ProjectItemViewModel>
+                {
+                    GridId = "projectGrid",
+                    Title = "Project List",
+                    ShowCheckboxColumn = false,
+                    ShowPagination = true,
+                    KeyProperty = "ProjectCode",
+                    Data = new List<ProjectItemViewModel>(),
+                    Columns = GridDataProvider.GetColumnsDefination<ProjectItemViewModel>(null),
+                    Pagination = new PaginationModel(),
+                    CurrentFilters = filterDict
+                };
+            }
+        }
+
+
 
        
+
+        // GET: /CostBook/Projects/Create - MS Access Form OnOpen for new record
         public async Task<IActionResult> Create()
         {
             var viewModel = new ProjectCreateEditViewModel
             {
-                ProjectId = string.Empty, 
-                ProjectTitle = string.Empty, 
+                ProjectId = string.Empty, // Will be set by user
+                ProjectTitle = string.Empty, // Will be set by user
                 ContractNumber = string.Empty,
-                StartDate = null,
+                StartDate = DateOnly.FromDateTime(DateTime.Today),// DateTime.Today → DateOnly?
                 Status = "Active",
                 CreatedDate = DateTime.Now
             };
@@ -164,14 +182,14 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
 
             return View(viewModel);
         }
-       
+
+        // POST: /CostBook/Projects/Create - MS Access BeforeUpdate validation
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ProjectCreateEditViewModel viewModel)
         {
             // Handle unchecked checkbox: null → 0, checked → -1
             viewModel.Inflation ??= 0;
-            //ModelState.Remove(nameof(viewModel.ProjectId));
 
             if (ModelState.IsValid)
             {
@@ -223,6 +241,7 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
         }
 
 
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(string id, ProjectCreateEditViewModel viewModel)
@@ -240,162 +259,187 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
 
             if (ModelState.IsValid)
             {
-                var projectDto = _mapper.Map<ProjectDto>(viewModel);
-                var response = await _projectService.UpdateProjectAsync(decodedId, projectDto);
+                var projectDto = _mapper.Map<ProjectDto>(viewModel);               
 
-                if (response.Success)
-                {
-                    TempData["Success"] = "Project updated successfully!";
-                    return RedirectToAction(nameof(Edit), new { id = decodedId });
-                }
 
-                foreach (var error in response.Errors ?? new List<ApiErrorDto>())
-                    ModelState.AddModelError(string.Empty, error.Message ?? "Unknown error");
+                    var response = await _projectService.UpdateProjectAsync(decodedId, projectDto);
+
+                    if (response.Success)
+                    {
+                        TempData["Success"] = "Project updated successfully!";
+                        return RedirectToAction(nameof(Edit), new { id = decodedId });
+                    }
+
+                    // API errors
+                    foreach (var error in response.Errors ?? new List<ApiErrorDto>())
+                    {
+                        ModelState.AddModelError("", error.Message ?? "Unknown error");
+                    }
+
             }
 
+            // ❗ IMPORTANT: Re-populate dropdowns when returning view
             await PopulateDropdownsAsync(viewModel);
+
             return View(viewModel);
         }
-        
 
+        // GET: /CostBook/Projects/Delete/5
+        public async Task<IActionResult> Delete(string id)
+        {
+            if (string.IsNullOrEmpty(id))
+                throw new ArgumentException("Project ID is required", nameof(id));
+
+            var decodedId = HttpUtility.UrlDecode(id);
+            var response = await _projectService.GetProjectByIdAsync(decodedId);
+
+            if (!response.Success || response.Data == null)
+                throw new KeyNotFoundException($"Project with ID '{decodedId}' not found");
+
+            var viewModel = _mapper.Map<ProjectDetailViewModel>(response.Data);
+            return View(viewModel);
+        }
+
+        // POST: /CostBook/Projects/Delete/5 - MS Access OnClick Delete button
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<JsonResult> DeleteConfirmed(string id)
         {
-            if (string.IsNullOrEmpty(id))
-                return Json(new { success = false, message = "Project ID is required." });
+           
+                if (string.IsNullOrEmpty(id))
+                {
+                    return Json(new { success = false, message = "Project ID is required" });
+                }
 
-            var decodedId = HttpUtility.UrlDecode(id);
-            var response = await _projectService.DeleteProjectAsync(decodedId);
+                var decodedId = HttpUtility.UrlDecode(id);
+                var response = await _projectService.DeleteProjectAsync(decodedId);
 
-            if (!response.Success)
-            {
-                var errorMessage = response.Errors?.Count > 0
+                if (!response.Success)
+                {
+                    var errorMessage = response.Errors?.Count > 0
                     ? string.Join(", ", response.Errors.Select(e => e.Message))
                     : "Project deletion failed. Please try again.";
 
+                    return Json(new
+                    {
+                        success = false,
+                        message = errorMessage,
+                        errors = response.Errors?.Select(e => e.Message)
+                    });
+                }
+
                 return Json(new
                 {
-                    success = false,
-                    message = errorMessage,
-                    errors = response.Errors?.Select(e => e.Message)
+                    success = true,
+                    message = "Project deleted successfully!"
                 });
-            }
-
-            return Json(new { success = true, message = "Project deleted successfully!" });
+            
+           
         }
 
-        // ── Copy (AJAX — returns JSON, matches FPS pattern) ──────────────────
+        // Control-level events (MS Access OnClick, AfterUpdate equivalents)
+
+        // MS Access AfterUpdate for dropdown - Control event handler
+        [HttpPost]
+        public async Task<JsonResult> OnCustomerChange(string customerName)
+        {
+            // Business logic when customer dropdown changes
+            var programs = await _programService.GetAllProgramsAsync();
+
+            var customerPrograms = programs.Success && programs.Data != null
+                ? programs.Data.Where(p => p.Customer == customerName)
+                               .Select(p => new { value = p.ProgramNo, text = p.ProgramName })
+                               .Cast<object>()
+                               .ToList()
+                : new List<object>();
+
+            return Json(new { programs = customerPrograms });
+        }
+
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<JsonResult> Copy(string sourceProjectId)
         {
+            string newProjectId=String.Empty;
+
+            // If newId is not provided, generate one based on the oldId (same logic as API)
             var nextIdResponse = await _projectService.GetNextProjectNumberAsync(sourceProjectId);
+                  if (nextIdResponse.Success && !string.IsNullOrEmpty(nextIdResponse.Data))
+                  {
+                        newProjectId = nextIdResponse.Data;
+                  }
+                  else
+                  {
+                        return Json(new { success = false, errors = new[] { "Failed to generate new project ID" } });
+                  }
+                
 
-            if (!nextIdResponse.Success || string.IsNullOrEmpty(nextIdResponse.Data))
-                return Json(new { success = false, message = "Failed to generate new project ID." });
+                var response = await _projectService.CopyProjectAsync(sourceProjectId, newProjectId);
 
-            var newProjectId = nextIdResponse.Data;
-            var response = await _projectService.CopyProjectAsync(sourceProjectId, newProjectId);
-
-            if (response.Success)
-                return Json(new
+                if (response.Success)
                 {
-                    success = true,
-                    message = "Project copied successfully!",
-                    projectId = response.Data?.ProjectId,
-                    generatedId = newProjectId
-                });
+                    return Json(new
+                    {
+                        success = true,
+                        projectId = response.Data?.ProjectId,
+                        message = "Project copied successfully!",
+                        generatedId = newProjectId  // Return the generated ID for user feedback
+                    });
+                }
 
-            return Json(new
-            {
-                success = false,
-                message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to copy project.",
-                errors = response.Errors?.Select(e => e.Message)
-            });
+                return Json(new { success = false, errors = response.Errors?.Select(e => e.Message) });
+           
         }
-
-        // ── Recost (AJAX — returns JSON) ──────────────────────────────────────
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<JsonResult> Recost(string id)
         {
             var response = await _projectService.RecostProjectAsync(id);
-            return Json(new
-            {
-                success = response.Success && response.Data,
-                message = response.Success ? "Project recosted successfully." : "Recost failed."
-            });
-        }
-        
-
-        [HttpGet]
-        public async Task<IActionResult> GetNextProjectId()
-        {
-            var response = await _projectService.GetNextProjectNumberAsync(null);
-
-            if (response.Success && response.Data != null)
-                return Json(new { success = true, projectId = response.Data });
-
-            return Json(new { success = false, projectId = (string?)null });
+            return Json(new { success = response.Success && response.Data });
         }
 
-        
-
-        [HttpPost]
-        public async Task<JsonResult> OnCustomerChange(string customerName)
-        {
-            var programs = await _programService.GetAllProgramsAsync();
-
-            var customerPrograms = programs.Success && programs.Data != null
-                ? programs.Data
-                    .Where(p => p.Customer == customerName)
-                    .Select(p => new { value = p.ProgramNo, text = p.ProgramName })
-                    .Cast<object>()
-                    .ToList()
-                : new List<object>();
-
-            return Json(new { programs = customerPrograms });
-        }
-
-        // ── Private helpers ───────────────────────────────────────────────────
-
+        // Helper methods for business logic (MS Access VBA equivalent)
         private async Task<bool> ValidateProjectBusinessRules(ProjectDto project)
         {
+            // MS Access ValidationRule equivalent
+            //if (project.EndDate.HasValue && project.EndDate < project.StartDate)
             if (project.EndDate.HasValue && project.StartDate.HasValue &&
-                DateOnly.FromDateTime(project.EndDate.Value) < project.StartDate.Value)
+    DateOnly.FromDateTime(project.EndDate.Value) < project.StartDate.Value)
+
             {
-                ModelState.AddModelError("EndDate", "End date cannot be earlier than start date.");
+                ModelState.AddModelError("EndDate", "End date cannot be earlier than start date");
                 return false;
             }
 
             if (project.BudgetAmount.HasValue && project.BudgetAmount < 0)
             {
-                ModelState.AddModelError("BudgetAmount", "Budget amount cannot be negative.");
+                ModelState.AddModelError("BudgetAmount", "Budget amount cannot be negative");
                 return false;
             }
 
             if (project.ActualCost.HasValue && project.ActualCost < 0)
             {
-                ModelState.AddModelError("ActualCost", "Actual cost cannot be negative.");
+                ModelState.AddModelError("ActualCost", "Actual cost cannot be negative");
                 return false;
             }
 
             return true;
         }
 
-        private  static void PopulateViewModelOptions(ProjectViewModel viewModel)
+        private void PopulateViewModelOptions(ProjectViewModel viewModel)
         {
+            
+
             viewModel.RecordsPerPageOptions = new List<SelectListItem>
             {
-                new() { Value = "5",  Text = "5",  Selected = viewModel.RecordsPerPage == 5  },
+                new() { Value = "5", Text = "5", Selected = viewModel.RecordsPerPage == 5 },
                 new() { Value = "10", Text = "10", Selected = viewModel.RecordsPerPage == 10 },
-                new() { Value = "15", Text = "15", Selected = viewModel.RecordsPerPage == 15 },
-                new() { Value = "20", Text = "20", Selected = viewModel.RecordsPerPage == 20 },
-                new() { Value = "25", Text = "25", Selected = viewModel.RecordsPerPage == 25 },
-                new() { Value = "30", Text = "30", Selected = viewModel.RecordsPerPage == 30 }
+                new() { Value = "15", Text = "15" , Selected = viewModel.RecordsPerPage == 15 },
+                new() { Value = "20", Text = "20" , Selected = viewModel.RecordsPerPage == 20},
+                new() { Value = "25", Text = "25" , Selected = viewModel.RecordsPerPage == 25},
+                new() { Value = "30", Text = "30",Selected = viewModel.RecordsPerPage == 30}
             };
         }
 
@@ -489,7 +533,7 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
                })
                .ToList() ?? new List<SelectListItem>();
 
-            
+            // If PreparedBy is set but not in the staff list, add it to preserve the value
             if (!string.IsNullOrEmpty(viewModel.PreparedBy) &&
                 !staffList.Any(s => s.Value == viewModel.PreparedBy))
             {
@@ -505,7 +549,11 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
 
             // Available Financial Years with selected value
             var selectedFinancialYear = viewModel.FinancialYears?.ToString() ?? "-1";
-            viewModel.AvailableFinancialYears = FinancialYearOptions
+            viewModel.AvailableFinancialYears = new List<(string Value, string Text)>
+                {
+                    ("-1", "Financial Years"),
+                    ("0", "Project Years")
+                }
                 .Select(item => new SelectListItem
                 {
                     Value = item.Value,
@@ -515,8 +563,12 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
                 .ToList();
 
             // Available Defra Project Options with selected value
-            var selectedDefraProject = viewModel.IsDefraProject?.ToString() ?? string.Empty;  // ← was ?? "-1"
-            viewModel.AvailableDefraProjectOptions = DefraProjectOptions
+            var selectedDefraProject = viewModel.IsDefraProject?.ToString() ?? "-1";
+            viewModel.AvailableDefraProjectOptions = new List<(string Value, string Text)>
+                {
+                     ("-1", "Yes"),
+                    ("0", "No")
+                }
                 .Select(item => new SelectListItem
                 {
                     Value = item.Value,
@@ -525,6 +577,5 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
                 })
                 .ToList();
         }
-      
     }
 }

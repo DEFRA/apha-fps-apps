@@ -14,27 +14,22 @@ public class StaffRequirementItem
     public string WgGrade { get; set; } = null!;
 
     [Display(Name = "Name")]
-    [Required(ErrorMessage = "Name is required.")]
     [GridColumn(Order = 2, Width = 150, Type = GridColumnType.Text)]
     public string? Name { get; set; }
 
     [Display(Name = "Rate")]
-    [Required(ErrorMessage = "Rate is required.")]
     [GridColumn(Order = 3, Width = 100, Type = GridColumnType.GbpValue)]
     public double? Chargerate { get; set; }
 
     [Display(Name = "Hrs")]
-    [Required(ErrorMessage = "Hrs is required.")]
     [GridColumn(Order = 4, Width = 70, Type = GridColumnType.DecimalNumber)]
     public double? Nohours { get; set; }
 
     [Display(Name = "Days")]
-    [Required(ErrorMessage = "Days is required.")]
     [GridColumn(Order = 5, Width = 70, Type = GridColumnType.DecimalNumber)]
     public double? Nodays { get; set; }
 
     [Display(Name = "Cost")]
-    [Required(ErrorMessage = "Cost is required.")]
     [GridColumn(Order = 6, Width = 100, Type = GridColumnType.GbpValue)]
     public double? StaffCost { get; set; }
 

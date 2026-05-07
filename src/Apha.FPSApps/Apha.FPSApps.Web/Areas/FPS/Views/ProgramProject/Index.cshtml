@@ -64,9 +64,7 @@
                                                    data-nav-program="@Url.Action("Index", "ProjectStaffPlanActual", new { area = "FPS" })"
                                                    href="@Url.Action("Index", "ProjectStaffPlanActual", new { area = "FPS", programNo = Model.SelectedProgramNo })">Staff</a>
                                                 </li>
-                                            <li><a class="dropdown-item" data-nav-program="@Url.Action("Index", "ProjectTestPlanActual", new { area = "FPS" })"
-                                                       href="@Url.Action("Index", "ProjectTestPlanActual", new { area = "FPS", programNo = Model.SelectedProgramNo })">Tests</a>
-                                                </li>
+                                            <li><a class="dropdown-item" href="#">Tests</a></li>
                                             <li><a class="dropdown-item"
                                                    data-nav-program="@Url.Action("Index", "ProjectAnimalPlanActual", new { area = "FPS" })"
                                                        href="@Url.Action("Index", "ProjectAnimalPlanActual", new { area = "FPS", programNo = Model.SelectedProgramNo })">Animals</a>
@@ -188,11 +186,6 @@
                 planBtn.href          = '@Url.Action("Index", "ProjectPlanning", new { area = "FPS" })?parentProject=' + encodeURIComponent(id);
                 planBtn.style.display = '';
             }
-
-            $('a[data-nav-program]').each(function () {
-                var base = $(this).data('nav-program');
-                $(this).attr('href', base + '?projectCode=' + encodeURIComponent(id));
-            });
         }
 
         function resetSelectedProject() {

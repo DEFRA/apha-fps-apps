@@ -8,7 +8,6 @@ public interface IProjectYearRepository
     Task<int?> GetMaxProjectYearAsync(string project);
     Task<ProjectYear> AddProjectYearAsync(string project, int year, ProjectYear yearData);
     Task<ProjectYear> UpdateProjectYearAsync(ProjectYear projectYear);
-    Task<(bool Deleted, IReadOnlyList<string> Errors)> DeleteProjectYearAsync(string project, int year);
     Task<IEnumerable<PayRateLookup>> GetPayRatesAsync(bool isDefra);
 }
 

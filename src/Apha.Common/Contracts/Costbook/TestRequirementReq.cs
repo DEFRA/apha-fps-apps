@@ -7,5 +7,4 @@ public class TestRequirementReq
     public string TestCode { get; set; } = null!;
     public double? NumberOfTests { get; set; }
     public double? UnitPrice { get; set; }
-    public double? TestCost { get; set; }
 }

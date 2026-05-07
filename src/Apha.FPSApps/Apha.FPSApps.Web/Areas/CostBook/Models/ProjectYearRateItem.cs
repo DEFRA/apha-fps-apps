@@ -43,5 +43,4 @@ public class ProjectYearRateItem
     [Display(Name = "Profit Additional %")]
     [GridColumn(Order = 9, Width = 130, Type = GridColumnType.Number)]
     public double? ProfitAdditional { get; set; }
-    public string? Programme { get; set; }
 }

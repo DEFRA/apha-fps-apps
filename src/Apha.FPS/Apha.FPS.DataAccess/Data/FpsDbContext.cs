@@ -59,8 +59,6 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<TimeCostCalcsView> TimeCostCalcsViews { get; set; }
         public virtual DbSet<TimeCostCalcs> TimeCostCalcs { get; set; }
 
-        public virtual DbSet<MonthlyOutput> MonthlyOutputs { get; set; }
-
         public virtual DbSet<Division> Divisions { get; set; }
         public virtual DbSet<Agency> Agencies { get; set; }
 
@@ -189,9 +187,6 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.Entity<AdditionalCostLog>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new AccountCategoryMap());
-
-            modelBuilder.ApplyConfiguration(new MonthlyOutputMap());
-            modelBuilder.Entity<MonthlyOutput>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
         }
     }
 }

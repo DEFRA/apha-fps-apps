@@ -1,0 +1,19 @@
+Orchestrator Dependency Notes
+
+Scheduled Master Flow
+sp_LoadFromFPS calls
+sp_deleteFPSTotals and sp_createFPSTotals in source fps database
+sp_DeleteYearsFPSData in target archive database
+sp_AddYearsFPSData in target archive database
+
+Scheduled Composite Loader
+sp_AddYearsFPSData executes dependent add procedures in fixed order
+
+Adhoc Master Flow
+sp_RecreateSummaries is primary orchestrator for adhoc track
+manual report notifications are handled by spSendReportEmails_Manual group
+
+Parity Requirements
+Maintain execution order for all orchestrator driven procedures
+Maintain conditional year logic in scheduled flow
+Maintain notification side effects and mail trigger behavior

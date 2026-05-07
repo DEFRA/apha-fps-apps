@@ -14,17 +14,14 @@ public class AdditionalCostItem
     public string Description { get; set; } = null!;
 
     [Display(Name = "Cost No")]
-    [Required(ErrorMessage = "Cost is required.")]
     [GridColumn(Order = 2, Width = 110, Type = GridColumnType.GbpValue)]
     public double CostEntered { get; set; }
 
     [Display(Name = "Cost(inf)")]
-    [Required(ErrorMessage = "Cost(inf) is required.")]
     [GridColumn(Order = 3, Width = 110, Type = GridColumnType.GbpValue)]
     public double? ItemCost { get; set; }
 
     [Display(Name = "Account Cat")]
-    [Required(ErrorMessage = "Account Category is required.")]
     [GridColumn(Order = 4, Width = 130, Type = GridColumnType.Text, IsFilterable = false)]
     public string AccountCat { get; set; } = null!;
 }

@@ -1,0 +1,27 @@
+Target Structure
+
+src
+Apha.BatchJobs
+Apha.BatchJobs.Console
+Apha.BatchJobs.Console.UnitTests
+Apha.BatchJobs.Console.sln
+
+Apha.BatchJobs.Console
+Program.cs
+appsettings.json
+appsettings.Development.json
+Extensions
+Configuration
+Jobs
+Jobs Scheduled
+Jobs Adhoc
+Services
+Interfaces
+Models
+
+Conventions
+Nullable enabled
+Implicit usings enabled
+Extension methods for service registration
+Async await for all io and db operations
+Structured logging required

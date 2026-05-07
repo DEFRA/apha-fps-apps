@@ -11,7 +11,6 @@ public class StaffRequirementReq
     public double? Nodays { get; set; }
     public double? Chargerate { get; set; }
     public double? Payrate { get; set; }
-    public double? StaffCost { get; set; }
     public double? Npr { get; set; }
     public double? Ohr { get; set; }
 }

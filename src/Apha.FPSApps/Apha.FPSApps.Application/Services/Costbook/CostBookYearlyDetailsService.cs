@@ -26,9 +26,6 @@ public class CostBookYearlyDetailsService : ICostBookYearlyDetailsService
     public Task<ApiResponseDto<ProjectYearDto>> UpdateProjectYearAsync(string projectId, int year, ProjectYearDto dto)
         => _client.YearlyDetails.UpdateProjectYearAsync(projectId, year, dto);
 
-    public Task<ApiResponseDto<bool>> DeleteProjectYearAsync(string projectId, int year)
-        => _client.YearlyDetails.DeleteProjectYearAsync(projectId, year);
-
     public Task<ApiResponseDto<PaginatedResult<StaffRequirementDto>>> GetStaffRequirementsAsync(
         string projectId, int year, QueryParameters<string> query)
         => _client.YearlyDetails.GetStaffRequirementsAsync(projectId, year, query);

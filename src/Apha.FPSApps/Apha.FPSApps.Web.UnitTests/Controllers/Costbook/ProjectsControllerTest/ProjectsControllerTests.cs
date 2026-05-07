@@ -51,7 +51,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.Costbook.ProjectsControllerTest
         {
             var json = JsonSerializer.Serialize(jsonResult.Value);
             return JsonSerializer.Deserialize<JsonElement>(json);
-        }       
+        }
+
+       
 
         #region Index Tests
 
@@ -180,11 +182,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.Costbook.ProjectsControllerTest
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = "{}" };
             var errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "API_ERROR" } };
             var serviceResponse = ApiResponseDto<List<ProjectDto>>.FailureResponse(errors, new ApiMetaDto());
-            var paginationModel = new PaginationModel();
 
             _mapper.Map<QueryParameters<string>>(request).Returns(new QueryParameters<string>());
             _projectService.GetFilteredProjectsAsync(Arg.Any<QueryParameters<string>>()).Returns(serviceResponse);
-            _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(paginationModel);
 
             // Act
             var result = await _controller.LoadProjectGrid(request);
@@ -262,7 +262,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.Costbook.ProjectsControllerTest
         {
             // Arrange
             var viewModel = new ProjectCreateEditViewModel();
-            _controller.ModelState.AddModelError("ProjectTitle", "Required");
+            _controller.ModelState.AddModelError("ProjectId", "Required");
 
             _programService.GetAllProgramsAsync().Returns(ApiResponseDto<List<ProgramDto>>.SuccessResponse(new List<ProgramDto>()));
             _customerService.GetAllCustomersAsync().Returns(ApiResponseDto<List<CustomerDto>>.SuccessResponse(new List<CustomerDto>()));
@@ -409,6 +409,27 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.Costbook.ProjectsControllerTest
         #region Delete Tests
 
         [Fact]
+        public async Task Delete_Get_WithValidId_ReturnsViewWithProject()
+        {
+            // Arrange
+            var projectId = "P001";
+            var projectDto = new ProjectDto { ProjectId = projectId, ProjectTitle = "Test Project" };
+            var serviceResponse = ApiResponseDto<ProjectDto>.SuccessResponse(projectDto);
+            var viewModel = new ProjectDetailViewModel { ProjectId = projectId, Projecttitle = "Test Project" };
+
+            _projectService.GetProjectByIdAsync(projectId).Returns(serviceResponse);
+            _mapper.Map<ProjectDetailViewModel>(projectDto).Returns(viewModel);
+
+            // Act
+            var result = await _controller.Delete(projectId);
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProjectDetailViewModel>(viewResult.Model);
+            Assert.Equal(projectId, model.ProjectId);
+        }
+
+        [Fact]
         public async Task DeleteConfirmed_WithValidId_ReturnsSuccessJson()
         {
             // Arrange
@@ -437,7 +458,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.Costbook.ProjectsControllerTest
             var jsonResult = Assert.IsType<JsonResult>(result);
             var value = GetJsonResultElement(jsonResult);
             Assert.False(value.GetProperty("success").GetBoolean());
-            Assert.Equal("Project ID is required.", value.GetProperty("message").GetString());
+            Assert.Equal("Project ID is required", value.GetProperty("message").GetString());
         }
 
         [Fact]

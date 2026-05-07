@@ -1,10 +1,5 @@
 @using Microsoft.AspNetCore.Mvc.Rendering
-@using Apha.FPSApps.Application.Dtos.CostBook
 @model Apha.FPSApps.Web.Areas.CostBook.Models.StaffRequirementItem
-
-@{
-    var payRates = ViewBag.WgGradeOptions as List<PayRateDto> ?? new List<PayRateDto>();
-}
 
 <div class="modal-header">
     <h5 class="modal-title">@(Model.SrIdentity == 0 ? "Add" : "Edit") Staff Requirement</h5>
@@ -12,98 +7,34 @@
 </div>
 <div class="modal-body">
     <form id="staffRequirementForm">
-        @Html.AntiForgeryToken()
-        <input asp-for="SrIdentity" type="hidden" />
-        <input asp-for="Payrate" type="hidden" />
-        <input asp-for="Npr" type="hidden" />
-        <input asp-for="Ohr" type="hidden" />
-        <input type="hidden" id="WgGrade" name="WgGrade" value="@Model.WgGrade" />
-        <div class="govuk-error-summary" role="alert"
-             aria-labelledby="staffFormErrorTitle" tabindex="-1" style="display: none;">
-            <h2 class="govuk-error-summary__title" id="staffFormErrorTitle"></h2>
-            <div class="govuk-error-summary__body">
-                <ul class="govuk-list govuk-error-summary__list"></ul>
-            </div>
+        <div class="form-group mb-2">
+            <label asp-for="WgGrade" class="govuk-label">WG Grade</label>
+            <select asp-for="WgGrade" asp-items="@((List<SelectListItem>)ViewBag.WgGradeOptions)" class="govuk-select">
+                <option value="">-- Select Grade --</option>
+            </select>
+            <span asp-validation-for="WgGrade" class="govuk-error-message"></span>
         </div>
-        <div class="govuk-form-group govuk-!-margin-bottom-4">
-            <label class="govuk-label">
-                WG Grade <span class="sup_color_red">*</span>
-            </label>
-            <div style="position: relative; z-index: 50;">
-                <input type="text" id="wgGradeSelect" placeholder="-- Select Grade --" autocomplete="off"
-                       class="govuk-input govuk-!-font-size-16 down-arrow-img" style="width: 100%; cursor: pointer;"
-                       value="@Model.WgGrade" readonly />
-                <div id="wgGradeDropdownPanel" style="display:none; position:absolute; top:100%; left:0; width:100%;
-                        max-height:220px; overflow-y:auto; background:#fff; border:1px solid #b1b4b6;
-                        box-shadow:0 4px 8px rgba(0,0,0,.2); z-index:2000;">
-                    <input type="text" id="wgGradeSearchBox" placeholder="Type to search grade"
-                           style="width:100%; padding:6px 8px; border:0; border-bottom:1px solid #b1b4b6; outline:none; box-sizing:border-box;" />
-                    <table style="width:100%; border-collapse:collapse; font-size:14px;">
-                        <thead style="background:#f3f2f1; position:sticky; top:0; z-index:10;">
-                            <tr>
-                                <th style="padding:6px 8px; text-align:left;">Grade</th>
-                                <th style="padding:6px 8px; text-align:left;">Charge Rate</th>
-                            </tr>
-                        </thead>
-                        <tbody id="wgGradeDropdownBody">
-                            @foreach (var p in payRates)
-                            {
-                                <tr data-value="@p.WgGrade"
-                                    data-chargerate="@(p.ChargeRate?.ToString("F2") ?? "")"
-                                    data-payrate="@(p.PayRate?.ToString("F2") ?? "")"
-                                    data-npr="@(p.Npr?.ToString("F2") ?? "")"
-                                    data-ohr="@(p.Ohr?.ToString("F2") ?? "")"
-                                    style="cursor:pointer;">
-                                    <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@p.WgGrade</td>
-                                    <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@(p.ChargeRate?.ToString("F2") ?? "N/A")</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <span asp-validation-for="WgGrade" class="govuk-error-message" style="display:none;"></span>
+        <div class="form-group mb-2">
+            <label asp-for="Nohours" class="govuk-label">Hrs</label>
+            <input asp-for="Nohours" type="number" step="0.01" class="govuk-input">
         </div>
-        <div class="govuk-form-group govuk-!-margin-bottom-4">
-            <label asp-for="Name" class="govuk-label">
-                Name <span class="sup_color_red">*</span>
-            </label>
-            <input asp-for="Name" type="text" class="govuk-input" required />
-            <span asp-validation-for="Name" class="govuk-error-message" style="display:none;"></span>
+        <div class="form-group mb-2">
+            <label asp-for="Nodays" class="govuk-label">Days</label>
+            <input asp-for="Nodays" type="number" step="0.01" class="govuk-input">
         </div>
-        <div class="govuk-form-group govuk-!-margin-bottom-4">
-            <label asp-for="Nohours" class="govuk-label">
-                Hrs <span class="sup_color_red">*</span>
-            </label>
-            <input asp-for="Nohours" type="number" step="0.01" class="govuk-input" required />
-            <span asp-validation-for="Nohours" class="govuk-error-message" style="display:none;"></span>
+        <div class="form-group mb-2">
+            <label asp-for="Chargerate" class="govuk-label">Rate</label>
+            <input asp-for="Chargerate" type="text" readonly class="govuk-input">
         </div>
-        <div class="govuk-form-group govuk-!-margin-bottom-4">
-            <label asp-for="Nodays" class="govuk-label">
-                Days <span class="sup_color_red">*</span>
-            </label>
-            <input asp-for="Nodays" type="number"  class="govuk-input" required />
-            <span asp-validation-for="Nodays" class="govuk-error-message" style="display:none;"></span>
+        <div class="form-group mb-2">
+            <label asp-for="StaffCost" class="govuk-label">Cost</label>
+            <input asp-for="StaffCost" type="text" readonly class="govuk-input">
         </div>
-        <div class="govuk-form-group govuk-!-margin-bottom-4">
-            <label asp-for="Chargerate" class="govuk-label">
-                Rate <span class="sup_color_red">*</span>
-            </label>
-            <input asp-for="Chargerate" type="text" readonly class="govuk-input" />
-            <span asp-validation-for="Chargerate" class="govuk-error-message" style="display:none;"></span>
-        </div>
-        <div class="govuk-form-group govuk-!-margin-bottom-4">
-            <label asp-for="StaffCost" class="govuk-label">
-                Cost <span class="sup_color_red">*</span>
-            </label>
-            <input asp-for="StaffCost" type="text" readonly class="govuk-input" />
-            <span asp-validation-for="StaffCost" class="govuk-error-message" style="display:none;"></span>
-        </div>
+        <input asp-for="SrIdentity" type="hidden">
+        <input asp-for="Payrate" type="hidden">
+        <input asp-for="Npr" type="hidden">
+        <input asp-for="Ohr" type="hidden">
+        <button type="submit" class="govuk-button">Save</button>
+        <button type="button" class="govuk-button govuk-button--secondary sup_margin_0" onclick="closeModal()">Cancel</button>
     </form>
-</div>
-<div class="modal-footer">
-    <button type="button" class="govuk-button govuk-button--secondary sup_margin_0" onclick="closeModal()">Cancel</button>
-    <button type="button" class="govuk-button sup_margin_0" onclick="saveStaff()">
-        @(Model.SrIdentity == 0 ? "Save" : "Update")
-    </button>
 </div>

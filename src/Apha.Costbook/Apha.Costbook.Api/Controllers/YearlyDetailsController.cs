@@ -65,15 +65,6 @@ public class YearlyDetailsController : ControllerBase
         return Ok(BuildOk(_mapper.Map<ProjectYearRes>(updated)));
     }
 
-    [HttpDelete("{projectId}/years/{year}")]
-    public async Task<IActionResult> DeleteProjectYear(string projectId, int year)
-    {
-        var (deleted, errors) = await _service.DeleteProjectYearAsync(projectId, year);
-        if (errors.Count > 0)
-            return BadRequest(BuildError<bool>(string.Join("\n", errors)));
-        return Ok(BuildOk(deleted));
-    }
-
     // ── Staff requirements ────────────────────────────────────────────────────
 
     [HttpGet("{projectId}/years/{year}/staff")]
@@ -268,13 +259,6 @@ public class YearlyDetailsController : ControllerBase
         Success = true,
         Data = data,
         Errors = new List<ApiError>(),
-        Meta = new ApiMeta()
-    };
-
-    private static ApiResponse<T> BuildError<T>(string message) => new()
-    {
-        Success = false,
-        Errors = new List<ApiError> { new() { Message = message } },
         Meta = new ApiMeta()
     };
 }

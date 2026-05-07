@@ -1,11 +1,9 @@
-using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.CostBook;
 using Apha.FPSApps.Application.Interfaces.Costbook;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.CostBook.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
-using Azure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -58,9 +56,12 @@ public class YearlyDetailsController : Controller
 
         await PopulateDropdownsAsync(viewModel, isDefra);
 
-        if (selectedYear > 0 && yearsResponse.Success && yearsResponse.Data != null)
+        if (selectedYear > 0)
         {
-            viewModel.YearRates = _mapper.Map<List<ProjectYearRateItem>>(yearsResponse.Data);
+            var ratesResponse = await _service.GetProjectYearsAsync(decodedProjectId);
+
+            if (ratesResponse.Success && ratesResponse.Data != null)
+                viewModel.YearRates = _mapper.Map<List<ProjectYearRateItem>>(ratesResponse.Data);
         }
 
         return View(viewModel);
@@ -142,13 +143,12 @@ public class YearlyDetailsController : Controller
 
     [HttpGet]
     [ActionName("AddProjectYear")]
-    public IActionResult AddProjectYearGet(string projectId, int year, string? programme = null)
+    public IActionResult AddProjectYearGet(string projectId, int year)
     {
         var model = new ProjectYearRateItem
         {
             Project = projectId,
-            YearValue = year,
-            Programme = programme
+            YearValue = year
         };
         return PartialView("_AddProjectYear", model);
     }
@@ -156,30 +156,13 @@ public class YearlyDetailsController : Controller
     [HttpPost]
     public async Task<IActionResult> AddProjectYear(string projectId, int year, ProjectYearRateItem item)
     {
-        var validationResult = ValidateModel();
-        if (validationResult is not null) return validationResult;
-        var decodedProjectId = HttpUtility.UrlDecode(projectId);
         var dto = _mapper.Map<ProjectYearDto>(item);
-        dto.Project = decodedProjectId;
+        dto.Project = HttpUtility.UrlDecode(projectId);
         dto.YearValue = year;
-        var response = await _service.AddProjectYearAsync(decodedProjectId, year, dto);
+        var response = await _service.AddProjectYearAsync(HttpUtility.UrlDecode(projectId), year, dto);
         if (!response.Success)
             return Json(new { success = false, message = "Failed to add project year." });
         return Json(new { success = true, year = response.Data?.YearValue });
-    }
-
-    [HttpDelete]
-    public async Task<IActionResult> DeleteProjectYear(string projectId, int year)
-    {
-        var decodedProjectId = HttpUtility.UrlDecode(projectId);
-        var response = await _service.DeleteProjectYearAsync(decodedProjectId, year);
-        if (!response.Success)
-        {
-            var message = response.Errors?.FirstOrDefault()?.Message
-                          ?? "Failed to delete project year.";
-            return Json(new { success = false, message });
-        }
-        return Json(new { success = true });
     }
 
     // ── STAFF CRUD ────────────────────────────────────────────────────────
@@ -187,31 +170,30 @@ public class YearlyDetailsController : Controller
     [HttpGet]
     public async Task<IActionResult> CreateStaff(string projectId, int year, bool isDefra)
     {
-        await GetPayRateOptionsAsync(isDefra);
+        ViewBag.WgGradeOptions = await GetPayRateOptionsAsync(isDefra);
         return PartialView("_AddEditStaffRequirement", new StaffRequirementItem { WgGrade = string.Empty });
     }
 
     [HttpPost]
     public async Task<IActionResult> CreateStaff(string projectId, int year, StaffRequirementItem item)
     {
-        var validationResult = ValidateModel();
-        if (validationResult is not null) return validationResult;
-        var decodedProjectId = HttpUtility.UrlDecode(projectId);
+        if (!ModelState.IsValid)
+            return Json(new { success = false, message = "Validation failed." });
         var dto = _mapper.Map<StaffRequirementDto>(item);
-        dto.Project = decodedProjectId;
+        dto.Project = HttpUtility.UrlDecode(projectId);
         dto.Year = year;
-        var response = await _service.AddStaffRequirementAsync(decodedProjectId, year, dto);
+        var response = await _service.AddStaffRequirementAsync(HttpUtility.UrlDecode(projectId), year, dto);
         if (!response.Success)
-            return Json(new { success = false, errors = MapApiErrors(response.Errors) });
+            return Json(new { success = false });
         return Json(new { success = true });
     }
 
     [HttpGet]
     public async Task<IActionResult> EditStaff(string projectId, int year, int srIdentity, bool isDefra)
     {
-        await GetPayRateOptionsAsync(isDefra);
+        ViewBag.WgGradeOptions = await GetPayRateOptionsAsync(isDefra);
 
-        var query = new QueryParameters<string> { Page = 1, PageSize = int.MaxValue };
+        var query = new QueryParameters<string> { Page = 1, PageSize = 1000 };
         var listResponse = await _service.GetStaffRequirementsAsync(
                                HttpUtility.UrlDecode(projectId), year, query);
 
@@ -224,16 +206,15 @@ public class YearlyDetailsController : Controller
     [HttpPost]
     public async Task<IActionResult> EditStaff(string projectId, int year, int srIdentity, StaffRequirementItem item)
     {
-        var validationResult = ValidateModel();
-        if (validationResult is not null) return validationResult;
-        var decodedProjectId = HttpUtility.UrlDecode(projectId);
+        if (!ModelState.IsValid)
+            return Json(new { success = false, message = "Validation failed." });
         var dto = _mapper.Map<StaffRequirementDto>(item);
-        dto.Project = decodedProjectId;
+        dto.Project = HttpUtility.UrlDecode(projectId);
         dto.Year = year;
         dto.SrIdentity = srIdentity;
-        var response = await _service.UpdateStaffRequirementAsync(decodedProjectId, year, srIdentity, dto);
+        var response = await _service.UpdateStaffRequirementAsync(HttpUtility.UrlDecode(projectId), year, srIdentity, dto);
         if (!response.Success)
-            return Json(new { success = false, errors = MapApiErrors(response.Errors) });
+            return Json(new { success = false });
         return Json(new { success = true });
     }
 
@@ -249,29 +230,28 @@ public class YearlyDetailsController : Controller
     [HttpGet]
     public async Task<IActionResult> CreateTest(string projectId, int year, bool isDefra)
     {
-        await GetTestCodeOptionsAsync(isDefra);
+        ViewBag.TestCode = await GetTestCodeOptionsAsync(isDefra);
         return PartialView("_AddEditTestRequirement", new TestRequirementItem { TestCode = string.Empty });
     }
 
     [HttpPost]
     public async Task<IActionResult> CreateTest(string projectId, int year, TestRequirementItem item)
     {
-        var validationResult = ValidateModel();
-        if (validationResult is not null) return validationResult;
-        var decodedProjectId = HttpUtility.UrlDecode(projectId);
+        if (!ModelState.IsValid)
+            return Json(new { success = false, message = "Validation failed." });
         var dto = _mapper.Map<TestRequirementDto>(item);
-        dto.Project = decodedProjectId;
+        dto.Project = HttpUtility.UrlDecode(projectId);
         dto.Year = year;
-        var response = await _service.AddTestRequirementAsync(decodedProjectId, year, dto);
+        var response = await _service.AddTestRequirementAsync(HttpUtility.UrlDecode(projectId), year, dto);
         if (!response.Success)
-            return Json(new { success = false, errors = MapApiErrors(response.Errors) });
+            return Json(new { success = false });
         return Json(new { success = true });
     }
 
     [HttpGet]
     public async Task<IActionResult> EditTest(string projectId, int year, string testCode, bool isDefra)
     {
-        await GetTestCodeOptionsAsync(isDefra);
+        ViewBag.TestCode = await GetTestCodeOptionsAsync(isDefra);
         var listResponse = await _service.GetTestRequirementsAsync(HttpUtility.UrlDecode(projectId), year);
         var row = listResponse.Data?.FirstOrDefault(t => t.TestCode == testCode);
         if (row is null) return NotFound();
@@ -281,16 +261,15 @@ public class YearlyDetailsController : Controller
     [HttpPost]
     public async Task<IActionResult> EditTest(string projectId, int year, string testCode, TestRequirementItem item)
     {
-        var validationResult = ValidateModel();
-        if (validationResult is not null) return validationResult;
-        var decodedProjectId = HttpUtility.UrlDecode(projectId);
+        if (!ModelState.IsValid)
+            return Json(new { success = false, message = "Validation failed." });
         var dto = _mapper.Map<TestRequirementDto>(item);
-        dto.Project = decodedProjectId;
+        dto.Project = HttpUtility.UrlDecode(projectId);
         dto.Year = year;
         dto.TestCode = testCode;
-        var response = await _service.UpdateTestRequirementAsync(decodedProjectId, year, testCode, dto);
+        var response = await _service.UpdateTestRequirementAsync(HttpUtility.UrlDecode(projectId), year, testCode, dto);
         if (!response.Success)
-            return Json(new { success = false, errors = MapApiErrors(response.Errors) });
+            return Json(new { success = false });
         return Json(new { success = true });
     }
 
@@ -306,29 +285,28 @@ public class YearlyDetailsController : Controller
     [HttpGet]
     public async Task<IActionResult> CreateAnimal(string projectId, int year, bool isDefra)
     {
-        await GetAnimalTypeOptionsAsync();
+        ViewBag.AnimalTypeOptions = await GetAnimalTypeOptionsAsync();
         return PartialView("_AddEditAnimalRequirement", new AnimalRequirementItem { AnimalType = string.Empty });
     }
 
     [HttpPost]
     public async Task<IActionResult> CreateAnimal(string projectId, int year, AnimalRequirementItem item)
     {
-        var validationResult = ValidateModel();
-        if (validationResult is not null) return validationResult;
-        var decodedProjectId = HttpUtility.UrlDecode(projectId);
+        if (!ModelState.IsValid)
+            return Json(new { success = false, message = "Validation failed." });
         var dto = _mapper.Map<AnimalRequirementDto>(item);
-        dto.Project = decodedProjectId;
+        dto.Project = HttpUtility.UrlDecode(projectId);
         dto.Year = year;
-        var response = await _service.AddAnimalRequirementAsync(decodedProjectId, year, dto);
+        var response = await _service.AddAnimalRequirementAsync(HttpUtility.UrlDecode(projectId), year, dto);
         if (!response.Success)
-            return Json(new { success = false, errors = MapApiErrors(response.Errors) });
+            return Json(new { success = false });
         return Json(new { success = true });
     }
 
     [HttpGet]
     public async Task<IActionResult> EditAnimal(string projectId, int year, int arIdentity, bool isDefra)
     {
-        await GetAnimalTypeOptionsAsync();
+        ViewBag.AnimalTypeOptions = await GetAnimalTypeOptionsAsync();
         var listResponse = await _service.GetAnimalRequirementsAsync(HttpUtility.UrlDecode(projectId), year);
         var row = listResponse.Data?.FirstOrDefault(a => a.ArIdentity == arIdentity);
         if (row is null) return NotFound();
@@ -338,16 +316,15 @@ public class YearlyDetailsController : Controller
     [HttpPost]
     public async Task<IActionResult> EditAnimal(string projectId, int year, int arIdentity, AnimalRequirementItem item)
     {
-        var validationResult = ValidateModel();
-        if (validationResult is not null) return validationResult;
-        var decodedProjectId = HttpUtility.UrlDecode(projectId);
+        if (!ModelState.IsValid)
+            return Json(new { success = false, message = "Validation failed." });
         var dto = _mapper.Map<AnimalRequirementDto>(item);
-        dto.Project = decodedProjectId;
+        dto.Project = HttpUtility.UrlDecode(projectId);
         dto.Year = year;
         dto.ArIdentity = arIdentity;
-        var response = await _service.UpdateAnimalRequirementAsync(decodedProjectId, year, arIdentity, dto);
+        var response = await _service.UpdateAnimalRequirementAsync(HttpUtility.UrlDecode(projectId), year, arIdentity, dto);
         if (!response.Success)
-            return Json(new { success = false, errors = MapApiErrors(response.Errors) });
+            return Json(new { success = false });
         return Json(new { success = true });
     }
 
@@ -363,7 +340,7 @@ public class YearlyDetailsController : Controller
     [HttpGet]
     public async Task<IActionResult> CreateAdditionalCost(string projectId, int year)
     {
-        await GetAccountCatOptionsAsync();
+        ViewBag.AccountCatOptions = await GetAccountCatOptionsAsync();
         return PartialView("_AddEditAdditionalCost",
             new AdditionalCostItem { Description = string.Empty, AccountCat = string.Empty });
     }
@@ -371,22 +348,21 @@ public class YearlyDetailsController : Controller
     [HttpPost]
     public async Task<IActionResult> CreateAdditionalCost(string projectId, int year, AdditionalCostItem item)
     {
-        var validationResult = ValidateModel();
-        if (validationResult is not null) return validationResult;
-        var decodedProjectId = HttpUtility.UrlDecode(projectId);
+        if (!ModelState.IsValid)
+            return Json(new { success = false, message = "Validation failed." });
         var dto = _mapper.Map<AdditionalCostDto>(item);
-        dto.Project = decodedProjectId;
+        dto.Project = HttpUtility.UrlDecode(projectId);
         dto.Year = year;
-        var response = await _service.AddAdditionalCostAsync(decodedProjectId, year, dto);
+        var response = await _service.AddAdditionalCostAsync(HttpUtility.UrlDecode(projectId), year, dto);
         if (!response.Success)
-            return Json(new { success = false, errors = MapApiErrors(response.Errors) });
+            return Json(new { success = false });
         return Json(new { success = true });
     }
 
     [HttpGet]
     public async Task<IActionResult> EditAdditionalCost(string projectId, int year, int acIdentity)
     {
-        await GetAccountCatOptionsAsync();
+        ViewBag.AccountCatOptions = await GetAccountCatOptionsAsync();
         var listResponse = await _service.GetAdditionalCostsAsync(HttpUtility.UrlDecode(projectId), year);
         var row = listResponse.Data?.FirstOrDefault(ac => ac.AcIdentity == acIdentity);
         if (row is null) return NotFound();
@@ -396,16 +372,15 @@ public class YearlyDetailsController : Controller
     [HttpPost]
     public async Task<IActionResult> EditAdditionalCost(string projectId, int year, int acIdentity, AdditionalCostItem item)
     {
-        var validationResult = ValidateModel();
-        if (validationResult is not null) return validationResult;
-        var decodedProjectId = HttpUtility.UrlDecode(projectId);
+        if (!ModelState.IsValid)
+            return Json(new { success = false, message = "Validation failed." });
         var dto = _mapper.Map<AdditionalCostDto>(item);
-        dto.Project = decodedProjectId;
+        dto.Project = HttpUtility.UrlDecode(projectId);
         dto.Year = year;
         dto.AcIdentity = acIdentity;
-        var response = await _service.UpdateAdditionalCostAsync(decodedProjectId, year, acIdentity, dto);
+        var response = await _service.UpdateAdditionalCostAsync(HttpUtility.UrlDecode(projectId), year, acIdentity, dto);
         if (!response.Success)
-            return Json(new { success = false, errors = MapApiErrors(response.Errors) });
+            return Json(new { success = false });
         return Json(new { success = true });
     }
 
@@ -419,69 +394,24 @@ public class YearlyDetailsController : Controller
     // ── MARKUP/PROFIT UPDATE ──────────────────────────────────────────────
 
     [HttpGet]
-    public async Task<IActionResult> EditMarkupAndProfit(string projectId, int year, string? programme)
+    public async Task<IActionResult> EditMarkupAndProfit(string projectId, int year)
     {
         var response = await _service.GetProjectYearsAsync(HttpUtility.UrlDecode(projectId));
         var yearDto = response.Data?.FirstOrDefault(y => y.YearValue == year);
         if (yearDto is null) return NotFound();
         var model = _mapper.Map<ProjectYearRateItem>(yearDto);
-        model.Programme = programme;
         return PartialView("_AddProjectYear", model);
     }
 
     [HttpPost]
     public async Task<IActionResult> UpdateProjectYearRate(string projectId, int year, ProjectYearRateItem item)
     {
-        var validationResult = ValidateModel();
-        if (validationResult is not null) return validationResult;
         var dto = _mapper.Map<ProjectYearDto>(item);
         var response = await _service.UpdateProjectYearAsync(HttpUtility.UrlDecode(projectId), year, dto);
         return Json(new { success = response.Success });
     }
 
     // ── PRIVATE HELPERS ───────────────────────────────────────────────────
-
-    private JsonResult? ValidateModel()
-    {
-        if (!ModelState.IsValid)
-        {
-            var errors = ModelState
-                .Where(e => e.Value?.Errors.Count > 0)
-                .Select(e => new { field = e.Key, message = e.Value!.Errors.First().ErrorMessage })
-                .ToList();
-            return Json(new { success = false, errors });
-        }
-        return null;
-    }
-
-    private static List<object> MapApiErrors(List<ApiErrorDto>? apiErrors)
-    {
-        if (apiErrors is null || apiErrors.Count == 0)
-            return [new { field = string.Empty, message = "An unexpected error occurred." }];
-
-        var errors = new List<object>();
-        foreach (var error in apiErrors)
-        {
-            if (error.Details is Dictionary<string, string[]> validationDetails)
-            {
-                foreach (var kvp in validationDetails)
-                {
-                    foreach (var msg in kvp.Value)
-                    {
-                        errors.Add(new { field = kvp.Key, message = msg });
-                    }
-                }
-            }
-            else
-            {
-                errors.Add(new { field = string.Empty, message = error.Message });
-            }
-        }
-
-        return errors.Count > 0
-            ? errors
-            : [new { field = string.Empty, message = "An unexpected error occurred." }];
-    }
 
     private async Task<DataGridConfig<StaffRequirementItem>> BuildStaffGridAsync(
         string projectId, int year, QueryParameters<string>? query = null)
@@ -633,7 +563,7 @@ public class YearlyDetailsController : Controller
             Data = data,
             KeyProperty = nameof(ProjectYearRateItem.YearValue),
             AllowAdd = false,
-            AllowEdit = true,
+            AllowEdit = false,
             AllowDelete = false,
             AllowCopy = false,
             ShowPagination = false,
@@ -667,36 +597,35 @@ public class YearlyDetailsController : Controller
             : new List<SelectListItem>();
     }
 
-    private async Task GetPayRateOptionsAsync(bool isDefra)
+    private async Task<List<SelectListItem>> GetPayRateOptionsAsync(bool isDefra)
     {
         var response = await _service.GetPayRatesAsync(isDefra);
-        ViewBag.WgGradeOptions = response.Data;
+        return response.Success && response.Data != null
+            ? response.Data.Select(p => new SelectListItem(p.WgGrade, p.WgGrade)).ToList()
+            : new List<SelectListItem>();
     }
 
-    private async Task GetAnimalTypeOptionsAsync()
+    private async Task<List<SelectListItem>> GetAnimalTypeOptionsAsync()
     {
         var response = await _service.GetAllAnimalsAsync();
-        ViewBag.AnimalTypeOptions = response.Success && response.Data != null
-            ? response.Data
-            : new List<AnimalLookupDto>();
+        return response.Success && response.Data != null
+            ? response.Data.Select(a => new SelectListItem(a.AnimalType, a.AnimalType)).ToList()
+            : new List<SelectListItem>();
     }
 
-    private async Task GetAccountCatOptionsAsync()
+    private async Task<List<SelectListItem>> GetAccountCatOptionsAsync()
     {
         var response = await _service.GetAccountCategoriesAsync();
-        ViewBag.AccountCatOptions = response.Success && response.Data != null
-            ? response.Data
-            : new List<AccountCategoryDto>();
+        return response.Success && response.Data != null
+            ? response.Data.Select(c => new SelectListItem(c.AccShortName, c.AccShortName)).ToList()
+            : new List<SelectListItem>();
     }
 
-    private async Task GetTestCodeOptionsAsync(bool isDefra)
+    private async Task<List<SelectListItem>> GetTestCodeOptionsAsync(bool isDefra)
     {
         var response = await _service.GetTestCodeLookupsAsync(isDefra);
-        if (!response.Success || response.Data is null)
-        {
-            ViewBag.TestCodeOptions = new List<TestCodeLookupDto>();
-            return;
-        }
-        ViewBag.TestCodeOptions = response.Data;
+        return response.Success && response.Data != null
+            ? response.Data.Select(t => new SelectListItem($"{t.ItemCode} - {t.ItemDescription}", t.ItemCode)).ToList()
+            : new List<SelectListItem>();
     }
 }

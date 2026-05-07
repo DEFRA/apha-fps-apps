@@ -9,5 +9,4 @@ public class AnimalRequirementReq
     public double? NumberOfDays { get; set; }
     public double? NumberOfAnimals { get; set; }
     public double? DailyRate { get; set; }
-    public double? AnimalCost { get; set; }
 }

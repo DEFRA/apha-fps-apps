@@ -10,7 +10,6 @@ public interface ICostBookYearlyDetailsService
     Task<ApiResponseDto<List<ProjectYearDto>>> GetProjectYearsAsync(string projectId);
     Task<ApiResponseDto<ProjectYearDto>> AddProjectYearAsync(string projectId, int year, ProjectYearDto dto);
     Task<ApiResponseDto<ProjectYearDto>> UpdateProjectYearAsync(string projectId, int year, ProjectYearDto dto);
-    Task<ApiResponseDto<bool>> DeleteProjectYearAsync(string projectId, int year);
 
     // ── Staff — now paginated ─────────────────────────────────────────────────
     Task<ApiResponseDto<PaginatedResult<StaffRequirementDto>>> GetStaffRequirementsAsync(string projectId, int year, QueryParameters<string> query);

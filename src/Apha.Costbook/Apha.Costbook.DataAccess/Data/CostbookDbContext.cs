@@ -451,10 +451,6 @@ public partial class CostbookDbContext : DbContext
                 .HasColumnName("eugrade");
         });
 
-        modelBuilder.ApplyConfiguration(new StaffRequirementMap());
-        modelBuilder.ApplyConfiguration(new TestRequirementMap());
-        modelBuilder.ApplyConfiguration(new AnimalRequirementMap());
-        modelBuilder.ApplyConfiguration(new AdditionalCostMap());
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(CostbookDbContext).Assembly);
 
     }

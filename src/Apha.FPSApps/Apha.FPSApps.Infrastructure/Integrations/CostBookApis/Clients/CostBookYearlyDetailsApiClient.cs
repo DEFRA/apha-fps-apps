@@ -78,16 +78,6 @@ public class CostBookYearlyDetailsApiClient : ICostBookYearlyDetailsApiClient
         return ApiResponseDto<ProjectYearDto>.FailureResponse(err.Errors, err.Meta);
     }
 
-    public async Task<ApiResponseDto<bool>> DeleteProjectYearAsync(string projectId, int year)
-    {
-        var response = await _http.DeleteAsync<bool>(
-            string.Format(CostBookApiEndpoints.DeleteProjectYear, HttpUtility.UrlEncode(projectId), year));
-        if (response.Success)
-            return ApiResponseDto<bool>.SuccessResponse(response.Data);
-        var err = _mapper.Map<ApiResponseDto<bool>>(response);
-        return ApiResponseDto<bool>.FailureResponse(err.Errors, err.Meta);
-    }
-
     // ── Staff ─────────────────────────────────────────────────────────────────
 
     public async Task<ApiResponseDto<PaginatedResult<StaffRequirementDto>>> GetStaffRequirementsAsync(

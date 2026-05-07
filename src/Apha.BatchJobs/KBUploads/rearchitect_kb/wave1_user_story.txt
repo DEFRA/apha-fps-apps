@@ -1,0 +1,96 @@
+Re-Architect Wave 1: Scheduled Job Orchestrator (sp_LoadFromFPS)
+
+Current State
+
+The AphaBatchJobs foundation has been established with v0.1.0-foundation targeting net8.0 on PostgreSQL and AWS ECS Fargate. The foundation provides four projects (Host, Application, Core, Infrastructure), CLI execution modes (--scheduled and --adhoc), Quartz scheduling, and dependency injection wiring. No stored procedures have been converted to C# yet.
+
+Objective
+
+Convert the sp_LoadFromFPS master orchestrator procedure and its dependency chain from SQL Server stored procedures to a composable C# implementation that runs within the foundation's scheduled job execution framework.
+
+Scope
+
+This wave focuses on the sp_LoadFromFPS orchestrator, which is the master procedure controlling all scheduled data loading operations. The procedure orchestrates five dependent stored procedures:
+
+1. sp_DeleteFPSJobAdhocResults — Clears previous adhoc results
+2. sp_LoadFPSTotals — Loads aggregated cost and income totals
+3. sp_RecreateYearData — Recreates current year financial data
+4. sp_LoadPreviousYearData — Loads prior year data for comparison
+5. sp_RecreateArchives — Archives old records for historical tracking
+
+Execution Order
+
+The orchestrator must execute these procedures in the following sequence:
+
+Step 1: Execute sp_DeleteFPSJobAdhocResults
+- Clears all adhoc results from the previous run
+- No parameters required
+- Must complete before any data loading
+
+Step 2: Execute sp_LoadFPSTotals
+- Depends on: Step 1 must be complete
+- Loads summary totals for all projects
+- Depends on tables: tblProject summary and cost tracking views
+- Result: Populates FPSYearTotals table
+
+Step 3: Execute sp_RecreateYearData
+- Depends on: Step 2 must be complete
+- Recreates current fiscal year project financial data
+- Depends on: FPSYearTotals (populated by Step 2)
+- Result: Recreates year_data tables with current financials
+
+Step 4: Execute sp_LoadPreviousYearData
+- Depends on: Step 3 must be complete
+- Loads previous fiscal year data for comparison and reporting
+- Depends on: Archive tables and previous year snapshots
+- Result: Populates previous_year_data for trending
+
+Step 5: Execute sp_RecreateArchives
+- Depends on: Step 4 must be complete and only executed if all prior steps succeeded
+- Archives completed records to historical storage
+- Cleanup: Removes old archived records older than 24 months
+- Result: Moves completed records to archive tables
+
+Overall Execution Rules
+
+- If any step fails, immediately halt orchestration and log error
+- Return exit code 1 if any step fails
+- Return exit code 0 only if all five steps complete successfully
+- Each step must validate its results before proceeding to the next step
+- Timeout: each step must complete within 300 seconds
+- If a step exceeds timeout, cancel execution and return exit code 2
+
+Output Specification
+
+Create a new IScheduledJob implementation called ScheduledLoadFromFpsJob that:
+
+1. Implements IScheduledJob interface from Core project
+2. Registers as a singleton in Infrastructure DI wiring
+3. Executes the five stored procedures in order via Npgsql/EntityFrameworkCore command interface
+4. Logs each step execution: start, step name, parameters (if any), duration, and result
+5. Catches exceptions per-step, logs them with correlation ID, and halts orchestration
+6. Returns JobExecutionResult with:
+   - Status: "Success" if all 5 steps complete, "Failed" if any step fails, "Timeout" if step exceeds 300s
+   - Message: human-readable summary (e.g., "All 5 steps completed successfully" or "Failed at step 3: sp_RecreateYearData")
+   - ExitCode: 0 for success, 1 for failure, 2 for timeout
+
+Code Organization
+
+- Create new file: AphaBatchJobs.Application/Scheduled/ScheduledLoadFromFpsJob.cs
+- Inject: ILogger, IDbConnection (or DbContext), ICorrelationIdService
+- Method signature: async Task<JobExecutionResult> ExecuteAsync(JobExecutionContext context, CancellationToken cancellationToken)
+- Each step should be a private async method that returns bool (success/failure)
+
+Logging Detail
+
+All logging through ILogger<ScheduledLoadFromFpsJob> at Information level for step entry/exit and Warning level for retries or non-fatal issues. At Error level for step failures with full exception details.
+
+Acceptance
+
+- Solution compiles without errors: dotnet build AphaBatchJobs.sln
+- ScheduledLoadFromFpsJob is correctly registered in DI and discoverable via IEnumerable<IScheduledJob>
+- Running with --scheduled flag executes the job and all 5 stored procedure steps in correct order
+- Logs show clear step progression and timings
+- Exit codes 0, 1, and 2 are returned appropriately based on execution result
+- No TODO comments in generated code
+- No placeholder or stub methods

@@ -4,7 +4,6 @@
     var projectId = Model.ProjectHeaderDto.ProjectId;
     var selectedYear = Model.SelectedYear;
     var isDefra = Model.ProjectHeaderDto.IsDefraProject == 1;
-    var programme = (Model.ProjectHeaderDto.Programme ?? "").ToLower() == "comm";
 }
 <div class="govuk-template__body govuk-frontend-supported project-requirement-page">
     <div class="govuk-grid-row sup_margin_left_right_0 govuk-!-margin-top-2">
@@ -86,7 +85,7 @@
                                 </div>
 
                                 <div class="content-area">
-                                    <div class="user-grid-section project-year-grid tab-grid-scroll">
+                                    <div class="user-grid-section project-year-grid">
 
                                         <!-- Year list (fsubProjectYear navigation) -->
                                         <div class="user-grid-section project-year-grid">
@@ -101,20 +100,14 @@
                                                     <thead>
                                                         <tr>
                                                             <th>Project Years</th>
-                                                            <th>Action</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody id="userTableBody">
                                                         @foreach (var year in Model.ProjectYears)
                                                         {
                                                             <tr class="project-year-row @(year == Model.SelectedYear ? "selected-table-rowbg" : "")" data-year="@year" style="cursor:pointer;">
-                                                                    <td>@year</td>
-                                                                    <td>
-                                                                        <button type="button" class="btn btn-sm delete-row-btn" data-year="@year" onclick="deletetblProjectYear(this)">
-                                                                            <img src="/images/delete_gridicon.svg" alt="Delete icon" width="20" height="20" title="Delete Project Year">
-                                                                        </button>
-                                                                    </td>
-                                                                </tr>
+                                                                <td>@year</td>
+                                                            </tr>
                                                         }
                                                     </tbody>
                                                 </table>
@@ -127,7 +120,7 @@
                                     <!-- Tab panels -->
                                     <div class="permissions-section">
 
-                                        <div class="govuk-tabs">
+                                        <div class="govuk-tabs" data-module="govuk-tabs">
                                             <ul class="govuk-tabs__list">
                                                 <li class="govuk-tabs__list-item govuk-tabs__list-item--selected">
                                                     <a class="govuk-tabs__tab" href="#Staff-tab">
@@ -149,75 +142,31 @@
                                                         Additional Costs
                                                     </a>
                                                 </li>
-                                                @if (programme)
-                                                {
-                                                    
-                                                    <li class="govuk-tabs__list-item">
-                                                        <a class="govuk-tabs__tab" href="#MarkupAndProfit-tab">
-                                                            Markup and Profit
-                                                        </a>
-                                                    </li>
-                                                }
 
+                                                <li class="govuk-tabs__list-item">
+                                                    <a class="govuk-tabs__tab" href="#MarkupAndProfit-tab">
+                                                        Markup and Profit
+                                                    </a>
+                                                </li>
                                             </ul>
-                                            <div class="govuk-tabs__panel " id="Staff-tab">
-                                                <div id="gridContainer_staffGrid" class="fps-sr-fixedheader-wrap"></div>
-                                                <div class="project-total-bar">
-                                                    <span class="project-total-label-wrap">
-                                                        <span class="govuk-label me-2">Total Staff Cost:</span>
-                                                    </span>
-                                                    <span class="project-total-value-wrap">
-                                                        <span class="total-amount">
-                                                            <input type="text" id="staffTotalAmount" aria-label="Total Staff Cost" class="govuk-input project-total-input" readonly="">
-                                                        </span>
-                                                    </span>
-                                                </div>
+                                            <div class="govuk-tabs__panel"
+                                                 id="Staff-tab">
                                             </div>
 
-                                            <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="Tests-tab">
-                                                <div id="gridContainer_testGrid" class="fps-sr-fixedheader-wrap"></div>
-                                                <div class="project-total-bar">
-                                                    <span class="project-total-label-wrap">
-                                                        <span class="govuk-label me-2">Total Test Cost:</span>
-                                                    </span>
-                                                    <span class="project-total-value-wrap">
-                                                        <span class="total-amount">
-                                                            <input type="text" id="testTotalAmount" aria-label="Total Test Cost" class="govuk-input project-total-input" readonly="">
-                                                        </span>
-                                                    </span>
-                                                </div>
+                                            <div class="govuk-tabs__panel govuk-tabs__panel--hidden"
+                                                 id="Tests-tab">
                                             </div>
 
-                                            <div class="govuk-tabs__panel govuk-tabs__panel--hidden " id="Animals-tab">
-                                                <div id="gridContainer_animalGrid" class="fps-sr-fixedheader-wrap"></div>
-                                                <div class="project-total-bar">
-                                                    <span class="project-total-label-wrap">
-                                                        <span class="govuk-label me-2">Total Animal Cost:</span>
-                                                    </span>
-                                                    <span class="project-total-value-wrap">
-                                                        <span class="total-amount">
-                                                            <input type="text" id="animalTotalAmount" aria-label="Total Animal Cost" class="govuk-input project-total-input" readonly="">
-                                                        </span>
-                                                    </span>
-                                                </div>
+                                            <div class="govuk-tabs__panel govuk-tabs__panel--hidden"
+                                                 id="Animals-tab">
                                             </div>
 
-                                            <div class="govuk-tabs__panel govuk-tabs__panel--hidden " id="AdditionalCosts-tab">
-                                                <div id="gridContainer_additionalCostGrid" class="fps-sr-fixedheader-wrap"></div>
-                                                <div class="project-total-bar">
-                                                    <span class="project-total-label-wrap">
-                                                        <span class="govuk-label me-2">Total Additional Cost:</span>
-                                                    </span>
-                                                    <span class="project-total-value-wrap">
-                                                        <span class="total-amount">
-                                                            <input type="text" id="additionalTotalAmount" aria-label="Total Animal Cost" class="govuk-input project-total-input" readonly="">
-                                                        </span>
-                                                    </span>
-                                                </div>
+                                            <div class="govuk-tabs__panel govuk-tabs__panel--hidden"
+                                                 id="AdditionalCosts-tab">
                                             </div>
-                                             
-                                            <div class="govuk-tabs__panel govuk-tabs__panel--hidden " id="MarkupAndProfit-tab">
-                                                <div id="gridContainer_markupAndProfitGrid" class="fps-sr-fixedheader-wrap"></div>
+
+                                            <div class="govuk-tabs__panel govuk-tabs__panel--hidden"
+                                                 id="MarkupAndProfit-tab">
                                             </div>
 
                                         </div>
@@ -300,19 +249,10 @@
     </div>
 
 </div>
-<style>
-    .tab-grid-scroll, .grid-scroll-container, .fps-sr-fixedheader-wrap {
-        overflow-y: auto!important;
-        max-height: 400px!important;
-    }
-</style>
 @section Scripts {
-    <script src="~/js/costbook_js/cosbook_common.js"></script>
-    <script src="~/js/ajax-form-validation.js"></script>
     <script>
         const projectId = '@projectId';
         let selectedYear = @selectedYear;
-        const programme = '@Model.ProjectHeaderDto.Programme';
 
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
@@ -328,14 +268,9 @@
             }, 200);
 
             // Remove filter rows from all grids on the page
-                removeFilterRows(document);
+            removeFilterRows(document);
 
-                // Hide pagination footers on all grids
-                document.querySelectorAll('.sup_pagination_footer.sup_p_0').forEach(function (el) {
-                    el.hidden = true;
-                });
-
-                // Attach event listeners to Add buttons
+            // Attach event listeners to Add buttons
             attachButtonEventListeners();
         });
 
@@ -420,38 +355,10 @@
             window.location.href = '@Url.Action("Index", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&selectedYear=' + year;
         }
 
-        function deletetblProjectYear(btn) {
-            var year = parseInt(btn.getAttribute('data-year'), 10);
-            if (!confirm('Delete year ' + year + ' and all its data?')) return;
-            fetch('@Url.Action("DeleteProjectYear", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&year=' + year, {
-                method: 'DELETE',
-                headers: { 'RequestVerificationToken': getAntiForgeryToken() }
-            })
-            .then(function(r) { return r.json(); })
-            .then(function(d) {
-                if (d.success) {
-                    var row = btn.closest('.project-year-row');
-                    if (row) row.remove();
-                    // If deleted year was the selected year, redirect to first remaining year
-                    if (year === selectedYear) {
-                        var firstRow = document.querySelector('.project-year-row');
-                        if (firstRow) {
-                            selectYear(projectId, parseInt(firstRow.getAttribute('data-year'), 10));
-                        } else {
-                            window.location.href = '@Url.Action("Index", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId);
-                        }
-                    }
-                } else {
-                    alert(d.message || 'Failed to delete project year.');
-                }
-            })
-            .catch(function(err) { console.error('Delete year error:', err); alert('Failed to delete project year.'); });
-        }
-
         function addProjectYear(projectId) {
             var years = Array.from(document.querySelectorAll('.project-year-row')).map(function(r) { return parseInt(r.getAttribute('data-year'), 10); });
             var nextYear = years.length > 0 ? Math.max.apply(null, years) + 1 : new Date().getFullYear();
-            fetch('@Url.Action("AddProjectYear", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&year=' + nextYear + '&programme=' + encodeURIComponent(programme))
+            fetch('@Url.Action("AddProjectYear", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&year=' + nextYear)
                 .then(function(r) { return r.text(); })
                 .then(function(html) {
                     document.getElementById('project1ModalContent').innerHTML = html;
@@ -468,7 +375,7 @@
                 fetch('@Url.Action("AddProjectYear", "YearlyDetails", new { area = "CostBook" })', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': getAntiForgeryToken() },
-                    body: new URLSearchParams(new FormData(form)).toString() + '&projectId=' + encodeURIComponent(pid) + '&year=' + year + '&programme=' + encodeURIComponent(programme)
+                    body: new URLSearchParams(new FormData(form)).toString() + '&projectId=' + encodeURIComponent(pid) + '&year=' + year
                 })
                 .then(function(r) { return r.json(); })
                 .then(function(data) {
@@ -503,19 +410,13 @@
         function gridEditMarkupAndProfit(btn)  { var yearVal = btn.getAttribute('data-id'); openEditMarkupAndProfitModal(projectId, yearVal); }
 
         // ── Staff ────────────────────────────────────────────────────────────
-        var _staffIsAddingNew = true;
-        var _staffCurrentIdentity = null;
-
         function openAddStaffModal(pid, year) {
             fetch('@Url.Action("CreateStaff", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&isDefra=@isDefra')
                 .then(function(r) { return r.text(); })
                 .then(function(html) {
                     document.getElementById('project1ModalContent').innerHTML = html;
-                    _staffIsAddingNew = true;
-                    _staffCurrentIdentity = null;
                     openModal();
-                    fetchHoursPerDay();
-                    initWgGradeDropdown();
+                    bindStaffForm(pid, year, null);
                 });
         }
         function openEditStaffModal(pid, year, srIdentity) {
@@ -523,64 +424,30 @@
                 .then(function(r) { return r.text(); })
                 .then(function(html) {
                     document.getElementById('project1ModalContent').innerHTML = html;
-                    _staffIsAddingNew = false;
-                    _staffCurrentIdentity = srIdentity;
                     openModal();
-                    fetchHoursPerDay();
-                    initWgGradeDropdown();
-                    // Pre-fill display input with the selected grade value
-                    var hiddenGrade = document.getElementById('WgGrade');
-                    var displayInput = document.getElementById('wgGradeSelect');
-                    if (hiddenGrade && displayInput && hiddenGrade.value) {
-                        var matchRow = document.querySelector('#wgGradeDropdownBody tr[data-value="' + hiddenGrade.value + '"]');
-                        if (matchRow) {
-                            displayInput.value = matchRow.querySelector('td').textContent.trim();
-                        } else {
-                            displayInput.value = hiddenGrade.value;
-                        }
-                    }
+                    bindStaffForm(pid, year, srIdentity);
                 });
         }
-        function saveStaff() {
-            var $form = $('#staffRequirementForm');
-            var $modal = $('#project1ModalContent');
-
-            clearValidationErrors($modal);
-
-            if (!isFormValid($form)) {
-                displayClientValidationErrors($form, $modal);
-                return;
-            }
-
-            var form  = $form[0];
-            var token = form.querySelector('input[name="__RequestVerificationToken"]').value;
-            var url   = _staffIsAddingNew
-                ? '@Url.Action("CreateStaff", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&year=' + selectedYear
-                : '@Url.Action("EditStaff", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&year=' + selectedYear + '&srIdentity=' + _staffCurrentIdentity;
-
-            fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': token },
-                body: new URLSearchParams(new FormData(form)).toString()
-            })
-            .then(function(r) { return r.json(); })
-            .then(function(d) {
-                if (d.success) { closeModal(); loadStaffGrid(); }
-                else if (d.errors) {
-                    displayServerValidationErrors(d.errors, 'Please correct the errors below.', $modal);
-                    var $summary = $modal.find('.govuk-error-summary');
-                    var $list = $summary.find('.govuk-error-summary__list');
-                    $summary.find('.govuk-error-summary__title').text('There is a problem');
-                    d.errors.forEach(function(e) {
-                        if ($list.find('a[href="#' + e.field + '"]').length === 0) {
-                            $list.append('<li><a href="#' + e.field + '">' + e.message + '</a></li>');
-                        }
-                    });
-                    $summary.show().focus();
-                }
-                else { alert(d.message || 'Failed to save staff requirement.'); }
-            })
-            .catch(function(err) { console.error('Staff save error:', err); alert('Failed to save staff requirement.'); });
+        function bindStaffForm(pid, year, srIdentity) {
+            var form = document.getElementById('staffRequirementForm');
+            if (!form) return;
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                var url = srIdentity
+                    ? '@Url.Action("EditStaff", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&srIdentity=' + srIdentity
+                    : '@Url.Action("CreateStaff", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year;
+                fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': getAntiForgeryToken() },
+                    body: new URLSearchParams(new FormData(form)).toString()
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                    if (d.success) { closeModal(); loadStaffGrid(); }
+                    else { alert(d.message || 'Failed to save staff requirement.'); }
+                })
+                .catch(function(err) { console.error('Staff save error:', err); alert('Failed to save staff requirement.'); });
+            });
         }
         function deleteStaff(pid, year, srIdentity) {
             if (!confirm('Delete this staff entry?')) return;
@@ -593,18 +460,13 @@
         }
 
         // ── Tests ────────────────────────────────────────────────────────────
-        var _testIsAddingNew = true;
-        var _testCurrentCode = null;
-
         function openAddTestModal(pid, year) {
             fetch('@Url.Action("CreateTest", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&isDefra=@isDefra')
                 .then(function(r) { return r.text(); })
                 .then(function(html) {
                     document.getElementById('project1ModalContent').innerHTML = html;
-                    _testIsAddingNew = true;
-                    _testCurrentCode = null;
                     openModal();
-                    initTestCodeDropdown();
+                    bindTestForm(pid, year, null);
                 });
         }
         function openEditTestModal(pid, year, testCode) {
@@ -612,61 +474,29 @@
                 .then(function(r) { return r.text(); })
                 .then(function(html) {
                     document.getElementById('project1ModalContent').innerHTML = html;
-                    _testIsAddingNew = false;
-                    _testCurrentCode = testCode;
                     openModal();
-                    initTestCodeDropdown();
-                    // Pre-fill display input for edit mode
-                    var hiddenCode  = document.getElementById('TestCode');
-                    var displayInput = document.getElementById('testCodeSelect');
-                    if (hiddenCode && displayInput && hiddenCode.value) {
-                        var matchRow = document.querySelector('#testCodeDropdownBody tr[data-value="' + hiddenCode.value + '"]');
-                        displayInput.value = matchRow
-                            ? matchRow.querySelector('td').textContent.trim()
-                            : hiddenCode.value;
-                    }
+                    bindTestForm(pid, year, testCode);
                 });
         }
-        function saveTest() {
-            var $form = $('#testRequirementForm');
-            var $modal = $('#project1ModalContent');
-
-            clearValidationErrors($modal);
-
-            if (!isFormValid($form)) {
-                displayClientValidationErrors($form, $modal);
-                return;
-            }
-
-            var form  = $form[0];
-            var token = form.querySelector('input[name="__RequestVerificationToken"]').value;
-            var url   = _testIsAddingNew
-                ? '@Url.Action("CreateTest", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&year=' + selectedYear
-                : '@Url.Action("EditTest", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&year=' + selectedYear + '&testCode=' + encodeURIComponent(_testCurrentCode);
-
-            fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': token },
-                body: new URLSearchParams(new FormData(form)).toString()
-            })
-            .then(function(r) { return r.json(); })
-            .then(function(d) {
-                if (d.success) { closeModal(); loadTestGrid(); }
-                else if (d.errors) {
-                    displayServerValidationErrors(d.errors, 'Please correct the errors below.', $modal);
-                    var $summary = $modal.find('.govuk-error-summary');
-                    var $list = $summary.find('.govuk-error-summary__list');
-                    $summary.find('.govuk-error-summary__title').text('There is a problem');
-                    d.errors.forEach(function(e) {
-                        if ($list.find('a[href="#' + e.field + '"]').length === 0) {
-                            $list.append('<li><a href="#' + e.field + '">' + e.message + '</a></li>');
-                        }
-                    });
-                    $summary.show().focus();
-                }
-                else { alert(d.message || 'Failed to save test requirement.'); }
-            })
-            .catch(function(err) { console.error('Test save error:', err); alert('Failed to save test requirement.'); });
+        function bindTestForm(pid, year, testCode) {
+            var form = document.getElementById('testRequirementForm');
+            if (!form) return;
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                var url = testCode
+                    ? '@Url.Action("EditTest", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&testCode=' + encodeURIComponent(testCode)
+                    : '@Url.Action("CreateTest", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year;
+                fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': getAntiForgeryToken() },
+                    body: new URLSearchParams(new FormData(form)).toString()
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                    if (d.success) { closeModal(); loadTestGrid(); }
+                    else { alert('Failed to save test requirement.'); }
+                });
+            });
         }
         function deleteTest(pid, year, testCode) {
             if (!confirm('Delete this test entry?')) return;
@@ -679,18 +509,13 @@
         }
 
         // ── Animals ──────────────────────────────────────────────────────────
-        var _animalIsAddingNew = true;
-        var _animalCurrentIdentity = null;
-
         function openAddAnimalModal(pid, year) {
             fetch('@Url.Action("CreateAnimal", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&isDefra=@isDefra')
                 .then(function(r) { return r.text(); })
                 .then(function(html) {
                     document.getElementById('project1ModalContent').innerHTML = html;
-                    _animalIsAddingNew = true;
-                    _animalCurrentIdentity = null;
                     openModal();
-                    initAnimalTypeDropdown();
+                    bindAnimalForm(pid, year, null);
                 });
         }
         function openEditAnimalModal(pid, year, arIdentity) {
@@ -698,61 +523,29 @@
                 .then(function(r) { return r.text(); })
                 .then(function(html) {
                     document.getElementById('project1ModalContent').innerHTML = html;
-                    _animalIsAddingNew = false;
-                    _animalCurrentIdentity = arIdentity;
                     openModal();
-                    initAnimalTypeDropdown();
-                    // Pre-fill display input for edit mode
-                    var hiddenType   = document.getElementById('AnimalType');
-                    var displayInput = document.getElementById('animalTypeSelect');
-                    if (hiddenType && displayInput && hiddenType.value) {
-                        var matchRow = document.querySelector('#animalTypeDropdownBody tr[data-value="' + hiddenType.value + '"]');
-                        displayInput.value = matchRow
-                            ? matchRow.querySelector('td').textContent.trim()
-                            : hiddenType.value;
-                    }
+                    bindAnimalForm(pid, year, arIdentity);
                 });
         }
-        function saveAnimal() {
-            var $form = $('#animalRequirementForm');
-            var $modal = $('#project1ModalContent');
-
-            clearValidationErrors($modal);
-
-            if (!isFormValid($form)) {
-                displayClientValidationErrors($form, $modal);
-                return;
-            }
-
-            var form  = $form[0];
-            var token = form.querySelector('input[name="__RequestVerificationToken"]').value;
-            var url   = _animalIsAddingNew
-                ? '@Url.Action("CreateAnimal", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&year=' + selectedYear
-                : '@Url.Action("EditAnimal", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&year=' + selectedYear + '&arIdentity=' + _animalCurrentIdentity;
-
-            fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': token },
-                body: new URLSearchParams(new FormData(form)).toString()
-            })
-            .then(function(r) { return r.json(); })
-            .then(function(d) {
-                if (d.success) { closeModal(); loadAnimalGrid(); }
-                else if (d.errors) {
-                    displayServerValidationErrors(d.errors, 'Please correct the errors below.', $modal);
-                    var $summary = $modal.find('.govuk-error-summary');
-                    var $list = $summary.find('.govuk-error-summary__list');
-                    $summary.find('.govuk-error-summary__title').text('There is a problem');
-                    d.errors.forEach(function(e) {
-                        if ($list.find('a[href="#' + e.field + '"]').length === 0) {
-                            $list.append('<li><a href="#' + e.field + '">' + e.message + '</a></li>');
-                        }
-                    });
-                    $summary.show().focus();
-                }
-                else { alert(d.message || 'Failed to save animal requirement.'); }
-            })
-            .catch(function(err) { console.error('Animal save error:', err); alert('Failed to save animal requirement.'); });
+        function bindAnimalForm(pid, year, arIdentity) {
+            var form = document.getElementById('animalRequirementForm');
+            if (!form) return;
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                var url = arIdentity
+                    ? '@Url.Action("EditAnimal", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&arIdentity=' + arIdentity
+                    : '@Url.Action("CreateAnimal", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year;
+                fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': getAntiForgeryToken() },
+                    body: new URLSearchParams(new FormData(form)).toString()
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                    if (d.success) { closeModal(); loadAnimalGrid(); }
+                    else { alert('Failed to save animal requirement.'); }
+                });
+            });
         }
         function deleteAnimal(pid, year, arIdentity) {
             if (!confirm('Delete this animal entry?')) return;
@@ -765,18 +558,13 @@
         }
 
         // ── Additional Costs ─────────────────────────────────────────────────
-        var _additionalCostIsAddingNew = true;
-        var _additionalCostCurrentIdentity = null;
-
         function openAddAdditionalCostModal(pid, year) {
             fetch('@Url.Action("CreateAdditionalCost", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year)
                 .then(function(r) { return r.text(); })
                 .then(function(html) {
                     document.getElementById('project1ModalContent').innerHTML = html;
-                    _additionalCostIsAddingNew = true;
-                    _additionalCostCurrentIdentity = null;
                     openModal();
-                    initAccountCatDropdown();
+                    bindAdditionalCostForm(pid, year, null);
                 });
         }
         function openEditAdditionalCostModal(pid, year, acIdentity) {
@@ -784,61 +572,29 @@
                 .then(function(r) { return r.text(); })
                 .then(function(html) {
                     document.getElementById('project1ModalContent').innerHTML = html;
-                    _additionalCostIsAddingNew = false;
-                    _additionalCostCurrentIdentity = acIdentity;
                     openModal();
-                    initAccountCatDropdown();
-                    // Pre-fill display input for edit mode
-                    var hiddenCat    = document.getElementById('AccountCat');
-                    var displayInput = document.getElementById('accountCatSelect');
-                    if (hiddenCat && displayInput && hiddenCat.value) {
-                        var matchRow = document.querySelector('#accountCatDropdownBody tr[data-value="' + hiddenCat.value + '"]');
-                        displayInput.value = matchRow
-                            ? matchRow.querySelector('td').textContent.trim()
-                            : hiddenCat.value;
-                    }
+                    bindAdditionalCostForm(pid, year, acIdentity);
                 });
         }
-        function saveAdditionalCost() {
-            var $form = $('#additionalCostForm');
-            var $modal = $('#project1ModalContent');
-
-            clearValidationErrors($modal);
-
-            if (!isFormValid($form)) {
-                displayClientValidationErrors($form, $modal);
-                return;
-            }
-
-            var form  = $form[0];
-            var token = form.querySelector('input[name="__RequestVerificationToken"]').value;
-            var url   = _additionalCostIsAddingNew
-                ? '@Url.Action("CreateAdditionalCost", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&year=' + selectedYear
-                : '@Url.Action("EditAdditionalCost", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&year=' + selectedYear + '&acIdentity=' + _additionalCostCurrentIdentity;
-
-            fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': token },
-                body: new URLSearchParams(new FormData(form)).toString()
-            })
-            .then(function(r) { return r.json(); })
-            .then(function(d) {
-                if (d.success) { closeModal(); loadAdditionalCostGrid(); }
-                else if (d.errors) {
-                    displayServerValidationErrors(d.errors, 'Please correct the errors below.', $modal);
-                    var $summary = $modal.find('.govuk-error-summary');
-                    var $list = $summary.find('.govuk-error-summary__list');
-                    $summary.find('.govuk-error-summary__title').text('There is a problem');
-                    d.errors.forEach(function(e) {
-                        if ($list.find('a[href="#' + e.field + '"]').length === 0) {
-                            $list.append('<li><a href="#' + e.field + '">' + e.message + '</a></li>');
-                        }
-                    });
-                    $summary.show().focus();
-                }
-                else { alert(d.message || 'Failed to save additional cost.'); }
-            })
-            .catch(function(err) { console.error('Additional cost save error:', err); alert('Failed to save additional cost.'); });
+        function bindAdditionalCostForm(pid, year, acIdentity) {
+            var form = document.getElementById('additionalCostForm');
+            if (!form) return;
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                var url = acIdentity
+                    ? '@Url.Action("EditAdditionalCost", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&acIdentity=' + acIdentity
+                    : '@Url.Action("CreateAdditionalCost", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year;
+                fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': getAntiForgeryToken() },
+                    body: new URLSearchParams(new FormData(form)).toString()
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                    if (d.success) { closeModal(); loadAdditionalCostGrid(); }
+                    else { alert('Failed to save additional cost.'); }
+                });
+            });
         }
         function deleteAdditionalCost(pid, year, acIdentity) {
             if (!confirm('Delete this additional cost entry?')) return;
@@ -871,7 +627,7 @@
         }
 
         function openEditMarkupAndProfitModal(pid, yearVal) {
-            fetch('@Url.Action("EditMarkupAndProfit", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + yearVal + '&programme=' + encodeURIComponent(programme))
+            fetch('@Url.Action("EditMarkupAndProfit", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + yearVal)
                 .then(function(r) { return r.text(); })
                 .then(function(html) {
                     document.getElementById('project1ModalContent').innerHTML = html;
@@ -955,11 +711,9 @@
             .then(function (response) { return response.text(); })
             .then(function (html) {
                 var gridId = tabGridIds[tabId];
-                var gridContainer = document.getElementById('gridContainer_' + gridId);
-                if (!gridContainer) return;
-                gridContainer.innerHTML = html;
+                panel.innerHTML = '<div id="gridContainer_' + gridId + '">' + html + '</div>';
                 // Execute <script> tags injected via innerHTML (needed for _DataGrid event handlers)
-                gridContainer.querySelectorAll('script').forEach(function (oldScript) {
+                panel.querySelectorAll('script').forEach(function (oldScript) {
                     var newScript = document.createElement('script');
                     if (oldScript.src) {
                         newScript.src = oldScript.src;
@@ -969,12 +723,7 @@
                     oldScript.parentNode.replaceChild(newScript, oldScript);
                 });
                 // Remove filter rows from the loaded grid
-                removeFilterRows(gridContainer);
-
-                // Hide pagination footers in the loaded grid
-                gridContainer.querySelectorAll('.sup_pagination_footer.sup_p_0').forEach(function (el) {
-                    el.hidden = true;
-                });
+                removeFilterRows(panel);
             })
             .catch(function (err) {
                 console.error('Failed to load grid for ' + tabId, err);
@@ -1005,19 +754,11 @@
             })
             .then(function (r) { return r.json(); })
             .then(function (d) {
-                document.getElementById('year-total-staff').value     = formatGbp(d.staffCostTotal);
-                document.getElementById('staffTotalAmount').value      = formatGbp(d.staffCostTotal);
-
-                document.getElementById('year-total-test').value      = formatGbp(d.testCostTotal);
-                document.getElementById('testTotalAmount').value       = formatGbp(d.testCostTotal);
-
-                document.getElementById('year-total-animal').value    = formatGbp(d.animalCostTotal);
-                document.getElementById('animalTotalAmount').value     = formatGbp(d.animalCostTotal);
-
+                document.getElementById('year-total-staff').value = formatGbp(d.staffCostTotal);
+                document.getElementById('year-total-test').value = formatGbp(d.testCostTotal);
+                document.getElementById('year-total-animal').value = formatGbp(d.animalCostTotal);
                 document.getElementById('year-total-additional').value = formatGbp(d.additionalCostTotal);
-                document.getElementById('additionalTotalAmount').value  = formatGbp(d.additionalCostTotal);
-
-                document.getElementById('year-total-grand').value     = formatGbp(d.grandTotal);
+                document.getElementById('year-total-grand').value = formatGbp(d.grandTotal);
             })
             .catch(function (err) { console.error('Failed to load year totals', err); });
         }
@@ -1093,23 +834,18 @@
                             loadTabGrid(tabId);
                         }
 
-                        // Always refresh totals when switching tabs
-                        loadYearTotals();
-
                         // Update active tab styling
                         document.querySelectorAll('.govuk-tabs__list-item').forEach(function (li) {
                             li.classList.remove('govuk-tabs__list-item--selected');
                         });
                         link.closest('.govuk-tabs__list-item').classList.add('govuk-tabs__list-item--selected');
 
-                        // Show / hide panels — explicitly set display to override GOV.UK CSS
+                        // Show / hide panels
                         document.querySelectorAll('.govuk-tabs__panel').forEach(function (p) {
                             if (p.id === tabId) {
                                 p.classList.remove('govuk-tabs__panel--hidden');
-                                p.style.display = 'block';
                             } else {
                                 p.classList.add('govuk-tabs__panel--hidden');
-                                p.style.display = 'none';
                             }
                         });
 
@@ -1119,18 +855,7 @@
 
                 // Load the Staff tab on initial page load since it is selected by default
                 if (selectedYear > 0) {
-                    // Ensure all panels are hidden first, then show Staff
-                    document.querySelectorAll('.govuk-tabs__panel').forEach(function (p) {
-                        p.classList.add('govuk-tabs__panel--hidden');
-                        p.style.display = 'none';
-                    });
-                    var staffPanel = document.getElementById('Staff-tab');
-                    if (staffPanel) {
-                        staffPanel.classList.remove('govuk-tabs__panel--hidden');
-                        staffPanel.style.display = 'block';
-                    }
                     loadStaffGrid();
-                    loadYearTotals();
                 }
 
                 // Attach click handlers to project year rows
@@ -1141,380 +866,5 @@
                 });
             });
         })();
-
-// ── WG Grade custom dropdown (inside modal) ──────────────────────────────────
-function initWgGradeDropdown() {
-    var input    = document.getElementById('wgGradeSelect');
-    var panel    = document.getElementById('wgGradeDropdownPanel');
-    var searchBox = document.getElementById('wgGradeSearchBox');
-
-    if (!input || !panel) return;
-
-    // Open / close on display-input click
-    input.addEventListener('click', function (e) {
-        e.stopPropagation();
-        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-        if (panel.style.display === 'block' && searchBox) {
-            searchBox.value = '';
-            filterWgGradeRows('');
-            searchBox.focus();
-        }
-    });
-
-    // Stop clicks inside the search box from closing the panel
-    if (searchBox) {
-        searchBox.addEventListener('click', function (e) { e.stopPropagation(); });
-        searchBox.addEventListener('input', function () {
-            filterWgGradeRows(this.value.toLowerCase());
-        });
-    }
-
-    // Row selection
-    document.querySelectorAll('#wgGradeDropdownBody tr').forEach(function (row) {
-        row.addEventListener('click', function () {
-            var grade      = this.getAttribute('data-value');
-            var chargeRate = this.getAttribute('data-chargerate');
-            var payrate    = this.getAttribute('data-payrate');
-            var npr        = this.getAttribute('data-npr');
-            var ohr        = this.getAttribute('data-ohr');
-
-            input.value = grade;
-            document.getElementById('WgGrade').value    = grade;
-            document.getElementById('Chargerate').value = chargeRate;
-            document.getElementById('Payrate').value    = payrate;
-            document.getElementById('Npr').value        = npr;
-            document.getElementById('Ohr').value        = ohr;
-
-            calcStaffCost();
-            panel.style.display = 'none';
-        });
-
-        row.addEventListener('mouseenter', function () { this.style.backgroundColor = '#f3f2f1'; });
-        row.addEventListener('mouseleave', function () { this.style.backgroundColor = ''; });
-    });
-
-    // Recalculate whenever hours are changed — all events to catch typing, backspace, delete, paste, spin
-    var hoursInput = document.getElementById('Nohours');
-    if (hoursInput) {
-        ['input', 'change', 'keyup', 'keydown', 'paste'].forEach(function (evt) {
-            hoursInput.addEventListener(evt, function () { setTimeout(calcStaffCost, 0); });
-        });
-    }
-
-    // Back-calculate hours from days — all events
-    var daysInput = document.getElementById('Nodays');
-    if (daysInput) {
-        ['input', 'change', 'keyup', 'keydown', 'paste'].forEach(function (evt) {
-            daysInput.addEventListener(evt, function () { setTimeout(calcStaffCostFromDays, 0); });
-        });
-    }
-
-    // Close when clicking outside
-    document.addEventListener('click', function (e) {
-        if (input && panel && !input.contains(e.target) && !panel.contains(e.target)) {
-            panel.style.display = 'none';
-        }
-    });
-}
-
-var _hoursPerDay = 8.0;
-
-function fetchHoursPerDay() {
-    fetch('/FPS/Setting/GetHoursPerDay')
-        .then(function (r) { return r.json(); })
-        .then(function (result) {
-            if (result.success && result.hoursPerDay) {
-                _hoursPerDay = result.hoursPerDay;
-            }
-        })
-        .catch(function () { /* fallback: keep default 8.0 */ });
-}
-
-var _calcStaffGuard = false;
-
-function calcStaffCost() {
-    if (_calcStaffGuard) return;
-    var hoursEl = document.getElementById('Nohours');
-    var daysEl  = document.getElementById('Nodays');
-    var rateEl  = document.getElementById('Chargerate');
-    var costEl  = document.getElementById('StaffCost');
-    if (!hoursEl || !rateEl || !costEl) return;
-
-    var hoursStr = hoursEl.value.trim();
-    var hours    = parseFloat(hoursStr);
-    var rate     = parseFloat(rateEl.value);
-
-    // Update Days only when user is not actively editing it
-    if (daysEl && document.activeElement !== daysEl) {
-        daysEl.value = (hoursStr !== '' && !isNaN(hours) && _hoursPerDay > 0)
-            ? (hours / _hoursPerDay).toFixed(2)
-            : '';
-    }
-
-    // StaffCost = ChargeRate * NoHours, clear if either is empty
-    costEl.value = (hoursStr !== '' && !isNaN(hours) && !isNaN(rate))
-        ? (hours * rate).toFixed(2)
-        : '';
-}
-
-function calcStaffCostFromDays() {
-    if (_calcStaffGuard) return;
-    var hoursEl = document.getElementById('Nohours');
-    var daysEl  = document.getElementById('Nodays');
-    var rateEl  = document.getElementById('Chargerate');
-    var costEl  = document.getElementById('StaffCost');
-    if (!hoursEl || !daysEl || !rateEl || !costEl) return;
-
-    var daysStr = daysEl.value.trim();
-    var days    = parseFloat(daysStr);
-
-    _calcStaffGuard = true;
-
-    // Update Hours only when user is not actively editing it
-    if (document.activeElement !== hoursEl) {
-        hoursEl.value = (daysStr !== '' && !isNaN(days) && _hoursPerDay > 0)
-            ? (days * _hoursPerDay).toFixed(2)
-            : '';
-    }
-
-    // StaffCost = ChargeRate * NoHours, clear if either is empty
-    var hoursStr2 = hoursEl.value.trim();
-    var hours     = parseFloat(hoursStr2);
-    var rate      = parseFloat(rateEl.value);
-    costEl.value  = (hoursStr2 !== '' && !isNaN(hours) && !isNaN(rate))
-        ? (hours * rate).toFixed(2)
-        : '';
-
-    _calcStaffGuard = false;
-}
-
-// ── Test Code custom dropdown (inside modal) ─────────────────────────────────
-function initTestCodeDropdown() {
-    var input     = document.getElementById('testCodeSelect');
-    var panel     = document.getElementById('testCodeDropdownPanel');
-    var searchBox = document.getElementById('testCodeSearchBox');
-
-    if (!input || !panel) return;
-
-    input.addEventListener('click', function (e) {
-        e.stopPropagation();
-        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-        if (panel.style.display === 'block' && searchBox) {
-            searchBox.value = '';
-            filterTestCodeRows('');
-            searchBox.focus();
-        }
-    });
-
-    if (searchBox) {
-        searchBox.addEventListener('click', function (e) { e.stopPropagation(); });
-        searchBox.addEventListener('input', function () {
-            filterTestCodeRows(this.value.toLowerCase());
-        });
-    }
-
-    document.querySelectorAll('#testCodeDropdownBody tr').forEach(function (row) {
-        row.addEventListener('click', function () {
-            var code      = this.getAttribute('data-value');
-            var unitPrice = this.getAttribute('data-unitprice');
-
-            input.value = code;
-            document.getElementById('TestCode').value    = code;
-            document.getElementById('UnitPrice').value   = unitPrice;
-
-            calcTestCost();
-            panel.style.display = 'none';
-        });
-        row.addEventListener('mouseenter', function () { this.style.backgroundColor = '#f3f2f1'; });
-        row.addEventListener('mouseleave', function () { this.style.backgroundColor = ''; });
-    });
-
-    document.addEventListener('click', function (e) {
-        if (input && panel && !input.contains(e.target) && !panel.contains(e.target)) {
-            panel.style.display = 'none';
-        }
-    });
-
-    // Wire NumberOfTests — all events to catch typing, backspace, delete, paste, spin
-    var noInput = document.getElementById('NumberOfTests');
-    if (noInput) {
-        ['input', 'change', 'keyup', 'keydown', 'paste'].forEach(function (evt) {
-            noInput.addEventListener(evt, function () {
-                setTimeout(calcTestCost, 0);
-            });
-        });
-    }
-}
-
-function filterTestCodeRows(term) {
-    document.querySelectorAll('#testCodeDropdownBody tr').forEach(function (row) {
-        row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none';
-    });
-}
-
-function calcTestCost() {
-    var noEl        = document.getElementById('NumberOfTests');
-    var unitPriceEl = document.getElementById('UnitPrice');
-    var costEl      = document.getElementById('TestCost');
-    if (!noEl || !unitPriceEl || !costEl) return;
-    var noStr = noEl.value.trim();
-    var no    = parseFloat(noStr);
-    var price = parseFloat(unitPriceEl.value);
-    costEl.value = (noStr !== '' && !isNaN(no) && !isNaN(price)) ? (no * price).toFixed(2) : '';
-}
-
-// ── Animal Type custom dropdown (inside modal) ────────────────────────────
-function initAnimalTypeDropdown() {
-    var input     = document.getElementById('animalTypeSelect');
-    var panel     = document.getElementById('animalTypeDropdownPanel');
-    var searchBox = document.getElementById('animalTypeSearchBox');
-
-    if (!input || !panel) return;
-
-    input.addEventListener('click', function (e) {
-        e.stopPropagation();
-        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-        if (panel.style.display === 'block' && searchBox) {
-            searchBox.value = '';
-            filterAnimalTypeRows('');
-            searchBox.focus();
-        }
-    });
-
-    if (searchBox) {
-        searchBox.addEventListener('click', function (e) { e.stopPropagation(); });
-        searchBox.addEventListener('input', function () {
-            filterAnimalTypeRows(this.value.toLowerCase());
-        });
-    }
-
-    document.querySelectorAll('#animalTypeDropdownBody tr').forEach(function (row) {
-        row.addEventListener('click', function () {
-            var animalType = this.getAttribute('data-value');
-            var dailyRate  = this.getAttribute('data-dailyrate');
-
-            input.value = animalType;
-            document.getElementById('AnimalType').value = animalType;
-            document.getElementById('DailyRate').value  = dailyRate;
-
-            calcAnimalCost();
-            panel.style.display = 'none';
-        });
-        row.addEventListener('mouseenter', function () { this.style.backgroundColor = '#f3f2f1'; });
-        row.addEventListener('mouseleave', function () { this.style.backgroundColor = ''; });
-    });
-
-    document.addEventListener('click', function (e) {
-        if (input && panel && !input.contains(e.target) && !panel.contains(e.target)) {
-            panel.style.display = 'none';
-        }
-    });
-
-    // Wire NumberOfAnimals and NumberOfDays — all events to catch typing, backspace, delete, paste, spin
-    ['NumberOfAnimals', 'NumberOfDays'].forEach(function (id) {
-        var el = document.getElementById(id);
-        if (el) {
-            ['input', 'change', 'keyup', 'keydown', 'paste'].forEach(function (evt) {
-                el.addEventListener(evt, function () { setTimeout(calcAnimalCost, 0); });
-            });
-        }
-    });
-}
-
-function filterAnimalTypeRows(term) {
-    document.querySelectorAll('#animalTypeDropdownBody tr').forEach(function (row) {
-        row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none';
-    });
-}
-
-function calcAnimalCost() {
-    var noAnimalsEl = document.getElementById('NumberOfAnimals');
-    var noDaysEl    = document.getElementById('NumberOfDays');
-    var rateEl      = document.getElementById('DailyRate');
-    var costEl      = document.getElementById('AnimalCost');
-    if (!noAnimalsEl || !noDaysEl || !rateEl || !costEl) return;
-    var noStr   = noAnimalsEl.value.trim();
-    var daysStr = noDaysEl.value.trim();
-    var no      = parseFloat(noStr);
-    var days    = parseFloat(daysStr);
-    var rate    = parseFloat(rateEl.value);
-    costEl.value = (noStr !== '' && daysStr !== '' && !isNaN(no) && !isNaN(days) && !isNaN(rate))
-        ? (no * days * rate).toFixed(2)
-        : '';
-}
-
-// ── Account Category custom dropdown (inside modal) ──────────────────────
-function initAccountCatDropdown() {
-    var input     = document.getElementById('accountCatSelect');
-    var panel     = document.getElementById('accountCatDropdownPanel');
-    var searchBox = document.getElementById('accountCatSearchBox');
-
-    if (!input || !panel) return;
-
-    input.addEventListener('click', function (e) {
-        e.stopPropagation();
-        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-        if (panel.style.display === 'block' && searchBox) {
-            searchBox.value = '';
-            filterAccountCatRows('');
-            searchBox.focus();
-        }
-    });
-
-    if (searchBox) {
-        searchBox.addEventListener('click', function (e) { e.stopPropagation(); });
-        searchBox.addEventListener('input', function () {
-            filterAccountCatRows(this.value.toLowerCase());
-        });
-    }
-
-    document.querySelectorAll('#accountCatDropdownBody tr').forEach(function (row) {
-        row.addEventListener('click', function () {
-            var cat = this.getAttribute('data-value');
-
-            input.value = cat;
-            document.getElementById('AccountCat').value = cat;
-
-            panel.style.display = 'none';
-        });
-        row.addEventListener('mouseenter', function () { this.style.backgroundColor = '#f3f2f1'; });
-        row.addEventListener('mouseleave', function () { this.style.backgroundColor = ''; });
-    });
-
-    document.addEventListener('click', function (e) {
-        if (input && panel && !input.contains(e.target) && !panel.contains(e.target)) {
-            panel.style.display = 'none';
-        }
-    });
-
-    // Wire CostEntered — sync ItemCost on every change
-    var costInput = document.getElementById('CostEntered');
-    if (costInput) {
-        ['input', 'change', 'keyup', 'keydown', 'paste'].forEach(function (evt) {
-            costInput.addEventListener(evt, function () { setTimeout(syncItemCost, 0); });
-        });
-    }
-}
-
-function filterAccountCatRows(term) {
-    document.querySelectorAll('#accountCatDropdownBody tr').forEach(function (row) {
-        row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none';
-    });
-}
-
-function syncItemCost() {
-    var costEl     = document.getElementById('CostEntered');
-    var itemCostEl = document.getElementById('ItemCost');
-    if (!costEl || !itemCostEl) return;
-    var costStr = costEl.value.trim();
-    var cost    = parseFloat(costStr);
-    itemCostEl.value = (costStr !== '' && !isNaN(cost)) ? cost.toFixed(2) : '';
-}
-
-function filterWgGradeRows(term) {
-    document.querySelectorAll('#wgGradeDropdownBody tr').forEach(function (row) {
-        row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none';
-    });
-}
     </script>
 }
