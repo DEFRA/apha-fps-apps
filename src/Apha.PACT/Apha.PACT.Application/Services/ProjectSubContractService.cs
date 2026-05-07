@@ -94,7 +94,7 @@ namespace Apha.PACT.Application.Services
 
             // Discover all months present in filtered data (used to build columns)
             List<int> months = data
-                .Select(x => x.Month)
+                .Select(x => (int)x.Month)
                 .Distinct()
                 .OrderBy(m => m)
                 .ToList();
@@ -106,7 +106,7 @@ namespace Apha.PACT.Application.Services
                 {
                     Program = g.Key.Program,
                     ParentProject = g.Key.ParentProject,
-                    MonthlyAmounts = g.ToDictionary(x => x.Month, x => x.MonthlyAmount ?? 0m)
+                    MonthlyAmounts = g.ToDictionary(x => (int)x.Month, x => x.MonthlyAmount ?? 0m)
                 });
 
             // Sort grouped pivot rows (including dynamic month columns M1..M12)

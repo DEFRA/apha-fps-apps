@@ -138,7 +138,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
 
         public async Task<ApiResponseDto<MonthlySubContractsPivotDto>> GetMonthlySubContractsSummaryAsync(QueryParameters<string> query)
         {
-            string url = QueryStringHelper.AddQueryString(PactApiEndpoints.GetMonthlyInvoicesSummary, query);
+            string url = QueryStringHelper.AddQueryString(PactApiEndpoints.GetMonthlySubContractsSummary, query);
             var response = await _http.GetAsync<MonthlySubContractsPivotRes>(url);
             if (response.Success)
             {

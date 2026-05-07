@@ -52,7 +52,7 @@ namespace Apha.Common.Constants
         public const string UpdateProjectInvoice = "api/v1/projectinvoice/{0}";
         public const string DeleteProjectInvoice = "api/v1/projectinvoice/{0}";
         public const string GetMonthlyInvoicesSummary = "api/v1/projectinvoice/monthly-summary";
-        public const string GetMonthlySubContractsSummary = "api/v1/projectinvoice/monthly-summary";
+        
         // Project SubContract
         public const string GetPagedProjectSubContracts = "api/v1/projectsubcontract";
         public const string GetProjectSubContractTotalAmount = "api/v1/projectsubcontract/total";
@@ -62,6 +62,7 @@ namespace Apha.Common.Constants
         public const string DeleteProjectSubContract = "api/v1/projectsubcontract/{0}";
         public const string GetFpsProjectSubContracts = "api/v1/projectsubcontract/animals";
         public const string GetFpsProjectSubContractTotalAmount = "api/v1/projectsubcontract/animals/total";
+        public const string GetMonthlySubContractsSummary = "api/v1/projectsubcontract/monthly-summary";
 
         // WorkGroup Test Capability
         public const string GetPagedTestCapabilityByWorkGroup = "api/v1/testcapability/paged/workgroup";

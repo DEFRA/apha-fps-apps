@@ -14,6 +14,6 @@ namespace Apha.PACT.Core.Entities
 
         public decimal? MonthlyAmount { get; set; }
 
-        public required int Month { get; set; }
+        public required double Month { get; set; }
     }
 }

@@ -123,7 +123,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 AllowEdit      = false,
                 AllowDelete    = false,
                 ShowPagination = true,
-                BindGridUrl    = "/PACT/InvoiceByMonth/LoadGrid",
+                BindGridUrl    = "/PACT/SubContractByMonth/LoadGrid",
                 Columns        = columns,
                 Data           = rows,
                 CurrentFilters = filterDict,

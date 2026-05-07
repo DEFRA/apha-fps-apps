@@ -10,7 +10,7 @@ namespace Apha.PACT.DataAccess.Data
         {
             entity
                .HasNoKey()
-               .ToView("vwinvoicebymonth", "fps");
+               .ToView("vwsubcontractbymonth", "fps");
 
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.Month).HasColumnName("month");
