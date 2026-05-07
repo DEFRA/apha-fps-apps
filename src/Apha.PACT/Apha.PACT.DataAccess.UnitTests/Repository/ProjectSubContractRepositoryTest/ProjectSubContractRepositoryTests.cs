@@ -51,6 +51,27 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectSubContractRepository
             int fpsYear = DefaultTestFpsYear)
             => CreateRepositoryWithMocks(subContracts, fpsYear).Repo;
 
+        private static ProjectSubContractRepository CreateRepositoryWithMonthlySummary(
+            IEnumerable<MonthlySubContractsSummary> summaryData,
+            int fpsYear = DefaultTestFpsYear)
+        {
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            fpsRequestContext.FpsYear.Returns(fpsYear);
+
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
+
+            var subContractsMockSet = RepositoryTestHelper.CreateMockDbSet<ProjectSubContract>([]);
+            mockContext.Setup(x => x.ProjectSubContracts).Returns(subContractsMockSet.Object);
+
+            var summaryMockSet = RepositoryTestHelper.CreateMockDbSet(summaryData);
+            mockContext.Setup(x => x.MonthlySubContractsSummary).Returns(summaryMockSet.Object);
+
+            return new ProjectSubContractRepository(mockContext.Object, fpsRequestContext);
+        }
+
+        private static MonthlySubContractsSummary MakeMonthlySummary(string program, string parentProject, int month, decimal? amount = null)
+            => new() { FpsYear = DefaultTestFpsYear, Program = program, ParentProject = parentProject, Month = month, MonthlyAmount = amount };
+
         #region GetPagedProjectSubContractsAsync
 
         [Fact]
@@ -390,27 +411,6 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectSubContractRepository
         #endregion
 
         #region GetMonthlySubContractsSummaryAsync
-
-        private static ProjectSubContractRepository CreateRepositoryWithMonthlySummary(
-            IEnumerable<MonthlySubContractsSummary> summaryData,
-            int fpsYear = DefaultTestFpsYear)
-        {
-            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
-            fpsRequestContext.FpsYear.Returns(fpsYear);
-
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
-
-            var subContractsMockSet = RepositoryTestHelper.CreateMockDbSet<ProjectSubContract>([]);
-            mockContext.Setup(x => x.ProjectSubContracts).Returns(subContractsMockSet.Object);
-
-            var summaryMockSet = RepositoryTestHelper.CreateMockDbSet(summaryData);
-            mockContext.Setup(x => x.MonthlySubContractsSummary).Returns(summaryMockSet.Object);
-
-            return new ProjectSubContractRepository(mockContext.Object, fpsRequestContext);
-        }
-
-        private static MonthlySubContractsSummary MakeMonthlySummary(string program, string parentProject, int month, decimal? amount = null)
-            => new() { FpsYear = DefaultTestFpsYear, Program = program, ParentProject = parentProject, Month = month, MonthlyAmount = amount };
 
         [Fact]
         public async Task GetMonthlySubContractsSummaryAsync_NoFilter_ReturnsAllRowsOrderedByProgramParentProjectMonth()
