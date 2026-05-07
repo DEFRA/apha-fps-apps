@@ -9,8 +9,8 @@ namespace Apha.PACT.DataAccess.Data
         public void Configure(EntityTypeBuilder<Month> entity)
         {
             entity
-                .HasNoKey()
-                .ToTable("tlkpmonth", "fps");
+                 .HasNoKey()
+                 .ToTable("tlkpmonth", "fps");
 
             entity.Property(e => e.AccntsPeriod).HasColumnName("accntsperiod");
             entity.Property(e => e.FQuarter).HasColumnName("fquarter");

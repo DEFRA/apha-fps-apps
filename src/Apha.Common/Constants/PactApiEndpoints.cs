@@ -31,6 +31,9 @@ namespace Apha.Common.Constants
         // Work Group
         public const string GetAllWorkGroups = "api/v1/workgroup";
 
+        // Month
+        public const string GetAllMonths = "api/v1/months";
+
         // Test List
         public const string GetPagedTestOrProducts = "api/v1/testorproduct/paged";
         public const string GetTestOrProductById = "api/v1/testorproduct/{0}";
@@ -42,11 +45,13 @@ namespace Apha.Common.Constants
 
         // Project Invoice
         public const string GetPagedProjectInvoices = "api/v1/projectinvoice?parentProject={0}";
+        public const string GetPagedProjectInvoiceManual = "api/v1/projectinvoice";
         public const string GetProjectInvoiceTotalAmount = "api/v1/projectinvoice/total";
         public const string GetProjectInvoiceById = "api/v1/projectinvoice/{0}";
         public const string CreateProjectInvoice = "api/v1/projectinvoice";
         public const string UpdateProjectInvoice = "api/v1/projectinvoice/{0}";
         public const string DeleteProjectInvoice = "api/v1/projectinvoice/{0}";
+        public const string GetMonthlyInvoicesSummary = "api/v1/projectinvoice/monthly-summary";
 
         // Project SubContract
         public const string GetPagedProjectSubContracts = "api/v1/projectsubcontract";

@@ -44,9 +44,10 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IDivisionService, DivisionService>();
             services.AddScoped<IProjectInvoiceService, ProjectInvoiceService>();
             services.AddScoped<IProjectSubContractService, ProjectSubContractService>();
+            services.AddScoped<IMonthService, MonthService>();
             services.AddScoped<ITestCapabilityService, TestCapabilityService>();
             services.AddScoped<ITestRequirementService, TestRequirementService>();
-            services.AddScoped<IProjectStaffPlanActualService, ProjectStaffPlanActualService>();
+            services.AddScoped<ITimeCostCalcsService, TimeCostCalcsService>();
             services.AddScoped<IExcelExportService, ExcelExportService>();
             services.AddScoped<IAppStateService, AppStateService>();
             services.AddScoped<IAdditionalCostService, AdditionalCostService>();
@@ -56,8 +57,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IProjectCommentService, ProjectCommentService>();
 
             services.AddScoped<ITestorProductService, TestorProductService>();
-            services.AddScoped<IProjectMonthService, ProjectMonthService>();
-            services.AddScoped<IProjectProfileService, ProjectProfileService>();
+            services.AddScoped<IMonthlyOutputService, MonthlyOutputService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)

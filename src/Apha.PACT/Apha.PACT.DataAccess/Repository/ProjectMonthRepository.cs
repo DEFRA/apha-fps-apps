@@ -21,7 +21,8 @@ namespace Apha.PACT.DataAccess.Repository
                  .Select(m => new Month
                  {
                      AccntsPeriod = m.AccntsPeriod,
-                     MonthName = m.MonthName
+                     MonthName = m.MonthName,
+                     MonthNumber = m.MonthNumber,
                  })
                 .ToListAsync();
         }

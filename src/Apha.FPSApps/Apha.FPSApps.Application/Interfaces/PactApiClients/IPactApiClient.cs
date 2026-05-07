@@ -5,6 +5,7 @@
         IPactJobCodeApiClient PactJobCode { get; }
         IPactTimeCodeValidApiClient PactTimeCodeValid { get; }
         IPactWorkGroupApiClient PactWorkGroup { get; }
+        IPactMonthApiClient PactMonth { get; }
         IPactProjectInvoiceApiClient PactProjectInvoice { get; }
         IPactProjectSubContractApiClient PactProjectSubContract { get; }
         IPactTestCapabilityApiClient PactWorkGroupTestCapability { get; }

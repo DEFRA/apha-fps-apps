@@ -15,6 +15,12 @@ namespace Apha.FPSApps.Infrastructure.Integrations.HttpExecutor
         public static async Task<ApiResponse<T>> ToApiResponse<T>(
          this HttpResponseMessage response)
         {
+            // Handle 404 Not Found - throw exception to let middleware handle it
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                throw new KeyNotFoundException("The requested resource was not found.");
+            }
+
             try
             {
                 var apiResponse =

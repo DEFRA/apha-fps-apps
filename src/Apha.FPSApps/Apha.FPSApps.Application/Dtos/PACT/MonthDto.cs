@@ -2,7 +2,7 @@ namespace Apha.FPSApps.Application.Dtos.PACT
 {
     public class MonthDto
     {
-        public short? AccntsPeriod { get; set; }
-        public string? MonthName { get; set; }
+        public required short Monthnumber { get; set; }
+        public required string Monthname { get; set; }
     }
 }

@@ -35,4 +35,9 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Services\FPS\ProjectStaffPlanActualServiceTest\" />
+    <Folder Include="Services\FPS\ProjectTestPlanActualServiceTest\" />
+  </ItemGroup>
+
 </Project>
