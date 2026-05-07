@@ -25,15 +25,11 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             _subContractService = subContractService;
         }
 
-        // ── INDEX ────────────────────────────────────────────────────────────
-
         public async Task<IActionResult> Index()
         {
             var grid = await BuildGridAsync(new PaginationFilter<string>());
             return View(new SubContractByMonthViewModel { Grid = grid });
         }
-
-        // ── GRID RELOAD (called by DataGrid JS on sort / filter) ─────────────
 
         [HttpPost]
         public async Task<IActionResult> LoadGrid(PaginationFilter<string> request)
@@ -44,8 +40,6 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var grid = await BuildGridAsync(request);
             return PartialView("_DataGrid", grid);
         }
-
-        // ── PRIVATE ──────────────────────────────────────────────────────────
 
         private async Task<DataGridConfig<SubContractByMonthPivotRow>> BuildGridAsync(
             PaginationFilter<string> request)
