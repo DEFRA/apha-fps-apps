@@ -9,6 +9,7 @@ namespace Apha.PIMS.DataAccess.Data
 {
     public class ProjectsMap : IEntityTypeConfiguration<Projects>
     {
+        private const string ColumnTypeMoney = "money";
         public void Configure(EntityTypeBuilder<Projects> entity)
         {
             entity.HasKey(e => new { e.Year, e.Parentproject }).HasName("pk_my_tlkpproject");
@@ -22,10 +23,10 @@ namespace Apha.PIMS.DataAccess.Data
                 .HasMaxLength(20)
                 .HasColumnName("parentproject");
             entity.Property(e => e.BudgetCvl)
-                .HasColumnType("money")
+                .HasColumnType(ColumnTypeMoney)
                 .HasColumnName("budget_cvl");
             entity.Property(e => e.Carryover)
-                .HasColumnType("money")
+                .HasColumnType(ColumnTypeMoney)
                 .HasColumnName("carryover");
             entity.Property(e => e.Caseworksub)
                 .HasPrecision(5, 4)
@@ -36,7 +37,7 @@ namespace Apha.PIMS.DataAccess.Data
                 .HasColumnName("contract");
             entity.Property(e => e.Costcentre).HasColumnName("costcentre");
             entity.Property(e => e.Custincome)
-                .HasColumnType("money")
+                .HasColumnType(ColumnTypeMoney)
                 .HasColumnName("custincome");
             entity.Property(e => e.Customer)
                 .HasMaxLength(50)
@@ -48,7 +49,7 @@ namespace Apha.PIMS.DataAccess.Data
                 .HasMaxLength(50)
                 .HasColumnName("disease");
             entity.Property(e => e.Feccost)
-                .HasColumnType("money")
+                .HasColumnType(ColumnTypeMoney)
                 .HasColumnName("feccost");
             entity.Property(e => e.Finished).HasColumnName("finished");
             entity.Property(e => e.Incomeaccountcode)
@@ -62,10 +63,10 @@ namespace Apha.PIMS.DataAccess.Data
                 .HasMaxLength(50)
                 .HasColumnName("oracleprojectcode");
             entity.Property(e => e.Plancaseworkdebit)
-                .HasColumnType("money")
+                .HasColumnType(ColumnTypeMoney)
                 .HasColumnName("plancaseworkdebit");
             entity.Property(e => e.Profit)
-                .HasColumnType("money")
+                .HasColumnType(ColumnTypeMoney)
                 .HasColumnName("profit");
             entity.Property(e => e.Program)
                 .HasMaxLength(10)
@@ -77,7 +78,7 @@ namespace Apha.PIMS.DataAccess.Data
                 .HasMaxLength(50)
                 .HasColumnName("projectstatus");
             entity.Property(e => e.Pvsincome)
-                .HasColumnType("money")
+                .HasColumnType(ColumnTypeMoney)
                 .HasColumnName("pvsincome");
             entity.Property(e => e.Source)
                 .HasMaxLength(5)
@@ -87,16 +88,16 @@ namespace Apha.PIMS.DataAccess.Data
                 .HasMaxLength(50)
                 .HasColumnName("subaccountcode");
             entity.Property(e => e.Transferincome)
-                .HasColumnType("money")
+                .HasColumnType(ColumnTypeMoney)
                 .HasColumnName("transferincome");
             entity.Property(e => e.WipCurrent)
-                .HasColumnType("money")
+                .HasColumnType(ColumnTypeMoney)
                 .HasColumnName("wip_current");
             entity.Property(e => e.WipEoy)
-                .HasColumnType("money")
+                .HasColumnType(ColumnTypeMoney)
                 .HasColumnName("wip_eoy");
             entity.Property(e => e.WipLimit)
-                .HasColumnType("money")
+                .HasColumnType(ColumnTypeMoney)
                 .HasColumnName("wip_limit");
         }
     }

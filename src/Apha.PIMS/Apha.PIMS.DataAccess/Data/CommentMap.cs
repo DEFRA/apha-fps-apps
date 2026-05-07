@@ -6,6 +6,7 @@ namespace Apha.PIMS.DataAccess.Data
 {
     public class CommentMap : IEntityTypeConfiguration<Comment>
     {
+        private const string Collation = "und-x-icu";
         public void Configure(EntityTypeBuilder<Comment> entity)
         {
             entity.HasKey(e => e.Commentno).HasName("pk_tblcomments");
@@ -18,7 +19,7 @@ namespace Apha.PIMS.DataAccess.Data
 
             entity.Property(e => e.Commentno).HasColumnName("commentno");
             entity.Property(e => e.Commenttext)
-                .UseCollation("und-x-icu")
+                .UseCollation(Collation)
                 .HasColumnName("comment");
             entity.Property(e => e.Dateentered)
                 .HasColumnType("timestamp without time zone")
@@ -26,15 +27,15 @@ namespace Apha.PIMS.DataAccess.Data
             entity.Property(e => e.Madeby)
                 .HasMaxLength(20)
                 .IsFixedLength()
-                .UseCollation("und-x-icu")
+                .UseCollation(Collation)
                 .HasColumnName("madeby");
             entity.Property(e => e.Project)
                 .HasMaxLength(20)
-                .UseCollation("und-x-icu")
+                .UseCollation(Collation)
                 .HasColumnName("project");
             entity.Property(e => e.Topic)
                 .HasMaxLength(25)
-                .UseCollation("und-x-icu")
+                .UseCollation(Collation)
                 .HasColumnName("topic");
             entity.Property(e => e.Year).HasColumnName("year");
         }
