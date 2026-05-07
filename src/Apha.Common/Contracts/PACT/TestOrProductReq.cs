@@ -1,6 +1,6 @@
-namespace Apha.FPS.Application.Dtos
+namespace Apha.Common.Contracts.PACT
 {
-    public class TestorProductDto
+    public class TestorProductReq
     {
         public string ItemCode { get; set; } = null!;
         public string? ItemDescription { get; set; }
@@ -12,5 +12,6 @@ namespace Apha.FPS.Application.Dtos
         public string? ChargeMethod { get; set; }
         public string? ShortDescription { get; set; }
         public decimal DefraUnitPrice { get; set; }
+        public int FpsYear { get; set; }
     }
 }

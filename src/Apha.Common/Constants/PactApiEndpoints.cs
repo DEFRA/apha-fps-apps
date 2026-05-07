@@ -14,10 +14,12 @@ namespace Apha.Common.Constants
 
         // Time Code Valid
         public const string GetTimeCodesByJobCode = "api/v1/timecodevalid/jobcode/{0}/project/{1}";
+        public const string GetTimeCodeValidById = "api/v1/timecodevalid/{0}/{1}/{2}";
         public const string GetPagedTimeCodes = "api/v1/timecodevalid/paged";
         public const string GetPagedTimeCodesByJobCode = "api/v1/timecodevalid/paged?jobCode={0}";
         public const string GetPagedTimeCodesByProject = "api/v1/timecodevalid/paged?parentProject={0}";
         public const string GetPagedTimeCodesByJobCodeAndProject = "api/v1/timecodevalid/paged?jobCode={0}&parentProject={1}";
+        public const string GetPagedTimeCodesByProjectAndTestCode = "api/v1/timecodevalid/paged/project/{0}/testcode/{1}";
         public const string CreateTimeCodeValid = "api/v1/timecodevalid";
         public const string UpdateTimeCodeValid = "api/v1/timecodevalid";
         public const string DeleteTimeCodeValid = "api/v1/timecodevalid/{0}/{1}/{2}";
@@ -29,13 +31,27 @@ namespace Apha.Common.Constants
         // Work Group
         public const string GetAllWorkGroups = "api/v1/workgroup";
 
+        // Month
+        public const string GetAllMonths = "api/v1/months";
+
+        // Test List
+        public const string GetPagedTestOrProducts = "api/v1/testorproduct/paged";
+        public const string GetTestOrProductById = "api/v1/testorproduct/{0}";
+        public const string CreateTestOrProduct = "api/v1/testorproduct";
+        public const string UpdateTestOrProduct = "api/v1/testorproduct/{0}";
+        public const string DeleteTestOrProduct = "api/v1/testorproduct/{0}";
+        public const string GetTestListOwners = "api/v1/testorproduct/owners";
+        public const string GetAllTestorProducts = "api/v1/testorproduct";
+
         // Project Invoice
         public const string GetPagedProjectInvoices = "api/v1/projectinvoice?parentProject={0}";
+        public const string GetPagedProjectInvoiceManual = "api/v1/projectinvoice";
         public const string GetProjectInvoiceTotalAmount = "api/v1/projectinvoice/total";
         public const string GetProjectInvoiceById = "api/v1/projectinvoice/{0}";
         public const string CreateProjectInvoice = "api/v1/projectinvoice";
         public const string UpdateProjectInvoice = "api/v1/projectinvoice/{0}";
         public const string DeleteProjectInvoice = "api/v1/projectinvoice/{0}";
+        public const string GetMonthlyInvoicesSummary = "api/v1/projectinvoice/monthly-summary";
 
         // Project SubContract
         public const string GetPagedProjectSubContracts = "api/v1/projectsubcontract";
@@ -44,10 +60,13 @@ namespace Apha.Common.Constants
         public const string CreateProjectSubContract = "api/v1/projectsubcontract";
         public const string UpdateProjectSubContract = "api/v1/projectsubcontract/{0}";
         public const string DeleteProjectSubContract = "api/v1/projectsubcontract/{0}";
+        public const string GetFpsProjectSubContracts = "api/v1/projectsubcontract/animals";
+        public const string GetFpsProjectSubContractTotalAmount = "api/v1/projectsubcontract/animals/total";
 
         // WorkGroup Test Capability
         public const string GetPagedTestCapabilityByWorkGroup = "api/v1/testcapability/paged/workgroup";
         public const string GetPagedTestCapabilityByTestCode = "api/v1/testcapability/paged/testcode";
+        public const string GetPagedTestCapabilityByPortfolio = "api/v1/testcapability/paged/portfolio";
         public const string GetTestCapabilityById = "api/v1/testcapability/testcapability/{0}/{1}";
         public const string CreateTestCapability = "api/v1/testcapability/testcapability";
         public const string UpdateTestCapability = "api/v1/testcapability/testcapability";
@@ -63,7 +82,7 @@ namespace Apha.Common.Constants
         public const string DeleteTestReqmt = "api/v1/testrequirement/{0}/{1}";
 
         // Lookups
-        public const string GetAllTestorProducts = "api/v1/testcapability/testorproducts";
+        //public const string GetAllTestorProducts = "api/v1/testcapability/testorproducts";
         public const string GetTestReqmtPricing = "api/v1/testrequirement/pricing";
     }
 }
