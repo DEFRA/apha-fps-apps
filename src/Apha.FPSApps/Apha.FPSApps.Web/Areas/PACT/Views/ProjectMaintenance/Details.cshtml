@@ -260,10 +260,14 @@
                                         </div>
                                     </div>
                                     <div style="padding-top:0;">
-                                        <button type="button" class="govuk-button sup_margin_0"
-                                                aria-label="Profile by month" onclick="onClickProfileByMonth()" allow-edit="true">
+                                        <a class="govuk-button sup_margin_0"
+                                           aria-label="Profile by month"
+                                           asp-area="PACT"
+                                           asp-controller="ProjectProfile"
+                                           asp-action="Index"
+                                           asp-route-parentProject="@Model.Project.ParentProject">
                                             Profile By Month
-                                        </button>
+                                        </a>
                                     </div>
                                 </div>
                             </div>
@@ -327,10 +331,6 @@
 
         function toggleSidebar() {
             document.querySelector('.sidenav').classList.toggle('collapsed');
-        }
-
-        function onClickProfileByMonth() {
-            // TODO: navigate to profile-by-month page
         }
 
         function getJobCodeGridManager() { return window['gridManager_' + jobCodeGridId]; }

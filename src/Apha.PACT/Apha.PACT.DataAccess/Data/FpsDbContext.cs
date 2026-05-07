@@ -76,6 +76,14 @@ namespace Apha.PACT.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new MonthlyInvoicesSummaryMap());
             modelBuilder.Entity<MonthlyInvoicesSummary>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new ProjectMonthFinalMap());
+            modelBuilder.Entity<ProjectMonthFinal>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new ProjectMonthMap());
+            modelBuilder.Entity<ProjectMonth>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new PeriodMonthMap());
         }
     }
 }

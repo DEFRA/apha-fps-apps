@@ -36,7 +36,7 @@ namespace Apha.PACT.Api.Controllers
 
         /// <summary>Retrieves all cost profile months for a given project.</summary>
         [HttpGet("project/{project}")]
-        public async Task<IActionResult> GetByProject(string project)
+        public async Task<IActionResult> GetProjectMonthByProject(string project)
         {
             IList<ProjectMonthDto> items = await _service.GetProjectMonthByProjectAsync(project);
             return Ok(_mapper.Map<IList<ProjectMonthRes>>(items));
@@ -54,7 +54,7 @@ namespace Apha.PACT.Api.Controllers
 
         /// <summary>Creates a new cost profile month record.</summary>
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] ProjectMonthReq request)
+        public async Task<IActionResult> CreateProjectMonth([FromBody] ProjectMonthReq request)
         {
             ProjectMonthDto dto = _mapper.Map<ProjectMonthDto>(request);
             ProjectMonthDto created = await _service.CreateProjectMonthAsync(dto);
@@ -66,7 +66,7 @@ namespace Apha.PACT.Api.Controllers
 
         /// <summary>Updates an existing cost profile month record.</summary>
         [HttpPut]
-        public async Task<IActionResult> Update([FromBody] ProjectMonthReq request)
+        public async Task<IActionResult> UpdateProjectMonth([FromBody] ProjectMonthReq request)
         {
             ProjectMonthDto dto = _mapper.Map<ProjectMonthDto>(request);
             ProjectMonthDto updated = await _service.UpdateProjectMonthAsync(dto);
@@ -75,7 +75,7 @@ namespace Apha.PACT.Api.Controllers
 
         /// <summary>Deletes a cost profile month record.</summary>
         [HttpDelete("project/{project}/month/{monthNo:int}")]
-        public async Task<IActionResult> Delete(string project, int monthNo)
+        public async Task<IActionResult> DeleteProjectMonth(string project, int monthNo)
         {
             bool deleted = await _service.DeleteProjectMonthAsync(project, monthNo);
             if (!deleted)

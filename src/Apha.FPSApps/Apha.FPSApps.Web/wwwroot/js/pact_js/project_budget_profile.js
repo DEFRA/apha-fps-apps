@@ -219,6 +219,8 @@ function saveProjectMonth() {
             if (res.success) {
                 document.getElementById('costProfileModal').classList.remove('show');
                 loadCostProfileGrid(_modalProject);
+                loadProfileGraphData(_modalProject);
+                loadCumulativeGraphData(_modalProject);
             } else {
                 alert(res.message || 'Failed to save.');
             }
