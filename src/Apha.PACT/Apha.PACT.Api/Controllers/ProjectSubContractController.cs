@@ -96,5 +96,12 @@ namespace Apha.PACT.Api.Controllers
             bool deleted = await _service.DeleteAsync(id);
             return Ok(deleted);
         }
+
+        [HttpGet("monthly-summary")]
+        public async Task<IActionResult> GetMonthlySubContractsSummary([FromQuery] QueryParameters<string> query)
+        {
+            MonthlySubContractsPivotDto result = await _service.GetMonthlySubContractsSummaryAsync(query);
+            return Ok(_mapper.Map<MonthlySubContractsPivotRes>(result));
+        }
     }
 }
