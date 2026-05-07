@@ -663,8 +663,8 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProjectServiceTest
             // Arrange
             var projectGroups = new List<ProjectGroupDto>
             {
-                new() { ProjectGroupName = "Surveillance" },
-                new() { ProjectGroupName = "Research" }
+                new() { ProjectGroupName = "Surveillance", ProjectGroup = "SRV" },
+                new() { ProjectGroupName = "Research", ProjectGroup = "RSH" }
             };
             var expectedResponse = ApiResponseDto<List<ProjectGroupDto>>.SuccessResponse(projectGroups);
             _fpsLookupApiClient.GetAllProjectGroupsAsync().Returns(expectedResponse);
@@ -919,7 +919,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProjectServiceTest
         [Fact]
         public async Task GetCostCentresAsync_WithSuccess_ReturnsCostCentreList()
         {
-            var data = new List<CostCentreWorkgroupDto> { new() { CostCentre = 100 } };
+            var data = new List<CostCentreWorkgroupDto> { new() { CostCentre = 100, ProfitCentre = "PC01", WGs = "WG1" } };
             var expectedResponse = ApiResponseDto<List<CostCentreWorkgroupDto>>.SuccessResponse(data);
             _fpsProjectApiClient.GetCostCentresAsync().Returns(expectedResponse);
 
@@ -949,7 +949,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProjectServiceTest
         [Fact]
         public async Task GetProjectGroupsAsync_WithSuccess_ReturnsProjectGroupList()
         {
-            var data = new List<ProjectGroupDto> { new() { ProjectGroupName = "GRP1" } };
+            var data = new List<ProjectGroupDto> { new() { ProjectGroupName = "GRP1", ProjectGroup = "G1" } };
             var expectedResponse = ApiResponseDto<List<ProjectGroupDto>>.SuccessResponse(data);
             _fpsProjectApiClient.GetProjectGroupsAsync().Returns(expectedResponse);
 
@@ -979,7 +979,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProjectServiceTest
         [Fact]
         public async Task GetAccountCodesAsync_WithSuccess_ReturnsAccountCodeList()
         {
-            var data = new List<AccountCodeDto> { new() { Code = "AC1" } };
+            var data = new List<AccountCodeDto> { new() { Code = "AC1", Description = "Account Code 1" } };
             var expectedResponse = ApiResponseDto<List<AccountCodeDto>>.SuccessResponse(data);
             _fpsProjectApiClient.GetAccountCodesAsync().Returns(expectedResponse);
 
@@ -1009,7 +1009,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProjectServiceTest
         [Fact]
         public async Task GetSubAccountsAsync_WithSuccess_ReturnsSubAccountList()
         {
-            var data = new List<SubAccountDto> { new() { SubAccountCode = "SA1" } };
+            var data = new List<SubAccountDto> { new() { SubAccountCode = "SA1", SubAccount = "Sub Account 1" } };
             var expectedResponse = ApiResponseDto<List<SubAccountDto>>.SuccessResponse(data);
             _fpsProjectApiClient.GetSubAccountsAsync().Returns(expectedResponse);
 
