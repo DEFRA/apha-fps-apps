@@ -86,13 +86,13 @@ namespace Apha.PACT.DataAccess.Repository
             IDictionary<string, object> dict = (IDictionary<string, object>)filterModel;
 
             if (dict.TryGetValue("ProjectParent", out object? projectParent) && projectParent != null)
-                query = query.Where(x => x.ProjectParent.Contains(projectParent.ToString()!));
+                query = query.Where(x => EF.Functions.ILike(x.ProjectParent, $"%{projectParent}%"));
 
             if (dict.TryGetValue("Month", out object? month) && month != null && int.TryParse(month.ToString(), out int monthVal))
                 query = query.Where(x => x.Month == monthVal);
 
             if (dict.TryGetValue("Detail", out object? detail) && detail != null)
-                query = query.Where(x => x.Detail != null && x.Detail.Contains(detail.ToString()!));
+                query = query.Where(x => x.Detail != null && EF.Functions.ILike(x.Detail, $"%{detail}%"));
 
             return query;
         }

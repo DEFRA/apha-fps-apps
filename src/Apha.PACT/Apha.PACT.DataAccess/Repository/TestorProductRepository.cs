@@ -108,29 +108,19 @@ namespace Apha.PACT.DataAccess.Repository
             var dict = (IDictionary<string, object>)filterModel;
 
             if (dict.TryGetValue("ItemCode", out var itemCode) && itemCode != null)
-            {
-                query = query.Where(x => x.ItemCode.Contains(itemCode.ToString()!));
-            }
+                query = query.Where(x => EF.Functions.ILike(x.ItemCode, $"%{itemCode}%"));
 
             if (dict.TryGetValue("ItemDescription", out var itemDescription) && itemDescription != null)
-            {
-                query = query.Where(x => x.ItemDescription!.Contains(itemDescription.ToString()!));
-            }
+                query = query.Where(x => x.ItemDescription != null && EF.Functions.ILike(x.ItemDescription, $"%{itemDescription}%"));
 
             if (dict.TryGetValue("ShortDescription", out var shortDescription) && shortDescription != null)
-            {
-                query = query.Where(x => x.ShortDescription!.Contains(shortDescription.ToString()!));
-            }
+                query = query.Where(x => x.ShortDescription != null && EF.Functions.ILike(x.ShortDescription, $"%{shortDescription}%"));
 
             if (dict.TryGetValue("Owner", out var owner) && owner != null)
-            {
-                query = query.Where(x => x.Owner!.Contains(owner.ToString()!));
-            }
+                query = query.Where(x => x.Owner != null && EF.Functions.ILike(x.Owner, $"%{owner}%"));
 
             if (dict.TryGetValue("TestManager", out var testManager) && testManager != null)
-            {
-                query = query.Where(x => x.TestManager!.Contains(testManager.ToString()!));
-            }
+                query = query.Where(x => x.TestManager != null && EF.Functions.ILike(x.TestManager, $"%{testManager}%"));
 
             return query;
         }

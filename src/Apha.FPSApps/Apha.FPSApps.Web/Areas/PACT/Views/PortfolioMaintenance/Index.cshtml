@@ -190,7 +190,7 @@
 
                         <div class="govuk-form-group sup_margin_bottom_10">
                             <label class="govuk-label govuk-!-font-weight-bold" asp-for="CurrentPortfolio.ProjectTitle">
-                                Project Title
+                                Project Title <span class="sup_color_red">*</span>
                             </label>
                             <input class="govuk-input govuk-!-font-size-16" asp-for="CurrentPortfolio.ProjectTitle"
                                    id="txtProjectTitle" />
@@ -212,7 +212,7 @@
                         <div style="display:flex; gap:16px; margin-bottom:10px;">
                             <div class="govuk-form-group" style="flex:1; margin-bottom:0;">
                                 <label class="govuk-label govuk-!-font-weight-bold" asp-for="CurrentPortfolio.Program">
-                                    Programme
+                                    Programme <span class="sup_color_red">*</span>
                                 </label>
                                 <select class="govuk-select govuk-!-font-size-16" asp-for="CurrentPortfolio.Program"
                                         id="dpProgramme" asp-items="Model.Programs" style="width:100%;">

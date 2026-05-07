@@ -307,10 +307,10 @@ namespace Apha.PACT.DataAccess.Repository
             if (filters is null) return query;
 
             if (filters.TryGetValue("Buyer", out string? buyer) && !string.IsNullOrWhiteSpace(buyer))
-                query = query.Where(t => t.Buyer.Contains(buyer));
+                query = query.Where(t => EF.Functions.ILike(t.Buyer, $"%{buyer}%"));
 
             if (filters.TryGetValue("ProjectBuyerCode", out string? projectCode) && !string.IsNullOrWhiteSpace(projectCode))
-                query = query.Where(t => t.ProjectBuyerCode != null && t.ProjectBuyerCode.Contains(projectCode));
+                query = query.Where(t => t.ProjectBuyerCode != null && EF.Functions.ILike(t.ProjectBuyerCode, $"%{projectCode}%"));
 
             return query;
         }
@@ -323,11 +323,14 @@ namespace Apha.PACT.DataAccess.Repository
             var filters = JsonConvert.DeserializeObject<Dictionary<string, string>>(filterJson);
             if (filters is null) return query;
 
+            if (filters.TryGetValue("TestCode", out string? testcode) && !string.IsNullOrWhiteSpace(testcode))
+                query = query.Where(t => EF.Functions.ILike(t.TestCode, $"%{testcode}%"));
+
             if (filters.TryGetValue("Buyer", out string? buyer) && !string.IsNullOrWhiteSpace(buyer))
-                query = query.Where(t => t.Buyer.Contains(buyer));
+                query = query.Where(t => EF.Functions.ILike(t.Buyer, $"%{buyer}%"));
 
             if (filters.TryGetValue("ProjectBuyerCode", out string? projectCode) && !string.IsNullOrWhiteSpace(projectCode))
-                query = query.Where(t => t.ProjectBuyerCode != null && t.ProjectBuyerCode.Contains(projectCode));
+                query = query.Where(t => t.ProjectBuyerCode != null && EF.Functions.ILike(t.ProjectBuyerCode, $"%{projectCode}%"));
 
             return query;
         }
