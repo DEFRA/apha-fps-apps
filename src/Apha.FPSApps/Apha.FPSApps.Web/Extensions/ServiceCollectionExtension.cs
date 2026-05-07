@@ -39,16 +39,18 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<ICostBookProgramService, CostBookProgramService>();
             services.AddScoped<ICostBookStaffService, CostBookStaffService>();
             services.AddScoped<ICostBookContractService, CostBookContractService>();
+            services.AddScoped<ICostBookYearlyDetailsService, CostBookYearlyDetailsService>();
             services.AddScoped<IYearMasterService, YearMasterService>();
             services.AddScoped<IDivisionService, DivisionService>();
             services.AddScoped<IProjectInvoiceService, ProjectInvoiceService>();
             services.AddScoped<IProjectSubContractService, ProjectSubContractService>();
+            services.AddScoped<IMonthService, MonthService>();
             services.AddScoped<ITestCapabilityService, TestCapabilityService>();
             services.AddScoped<ITestRequirementService, TestRequirementService>();
-            services.AddScoped<ITestorProductService, TestorProductService>();
-            services.AddScoped<IProjectStaffPlanActualService, ProjectStaffPlanActualService>();
+            services.AddScoped<ITimeCostCalcsService, TimeCostCalcsService>();
             services.AddScoped<IExcelExportService, ExcelExportService>();
             services.AddScoped<IAppStateService, AppStateService>();
+            services.AddScoped<IAdditionalCostService, AdditionalCostService>();
             // PIMS
             services.AddScoped<IProjectListService, ProjectListService>();
             services.AddScoped<IProjectDetailsService, ProjectDetailsService>();
@@ -58,6 +60,8 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IWorkGroupGradeService, WorkGroupGradeService>();
             services.AddScoped<IWorkGroupEmployeeService, WorkGroupEmployeeService>();
 
+            services.AddScoped<ITestorProductService, TestorProductService>();
+            services.AddScoped<IMonthlyOutputService, MonthlyOutputService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)

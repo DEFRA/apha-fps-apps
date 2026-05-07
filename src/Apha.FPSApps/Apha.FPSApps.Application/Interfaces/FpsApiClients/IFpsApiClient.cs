@@ -10,10 +10,11 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         IFpsAnimalPlanApiClient FpsAnimalPlan { get; }
         IFpsSettingApiClient FpsSetting { get; }
         IFpsYearMasterApiClient FpsYearMaster { get; }
-        IFpsTestorProductApiClient FpsTestorProduct { get; }
         IFpsProjectStaffPlanActualApiClient FpsProjectStaffPlanActual { get; }
+        IFpsMonthlyOutputApiClient FpsMonthlyOutput { get; }
         IFpsDivisionApiClient FpsDivision { get; }
         IFpsAgencyApiClient FpsAgency { get; }
+        IFpsAdditionalCostApiClient FpsAdditionalCost { get; }
         IFpsProfitCentreApiClient FpsProfitCentre { get; }
         IFpsResourceCentreGradeApiClient FpsResourceCentreGrade { get; }
         IFpsWorkGroupGradeApiClient FpsWorkGroupGrade { get; }

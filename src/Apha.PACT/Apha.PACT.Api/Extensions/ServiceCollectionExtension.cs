@@ -24,10 +24,12 @@ namespace Apha.PACT.Api.Extensions
             services.AddScoped<IJobCodeService, JobCodeService>();
             services.AddScoped<ITimeCodeValidService, TimeCodeValidService>();
             services.AddScoped<IWorkGroupService, WorkGroupService>();
+            services.AddScoped<IMonthService, MonthService>();
             services.AddScoped<IProjectInvoiceService, ProjectInvoiceService>();
             services.AddScoped<IProjectSubContractService, ProjectSubContractService>();
             services.AddScoped<ITestCapabilityService, TestCapabilityService>();
             services.AddScoped<ITestRequirementService, TestRequirementService>();
+            services.AddScoped<ITestorProductService, TestorProductService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
@@ -37,11 +39,14 @@ namespace Apha.PACT.Api.Extensions
             services.AddScoped<IJobCodeRepository, JobCodeRepository>();
             services.AddScoped<ITimeCodeValidRepository, TimeCodeValidRepository>();
             services.AddScoped<IWorkGroupRepository, WorkGroupRepository>();
+            services.AddScoped<IMonthRepository, MonthRepository>();
             services.AddScoped<IProjectInvoiceRepository, ProjectInvoiceRepository>();
             services.AddScoped<IProjectSubContractRepository, ProjectSubContractRepository>();
             services.AddScoped<IProjectRepository, ProjectRepository>();
             services.AddScoped<ITestCapabilityRepository, TestCapabilityRepository>();
             services.AddScoped<ITestRequirementRepository, TestRequirementRepository>();
+            services.AddScoped<ITestorProductRepository, TestorProductRepository>();
+            services.AddScoped<IMonthlyTimeRepository, MonthlyTimeRepository>();
                  return services;
         }
     }

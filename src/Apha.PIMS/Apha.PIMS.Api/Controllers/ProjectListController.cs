@@ -9,8 +9,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Apha.PIMS.Api.Controllers
-{    
-     
+{
+
     [ApiController]
     [Authorize(Roles = "API-PIMSUser,API-PIMSAdmin")]
     [ApiVersion("1.0")]
@@ -43,28 +43,24 @@ namespace Apha.PIMS.Api.Controllers
         }
 
 
-       
-       
+
+
         [HttpGet("{parentproject}/fps")]
         public async Task<IActionResult> GetFpsProjectById(string parentproject)
         {
             ProjectDto? result = await _service.GetFpsProjectByIdAsync(parentproject);
-            if (result is null)
-                throw new KeyNotFoundException($"FPS project '{parentproject}' not found.");
             return Ok(_mapper.Map<ProjectRes>(result));
         }
 
-        
+
         [HttpGet("{parentproject}/proposed")]
         public async Task<IActionResult> GetProposedProjectById(string parentproject)
         {
             ProposedProjectDto? result = await _service.GetProposedProjectByIdAsync(parentproject);
-            if (result is null)
-                throw new KeyNotFoundException($"Proposed project '{parentproject}' not found.");
             return Ok(_mapper.Map<ProposedProjectRes>(result));
         }
 
-       
+
         [HttpGet("{parentproject}/yearly")]
         public async Task<IActionResult> GetYearlyDetailsByProject(string parentproject)
         {
@@ -72,7 +68,7 @@ namespace Apha.PIMS.Api.Controllers
             return Ok(_mapper.Map<List<ProjectsRes>>(result));
         }
 
-        
+
         [HttpPost]
         public async Task<IActionResult> CreateProject([FromBody] ProposedProjectReq request)
         {

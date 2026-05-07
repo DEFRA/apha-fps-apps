@@ -32,6 +32,18 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             return ApiResponseDto<List<TimeCodeValidDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
 
+        public async Task<ApiResponseDto<TimeCodeValidDto>> GetTimeCodeValidAsync(string workGroup, string timeCode, string parentProject)
+        {
+            var url = string.Format(PactApiEndpoints.GetTimeCodeValidById,
+                Uri.EscapeDataString(workGroup), Uri.EscapeDataString(timeCode), Uri.EscapeDataString(parentProject));
+            var response = await _http.GetAsync<TimeCodeValidRes>(url);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<TimeCodeValidDto>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<TimeCodeValidDto>>(response);
+            return ApiResponseDto<TimeCodeValidDto>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
         public async Task<ApiResponseDto<List<TimeCodeValidDto>>> GetPagedTimeCodesAsync(QueryParameters<string> query, string? jobCode, string? parentProject)
         {
             string baseUrl;
@@ -44,6 +56,20 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             else
                 baseUrl = PactApiEndpoints.GetPagedTimeCodes;
 
+            var url = QueryStringHelper.AddQueryString(baseUrl, query);
+
+            var response = await _http.GetAsync<List<TimeCodeValidRes>>(url);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<TimeCodeValidDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<TimeCodeValidDto>>>(response);
+            return ApiResponseDto<List<TimeCodeValidDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+        public async Task<ApiResponseDto<List<TimeCodeValidDto>>> GetPagedByProjectAndTestCodeAsync(QueryParameters<string> query, string parentProject, string testCode)
+        {
+            var baseUrl = string.Format(PactApiEndpoints.GetPagedTimeCodesByProjectAndTestCode,
+                Uri.EscapeDataString(parentProject), Uri.EscapeDataString(testCode));
             var url = QueryStringHelper.AddQueryString(baseUrl, query);
 
             var response = await _http.GetAsync<List<TimeCodeValidRes>>(url);

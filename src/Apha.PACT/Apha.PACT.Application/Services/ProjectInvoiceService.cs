@@ -74,5 +74,87 @@ namespace Apha.PACT.Application.Services
         {
             return await _repository.DeleteAsync(invoiceCounter);
         }
+
+        public async Task<MonthlyInvoicesPivotDto> GetMonthlyInvoicesSummaryAsync(QueryParameters<string> query)
+        {
+            // Push filter to the repository so the DB query is already filtered
+            PaginationParameters<string> parameters = _mapper.Map<PaginationParameters<string>>(query);
+            List<Core.Entities.MonthlyInvoicesSummary> data =
+                await _repository.GetMonthlyInvoicesSummaryAsync(parameters);
+
+            // Discover all months present in filtered data (used to build columns)
+            List<int> months = data
+                .Select(x => x.Month)
+                .Distinct()
+                .OrderBy(m => m)
+                .ToList();
+
+            // Group flat rows into pivot rows (must be done in-memory: dict per row)
+            IEnumerable<MonthlyInvoicesSummaryDto> rows = data
+                .GroupBy(x => new { x.Program, x.ParentProject })
+                .Select(g => new MonthlyInvoicesSummaryDto
+                {
+                    Program = g.Key.Program,
+                    ParentProject = g.Key.ParentProject,
+                    MonthlyAmounts = g.ToDictionary(x => x.Month, x => x.MonthlyAmount ?? 0m)
+                });
+
+            // Sort grouped pivot rows (including dynamic month columns M1..M12)
+            rows = SortPivotRows(rows, query.SortBy, query.Descending);
+
+            // Paginate grouped rows in-memory
+            var allRows = rows.ToList();
+            int totalRecords = allRows.Count;
+            int page = query.Page < 1 ? 1 : query.Page;
+            int pageSize = query.PageSize < 1 ? 10 : query.PageSize;
+            int totalPages = (int)Math.Ceiling((double)totalRecords / pageSize);
+
+            List<MonthlyInvoicesSummaryDto> pagedRows = allRows
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            return new MonthlyInvoicesPivotDto
+            {
+                Months = months,
+                Rows = pagedRows,
+                Pagination = new Apha.PACT.Application.Pagination.PaginationDto
+                {
+                    PageNumber = page,
+                    PageSize = pageSize,
+                    TotalPages = totalPages,
+                    TotalRecords = totalRecords
+                }
+            };
+        }
+
+        private static IEnumerable<MonthlyInvoicesSummaryDto> SortPivotRows(
+            IEnumerable<MonthlyInvoicesSummaryDto> rows, string? sortBy, bool descending)
+        {
+            if (string.IsNullOrWhiteSpace(sortBy))
+                return rows.OrderBy(r => r.Program).ThenBy(r => r.ParentProject);
+
+            // Dynamic month column: PropertyName is "M1" … "M12"
+            // Parse the month number and sort by the corresponding amount value
+            if (sortBy.StartsWith("M", StringComparison.OrdinalIgnoreCase)
+                && int.TryParse(sortBy[1..], out int month)
+                && month is >= 1 and <= 12)
+            {
+                return descending
+                    ? rows.OrderByDescending(r => r.MonthlyAmounts.GetValueOrDefault(month))
+                          .ThenBy(r => r.Program)
+                    : rows.OrderBy(r => r.MonthlyAmounts.GetValueOrDefault(month))
+                          .ThenBy(r => r.Program);
+            }
+
+            return sortBy.ToLower() switch
+            {
+                "program"       when descending => rows.OrderByDescending(r => r.Program).ThenByDescending(r => r.ParentProject),
+                "program"                       => rows.OrderBy(r => r.Program).ThenBy(r => r.ParentProject),
+                "parentproject" when descending => rows.OrderByDescending(r => r.ParentProject).ThenByDescending(r => r.Program),
+                "parentproject"                 => rows.OrderBy(r => r.ParentProject).ThenBy(r => r.Program),
+                _                               => rows.OrderBy(r => r.Program).ThenBy(r => r.ParentProject)
+            };
+        }
     }
 }

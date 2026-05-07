@@ -10,15 +10,15 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
 
         [Required(ErrorMessage = "Project is required")]
         [Display(Name = "Project")]
-        [GridColumn(Order = 1, Width = 289, Type = GridColumnType.Text, IsFilterable = true)]
+        [GridColumn(Order = 1, Width = 289, Type = GridColumnType.Text, IsFilterable = false)]
         public string ProjectParent { get; set; } = null!;
 
         [Required(ErrorMessage = "Month is required")]        
-        [GridColumn(Order = 2, Width = 75, Type = GridColumnType.Number, IsFilterable = true)]
+        [GridColumn(Order = 2, Width = 75, Type = GridColumnType.Number, IsFilterable = false)]
         public int? Month { get; set; }
 
         [Required(ErrorMessage = "Amount is required")]        
-        [GridColumn(Order = 3, Width = 89, Type = GridColumnType.UsdValue)]
+        [GridColumn(Order = 3, Width = 89, Type = GridColumnType.GbpValue)]
         public decimal? Amount { get; set; }
         
         [GridColumn(Order = 4, Width = 129, Type = GridColumnType.GbpValue)]
@@ -30,12 +30,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         
         [GridColumn(Order = 6, Width = 109, Type = GridColumnType.GbpValue)]
         public decimal? ProfitLoss { get; set; }
-        
-        [GridColumn(Order = 7, Width = 177, Type = GridColumnType.Text, IsFilterable = true)]
-        public string? Detail { get; set; }
 
-        [Display(Name = "Invoice Counter")]
-        [GridColumn(Order = 8, Width = 159, Type = GridColumnType.Number)]
-        public int Counter { get; set; }
+        [StringLength(100)]
+        [GridColumn(Order = 7, Width = 177, Type = GridColumnType.Text, IsFilterable = false)]
+        public string? Detail { get; set; }
     }
 }

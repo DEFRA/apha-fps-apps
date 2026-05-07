@@ -1,3 +1,12 @@
+@using System.Security.Claims
+@{
+    // Get display name from claims (try multiple claim types)
+    var displayName = User.FindFirst("name")?.Value
+                      ?? User.FindFirst(ClaimTypes.GivenName)?.Value
+                      ?? User.FindFirst(ClaimTypes.Name)?.Value?.Split('@')[0]
+                      ?? "Unknown User";
+   
+}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -50,6 +59,7 @@
                 </div>
                 <div class="btn-group" style="display: flex; align-items: center; font-size: 16px;">
                     <button type="button" aria-label="user dropdown arrow to go home page" style="border: 0;" class="btn btn-secondary dropdown-toggle user-menu" data-bs-toggle="dropdown" aria-expanded="false">
+                        @displayName
                         <img src="~/images/circle-user-regular-full.svg" alt="user icon" width="24">
                             <img src="~/images/down-arrow.png" alt="dropdown arrow for logout of application" width="30" height="30">
                             </button>
@@ -83,7 +93,7 @@
                                                     <li><a class="dropdown-item" asp-area="FPS" asp-controller="ProgramStaffPlan" asp-action="Index">Plan STAFF for Entire Programme</a></li>
                                                     <li><a class="dropdown-item" asp-area="FPS" asp-controller="ProgramAnimalPlan" asp-action="Index">Plan Animals for Entire Programme</a></li>
                                                     <li><a class="dropdown-item" asp-area="FPS" asp-controller="ProgramTestPlan" asp-action="Index">Plan Test Purchases for Entire Programme</a></li>
-                                                    <li><a class="dropdown-item" href="#">Plan Additional cost for Entire Programme</a></li>
+                                                    <li><a class="dropdown-item" asp-area="FPS" asp-controller="ProgramAdditionalCostPlan" asp-action="Index">Plan Additional cost for Entire Programme</a></li>
                                                 </ul>
                                             </li>
                                             <li>

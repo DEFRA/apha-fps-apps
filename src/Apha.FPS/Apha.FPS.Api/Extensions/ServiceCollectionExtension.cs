@@ -34,10 +34,11 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IContractService, ContractService>();
             services.AddScoped<IYearMasterService, YearMasterService>();
             services.AddScoped<IProjectGroupService, ProjectGroupService>();
-services.AddScoped<ITestorProductService, TestorProductService>();
             services.AddScoped<ITimeCostCalcsService, TimeCostCalcsService>();
             services.AddScoped<IDivisionService, DivisionService>();
             services.AddScoped<IAgencyService, AgencyService>();
+            services.AddScoped<IAdditionalCostService, AdditionalCostService>();
+            services.AddScoped<IMonthlyOutputService, MonthlyOutputService>();
             services.AddScoped<IProfitCentreService, ProfitCentreService>();
             services.AddScoped<IResourceCentreGradeService, ResourceCentreGradeService>();
             services.AddScoped<IWorkGroupGradeService, WorkGroupGradeService>();
@@ -59,16 +60,18 @@ services.AddScoped<ITestorProductService, TestorProductService>();
             services.AddScoped<ICustomerRepository, CustomerRepository>();
             services.AddScoped<IContractRepository, ContractRepository>();
             services.AddScoped<IYearMasterRepository, YearMasterRepository>();
-services.AddScoped<IProjectGroupRepository, ProjectGroupRepository>();
-services.AddScoped<ITestorProductRepository, TestorProductRepository>();
+            services.AddScoped<IProjectGroupRepository, ProjectGroupRepository>();
             services.AddScoped<ITimeCostCalcsRepository, TimeCostCalcsRepository>();
             services.AddScoped<IDivisionRepository, DivisionRepository>();
             services.AddScoped<IAgencyRepository, AgencyRepository>();
+            services.AddScoped<IAdditionalCostRepository, AdditionalCostRepository>();
+            services.AddScoped<IMonthlyOutputRepository, MonthlyOutputRepository>();
             services.AddScoped<IProfitCentreRepository, ProfitCentreRepository>();
             services.AddScoped<IResourceCentreGradeRepository, ResourceCentreGradeRepository>();
             services.AddScoped<IWorkGroupGradeRepository, WorkGroupGradeRepository>();
             services.AddScoped<IWorkGroupEmployeeRepository, WorkGroupEmployeeRepository>();
             return services;
+
         }
     }
 }
