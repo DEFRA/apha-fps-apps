@@ -17,31 +17,25 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
     [Area("PACT")]
     [Authorize(Roles = "PACTAdmin,PACTUser")]
     [AuthorizeForScopes(ScopeKeySection = "PACTApiSettings:Scope")]
-    public class InvoiceController : Controller
+    public class SubContractController : Controller
     {
         private readonly IMapper _mapper;
-        private readonly IProjectInvoiceService _invoiceService;
+        private readonly IProjectSubContractService _subContractService;
         private readonly IProjectService _projectService;
         private readonly IMonthService _monthService;
 
-        public InvoiceController(
+        public SubContractController(
             IMapper mapper,
-            IProjectInvoiceService invoiceService,
+            IProjectSubContractService subContractService,
             IProjectService projectService,
             IMonthService monthService)
         {
             _mapper = mapper;
-            _invoiceService = invoiceService;
+            _subContractService = subContractService;
             _projectService = projectService;
             _monthService = monthService;
         }
 
-        /// <summary>
-        /// Displays the invoice management page with a paginated data grid, project dropdown, and month filter.
-        /// </summary>
-        /// <param name="parentProject">Optional parent project code to pre-filter the invoice grid.</param>
-        /// <param name="month">Optional month number to pre-filter the invoice grid.</param>
-        /// <returns>The Invoice Index view populated with grid configuration and filter options.</returns>
         public async Task<IActionResult> Index(string? parentProject, int? month)
         {
             var defaultRequest = new PaginationFilter<string>
@@ -58,7 +52,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 defaultRequest.Filter = $"{{\"Month\":\"{month.Value}\"}}";
             }
 
-            var gridConfig = await BuildInvoiceManualGridAsync(defaultRequest, parentProject, month);
+            var gridConfig = await BuildSubContractGridAsync(defaultRequest, parentProject, month);
 
             // Populate project dropdown for filter panel
             var projectsList = await GetProjectsListAsync();
@@ -70,25 +64,18 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             ViewBag.Projects = projectsList;
             ViewBag.FilterProjects = projectsList;
 
-            return View(new InvoiceViewModel
+            return View(new SubContractViewModel
             {
                 ParentProject = parentProject ?? string.Empty,
                 Month = month,
-                InvoicesGrid = gridConfig,
+                SubContractsGrid = gridConfig,
                 FilterProjects = projectsList,
                 FilterMonths = monthsList
             });
         }
 
-        /// <summary>
-        /// Reloads the invoice data grid partial view based on the supplied pagination, sort, and filter parameters.
-        /// </summary>
-        /// <param name="request">Pagination and filter parameters submitted from the data grid.</param>
-        /// <param name="parentProject">Optional parent project code to filter invoices.</param>
-        /// <param name="month">Optional month number to filter invoices.</param>
-        /// <returns>A partial view containing the refreshed data grid, or <see cref="BadRequestResult"/> if the model state is invalid.</returns>
         [HttpPost]
-        public async Task<IActionResult> LoadInvoicesGrid(PaginationFilter<string> request, string? parentProject, int? month)
+        public async Task<IActionResult> LoadSubContractsGrid(PaginationFilter<string> request, string? parentProject, int? month)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -104,52 +91,36 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 request.Filter = JsonConvert.SerializeObject(filterDict);
             }
 
-            var gridConfig = await BuildInvoiceManualGridAsync(request, parentProject, month);
+            var gridConfig = await BuildSubContractGridAsync(request, parentProject, month);
             return PartialView("_DataGrid", gridConfig);
         }
 
-        /// <summary>
-        /// Returns the add/edit invoice modal partial view for a new or existing invoice.
-        /// </summary>
-        /// <param name="id">The invoice counter of the invoice to edit, or <c>0</c> to create a new invoice.</param>
-        /// <param name="parentProject">Optional parent project code pre-populated on the new invoice form.</param>
-        /// <returns>
-        /// A partial view pre-populated with the invoice data, or <see cref="NotFoundResult"/> if the invoice does not exist.
-        /// Returns <see cref="BadRequestResult"/> if the model state is invalid.
-        /// </returns>
         [HttpGet]
-        public async Task<IActionResult> GetInvoice(int id, string? parentProject)
+        public async Task<IActionResult> GetSubContract(int id, string? parentProject)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
             await PopulateProjectsViewBagAsync();
+            await PopulateMonthsViewBagAsync();
 
             if (id == 0)
             {
-                return PartialView("_AddEditInvoice", new ProjectInvoiceItem
+                return PartialView("_AddEditSubContract", new SubContractItem
                 {
-                    ProjectParent = parentProject ?? string.Empty
+                    Project = parentProject ?? string.Empty
                 });
             }
 
-            var result = await _invoiceService.GetByIdAsync(id);
+            var result = await _subContractService.GetByIdAsync(id);
             if (!result.Success || result.Data == null) return NotFound();
 
-            var item = _mapper.Map<ProjectInvoiceItem>(result.Data);
-            return PartialView("_AddEditInvoice", item);
+            var item = _mapper.Map<SubContractItem>(result.Data);
+            return PartialView("_AddEditSubContract", item);
         }
 
-        /// <summary>
-        /// Creates or updates an invoice record based on the submitted model.
-        /// A new invoice is created when <see cref="ProjectInvoiceItem.InvoiceCounter"/> is <c>0</c>; otherwise the existing record is updated.
-        /// </summary>
-        /// <param name="model">The invoice data submitted from the add/edit modal form.</param>
-        /// <returns>
-        /// A JSON response indicating success or failure. On validation failure, field-level error details are included.
-        /// </returns>
         [HttpPost]
-        public async Task<IActionResult> SaveInvoice([FromBody] ProjectInvoiceItem model)
+        public async Task<IActionResult> SaveSubContract([FromBody] SubContractItem model)
         {
             if (!ModelState.IsValid)
                 return Json(new
@@ -165,19 +136,19 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                         }))
                 });
 
-            var dto = _mapper.Map<ProjectInvoiceDto>(model);
-            ApiResponseDto<ProjectInvoiceDto> result;
+            var dto = _mapper.Map<ProjectSubContractDto>(model);
+            ApiResponseDto<ProjectSubContractDto> result;
             string successMsg;
 
-            if (model.InvoiceCounter == 0)
+            if (model.SubContCounter == 0)
             {
-                result = await _invoiceService.CreateAsync(dto);
-                successMsg = "Invoice saved successfully.";
+                result = await _subContractService.CreateAsync(dto);
+                successMsg = "Sub Contract saved successfully.";
             }
             else
             {
-                result = await _invoiceService.UpdateAsync(model.InvoiceCounter, dto);
-                successMsg = "Invoice updated successfully.";
+                result = await _subContractService.UpdateAsync(model.SubContCounter, dto);
+                successMsg = "SubContract updated successfully.";
             }
 
             if (result.Success)
@@ -186,7 +157,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return Json(new
             {
                 success = false,
-                message = "Failed to save invoice.",
+                message = "Failed to save subcontract.",
                 errors = (result.Errors ?? new List<ApiErrorDto>()).Select(e => new
                 {
                     field = e.Code ?? string.Empty,
@@ -195,36 +166,22 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             });
         }
 
-        /// <summary>
-        /// Deletes the invoice with the specified identifier.
-        /// </summary>
-        /// <param name="id">The invoice counter of the invoice to delete.</param>
-        /// <returns>
-        /// A JSON response indicating success or failure.
-        /// Returns <see cref="BadRequestResult"/> if the model state is invalid.
-        /// </returns>
         [HttpDelete]
-        public async Task<IActionResult> DeleteInvoice(int id)
+        public async Task<IActionResult> DeleteSubContract(int id)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var result = await _invoiceService.DeleteAsync(id);
+            var result = await _subContractService.DeleteAsync(id);
             if (result.Success)
                 return Json(new { success = true });
 
-            return Json(new { success = false, message = "Failed to delete invoice." });
-        }        
+            return Json(new { success = false, message = "Failed to delete subcontract." });
+        }
 
-        /// <summary>
-        /// Builds the invoice data grid configuration by fetching paged invoice data from the service
-        /// and applying any active pagination, sort, and filter state.
-        /// </summary>
-        /// <param name="request">Pagination and filter parameters for the grid query.</param>
-        /// <param name="parentProject">Optional parent project code used to scope the invoice query.</param>
-        /// <param name="month">Optional month number injected into the filter when not already present.</param>
-        /// <returns>A fully configured <see cref="DataGridConfig{T}"/> ready for rendering.</returns>
-        private async Task<DataGridConfig<ProjectInvoiceItem>> BuildInvoiceManualGridAsync(
+        // ── PRIVATE GRID BUILDERS ─────────────────────────────────────────────
+
+        private async Task<DataGridConfig<SubContractItem>> BuildSubContractGridAsync(
             PaginationFilter<string> request, string? parentProject, int? month = null)
         {
             var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}")
@@ -238,11 +195,11 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             }
 
             var query = _mapper.Map<QueryParameters<string>>(request);
-            var response = await _invoiceService.GetPagedProjectInvoiceManualAsync(query, parentProject);
+            var response = await _subContractService.GetPagedProjectSubContractsAsync(query, parentProject);
 
             var items = response.Data != null
-                ? _mapper.Map<List<ProjectInvoiceItem>>(response.Data)
-                : new List<ProjectInvoiceItem>();
+                ? _mapper.Map<List<SubContractItem>>(response.Data)
+                : new List<SubContractItem>();
 
             var pagination = response.Pagination != null
                 ? _mapper.Map<PaginationModel>(response.Pagination)
@@ -258,30 +215,24 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
             string queryString = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : string.Empty;
 
-            return new DataGridConfig<ProjectInvoiceItem>
+            return new DataGridConfig<SubContractItem>
             {
-                GridId = "invoicesGrid",
-                Title = "Invoice Record",
-                KeyProperty = "InvoiceCounter",
-                AddFunction = "addInvoice",
-                EditFunction = "editInvoice",
-                DeleteFunction = "deleteInvoice",
-                BindGridUrl = $"/PACT/Invoice/LoadInvoicesGrid{queryString}",
+                GridId = "subContractsGrid",
+                Title = "Sub Contracts",
+                KeyProperty = "SubContCounter",
+                AddFunction = "addSubContract",
+                EditFunction = "editSubContract",
+                DeleteFunction = "deleteSubContract",
+                BindGridUrl = $"/PACT/SubContract/LoadSubContractsGrid{queryString}",
                 Data = items,
-                Columns = GridDataProvider.GetColumnsDefination<ProjectInvoiceItem>(),
+                Columns = GridDataProvider.GetColumnsDefination<SubContractItem>(),
                 Pagination = pagination,
                 CurrentFilters = filterDict
             };
         }
 
-        /// <summary>
-        /// Retrieves an ordered list of all PACT projects formatted as <see cref="SelectListItem"/> entries
-        /// for use in project filter dropdowns.
-        /// </summary>
-        /// <returns>An ordered list of project select items, or an empty list if none are available.</returns>
         private async Task<List<SelectListItem>> GetProjectsListAsync()
         {
-
             var result = await _projectService.GetAllPactProjectsAsync();
 
             if (result != null && result.Success && result.Data != null && result.Data.Count > 0)
@@ -301,14 +252,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             {
                 return new List<SelectListItem>();
             }
-
         }
 
-        /// <summary>
-        /// Retrieves an ordered list of all months formatted as <see cref="SelectListItem"/> entries
-        /// for use in month filter dropdowns.
-        /// </summary>
-        /// <returns>An ordered list of month select items in the format "number - name", or an empty list if none are available.</returns>
         private async Task<List<SelectListItem>> GetMonthsListAsync()
         {
             var result = await _monthService.GetAllMonthsAsync();
@@ -332,12 +277,13 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             }
         }
 
-        /// <summary>
-        /// Populates <c>ViewBag.Projects</c> with the list of PACT projects for use in modal form dropdowns.
-        /// </summary>
         private async Task PopulateProjectsViewBagAsync()
         {
             ViewBag.Projects = await GetProjectsListAsync();
+        }
+
+        private async Task PopulateMonthsViewBagAsync()
+        {
             ViewBag.Months = await GetMonthsListAsync();
         }
     }
