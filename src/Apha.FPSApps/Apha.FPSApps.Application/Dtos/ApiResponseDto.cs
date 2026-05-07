@@ -8,7 +8,7 @@
         public List<ApiErrorDto>? Errors { get; set; } = new();
         public ApiMetaDto Meta { get; set; } = new();
 
-        public static ApiResponseDto<T> SuccessResponse(T data, PaginationDto? pagination = null)
+        public static ApiResponseDto<T> SuccessResponse(T? data, PaginationDto? pagination = null)
         {
             return new ApiResponseDto<T>
             {
