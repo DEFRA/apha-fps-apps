@@ -17,12 +17,12 @@ namespace Apha.FPS.DataAccess.Repositories
         /// <summary>
         /// Returns all profit centres ordered by ProfitCentreId.
         /// </summary>
-        public async Task<List<ProfitCentre>> GetProfitCentresAsync(CancellationToken cancellationToken = default)
+        public async Task<List<ProfitCentre>> GetProfitCentresAsync()
         {
             return await _dbContext.ProfitCentres
                 .AsNoTracking()
                 .OrderBy(x => x.ProfitCentreId)
-                .ToListAsync(cancellationToken);
+                .ToListAsync();
         }
     }
 }

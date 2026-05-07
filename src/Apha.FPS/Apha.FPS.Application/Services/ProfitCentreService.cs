@@ -16,9 +16,9 @@ namespace Apha.FPS.Application.Services
             _mapper = mapper;
         }
 
-        public async Task<List<ProfitCentreDto>> GetProfitCentresAsync(CancellationToken cancellationToken = default)
+        public async Task<List<ProfitCentreDto>> GetProfitCentresAsync()
         {
-            var result = await _repository.GetProfitCentresAsync(cancellationToken);
+            var result = await _repository.GetProfitCentresAsync();
             return _mapper.Map<List<ProfitCentreDto>>(result);
         }
     }

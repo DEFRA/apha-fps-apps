@@ -29,9 +29,9 @@ namespace Apha.FPS.Api.Controllers
         /// Returns all profit centres for the Resource Centre dropdown.
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> GetProfitCentresAsync(CancellationToken cancellationToken)
+        public async Task<IActionResult> GetProfitCentresAsync()
         {
-            var result = await _profitCentreService.GetProfitCentresAsync(cancellationToken);
+            var result = await _profitCentreService.GetProfitCentresAsync();
             return Ok(_mapper.Map<List<ProfitCentreRes>>(result));
         }
     }

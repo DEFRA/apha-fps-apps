@@ -4,6 +4,6 @@ namespace Apha.FPS.Application.Interfaces
 {
     public interface IProfitCentreService
     {
-        Task<List<ProfitCentreDto>> GetProfitCentresAsync(CancellationToken cancellationToken = default);
+        Task<List<ProfitCentreDto>> GetProfitCentresAsync();
     }
 }
