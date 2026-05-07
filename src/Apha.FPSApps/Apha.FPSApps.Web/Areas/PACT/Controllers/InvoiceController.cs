@@ -280,6 +280,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         private async Task PopulateProjectsViewBagAsync()
         {
             ViewBag.Projects = await GetProjectsListAsync();
+            ViewBag.Months = await GetMonthsListAsync();
         }
     }
 }

@@ -28,11 +28,11 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         public decimal? Amount { get; set; }
 
         [Display(Name = "Work Group")]
-        [GridColumn(Order = 5, Width = 109, Type = GridColumnType.Text,IsFilterable =false)]
+        [GridColumn(Order = 5, Width = 109, Type = GridColumnType.Text,IsFilterable =true)]
         public string? WorkGroup { get; set; }
 
         [Display(Name = "Test Job")]
-        [GridColumn(Order = 6, Width = 86, Type = GridColumnType.Text, IsFilterable = false)]
+        [GridColumn(Order = 6, Width = 86, Type = GridColumnType.Text, IsFilterable = true)]
         public string? TestJob { get; set; }
 
         [Display(Name = "SCtCntr")]
@@ -46,11 +46,11 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
 
         [StringLength(100)]
         [Display(Name = "Supplier")]
-        [GridColumn(Order = 9, Width = 150, Type = GridColumnType.Text, IsFilterable = false)]
+        [GridColumn(Order = 9, Width = 150, Type = GridColumnType.Text, IsFilterable = true)]
         public string? Supplier { get; set; }
 
         [Display(Name = "Supplier Number")]
-        [GridColumn(Order = 10, Width = 150, Type = GridColumnType.Number, IsFilterable=false)]
+        [GridColumn(Order = 10, Width = 150, Type = GridColumnType.Number, IsFilterable=true)]
         public int? SupplierNumber { get; set; }
     }
 }

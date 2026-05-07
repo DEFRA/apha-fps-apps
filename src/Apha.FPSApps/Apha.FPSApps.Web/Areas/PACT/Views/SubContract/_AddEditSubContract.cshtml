@@ -26,10 +26,10 @@
 
         @if (isEdit)
         {
-            <div class="govuk-grid-row sup_margin_top_10" id="divSubContCounter">
+            <div class="govuk-grid-row sup_margin_top_10" id="divSubContCounter" style="display: none;">
                 <div class="govuk-grid-column-one-half">
                     <div class="govuk-form-group sup_margin_bottom_10">
-                        <label class="govuk-label" asp-for="SubContCounter">SubContract Counter</label>
+                        <label class="govuk-label" asp-for="SubContCounter" style="display: none;">SubContract Counter</label>
                         <div class="govuk-input__wrapper">
                             <input class="govuk-input govuk-!-font-size-16" value="@Model.SubContCounter" readonly disabled />
                         </div>
