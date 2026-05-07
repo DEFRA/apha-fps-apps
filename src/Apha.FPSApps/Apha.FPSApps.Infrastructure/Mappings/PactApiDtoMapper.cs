@@ -21,9 +21,15 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<TestCapabilityDto, TestCapabilityReq>().ReverseMap();
             CreateMap<TestCapabilityDto, TestCapabilityRes>().ReverseMap();
             CreateMap<TestRequirementDto, TestRequirementReq>().ReverseMap();
-            CreateMap<TestRequirementDto, TestRequirementtRes>().ReverseMap();            
+            CreateMap<TestRequirementDto, TestRequirementtRes>().ReverseMap();
             CreateMap<TestorProductDto, TestorProductReq>().ReverseMap();
             CreateMap<TestorProductDto, TestorProductRes>().ReverseMap();
+
+            CreateMap<ProjectMonthDto, ProjectMonthReq>().ReverseMap();
+            CreateMap<ProjectMonthDto, ProjectMonthRes>().ReverseMap();
+            CreateMap<MonthDto, MonthRes>().ReverseMap();
+            CreateMap<ProjectProfileGraphDto, ProjectProfileGraphRes>().ReverseMap();
+            CreateMap<ProjectProfileCumulativeGraphDto, ProjectProfileCumulativeGraphRes>().ReverseMap();
         }
     }
 }

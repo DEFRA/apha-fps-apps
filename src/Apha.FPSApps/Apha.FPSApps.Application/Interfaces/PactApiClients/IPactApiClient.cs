@@ -10,5 +10,7 @@
         IPactTestCapabilityApiClient PactWorkGroupTestCapability { get; }
         IPactTestRequirementApiClient PactTestRequirement { get; }
         IPactTestorProductApiClient PactTestList { get; }
+        IPactProjectMonthApiClient PactProjectMonth { get; }
+        IPactProjectProfileApiClient PactProjectProfile { get; }
     }
 }

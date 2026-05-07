@@ -79,5 +79,17 @@ namespace Apha.Common.Constants
         // Lookups
         //public const string GetAllTestorProducts = "api/v1/testcapability/testorproducts";
         public const string GetTestReqmtPricing = "api/v1/testrequirement/pricing";
+
+        // Project Month (Cost Profile Grid)
+        public const string GetMonths = "api/v1/projectmonth/months";
+        public const string GetProjectMonthsByProject = "api/v1/projectmonth/project/{0}";
+        public const string GetProjectMonthById = "api/v1/projectmonth/project/{0}/month/{1}";
+        public const string CreateProjectMonth = "api/v1/projectmonth";
+        public const string UpdateProjectMonth = "api/v1/projectmonth";
+        public const string DeleteProjectMonth = "api/v1/projectmonth/project/{0}/month/{1}";
+
+        // Project Profile Graph
+        public const string GetProjectProfileGraph = "api/v1/projectprofile/{0}/graph";
+        public const string GetProjectProfileCumulativeGraph = "api/v1/projectprofile/{0}/graph/cumulative";
     }
 }
