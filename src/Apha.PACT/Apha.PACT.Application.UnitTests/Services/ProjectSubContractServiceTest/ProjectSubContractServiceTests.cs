@@ -354,5 +354,254 @@ namespace Apha.PACT.Application.UnitTests.Services.ProjectSubContractServiceTest
         }
 
         #endregion
+
+        #region GetMonthlySubContractsSummaryAsync
+
+        private static MonthlySubContractsSummary MakeSummary(string program, string parentProject, double month, decimal? amount = null)
+            => new() { FpsYear = 2024, Program = program, ParentProject = parentProject, Month = month, MonthlyAmount = amount };
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_ValidQuery_CallsRepositoryWithMappedParameters()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string>();
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetMonthlySubContractsSummaryAsync(mappedParams).Returns([]);
+
+            await _sut.GetMonthlySubContractsSummaryAsync(query);
+
+            _mockMapper.Received(1).Map<PaginationParameters<string>>(query);
+            await _mockRepository.Received(1).GetMonthlySubContractsSummaryAsync(mappedParams);
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_EmptyData_ReturnsEmptyPivot()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string>();
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetMonthlySubContractsSummaryAsync(mappedParams).Returns([]);
+
+            var result = await _sut.GetMonthlySubContractsSummaryAsync(query);
+
+            result.Rows.Should().BeEmpty();
+            result.Months.Should().BeEmpty();
+            result.Pagination.TotalRecords.Should().Be(0);
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_SingleRow_ReturnsCorrectPivotRow()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string>();
+            var data = new List<MonthlySubContractsSummary>
+            {
+                MakeSummary("ADMIN", "AH", 1, 100m),
+                MakeSummary("ADMIN", "AH", 2, 200m)
+            };
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetMonthlySubContractsSummaryAsync(mappedParams).Returns(data);
+
+            var result = await _sut.GetMonthlySubContractsSummaryAsync(query);
+
+            result.Rows.Should().HaveCount(1);
+            result.Rows[0].Program.Should().Be("ADMIN");
+            result.Rows[0].ParentProject.Should().Be("AH");
+            result.Rows[0].MonthlyAmounts[1].Should().Be(100m);
+            result.Rows[0].MonthlyAmounts[2].Should().Be(200m);
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_MultipleGroups_GroupsByProgramAndParentProject()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string>();
+            var data = new List<MonthlySubContractsSummary>
+            {
+                MakeSummary("ADMIN", "AH",  1, 100m),
+                MakeSummary("ADMIN", "AH",  2, 200m),
+                MakeSummary("BETA",  "ZZ",  1, 300m)
+            };
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetMonthlySubContractsSummaryAsync(mappedParams).Returns(data);
+
+            var result = await _sut.GetMonthlySubContractsSummaryAsync(query);
+
+            result.Rows.Should().HaveCount(2);
+            result.Pagination.TotalRecords.Should().Be(2);
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_DiscoverMonths_ReturnsDistinctOrderedMonths()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string>();
+            var data = new List<MonthlySubContractsSummary>
+            {
+                MakeSummary("ADMIN", "AH", 3, 300m),
+                MakeSummary("ADMIN", "AH", 1, 100m),
+                MakeSummary("BETA",  "ZZ", 1, 200m)
+            };
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetMonthlySubContractsSummaryAsync(mappedParams).Returns(data);
+
+            var result = await _sut.GetMonthlySubContractsSummaryAsync(query);
+
+            result.Months.Should().BeInAscendingOrder();
+            result.Months.Should().Equal(1, 3);
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_NullMonthlyAmount_TreatedAsZero()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string>();
+            var data = new List<MonthlySubContractsSummary>
+            {
+                MakeSummary("ADMIN", "AH", 1, null)
+            };
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetMonthlySubContractsSummaryAsync(mappedParams).Returns(data);
+
+            var result = await _sut.GetMonthlySubContractsSummaryAsync(query);
+
+            result.Rows[0].MonthlyAmounts[1].Should().Be(0m);
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_Pagination_ReturnsCorrectPage()
+        {
+            var query = new QueryParameters<string> { Page = 2, PageSize = 1 };
+            var mappedParams = new PaginationParameters<string>();
+            var data = new List<MonthlySubContractsSummary>
+            {
+                MakeSummary("ADMIN", "AH", 1, 100m),
+                MakeSummary("BETA",  "ZZ", 1, 200m)
+            };
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetMonthlySubContractsSummaryAsync(mappedParams).Returns(data);
+
+            var result = await _sut.GetMonthlySubContractsSummaryAsync(query);
+
+            result.Rows.Should().HaveCount(1);
+            result.Pagination.PageNumber.Should().Be(2);
+            result.Pagination.PageSize.Should().Be(1);
+            result.Pagination.TotalRecords.Should().Be(2);
+            result.Pagination.TotalPages.Should().Be(2);
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_PageLessThanOne_DefaultsToPageOne()
+        {
+            var query = new QueryParameters<string> { Page = 0, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string>();
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetMonthlySubContractsSummaryAsync(mappedParams).Returns([]);
+
+            var result = await _sut.GetMonthlySubContractsSummaryAsync(query);
+
+            result.Pagination.PageNumber.Should().Be(1);
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_PageSizeLessThanOne_DefaultsToTen()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 0 };
+            var mappedParams = new PaginationParameters<string>();
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetMonthlySubContractsSummaryAsync(mappedParams).Returns([]);
+
+            var result = await _sut.GetMonthlySubContractsSummaryAsync(query);
+
+            result.Pagination.PageSize.Should().Be(10);
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_NoSortBy_SortsByProgramThenParentProject()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string>();
+            var data = new List<MonthlySubContractsSummary>
+            {
+                MakeSummary("ZETA",  "BB", 1, 300m),
+                MakeSummary("ADMIN", "CC", 1, 100m),
+                MakeSummary("ADMIN", "AA", 1, 200m)
+            };
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetMonthlySubContractsSummaryAsync(mappedParams).Returns(data);
+
+            var result = await _sut.GetMonthlySubContractsSummaryAsync(query);
+
+            result.Rows[0].Program.Should().Be("ADMIN");
+            result.Rows[0].ParentProject.Should().Be("AA");
+            result.Rows[1].Program.Should().Be("ADMIN");
+            result.Rows[1].ParentProject.Should().Be("CC");
+            result.Rows[2].Program.Should().Be("ZETA");
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_SortByProgramDescending_SortsCorrectly()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10, SortBy = "program", Descending = true };
+            var mappedParams = new PaginationParameters<string>();
+            var data = new List<MonthlySubContractsSummary>
+            {
+                MakeSummary("ADMIN", "AH", 1, 100m),
+                MakeSummary("ZETA",  "ZZ", 1, 200m)
+            };
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetMonthlySubContractsSummaryAsync(mappedParams).Returns(data);
+
+            var result = await _sut.GetMonthlySubContractsSummaryAsync(query);
+
+            result.Rows[0].Program.Should().Be("ZETA");
+            result.Rows[1].Program.Should().Be("ADMIN");
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_SortByMonthColumn_SortsByMonthlyAmount()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10, SortBy = "M1", Descending = false };
+            var mappedParams = new PaginationParameters<string>();
+            var data = new List<MonthlySubContractsSummary>
+            {
+                MakeSummary("ZETA",  "ZZ", 1, 500m),
+                MakeSummary("ADMIN", "AH", 1, 100m)
+            };
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetMonthlySubContractsSummaryAsync(mappedParams).Returns(data);
+
+            var result = await _sut.GetMonthlySubContractsSummaryAsync(query);
+
+            result.Rows[0].MonthlyAmounts[1].Should().Be(100m);
+            result.Rows[1].MonthlyAmounts[1].Should().Be(500m);
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_RepositoryThrows_PropagatesException()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string>();
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetMonthlySubContractsSummaryAsync(mappedParams)
+                .ThrowsAsync(new Exception("DB error"));
+
+            await Assert.ThrowsAsync<Exception>(() => _sut.GetMonthlySubContractsSummaryAsync(query));
+        }
+
+        #endregion
     }
 }
