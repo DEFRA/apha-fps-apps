@@ -168,7 +168,7 @@
                     </div>
                     <div class="summary-item">
                         <label style="display:block" for="ProfitLoss">Profit/(Loss):</label>
-                        <input type="text" value="@Model.ProfitLoss.ToString("C0")" aria-label="Profit/(Loss)" id="ProfitLoss" class="form-control form-control-sm @(Model.ProfitLoss < 0 ? "text-danger" : "text-success")" name="Profit/(Loss)" asp-for="ProfitLoss">
+                        <input type="text" value="@(Model.ProfitLoss < 0 ? $"(£{Math.Abs(Model.ProfitLoss):N0})" : Model.ProfitLoss.ToString("C0"))" aria-label="Profit/(Loss)" id="ProfitLoss" class="form-control form-control-sm @(Model.ProfitLoss < 0 ? "text-danger" : "text-primary")" name="Profit/(Loss)" asp-for="ProfitLoss">
                     </div>
                     <div class="summary-item">
                         <label style="display:block" for="TargetProfit">Target Profit:</label>
@@ -176,7 +176,7 @@
                     </div>
                     <div class="summary-item">
                         <label style="display:block" for="OffTarget">Off - Target:</label>
-                        <input type="text" value="@Model.OffTarget.ToString("C0")" aria-label="Off - Target" id="OffTarget" class="form-control form-control-sm @(Model.OffTarget < 0 ? "text-danger" : "text-success")" name="Off - Target" asp-for="OffTarget">
+                        <input type="text" value="@(Model.OffTarget < 0 ? $"(£{Math.Abs(Model.OffTarget):N0})" : Model.OffTarget.ToString("C0"))" aria-label="Off - Target" id="OffTarget" class="form-control form-control-sm @(Model.OffTarget < 0 ? "text-danger" : "text-primary")" name="Off - Target" asp-for="OffTarget">
                     </div>
                 </div>
             </footer>
@@ -194,7 +194,8 @@
         // ---- Currency helpers ----
 
         function formatGBP(value) {
-            return new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
+            var formatted = new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(Math.abs(value));
+            return value < 0 ? '-(' + formatted + ')' : formatted;
         }
 
         function parseCurrency(str) {
@@ -207,8 +208,8 @@
         }
 
         function applyValueColour(selector, value) {
-            $(selector).removeClass('text-danger text-success')
-                       .addClass(value < 0 ? 'text-danger' : 'text-success');
+            $(selector).removeClass('text-danger text-primary')
+                       .addClass(value < 0 ? 'text-danger' : 'text-primary');
         }
 
         // ---- Financial summary ----
