@@ -12,10 +12,12 @@ namespace Apha.FPS.DataAccess.Repositories
     public class TimeCostCalcsRepository : BaseRepository, ITimeCostCalcsRepository
     {
         private readonly FpsDbContext _dbContext;
+        private readonly IFpsRequestContext _requestContext;
 
-        public TimeCostCalcsRepository(FpsDbContext dbContext) : base(dbContext)
+        public TimeCostCalcsRepository(FpsDbContext dbContext, IFpsRequestContext requestContext) : base(dbContext)
         {
             _dbContext = dbContext;
+            _requestContext = requestContext;
         }
 
         public async Task<PagedData<TimeCostCalcsView>> GetTimeCostCalcsByProjectAsync(
@@ -23,7 +25,9 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             var baseQuery = _dbContext.TimeCostCalcsViews
                 .AsNoTracking()
-                .Where(x => x.Project == projectCode)
+                .Where(x => x.Project == projectCode 
+                            && x.UserEmail != null
+                            && x.UserEmail.ToLower() == _requestContext.UserEmailId)
                 .Select(x => new TimeCostCalcsView
                 {
                     WorkGroup  = x.WorkGroup,
@@ -53,7 +57,9 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var totals = await _dbContext.TimeCostCalcsViews
                 .AsNoTracking()
-                .Where(x => x.Project == projectCode)
+                .Where(x => x.Project == projectCode
+                            && x.UserEmail != null
+                            && x.UserEmail.ToLower() == _requestContext.UserEmailId)
                 .Select(x => new TimeCostCalcsView
                 {
                     WorkGroup = x.WorkGroup,

@@ -16,5 +16,8 @@ namespace Apha.FPS.Core.Entities
         public string? Division { get; set; }
         public string? JobCodeOld { get; set; }
         public int? FpsYear { get; set; }
+        public int? UserId { get; set; }
+        public string? Dt2UserName { get; set; }
+        public string? UserEmail { get; set; }
     }
 }
