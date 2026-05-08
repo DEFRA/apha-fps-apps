@@ -54,6 +54,9 @@ namespace Apha.FPSApps.Application.Services.FPS
         public async Task<ApiResponseDto<List<ContractDto>>> GetAllContractsAsync()
             => await _fpsClient.FpsLookup.GetAllContractsAsync();
 
+        public async Task<ApiResponseDto<List<ContractDto>>> GetContractsByUserAsync()
+            => await _fpsClient.FpsProject.GetContractsByUserAsync();
+
         public async Task<ApiResponseDto<List<ProjectDto>>> GetProjectsByProgramAsync(QueryParameters<string> query, string programNo)
             => await _fpsClient.FpsProject.GetProjectsByProgramAsync(query, programNo);
 
@@ -84,6 +87,9 @@ namespace Apha.FPSApps.Application.Services.FPS
 
         public Task<ApiResponseDto<List<ProjectGroupDto>>> GetProjectGroupsAsync()
             => _fpsClient.FpsProject.GetProjectGroupsAsync();
+
+        public Task<ApiResponseDto<List<ProjectGroupDto>>> GetProjectGroupsByUserAsync()
+            => _fpsClient.FpsProject.GetProjectGroupsByUserAsync();
 
         public Task<ApiResponseDto<List<AccountCodeDto>>> GetAccountCodesAsync()
             => _fpsClient.FpsProject.GetAccountCodesAsync();

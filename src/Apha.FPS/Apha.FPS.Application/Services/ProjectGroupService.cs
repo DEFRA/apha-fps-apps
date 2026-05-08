@@ -21,5 +21,11 @@ namespace Apha.FPS.Application.Services
             var projectGroups = await _projectGroupRepository.GetAllProjectGroupsAsync();
             return _mapper.Map<IEnumerable<ProjectGroupDto>>(projectGroups);
         }
+
+        public async Task<IEnumerable<ProjectGroupDto>> GetAllProjectGroupsByUserAsync()
+        {
+            var projectGroups = await _projectGroupRepository.GetAllProjectGroupsByUserAsync();
+            return _mapper.Map<IEnumerable<ProjectGroupDto>>(projectGroups);
+        }
     }
 }

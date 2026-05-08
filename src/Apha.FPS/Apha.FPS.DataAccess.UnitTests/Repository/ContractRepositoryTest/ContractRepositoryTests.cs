@@ -34,7 +34,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ContractRepositoryTest
             mockContext.Setup(x => x.UserCategories).Returns(userCategoriesMockSet.Object);
             mockContext.Setup(x => x.Users).Returns(usersMockSet.Object);
 
-            return new ContractRepository(mockContext.Object);
+            return new ContractRepository(mockContext.Object, fpsYearContext);
         }
 
         #region GetAllContractsAsync

@@ -19,6 +19,7 @@ namespace Apha.FPSApps.Application.Interfaces.FPS
         Task<ApiResponseDto<List<DiseaseDto>>> GetAllDiseasesAsync();
         Task<ApiResponseDto<List<CustomerDto>>> GetAllCustomersAsync();
         Task<ApiResponseDto<List<ContractDto>>> GetAllContractsAsync();
+        Task<ApiResponseDto<List<ContractDto>>> GetContractsByUserAsync();
         Task<ApiResponseDto<List<ProjectDto>>> GetProjectsByProgramAsync(QueryParameters<string> query, string programNo);
         Task<ApiResponseDto<List<ProjectGroupDto>>> GetAllProjectGroupsAsync();
 
@@ -31,6 +32,7 @@ namespace Apha.FPSApps.Application.Interfaces.FPS
         Task<ApiResponseDto<List<ManagerDto>>> GetManagersAsync();
         Task<ApiResponseDto<List<CostCentreWorkgroupDto>>> GetCostCentresAsync();
         Task<ApiResponseDto<List<ProjectGroupDto>>> GetProjectGroupsAsync();
+        Task<ApiResponseDto<List<ProjectGroupDto>>> GetProjectGroupsByUserAsync();
         Task<ApiResponseDto<List<AccountCodeDto>>> GetAccountCodesAsync();
         Task<ApiResponseDto<List<SubAccountDto>>> GetSubAccountsAsync();
     }

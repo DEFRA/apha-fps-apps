@@ -26,7 +26,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectGroupRepositoryTest
             var projectGroupsMockSet = RepositoryTestHelper.CreateMockDbSet(projectGroups);
             mockContext.Setup(x => x.ProjectGroups).Returns(projectGroupsMockSet.Object);
 
-            return new ProjectGroupRepository(mockContext.Object);
+            return new ProjectGroupRepository(mockContext.Object, fpsYearContext);
         }
 
         #region GetAllProjectGroupsAsync

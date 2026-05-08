@@ -23,6 +23,8 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         Task<ApiResponseDto<List<ManagerDto>>> GetManagersAsync();
         Task<ApiResponseDto<List<CostCentreWorkgroupDto>>> GetCostCentresAsync();
         Task<ApiResponseDto<List<ProjectGroupDto>>> GetProjectGroupsAsync();
+        Task<ApiResponseDto<List<ProjectGroupDto>>> GetProjectGroupsByUserAsync();
+        Task<ApiResponseDto<List<ContractDto>>> GetContractsByUserAsync();
         Task<ApiResponseDto<List<AccountCodeDto>>> GetAccountCodesAsync();
         Task<ApiResponseDto<List<SubAccountDto>>> GetSubAccountsAsync();
     }

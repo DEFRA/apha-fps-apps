@@ -5,7 +5,7 @@
     ViewData["Title"] = isEditMode ? $"Edit Project - {Model.ParentProject}" : "Add New Project";
     
     var formId = isEditMode ? "editProgrammeNewProjectForm" : "addProgrammeNewProjectForm";
-    var submitButtonText = isEditMode ? "Update" : "Save";
+    var submitButtonText = isEditMode ? "Save" : "Save";
 }
 
 <main id="main-content">
@@ -82,20 +82,24 @@
                             </div>
                             <div class="col-lg-6">
                                 <div class="action-buttons">
-                                    <button class="govuk-button sup_margin_0" type="button" onclick="submitProject()">
-                                         @submitButtonText
-                                     </button>
-                                    <button class="govuk-button govuk-button--secondary sup_margin_0" type="button"
-                                            onclick="window.location.href='@Url.Action("Index", "Project", new { area = "FPS" })'">
-                                        Cancel
-                                    </button>
                                     @if (isEditMode)
                                     {
+                                        <button class="govuk-button sup_margin_0" type="button"
+                                                onclick="window.location.href='@Url.Action("Add", "Project", new { area = "FPS" })'">
+                                            Add Another Project
+                                        </button>
+                                        <button class="govuk-button sup_margin_0" type="button"
+                                                onclick="planProject()">
+                                            Plan this Project
+                                        </button>
                                         <button class="govuk-button govuk-button--warning sup_margin_0" type="button"
                                                 onclick="handleDeleteProject()">
                                              Delete this Project
                                          </button>
                                     }
+                                    <button class="govuk-button sup_margin_0" type="button" onclick="submitProject()">
+                                         @submitButtonText
+                                     </button>
                                 </div>
                             </div>
                         </div>
@@ -392,21 +396,42 @@
         }
 
         window.submitProject = function() {
-            const form = document.querySelector('form[data-parent-project]');
-            const formId = form.id;
-            const isEdit = form.dataset.isEdit === 'true';
-            const parentProject = form.dataset.parentProject;
-            clearValidationErrors('#main-content');
-            stripCurrencyFormatting();
-            const $form = $('#' + formId);
-            if (!$form.valid()) { displayClientValidationErrors($form, '#main-content'); return; }
-            submitForm(formId, isEdit, parentProject);
+            try {
+      
+                const form = document.querySelector('form[data-parent-project]');
+                const formId = form.id;
+                const isEdit = form.dataset.isEdit === 'true';
+                const parentProject = form.dataset.parentProject;
+                if (typeof clearValidationErrors === 'function') clearValidationErrors('#main-content');
+                stripCurrencyFormatting();
+                const $form = $('#' + formId);
+                if ($form.data('validator') && !$form.valid()) {
+                    if (typeof displayClientValidationErrors === 'function') displayClientValidationErrors($form, '#main-content');
+                    // Re-format currency fields so they don't look stripped
+                    currencyFieldNames.forEach(function (name) {
+                        var $field = $('[name="' + name + '"]');
+                        var raw = parseCurrencyValue($field.val());
+                        if (raw !== '' && !isNaN(parseFloat(raw))) {
+                            $field.val(formatCurrency(raw));
+                        }
+                    });
+                    return;
+                }
+                submitForm(formId, isEdit, parentProject);
+            } catch (e) {
+                console.error('submitProject error:', e);
+                showGovukAlert('An error occurred: ' + e.message);
+            }
         };
 
         window.handleDeleteProject = function() {
             const form = document.querySelector('form[data-parent-project]');
             const parentProject = form.dataset.parentProject;
             deleteProject(parentProject);
+        };
+
+        window.planProject = function() {
+            // TODO: Navigate to project planning page when ready
         };
 
         function submitForm(formId, isEdit, parentProject) {
@@ -445,9 +470,22 @@
                 },
                 body: JSON.stringify(data)
             })
-            .then(r => r.json())
+            .then(r => {
+                if (!r.ok) {
+                    return r.text().then(t => { throw new Error('Server returned ' + r.status + ': ' + t); });
+                }
+                return r.json();
+            })
             .then(result => {
                 if (result.success) {
+                    // Re-format currency fields after successful save
+                    currencyFieldNames.forEach(function (name) {
+                        var $field = $('[name="' + name + '"]');
+                        var raw = parseCurrencyValue($field.val());
+                        if (raw !== '' && !isNaN(parseFloat(raw))) {
+                            $field.val(formatCurrency(raw));
+                        }
+                    });
                     if (!isEdit && result.data?.parentProject) {
                         showGovukAlert(result.message || 'Project created successfully.').then(function () {
                             window.location.href = '@Url.Action("Edit", "Project", new { area = "FPS" })' + '?parentProject=' + encodeURIComponent(result.data.parentProject);

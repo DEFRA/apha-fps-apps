@@ -26,6 +26,7 @@ namespace Apha.Common.Constants
         public const string GetAllDiseases = "api/v1/disease";
         public const string GetAllCustomers = "api/v1/customer";
         public const string GetAllContracts = "api/v1/contract";
+        public const string GetContractsByUser = "api/v1/contract/by-user";
 
         // Program
         public const string GetAllPrograms = "api/v1/program";
@@ -49,6 +50,7 @@ namespace Apha.Common.Constants
 
         // Project Group
         public const string GetAllProjectGroups = "api/v1/projectgroup";
+        public const string GetProjectGroupsByUser = "api/v1/projectgroup/by-user";
 
         // ProgrammeNewProject (merged into project route)
         public const string GetProgrammeNewProjectById = "api/v1/project/{0}";

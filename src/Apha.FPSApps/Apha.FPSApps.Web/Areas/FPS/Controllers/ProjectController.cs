@@ -187,13 +187,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         {
             var managerTask = _projectService.GetManagersAsync();
             var costCentreTask = _projectService.GetCostCentresAsync();
-            var projectGroupTask = _projectService.GetProjectGroupsAsync();
+            var projectGroupTask = _projectService.GetProjectGroupsByUserAsync();
             var accountCodeTask = _projectService.GetAccountCodesAsync();
             var subAccountTask = _projectService.GetSubAccountsAsync();
             var statusTask = _projectService.GetAllStatusesAsync();
             var diseaseTask = _projectService.GetAllDiseasesAsync();
             var customerTask = _projectService.GetAllCustomersAsync();
-            var contractTask = _projectService.GetAllContractsAsync();
+            var contractTask = _projectService.GetContractsByUserAsync();
             var programTask = _programService.GetAllProgramsAsync();
 
             await Task.WhenAll(managerTask, costCentreTask, projectGroupTask,

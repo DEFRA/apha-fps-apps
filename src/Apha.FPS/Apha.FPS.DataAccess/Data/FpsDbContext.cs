@@ -37,6 +37,8 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<Animal> Animals { get; set; }
         public virtual DbSet<AnimalRequest> AnimalRequests { get; set; }
         public virtual DbSet<ProjectGroup> ProjectGroups { get; set; }
+        public virtual DbSet<ProjectGroupView> ProjectGroupViews { get; set; }
+        public virtual DbSet<ContractView> ContractViews { get; set; }
         public virtual DbSet<AccountCode> AccountCodes { get; set; }
         public virtual DbSet<SubAccount> SubAccounts { get; set; }
         public virtual DbSet<UserCategory> UserCategories { get; set; }
@@ -132,6 +134,12 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.Entity<AnimalRequest>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new ProjectGroupMap());
+
+            modelBuilder.ApplyConfiguration(new ProjectGroupViewMap());
+
+            modelBuilder.ApplyConfiguration(new ContractViewMap());
+            modelBuilder.Entity<ContractView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
             modelBuilder.ApplyConfiguration(new AccountCodeMap());
             modelBuilder.ApplyConfiguration(new SubAccountMap());
 

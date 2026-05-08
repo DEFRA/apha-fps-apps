@@ -119,26 +119,58 @@ namespace Apha.FPS.DataAccess.Repositories
         //Create Project with trigger code
         public async Task<Project> CreateProjectAsync(Project project)
         {
-            project.FpsYear = _requestContext.FpsYear;
-            project.DateCreated = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
-            NormalizeDateTimesToUnspecified(project);
-            await _dbContext.Projects.AddAsync(project);
-            // Converted trigger logic — UITrig_tlkpProject FOR INSERT: stage audit log in same unit of work
-            _dbContext.ProjectLogs.Add(MapProjectToLog(project, "I", _requestContext.UserEmailId));
-            await _dbContext.SaveChangesAsync();
+            var strategy = _dbContext.Database.CreateExecutionStrategy();
+
+            await strategy.ExecuteAsync(async () =>
+            {
+                await using var tx = await _dbContext.Database.BeginTransactionAsync();
+                try
+                {
+                    project.FpsYear = _requestContext.FpsYear;
+                    project.DateCreated = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
+                    NormalizeDateTimesToUnspecified(project);
+                    await _dbContext.Projects.AddAsync(project);
+                    // Converted trigger logic — UITrig_tlkpProject FOR INSERT: stage audit log in same unit of work
+                    _dbContext.ProjectLogs.Add(MapProjectToLog(project, "I", _requestContext.UserEmailId));
+                    await _dbContext.SaveChangesAsync();
+
+                    await tx.CommitAsync();
+                }
+                catch
+                {
+                    await tx.RollbackAsync();
+                    throw;
+                }
+            });
             return project;
         }
 
         //Update Project with trigger code
         public async Task<Project> UpdateProjectAsync(Project project)
         {
-            project.FpsYear = _requestContext.FpsYear;
-            NormalizeDateTimesToUnspecified(project);
-            _dbContext.Entry(project).State = EntityState.Modified;
-            _dbContext.Entry(project).Property(p => p.IncomeAccountCode).IsModified = false;
-            // Converted trigger logic — UITrig_tlkpProject FOR UPDATE: stage audit log in same unit of work
-            _dbContext.ProjectLogs.Add(MapProjectToLog(project, "U", _requestContext.UserEmailId));
-            await _dbContext.SaveChangesAsync();
+            var strategy = _dbContext.Database.CreateExecutionStrategy();
+
+            await strategy.ExecuteAsync(async () =>
+            {
+                await using var tx = await _dbContext.Database.BeginTransactionAsync();
+                try
+                {
+                    project.FpsYear = _requestContext.FpsYear;
+                    NormalizeDateTimesToUnspecified(project);
+                    _dbContext.Entry(project).State = EntityState.Modified;
+                    _dbContext.Entry(project).Property(p => p.IncomeAccountCode).IsModified = false;
+                    // Converted trigger logic — UITrig_tlkpProject FOR UPDATE: stage audit log in same unit of work
+                    _dbContext.ProjectLogs.Add(MapProjectToLog(project, "I", _requestContext.UserEmailId));
+                    await _dbContext.SaveChangesAsync();
+
+                    await tx.CommitAsync();
+                }
+                catch
+                {
+                    await tx.RollbackAsync();
+                    throw;
+                }
+            });
             return project;
         }
 
@@ -153,49 +185,84 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<Project?> UpdatePactProjectDetailsAsync(Project project)
         {
-            var entity = await _dbContext.Projects
-                .FirstOrDefaultAsync(p => p.ParentProject == project.ParentProject
-                    && p.FpsYear == _requestContext.FpsYear);
+            var strategy = _dbContext.Database.CreateExecutionStrategy();
+            Project? entity = null;
 
-            if (entity == null) return null;
+            await strategy.ExecuteAsync(async () =>
+            {
+                await using var tx = await _dbContext.Database.BeginTransactionAsync();
+                try
+                {
+                    entity = await _dbContext.Projects
+                        .FirstOrDefaultAsync(p => p.ParentProject == project.ParentProject
+                            && p.FpsYear == _requestContext.FpsYear);
 
-            entity.ProjectTitle = project.ProjectTitle;
-            entity.Program = project.Program;
-            entity.Customer = project.Customer;
-            entity.Manager = project.Manager;
-            entity.Contract = project.Contract;
-            entity.ProjectStatus = project.ProjectStatus;
-            entity.Disease = project.Disease;
-            entity.IsDefraProject = project.IsDefraProject;
-            entity.Finished = project.Finished;
-            entity.Comments = project.Comments;
-            entity.BudgetCvl = project.BudgetCvl;
-            entity.TransferIncome = project.TransferIncome;
-            entity.PvsIncome = project.PvsIncome;
-            entity.WipEoy = project.WipEoy;
-            entity.WipLimit = project.WipLimit;
-            entity.WipCurrent = project.WipCurrent;
-            entity.FecCost = project.FecCost;
+                    if (entity == null) return;
 
-            NormalizeDateTimesToUnspecified (entity);
-            // Converted trigger logic — UITrig_tlkpProject FOR UPDATE: stage audit log in same unit of work
-            _dbContext.ProjectLogs.Add(MapProjectToLog(entity, "U", _requestContext.UserEmailId));
-            await _dbContext.SaveChangesAsync();
+                    entity.ProjectTitle = project.ProjectTitle;
+                    entity.Program = project.Program;
+                    entity.Customer = project.Customer;
+                    entity.Manager = project.Manager;
+                    entity.Contract = project.Contract;
+                    entity.ProjectStatus = project.ProjectStatus;
+                    entity.Disease = project.Disease;
+                    entity.IsDefraProject = project.IsDefraProject;
+                    entity.Finished = project.Finished;
+                    entity.Comments = project.Comments;
+                    entity.BudgetCvl = project.BudgetCvl;
+                    entity.TransferIncome = project.TransferIncome;
+                    entity.PvsIncome = project.PvsIncome;
+                    entity.WipEoy = project.WipEoy;
+                    entity.WipLimit = project.WipLimit;
+                    entity.WipCurrent = project.WipCurrent;
+                    entity.FecCost = project.FecCost;
+
+                    NormalizeDateTimesToUnspecified(entity);
+                    // Converted trigger logic — UITrig_tlkpProject FOR UPDATE: stage audit log in same unit of work
+                    _dbContext.ProjectLogs.Add(MapProjectToLog(entity, "U", _requestContext.UserEmailId));
+                    await _dbContext.SaveChangesAsync();
+
+                    await tx.CommitAsync();
+                }
+                catch
+                {
+                    await tx.RollbackAsync();
+                    throw;
+                }
+            });
             return entity;
         }
 
         public async Task<bool> DeleteProjectAsync(string parentProject)
         {
-            var project = await _dbContext.Projects
-                .FirstOrDefaultAsync(p => p.ParentProject == parentProject
-                    && p.FpsYear == _requestContext.FpsYear);
-            if (project == null) return false;
-            NormalizeDateTimesToUnspecified (project);
-            // Converted trigger logic — DTrig_tlkpProject FOR DELETE: stage audit log before delete in same unit of work
-            _dbContext.ProjectLogs.Add(MapProjectToLog(project, "D", _requestContext.UserEmailId));
-            _dbContext.Projects.Remove(project);
-            await _dbContext.SaveChangesAsync();
-            return true;
+            var strategy = _dbContext.Database.CreateExecutionStrategy();
+            var deleted = false;
+
+            await strategy.ExecuteAsync(async () =>
+            {
+                await using var tx = await _dbContext.Database.BeginTransactionAsync();
+                try
+                {
+                    var project = await _dbContext.Projects
+                        .FirstOrDefaultAsync(p => p.ParentProject == parentProject
+                            && p.FpsYear == _requestContext.FpsYear);
+                    if (project == null) return;
+                    NormalizeDateTimesToUnspecified(project);
+                    // Converted trigger logic — DTrig_tlkpProject FOR DELETE: stage audit log before delete in same unit of work
+                    _dbContext.ProjectLogs.Add(MapProjectToLog(project, "D", _requestContext.UserEmailId));
+                    _dbContext.Projects.Remove(project);
+                    await _dbContext.SaveChangesAsync();
+
+                    await tx.CommitAsync();
+                    deleted = true;
+                }
+                catch
+                {
+                    await tx.RollbackAsync();
+                    throw;
+                }
+            });
+            return deleted;
         }
 
         public async Task<bool> HasAssociatedJobCodesAsync(string parentProject)
