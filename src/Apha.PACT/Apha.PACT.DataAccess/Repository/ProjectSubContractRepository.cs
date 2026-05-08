@@ -119,10 +119,10 @@ namespace Apha.PACT.DataAccess.Repository
                     IDictionary<string, object> dict = (IDictionary<string, object>)filterModel;
 
                     if (dict.TryGetValue("Program", out object? program) && program != null)
-                        query = query.Where(x => x.Program.Contains(program.ToString()!));
+                        query = query.Where(x => EF.Functions.ILike(x.Program, $"%{program}%"));
 
                     if (dict.TryGetValue("ParentProject", out object? parentProject) && parentProject != null)
-                        query = query.Where(x => x.ParentProject.Contains(parentProject.ToString()!));
+                        query = query.Where(x => EF.Functions.ILike(x.ParentProject, $"%{parentProject}%"));
                 }
             }
 
@@ -143,35 +143,40 @@ namespace Apha.PACT.DataAccess.Repository
 
             IDictionary<string, object> dict = (IDictionary<string, object>)filterModel;
 
-            if (dict.TryGetValue("Project", out object? project) && project != null)
-                query = query.Where(x => x.Project != null && EF.Functions.ILike(x.Project, $"%{project}%"));
+            query = ApplyStringFilter(dict, "Project", query, (q, v) => q.Where(x => x.Project != null && EF.Functions.ILike(x.Project, v)));
+            query = ApplyStringFilter(dict, "AcctCode", query, (q, v) => q.Where(x => x.AcctCode != null && EF.Functions.ILike(x.AcctCode, v)));
+            query = ApplyStringFilter(dict, "TestJob", query, (q, v) => q.Where(x => x.TestJob != null && EF.Functions.ILike(x.TestJob, v)));
+            query = ApplyStringFilter(dict, "WorkGroup", query, (q, v) => q.Where(x => x.WorkGroup != null && EF.Functions.ILike(x.WorkGroup, v)));
+            query = ApplyStringFilter(dict, "Description", query, (q, v) => q.Where(x => x.Description != null && EF.Functions.ILike(x.Description, v)));
+            query = ApplyStringFilter(dict, "Supplier", query, (q, v) => q.Where(x => x.Supplier != null && EF.Functions.ILike(x.Supplier, v)));
+            query = ApplyMonthFilter(dict, query);
+            query = ApplySupplierNumberFilter(dict, query);
 
-            if (dict.TryGetValue("AcctCode", out object? acctCode) && acctCode != null)
-                query = query.Where(x => x.AcctCode != null && EF.Functions.ILike(x.AcctCode, $"%{acctCode}%"));
+            return query;
+        }
 
-            if (dict.TryGetValue("TestJob", out object? testJob) && testJob != null)
-                query = query.Where(x => x.TestJob != null && EF.Functions.ILike(x.TestJob, $"%{testJob}%"));
+        private static IQueryable<ProjectSubContract> ApplyStringFilter(
+            IDictionary<string, object> dict,
+            string key,
+            IQueryable<ProjectSubContract> query,
+            Func<IQueryable<ProjectSubContract>, string, IQueryable<ProjectSubContract>> applyWhere)
+        {
+            if (dict.TryGetValue(key, out object? value) && value != null)
+                query = applyWhere(query, $"%{value}%");
+            return query;
+        }
 
-            if (dict.TryGetValue("Month", out object? month) && month != null)
-            {
-                if (double.TryParse(month.ToString(), out double monthValue))
-                    query = query.Where(x => x.Month == monthValue);
-            }
-            if (dict.TryGetValue("WorkGroup", out object? workGroup) && workGroup != null)
-                query = query.Where(x => x.WorkGroup != null && x.WorkGroup.Contains(workGroup.ToString()!));
+        private static IQueryable<ProjectSubContract> ApplyMonthFilter(IDictionary<string, object> dict, IQueryable<ProjectSubContract> query)
+        {
+            if (dict.TryGetValue("Month", out object? month) && month != null && int.TryParse(month.ToString(), out int monthValue))
+                query = query.Where(x => (int?)x.Month == monthValue);
+            return query;
+        }
 
-            if (dict.TryGetValue("Description", out object? description) && description != null)
-                query = query.Where(x => x.Description != null && x.Description.Contains(description.ToString()!));
-
-            if (dict.TryGetValue("Supplier", out object? supplier) && acctCode != null)
-                query = query.Where(x => x.Supplier != null && x.Supplier.Contains(supplier.ToString()!));
-
-            if (dict.TryGetValue("SupplierNumber", out object? supplierNumber) && supplierNumber != null)
-            {
-                if (int.TryParse(supplierNumber.ToString(), out int supplierNumberValue))
-                    query = query.Where(x => x.SupplierNumber == supplierNumberValue);
-            }
-
+        private static IQueryable<ProjectSubContract> ApplySupplierNumberFilter(IDictionary<string, object> dict, IQueryable<ProjectSubContract> query)
+        {
+            if (dict.TryGetValue("SupplierNumber", out object? supplierNumber) && supplierNumber != null && int.TryParse(supplierNumber.ToString(), out int supplierNumberValue))
+                query = query.Where(x => x.SupplierNumber == supplierNumberValue);
             return query;
         }
 

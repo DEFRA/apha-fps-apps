@@ -139,10 +139,10 @@ namespace Apha.PACT.DataAccess.Repository
                     IDictionary<string, object> dict = (IDictionary<string, object>)filterModel;
 
                     if (dict.TryGetValue("Program", out object? program) && program != null)
-                        query = query.Where(x => x.Program.Contains(program.ToString()!));
+                        query = query.Where(x => EF.Functions.ILike(x.Program, $"%{program}%"));
 
                     if (dict.TryGetValue("ParentProject", out object? parentProject) && parentProject != null)
-                        query = query.Where(x => x.ParentProject.Contains(parentProject.ToString()!));
+                        query = query.Where(x => EF.Functions.ILike(x.ParentProject, $"%{parentProject}%"));
                 }
             }
 
