@@ -37,31 +37,19 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
         public async Task<IActionResult> Index(string? parentProject)
         {
-            await PopulateProjectsViewBagAsync(parentProject);
-
-            var defaultRequest = new PaginationFilter<string>();
-            var costProfileGridTask = BuildCostProfileGridAsync(defaultRequest, parentProject);
-            var projectTask = string.IsNullOrWhiteSpace(parentProject)
+            var projectsTask = BuildProjectsListAsync(parentProject);
+            var projectTask  = string.IsNullOrWhiteSpace(parentProject)
                 ? Task.FromResult<ProjectDto?>(null)
                 : FetchProjectDetailsAsync(parentProject);
 
-            await Task.WhenAll(costProfileGridTask, projectTask);
-
-            decimal totalCostProfile = costProfileGridTask.Result.Data
-                .Sum(i => i.CostProfile ?? 0m);
+            await Task.WhenAll(projectsTask, projectTask);
 
             return View(new ProjectProfileViewModel
             {
-                ParentProject  = parentProject ?? string.Empty,
-                ProjectTitle   = projectTask.Result?.ProjectTitle ?? string.Empty,
-                Program        = projectTask.Result?.Program,
-                Customer       = projectTask.Result?.Customer,
-                Manager        = projectTask.Result?.Manager,
-                ProjectStatus  = projectTask.Result?.ProjectStatus,
-                BudgetCvl      = projectTask.Result?.BudgetCvl,
-                BudgetExt      = projectTask.Result?.BudgetExt,
-                CostProfileGrid  = costProfileGridTask.Result,
-                TotalCostProfile = totalCostProfile
+                ParentProject = parentProject ?? string.Empty,
+                Projects      = projectsTask.Result,
+                ProjectTitle  = projectTask.Result?.ProjectTitle ?? string.Empty,
+                BudgetCvl     = projectTask.Result?.BudgetCvl,
             });
         }
 
@@ -261,20 +249,20 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return result.Success ? result.Data : null;
         }
 
-        private async Task PopulateProjectsViewBagAsync(string? selectedProject = null)
+        private async Task<List<SelectListItem>> BuildProjectsListAsync(string? selectedProject = null)
         {
             var result = await _projectService.GetAllPactProjectsAsync();
-            ViewBag.Projects = (result.Success && result.Data != null)
+            return (result.Success && result.Data != null)
                 ? result.Data
                     .OrderBy(p => p.ParentProject)
                     .Select(p => new SelectListItem
                     {
-                        Value = p.ParentProject,
-                        Text  = p.ParentProject,
+                        Value    = p.ParentProject,
+                        Text     = p.ParentProject,
                         Selected = p.ParentProject == selectedProject
                     })
                     .ToList()
-                : new List<SelectListItem>();
+                : [];
         }
     }
 }
