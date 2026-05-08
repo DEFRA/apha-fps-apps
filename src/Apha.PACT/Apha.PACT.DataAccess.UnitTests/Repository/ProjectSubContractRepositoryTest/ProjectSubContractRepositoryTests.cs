@@ -51,6 +51,27 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectSubContractRepository
             int fpsYear = DefaultTestFpsYear)
             => CreateRepositoryWithMocks(subContracts, fpsYear).Repo;
 
+        private static ProjectSubContractRepository CreateRepositoryWithMonthlySummary(
+            IEnumerable<MonthlySubContractsSummary> summaryData,
+            int fpsYear = DefaultTestFpsYear)
+        {
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            fpsRequestContext.FpsYear.Returns(fpsYear);
+
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
+
+            var subContractsMockSet = RepositoryTestHelper.CreateMockDbSet<ProjectSubContract>([]);
+            mockContext.Setup(x => x.ProjectSubContracts).Returns(subContractsMockSet.Object);
+
+            var summaryMockSet = RepositoryTestHelper.CreateMockDbSet(summaryData);
+            mockContext.Setup(x => x.MonthlySubContractsSummary).Returns(summaryMockSet.Object);
+
+            return new ProjectSubContractRepository(mockContext.Object, fpsRequestContext);
+        }
+
+        private static MonthlySubContractsSummary MakeMonthlySummary(string program, string parentProject, int month, decimal? amount = null)
+            => new() { FpsYear = DefaultTestFpsYear, Program = program, ParentProject = parentProject, Month = month, MonthlyAmount = amount };
+
         #region GetPagedProjectSubContractsAsync
 
         [Fact]
@@ -388,5 +409,151 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectSubContractRepository
         }
 
         #endregion
+
+        #region GetMonthlySubContractsSummaryAsync
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_NoFilter_ReturnsAllRowsOrderedByProgramParentProjectMonth()
+        {
+            var repo = CreateRepositoryWithMonthlySummary(
+            [
+                MakeMonthlySummary("BETA",  "ZZ",  2, 200m),
+                MakeMonthlySummary("ADMIN", "AH",  3, 300m),
+                MakeMonthlySummary("ADMIN", "AH",  1, 100m)
+            ]);
+            var parameters = new PaginationParameters<string>();
+
+            var result = await repo.GetMonthlySubContractsSummaryAsync(parameters);
+
+            Assert.Equal(3, result.Count);
+            Assert.Equal("ADMIN", result[0].Program); Assert.Equal(1, result[0].Month);
+            Assert.Equal("ADMIN", result[1].Program); Assert.Equal(3, result[1].Month);
+            Assert.Equal("BETA",  result[2].Program);
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_NoData_ReturnsEmptyList()
+        {
+            var repo = CreateRepositoryWithMonthlySummary([]);
+            var parameters = new PaginationParameters<string>();
+
+            var result = await repo.GetMonthlySubContractsSummaryAsync(parameters);
+
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_EmptyFilter_ReturnsAllRows()
+        {
+            var repo = CreateRepositoryWithMonthlySummary(
+            [
+                MakeMonthlySummary("ADMIN", "AH", 1, 100m),
+                MakeMonthlySummary("BETA",  "ZZ", 2, 200m)
+            ]);
+            var parameters = new PaginationParameters<string> { Filter = "" };
+
+            var result = await repo.GetMonthlySubContractsSummaryAsync(parameters);
+
+            Assert.Equal(2, result.Count);
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_WhitespaceFilter_ReturnsAllRows()
+        {
+            var repo = CreateRepositoryWithMonthlySummary(
+            [
+                MakeMonthlySummary("ADMIN", "AH", 1, 100m)
+            ]);
+            var parameters = new PaginationParameters<string> { Filter = "   " };
+
+            var result = await repo.GetMonthlySubContractsSummaryAsync(parameters);
+
+            Assert.Single(result);
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_FilterByProgram_ReturnsMatchingRows()
+        {
+            var repo = CreateRepositoryWithMonthlySummary(
+            [
+                MakeMonthlySummary("ADMIN", "AH", 1, 100m),
+                MakeMonthlySummary("BETA",  "ZZ", 2, 200m)
+            ]);
+            var parameters = new PaginationParameters<string> { Filter = """{"Program":"ADMIN"}""" };
+
+            var result = await repo.GetMonthlySubContractsSummaryAsync(parameters);
+
+            Assert.Single(result);
+            Assert.Equal("ADMIN", result[0].Program);
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_FilterByProgram_PartialMatch_ReturnsContainingRows()
+        {
+            var repo = CreateRepositoryWithMonthlySummary(
+            [
+                MakeMonthlySummary("ADMIN",          "AH", 1, 100m),
+                MakeMonthlySummary("ADMINISTRATION", "BX", 2, 200m),
+                MakeMonthlySummary("BETA",           "CZ", 3, 300m)
+            ]);
+            var parameters = new PaginationParameters<string> { Filter = """{"Program":"ADMIN"}""" };
+
+            var result = await repo.GetMonthlySubContractsSummaryAsync(parameters);
+
+            Assert.Equal(2, result.Count);
+            Assert.All(result, r => Assert.Contains("ADMIN", r.Program));
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_FilterByParentProject_ReturnsMatchingRows()
+        {
+            var repo = CreateRepositoryWithMonthlySummary(
+            [
+                MakeMonthlySummary("ADMIN", "AH001", 1, 100m),
+                MakeMonthlySummary("ADMIN", "BX002", 2, 200m)
+            ]);
+            var parameters = new PaginationParameters<string> { Filter = """{"ParentProject":"AH"}""" };
+
+            var result = await repo.GetMonthlySubContractsSummaryAsync(parameters);
+
+            Assert.Single(result);
+            Assert.Equal("AH001", result[0].ParentProject);
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_FilterByBothFields_ReturnsMatchingRows()
+        {
+            var repo = CreateRepositoryWithMonthlySummary(
+            [
+                MakeMonthlySummary("ADMIN", "AH001", 1, 100m),
+                MakeMonthlySummary("ADMIN", "BX002", 2, 200m),
+                MakeMonthlySummary("BETA",  "AH001", 3, 300m)
+            ]);
+            var parameters = new PaginationParameters<string> { Filter = """{"Program":"ADMIN","ParentProject":"AH"}""" };
+
+            var result = await repo.GetMonthlySubContractsSummaryAsync(parameters);
+
+            Assert.Single(result);
+            Assert.Equal("ADMIN", result[0].Program);
+            Assert.Equal("AH001", result[0].ParentProject);
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_FilterNoMatch_ReturnsEmptyList()
+        {
+            var repo = CreateRepositoryWithMonthlySummary(
+            [
+                MakeMonthlySummary("ADMIN", "AH", 1, 100m)
+            ]);
+            var parameters = new PaginationParameters<string> { Filter = """{"Program":"NONEXISTENT"}""" };
+
+            var result = await repo.GetMonthlySubContractsSummaryAsync(parameters);
+
+            Assert.Empty(result);
+        }
+
+        #endregion
+
+
     }
 }

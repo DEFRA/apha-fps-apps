@@ -281,5 +281,98 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProjectSubContractControllerTest
         }
 
         #endregion
+
+        #region GetMonthlySubContractsSummary
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummary_ValidQuery_ReturnsOk()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var dto = new MonthlySubContractsPivotDto
+            {
+                Months = [1, 2, 3],
+                Rows =
+                [
+                    new MonthlySubContractsSummaryDto
+                    {
+                        Program = "ADMIN",
+                        ParentProject = "AH",
+                        MonthlyAmounts = new Dictionary<int, decimal> { { 1, 100m }, { 2, 200m } }
+                    }
+                ],
+                Pagination = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1, TotalPages = 1 }
+            };
+            var expectedRes = new MonthlySubContractsPivotRes
+            {
+                Months = [1, 2, 3],
+                Rows = [new MonthlySubContractsSummaryItemRes { Program = "ADMIN", ParentProject = "AH" }],
+                Pagination = new Pagination { PageNumber = 1, PageSize = 10, TotalRecords = 1, TotalPages = 1 }
+            };
+
+            _serviceMock.GetMonthlySubContractsSummaryAsync(query).Returns(dto);
+            _mapperMock.Map<MonthlySubContractsPivotRes>(dto).Returns(expectedRes);
+
+            var result = await _controller.GetMonthlySubContractsSummary(query);
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(expectedRes, okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummary_EmptyData_ReturnsOkWithEmptyPivot()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var dto = new MonthlySubContractsPivotDto();
+            var expectedRes = new MonthlySubContractsPivotRes();
+
+            _serviceMock.GetMonthlySubContractsSummaryAsync(query).Returns(dto);
+            _mapperMock.Map<MonthlySubContractsPivotRes>(dto).Returns(expectedRes);
+
+            var result = await _controller.GetMonthlySubContractsSummary(query);
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(expectedRes, okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummary_CallsServiceOnce()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var dto = new MonthlySubContractsPivotDto();
+
+            _serviceMock.GetMonthlySubContractsSummaryAsync(query).Returns(dto);
+            _mapperMock.Map<MonthlySubContractsPivotRes>(dto).Returns(new MonthlySubContractsPivotRes());
+
+            await _controller.GetMonthlySubContractsSummary(query);
+
+            await _serviceMock.Received(1).GetMonthlySubContractsSummaryAsync(query);
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummary_MapsServiceResultToRes()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var dto = new MonthlySubContractsPivotDto();
+
+            _serviceMock.GetMonthlySubContractsSummaryAsync(query).Returns(dto);
+            _mapperMock.Map<MonthlySubContractsPivotRes>(dto).Returns(new MonthlySubContractsPivotRes());
+
+            await _controller.GetMonthlySubContractsSummary(query);
+
+            _mapperMock.Received(1).Map<MonthlySubContractsPivotRes>(dto);
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummary_ServiceThrows_PropagatesException()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+
+            _serviceMock.GetMonthlySubContractsSummaryAsync(query)
+                .ThrowsAsync(new Exception("Service error"));
+
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetMonthlySubContractsSummary(query));
+        }
+
+        #endregion
     }
 }
