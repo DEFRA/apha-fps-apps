@@ -14,13 +14,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@ViewData["Title"]</title>
 
-    <!-- Shared stylesheets -->      
-    <link rel="stylesheet" href="~/css/pact_styles/govuk-frontend-6.0.0.min.css" /> 
-    <link rel="stylesheet" href="~/css/pact_styles/custom_style.css" />    
-    <link rel="stylesheet" href="~/css/pact_styles/navstyle.css" />    
-    <link rel="stylesheet" href="~/css/pact_styles/style.css" /> 
+    <link rel="stylesheet" href="~/css/govuk-frontend-6.0.0.min.css" />
+    <link rel="stylesheet" href="~/css/supplement_style_for_gov.uk_style.css" />
+    <link rel="stylesheet" href="~/css/main_style.css" />
+    <link rel="stylesheet" href="~/css/common/headernav/navstyle.css" />
     <link rel="stylesheet" href="~/DataGrid/editable-grid.css" />
-    <link href="~/css/suppliement_style_over_gov.uk_style.css" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/pact_styles/styles.css" />
     <!-- jQuery (required before any scripts) -->
     <script src="~/lib/jquery/dist/jquery.js"></script>
     @await RenderSectionAsync("Styles", required: false)
@@ -32,33 +31,32 @@
             <div class="pims-log-wrapper">
                 <div>
                     <img src="~/images/defra_logo.png" width="80" alt="Animal & Plant Health Agency" />
-                </div>                
-				<div class="pims-log">
-					<span>PACT</span>
-				</div>
-				<div>
-                @await Component.InvokeAsync("YearSelector")
+                </div>
+                <div class="pims-log">
+                    <span>PACT</span>
+                </div>
+                <div>
+                    @await Component.InvokeAsync("YearSelector")
+                </div>
             </div>
+            <div>
+                <button class="userdropdownbtn" id="userdropdownbtn" allow-edit="true">@displayName &nbsp; <img src="~/images/circle-user-regular-full.svg" alt="user icon" width="24" /></button>
+                <div class="userdropdown" id="userdropdowndp">
+                    <ul>
+                        <li>
+                            <a href="/" style="display: flex; align-items: center;" type="button">
+                                <img src="~/images/house-user-solid-full.svg" alt="dropdown home icon" width="22">
+                                Home
+                            </a>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
     </header>
 
     <!-- ── Main Navigation ───────────────────────────────────────────── -->
     <div id="header">
-        <div style="display: flex; flex-direction: row;">
-            <button class="userdropdownbtn" style="border: 0; margin-right: 20px;" id="userdropdownbtn" allow-edit="true">@displayName &nbsp; <img src="~/images/circle-user-regular-full.svg" alt="user icon" width="24" /></button>
-        </div>
-        <div class="userdropdown" id="userdropdowndp">
-            <ul>                   
-                <li>
-                    <a href="/" style="display: flex; align-items: center;" type="button">
-                        <img src="~/images/house-user-solid-full.svg" alt="dropdown home icon" width="22">
-                        Home
-                    </a>
-                </li>
-            </ul>          
-        </div>
-        
         <nav class="main-nav">
             <!-- Project & Programme Dropdown -->
             <div class="nav-item dropdown">
@@ -161,7 +159,7 @@
     <div class="govuk-footer sup_p_0 sup_margin_left_right_0">
         <div class="govuk-width-container sup_p_8 sup_text_center">
             <span>
-                &copy; copyright Defra 2025
+                &copy; Copyright Defra 2025
             </span>
         </div>
     </div>
@@ -177,7 +175,7 @@
     </div>
 
     <!-- ── Scripts ───────────────────────────────────────────────────── -->    
-    <script src="~/js/pact_js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/lib/jquery-validation/dist/jquery.validate.js"></script>
     <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.js"></script>
     <script src="~/js/govuk-modal-dialog.js"></script>
