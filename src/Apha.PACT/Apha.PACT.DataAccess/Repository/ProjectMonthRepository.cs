@@ -53,19 +53,22 @@ namespace Apha.PACT.DataAccess.Repository
 
         public async Task<ProjectMonth> UpdateProjectMonthAsync(ProjectMonth entity)
         {
-            entity.FpsYear = _fpsRequestContext.FpsYear;
-            _context.Entry(entity).State = EntityState.Modified;
+            var existing = await _context.ProjectMonths.FirstOrDefaultAsync(e =>
+                e.Project == entity.Project &&
+                e.MonthNo == entity.MonthNo &&
+                e.FpsYear == _fpsRequestContext.FpsYear)
+                ?? throw new KeyNotFoundException($"Project month not found for project '{entity.Project}', month {entity.MonthNo}.");
+
+            existing.CostProfile = entity.CostProfile;
             await _context.SaveChangesAsync();
-            return entity;
+
+            return existing;
         }
 
         public async Task<bool> DeleteProjectMonthAsync(string project, int monthNo)
         {
             ProjectMonth? entity = await _context.ProjectMonths
-                .FirstOrDefaultAsync(
-                e => e.Project == project
-                && e.MonthNo == monthNo
-                && e.FpsYear == _fpsRequestContext.FpsYear);
+                .FirstOrDefaultAsync(e => e.Project == project && e.MonthNo == monthNo);
 
             if (entity == null) return false;
             _context.ProjectMonths.Remove(entity);

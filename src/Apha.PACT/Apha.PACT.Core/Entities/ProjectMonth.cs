@@ -4,7 +4,7 @@
     {
         public string Project { get; set; } = null!;
 
-        public double MonthNo { get; set; }
+        public int MonthNo { get; set; }
 
         public decimal? CostProfile { get; set; }
 

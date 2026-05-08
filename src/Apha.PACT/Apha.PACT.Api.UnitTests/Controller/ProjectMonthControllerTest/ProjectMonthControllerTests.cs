@@ -242,14 +242,13 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProjectMonthControllerTest
         #region DeleteProjectMonth
 
         [Fact]
-        public async Task DeleteProjectMonth_ExistingRecord_ReturnsOkTrue()
+        public async Task DeleteProjectMonth_ExistingRecord_ReturnsNoContent()
         {
             _serviceMock.DeleteProjectMonthAsync("PRJ1", 1).Returns(true);
 
             var result = await _controller.DeleteProjectMonth("PRJ1", 1);
 
-            var okResult = Assert.IsType<OkObjectResult>(result);
-            Assert.Equal(true, okResult.Value);
+            Assert.IsType<NoContentResult>(result);
             await _serviceMock.Received(1).DeleteProjectMonthAsync("PRJ1", 1);
         }
 

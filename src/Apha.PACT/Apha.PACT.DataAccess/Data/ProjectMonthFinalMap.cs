@@ -6,6 +6,8 @@ namespace Apha.PACT.DataAccess.Data
 {
     public class ProjectMonthFinalMap : IEntityTypeConfiguration<ProjectMonthFinal>
     {
+        private const string MoneyColumnType = "money";
+
         public void Configure(EntityTypeBuilder<ProjectMonthFinal> entity)
         {
             entity.HasKey(e => new { e.Project, e.MonthNo }).HasName("projectmonthfinal_aaaaaprojectmonthfinal_pk");
@@ -17,54 +19,54 @@ namespace Apha.PACT.DataAccess.Data
                 .HasColumnName("project");
             entity.Property(e => e.MonthNo).HasColumnName("monthno");
             entity.Property(e => e.Animals)
-                .HasColumnType("money")
+                .HasColumnType(MoneyColumnType)
                 .HasColumnName("animals");
             entity.Property(e => e.Coiw)
-                .HasColumnType("money")
+                .HasColumnType(MoneyColumnType)
                 .HasColumnName("coiw");
             entity.Property(e => e.CostProfile)
-                .HasColumnType("money")
+                .HasColumnType(MoneyColumnType)
                 .HasColumnName("costprofile");
             entity.Property(e => e.CumCoiw)
-                .HasColumnType("money")
+                .HasColumnType(MoneyColumnType)
                 .HasColumnName("cumcoiw");
             entity.Property(e => e.CumCost)
-                .HasColumnType("money")
+                .HasColumnType(MoneyColumnType)
                 .HasColumnName("cumcost");
             entity.Property(e => e.CumCwCredit)
-                .HasColumnType("money")
+                .HasColumnType(MoneyColumnType)
                 .HasColumnName("cumcwcredit");
             entity.Property(e => e.CumCwDebit)
-                .HasColumnType("money")
+                .HasColumnType(MoneyColumnType)
                 .HasColumnName("cumcwdebit");
             entity.Property(e => e.CumFlag).HasColumnName("cumflag");
             entity.Property(e => e.CumInvoices)
-                .HasColumnType("money")
+                .HasColumnType(MoneyColumnType)
                 .HasColumnName("cuminvoices");
             entity.Property(e => e.CumPayCosts).HasColumnName("cumpaycosts");
             entity.Property(e => e.CumPortSales)
-                .HasColumnType("money")
+                .HasColumnType(MoneyColumnType)
                 .HasColumnName("cumportsales");
             entity.Property(e => e.CumProfile)
-                .HasColumnType("money")
+                .HasColumnType(MoneyColumnType)
                 .HasColumnName("cumprofile");
             entity.Property(e => e.CumSubcontracts).HasColumnName("cumsubcontracts");
             entity.Property(e => e.CumTestCosts).HasColumnName("cumtestcosts");
             entity.Property(e => e.CumTotalHours).HasColumnName("cumtotalhours");
             entity.Property(e => e.CwCredit)
-                .HasColumnType("money")
+                .HasColumnType(MoneyColumnType)
                 .HasColumnName("cwcredit");
             entity.Property(e => e.CwDebit)
-                .HasColumnType("money")
+                .HasColumnType(MoneyColumnType)
                 .HasColumnName("cwdebit");
             entity.Property(e => e.DueDone).HasColumnName("due__done");
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.Invoices)
-                .HasColumnType("money")
+                .HasColumnType(MoneyColumnType)
                 .HasColumnName("invoices");
             entity.Property(e => e.MstoneDue).HasColumnName("mstonedue");
             entity.Property(e => e.NonAnimals)
-                .HasColumnType("money")
+                .HasColumnType(MoneyColumnType)
                 .HasColumnName("nonanimals");
             entity.Property(e => e.OnTime).HasColumnName("ontime");
             entity.Property(e => e.PayCosts).HasColumnName("paycosts");
@@ -72,26 +74,26 @@ namespace Apha.PACT.DataAccess.Data
                 .HasMaxLength(50)
                 .HasColumnName("periodname");
             entity.Property(e => e.PortSales)
-                .HasColumnType("money")
+                .HasColumnType(MoneyColumnType)
                 .HasColumnName("portsales");
             entity.Property(e => e.Subcontracts)
-                .HasColumnType("money")
+                .HasColumnType(MoneyColumnType)
                 .HasColumnName("subcontracts");
             entity.Property(e => e.SumOfCostProfile)
-                .HasColumnType("money")
+                .HasColumnType(MoneyColumnType)
                 .HasColumnName("sumofcostprofile");
             entity.Property(e => e.SumOfDueDone).HasColumnName("sumofdue__done");
             entity.Property(e => e.SumOfMstoneDue).HasColumnName("sumofmstonedue");
             entity.Property(e => e.SumOfOnTime).HasColumnName("sumofontime");
             entity.Property(e => e.TimeCosts)
-                .HasColumnType("money")
+                .HasColumnType(MoneyColumnType)
                 .HasColumnName("timecosts");
             entity.Property(e => e.TotalCost)
-                .HasColumnType("money")
+                .HasColumnType(MoneyColumnType)
                 .HasColumnName("totalcost");
             entity.Property(e => e.TotalHours).HasColumnName("totalhours");
             entity.Property(e => e.TransferCosts)
-                .HasColumnType("money")
+                .HasColumnType(MoneyColumnType)
                 .HasColumnName("transfercosts");
             entity.Property(e => e.X).HasColumnName("x");
         }

@@ -16,8 +16,8 @@ namespace Apha.PACT.DataAccess.Repository
                 .Where(pmf => pmf.Project == project)
                 .Join(
                     _context.ProjectMonths.AsNoTracking(),
-                    pmf => new { pmf.Project, pmf.MonthNo },
-                    pm => new { pm.Project, pm.MonthNo },
+                    pmf => new { pmf.Project, MonthNo = (double?)pmf.MonthNo },
+                    pm => new { pm.Project, MonthNo = (double?)pm.MonthNo },
                     (pmf, pm) => new ProjectProfile
                     {
                         MonthNo = pmf.MonthNo,
