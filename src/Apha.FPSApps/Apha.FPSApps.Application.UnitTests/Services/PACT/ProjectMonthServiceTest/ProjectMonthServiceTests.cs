@@ -12,6 +12,8 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectMonthServiceTe
         private readonly IPactApiClient _pactClient;
         private readonly IPactProjectMonthApiClient _pactProjectMonthApiClient;
         private readonly ProjectMonthService _service;
+        private static readonly string[] value = new[] { "Project is required" };
+        private static readonly string[] valueArray = new[] { "MonthNo must be greater than zero" };
 
         public ProjectMonthServiceTests()
         {
@@ -256,7 +258,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectMonthServiceTe
             var dto = new ProjectMonthDto { Project = "", MonthNo = 0 };
             var expectedResponse = ApiResponseDto<ProjectMonthDto>.ValidationFailure(
                 "Validation failed",
-                new Dictionary<string, string[]> { { "Project", new[] { "Project is required" } } });
+                new Dictionary<string, string[]> { { "Project", value } });
             _pactProjectMonthApiClient.CreateProjectMonthAsync(dto).Returns(expectedResponse);
 
             // Act
@@ -319,7 +321,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectMonthServiceTe
             var dto = new ProjectMonthDto { Project = "", MonthNo = 0 };
             var expectedResponse = ApiResponseDto<ProjectMonthDto>.ValidationFailure(
                 "Validation failed",
-                new Dictionary<string, string[]> { { "MonthNo", new[] { "MonthNo must be greater than zero" } } });
+                new Dictionary<string, string[]> { { "MonthNo", valueArray } });
             _pactProjectMonthApiClient.UpdateProjectMonthAsync(dto).Returns(expectedResponse);
 
             // Act
