@@ -188,8 +188,8 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectControllerTest
 
             var result = await _controller.CreateProjectAsync(req);
 
-            var okResult = Assert.IsType<OkObjectResult>(result.Result);
-            Assert.Equal(mapped, okResult.Value);
+            var createdResult = Assert.IsType<CreatedAtActionResult>(result.Result);
+            Assert.Equal(mapped, createdResult.Value);
         }
 
         [Fact]

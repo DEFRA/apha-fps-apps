@@ -382,13 +382,13 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectControllerTest
         {
             _projectService.GetManagersAsync().Returns(ApiResponseDto<List<ManagerDto>>.SuccessResponse(new List<ManagerDto>()));
             _projectService.GetCostCentresAsync().Returns(ApiResponseDto<List<CostCentreWorkgroupDto>>.SuccessResponse(new List<CostCentreWorkgroupDto>()));
-            _projectService.GetProjectGroupsAsync().Returns(ApiResponseDto<List<ProjectGroupDto>>.SuccessResponse(new List<ProjectGroupDto>()));
+            _projectService.GetProjectGroupsByUserAsync().Returns(ApiResponseDto<List<ProjectGroupDto>>.SuccessResponse(new List<ProjectGroupDto>()));
             _projectService.GetAccountCodesAsync().Returns(ApiResponseDto<List<AccountCodeDto>>.SuccessResponse(new List<AccountCodeDto>()));
             _projectService.GetSubAccountsAsync().Returns(ApiResponseDto<List<SubAccountDto>>.SuccessResponse(new List<SubAccountDto>()));
             _projectService.GetAllStatusesAsync().Returns(ApiResponseDto<List<StatusDto>>.SuccessResponse(new List<StatusDto>()));
             _projectService.GetAllDiseasesAsync().Returns(ApiResponseDto<List<DiseaseDto>>.SuccessResponse(new List<DiseaseDto>()));
             _projectService.GetAllCustomersAsync().Returns(ApiResponseDto<List<CustomerDto>>.SuccessResponse(new List<CustomerDto>()));
-            _projectService.GetAllContractsAsync().Returns(ApiResponseDto<List<ContractDto>>.SuccessResponse(new List<ContractDto>()));
+            _projectService.GetContractsByUserAsync().Returns(ApiResponseDto<List<ContractDto>>.SuccessResponse(new List<ContractDto>()));
             _programService.GetAllProgramsAsync().Returns(ApiResponseDto<IEnumerable<ProgramDto>>.SuccessResponse(Enumerable.Empty<ProgramDto>()));
         }
 
