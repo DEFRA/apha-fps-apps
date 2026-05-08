@@ -58,8 +58,20 @@ body {
 }
  
 .uklogo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
   background-color: #1d70b8;
   height: 65px;
+}
+.uklogo img { height: 40px; }
+.user-info { display: flex; align-items: center; gap: 10px; color: #fff; }
+.user-name {
+  font-family: "GDS Transport", HelveticaNeue, "Helvetica Neue", Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
 }
  
 .uklogofont {
@@ -1498,29 +1510,8 @@ textarea {
     float:right;
   }
 }
-/* ============================================================
-   MVC-ONLY ADDITIONS (not in docs prototype)
-   ============================================================ */
 
-/* Header logo/user area (MVC Layout only) */
-.uklogo {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 20px;
-  background-color: #1d70b8;
-  height: 65px;
-}
-.uklogo img { height: 40px; }
-.user-info { display: flex; align-items: center; gap: 10px; color: #fff; }
-.user-name {
-  font-family: "GDS Transport", HelveticaNeue, "Helvetica Neue", Arial, Helvetica, sans-serif;
-  font-size: 16px;
-  font-weight: 600;
-  color: #fff;
-}
-
-/* Disabled tile */
+/* Disabled tile — used on landing page for apps not yet available */
 .tile-disabled {
   background-color: #e9ecef !important;
   border-bottom: 8px solid #adb5bd !important;

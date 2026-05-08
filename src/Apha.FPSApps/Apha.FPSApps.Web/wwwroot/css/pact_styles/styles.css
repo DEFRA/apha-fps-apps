@@ -819,27 +819,8 @@ td.action-cell:nth-child(5) { display: flex; }
 .card-list li { padding: 10px 16px; border-top: 1px solid #dee2e6; }
 
 /* ============================================================
-   14. HEADER / NAV / PIMS LOG
+   14. HEADER / NAV / PIMS LOG  —  moved to css/common/headernav/navstyle.css
    ============================================================ */
-.pims-log-wrapper { display: flex; align-items: center; margin: 4px 0; }
-
-.pims-log {
-  border: 1px solid #0374e9; border-radius: 10px; width: 90px;
-  color: #00005c; text-shadow: 1px 1px #b0d7ff; letter-spacing: 1px;
-  background: #fff; font-weight: bold; font-size: 20px;
-  text-align: center; padding: 3px; margin-left: 10px;
-}
-
-.pims-log-wrapper p { margin: 0; padding: 0 0 0 10px; font-size: 16px; font-weight: bold; }
-.user-menu  { background: transparent !important; color: #000 !important; }
-
-.header-nav {
-  display: flex; justify-content: space-between; border-bottom: 1px solid #ccc;
-  align-items: center; padding: 0 10px; background: #ecf5ff;
-}
-
-.menu-icon { display: inline-block; cursor: pointer; padding: 10px; }
-.bar1, .bar2, .bar3 { width: 28px; height: 2px; background-color: #454545; margin: 6px 0; transition: 0.4s; }
 
 .bg-dark { --bs-bg-opacity: 1; background-color: #1d70b8 !important; padding: 0; }
 

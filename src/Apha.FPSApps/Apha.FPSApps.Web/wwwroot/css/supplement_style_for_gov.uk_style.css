@@ -1,4 +1,4 @@
-/*pupose: This file is to supply additional css classes over the default style of gov.uk NOT TO OVERRIDE, to reduce alignment issues, text overflow issues which imapact basic alignment for eg checkbox label.*/
+﻿﻿/*pupose: This file is to supply additional css classes over the default style of gov.uk NOT TO OVERRIDE, to reduce alignment issues, text overflow issues which imapact basic alignment for eg checkbox label.*/
 
 
 /* for reference only, */
@@ -113,7 +113,7 @@ a {
 }
 
 .sup_margin_tb_10 {
-    margin: 10px 0 !important;
+    margin: 10px 0;
 }
 
 .sup_margin_tb_20 {
@@ -555,6 +555,13 @@ a {
     display: flex;
     align-items: center;
     justify-content: flex-start;
+}
+
+.sup_flex_end_center_100 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
 }
 
 .sup_margin_bottom_12 {
@@ -1548,4 +1555,35 @@ table#tblMonthPeriod>tbody>tr>td {
 /* Costbook: tabs panel padding */
 .govuk-frontend-supported .govuk-tabs__panel {
     padding: 10px;
+}
+
+/* =====================================================
+   Generic Form Validation — app-form / app-required /
+   app-mandatory-note / app-note / app-db-error / app-error-inline
+   Usage: add class="app-form" to <form>.
+   ===================================================== */
+
+/* Red asterisk on required field labels */
+.app-required {
+    color: #d4351c;
+    font-weight: 700;
+    margin-left: 2px;
+}
+
+/* "* Mandatory Fields" note — right-aligned above form fields */
+.app-mandatory-note {
+    display: flex;
+    justify-content: flex-end;
+    font-size: 14px;
+    color: #d4351c;
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-left: auto;
+    margin-right: 8px;
+    margin-bottom: 10px;
+    font-weight: 700;
+}
+
+.govuk-error-message {
+    font-size: 14px;
 }

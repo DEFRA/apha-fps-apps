@@ -618,7 +618,7 @@ button a {
 }
 
 .main-nav {
-    background-color: #1d70b8;
+    background: #1d70b8;
     padding: 0;
 }
 
@@ -1084,20 +1084,7 @@ input:focus-visible+label {
     background-color: #fff;
 }
 
-.header-nav {
-    display: flex;
-    justify-content: space-between;
-    border-bottom: 1px solid #ccc;
-    align-items: center;
-    padding: 0 10px;
-    background: #ecf5ff;
-}
-
-.pims-log-wrapper {
-    display: flex;
-    align-items: center;
-    margin: 4px 0;
-}
+/* header-nav, app-log-wrapper — moved to css/common/headernav/navstyle.css */
 
 .financial-summary.pp-summary-4-3 .summary-row {
     display: grid;
@@ -1136,29 +1123,8 @@ input:focus-visible+label {
     }
 }
 
-.header-nav .dropdown-menu {
-
-    padding: 0;
-    border-radius: 0;
-    border: 1px solid #003078;
-    border-bottom: 0;
-}
-
-.pims-log {
-    border: 1px solid #0374e9;
-    border-radius: 10px;
-    color: #00005c;
-    text-shadow: 1px 1px #b0d7ff;
-    letter-spacing: 1px;
-    background: #fff;
-    font-weight: bold;
-    font-size: 20px;
-    text-align: center;
-    padding: 2px;
-    margin-left: 10px;
-}
-
-.pims-log > select  {
+/* app-log — moved to navstyle.css; fps-specific select override kept below */
+.app-log > select  {
 
     color: #00005c;
     text-shadow: 1px 1px #b0d7ff;
@@ -1181,16 +1147,6 @@ input:focus-visible+label {
     background-color: #1d70b8;
     color: #fff;
     font-size: 14px;
-}
-
-.header-nav .dropdown-item:hover {
-    background-color: #1d70b8;
-    color: #fff;
-
-}
-
-.header-nav .dropdown-menu {
-    top: 0% !important;
 }
 
 .footer {
@@ -1347,14 +1303,6 @@ label.required::after {
     background-color: #fff;
 }
 
-.header-nav .dropdown-menu {
-
-    padding: 0;
-    border-radius: 0;
-    border: 1px solid #003078;
-    border-bottom: 0;
-}
-
 .nav-link .nav-item:hover a {
     background-color: #555 !important;
 }
@@ -1364,15 +1312,6 @@ label.required::after {
     background-color: #003078;
     color: #000;
     font-size: 13px;
-}
-
-.header-nav .dropdown-item:hover {
-    background-color: #003078;
-    color: #fff;
-}
-
-.header-nav .dropdown-menu {
-    top: 0% !important;
 }
 
 .dropdown .dropdown-item:hover {
@@ -1511,14 +1450,6 @@ label.required::after {
 
 .financial-summary{margin-bottom:50px;}
 
-    .header-nav .dropdown-menu {
-
-        padding: 0;
-        border-radius: 0;
-        border: 1px solid #003078;
-        border-bottom: 0;
-    }
-
     .nav-link .nav-item:hover a {
         background-color: #555 !important;
     }
@@ -1528,15 +1459,6 @@ label.required::after {
         background-color: #003078;
         color: #000;
         font-size: 13px;
-    }
-
-    .header-nav .dropdown-item:hover {
-        background-color: #003078;
-        color: #fff;
-    }
-
-    .header-nav .dropdown-menu {
-        top: 0% !important;
     }
 
     .dropdown .dropdown-item:hover {
