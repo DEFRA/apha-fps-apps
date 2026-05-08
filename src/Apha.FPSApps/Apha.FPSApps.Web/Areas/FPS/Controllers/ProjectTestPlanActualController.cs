@@ -162,7 +162,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var gridConfig = new DataGridConfig<ActualTestOutputItem>
             {
                 GridId = "compareTests2Grid",
-                Title = "Actual Tests (FPS)",
+                Title = "Actual Tests (PACT)",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 AllowAdd = false,

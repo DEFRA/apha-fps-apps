@@ -45,7 +45,7 @@ namespace Apha.Common.Contracts.FPS
         public short? Finished { get; set; }
         public string? Comments { get; set; }
 
-        [Range(0, 1)]
+        [Range(-1, 1)]
         public short IsDefraProject { get; set; }
 
         [MaxLength(50)]

@@ -178,24 +178,16 @@ namespace Apha.FPS.DataAccess.Repositories
             var dict = (IDictionary<string, object>)filterModel;
 
             if (dict.TryGetValue("SPNumber", out var spNumber) && spNumber != null)
-            {
-                queryEmployees = queryEmployees.Where(x => x.SPNumber.Contains(spNumber.ToString()!));
-            }
+                queryEmployees = queryEmployees.Where(x => EF.Functions.ILike(x.SPNumber, $"%{spNumber}%"));
 
             if (dict.TryGetValue("FirstName", out var firstName) && firstName != null)
-            {
-                queryEmployees = queryEmployees.Where(x => x.FirstName!.Contains(firstName.ToString()!));
-            }
+                queryEmployees = queryEmployees.Where(x => EF.Functions.ILike(x.FirstName!, $"%{firstName}%"));
 
             if (dict.TryGetValue("LastName", out var lastName) && lastName != null)
-            {
-                queryEmployees = queryEmployees.Where(x => x.LastName!.Contains(lastName.ToString()!));
-            }
+                queryEmployees = queryEmployees.Where(x => EF.Functions.ILike(x.LastName!, $"%{lastName}%"));
 
             if (dict.TryGetValue("Title", out var title) && title != null)
-            {
-                queryEmployees = queryEmployees.Where(x => x.Title!.Contains(title.ToString()!));
-            }
+                queryEmployees = queryEmployees.Where(x => EF.Functions.ILike(x.Title!, $"%{title}%"));
 
             return queryEmployees;
         }

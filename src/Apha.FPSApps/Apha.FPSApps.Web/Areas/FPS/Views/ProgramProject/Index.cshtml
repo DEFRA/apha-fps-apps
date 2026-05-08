@@ -53,23 +53,22 @@
                             <div class="container-fluid" style="padding-left:0px;">
                                 <div style="display: flex; flex-direction: row; align-items: flex-start;">
 
-                                    <!-- Side navigation: Plan vs Actuals -->
+                                    <!-- Side navigation: Plan vs Actuals  @* data-nav-program="@Url.Action("Index", "ProjectStaffPlanActual", new { area = "FPS" })" *@ -->
                                     <nav class="sidenav flex-column flex-shrink-0" id="shortnav" aria-label="Plan vs Actuals side navigation">
                                         <button class="toggle-btn ppi-toggle-btn-position" onclick="toggleSidebar()" aria-label="Toggle side navigation">
                                             <img src="~/images/chevron-left-solid-full.svg" alt="Toggle navigation" width="24">
                                         </button>
                                         <ul>
                                             <li><a class="dropdown-item sidenav-title">Plan vs Actuals</a></li>
-                                            <li><a class="dropdown-item"
-                                                   data-nav-program="@Url.Action("Index", "ProjectStaffPlanActual", new { area = "FPS" })"
-                                                   href="@Url.Action("Index", "ProjectStaffPlanActual", new { area = "FPS", programNo = Model.SelectedProgramNo })">Staff</a>
+                                            <li><a class="dropdown-item"                                                  
+                                                   asp-area="FPS" asp-controller="ProjectStaffPlanActual" asp-action="Index"
+                                                   asp-route-programNo="@Model.SelectedProgramNo">Staff</a>
                                                 </li>
-                                            <li><a class="dropdown-item" data-nav-program="@Url.Action("Index", "ProjectTestPlanActual", new { area = "FPS" })"
-                                                       href="@Url.Action("Index", "ProjectTestPlanActual", new { area = "FPS", programNo = Model.SelectedProgramNo })">Tests</a>
+                                            <li><a class="dropdown-item" 
+                                                    asp-area="FPS" asp-controller="ProjectTestPlanActual" asp-action="Index"  asp-route-programNo="@Model.SelectedProgramNo">Tests</a>
                                                 </li>
                                             <li><a class="dropdown-item"
-                                                   data-nav-program="@Url.Action("Index", "ProjectAnimalPlanActual", new { area = "FPS" })"
-                                                       href="@Url.Action("Index", "ProjectAnimalPlanActual", new { area = "FPS", programNo = Model.SelectedProgramNo })">Animals</a>
+                                                    asp-area="FPS" asp-controller="ProjectAnimalPlanActual" asp-action="Index"  asp-route-programNo="@Model.SelectedProgramNo">Animals</a>
                                                 </li>
                                             <li><a class="dropdown-item" href="#">Additional</a></li>
                                         </ul>

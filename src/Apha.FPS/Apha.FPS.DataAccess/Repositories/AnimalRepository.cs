@@ -3,6 +3,8 @@ using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using System.Dynamic;
 using System.Linq.Expressions;
 
 namespace Apha.FPS.DataAccess.Repositories
@@ -23,6 +25,8 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<PagedData<AnimalCostView>> GetAnimalCostAsync(PaginationParameters<string> query, string jobCode)
         {
             var queryAnimalCost = BuildAnimalCostQuery(jobCode);
+
+            queryAnimalCost = ApplyAnimalCostFilter(queryAnimalCost, query.Filter);
 
             queryAnimalCost = (IQueryable<AnimalCostView>)ApplySorting(queryAnimalCost, query.SortBy, query.Descending);
 
@@ -101,7 +105,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 await using var transaction = await _dbContext.Database.BeginTransactionAsync();
                 try
                 {
-                    var existingEntity = await _dbContext.AnimalRequests.FindAsync(animalReq.IndCounter);
+                    var existingEntity = await _dbContext.AnimalRequests.FindAsync(animalReq.IndCounter, _requestContext.FpsYear);
 
                     if (existingEntity == null)
                         throw new InvalidOperationException(
@@ -133,7 +137,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             ArgumentOutOfRangeException.ThrowIfNegativeOrZero(indCounter);
 
-            var entity = await _dbContext.AnimalRequests.FindAsync(indCounter);
+            var entity = await _dbContext.AnimalRequests.FindAsync(indCounter, _requestContext.FpsYear);
             if (entity == null)
                 return false;
 
@@ -196,6 +200,29 @@ namespace Apha.FPS.DataAccess.Repositories
                        DailyRate = dailyRate,
                        TotalDays = animalReq.NumberOfAnimals * animalReq.NumberOfDays
                    };
+        }
+
+        private static IQueryable<AnimalCostView> ApplyAnimalCostFilter(IQueryable<AnimalCostView> query, string? filter)
+        {
+            if (string.IsNullOrEmpty(filter))
+                return query;
+
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            if (filterModel == null)
+                return query;
+
+            var dict = (IDictionary<string, object>)filterModel;
+
+            if (dict.TryGetValue("AnimalType", out var animalType) && animalType != null)
+                query = query.Where(x => EF.Functions.ILike(x.AnimalType!, $"%{animalType}%"));
+
+            if (dict.TryGetValue("NumberOfDays", out var numberOfDays) && numberOfDays != null)
+                query = query.Where(x => EF.Functions.ILike(x.NumberOfDays.ToString(), $"%{numberOfDays}%"));
+
+            if (dict.TryGetValue("NumberOfAnimals", out var numberOfAnimals) && numberOfAnimals != null)
+                query = query.Where(x => EF.Functions.ILike(x.NumberOfAnimals.ToString(), $"%{numberOfAnimals}%"));
+
+            return query;
         }
 
         private static IQueryable ApplySorting(IQueryable<AnimalCostView> query, string? sortBy, bool descending)

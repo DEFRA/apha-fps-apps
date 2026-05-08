@@ -319,12 +319,15 @@ namespace Apha.PACT.DataAccess.Repository
             IQueryable<TestRequirementDetail> query, string? filterJson)
         {
             if (string.IsNullOrWhiteSpace(filterJson)) return query;
-
+            
             var filters = JsonConvert.DeserializeObject<Dictionary<string, string>>(filterJson);
             if (filters is null) return query;
 
             if (filters.TryGetValue("TestCode", out string? testcode) && !string.IsNullOrWhiteSpace(testcode))
                 query = query.Where(t => EF.Functions.ILike(t.TestCode, $"%{testcode}%"));
+
+            if (filters.TryGetValue("ItemDescription", out string? itemdescription) && !string.IsNullOrWhiteSpace(itemdescription))
+                query = query.Where(t => t.ItemDescription != null && EF.Functions.ILike(t.ItemDescription, $"%{itemdescription}%"));
 
             if (filters.TryGetValue("Buyer", out string? buyer) && !string.IsNullOrWhiteSpace(buyer))
                 query = query.Where(t => EF.Functions.ILike(t.Buyer, $"%{buyer}%"));
