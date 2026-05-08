@@ -1,9 +1,9 @@
 // Invoice Recording Page JavaScript
 
 // ── State ──────────────────────────────────────────────────────────
-var currentParentProject = null;
-var currentMonth = null;
-var invoicesGridId = '';
+// Note: currentParentProject, currentMonth, and invoicesGridId 
+// are initialized in the Razor view to avoid flicker
+// DO NOT redeclare them here - they are set via inline script in Index.cshtml
 
 function getInvoicesGridManager() {
     return window['gridManager_' + invoicesGridId];

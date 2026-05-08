@@ -1,4 +1,6 @@
 ﻿using Apha.FPSApps.Application.Dtos.PACT;
+using Apha.FPSApps.Application.Dtos;
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.PACT;
 using AutoMapper;
 
@@ -17,6 +19,9 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<MonthDto, MonthRes>().ReverseMap();
             CreateMap<ProjectInvoiceDto, ProjectInvoiceReq>().ReverseMap();
             CreateMap<ProjectInvoiceDto, ProjectInvoiceRes>().ReverseMap();
+            CreateMap<MonthlyInvoicesSummaryItemDto, MonthlyInvoicesSummaryItemRes>().ReverseMap();
+            CreateMap<PaginationDto, Pagination>().ReverseMap();
+            CreateMap<MonthlyInvoicesPivotDto, MonthlyInvoicesPivotRes>().ReverseMap();
             CreateMap<ProjectSubContractDto, ProjectSubContractReq>().ReverseMap();
             CreateMap<ProjectSubContractDto, ProjectSubContractRes>().ReverseMap();
             CreateMap<TestCapabilityDto, TestCapabilityReq>().ReverseMap();
@@ -25,6 +30,8 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<TestRequirementDto, TestRequirementtRes>().ReverseMap();            
             CreateMap<TestorProductDto, TestorProductReq>().ReverseMap();
             CreateMap<TestorProductDto, TestorProductRes>().ReverseMap();
+            CreateMap<MonthlySubContractsSummaryItemDto, MonthlySubContractsSummaryItemRes>().ReverseMap();
+            CreateMap<MonthlySubContractsPivotDto, MonthlySubContractsPivotRes>().ReverseMap();     
         }
     }
 }

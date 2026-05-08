@@ -80,5 +80,13 @@ namespace Apha.PACT.Api.Controllers
             bool deleted = await _service.DeleteAsync(id);
             return Ok(deleted);
         }
+
+        /// <summary>Retrieves monthly invoices summary pivoted by month, with optional filter, sort and pagination.</summary>
+        [HttpGet("monthly-summary")]
+        public async Task<IActionResult> GetMonthlyInvoicesSummary([FromQuery] QueryParameters<string> query)
+        {
+            MonthlyInvoicesPivotDto result = await _service.GetMonthlyInvoicesSummaryAsync(query);
+            return Ok(_mapper.Map<MonthlyInvoicesPivotRes>(result));
+        }
     }
 }

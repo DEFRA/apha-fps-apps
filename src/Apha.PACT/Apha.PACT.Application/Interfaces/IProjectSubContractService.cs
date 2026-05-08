@@ -13,5 +13,6 @@ namespace Apha.PACT.Application.Interfaces
         Task<ProjectSubContractDto> CreateAsync(ProjectSubContractDto dto);
         Task<ProjectSubContractDto> UpdateAsync(ProjectSubContractDto dto);
         Task<bool> DeleteAsync(int subContCounter);
+        Task<MonthlySubContractsPivotDto> GetMonthlySubContractsSummaryAsync(QueryParameters<string> query);
     }
 }

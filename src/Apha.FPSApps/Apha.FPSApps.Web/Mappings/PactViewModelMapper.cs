@@ -20,6 +20,13 @@ namespace Apha.FPSApps.Web.Mappings
                 .ReverseMap()
                 .ForMember(dest => dest.Counter, opt => opt.MapFrom(src => src.SubContCounter));
 
+            // Mapping for standalone SubContract page
+            CreateMap<SubContractItem, ProjectSubContractDto>()
+                .ForMember(dest => dest.DailyRate, opt => opt.Ignore())
+                .ForMember(dest => dest.AnimalDays, opt => opt.Ignore())
+                .ReverseMap()
+                .ForMember(dest => dest.Counter, opt => opt.MapFrom(src => src.SubContCounter));
+
             CreateMap<TestCapabilityItem, TestCapabilityDto>().ReverseMap();
             CreateMap<ConstituentTestItem, TestCapabilityDto>().ReverseMap();
             CreateMap<PortfolioTimeCodeViewModel, TimeCodeValidDto>().ReverseMap();

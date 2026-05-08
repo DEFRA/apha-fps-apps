@@ -38,5 +38,8 @@ namespace Apha.FPSApps.Application.Services.PACT
 
         public async Task<ApiResponseDto<decimal>> GetFpsProjectSubContractTotalAmountAsync(string? project)
             => await _pactClient.PactProjectSubContract.GetFpsProjectSubContractTotalAmountAsync(project);
+
+        public async Task<ApiResponseDto<MonthlySubContractsPivotDto>> GetMonthlySubContractsSummaryAsync(QueryParameters<string> query)
+           => await _pactClient.PactProjectSubContract.GetMonthlySubContractsSummaryAsync(query);
     }
 }

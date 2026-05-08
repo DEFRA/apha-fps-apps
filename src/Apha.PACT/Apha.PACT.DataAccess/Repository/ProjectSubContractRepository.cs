@@ -106,6 +106,34 @@ namespace Apha.PACT.DataAccess.Repository
             return true;
         }
 
+        public async Task<List<MonthlySubContractsSummary>> GetMonthlySubContractsSummaryAsync(PaginationParameters<string> parameters)
+        {
+            IQueryable<MonthlySubContractsSummary> query = _context.MonthlySubContractsSummary.AsNoTracking();
+
+            // Parse filter JSON from DataGrid: {"Program":"ADMIN","ParentProject":"AH"}
+            if (!string.IsNullOrWhiteSpace(parameters.Filter))
+            {
+                dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(parameters.Filter);
+                if (filterModel != null)
+                {
+                    IDictionary<string, object> dict = (IDictionary<string, object>)filterModel;
+
+                    if (dict.TryGetValue("Program", out object? program) && program != null)
+                        query = query.Where(x => x.Program.Contains(program.ToString()!));
+
+                    if (dict.TryGetValue("ParentProject", out object? parentProject) && parentProject != null)
+                        query = query.Where(x => x.ParentProject.Contains(parentProject.ToString()!));
+                }
+            }
+
+            // Always order raw rows by Program, Project, Month so grouping is stable
+            return await query
+                .OrderBy(x => x.Program)
+                .ThenBy(x => x.ParentProject)
+                .ThenBy(x => x.Month)
+                .ToListAsync();
+        }
+
         private static IQueryable<ProjectSubContract> ApplySubContractFilter(IQueryable<ProjectSubContract> query, string? filter)
         {
             if (string.IsNullOrEmpty(filter)) return query;
@@ -123,6 +151,26 @@ namespace Apha.PACT.DataAccess.Repository
 
             if (dict.TryGetValue("TestJob", out object? testJob) && testJob != null)
                 query = query.Where(x => x.TestJob != null && EF.Functions.ILike(x.TestJob, $"%{testJob}%"));
+
+            if (dict.TryGetValue("Month", out object? month) && month != null)
+            {
+                if (double.TryParse(month.ToString(), out double monthValue))
+                    query = query.Where(x => x.Month == monthValue);
+            }
+            if (dict.TryGetValue("WorkGroup", out object? workGroup) && workGroup != null)
+                query = query.Where(x => x.WorkGroup != null && x.WorkGroup.Contains(workGroup.ToString()!));
+
+            if (dict.TryGetValue("Description", out object? description) && description != null)
+                query = query.Where(x => x.Description != null && x.Description.Contains(description.ToString()!));
+
+            if (dict.TryGetValue("Supplier", out object? supplier) && acctCode != null)
+                query = query.Where(x => x.Supplier != null && x.Supplier.Contains(supplier.ToString()!));
+
+            if (dict.TryGetValue("SupplierNumber", out object? supplierNumber) && supplierNumber != null)
+            {
+                if (int.TryParse(supplierNumber.ToString(), out int supplierNumberValue))
+                    query = query.Where(x => x.SupplierNumber == supplierNumberValue);
+            }
 
             return query;
         }

@@ -32,6 +32,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectApiClien
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var filterOption = 2;
             var projectListResList = new List<ProjectListRes>
             {
                 new ProjectListRes { Parentproject = "PP001", Program = "Program A", Customer = "Customer A", OnFps = "yes" },
@@ -48,14 +49,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectApiClien
             _mapper.Map<ApiResponseDto<List<ProjectListViewDto>>>(apiResponse).Returns(mappedDto);
 
             // Act
-            var result = await _client.GetAllProjectsAsync(query);
+            var result = await _client.GetAllProjectsAsync(query, filterOption);
 
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.NotNull(result.Data);
             Assert.Equal(2, result.Data.Count);
-            await _http.Received(1).GetAsync<List<ProjectListRes>>(Arg.Any<string>());
+            await _http.Received(1).GetAsync<List<ProjectListRes>>(Arg.Is<string>(s => s.Contains($"showWhichProjects={filterOption}")));
             _mapper.Received(1).Map<ApiResponseDto<List<ProjectListViewDto>>>(apiResponse);
         }
 
@@ -64,6 +65,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectApiClien
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var filterOption = 2;
             var apiResponse = new ApiResponse<List<ProjectListRes>> { Success = true, Data = null };
             var mappedDto = new ApiResponseDto<List<ProjectListViewDto>>
             {
@@ -76,7 +78,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectApiClien
             _mapper.Map<ApiResponseDto<List<ProjectListViewDto>>>(apiResponse).Returns(mappedDto);
 
             // Act
-            var result = await _client.GetAllProjectsAsync(query);
+            var result = await _client.GetAllProjectsAsync(query, filterOption);
 
             // Assert
             Assert.NotNull(result);
@@ -92,6 +94,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectApiClien
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var filterOption = 2;
             var errors = new List<ApiError>
             {
                 new ApiError { Message = "API Error", Code = "ERROR_CODE" }
@@ -109,7 +112,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectApiClien
             _mapper.Map<ApiResponseDto<List<ProjectListViewDto>>>(apiResponse).Returns(mappedDto);
 
             // Act
-            var result = await _client.GetAllProjectsAsync(query);
+            var result = await _client.GetAllProjectsAsync(query, filterOption);
 
             // Assert
             Assert.NotNull(result);
@@ -124,60 +127,11 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectApiClien
         }
 
         [Fact]
-        public async Task GetAllProjectsAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
+        public async Task GetAllProjectsAsync_WithCustomFilterOption_AppendsCorrectQueryParameter()
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            _http.GetAsync<List<ProjectListRes>>(Arg.Any<string>())
-                .ThrowsAsync(new Exception("Network connection failed"));
-
-            // Act
-            var result = await _client.GetAllProjectsAsync(query);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to retrieve project list", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-            Assert.NotNull(result.Meta);
-        }
-
-        [Fact]
-        public async Task GetAllProjectsAsync_WhenMapperThrowsException_ReturnsInternalError()
-        {
-            // Arrange
-            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var apiResponse = new ApiResponse<List<ProjectListRes>>
-            {
-                Success = true,
-                Data = new List<ProjectListRes> { new ProjectListRes { Parentproject = "PP001" } }
-            };
-
-            _http.GetAsync<List<ProjectListRes>>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<ProjectListViewDto>>>(apiResponse)
-                .Throws(new AutoMapperMappingException("Mapping failed"));
-
-            // Act
-            var result = await _client.GetAllProjectsAsync(query);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to retrieve project list", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-        }
-
-        [Fact]
-        public async Task GetAllProjectsAsync_EnsuresCorrectApiEndpoint_CallsWithCorrectUrl()
-        {
-            // Arrange
-            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var filterOption = 1;
             var apiResponse = new ApiResponse<List<ProjectListRes>> { Success = true, Data = new List<ProjectListRes>() };
             var mappedDto = ApiResponseDto<List<ProjectListViewDto>>.SuccessResponse(new List<ProjectListViewDto>());
 
@@ -185,11 +139,173 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectApiClien
             _mapper.Map<ApiResponseDto<List<ProjectListViewDto>>>(apiResponse).Returns(mappedDto);
 
             // Act
-            await _client.GetAllProjectsAsync(query);
+            await _client.GetAllProjectsAsync(query, filterOption);
+
+            // Assert
+            await _http.Received(1).GetAsync<List<ProjectListRes>>(
+                Arg.Is<string>(s => s.Contains($"showWhichProjects={filterOption}"))
+            );
+        }
+
+        [Fact]
+        public async Task GetAllProjectsAsync_EnsuresCorrectApiEndpoint_CallsWithCorrectUrl()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var filterOption = 2;
+            var apiResponse = new ApiResponse<List<ProjectListRes>> { Success = true, Data = new List<ProjectListRes>() };
+            var mappedDto = ApiResponseDto<List<ProjectListViewDto>>.SuccessResponse(new List<ProjectListViewDto>());
+
+            _http.GetAsync<List<ProjectListRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProjectListViewDto>>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            await _client.GetAllProjectsAsync(query, filterOption);
 
             // Assert
             await _http.Received(1).GetAsync<List<ProjectListRes>>(
                 Arg.Is<string>(s => s.StartsWith(PimsApiEndpoints.GetAllProjects))
+            );
+        }
+
+        #endregion
+
+        #region GetAllProjectsListAsync Tests
+
+        [Fact]
+        public async Task GetAllProjectsListAsync_WithSuccessResponseAndData_ReturnsMappedProjectList()
+        {
+            // Arrange
+            var projectListResList = new List<ProjectListRes>
+            {
+                new ProjectListRes { Parentproject = "PP001", Program = "Program A", Customer = "Customer A", OnFps = "yes" },
+                new ProjectListRes { Parentproject = "PP002", Program = "Program B", Customer = "Customer B", OnFps = "no" },
+                new ProjectListRes { Parentproject = "PP003", Program = "Program C", Customer = "Customer C", OnFps = "yes" }
+            };
+            var apiResponse = new ApiResponse<List<ProjectListRes>> { Success = true, Data = projectListResList };
+            var mappedDto = ApiResponseDto<List<ProjectListViewDto>>.SuccessResponse(new List<ProjectListViewDto>
+            {
+                new ProjectListViewDto { Parentproject = "PP001", Program = "Program A" },
+                new ProjectListViewDto { Parentproject = "PP002", Program = "Program B" },
+                new ProjectListViewDto { Parentproject = "PP003", Program = "Program C" }
+            });
+
+            _http.GetAsync<List<ProjectListRes>>(PimsApiEndpoints.GetAllProjectsList).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProjectListViewDto>>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            var result = await _client.GetAllProjectsListAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.NotNull(result.Data);
+            Assert.Equal(3, result.Data.Count);
+            await _http.Received(1).GetAsync<List<ProjectListRes>>(PimsApiEndpoints.GetAllProjectsList);
+            _mapper.Received(1).Map<ApiResponseDto<List<ProjectListViewDto>>>(apiResponse);
+        }
+
+        [Fact]
+        public async Task GetAllProjectsListAsync_WithSuccessResponseButNullData_ReturnsFailureResponse()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<List<ProjectListRes>> { Success = true, Data = null };
+            var mappedDto = new ApiResponseDto<List<ProjectListViewDto>>
+            {
+                Success = false,
+                Errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "No data", Code = "NO_DATA" } },
+                Meta = new ApiMetaDto()
+            };
+
+            _http.GetAsync<List<ProjectListRes>>(PimsApiEndpoints.GetAllProjectsList).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProjectListViewDto>>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            var result = await _client.GetAllProjectsListAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.NotNull(result.Meta);
+            await _http.Received(1).GetAsync<List<ProjectListRes>>(PimsApiEndpoints.GetAllProjectsList);
+            _mapper.Received(1).Map<ApiResponseDto<List<ProjectListViewDto>>>(apiResponse);
+        }
+
+        [Fact]
+        public async Task GetAllProjectsListAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var errors = new List<ApiError>
+            {
+                new ApiError { Message = "API Error", Code = "ERROR_CODE" }
+            };
+            var apiResponse = new ApiResponse<List<ProjectListRes>> { Success = false, Data = null, Errors = errors };
+            var mappedDto = new ApiResponseDto<List<ProjectListViewDto>>
+            {
+                Success = false,
+                Data = null,
+                Errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "API Error", Code = "ERROR_CODE" } },
+                Meta = new ApiMetaDto()
+            };
+
+            _http.GetAsync<List<ProjectListRes>>(PimsApiEndpoints.GetAllProjectsList).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProjectListViewDto>>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            var result = await _client.GetAllProjectsListAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.Null(result.Data);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+            Assert.Equal("API Error", result.Errors[0].Message);
+            Assert.Equal("ERROR_CODE", result.Errors[0].Code);
+            await _http.Received(1).GetAsync<List<ProjectListRes>>(PimsApiEndpoints.GetAllProjectsList);
+            _mapper.Received(1).Map<ApiResponseDto<List<ProjectListViewDto>>>(apiResponse);
+        }
+
+        [Fact]
+        public async Task GetAllProjectsListAsync_WithEmptyList_ReturnsSuccessWithEmptyData()
+        {
+            // Arrange
+            var emptyList = new List<ProjectListRes>();
+            var apiResponse = new ApiResponse<List<ProjectListRes>> { Success = true, Data = emptyList };
+            var mappedDto = ApiResponseDto<List<ProjectListViewDto>>.SuccessResponse(new List<ProjectListViewDto>());
+
+            _http.GetAsync<List<ProjectListRes>>(PimsApiEndpoints.GetAllProjectsList).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProjectListViewDto>>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            var result = await _client.GetAllProjectsListAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.NotNull(result.Data);
+            Assert.Empty(result.Data);
+            await _http.Received(1).GetAsync<List<ProjectListRes>>(PimsApiEndpoints.GetAllProjectsList);
+            _mapper.Received(1).Map<ApiResponseDto<List<ProjectListViewDto>>>(apiResponse);
+        }
+
+        [Fact]
+        public async Task GetAllProjectsListAsync_EnsuresCorrectApiEndpoint_CallsWithCorrectUrl()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<List<ProjectListRes>> { Success = true, Data = new List<ProjectListRes>() };
+            var mappedDto = ApiResponseDto<List<ProjectListViewDto>>.SuccessResponse(new List<ProjectListViewDto>());
+
+            _http.GetAsync<List<ProjectListRes>>(PimsApiEndpoints.GetAllProjectsList).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProjectListViewDto>>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            await _client.GetAllProjectsListAsync();
+
+            // Assert
+            await _http.Received(1).GetAsync<List<ProjectListRes>>(
+                Arg.Is<string>(s => s == PimsApiEndpoints.GetAllProjectsList)
             );
         }
 

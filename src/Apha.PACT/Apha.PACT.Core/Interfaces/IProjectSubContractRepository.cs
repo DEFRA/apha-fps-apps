@@ -13,5 +13,6 @@ namespace Apha.PACT.Core.Interfaces
         Task<ProjectSubContract> CreateAsync(ProjectSubContract entity);
         Task<ProjectSubContract> UpdateAsync(ProjectSubContract entity);
         Task<bool> DeleteAsync(int subContCounter);
+        Task<List<MonthlySubContractsSummary>> GetMonthlySubContractsSummaryAsync(PaginationParameters<string> parameters);
     }
 }
