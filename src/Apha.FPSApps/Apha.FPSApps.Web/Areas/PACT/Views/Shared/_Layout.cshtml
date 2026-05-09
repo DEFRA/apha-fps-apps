@@ -1,12 +1,3 @@
-@using System.Security.Claims
-@{
-    // Get display name from claims (try multiple claim types)
-    var displayName = User.FindFirst("name")?.Value
-                      ?? User.FindFirst(ClaimTypes.GivenName)?.Value
-                      ?? User.FindFirst(ClaimTypes.Name)?.Value?.Split('@')[0]
-                      ?? "Unknown User";
-   
-}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -26,34 +17,7 @@
 </head>
 <body>
     <!-- ── Top Header ─────────────────────────────────────────────────── -->
-    <header>
-        <div class="header-nav">
-            <div class="app-log-wrapper">
-                <div>
-                    <img src="~/images/defra_logo.png" width="80" alt="Animal & Plant Health Agency" />
-                </div>
-                <div class="app-log">
-                    <span>PACT</span>
-                </div>
-                <div>
-                    @await Component.InvokeAsync("YearSelector")
-                </div>
-            </div>
-            <div>
-                <button class="userdropdownbtn" id="userdropdownbtn" allow-edit="true">@displayName &nbsp; <img src="~/images/circle-user-regular-full.svg" alt="user icon" width="24" /></button>
-                <div class="userdropdown" id="userdropdowndp">
-                    <ul>
-                        <li>
-                            <a href="/" style="display: flex; align-items: center;" type="button">
-                                <img src="~/images/house-user-solid-full.svg" alt="dropdown home icon" width="22">
-                                Home
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </header>
+    @await Component.InvokeAsync("AppHeader", new { appName = "PACT", showYearSelector = true })
 
     <!-- ── Main Navigation ───────────────────────────────────────────── -->
     <div id="header">
@@ -156,13 +120,7 @@
         @RenderBody()
     </div>    
     <!-- ── Footer ────────────────────────────────────────────────────── -->
-    <div class="govuk-footer sup_p_0 sup_margin_left_right_0">
-        <div class="govuk-width-container sup_p_8 sup_text_center">
-            <span>
-                &copy; Copyright Defra 2025
-            </span>
-        </div>
-    </div>
+    @await Component.InvokeAsync("AppFooter")
 
     <!-- ── Shared modal popup (for add/edit forms) ───────────────────── -->
     <div id="modalPopup" tabindex="-1" aria-labelledby="modalPopupLabel"         
