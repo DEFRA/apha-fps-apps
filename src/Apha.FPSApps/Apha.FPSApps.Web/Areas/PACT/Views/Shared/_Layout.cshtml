@@ -21,101 +21,7 @@
     @await Component.InvokeAsync("AppHeader", new { appName = "PACT", showYearSelector = true })
 
     <!-- ── Main Navigation ───────────────────────────────────────────── -->
-    <div id="header">
-        <nav class="main-nav">
-            <!-- Project & Programme Dropdown -->
-            <div class="nav-item dropdown">
-                <button class="nav-button dropdown-toggle" data-dropdown="project-management" allow-edit="true">
-                    <div class="align-menu-text">
-                        <span>Project & Programme</span>
-                    </div>
-                    <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow for dropdown menu" width="12"></span>
-                </button>
-                <div class="dropdown-menu" id="project-management">
-                    <a class="dropdown-item" asp-area="PACT" asp-controller="ProgramMaintenance" asp-action="Index">Program Maintenance</a>
-                    <a class="dropdown-item" asp-area="PACT" asp-controller="ProjectMaintenance" asp-action="Index">Project Maintenance</a>
-                    <a class="dropdown-item" asp-area="PACT" asp-controller="PortfolioMaintenance" asp-action="Index">Portfolio Maintenance</a>
-                </div>
-            </div>
-
-            <!-- Monthly Project Dropdown -->
-            <div class="nav-item dropdown">
-                <button class="nav-button dropdown-toggle" data-dropdown="monthly-data" allow-edit="true">
-                    <div class="align-menu-text">
-                        <span>Monthly Project Data </span>
-                    </div>
-                    <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow for dropdown menu" width="12"></span>
-                </button>
-                <div class="dropdown-menu" id="monthly-data">
-                    <a class="dropdown-item" asp-area="PACT" asp-controller="Invoice" asp-action="Index">Project Invoices (Manual)</a>
-
-                    <a class="dropdown-item" href="#">OM, OG, FT & UT Invoices (Batch Mode from RMS)</a>
-
-                    <a class="dropdown-item" asp-area="PACT" asp-controller="InvoiceByMonth" asp-action="Index">Invoices by Month</a>
-                    <a class="dropdown-item" href="#">FT & UT Project Work In Progress (WIP Over-ride)</a>
-
-                    <a class="dropdown-item" asp-area="PACT" asp-controller="SubContract" asp-action="Index">SubContracts (Exceptional Costs) (Manual)</a>
-                    <a class="dropdown-item" href="#">SubContracts (Exceptional Costs) (Batch mode from RMS)</a>
-                        <a class="dropdown-item" asp-area="PACT" asp-controller="SubContractByMonth" asp-action="Index">SubContracts By Month</a>
-                </div>
-            </div>
-
-            <!-- Work Group Dropdown -->
-            <div class="nav-item dropdown">
-                <button class="nav-button dropdown-toggle" data-dropdown="work-group" allow-edit="true">
-                    <div class="align-menu-text">
-                        <span> Work Group Static Data </span>
-                    </div>
-                    <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow for dropdown menu" width="12"></span>
-                </button>
-                <div class="dropdown-menu" id="work-group">
-                    <a href="#" class="dropdown-item">Work Group People</a>
-                    <a class="dropdown-item" asp-area="PACT" asp-controller="TestCapability" asp-action="Index">Test Capabilities</a>
-                    <a class="dropdown-item" asp-area="PACT" asp-controller="TestorProduct" asp-action="Index">Test Maintenance List</a>
-                </div>
-            </div>
-		
-            <!-- Bosworth Interface Dropdown -->
-            <div class="nav-item dropdown">
-                <button class="nav-button dropdown-toggle" data-dropdown="bosworth-interface" allow-edit="true">
-                    <div class="align-menu-text">
-                        <span> Bosworth Interface </span>
-                    </div>
-                    <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow for dropdown menu" width="12"></span>
-                </button>
-                <div class="dropdown-menu" id="bosworth-interface">
-                    <a href="#" class="dropdown-item">Resource Management</a>
-                    <a href="#" class="dropdown-item">Time Purchase Pivot Wizard</a>
-                    <a href="#" class="dropdown-item">Time Sales Pivot Wizard</a>
-                    <a href="#" class="dropdown-item">Test Sale Pivot Wizard</a>
-                </div>
-            </div>
-
-            <!-- Time & Output Dropdown -->
-            <div class="nav-item dropdown">
-                <button class="nav-button dropdown-toggle" data-dropdown="time-data" allow-edit="true">
-                    <div class="align-menu-text">
-                        <span> Time & Output Data </span>
-                    </div>
-                    <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow for dropdown menu" width="12"></span>
-                </button>
-                <div class="dropdown-menu" id="time-data">
-                    <a href="timerecording.html" class="dropdown-item">Time record data entry</a>
-                    <a href="output_record_dataentry.html" class="dropdown-item">Output record data entry</a>
-                    <a href="create_email_time_output_summary.html" class="dropdown-item">Create & email time & output summaries</a>
-                    <a href="create_print_individual_cos90s.html" class="dropdown-item">Create & print individual COS90s</a>
-                    <a href="#" class="dropdown-item">Search Audit Log for Monthly Output Change</a>
-                    <a href="#" class="dropdown-item">Search Audit Log for Monthly Time Change</a>
-                </div>
-            </div>
-            <div class="nav-item">
-                <button class="nav-button" allow-edit="true">
-                    Reports
-                </button>
-            </div>
-        </nav>
-    </div>
-
+    @await Component.InvokeAsync("AppNav", new { appArea = "PACT" })
     <!-- ── Page Body ─────────────────────────────────────────────────── -->
         <div class="sup_margin_bottom_10 content-wrapper">
         @RenderBody()
@@ -180,7 +86,7 @@
         };
     </script>
 
-    <script src="~/js/pact_js/pactnavmenu.js"></script>
+    <script src="~/js/common/headernav/navmenu.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

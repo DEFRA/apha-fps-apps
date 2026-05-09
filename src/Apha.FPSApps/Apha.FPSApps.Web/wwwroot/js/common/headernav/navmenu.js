@@ -1,6 +1,6 @@
-// ── FPS navigation menu initialisation ──────────────────────────────────────
-// Handles user-profile dropdown, L1 main-nav dropdowns, and L2 sub-dropdowns.
-// This file is referenced by Areas/FPS/Views/Shared/_Layout.cshtml.
+// ── Shared navigation menu — all 4 apps (FPS, PACT, PIMS, CostBook) ──────────
+// Handles: user-profile dropdown, L1 main-nav dropdowns, L2 sub-dropdowns (FPS).
+// Referenced by Views/Shared/Components/AppNav/Default.cshtml.
 (function () {
     'use strict';
 
@@ -13,7 +13,7 @@
         });
     }
 
-    // ── Main nav L1 dropdowns ─────────────────────────────────────────────────
+    // ── L1 main nav dropdowns ─────────────────────────────────────────────────
     document.querySelectorAll('.nav-button.dropdown-toggle').forEach(function (toggle) {
         toggle.addEventListener('click', function (e) {
             e.stopPropagation();
@@ -68,7 +68,7 @@
         });
     });
 
-    // ── L2 sub-dropdown toggles — open on hover ────────────────────────────────
+    // ── L2 sub-dropdown toggles — open on hover (FPS only; ignored by others) ─
     document.querySelectorAll('.sub-dropdown').forEach(function (subDropdown) {
         subDropdown.addEventListener('mouseenter', function () {
             var subMenu = this.querySelector('.sub-dropdown-menu');
@@ -119,28 +119,20 @@
         document.querySelectorAll('.sub-dropdown-menu').forEach(function (menu) {
             menu.classList.remove('show');
         });
-        document.querySelectorAll('.sub-dropdown').forEach(function (dropdown) {
-            dropdown.classList.remove('active');
+        document.querySelectorAll('.sub-dropdown').forEach(function (d) {
+            d.classList.remove('active');
         });
         var udp = document.getElementById('userdropdowndp');
         if (udp) udp.classList.remove('show');
     });
 
-    // ── Close all on terminal dropdown-item click ─────────────────────────────
+    // ── Close dropdown when a nav item is clicked ─────────────────────────────
     document.querySelectorAll('.dropdown-item').forEach(function (item) {
         item.addEventListener('click', function () {
-            document.querySelectorAll('.dropdown-menu').forEach(function (m) {
-                m.classList.remove('show');
-            });
-            document.querySelectorAll('.nav-item.dropdown').forEach(function (d) {
-                d.classList.remove('active');
-            });
-            document.querySelectorAll('.sub-dropdown-menu').forEach(function (m) {
-                m.classList.remove('show');
-            });
-            document.querySelectorAll('.sub-dropdown').forEach(function (d) {
-                d.classList.remove('active');
-            });
+            var dropdownMenu = this.closest('.dropdown-menu');
+            var parentDropdown = this.closest('.nav-item.dropdown');
+            if (dropdownMenu) dropdownMenu.classList.remove('show');
+            if (parentDropdown) parentDropdown.classList.remove('active');
         });
     });
 })();

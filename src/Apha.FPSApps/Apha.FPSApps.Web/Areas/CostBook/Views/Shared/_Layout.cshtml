@@ -22,25 +22,7 @@
     @await Component.InvokeAsync("AppHeader", new { appName = "Costbook" })
 
     <!-- ── Main Navigation ───────────────────────────────────────────── -->
-    <div id="header">
-        <nav class="main-nav">
-
-            <!-- Choose Project -->
-            <div class="nav-item">
-                <a class="nav-button" asp-area="CostBook" asp-controller="Projects" asp-action="Index">
-                    <div class="align-menu-text"><span>Choose Project</span></div>
-                </a>
-            </div>
-
-            <!-- Maintenance -->
-            <div class="nav-item">
-                <a class="nav-button" asp-area="CostBook" asp-controller="YearlyDetails" asp-action="Index">
-                    <div class="align-menu-text"><span>Maintenance</span></div>
-                </a>
-            </div>
-
-        </nav>
-    </div>
+    @await Component.InvokeAsync("AppNav", new { appArea = "CostBook" })
 
     <!-- ── Page Body ─────────────────────────────────────────────────── -->
     <div class="sup_margin_bottom_10 content-wrapper">
@@ -107,7 +89,7 @@
         };
     </script>
 
-    <script src="~/js/costbook_js/costbooknavmenu.js"></script>
+    <script src="~/js/common/headernav/navmenu.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

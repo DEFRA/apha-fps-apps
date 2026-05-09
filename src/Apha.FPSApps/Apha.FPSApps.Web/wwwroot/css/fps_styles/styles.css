@@ -15,6 +15,11 @@ table, th, td, button, label, input {
     font-size: 1rem !important;
 }
 
+button {
+    background: none;
+    border: 0;
+}
+
 .admin-btn {
     background-color: #f0f0f0;
     border: 1px solid #ccc;
