@@ -6,12 +6,13 @@
     <title>@ViewData["Title"] - Costbook</title>
 
     <!-- CSS References — 5-tier hierarchy -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/govuk-frontend-6.0.0.min.css" />
     <link rel="stylesheet" href="~/css/supplement_style_for_gov.uk_style.css" />
-    <link rel="stylesheet" href="~/css/main_style.css" />
-    <link rel="stylesheet" href="~/css/common/headernav/navstyle.css" />
-    <link rel="stylesheet" href="~/DataGrid/editable-grid.css" />
     <link rel="stylesheet" href="~/css/costbook_styles/styles.css" />
+    <link rel="stylesheet" href="~/css/main_style.css" />
+    <link rel="stylesheet" href="~/DataGrid/editable-grid.css" />
+    <link rel="stylesheet" href="~/css/common/headernav/navstyle.css" />
 
     <script src="~/lib/jquery/dist/jquery.js"></script>
     @await RenderSectionAsync("Styles", required: false)
@@ -32,14 +33,10 @@
             </div>
 
             <!-- Maintenance -->
-            <div class="nav-item dropdown">
-                <button class="nav-button dropdown-toggle" data-dropdown="cb-maintenance" allow-edit="true">
+            <div class="nav-item">
+                <a class="nav-button" asp-area="CostBook" asp-controller="YearlyDetails" asp-action="Index">
                     <div class="align-menu-text"><span>Maintenance</span></div>
-                    <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow" width="12" /></span>
-                </button>
-                <div class="dropdown-menu" id="cb-maintenance">
-                    <a class="dropdown-item" asp-area="CostBook" asp-controller="YearlyDetails" asp-action="Index">Yearly Details</a>
-                </div>
+                </a>
             </div>
 
         </nav>

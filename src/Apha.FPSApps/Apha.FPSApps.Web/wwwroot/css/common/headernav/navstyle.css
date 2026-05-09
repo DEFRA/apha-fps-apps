@@ -176,6 +176,8 @@ select.app-log {
 
 .nav-button:hover {
     background-color: #003078;
+    color: white;
+    text-decoration: none;
 }
 
 .nav-button:focus {

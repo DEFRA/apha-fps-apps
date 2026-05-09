@@ -4,12 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/govuk-frontend-6.0.0.min.css" />
     <link rel="stylesheet" href="~/css/supplement_style_for_gov.uk_style.css" />
-    <link rel="stylesheet" href="~/css/main_style.css" />
-    <link rel="stylesheet" href="~/css/common/headernav/navstyle.css" />
-    <link rel="stylesheet" href="~/DataGrid/editable-grid.css" />
     <link rel="stylesheet" href="~/css/fps_styles/styles.css" />
+    <link rel="stylesheet" href="~/css/main_style.css" />
+    <link rel="stylesheet" href="~/DataGrid/editable-grid.css" />
+    <link rel="stylesheet" href="~/css/common/headernav/navstyle.css" />
     <script src="~/lib/jquery/dist/jquery.js"></script>
     @await RenderSectionAsync("Styles", required: false)
 </head>
@@ -37,18 +38,18 @@
                         <div class="sub-dropdown-menu" id="plan-projects">
                             <a class="dropdown-item" href="#">Set Up A New Project</a>
                             <a class="dropdown-item" asp-area="FPS" asp-controller="ProgramProject" asp-action="Index">Plan Project Individually</a>
-                            <a class="dropdown-item" asp-area="FPS" asp-controller="ProgramStaffPlan" asp-action="Index">Plan STAFF for Entire Programme</a>
+                            <a class="dropdown-item" asp-area="FPS" asp-controller="ProgramStaffPlan" asp-action="Index">Plan Staff for Entire Programme</a>
                             <a class="dropdown-item" asp-area="FPS" asp-controller="ProgramAnimalPlan" asp-action="Index">Plan Animals for Entire Programme</a>
                             <a class="dropdown-item" asp-area="FPS" asp-controller="ProgramTestPlan" asp-action="Index">Plan Test Purchases for Entire Programme</a>
                             <a class="dropdown-item" asp-area="FPS" asp-controller="ProgramAdditionalCostPlan" asp-action="Index">Plan Additional Cost for Entire Programme</a>
                         </div>
                     </div>
                     <div class="sub-dropdown">
-                        <button class="sub-dropdown-toggle" data-subdropdown="review-plans">
+                        <button class="sub-dropdown-toggle" data-subdropdown="pm-review-plans">
                             Review Plans
                             <img src="~/images/right-arrow.png" class="sub-right-arrow" alt="expand" width="14" />
                         </button>
-                        <div class="sub-dropdown-menu" id="review-plans">
+                        <div class="sub-dropdown-menu" id="pm-review-plans">
                             <a class="dropdown-item" href="#">Project Portability</a>
                             <a class="dropdown-item" href="#">Staff Plan Pivot</a>
                         </div>
@@ -75,32 +76,34 @@
                     <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow" width="12" /></span>
                 </button>
                 <div class="dropdown-menu" id="resource-management">
-                    <a class="dropdown-item" href="#">Create Resource Center</a>
-                    <a class="dropdown-item" href="#">Setup Resource</a>
-                    <a class="dropdown-item" href="#">Review Plans</a>
+                    <a class="dropdown-item" href="#">Create Resource Centre</a>
+                    <div class="sub-dropdown">
+                        <button class="sub-dropdown-toggle" data-subdropdown="setup-resource">
+                            Setup Resource
+                            <img src="~/images/right-arrow.png" class="sub-right-arrow" alt="expand" width="14" />
+                        </button>
+                        <div class="sub-dropdown-menu" id="setup-resource">
+                            <a class="dropdown-item" href="#">Enter Staff Resources (by Resource Centre)</a>
+                            <a class="dropdown-item" href="#">WorkGroup Resources</a>
+                            <a class="dropdown-item" href="#">Resource Set-Up Report</a>
+                            <a class="dropdown-item" href="#">High Level Summary</a>
+                        </div>
+                    </div>
+                    <div class="sub-dropdown">
+                        <button class="sub-dropdown-toggle" data-subdropdown="rm-review-plans">
+                            Review Plans
+                            <img src="~/images/right-arrow.png" class="sub-right-arrow" alt="expand" width="14" />
+                        </button>
+                        <div class="sub-dropdown-menu" id="rm-review-plans">
+                            <a class="dropdown-item" href="#">Recalculate Rates</a>
+                            <a class="dropdown-item" href="#">Contribution Summary</a>
+                            <a class="dropdown-item" href="#">Staff Plan Pivot</a>
+                            <a class="dropdown-item" href="#">Resource Utilization View</a>
+                            <a class="dropdown-item" href="#">View/Replan Staff Hours</a>
+                        </div>
+                    </div>
                     <a class="dropdown-item" href="#">Reports</a>
                 </div>
-            </div>
-
-            <!-- Contract -->
-            <div class="nav-item">
-                <button class="nav-button" allow-edit="true">
-                    <div class="align-menu-text"><span>Contract</span></div>
-                </button>
-            </div>
-
-            <!-- Lab Testing Manager's -->
-            <div class="nav-item">
-                <button class="nav-button" allow-edit="true">
-                    <div class="align-menu-text"><span>Lab Testing Manager's</span></div>
-                </button>
-            </div>
-
-            <!-- Luvely Pivots -->
-            <div class="nav-item">
-                <button class="nav-button" allow-edit="true">
-                    <div class="align-menu-text"><span>Luvely Pivots</span></div>
-                </button>
             </div>
 
             <!-- MAB — multi-column -->
@@ -110,7 +113,7 @@
                     <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow" width="12" /></span>
                 </button>
                 <div class="dropdown-menu dropdown-menu--columns" id="mab-menu">
-                    <div class="dropdown-col">
+                    <div class="dropdown-col" style="min-width:200px">
                         <a class="dropdown-item" asp-area="FPS" asp-controller="StaffMaintenance" asp-action="Index">Maintenance Menu</a>
                         <a class="dropdown-item" href="#">Stage 1 Plans</a>
                         <a class="dropdown-item" href="#">ASU Data View</a>
@@ -118,7 +121,7 @@
                         <a class="dropdown-item" href="#">Generic Bids</a>
                         <a class="dropdown-item" href="#">Project Audit Trails</a>
                     </div>
-                    <div class="dropdown-col">
+                    <div class="dropdown-col" style="min-width:310px">
                         <a class="dropdown-item" href="#">SMG Summary Report - All Work</a>
                         <a class="dropdown-item" href="#">SMG Summary Report - Assured Work Only</a>
                         <a class="dropdown-item" href="#">All Programs Profitability</a>
@@ -127,7 +130,7 @@
                         <a class="dropdown-item" href="#">Income Cont - Summary</a>
                         <a class="dropdown-item" href="#">Project Specific - Query</a>
                     </div>
-                    <div class="dropdown-col">
+                    <div class="dropdown-col" style="min-width:240px">
                         <a class="dropdown-item" href="#">Resource Grades by Programme</a>
                         <a class="dropdown-item" href="#">Resource Utilisation</a>
                         <a class="dropdown-item" href="#">Open FPS</a>
@@ -138,25 +141,25 @@
                 </div>
             </div>
 
+            <!-- Lab Testing Manager's -->
+            <div class="nav-item">
+                <a class="nav-button" href="#" allow-edit="true">
+                    <div class="align-menu-text"><span>Lab Testing Manager's</span></div>
+                </a>
+            </div>
+
             <!-- Project Plan Viewer -->
             <div class="nav-item">
-                <button class="nav-button" allow-edit="true">
+                <a class="nav-button" href="#" allow-edit="true">
                     <div class="align-menu-text"><span>Project Plan Viewer</span></div>
-                </button>
+                </a>
             </div>
 
             <!-- Project Group -->
             <div class="nav-item">
-                <button class="nav-button" allow-edit="true">
+                <a class="nav-button" href="#" allow-edit="true">
                     <div class="align-menu-text"><span>Project Group</span></div>
-                </button>
-            </div>
-
-            <!-- Management Account -->
-            <div class="nav-item">
-                <button class="nav-button" allow-edit="true">
-                    <div class="align-menu-text"><span>Management Account</span></div>
-                </button>
+                </a>
             </div>
 
         </nav>

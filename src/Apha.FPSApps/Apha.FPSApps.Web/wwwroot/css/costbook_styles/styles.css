@@ -84,8 +84,8 @@
 
 
 
-.nav-item:hover a,
-.nav-item.active a {
+.nav-item:hover a:not(.nav-button):not(.dropdown-item),
+.nav-item.active a:not(.nav-button):not(.dropdown-item) {
     background-color: rgba(255, 255, 255, 0.2);
 }
 
