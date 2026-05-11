@@ -17,10 +17,10 @@ namespace Apha.FPS.DataAccess.Data
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.Name).HasColumnName("name");
             entity.Property(e => e.StaffId)
-                .HasColumnType("citext")
+                .HasMaxLength(50)
                 .HasColumnName("staffid");
             entity.Property(e => e.WorkgroupGrade)
-                .HasColumnType("citext")
+                .HasMaxLength(50)
                 .HasColumnName("workgroupgrade");
         }
     }

@@ -1,0 +1,30 @@
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.PACT.Models.InvoiceByMonthViewModel
+
+@{
+    ViewData["Title"] = "Invoices by Month";
+}
+
+<div class="govuk-grid-row sup_margin_left_right_0">
+    <div class="govuk-grid-column-full">
+        <h1 class="heading_with_txtbox govuk-heading-s sup_border-bottom">
+            <span class="sup_flex_left_center">Invoices by Month</span>
+        </h1>
+    </div>
+</div>
+
+<div class="govuk-grid-row sup_margin_left_right_0 sup_margin_bottom_10">
+    <div class="govuk-grid-column-full">
+        <div id="gridContainer_invoiceByMonthGrid">
+            @await Html.PartialAsync("_DataGrid", Model.Grid)
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function toggleSidebar() {
+            document.querySelector('.sidenav')?.classList.toggle('collapsed');
+        }
+    </script>
+}

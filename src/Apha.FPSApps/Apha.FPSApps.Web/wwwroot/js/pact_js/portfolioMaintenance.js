@@ -95,6 +95,30 @@ $(document).ready(function () {
         var fn = $('#modaPopupBody').data('submitFn');
         if (fn && window[fn]) window[fn]();
     });
+
+    // ── Re-select first row after constituent tests grid reloads (filter/sort) ─
+    document.addEventListener('gridReloaded', function (e) {
+        if (e.detail.gridId !== 'constituentTestGrid') return;
+
+        var $firstRow = $('#tbl_constituentTestGrid tbody tr').first();
+        var firstTestCode = ($firstRow.length && $firstRow.data('id')) ? String($firstRow.data('id')) : '';
+
+        if (firstTestCode) {
+            var previousTestCode = currentTestCode;
+            currentTestCode = firstTestCode;
+            currentPortfolio = currentParentProject;
+            $firstRow.addClass('selected-row');
+            $('#txtSelectedPortfolioTest').val(currentParentProject + ' - ' + currentTestCode);
+            // Only reload the work groups grid when the selected test has changed
+            if (currentTestCode !== previousTestCode) {
+                loadTimeCodeGrid(currentParentProject, currentTestCode);
+            }
+        } else {
+            currentTestCode = '';
+            $('#txtSelectedPortfolioTest').val('');
+            loadTimeCodeGrid(currentParentProject, '');
+        }
+    });
 });
 
 // ── Wrap a plain message string into the errors-array format ─────────────
@@ -254,6 +278,14 @@ function selectConstituentTest(row) {
     loadTimeCodeGrid(currentParentProject, testCode);
 }
 
+// ── Extra filters supplied to the Work Groups grid on every reload ──────
+function getTimeCodeGridExtraFilters() {
+    return {
+        parentProject: currentParentProject,
+        testCode: currentTestCode
+    };
+}
+
 // ── Time Codes / Work Groups grid ────────────────────────────────────────
 function loadTimeCodeGrid(parentProject, testCode, page, pageSize) {
     var payload = {
@@ -263,8 +295,11 @@ function loadTimeCodeGrid(parentProject, testCode, page, pageSize) {
         descending: false,
         filter: '{}'
     };
-    var url = '/PACT/PortfolioMaintenance/LoadTimeCodeGrid?parentProject=' + encodeURIComponent(parentProject);
-    if (testCode) url += '&testCode=' + encodeURIComponent(testCode);
+    var url = '/PACT/PortfolioMaintenance/LoadTimeCodeGrid';
+    if (parentProject) {
+        url += '?parentProject=' + encodeURIComponent(parentProject);
+        if (testCode) url += '&testCode=' + encodeURIComponent(testCode);
+    }
 
     $.ajax({
         url: url,

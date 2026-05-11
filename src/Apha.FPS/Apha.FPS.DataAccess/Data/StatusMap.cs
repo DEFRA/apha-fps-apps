@@ -8,7 +8,7 @@ namespace Apha.FPS.DataAccess.Data
     {
         public void Configure(EntityTypeBuilder<Status> entity)
         {
-            entity.HasKey(e => e.StatusValue).HasName("tblstatus_pk___3__10");
+            entity.HasKey(e => e.StatusValue).HasName("pk___3__10");
 
             entity.ToTable("tblstatus", "fps");
 

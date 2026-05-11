@@ -10,7 +10,7 @@ namespace Apha.FPS.DataAccess.Data
 
         public void Configure(EntityTypeBuilder<Contract> entity)
         {
-            entity.HasKey(e => e.ContractNo).HasName("tblcontract_pk___2__10");
+            entity.HasKey(e => new { e.ContractNo, e.FpsYear }).HasName("pk_tblcontract");
 
             entity.ToTable("tblcontract", "fps");
 
@@ -25,13 +25,19 @@ namespace Apha.FPS.DataAccess.Data
                 .HasMaxLength(50)
                 .HasColumnName("customer");
             entity.Property(e => e.Duration).HasColumnName("duration");
-            entity.Property(e => e.EndDate).HasColumnName("enddate");
+            entity.Property(e => e.EndDate)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("enddate");
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.Manager)
                 .HasMaxLength(50)
                 .HasColumnName("manager");
-            entity.Property(e => e.RegisteredDate).HasColumnName("registereddate");
-            entity.Property(e => e.StartDate).HasColumnName("startdate");
+            entity.Property(e => e.RegisteredDate)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("registereddate");
+            entity.Property(e => e.StartDate)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("startdate");
             entity.Property(e => e.Title)
                 .HasMaxLength(100)
                 .HasColumnName("title");

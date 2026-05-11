@@ -61,13 +61,14 @@
                     <label class="govuk-label" asp-for="Month">
                         Month:<span class="sup_color_red">*</span>
                     </label>
+                    @{
+                        var months = ViewBag.Months as IEnumerable<SelectListItem> ?? new List<SelectListItem>();
+                    }
                     <select class="govuk-select sup_select_option_width_100 govuk-!-font-size-16"
-                            asp-for="Month" required>
-                        <option value="">--select month--</option>
-                        @for (int i = 1; i <= 12; i++)
-                        {
-                            <option value="@i">@i</option>
-                        }
+                            asp-for="Month"
+                            asp-items="@months"
+                            required>
+                        <option value="">-- select month --</option>
                     </select>
                     <span asp-validation-for="Month" class="govuk-error-message"></span>
                 </div>

@@ -85,9 +85,14 @@ namespace Apha.Common.Helpers.Repository
                 {
                     // Extract the column expression and the pattern string
                     var matchExpression = Visit(node.Arguments[1]); // e.g. staff.Name
-                    var patternExpression = node.Arguments[2] as ConstantExpression;
+                    // The pattern may be a constant or a closure-captured variable (e.g. $"%{value}%").
+                    // Evaluate it to a runtime string either way.
+                    var patternArg = Visit(node.Arguments[2]);
+                    string? pattern = patternArg is ConstantExpression constExpr
+                        ? constExpr.Value as string
+                        : Expression.Lambda<Func<string>>(patternArg).Compile()();
 
-                    if (patternExpression?.Value is string pattern)
+                    if (pattern != null)
                     {
                         // Strip leading/trailing % wildcards → "%general%" becomes "general"
                         var keyword = pattern.Trim('%').ToLower();

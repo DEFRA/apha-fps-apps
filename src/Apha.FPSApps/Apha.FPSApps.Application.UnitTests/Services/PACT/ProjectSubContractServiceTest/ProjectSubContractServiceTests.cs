@@ -369,6 +369,97 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectSubContractSer
 
         #endregion
 
+        #region GetMonthlySubContractsSummaryAsync Tests
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_WithValidQuery_ReturnsSuccessResponse()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var pivot = new MonthlySubContractsPivotDto
+            {
+                Months = [1, 2, 3],
+                Rows =
+                [
+                    new MonthlySubContractsSummaryItemDto
+                    {
+                        Program = "ADMIN",
+                        ParentProject = "AH",
+                        MonthlyAmounts = new Dictionary<int, decimal> { { 1, 100m }, { 2, 200m } }
+                    }
+                ],
+                Pagination = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1 }
+            };
+            var expectedResponse = ApiResponseDto<MonthlySubContractsPivotDto>.SuccessResponse(pivot);
+            _pactProjectSubContractApiClient.GetMonthlySubContractsSummaryAsync(query).Returns(expectedResponse);
+
+            // Act
+            var result = await _service.GetMonthlySubContractsSummaryAsync(query);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.NotNull(result.Data);
+            Assert.Equal(3, result.Data.Months.Count);
+            Assert.Single(result.Data.Rows);
+            await _pactProjectSubContractApiClient.Received(1).GetMonthlySubContractsSummaryAsync(query);
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_WithEmptyData_ReturnsSuccessWithEmptyPivot()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var pivot = new MonthlySubContractsPivotDto();
+            var expectedResponse = ApiResponseDto<MonthlySubContractsPivotDto>.SuccessResponse(pivot);
+            _pactProjectSubContractApiClient.GetMonthlySubContractsSummaryAsync(query).Returns(expectedResponse);
+
+            // Act
+            var result = await _service.GetMonthlySubContractsSummaryAsync(query);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!.Months);
+            Assert.Empty(result.Data.Rows);
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "API Error", Code = "API_ERROR" } };
+            var expectedResponse = ApiResponseDto<MonthlySubContractsPivotDto>.FailureResponse(errors, new ApiMetaDto());
+            _pactProjectSubContractApiClient.GetMonthlySubContractsSummaryAsync(query).Returns(expectedResponse);
+
+            // Act
+            var result = await _service.GetMonthlySubContractsSummaryAsync(query);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_DelegatesToPactClient()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 2, PageSize = 5, SortBy = "program", Descending = true };
+            var expectedResponse = ApiResponseDto<MonthlySubContractsPivotDto>.SuccessResponse(new MonthlySubContractsPivotDto());
+            _pactProjectSubContractApiClient.GetMonthlySubContractsSummaryAsync(query).Returns(expectedResponse);
+
+            // Act
+            await _service.GetMonthlySubContractsSummaryAsync(query);
+
+            // Assert
+            await _pactProjectSubContractApiClient.Received(1).GetMonthlySubContractsSummaryAsync(query);
+        }
+
+        #endregion
+
         #region DeleteAsync Tests
 
         [Fact]

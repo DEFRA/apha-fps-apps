@@ -89,7 +89,7 @@
                             </div>
                             <div class="govuk-grid-column-one-half">
                                 <div class="govuk-form-group sup_margin_bottom_10">
-                                    <label class="govuk-label govuk-!-font-weight-bold" asp-for="Program.ProgramName">Program Name:</label>
+                                    <label class="govuk-label govuk-!-font-weight-bold" asp-for="Program.ProgramName">Program Name: <span class="sup_color_red">*</span></label>
                                     <textarea class="govuk-textarea govuk-!-font-size-16 sup_margin_bottom_12"
                                               asp-for="Program.ProgramName" rows="2"></textarea>
                                     <span asp-validation-for="Program.ProgramName" class="govuk-error-message"></span>

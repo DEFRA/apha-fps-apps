@@ -330,6 +330,138 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectSubContr
 
         #endregion
 
+        #region GetMonthlySubContractsSummaryAsync Tests
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_WhenApiReturnsSuccess_ReturnsMappedDto()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var pivotRes = new MonthlySubContractsPivotRes
+            {
+                Months = [1, 2, 3],
+                Rows = [new MonthlySubContractsSummaryItemRes { Program = "ADMIN", ParentProject = "AH" }],
+                Pagination = new Pagination { PageNumber = 1, PageSize = 10, TotalRecords = 1 }
+            };
+            var apiResponse = new ApiResponse<MonthlySubContractsPivotRes> { Success = true, Data = pivotRes };
+            var expectedDto = new MonthlySubContractsPivotDto
+            {
+                Months = [1, 2, 3],
+                Rows = [new MonthlySubContractsSummaryItemDto { Program = "ADMIN", ParentProject = "AH" }],
+                Pagination = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1 }
+            };
+
+            _http.GetAsync<MonthlySubContractsPivotRes>(
+                    Arg.Is<string>(url => url.Contains("api/v1/projectsubcontract/monthly-summary")))
+                .Returns(apiResponse);
+            _mapper.Map<MonthlySubContractsPivotDto>(pivotRes).Returns(expectedDto);
+
+            // Act
+            var result = await _client.GetMonthlySubContractsSummaryAsync(query);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.NotNull(result.Data);
+            Assert.Equal(3, result.Data.Months.Count);
+            Assert.Single(result.Data.Rows);
+            await _http.Received(1).GetAsync<MonthlySubContractsPivotRes>(
+                Arg.Is<string>(url => url.Contains("api/v1/projectsubcontract/monthly-summary")));
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_WithQueryParameters_IncludesQueryStringInUrl()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 2, PageSize = 5, SortBy = "program", Descending = true };
+            var apiResponse = new ApiResponse<MonthlySubContractsPivotRes> { Success = true, Data = new MonthlySubContractsPivotRes() };
+            var expectedDto = new MonthlySubContractsPivotDto();
+
+            _http.GetAsync<MonthlySubContractsPivotRes>(
+                    Arg.Is<string>(url => url.Contains("api/v1/projectsubcontract/monthly-summary")))
+                .Returns(apiResponse);
+            _mapper.Map<MonthlySubContractsPivotDto>(Arg.Any<MonthlySubContractsPivotRes>()).Returns(expectedDto);
+
+            // Act
+            await _client.GetMonthlySubContractsSummaryAsync(query);
+
+            // Assert
+            await _http.Received(1).GetAsync<MonthlySubContractsPivotRes>(
+                Arg.Is<string>(url => url.Contains("api/v1/projectsubcontract/monthly-summary")));
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_WhenApiReturnsSuccess_MapsResponseData()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var pivotRes = new MonthlySubContractsPivotRes();
+            var apiResponse = new ApiResponse<MonthlySubContractsPivotRes> { Success = true, Data = pivotRes };
+            var expectedDto = new MonthlySubContractsPivotDto();
+
+            _http.GetAsync<MonthlySubContractsPivotRes>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<MonthlySubContractsPivotDto>(pivotRes).Returns(expectedDto);
+
+            // Act
+            var result = await _client.GetMonthlySubContractsSummaryAsync(query);
+
+            // Assert
+            Assert.True(result.Success);
+            _mapper.Received(1).Map<MonthlySubContractsPivotDto>(pivotRes);
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var errors = new List<ApiError> { new() { Message = "API Error", Code = "API_ERROR" } };
+            var apiResponse = new ApiResponse<MonthlySubContractsPivotRes> { Success = false, Errors = errors };
+            var mappedFailure = new ApiResponseDto<MonthlySubContractsPivotDto>
+            {
+                Success = false,
+                Errors = [new ApiErrorDto { Message = "API Error", Code = "API_ERROR" }],
+                Meta = new ApiMetaDto()
+            };
+
+            _http.GetAsync<MonthlySubContractsPivotRes>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<MonthlySubContractsPivotDto>>(apiResponse).Returns(mappedFailure);
+
+            // Act
+            var result = await _client.GetMonthlySubContractsSummaryAsync(query);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_WhenApiReturnsFailure_DoesNotMapResponseData()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var apiResponse = new ApiResponse<MonthlySubContractsPivotRes> { Success = false, Errors = [] };
+            var mappedFailure = new ApiResponseDto<MonthlySubContractsPivotDto>
+            {
+                Success = false,
+                Errors = [],
+                Meta = new ApiMetaDto()
+            };
+
+            _http.GetAsync<MonthlySubContractsPivotRes>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<MonthlySubContractsPivotDto>>(apiResponse).Returns(mappedFailure);
+
+            // Act
+            await _client.GetMonthlySubContractsSummaryAsync(query);
+
+            // Assert
+            _mapper.DidNotReceive().Map<MonthlySubContractsPivotDto>(Arg.Any<MonthlySubContractsPivotRes>());
+        }
+
+        #endregion
+
         #region DeleteAsync Tests
 
         [Fact]

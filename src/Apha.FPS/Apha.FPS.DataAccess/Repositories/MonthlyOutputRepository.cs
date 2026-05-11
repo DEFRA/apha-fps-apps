@@ -64,17 +64,6 @@ namespace Apha.FPS.DataAccess.Repositories
             if (string.IsNullOrEmpty(filter))
                 return query;
 
-            if (filter.TrimStart().StartsWith('{'))
-                return ApplyJsonFilter(query, filter);
-
-            var search = filter.ToLower();
-            return query.Where(x =>
-                (x.TestCode  != null && x.TestCode.ToLower().Contains(search))  ||
-                (x.WorkGroup != null && x.WorkGroup.ToLower().Contains(search)));
-        }
-
-        private static IQueryable<MonthlyOutput> ApplyJsonFilter(IQueryable<MonthlyOutput> query, string filter)
-        {
             dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
             if (filterModel == null)
                 return query;
@@ -82,10 +71,10 @@ namespace Apha.FPS.DataAccess.Repositories
             var dict = (IDictionary<string, object>)filterModel;
 
             if (dict.TryGetValue("TestCode", out var testCode) && testCode != null)
-                query = query.Where(x => x.TestCode != null && x.TestCode.Contains(testCode.ToString()!));
+                query = query.Where(x => EF.Functions.ILike(x.TestCode!, $"%{testCode}%"));
 
             if (dict.TryGetValue("WorkGroup", out var workGroup) && workGroup != null)
-                query = query.Where(x => x.WorkGroup != null && x.WorkGroup.Contains(workGroup.ToString()!));
+                query = query.Where(x => EF.Functions.ILike(x.WorkGroup!, $"%{workGroup}%"));
 
             if (dict.TryGetValue("Month", out var month) && month != null
                 && double.TryParse(month.ToString(), out var monthVal))

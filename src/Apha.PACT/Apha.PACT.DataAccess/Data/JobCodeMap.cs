@@ -26,7 +26,7 @@ namespace Apha.PACT.DataAccess.Data
                 .HasMaxLength(20)
                 .HasColumnName("newprog");
             entity.Property(e => e.ParentProject)
-                .HasColumnType("citext")
+                .HasMaxLength(20)
                 .HasColumnName("parentproject");
             entity.Property(e => e.Type)
                 .HasMaxLength(15)

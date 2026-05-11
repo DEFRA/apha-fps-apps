@@ -1,0 +1,86 @@
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@using Microsoft.AspNetCore.Mvc.Rendering
+@model Apha.FPSApps.Web.Areas.PACT.Models.SubContractViewModel
+
+@{
+    ViewData["Title"] = "Sub Contracts";
+}
+
+<div class="govuk-grid-row sup_margin_left_right_0 sup_margin_bottom_20" style="margin-top: 5pt;">
+    <div class="govuk-grid-column-full">
+        <div style="display: flex; align-items: flex-end; gap: 120px;">
+            <h1 class="govuk-heading-l" style="margin-bottom: 0; font-size: calc(1em + 5pt);">Sub Contracts</h1>
+            <div class="govuk-form-group" style="margin-bottom: 0;">
+                <fieldset class="govuk-fieldset">
+                    <div style="display: flex; gap: 20px; align-items: center;">
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <label class="govuk-label govuk-!-font-weight-bold" for="projectPick" style="margin-bottom: 0; white-space: nowrap;">
+                              Select a Project
+                            </label>
+                            <select id="projectPick"
+                                    class="govuk-select"
+                                    style="width: 250px;"
+                                    onchange="onProjectPickChange(this.value)">
+                                <option value="">-- All Projects --</option>
+                                @foreach (var project in Model.FilterProjects)
+                                {
+                                    @if (project.Value == Model.ParentProject)
+                                    {
+                                        <option value="@project.Value" selected>@project.Text</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@project.Value">@project.Text</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <label class="govuk-label govuk-!-font-weight-bold" for="monthPick" style="margin-bottom: 0; white-space: nowrap;">
+                               or a Month
+                            </label>
+                            <select id="monthPick" 
+                                    class="govuk-select"
+                                    style="width: 200px;"
+                                    onchange="onMonthPickChange(this.value)">
+                                <option value="">All Months</option>
+                                @foreach (var month in Model.FilterMonths)
+                                {
+                                    @if (month.Value == Model.Month?.ToString())
+                                    {
+                                        <option value="@month.Value" selected>@month.Text</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@month.Value">@month.Text</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                </fieldset>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="govuk-grid-row sup_margin_left_right_0">
+    <div class="govuk-grid-column-full">
+        <div id="gridContainer_subContractsGrid">
+            @await Html.PartialAsync("_DataGrid", Model.SubContractsGrid)
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/ajax-form-validation.js"></script>
+    <script>
+        // State variables for JavaScript access - must be declared BEFORE subcontract.js loads
+        var currentParentProject = '@(Model.ParentProject ?? "")';
+        var currentMonth = '@(Model.Month?.ToString() ?? "")';
+        var subContractsGridId = '@Model.SubContractsGrid.GridId';
+
+        // Note: Dropdown values are already set server-side via Razor 'selected' attribute
+        // No need to re-initialize with JavaScript to avoid flicker
+    </script>
+    <script src="~/js/pact_js/subcontract.js"></script>
+}

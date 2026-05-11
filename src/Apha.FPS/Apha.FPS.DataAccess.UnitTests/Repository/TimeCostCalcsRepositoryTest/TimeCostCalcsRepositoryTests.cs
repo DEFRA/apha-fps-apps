@@ -125,7 +125,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TimeCostCalcsRepositoryTest
             var repo = CreateRepository(timeCostCalcsViews: views);
 
             // Act
-            var result = await repo.GetTimeCostCalcsByProjectAsync(DefaultQuery(filter: "alice"), "AH0033");
+            var result = await repo.GetTimeCostCalcsByProjectAsync(DefaultQuery(filter: "{\"Name\":\"Alice\"}"), "AH0033");
 
             // Assert
             Assert.Equal(2, result.Data.Count());
@@ -145,7 +145,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TimeCostCalcsRepositoryTest
             var repo = CreateRepository(timeCostCalcsViews: views);
 
             // Act
-            var result = await repo.GetTimeCostCalcsByProjectAsync(DefaultQuery(filter: "apha"), "AH0033");
+            var result = await repo.GetTimeCostCalcsByProjectAsync(DefaultQuery(filter: "{\"WorkGroup\":\"APHA\"}"), "AH0033");
 
             // Assert
             Assert.Equal(2, result.Data.Count());

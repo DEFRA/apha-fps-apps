@@ -33,15 +33,7 @@
         <!-- Title section -->
         <div class="govuk-grid-row">
             <div class="govuk-grid-column-full">
-                <div class="row" style="display:flex; align-items: center;">
-                    <div class="col-sm-12" style="padding:0px;">
-                        <div style="border-bottom: 2px solid #1d70b8; height:48px;">
-                            <h1 style="padding: 15px 0 5px 17px; font-size:16px; width: 50%; font-weight: 700; float:left; margin: 0;">
-                                Projects within Programme
-                            </h1>
-                        </div>
-                    </div>
-                </div>
+                <h1 class="govuk-heading-s sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2 govuk-!-padding-left-4">Projects within Programme</h1>
             </div>
         </div>
 
@@ -60,16 +52,15 @@
                                         </button>
                                         <ul>
                                             <li><a class="dropdown-item sidenav-title">Plan vs Actuals</a></li>
-                                            <li><a class="dropdown-item"
-                                                   data-nav-program="@Url.Action("Index", "ProjectStaffPlanActual", new { area = "FPS" })"
-                                                   href="@Url.Action("Index", "ProjectStaffPlanActual", new { area = "FPS", programNo = Model.SelectedProgramNo })">Staff</a>
+                                            <li><a class="dropdown-item"                                                  
+                                                   asp-area="FPS" asp-controller="ProjectStaffPlanActual" asp-action="Index"
+                                                   asp-route-programNo="@Model.SelectedProgramNo">Staff</a>
                                                 </li>
-                                            <li><a class="dropdown-item" data-nav-program="@Url.Action("Index", "ProjectTestPlanActual", new { area = "FPS" })"
-                                                       href="@Url.Action("Index", "ProjectTestPlanActual", new { area = "FPS", programNo = Model.SelectedProgramNo })">Tests</a>
+                                            <li><a class="dropdown-item" 
+                                                    asp-area="FPS" asp-controller="ProjectTestPlanActual" asp-action="Index"  asp-route-programNo="@Model.SelectedProgramNo">Tests</a>
                                                 </li>
                                             <li><a class="dropdown-item"
-                                                   data-nav-program="@Url.Action("Index", "ProjectAnimalPlanActual", new { area = "FPS" })"
-                                                       href="@Url.Action("Index", "ProjectAnimalPlanActual", new { area = "FPS", programNo = Model.SelectedProgramNo })">Animals</a>
+                                                    asp-area="FPS" asp-controller="ProjectAnimalPlanActual" asp-action="Index"  asp-route-programNo="@Model.SelectedProgramNo">Animals</a>
                                                 </li>
                                             <li><a class="dropdown-item" href="#">Additional</a></li>
                                         </ul>

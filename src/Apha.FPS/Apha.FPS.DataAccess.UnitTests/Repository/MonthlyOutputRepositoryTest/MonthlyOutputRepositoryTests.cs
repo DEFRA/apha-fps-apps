@@ -91,7 +91,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.MonthlyOutputRepositoryTest
         #region GetByProjectAsync -- Plain string filter
 
         [Fact]
-        public async Task GetByProjectAsync_PlainFilter_ByTestCode_ReturnsMatchingRows()
+        public async Task GetByProjectAsync_JsonFilter_ByTestCode_PartialMatch_ReturnsMatchingRows()
         {
             var data = new List<MonthlyOutput>
             {
@@ -101,14 +101,14 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.MonthlyOutputRepositoryTest
             };
             var repo = CreateRepository(data);
 
-            var result = await repo.GetByProjectAsync(DefaultQuery(filter: "bovine"), "AH0033");
+            var result = await repo.GetByProjectAsync(DefaultQuery(filter: "{\"TestCode\":\"BOVINE\"}"), "AH0033");
 
             Assert.Equal(2, result.Data.Count());
             Assert.All(result.Data, r => Assert.Contains("BOVINE", r.TestCode, StringComparison.OrdinalIgnoreCase));
         }
 
         [Fact]
-        public async Task GetByProjectAsync_PlainFilter_ByWorkGroup_ReturnsMatchingRows()
+        public async Task GetByProjectAsync_JsonFilter_ByWorkGroup_PartialMatch_ReturnsMatchingRows()
         {
             var data = new List<MonthlyOutput>
             {
@@ -118,7 +118,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.MonthlyOutputRepositoryTest
             };
             var repo = CreateRepository(data);
 
-            var result = await repo.GetByProjectAsync(DefaultQuery(filter: "apha"), "AH0033");
+            var result = await repo.GetByProjectAsync(DefaultQuery(filter: "{\"WorkGroup\":\"APHA\"}"), "AH0033");
 
             Assert.Equal(2, result.Data.Count());
         }

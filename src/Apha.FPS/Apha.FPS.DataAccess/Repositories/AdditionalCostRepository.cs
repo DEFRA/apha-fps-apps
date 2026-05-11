@@ -43,6 +43,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return await _context.AccountCategories
                 .AsNoTracking()
                 .Where(a => a.ProjectSpecific == -1)
+                .Distinct()
                 .OrderBy(a => a.AccShortName)
                 .ToListAsync();
         }
@@ -235,19 +236,13 @@ namespace Apha.FPS.DataAccess.Repositories
             var dict = (IDictionary<string, object>)filterModel;
 
             if (dict.TryGetValue("Description", out var description) && description != null)
-            {
-                query = query.Where(x => x.Description.Contains(description.ToString()!));
-            }
+                query = query.Where(x => EF.Functions.ILike(x.Description, $"%{description}%"));
 
             if (dict.TryGetValue("Account", out var account) && account != null)
-            {
-                query = query.Where(x => x.Account.Contains(account.ToString()!));
-            }
+                query = query.Where(x => EF.Functions.ILike(x.Account, $"%{account}%"));
 
             if (dict.TryGetValue("Supplier", out var supplier) && supplier != null)
-            {
-                query = query.Where(x => x.Supplier != null && x.Supplier.Contains(supplier.ToString()!));
-            }
+                query = query.Where(x => EF.Functions.ILike(x.Supplier!, $"%{supplier}%"));
 
             return query;
         }
