@@ -16,7 +16,7 @@ namespace Apha.PACT.DataAccess.Data
             entity.HasIndex(e => e.ProjectStatus, "projectstatus");
 
             entity.Property(e => e.ParentProject)
-                .HasColumnType("citext")
+                .HasMaxLength(20)
                 .HasColumnName("parentproject");
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.BudgetCvl)
@@ -34,8 +34,8 @@ namespace Apha.PACT.DataAccess.Data
                 .HasColumnName("caseworksub");
             entity.Property(e => e.Comments).HasColumnName("comments");
             entity.Property(e => e.Contract)
+                .HasMaxLength(10)
                 .HasDefaultValueSql("0")
-                .HasColumnType("citext")
                 .HasColumnName("contract");
             entity.Property(e => e.CostBookNo)
                 .HasMaxLength(50)
@@ -45,7 +45,7 @@ namespace Apha.PACT.DataAccess.Data
                 .HasColumnType("money")
                 .HasColumnName("custincome");
             entity.Property(e => e.Customer)
-                .HasColumnType("citext")
+                .HasMaxLength(50)
                 .HasColumnName("customer");
             entity.Property(e => e.DateCosted)
                 .HasColumnType("timestamp without time zone")
@@ -55,7 +55,7 @@ namespace Apha.PACT.DataAccess.Data
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("datecreated");
             entity.Property(e => e.Disease)
-                .HasColumnType("citext")
+                .HasMaxLength(50)
                 .HasColumnName("disease");
             entity.Property(e => e.FecCost)
                 .HasDefaultValueSql("0")
@@ -65,7 +65,7 @@ namespace Apha.PACT.DataAccess.Data
                 .HasDefaultValue((short)0)
                 .HasColumnName("finished");
             entity.Property(e => e.IncomeAccountCode)
-                .HasColumnType("citext")
+                .HasMaxLength(50)
                 .HasColumnName("incomeaccountcode");
             entity.Property(e => e.IsDefraProject).HasColumnName("isdefraproject");
             entity.Property(e => e.Manager)
@@ -85,16 +85,16 @@ namespace Apha.PACT.DataAccess.Data
                 .HasColumnType("money")
                 .HasColumnName("profit");
             entity.Property(e => e.Program)
-                .HasColumnType("citext")
+                .HasMaxLength(10)
                 .HasColumnName("program");
             entity.Property(e => e.ProjectGroup)
-                .HasColumnType("citext")
+                .HasMaxLength(50)
                 .HasColumnName("projectgroup");
             entity.Property(e => e.ProjectParent)
                 .HasMaxLength(50)
                 .HasColumnName("projectparent");
             entity.Property(e => e.ProjectStatus)
-                .HasColumnType("citext")
+                .HasMaxLength(50)
                 .HasColumnName("projectstatus");
             entity.Property(e => e.ProjectTitle)
                 .HasMaxLength(200)
@@ -106,7 +106,7 @@ namespace Apha.PACT.DataAccess.Data
                 .HasMaxLength(30)
                 .HasColumnName("shorttitle");
             entity.Property(e => e.SubAccountCode)
-                .HasColumnType("citext")
+                .HasMaxLength(50)
                 .HasColumnName("subaccountcode");
             entity.Property(e => e.TransferIncome)
                 .HasColumnType("money")

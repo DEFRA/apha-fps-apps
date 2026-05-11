@@ -8,9 +8,11 @@ namespace Apha.FPS.DataAccess.Repositories
     public class ContractRepository : IContractRepository
     {
         private readonly FpsDbContext _dbContext;
-        public ContractRepository(FpsDbContext dbContext)
+        private readonly IFpsRequestContext _requestContext;
+        public ContractRepository(FpsDbContext dbContext, IFpsRequestContext requestContext)
         {
             _dbContext = dbContext;
+            _requestContext = requestContext;   
         }
 
         public async Task<IEnumerable<Contract>> GetAllContractsAsync()
@@ -20,9 +22,9 @@ namespace Apha.FPS.DataAccess.Repositories
                             on contract.Category equals userCategory.Category
                         join user in _dbContext.Users
                             on userCategory.UserId equals user.UserId
-                          where user.Username == "dbo"
+                          where user.UserEmail != null && user.UserEmail.ToLower() == _requestContext.UserEmailId
                           select contract).AsNoTracking()
-                .ToListAsync(); 
+                          .ToListAsync(); 
         }
     }
 }

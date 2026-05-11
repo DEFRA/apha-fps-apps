@@ -72,7 +72,7 @@
 
         public string IncomeAccountCode { get; set; } = null!;
 
-        public int? FpsYear { get; set; }
+        public int FpsYear { get; set; }
     }
 }
 

@@ -20,13 +20,13 @@ namespace Apha.PACT.DataAccess.Data
             entity.HasIndex(e => e.ParentProject, "reference3");
 
             entity.Property(e => e.WorkGroup)
-                .HasColumnType("citext")
+                .HasMaxLength(50)
                 .HasColumnName("workgroup");
             entity.Property(e => e.TimeCode)
-                .HasColumnType("citext")
+                .HasMaxLength(50)
                 .HasColumnName("timecode");
             entity.Property(e => e.ParentProject)
-                .HasColumnType("citext")
+                .HasMaxLength(20)
                 .HasColumnName("parentproject");
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.Active).HasColumnName("active");

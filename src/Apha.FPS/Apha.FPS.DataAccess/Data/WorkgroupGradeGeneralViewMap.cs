@@ -1,4 +1,4 @@
-using Apha.FPS.Core.Enities;
+using Apha.FPS.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -15,8 +15,7 @@ namespace Apha.FPS.DataAccess.Data
                 .ToView("vworkgroupgrade_general", "fps");
 
             entity.Property(e => e.GradeCode)
-                .HasMaxLength(50)
-                .UseCollation("latin1_general_ci_as")
+                .HasMaxLength(10)
                 .HasColumnName("gradecode");
             entity.Property(e => e.ProfitCentreGrade)
                 .HasMaxLength(20)

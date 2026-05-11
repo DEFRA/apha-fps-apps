@@ -6,28 +6,51 @@ namespace Apha.FPS.DataAccess.Data
 {
     public class DivisionGradeMap : IEntityTypeConfiguration<DivisionGrade>
     {
-        private const string Latin1GeneralCiAs = "latin1_general_ci_as";
-
         public void Configure(EntityTypeBuilder<DivisionGrade> entity)
         {
-            entity.HasKey(e => new { e.Division, e.FpsYear }).HasName("pk_divisiongrade");
+            entity.HasKey(e => new { e.DivisionGradeCode, e.FpsYear }).HasName("pk_divisiongrade");
 
-            entity.ToTable("divisiongrade", "fps", tb => tb.HasComment("Division grade mapping table linking divisions to grade codes."));
+            entity.ToTable("divisiongrade", "fps");
+
+            entity.Property(e => e.DivisionGradeCode)
+                .HasMaxLength(10)
+                .HasColumnName("divisiongrade");
+
+            entity.Property(e => e.FpsYear)
+                .HasColumnName("fpsyear");
+
+            entity.Property(e => e.ChargeRate)
+                .HasDefaultValueSql("0")
+                .HasColumnType("money")
+                .HasColumnName("chargerate");
+
+            entity.Property(e => e.DirectRate)
+                .HasDefaultValueSql("0")
+                .HasColumnType("money")
+                .HasColumnName("directrate");
 
             entity.Property(e => e.Division)
-                .HasMaxLength(255)
-                .HasComment("Division name (foreign key to fps.tlkpdivision.divname).")
+                .HasMaxLength(10)
                 .HasColumnName("division");
 
             entity.Property(e => e.GradeCode)
-                .HasMaxLength(50)
-                .UseCollation(Latin1GeneralCiAs)
-                .HasComment("Grade code identifier.")
+                .HasMaxLength(10)
                 .HasColumnName("gradecode");
 
-            entity.Property(e => e.FpsYear)
-                .HasComment("Fiscal year.")
-                .HasColumnName("fpsyear");
+            entity.Property(e => e.Npr)
+                .HasDefaultValueSql("0")
+                .HasColumnType("money")
+                .HasColumnName("npr");
+
+            entity.Property(e => e.Ohr)
+                .HasDefaultValueSql("0")
+                .HasColumnType("money")
+                .HasColumnName("ohr");
+
+            entity.Property(e => e.PayRate)
+                .HasDefaultValueSql("0")
+                .HasColumnType("money")
+                .HasColumnName("payrate");
         }
     }
 }

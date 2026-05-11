@@ -10,11 +10,11 @@ namespace Apha.FPS.DataAccess.Data
 
         public void Configure(EntityTypeBuilder<Workgroup> entity)
         {
-            entity.HasKey(e => e.WorkgroupName).HasName("workgroup_pk__workgroup__25518c17");
+            entity.HasKey(e => new { e.WorkgroupName, e.FpsYear }).HasName("pk_workgroup");
 
             entity.ToTable("workgroup", "fps");
 
-            entity.HasIndex(e => e.ProfitCentre, "dbo_workgroup_profitcentre");
+            entity.HasIndex(e => e.ProfitCentre, "workgroup_profitcentre");
 
             entity.Property(e => e.WorkgroupName)
                 .HasMaxLength(50)
@@ -40,9 +40,6 @@ namespace Apha.FPS.DataAccess.Data
                 .HasMaxLength(50)
                 .HasColumnName("profitcentre");
             entity.Property(e => e.SendEmail).HasColumnName("sendemail");
-            entity.Property(e => e.SysTimestamp)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("systimestamp");
-        }
+            }
     }
 }

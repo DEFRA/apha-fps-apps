@@ -16,17 +16,17 @@ namespace Apha.PACT.DataAccess.Data
             entity.HasIndex(e => e.PlanPortfolio, "tlkptestcapability_planportfol");
 
             entity.Property(e => e.TestCode)
-                .HasColumnType("citext")
+                .HasMaxLength(20)
                 .HasColumnName("testcode");
             entity.Property(e => e.WorkGroup)
-                .HasColumnType("citext")
+                .HasMaxLength(50)
                 .HasColumnName("workgroup");
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.PlanPortfolio)
-                .HasColumnType("citext")
+                .HasMaxLength(20)
                 .HasColumnName("planportfolio");
             entity.Property(e => e.PredOutturn)
-                .HasDefaultValueSql("0")
+                .HasDefaultValue(0.0)
                 .HasColumnName("predoutturn");
             entity.Property(e => e.SmsCode)
                 .HasMaxLength(50)

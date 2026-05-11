@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Apha.FPS.Core.Enities
+namespace Apha.FPS.Core.Entities
 {
     /// <summary>
     /// Master table of fiscal / FPS years. Defines which years exist, their display codes, and their lifecycle status (Open, Closed, Planned).
