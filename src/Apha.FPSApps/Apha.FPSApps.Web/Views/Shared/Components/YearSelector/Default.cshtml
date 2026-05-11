@@ -1,18 +1,9 @@
 @model Apha.FPSApps.Web.Models.Components.YearSelector.YearSelectorViewModel
 
 <select id="yearSelector"
+        class="app-log"
         aria-label="Year"
-        data-area="@ViewContext.RouteData.Values["area"]"
-        style="border: 1px solid #0374e9;
-               border-radius: 10px;
-               margin-left: 10px;
-               font-size: 20px;
-               font-weight: bold;
-               color: #00005c;
-               text-shadow: 1px 1px #b0d7ff;
-               letter-spacing: 1px;
-               background: #fff;
-               padding: 3px;">
+        data-area="@ViewContext.RouteData.Values["area"]">
     @foreach (var item in Model.Years)
     {
         var selectedAttr = item.Selected ? "selected" : null;
