@@ -68,7 +68,7 @@ jobs:
             # includes this app (handles partial rollouts where not all apps are released)
             app_version=""
             for rollout_tag in $(git tag --list "rollout-v*" --sort=-version:refname); do
-              app_version=$(git tag -l --format='%(contents)' "$rollout_tag" | grep "^${app_name}=" | cut -d= -f2 || true)
+              app_version=$(git tag -l --format='%(contents)' "$rollout_tag" | grep "^${app_name}=" | cut -d= -f2)
               if [ -n "$app_version" ]; then
                 echo "Found version ${app_version} for ${app_name} in ${rollout_tag}"
                 break
