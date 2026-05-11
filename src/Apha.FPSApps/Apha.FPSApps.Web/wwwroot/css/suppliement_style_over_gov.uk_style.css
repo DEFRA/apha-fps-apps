@@ -573,6 +573,49 @@ table, th, td, button, label, input {
     text-align: center !important;
 }
 
+.govuk-tabs__list {
+    display: flex;
+    padding-left: 0;
+    list-style: none;
+}
+
+.govuk-tabs__list-item {
+    border: 1px solid var(--govuk-border-colour);
+    margin-right: 5px;
+    border-bottom: 1px solid #ffffff;
+}
+
+.govuk-tabs__tab {
+    display: block;
+    text-decoration: none;
+    border: 0;
+    border-bottom: none;
+    color: #0b0c0c;
+}
+
+.govuk-tabs__list-item--selected .govuk-tabs__tab {
+    font-weight: normal;
+    background-color: var(--govuk-focus-colour, #fd0);
+}
+
+.govuk-tabs__panel {
+    border: 1px solid var(--govuk-border-colour);
+    padding: 15px;
+}
+
+.govuk-tabs__panel--hidden {
+    display: none;
+}
+
+.govuk-tabs__list-item--selected,
+.govuk-tabs__list-item {
+    padding: 5px !important;
+}
+
+.govuk-tabs__list-item:before {
+    display: none;
+}
+
 .sup_gov_yellow_bg {
     background-color: var(--primary-yellow, #ffdd00);
 }
@@ -897,4 +940,144 @@ table#tblMonthPeriod > tbody > tr > td {
 
 .sup_display_none {
     display: none;
+}
+
+.sup_padding_16 {
+    padding: 16px;
+}
+
+.sup_overflow_hidden {
+    overflow: hidden;
+}
+
+.sup_flex_row_gap_10 {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    flex: 1;
+}
+
+.sup_flex_one {
+    flex: 1;
+}
+
+.sup_display_flex {
+    display: flex;
+}
+
+.sup_flex_column {
+    display: flex;
+    flex-direction: column;
+}
+
+.sup_flex_center_center_center {
+    display: flex;
+    align-content: center;
+    align-items: center;
+    justify-content: center;
+}
+
+.sup_flex_row_center_gap_50 {
+    display: flex;
+    gap: 50px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+.sup_p_0_mt_24 {
+    padding: 0;
+    margin-top: 24px;
+}
+
+.sup_float_right {
+    float: right;
+}
+
+.sup_heading-pad {
+    padding: 10px 0 0px 10px;
+}
+
+.sup_zero-pad {
+    padding: 0 !important;
+}
+
+.sup-pad-top-10px {
+    padding-top: 1em !important;
+}
+
+.sup-pad-left-10px {
+    padding-left: 1em !important;
+}
+
+.sup-pad-left-20px {
+    padding-left: 1em !important;
+}
+
+.sup-margin-left-20px {
+    margin-left: 2em !important;
+}
+
+.sup-pad-top-all-10px {
+    padding: 1em;
+    /* overflow: hidden; */
+}
+
+.sup-highlighted-forms-blue-bg {
+    border-radius: 8px;
+    border: 1px solid #1d70b8;
+    border-radius: 8px;
+    margin: 010px 0 0;
+    align-items: flex-end;
+    background: #bce0ff;
+    padding: 0 10px;
+    gap: 1px;
+    padding-bottom: 10px;
+}
+
+.sup_flex_center_space {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.sup_flex_end_space {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+
+.sup_flex_end {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: flex-end;
+}
+
+.sup_flex_start_space {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.sup_flex_space_center {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sup_flex_start_center {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.sup_flex_p_4 {
+    display: flex;
+    align-items: center;
+    padding: 4px;
 }
