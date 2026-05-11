@@ -107,7 +107,7 @@ src/Apha.BatchJobs/Apha.BatchJobs.Infrastructure/Sql/RecreateSummaries/
 
 **Why external files:** Keeps every SQL change auditable via git diff. No SQL should be embedded as string literals in C# source.
 
-Source for each file: the corresponding procedure body from `dbscript/docs/recreatesummaries/sp_RecreateSummaries_child_procedures.sql`, with only the syntax conversions in Phase 4 applied.
+Source for each file: the corresponding procedure body from `src/Apha.BatchJobs/docs/dbscript/recreatesummaries/sp_RecreateSummaries_child_procedures.sql`, with only the syntax conversions in Phase 4 applied.
 
 ---
 
@@ -317,9 +317,9 @@ src/Apha.BatchJobs/
 
 | Document | Location |
 |----------|----------|
-| Legacy procedure tree | `dbscript/docs/recreatesummaries/sp_RecreateSummaries_tree.md` |
-| Legacy procedure details | `dbscript/docs/recreatesummaries/sp_RecreateSummaries_details.md` |
-| Legacy child procedure SQL | `dbscript/docs/recreatesummaries/sp_RecreateSummaries_child_procedures.sql` |
+| Legacy procedure tree | `src/Apha.BatchJobs/docs/dbscript/recreatesummaries/sp_RecreateSummaries_tree.md` |
+| Legacy procedure details | `src/Apha.BatchJobs/docs/dbscript/recreatesummaries/sp_RecreateSummaries_details.md` |
+| Legacy child procedure SQL | `src/Apha.BatchJobs/docs/dbscript/recreatesummaries/sp_RecreateSummaries_child_procedures.sql` |
 | SP-to-.NET parity tracker (MABArchive) | `src/Apha.BatchJobs/docs/SP-TO-DOTNET-PARITY-TRACKER.md` |
 | Batch job framework reference | `src/Apha.BatchJobs/docs/BATCH-JOB-FRAMEWORK-REFERENCE.md` |
 | Architecture guide | `src/Apha.BatchJobs/BATCHJOBS_ARCHITECTURE_GUIDE.md` |

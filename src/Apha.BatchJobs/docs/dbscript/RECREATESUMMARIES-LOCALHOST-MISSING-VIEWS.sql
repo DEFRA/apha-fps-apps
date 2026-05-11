@@ -68,7 +68,7 @@ CREATE OR REPLACE VIEW fps.qrymilestone1 AS
 -- Source: dbscript/schemas/01fps/04views/qryjobmonthmilestone.sql
 -- =====================================================================
 -- View: fps.qryjobmonthmilestone
--- Source: cloud export from dbscript/docs/CloudDump/viewsInCloud
+-- Source: cloud export from src/Apha.BatchJobs/docs/dbscript/CloudDump/viewsInCloud
 
 CREATE OR REPLACE VIEW fps.qryjobmonthmilestone AS
 SELECT

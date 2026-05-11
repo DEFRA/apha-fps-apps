@@ -1,5 +1,5 @@
 -- View: fps.qryjobmonthmilestone
--- Source: cloud export from dbscript/docs/CloudDump/viewsInCloud
+-- Source: cloud export from src/Apha.BatchJobs/docs/dbscript/CloudDump/viewsInCloud
 
 CREATE OR REPLACE VIEW fps.qryjobmonthmilestone AS
 SELECT

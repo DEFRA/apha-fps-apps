@@ -5,9 +5,9 @@
 
 **Cloud validation source:**
 
-- `dbscript/docs/CloudDump/tablesInCloud`
-- `dbscript/docs/CloudDump/viewsInCloud`
-- `dbscript/docs/CloudDump/constraintsInCloud`
+- `src/Apha.BatchJobs/docs/dbscript/CloudDump/tablesInCloud`
+- `src/Apha.BatchJobs/docs/dbscript/CloudDump/viewsInCloud`
+- `src/Apha.BatchJobs/docs/dbscript/CloudDump/constraintsInCloud`
 
 ## Status legend
 

@@ -8,7 +8,7 @@
 
 This document combines three sources:
 
-1. Reverse-engineered legacy dependency analysis in `dbscript/docs/recreatesummaries/`
+1. Reverse-engineered legacy dependency analysis in `src/Apha.BatchJobs/docs/dbscript/recreatesummaries/`
 2. The converted PostgreSQL SQL files under `src/Apha.BatchJobs/Apha.BatchJobs.Infrastructure/Sql/RecreateSummaries/`
 3. Current PostgreSQL schema/view scripts under `dbscript/schemas/01fps/`
 
@@ -222,7 +222,7 @@ No additional second-level views are required for these refresh statements; they
 
 | Object | Type | Status | Evidence |
 |--------|------|--------|----------|
-| `fps.qryjobmonthmilestone` | View | Missing from `dbscript/schemas/01fps/04views` | Present only in reverse-engineered docs under `dbscript/docs/recreatesummaries/sp_RecreateSummaries_details.md` |
+| `fps.qryjobmonthmilestone` | View | Missing from `dbscript/schemas/01fps/04views` | Present only in reverse-engineered docs under `src/Apha.BatchJobs/docs/dbscript/recreatesummaries/sp_RecreateSummaries_details.md` |
 
 Reverse-engineered legacy SQL for the missing view:
 

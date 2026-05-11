@@ -1,7 +1,7 @@
 # RecreateSummaries Cloud Parity Review
 
 Analysis date: 2026-05-11
-Source: dbscript/docs/CloudDump/viewsInCloud
+Source: src/Apha.BatchJobs/docs/dbscript/CloudDump/viewsInCloud
 Scope: High-risk view dependencies for RecreateSummaries parity
 
 ## Purpose
