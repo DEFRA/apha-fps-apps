@@ -7,13 +7,4 @@ CREATE OR REPLACE VIEW fps.vtbltestrequ AS
     unitprice AS testprice,
     datecreated,
     projectbuyercode
-   FROM fps.tlkptestreqmt
-  WHERE ((buyer)::text IN ( SELECT tlkpproject.parentproject
-           FROM fps.tlkpproject
-          WHERE ((tlkpproject.program)::text IN ( SELECT tlkpprogram.programno
-                   FROM fps.tlkpprogram
-                  WHERE ((tlkpprogram.programno)::text IN ( SELECT tbluser_program.programno
-                           FROM fps.tbluser_program
-                          WHERE (tbluser_program.user_id IN ( SELECT tblusers.user_id
-                                   FROM fps.tblusers
-                                  WHERE ((tblusers.dt2username)::text = CURRENT_USER)))))))));
+   FROM fps.tlkptestreqmt;

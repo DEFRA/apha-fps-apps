@@ -1,170 +1,185 @@
 # Ask from DBA
 
 ## Purpose
-This document is the consolidated DBA handoff for promoting current MABArchive runtime assumptions to canonical cloud database definitions.
+This document is the DBA handoff for Cloud DB readiness of RecreateSummaries.
 
-## What Engineering Changed (App Side)
-1. MABArchive totals rebuild is now year-isolated.
-2. Runtime enforces strict guard: all `fps.qrytotal*costs` views must expose `fpsyear`.
-3. Runtime now joins totals sources by `(parentproject, fpsyear)` and performs year-scoped totals delete.
+## Cloud Scope (RecreateSummaries)
 
-Because of this, canonical DB objects must match these contracts.
+Please verify these dependency views exist in cloud and match canonical definitions:
 
-## Design-Spec Mismatch Observed Locally
-The approved target DB design says year-bearing FPS tables should use composite primary keys of the form `(fpsyear, natural_key)` and year-aligned foreign keys.
+- `fps.vpacttblstaff`
+- `fps.vpacttlkptestcapability`
+- `fps.qrymilestone1`
+- `fps.qryjobmonthmilestone`
+- `fps.qryprojectmonthcw`
+- `fps.qryjobmonth_subcontracts1`
+- `fps.qryjobmonth_subcontracts`
+- `fps.qryjobmonth_invoices`
+- `fps.qryjobmonthportfoliosales`
+- `fps.qryjobmonth_tctransfers`
+- `fps.qryjobmonth_transfers1`
+- `fps.qryjobmonth_transferunion`
+- `fps.qryjobmonth_transferstotal`
 
-Local verification against the current PostgreSQL snapshot shows that this is not yet true for the MABArchive source tables we inspected. Examples:
-- `fps.tlkpprogram` still has PK `(programno)` instead of `(fpsyear, programno)`.
-- `fps.tlkpproject` still has PK `(parentproject)` instead of `(fpsyear, parentproject)`.
-- `fps.fpsyeartotals` still has PK `(parentproject)` instead of `(fpsyear, parentproject)`.
-- `fps.monthlyoutput` still has PK `(testcode, buyer, month, workgroup)` instead of `(fpsyear, testcode, buyer, month, workgroup)`.
-- `fps.monthlytime` still has PK `(pactstaffid, timecode, month, parentproject)` instead of `(fpsyear, pactstaffid, timecode, month, parentproject)`.
+CloudDump reference indicates these views already exist; DBA action is definition/parity confirmation and drift correction if needed.
 
-This mismatch blocks safe multi-year source data loading because a 2025 row with the same natural key as a 2026 row collides in the same table.
+### 1) Required definition for `fps.qrymilestone1`
 
-## DBA Actions Required (Blocking)
+Required behavior:
 
-### 0) CRITICAL: Apply composite PK/FK model for multiyear FPS tables (FULL SCOPE)
+- removed hardcoded filter `WHERE year = '2003/2004'`
+- retained output columns including `year` and `fpsyear`
 
-**⚠️ BLOCKING ISSUE**: Local DB cannot be safely modernized to composite-key model due to cascading dependencies. This work MUST be done by DBA on the canonical cloud DB.
+Current expected definition behavior:
 
-**Why this is critical**:
-- Engineering verified that applying composite PKs locally requires rewriting FKs across **27+ dependent relationships** spanning tables beyond the 21 core FPS source tables
-- Incomplete FK rewrites risk data corruption and silent constraint violations
-- This is architectural DB work, not a local hotfix
+- reads all rows from `fps.milestone` (no fixed-year predicate)
 
-**Full scope of composite-PK redesign** (not limited to MABArchive source tables):
+### 2) Required definition for `fps.vtbltestrequ`
 
-*Primary year-bearing tables (requiring composite PKs):*
-- `fps.tlkpprogram`, `fps.tlkpproject`, `fps.fpsyeartotals`, `fps.monthlyoutput`, `fps.monthlytime`
-- `fps.proj_invoice`, `fps.proj_subcontract`, `fps.projectmonthfinal`, `fps.tbladditionalcosts`, `fps.tblanimalreq`
-- `fps.tblcontract`, `fps.tblstaffjob`, `fps.timecostcalcs`, `fps.tlkptestreqmt`, `fps.workgroupgrade`
-- `fps.profitcentregrade`, `fps.testorproduct`, `fps.tblwgemployee`, `fps.tblemployee`, `fps.workgroup`, `fps.tblanimals`
+Required behavior:
 
-*Dependent tables with cascading FK rewrites required (27 relationships)*:
-- `fps.tlkptestcapability` → references `fps.testorproduct`, `fps.tlkptestreqmt`, `fps.workgroup`
-- `fps.tlkpjobcode` → references `fps.tlkpproject`
-- `fps.milestone` → references `fps.tlkpproject`
-- `fps.timecodevalid` → references `fps.tlkpproject`
-- `fps.tbltestrccost` → references `fps.testorproduct`
-- `fps.tbltestrequirementrccost` → references `fps.tlkptestreqmt`
-- `fps.tblpaymentschedule` → references `fps.tblcontract`
-- `fps.plancatwggrade` → references `fps.workgroupgrade`
-- `fps.tblbid` → references `fps.workgroup`
-- Plus internal dependencies within the 21-table core group (e.g., `fps.workgroupgrade` → `fps.tlkptestreqmt`)
+- removed nested `CURRENT_USER`-driven security filter chain
+- now sources directly from `fps.tlkptestreqmt`
 
-**Required actions** (DBA on canonical cloud DB):
-1. For each of the 21 primary year-bearing tables:
-   - Drop existing single-column PKs
-   - Create new composite PKs: `(fpsyear, natural_key)`
-   - Example: `ALTER TABLE fps.tlkpproject DROP CONSTRAINT ...; ALTER TABLE fps.tlkpproject ADD PRIMARY KEY (fpsyear, parentproject);`
+Reason:
 
-2. For each of the 27+ dependent FKs:
-   - Verify if the dependent table also has `fpsyear` column
-   - If yes: Rewrite FK to include `fpsyear` on both sides
-   - If no: Assess whether `fpsyear` should be added or if table is out-of-scope for multiyear model
-   - Example: `ALTER TABLE fps.tlkptestcapability ADD CONSTRAINT fk_tlkptestcapability_testcode FOREIGN KEY (fpsyear, testcode) REFERENCES fps.testorproduct (fpsyear, testcode);`
+- RecreateSummaries is a batch/system process and should not be restricted by session user mappings.
 
-3. Confirm views that join year-bearing tables propagate `fpsyear` consistently
+### 3) Required constraints on key upstream tables
 
-**Temporary local workaround** (valid until canonical DB is updated):
-- Engineering created a rerunnable seed script (`src/Apha.BatchJobs/database/sql/200_insert_test_scenario_data.sql`) that clones 2026 FPS data into non-colliding 2025 keys using suffix naming (e.g., `P100-BASIC` → `P100-BASIC_25`)
-- This allows parity testing of MABArchive Jan–Apr vs. May–Dec branch logic with two years of data **without** modifying the local schema
-- The workaround is valid only for local testing; canonical DB must implement the proper composite-key design
+Please verify constraints exist for:
 
-**Why blocking**:
-- Local sample-data loading for both 2025 and 2026 cannot use real business keys if PKs exclude `fpsyear`
-- FK definitions that still point to single-column parent keys prevent safe conversion of source data to the intended multiyear model
-- Cascading scope makes local implementation too risky; DBA must own this change on canonical DB
+- `fps.milestone`
+   - `pk_milestone_1__12` PK `(project, milestoneref, objectiveref)`
+   - `fk_milestone_project` FK `(fpsyear, project) -> fps.tlkpproject(fpsyear, parentproject)`
+- `fps.timecodevalid`
+   - `aaaaatimecodevalid_pk` PK `(workgroup, timecode, parentproject)`
+   - `fk_timecodevalid_parentproject` FK `(fpsyear, parentproject) -> fps.tlkpproject(fpsyear, parentproject)`
+- `fps.tlkptestcapability`
+   - `pk__tlkptestcapabili__4e53a1aa` PK `(testcode, workgroup)`
+   - `fk_tlkptestcapability_1__15` FK `(fpsyear, workgroup) -> fps.workgroup(fpsyear, workgroup)`
+   - `fk_tlkptestcapability_1__18` FK `(fpsyear, planportfolio) -> fps.tlkpproject(fpsyear, parentproject)`
+   - `fk_tlkptestcapability_2__18` FK `(fpsyear, testcode) -> fps.testorproduct(fpsyear, itemcode)`
 
-**Confirm and apply composite PK/FK model for multiyear FPS tables**:
-Please confirm the canonical cloud DB matches the approved multiyear design:
-- year-bearing tables use composite PKs of the form `(fpsyear, natural_key)`
-- year-bearing child tables use FKs that include `fpsyear` on both sides of the relationship
-- views that join year-bearing tables propagate `fpsyear` consistently through joins and projections
+- If cloud key model is year-composite, ensure FKs include `fpsyear` on both sides.
 
-At minimum, this must hold for the FPS source tables used by MABArchive:
-- `fps.tlkpprogram`
-- `fps.tlkpproject`
-- `fps.fpsyeartotals`
-- `fps.monthlyoutput`
-- `fps.monthlytime`
-- `fps.proj_invoice`
-- `fps.proj_subcontract`
-- `fps.projectmonthfinal`
-- `fps.tbladditionalcosts`
-- `fps.tblanimalreq`
-- `fps.tblcontract`
-- `fps.tblstaffjob`
-- `fps.timecostcalcs`
-- `fps.tlkptestreqmt`
-- `fps.workgroupgrade`
-- `fps.profitcentregrade`
-- `fps.testorproduct`
-- `fps.tblwgemployee`
-- `fps.tblemployee`
-- `fps.workgroup`
-- `fps.tblanimals`
+## DBA Actions Required in Cloud
 
-### 1) Update/Confirm 4 canonical totals views include `fpsyear`
-Please ensure the following views project `fpsyear` in their output:
-- `fps.qrytotaladditionalcosts`
-- `fps.qrytotalanimalcosts`
-- `fps.qrytotalstaffcosts`
-- `fps.qrytotaltestcosts`
+Apply/confirm the required behavior in canonical Cloud DB.
 
-Minimum expected output columns per view:
-- `jobcode`
-- `fpsyear`
-- corresponding total column (`totaladditionalcosts` / `totalanimalcosts` / `totalstaffcosts` / `totaltestcosts`)
+### A) Ensure all RecreateSummaries dependency views exist
 
-Why blocking:
-- Without `fpsyear`, strict-year-isolation fails and May-Dec full cycle is blocked.
-- Missing `fpsyear` also risks cross-year joins.
+Please ensure the dependency views listed in the Cloud Scope section exist in schema `fps` with canonical definitions.
 
-### 2) Confirm canonical join derivation for `fpsyear` inside each view
-Please confirm the authoritative join path used to derive `fpsyear` in each `qrytotal*costs` view so engineering and DB remain consistent.
+### B) Update/confirm `fps.qrymilestone1`
 
-### 3) Confirm canonical datatype policy for totals arithmetic
-Please confirm whether canonical contract is:
-- PostgreSQL `money` (current behavior), or
-- `numeric(18,2)`
+Required behavior:
 
-If `money` is canonical, confirm any required casting guidance for deterministic aggregates.
+- no hardcoded year predicate
+- no fixed literal like `'2003/2004'`
 
-## DBA Actions Required (Operational Foundation)
-Please confirm these operational objects exist and are managed in cloud:
-- `fps.job_master`
-- `fps.job_status`
-- `fps.job_queue`
-- `fps.job_queue_log`
-- `fps.job_lock`
+### C) Update/confirm `fps.vtbltestrequ`
 
-Please also enforce single active lock per job:
-- unique partial index on `fps.job_lock(job_name)` where `is_active = true`
-- expected index name: `uq_job_lock_job_name_active`
+Required behavior:
+
+- no `CURRENT_USER`-based filtering for RecreateSummaries data path
+- batch-safe dataset source from canonical test requirement base tables
+
+### D) Confirm constraints on key upstream tables
+
+Please verify constraints exist for:
+
+- `fps.milestone`
+- `fps.timecodevalid`
+- `fps.tlkptestcapability`
+
+## Validation Queries for DBA (Cloud)
+
+### 1) Missing required tables/views check (RecreateSummaries scope)
+
+```sql
+WITH req(obj_type,obj_name) AS (
+   VALUES
+   ('TABLE','fpsyeartotals'),('TABLE','tlkpproject'),('TABLE','projectmonth'),('TABLE','timecostcalcs'),
+   ('TABLE','tblkpprofitcentre'),('TABLE','profitcentregrade'),('TABLE','workgroupgrade'),('TABLE','timecodevalid'),
+   ('TABLE','monthlytime'),('TABLE','tlkpprogram'),('TABLE','projectmonthcasework'),('TABLE','projectmonthfinal'),
+   ('TABLE','projectmonth2'),('TABLE','projectmonth3'),('TABLE','tblperiod'),('TABLE','recreatesummaries_log'),
+   ('TABLE','period_monthlyoutput'),('TABLE','costcentre'),('TABLE','monthlyoutput'),('TABLE','workgroup'),
+   ('TABLE','tlkptestreqmt'),('TABLE','period_proj_subcontract'),('TABLE','proj_subcontract'),('TABLE','period_timecostcalcs'),
+   ('TABLE','tblwgemployee'),('TABLE','tbladditionalcosts'),('TABLE','tblanimalreq'),('TABLE','tblanimals'),
+   ('TABLE','tblstaffjob'),('TABLE','tblemployee'),('TABLE','tbluser_program'),('TABLE','tblusers'),
+   ('TABLE','testorproduct'),('TABLE','tblperiodmonth'),('TABLE','milestone'),('TABLE','tlkptestcapability'),
+   ('VIEW','qrytotaladditionalcosts'),('VIEW','qrytotalanimalcosts'),('VIEW','qrytotalstaffcosts'),('VIEW','qrytotaltestcosts'),
+   ('VIEW','vpacttblstaff'),('VIEW','qryprojectmonthcw'),('VIEW','qryjobmonth_subcontracts'),('VIEW','qryjobmonth_time'),
+   ('VIEW','qryjobmonthmilestone'),('VIEW','qryjobmonth_transferstotal'),('VIEW','qryjobmonth_invoices'),
+   ('VIEW','qryjobmonthportfoliosales'),('VIEW','qryjobmonth_totprofile'),('VIEW','tblkperiodmonth'),
+   ('VIEW','qrymilestone1'),('VIEW','vtbltestrequ'),('VIEW','vprojectanimalplan'),('VIEW','vprojectstaffplan'),
+   ('VIEW','qryjobmonth_subcontracts1'),('VIEW','qryjobmonth_transferunion'),('VIEW','qryjobmonth_tctransfers'),
+   ('VIEW','qryjobmonth_transfers1'),('VIEW','vpacttlkptestcapability')
+),
+existing AS (
+   SELECT 'TABLE' AS obj_type, table_name AS obj_name
+   FROM information_schema.tables
+   WHERE table_schema='fps' AND table_type='BASE TABLE'
+   UNION ALL
+   SELECT 'VIEW' AS obj_type, table_name AS obj_name
+   FROM information_schema.views
+   WHERE table_schema='fps'
+)
+SELECT r.obj_type, r.obj_name
+FROM req r
+LEFT JOIN existing e
+   ON e.obj_type = r.obj_type
+ AND lower(e.obj_name) = lower(r.obj_name)
+WHERE e.obj_name IS NULL
+ORDER BY r.obj_type, r.obj_name;
+```
+
+Expected result: zero rows.
+
+### 2) Hardcoded-year regression check
+
+```sql
+SELECT schemaname, viewname
+FROM pg_views
+WHERE schemaname = 'fps'
+   AND viewname = 'qrymilestone1'
+   AND definition ILIKE '%2003/2004%';
+```
+
+Expected result: zero rows.
+
+### 3) User-context filter regression check
+
+```sql
+SELECT schemaname, viewname
+FROM pg_views
+WHERE schemaname = 'fps'
+   AND viewname = 'vtbltestrequ'
+   AND definition ILIKE '%current_user%';
+```
+
+Expected result: zero rows.
+
+### 4) Constraint existence check for 3 key tables
+
+```sql
+SELECT c.relname AS table_name,
+          co.conname AS constraint_name,
+          co.contype,
+          pg_get_constraintdef(co.oid) AS constraint_def
+FROM pg_constraint co
+JOIN pg_class c ON c.oid = co.conrelid
+JOIN pg_namespace n ON n.oid = c.relnamespace
+WHERE n.nspname = 'fps'
+   AND c.relname IN ('milestone','timecodevalid','tlkptestcapability')
+ORDER BY c.relname, co.contype, co.conname;
+```
 
 ## Evidence Requested Back from DBA
-Please provide the following artifacts after apply/confirmation:
-1. DDL or catalog extract proving composite PKs for the year-bearing FPS source tables listed above.
-2. DDL or catalog extract proving year-aligned FKs were recreated with `fpsyear` included.
-3. DDL for each `fps.qrytotal*costs` view listed above.
-4. Column metadata extract proving `jobcode`, `fpsyear`, and total column are present.
-5. Confirmation of datatype policy for totals calculations (`money` vs `numeric(18,2)`).
-6. DDL/metadata proof for `fps.job_*` foundation tables and active-lock unique partial index.
+Please provide:
 
-## Local Engineering Note (Informational)
-Engineering already applied local-only hotfixes to unblock parity testing by adding `fpsyear` to local `qrytotal*costs` views.
-This must now be reflected (or confirmed) in canonical cloud DB definitions.
-
-Engineering also verified that the current local DB snapshot does not yet reflect the composite PK/FK model described in the target design document.
-
-**Attempted local composite-PK redesign (2026-05-04)**: Engineering attempted to apply the composite-PK redesign locally but discovered the scope requires rewriting **27+ foreign-key relationships** across dependent tables. This work is too risky and too large for local implementation; it must be done by DBA on the canonical cloud DB. 
-
-**Current local testing strategy**: Engineering uses a rerunnable SQL seed script (`200_insert_test_scenario_data.sql`) that clones 2026 FPS data into non-colliding 2025 keys using suffix naming. This allows full two-year parity testing of the MABArchive Jan–Apr vs. May–Dec branch logic without schema changes. This workaround is valid until the canonical DB is modernized with the composite-PK design.
-
-**Reference**: Failed migration scripts are in `src/Apha.BatchJobs/database/sql/`:
-- `010_apply_composite_pk_fk_redesign.sql` (initial attempt, syntax issues)
-- `011_apply_composite_pk_fk_redesign_v2.sql` (refined attempt, failed on cascading FK dependencies)
-
-These remain as reference for the DBA's implementation on the canonical cloud DB.
+1. DDL for the dependency views listed in this document.
+2. DDL for `fps.qrymilestone1` and `fps.vtbltestrequ` after changes.
+3. Constraint metadata extract for `fps.milestone`, `fps.timecodevalid`, `fps.tlkptestcapability`.
+4. Output of the 4 validation queries above.

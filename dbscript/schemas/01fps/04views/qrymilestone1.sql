@@ -14,6 +14,6 @@ CREATE OR REPLACE VIEW fps.qrymilestone1 AS
             WHEN (actualdate IS NULL) THEN 0
             ELSE 1
         END AS completeflag,
-    year
-   FROM fps.milestone
-  WHERE ((year)::text = '2003/2004'::text);
+    year,
+    fpsyear
+   FROM fps.milestone;
