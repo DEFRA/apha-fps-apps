@@ -248,7 +248,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProjectMonthControllerTest
 
             var result = await _controller.DeleteProjectMonth("PRJ1", 1);
 
-            Assert.IsType<NoContentResult>(result);
+            Assert.IsType<OkObjectResult>(result);
             await _serviceMock.Received(1).DeleteProjectMonthAsync("PRJ1", 1);
         }
 

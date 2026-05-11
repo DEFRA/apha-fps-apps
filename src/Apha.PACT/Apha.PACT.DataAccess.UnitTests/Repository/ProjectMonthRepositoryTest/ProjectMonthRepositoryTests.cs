@@ -270,51 +270,33 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectMonthRepositoryTest
         #region UpdateProjectMonthAsync
 
         [Fact]
-        public async Task UpdateProjectMonthAsync_ValidEntity_SetsFpsYearBeforeEntryIsCalled()
+        public async Task UpdateProjectMonthAsync_ValidEntity_UpdatesCostProfileAndSaves()
         {
-            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
-            fpsRequestContext.FpsYear.Returns(DefaultFpsYear);
+            var projectMonths = new List<ProjectMonth>
+            {
+                new() { Project = "PRJ1", MonthNo = 1, CostProfile = 100m, FpsYear = DefaultFpsYear }
+            };
+            var (repo, _, mockContext) = CreateRepositoryWithMocks(projectMonths);
+            var entity = new ProjectMonth { Project = "PRJ1", MonthNo = 1, CostProfile = 999m };
 
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
-            var projectMonthsMockSet = RepositoryTestHelper.CreateMockDbSet<ProjectMonth>([]);
-            mockContext.Setup(x => x.ProjectMonths).Returns(projectMonthsMockSet.Object);
-            mockContext.Setup(x => x.Months).Returns(RepositoryTestHelper.CreateMockDbSet<Month>([]).Object);
+            var result = await repo.UpdateProjectMonthAsync(entity);
 
-            var entryWasCalled = false;
-            mockContext.Setup(x => x.Entry(It.IsAny<ProjectMonth>()))
-                .Callback(() => entryWasCalled = true)
-                .Throws(new NotSupportedException("Entry() is not supported in mocked DbContext"));
-
-            var repo = new ProjectMonthRepository(mockContext.Object, fpsRequestContext);
-            var entity = new ProjectMonth { Project = "PRJ1", MonthNo = 1 };
-
-            await Assert.ThrowsAsync<NotSupportedException>(() => repo.UpdateProjectMonthAsync(entity));
-
-            Assert.Equal(DefaultFpsYear, entity.FpsYear);
-            Assert.True(entryWasCalled);
+            Assert.Equal(999m, result.CostProfile);
+            RepositoryTestHelper.VerifySaveChanges(mockContext);
         }
 
         [Fact]
-        public async Task UpdateProjectMonthAsync_SetsFpsYear_FromRequestContext()
+        public async Task UpdateProjectMonthAsync_NotFound_ThrowsKeyNotFoundException()
         {
             const int customYear = 2025;
-            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
-            fpsRequestContext.FpsYear.Returns(customYear);
+            var projectMonths = new List<ProjectMonth>
+            {
+                new() { Project = "PRJ1", MonthNo = 1, CostProfile = 100m, FpsYear = DefaultFpsYear }
+            };
+            var (repo, _, _) = CreateRepositoryWithMocks(projectMonths, fpsYear: customYear);
+            var entity = new ProjectMonth { Project = "PRJ1", MonthNo = 1, CostProfile = 999m };
 
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
-            var projectMonthsMockSet = RepositoryTestHelper.CreateMockDbSet<ProjectMonth>([]);
-            mockContext.Setup(x => x.ProjectMonths).Returns(projectMonthsMockSet.Object);
-            mockContext.Setup(x => x.Months).Returns(RepositoryTestHelper.CreateMockDbSet<Month>([]).Object);
-
-            mockContext.Setup(x => x.Entry(It.IsAny<ProjectMonth>()))
-                .Throws(new NotSupportedException("Entry() is not supported in mocked DbContext"));
-
-            var repo = new ProjectMonthRepository(mockContext.Object, fpsRequestContext);
-            var entity = new ProjectMonth { Project = "PRJ1", MonthNo = 1 };
-
-            await Assert.ThrowsAsync<NotSupportedException>(() => repo.UpdateProjectMonthAsync(entity));
-
-            Assert.Equal(customYear, entity.FpsYear);
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => repo.UpdateProjectMonthAsync(entity));
         }
 
         #endregion

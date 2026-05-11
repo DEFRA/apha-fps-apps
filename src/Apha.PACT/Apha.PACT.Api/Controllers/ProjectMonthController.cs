@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Apha.PACT.Api.Controllers
 {
+
     /// <summary>
     /// API controller for Project Month (Cost Profile Grid) operations.
     /// </summary>
@@ -27,6 +28,7 @@ namespace Apha.PACT.Api.Controllers
         }
 
         /// <summary>Retrieves all months (accounting period and month name lookup).</summary>
+        /// <returns>Returns <c>200 OK</c> with a list of <see cref="MonthRes"/> objects.</returns>
         [HttpGet("months")]
         public async Task<IActionResult> GetMonths()
         {
@@ -35,6 +37,8 @@ namespace Apha.PACT.Api.Controllers
         }
 
         /// <summary>Retrieves all cost profile months for a given project.</summary>
+        /// <param name="project">The project code to retrieve cost profile months for.</param>
+        /// <returns>Returns <c>200 OK</c> with a list of <see cref="ProjectMonthRes"/> objects.</returns>
         [HttpGet("project/{project}")]
         public async Task<IActionResult> GetProjectMonthByProject(string project)
         {
@@ -43,6 +47,9 @@ namespace Apha.PACT.Api.Controllers
         }
 
         /// <summary>Retrieves a single cost profile month record by project and month number.</summary>
+        /// <param name="project">The project code the month record belongs to.</param>
+        /// <param name="monthNo">The month number to retrieve.</param>
+        /// <returns>Returns <c>200 OK</c> with the matching <see cref="ProjectMonthRes"/>, or throws <see cref="KeyNotFoundException"/> if not found.</returns>
         [HttpGet("project/{project}/month/{monthNo:int}")]
         public async Task<IActionResult> GetProjectMonth(string project, int monthNo)
         {
@@ -51,8 +58,10 @@ namespace Apha.PACT.Api.Controllers
                 throw new KeyNotFoundException($"Project month record not found for project '{project}', month {monthNo}.");
             return Ok(_mapper.Map<ProjectMonthRes>(item));
         }
-
+        
         /// <summary>Creates a new cost profile month record.</summary>
+        /// <param name="request">The cost profile month data to create.</param>
+        /// <returns>Returns <c>201 Created</c> with the newly created <see cref="ProjectMonthRes"/> and a location header.</returns>
         [HttpPost]
         public async Task<IActionResult> CreateProjectMonth([FromBody] ProjectMonthReq request)
         {
@@ -65,6 +74,8 @@ namespace Apha.PACT.Api.Controllers
         }
 
         /// <summary>Updates an existing cost profile month record.</summary>
+        /// <param name="request">The updated cost profile month data.</param>
+        /// <returns>Returns <c>200 OK</c> with the updated <see cref="ProjectMonthRes"/>.</returns>
         [HttpPut]
         public async Task<IActionResult> UpdateProjectMonth([FromBody] ProjectMonthReq request)
         {
@@ -73,14 +84,17 @@ namespace Apha.PACT.Api.Controllers
             return Ok(_mapper.Map<ProjectMonthRes>(updated));
         }
 
-        /// <summary>Deletes a cost profile month record.</summary>
+        /// <summary>Deletes a cost profile month record for the specified project and month.</summary>
+        /// <param name="project">The project code the month record belongs to.</param>
+        /// <param name="monthNo">The month number of the record to delete.</param>
+        /// <returns>Returns <c>200 OK</c> with a success flag if deleted, or <c>404 Not Found</c> if the record does not exist.</returns>
         [HttpDelete("project/{project}/month/{monthNo:int}")]
         public async Task<IActionResult> DeleteProjectMonth(string project, int monthNo)
         {
             bool deleted = await _service.DeleteProjectMonthAsync(project, monthNo);
             if (!deleted)
                 return NotFound();
-            return Ok(deleted);
+            return Ok(new { success = deleted });
         }
     }
 }

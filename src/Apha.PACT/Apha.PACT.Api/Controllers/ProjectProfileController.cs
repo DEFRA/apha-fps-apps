@@ -8,8 +8,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Apha.PACT.Api.Controllers
 {
+
     /// <summary>
-    /// API controller for Project Profile graph data (cumulative and non-cumulative).
+    /// API controller for Project Profile graph data operations.
     /// </summary>
     [Authorize(Roles = "API-PACTUser,API-PACTAdmin")]
     [ApiController]
@@ -26,7 +27,9 @@ namespace Apha.PACT.Api.Controllers
             _mapper = mapper;
         }
 
-        /// <summary>Retrieves the monthly (NOT cumulative) profile vs actual cost graph data for a project.</summary>
+        /// <summary>Retrieves the monthly profile and cost data for a given project, used to render the non-cumulative graph.</summary>
+        /// <param name="project">The project code to retrieve profile graph data for.</param>
+        /// <returns>Returns <c>200 OK</c> with a list of <see cref="ProjectProfileGraphRes"/> objects.</returns>
         [HttpGet("{project}/graph")]
         public async Task<IActionResult> GetProfileGraph(string project)
         {
@@ -34,7 +37,9 @@ namespace Apha.PACT.Api.Controllers
             return Ok(_mapper.Map<IList<ProjectProfileGraphRes>>(data));
         }
 
-        /// <summary>Retrieves the cumulative profile vs actual cost graph data for a project.</summary>
+        /// <summary>Retrieves the cumulative profile and cost data for a given project, used to render the cumulative graph.</summary>
+        /// <param name="project">The project code to retrieve cumulative graph data for.</param>
+        /// <returns>Returns <c>200 OK</c> with a list of <see cref="ProjectProfileCumulativeGraphRes"/> objects.</returns>
         [HttpGet("{project}/graph/cumulative")]
         public async Task<IActionResult> GetCumulativeGraph(string project)
         {

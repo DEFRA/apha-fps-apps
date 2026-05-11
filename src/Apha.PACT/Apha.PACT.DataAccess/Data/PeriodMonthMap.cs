@@ -16,7 +16,6 @@ namespace Apha.PACT.DataAccess.Data
             entity.Property(e => e.MonthNo).HasColumnName("monthno");
             entity.Property(e => e.PeriodName)
                 .HasMaxLength(50)
-                .UseCollation("latin1_general_ci_as")
                 .HasColumnName("periodname");
         }
     }

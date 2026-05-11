@@ -35,6 +35,10 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             _projectService = projectService;
         }
 
+        /// <summary>
+        /// Renders the Project Profile index view, loading project details and dropdown list.
+        /// </summary>
+        /// <param name="parentProject">Optional project code to pre-select and load details for.</param>
         public async Task<IActionResult> Index(string? parentProject)
         {
             var projectsTask = BuildProjectsListAsync(parentProject);
@@ -53,6 +57,11 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             });
         }
 
+        /// <summary>
+        /// Loads the cost profile data grid as a partial view for a given project.
+        /// </summary>
+        /// <param name="request">Pagination and filter parameters for the grid.</param>
+        /// <param name="parentProject">Optional project code to filter the cost profile data.</param>
         [HttpPost]
         public async Task<IActionResult> LoadCostProfileGrid(PaginationFilter<string> request, string? parentProject)
         {
@@ -65,6 +74,10 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
         // ── GRAPH DATA (JSON) ─────────────────────────────────────────────────
 
+        /// <summary>
+        /// Returns project title and budget details as JSON for the given project code.
+        /// </summary>
+        /// <param name="parentProject">The project code to retrieve details for.</param>
         [HttpGet]
         [ActionName("GetProjectDetailsAsync")]
         public async Task<IActionResult> GetProjectDetailsAsync(string parentProject)
@@ -81,6 +94,10 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             });
         }
 
+        /// <summary>
+        /// Returns the total sum of cost profile values across all months for a given project.
+        /// </summary>
+        /// <param name="parentProject">The project code to calculate the total cost profile for.</param>
         [HttpGet]
         public async Task<IActionResult> GetTotalCostProfile(string parentProject)
         {
@@ -92,6 +109,10 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return Json(new { success = true, data = total });
         }
 
+        /// <summary>
+        /// Returns monthly profile and cost data as JSON for rendering the non-cumulative graph.
+        /// </summary>
+        /// <param name="parentProject">The project code to retrieve profile graph data for.</param>
         [HttpGet]
         public async Task<IActionResult> GetProfileGraphData(string parentProject)
         {
@@ -111,6 +132,10 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             });
         }
 
+        /// <summary>
+        /// Returns cumulative profile and cost data as JSON for rendering the cumulative graph.
+        /// </summary>
+        /// <param name="parentProject">The project code to retrieve cumulative graph data for.</param>
         [HttpGet]
         public async Task<IActionResult> GetCumulativeGraphData(string parentProject)
         {
@@ -132,6 +157,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
         // ── COST PROFILE CRUD ─────────────────────────────────────────────────
 
+        /// <summary>
+        /// Returns all available accounting months as JSON for populating month dropdowns.
+        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetMonths()
         {
@@ -142,6 +170,12 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return Json(new { success = true, data = result.Data });
         }
 
+        /// <summary>
+        /// Returns the add/edit partial view for a cost profile month record.
+        /// Passing <c>monthNo = 0</c> opens the form in add mode; any other value loads the existing record for editing.
+        /// </summary>
+        /// <param name="project">The project code the month record belongs to.</param>
+        /// <param name="monthNo">The month number to edit, or <c>0</c> to create a new record.</param>
         [HttpGet]
         public async Task<IActionResult> GetProjectMonth(string project, int monthNo)
         {
@@ -158,6 +192,10 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return PartialView("_AddEditProjectMonth", _mapper.Map<ProjectMonthItem>(result.Data));
         }
 
+        /// <summary>
+        /// Creates or updates a cost profile month record. A <c>MonthNo</c> of <c>0</c> triggers a create; otherwise an update is performed.
+        /// </summary>
+        /// <param name="model">The cost profile month data submitted from the form.</param>
         [HttpPost]
         public async Task<IActionResult> SaveProjectMonth([FromBody] ProjectMonthItem model)
         {
@@ -199,6 +237,11 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             });
         }
 
+        /// <summary>
+        /// Deletes the specified cost profile month record for a project.
+        /// </summary>
+        /// <param name="project">The project code the month record belongs to.</param>
+        /// <param name="monthNo">The month number of the record to delete.</param>
         [HttpDelete]
         public async Task<IActionResult> DeleteProjectMonth(string project, int monthNo)
         {
@@ -209,6 +252,11 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return Json(new { success = false, message = "Failed to delete cost profile month." });
         }
 
+        /// <summary>
+        /// Builds and returns the data grid configuration for the cost profile grid.
+        /// </summary>
+        /// <param name="request">Pagination and filter parameters.</param>
+        /// <param name="parentProject">The project code to load cost profile rows for.</param>
         private async Task<DataGridConfig<ProjectMonthItem>> BuildCostProfileGridAsync(
             PaginationFilter<string> request, string? parentProject)
         {
@@ -243,6 +291,10 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             };
         }
 
+        /// <summary>
+        /// Fetches project details for the given project code, returning <c>null</c> if not found.
+        /// </summary>
+        /// <param name="parentProject">The project code to look up.</param>
         private async Task<ProjectDto?> FetchProjectDetailsAsync(string parentProject)
         {
             var result = await _projectService.GetProjectByIdAsync(parentProject);

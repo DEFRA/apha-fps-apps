@@ -68,7 +68,7 @@ namespace Apha.PACT.DataAccess.Repository
         public async Task<bool> DeleteProjectMonthAsync(string project, int monthNo)
         {
             ProjectMonth? entity = await _context.ProjectMonths
-                .FirstOrDefaultAsync(e => e.Project == project && e.MonthNo == monthNo);
+                .FirstOrDefaultAsync(e => e.Project == project && e.MonthNo == monthNo && e.FpsYear == _fpsRequestContext.FpsYear);
 
             if (entity == null) return false;
             _context.ProjectMonths.Remove(entity);
