@@ -10,6 +10,7 @@ using Apha.BatchJobs.Infrastructure.Context;
 using Apha.BatchJobs.Infrastructure.Repositories;
 using Apha.BatchJobs.Infrastructure.Repositories.MabArchive;
 using Apha.BatchJobs.Infrastructure.Repositories.MabArchive.Loaders;
+using Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
 using Apha.BatchJobs.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -118,6 +119,10 @@ public static class ServiceCollectionSetup
         services.AddScoped<IMyFpsYearlyDataService, MyFpsYearlyDataService>();
         services.AddScoped<IEmailNotificationService, EmailNotificationService>();
         services.AddScoped<MabArchiveLoadOrchestrator>();
+
+        // RecreateSummaries Configuration and Services
+        services.AddScoped<IRecreateSummariesContext, RecreateSummariesContext>();
+        services.AddScoped<RecreateSummariesOrchestrator>();
     }
 
     private static void RegisterMabArchiveLoaders(IServiceCollection services)

@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <Compile Remove="Archive\**\*.cs" />
+    <Compile Remove="AppMod-Wave1-Analysis\**\*.cs" />
     <Compile Remove="ReImagineAnalysis_v4\**\*.cs" />
     <Compile Remove="docs\**\*.cs" />
     <Compile Remove="docs\legacy\**\*.cs" />
@@ -44,6 +45,9 @@
 
   <ItemGroup>
     <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Apha.BatchJobs.Infrastructure\Sql\RecreateSummaries\**\*.sql">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
