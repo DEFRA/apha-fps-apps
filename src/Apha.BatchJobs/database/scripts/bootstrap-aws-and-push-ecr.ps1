@@ -11,11 +11,11 @@ This script is focused on BatchJobs scope only. It can:
 
 .EXAMPLE
 # Push to ECR first (minimal path)
-./scripts/bootstrap-aws-and-push-ecr.ps1 -PushOnly -Region eu-west-2
+./database/scripts/bootstrap-aws-and-push-ecr.ps1 -PushOnly -Region eu-west-2
 
 .EXAMPLE
 # Full bootstrap + push
-./scripts/bootstrap-aws-and-push-ecr.ps1 -CreateCoreResources -PushImage -Region eu-west-2
+./database/scripts/bootstrap-aws-and-push-ecr.ps1 -CreateCoreResources -PushImage -Region eu-west-2
 #>
 
 [CmdletBinding()]

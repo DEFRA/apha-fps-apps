@@ -14,5 +14,5 @@ public sealed class AwsEcsTriggerOptions
     public bool AssignPublicIp { get; set; } = true;
     public string PlatformVersion { get; set; } = "LATEST";
     public string PowerShellExecutable { get; set; } = "pwsh";
-    public string PowerShellScriptPath { get; set; } = "scripts/trigger-healthcheck.ps1";
+    public string PowerShellScriptPath { get; set; } = "database/scripts/trigger-healthcheck.ps1";
 }

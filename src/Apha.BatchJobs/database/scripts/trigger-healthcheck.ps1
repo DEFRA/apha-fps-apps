@@ -18,8 +18,21 @@ function Resolve-DotnetPath {
     throw "dotnet executable not found."
 }
 
-$repoRoot = Split-Path -Parent $PSScriptRoot
-$workerProject = Join-Path $repoRoot "Apha.BatchJobs.Worker/Apha.BatchJobs.Worker.csproj"
+
+$repoRootCandidates = @(
+    (Split-Path -Parent $PSScriptRoot),
+    (Split-Path -Parent (Split-Path -Parent $PSScriptRoot))
+)
+
+$repoRoot = $repoRootCandidates |
+    Where-Object { Test-Path (Join-Path $_ "Apha.BatchJobs.Worker/Apha.BatchJobs.Worker.csproj") } |
+    Select-Object -First 1
+
+$workerProject = if (-not [string]::IsNullOrWhiteSpace($repoRoot)) {
+    Join-Path $repoRoot "Apha.BatchJobs.Worker/Apha.BatchJobs.Worker.csproj"
+} else {
+    $null
+}
 
 if (-not (Test-Path $workerProject)) {
     throw "Worker project not found at $workerProject"
