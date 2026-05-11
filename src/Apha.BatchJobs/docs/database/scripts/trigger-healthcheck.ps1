@@ -21,7 +21,8 @@ function Resolve-DotnetPath {
 
 $repoRootCandidates = @(
     (Split-Path -Parent $PSScriptRoot),
-    (Split-Path -Parent (Split-Path -Parent $PSScriptRoot))
+    (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)),
+    (Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)))
 )
 
 $repoRoot = $repoRootCandidates |

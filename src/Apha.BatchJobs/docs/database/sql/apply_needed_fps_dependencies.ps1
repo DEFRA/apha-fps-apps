@@ -19,7 +19,7 @@ function Ensure-Table-From-File([string]$name) {
         return
     }
 
-    $f = Join-Path 'src/Apha.BatchJobs/database/dbscript/schemas/01fps/01tables' ($name + '.sql')
+    $f = Join-Path 'src/Apha.BatchJobs/docs/database/dbscript/schemas/01fps/01tables' ($name + '.sql')
     if (-not (Test-Path $f)) {
         Write-Output "NO_FILE:$name"
         return
@@ -40,7 +40,7 @@ function Ensure-View-From-File([string]$name) {
         return
     }
 
-    $f = Join-Path 'src/Apha.BatchJobs/database/dbscript/schemas/01fps/04views' ($name + '.sql')
+    $f = Join-Path 'src/Apha.BatchJobs/docs/database/dbscript/schemas/01fps/04views' ($name + '.sql')
     if (-not (Test-Path $f)) {
         Write-Output "NO_VIEW_FILE:$name"
         return
