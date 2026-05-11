@@ -11,104 +11,104 @@
 <style>
 
     /* ============================================================================
-   project-budget-profile.css
-   Page-specific styles for the PACT Project Budget Profile view.
-   Covers: graph tab bar, chart canvas container, refresh button layout,
-           cost-profile modal overlay, and local utility helpers.
-   ============================================================================ */
+       project-budget-profile.css
+       Page-specific styles for the PACT Project Budget Profile view.
+       Covers: graph tab bar, chart canvas container, refresh button layout,
+               cost-profile modal overlay, and local utility helpers.
+       ============================================================================ */
+    /*
+        .pact-graph-tabs .govuk-tabs__list {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        margin: 0;
+        padding: 0 8px;
+        background-color: var(--govuk-surface-background-colour, #f4f8fb);
+        border-bottom: 2px solid var(--govuk-brand-colour, #1d70b8);
+        list-style: none;
+    }
 
-    .pact-graph-tabs .govuk-tabs__list {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    margin: 0;
-    padding: 0 8px;
-    background-color: var(--govuk-surface-background-colour, #f4f8fb);
-    border-bottom: 2px solid var(--govuk-brand-colour, #1d70b8);
-    list-style: none;
-}
+    .pact-graph-tabs .govuk-tabs__list-item {
+        display: inline-flex;
+        margin-bottom: -2px;
+    }
 
-.pact-graph-tabs .govuk-tabs__list-item {
-    display: inline-flex;
-    margin-bottom: -2px;
-}
+    .pact-graph-tabs .govuk-tabs__list-item::before {
+        content: none !important;
+    }
 
-.pact-graph-tabs .govuk-tabs__list-item::before {
-    content: none !important;
-}
+    .pact-graph-tabs .govuk-tabs__tab {
+        font-size: 0.875rem;
+        padding: 7px 16px;
+        color: var(--govuk-link-colour, #1a65a6);
+        text-decoration: none;
+        background: transparent;
+        border: 2px solid transparent;
+        border-bottom: none;
+    }
 
-.pact-graph-tabs .govuk-tabs__tab {
-    font-size: 0.875rem;
-    padding: 7px 16px;
-    color: var(--govuk-link-colour, #1a65a6);
-    text-decoration: none;
-    background: transparent;
-    border: 2px solid transparent;
-    border-bottom: none;
-}
+    .pact-graph-tabs .govuk-tabs__tab:hover {
+        color: var(--govuk-link-hover-colour, #0f385c);
+        text-decoration: underline;
+    }
 
-.pact-graph-tabs .govuk-tabs__tab:hover {
-    color: var(--govuk-link-hover-colour, #0f385c);
-    text-decoration: underline;
-}
+    .pact-graph-tabs .govuk-tabs__list-item--selected .govuk-tabs__tab {
+        background-color: #ffffff;
+        color: var(--govuk-text-colour, #0b0c0c);
+        font-weight: 700;
+        border-color: var(--govuk-brand-colour, #1d70b8);
+        border-bottom-color: #ffffff;
+    }
+    */
+    /* ── Tab panel ───────────────────────────────────────────────────────────── */
+    /*
+    .pact-graph-tabs .govuk-tabs__panel {
+        margin: 0;
+        padding: 12px;
+        background-color: #ffffff;
+        border: 2px solid var(--govuk-brand-colour, #1d70b8);
+        border-top: none;
+    }
 
-.pact-graph-tabs .govuk-tabs__list-item--selected .govuk-tabs__tab {
-    background-color: #ffffff;
-    color: var(--govuk-text-colour, #0b0c0c);
-    font-weight: 700;
-    border-color: var(--govuk-brand-colour, #1d70b8);
-    border-bottom-color: #ffffff;
-}
-
-/* ── Tab panel ───────────────────────────────────────────────────────────── */
-
-.pact-graph-tabs .govuk-tabs__panel {
-    margin: 0;
-    padding: 12px;
-    background-color: #ffffff;
-    border: 2px solid var(--govuk-brand-colour, #1d70b8);
-    border-top: none;
-}
-
-.pact-graph-tabs .govuk-tabs__panel--hidden {
-    display: none !important;
-}
-
-
-/* ── Chart canvas ────────────────────────────────────────────────────────── */
-
-.chart-container {
-    position: relative;
-    width: 100%;
-    height: 280px;
-}
-
-.chart-container canvas {
-    max-height: 280px;
-}
+    .pact-graph-tabs .govuk-tabs__panel--hidden {
+        display: none !important;
+    }*/
 
 
-/* ── Graph section layout: tabs fill width, refresh button pins top-right ── */
+    /* ── Chart canvas ────────────────────────────────────────────────────────── */
 
-.pact-graph-section {
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    gap: 8px;
-    margin-top: 10px;
-}
+    .chart-container {
+        position: relative;
+        width: 100%;
+        height: 280px;
+    }
 
-.pact-graph-section .pact-graph-tabs {
-    flex: 1;
-    min-width: 0;
-}
+        .chart-container canvas {
+            max-height: 280px;
+        }
 
-.pact-graph-refresh-wrap {
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    padding-top: 4px;
-}
+
+    /* ── Graph section layout: tabs fill width, refresh button pins top-right ── */
+    /*
+    .pact-graph-section {
+        display: flex;
+        flex-direction: row;
+        align-items: flex-start;
+        gap: 8px;
+        margin-top: 10px;
+    }
+
+    .pact-graph-section .pact-graph-tabs {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .pact-graph-refresh-wrap {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        padding-top: 4px;
+    }*/
 </style>
 
 <div class="content-wrapper">
@@ -146,137 +146,142 @@
                                 <input asp-for="@Model.ProjectTitle"
                                        type="text"
                                        class="govuk-input govuk-!-font-size-16" readonly>
-                            </div>
+                                </div>
 
-                            <div class="govuk-form-group sup_margin_bottom_10">
-                                <label asp-for="@Model.BudgetCvl"
-                                       class="govuk-label govuk-!-font-weight-bold">
-                                    Budget_cy1:
-                                </label>
-                                <input type="text"
-                                       asp-for="@Model.BudgetCvl"
-                                       class="govuk-input govuk-!-font-size-16"
-                                       readonly>
+                                <div class="govuk-form-group sup_margin_bottom_10">
+                                    <label asp-for="@Model.BudgetCvl"
+                                           class="govuk-label govuk-!-font-weight-bold">
+                                        Budget_cy1:
+                                    </label>
+                                    <input type="text"
+                                           asp-for="@Model.BudgetCvl"
+                                           class="govuk-input govuk-!-font-size-16"
+                                           readonly>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Graphs Section -->
+                    <div class="govuk-grid-column-full govuk-grid-row sup_margin_left_right_0 sup_p_0 sup_margin_top_10">
+                        <div class="govuk-grid-column-full">
+                            <div id="pactGraphTabs">
+                                <div class="govuk-tabs sup_margin_0">
+                                <div  class="sup_flex_space_between pact-graph-tabs">
+                                    <div>
+                                        <ul class="govuk-tabs__list sup_margin_0 sup_border_0">
+                                            <li class="govuk-tabs__list-item govuk-tabs__list-item--selected sup_p_0 sup_margin_0">
+                                                    <a class="govuk-tabs__tab sup_margin_0" href="#nonCumulativeTab">
+                                                    Profile by Month (NOT Cumulative)
+                                                </a>
+                                            </li>
+                                            <li class="govuk-tabs__list-item sup_p_0 sup_margin_0">
+                                                    <a class="govuk-tabs__tab sup_margin_0" href="#cumulativeTab">
+                                                    Cumulative Graph
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <div style="margin-left:8px; align-self:flex-start;">
+                                        <button type="button" class="govuk-button sup_margin_0 sup_flex_p_4" onclick="refreshGraph()">
+                                            <img src="../images/refresh_icon.svg" width="24" height="24" alt="Refresh">&nbsp;Refresh Graph
+                                        </button>
+                                    </div>
+                                   
+                                </div>
+                       
+                            </div>
+                                <!-- Tab Panel 1 - Non-Cumulative -->
+                                <div class="govuk-tabs__panel" id="nonCumulativeTab">
+                                    <div class="chart-container">
+                                        <canvas id="nonCumulativeChart"></canvas>
+                                    </div>
+                                </div>
+
+                                <!-- Tab Panel 2 - Cumulative -->
+                                <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="cumulativeTab">
+                                    <div class="chart-container">
+                                        <canvas id="cumulativeChart"></canvas>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Graphs Section -->
-            <div class="govuk-grid-column-full govuk-grid-row sup_margin_left_right_0 sup_p_0 sup_margin_top_10">
-                <div class="govuk-grid-column-full">
-                    <div class="sup_flex_space_between" style="align-items:flex-end; margin-bottom:0;">
-                        <div id="pactGraphTabs" class="pact-graph-tabs" style="flex:1; margin:0;">
-                            <ul class="govuk-tabs__list">
-                                <li class="govuk-tabs__list-item govuk-tabs__list-item--selected">
-                                    <a class="govuk-tabs__tab" href="#nonCumulativeTab">
-                                        Profile by Month (NOT Cumulative)
-                                    </a>
-                                </li>
-                                <li class="govuk-tabs__list-item">
-                                    <a class="govuk-tabs__tab" href="#cumulativeTab">
-                                        Cumulative Graph
-                                    </a>
-                                </li>
-                            </ul>
-
-                            <!-- Tab Panel 1 - Non-Cumulative -->
-                            <div class="govuk-tabs__panel" id="nonCumulativeTab">
-                                <div class="chart-container">
-                                    <canvas id="nonCumulativeChart"></canvas>
-                                </div>
-                            </div>
-
-                            <!-- Tab Panel 2 - Cumulative -->
-                            <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="cumulativeTab">
-                                <div class="chart-container">
-                                    <canvas id="cumulativeChart"></canvas>
-                                </div>
-                            </div>
+                <!-- Right Column - Cost Profile Table -->
+                <div class="govuk-grid-column-one-third sup_p_0" style="padding-left: 10px !important;">
+                    <div class="sup_border">
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 5px; border-bottom: 1px solid #b1b4b6;">
+                            <h2 class="govuk-heading-s" style="margin: 0;">Cost Profile</h2>
                         </div>
-                        <div style="margin-left:8px; align-self:flex-start;">
-                            <button type="button" class="govuk-button sup_margin_0 sup_flex_p_4" onclick="refreshGraph()">
-                                <img src="../images/refresh_icon.svg" width="24" height="24" alt="Refresh">&nbsp;Refresh Graph
-                            </button>
+                        <div id="gridContainer_costProfileGrid">
+                        </div>
+                    </div>
+                    <div class="sup_margin_10 sup_text_center">
+                        <div class="sup_flex_center_center_center">
+                            <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                            <input type="text" id="TotalCostProfile"
+                                   class="govuk-input govuk-!-font-size-16 govuk-input--width-5 sup_text_align_right"
+                                   readonly>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <!-- Right Column - Cost Profile Table -->
-        <div class="govuk-grid-column-one-third sup_p_0" style="padding-left: 10px !important;">
-            <div class="sup_border">
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 5px; border-bottom: 1px solid #b1b4b6;">
-                    <h2 class="govuk-heading-s" style="margin: 0;">Cost Profile</h2>
-                </div>
-                <div id="gridContainer_costProfileGrid">
-                </div>
-            </div>
-            <div class="sup_margin_10 sup_text_center">
-                <div class="sup_flex_center_center_center">
-                    <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                    <input type="text" id="TotalCostProfile"
-                           class="govuk-input govuk-!-font-size-16 govuk-input--width-5 sup_text_align_right"
-                           readonly>
+        <!-- Add/Edit Cost Profile Modal -->
+        <div class="modal" id="costProfileModal" tabindex="-1">
+            <div class="modal-dialog modal-md">
+                <div class="modal-content" id="costProfileModalContent">
                 </div>
             </div>
         </div>
-    </div>
-</div>
-<!-- Add/Edit Cost Profile Modal -->
-<div class="modal" id="costProfileModal" tabindex="-1">
-    <div class="modal-dialog modal-md">
-        <div class="modal-content" id="costProfileModalContent">
-        </div>
-    </div>
-</div>
 
-<!-- Load JavaScript -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="~/js/pact_js/project_budget_profile.js"></script>
+        <!-- Load JavaScript -->
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script src="~/js/pact_js/project_budget_profile.js"></script>
 
 
-<script>
-    // ── PACT Graph Tab switching ──────────────────────────────────────────────────
-// Handles tab click events for the Project Budget Profile graph tabs.
-// Matches the CostBook YearlyDetails tab switching pattern.
+        <script>
+            // ── PACT Graph Tab switching ──────────────────────────────────────────────────
+            // Handles tab click events for the Project Budget Profile graph tabs.
+            // Matches the CostBook YearlyDetails tab switching pattern.
 
-(function initTabClickHandlers() {
-    document.addEventListener('DOMContentLoaded', function () {
-        var tabLinks = document.querySelectorAll('#pactGraphTabs .govuk-tabs__tab');
+            (function initTabClickHandlers() {
+            document.addEventListener('DOMContentLoaded', function () {
+            var tabLinks = document.querySelectorAll('#pactGraphTabs .govuk-tabs__tab');
 
-        tabLinks.forEach(function (link) {
+            tabLinks.forEach(function (link) {
             link.addEventListener('click', function (e) {
-                e.preventDefault();
+            e.preventDefault();
 
-                var tabId = link.getAttribute('href').replace('#', '');
+            var tabId = link.getAttribute('href').replace('#', '');
 
-                // Update selected state on list items
-                document.querySelectorAll('#pactGraphTabs .govuk-tabs__list-item').forEach(function (li) {
-                    li.classList.remove('govuk-tabs__list-item--selected');
-                });
-                link.closest('.govuk-tabs__list-item').classList.add('govuk-tabs__list-item--selected');
-
-                // Show the target panel, hide all others
-                document.querySelectorAll('#pactGraphTabs .govuk-tabs__panel').forEach(function (p) {
-                    if (p.id === tabId) {
-                        p.classList.remove('govuk-tabs__panel--hidden');
-                        p.style.display = 'block';
-                    } else {
-                        p.classList.add('govuk-tabs__panel--hidden');
-                        p.style.display = 'none';
-                    }
-                });
-
-                // Resize charts so Chart.js fills the newly visible canvas
-                setTimeout(function () {
-                    if (nonCumulativeChart) nonCumulativeChart.resize();
-                    if (cumulativeChart)    cumulativeChart.resize();
-                }, 50);
+            // Update selected state on list items
+            document.querySelectorAll('#pactGraphTabs .govuk-tabs__list-item').forEach(function (li) {
+            li.classList.remove('govuk-tabs__list-item--selected');
             });
-        });
-    });
-})();
+            link.closest('.govuk-tabs__list-item').classList.add('govuk-tabs__list-item--selected');
 
-</script>
+            // Show the target panel, hide all others
+            document.querySelectorAll('#pactGraphTabs .govuk-tabs__panel').forEach(function (p) {
+            if (p.id === tabId) {
+            p.classList.remove('govuk-tabs__panel--hidden');
+            p.style.display = 'block';
+            } else {
+            p.classList.add('govuk-tabs__panel--hidden');
+            p.style.display = 'none';
+            }
+            });
+
+            // Resize charts so Chart.js fills the newly visible canvas
+            setTimeout(function () {
+            if (nonCumulativeChart) nonCumulativeChart.resize();
+            if (cumulativeChart)    cumulativeChart.resize();
+            }, 50);
+            });
+            });
+            });
+            })();
+
+        </script>
