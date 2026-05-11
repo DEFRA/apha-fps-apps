@@ -38,7 +38,7 @@
                     <input class="govuk-input govuk-!-font-size-16 govuk-input--width-5"
                            asp-for="MonthNo"
                            type="number" min="1" max="12"
-                           readonly="@(isEdit ? "readonly" : null)" />
+                           disabled />
                     <span asp-validation-for="MonthNo" class="govuk-error-message"></span>
                 </div>
             </div>
