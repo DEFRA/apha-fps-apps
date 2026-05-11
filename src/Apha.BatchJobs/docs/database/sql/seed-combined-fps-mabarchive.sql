@@ -22,100 +22,135 @@ BEGIN;
 -- FPS SCHEMA: RecreateSummaries Core Data
 -- ============================================================================
 
--- ========= 1. PARENT PROJECTS (tlkpproject) =========
+-- ========= 1. PROGRAM LOOKUPS (tlkpprogram) =========
+INSERT INTO fps.tlkpprogram (programno, fpsyear)
+VALUES
+  ('AH', 2024), ('AH', 2025), ('AH', 2026),
+  ('TH', 2024), ('TH', 2025), ('TH', 2026),
+  ('BS', 2024), ('BS', 2025), ('BS', 2026),
+  ('RS', 2024), ('RS', 2025), ('RS', 2026)
+ON CONFLICT (programno, fpsyear) DO NOTHING;
+
+-- ========= 2. PARENT PROJECTS (tlkpproject) =========
 INSERT INTO fps.tlkpproject 
-  (parentproject, projecttitle, program, customer, manager, transferincome, custincome, projectstatus, disease, contract, fpsyear)
+  (parentproject, projecttitle, program, customer, manager, transferincome, custincome, projectstatus, disease, contract, isdefraproject, incomeaccountcode, fpsyear)
 VALUES
   -- Aquatic Health programme (3 years)
-  ('AH0001', 'Aquatic Health - Core Testing', 'AH', 'DEFRA', 'John Smith', 5000.00, 4500.00, 'Active', 'Fish', '0', 2024),
-  ('AH0001', 'Aquatic Health - Core Testing', 'AH', 'DEFRA', 'John Smith', 5500.00, 4950.00, 'Active', 'Fish', '0', 2025),
-  ('AH0001', 'Aquatic Health - Core Testing', 'AH', 'DEFRA', 'John Smith', 6000.00, 5400.00, 'Active', 'Fish', '0', 2026),
+  ('AH0001', 'Aquatic Health - Core Testing', 'AH', 'DEFRA', 'John Smith', 5000.00, 4500.00, 'Active', 'Fish', '0', 1, 'INC_AH', 2024),
+  ('AH0001', 'Aquatic Health - Core Testing', 'AH', 'DEFRA', 'John Smith', 5500.00, 4950.00, 'Active', 'Fish', '0', 1, 'INC_AH', 2025),
+  ('AH0001', 'Aquatic Health - Core Testing', 'AH', 'DEFRA', 'John Smith', 6000.00, 5400.00, 'Active', 'Fish', '0', 1, 'INC_AH', 2026),
   
   -- Terrestrial Health programme (3 years)
-  ('TH0002', 'Terrestrial Health - Disease Control', 'TH', 'DEFRA', 'Jane Brown', 4000.00, 3600.00, 'Active', 'Cattle', '0', 2024),
-  ('TH0002', 'Terrestrial Health - Disease Control', 'TH', 'DEFRA', 'Jane Brown', 4400.00, 3960.00, 'Active', 'Cattle', '0', 2025),
-  ('TH0002', 'Terrestrial Health - Disease Control', 'TH', 'DEFRA', 'Jane Brown', 4800.00, 4320.00, 'Active', 'Cattle', '0', 2026),
+  ('TH0002', 'Terrestrial Health - Disease Control', 'TH', 'DEFRA', 'Jane Brown', 4000.00, 3600.00, 'Active', 'Cattle', '0', 1, 'INC_TH', 2024),
+  ('TH0002', 'Terrestrial Health - Disease Control', 'TH', 'DEFRA', 'Jane Brown', 4400.00, 3960.00, 'Active', 'Cattle', '0', 1, 'INC_TH', 2025),
+  ('TH0002', 'Terrestrial Health - Disease Control', 'TH', 'DEFRA', 'Jane Brown', 4800.00, 4320.00, 'Active', 'Cattle', '0', 1, 'INC_TH', 2026),
   
   -- Biosecurity programme (3 years)
-  ('BS0003', 'Biosecurity - Import Inspections', 'BS', 'APHA', 'Mike Johnson', 3500.00, 3150.00, 'Active', 'Wildlife', '0', 2024),
-  ('BS0003', 'Biosecurity - Import Inspections', 'BS', 'APHA', 'Mike Johnson', 3850.00, 3465.00, 'Active', 'Wildlife', '0', 2025),
-  ('BS0003', 'Biosecurity - Import Inspections', 'BS', 'APHA', 'Mike Johnson', 4235.00, 3811.50, 'Active', 'Wildlife', '0', 2026),
+  ('BS0003', 'Biosecurity - Import Inspections', 'BS', 'APHA', 'Mike Johnson', 3500.00, 3150.00, 'Active', 'Wildlife', '0', 0, 'INC_BS', 2024),
+  ('BS0003', 'Biosecurity - Import Inspections', 'BS', 'APHA', 'Mike Johnson', 3850.00, 3465.00, 'Active', 'Wildlife', '0', 0, 'INC_BS', 2025),
+  ('BS0003', 'Biosecurity - Import Inspections', 'BS', 'APHA', 'Mike Johnson', 4235.00, 3811.50, 'Active', 'Wildlife', '0', 0, 'INC_BS', 2026),
   
   -- Research programme (3 years)
-  ('RS0004', 'Research Support - Diagnostics', 'RS', 'Academia', 'Sarah Davis', 2500.00, 2250.00, 'Active', 'Zoonotic', '0', 2024),
-  ('RS0004', 'Research Support - Diagnostics', 'RS', 'Academia', 'Sarah Davis', 2750.00, 2475.00, 'Active', 'Zoonotic', '0', 2025),
-  ('RS0004', 'Research Support - Diagnostics', 'RS', 'Academia', 'Sarah Davis', 3025.00, 2722.50, 'Active', 'Zoonotic', '0', 2026)
+  ('RS0004', 'Research Support - Diagnostics', 'RS', 'Academia', 'Sarah Davis', 2500.00, 2250.00, 'Active', 'Zoonotic', '0', 0, 'INC_RS', 2024),
+  ('RS0004', 'Research Support - Diagnostics', 'RS', 'Academia', 'Sarah Davis', 2750.00, 2475.00, 'Active', 'Zoonotic', '0', 0, 'INC_RS', 2025),
+  ('RS0004', 'Research Support - Diagnostics', 'RS', 'Academia', 'Sarah Davis', 3025.00, 2722.50, 'Active', 'Zoonotic', '0', 0, 'INC_RS', 2026)
 ON CONFLICT (parentproject, fpsyear) DO NOTHING;
 
--- ========= 2. PROJECT MONTHLY BASELINE (projectmonth) =========
+-- ========= 3. PROJECT MONTHLY BASELINE (projectmonth) =========
 INSERT INTO fps.projectmonth (project, monthno, fpsyear)
 WITH months AS (SELECT generate_series(1, 12) AS monthno),
-     projects AS (SELECT DISTINCT parentproject, fpsyear FROM fps.tlkpproject)
+  projects AS (SELECT DISTINCT parentproject, 2024 AS fpsyear FROM fps.tlkpproject)
 SELECT p.parentproject, m.monthno, p.fpsyear
 FROM projects p
 CROSS JOIN months m
-ON CONFLICT (project, monthno, fpsyear) DO NOTHING;
+ON CONFLICT (project, monthno) DO NOTHING;
 
--- ========= 3. PROJECT MILESTONES (milestone) =========
+-- ========= 4. PROJECT MILESTONES (milestone) =========
 -- Mix of on-time, late, and pending status
 INSERT INTO fps.milestone 
-  (project, milestoneref, plandate, actualdate, monthnofin, year, fpsyear)
+  (project, milestoneref, objectiveref, plandate, actualdate, monthnofin, year, fpsyear)
 VALUES
   -- AH0001 (2024)
-  ('AH0001', 'AQ-Q1-2024', '2024-03-31'::date, '2024-03-28'::date, 3, '2024', 2024),
-  ('AH0001', 'AQ-Q2-2024', '2024-06-30'::date, '2024-07-15'::date, 6, '2024', 2024),
-  ('AH0001', 'AQ-Q3-2024', '2024-09-30'::date, NULL, 9, '2024', 2024),
-  ('AH0001', 'AQ-Q4-2024', '2024-12-31'::date, '2024-12-20'::date, 12, '2024', 2024),
+  ('AH0001', 'Q1', 'OBJ-AQ-Q1-2024', '2024-03-31'::date, '2024-03-28'::date, 3, '2024', 2024),
+  ('AH0001', 'Q2', 'OBJ-AQ-Q2-2024', '2024-06-30'::date, '2024-07-15'::date, 6, '2024', 2024),
+  ('AH0001', 'Q3', 'OBJ-AQ-Q3-2024', '2024-09-30'::date, NULL, 9, '2024', 2024),
+  ('AH0001', 'Q4', 'OBJ-AQ-Q4-2024', '2024-12-31'::date, '2024-12-20'::date, 12, '2024', 2024),
   -- AH0001 (2025)
-  ('AH0001', 'AQ-Q1-2025', '2025-03-31'::date, '2025-04-05'::date, 3, '2025', 2025),
-  ('AH0001', 'AQ-Q2-2025', '2025-06-30'::date, '2025-06-25'::date, 6, '2025', 2025),
-  ('AH0001', 'AQ-Q3-2025', '2025-09-30'::date, NULL, 9, '2025', 2025),
+  ('AH0001', 'Q1', 'OBJ-AQ-Q1-2025', '2025-03-31'::date, '2025-04-05'::date, 3, '2025', 2025),
+  ('AH0001', 'Q2', 'OBJ-AQ-Q2-2025', '2025-06-30'::date, '2025-06-25'::date, 6, '2025', 2025),
+  ('AH0001', 'Q3', 'OBJ-AQ-Q3-2025', '2025-09-30'::date, NULL, 9, '2025', 2025),
   -- AH0001 (2026)
-  ('AH0001', 'AQ-Q1-2026', '2026-03-31'::date, '2026-03-30'::date, 3, '2026', 2026),
-  ('AH0001', 'AQ-Q2-2026', '2026-06-30'::date, NULL, 6, '2026', 2026),
+  ('AH0001', 'Q1', 'OBJ-AQ-Q1-2026', '2026-03-31'::date, '2026-03-30'::date, 3, '2026', 2026),
+  ('AH0001', 'Q2', 'OBJ-AQ-Q2-2026', '2026-06-30'::date, NULL, 6, '2026', 2026),
   
   -- TH0002 (2024)
-  ('TH0002', 'TH-Q1-2024', '2024-02-29'::date, '2024-02-25'::date, 2, '2024', 2024),
-  ('TH0002', 'TH-Q2-2024', '2024-05-31'::date, '2024-06-10'::date, 5, '2024', 2024),
-  ('TH0002', 'TH-Q3-2024', '2024-08-31'::date, '2024-08-31'::date, 8, '2024', 2024),
-  ('TH0002', 'TH-Q4-2024', '2024-11-30'::date, NULL, 11, '2024', 2024),
+  ('TH0002', 'Q1', 'OBJ-TH-Q1-2024', '2024-02-29'::date, '2024-02-25'::date, 2, '2024', 2024),
+  ('TH0002', 'Q2', 'OBJ-TH-Q2-2024', '2024-05-31'::date, '2024-06-10'::date, 5, '2024', 2024),
+  ('TH0002', 'Q3', 'OBJ-TH-Q3-2024', '2024-08-31'::date, '2024-08-31'::date, 8, '2024', 2024),
+  ('TH0002', 'Q4', 'OBJ-TH-Q4-2024', '2024-11-30'::date, NULL, 11, '2024', 2024),
   -- TH0002 (2025)
-  ('TH0002', 'TH-Q1-2025', '2025-02-28'::date, '2025-02-20'::date, 2, '2025', 2025),
-  ('TH0002', 'TH-Q2-2025', '2025-05-31'::date, NULL, 5, '2025', 2025),
-  ('TH0002', 'TH-Q3-2025', '2025-08-31'::date, '2025-09-05'::date, 8, '2025', 2025),
+  ('TH0002', 'Q1', 'OBJ-TH-Q1-2025', '2025-02-28'::date, '2025-02-20'::date, 2, '2025', 2025),
+  ('TH0002', 'Q2', 'OBJ-TH-Q2-2025', '2025-05-31'::date, NULL, 5, '2025', 2025),
+  ('TH0002', 'Q3', 'OBJ-TH-Q3-2025', '2025-08-31'::date, '2025-09-05'::date, 8, '2025', 2025),
   
   -- BS0003 (2024)
-  ('BS0003', 'BS-Q1-2024', '2024-01-31'::date, '2024-01-29'::date, 1, '2024', 2024),
-  ('BS0003', 'BS-Q2-2024', '2024-04-30'::date, '2024-04-30'::date, 4, '2024', 2024),
-  ('BS0003', 'BS-Q3-2024', '2024-07-31'::date, '2024-08-20'::date, 7, '2024', 2024),
-  ('BS0003', 'BS-Q4-2024', '2024-10-31'::date, NULL, 10, '2024', 2024),
+  ('BS0003', 'Q1', 'OBJ-BS-Q1-2024', '2024-01-31'::date, '2024-01-29'::date, 1, '2024', 2024),
+  ('BS0003', 'Q2', 'OBJ-BS-Q2-2024', '2024-04-30'::date, '2024-04-30'::date, 4, '2024', 2024),
+  ('BS0003', 'Q3', 'OBJ-BS-Q3-2024', '2024-07-31'::date, '2024-08-20'::date, 7, '2024', 2024),
+  ('BS0003', 'Q4', 'OBJ-BS-Q4-2024', '2024-10-31'::date, NULL, 10, '2024', 2024),
   -- BS0003 (2025)
-  ('BS0003', 'BS-Q1-2025', '2025-01-31'::date, NULL, 1, '2025', 2025),
-  ('BS0003', 'BS-Q2-2025', '2025-04-30'::date, '2025-04-28'::date, 4, '2025', 2025),
+  ('BS0003', 'Q1', 'OBJ-BS-Q1-2025', '2025-01-31'::date, NULL, 1, '2025', 2025),
+  ('BS0003', 'Q2', 'OBJ-BS-Q2-2025', '2025-04-30'::date, '2025-04-28'::date, 4, '2025', 2025),
   
   -- RS0004 (2024)
-  ('RS0004', 'RS-Q1-2024', '2024-03-31'::date, '2024-03-15'::date, 3, '2024', 2024),
-  ('RS0004', 'RS-Q3-2024', '2024-09-30'::date, '2024-10-30'::date, 9, '2024', 2024),
+  ('RS0004', 'Q1', 'OBJ-RS-Q1-2024', '2024-03-31'::date, '2024-03-15'::date, 3, '2024', 2024),
+  ('RS0004', 'Q3', 'OBJ-RS-Q3-2024', '2024-09-30'::date, '2024-10-30'::date, 9, '2024', 2024),
   -- RS0004 (2025)
-  ('RS0004', 'RS-Q1-2025', '2025-03-31'::date, NULL, 3, '2025', 2025),
-  ('RS0004', 'RS-Q3-2025', '2025-09-30'::date, '2025-09-30'::date, 9, '2025', 2025)
-ON CONFLICT (project, milestoneref, fpsyear) DO NOTHING;
+  ('RS0004', 'Q1', 'OBJ-RS-Q1-2025', '2025-03-31'::date, NULL, 3, '2025', 2025),
+  ('RS0004', 'Q3', 'OBJ-RS-Q3-2025', '2025-09-30'::date, '2025-09-30'::date, 9, '2025', 2025)
+ON CONFLICT (project, milestoneref, objectiveref) DO NOTHING;
 
--- ========= 4. TEST CAPABILITIES (tlkptestcapability) =========
+-- ========= 5. WORKGROUP LOOKUPS (workgroup) =========
+INSERT INTO fps.workgroup (workgroup, profitcentre, description, fpsyear)
+VALUES
+  ('WG001', 'PC01', 'Aquatic workgroup', 2024),
+  ('WG001', 'PC01', 'Aquatic workgroup', 2025),
+  ('WG001', 'PC01', 'Aquatic workgroup', 2026),
+  ('WG002', 'PC02', 'Terrestrial workgroup', 2024),
+  ('WG002', 'PC02', 'Terrestrial workgroup', 2025),
+  ('WG002', 'PC02', 'Terrestrial workgroup', 2026),
+  ('WG003', 'PC03', 'Biosecurity workgroup', 2024),
+  ('WG003', 'PC03', 'Biosecurity workgroup', 2025),
+  ('WG003', 'PC03', 'Biosecurity workgroup', 2026),
+  ('WG004', 'PC04', 'Research workgroup', 2024),
+  ('WG004', 'PC04', 'Research workgroup', 2025),
+  ('WG004', 'PC04', 'Research workgroup', 2026)
+ON CONFLICT (fpsyear, workgroup) DO NOTHING;
+
+-- ========= 6. PRODUCT LOOKUPS (testorproduct prerequisite) =========
+INSERT INTO fps.testorproduct (itemcode, itemdescription, owner, defraunitprice, fpsyear)
+VALUES
+  ('AQUA-001', 'Aquatic Microbiology - Basic', 'PT', 150.00, 2024),
+  ('AQUA-001', 'Aquatic Microbiology - Basic', 'PT', 155.00, 2025),
+  ('AQUA-001', 'Aquatic Microbiology - Basic', 'PT', 160.00, 2026),
+  ('TERR-001', 'Terrestrial Pathology', 'PA', 120.00, 2024),
+  ('TERR-001', 'Terrestrial Pathology', 'PA', 125.00, 2025),
+  ('INSP-001', 'Import Health Certificate Review', 'SD', 100.00, 2024),
+  ('INSP-001', 'Import Health Certificate Review', 'SD', 105.00, 2025),
+  ('DIAG-001', 'Research Diagnostic Services', 'LT', 250.00, 2024),
+  ('DIAG-001', 'Research Diagnostic Services', 'LT', 260.00, 2025)
+ON CONFLICT (itemcode, fpsyear) DO NOTHING;
+
+-- ========= 5. TEST CAPABILITIES (tlkptestcapability) =========
 INSERT INTO fps.tlkptestcapability (testcode, workgroup, planportfolio, smscode, fpsyear)
 VALUES
   ('AQUA-001', 'WG001', 'AH0001', 'SMS-AQ-001', 2024),
-  ('AQUA-001', 'WG001', 'AH0001', 'SMS-AQ-001', 2025),
-  ('AQUA-001', 'WG001', 'AH0001', 'SMS-AQ-001', 2026),
   ('TERR-001', 'WG002', 'TH0002', 'SMS-TR-001', 2024),
-  ('TERR-001', 'WG002', 'TH0002', 'SMS-TR-001', 2025),
   ('INSP-001', 'WG003', 'BS0003', 'SMS-BS-001', 2024),
-  ('INSP-001', 'WG003', 'BS0003', 'SMS-BS-001', 2025),
-  ('DIAG-001', 'WG004', 'RS0004', 'SMS-RS-001', 2024),
-  ('DIAG-001', 'WG004', 'RS0004', 'SMS-RS-001', 2025)
-ON CONFLICT (testcode, workgroup, fpsyear) DO NOTHING;
+  ('DIAG-001', 'WG004', 'RS0004', 'SMS-RS-001', 2024)
+ON CONFLICT (testcode, workgroup) DO NOTHING;
 
--- ========= 5. TEST REQUIREMENTS (tlkptestreqmt) =========
+-- ========= 6. TEST REQUIREMENTS (tlkptestreqmt) =========
 INSERT INTO fps.tlkptestreqmt (buyer, testcode, norequired, unitprice, fpsyear)
 VALUES
   ('AH0001', 'AQUA-001', 5, 150.00, 2024),
@@ -129,7 +164,7 @@ VALUES
   ('RS0004', 'DIAG-001', 3, 260.00, 2025)
 ON CONFLICT (buyer, testcode, fpsyear) DO NOTHING;
 
--- ========= 6. MONTHLY TEST OUTPUTS (monthlyoutput) =========
+-- ========= 7. MONTHLY TEST OUTPUTS (monthlyoutput) =========
 INSERT INTO fps.monthlyoutput 
   (buyer, testcode, workgroup, month, volume, fpsyear)
 VALUES
@@ -150,23 +185,24 @@ VALUES
   ('RS0004', 'DIAG-001', 'WG004', 2, 10, 2024)
 ON CONFLICT (buyer, testcode, workgroup, month, fpsyear) DO NOTHING;
 
--- ========= 7. PRODUCT CODES (testorproduct) =========
-INSERT INTO fps.testorproduct (itemcode, itemdescription, fpsyear)
+-- ========= 8. PRODUCT CODES (testorproduct) =========
+INSERT INTO fps.testorproduct (itemcode, itemdescription, owner, defraunitprice, fpsyear)
 VALUES
-  ('AQUA-001', 'Aquatic Microbiology - Basic', 2024),
-  ('AQUA-001', 'Aquatic Microbiology - Basic', 2025),
-  ('AQUA-001', 'Aquatic Microbiology - Basic', 2026),
-  ('TERR-001', 'Terrestrial Pathology', 2024),
-  ('TERR-001', 'Terrestrial Pathology', 2025),
-  ('INSP-001', 'Import Health Certificate Review', 2024),
-  ('INSP-001', 'Import Health Certificate Review', 2025),
-  ('DIAG-001', 'Research Diagnostic Services', 2024),
-  ('DIAG-001', 'Research Diagnostic Services', 2025)
+  ('AQUA-001', 'Aquatic Microbiology - Basic', 'PT', 150.00, 2024),
+  ('AQUA-001', 'Aquatic Microbiology - Basic', 'PT', 155.00, 2025),
+  ('AQUA-001', 'Aquatic Microbiology - Basic', 'PT', 160.00, 2026),
+  ('TERR-001', 'Terrestrial Pathology', 'PA', 120.00, 2024),
+  ('TERR-001', 'Terrestrial Pathology', 'PA', 125.00, 2025),
+  ('INSP-001', 'Import Health Certificate Review', 'SD', 100.00, 2024),
+  ('INSP-001', 'Import Health Certificate Review', 'SD', 105.00, 2025),
+  ('DIAG-001', 'Research Diagnostic Services', 'LT', 250.00, 2024),
+  ('DIAG-001', 'Research Diagnostic Services', 'LT', 260.00, 2025)
 ON CONFLICT (itemcode, fpsyear) DO NOTHING;
 
--- ========= 8. SUBCONTRACTS (proj_subcontract) =========
+-- ========= 9. SUBCONTRACTS (proj_subcontract) =========
 INSERT INTO fps.proj_subcontract 
   (project, month, acctcode, amount, fpsyear)
+SELECT * FROM (
 VALUES
   ('AH0001', 1, 'Consulting', 3000.00, 2024),
   ('AH0001', 2, 'Consulting', 3500.00, 2024),
@@ -179,26 +215,42 @@ VALUES
   ('BS0003', 1, 'Other', 1550.00, 2025),
   ('RS0004', 1, 'Other', 1000.00, 2024),
   ('RS0004', 2, 'Other', 1200.00, 2024)
-ON CONFLICT (project, month, acctcode, fpsyear) DO NOTHING;
+) AS v(project, month, acctcode, amount, fpsyear)
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM fps.proj_subcontract ps
+  WHERE ps.project = v.project
+    AND ps.month = v.month
+    AND ps.acctcode = v.acctcode
+    AND ps.fpsyear = v.fpsyear
+);
 
--- ========= 9. INVOICES (proj_invoice) =========
+-- ========= 10. INVOICES (proj_invoice) =========
 INSERT INTO fps.proj_invoice 
-  (projectparent, month, amount, costofwork, fpsyear)
+  (projectparent, month, amount, costofwork, invoicecounter, fpsyear)
+SELECT * FROM (
 VALUES
-  ('AH0001', 1, 12500.00, 8000.00, 2024),
-  ('AH0001', 2, 13000.00, 8500.00, 2024),
-  ('AH0001', 3, 14000.00, 9000.00, 2024),
-  ('AH0001', 1, 13000.00, 8300.00, 2025),
-  ('AH0001', 2, 13500.00, 8700.00, 2025),
-  ('TH0002', 1, 10000.00, 6500.00, 2024),
-  ('TH0002', 2, 10500.00, 6800.00, 2024),
-  ('TH0002', 1, 10500.00, 6700.00, 2025),
-  ('BS0003', 1, 8500.00, 5500.00, 2024),
-  ('BS0003', 2, 9000.00, 5800.00, 2024),
-  ('BS0003', 1, 9000.00, 5700.00, 2025),
-  ('RS0004', 1, 6500.00, 4000.00, 2024),
-  ('RS0004', 2, 7000.00, 4300.00, 2024)
-ON CONFLICT (projectparent, month, fpsyear) DO NOTHING;
+  ('AH0001', 1, 12500.00, 8000.00, 1001, 2024),
+  ('AH0001', 2, 13000.00, 8500.00, 1002, 2024),
+  ('AH0001', 3, 14000.00, 9000.00, 1003, 2024),
+  ('AH0001', 1, 13000.00, 8300.00, 2001, 2025),
+  ('AH0001', 2, 13500.00, 8700.00, 2002, 2025),
+  ('TH0002', 1, 10000.00, 6500.00, 1004, 2024),
+  ('TH0002', 2, 10500.00, 6800.00, 1005, 2024),
+  ('TH0002', 1, 10500.00, 6700.00, 2003, 2025),
+  ('BS0003', 1, 8500.00, 5500.00, 1006, 2024),
+  ('BS0003', 2, 9000.00, 5800.00, 1007, 2024),
+  ('BS0003', 1, 9000.00, 5700.00, 2004, 2025),
+  ('RS0004', 1, 6500.00, 4000.00, 1008, 2024),
+  ('RS0004', 2, 7000.00, 4300.00, 1009, 2024)
+) AS v(projectparent, month, amount, costofwork, invoicecounter, fpsyear)
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM fps.proj_invoice pi
+  WHERE pi.projectparent = v.projectparent
+    AND pi.month = v.month
+    AND pi.fpsyear = v.fpsyear
+);
 
 -- ============================================================================
 -- MABARCHIVE SCHEMA: Scheduled Load Archive Data

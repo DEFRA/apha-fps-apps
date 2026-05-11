@@ -24,7 +24,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 $PsqlPath = "C:\Program Files\PostgreSQL\16\bin\psql.exe"
-$RepoRoot = (Get-Item -Path $PSScriptRoot).Parent.Parent.Parent.Parent
+$BatchJobsRoot = (Get-Item -Path $PSScriptRoot).Parent.Parent.Parent.FullName
 
 # Validate psql exists
 if (-not (Test-Path $PsqlPath)) {
@@ -33,8 +33,8 @@ if (-not (Test-Path $PsqlPath)) {
 }
 
 # Script paths
-$FlushScript = Join-Path $RepoRoot "src\Apha.BatchJobs\docs\database\sql\00-flush-test-data.sql"
-$SeedScript = Join-Path $RepoRoot "src\Apha.BatchJobs\docs\database\sql\seed-combined-fps-mabarchive.sql"
+$FlushScript = Join-Path $BatchJobsRoot "docs\database\sql\00-flush-test-data.sql"
+$SeedScript = Join-Path $BatchJobsRoot "docs\database\sql\seed-combined-fps-mabarchive.sql"
 
 # Validate scripts exist
 @($FlushScript, $SeedScript) | ForEach-Object {
@@ -64,7 +64,7 @@ try {
         -f $FlushScript `
         2>&1 | Select-Object -Last 20
 
-    Write-Host "✓ Flush complete" -ForegroundColor Green
+    Write-Host "[OK] Flush complete" -ForegroundColor Green
 }
 catch {
     Write-Error "Flush failed: $_"
@@ -84,7 +84,7 @@ try {
         -f $SeedScript `
         2>&1 | Select-Object -Last 20
 
-    Write-Host "✓ Reseed complete" -ForegroundColor Green
+    Write-Host "[OK] Reseed complete" -ForegroundColor Green
 }
 catch {
     Write-Error "Reseed failed: $_"
@@ -93,12 +93,12 @@ catch {
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Green
-Write-Host "✓ Database reset successful!" -ForegroundColor Green
+Write-Host "[OK] Database reset successful!" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Green
 Write-Host ""
 Write-Host "Data loaded:" -ForegroundColor Cyan
-Write-Host "  • 12 parent projects (4 programmes × 3 years)"
-Write-Host "  • 48+ milestones (on-time, late, pending)"
-Write-Host "  • Monthly outputs, invoices, subcontracts"
-Write-Host "  • MABArchive baseline totals & snapshots"
+Write-Host "  - 12 parent projects (4 programmes x 3 years)"
+Write-Host "  - 48+ milestones (on-time, late, pending)"
+Write-Host "  - Monthly outputs, invoices, subcontracts"
+Write-Host "  - MABArchive baseline totals and snapshots"
 Write-Host ""

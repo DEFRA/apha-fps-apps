@@ -22,6 +22,10 @@ DELETE FROM fps.proj_subcontract WHERE project IN ('AH0001', 'TH0002', 'BS0003',
 DELETE FROM fps.monthlyoutput 
   WHERE buyer IN ('AH0001', 'TH0002', 'BS0003', 'RS0004');
 
+-- Delete test capabilities (must be before testorproduct/workgroup due FKs)
+DELETE FROM fps.tlkptestcapability 
+  WHERE testcode IN ('AQUA-001', 'TERR-001', 'INSP-001', 'DIAG-001');
+
 -- Delete product/test data
 DELETE FROM fps.testorproduct 
   WHERE itemcode IN ('AQUA-001', 'TERR-001', 'INSP-001', 'DIAG-001');
@@ -29,10 +33,6 @@ DELETE FROM fps.testorproduct
 -- Delete test requirements
 DELETE FROM fps.tlkptestreqmt 
   WHERE buyer IN ('AH0001', 'TH0002', 'BS0003', 'RS0004');
-
--- Delete test capabilities
-DELETE FROM fps.tlkptestcapability 
-  WHERE testcode IN ('AQUA-001', 'TERR-001', 'INSP-001', 'DIAG-001');
 
 -- Delete milestones
 DELETE FROM fps.milestone 
@@ -45,6 +45,15 @@ DELETE FROM fps.projectmonth
 -- Delete parent projects (base table)
 DELETE FROM fps.tlkpproject 
   WHERE parentproject IN ('AH0001', 'TH0002', 'BS0003', 'RS0004');
+
+-- Delete workgroup and program lookups seeded for test runs
+DELETE FROM fps.workgroup
+  WHERE workgroup IN ('WG001', 'WG002', 'WG003', 'WG004')
+    AND fpsyear IN (2024, 2025, 2026);
+
+DELETE FROM fps.tlkpprogram
+  WHERE programno IN ('AH', 'TH', 'BS', 'RS')
+    AND fpsyear IN (2024, 2025, 2026);
 
 -- ============================================================================
 -- MABARCHIVE SCHEMA: Delete archive snapshots
