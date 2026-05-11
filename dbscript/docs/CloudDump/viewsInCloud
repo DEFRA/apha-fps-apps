@@ -1,0 +1,2121 @@
+"schema_name","view_name","view_sql"
+"fps","all_staff_project"," SELECT tblstaffjob.staffid AS pactid,
+    tblstaffjob.jobcode AS parentproject,
+    tblstaffjob.fpsyear
+   FROM fps.tblstaffjob
+UNION
+ SELECT monthlytime.pactstaffid AS pactid,
+    monthlytime.parentproject,
+    monthlytime.fpsyear
+   FROM fps.monthlytime
+  GROUP BY monthlytime.pactstaffid, monthlytime.parentproject, monthlytime.fpsyear;"
+"fps","all_wg_project"," SELECT workgroup.workgroup,
+    tlkpproject.parentproject AS project,
+    tlkpproject.fpsyear
+   FROM fps.workgroup
+     JOIN fps.tlkpproject ON workgroup.fpsyear = tlkpproject.fpsyear;"
+"fps","pandoratimecostcalcs"," SELECT DISTINCT tc.workgroup,
+    tc.jobcode,
+    tc.project,
+    tc.month,
+    tc.staffid,
+    tc.gradecode,
+    tc.name,
+    tc.chargerate,
+    tc.class,
+    tc.""time"",
+    tc.cost,
+    tc.division,
+    tc.jobcodeold,
+    tc.pay,
+    tc.nonpay,
+    tc.overhead,
+    tc.fpsyear,
+    u.user_id,
+    u.dt2username,
+    u.useremail
+   FROM fps.timecostcalcs tc
+     JOIN fps.tbluser_workgroup uw ON tc.workgroup::text = uw.workgroup::text
+     JOIN fps.tblusers u ON uw.user_id = u.user_id;"
+"fps","qrycaseworkhours"," SELECT timecostcalcs.project,
+    timecostcalcs.month,
+    timecostcalcs.fpsyear,
+    sum(timecostcalcs.cost) AS sumofcost
+   FROM fps.timecostcalcs
+     JOIN fps.tlkpjobcode ON timecostcalcs.project::text = tlkpjobcode.parentproject::text AND timecostcalcs.jobcode::text = tlkpjobcode.jobcode::text AND timecostcalcs.fpsyear = tlkpjobcode.fpsyear
+  WHERE tlkpjobcode.type::text = 'casework'::text
+  GROUP BY timecostcalcs.project, timecostcalcs.month, timecostcalcs.fpsyear;"
+"fps","qryfrmtimesellerpc_map"," SELECT tblkpprofitcentre.conttarget,
+    profitcentregrade.profitcentre AS sellingpc,
+    profitcentregrade.chargerate,
+    profitcentregrade.ohr,
+    vqrytbidsum.sumofgenbid,
+    workgroupgrade.workgroup,
+    workgroupgrade.profitcentregrade AS profitcentregrade_col,
+    workgroupgrade.wggrade,
+    vapphours.sumofplannedhours AS apphours,
+    sum(vstaffjobhours.plannedhours) AS hrs,
+    sum(tblwgemployee.hrsavail) AS avhrs,
+    sum(vstaffjobhours.plannedhours) * profitcentregrade.chargerate AS fec,
+    vapphours.sumofplannedhours * profitcentregrade.chargerate AS appfec,
+    profitcentregrade.ohr * sum(vstaffjobhours.plannedhours) AS contribution
+   FROM fps.vapphours
+     RIGHT JOIN (fps.tblkpprofitcentre
+     JOIN (fps.profitcentregrade
+     LEFT JOIN fps.vqrytbidsum ON profitcentregrade.profitcentre::text = vqrytbidsum.profitcentre::text) ON tblkpprofitcentre.profitcentre::text = profitcentregrade.profitcentre::text
+     JOIN fps.workgroupgrade ON profitcentregrade.pcgrade::text = workgroupgrade.profitcentregrade::text
+     JOIN fps.tblwgemployee ON workgroupgrade.wggrade::text = tblwgemployee.workgroupgrade::text) ON vapphours.workgroupgrade::text = workgroupgrade.wggrade::text
+     LEFT JOIN fps.vstaffjobhours ON tblwgemployee.pactid::text = vstaffjobhours.staffid::text
+  GROUP BY tblkpprofitcentre.conttarget, profitcentregrade.profitcentre, profitcentregrade.chargerate, profitcentregrade.ohr, vqrytbidsum.sumofgenbid, workgroupgrade.workgroup, workgroupgrade.profitcentregrade, workgroupgrade.wggrade, vapphours.sumofplannedhours;"
+"fps","qryjobmonth_invoices"," SELECT projectparent,
+    month,
+    fpsyear,
+    sum(amount) AS sumofamount1,
+    sum(costofwork) AS workcost
+   FROM fps.proj_invoice
+  GROUP BY projectparent, month, fpsyear;"
+"fps","qryjobmonth_subcontracts"," SELECT project,
+    month,
+    fpsyear,
+    sum(animals1) AS animals,
+    sum(other1) AS other,
+    sum(animals1) + sum(other1) AS total
+   FROM fps.qryjobmonth_subcontracts1
+  GROUP BY project, month, fpsyear;"
+"fps","qryjobmonth_subcontracts1"," SELECT DISTINCT project,
+    month,
+    acctcode,
+    fpsyear,
+    sum(amount::numeric) AS total,
+        CASE
+            WHEN acctcode::text = ANY (ARRAY['LargeAnimals'::character varying::text, 'SmallAnimals'::character varying::text, 'Mice'::character varying::text]) THEN sum(amount::numeric)
+            ELSE 0::numeric
+        END AS animals1,
+        CASE
+            WHEN acctcode::text = ANY (ARRAY['LargeAnimals'::character varying::text, 'SmallAnimals'::character varying::text, 'Mice'::character varying::text]) THEN 0::numeric
+            ELSE sum(amount::numeric)
+        END AS other1
+   FROM fps.proj_subcontract
+  GROUP BY project, month, acctcode, fpsyear;"
+"fps","qryjobmonth_tctransfers"," SELECT vpacttlkptestcapability.planportfolio AS project,
+    monthlyoutput.month,
+    monthlyoutput.testcode,
+    monthlyoutput.volume,
+    tlkptestreqmt.unitprice AS intunitprice,
+    monthlyoutput.fpsyear,
+    sum(monthlyoutput.volume * tlkptestreqmt.unitprice) AS transfercost
+   FROM fps.monthlyoutput
+     JOIN fps.tlkptestreqmt ON monthlyoutput.testcode::text = tlkptestreqmt.testcode::text AND monthlyoutput.buyer::text = tlkptestreqmt.buyer::text AND monthlyoutput.fpsyear = tlkptestreqmt.fpsyear
+     JOIN fps.vpacttlkptestcapability ON tlkptestreqmt.buyer::text = vpacttlkptestcapability.wgtestcode AND tlkptestreqmt.fpsyear = vpacttlkptestcapability.fpsyear
+  GROUP BY vpacttlkptestcapability.planportfolio, monthlyoutput.month, monthlyoutput.testcode, monthlyoutput.volume, tlkptestreqmt.unitprice, monthlyoutput.fpsyear;"
+"fps","qryjobmonth_time"," SELECT DISTINCT project,
+    month,
+    fpsyear,
+    sum(cost) AS sumofcost,
+    sum(""time"") AS sumofhours,
+    sum(pay) AS sumofpayrate
+   FROM fps.timecostcalcs
+  GROUP BY project, month, fpsyear;"
+"fps","qryjobmonth_totprofile"," SELECT DISTINCT project,
+    fpsyear,
+    sum(costprofile) AS sumofcostprofile
+   FROM fps.projectmonth
+  GROUP BY project, fpsyear;"
+"fps","qryjobmonth_transfers1"," SELECT DISTINCT monthlyoutput.buyer AS project,
+    monthlyoutput.month,
+    monthlyoutput.testcode,
+    monthlyoutput.volume,
+    tlkptestreqmt.unitprice AS intunitprice,
+    monthlyoutput.fpsyear,
+    sum(monthlyoutput.volume * tlkptestreqmt.unitprice) AS transfercost
+   FROM fps.testorproduct
+     JOIN fps.tlkptestreqmt ON testorproduct.itemcode::text = tlkptestreqmt.testcode::text AND testorproduct.fpsyear = tlkptestreqmt.fpsyear
+     JOIN fps.monthlyoutput ON tlkptestreqmt.buyer::text = monthlyoutput.buyer::text AND tlkptestreqmt.testcode::text = monthlyoutput.testcode::text AND tlkptestreqmt.fpsyear = monthlyoutput.fpsyear
+  GROUP BY monthlyoutput.buyer, monthlyoutput.month, monthlyoutput.testcode, monthlyoutput.volume, tlkptestreqmt.unitprice, monthlyoutput.fpsyear;"
+"fps","qryjobmonth_transfers2"," SELECT DISTINCT project,
+    month,
+    fpsyear,
+    sum(transfercost) AS sumoftransfercost
+   FROM fps.qryjobmonth_transfers1
+  GROUP BY project, month, fpsyear;"
+"fps","qryjobmonth_transferstotal"," SELECT DISTINCT project,
+    month,
+    fpsyear,
+    sum(transfercost) AS sumoftransfercost
+   FROM fps.qryjobmonth_transferunion
+  GROUP BY project, month, fpsyear;"
+"fps","qryjobmonth_transferunion"," SELECT qryjobmonth_tctransfers.project,
+    qryjobmonth_tctransfers.month,
+    qryjobmonth_tctransfers.fpsyear,
+    qryjobmonth_tctransfers.transfercost
+   FROM fps.qryjobmonth_tctransfers
+UNION ALL
+ SELECT qryjobmonth_transfers1.project,
+    qryjobmonth_transfers1.month,
+    qryjobmonth_transfers1.fpsyear,
+    qryjobmonth_transfers1.transfercost
+   FROM fps.qryjobmonth_transfers1;"
+"fps","qryjobmonthmilestone"," SELECT project,
+    duemonth,
+    count(milestoneref) AS mstonedue,
+    sum(completeflag) AS due__done,
+    sum(ontimeflag) AS ontime
+   FROM fps.qrymilestone1
+  GROUP BY project, duemonth;"
+"fps","qryjobmonthportfoliosales"," SELECT DISTINCT tlkptestcapability.planportfolio,
+    monthlyoutput.month,
+    monthlyoutput.fpsyear,
+    sum(tlkptestreqmt.unitprice * monthlyoutput.volume) AS fee
+   FROM fps.tlkptestreqmt
+     JOIN (fps.tlkptestcapability
+     JOIN fps.monthlyoutput ON tlkptestcapability.workgroup::text = monthlyoutput.workgroup::text AND tlkptestcapability.testcode::text = monthlyoutput.testcode::text AND tlkptestcapability.fpsyear = monthlyoutput.fpsyear) ON tlkptestreqmt.buyer::text = monthlyoutput.buyer::text AND tlkptestreqmt.testcode::text = monthlyoutput.testcode::text AND tlkptestreqmt.fpsyear = monthlyoutput.fpsyear
+  GROUP BY tlkptestcapability.planportfolio, monthlyoutput.month, monthlyoutput.fpsyear;"
+"fps","qrymilestone1"," SELECT DISTINCT project,
+    milestoneref,
+    plandate,
+    actualdate,
+    monthnofin AS duemonth,
+        CASE
+            WHEN actualdate <= plandate THEN 1::numeric
+            ELSE 0::numeric
+        END AS ontimeflag,
+        CASE
+            WHEN actualdate IS NULL THEN 0
+            ELSE 1
+        END AS completeflag,
+    year,
+    fpsyear
+   FROM fps.milestone
+  WHERE year::text = '2003/2004'::text;"
+"fps","qryprojectmonthcw"," SELECT DISTINCT projectmonth.project,
+    projectmonth.monthno,
+    projectmonth.fpsyear,
+    tlkpproject.plancaseworkdebit / 12 AS cwdebit,
+    tlkpproject.transferincome * tlkpproject.caseworksub::double precision / 12 AS cwcredit
+   FROM fps.tlkpproject
+     JOIN fps.projectmonth ON tlkpproject.parentproject::text = projectmonth.project::text AND tlkpproject.fpsyear = projectmonth.fpsyear;"
+"fps","qryrptahvggraph1"," SELECT monthlyoutput.buyer,
+    tblkperiodmonth.endmonth,
+    monthlyoutput.testcode,
+    monthlyoutput.fpsyear,
+    sum(monthlyoutput.volume) AS actualvol
+   FROM fps.tlkptestcapability
+     JOIN (fps.tblkperiodmonth
+     JOIN fps.monthlyoutput ON tblkperiodmonth.monthno = monthlyoutput.month AND tblkperiodmonth.fpsyear = monthlyoutput.fpsyear) ON tlkptestcapability.workgroup::text = monthlyoutput.workgroup::text AND tlkptestcapability.testcode::text = monthlyoutput.testcode::text AND tlkptestcapability.fpsyear = monthlyoutput.fpsyear
+  GROUP BY monthlyoutput.buyer, tblkperiodmonth.endmonth, monthlyoutput.testcode, monthlyoutput.fpsyear;"
+"fps","qrysurvprojectsum"," SELECT DISTINCT qrytcc_union.project,
+    qrytcc_union.workgroup,
+    tlkpjobcode.type,
+    sum(timecostcalcs.cost) AS hourscost,
+    timecostcalcs.month,
+    timecostcalcs.fpsyear
+   FROM fps.qrytcc_union
+     LEFT JOIN (fps.tlkpjobcode
+     RIGHT JOIN fps.timecostcalcs ON tlkpjobcode.parentproject::text = timecostcalcs.project::text AND tlkpjobcode.jobcode::text = timecostcalcs.jobcode::text AND tlkpjobcode.fpsyear = timecostcalcs.fpsyear) ON qrytcc_union.project::text = timecostcalcs.project::text AND qrytcc_union.workgroup::text = timecostcalcs.workgroup::text AND qrytcc_union.fpsyear = timecostcalcs.fpsyear
+  GROUP BY qrytcc_union.project, qrytcc_union.workgroup, tlkpjobcode.type, timecostcalcs.month, timecostcalcs.fpsyear;"
+"fps","qrytcc_union"," SELECT workgroup.workgroup,
+    tlkpproject.parentproject AS project,
+    tlkpproject.fpsyear
+   FROM fps.workgroup
+     JOIN fps.tlkpproject ON workgroup.fpsyear = tlkpproject.fpsyear
+  WHERE workgroup.workgroup::text ~~ 'SV__'::text
+UNION
+ SELECT timecostcalcs.workgroup,
+    timecostcalcs.project,
+    timecostcalcs.fpsyear
+   FROM fps.timecostcalcs;"
+"fps","qrytestpcccostplan"," SELECT vtbltestrequ_tm.jobcode,
+    vtbltestrequ_tm.testcode,
+    tbltestrccost.profitcentre,
+    tbltestrccost.price::numeric AS price,
+    vtbltestrequ_tm.fpsyear
+   FROM fps.vtbltestrequ_tm
+     LEFT JOIN fps.tbltestrccost ON vtbltestrequ_tm.testcode::text = tbltestrccost.testcode::text AND vtbltestrequ_tm.fpsyear = tbltestrccost.fpsyear
+  WHERE tbltestrccost.price IS NOT NULL AND tbltestrccost.profitcentre IS NOT NULL
+  ORDER BY vtbltestrequ_tm.jobcode;"
+"fps","qrytestspccostplan_crosstab"," SELECT qrytestpcccostplan.jobcode,
+    qrytestpcccostplan.testcode,
+    qrytestpcccostplan.profitcentre,
+    qrytestpcccostplan.fpsyear,
+        CASE qrytestpcccostplan.profitcentre
+            WHEN 'LabT'::text THEN max(COALESCE(tbltestrequirementrccost.price::numeric, qrytestpcccostplan.price))
+            ELSE 0::numeric
+        END AS labt,
+        CASE qrytestpcccostplan.profitcentre
+            WHEN 'VSD GB'::text THEN max(COALESCE(tbltestrequirementrccost.price::numeric, qrytestpcccostplan.price))
+            ELSE 0::numeric
+        END AS vetr,
+        CASE qrytestpcccostplan.profitcentre
+            WHEN 'Viro'::text THEN max(COALESCE(tbltestrequirementrccost.price::numeric, qrytestpcccostplan.price))
+            ELSE 0::numeric
+        END AS viro
+   FROM fps.qrytestpcccostplan
+     LEFT JOIN fps.tbltestrequirementrccost ON qrytestpcccostplan.profitcentre::text = tbltestrequirementrccost.profitcentre::text AND qrytestpcccostplan.jobcode::text = tbltestrequirementrccost.buyer::text AND qrytestpcccostplan.testcode::text = tbltestrequirementrccost.testcode::text AND qrytestpcccostplan.fpsyear = tbltestrequirementrccost.fpsyear
+  GROUP BY qrytestpcccostplan.jobcode, qrytestpcccostplan.testcode, qrytestpcccostplan.profitcentre, qrytestpcccostplan.fpsyear
+  ORDER BY qrytestpcccostplan.jobcode;"
+"fps","qrytestspccostplan_xtab"," SELECT testcode,
+    fpsyear,
+    sum(
+        CASE profitcentre
+            WHEN 'LabT'::text THEN price::numeric
+            ELSE 0::numeric
+        END) AS labt,
+    sum(
+        CASE profitcentre
+            WHEN 'VSD GB'::text THEN price::numeric
+            ELSE 0::numeric
+        END) AS vetr,
+    sum(
+        CASE profitcentre
+            WHEN 'Viro'::text THEN price::numeric
+            ELSE 0::numeric
+        END) AS viro
+   FROM fps.tbltestrccost
+  GROUP BY testcode, fpsyear;"
+"fps","qrytestspcostplan_xtab"," SELECT testcode,
+    sum(
+        CASE lower(profitcentre::text)
+            WHEN 'labt'::text THEN price
+            ELSE 0::money
+        END) AS labt,
+    sum(
+        CASE lower(profitcentre::text)
+            WHEN 'vsd gb'::text THEN price
+            ELSE 0::money
+        END) AS vetr,
+    sum(
+        CASE lower(profitcentre::text)
+            WHEN 'viro'::text THEN price
+            ELSE 0::money
+        END) AS viro
+   FROM fps.tbltestrccost
+  GROUP BY testcode;"
+"fps","qrytotaladditionalcosts"," SELECT DISTINCT jobcode,
+    fpsyear,
+    sum(itemcost) AS totaladditionalcosts
+   FROM fps.tbladditionalcosts
+  GROUP BY jobcode, fpsyear;"
+"fps","qrytotalanimalcosts"," SELECT DISTINCT parentproject AS jobcode,
+    fpsyear,
+    sum(cost) AS totalanimalcosts
+   FROM fps.vprojectanimalplan
+  GROUP BY parentproject, fpsyear;"
+"fps","qrytotalstaffcosts"," SELECT DISTINCT parentproject AS jobcode,
+    fpsyear,
+    sum(cost) AS totalstaffcosts,
+    sum(paycost) AS totalpaycosts
+   FROM fps.vprojectstaffplan
+  GROUP BY parentproject, fpsyear;"
+"fps","qrytotaltestcosts"," SELECT jobcode,
+    sum(notests * testprice) AS totaltestcosts
+   FROM fps.vtbltestrequ
+  GROUP BY jobcode;"
+"fps","qvrd_split"," SELECT monthlyoutput.workgroup AS location,
+    monthlyoutput.month,
+        CASE vplancrosstab.vetr
+            WHEN 0 THEN 1::numeric
+            ELSE 0::numeric
+        END::double precision * (vplancrosstab.labt::double precision * sum(monthlyoutput.volume)) AS ltsplitfee,
+        CASE vplancrosstab.vetr
+            WHEN 0 THEN 1::numeric
+            ELSE 0::numeric
+        END AS ispartofltfee,
+    monthlyoutput.testcode,
+    monthlyoutput.fpsyear,
+    sum(monthlyoutput.volume) AS totvol,
+    vplancrosstab.labt AS ltunitcharge,
+    vplancrosstab.vetr AS sdunitcharge,
+    vplancrosstab.labt::double precision * sum(monthlyoutput.volume) AS ltfee,
+    vplancrosstab.vetr::double precision * sum(monthlyoutput.volume) AS sdfee,
+    vplancrosstab.labt::double precision * sum(monthlyoutput.volume) + vplancrosstab.vetr::double precision * sum(monthlyoutput.volume) AS totalfee,
+    tlkptestreqmt.unitprice::numeric::double precision * sum(monthlyoutput.volume) - (vplancrosstab.labt::double precision * sum(monthlyoutput.volume) + vplancrosstab.vetr::double precision * sum(monthlyoutput.volume)) AS ""profit/loss"",
+    tlkptestreqmt.unitprice::numeric AS testprice
+   FROM fps.monthlyoutput
+     JOIN fps.tlkptestcapability ON monthlyoutput.testcode::text = tlkptestcapability.testcode::text AND monthlyoutput.workgroup::text = tlkptestcapability.workgroup::text AND monthlyoutput.fpsyear = tlkptestcapability.fpsyear
+     JOIN fps.vplancrosstab ON monthlyoutput.testcode::text = vplancrosstab.testcode::text AND monthlyoutput.fpsyear = vplancrosstab.fpsyear
+     JOIN fps.tlkptestreqmt ON monthlyoutput.testcode::text = tlkptestreqmt.testcode::text AND monthlyoutput.buyer::text = tlkptestreqmt.buyer::text AND monthlyoutput.fpsyear = tlkptestreqmt.fpsyear
+  GROUP BY vplancrosstab.labt, vplancrosstab.vetr, monthlyoutput.workgroup, monthlyoutput.month, monthlyoutput.testcode, tlkptestcapability.planportfolio, (tlkptestreqmt.unitprice::numeric), monthlyoutput.fpsyear
+ HAVING tlkptestcapability.planportfolio::text = 'TG0100'::text AND monthlyoutput.month <= (( SELECT max(tblperiod.endperiod) AS month
+           FROM fps.tblperiod
+          WHERE tblperiod.finalsummariesrun = '-1'::integer)) AND vplancrosstab.labt IS NOT NULL AND vplancrosstab.vetr IS NOT NULL
+  ORDER BY monthlyoutput.workgroup, monthlyoutput.month, monthlyoutput.testcode;"
+"fps","qvrd_splitlocationmonthly"," SELECT location,
+    month,
+    fpsyear,
+    sum(ltsplitfee) AS labltsplitfee
+   FROM fps.vpostmort_vrd_split
+  GROUP BY location, month, fpsyear
+  ORDER BY location, month;"
+"fps","qvrd_splitmonthly"," SELECT month,
+    fpsyear,
+    sum(ltsplitfee) AS totalltsplitfee
+   FROM fps.vpostmort_vrd_split
+  GROUP BY month, fpsyear;"
+"fps","tblkperiodmonth"," SELECT tblperiodmonth.endmonth,
+    tblperiodmonth.monthno,
+    tblperiod.periodname,
+    tblperiod.fpsyear
+   FROM fps.tblperiod
+     JOIN fps.tblperiodmonth ON tblperiod.endperiod = tblperiodmonth.endmonth;"
+"fps","vanimalcosts"," SELECT tblanimalreq.numberofdays,
+    tblanimalreq.numberofanimals,
+    tblanimalreq.fpsyear
+   FROM fps.tblanimals
+     JOIN fps.tblanimalreq ON tblanimals.animaltype::text = tblanimalreq.animaltype::text AND tblanimals.fpsyear = tblanimalreq.fpsyear;"
+"fps","vapphours"," SELECT tblwgemployee.workgroupgrade,
+    tblstaffjob.fpsyear,
+    sum(tblstaffjob.plannedhours) AS sumofplannedhours
+   FROM fps.tlkpproject
+     JOIN fps.tblstaffjob ON tlkpproject.parentproject::text = tblstaffjob.jobcode::text AND tlkpproject.fpsyear = tblstaffjob.fpsyear
+     JOIN fps.tblwgemployee ON tblstaffjob.staffid::text = tblwgemployee.pactid::text AND tblstaffjob.fpsyear = tblwgemployee.fpsyear
+     JOIN fps.tlkpprogram ON tlkpproject.program::text = tlkpprogram.programno::text AND tlkpproject.fpsyear = tlkpprogram.fpsyear
+  WHERE tlkpproject.program::text <> 'ZT_Prog'::text AND tlkpproject.projectstatus::text = 'approved'::text AND tlkpprogram.sector_name::text = 'Charge'::text
+  GROUP BY tblwgemployee.workgroupgrade, tblstaffjob.fpsyear;"
+"fps","vbudgetbyprogrambystatus"," SELECT program,
+    projectstatus,
+    fpsyear,
+    sum(budget_cvl) AS statusbudget
+   FROM fps.tlkpproject
+  GROUP BY program, projectstatus, fpsyear;"
+"fps","vcontractadditionalcosts"," SELECT jobcode,
+    account,
+    description,
+    itemcost
+   FROM fps.tbladditionalcosts
+  WHERE (jobcode::text IN ( SELECT vcontractproject.parentproject
+           FROM fps.vcontractproject));"
+"fps","vcontractanimalreq"," SELECT jobcode,
+    animaltype,
+    numberofdays,
+    numberofanimals,
+    indcounter,
+    fpsyear
+   FROM fps.tblanimalreq
+  WHERE (jobcode::text IN ( SELECT vcontractproject.parentproject
+           FROM fps.vcontractproject));"
+"fps","vcontractproject"," SELECT parentproject,
+    projecttitle,
+    program,
+    customer,
+    manager,
+    transferincome,
+    custincome,
+    wip_eoy,
+    wip_limit,
+    wip_current,
+    projectstatus,
+    costbookno,
+    datecreated,
+    feccost,
+    profit,
+    budget_cvl,
+    datecosted,
+    disease,
+    contract,
+    projectparent,
+    shorttitle,
+    caseworksub,
+    pvsincome,
+    plancaseworkdebit,
+    finished,
+    owningrc,
+    comments,
+    carryover,
+    carryoverseed,
+    isdefraproject,
+    costcentre,
+    oracleprojectcode,
+    subaccountcode,
+    projectgroup,
+    incomeaccountcode,
+    fpsyear
+   FROM fps.tlkpproject
+  WHERE (contract::text IN ( SELECT vtblcontract.contractno
+           FROM fps.vtblcontract));"
+"fps","vcontractstaffjob"," SELECT staffid,
+    jobcode,
+    plannedhours,
+    fpsyear
+   FROM fps.tblstaffjob
+  WHERE (jobcode::text IN ( SELECT vcontractproject.parentproject
+           FROM fps.vcontractproject));"
+"fps","vcontracttestrequ"," SELECT buyer AS jobcode,
+    testcode,
+    norequired AS notests,
+    unitprice AS testprice,
+    datecreated,
+    projectbuyercode
+   FROM fps.tlkptestreqmt
+  WHERE (buyer::text IN ( SELECT vcontractproject.parentproject
+           FROM fps.vcontractproject));"
+"fps","vcurrentperiod"," SELECT periodname,
+    fpsyear
+   FROM fps.tblperiod
+  WHERE endperiod = (( SELECT max(tblperiod_1.endperiod) AS maxendperiod
+           FROM fps.tblperiod tblperiod_1
+          GROUP BY tblperiod_1.finalsummariesrun
+         HAVING tblperiod_1.finalsummariesrun = '-1'::integer));"
+"fps","vcustomerbudgetbyprogram"," SELECT program,
+    projectstatus,
+    customer,
+    fpsyear,
+    sum(budget_cvl) AS customerbudget
+   FROM fps.tlkpproject
+  GROUP BY program, projectstatus, customer, fpsyear;"
+"fps","vfps_totals"," SELECT fpsyeartotals.parentproject,
+    fpsyeartotals.program,
+    fpsyeartotals.totaladditionalcosts,
+    fpsyeartotals.totalanimalcosts,
+    fpsyeartotals.totalstaffcosts,
+    fpsyeartotals.totaltestcosts,
+    fpsyeartotals.totalcosts,
+    fpsyeartotals.custincome,
+    fpsyeartotals.transferincome,
+    fpsyeartotals.totalincome,
+    fpsyeartotals.budget_cvl,
+    fpsyeartotals.requiredprofit,
+    fpsyeartotals.manager,
+    fpsyeartotals.customer,
+    fpsyeartotals.projectstatus,
+    fpsyeartotals.pvsincome,
+    fpsyeartotals.plancaseworkdebit,
+    ma_a.bfbudget AS ma_bfbudget,
+    fpsyeartotals.fpsyear
+   FROM fps.fpsyeartotals
+     LEFT JOIN ( SELECT my_tlkpprojectradtrackdata.project,
+            my_tlkpprojectradtrackdata.bfbudget
+           FROM mabarchive.my_tlkpprojectradtrackdata
+          WHERE my_tlkpprojectradtrackdata.year::text = (( SELECT ""right""(tbldb_variables.db_var_value::text, 4) AS ""right""
+                   FROM fps.tbldb_variables
+                  WHERE tbldb_variables.db_var_name::text = 'DB_Name'::text))) ma_a ON fpsyeartotals.parentproject::text = ma_a.project::text;"
+"fps","vfthours"," SELECT 1.0 * (( SELECT tblsettings.setting::numeric AS setting
+           FROM fps.tblsettings
+          WHERE tblsettings.id::text = 'HoursInDay'::text)) AS fthoursperday,
+    5.0 * (( SELECT tblsettings_1.setting::numeric AS setting
+           FROM fps.tblsettings tblsettings_1
+          WHERE tblsettings_1.id::text = 'HoursInDay'::text)) AS fthoursperweek,
+    ( SELECT sum(tlkpmonthhours.cvlhours) AS fthourspaid
+           FROM fps.tlkpmonthhours
+          WHERE NOT tlkpmonthhours.year::text = (( SELECT ""right""(tbldb_variables.db_var_value::text, 4) AS expr1
+                   FROM fps.tbldb_variables
+                  WHERE tbldb_variables.db_var_name::text = 'DB_Name'::text)) OR NOT tlkpmonthhours.month < 4) AS fthourspaidperyear;"
+"fps","view3"," SELECT timecostcalcs.project,
+    timecostcalcs.jobcode,
+    timecostcalcs.fpsyear,
+    sum(timecostcalcs.cost) AS sumofcost,
+        CASE workgroup.profitcentre
+            WHEN 'Path'::text THEN 'Surveillance/Pathology'::text
+            WHEN 'vetr'::text THEN 'Surveillance/Pathology'::text
+            ELSE 'Laboratory Testing'::text
+        END AS resourcecentre
+   FROM fps.timecostcalcs
+     JOIN fps.workgroup ON timecostcalcs.workgroup::text = workgroup.workgroup::text AND timecostcalcs.fpsyear = workgroup.fpsyear
+  GROUP BY workgroup.profitcentre, timecostcalcs.project, timecostcalcs.jobcode, timecostcalcs.fpsyear, (
+        CASE workgroup.profitcentre
+            WHEN 'Path'::text THEN 'Surveillance/Pathology'::text
+            WHEN 'vetr'::text THEN 'Surveillance/Pathology'::text
+            ELSE 'Laboratory Testing'::text
+        END)
+ HAVING timecostcalcs.project::text = 'TG0100'::text AND max(timecostcalcs.month) <= (( SELECT max(tblperiod.endperiod) AS endperiod
+           FROM fps.tblperiod
+          WHERE tblperiod.finalsummariesrun = '-1'::integer));"
+"fps","vmilestone"," SELECT m.project,
+    m.milestoneref,
+    m.objectiveref,
+    m.milsetonetitle,
+    m.plandate,
+    m.actualdate,
+    m.comment,
+    m.monthnofin,
+    m.year,
+    m.fpsyear,
+    p.user_id,
+    p.dt2username,
+    p.useremail
+   FROM fps.milestone m
+     JOIN fps.vtlkpproject p ON m.project::text = p.parentproject::text AND p.fpsyear = m.fpsyear;"
+"fps","vpactprofitcentregrade"," SELECT pcgrade AS pc_grade,
+    divisiongrade,
+    gradecode,
+    profitcentre,
+    chargerate,
+    directrate,
+    payrate,
+    npr,
+    ohr,
+    hrsavailable,
+    fpsyear
+   FROM fps.profitcentregrade;"
+"fps","vpactprogram"," SELECT programno,
+    programname,
+    directorate,
+    minim,
+    sector_name,
+    customer,
+    manager AS leader,
+    fpsyear
+   FROM fps.tlkpprogram;"
+"fps","vpactproject"," SELECT parentproject,
+    projecttitle,
+    program,
+    customer,
+    transferincome,
+    budget_cvl,
+    pvsincome,
+    custincome AS budget_ext,
+    feccost AS forecastcost,
+    wip_eoy,
+    wip_limit,
+    wip_current,
+    manager,
+    projectstatus,
+    projectparent,
+    contract,
+    disease,
+    finished,
+    comments,
+    isdefraproject,
+    costcentre,
+    oracleprojectcode,
+    subaccountcode,
+    projectgroup,
+    fpsyear
+   FROM fps.tlkpproject;"
+"fps","vpacttblkpprofitcentre"," SELECT profitcentre,
+    profitcentrename,
+    division,
+    conttarget,
+    profitcentrehead,
+    divisionid,
+    email_recipient,
+    pactcoordinatoremailname,
+    timesheet,
+    outputsheet,
+    timesheetlayout
+   FROM fps.tblkpprofitcentre;"
+"fps","vpacttblstaff"," SELECT tblwgemployee.pactid,
+    tblemployee.spnumber,
+    (COALESCE(tblemployee.lastname, ''::character varying)::text || ', '::text) || COALESCE(tblemployee.firstname, ''::character varying)::text AS name,
+    tblwgemployee.workgroupgrade,
+    tblemployee.title,
+    tblwgemployee.personstatus,
+    tblwgemployee.personclass,
+    tblwgemployee.hrspaid,
+    tblwgemployee.leave,
+    tblwgemployee.sickspecial,
+    tblwgemployee.hrsavail,
+    tblwgemployee.fpsyear
+   FROM fps.tblemployee
+     JOIN fps.tblwgemployee ON tblemployee.spnumber::text = tblwgemployee.spnumber::text;"
+"fps","vpacttestorproduct"," SELECT itemcode,
+    itemdescription,
+    shortdescription,
+    testmanager,
+    owner,
+    jobstatus,
+    unitpricevla AS unitpricevlagen,
+    priceahvg AS priceahvgx,
+    defraunitprice,
+    fpsyear
+   FROM fps.testorproduct;"
+"fps","vpacttlkptestcapability"," SELECT testcode,
+    workgroup,
+    planportfolio,
+    smscode,
+    testcode::text || workgroup::text AS wgtestcode,
+    fpsyear
+   FROM fps.tlkptestcapability;"
+"fps","vpactworkgroupgrade"," SELECT wggrade AS wg_grade,
+    profitcentregrade,
+    gradecode,
+    workgroup,
+    chargeratewg AS chargerate_wg,
+    directratewg AS directrate_wg,
+    payratewg AS payrate_wg,
+    nprwg AS npr_wg,
+    ohrwg AS ohr_wg,
+    avsalary,
+    hrschangedby,
+    fpsyear
+   FROM fps.workgroupgrade;"
+"fps","vplancatwggrade"," SELECT pcwg.plancategory,
+    pcwg.wggrade,
+    pcwg.hours,
+    pcwg.createdby,
+    pcwg.selleragrees,
+    pcwg.buyeragrees,
+    pcwg.fpsyear,
+    wgg.user_id,
+    wgg.dt2username,
+    wgg.useremail
+   FROM fps.plancatwggrade pcwg
+     JOIN fps.vworkgroupgrade wgg ON wgg.wggrade::text = pcwg.wggrade::text AND wgg.fpsyear = pcwg.fpsyear;"
+"fps","vplancatwggrade_general"," SELECT plancategory,
+    wggrade,
+    fpsyear
+   FROM fps.plancatwggrade;"
+"fps","vplancrosstab"," SELECT jobcode,
+    testcode,
+    fpsyear,
+    sum(labt) AS labt,
+    sum(vetr) AS vetr,
+    sum(viro) AS viro
+   FROM fps.qrytestspccostplan_crosstab
+  GROUP BY jobcode, testcode, fpsyear;"
+"fps","vplannedstaffcostspar1"," SELECT vprojectstaffplan.parentproject,
+    vprojectstaffplan.programno,
+    vprojectstaffplan.fpsyear,
+    sum(vprojectstaffplan.plannedhours) AS sumofplannedhours,
+    sum(vprojectstaffplan.cost) AS sumofcost
+   FROM fps.vprojectstaffplan
+     JOIN fps.tlkpproject ON vprojectstaffplan.parentproject::text = tlkpproject.parentproject::text AND vprojectstaffplan.fpsyear = tlkpproject.fpsyear
+  GROUP BY vprojectstaffplan.parentproject, vprojectstaffplan.programno, vprojectstaffplan.fpsyear;"
+"fps","vplannedstaffcostssummary"," SELECT workgroup.profitcentre,
+    vprojectstaffplan.parentproject,
+    vprojectstaffplan.fpsyear,
+    sum(vprojectstaffplan.cost) AS sumofcost,
+    sum(vprojectstaffplan.plannedhours) AS sumofplannedhours
+   FROM fps.vprojectstaffplan
+     JOIN fps.workgroup ON vprojectstaffplan.workgroup::text = workgroup.workgroup::text AND vprojectstaffplan.fpsyear = workgroup.fpsyear
+  GROUP BY workgroup.profitcentre, vprojectstaffplan.parentproject, vprojectstaffplan.fpsyear;"
+"fps","vplantestcosts"," SELECT buyer,
+    fpsyear,
+    sum(unitprice * norequired) AS testplancost
+   FROM fps.tlkptestreqmt
+  GROUP BY buyer, fpsyear;"
+"fps","vpostmort1"," SELECT tlkptestcapability.planportfolio,
+    monthlyoutput.testcode,
+    testorproduct.shortdescription AS itemdescription,
+    sum(monthlyoutput.volume) AS totvol,
+    qrytestspcostplan_xtab.labt::numeric AS ltunitcharge,
+    qrytestspcostplan_xtab.vetr::numeric AS sdunitcharge,
+    qrytestspcostplan_xtab.labt::numeric::double precision * sum(monthlyoutput.volume) AS ltfee,
+    qrytestspcostplan_xtab.vetr::numeric::double precision * sum(monthlyoutput.volume) AS sdfee,
+    sum(monthlyoutput.volume) + qrytestspcostplan_xtab.vetr::numeric::double precision * sum(monthlyoutput.volume) AS totalfee,
+    sum(vtbltestrequ.testprice::numeric::double precision * monthlyoutput.volume) AS feecharged,
+    sum(vtbltestrequ.testprice::numeric::double precision * monthlyoutput.volume) - sum(monthlyoutput.volume) + qrytestspcostplan_xtab.vetr::numeric::double precision * sum(monthlyoutput.volume) AS profit_loss,
+    monthlyoutput.workgroup
+   FROM fps.vtbltestrequ
+     JOIN (fps.tlkptestcapability
+     JOIN fps.monthlyoutput ON tlkptestcapability.workgroup::text = monthlyoutput.workgroup::text AND tlkptestcapability.testcode::text = monthlyoutput.testcode::text) ON vtbltestrequ.testcode::text = monthlyoutput.testcode::text AND vtbltestrequ.jobcode::text = monthlyoutput.buyer::text
+     JOIN fps.testorproduct ON monthlyoutput.testcode::text = testorproduct.itemcode::text
+     LEFT JOIN fps.qrytestspcostplan_xtab ON testorproduct.itemcode::text = qrytestspcostplan_xtab.testcode::text
+  WHERE monthlyoutput.month <= (( SELECT max(tblperiod.endperiod) AS endperiod
+           FROM fps.tblperiod
+          WHERE tblperiod.finalsummariesrun = '-1'::integer))
+  GROUP BY tlkptestcapability.planportfolio, monthlyoutput.testcode, testorproduct.shortdescription, qrytestspcostplan_xtab.labt, qrytestspcostplan_xtab.vetr, monthlyoutput.workgroup
+ HAVING tlkptestcapability.planportfolio::text ~~* 'tg0100'::text;"
+"fps","vpostmort_vrd_split"," SELECT ""right""(monthlyoutput.workgroup::text, 2) AS location,
+    monthlyoutput.month,
+    (
+        CASE qrytestspccostplan_xtab.vetr
+            WHEN 0 THEN 0
+            WHEN NULL::numeric THEN 0
+            ELSE 1
+        END::numeric * qrytestspccostplan_xtab.labt)::double precision * sum(monthlyoutput.volume) AS ltsplitfee,
+        CASE qrytestspccostplan_xtab.vetr
+            WHEN 0 THEN 0
+            WHEN NULL::numeric THEN 0
+            ELSE 1
+        END AS ispartofltfee,
+    monthlyoutput.testcode,
+    monthlyoutput.fpsyear,
+    sum(monthlyoutput.volume) AS totvol,
+    qrytestspccostplan_xtab.labt AS ltunitcharge,
+    qrytestspccostplan_xtab.vetr AS sdunitcharge,
+    qrytestspccostplan_xtab.labt::double precision * sum(monthlyoutput.volume) AS ltfee,
+    qrytestspccostplan_xtab.vetr::double precision * sum(monthlyoutput.volume) AS sdfee,
+    qrytestspccostplan_xtab.labt::double precision * sum(monthlyoutput.volume) + qrytestspccostplan_xtab.vetr::double precision * sum(monthlyoutput.volume) AS totalfee,
+    tlkptestreqmt.unitprice::numeric::double precision * sum(monthlyoutput.volume) - (qrytestspccostplan_xtab.labt::double precision * sum(monthlyoutput.volume) + qrytestspccostplan_xtab.vetr::double precision * sum(monthlyoutput.volume)) AS ""profit/loss"",
+    tlkptestreqmt.unitprice::numeric AS unitprice
+   FROM fps.monthlyoutput
+     JOIN fps.tlkptestcapability ON monthlyoutput.testcode::text = tlkptestcapability.testcode::text AND monthlyoutput.workgroup::text = tlkptestcapability.workgroup::text AND monthlyoutput.fpsyear = tlkptestcapability.fpsyear
+     JOIN fps.qrytestspccostplan_xtab ON monthlyoutput.testcode::text = qrytestspccostplan_xtab.testcode::text AND monthlyoutput.fpsyear = qrytestspccostplan_xtab.fpsyear
+     JOIN fps.tlkptestreqmt ON monthlyoutput.testcode::text = tlkptestreqmt.testcode::text AND monthlyoutput.buyer::text = tlkptestreqmt.buyer::text AND monthlyoutput.fpsyear = tlkptestreqmt.fpsyear
+  GROUP BY qrytestspccostplan_xtab.labt, qrytestspccostplan_xtab.vetr, monthlyoutput.workgroup, monthlyoutput.month, monthlyoutput.testcode, tlkptestcapability.planportfolio, (tlkptestreqmt.unitprice::numeric), monthlyoutput.fpsyear
+ HAVING (lower(tlkptestcapability.planportfolio::text) = ANY (ARRAY['tg0100'::text, 'pmport1'::text])) AND monthlyoutput.month <= (( SELECT max(tblperiod.endperiod) AS month
+           FROM fps.tblperiod
+          WHERE tblperiod.finalsummariesrun = '-1'::integer))
+  ORDER BY (""right""(monthlyoutput.workgroup::text, 2)), monthlyoutput.month, monthlyoutput.testcode;"
+"fps","vpostmortem1report_obsolete"," SELECT testcode,
+    itemdescription,
+    totvol,
+    ltunitcharge,
+    sdunitcharge,
+    round(ltfee::numeric)::integer AS ltfee,
+    round(sdfee::numeric)::integer AS sdfee,
+    round(ltfee::numeric)::integer + round(sdfee::numeric)::integer AS total_fee,
+    round(feecharged::numeric)::integer AS fee_charged,
+    round((feecharged - ltfee - sdfee)::numeric)::integer AS profit_loss,
+    workgroup
+   FROM fps.vpostmort1;"
+"fps","vprofitcentregrade"," SELECT DISTINCT pcg.pcgrade,
+    pcg.divisiongrade,
+    pcg.gradecode,
+    pcg.profitcentre,
+    pcg.chargerate,
+    pcg.directrate,
+    pcg.payrate,
+    pcg.npr,
+    pcg.ohr,
+    pcg.hrsavailable,
+    pcg.oldchargerate,
+    pcg.defrachargerate,
+    pcg.fpsyear,
+    vpc.user_id,
+    vpc.dt2username,
+    vpc.useremail
+   FROM fps.profitcentregrade pcg
+     JOIN fps.vtblkpprofitcentre vpc ON pcg.profitcentre::text = vpc.profitcentre::text;"
+"fps","vprofitcentregrade_general"," SELECT pcgrade,
+    divisiongrade,
+    gradecode,
+    profitcentre,
+    chargerate,
+    defrachargerate,
+    fpsyear
+   FROM fps.profitcentregrade;"
+"fps","vprogramcosts"," SELECT tlkpprogram.programno,
+    tlkpproject.fpsyear,
+    sum(projectmonthfinal.totalcost::numeric) AS programcost
+   FROM fps.tlkpprogram
+     JOIN fps.tlkpproject ON tlkpprogram.programno::text = tlkpproject.program::text AND tlkpprogram.fpsyear = tlkpproject.fpsyear
+     JOIN fps.projectmonthfinal ON tlkpproject.parentproject::text = projectmonthfinal.project::text AND tlkpproject.fpsyear = projectmonthfinal.fpsyear
+  GROUP BY tlkpprogram.programno, tlkpproject.fpsyear;"
+"fps","vprojectanimalplan"," SELECT tlkpproject.parentproject,
+    tlkpproject.program,
+    tblanimalreq.animaltype,
+    tblanimalreq.numberofdays,
+    tblanimalreq.numberofanimals,
+        CASE tlkpproject.isdefraproject
+            WHEN 0 THEN tblanimals.dailyrate
+            ELSE tblanimals.defradailyrate
+        END AS dailyrate,
+    tblanimalreq.numberofanimals * tblanimalreq.numberofdays *
+        CASE tlkpproject.isdefraproject
+            WHEN 0 THEN tblanimals.dailyrate
+            ELSE tblanimals.defradailyrate
+        END AS cost,
+    tblanimals.species,
+    tblanimals.security_level,
+    tblanimalreq.indcounter,
+    tblanimalreq.fpsyear
+   FROM fps.tlkpproject
+     JOIN fps.tblanimalreq ON tlkpproject.parentproject::text = tblanimalreq.jobcode::text AND tlkpproject.fpsyear = tblanimalreq.fpsyear
+     JOIN fps.tblanimals ON tblanimalreq.animaltype::text = tblanimals.animaltype::text AND tblanimalreq.fpsyear = tblanimals.fpsyear;"
+"fps","vprojectmonth"," SELECT pm.project,
+    pm.monthno,
+    pm.costprofile,
+    pm.fpsyear,
+    p.user_id,
+    p.dt2username,
+    p.useremail
+   FROM fps.projectmonth pm
+     JOIN fps.vtlkpproject p ON pm.project::text = p.parentproject::text AND p.fpsyear = pm.fpsyear;"
+"fps","vprojectmonthfinal"," SELECT pmf.project,
+    pmf.monthno,
+    pmf.periodname,
+    pmf.cumflag,
+    pmf.costprofile,
+    pmf.subcontracts,
+    pmf.animals,
+    pmf.nonanimals,
+    pmf.timecosts,
+    pmf.transfercosts,
+    pmf.totalcost,
+    pmf.invoices,
+    pmf.coiw,
+    pmf.portsales,
+    pmf.cumcost,
+    pmf.cumprofile,
+    pmf.sumofcostprofile,
+    pmf.cuminvoices,
+    pmf.cumcoiw,
+    pmf.cumportsales,
+    pmf.mstonedue,
+    pmf.due__done,
+    pmf.ontime,
+    pmf.sumofmstonedue,
+    pmf.sumofdue__done,
+    pmf.sumofontime,
+    pmf.cwdebit,
+    pmf.cwcredit,
+    pmf.cumcwdebit,
+    pmf.cumcwcredit,
+    pmf.totalhours,
+    pmf.cumtotalhours,
+    pmf.cumsubcontracts,
+    pmf.x,
+    pmf.cumtestcosts,
+    pmf.paycosts,
+    pmf.cumpaycosts,
+    pmf.fpsyear,
+    p.user_id,
+    p.dt2username,
+    p.useremail
+   FROM fps.projectmonthfinal pmf
+     JOIN fps.vtlkpproject p ON p.parentproject::text = pmf.project::text AND p.fpsyear = pmf.fpsyear;"
+"fps","vprojectmonthfinal_paycosts"," SELECT projectmonthfinal.monthno,
+    projectmonthfinal.periodname,
+    projectmonthfinal.cumflag,
+    projectmonthfinal.costprofile,
+    projectmonthfinal.subcontracts,
+    projectmonthfinal.animals,
+    projectmonthfinal.nonanimals,
+    projectmonthfinal.timecosts::numeric AS timecosts,
+    projectmonthfinal.transfercosts,
+    projectmonthfinal.totalcost::numeric - projectmonthfinal.timecosts::numeric + projectmonthfinal.paycosts::numeric AS totalcost,
+    projectmonthfinal.invoices::numeric AS invoices,
+    projectmonthfinal.coiw,
+    projectmonthfinal.portsales,
+    (COALESCE(projectmonthfinal.cumcost::numeric, 0::numeric) + COALESCE(projectmonthfinal.cumpaycosts::numeric, 0::numeric))::double precision - COALESCE(sum(timecostcalcs.cost), 0::double precision) AS cumcost,
+    projectmonthfinal.cumprofile,
+    projectmonthfinal.sumofcostprofile,
+    projectmonthfinal.cuminvoices::numeric AS cuminvoices,
+    projectmonthfinal.cumcoiw,
+    projectmonthfinal.cumportsales,
+    projectmonthfinal.mstonedue,
+    projectmonthfinal.due__done,
+    projectmonthfinal.ontime,
+    projectmonthfinal.sumofmstonedue,
+    projectmonthfinal.sumofdue__done,
+    projectmonthfinal.sumofontime,
+    projectmonthfinal.cwdebit,
+    projectmonthfinal.cwcredit,
+    projectmonthfinal.cumcwdebit,
+    projectmonthfinal.cumcwcredit,
+    projectmonthfinal.totalhours,
+    projectmonthfinal.cumtotalhours,
+    projectmonthfinal.cumsubcontracts::numeric AS cumsubcontracts,
+    projectmonthfinal.cumtestcosts::numeric AS cumtestcosts,
+    projectmonthfinal.project,
+    projectmonthfinal.paycosts::numeric AS payratecosts,
+    projectmonthfinal.fpsyear
+   FROM fps.projectmonthfinal
+     LEFT JOIN fps.timecostcalcs ON projectmonthfinal.project::text = timecostcalcs.project::text AND projectmonthfinal.monthno = timecostcalcs.month AND projectmonthfinal.fpsyear = timecostcalcs.fpsyear
+  GROUP BY projectmonthfinal.monthno, projectmonthfinal.periodname, projectmonthfinal.cumflag, projectmonthfinal.costprofile, projectmonthfinal.subcontracts, projectmonthfinal.animals, projectmonthfinal.nonanimals, (projectmonthfinal.timecosts::numeric), projectmonthfinal.transfercosts, (projectmonthfinal.totalcost::numeric), (projectmonthfinal.invoices::numeric), projectmonthfinal.coiw, projectmonthfinal.portsales, projectmonthfinal.cumprofile, projectmonthfinal.sumofcostprofile, (projectmonthfinal.cuminvoices::numeric), projectmonthfinal.cumcoiw, projectmonthfinal.cumportsales, projectmonthfinal.mstonedue, projectmonthfinal.due__done, projectmonthfinal.ontime, projectmonthfinal.sumofmstonedue, projectmonthfinal.sumofdue__done, projectmonthfinal.sumofontime, projectmonthfinal.cwdebit, projectmonthfinal.cwcredit, projectmonthfinal.cumcwdebit, projectmonthfinal.cumcwcredit, projectmonthfinal.totalhours, projectmonthfinal.cumtotalhours, (projectmonthfinal.cumsubcontracts::numeric), (projectmonthfinal.cumtestcosts::numeric), projectmonthfinal.project, (projectmonthfinal.totalcost::numeric - projectmonthfinal.timecosts::numeric + projectmonthfinal.paycosts::numeric), (projectmonthfinal.cumcost::numeric), (projectmonthfinal.cumpaycosts::numeric), (projectmonthfinal.paycosts::numeric), projectmonthfinal.fpsyear;"
+"fps","vprojectstaff"," SELECT DISTINCT tblstaffjob.jobcode AS project,
+    tblstaffjob.staffid,
+    tblstaffjob.fpsyear
+   FROM fps.tblstaffjob
+UNION
+ SELECT DISTINCT monthlytime.parentproject AS project,
+    monthlytime.pactstaffid AS staffid,
+    monthlytime.fpsyear
+   FROM fps.monthlytime;"
+"fps","vprojectstaffcount"," SELECT jobcode,
+    fpsyear,
+    count(staffid) AS countofstaff
+   FROM fps.tblstaffjob
+  GROUP BY jobcode, fpsyear;"
+"fps","vprojectstaffplan"," SELECT tlkpproject.parentproject,
+    tlkpprogram.programno,
+    tlkpproject.contract,
+    (COALESCE(tblemployee.lastname, ''::character varying)::text || ', '::text) || COALESCE(tblemployee.firstname, ''::character varying)::text AS name,
+    tblstaffjob.staffid,
+    tblstaffjob.plannedhours,
+        CASE tlkpproject.isdefraproject
+            WHEN 0 THEN profitcentregrade.chargerate
+            ELSE profitcentregrade.defrachargerate
+        END AS chargerate,
+    tblstaffjob.plannedhours *
+        CASE tlkpprogram.sector_name
+            WHEN 'charge'::text THEN 1::numeric
+            ELSE 0::numeric
+        END::double precision *
+        CASE tlkpproject.isdefraproject
+            WHEN 0 THEN profitcentregrade.chargerate
+            ELSE profitcentregrade.defrachargerate
+        END AS cost,
+    tblstaffjob.plannedhours *
+        CASE tlkpprogram.sector_name
+            WHEN 'charge'::text THEN 1::numeric
+            ELSE 0::numeric
+        END::double precision * profitcentregrade.payrate AS paycost,
+    profitcentregrade.profitcentre,
+    workgroupgrade.workgroup,
+    workgroupgrade.wggrade,
+    profitcentregrade.pcgrade,
+    workgroupgrade.gradecode,
+    tblwgemployee.fpsyear
+   FROM fps.tblwgemployee
+     JOIN fps.tblstaffjob ON tblwgemployee.pactid::text = tblstaffjob.staffid::text AND tblwgemployee.fpsyear = tblstaffjob.fpsyear
+     JOIN fps.tblemployee ON tblwgemployee.spnumber::text = tblemployee.spnumber::text
+     JOIN fps.workgroupgrade ON tblwgemployee.workgroupgrade::text = workgroupgrade.wggrade::text AND tblwgemployee.fpsyear = workgroupgrade.fpsyear
+     JOIN fps.profitcentregrade ON workgroupgrade.profitcentregrade::text = profitcentregrade.pcgrade::text AND workgroupgrade.fpsyear = profitcentregrade.fpsyear
+     JOIN fps.tlkpproject ON tblstaffjob.jobcode::text = tlkpproject.parentproject::text AND tblstaffjob.fpsyear = tlkpproject.fpsyear
+     JOIN fps.tlkpprogram ON tlkpproject.program::text = tlkpprogram.programno::text AND tlkpproject.fpsyear = tlkpprogram.fpsyear;"
+"fps","vqrybid"," SELECT DISTINCT tblkpaccountcategory.accshortname,
+    tblbid.workgroup,
+    tblbid.genbid,
+    workgroup.profitcentre,
+    tblbid.fpsyear
+   FROM fps.tblkpaccountcategory
+     LEFT JOIN fps.tblbid ON tblkpaccountcategory.accshortname::text = tblbid.account::text
+     LEFT JOIN fps.workgroup ON tblbid.workgroup::text = workgroup.workgroup::text AND tblbid.fpsyear = workgroup.fpsyear
+  GROUP BY tblkpaccountcategory.accshortname, tblbid.workgroup, tblbid.genbid, workgroup.profitcentre, tblbid.fpsyear;"
+"fps","vqryfrmtimesellerpc"," SELECT pc.conttarget,
+    pcg.profitcentre AS sellingpc,
+    pcg.chargerate,
+    pcg.ohr,
+    bsum.sumofgenbid,
+    wgg.workgroup,
+    wgg.profitcentregrade,
+    wgg.wggrade,
+    ah.sumofplannedhours AS apphours,
+    sum(sjh.plannedhours) AS hrs,
+    sum(we.hrsavail) AS avhrs,
+    sum(sjh.plannedhours) * pcg.chargerate AS fec,
+    ah.sumofplannedhours * pcg.chargerate AS appfec,
+    pcg.ohr * sum(sjh.plannedhours) AS contribution,
+    we.fpsyear,
+    u.user_id,
+    u.dt2username,
+    u.useremail
+   FROM fps.tblkpprofitcentre pc
+     JOIN fps.tbluser_profitcentre upc ON pc.profitcentre::text = upc.profitcentre::text
+     JOIN fps.tblusers u ON upc.user_id = u.user_id
+     JOIN fps.profitcentregrade pcg ON pc.profitcentre::text = pcg.profitcentre::text
+     LEFT JOIN fps.vqrytbidsum bsum ON pcg.profitcentre::text = bsum.profitcentre::text AND pcg.fpsyear = bsum.fpsyear AND u.user_id = bsum.user_id
+     JOIN fps.workgroupgrade wgg ON pcg.pcgrade::text = wgg.profitcentregrade::text AND pcg.fpsyear = wgg.fpsyear
+     JOIN fps.tblwgemployee we ON wgg.wggrade::text = we.workgroupgrade::text AND wgg.fpsyear = we.fpsyear
+     LEFT JOIN fps.vapphours ah ON wgg.wggrade::text = ah.workgroupgrade::text AND wgg.fpsyear = ah.fpsyear
+     LEFT JOIN fps.vstaffjobhours sjh ON we.pactid::text = sjh.staffid::text AND we.fpsyear = sjh.fpsyear
+  GROUP BY pc.conttarget, pcg.profitcentre, pcg.chargerate, pcg.ohr, bsum.sumofgenbid, wgg.workgroup, wgg.profitcentregrade, wgg.wggrade, ah.sumofplannedhours, we.fpsyear, u.user_id, u.dt2username, u.useremail;"
+"fps","vqrytbidsum"," SELECT pc.profitcentre,
+    b.fpsyear,
+    sum(b.genbid) AS sumofgenbid,
+    u.user_id,
+    u.dt2username,
+    u.useremail
+   FROM fps.tblkpprofitcentre pc
+     JOIN fps.workgroup w ON pc.profitcentre::text = w.profitcentre::text
+     JOIN fps.tblbid b ON w.workgroup::text = b.workgroup::text AND w.fpsyear = b.fpsyear
+     JOIN fps.tbluser_profitcentre upc ON pc.profitcentre::text = upc.profitcentre::text
+     JOIN fps.tblusers u ON upc.user_id = u.user_id
+  GROUP BY pc.profitcentre, b.fpsyear, u.user_id, u.dt2username, u.useremail;"
+"fps","vsnapshot_tbldb_variables"," SELECT db_var_name,
+    db_var_value
+   FROM fps.tbldb_variables;"
+"fps","vstaffjobhours"," SELECT tblstaffjob.staffid,
+    tblstaffjob.fpsyear,
+    sum(tblstaffjob.plannedhours) AS plannedhours
+   FROM fps.tblstaffjob
+     JOIN fps.tlkpproject ON tblstaffjob.jobcode::text = tlkpproject.parentproject::text AND tblstaffjob.fpsyear = tlkpproject.fpsyear
+     JOIN fps.tlkpprogram ON tlkpproject.program::text = tlkpprogram.programno::text AND tlkpproject.fpsyear = tlkpprogram.fpsyear
+  WHERE tlkpproject.program::text <> 'zt_prog'::text AND tlkpprogram.sector_name::text = 'Charge'::text
+  GROUP BY tblstaffjob.staffid, tblstaffjob.fpsyear;"
+"fps","vstaffutilisation"," SELECT vstaffutilisation_time.workgroup,
+    tlkpmonthhours.month,
+    tlkpmonthhours.cvlhours AS fthourspermonth,
+    vstaffutilisation_time.fthoursperweek,
+    vstaffutilisation_time.name,
+    vstaffutilisation_time.staffid,
+    vstaffutilisation_time.gradecode,
+    vstaffutilisation_time.timerecorder,
+    vstaffutilisation_time.fpsyear,
+    (vstaffutilisation_time.hoursperweek *
+        CASE
+            WHEN COALESCE(vstaffutilisation_time.startdate::date, '2000-01-01'::date) <= make_date(tlkpmonthhours.year::integer, tlkpmonthhours.month::integer, 1) AND COALESCE(vstaffutilisation_time.enddate::date, '2200-01-01'::date) >= (make_date(tlkpmonthhours.year::integer, tlkpmonthhours.month::integer, 1) + '1 mon'::interval - '1 day'::interval)::date THEN 1::numeric
+            WHEN COALESCE(vstaffutilisation_time.startdate::date, '2000-01-01'::date) > (make_date(tlkpmonthhours.year::integer, tlkpmonthhours.month::integer, 1) + '1 mon'::interval - '1 day'::interval)::date OR COALESCE(vstaffutilisation_time.enddate::date, '2200-01-01'::date) < make_date(tlkpmonthhours.year::integer, tlkpmonthhours.month::integer, 1) THEN 0::numeric
+            ELSE (LEAST(COALESCE(vstaffutilisation_time.enddate::date, '2200-01-01'::date), (make_date(tlkpmonthhours.year::integer, tlkpmonthhours.month::integer, 1) + '1 mon'::interval - '1 day'::interval)::date) - GREATEST(COALESCE(vstaffutilisation_time.startdate::date, '2000-01-01'::date), make_date(tlkpmonthhours.year::integer, tlkpmonthhours.month::integer, 1)))::numeric(9,7) / ((make_date(tlkpmonthhours.year::integer, tlkpmonthhours.month::integer, 1) + '1 mon'::interval - '1 day'::interval)::date - make_date(tlkpmonthhours.year::integer, tlkpmonthhours.month::integer, 1))::numeric(9,7)
+        END::double precision)::numeric(9,2) AS hoursperweek,
+    vstaffutilisation_time.hrspaid,
+    sum(
+        CASE vtimecostcalcs_allstaff.project
+            WHEN 'ZTLeave'::text THEN 0::double precision
+            WHEN 'ZTWork'::text THEN 0::double precision
+            ELSE vtimecostcalcs_allstaff.""time""
+        END) AS chargedhours,
+    sum(
+        CASE vtimecostcalcs_allstaff.project
+            WHEN 'ZTLeave'::text THEN vtimecostcalcs_allstaff.""time""
+            ELSE 0::numeric::double precision
+        END) AS ztleave,
+    sum(
+        CASE vtimecostcalcs_allstaff.project
+            WHEN 'ZTWork'::text THEN vtimecostcalcs_allstaff.""time""
+            ELSE 0::numeric::double precision
+        END) AS ztwork
+   FROM fps.tlkpmonthhours
+     LEFT JOIN fps.vtimecostcalcs_allstaff ON tlkpmonthhours.fmonth::double precision = vtimecostcalcs_allstaff.month AND tlkpmonthhours.fpsyear = vtimecostcalcs_allstaff.fpsyear
+     RIGHT JOIN fps.vstaffutilisation_time ON vtimecostcalcs_allstaff.staffid::text = vstaffutilisation_time.staffid::text AND vtimecostcalcs_allstaff.fpsyear = vstaffutilisation_time.fpsyear
+  GROUP BY vstaffutilisation_time.workgroup, tlkpmonthhours.month, tlkpmonthhours.cvlhours, vstaffutilisation_time.name, vstaffutilisation_time.gradecode, vstaffutilisation_time.hrspaid, vstaffutilisation_time.timerecorder, vstaffutilisation_time.fthoursperweek, vstaffutilisation_time.staffid, vstaffutilisation_time.fpsyear, ((vstaffutilisation_time.hoursperweek *
+        CASE
+            WHEN COALESCE(vstaffutilisation_time.startdate::date, '2000-01-01'::date) <= make_date(tlkpmonthhours.year::integer, tlkpmonthhours.month::integer, 1) AND COALESCE(vstaffutilisation_time.enddate::date, '2200-01-01'::date) >= (make_date(tlkpmonthhours.year::integer, tlkpmonthhours.month::integer, 1) + '1 mon'::interval - '1 day'::interval)::date THEN 1::numeric
+            WHEN COALESCE(vstaffutilisation_time.startdate::date, '2000-01-01'::date) > (make_date(tlkpmonthhours.year::integer, tlkpmonthhours.month::integer, 1) + '1 mon'::interval - '1 day'::interval)::date OR COALESCE(vstaffutilisation_time.enddate::date, '2200-01-01'::date) < make_date(tlkpmonthhours.year::integer, tlkpmonthhours.month::integer, 1) THEN 0::numeric
+            ELSE (LEAST(COALESCE(vstaffutilisation_time.enddate::date, '2200-01-01'::date), (make_date(tlkpmonthhours.year::integer, tlkpmonthhours.month::integer, 1) + '1 mon'::interval - '1 day'::interval)::date) - GREATEST(COALESCE(vstaffutilisation_time.startdate::date, '2000-01-01'::date), make_date(tlkpmonthhours.year::integer, tlkpmonthhours.month::integer, 1)))::numeric(9,7) / ((make_date(tlkpmonthhours.year::integer, tlkpmonthhours.month::integer, 1) + '1 mon'::interval - '1 day'::interval)::date - make_date(tlkpmonthhours.year::integer, tlkpmonthhours.month::integer, 1))::numeric(9,7)
+        END::double precision)::numeric(9,2));"
+"fps","vstaffutilisation_summary"," SELECT workgroup,
+    month,
+    fpsyear,
+    sum(chargedhours) AS sumchargedhours,
+    count(DISTINCT staffid) AS nostaff,
+    fthourspermonth,
+    sum(hoursperweek) AS actualweekhoursavailable,
+    fthoursperweek,
+    sum(ztleave) AS sumztleave
+   FROM fps.vstaffutilisation
+  GROUP BY workgroup, month, fpsyear, fthourspermonth, fthoursperweek;"
+"fps","vstaffutilisation_time"," SELECT tblwgemployee.pactid AS staffid,
+    (COALESCE(tblemployee.lastname, ''::character varying)::text || ', '::text) || COALESCE(tblemployee.firstname, ''::character varying)::text AS name,
+    workgroupgrade.workgroup,
+    workgroupgrade.gradecode,
+    tblwgemployee.workgroupgrade,
+    tblemployee.title,
+    tblwgemployee.personstatus,
+    tblwgemployee.personclass,
+    tblwgemployee.hrspaid,
+    tblwgemployee.timerecorder,
+    tblwgemployee.hoursperweek,
+    vfthours.fthoursperday,
+    vfthours.fthoursperweek,
+    tblwgemployee.startdate,
+    tblwgemployee.enddate,
+    tblwgemployee.fpsyear
+   FROM fps.tblwgemployee
+     JOIN fps.tblemployee ON tblwgemployee.spnumber::text = tblemployee.spnumber::text
+     JOIN fps.workgroupgrade ON tblwgemployee.workgroupgrade::text = workgroupgrade.wggrade::text
+     CROSS JOIN fps.vfthours
+  WHERE tblemployee.firstname::text <> 'General'::text;"
+"fps","vtbladditionalcosts"," SELECT ac.jobcode,
+    ac.account,
+    ac.description,
+    ac.itemcost,
+    ac.freq,
+    ac.supplier,
+    ac.fpsyear,
+    p.user_id,
+    p.dt2username,
+    p.useremail
+   FROM fps.tbladditionalcosts ac
+     JOIN fps.vtlkpproject p ON p.parentproject::text = ac.jobcode::text AND p.fpsyear = ac.fpsyear;"
+"fps","vtbladditionalcosts_bygroup"," SELECT ac.jobcode,
+    ac.account,
+    ac.description,
+    ac.itemcost,
+    ac.freq,
+    ac.supplier,
+    ac.fpsyear,
+    p.user_id,
+    p.dt2username,
+    p.useremail
+   FROM fps.tbladditionalcosts ac
+     JOIN fps.vtlkpproject_bygroup p ON p.parentproject::text = ac.jobcode::text AND p.fpsyear = ac.fpsyear;"
+"fps","vtbladditionalcosts_general"," SELECT jobcode,
+    account,
+    description,
+    itemcost,
+    freq,
+    supplier,
+    fpsyear
+   FROM fps.tbladditionalcosts;"
+"fps","vtblanimalreq"," SELECT ar.jobcode,
+    ar.animaltype,
+    ar.numberofdays,
+    ar.numberofanimals,
+    ar.indcounter,
+    ar.fpsyear,
+    p.user_id,
+    p.dt2username,
+    p.useremail
+   FROM fps.tblanimalreq ar
+     JOIN fps.vtlkpproject p ON p.parentproject::text = ar.jobcode::text AND p.fpsyear = ar.fpsyear;"
+"fps","vtblanimalreq_bygroup"," SELECT ar.jobcode,
+    ar.animaltype,
+    ar.numberofdays,
+    ar.numberofanimals,
+    ar.indcounter,
+    ar.fpsyear,
+    p.user_id,
+    p.dt2username,
+    p.useremail
+   FROM fps.tblanimalreq ar
+     JOIN fps.vtlkpproject_bygroup p ON p.parentproject::text = ar.jobcode::text AND p.fpsyear = ar.fpsyear;"
+"fps","vtblbid"," SELECT b.workgroup,
+    b.account,
+    b.genbid,
+    b.fpsyear,
+    wg.user_id,
+    wg.dt2username,
+    wg.useremail
+   FROM fps.tblbid b
+     JOIN fps.vworkgroup wg ON wg.workgroup::text = b.workgroup::text AND wg.fpsyear = b.fpsyear;"
+"fps","vtblcontract"," SELECT DISTINCT c.contractno,
+    c.category,
+    c.manager,
+    c.customer,
+    c.title,
+    c.registereddate,
+    c.startdate,
+    c.enddate,
+    c.contractdoc,
+    c.duration,
+    c.fpsyear,
+    u.user_id,
+    u.dt2username,
+    u.useremail
+   FROM fps.tblcontract c
+     JOIN fps.tbluser_category uc ON c.category::text = uc.category::text
+     JOIN fps.tblusers u ON uc.user_id = u.user_id;"
+"fps","vtblkpprofitcentre"," SELECT DISTINCT pc.profitcentre,
+    pc.profitcentrename,
+    pc.division,
+    pc.conttarget,
+    pc.profitcentrehead,
+    pc.divisionid,
+    pc.email_recipient,
+    pc.highlevelsummary,
+    u.user_id,
+    u.dt2username,
+    u.useremail
+   FROM fps.tblkpprofitcentre pc
+     JOIN fps.tbluser_profitcentre upc ON pc.profitcentre::text = upc.profitcentre::text
+     JOIN fps.tblusers u ON upc.user_id = u.user_id;"
+"fps","vtblkpprofitcentre_general"," SELECT profitcentre,
+    profitcentrename
+   FROM fps.tblkpprofitcentre;"
+"fps","vtblpurchase"," SELECT DISTINCT tp.workgroup,
+    tp.account,
+    tp.itemdescription,
+    tp.amount,
+    tp.fpsyear,
+    u.user_id,
+    u.dt2username,
+    u.useremail
+   FROM fps.tblpurchase tp
+     JOIN fps.tblbid b ON tp.workgroup::text = b.workgroup::text
+     JOIN fps.workgroup w ON b.workgroup::text = w.workgroup::text
+     JOIN fps.tblkpprofitcentre pc ON w.profitcentre::text = pc.profitcentre::text
+     JOIN fps.tbluser_profitcentre upc ON pc.profitcentre::text = upc.profitcentre::text
+     JOIN fps.tblusers u ON upc.user_id = u.user_id
+  WHERE (tp.account::text IN ( SELECT b2.account
+           FROM fps.tblbid b2
+             JOIN fps.workgroup w2 ON b2.workgroup::text = w2.workgroup::text
+             JOIN fps.tblkpprofitcentre pc2 ON w2.profitcentre::text = pc2.profitcentre::text
+             JOIN fps.tbluser_profitcentre upc2 ON pc2.profitcentre::text = upc2.profitcentre::text
+          WHERE upc2.user_id = u.user_id));"
+"fps","vtblstaff"," SELECT tblwgemployee.pactid AS staffid,
+    (COALESCE(tblemployee.lastname, ''::character varying)::text || ', '::text) || COALESCE(tblemployee.firstname, ''::character varying)::text AS name,
+    tblwgemployee.workgroupgrade,
+    tblemployee.title,
+    tblwgemployee.personstatus,
+    tblwgemployee.personclass,
+    tblwgemployee.hrspaid,
+    tblwgemployee.leave,
+    tblwgemployee.sickspecial,
+    tblwgemployee.hrsavail,
+    tblwgemployee.makeavailable,
+    tblwgemployee.fpsyear,
+    wgg.user_id,
+    wgg.dt2username,
+    wgg.useremail
+   FROM fps.tblwgemployee
+     JOIN fps.tblemployee ON tblemployee.spnumber::text = tblwgemployee.spnumber::text
+     JOIN fps.vworkgroupgrade wgg ON wgg.wggrade::text = tblwgemployee.workgroupgrade::text AND wgg.fpsyear = tblwgemployee.fpsyear;"
+"fps","vtblstaff_general"," SELECT tblwgemployee.pactid AS staffid,
+    (COALESCE(tblemployee.lastname, ''::character varying)::text || ', '::text) || COALESCE(tblemployee.firstname, ''::character varying)::text AS name,
+    tblwgemployee.workgroupgrade,
+    tblwgemployee.fpsyear
+   FROM fps.tblwgemployee,
+    fps.tblemployee
+  WHERE tblwgemployee.spnumber::text = tblemployee.spnumber::text;"
+"fps","vtblstaff_pick"," SELECT tblwgemployee.pactid AS staffid,
+    (COALESCE(tblemployee.lastname, ''::character varying)::text || ', '::text) || COALESCE(tblemployee.firstname, ''::character varying)::text AS name,
+    tblwgemployee.workgroupgrade,
+    tblwgemployee.fpsyear
+   FROM fps.tblwgemployee,
+    fps.tblemployee
+  WHERE tblwgemployee.spnumber::text = tblemployee.spnumber::text AND tblwgemployee.makeavailable = '-1'::integer;"
+"fps","vtblstaffactive"," SELECT tblwgemployee.pactid AS staffid,
+    (COALESCE(tblemployee.lastname, ''::character varying)::text || ', '::text) || COALESCE(tblemployee.firstname, ''::character varying)::text AS name,
+    tblwgemployee.workgroupgrade,
+    tblwgemployee.fpsyear
+   FROM fps.tblwgemployee,
+    fps.tblemployee
+  WHERE tblwgemployee.spnumber::text = tblemployee.spnumber::text AND tblwgemployee.personstatus::text = 'A'::text;"
+"fps","vtblstaffjob"," SELECT sj.staffid,
+    sj.jobcode,
+    sj.plannedhours,
+    sj.fpsyear,
+    p.user_id,
+    p.dt2username,
+    p.useremail
+   FROM fps.tblstaffjob sj
+     JOIN fps.vtlkpproject p ON p.parentproject::text = sj.jobcode::text AND p.fpsyear = sj.fpsyear;"
+"fps","vtblstaffjob_bygroup"," SELECT sj.staffid,
+    sj.jobcode,
+    sj.plannedhours,
+    sj.fpsyear,
+    p.user_id,
+    p.dt2username,
+    p.useremail
+   FROM fps.tblstaffjob sj
+     JOIN fps.vtlkpproject_bygroup p ON p.parentproject::text = sj.jobcode::text AND p.fpsyear = sj.fpsyear;"
+"fps","vtblstaffjob_rm"," SELECT staffid,
+    jobcode,
+    plannedhours
+   FROM fps.tblstaffjob
+  WHERE (staffid::text IN ( SELECT vtblwgemployee.pactid
+           FROM fps.vtblwgemployee));"
+"fps","vtbltestrequ"," SELECT DISTINCT tr.buyer AS jobcode,
+    tr.testcode,
+    tr.norequired AS notests,
+    tr.unitprice AS testprice,
+    tr.datecreated,
+    tr.projectbuyercode,
+    tr.fpsyear,
+    u.user_id,
+    u.dt2username,
+    u.useremail
+   FROM fps.tlkptestreqmt tr
+     JOIN fps.tlkpproject pj ON tr.buyer::text = pj.parentproject::text
+     JOIN fps.tlkpprogram pg ON pj.program::text = pg.programno::text
+     JOIN fps.tbluser_program up ON pg.programno::text = up.programno::text
+     JOIN fps.tblusers u ON up.user_id = u.user_id;"
+"fps","vtbltestrequ_bygroup"," SELECT DISTINCT tr.buyer AS jobcode,
+    tr.testcode,
+    tr.norequired AS notests,
+    tr.unitprice AS testprice,
+    tr.datecreated,
+    tr.projectbuyercode,
+    tr.fpsyear,
+    p.user_id,
+    p.dt2username,
+    p.useremail
+   FROM fps.tlkptestreqmt tr
+     JOIN fps.vtlkpproject_bygroup p ON tr.buyer::text = p.parentproject::text;"
+"fps","vtbltestrequ_tm"," SELECT buyer AS jobcode,
+    testcode,
+    norequired AS notests,
+    unitprice AS testprice,
+    fpsyear
+   FROM fps.tlkptestreqmt;"
+"fps","vtblwgemployee"," SELECT e.pactid,
+    e.spnumber,
+    e.workgroupgrade,
+    e.personstatus,
+    e.personclass,
+    e.hrspaid,
+    e.leave,
+    e.sickspecial,
+    e.hrsavail,
+    e.makeavailable,
+    e.timerecorder,
+    e.startdate,
+    e.enddate,
+    e.hoursperweek,
+    e.fpsyear,
+    wgg.user_id,
+    wgg.dt2username,
+    wgg.useremail
+   FROM fps.tblwgemployee e
+     JOIN fps.vworkgroupgrade wgg ON wgg.wggrade::text = e.workgroupgrade::text AND wgg.fpsyear = e.fpsyear;"
+"fps","vtblwgemployee_general"," SELECT pactid,
+    spnumber,
+    workgroupgrade,
+    fpsyear
+   FROM fps.tblwgemployee;"
+"fps","vtestorproduct_tm"," SELECT DISTINCT tp.itemcode,
+    tp.itemdescription,
+    tp.testmanager,
+    tp.jobstatus,
+    tp.unitpricevla,
+    tp.priceahvg,
+    tp.owner,
+    tp.chargemethod,
+    tp.shortdescription,
+    tp.defraunitprice,
+    tp.fpsyear,
+    u.user_id,
+    u.dt2username,
+    u.useremail
+   FROM fps.testorproduct tp
+     JOIN fps.tbluser_testowner uto ON tp.owner::text = uto.test_owner::text
+     JOIN fps.tblusers u ON uto.user_id = u.user_id;"
+"fps","vtestprojectmonthfinal"," SELECT monthno,
+    fpsyear,
+    sum(costprofile) AS costprofile,
+    sum(subcontracts) AS subcontracts,
+    sum(animals) AS animals,
+    sum(nonanimals) AS nonanimals,
+    sum(timecosts) AS timecosts,
+    sum(transfercosts) AS transfercosts,
+    sum(totalcost) AS totalcost,
+    sum(invoices) AS invoices,
+    sum(coiw) AS coiw,
+    sum(portsales) AS portsales,
+    sum(cumcost) AS cumcost,
+    sum(cumprofile) AS cumprofile,
+    sum(sumofcostprofile) AS sumofcostprofile,
+    sum(cuminvoices) AS cuminvoices,
+    sum(cumcoiw) AS cumcoiw,
+    sum(cumportsales) AS cumportsales,
+    sum(mstonedue) AS mstonedue,
+    sum(due__done) AS due__done,
+    sum(ontime) AS ontime,
+    sum(sumofmstonedue) AS sumofmstonedue,
+    sum(sumofdue__done) AS sumofdue__done,
+    sum(sumofontime) AS sumofontime
+   FROM fps.projectmonthfinal
+  GROUP BY monthno, fpsyear;"
+"fps","vtestssummary"," SELECT tlkpprogram.programno,
+    tlkpproject.parentproject,
+    tlkptestreqmt.testcode,
+    testorproduct.itemdescription,
+    tlkptestreqmt.fpsyear,
+    tlkptestreqmt.norequired * tlkptestreqmt.unitprice AS ""planned test cost"",
+    tlkptestreqmt.norequired AS ""planned test vol"",
+    sum(monthlyoutput.volume) AS ""brought test volume"",
+    sum(monthlyoutput.volume * tlkptestreqmt.unitprice) AS ""brought test cost""
+   FROM fps.tlkpprogram
+     JOIN fps.tlkpproject ON tlkpprogram.programno::text = tlkpproject.program::text AND tlkpprogram.fpsyear = tlkpproject.fpsyear
+     JOIN fps.tlkptestreqmt ON tlkpproject.parentproject::text = tlkptestreqmt.buyer::text AND tlkpproject.fpsyear = tlkptestreqmt.fpsyear
+     LEFT JOIN fps.monthlyoutput ON tlkptestreqmt.buyer::text = monthlyoutput.buyer::text AND tlkptestreqmt.testcode::text = monthlyoutput.testcode::text AND tlkptestreqmt.fpsyear = monthlyoutput.fpsyear
+     JOIN fps.testorproduct ON tlkptestreqmt.testcode::text = testorproduct.itemcode::text AND tlkptestreqmt.fpsyear = testorproduct.fpsyear
+  GROUP BY tlkpprogram.programno, tlkpproject.parentproject, tlkptestreqmt.testcode, testorproduct.itemdescription, tlkptestreqmt.fpsyear, (tlkptestreqmt.norequired * tlkptestreqmt.unitprice), tlkptestreqmt.norequired;"
+"fps","vtimecostcalcs"," SELECT tc.workgroup,
+    tc.jobcode,
+    tc.project,
+    tc.month,
+    tc.staffid,
+    tc.gradecode,
+    tc.name,
+    tc.chargerate,
+    tc.class,
+    tc.""time"",
+    tc.cost,
+    tc.division,
+    tc.jobcodeold,
+    tc.fpsyear,
+    p.user_id,
+    p.dt2username,
+    p.useremail
+   FROM fps.timecostcalcs tc
+     JOIN fps.vtlkpproject p ON tc.project::text = p.parentproject::text AND p.fpsyear = tc.fpsyear;"
+"fps","vtimecostcalcs_allstaff"," SELECT timecostcalcs.workgroup,
+    timecostcalcs.month,
+    timecostcalcs.staffid,
+    timecostcalcs.project,
+    timecostcalcs.gradecode,
+    timecostcalcs.name,
+    timecostcalcs.class,
+    timecostcalcs.""time"",
+    timecostcalcs.fpsyear
+   FROM fps.timecostcalcs
+UNION ALL
+ SELECT workgroupgrade.workgroup,
+    tblperiod.endperiod AS month,
+    vtblstaff_general.staffid,
+    ''::character varying AS project,
+    workgroupgrade.gradecode,
+    vtblstaff_general.name,
+    ''::character varying AS class,
+    0 AS ""time"",
+    vtblstaff_general.fpsyear
+   FROM fps.vtblstaff_general
+     JOIN fps.workgroupgrade ON vtblstaff_general.workgroupgrade::text = workgroupgrade.wggrade::text AND vtblstaff_general.fpsyear = workgroupgrade.fpsyear
+     CROSS JOIN fps.tblperiod
+  WHERE tblperiod.finalsummariesrun = '-1'::integer AND vtblstaff_general.name !~~ '%general'::text;"
+"fps","vtimerecordedrc"," SELECT timecostcalcs.project,
+    workgroup.profitcentre,
+    timecostcalcs.fpsyear
+   FROM fps.workgroup
+     JOIN fps.timecostcalcs ON workgroup.workgroup::text = timecostcalcs.workgroup::text AND workgroup.fpsyear = timecostcalcs.fpsyear
+  GROUP BY timecostcalcs.project, workgroup.profitcentre, timecostcalcs.fpsyear;"
+"fps","vtimerecordedrc_final"," SELECT vtimerecordedrc.project,
+    vtimerecordedrc.profitcentre,
+    vtimerecordedrc.fpsyear,
+    COALESCE(vplannedstaffcostssummary.sumofplannedhours, 0::double precision) AS sumofplannedhours,
+    COALESCE(vplannedstaffcostssummary.sumofcost::numeric, 0::numeric) AS sumofcost
+   FROM fps.vtimerecordedrc
+     LEFT JOIN fps.vplannedstaffcostssummary ON vtimerecordedrc.profitcentre::text = vplannedstaffcostssummary.profitcentre::text AND vtimerecordedrc.project::text = vplannedstaffcostssummary.parentproject::text AND vtimerecordedrc.fpsyear = vplannedstaffcostssummary.fpsyear
+  GROUP BY vtimerecordedrc.project, vtimerecordedrc.profitcentre, vtimerecordedrc.fpsyear, vplannedstaffcostssummary.sumofplannedhours, vplannedstaffcostssummary.sumofcost;"
+"fps","vtlkpprogram"," SELECT DISTINCT p.programno,
+    p.programname,
+    p.directorate,
+    p.minim,
+    p.sector_name,
+    p.customer,
+    p.target,
+    p.manager,
+    p.fpsyear,
+    u.user_id,
+    u.dt2username,
+    u.useremail
+   FROM fps.tlkpprogram p
+     JOIN fps.tbluser_program up ON p.programno::text = up.programno::text
+     JOIN fps.tblusers u ON up.user_id = u.user_id;"
+"fps","vtlkpproject"," SELECT p.parentproject,
+    p.projecttitle,
+    p.program,
+    p.customer,
+    p.manager,
+    p.transferincome,
+    p.custincome,
+    p.wip_eoy,
+    p.wip_limit,
+    p.wip_current,
+    p.projectstatus,
+    p.costbookno,
+    p.datecreated,
+    p.feccost,
+    p.profit,
+    p.budget_cvl,
+    p.datecosted,
+    p.disease,
+    p.contract,
+    p.projectparent,
+    p.shorttitle,
+    p.caseworksub,
+    p.pvsincome,
+    p.plancaseworkdebit,
+    p.finished,
+    p.owningrc,
+    p.comments,
+    p.carryover,
+    p.carryoverseed,
+    p.isdefraproject,
+    p.costcentre,
+    p.oracleprojectcode,
+    p.subaccountcode,
+    p.projectgroup,
+    p.incomeaccountcode,
+    p.fpsyear,
+    pr.user_id,
+    pr.dt2username,
+    pr.useremail
+   FROM fps.tlkpproject p
+     JOIN fps.vtlkpprogram pr ON pr.programno::text = p.program::text AND pr.fpsyear = p.fpsyear;"
+"fps","vtlkpproject_bygroup"," SELECT DISTINCT p.parentproject,
+    p.projecttitle,
+    p.program,
+    p.customer,
+    p.manager,
+    p.transferincome,
+    p.custincome,
+    p.wip_eoy,
+    p.wip_limit,
+    p.wip_current,
+    p.projectstatus,
+    p.costbookno,
+    p.datecreated,
+    p.feccost,
+    p.profit,
+    p.budget_cvl,
+    p.datecosted,
+    p.disease,
+    p.contract,
+    p.projectparent,
+    p.shorttitle,
+    p.caseworksub,
+    p.pvsincome,
+    p.plancaseworkdebit,
+    p.finished,
+    p.owningrc,
+    p.comments,
+    p.carryover,
+    p.carryoverseed,
+    p.isdefraproject,
+    p.costcentre,
+    p.oracleprojectcode,
+    p.subaccountcode,
+    p.projectgroup,
+    p.incomeaccountcode,
+    p.fpsyear,
+    vpg.user_id,
+    vpg.dt2username,
+    vpg.useremail
+   FROM fps.tlkpproject p
+     JOIN fps.vtlkpprojectgroup vpg ON p.projectgroup::text = vpg.projectgroup::text;"
+"fps","vtlkpproject_general"," SELECT parentproject,
+    projecttitle,
+    shorttitle,
+    program,
+    projectstatus,
+    customer,
+    manager,
+    disease,
+    contract,
+    datecreated,
+    isdefraproject,
+    projectgroup,
+    fpsyear
+   FROM fps.tlkpproject;"
+"fps","vtlkpprojectgroup"," SELECT DISTINCT pg.projectgroup,
+    u.user_id,
+    u.dt2username,
+    u.useremail
+   FROM fps.tlkpprojectgroup pg
+     JOIN fps.tbluser_projectgroup upg ON pg.projectgroup::text = upg.projectgroup::text
+     JOIN fps.tblusers u ON upg.user_id = u.user_id;"
+"fps","vtlkpprojectnozt"," SELECT parentproject,
+    projecttitle,
+    program,
+    customer,
+    manager,
+    transferincome,
+    custincome,
+    wip_eoy,
+    wip_limit,
+    wip_current,
+    projectstatus,
+    costbookno,
+    datecreated,
+    feccost,
+    profit,
+    budget_cvl,
+    datecosted,
+    disease,
+    contract,
+    projectparent,
+    shorttitle,
+    caseworksub,
+    pvsincome,
+    plancaseworkdebit,
+    finished,
+    owningrc,
+    comments,
+    carryover,
+    carryoverseed,
+    isdefraproject,
+    costcentre,
+    oracleprojectcode,
+    subaccountcode,
+    projectgroup,
+    incomeaccountcode,
+    fpsyear
+   FROM fps.tlkpproject
+  WHERE program::text !~~ 'ZT%'::text;"
+"fps","vvrd_split"," SELECT qvrd_splitlocationmonthly.location,
+    qvrd_splitlocationmonthly.fpsyear,
+    sum(qvrd_splitlocationmonthly.labltsplitfee / qvrd_splitmonthly.totalltsplitfee) AS split
+   FROM fps.qvrd_splitmonthly
+     JOIN fps.qvrd_splitlocationmonthly ON qvrd_splitmonthly.month = qvrd_splitlocationmonthly.month AND qvrd_splitmonthly.fpsyear = qvrd_splitlocationmonthly.fpsyear
+  GROUP BY qvrd_splitlocationmonthly.location, qvrd_splitlocationmonthly.fpsyear
+  ORDER BY qvrd_splitlocationmonthly.location;"
+"fps","vvrd_splitlocation"," SELECT qvrd_splitlocationmonthly.location,
+    qvrd_splitlocationmonthly.fpsyear,
+    sum(qvrd_splitlocationmonthly.labltsplitfee / qvrd_splitmonthly.totalltsplitfee) AS splitmultiplier
+   FROM fps.qvrd_splitlocationmonthly
+     JOIN fps.qvrd_splitmonthly ON qvrd_splitlocationmonthly.month = qvrd_splitmonthly.month AND qvrd_splitlocationmonthly.fpsyear = qvrd_splitmonthly.fpsyear
+  GROUP BY qvrd_splitlocationmonthly.location, qvrd_splitlocationmonthly.fpsyear;"
+"fps","vwgjobcodes"," SELECT DISTINCT tlkpproject.parentproject,
+    timecodevalid.timecode,
+    timecodevalid.workgroup,
+    tlkpproject.fpsyear,
+    ((tlkpproject.shorttitle::text || ': '::text) || tlkpjobcode.jobcodename::text) || testorproduct.itemdescription::text AS descript
+   FROM fps.tlkpproject
+     JOIN fps.timecodevalid ON tlkpproject.parentproject::text = timecodevalid.parentproject::text AND tlkpproject.fpsyear = timecodevalid.fpsyear
+     LEFT JOIN fps.tlkpjobcode ON timecodevalid.parentproject::text = tlkpjobcode.parentproject::text AND timecodevalid.jobcode::text = tlkpjobcode.jobcode::text AND timecodevalid.fpsyear = tlkpjobcode.fpsyear
+     LEFT JOIN fps.testorproduct ON timecodevalid.testcode::text = testorproduct.itemcode::text AND timecodevalid.fpsyear = testorproduct.fpsyear;"
+"fps","vwinvoicebymonth"," SELECT proj.fpsyear,
+    proj.program,
+    proj.parentproject,
+    sum(projinv.amount) AS monthlyamount,
+    projinv.month
+   FROM fps.tlkpproject proj
+     JOIN fps.proj_invoice projinv ON proj.parentproject::text = projinv.projectparent::text AND proj.fpsyear = projinv.fpsyear
+  GROUP BY proj.fpsyear, proj.program, proj.parentproject, projinv.month;"
+"fps","vworkgroup"," SELECT DISTINCT w.workgroup,
+    w.profitcentre,
+    w.costcentre,
+    w.owner,
+    w.description,
+    w.centraloverhead,
+    w.sendemail,
+    w.cos90,
+    w.costcentreold,
+    w.email_recipient,
+    w.fpsyear,
+    vpc.user_id,
+    vpc.dt2username,
+    vpc.useremail
+   FROM fps.workgroup w
+     JOIN fps.vtblkpprofitcentre vpc ON w.profitcentre::text = vpc.profitcentre::text;"
+"fps","vworkgroup_general"," SELECT workgroup,
+    profitcentre,
+    fpsyear
+   FROM fps.workgroup;"
+"fps","vworkgroupgrade"," SELECT wgg.wggrade,
+    wgg.profitcentregrade,
+    wgg.gradecode,
+    wgg.workgroup,
+    wgg.chargeratewg,
+    wgg.directratewg,
+    wgg.payratewg,
+    wgg.nprwg,
+    wgg.ohrwg,
+    wgg.avsalary,
+    wgg.hrschangedby,
+    wgg.fpsyear,
+    wg.user_id,
+    wg.dt2username,
+    wg.useremail
+   FROM fps.workgroupgrade wgg
+     JOIN fps.vworkgroup wg ON wg.workgroup::text = wgg.workgroup::text AND wg.fpsyear = wgg.fpsyear;"
+"fps","vworkgroupgrade_general"," SELECT wggrade,
+    profitcentregrade,
+    gradecode,
+    workgroup,
+    fpsyear
+   FROM fps.workgroupgrade;"
+"fps","vworkgroupratehours"," SELECT DISTINCT timecostcalcs_1.workgroup,
+    timecostcalcs.chargerate AS rate,
+    tblmtconversion.hours,
+    timecostcalcs.fpsyear
+   FROM fps.timecostcalcs
+     JOIN fps.timecodevalid ON timecostcalcs.workgroup::text = timecodevalid.workgroup::text AND timecostcalcs.fpsyear = timecodevalid.fpsyear
+     JOIN fps.timecostcalcs timecostcalcs_1 ON timecodevalid.parentproject::text = timecostcalcs_1.project::text AND timecodevalid.fpsyear = timecostcalcs_1.fpsyear
+     JOIN fps.tblmtconversion ON timecostcalcs_1.project::text = tblmtconversion.newproject::text
+  WHERE timecodevalid.parentproject::text = 'TG0100'::text AND timecostcalcs.staffid::text = '4464'::text;"
+"fps","vwsubcontractbymonth"," SELECT proj.fpsyear,
+    proj.program,
+    proj.parentproject,
+    sum(projsubcontract.amount) AS monthlyamount,
+    projsubcontract.month
+   FROM fps.tlkpproject proj
+     JOIN fps.proj_subcontract projsubcontract ON proj.parentproject::text = projsubcontract.project::text AND proj.fpsyear = projsubcontract.fpsyear
+  GROUP BY proj.fpsyear, proj.program, proj.parentproject, projsubcontract.month;"
+"fps","xxtestorproduct_tm"," SELECT DISTINCT tp.itemcode,
+    tp.itemdescription,
+    tp.testmanager,
+    tp.jobstatus,
+    tp.unitpricevla,
+    tp.priceahvg,
+    tp.owner,
+    tp.chargemethod,
+    tp.shortdescription,
+    tp.defraunitprice,
+    tp.fpsyear,
+    u.username,
+    u.user_id,
+    u.dt2username,
+    u.useremail
+   FROM fps.testorproduct tp
+     JOIN fps.tbluser_testowner uto ON tp.owner::text = uto.test_owner::text
+     JOIN fps.tblusers u ON uto.user_id = u.user_id;"
+"mabarchive","vasuprojectlist"," SELECT my_tlkpproject_all.year,
+    my_tlkpproject_all.parentproject,
+    my_tlkpproject_all.program,
+    g_tlkpproject.projecttitle,
+    my_tlkpproject_all.isdefraproject
+   FROM mabarchive.my_tlkpproject_all
+     LEFT JOIN mabarchive.g_tlkpproject ON my_tlkpproject_all.parentproject::text = g_tlkpproject.parentproject::text
+  WHERE (EXTRACT(month FROM CURRENT_DATE) = ANY (ARRAY[1::numeric, 2::numeric, 3::numeric])) AND my_tlkpproject_all.year::numeric >= (EXTRACT(year FROM CURRENT_DATE) - 1::numeric) OR (EXTRACT(month FROM CURRENT_DATE) = ANY (ARRAY[4::numeric, 5::numeric, 6::numeric, 7::numeric, 8::numeric, 9::numeric, 10::numeric, 11::numeric, 12::numeric])) AND my_tlkpproject_all.year::numeric >= EXTRACT(year FROM CURRENT_DATE);"
+"mabarchive","vcurrent_projectinfo"," SELECT my_tlkpproject.year,
+    my_tlkpproject.parentproject,
+    g_tlkpproject.projecttitle,
+    g_tlkpproject.costbookno,
+    g_tlkpproject.disease,
+    g_tlkpproject.contract,
+    g_tlkpproject.shorttitle,
+    g_tlkpproject.projectstatus,
+    my_tlkpproject.program,
+    my_tlkpproject.customer,
+    my_tlkpproject.manager,
+    my_tlkpproject.transferincome,
+    my_tlkpproject.custincome,
+    my_tlkpproject.wip_eoy,
+    my_tlkpproject.wip_limit,
+    my_tlkpproject.wip_current,
+    my_tlkpproject.datecreated,
+    my_tlkpproject.feccost,
+    my_tlkpproject.profit,
+    my_tlkpproject.budget_cvl,
+    my_tlkpproject.caseworksub,
+    my_tlkpproject.pvsincome,
+    my_tlkpproject.plancaseworkdebit,
+    my_tlkpproject.source,
+    my_tlkpprojectradtrackdata.bfbudget,
+    my_tlkpprojectradtrackdata.pybudget,
+    my_tlkpprojectradtrackdata.seedcorn,
+    my_tlkpprojectradtrackdata.manhours,
+    my_tlkpprojectradtrackdata.mandays,
+    my_tlkpprojectradtrackdata.manyears,
+    my_tlkpprojectradtrackdata.paycosts,
+    my_tlkpprojectradtrackdata.nonpayohcosts,
+    my_tlkpprojectradtrackdata.testcosts,
+    my_tlkpprojectradtrackdata.animalcosts,
+    my_tlkpprojectradtrackdata.nonanimalcosts,
+    my_tlkpprojectradtrackdata.manhourschanged,
+    my_tlkpprojectradtrackdata.paycostschanged,
+    my_tlkpprojectradtrackdata.nonpayohcostschanged,
+    my_tlkpprojectradtrackdata.testcostschanged,
+    my_tlkpprojectradtrackdata.animalcostschanged,
+    my_tlkpprojectradtrackdata.nonanimalcostschanged,
+    my_tlkpprojectradtrackdata.adjustment,
+    my_tlkpprojectradtrackdata.adjustmentcomment,
+    my_tlkpprojectradtrackdata.locked,
+    my_tlkpprojectradtrackdata.datecosted,
+    my_tlkpprojectradtrackdata.costedby,
+    my_tlkpprojectradtrackdata.actualexpenditure,
+    my_tlkpprojectradtrackdata.actualmanyears,
+    my_tlkpprojectradtrackdata.vla_budget,
+    vg_tlkpprojectincome.totalprojectvalue,
+    my_tlkpproject.projectgroup
+   FROM mabarchive.my_tlkpproject
+     JOIN mabarchive.vlatestmonthyear ON my_tlkpproject.year = vlatestmonthyear.year
+     JOIN mabarchive.g_tlkpproject ON my_tlkpproject.parentproject::text = g_tlkpproject.parentproject::text
+     JOIN mabarchive.vg_tlkpprojectincome ON g_tlkpproject.parentproject::text = vg_tlkpprojectincome.project::text
+     LEFT JOIN mabarchive.my_tlkpprojectradtrackdata ON my_tlkpproject.year = my_tlkpprojectradtrackdata.year AND my_tlkpproject.parentproject::text = my_tlkpprojectradtrackdata.project::text;"
+"mabarchive","vcurrent_tlkpprojectradtrackdata"," SELECT my_tlkpprojectradtrackdata.year,
+    my_tlkpprojectradtrackdata.project,
+    my_tlkpprojectradtrackdata.bfbudget,
+    my_tlkpprojectradtrackdata.pybudget,
+    my_tlkpprojectradtrackdata.seedcorn,
+    my_tlkpprojectradtrackdata.manhours,
+    my_tlkpprojectradtrackdata.mandays,
+    my_tlkpprojectradtrackdata.manyears,
+    my_tlkpprojectradtrackdata.paycosts,
+    my_tlkpprojectradtrackdata.nonpayohcosts,
+    my_tlkpprojectradtrackdata.testcosts,
+    my_tlkpprojectradtrackdata.animalcosts,
+    my_tlkpprojectradtrackdata.nonanimalcosts,
+    my_tlkpprojectradtrackdata.manhourschanged,
+    my_tlkpprojectradtrackdata.paycostschanged,
+    my_tlkpprojectradtrackdata.nonpayohcostschanged,
+    my_tlkpprojectradtrackdata.testcostschanged,
+    my_tlkpprojectradtrackdata.animalcostschanged,
+    my_tlkpprojectradtrackdata.nonanimalcostschanged,
+    my_tlkpprojectradtrackdata.adjustment,
+    my_tlkpprojectradtrackdata.adjustmentcomment,
+    my_tlkpprojectradtrackdata.locked,
+    my_tlkpprojectradtrackdata.datecosted,
+    my_tlkpprojectradtrackdata.costedby,
+    my_tlkpprojectradtrackdata.actualexpenditure,
+    my_tlkpprojectradtrackdata.actualmanyears,
+    my_tlkpprojectradtrackdata.vla_budget
+   FROM mabarchive.my_tlkpprojectradtrackdata
+     JOIN mabarchive.vlatestmonthyear ON my_tlkpprojectradtrackdata.year = vlatestmonthyear.year;"
+"mabarchive","vfiveyearprojectsummary"," SELECT sub2.project,
+    sub2.year,
+    sub2.displayyear,
+    sub2.custincome,
+    sub2.vlaexpeniture,
+    sub2.incomelesscost,
+    sub2.invoicedincome,
+    sub2.invoiceslesscost,
+    sub2.budget,
+    sub2.budgetremaining,
+    sum(sub.cumbudget) AS cumbudget,
+    sum(sub.cumcost) AS cumcost
+   FROM mabarchive.vfiveyearprojectsummary_sub2 sub2
+     JOIN mabarchive.vfiveyearprojectsummary_sub sub ON sub2.project::text = sub.project::text AND sub2.year >= sub.year
+  GROUP BY sub2.project, sub2.year, sub2.displayyear, sub2.custincome, sub2.vlaexpeniture, sub2.incomelesscost, sub2.invoicedincome, sub2.invoiceslesscost, sub2.budget, sub2.budgetremaining;"
+"mabarchive","vfiveyearprojectsummary_sub"," SELECT my_projectmonthfinal.year,
+    my_projectmonthfinal.project,
+    my_tlkpproject.custincome AS cumbudget,
+    sum(my_projectmonthfinal.totalcost) AS cumcost
+   FROM mabarchive.my_projectmonthfinal
+     JOIN mabarchive.my_tlkpproject ON my_projectmonthfinal.year = my_tlkpproject.year AND my_projectmonthfinal.project::text = my_tlkpproject.parentproject::text
+  GROUP BY my_projectmonthfinal.year, my_projectmonthfinal.project, my_tlkpproject.custincome
+ HAVING my_projectmonthfinal.year >= 2004;"
+"mabarchive","vfiveyearprojectsummary_sub2"," SELECT my_tlkpproject.parentproject AS project,
+    my_tlkpproject.year,
+    (my_tlkpproject.year::character(4)::text || '/'::text) || ""right""(((my_tlkpproject.year + 1))::character(4)::text, 2) AS displayyear,
+    my_tlkpproject.custincome,
+    my_projectmonthfinal.cumcost AS vlaexpeniture,
+    my_tlkpproject.custincome - my_projectmonthfinal.cumcost AS incomelesscost,
+    my_projectmonthfinal.cuminvoices AS invoicedincome,
+    my_projectmonthfinal.cuminvoices - my_projectmonthfinal.cumcost AS invoiceslesscost,
+    my_tlkpproject.budget_cvl AS budget,
+    my_tlkpproject.budget_cvl - my_projectmonthfinal.cumcost AS budgetremaining
+   FROM mabarchive.my_projectmonthfinal
+     JOIN mabarchive.my_tlkpproject ON my_projectmonthfinal.year = my_tlkpproject.year AND my_projectmonthfinal.project::text = my_tlkpproject.parentproject::text
+     JOIN ( SELECT my_projectmonthfinal_1.year,
+            max(my_projectmonthfinal_1.monthno) AS latestmonth
+           FROM mabarchive.my_projectmonthfinal my_projectmonthfinal_1
+          WHERE my_projectmonthfinal_1.cumflag = 1::double precision
+          GROUP BY my_projectmonthfinal_1.year) l ON my_projectmonthfinal.year = l.year AND my_projectmonthfinal.monthno = l.latestmonth
+     CROSS JOIN mabarchive.vlatestmonthyear
+  WHERE my_tlkpproject.year >= (vlatestmonthyear.year - 5) AND my_tlkpproject.year <=
+        CASE
+            WHEN ""right""(my_tlkpproject.program::text, 4) = '_Res'::text THEN vlatestmonthyear.year - 1
+            WHEN ""right""(my_tlkpproject.program::text, 5) = '_SURV'::text THEN vlatestmonthyear.year - 1
+            WHEN my_tlkpproject.program::text = 'OM_WORK'::text THEN vlatestmonthyear.year - 1
+            ELSE vlatestmonthyear.year
+        END;"
+"mabarchive","vg_tlkpproject"," SELECT g_tlkpproject.parentproject,
+    g_tlkpproject.projecttitle,
+    g_tlkpproject.costbookno,
+    g_tlkpproject.disease,
+    g_tlkpproject.contract,
+    g_tlkpproject.shorttitle,
+    g_tlkpproject.projectstatus,
+    vcurrent_tlkpprojectradtrackdata.bfbudget AS currentbfbudget
+   FROM mabarchive.g_tlkpproject
+     LEFT JOIN mabarchive.vcurrent_tlkpprojectradtrackdata ON g_tlkpproject.parentproject::text = vcurrent_tlkpprojectradtrackdata.project::text;"
+"mabarchive","vg_tlkpprojectincome"," SELECT vmy_projectcustincome.project,
+    COALESCE(g_tlkpproject_radtrackdata.overallcustincome, sum(vmy_projectcustincome.custinc)) AS totalprojectvalue
+   FROM mabarchive.vmy_projectcustincome
+     LEFT JOIN mabarchive.g_tlkpproject_radtrackdata ON vmy_projectcustincome.project::text = g_tlkpproject_radtrackdata.parentproject::text
+  GROUP BY vmy_projectcustincome.project, g_tlkpproject_radtrackdata.overallcustincome;"
+"mabarchive","vlatestmonthyear"," SELECT tlkpyear.year,
+    tlkpyear.latestmonthreleased,
+        CASE
+            WHEN tlkpyear.latestmonthreleased = 1 THEN 'April '::text || tlkpyear.year::character(4)::text
+            WHEN tlkpyear.latestmonthreleased < 10 THEN (('April - '::text || tlkpmonths.monthname::text) || ' '::text) || tlkpyear.year::character(4)::text
+            ELSE (((('April '::text || tlkpyear.year::character(4)::text) || ' - '::text) || tlkpmonths.monthname::text) || ' '::text) || ((tlkpyear.year + 1))::character(4)::text
+        END AS period
+   FROM mabarchive.tlkpyear
+     JOIN mabarchive.tlkpmonths ON tlkpyear.latestmonthreleased = tlkpmonths.fmonthno
+  WHERE tlkpyear.year = (( SELECT max(tlkpyear_1.year) AS expr1
+           FROM mabarchive.tlkpyear tlkpyear_1
+          WHERE tlkpyear_1.latestmonthreleased > 0));"
+"mabarchive","vlatestprojectyear"," SELECT parentproject,
+    max(year) AS year
+   FROM mabarchive.my_tlkpproject
+  GROUP BY parentproject;"
+"mabarchive","vmilestonesforcurrentfy"," SELECT tblmilestone.project,
+    tblmilestone.number,
+    tblmilestone.description,
+    tblmilestone.datedue,
+    tblmilestone.datecompleted,
+    tblmilestone.dateformreceived,
+    tblmilestone.undersdreview,
+    tblmilestone.ontarget,
+    tblmilestone.projectleadercomment,
+    tblmilestone.capscomment,
+    tblmilestone.idtype,
+        CASE
+            WHEN vlatestmonthyear.year::double precision = date_part('year'::text, tblmilestone.datedue - '3 mons'::interval) THEN '-1'::integer
+            ELSE 0
+        END AS inthisfyear
+   FROM mabarchive.tblmilestone
+     CROSS JOIN mabarchive.vlatestmonthyear
+  WHERE date_part('year'::text, tblmilestone.datedue - '3 mons'::interval) = vlatestmonthyear.year::double precision OR date_part('year'::text, tblmilestone.datedue - '6 mons'::interval) = vlatestmonthyear.year::double precision;"
+"mabarchive","vmy_projectanimalplan"," SELECT my_tlkpproject.year,
+    my_tlkpproject.parentproject,
+    my_tblanimalreq.animaltype,
+    my_tblanimalreq.numberofdays,
+    my_tblanimalreq.numberofanimals,
+        CASE
+            WHEN my_tlkpproject.isdefraproject <> 0 AND my_tlkpproject.year >= 2013 THEN my_tblanimals.defradailyrate
+            ELSE my_tblanimals.dailyrate
+        END AS rate,
+        CASE
+            WHEN my_tlkpproject.isdefraproject <> 0 AND my_tlkpproject.year >= 2013 THEN my_tblanimals.defradailyrate
+            ELSE my_tblanimals.dailyrate
+        END * my_tblanimalreq.numberofdays * my_tblanimalreq.numberofanimals AS cost
+   FROM mabarchive.my_tlkpproject
+     JOIN mabarchive.my_tblanimalreq ON my_tlkpproject.year = my_tblanimalreq.year AND my_tlkpproject.parentproject::text = my_tblanimalreq.jobcode::text
+     JOIN mabarchive.my_tblanimals ON my_tblanimalreq.year = my_tblanimals.year AND my_tblanimalreq.animaltype::text = my_tblanimals.animaltype::text;"
+"mabarchive","vmy_projectcustincome"," SELECT COALESCE(pims.year, fps.year) AS year,
+    COALESCE(pims.project, fps.parentproject) AS project,
+    COALESCE(pims.pybudget, fps.custincome) AS custinc
+   FROM mabarchive.my_fpsyeartotals fps
+     FULL JOIN mabarchive.my_tlkpprojectradtrackdata pims ON fps.year = pims.year AND fps.parentproject::text = pims.project::text;"
+"mabarchive","vmy_projectstaffplan"," SELECT my_tlkpproject.year,
+    my_tlkpproject.parentproject,
+    my_profitcentregrade.pcgrade,
+    my_staff.workgroupgrade,
+    my_staff.name,
+    my_tblstaffjob.plannedhours,
+        CASE
+            WHEN my_tlkpproject.isdefraproject <> 0 AND my_tlkpproject.year >= 2013 THEN my_profitcentregrade.npr + my_profitcentregrade.payrate
+            ELSE my_profitcentregrade.chargerate
+        END AS rate,
+        CASE
+            WHEN my_tlkpproject.isdefraproject <> 0 AND my_tlkpproject.year >= 2013 THEN my_tblstaffjob.plannedhours * (my_profitcentregrade.npr + my_profitcentregrade.payrate)
+            ELSE my_tblstaffjob.plannedhours * my_profitcentregrade.chargerate
+        END AS cost
+   FROM mabarchive.my_tlkpproject
+     JOIN mabarchive.my_tblstaffjob ON my_tlkpproject.year = my_tblstaffjob.year AND my_tlkpproject.parentproject::text = my_tblstaffjob.jobcode::text
+     JOIN mabarchive.my_staff ON my_tblstaffjob.year = my_staff.year AND my_tblstaffjob.staffid::text = my_staff.staffid::text
+     JOIN mabarchive.my_workgroupgrade ON my_staff.year = my_workgroupgrade.year AND my_staff.workgroupgrade::text = my_workgroupgrade.wggrade::text
+     JOIN mabarchive.my_profitcentregrade ON my_workgroupgrade.year = my_profitcentregrade.year AND my_workgroupgrade.profitcentregrade::text = my_profitcentregrade.pcgrade::text;"
+"mabarchive","vmy_radtrack_reports_forfyandnext"," SELECT my_radtrack_reports.year,
+    my_radtrack_reports.project,
+    my_radtrack_reports.type,
+    my_radtrack_reports.reminder1,
+    my_radtrack_reports.reminder2,
+    my_radtrack_reports.replyreceived,
+    my_radtrack_reports.senttoprogmanager,
+    my_radtrack_reports.senttoprojleader,
+    my_radtrack_reports.emailedtocustomer,
+    my_radtrack_reports.signedcopytocustomer,
+    my_radtrack_reports.repduedate,
+    my_radtrack_reports.id,
+        CASE
+            WHEN my_radtrack_reports.emailedtocustomer IS NULL THEN NULL::text
+            WHEN my_radtrack_reports.repduedate IS NULL THEN NULL::text
+            WHEN my_radtrack_reports.emailedtocustomer <= my_radtrack_reports.repduedate THEN 'Yes'::text
+            ELSE 'No'::text
+        END AS ontime
+   FROM mabarchive.vlatestmonthyear
+     CROSS JOIN mabarchive.my_radtrack_reports
+  WHERE vlatestmonthyear.year = my_radtrack_reports.year OR (vlatestmonthyear.year + 1) = my_radtrack_reports.year;"
+"mabarchive","vpactprojectyearcosts"," SELECT my_projectmonthfinal.project,
+        CASE g_tlkpproject_radtrackdata.useprojectyear
+            WHEN '-1'::integer THEN date_part('year'::text, date_trunc('month'::text, g_tlkpproject_radtrackdata.startdate::timestamp with time zone) + (my_projectmonthfinal.monthno + 3::double precision - date_part('month'::text, g_tlkpproject_radtrackdata.startdate))::integer::double precision * '1 mon'::interval)
+            ELSE my_projectmonthfinal.year::double precision
+        END AS year,
+    my_projectmonthfinal.monthno,
+    sum(my_projectmonthfinal.subcontracts) AS subcontracts,
+    sum(my_projectmonthfinal.animals) AS animals,
+    sum(my_projectmonthfinal.transfercosts) AS tests,
+    sum(vtcc_summary.pay) AS pay,
+    sum(vtcc_summary.nonpay + vtcc_summary.overhead) AS nonpayoh,
+    sum(my_projectmonthfinal.totalhours) AS hours,
+    sum(my_projectmonthfinal.totalcost) AS totalcosts,
+    sum(my_projectmonthfinal.timecosts) AS timecost
+   FROM mabarchive.my_projectmonthfinal
+     LEFT JOIN mabarchive.g_tlkpproject_radtrackdata ON my_projectmonthfinal.project::text = g_tlkpproject_radtrackdata.parentproject::text
+     LEFT JOIN mabarchive.vtcc_summary ON my_projectmonthfinal.year = vtcc_summary.year AND my_projectmonthfinal.project::text = vtcc_summary.project::text AND my_projectmonthfinal.monthno = vtcc_summary.month
+  GROUP BY my_projectmonthfinal.project, my_projectmonthfinal.monthno, g_tlkpproject_radtrackdata.useprojectyear, my_projectmonthfinal.year, g_tlkpproject_radtrackdata.startdate;"
+"mabarchive","vprogramreports_mail"," SELECT ((((((('<a href=""'::text || root.setting::text) || '/'::text) || sq.program::text) || '_'::text) || prepname.setting::text) || '"">'::text) || sq.program::text) || '</a><br> '::text AS hlink,
+        CASE
+            WHEN tblprojectmanager.projectmanager::text ~~ '%,%'::text THEN ((SUBSTRING(tblprojectmanager.projectmanager FROM POSITION((','::text) IN (tblprojectmanager.projectmanager)) + 2 FOR 50) || ' '::text) || ""left""(tblprojectmanager.projectmanager::text, POSITION((','::text) IN (tblprojectmanager.projectmanager)) - 1))::character varying
+            ELSE tblprojectmanager.projectmanager
+        END AS projectmanager,
+    tblprojectmanager.mnumber,
+    tblprojectmanager.email,
+    sq.program,
+    sq.year,
+    tblprojectmanager.disable
+   FROM mabarchive.tblprogram_manager_link
+     JOIN mabarchive.tblradtrackprog ON tblprogram_manager_link.program::text = tblradtrackprog.program::text
+     JOIN ( SELECT vcurrent_projectinfo.year,
+                CASE
+                    WHEN vcurrent_projectinfo.projectgroup::text = 'SCN_RES'::text THEN vcurrent_projectinfo.projectgroup
+                    ELSE vcurrent_projectinfo.program
+                END AS program
+           FROM mabarchive.vcurrent_projectinfo
+          WHERE vcurrent_projectinfo.projectstatus::text <> 'Completed'::text) sq ON tblradtrackprog.program::text = sq.program::text
+     JOIN mabarchive.tblprojectmanager ON tblprogram_manager_link.manager::text = tblprojectmanager.projectmanager::text
+     CROSS JOIN mabarchive.tbl_settings root
+     CROSS JOIN mabarchive.tbl_settings prepname
+  WHERE root.id::text = 'PIMS_Program_Current_Root'::text AND prepname.id::text = 'PIMS_Program_Report_Name'::text AND tblradtrackprog.radtrackprog = true
+  GROUP BY (((((((('<a href=""'::text || root.setting::text) || '/'::text) || sq.program::text) || '_'::text) || prepname.setting::text) || '"">'::text) || sq.program::text) || '</a><br> '::text), tblprojectmanager.mnumber, tblprojectmanager.email, sq.program, sq.year, tblprojectmanager.projectmanager, tblprojectmanager.disable
+ HAVING sq.program::text <> 'ZT_Prog'::text;"
+"mabarchive","vprojectlatestdetails"," SELECT g_tlkpproject.parentproject,
+    my_tlkpproject.program,
+    my_tlkpproject.manager,
+    g_tlkpproject.projecttitle,
+    g_tlkpproject.shorttitle,
+    my_tlkpproject.customer,
+    vlatestprojectyear.year AS lastyear,
+        CASE
+            WHEN vlatestprojectyear.year = (( SELECT max(tlkpyear.year) AS max
+               FROM mabarchive.tlkpyear)) THEN 'Y'::text
+            ELSE 'N'::text
+        END AS active,
+    my_tlkpproject.projectgroup
+   FROM mabarchive.g_tlkpproject
+     JOIN mabarchive.vlatestprojectyear ON g_tlkpproject.parentproject::text = vlatestprojectyear.parentproject::text
+     JOIN mabarchive.my_tlkpproject ON my_tlkpproject.year = vlatestprojectyear.year AND my_tlkpproject.parentproject::text = vlatestprojectyear.parentproject::text;"
+"mabarchive","vprojectreports_pmmail"," SELECT ((((((((('<a href=""'::text || root.setting::text) || '/'::text) || vcurrent_projectinfo.projectgroup::text) || '/'::text) || replace(vcurrent_projectinfo.parentproject::text, '/'::text, '-'::text)) || ' '::text) || prepname.setting::text) || '"" target=""_blank"">'::text) || vcurrent_projectinfo.parentproject::text) || '</a><br> '::text AS hlink,
+        CASE
+            WHEN tblprojectmanager.projectmanager::text ~~ '%,%'::text THEN ((SUBSTRING(tblprojectmanager.projectmanager FROM POSITION((','::text) IN (tblprojectmanager.projectmanager)) + 2 FOR 50) || ' '::text) || ""left""(tblprojectmanager.projectmanager::text, POSITION((','::text) IN (tblprojectmanager.projectmanager)) - 1))::character varying
+            ELSE tblprojectmanager.projectmanager
+        END AS projectmanager,
+    tblprojectmanager.mnumber,
+    vcurrent_projectinfo.parentproject,
+    tblprojectmanager.email,
+    (((('<a href=""'::text || editroot.setting::text) || vcurrent_projectinfo.parentproject::text) || '"">'::text) || vcurrent_projectinfo.parentproject::text) || '</a><br>'::text AS editlink,
+    vcurrent_projectinfo.projectgroup,
+    vcurrent_projectinfo.year,
+    tblprojectmanager.disable
+   FROM mabarchive.tblradtrackprog
+     JOIN (mabarchive.tblprojectmanager
+     JOIN mabarchive.vcurrent_projectinfo ON tblprojectmanager.projectmanager::text = vcurrent_projectinfo.manager::text) ON tblradtrackprog.program::text = vcurrent_projectinfo.program::text
+     CROSS JOIN mabarchive.tbl_settings prepname
+     CROSS JOIN mabarchive.tbl_settings root
+     CROSS JOIN mabarchive.tbl_settings editroot
+  WHERE root.id::text = 'PIMS_Project_Current_Root'::text AND prepname.id::text = 'PIMS_Project_Report_Name'::text AND editroot.id::text = 'PIMS_Project_Edit_Link'::text AND tblradtrackprog.radtrackprog = true AND vcurrent_projectinfo.projectstatus::text <> 'Completed'::text AND (vcurrent_projectinfo.projectgroup::text <> ALL (ARRAY['EU_PROG'::character varying::text, 'ZT_Prog'::character varying::text]));"
+"mabarchive","vprojectreports_pmmilestoneemail"," SELECT hlink,
+    projectmanager,
+    mnumber,
+    parentproject,
+    email,
+    editlink,
+    year,
+    disable
+   FROM mabarchive.vprojectreports_pmmail
+  WHERE (EXISTS ( SELECT tblmilestone.project,
+            tblmilestone.number,
+            tblmilestone.description,
+            tblmilestone.datedue,
+            tblmilestone.datecompleted,
+            tblmilestone.dateformreceived,
+            tblmilestone.undersdreview,
+            tblmilestone.ontarget,
+            tblmilestone.projectleadercomment,
+            tblmilestone.capscomment,
+            tblmilestone.idtype
+           FROM mabarchive.tblmilestone
+          WHERE vprojectreports_pmmail.parentproject::text = tblmilestone.project::text AND vprojectreports_pmmail.year::double precision = date_part('year'::text, tblmilestone.datedue)));"
+"mabarchive","vprojectreports_pmmilestonemail"," SELECT hlink,
+    projectmanager,
+    mnumber,
+    parentproject,
+    email,
+    editlink,
+    year,
+    disable
+   FROM mabarchive.vprojectreports_pmmail
+  WHERE (EXISTS ( SELECT tblmilestone.project,
+            tblmilestone.number,
+            tblmilestone.description,
+            tblmilestone.datedue,
+            tblmilestone.datecompleted,
+            tblmilestone.dateformreceived,
+            tblmilestone.undersdreview,
+            tblmilestone.ontarget,
+            tblmilestone.projectleadercomment,
+            tblmilestone.capscomment,
+            tblmilestone.idtype
+           FROM mabarchive.tblmilestone
+          WHERE vprojectreports_pmmail.parentproject::text = tblmilestone.project::text AND vprojectreports_pmmail.year::numeric = EXTRACT(year FROM tblmilestone.datedue)));"
+"mabarchive","vprojectreports_programmmail"," SELECT ((((((('<a href=""'::text || root.setting::text) || '/'::text) || sq.program::text) || '_'::text) || prepname.setting::text) || '"">'::text) || sq.program::text) || '</a><br> '::text AS hlink,
+        CASE
+            WHEN tblprojectmanager.projectmanager::text ~~ '%,%'::text THEN ((SUBSTRING(tblprojectmanager.projectmanager FROM POSITION((','::text) IN (tblprojectmanager.projectmanager)) + 2 FOR 50) || ' '::text) || ""left""(tblprojectmanager.projectmanager::text, POSITION((','::text) IN (tblprojectmanager.projectmanager)) - 1))::character varying
+            ELSE tblprojectmanager.projectmanager
+        END AS projectmanager,
+    tblprojectmanager.mnumber,
+    tblprojectmanager.email,
+    sq.program,
+    sq.year,
+    tblprojectmanager.disable
+   FROM mabarchive.tblprogram_manager_link
+     JOIN mabarchive.tblradtrackprog ON tblprogram_manager_link.program::text = tblradtrackprog.program::text
+     JOIN ( SELECT vcurrent_projectinfo.year,
+                CASE
+                    WHEN vcurrent_projectinfo.projectgroup::text = 'SCN_RES'::text THEN vcurrent_projectinfo.projectgroup
+                    ELSE vcurrent_projectinfo.program
+                END AS program
+           FROM mabarchive.vcurrent_projectinfo
+          WHERE vcurrent_projectinfo.projectstatus::text <> 'Completed'::text) sq ON tblradtrackprog.program::text = sq.program::text
+     JOIN mabarchive.tblprojectmanager ON tblprogram_manager_link.manager::text = tblprojectmanager.projectmanager::text
+     CROSS JOIN mabarchive.tbl_settings root
+     CROSS JOIN mabarchive.tbl_settings prepname
+  WHERE prepname.id::text = 'PIMS_Program_Report_Name'::text AND tblradtrackprog.radtrackprog = true AND root.id::text = 'PIMS_Program_Current_Root'::text
+  GROUP BY (((((((('<a href=""'::text || root.setting::text) || '/'::text) || sq.program::text) || '_'::text) || prepname.setting::text) || '"">'::text) || sq.program::text) || '</a><br> '::text), tblprojectmanager.mnumber, tblprojectmanager.email, sq.program, sq.year, tblprojectmanager.projectmanager, tblprojectmanager.disable
+ HAVING sq.program::text <> 'ZT_Prog'::text;"
+"mabarchive","vrcreports_mail"," SELECT my_tblprofitcentre.profitcentre,
+    ((((((((('<a href=""'::text || root.setting::text) || '/'::text) || my_tblprofitcentre.profitcentre::text) || ' '::text) || rcrepname1.setting::text) || '"">'::text) || my_tblprofitcentre.profitcentre::text) || ' '::text) || rcrepname1.setting::text) || '</a><br> '::text AS hlink1,
+    ((((((((('<a href=""'::text || root.setting::text) || '/'::text) || my_tblprofitcentre.profitcentre::text) || ' '::text) || rcrepname2.setting::text) || '"">'::text) || my_tblprofitcentre.profitcentre::text) || ' '::text) || rcrepname2.setting::text) || '</a><br> '::text AS hlink2,
+        CASE
+            WHEN tblprojectmanager.projectmanager::text ~~ '%,%'::text THEN ((SUBSTRING(tblprojectmanager.projectmanager FROM POSITION((','::text) IN (tblprojectmanager.projectmanager)) + 2 FOR 50) || ' '::text) || SUBSTRING(tblprojectmanager.projectmanager FROM 1 FOR POSITION((','::text) IN (tblprojectmanager.projectmanager)) - 1))::character varying
+            ELSE tblprojectmanager.projectmanager
+        END AS projectmanager,
+    tblprojectmanager.mnumber,
+    tblprojectmanager.email,
+    tblprojectmanager.disable
+   FROM mabarchive.vlatestmonthyear
+     JOIN mabarchive.my_tblprofitcentre ON vlatestmonthyear.year = my_tblprofitcentre.year
+     JOIN mabarchive.tblprofitcentre_manager_link ON my_tblprofitcentre.profitcentre::text = tblprofitcentre_manager_link.profitcentre::text
+     JOIN mabarchive.tblprojectmanager ON tblprofitcentre_manager_link.manager::text = tblprojectmanager.projectmanager::text
+     CROSS JOIN mabarchive.tbl_settings rcrepname1
+     CROSS JOIN mabarchive.tbl_settings rcrepname2
+     CROSS JOIN mabarchive.tbl_settings root
+  WHERE root.id::text = 'PIMS_RC_Current_Root'::text AND rcrepname1.id::text = 'PIMS_RC_Report_Name1'::text AND rcrepname2.id::text = 'PIMS_RC_Report_Name2'::text;"
+"mabarchive","vtcc_summary"," SELECT year,
+    project,
+    month,
+    sum(pay) AS pay,
+    sum(nonpay) AS nonpay,
+    sum(overhead) AS overhead
+   FROM mabarchive.my_timecostcalcs
+  GROUP BY year, project, month;"
