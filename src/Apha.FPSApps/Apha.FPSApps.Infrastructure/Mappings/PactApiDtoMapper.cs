@@ -1,4 +1,4 @@
-﻿using Apha.FPSApps.Application.Dtos.PACT;
+using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Dtos;
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.PACT;
@@ -36,8 +36,8 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<ProjectMonthDto, ProjectMonthReq>().ReverseMap();
             CreateMap<ProjectMonthDto, ProjectMonthRes>().ReverseMap();
             CreateMap<MonthDto, MonthRes>().ReverseMap();
-            CreateMap<ProjectProfileGraphDto, ProjectProfileGraphRes>().ReverseMap();
-            CreateMap<ProjectProfileCumulativeGraphDto, ProjectProfileCumulativeGraphRes>().ReverseMap();
+            CreateMap<ProjectProfileDto, ProjectProfileRes>().ReverseMap();
+            CreateMap<ProjectProfileCumulativeDto, ProjectProfileCumulativeRes>().ReverseMap();
         }
     }
 }

@@ -363,22 +363,22 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectProfileControllerTe
 
         #endregion
 
-        #region GetProfileGraphData
+        #region GetProfileData
 
         [Fact]
-        public async Task GetProfileGraphData_ServiceSuccess_ReturnsJsonWithData()
+        public async Task GetProfileData_ServiceSuccess_ReturnsJsonWithData()
         {
             // Arrange
-            var graphData = new List<ProjectProfileGraphDto>
+            var profileData = new List<ProjectProfileDto>
             {
                 new() { MonthNo = 1, Profile = 100m, TotalCost = 200m },
                 new() { MonthNo = 2, Profile = 150m, TotalCost = 300m }
             };
-            _projectProfileService.GetProfileGraphDataAsync("PRJ1")
-                .Returns(ApiResponseDto<List<ProjectProfileGraphDto>>.SuccessResponse(graphData));
+            _projectProfileService.GetProfileDataAsync("PRJ1")
+                .Returns(ApiResponseDto<List<ProjectProfileDto>>.SuccessResponse(profileData));
 
             // Act
-            var result = await _controller.GetProfileGraphData("PRJ1");
+            var result = await _controller.GetProfileData("PRJ1");
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
@@ -392,15 +392,15 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectProfileControllerTe
         }
 
         [Fact]
-        public async Task GetProfileGraphData_ServiceFails_ReturnsSuccessFalse()
+        public async Task GetProfileData_ServiceFails_ReturnsSuccessFalse()
         {
             // Arrange
             var errors = new List<ApiErrorDto> { new() { Code = "API_ERROR", Message = "Error" } };
-            _projectProfileService.GetProfileGraphDataAsync("PRJ1")
-                .Returns(ApiResponseDto<List<ProjectProfileGraphDto>>.FailureResponse(errors, new ApiMetaDto()));
+            _projectProfileService.GetProfileDataAsync("PRJ1")
+                .Returns(ApiResponseDto<List<ProjectProfileDto>>.FailureResponse(errors, new ApiMetaDto()));
 
             // Act
-            var result = await _controller.GetProfileGraphData("PRJ1");
+            var result = await _controller.GetProfileData("PRJ1");
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
@@ -409,14 +409,14 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectProfileControllerTe
         }
 
         [Fact]
-        public async Task GetProfileGraphData_EmptyData_ReturnsSuccessWithEmptyArray()
+        public async Task GetProfileData_EmptyData_ReturnsSuccessWithEmptyArray()
         {
             // Arrange
-            _projectProfileService.GetProfileGraphDataAsync("PRJ1")
-                .Returns(ApiResponseDto<List<ProjectProfileGraphDto>>.SuccessResponse([]));
+            _projectProfileService.GetProfileDataAsync("PRJ1")
+                .Returns(ApiResponseDto<List<ProjectProfileDto>>.SuccessResponse([]));
 
             // Act
-            var result = await _controller.GetProfileGraphData("PRJ1");
+            var result = await _controller.GetProfileData("PRJ1");
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
@@ -427,22 +427,22 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectProfileControllerTe
 
         #endregion
 
-        #region GetCumulativeGraphData
+        #region GetCumulativeData
 
         [Fact]
-        public async Task GetCumulativeGraphData_ServiceSuccess_ReturnsJsonWithData()
+        public async Task GetCumulativeData_ServiceSuccess_ReturnsJsonWithData()
         {
             // Arrange
-            var cumulativeData = new List<ProjectProfileCumulativeGraphDto>
+            var cumulativeData = new List<ProjectProfileCumulativeDto>
             {
                 new() { MonthNo = 1, CumulativeProfile = 100m, CumulativeCost = 200m },
                 new() { MonthNo = 2, CumulativeProfile = 250m, CumulativeCost = 500m }
             };
-            _projectProfileService.GetCumulativeGraphDataAsync("PRJ1")
-                .Returns(ApiResponseDto<List<ProjectProfileCumulativeGraphDto>>.SuccessResponse(cumulativeData));
+            _projectProfileService.GetCumulativeDataAsync("PRJ1")
+                .Returns(ApiResponseDto<List<ProjectProfileCumulativeDto>>.SuccessResponse(cumulativeData));
 
             // Act
-            var result = await _controller.GetCumulativeGraphData("PRJ1");
+            var result = await _controller.GetCumulativeData("PRJ1");
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
@@ -456,15 +456,15 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectProfileControllerTe
         }
 
         [Fact]
-        public async Task GetCumulativeGraphData_ServiceFails_ReturnsSuccessFalse()
+        public async Task GetCumulativeData_ServiceFails_ReturnsSuccessFalse()
         {
             // Arrange
             var errors = new List<ApiErrorDto> { new() { Code = "API_ERROR", Message = "Error" } };
-            _projectProfileService.GetCumulativeGraphDataAsync("PRJ1")
-                .Returns(ApiResponseDto<List<ProjectProfileCumulativeGraphDto>>.FailureResponse(errors, new ApiMetaDto()));
+            _projectProfileService.GetCumulativeDataAsync("PRJ1")
+                .Returns(ApiResponseDto<List<ProjectProfileCumulativeDto>>.FailureResponse(errors, new ApiMetaDto()));
 
             // Act
-            var result = await _controller.GetCumulativeGraphData("PRJ1");
+            var result = await _controller.GetCumulativeData("PRJ1");
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
@@ -473,14 +473,14 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectProfileControllerTe
         }
 
         [Fact]
-        public async Task GetCumulativeGraphData_EmptyData_ReturnsSuccessWithEmptyArray()
+        public async Task GetCumulativeData_EmptyData_ReturnsSuccessWithEmptyArray()
         {
             // Arrange
-            _projectProfileService.GetCumulativeGraphDataAsync("PRJ1")
-                .Returns(ApiResponseDto<List<ProjectProfileCumulativeGraphDto>>.SuccessResponse([]));
+            _projectProfileService.GetCumulativeDataAsync("PRJ1")
+                .Returns(ApiResponseDto<List<ProjectProfileCumulativeDto>>.SuccessResponse([]));
 
             // Act
-            var result = await _controller.GetCumulativeGraphData("PRJ1");
+            var result = await _controller.GetCumulativeData("PRJ1");
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);

@@ -4,7 +4,7 @@ namespace Apha.PACT.Application.Interfaces
 {
     public interface IProjectProfileService
     {
-        Task<IList<ProjectProfileGraphDto>> GetProfileGraphDataAsync(string project);
-        Task<IList<ProjectProfileCumulativeGraphDto>> GetCumulativeGraphDataAsync(string project);
+        Task<IList<ProjectProfileDto>> GetProfileDataAsync(string project);
+        Task<IList<ProjectProfileCumulativeDto>> GetCumulativeDataAsync(string project);
     }
 }

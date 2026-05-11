@@ -19,28 +19,28 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             _mapper = mapper;
         }
 
-        public async Task<ApiResponseDto<List<ProjectProfileGraphDto>>> GetProfileGraphDataAsync(string project)
+        public async Task<ApiResponseDto<List<ProjectProfileDto>>> GetProfileDataAsync(string project)
         {
-            var response = await _http.GetAsync<List<ProjectProfileGraphRes>>(
-                string.Format(PactApiEndpoints.GetProjectProfileGraph, Uri.EscapeDataString(project)));
+            var response = await _http.GetAsync<List<ProjectProfileRes>>(
+                string.Format(PactApiEndpoints.GetProjectProfile, Uri.EscapeDataString(project)));
 
             if (response.Success)
-                return _mapper.Map<ApiResponseDto<List<ProjectProfileGraphDto>>>(response);
+                return _mapper.Map<ApiResponseDto<List<ProjectProfileDto>>>(response);
 
-            var dto = _mapper.Map<ApiResponseDto<List<ProjectProfileGraphDto>>>(response);
-            return ApiResponseDto<List<ProjectProfileGraphDto>>.FailureResponse(dto.Errors, dto.Meta);
+            var dto = _mapper.Map<ApiResponseDto<List<ProjectProfileDto>>>(response);
+            return ApiResponseDto<List<ProjectProfileDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
 
-        public async Task<ApiResponseDto<List<ProjectProfileCumulativeGraphDto>>> GetCumulativeGraphDataAsync(string project)
+        public async Task<ApiResponseDto<List<ProjectProfileCumulativeDto>>> GetCumulativeDataAsync(string project)
         {
-            var response = await _http.GetAsync<List<ProjectProfileCumulativeGraphRes>>(
-                string.Format(PactApiEndpoints.GetProjectProfileCumulativeGraph, Uri.EscapeDataString(project)));
+            var response = await _http.GetAsync<List<ProjectProfileCumulativeRes>>(
+                string.Format(PactApiEndpoints.GetProjectProfileCumulative, Uri.EscapeDataString(project)));
 
             if (response.Success)
-                return _mapper.Map<ApiResponseDto<List<ProjectProfileCumulativeGraphDto>>>(response);
+                return _mapper.Map<ApiResponseDto<List<ProjectProfileCumulativeDto>>>(response);
 
-            var dto = _mapper.Map<ApiResponseDto<List<ProjectProfileCumulativeGraphDto>>>(response);
-            return ApiResponseDto<List<ProjectProfileCumulativeGraphDto>>.FailureResponse(dto.Errors, dto.Meta);
+            var dto = _mapper.Map<ApiResponseDto<List<ProjectProfileCumulativeDto>>>(response);
+            return ApiResponseDto<List<ProjectProfileCumulativeDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
     }
 }

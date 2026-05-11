@@ -5,7 +5,7 @@ namespace Apha.FPSApps.Application.Interfaces.PACT
 {
     public interface IProjectProfileService
     {
-        Task<ApiResponseDto<List<ProjectProfileGraphDto>>> GetProfileGraphDataAsync(string project);
-        Task<ApiResponseDto<List<ProjectProfileCumulativeGraphDto>>> GetCumulativeGraphDataAsync(string project);
+        Task<ApiResponseDto<List<ProjectProfileDto>>> GetProfileDataAsync(string project);
+        Task<ApiResponseDto<List<ProjectProfileCumulativeDto>>> GetCumulativeDataAsync(string project);
     }
 }

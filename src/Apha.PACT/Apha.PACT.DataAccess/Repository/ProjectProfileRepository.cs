@@ -9,7 +9,7 @@ namespace Apha.PACT.DataAccess.Repository
         BaseRepository(context),
         IProjectProfileRepository
     {
-        public async Task<IList<ProjectProfile>> GetProfileGraphDataAsync(string project)
+        public async Task<IList<ProjectProfile>> GetProfileDataAsync(string project)
         {
             return await _context.ProjectMonthFinals
                 .AsNoTracking()
@@ -28,7 +28,7 @@ namespace Apha.PACT.DataAccess.Repository
                 .ToListAsync();
         }
 
-        public async Task<IList<ProjectProfile>> GetCumulativeGraphDataAsync(string project)
+        public async Task<IList<ProjectProfile>> GetCumulativeDataAsync(string project)
         {
             return await _context.ProjectMonthFinals
                 .AsNoTracking()

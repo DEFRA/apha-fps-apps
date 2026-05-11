@@ -7,8 +7,8 @@ function goBack() {
 function refreshGraph() {
     const project = document.getElementById('ParentProject').value;
     if (!project) return;
-    loadProfileGraphData(project);
-    loadCumulativeGraphData(project);
+    loadProfileData(project);
+    loadCumulativeData(project);
 }
 
 // ── Cost Profile Grid ─────────────────────────────────────────────────────
@@ -55,10 +55,10 @@ function updateTotalCostProfile(parentProject) {
 let nonCumulativeChart = null;
 let cumulativeChart = null;
 
-function loadProfileGraphData(parentProject) {
+function loadProfileData(parentProject) {
     if (!parentProject) return;
 
-    fetch('/PACT/ProjectProfile/GetProfileGraphData?parentProject=' + encodeURIComponent(parentProject))
+    fetch('/PACT/ProjectProfile/GetProfileData?parentProject=' + encodeURIComponent(parentProject))
         .then(response => response.json())
         .then(res => {
             if (!res.success || !res.data) return;
@@ -80,16 +80,26 @@ function loadProfileGraphData(parentProject) {
                         {
                             label: 'Profile',
                             data: profileData,
-                            backgroundColor: 'rgba(0, 112, 60, 0.6)',
-                            borderColor: 'rgba(0, 112, 60, 1)',
-                            borderWidth: 1
+                            borderColor: 'rgba(0, 0, 255, 1)',
+                            backgroundColor: 'rgba(0, 0, 255, 1)',
+                            fill: false,
+                            tension: 0,
+                            borderWidth: 1,
+                            pointStyle: 'rectRot',
+                            pointRadius: 5,
+                            pointHoverRadius: 7
                         },
                         {
-                            label: 'Actual Cost',
+                            label: 'Cost',
                             data: costData,
-                            backgroundColor: 'rgba(29, 112, 184, 0.6)',
-                            borderColor: 'rgba(29, 112, 184, 1)',
-                            borderWidth: 1
+                            borderColor: 'rgba(255, 0, 255, 1)',
+                            backgroundColor: 'rgba(255, 0, 255, 1)',
+                            fill: false,
+                            tension: 0,
+                            borderWidth: 1,
+                            pointStyle: 'rect',
+                            pointRadius: 5,
+                            pointHoverRadius: 7
                         }
                     ]
                 },
@@ -97,9 +107,15 @@ function loadProfileGraphData(parentProject) {
                     responsive: true,
                     plugins: { legend: { position: 'top' } },
                     scales: {
+                        x: {
+                            ticks: { maxTicksLimit: 12 }
+                        },
                         y: {
                             beginAtZero: true,
-                            ticks: { maxTicksLimit: 7, callback: value => '£' + value.toLocaleString() }
+                            ticks: {
+                                maxTicksLimit: 7,
+                                callback: value => value.toLocaleString()
+                            }
                         }
                     }
                 }
@@ -107,10 +123,10 @@ function loadProfileGraphData(parentProject) {
         });
 }
 
-function loadCumulativeGraphData(parentProject) {
+function loadCumulativeData(parentProject) {
     if (!parentProject) return;
 
-    fetch('/PACT/ProjectProfile/GetCumulativeGraphData?parentProject=' + encodeURIComponent(parentProject))
+    fetch('/PACT/ProjectProfile/GetCumulativeData?parentProject=' + encodeURIComponent(parentProject))
         .then(response => response.json())
         .then(res => {
             if (!res.success || !res.data) return;
@@ -130,20 +146,28 @@ function loadCumulativeGraphData(parentProject) {
                     labels,
                     datasets: [
                         {
-                            label: 'Cumulative Profile',
+                            label: 'Profile',
                             data: cumProfileData,
-                            borderColor: 'rgba(0, 112, 60, 1)',
-                            backgroundColor: 'rgba(0, 112, 60, 0.1)',
-                            fill: true,
-                            tension: 0.3
+                            borderColor: 'rgba(0, 0, 255, 1)',
+                            backgroundColor: 'rgba(0, 0, 255, 1)',
+                            fill: false,
+                            tension: 0,
+                            borderWidth: 1,
+                            pointStyle: 'rectRot',
+                            pointRadius: 5,
+                            pointHoverRadius: 7
                         },
                         {
-                            label: 'Cumulative Cost',
+                            label: 'Cost',
                             data: cumCostData,
-                            borderColor: 'rgba(29, 112, 184, 1)',
-                            backgroundColor: 'rgba(29, 112, 184, 0.1)',
-                            fill: true,
-                            tension: 0.3
+                            borderColor: 'rgba(255, 0, 255, 1)',
+                            backgroundColor: 'rgba(255, 0, 255, 1)',
+                            fill: false,
+                            tension: 0,
+                            borderWidth: 1,
+                            pointStyle: 'rect',
+                            pointRadius: 5,
+                            pointHoverRadius: 7
                         }
                     ]
                 },
@@ -151,9 +175,15 @@ function loadCumulativeGraphData(parentProject) {
                     responsive: true,
                     plugins: { legend: { position: 'top' } },
                     scales: {
+                        x: {
+                            ticks: { maxTicksLimit: 12 }
+                        },
                         y: {
                             beginAtZero: true,
-                            ticks: { maxTicksLimit: 6, callback: value => '£' + value.toLocaleString() }
+                            ticks: {
+                                maxTicksLimit: 6,
+                                callback: value => value.toLocaleString()
+                            }
                         }
                     }
                 }
@@ -219,8 +249,8 @@ function saveProjectMonth() {
             if (res.success) {
                 document.getElementById('costProfileModal').classList.remove('show');
                 loadCostProfileGrid(_modalProject);
-                loadProfileGraphData(_modalProject);
-                loadCumulativeGraphData(_modalProject);
+                loadProfileData(_modalProject);
+                loadCumulativeData(_modalProject);
             } else {
                 alert(res.message || 'Failed to save.');
             }
@@ -275,8 +305,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const project = this.value;
         loadProjectDetails(project);
         loadCostProfileGrid(project);
-        loadProfileGraphData(project);
-        loadCumulativeGraphData(project);
+        loadProfileData(project);
+        loadCumulativeData(project);
     });
 
     // Bind grid on page load if a project is already selected
@@ -284,8 +314,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (initialProject) {
         loadProjectDetails(initialProject);
         loadCostProfileGrid(initialProject);
-        loadProfileGraphData(initialProject);
-        loadCumulativeGraphData(initialProject);
+        loadProfileData(initialProject);
+        loadCumulativeData(initialProject);
     }
 
 

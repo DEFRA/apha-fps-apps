@@ -14,10 +14,10 @@ namespace Apha.FPSApps.Application.Services.PACT
             _pactClient = pactClient;
         }
 
-        public async Task<ApiResponseDto<List<ProjectProfileGraphDto>>> GetProfileGraphDataAsync(string project)
-            => await _pactClient.PactProjectProfile.GetProfileGraphDataAsync(project);
+        public async Task<ApiResponseDto<List<ProjectProfileDto>>> GetProfileDataAsync(string project)
+            => await _pactClient.PactProjectProfile.GetProfileDataAsync(project);
 
-        public async Task<ApiResponseDto<List<ProjectProfileCumulativeGraphDto>>> GetCumulativeGraphDataAsync(string project)
-            => await _pactClient.PactProjectProfile.GetCumulativeGraphDataAsync(project);
+        public async Task<ApiResponseDto<List<ProjectProfileCumulativeDto>>> GetCumulativeDataAsync(string project)
+            => await _pactClient.PactProjectProfile.GetCumulativeDataAsync(project);
     }
 }

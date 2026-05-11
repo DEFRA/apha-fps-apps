@@ -32,10 +32,10 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectProfileRepositoryTest
             return new ProjectProfileRepository(mockContext.Object);
         }
 
-        #region GetProfileGraphDataAsync
+        #region GetProfileDataAsync
 
         [Fact]
-        public async Task GetProfileGraphDataAsync_MatchingProjectAndMonthNo_ReturnsJoinedData()
+        public async Task GetProfileDataAsync_MatchingProjectAndMonthNo_ReturnsJoinedData()
         {
             var finals = new List<ProjectMonthFinal>
             {
@@ -50,14 +50,14 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectProfileRepositoryTest
 
             var repo = CreateRepository(finals, months, []);
 
-            var result = await repo.GetProfileGraphDataAsync("PRJ1");
+            var result = await repo.GetProfileDataAsync("PRJ1");
 
             Assert.Equal(2, result.Count);
             Assert.All(result, r => Assert.Equal("PRJ1", finals.First(f => f.MonthNo == r.MonthNo).Project));
         }
 
         [Fact]
-        public async Task GetProfileGraphDataAsync_MapsMonthNoProfileAndCostCorrectly()
+        public async Task GetProfileDataAsync_MapsMonthNoProfileAndCostCorrectly()
         {
             var finals = new List<ProjectMonthFinal>
             {
@@ -70,7 +70,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectProfileRepositoryTest
 
             var repo = CreateRepository(finals, months, []);
 
-            var result = await repo.GetProfileGraphDataAsync("PRJ1");
+            var result = await repo.GetProfileDataAsync("PRJ1");
 
             Assert.Single(result);
             Assert.Equal(3, result[0].MonthNo);
@@ -79,7 +79,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectProfileRepositoryTest
         }
 
         [Fact]
-        public async Task GetProfileGraphDataAsync_ReturnsResultsOrderedByMonthNo()
+        public async Task GetProfileDataAsync_ReturnsResultsOrderedByMonthNo()
         {
             var finals = new List<ProjectMonthFinal>
             {
@@ -96,7 +96,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectProfileRepositoryTest
 
             var repo = CreateRepository(finals, months, []);
 
-            var result = await repo.GetProfileGraphDataAsync("PRJ1");
+            var result = await repo.GetProfileDataAsync("PRJ1");
 
             Assert.Equal(3, result.Count);
             Assert.Equal(1, result[0].MonthNo);
@@ -105,7 +105,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectProfileRepositoryTest
         }
 
         [Fact]
-        public async Task GetProfileGraphDataAsync_NoMatchingProject_ReturnsEmptyList()
+        public async Task GetProfileDataAsync_NoMatchingProject_ReturnsEmptyList()
         {
             var finals = new List<ProjectMonthFinal>
             {
@@ -118,13 +118,13 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectProfileRepositoryTest
 
             var repo = CreateRepository(finals, months, []);
 
-            var result = await repo.GetProfileGraphDataAsync("PRJ_NONE");
+            var result = await repo.GetProfileDataAsync("PRJ_NONE");
 
             Assert.Empty(result);
         }
 
         [Fact]
-        public async Task GetProfileGraphDataAsync_NoMatchingMonthNo_ReturnsEmptyList()
+        public async Task GetProfileDataAsync_NoMatchingMonthNo_ReturnsEmptyList()
         {
             var finals = new List<ProjectMonthFinal>
             {
@@ -137,23 +137,23 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectProfileRepositoryTest
 
             var repo = CreateRepository(finals, months, []);
 
-            var result = await repo.GetProfileGraphDataAsync("PRJ1");
+            var result = await repo.GetProfileDataAsync("PRJ1");
 
             Assert.Empty(result);
         }
 
         [Fact]
-        public async Task GetProfileGraphDataAsync_EmptyTables_ReturnsEmptyList()
+        public async Task GetProfileDataAsync_EmptyTables_ReturnsEmptyList()
         {
             var repo = CreateRepository([], [], []);
 
-            var result = await repo.GetProfileGraphDataAsync("PRJ1");
+            var result = await repo.GetProfileDataAsync("PRJ1");
 
             Assert.Empty(result);
         }
 
         [Fact]
-        public async Task GetProfileGraphDataAsync_OnlyMatchesSpecifiedProject_ExcludesOtherProjects()
+        public async Task GetProfileDataAsync_OnlyMatchesSpecifiedProject_ExcludesOtherProjects()
         {
             var finals = new List<ProjectMonthFinal>
             {
@@ -168,7 +168,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectProfileRepositoryTest
 
             var repo = CreateRepository(finals, months, []);
 
-            var result = await repo.GetProfileGraphDataAsync("PRJ1");
+            var result = await repo.GetProfileDataAsync("PRJ1");
 
             Assert.Single(result);
             Assert.Equal(100m, result[0].Cost);
@@ -176,7 +176,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectProfileRepositoryTest
         }
 
         [Fact]
-        public async Task GetProfileGraphDataAsync_NullCostProfile_MapsCostProfileAsNull()
+        public async Task GetProfileDataAsync_NullCostProfile_MapsCostProfileAsNull()
         {
             var finals = new List<ProjectMonthFinal>
             {
@@ -189,7 +189,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectProfileRepositoryTest
 
             var repo = CreateRepository(finals, months, []);
 
-            var result = await repo.GetProfileGraphDataAsync("PRJ1");
+            var result = await repo.GetProfileDataAsync("PRJ1");
 
             Assert.Single(result);
             Assert.Null(result[0].Profile);
@@ -198,10 +198,10 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectProfileRepositoryTest
 
         #endregion
 
-        #region GetCumulativeGraphDataAsync
+        #region GetCumulativeDataAsync
 
         [Fact]
-        public async Task GetCumulativeGraphDataAsync_MatchingData_ReturnsCumulativeResult()
+        public async Task GetCumulativeDataAsync_MatchingData_ReturnsCumulativeResult()
         {
             var finals = new List<ProjectMonthFinal>
             {
@@ -221,13 +221,13 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectProfileRepositoryTest
 
             var repo = CreateRepository(finals, months, periodMonths);
 
-            var result = await repo.GetCumulativeGraphDataAsync("PRJ1");
+            var result = await repo.GetCumulativeDataAsync("PRJ1");
 
             Assert.NotEmpty(result);
         }
 
         [Fact]
-        public async Task GetCumulativeGraphDataAsync_ReturnsResultsOrderedByMonthNo()
+        public async Task GetCumulativeDataAsync_ReturnsResultsOrderedByMonthNo()
         {
             var finals = new List<ProjectMonthFinal>
             {
@@ -250,7 +250,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectProfileRepositoryTest
 
             var repo = CreateRepository(finals, months, periodMonths);
 
-            var result = await repo.GetCumulativeGraphDataAsync("PRJ1");
+            var result = await repo.GetCumulativeDataAsync("PRJ1");
 
             Assert.NotEmpty(result);
             var monthNos = result.Select(r => r.MonthNo).ToList();
@@ -258,7 +258,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectProfileRepositoryTest
         }
 
         [Fact]
-        public async Task GetCumulativeGraphDataAsync_NoMatchingProject_ReturnsEmptyList()
+        public async Task GetCumulativeDataAsync_NoMatchingProject_ReturnsEmptyList()
         {
             var finals = new List<ProjectMonthFinal>
             {
@@ -275,23 +275,23 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectProfileRepositoryTest
 
             var repo = CreateRepository(finals, months, periodMonths);
 
-            var result = await repo.GetCumulativeGraphDataAsync("PRJ_NONE");
+            var result = await repo.GetCumulativeDataAsync("PRJ_NONE");
 
             Assert.Empty(result);
         }
 
         [Fact]
-        public async Task GetCumulativeGraphDataAsync_EmptyTables_ReturnsEmptyList()
+        public async Task GetCumulativeDataAsync_EmptyTables_ReturnsEmptyList()
         {
             var repo = CreateRepository([], [], []);
 
-            var result = await repo.GetCumulativeGraphDataAsync("PRJ1");
+            var result = await repo.GetCumulativeDataAsync("PRJ1");
 
             Assert.Empty(result);
         }
 
         [Fact]
-        public async Task GetCumulativeGraphDataAsync_NoPeriodMonths_ReturnsEmptyList()
+        public async Task GetCumulativeDataAsync_NoPeriodMonths_ReturnsEmptyList()
         {
             var finals = new List<ProjectMonthFinal>
             {
@@ -304,13 +304,13 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectProfileRepositoryTest
 
             var repo = CreateRepository(finals, months, []);
 
-            var result = await repo.GetCumulativeGraphDataAsync("PRJ1");
+            var result = await repo.GetCumulativeDataAsync("PRJ1");
 
             Assert.Empty(result);
         }
 
         [Fact]
-        public async Task GetCumulativeGraphDataAsync_GroupsCorrectlyByMonthNoAndCumCost()
+        public async Task GetCumulativeDataAsync_GroupsCorrectlyByMonthNoAndCumCost()
         {
             // Two ProjectMonth rows with same MonthNo join to same ProjectMonthFinal;
             // grouping should collapse them and sum their CostProfiles.
@@ -331,7 +331,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectProfileRepositoryTest
 
             var repo = CreateRepository(finals, months, periodMonths);
 
-            var result = await repo.GetCumulativeGraphDataAsync("PRJ1");
+            var result = await repo.GetCumulativeDataAsync("PRJ1");
 
             Assert.Single(result);
             Assert.Equal(1, result[0].MonthNo);
@@ -339,7 +339,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectProfileRepositoryTest
         }
 
         [Fact]
-        public async Task GetCumulativeGraphDataAsync_NullCumCost_MapsNullCost()
+        public async Task GetCumulativeDataAsync_NullCumCost_MapsNullCost()
         {
             var finals = new List<ProjectMonthFinal>
             {
@@ -356,7 +356,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectProfileRepositoryTest
 
             var repo = CreateRepository(finals, months, periodMonths);
 
-            var result = await repo.GetCumulativeGraphDataAsync("PRJ1");
+            var result = await repo.GetCumulativeDataAsync("PRJ1");
 
             Assert.Single(result);
             Assert.Null(result[0].Cost);

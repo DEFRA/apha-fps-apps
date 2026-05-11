@@ -27,24 +27,24 @@ namespace Apha.PACT.Api.Controllers
             _mapper = mapper;
         }
 
-        /// <summary>Retrieves the monthly profile and cost data for a given project, used to render the non-cumulative graph.</summary>
-        /// <param name="project">The project code to retrieve profile graph data for.</param>
-        /// <returns>Returns <c>200 OK</c> with a list of <see cref="ProjectProfileGraphRes"/> objects.</returns>
-        [HttpGet("{project}/graph")]
-        public async Task<IActionResult> GetProfileGraph(string project)
+        /// <summary>Retrieves the monthly profile and cost data for a given project, used to render the non-cumulative chart.</summary>
+        /// <param name="project">The project code to retrieve profile data for.</param>
+        /// <returns>Returns <c>200 OK</c> with a list of <see cref="ProjectProfileRes"/> objects.</returns>
+        [HttpGet("{project}/data")]
+        public async Task<IActionResult> GetProfile(string project)
         {
-            IList<ProjectProfileGraphDto> data = await _service.GetProfileGraphDataAsync(project);
-            return Ok(_mapper.Map<IList<ProjectProfileGraphRes>>(data));
+            IList<ProjectProfileDto> data = await _service.GetProfileDataAsync(project);
+            return Ok(_mapper.Map<IList<ProjectProfileRes>>(data));
         }
 
-        /// <summary>Retrieves the cumulative profile and cost data for a given project, used to render the cumulative graph.</summary>
-        /// <param name="project">The project code to retrieve cumulative graph data for.</param>
-        /// <returns>Returns <c>200 OK</c> with a list of <see cref="ProjectProfileCumulativeGraphRes"/> objects.</returns>
-        [HttpGet("{project}/graph/cumulative")]
-        public async Task<IActionResult> GetCumulativeGraph(string project)
+        /// <summary>Retrieves the cumulative profile and cost data for a given project, used to render the cumulative chart.</summary>
+        /// <param name="project">The project code to retrieve cumulative data for.</param>
+        /// <returns>Returns <c>200 OK</c> with a list of <see cref="ProjectProfileCumulativeRes"/> objects.</returns>
+        [HttpGet("{project}/data/cumulative")]
+        public async Task<IActionResult> GetCumulative(string project)
         {
-            IList<ProjectProfileCumulativeGraphDto> data = await _service.GetCumulativeGraphDataAsync(project);
-            return Ok(_mapper.Map<IList<ProjectProfileCumulativeGraphRes>>(data));
+            IList<ProjectProfileCumulativeDto> data = await _service.GetCumulativeDataAsync(project);
+            return Ok(_mapper.Map<IList<ProjectProfileCumulativeRes>>(data));
         }
     }
 }

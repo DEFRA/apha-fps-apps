@@ -112,11 +112,11 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// <summary>
         /// Returns monthly profile and cost data as JSON for rendering the non-cumulative graph.
         /// </summary>
-        /// <param name="parentProject">The project code to retrieve profile graph data for.</param>
+        /// <param name="parentProject">The project code to retrieve profile data for.</param>
         [HttpGet]
-        public async Task<IActionResult> GetProfileGraphData(string parentProject)
+        public async Task<IActionResult> GetProfileData(string parentProject)
         {
-            var result = await _projectProfileService.GetProfileGraphDataAsync(parentProject);
+            var result = await _projectProfileService.GetProfileDataAsync(parentProject);
             if (!result.Success)
                 return Json(new { success = false });
 
@@ -135,11 +135,11 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// <summary>
         /// Returns cumulative profile and cost data as JSON for rendering the cumulative graph.
         /// </summary>
-        /// <param name="parentProject">The project code to retrieve cumulative graph data for.</param>
+        /// <param name="parentProject">The project code to retrieve cumulative data for.</param>
         [HttpGet]
-        public async Task<IActionResult> GetCumulativeGraphData(string parentProject)
+        public async Task<IActionResult> GetCumulativeData(string parentProject)
         {
-            var result = await _projectProfileService.GetCumulativeGraphDataAsync(parentProject);
+            var result = await _projectProfileService.GetCumulativeDataAsync(parentProject);
             if (!result.Success)
                 return Json(new { success = false });
 

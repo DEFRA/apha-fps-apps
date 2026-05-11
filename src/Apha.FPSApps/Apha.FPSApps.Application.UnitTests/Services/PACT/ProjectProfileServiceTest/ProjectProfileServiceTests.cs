@@ -21,23 +21,23 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectProfileService
             _service = new ProjectProfileService(_pactClient);
         }
 
-        #region GetProfileGraphDataAsync Tests
+        #region GetProfileDataAsync Tests
 
         [Fact]
-        public async Task GetProfileGraphDataAsync_WithData_ReturnsSuccessResponse()
+        public async Task GetProfileDataAsync_WithData_ReturnsSuccessResponse()
         {
             // Arrange
             var project = "PRJ1";
-            var graphData = new List<ProjectProfileGraphDto>
+            var profileData = new List<ProjectProfileDto>
             {
-                new ProjectProfileGraphDto { MonthNo = 1, Profile = 100m, TotalCost = 200m },
-                new ProjectProfileGraphDto { MonthNo = 2, Profile = 150m, TotalCost = 300m }
+                new ProjectProfileDto { MonthNo = 1, Profile = 100m, TotalCost = 200m },
+                new ProjectProfileDto { MonthNo = 2, Profile = 150m, TotalCost = 300m }
             };
-            var expectedResponse = ApiResponseDto<List<ProjectProfileGraphDto>>.SuccessResponse(graphData);
-            _pactProjectProfileApiClient.GetProfileGraphDataAsync(project).Returns(expectedResponse);
+            var expectedResponse = ApiResponseDto<List<ProjectProfileDto>>.SuccessResponse(profileData);
+            _pactProjectProfileApiClient.GetProfileDataAsync(project).Returns(expectedResponse);
 
             // Act
-            var result = await _service.GetProfileGraphDataAsync(project);
+            var result = await _service.GetProfileDataAsync(project);
 
             // Assert
             Assert.NotNull(result);
@@ -46,38 +46,38 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectProfileService
             Assert.Equal(1, result.Data![0].MonthNo);
             Assert.Equal(100m, result.Data[0].Profile);
             Assert.Equal(200m, result.Data[0].TotalCost);
-            await _pactProjectProfileApiClient.Received(1).GetProfileGraphDataAsync(project);
+            await _pactProjectProfileApiClient.Received(1).GetProfileDataAsync(project);
         }
 
         [Fact]
-        public async Task GetProfileGraphDataAsync_WithEmptyResult_ReturnsSuccessWithEmptyList()
+        public async Task GetProfileDataAsync_WithEmptyResult_ReturnsSuccessWithEmptyList()
         {
             // Arrange
             var project = "PRJ_NONE";
-            var expectedResponse = ApiResponseDto<List<ProjectProfileGraphDto>>.SuccessResponse(new List<ProjectProfileGraphDto>());
-            _pactProjectProfileApiClient.GetProfileGraphDataAsync(project).Returns(expectedResponse);
+            var expectedResponse = ApiResponseDto<List<ProjectProfileDto>>.SuccessResponse(new List<ProjectProfileDto>());
+            _pactProjectProfileApiClient.GetProfileDataAsync(project).Returns(expectedResponse);
 
             // Act
-            var result = await _service.GetProfileGraphDataAsync(project);
+            var result = await _service.GetProfileDataAsync(project);
 
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Empty(result.Data!);
-            await _pactProjectProfileApiClient.Received(1).GetProfileGraphDataAsync(project);
+            await _pactProjectProfileApiClient.Received(1).GetProfileDataAsync(project);
         }
 
         [Fact]
-        public async Task GetProfileGraphDataAsync_WhenApiFails_ReturnsFailureResponse()
+        public async Task GetProfileDataAsync_WhenApiFails_ReturnsFailureResponse()
         {
             // Arrange
             var project = "PRJ1";
             var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "API Error", Code = "API_ERROR" } };
-            var expectedResponse = ApiResponseDto<List<ProjectProfileGraphDto>>.FailureResponse(errors, new ApiMetaDto());
-            _pactProjectProfileApiClient.GetProfileGraphDataAsync(project).Returns(expectedResponse);
+            var expectedResponse = ApiResponseDto<List<ProjectProfileDto>>.FailureResponse(errors, new ApiMetaDto());
+            _pactProjectProfileApiClient.GetProfileDataAsync(project).Returns(expectedResponse);
 
             // Act
-            var result = await _service.GetProfileGraphDataAsync(project);
+            var result = await _service.GetProfileDataAsync(project);
 
             // Assert
             Assert.NotNull(result);
@@ -89,23 +89,23 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectProfileService
 
         #endregion
 
-        #region GetCumulativeGraphDataAsync Tests
+        #region GetCumulativeDataAsync Tests
 
         [Fact]
-        public async Task GetCumulativeGraphDataAsync_WithData_ReturnsSuccessResponse()
+        public async Task GetCumulativeDataAsync_WithData_ReturnsSuccessResponse()
         {
             // Arrange
             var project = "PRJ1";
-            var cumulativeData = new List<ProjectProfileCumulativeGraphDto>
+            var cumulativeData = new List<ProjectProfileCumulativeDto>
             {
-                new ProjectProfileCumulativeGraphDto { MonthNo = 1, CumulativeProfile = 100m, CumulativeCost = 200m },
-                new ProjectProfileCumulativeGraphDto { MonthNo = 2, CumulativeProfile = 250m, CumulativeCost = 500m }
+                new ProjectProfileCumulativeDto { MonthNo = 1, CumulativeProfile = 100m, CumulativeCost = 200m },
+                new ProjectProfileCumulativeDto { MonthNo = 2, CumulativeProfile = 250m, CumulativeCost = 500m }
             };
-            var expectedResponse = ApiResponseDto<List<ProjectProfileCumulativeGraphDto>>.SuccessResponse(cumulativeData);
-            _pactProjectProfileApiClient.GetCumulativeGraphDataAsync(project).Returns(expectedResponse);
+            var expectedResponse = ApiResponseDto<List<ProjectProfileCumulativeDto>>.SuccessResponse(cumulativeData);
+            _pactProjectProfileApiClient.GetCumulativeDataAsync(project).Returns(expectedResponse);
 
             // Act
-            var result = await _service.GetCumulativeGraphDataAsync(project);
+            var result = await _service.GetCumulativeDataAsync(project);
 
             // Assert
             Assert.NotNull(result);
@@ -114,38 +114,38 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectProfileService
             Assert.Equal(1, result.Data![0].MonthNo);
             Assert.Equal(100m, result.Data[0].CumulativeProfile);
             Assert.Equal(200m, result.Data[0].CumulativeCost);
-            await _pactProjectProfileApiClient.Received(1).GetCumulativeGraphDataAsync(project);
+            await _pactProjectProfileApiClient.Received(1).GetCumulativeDataAsync(project);
         }
 
         [Fact]
-        public async Task GetCumulativeGraphDataAsync_WithEmptyResult_ReturnsSuccessWithEmptyList()
+        public async Task GetCumulativeDataAsync_WithEmptyResult_ReturnsSuccessWithEmptyList()
         {
             // Arrange
             var project = "PRJ_NONE";
-            var expectedResponse = ApiResponseDto<List<ProjectProfileCumulativeGraphDto>>.SuccessResponse(new List<ProjectProfileCumulativeGraphDto>());
-            _pactProjectProfileApiClient.GetCumulativeGraphDataAsync(project).Returns(expectedResponse);
+            var expectedResponse = ApiResponseDto<List<ProjectProfileCumulativeDto>>.SuccessResponse(new List<ProjectProfileCumulativeDto>());
+            _pactProjectProfileApiClient.GetCumulativeDataAsync(project).Returns(expectedResponse);
 
             // Act
-            var result = await _service.GetCumulativeGraphDataAsync(project);
+            var result = await _service.GetCumulativeDataAsync(project);
 
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Empty(result.Data!);
-            await _pactProjectProfileApiClient.Received(1).GetCumulativeGraphDataAsync(project);
+            await _pactProjectProfileApiClient.Received(1).GetCumulativeDataAsync(project);
         }
 
         [Fact]
-        public async Task GetCumulativeGraphDataAsync_WhenApiFails_ReturnsFailureResponse()
+        public async Task GetCumulativeDataAsync_WhenApiFails_ReturnsFailureResponse()
         {
             // Arrange
             var project = "PRJ1";
             var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "API Error", Code = "API_ERROR" } };
-            var expectedResponse = ApiResponseDto<List<ProjectProfileCumulativeGraphDto>>.FailureResponse(errors, new ApiMetaDto());
-            _pactProjectProfileApiClient.GetCumulativeGraphDataAsync(project).Returns(expectedResponse);
+            var expectedResponse = ApiResponseDto<List<ProjectProfileCumulativeDto>>.FailureResponse(errors, new ApiMetaDto());
+            _pactProjectProfileApiClient.GetCumulativeDataAsync(project).Returns(expectedResponse);
 
             // Act
-            var result = await _service.GetCumulativeGraphDataAsync(project);
+            var result = await _service.GetCumulativeDataAsync(project);
 
             // Assert
             Assert.NotNull(result);

@@ -19,10 +19,10 @@ namespace Apha.PACT.Application.UnitTests.Services.ProjectProfileServiceTest
             _sut = new ProjectProfileService(_mockRepository);
         }
 
-        #region GetProfileGraphDataAsync
+        #region GetProfileDataAsync
 
         [Fact]
-        public async Task GetProfileGraphDataAsync_WithData_ReturnsMappedDtoList()
+        public async Task GetProfileDataAsync_WithData_ReturnsMappedDtoList()
         {
             var entities = new List<ProjectProfile>
             {
@@ -30,9 +30,9 @@ namespace Apha.PACT.Application.UnitTests.Services.ProjectProfileServiceTest
                 new() { MonthNo = 2.0, Profile = 150m, Cost = 300m }
             };
 
-            _mockRepository.GetProfileGraphDataAsync("PRJ1").Returns(entities);
+            _mockRepository.GetProfileDataAsync("PRJ1").Returns(entities);
 
-            var result = await _sut.GetProfileGraphDataAsync("PRJ1");
+            var result = await _sut.GetProfileDataAsync("PRJ1");
 
             result.Should().HaveCount(2);
             result[0].MonthNo.Should().Be(1);
@@ -41,48 +41,48 @@ namespace Apha.PACT.Application.UnitTests.Services.ProjectProfileServiceTest
             result[1].MonthNo.Should().Be(2);
             result[1].Profile.Should().Be(150m);
             result[1].TotalCost.Should().Be(300m);
-            await _mockRepository.Received(1).GetProfileGraphDataAsync("PRJ1");
+            await _mockRepository.Received(1).GetProfileDataAsync("PRJ1");
         }
 
         [Fact]
-        public async Task GetProfileGraphDataAsync_EmptyResult_ReturnsEmptyList()
+        public async Task GetProfileDataAsync_EmptyResult_ReturnsEmptyList()
         {
-            _mockRepository.GetProfileGraphDataAsync("PRJ_NONE").Returns(new List<ProjectProfile>());
+            _mockRepository.GetProfileDataAsync("PRJ_NONE").Returns(new List<ProjectProfile>());
 
-            var result = await _sut.GetProfileGraphDataAsync("PRJ_NONE");
+            var result = await _sut.GetProfileDataAsync("PRJ_NONE");
 
             result.Should().BeEmpty();
-            await _mockRepository.Received(1).GetProfileGraphDataAsync("PRJ_NONE");
+            await _mockRepository.Received(1).GetProfileDataAsync("PRJ_NONE");
         }
 
         [Fact]
-        public async Task GetProfileGraphDataAsync_MapsMonthNoFromDoubleToInt()
+        public async Task GetProfileDataAsync_MapsMonthNoFromDoubleToInt()
         {
             var entities = new List<ProjectProfile>
             {
                 new() { MonthNo = 3.0, Profile = 50m, Cost = 75m }
             };
 
-            _mockRepository.GetProfileGraphDataAsync("PRJ1").Returns(entities);
+            _mockRepository.GetProfileDataAsync("PRJ1").Returns(entities);
 
-            var result = await _sut.GetProfileGraphDataAsync("PRJ1");
+            var result = await _sut.GetProfileDataAsync("PRJ1");
 
             result.Should().ContainSingle();
             result[0].MonthNo.Should().Be(3);
-            result[0].Should().BeOfType<ProjectProfileGraphDto>();
+            result[0].Should().BeOfType<ProjectProfileDto>();
         }
 
         [Fact]
-        public async Task GetProfileGraphDataAsync_NullProfileAndCost_MapsNullValues()
+        public async Task GetProfileDataAsync_NullProfileAndCost_MapsNullValues()
         {
             var entities = new List<ProjectProfile>
             {
                 new() { MonthNo = 1.0, Profile = null, Cost = null }
             };
 
-            _mockRepository.GetProfileGraphDataAsync("PRJ1").Returns(entities);
+            _mockRepository.GetProfileDataAsync("PRJ1").Returns(entities);
 
-            var result = await _sut.GetProfileGraphDataAsync("PRJ1");
+            var result = await _sut.GetProfileDataAsync("PRJ1");
 
             result.Should().ContainSingle();
             result[0].Profile.Should().BeNull();
@@ -90,19 +90,19 @@ namespace Apha.PACT.Application.UnitTests.Services.ProjectProfileServiceTest
         }
 
         [Fact]
-        public async Task GetProfileGraphDataAsync_RepositoryThrows_PropagatesException()
+        public async Task GetProfileDataAsync_RepositoryThrows_PropagatesException()
         {
-            _mockRepository.GetProfileGraphDataAsync("PRJ1").ThrowsAsync(new Exception("DB error"));
+            _mockRepository.GetProfileDataAsync("PRJ1").ThrowsAsync(new Exception("DB error"));
 
-            await Assert.ThrowsAsync<Exception>(() => _sut.GetProfileGraphDataAsync("PRJ1"));
+            await Assert.ThrowsAsync<Exception>(() => _sut.GetProfileDataAsync("PRJ1"));
         }
 
         #endregion
 
-        #region GetCumulativeGraphDataAsync
+        #region GetCumulativeDataAsync
 
         [Fact]
-        public async Task GetCumulativeGraphDataAsync_WithData_ReturnsMappedDtoList()
+        public async Task GetCumulativeDataAsync_WithData_ReturnsMappedDtoList()
         {
             var entities = new List<ProjectProfile>
             {
@@ -110,9 +110,9 @@ namespace Apha.PACT.Application.UnitTests.Services.ProjectProfileServiceTest
                 new() { MonthNo = 2.0, Profile = 250m, Cost = 500m }
             };
 
-            _mockRepository.GetCumulativeGraphDataAsync("PRJ1").Returns(entities);
+            _mockRepository.GetCumulativeDataAsync("PRJ1").Returns(entities);
 
-            var result = await _sut.GetCumulativeGraphDataAsync("PRJ1");
+            var result = await _sut.GetCumulativeDataAsync("PRJ1");
 
             result.Should().HaveCount(2);
             result[0].MonthNo.Should().Be(1);
@@ -121,48 +121,48 @@ namespace Apha.PACT.Application.UnitTests.Services.ProjectProfileServiceTest
             result[1].MonthNo.Should().Be(2);
             result[1].CumulativeProfile.Should().Be(250m);
             result[1].CumulativeCost.Should().Be(500m);
-            await _mockRepository.Received(1).GetCumulativeGraphDataAsync("PRJ1");
+            await _mockRepository.Received(1).GetCumulativeDataAsync("PRJ1");
         }
 
         [Fact]
-        public async Task GetCumulativeGraphDataAsync_EmptyResult_ReturnsEmptyList()
+        public async Task GetCumulativeDataAsync_EmptyResult_ReturnsEmptyList()
         {
-            _mockRepository.GetCumulativeGraphDataAsync("PRJ_NONE").Returns(new List<ProjectProfile>());
+            _mockRepository.GetCumulativeDataAsync("PRJ_NONE").Returns(new List<ProjectProfile>());
 
-            var result = await _sut.GetCumulativeGraphDataAsync("PRJ_NONE");
+            var result = await _sut.GetCumulativeDataAsync("PRJ_NONE");
 
             result.Should().BeEmpty();
-            await _mockRepository.Received(1).GetCumulativeGraphDataAsync("PRJ_NONE");
+            await _mockRepository.Received(1).GetCumulativeDataAsync("PRJ_NONE");
         }
 
         [Fact]
-        public async Task GetCumulativeGraphDataAsync_MapsMonthNoFromDoubleToInt()
+        public async Task GetCumulativeDataAsync_MapsMonthNoFromDoubleToInt()
         {
             var entities = new List<ProjectProfile>
             {
                 new() { MonthNo = 5.0, Profile = 400m, Cost = 800m }
             };
 
-            _mockRepository.GetCumulativeGraphDataAsync("PRJ1").Returns(entities);
+            _mockRepository.GetCumulativeDataAsync("PRJ1").Returns(entities);
 
-            var result = await _sut.GetCumulativeGraphDataAsync("PRJ1");
+            var result = await _sut.GetCumulativeDataAsync("PRJ1");
 
             result.Should().ContainSingle();
             result[0].MonthNo.Should().Be(5);
-            result[0].Should().BeOfType<ProjectProfileCumulativeGraphDto>();
+            result[0].Should().BeOfType<ProjectProfileCumulativeDto>();
         }
 
         [Fact]
-        public async Task GetCumulativeGraphDataAsync_NullProfileAndCost_MapsNullValues()
+        public async Task GetCumulativeDataAsync_NullProfileAndCost_MapsNullValues()
         {
             var entities = new List<ProjectProfile>
             {
                 new() { MonthNo = 2.0, Profile = null, Cost = null }
             };
 
-            _mockRepository.GetCumulativeGraphDataAsync("PRJ1").Returns(entities);
+            _mockRepository.GetCumulativeDataAsync("PRJ1").Returns(entities);
 
-            var result = await _sut.GetCumulativeGraphDataAsync("PRJ1");
+            var result = await _sut.GetCumulativeDataAsync("PRJ1");
 
             result.Should().ContainSingle();
             result[0].CumulativeProfile.Should().BeNull();
@@ -170,11 +170,11 @@ namespace Apha.PACT.Application.UnitTests.Services.ProjectProfileServiceTest
         }
 
         [Fact]
-        public async Task GetCumulativeGraphDataAsync_RepositoryThrows_PropagatesException()
+        public async Task GetCumulativeDataAsync_RepositoryThrows_PropagatesException()
         {
-            _mockRepository.GetCumulativeGraphDataAsync("PRJ1").ThrowsAsync(new Exception("DB error"));
+            _mockRepository.GetCumulativeDataAsync("PRJ1").ThrowsAsync(new Exception("DB error"));
 
-            await Assert.ThrowsAsync<Exception>(() => _sut.GetCumulativeGraphDataAsync("PRJ1"));
+            await Assert.ThrowsAsync<Exception>(() => _sut.GetCumulativeDataAsync("PRJ1"));
         }
 
         #endregion

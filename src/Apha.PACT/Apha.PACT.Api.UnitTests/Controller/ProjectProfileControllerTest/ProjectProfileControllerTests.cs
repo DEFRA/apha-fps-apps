@@ -22,106 +22,106 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProjectProfileControllerTest
             _controller = new ProjectProfileController(_serviceMock, _mapperMock);
         }
 
-        #region GetProfileGraph
+        #region GetProfile
 
         [Fact]
-        public async Task GetProfileGraph_WithData_ReturnsOkWithMappedList()
+        public async Task GetProfile_WithData_ReturnsOkWithMappedList()
         {
-            var dtos = new List<ProjectProfileGraphDto>
+            var dtos = new List<ProjectProfileDto>
             {
                 new() { MonthNo = 1, Profile = 100m, TotalCost = 200m },
                 new() { MonthNo = 2, Profile = 150m, TotalCost = 300m }
             };
-            var response = new List<ProjectProfileGraphRes>
+            var response = new List<ProjectProfileRes>
             {
                 new() { MonthNo = 1, Profile = 100m, TotalCost = 200m },
                 new() { MonthNo = 2, Profile = 150m, TotalCost = 300m }
             };
 
-            _serviceMock.GetProfileGraphDataAsync("PRJ1").Returns(dtos);
-            _mapperMock.Map<IList<ProjectProfileGraphRes>>(dtos).Returns(response);
+            _serviceMock.GetProfileDataAsync("PRJ1").Returns(dtos);
+            _mapperMock.Map<IList<ProjectProfileRes>>(dtos).Returns(response);
 
-            var result = await _controller.GetProfileGraph("PRJ1");
-
-            var okResult = Assert.IsType<OkObjectResult>(result);
-            Assert.Equal(response, okResult.Value);
-            await _serviceMock.Received(1).GetProfileGraphDataAsync("PRJ1");
-            _mapperMock.Received(1).Map<IList<ProjectProfileGraphRes>>(dtos);
-        }
-
-        [Fact]
-        public async Task GetProfileGraph_EmptyResult_ReturnsOkWithEmptyList()
-        {
-            var dtos = new List<ProjectProfileGraphDto>();
-            var response = new List<ProjectProfileGraphRes>();
-
-            _serviceMock.GetProfileGraphDataAsync("PRJ_NONE").Returns(dtos);
-            _mapperMock.Map<IList<ProjectProfileGraphRes>>(dtos).Returns(response);
-
-            var result = await _controller.GetProfileGraph("PRJ_NONE");
+            var result = await _controller.GetProfile("PRJ1");
 
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(response, okResult.Value);
+            await _serviceMock.Received(1).GetProfileDataAsync("PRJ1");
+            _mapperMock.Received(1).Map<IList<ProjectProfileRes>>(dtos);
         }
 
         [Fact]
-        public async Task GetProfileGraph_ServiceThrows_PropagatesException()
+        public async Task GetProfile_EmptyResult_ReturnsOkWithEmptyList()
         {
-            _serviceMock.GetProfileGraphDataAsync("PRJ1").ThrowsAsync(new Exception("Service error"));
+            var dtos = new List<ProjectProfileDto>();
+            var response = new List<ProjectProfileRes>();
 
-            await Assert.ThrowsAsync<Exception>(() => _controller.GetProfileGraph("PRJ1"));
+            _serviceMock.GetProfileDataAsync("PRJ_NONE").Returns(dtos);
+            _mapperMock.Map<IList<ProjectProfileRes>>(dtos).Returns(response);
+
+            var result = await _controller.GetProfile("PRJ_NONE");
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(response, okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetProfile_ServiceThrows_PropagatesException()
+        {
+            _serviceMock.GetProfileDataAsync("PRJ1").ThrowsAsync(new Exception("Service error"));
+
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetProfile("PRJ1"));
         }
 
         #endregion
 
-        #region GetCumulativeGraph
+        #region GetCumulative
 
         [Fact]
-        public async Task GetCumulativeGraph_WithData_ReturnsOkWithMappedList()
+        public async Task GetCumulative_WithData_ReturnsOkWithMappedList()
         {
-            var dtos = new List<ProjectProfileCumulativeGraphDto>
+            var dtos = new List<ProjectProfileCumulativeDto>
             {
                 new() { MonthNo = 1, CumulativeProfile = 100m, CumulativeCost = 200m },
                 new() { MonthNo = 2, CumulativeProfile = 250m, CumulativeCost = 500m }
             };
-            var response = new List<ProjectProfileCumulativeGraphRes>
+            var response = new List<ProjectProfileCumulativeRes>
             {
                 new() { MonthNo = 1, CumulativeProfile = 100m, CumulativeCost = 200m },
                 new() { MonthNo = 2, CumulativeProfile = 250m, CumulativeCost = 500m }
             };
 
-            _serviceMock.GetCumulativeGraphDataAsync("PRJ1").Returns(dtos);
-            _mapperMock.Map<IList<ProjectProfileCumulativeGraphRes>>(dtos).Returns(response);
+            _serviceMock.GetCumulativeDataAsync("PRJ1").Returns(dtos);
+            _mapperMock.Map<IList<ProjectProfileCumulativeRes>>(dtos).Returns(response);
 
-            var result = await _controller.GetCumulativeGraph("PRJ1");
-
-            var okResult = Assert.IsType<OkObjectResult>(result);
-            Assert.Equal(response, okResult.Value);
-            await _serviceMock.Received(1).GetCumulativeGraphDataAsync("PRJ1");
-            _mapperMock.Received(1).Map<IList<ProjectProfileCumulativeGraphRes>>(dtos);
-        }
-
-        [Fact]
-        public async Task GetCumulativeGraph_EmptyResult_ReturnsOkWithEmptyList()
-        {
-            var dtos = new List<ProjectProfileCumulativeGraphDto>();
-            var response = new List<ProjectProfileCumulativeGraphRes>();
-
-            _serviceMock.GetCumulativeGraphDataAsync("PRJ_NONE").Returns(dtos);
-            _mapperMock.Map<IList<ProjectProfileCumulativeGraphRes>>(dtos).Returns(response);
-
-            var result = await _controller.GetCumulativeGraph("PRJ_NONE");
+            var result = await _controller.GetCumulative("PRJ1");
 
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(response, okResult.Value);
+            await _serviceMock.Received(1).GetCumulativeDataAsync("PRJ1");
+            _mapperMock.Received(1).Map<IList<ProjectProfileCumulativeRes>>(dtos);
         }
 
         [Fact]
-        public async Task GetCumulativeGraph_ServiceThrows_PropagatesException()
+        public async Task GetCumulative_EmptyResult_ReturnsOkWithEmptyList()
         {
-            _serviceMock.GetCumulativeGraphDataAsync("PRJ1").ThrowsAsync(new Exception("Service error"));
+            var dtos = new List<ProjectProfileCumulativeDto>();
+            var response = new List<ProjectProfileCumulativeRes>();
 
-            await Assert.ThrowsAsync<Exception>(() => _controller.GetCumulativeGraph("PRJ1"));
+            _serviceMock.GetCumulativeDataAsync("PRJ_NONE").Returns(dtos);
+            _mapperMock.Map<IList<ProjectProfileCumulativeRes>>(dtos).Returns(response);
+
+            var result = await _controller.GetCumulative("PRJ_NONE");
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(response, okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetCumulative_ServiceThrows_PropagatesException()
+        {
+            _serviceMock.GetCumulativeDataAsync("PRJ1").ThrowsAsync(new Exception("Service error"));
+
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetCumulative("PRJ1"));
         }
 
         #endregion

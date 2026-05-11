@@ -94,8 +94,8 @@ namespace Apha.Common.Constants
         public const string UpdateProjectMonth = "api/v1/projectmonth";
         public const string DeleteProjectMonth = "api/v1/projectmonth/project/{0}/month/{1}";
 
-        // Project Profile Graph
-        public const string GetProjectProfileGraph = "api/v1/projectprofile/{0}/graph";
-        public const string GetProjectProfileCumulativeGraph = "api/v1/projectprofile/{0}/graph/cumulative";
+        // Project Profile
+        public const string GetProjectProfile = "api/v1/projectprofile/{0}/data";
+        public const string GetProjectProfileCumulative = "api/v1/projectprofile/{0}/data/cumulative";
     }
 }

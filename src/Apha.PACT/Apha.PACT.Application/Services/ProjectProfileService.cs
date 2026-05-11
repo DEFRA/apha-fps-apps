@@ -13,10 +13,10 @@ namespace Apha.PACT.Application.Services
             _repository = repository;
         }
 
-        public async Task<IList<ProjectProfileGraphDto>> GetProfileGraphDataAsync(string project)
+        public async Task<IList<ProjectProfileDto>> GetProfileDataAsync(string project)
         {
-            var data = await _repository.GetProfileGraphDataAsync(project);
-            return data.Select(d => new ProjectProfileGraphDto
+            var data = await _repository.GetProfileDataAsync(project);
+            return data.Select(d => new ProjectProfileDto
             {
                 MonthNo = (int)d.MonthNo,
                 Profile = d.Profile,
@@ -24,10 +24,10 @@ namespace Apha.PACT.Application.Services
             }).ToList();
         }
 
-        public async Task<IList<ProjectProfileCumulativeGraphDto>> GetCumulativeGraphDataAsync(string project)
+        public async Task<IList<ProjectProfileCumulativeDto>> GetCumulativeDataAsync(string project)
         {
-            var data = await _repository.GetCumulativeGraphDataAsync(project);
-            return data.Select(d => new ProjectProfileCumulativeGraphDto
+            var data = await _repository.GetCumulativeDataAsync(project);
+            return data.Select(d => new ProjectProfileCumulativeDto
             {
                 MonthNo = (int)d.MonthNo,
                 CumulativeProfile = d.Profile,
