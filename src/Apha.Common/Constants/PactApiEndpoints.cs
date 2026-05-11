@@ -87,7 +87,6 @@ namespace Apha.Common.Constants
         public const string GetTestReqmtPricing = "api/v1/testrequirement/pricing";
 
         // Project Month (Cost Profile Grid)
-        public const string GetMonths = "api/v1/projectmonth/months";
         public const string GetProjectMonthsByProject = "api/v1/projectmonth/project/{0}";
         public const string GetProjectMonthById = "api/v1/projectmonth/project/{0}/month/{1}";
         public const string CreateProjectMonth = "api/v1/projectmonth";

@@ -22,58 +22,6 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProjectMonthControllerTest
             _controller = new ProjectMonthController(_serviceMock, _mapperMock);
         }
 
-        #region GetMonths
-
-        [Fact]
-        public async Task GetMonths_WithData_ReturnsOkWithMappedList()
-        {
-            var dtos = new List<MonthDto>
-            {
-                new() { MonthNumber = 1, MonthName = "January" },
-                new() { MonthNumber = 2, MonthName = "February" }
-            };
-            var response = new List<MonthRes>
-            {
-                new() { MonthNumber = 1, MonthName = "January" },
-                new() { MonthNumber = 2, MonthName = "February" }
-            };
-
-            _serviceMock.GetMonthsAsync().Returns(dtos);
-            _mapperMock.Map<IList<MonthRes>>(dtos).Returns(response);
-
-            var result = await _controller.GetMonths();
-
-            var okResult = Assert.IsType<OkObjectResult>(result);
-            Assert.Equal(response, okResult.Value);
-            await _serviceMock.Received(1).GetMonthsAsync();
-            _mapperMock.Received(1).Map<IList<MonthRes>>(dtos);
-        }
-
-        [Fact]
-        public async Task GetMonths_EmptyList_ReturnsOkWithEmptyList()
-        {
-            var dtos = new List<MonthDto>();
-            var response = new List<MonthRes>();
-
-            _serviceMock.GetMonthsAsync().Returns(dtos);
-            _mapperMock.Map<IList<MonthRes>>(dtos).Returns(response);
-
-            var result = await _controller.GetMonths();
-
-            var okResult = Assert.IsType<OkObjectResult>(result);
-            Assert.Equal(response, okResult.Value);
-        }
-
-        [Fact]
-        public async Task GetMonths_ServiceThrows_PropagatesException()
-        {
-            _serviceMock.GetMonthsAsync().ThrowsAsync(new Exception("Service error"));
-
-            await Assert.ThrowsAsync<Exception>(() => _controller.GetMonths());
-        }
-
-        #endregion
-
         #region GetProjectMonthByProject
 
         [Fact]

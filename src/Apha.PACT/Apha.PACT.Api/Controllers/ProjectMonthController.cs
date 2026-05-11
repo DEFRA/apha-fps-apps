@@ -27,15 +27,6 @@ namespace Apha.PACT.Api.Controllers
             _mapper = mapper;
         }
 
-        /// <summary>Retrieves all months (accounting period and month name lookup).</summary>
-        /// <returns>Returns <c>200 OK</c> with a list of <see cref="MonthRes"/> objects.</returns>
-        [HttpGet("months")]
-        public async Task<IActionResult> GetMonths()
-        {
-            IList<MonthDto> items = await _service.GetMonthsAsync();
-            return Ok(_mapper.Map<IList<MonthRes>>(items));
-        }
-
         /// <summary>Retrieves all cost profile months for a given project.</summary>
         /// <param name="project">The project code to retrieve cost profile months for.</param>
         /// <returns>Returns <c>200 OK</c> with a list of <see cref="ProjectMonthRes"/> objects.</returns>

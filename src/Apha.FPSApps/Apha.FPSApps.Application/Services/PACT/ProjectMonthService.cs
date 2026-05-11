@@ -14,9 +14,6 @@ namespace Apha.FPSApps.Application.Services.PACT
             _pactClient = pactClient;
         }
 
-        public async Task<ApiResponseDto<List<MonthDto>>> GetMonthsAsync()
-            => await _pactClient.PactProjectMonth.GetMonthsAsync();
-
         public async Task<ApiResponseDto<List<ProjectMonthDto>>> GetProjectMonthByProjectAsync(string project)
             => await _pactClient.PactProjectMonth.GetProjectMonthByProjectAsync(project);
 

@@ -491,49 +491,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectProfileControllerTe
 
         #endregion
 
-        #region GetMonths
-
-        [Fact]
-        public async Task GetMonths_ServiceSuccess_ReturnsJsonWithData()
-        {
-            // Arrange
-            var months = new List<MonthDto>
-            {
-                new() { Monthnumber = 1, Monthname = "January" },
-                new() { Monthnumber = 2, Monthname = "February" }
-            };
-            _projectMonthService.GetMonthsAsync()
-                .Returns(ApiResponseDto<List<MonthDto>>.SuccessResponse(months));
-
-            // Act
-            var result = await _controller.GetMonths();
-
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var element = GetJsonElement(jsonResult);
-            Assert.True(element.GetProperty("success").GetBoolean());
-        }
-
-        [Fact]
-        public async Task GetMonths_ServiceFails_ReturnsSuccessFalseWithMessage()
-        {
-            // Arrange
-            var errors = new List<ApiErrorDto> { new() { Code = "API_ERROR", Message = "Error" } };
-            _projectMonthService.GetMonthsAsync()
-                .Returns(ApiResponseDto<List<MonthDto>>.FailureResponse(errors, new ApiMetaDto()));
-
-            // Act
-            var result = await _controller.GetMonths();
-
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var element = GetJsonElement(jsonResult);
-            Assert.False(element.GetProperty("success").GetBoolean());
-            Assert.Equal("Failed to retrieve months.", element.GetProperty("message").GetString());
-        }
-
-        #endregion
-
         #region GetProjectMonth
 
         [Fact]

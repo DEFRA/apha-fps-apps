@@ -23,56 +23,6 @@ namespace Apha.PACT.Application.UnitTests.Services.ProjectMonthServiceTest
             _sut = new ProjectMonthService(_mockRepository, _mockMapper);
         }
 
-        #region GetMonthsAsync
-
-        [Fact]
-        public async Task GetMonthsAsync_WithData_ReturnsMappedDtoList()
-        {
-            var entities = new List<Month>
-            {
-                new() { MonthNumber = 1, MonthName = "January" },
-                new() { MonthNumber = 2, MonthName = "February" }
-            };
-            var dtos = new List<MonthDto>
-            {
-                new() { MonthNumber = 1, MonthName = "January" },
-                new() { MonthNumber = 2, MonthName = "February" }
-            };
-
-            _mockRepository.GetMonthsAsync().Returns(entities);
-            _mockMapper.Map<IList<MonthDto>>(entities).Returns(dtos);
-
-            var result = await _sut.GetMonthsAsync();
-
-            result.Should().BeSameAs(dtos);
-            await _mockRepository.Received(1).GetMonthsAsync();
-            _mockMapper.Received(1).Map<IList<MonthDto>>(entities);
-        }
-
-        [Fact]
-        public async Task GetMonthsAsync_EmptyList_ReturnsMappedEmptyList()
-        {
-            var entities = new List<Month>();
-            var dtos = new List<MonthDto>();
-
-            _mockRepository.GetMonthsAsync().Returns(entities);
-            _mockMapper.Map<IList<MonthDto>>(entities).Returns(dtos);
-
-            var result = await _sut.GetMonthsAsync();
-
-            result.Should().BeEmpty();
-        }
-
-        [Fact]
-        public async Task GetMonthsAsync_RepositoryThrows_PropagatesException()
-        {
-            _mockRepository.GetMonthsAsync().ThrowsAsync(new Exception("DB error"));
-
-            await Assert.ThrowsAsync<Exception>(() => _sut.GetMonthsAsync());
-        }
-
-        #endregion
-
         #region GetProjectMonthByProjectAsync
 
         [Fact]

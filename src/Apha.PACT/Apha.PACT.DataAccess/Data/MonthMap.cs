@@ -6,18 +6,17 @@ namespace Apha.PACT.DataAccess.Data
 {
     public class MonthMap : IEntityTypeConfiguration<Month>
     {
-        public void Configure(EntityTypeBuilder<Month> entity)
+        public void Configure(EntityTypeBuilder<Month> builder)
         {
-            entity
-                 .HasNoKey()
-                 .ToTable("tlkpmonth", "fps");
+            builder.ToTable("tblkpmonth", "fps");
+            builder.HasKey(e => e.MonthNumber);
 
-            entity.Property(e => e.AccntsPeriod).HasColumnName("accntsperiod");
-            entity.Property(e => e.FQuarter).HasColumnName("fquarter");
-            entity.Property(e => e.MonthName)
-                .HasMaxLength(50)
+            builder.Property(e => e.MonthNumber)
+                .HasColumnName("monthnumber");
+
+            builder.Property(e => e.MonthName)
+                .HasMaxLength(20)
                 .HasColumnName("monthname");
-            entity.Property(e => e.MonthNumber).HasColumnName("monthnumber");
         }
     }
 }

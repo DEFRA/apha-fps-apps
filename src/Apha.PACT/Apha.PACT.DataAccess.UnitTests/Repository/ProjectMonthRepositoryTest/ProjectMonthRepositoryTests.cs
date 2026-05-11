@@ -55,54 +55,6 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectMonthRepositoryTest
             int fpsYear = DefaultFpsYear)
             => CreateRepositoryWithMocks(projectMonths, months, fpsYear).Repo;
 
-        #region GetMonthsAsync
-
-        [Fact]
-        public async Task GetMonthsAsync_WithData_ReturnsAllMonthsWithMappedFields()
-        {
-            var months = new List<Month>
-            {
-                new() { MonthNumber = 1, MonthName = "January",  AccntsPeriod = 1 },
-                new() { MonthNumber = 2, MonthName = "February", AccntsPeriod = 2 },
-                new() { MonthNumber = 3, MonthName = "March",    AccntsPeriod = 3 }
-            };
-            var repo = CreateRepository([], months);
-
-            var result = await repo.GetMonthsAsync();
-
-            Assert.Equal(3, result.Count);
-            Assert.Equal((short)1, result[0].MonthNumber);
-            Assert.Equal("January", result[0].MonthName);
-            Assert.Equal((short)1, result[0].AccntsPeriod);
-        }
-
-        [Fact]
-        public async Task GetMonthsAsync_EmptyTable_ReturnsEmptyList()
-        {
-            var repo = CreateRepository([], []);
-
-            var result = await repo.GetMonthsAsync();
-
-            Assert.Empty(result);
-        }
-
-        [Fact]
-        public async Task GetMonthsAsync_MapsAccntsPeriodCorrectly()
-        {
-            var months = new List<Month>
-            {
-                new() { MonthNumber = 4, MonthName = "April", AccntsPeriod = 10 }
-            };
-            var repo = CreateRepository([], months);
-
-            var result = await repo.GetMonthsAsync();
-
-            Assert.Single(result);
-            Assert.Equal((short)10, result[0].AccntsPeriod);
-        }
-
-        #endregion
-
         #region GetProjectMonthByProjectAsync
 
         [Fact]

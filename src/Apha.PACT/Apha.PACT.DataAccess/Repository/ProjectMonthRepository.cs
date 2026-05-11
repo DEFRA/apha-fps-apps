@@ -14,19 +14,6 @@ namespace Apha.PACT.DataAccess.Repository
             _fpsRequestContext = fpsRequestContext;
         }
 
-        public async Task<IList<Month>> GetMonthsAsync()
-        {
-            return await _context.Months
-                .AsNoTracking()
-                 .Select(m => new Month
-                 {
-                     AccntsPeriod = m.AccntsPeriod,
-                     MonthName = m.MonthName,
-                     MonthNumber = m.MonthNumber,
-                 })
-                .ToListAsync();
-        }
-
         public async Task<IList<ProjectMonth>> GetProjectMonthByProjectAsync(string project)
         {
             return await _context.ProjectMonths

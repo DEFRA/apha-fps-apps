@@ -19,17 +19,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             _mapper = mapper;
         }
 
-        public async Task<ApiResponseDto<List<MonthDto>>> GetMonthsAsync()
-        {
-            var response = await _http.GetAsync<List<MonthRes>>(PactApiEndpoints.GetMonths);
-
-            if (response.Success)
-                return _mapper.Map<ApiResponseDto<List<MonthDto>>>(response);
-
-            var dto = _mapper.Map<ApiResponseDto<List<MonthDto>>>(response);
-            return ApiResponseDto<List<MonthDto>>.FailureResponse(dto.Errors, dto.Meta);
-        }
-
         public async Task<ApiResponseDto<List<ProjectMonthDto>>> GetProjectMonthByProjectAsync(string project)
         {
             var response = await _http.GetAsync<List<ProjectMonthRes>>(

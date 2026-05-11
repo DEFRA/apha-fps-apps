@@ -23,66 +23,6 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectMonthServiceTe
             _service = new ProjectMonthService(_pactClient);
         }
 
-        #region GetMonthsAsync Tests
-
-        [Fact]
-        public async Task GetMonthsAsync_WithData_ReturnsSuccessResponse()
-        {
-            // Arrange
-            var months = new List<MonthDto>
-            {
-                new() { Monthnumber = 1, Monthname = "January" },
-                new() { Monthnumber = 2, Monthname = "February" }
-            };
-            var expectedResponse = ApiResponseDto<List<MonthDto>>.SuccessResponse(months);
-            _pactProjectMonthApiClient.GetMonthsAsync().Returns(expectedResponse);
-
-            // Act
-            var result = await _service.GetMonthsAsync();
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.True(result.Success);
-            Assert.Equal(2, result.Data?.Count);
-            await _pactProjectMonthApiClient.Received(1).GetMonthsAsync();
-        }
-
-        [Fact]
-        public async Task GetMonthsAsync_WithEmptyList_ReturnsSuccessWithEmptyList()
-        {
-            // Arrange
-            var expectedResponse = ApiResponseDto<List<MonthDto>>.SuccessResponse(new List<MonthDto>());
-            _pactProjectMonthApiClient.GetMonthsAsync().Returns(expectedResponse);
-
-            // Act
-            var result = await _service.GetMonthsAsync();
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.True(result.Success);
-            Assert.Empty(result.Data!);
-        }
-
-        [Fact]
-        public async Task GetMonthsAsync_WhenApiFails_ReturnsFailureResponse()
-        {
-            // Arrange
-            var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "API Error", Code = "API_ERROR" } };
-            var expectedResponse = ApiResponseDto<List<MonthDto>>.FailureResponse(errors, new ApiMetaDto());
-            _pactProjectMonthApiClient.GetMonthsAsync().Returns(expectedResponse);
-
-            // Act
-            var result = await _service.GetMonthsAsync();
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-        }
-
-        #endregion
-
         #region GetProjectMonthByProjectAsync Tests
 
         [Fact]

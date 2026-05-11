@@ -4,7 +4,6 @@ namespace Apha.PACT.Application.Interfaces
 {
     public interface IProjectMonthService
     {
-        Task<IList<MonthDto>> GetMonthsAsync();
         Task<IList<ProjectMonthDto>> GetProjectMonthByProjectAsync(string project);
         Task<ProjectMonthDto?> GetProjectMonthAsync(string project, int monthNo);
         Task<ProjectMonthDto> CreateProjectMonthAsync(ProjectMonthDto dto);

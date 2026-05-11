@@ -18,12 +18,6 @@ namespace Apha.PACT.Application.Services
             _mapper = mapper;
         }
 
-        public async Task<IList<MonthDto>> GetMonthsAsync()
-        {
-            IList<Month> entities = await _repository.GetMonthsAsync();
-            return _mapper.Map<IList<MonthDto>>(entities);
-        }
-
         public async Task<IList<ProjectMonthDto>> GetProjectMonthByProjectAsync(string project)
         {
             IList<ProjectMonth> entities = await _repository.GetProjectMonthByProjectAsync(project);

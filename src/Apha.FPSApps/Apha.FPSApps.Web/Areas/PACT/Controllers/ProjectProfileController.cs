@@ -158,19 +158,6 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         // ── COST PROFILE CRUD ─────────────────────────────────────────────────
 
         /// <summary>
-        /// Returns all available accounting months as JSON for populating month dropdowns.
-        /// </summary>
-        [HttpGet]
-        public async Task<IActionResult> GetMonths()
-        {
-            var result = await _projectMonthService.GetMonthsAsync();
-            if (!result.Success)
-                return Json(new { success = false, message = "Failed to retrieve months." });
-
-            return Json(new { success = true, data = result.Data });
-        }
-
-        /// <summary>
         /// Returns the add/edit partial view for a cost profile month record.
         /// Passing <c>monthNo = 0</c> opens the form in add mode; any other value loads the existing record for editing.
         /// </summary>
