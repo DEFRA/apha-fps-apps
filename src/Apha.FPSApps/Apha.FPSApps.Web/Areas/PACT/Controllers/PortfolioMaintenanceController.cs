@@ -309,9 +309,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 AddFunction = "addPortfolioTimeCode",
                 EditFunction = "editPortfolioTimeCode",
                 DeleteFunction = "deletePortfolioTimeCode",
-                BindGridUrl = string.IsNullOrEmpty(parentProject)
-                    ? "/PACT/PortfolioMaintenance/LoadTimeCodeGrid"
-                    : $"/PACT/PortfolioMaintenance/LoadTimeCodeGrid?parentProject={Uri.EscapeDataString(parentProject)}{(string.IsNullOrEmpty(testCode) ? "" : "&testCode=" + Uri.EscapeDataString(testCode))}",
+                BindGridUrl = "/PACT/PortfolioMaintenance/LoadTimeCodeGrid",
+                ExtraFilterMethod = "getTimeCodeGridExtraFilters",
                 Data = items,
                 Columns = GridDataProvider.GetColumnsDefination<PortfolioTimeCodeViewModel>(),
                 Pagination = pagination,

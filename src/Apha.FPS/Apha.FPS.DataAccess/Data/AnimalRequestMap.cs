@@ -10,11 +10,13 @@ namespace Apha.FPS.DataAccess.Data
 
         public void Configure(EntityTypeBuilder<AnimalRequest> entity)
         {
-            entity.HasKey(e => e.IndCounter).HasName("tblanimalreq_pk__tblanimalreq__7271068f");
+            entity.HasKey(e => new { e.IndCounter, e.FpsYear }).HasName("pk_tblanimalreq");
 
             entity.ToTable("tblanimalreq", "fps");
 
-            entity.Property(e => e.IndCounter).HasColumnName("indcounter");
+            entity.Property(e => e.IndCounter)
+                .ValueGeneratedOnAdd()
+                .HasColumnName("indcounter");
             entity.Property(e => e.AnimalType)
                 .HasMaxLength(50)
                 .HasColumnName("animaltype");

@@ -10,14 +10,18 @@ namespace Apha.FPS.DataAccess.Data
 
         public void Configure(EntityTypeBuilder<WgEmployee> entity)
         {
-            entity.HasKey(e => e.PactId).HasName("tblwgemployee_pk_tblwgemployee_1__10");
+            entity.HasKey(e => new { e.PactId, e.FpsYear }).HasName("pk_tblwgemployee");
 
             entity.ToTable("tblwgemployee", "fps");
+
+            entity.HasIndex(e => e.MakeAvailable, "ix_tblwgemployee_makeavailable");
 
             entity.Property(e => e.PactId)
                 .HasMaxLength(50)
                 .HasColumnName("pactid");
-            entity.Property(e => e.EndDate).HasColumnName("enddate");
+            entity.Property(e => e.EndDate)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("enddate");
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.HoursPerWeek).HasColumnName("hoursperweek");
             entity.Property(e => e.HrsAvail).HasColumnName("hrsavail");
@@ -37,7 +41,9 @@ namespace Apha.FPS.DataAccess.Data
             entity.Property(e => e.SpNumber)
                 .HasMaxLength(10)
                 .HasColumnName("spnumber");
-            entity.Property(e => e.StartDate).HasColumnName("startdate");
+            entity.Property(e => e.StartDate)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("startdate");
             entity.Property(e => e.TimeRecorder)
                 .HasDefaultValue(0)
                 .HasColumnName("timerecorder");

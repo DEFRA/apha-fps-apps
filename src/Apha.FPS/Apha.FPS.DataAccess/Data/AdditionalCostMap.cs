@@ -8,17 +8,17 @@ namespace Apha.FPS.DataAccess.Data
     {
         public void Configure(EntityTypeBuilder<AdditionalCost> entity)
         {
-            entity.HasKey(e => new { e.JobCode, e.Account, e.Description })
-                  .HasName("pk__tbladditionalcos__160f4887");
+            entity.HasKey(e => new { e.JobCode, e.Account, e.Description, e.FpsYear })
+                  .HasName("pk_tbladditionalcosts");
 
             entity.ToTable("tbladditionalcosts", "fps");
 
             entity.Property(e => e.JobCode)
-                .HasColumnType("citext")
+                .HasMaxLength(20)
                 .HasColumnName("jobcode");
 
             entity.Property(e => e.Account)
-                .HasColumnType("citext")
+                .HasMaxLength(50)
                 .HasColumnName("account");
 
             entity.Property(e => e.Description)
@@ -26,6 +26,7 @@ namespace Apha.FPS.DataAccess.Data
                 .HasColumnName("description");
 
             entity.Property(e => e.ItemCost)
+                .HasDefaultValueSql("0")
                 .HasColumnType("money")
                 .HasColumnName("itemcost");
 

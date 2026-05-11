@@ -20,14 +20,14 @@ namespace Apha.FPS.DataAccess.Data
                 .HasColumnName("budget_ext");
             entity.Property(e => e.Comments).HasColumnName("comments");
             entity.Property(e => e.Contract)
-                .HasColumnType("citext")
+                .HasMaxLength(10)
                 .HasColumnName("contract");
             entity.Property(e => e.CostCentre).HasColumnName("costcentre");
             entity.Property(e => e.Customer)
-                .HasColumnType("citext")
+                .HasMaxLength(50)
                 .HasColumnName("customer");
             entity.Property(e => e.Disease)
-                .HasColumnType("citext")
+                .HasMaxLength(50)
                 .HasColumnName("disease");
             entity.Property(e => e.Finished).HasColumnName("finished");
             entity.Property(e => e.ForecastCost)
@@ -42,19 +42,19 @@ namespace Apha.FPS.DataAccess.Data
                 .HasMaxLength(50)
                 .HasColumnName("oracleprojectcode");
             entity.Property(e => e.ParentProject)
-                .HasColumnType("citext")
+                .HasMaxLength(20)
                 .HasColumnName("parentproject");
             entity.Property(e => e.Program)
-                .HasColumnType("citext")
+                .HasMaxLength(10)
                 .HasColumnName("program");
             entity.Property(e => e.ProjectGroup)
-                .HasColumnType("citext")
+                .HasMaxLength(50)
                 .HasColumnName("projectgroup");
             entity.Property(e => e.ProjectParent)
                 .HasMaxLength(50)
                 .HasColumnName("projectparent");
             entity.Property(e => e.ProjectStatus)
-                .HasColumnType("citext")
+                .HasMaxLength(50)
                 .HasColumnName("projectstatus");
             entity.Property(e => e.ProjectTitle)
                 .HasMaxLength(200)
@@ -63,7 +63,7 @@ namespace Apha.FPS.DataAccess.Data
                 .HasColumnType("money")
                 .HasColumnName("pvsincome");
             entity.Property(e => e.SubAccountCode)
-                .HasColumnType("citext")
+                .HasMaxLength(50)
                 .HasColumnName("subaccountcode");
             entity.Property(e => e.TransferIncome)
                 .HasColumnType("money")

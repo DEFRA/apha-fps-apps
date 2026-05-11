@@ -110,6 +110,12 @@
                                 }
                     </tr>
                     <!-- Filter Row -->
+                    @{
+                        bool hasFilterableColumns = Model.Columns != null &&
+                            ((IEnumerable<dynamic>)Model.Columns).Any(c => c.IsVisible && c.IsFilterable);
+                    }
+                    @if (hasFilterableColumns)
+                    {
                     <tr class="filter-row govuk-table__row">
                         @if (Model.ShowCheckboxColumn)
                         {
@@ -165,6 +171,7 @@
                                             <th scope="col"></th>
                                         }
                                     </tr>
+                    }
                 </thead>
                 <tbody class="govuk-table__body">
                     @{
@@ -467,7 +474,7 @@
             });
 
             // Filter change
-            $(gridContainerSelector).on('change', '.grid-filter', function () {
+            $(gridContainerSelector).off('change', '.grid-filter').on('change', '.grid-filter', function () {
                 gridManager.reloadGrid({ page: 1 });
             });
 

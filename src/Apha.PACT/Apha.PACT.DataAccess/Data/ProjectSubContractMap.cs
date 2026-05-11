@@ -32,7 +32,7 @@ namespace Apha.PACT.DataAccess.Data
                 .HasColumnName("description");
             entity.Property(e => e.Month).HasColumnName("month");
             entity.Property(e => e.Project)
-                .HasColumnType("citext")
+                .HasMaxLength(20)
                 .HasColumnName("project");
             entity.Property(e => e.Supplier)
                 .HasMaxLength(50)

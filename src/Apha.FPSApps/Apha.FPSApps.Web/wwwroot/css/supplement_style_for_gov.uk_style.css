@@ -1,4 +1,4 @@
-/*pupose: This file is to supply additional css classes over the default style of gov.uk NOT TO OVERRIDE, to reduce alignment issues, text overflow issues which imapact basic alignment for eg checkbox label.*/
+﻿﻿/*pupose: This file is to supply additional css classes over the default style of gov.uk NOT TO OVERRIDE, to reduce alignment issues, text overflow issues which imapact basic alignment for eg checkbox label.*/
 
 
 /* for reference only, */
@@ -40,9 +40,13 @@
     --magenta-shade-25: #98285d;
     --black-tint-80: #cecece;
     --black-tint-95: #f3f3f3;
+    --black-tint-80: #cecece;
+    --black-tint-95: #f3f3f3;
+
 }
 
-html, body {
+html,
+body {
     height: 100%;
     margin: 0;
 }
@@ -58,11 +62,13 @@ body {
     flex: 1;
 }
 
-footer {
-    text-align: center;
-}
-
-table, th, td, button, label, input {
+table,
+th,
+td,
+button,
+label,
+input,
+a {
     font-size: 1rem !important;
 }
 
@@ -78,8 +84,24 @@ table, th, td, button, label, input {
     width: 50% !important;
 }
 
+.sup_select_option_width_50 {
+    width: 50% !important;
+}
+
 .sup_margin_0 {
     margin: 0 !important;
+}
+
+.sup_margin_10 {
+    margin: 10px !important;
+}
+
+.sup_margin_5 {
+    margin: 5px !important;
+}
+
+.sup_margin_bottom_10_left_15 {
+    margin: 0 0 10px 15px !important;
 }
 
 .sup_margin_top_10 {
@@ -90,8 +112,24 @@ table, th, td, button, label, input {
     margin: 5px 0;
 }
 
+.sup_margin_tb_10 {
+    margin: 10px 0;
+}
+
+.sup_margin_tb_20 {
+    margin: 20px 0;
+}
+
+.sup_margin_tb_13 {
+    margin: 13px 0;
+}
+
 .sup_margin_bottom_10 {
     margin-bottom: 10px;
+}
+
+.sup_margin_top_0 {
+    margin-top: 0 !important;
 }
 
 .sup_margin_bottom_0 {
@@ -101,6 +139,10 @@ table, th, td, button, label, input {
 
 .sup_margin_top_20 {
     margin-top: 20px;
+}
+
+.sup_margin_top_25 {
+    margin-top: 25px;
 }
 
 .sup_margin_top_25 {
@@ -139,7 +181,7 @@ table, th, td, button, label, input {
 
 
 .sup_justify_content {
-    justify-content: space-between;
+    justify-content: space-between !important;
 }
 
 .sup_border {
@@ -189,6 +231,30 @@ table, th, td, button, label, input {
     border-left: 0 !important;
 }
 
+.sup_blue_border_bottom_2 {
+    border-bottom: 2px solid var(--govuk-brand-colour);
+}
+
+
+.sup_border-top {
+    border-top: 1px solid var(--govuk-border-colour);
+}
+
+.sup_border-left {
+    border-left: 1px solid var(--govuk-border-colour) !important;
+    border-top: 0 !important;
+    border-right: 0 !important;
+    border-bottom: 0 !important;
+}
+
+.sup_border-right_0 {
+    border-right: 0 !important;
+}
+
+.sup_border-left_0 {
+    border-left: 0 !important;
+}
+
 .sup_text_color {
     color: var(--govuk-text-colour);
 }
@@ -211,6 +277,18 @@ table, th, td, button, label, input {
     padding: 0 10px 0 10px;
 }
 
+.sup_width_auto {
+    width: auto !important;
+}
+
+.sup_padding_right_left_10 {
+    padding: 0 10px 0 10px;
+}
+
+.sup_padding_right_left_5 {
+    padding: 0 5px 0 5px;
+}
+
 .sup_pagination_wrapper {
     display: flex;
     justify-content: space-between;
@@ -219,6 +297,14 @@ table, th, td, button, label, input {
     align-items: center;
     width: 100%;
     border-top: 1px solid var(--govuk-border-colour);
+}
+
+.sup_padding_left_6 {
+    padding-left: 6px;
+}
+
+.sup_padding_left_0 {
+    padding-left: 0px !important;
 }
 
 .sup_padding_left_6 {
@@ -312,6 +398,31 @@ table, th, td, button, label, input {
     padding-bottom: 10px;
 }
 
+.sup_padding_bottom_0 {
+    padding-bottom: 0 !important;
+}
+
+.sup_padding_right_10 {
+    padding-right: 10px;
+}
+
+.sup_padding_right_8 {
+    padding-right: 8px;
+}
+
+.sup_p_5 {
+    padding: 5px !important;
+}
+
+.sup_flex_row {
+    display: flex;
+    flex-direction: row;
+}
+
+.sup_padding_bottom_10 {
+    padding-bottom: 10px;
+}
+
 .sup_padding_right_10 {
     padding-right: 10px;
 }
@@ -352,6 +463,18 @@ table, th, td, button, label, input {
     align-items: center;
 }
 
+.sup_flex_end_center {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.sup_flex_end_center {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
 .sup_text_center {
     text-align: center;
 }
@@ -372,10 +495,43 @@ table, th, td, button, label, input {
     padding: 15px 0;
 }
 
+.sup_margin_tb_lr_0_20 {
+    margin: 0 20px;
+}
+
+.sup_padding_tb_15_lr_0 {
+    padding: 15px 0;
+}
+
+.sup_margin_tb_lr_0_20 {
+    margin: 0 20px;
+}
+
+.sup_padding_tb_15_lr_0 {
+    padding: 15px 0;
+}
+
+.sup_pad_top_bottom_5_10 {
+    padding: 5px 10px;
+}
+
 
 .sup_margin_left_right_0 {
     margin-left: 0;
     margin-right: 0;
+}
+
+.sup_mr_0_pr_0 {
+    margin-right: 0 !important;
+    padding-right: 0 !important;
+}
+
+.sup_margin_left_5 {
+    margin-left: 5px
+}
+
+.sup_margin_right_10 {
+    margin-right: 10px;
 }
 
 .sup_mr_0_pr_0 {
@@ -399,6 +555,13 @@ table, th, td, button, label, input {
     display: flex;
     align-items: center;
     justify-content: flex-start;
+}
+
+.sup_flex_end_center_100 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
 }
 
 .sup_margin_bottom_12 {
@@ -446,6 +609,14 @@ table, th, td, button, label, input {
     width: 140px !important;
 }
 
+.sup_height_250 {
+    height: 250px !important;
+}
+
+.sup_min_height_460 {
+    min-height: 460px !important;
+}
+
 .sup_failed_color {
     background-color: var(--govuk-error-colour) !important;
 }
@@ -477,6 +648,25 @@ table, th, td, button, label, input {
     gap: 20px;
 }
 
+.sup_heading_padding {
+    padding: 10px 0 10px 10px;
+}
+
+.sup_file_location_wrapper {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+    gap: 20px;
+}
+
+.sup_max_width_8em {
+    max-width: 8.5em !important;
+}
+
+.sup_max_width_7em {
+    max-width: 7.5em !important;
+}
+
 /* override the default gov.uk style for pagination */
 
 .govuk-pagination__item,
@@ -485,7 +675,7 @@ table, th, td, button, label, input {
     font-size: 16px !important;
     min-width: auto !important;
     min-height: auto !important;
-    padding: 5px 8px !important;
+    padding: 5px 10px !important;
 }
 
 .govuk-pagination__next,
@@ -505,22 +695,23 @@ table, th, td, button, label, input {
     min-width: 3.75em !important;
 }
 
+
 .govuk-checkboxes__input {
     width: 34px;
     height: 34px;
 }
 
-.govuk-checkboxes--small .govuk-checkboxes__item:hover .govuk-checkboxes__input:focus + .govuk-checkboxes__label:before {
+.govuk-checkboxes--small .govuk-checkboxes__item:hover .govuk-checkboxes__input:focus+.govuk-checkboxes__label:before {
     box-shadow: 0 0 0 3px var(--govuk-focus-colour, #fd0), 0 0 0 6px var(--govuk-hover-colour, #cecece);
 }
 
-.govuk-checkboxes--small .govuk-checkboxes__item:hover .govuk-checkboxes__input:not(:disabled) + .govuk-checkboxes__label:before {
+.govuk-checkboxes--small .govuk-checkboxes__item:hover .govuk-checkboxes__input:not(:disabled)+.govuk-checkboxes__label:before {
     outline: 3px dashed transparent;
     outline-offset: 1px;
     box-shadow: 0 0 0 6px var(--govuk-hover-colour, #cecece);
 }
 
-.govuk-checkboxes__input:focus + .govuk-checkboxes__label:before {
+.govuk-checkboxes__input:focus+.govuk-checkboxes__label:before {
     border-width: 4px;
     outline: 3px solid transparent;
     outline-offset: 1px;
@@ -532,20 +723,20 @@ table, th, td, button, label, input {
     font-weight: 600;
 }
 
-    .govuk-checkboxes--small .govuk-checkboxes__label:before {
-        top: 5px;
-        left: 0;
-        width: 24px;
-        height: 24px;
-    }
+.govuk-checkboxes--small .govuk-checkboxes__label:before {
+    top: 5px;
+    left: 0;
+    width: 24px;
+    height: 24px;
+}
 
-    .govuk-checkboxes--small .govuk-checkboxes__label:after {
-        top: 12px;
-        left: 6px;
-        width: 12px;
-        height: 6.5px;
-        border-width: 0 0 3px 3px;
-    }
+.govuk-checkboxes--small .govuk-checkboxes__label:after {
+    top: 12px;
+    left: 6px;
+    width: 12px;
+    height: 6.5px;
+    border-width: 0 0 3px 3px;
+}
 
 .govuk-table__cell,
 .govuk-table__header {
@@ -569,7 +760,7 @@ table, th, td, button, label, input {
     min-width: 3.3em !important;
 }
 
-.govuk-table__head > tr > th {
+.govuk-table__head>tr>th {
     text-align: center !important;
 }
 
@@ -625,6 +816,10 @@ table, th, td, button, label, input {
     color: #fff;
 }
 
+.sup_gov_blue_color {
+    color: var(--govuk-brand-colour, #1d70b8);
+}
+
 .sup_surface_bg {
     background-color: var(--govuk-surface-background-colour, #f4f8fb);
 }
@@ -652,6 +847,10 @@ table, th, td, button, label, input {
 
 .sup_padding_right_10 {
     padding-right: 10px;
+}
+
+.sup_padding_right_0 {
+    padding-right: 0 !important;
 }
 
 .sup_flex_center_center_center {
@@ -690,8 +889,8 @@ table, th, td, button, label, input {
     padding-top: 1em !important;
 }
 
-.sup_p_t_3{
-    padding-top:3px;
+.sup_padding_top_0 {
+    padding-top: 0 !important;
 }
 
 .sup-pad-left-10px {
@@ -704,6 +903,10 @@ table, th, td, button, label, input {
 
 .sup-margin-left-20px {
     margin-left: 2em !important;
+}
+
+.sup_margin_left_20 {
+    margin-left: 20px !important;
 }
 
 .sup-pad-top-all-10px {
@@ -769,7 +972,7 @@ table, th, td, button, label, input {
     padding: 0;
     margin: -1px;
     overflow: hidden;
-    clip: rect(0,0,0,0);
+    clip: rect(0, 0, 0, 0);
     border: 0;
 }
 
@@ -797,6 +1000,18 @@ table, th, td, button, label, input {
 
 .sup_min_height_900 {
     min-height: 900px;
+}
+
+.sup_height_310 {
+    height: 310px;
+}
+
+.sup_height_390 {
+    height: 390px;
+}
+
+.sup_max_height_550 {
+    max-height: 550px;
 }
 
 .sup_width_0 {
@@ -837,58 +1052,58 @@ table, th, td, button, label, input {
     width: 100%;
 }
 
-    .multicolumn-dropdown-panel .search-box-wrapper {
-        position: sticky;
-        top: 0;
-        background: #fff;
-        z-index: 1;
-        display: flex;
-        align-items: center;
-        border-bottom: 1px solid var(--govuk-border-colour);
-    }
+.multicolumn-dropdown-panel .search-box-wrapper {
+    position: sticky;
+    top: 0;
+    background: #fff;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--govuk-border-colour);
+}
 
-    .multicolumn-dropdown-panel .search-box {
-        width: 100%;
-        padding: 8px;
-        border: none;
-        outline: none;
-        box-sizing: border-box;
-    }
+.multicolumn-dropdown-panel .search-box {
+    width: 100%;
+    padding: 8px;
+    border: none;
+    outline: none;
+    box-sizing: border-box;
+}
 
-    .multicolumn-dropdown-panel .clear-search-btn {
-        padding: 4px 12px;
-        margin: 4px;
-        min-width: auto;
-        display: none;
-    }
+.multicolumn-dropdown-panel .clear-search-btn {
+    padding: 4px 12px;
+    margin: 4px;
+    min-width: auto;
+    display: none;
+}
 
-    .multicolumn-dropdown-panel table {
-        width: 100%;
-        border-collapse: collapse;
-        border-spacing: 0;
-    }
+.multicolumn-dropdown-panel table {
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+}
 
-    .multicolumn-dropdown-panel tbody tr {
-        cursor: pointer;
-        transition: background-color 0.2s;
-    }
+.multicolumn-dropdown-panel tbody tr {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
 
-        .multicolumn-dropdown-panel tbody tr:hover {
-            background-color: #f3f2f1;
-        }
+.multicolumn-dropdown-panel tbody tr:hover {
+    background-color: #f3f2f1;
+}
 
-    .multicolumn-dropdown-panel tbody td {
-        padding: 8px;
-        border-bottom: 1px solid var(--govuk-border-colour);
-    }
+.multicolumn-dropdown-panel tbody td {
+    padding: 8px;
+    border-bottom: 1px solid var(--govuk-border-colour);
+}
 
-    .multicolumn-dropdown-panel thead th {
-        padding: 8px;
-        background-color: #f3f2f1;
-        border-bottom: 2px solid var(--govuk-border-colour);
-        font-weight: bold;
-        text-align: left;
-    }
+.multicolumn-dropdown-panel thead th {
+    padding: 8px;
+    background-color: #f3f2f1;
+    border-bottom: 2px solid var(--govuk-border-colour);
+    font-weight: bold;
+    text-align: left;
+}
 
 .tbl-dropdown-panel table {
     width: 100%;
@@ -897,12 +1112,12 @@ table, th, td, button, label, input {
     font-weight: normal;
 }
 
-.tbl-dropdown-panel > table > tbody > tr > td {
+.tbl-dropdown-panel>table>tbody>tr>td {
     border-bottom: 1px solid var(--govuk-border-colour);
     padding: 5px;
 }
 
-table#tblMonthPeriod > tbody > tr > td {
+table#tblMonthPeriod>tbody>tr>td {
     padding: 6px 5px !important;
     border-bottom: 1px solid var(--govuk-border-colour);
     margin: 0;
@@ -1080,4 +1295,295 @@ table#tblMonthPeriod > tbody > tr > td {
     display: flex;
     align-items: center;
     padding: 4px;
+}
+
+/**purpose of this class is to hide label to avoid accessibility issues**/
+.sup_visually_hidden {
+    visibility: hidden;
+    width: 1px;
+    line-height: 0;
+    margin: 0 !important;
+}
+
+/*********/
+
+.sup_hidden_label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+
+.modal_position_transform_y_40 {
+    transform: translateY(40px) !important;
+}
+
+.sup_readonly {
+    background: var(--black-tint-80) !important;
+}
+
+.sup_flex_row_gap_3 {
+    gap: 3px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.sup_table_wrapper {
+    overflow-y: auto;
+    max-height: 423px;
+    height: 403px;
+    border: 0 !important;
+}
+
+.sup_min_height_900 {
+    min-height: 900px;
+}
+
+.sup_width_0 {
+    width: 0px !important;
+}
+
+.tableselectdropdown {
+    position: relative;
+    z-index: 930;
+}
+
+.tbl-dropdown-panel {
+    position: absolute;
+    top: 100%;
+    left: 0px;
+    right: 0;
+    border: 1px solid #aaa;
+    background: #fff;
+    z-index: 9999;
+    max-height: 220px;
+    overflow-y: auto;
+    display: none;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.tbl-dropdown-panel>div>table>tbody>tr>td {
+    cursor: pointer;
+}
+
+.sup_max_height_none {
+    max-height: none;
+}
+
+
+.add-td-width>table>tbody>tr>td:nth-child(2) {
+    min-width: 260px;
+}
+
+
+.clear-search-btn {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    border: 1px solid var(--govuk-border-colour);
+    height: 28px;
+    margin: 0;
+    text-align: center;
+    display: flex;
+    width: 32px;
+    text-align: center;
+    z-index: 1;
+}
+
+.clear-search-btn span {
+    line-height: 10px !important;
+}
+
+.multicolumn-dropdown-panel {
+    position: absolute;
+    top: 100%;
+    left: 0px;
+    right: 0;
+    border: 1px solid #aaa;
+    background: #fff;
+    z-index: 9999;
+    max-height: 300px;
+    overflow-y: auto;
+    display: none;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    width: 100%;
+}
+
+.multicolumn-dropdown-panel .search-box-wrapper {
+    position: sticky;
+    top: 0;
+    background: #fff;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--govuk-border-colour);
+}
+
+.multicolumn-dropdown-panel .search-box {
+    width: 100%;
+    padding: 8px;
+    border: none;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.multicolumn-dropdown-panel .clear-search-btn {
+    padding: 4px 12px;
+    margin: 4px;
+    min-width: auto;
+    display: none;
+}
+
+.multicolumn-dropdown-panel table {
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+.multicolumn-dropdown-panel tbody tr {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.multicolumn-dropdown-panel tbody tr:hover {
+    background-color: #f3f2f1;
+}
+
+.multicolumn-dropdown-panel tbody td {
+    padding: 8px;
+    border-bottom: 1px solid var(--govuk-border-colour);
+}
+
+.multicolumn-dropdown-panel thead th {
+    padding: 8px;
+    background-color: #f3f2f1;
+    border-bottom: 2px solid var(--govuk-border-colour);
+    font-weight: bold;
+    text-align: left;
+}
+
+.tbl-dropdown-panel table {
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+.tbl-dropdown-panel>table>tbody>tr>td {
+    border-bottom: 1px solid var(--govuk-border-colour);
+    padding: 5px;
+}
+
+table#tblMonthPeriod>tbody>tr>td {
+    padding: 6px 5px !important;
+    border-bottom: 1px solid var(--govuk-border-colour);
+    margin: 0;
+}
+
+.select-search-box {
+    width: 100%;
+    padding: 6px 40px 6px 8px;
+    border: none;
+    border-bottom: 1px solid var(--govuk-border-colour);
+    outline: none;
+    box-sizing: border-box;
+    display: block;
+}
+
+.tbl-dropdown-panel>.select-search-box {
+    position: relative;
+}
+
+.tbl-dropdown-panel>.clear-search-btn {
+    position: absolute;
+}
+
+.sup_label_width_10 {
+    min-width: 10px;
+    max-width: 10px;
+}
+
+.sup_white_color {
+    color: #fff !important;
+}
+
+.sup_color_red {
+    color: red;
+}
+
+.sup_position_relative {
+    position: relative;
+}
+
+.sup_error_text_color {
+    color: var(--govuk-error-colour);
+}
+
+.sup_selected_row {
+    background-color: var(--tint-80) !important;
+}
+
+.sup_overflow_visible {
+    overflow: visible;
+}
+
+/* ---------------------------------------------------------------
+   Rules merged from module-specific supplement files
+   fps_styles/suppliement_style_fps.css
+   costbook_styles/suppliement_style_costbook.css
+--------------------------------------------------------------- */
+
+/* FPS: modal select full width */
+.modal-body select.govuk-select {
+    min-width: 100%;
+}
+
+/* FPS: govuk-tabs link font size */
+.govuk-tabs__list a {
+    font-size: 16px !important;
+}
+
+/* FPS: govuk button font size */
+.govuk-button {
+    font-size: 16px;
+}
+
+/* Costbook: tabs panel padding */
+.govuk-frontend-supported .govuk-tabs__panel {
+    padding: 10px;
+}
+
+/* =====================================================
+   Generic Form Validation — app-form / app-required /
+   app-mandatory-note / app-note / app-db-error / app-error-inline
+   Usage: add class="app-form" to <form>.
+   ===================================================== */
+
+/* Red asterisk on required field labels */
+.app-required {
+    color: #d4351c;
+    font-weight: 700;
+    margin-left: 2px;
+}
+
+/* "* Mandatory Fields" note — right-aligned above form fields */
+.app-mandatory-note {
+    display: flex;
+    justify-content: flex-end;
+    font-size: 14px;
+    color: #d4351c;
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-left: auto;
+    margin-right: 8px;
+    margin-bottom: 10px;
+    font-weight: 700;
+}
+
+.govuk-error-message {
+    font-size: 14px;
 }
