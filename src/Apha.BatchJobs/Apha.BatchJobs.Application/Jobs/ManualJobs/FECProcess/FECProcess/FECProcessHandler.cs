@@ -8,7 +8,7 @@ namespace Apha.BatchJobs.Application.Jobs.FECProcess;
 /// <summary>
 /// FEC (Financial Eligibility Control) process handler.
 /// Status: Under investigation; groundwork for future feature.
-/// Trigger mode and schedule TBD.
+/// Trigger mode: manual/ad-hoc only (no scheduler binding).
 /// </summary>
 public sealed class FECProcessHandler : IBatchJob
 {
@@ -27,15 +27,14 @@ public sealed class FECProcessHandler : IBatchJob
     public string IdempotencyStrategy => "Pending";
 
     /// <summary>
-    /// No schedule expression defined: FEC process trigger mode is under investigation.
-    /// May be scheduled or user-triggered based on business requirements.
+    /// No schedule expression: FECProcess is manual/ad-hoc.
     /// </summary>
     public string? ScheduleExpression => null;
 
     /// <summary>
-    /// Placeholder description pending business requirements clarification.
+    /// Human-readable description for manual/ad-hoc execution.
     /// </summary>
-    public string? ScheduleDescription => "Financial Eligibility Control process (schedule TBD)";
+    public string? ScheduleDescription => "Manual/ad-hoc trigger only (no schedule)";
 
     /// <summary>
     /// Maximum execution timeout placeholder: 3 hours (may be adjusted based on data volume).

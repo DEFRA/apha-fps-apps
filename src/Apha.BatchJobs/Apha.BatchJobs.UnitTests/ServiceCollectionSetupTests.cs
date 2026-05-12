@@ -39,6 +39,24 @@ public sealed class ServiceCollectionSetupTests
         }
     }
 
+    [Fact]
+    public void CreateDefaultServices_ManualAdhocJobs_ShouldHaveNoScheduleExpression()
+    {
+        var batchJobsRoot = GetBatchJobsRoot();
+        var services = ServiceCollectionSetup.CreateDefaultServices(batchJobsRoot);
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var jobs = serviceProvider.GetServices<IBatchJob>().ToList();
+
+        var manualJobNames = new[] { "HealthCheck", "FECProcess", "RecreateSummaries" };
+        foreach (var jobName in manualJobNames)
+        {
+            var matchingJobs = jobs.Where(j => string.Equals(j.Name, jobName, StringComparison.OrdinalIgnoreCase)).ToList();
+            Assert.Single(matchingJobs);
+            Assert.Null(matchingJobs[0].ScheduleExpression);
+        }
+    }
+
     private static string GetBatchJobsRoot()
     {
         var current = new DirectoryInfo(AppContext.BaseDirectory);

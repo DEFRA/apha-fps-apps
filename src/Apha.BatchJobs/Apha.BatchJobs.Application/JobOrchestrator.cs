@@ -129,12 +129,14 @@ public sealed class JobOrchestrator : IJobOrchestrator
         }
 
         // Step 3 — Execute the job
-        var job = _factory.Create(jobName);
+        IBatchJob? job = null;
         Exception? jobException = null;
         var retryStartedAt = DateTime.UtcNow;
 
         try
         {
+            job = _factory.Create(jobName);
+
             var totalAttempts = _retryAttempts + 1;
             for (var attempt = 1; attempt <= totalAttempts; attempt++)
             {

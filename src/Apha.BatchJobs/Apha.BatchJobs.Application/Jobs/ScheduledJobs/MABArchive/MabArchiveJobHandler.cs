@@ -1,6 +1,7 @@
 using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Domain.Configuration;
 using Apha.BatchJobs.Domain.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -17,7 +18,7 @@ namespace Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive;
 /// </summary>
 public sealed class MabArchiveJobHandler : IBatchJob
 {
-    private readonly MabArchiveLoadOrchestrator _orchestrator;
+    private readonly IServiceProvider _serviceProvider;
     private readonly IExecutionYearContext _executionYearContext;
     private readonly Func<Func<Task>, Task> _transactionWrapper;
     private readonly ILogger<MabArchiveJobHandler> _logger;
@@ -53,14 +54,14 @@ public sealed class MabArchiveJobHandler : IBatchJob
     /// Initializes a new instance of the MabArchiveJobHandler.
     /// </summary>
     public MabArchiveJobHandler(
-        MabArchiveLoadOrchestrator orchestrator,
+        IServiceProvider serviceProvider,
         IExecutionYearContext executionYearContext,
         Func<Func<Task>, Task> transactionWrapper,
         ICorrelationService correlationService,
         ILogger<MabArchiveJobHandler> logger,
         IOptions<MabArchiveSettings> settings)
     {
-        _orchestrator = orchestrator ?? throw new ArgumentNullException(nameof(orchestrator));
+        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         _executionYearContext = executionYearContext ?? throw new ArgumentNullException(nameof(executionYearContext));
         _transactionWrapper = transactionWrapper ?? throw new ArgumentNullException(nameof(transactionWrapper));
         _correlationService = correlationService ?? throw new ArgumentNullException(nameof(correlationService));
@@ -93,7 +94,9 @@ public sealed class MabArchiveJobHandler : IBatchJob
 
         try
         {
-            var context = _orchestrator.BuildExecutionContext();
+            var orchestrator = _serviceProvider.GetRequiredService<MabArchiveLoadOrchestrator>();
+
+            var context = orchestrator.BuildExecutionContext();
             _executionYearContext.FpsYear = context.PrimaryYear;
             _executionYearContext.YearSource = "MABArchive.BuildExecutionContext";
             _logger.LogInformation(
@@ -101,7 +104,7 @@ public sealed class MabArchiveJobHandler : IBatchJob
                 context.PrimaryYear,
                 context.CurrentMonth);
 
-            await _orchestrator.ExecuteAsync(
+            await orchestrator.ExecuteAsync(
                 runId,
                 context,
                 _transactionWrapper,

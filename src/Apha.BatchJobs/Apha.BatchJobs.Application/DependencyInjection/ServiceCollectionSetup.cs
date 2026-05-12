@@ -169,12 +169,18 @@ public static class ServiceCollectionSetup
     {
         var batchJobType = typeof(IBatchJob);
         var applicationAssembly = batchJobType.Assembly;
+        var excludedJobTypes = new HashSet<Type>
+        {
+            // Exclude legacy/manual placeholder to keep RecreateSummaries single-source in worker orchestration.
+            typeof(Apha.BatchJobs.Application.Jobs.RecreateSummaries.RecreateSummariesHandler)
+        };
 
         var jobTypes = applicationAssembly
             .GetTypes()
             .Where(t =>
                 t is { IsClass: true, IsAbstract: false } &&
-                batchJobType.IsAssignableFrom(t))
+                batchJobType.IsAssignableFrom(t) &&
+                !excludedJobTypes.Contains(t))
             .ToList();
 
         foreach (var jobType in jobTypes)
