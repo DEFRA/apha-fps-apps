@@ -80,8 +80,8 @@ namespace Apha.FPS.DataAccess.Repositories
             {
                 var search = query.Search.ToLower();
                 queryable = queryable.Where(p =>
-                    p.ParentProject.Contains(search, StringComparison.CurrentCultureIgnoreCase) ||
-                    p.ProjectTitle.Contains(search, StringComparison.CurrentCultureIgnoreCase));
+                    p.ParentProject.ToLower().Contains(search) ||
+                    p.ProjectTitle.ToLower().Contains(search));
             }
 
             queryable = query.SortBy?.ToLower() switch
@@ -270,6 +270,15 @@ namespace Apha.FPS.DataAccess.Repositories
             return await _dbContext.JobCodes
                 .AnyAsync(j => j.ParentProject == parentProject
                     && j.FpsYear == _requestContext.FpsYear);
+        }
+
+        public async Task<bool> CheckProgramExistsAsync(string programNo)
+        {
+            if (string.IsNullOrWhiteSpace(programNo))
+                return true; // null/empty is allowed (nullable FK)
+            return await _dbContext.Programs
+                .AsNoTracking()
+                .AnyAsync(p => p.ProgramNo == programNo);
         }
 
         private static IQueryable ApplyOrder<T>(IQueryable<Project> query, Expression<Func<Project, T>> keySelector, bool descending)
@@ -572,20 +581,133 @@ namespace Apha.FPS.DataAccess.Repositories
                     {
                         await _dbContext.TestRequirements.AddRangeAsync(newTestReqs);
                         await _dbContext.SaveChangesAsync();
+
+                        // Derived from UITrig_tlkpTestReqmt: log inserted rows to TestReq_LOG
+                        _dbContext.TestRequirementLogs.AddRange(newTestReqs.Select(tr => new TestRequirementLog
+                        {
+                            TestCode         = tr.TestCode,
+                            Buyer            = tr.Buyer,
+                            UnitPrice        = tr.UnitPrice,
+                            NoRequired       = tr.NoRequired,
+                            ProjectBuyerCode = tr.ProjectBuyerCode,
+                            TestBuyerCode    = tr.TestBuyerCode,
+                            Active           = tr.Active,
+                            DateTime         = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                            UserId           = _requestContext.UserEmailId,
+                            InsertDelete     = "I",
+                            FpsYear          = tr.FpsYear
+                        }));
+                        await _dbContext.SaveChangesAsync();
                     }
 
                     // UPDATE remaining child tables
+
+                    // Derived from MT_LOG_UTrig: log old state (UD) and new state (UI) before update
+                    var mtToLog = await _dbContext.MonthlyTimes
+                        .Where(mt => mt.ParentProject == oldCode)
+                        .AsNoTracking()
+                        .ToListAsync();
+                    if (mtToLog.Count > 0)
+                    {
+                        _dbContext.MonthlyTimeLogs.AddRange(mtToLog.Select(mt => new MonthlyTimeLog
+                        {
+                            PactStaffId = mt.PactStaffId,
+                            TimeCode    = mt.TimeCode,
+                            Month       = mt.Month,
+                            ParentProject = mt.ParentProject,
+                            WorkGroup   = mt.WorkGroup,
+                            Hours       = mt.Hours,
+                            DateTime    = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                            UserId      = _requestContext.UserEmailId,
+                            InsertDelete = "UD",
+                            FpsYear     = mt.FpsYear ?? _requestContext.FpsYear
+                        }));
+                        _dbContext.MonthlyTimeLogs.AddRange(mtToLog.Select(mt => new MonthlyTimeLog
+                        {
+                            PactStaffId = mt.PactStaffId,
+                            TimeCode    = mt.TimeCode == oldCode ? newCode : mt.TimeCode,
+                            Month       = mt.Month,
+                            ParentProject = newCode,
+                            WorkGroup   = mt.WorkGroup,
+                            Hours       = mt.Hours,
+                            DateTime    = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                            UserId      = _requestContext.UserEmailId,
+                            InsertDelete = "UI",
+                            FpsYear     = mt.FpsYear ?? _requestContext.FpsYear
+                        }));
+                        await _dbContext.SaveChangesAsync();
+                    }
                     await _dbContext.MonthlyTimes
                         .Where(mt => mt.ParentProject == oldCode)
                         .ExecuteUpdateAsync(s => s
                             .SetProperty(x => x.ParentProject, newCode)
                             .SetProperty(x => x.TimeCode, x => x.TimeCode == oldCode ? newCode : x.TimeCode));
+
+                    // Derived from MO_LOG_UTrig: log old state (UD) and new state (UI) before update
+                    var moToLog = await _dbContext.MonthlyOutputs
+                        .Where(mo => mo.Buyer == oldCode)
+                        .AsNoTracking()
+                        .ToListAsync();
+                    if (moToLog.Count > 0)
+                    {
+                        _dbContext.MonthlyOutputLogs.AddRange(moToLog.Select(mo => new MonthlyOutputLog
+                        {
+                            TestCode     = mo.TestCode,
+                            Buyer        = mo.Buyer,
+                            Month        = mo.Month,
+                            WorkGroup    = mo.WorkGroup,
+                            Volume       = mo.Volume,
+                            WgBuyer      = mo.WgBuyer,
+                            DateTime     = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                            UserId       = _requestContext.UserEmailId,
+                            InsertDelete = "UD",
+                            FpsYear      = mo.FpsYear
+                        }));
+                        _dbContext.MonthlyOutputLogs.AddRange(moToLog.Select(mo => new MonthlyOutputLog
+                        {
+                            TestCode     = mo.TestCode,
+                            Buyer        = newCode,
+                            Month        = mo.Month,
+                            WorkGroup    = mo.WorkGroup,
+                            Volume       = mo.Volume,
+                            WgBuyer      = mo.WgBuyer,
+                            DateTime     = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                            UserId       = _requestContext.UserEmailId,
+                            InsertDelete = "UI",
+                            FpsYear      = mo.FpsYear
+                        }));
+                        await _dbContext.SaveChangesAsync();
+                    }
                     await _dbContext.MonthlyOutputs
                         .Where(mo => mo.Buyer == oldCode)
                         .ExecuteUpdateAsync(s => s.SetProperty(x => x.Buyer, newCode));
+
+                    // Derived from UITrig_tblAdditionalCosts: log new state ('I') before update
+                    var acToLog = await _dbContext.AdditionalCosts
+                        .Where(ac => ac.JobCode == oldCode)
+                        .AsNoTracking()
+                        .ToListAsync();
+                    if (acToLog.Count > 0)
+                    {
+                        _dbContext.AdditionalCostLogs.AddRange(acToLog.Select(ac => new AdditionalCostLog
+                        {
+                            JobCode      = newCode,
+                            Account      = ac.Account,
+                            Description  = ac.Description,
+                            ItemCost     = ac.ItemCost,
+                            Freq         = ac.Freq,
+                            Supplier     = ac.Supplier,
+                            DateTime     = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                            UserId       = _requestContext.UserEmailId,
+                            InsertDelete = "I",
+                            FpsYear      = ac.FpsYear ?? _requestContext.FpsYear
+                        }));
+                        await _dbContext.SaveChangesAsync();
+                    }
                     await _dbContext.AdditionalCosts
                         .Where(ac => ac.JobCode == oldCode)
                         .ExecuteUpdateAsync(s => s.SetProperty(x => x.JobCode, newCode));
+
                     await _dbContext.ProjectInvoices
                         .Where(pi => pi.ProjectParent == oldCode)
                         .ExecuteUpdateAsync(s => s.SetProperty(x => x.ProjectParent, newCode));
@@ -600,14 +722,54 @@ namespace Apha.FPS.DataAccess.Repositories
                     await _dbContext.ProjectMonths
                         .Where(pm => pm.Project == oldCode)
                         .ExecuteUpdateAsync(s => s.SetProperty(x => x.Project, newCode));
+
+                    // Derived from UITrig_tblAnimalReq: log new state ('I') before update
+                    var arToLog = await _dbContext.AnimalRequests
+                        .Where(ar => ar.JobCode == oldCode)
+                        .AsNoTracking()
+                        .ToListAsync();
+                    if (arToLog.Count > 0)
+                    {
+                        _dbContext.AnimalRequestLogs.AddRange(arToLog.Select(ar => new AnimalRequestLog
+                        {
+                            JobCode        = newCode,
+                            AnimalType     = ar.AnimalType,
+                            NumberOfDays   = ar.NumberOfDays,
+                            NumberOfAnimals = ar.NumberOfAnimals,
+                            DateTime       = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                            UserId         = _requestContext.UserEmailId,
+                            InsertDelete   = "I",
+                            FpsYear        = ar.FpsYear ?? _requestContext.FpsYear
+                        }));
+                        await _dbContext.SaveChangesAsync();
+                    }
                     await _dbContext.AnimalRequests
                         .Where(ar => ar.JobCode == oldCode)
                         .ExecuteUpdateAsync(s => s.SetProperty(x => x.JobCode, newCode));
+
                     await _dbContext.Milestones
                         .Where(m => m.Project == oldCode)
                         .ExecuteUpdateAsync(s => s.SetProperty(x => x.Project, newCode));
 
-                    // UPDATE tblStaffJob (existing DbSet — use LINQ for type safety)
+                    // Derived from UITrig_tblStaffJob: log new state ('I') before update
+                    var sjToLog = await _dbContext.StaffJobs
+                        .Where(sj => sj.JobCode == oldCode)
+                        .AsNoTracking()
+                        .ToListAsync();
+                    if (sjToLog.Count > 0)
+                    {
+                        _dbContext.StaffJobLogs.AddRange(sjToLog.Select(sj => new StaffJobLog
+                        {
+                            StaffId      = sj.StaffId,
+                            JobCode      = newCode,
+                            PlannedHours = sj.PlannedHours,
+                            DateTime     = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                            UserId       = _requestContext.UserEmailId,
+                            InsertDelete = "I",
+                            FpsYear      = sj.FpsYear ?? _requestContext.FpsYear
+                        }));
+                        await _dbContext.SaveChangesAsync();
+                    }
                     await _dbContext.StaffJobs
                         .Where(sj => sj.JobCode == oldCode)
                         .ExecuteUpdateAsync(s => s.SetProperty(x => x.JobCode, newCode));
@@ -617,6 +779,30 @@ namespace Apha.FPS.DataAccess.Repositories
                         .ExecuteUpdateAsync(s => s.SetProperty(x => x.Project, newCode));
 
                     // sp_Delete_tr, sp_Delete_tcv, sp_Delete_jc, sp_Delete_pp
+
+                    // Derived from DTrig_tlkpTestReqmt: log deleted rows to TestReq_LOG before delete
+                    var trToDelete = await _dbContext.TestRequirements
+                        .Where(tr => tr.ProjectBuyerCode == oldCode)
+                        .AsNoTracking()
+                        .ToListAsync();
+                    if (trToDelete.Count > 0)
+                    {
+                        _dbContext.TestRequirementLogs.AddRange(trToDelete.Select(tr => new TestRequirementLog
+                        {
+                            TestCode         = tr.TestCode,
+                            Buyer            = tr.Buyer,
+                            UnitPrice        = tr.UnitPrice,
+                            NoRequired       = tr.NoRequired,
+                            ProjectBuyerCode = tr.ProjectBuyerCode,
+                            TestBuyerCode    = tr.TestBuyerCode,
+                            Active           = tr.Active,
+                            DateTime         = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                            UserId           = _requestContext.UserEmailId,
+                            InsertDelete     = "D",
+                            FpsYear          = tr.FpsYear
+                        }));
+                        await _dbContext.SaveChangesAsync();
+                    }
                     await _dbContext.TestRequirements
                         .Where(tr => tr.ProjectBuyerCode == oldCode)
                         .ExecuteDeleteAsync();
@@ -664,46 +850,126 @@ namespace Apha.FPS.DataAccess.Repositories
                     var project = await _dbContext.Projects
                         .FirstOrDefaultAsync(p => p.ParentProject == parentProject);
                     if (project != null)
-                    { 
-                        NormalizeDateTimesToUnspecified (project);
-                    _dbContext.ProjectLogs.Add(MapProjectToLog(project, "D", _requestContext.UserEmailId));
+                    {
+                        NormalizeDateTimesToUnspecified(project);
+                        _dbContext.ProjectLogs.Add(MapProjectToLog(project, "D", _requestContext.UserEmailId));
+                        await _dbContext.SaveChangesAsync();
+
+                        // sp_Delete_tcv
+                        await _dbContext.TimeCodeValids
+                            .Where(tcv => tcv.ParentProject == parentProject || tcv.Portfolio == parentProject)
+                            .ExecuteDeleteAsync();
+
+                        // sp_Delete_JC
+                        await _dbContext.JobCodes
+                            .Where(jc => jc.ParentProject == parentProject)
+                            .ExecuteDeleteAsync();
+
+                        // sp_delete_tr — Derived from DTrig_tlkpTestReqmt: log before delete
+                        var trToDelete = await _dbContext.TestRequirements
+                            .Where(tr => tr.ProjectBuyerCode == parentProject)
+                            .AsNoTracking()
+                            .ToListAsync();
+                        if (trToDelete.Count > 0)
+                        {
+                            _dbContext.TestRequirementLogs.AddRange(trToDelete.Select(tr => new TestRequirementLog
+                            {
+                                TestCode         = tr.TestCode,
+                                Buyer            = tr.Buyer,
+                                UnitPrice        = tr.UnitPrice,
+                                NoRequired       = tr.NoRequired,
+                                ProjectBuyerCode = tr.ProjectBuyerCode,
+                                TestBuyerCode    = tr.TestBuyerCode,
+                                Active           = tr.Active,
+                                DateTime         = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                                UserId           = _requestContext.UserEmailId,
+                                InsertDelete     = "D",
+                                FpsYear          = tr.FpsYear
+                            }));
+                            await _dbContext.SaveChangesAsync();
+                        }
+                        await _dbContext.TestRequirements
+                            .Where(tr => tr.ProjectBuyerCode == parentProject)
+                            .ExecuteDeleteAsync();
+
+                        // sp_Delete_ar — Derived from DTrig_tblAnimalReq: log before delete
+                        var arToDelete = await _dbContext.AnimalRequests
+                            .Where(ar => ar.JobCode == parentProject)
+                            .AsNoTracking()
+                            .ToListAsync();
+                        if (arToDelete.Count > 0)
+                        {
+                            _dbContext.AnimalRequestLogs.AddRange(arToDelete.Select(ar => new AnimalRequestLog
+                            {
+                                JobCode         = ar.JobCode,
+                                AnimalType      = ar.AnimalType,
+                                NumberOfDays    = ar.NumberOfDays,
+                                NumberOfAnimals = ar.NumberOfAnimals,
+                                DateTime        = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                                UserId          = _requestContext.UserEmailId,
+                                InsertDelete    = "D",
+                                FpsYear         = ar.FpsYear ?? _requestContext.FpsYear
+                            }));
+                            await _dbContext.SaveChangesAsync();
+                        }
+                        await _dbContext.AnimalRequests
+                            .Where(ar => ar.JobCode == parentProject)
+                            .ExecuteDeleteAsync();
+
+                        // sp_Delete_sj — Derived from DTrig_tblStaffJob: log before delete
+                        var sjToDelete = await _dbContext.StaffJobs
+                            .Where(sj => sj.JobCode == parentProject)
+                            .AsNoTracking()
+                            .ToListAsync();
+                        if (sjToDelete.Count > 0)
+                        {
+                            _dbContext.StaffJobLogs.AddRange(sjToDelete.Select(sj => new StaffJobLog
+                            {
+                                StaffId      = sj.StaffId,
+                                JobCode      = sj.JobCode,
+                                PlannedHours = sj.PlannedHours,
+                                DateTime     = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                                UserId       = _requestContext.UserEmailId,
+                                InsertDelete = "D",
+                                FpsYear      = sj.FpsYear ?? _requestContext.FpsYear
+                            }));
+                            await _dbContext.SaveChangesAsync();
+                        }
+                        await _dbContext.StaffJobs
+                            .Where(sj => sj.JobCode == parentProject)
+                            .ExecuteDeleteAsync();
+
+                        // sp_Delete_ac — Derived from DTrig_tblAdditionalCosts: log before delete
+                        var acToDelete = await _dbContext.AdditionalCosts
+                            .Where(ac => ac.JobCode == parentProject)
+                            .AsNoTracking()
+                            .ToListAsync();
+                        if (acToDelete.Count > 0)
+                        {
+                            _dbContext.AdditionalCostLogs.AddRange(acToDelete.Select(ac => new AdditionalCostLog
+                            {
+                                JobCode      = ac.JobCode,
+                                Account      = ac.Account,
+                                Description  = ac.Description,
+                                ItemCost     = ac.ItemCost,
+                                Freq         = ac.Freq,
+                                Supplier     = ac.Supplier,
+                                DateTime     = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                                UserId       = _requestContext.UserEmailId,
+                                InsertDelete = "D",
+                                FpsYear      = ac.FpsYear ?? _requestContext.FpsYear
+                            }));
+                            await _dbContext.SaveChangesAsync();
+                        }
+                        await _dbContext.AdditionalCosts
+                            .Where(ac => ac.JobCode == parentProject)
+                            .ExecuteDeleteAsync();
+
+                        // sp_Delete_pp
+                        await _dbContext.Projects
+                            .Where(p => p.ParentProject == parentProject)
+                            .ExecuteDeleteAsync();
                     }
-                    await _dbContext.SaveChangesAsync();
-
-                    // sp_Delete_tcv
-                    await _dbContext.TimeCodeValids
-                        .Where(tcv => tcv.ParentProject == parentProject || tcv.Portfolio == parentProject)
-                        .ExecuteDeleteAsync();
-
-                    // sp_Delete_JC
-                    await _dbContext.JobCodes
-                        .Where(jc => jc.ParentProject == parentProject)
-                        .ExecuteDeleteAsync();
-
-                    // sp_delete_tr
-                    await _dbContext.TestRequirements
-                        .Where(tr => tr.ProjectBuyerCode == parentProject)
-                        .ExecuteDeleteAsync();
-
-                    // sp_Delete_ar
-                    await _dbContext.AnimalRequests
-                        .Where(ar => ar.JobCode == parentProject)
-                        .ExecuteDeleteAsync();
-
-                    // sp_Delete_sj
-                    await _dbContext.StaffJobs
-                        .Where(sj => sj.JobCode == parentProject)
-                        .ExecuteDeleteAsync();
-
-                    // sp_Delete_ac
-                    await _dbContext.AdditionalCosts
-                        .Where(ac => ac.JobCode == parentProject)
-                        .ExecuteDeleteAsync();
-
-                    // sp_Delete_pp
-                    await _dbContext.Projects
-                        .Where(p => p.ParentProject == parentProject)
-                        .ExecuteDeleteAsync();
 
                     await tx.CommitAsync();
                 }
@@ -717,7 +983,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
         // ── Private helpers ────────────────────────────────────────────────
 
-        private static ProjectLog MapProjectToLog(Project p, string operation, string? userId) => new()
+        private static ProjectLog MapProjectToLog(Project p, string operation, string userId) => new()
         {
             ParentProject = p.ParentProject,
             ProjectTitle = p.ProjectTitle,

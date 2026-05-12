@@ -57,6 +57,10 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<YearMaster> YearMasters { get; set; }
         public virtual DbSet<StaffJobLog> StaffJobLogs { get; set; }
         public virtual DbSet<AnimalRequestLog> AnimalRequestLogs { get; set; }
+        public virtual DbSet<MonthlyTimeLog> MonthlyTimeLogs { get; set; }
+        public virtual DbSet<MonthlyOutputLog> MonthlyOutputLogs { get; set; }
+        public virtual DbSet<AdditionalCostLog> AdditionalCostLogs { get; set; }
+        public virtual DbSet<TestRequirementLog> TestRequirementLogs { get; set; }
         public virtual DbSet<TestorProduct> TestorProducts { get; set; }
         public virtual DbSet<SurvFFSubmission> SurvFFSubmissions { get; set; }
         public virtual DbSet<ProjectLog> ProjectLogs { get; set; }
@@ -187,6 +191,14 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new AnimalRequestLogMap());
             modelBuilder.Entity<AnimalRequestLog>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
+            modelBuilder.ApplyConfiguration(new MonthlyTimeLogMap());
+
+            modelBuilder.ApplyConfiguration(new MonthlyOutputLogMap());
+            modelBuilder.Entity<MonthlyOutputLog>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new AdditionalCostLogMap());
+            modelBuilder.Entity<AdditionalCostLog>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
 
             modelBuilder.ApplyConfiguration(new SurvFFSubmissionMap());
             modelBuilder.Entity<SurvFFSubmission>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
@@ -196,6 +208,9 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new TestRequirementMap());
             modelBuilder.Entity<TestRequirement>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new TestRequirementLogMap());
+            modelBuilder.Entity<TestRequirementLog>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new ProjectInvoiceMap());
             modelBuilder.Entity<ProjectInvoice>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);

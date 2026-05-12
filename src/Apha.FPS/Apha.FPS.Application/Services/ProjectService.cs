@@ -54,6 +54,18 @@ namespace Apha.FPS.Application.Services
 
         public async Task<ProjectDto> CreateProjectAsync(ProjectDto projectDto)
         {
+            // Derived from tI_tlkpProject: validates Program FK exists in tlkpProgram
+            if (!string.IsNullOrWhiteSpace(projectDto.Program) &&
+                !await _projectRepository.CheckProgramExistsAsync(projectDto.Program))
+            {
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"Cannot create project: Program '{projectDto.Program}' does not exist.",
+                        "PROGRAM_NOT_FOUND")
+                ]);
+            }
+
             var project = _mapper.Map<Project>(projectDto);
             var created = await _projectRepository.CreateProjectAsync(project);
             return _mapper.Map<ProjectDto>(created);
@@ -61,6 +73,18 @@ namespace Apha.FPS.Application.Services
 
         public async Task<ProjectDto> UpdateProjectAsync(ProjectDto projectDto)
         {
+            // Derived from tU_tlkpProject: validates Program FK exists in tlkpProgram
+            if (!string.IsNullOrWhiteSpace(projectDto.Program) &&
+                !await _projectRepository.CheckProgramExistsAsync(projectDto.Program))
+            {
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"Cannot update project: Program '{projectDto.Program}' does not exist.",
+                        "PROGRAM_NOT_FOUND")
+                ]);
+            }
+
             var project = _mapper.Map<Project>(projectDto);
             var updated = await _projectRepository.UpdateProjectAsync(project);
             return _mapper.Map<ProjectDto>(updated);
@@ -68,6 +92,18 @@ namespace Apha.FPS.Application.Services
 
         public async Task<ProjectDto?> UpdatePactProjectDetailsAsync(ProjectDto projectDto)
         {
+            // Derived from tU_tlkpProject: validates Program FK exists in tlkpProgram
+            if (!string.IsNullOrWhiteSpace(projectDto.Program) &&
+                !await _projectRepository.CheckProgramExistsAsync(projectDto.Program))
+            {
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"Cannot update project: Program '{projectDto.Program}' does not exist.",
+                        "PROGRAM_NOT_FOUND")
+                ]);
+            }
+
             var project = _mapper.Map<Project>(projectDto);
             var updated = await _projectRepository.UpdatePactProjectDetailsAsync(project);
             return updated == null ? null : _mapper.Map<ProjectDto>(updated);

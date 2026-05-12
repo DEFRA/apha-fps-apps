@@ -29,5 +29,8 @@ namespace Apha.FPS.Core.Interfaces
         Task<bool> HasMonthlyTimeAsync(string parentProject);
         Task<bool> HasProjectInvoicesAsync(string parentProject);
         Task<bool> HasProjectSubcontractsAsync(string parentProject);
+
+        // Program FK validation (derived from tI_tlkpProject / tU_tlkpProject triggers)
+        Task<bool> CheckProgramExistsAsync(string programNo);
     }
 }
