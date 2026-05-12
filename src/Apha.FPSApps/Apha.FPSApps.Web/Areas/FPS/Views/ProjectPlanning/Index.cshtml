@@ -4,184 +4,124 @@
     ViewData["Title"] = $"{Model.SelectedYear} : Project Planning";   
 }
 
-<div style="padding: 5px 5px;  border-bottom: 1px solid #b4b4b4" class="row">
-    <div style="display: flex;  font-size: 14px;   align-items: center; justify-content: space-between; ">
-        <div class="col-md-6">
-            <a class="" href="fpshome.html">Home</a>  &gt; Programme Management &gt; Plan Projects &gt;  Setup A new Project
-        </div>
-        <div style="display: flex;
-                    justify-content: flex-end;" class="col-md-6">
-            <div class="col-sm-4" style="border: 2px solid #1d70b8;
-                        border-radius: 5px;
-                        font-size: 13px;
-                        font-weight: normal;
-                        background-color: #fff;
-                        text-align: left;
-                        display: flex;
+<div class="container-fluid">
 
-                        margin-right: 10px;
-                        align-items: center;
-                        justify-content: space-between;">
-                <div class="col" style="border-right: 1px solid #684e00; text-align: left; padding: 1px 5px;">
-                    Programme:<strong id="resultprogram"> @Model.SelectedProgramme </strong>
+    <div class="govuk-grid-row">
+        <div class="govuk-grid-column-full">
+            <div class="row fps-sr-breadcrumb-row">
+                <div class="fps-sr-breadcrumb-flex">
+                    <div class="col-md-8">
+                        <nav class="govuk-breadcrumbs" aria-label="Breadcrumb">
+                            <ol class="govuk-breadcrumbs__list">
+                                <li class="govuk-breadcrumbs__list-item">
+                                    <a class="govuk-breadcrumbs__link" href="fpshome.html">Home</a>
+                                </li>
+                                <li class="govuk-breadcrumbs__list-item">@Model.SelectedProgramme</li>
+                                <li class="govuk-breadcrumbs__list-item">
+                                    <a class="govuk-breadcrumbs__link" href="program_management.html">Programme Management</a>
+                                </li>
+                                <li class="govuk-breadcrumbs__list-item">Plan Projects</li>
+                                <li class="govuk-breadcrumbs__list-item">Project Planning</li>
+                            </ol>
+                        </nav>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
-<div class="row">
-    <div class="col-lg-6" style="padding:0px;  border-bottom: 2px solid #1d70b8;">
-        <h1 style="padding: 10px 0 0px 17px; font-weight: 700; font-size:16px;
-                                margin-bottom: 10px; ">
-            Project Planning : <span class="projectcode_color">@Model.ProjectCode</span>
-            <input id="hdnProjectCode" type="hidden" value="@Model.ProjectCode" />
-        </h1>
+        <div class="govuk-grid-column-full govuk-!-padding-0">
+            <h1 class="govuk-heading-s sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2 govuk-!-padding-left-4">
+                Project Planning : <span class="projectcode_color">@Model.ProjectCode</span>
+                <input id="hdnProjectCode" type="hidden" value="@Model.ProjectCode" />
+                <a href="program_management.html" class="govuk-back-link sup_align_right">Back</a>
+            </h1>
+        </div>
     </div>
 
-    <div class="col-lg-6" style=" text-align: right; border-bottom: 2px solid #1d70b8;">
-        <a class="btn btn-outline-primary btn-sm" href="program_management.html" style="  margin-top: 5px; margin-right: 10px; border: 1px solid #0d6efd;">Back</a>
+    <div class="project-code-section govuk-!-margin-bottom-2 govuk-!-padding-left-0">
+        <textarea class="govuk-textarea pp-project-description" id="projectDescription" aria-label="Project description" rows="2" asp-for="ProjectDescription">@Model.ProjectDescription</textarea>
+        <button type="button" class="govuk-button sup_margin_0" aria-label="Preview Report">Preview Report</button>
     </div>
-    <div class="col-lg-12">
-        <main class="main-content" style="padding:0px 10px 10px 10px">
-            <div class="project-code-section" style="justify-content: space-between; margin-top: 10px; margin-bottom: 10px; background-color: #efefef; border: 1px solid #cbcbcb; padding: 4px;">
-                <textarea class="form-control projectplan-code form-control-sm" aria-label="Salmonell Surveillance and control programme" style="width: 80%; height: 43px;" rows="2" asp-for="ProjectDescription">@Model.ProjectDescription</textarea>
-                <button aria-label="Preview Report" class="btnBlue">Preview Report</button>
-            </div>
-            <div class="main-grid">
-                <div class="left-column">
-                    <!-- Staff Booked Section -->
-                    <section class="data-section">
-                        <div>
-                            <div id="@($"gridContainer_{Model.StaffBookedGrid.GridId}")">
-                                @await Html.PartialAsync("_DataGrid", Model.StaffBookedGrid)
-                            </div>
-                            <div style=" border-left: 1px solid #1d70b8 !important; border-top: 1px solid #1d70b8 !important; border-right: 1px solid #1d70b8 !important; padding: 9px 20px 0px 20px; display: flex;justify-content: flex-end;align-items: center;">
-                                <span style=" border-right: 0px;  border-bottom: 0px; font-size: 14px;   text-align: right;">
-                                    <span class="me-2">Total Staff Cost: </span>
-                                </span>
-                                <span style=" border-right: 0px;  border-left: 0px; border-bottom: 0px; padding-right: 0px !important;  text-align: right;font-size: 13px;">
-                                    <span class="total-amount"> 
-                                        <input type="text" value="@Model.TotalStaffCost.ToString("C0")" aria-label="Total Staff Cost" style="padding-right:5px;" class="form-control form-control-sm " asp-for="TotalStaffCost">
-                            </div>
-                            <div style="display: flex;
-                                                    margin-top: 0;
-                                                    margin-bottom: 0;
-                                                    border: 1px solid #1d70b8;
-                                                    padding: 5px 10px 5px 10px;
-                                                    border-top: 0;
-                                                    justify-content: space-between;
-                                                    align-items: center;
-                                                    border-radius: 0 0 10px 10px;">
-                            </div>
-                        </div>
-                    </section>
-                    <!-- Animals Booked Section -->
-                    <section class="data-section">
-                        <div id="@($"gridContainer_{Model.AnimalsBookedGrid.GridId}")">
-                            @await Html.PartialAsync("_DataGrid", Model.AnimalsBookedGrid)
-                        </div>
-                        <div style=" border-top: 1px solid #1d70b8 !important; border-left: 1px solid #1d70b8 !important; border-right: 1px solid #1d70b8 !important; padding: 9px 20px 0px 20px; display: flex;justify-content: flex-end;align-items: center;">
-                            <span style=" border-right: 0px;  border-bottom: 0px; font-size: 14px;   text-align: right;">
-                                <span class="me-2">Total Animal Cost: </span>
-                            </span>
-                            <span style=" border-right: 0px;  border-left: 0px; border-bottom: 0px; padding-right: 0px !important;  text-align: right;font-size: 13px;"> <span class="total-amount"> 
-                                <input type="text" value="@Model.TotalAnimalCost.ToString("C0")" aria-label="Total Animal Cost" style="padding-right:5px;" class="form-control form-control-sm " asp-for="TotalAnimalCost">
-                        </div>
-                        <div style="display: flex;
-                                            margin-top: 0;
-                                            margin-bottom: 0;
-                                            border: 1px solid #1d70b8;
-                                            padding: 5px 10px 5px 10px;
-                                            border-top: 0;
-                                            justify-content: space-between;
-                                            align-items: center;
-                                            border-radius: 0 0 10px 10px;">
-                        </div>
-                    </section>
+
+    <div class="main-grid">
+        <div class="left-column">
+            <!-- Staff Booked Section -->
+            <section class="data-section sup_border govuk-!-padding-0">
+                <div id="@($"gridContainer_{Model.StaffBookedGrid.GridId}")">
+                    @await Html.PartialAsync("_DataGrid", Model.StaffBookedGrid)
                 </div>
-                <div class="right-column">
-                    <!-- Tests Booked Section -->
-                    <section class="data-section">
-                        <div id="@($"gridContainer_{Model.TestsBookedGrid.GridId}")">
-                            @await Html.PartialAsync("_DataGrid", Model.TestsBookedGrid)
-                        </div>
-                        <div style=" border-left: 1px solid #1d70b8 !important;  border-top: 1px solid #1d70b8 !important;  border-right: 1px solid #1d70b8 !important; padding: 9px 20px 0px 20px; display: flex;justify-content: flex-end;align-items: center;">
-                            <span style=" border-right: 0px;  border-bottom: 0px; font-size: 14px;   text-align: right;">
-                                <span class="me-2">Total Test Cost: </span>
-                            </span>
-                            <span style=" border-right: 0px;  border-left: 0px; border-bottom: 0px; padding-right: 0px !important;  text-align: right;font-size: 13px;"> <span class="total-amount">  
-                                <input type="text" value="@Model.TotalTestCost.ToString("C0")" aria-label="Total Test Cost" style="padding-right:5px;" class="form-control form-control-sm " asp-for="TotalTestCost">
-                        </div>
-                        <div style="display: flex;
-                                            margin-top: 0;
-                                            margin-bottom: 0;
-                                            border: 1px solid #1d70b8;
-                                            padding: 5px 10px 5px 10px;
-                                            border-top: 0;
-                                            justify-content: space-between;
-                                            align-items: center;
-                                            border-radius: 0 0 10px 10px;">
-                        </div>
-                    </section>
-                    <!-- Exceptional Costs Section -->
-                    <section class="data-section">
-                        <div id="@($"gridContainer_{Model.ExceptionalCostsGrid.GridId}")">
-                            @await Html.PartialAsync("_DataGrid", Model.ExceptionalCostsGrid)
-                        </div>
-                        <div style=" border-top: 1px solid #1d70b8 !important; border-left: 1px solid #1d70b8 !important; border-right: 1px solid #1d70b8 !important; padding: 9px 20px 0px 20px; display: flex;justify-content: flex-end;align-items: center;">
-                            <span style=" border-right: 0px;  border-bottom: 0px; font-size: 14px;   text-align: right;">
-                                <span class="me-2">Total Additional Cost: </span>
-                            </span>
-                            <span style=" border-right: 0px;  border-left: 0px; border-bottom: 0px; padding-right: 0px !important;  text-align: right;font-size: 13px;"> <span class="total-amount">
-                                <input type="text" value="@Model.TotalAdditionalCost.ToString("C0")" aria-label="Total Additional Cost" style="padding-right:5px;" class="form-control form-control-sm " asp-for="TotalAdditionalCost">
-                        </div>
-                        <div style="display: flex;
-                                            margin-top: 0;
-                                            margin-bottom: 0;
-                                            border: 1px solid #1d70b8;
-                                            padding: 5px 10px 5px 10px;
-                                            border-top: 0;
-                                            justify-content: space-between;
-                                            align-items: center;
-                                            border-radius: 0 0 10px 10px;">
-                        </div>
-                    </section>
+                <div class="pva-inline-summary govuk-!-padding-1 sup_top_border_1">
+                    <span class="govuk-body govuk-!-font-size-16 govuk-!-margin-bottom-0">Total Staff Cost:</span>
+                    <input type="text" id="TotalStaffCost" value="@Model.TotalStaffCost.ToString("C0")" aria-label="Total Staff Cost" class="govuk-input text-AlignRight pva-input-160" asp-for="TotalStaffCost" readonly>
                 </div>
-            </div>
-            <footer class="financial-summary">
-                <div class="summary-row">
-                    <div class="summary-item">
-                        <label style="display:block" for="TransferIncome">Transfer Income:</label>
-                        <input type="text" value="@Model.TransferIncome.ToString("C0")" aria-label="TransferIncome" id="TransferIncome" class="form-control form-control-sm" name="TransferIncome" asp-for="TransferIncome">
-                    </div>
-                    <div class="summary-item">
-                        <label style="display:block" for="ExternalIncome">External Income:</label>
-                        <input type="text" value="@Model.ExternalIncome.ToString("C0")" aria-label="External Income" id="ExternalIncome" class="form-control form-control-sm" name="External Income" asp-for="ExternalIncome">
-                    </div>
-                    <div class="summary-item">
-                        <label style="display:block" for="BudgetCVL">Budget CVL:</label>
-                        <input type="text" value="@Model.BudgetCVL.ToString("C0")" aria-label="Budget CVL" id="BudgetCVL" class="form-control form-control-sm" name="Budget CVL" asp-for="BudgetCVL">
-                    </div>
-                    <div class="summary-item">
-                        <label style="display:block" for="TotalCosts">Total Costs:</label>
-                        <input type="text" value="@Model.TotalCosts.ToString("C0")" aria-label="Total Costs" id="TotalCosts" class="form-control form-control-sm" name="Total Costs" asp-for="TotalCosts">
-                    </div>
-                    <div class="summary-item">
-                        <label style="display:block" for="ProfitLoss">Profit/(Loss):</label>
-                        <input type="text" value="@(Model.ProfitLoss < 0 ? $"(£{Math.Abs(Model.ProfitLoss):N0})" : Model.ProfitLoss.ToString("C0"))" aria-label="Profit/(Loss)" id="ProfitLoss" class="form-control form-control-sm @(Model.ProfitLoss < 0 ? "text-danger" : "text-primary")" name="Profit/(Loss)" asp-for="ProfitLoss">
-                    </div>
-                    <div class="summary-item">
-                        <label style="display:block" for="TargetProfit">Target Profit:</label>
-                        <input type="text" value="@Model.TargetProfit.ToString("C0")" aria-label="Target Profit" id="TargetProfit" class="form-control form-control-sm" name="Target Profit" asp-for="TargetProfit">
-                    </div>
-                    <div class="summary-item">
-                        <label style="display:block" for="OffTarget">Off - Target:</label>
-                        <input type="text" value="@(Model.OffTarget < 0 ? $"(£{Math.Abs(Model.OffTarget):N0})" : Model.OffTarget.ToString("C0"))" aria-label="Off - Target" id="OffTarget" class="form-control form-control-sm @(Model.OffTarget < 0 ? "text-danger" : "text-primary")" name="Off - Target" asp-for="OffTarget">
-                    </div>
+            </section>
+            <!-- Animals Booked Section -->
+            <section class="data-section sup_border govuk-!-padding-0">
+                <div id="@($"gridContainer_{Model.AnimalsBookedGrid.GridId}")">
+                    @await Html.PartialAsync("_DataGrid", Model.AnimalsBookedGrid)
                 </div>
-            </footer>
-        </main>
+                <div class="pva-inline-summary govuk-!-padding-1 sup_top_border_1">
+                    <span class="govuk-body govuk-!-font-size-16 govuk-!-margin-bottom-0">Total Animal Cost:</span>
+                    <input type="text" id="TotalAnimalCost" value="@Model.TotalAnimalCost.ToString("C0")" aria-label="Total Animal Cost" class="govuk-input text-AlignRight pva-input-160" asp-for="TotalAnimalCost" readonly>
+                </div>
+            </section>
+        </div>
+        <div class="right-column">
+            <!-- Tests Booked Section -->
+            <section class="data-section sup_border govuk-!-padding-0">
+                <div id="@($"gridContainer_{Model.TestsBookedGrid.GridId}")">
+                    @await Html.PartialAsync("_DataGrid", Model.TestsBookedGrid)
+                </div>
+                <div class="pva-inline-summary govuk-!-padding-1 sup_top_border_1">
+                    <span class="govuk-body govuk-!-font-size-16 govuk-!-margin-bottom-0">Total Test Cost:</span>
+                    <input type="text" id="TotalTestCost" value="@Model.TotalTestCost.ToString("C0")" aria-label="Total Test Cost" class="govuk-input text-AlignRight pva-input-160" asp-for="TotalTestCost" readonly>
+                </div>
+            </section>
+            <!-- Exceptional Costs Section -->
+            <section class="data-section sup_border govuk-!-padding-0">
+                <div id="@($"gridContainer_{Model.ExceptionalCostsGrid.GridId}")">
+                    @await Html.PartialAsync("_DataGrid", Model.ExceptionalCostsGrid)
+                </div>
+                <div class="pva-inline-summary govuk-!-padding-1 sup_top_border_1">
+                    <span class="govuk-body govuk-!-font-size-16 govuk-!-margin-bottom-0">Total Additional Cost:</span>
+                    <input type="text" id="TotalAdditionalCost" value="@Model.TotalAdditionalCost.ToString("C0")" aria-label="Total Additional Cost" class="govuk-input text-AlignRight pva-input-160" asp-for="TotalAdditionalCost" readonly>
+                </div>
+            </section>
+        </div>
     </div>
+
+    <footer class="financial-summary pp-summary-4-3">
+        <div class="summary-row">
+            <div class="summary-item">
+                <label class="govuk-label--s govuk-!-font-size-16" for="TransferIncome">Transfer Income:</label>
+                <input type="text" value="@Model.TransferIncome.ToString("C0")" aria-label="Transfer Income" id="TransferIncome" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight" name="TransferIncome" asp-for="TransferIncome">
+            </div>
+            <div class="summary-item">
+                <label class="govuk-label--s govuk-!-font-size-16" for="ExternalIncome">External Income:</label>
+                <input type="text" value="@Model.ExternalIncome.ToString("C0")" aria-label="External Income" id="ExternalIncome" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight" name="ExternalIncome" asp-for="ExternalIncome">
+            </div>
+            <div class="summary-item">
+                <label class="govuk-label--s govuk-!-font-size-16" for="BudgetCVL">Budget CVL:</label>
+                <input type="text" value="@Model.BudgetCVL.ToString("C0")" aria-label="Budget CVL" id="BudgetCVL" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight" name="BudgetCVL" asp-for="BudgetCVL">
+            </div>
+            <div class="summary-item">
+                <label class="govuk-label--s govuk-!-font-size-16" for="TotalCosts">Total Costs:</label>
+                <input type="text" value="@Model.TotalCosts.ToString("C0")" aria-label="Total Costs" id="TotalCosts" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight" name="TotalCosts" asp-for="TotalCosts">
+            </div>
+            <div class="summary-item">
+                <label class="govuk-label--s govuk-!-font-size-16" for="ProfitLoss">Profit/(Loss):</label>
+                <input type="text" value="@(Model.ProfitLoss < 0 ? $"(£{Math.Abs(Model.ProfitLoss):N0})" : Model.ProfitLoss.ToString("C0"))" aria-label="Profit/(Loss)" id="ProfitLoss" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight @(Model.ProfitLoss < 0 ? "text-danger" : "text-primary")" name="ProfitLoss" asp-for="ProfitLoss">
+            </div>
+            <div class="summary-item">
+                <label class="govuk-label--s govuk-!-font-size-16" for="TargetProfit">Target Profit:</label>
+                <input type="text" value="@Model.TargetProfit.ToString("C0")" aria-label="Target Profit" id="TargetProfit" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight" name="TargetProfit" asp-for="TargetProfit">
+            </div>
+            <div class="summary-item">
+                <label class="govuk-label--s govuk-!-font-size-16" for="OffTarget">Off - Target:</label>
+                <input type="text" value="@(Model.OffTarget < 0 ? $"(£{Math.Abs(Model.OffTarget):N0})" : Model.OffTarget.ToString("C0"))" aria-label="Off - Target" id="OffTarget" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight @(Model.OffTarget < 0 ? "text-danger" : "text-primary")" name="OffTarget" asp-for="OffTarget">
+            </div>
+        </div>
+    </footer>
+
 </div>
 
 @section Scripts{
