@@ -13,7 +13,7 @@ namespace Apha.PACT.DataAccess.Data
             entity.ToTable("projectmonth", "fps");
 
             entity.Property(e => e.Project)
-                .HasColumnType("citext")
+                .HasMaxLength(20)
                 .HasColumnName("project");
             entity.Property(e => e.MonthNo).HasColumnName("monthno");
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");

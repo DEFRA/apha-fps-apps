@@ -19,19 +19,21 @@ function loadCostProfileGrid(parentProject) {
         url += '?parentProject=' + encodeURIComponent(parentProject);
     }
 
-    fetch(url, {
+    $.ajax({
+        url: url,
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filter: '{}' })
-    })
-        .then(response => response.text())
-        .then(html => {
+        contentType: 'application/json',
+        data: JSON.stringify({ filter: '{}' }),
+        success: function (html) {
             const container = document.getElementById('gridContainer_costProfileGrid');
             container.innerHTML = '';
             container.appendChild(document.createRange().createContextualFragment(html));
             updateTotalCostProfile(parentProject);
-        })
-        .catch(() => console.error('Failed to load cost profile grid.'));
+        },
+        error: function () {
+            console.error('Failed to load cost profile grid.');
+        }
+    });
 }
 
 function updateTotalCostProfile(parentProject) {
@@ -41,13 +43,15 @@ function updateTotalCostProfile(parentProject) {
         return;
     }
 
-    fetch('/PACT/ProjectProfile/GetTotalCostProfile?parentProject=' + encodeURIComponent(parentProject))
-        .then(response => response.json())
-        .then(res => {
+    $.ajax({
+        url: '/PACT/ProjectProfile/GetTotalCostProfile?parentProject=' + encodeURIComponent(parentProject),
+        method: 'GET',
+        success: function (res) {
             if (res.success) {
                 input.value = parseFloat(res.data).toFixed(2);
             }
-        });
+        }
+    });
 }
 
 // ── Graph Data ────────────────────────────────────────────────────────────
@@ -58,9 +62,10 @@ let cumulativeChart = null;
 function loadProfileData(parentProject) {
     if (!parentProject) return;
 
-    fetch('/PACT/ProjectProfile/GetProfileData?parentProject=' + encodeURIComponent(parentProject))
-        .then(response => response.json())
-        .then(res => {
+    $.ajax({
+        url: '/PACT/ProjectProfile/GetProfileData?parentProject=' + encodeURIComponent(parentProject),
+        method: 'GET',
+        success: function (res) {
             if (!res.success || !res.data) return;
 
             const labels = res.data.map(d => 'Month ' + d.monthNo);
@@ -120,15 +125,17 @@ function loadProfileData(parentProject) {
                     }
                 }
             });
-        });
+        }
+    });
 }
 
 function loadCumulativeData(parentProject) {
     if (!parentProject) return;
 
-    fetch('/PACT/ProjectProfile/GetCumulativeData?parentProject=' + encodeURIComponent(parentProject))
-        .then(response => response.json())
-        .then(res => {
+    $.ajax({
+        url: '/PACT/ProjectProfile/GetCumulativeData?parentProject=' + encodeURIComponent(parentProject),
+        method: 'GET',
+        success: function (res) {
             if (!res.success || !res.data) return;
 
             const labels = res.data.map(d => 'Month ' + d.monthNo);
@@ -188,10 +195,11 @@ function loadCumulativeData(parentProject) {
                     }
                 }
             });
-        });
+        }
+    });
 }
 
-// ── CRUD helpers ──────────────────────────────────────────────────────────
+// ── CRUD helpers
 
 // Store modal state outside of jQuery .data()
 let _modalProject = '';
@@ -213,18 +221,19 @@ function openCostProfileModal(project, monthNo) {
 
     const url = '/PACT/ProjectProfile/GetProjectMonth?project=' + encodeURIComponent(project) + '&monthNo=' + monthNo;
 
-    fetch(url)
-        .then(response => {
-            if (!response.ok) throw new Error('HTTP ' + response.status + ' – ' + url);
-            return response.text();
-        })
-        .then(html => {
+    $.ajax({
+        url: url,
+        method: 'GET',
+        success: function (html) {
             const content = document.getElementById('costProfileModalContent');
             content.innerHTML = '';
             content.appendChild(document.createRange().createContextualFragment(html));
             document.getElementById('costProfileModal').classList.add('show');
-        })
-        .catch(err => console.error('Failed to load cost profile form:', err));
+        },
+        error: function (xhr) {
+            console.error('Failed to load cost profile form: HTTP ' + xhr.status + ' – ' + url);
+        }
+    });
 }
 
 function saveProjectMonth() {
@@ -239,13 +248,12 @@ function saveProjectMonth() {
 
     if (!payload.monthNo) { alert('Please enter a month number.'); return; }
 
-    fetch('/PACT/ProjectProfile/SaveProjectMonth', {
+    $.ajax({
+        url: '/PACT/ProjectProfile/SaveProjectMonth',
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-    })
-        .then(response => response.json())
-        .then(res => {
+        contentType: 'application/json',
+        data: JSON.stringify(payload),
+        success: function (res) {
             if (res.success) {
                 document.getElementById('costProfileModal').classList.remove('show');
                 loadCostProfileGrid(_modalProject);
@@ -254,7 +262,8 @@ function saveProjectMonth() {
             } else {
                 alert(res.message || 'Failed to save.');
             }
-        });
+        }
+    });
 }
 
 function deleteProjectMonth(btn) {
@@ -262,17 +271,17 @@ function deleteProjectMonth(btn) {
     const project = document.getElementById('ParentProject').value;
     if (!confirm('Delete month ' + monthNo + '?')) return;
 
-    fetch('/PACT/ProjectProfile/DeleteProjectMonth?project=' + encodeURIComponent(project) + '&monthNo=' + monthNo, {
-        method: 'DELETE'
-    })
-        .then(response => response.json())
-        .then(res => {
+    $.ajax({
+        url: '/PACT/ProjectProfile/DeleteProjectMonth?project=' + encodeURIComponent(project) + '&monthNo=' + monthNo,
+        method: 'DELETE',
+        success: function (res) {
             if (res.success) {
                 loadCostProfileGrid(project);
             } else {
                 alert(res.message || 'Failed to delete.');
             }
-        });
+        }
+    });
 }
 
 // ── Document Ready ────────────────────────────────────────────────────────
@@ -287,15 +296,19 @@ function loadProjectDetails(project) {
         return;
     }
 
-    fetch('/PACT/ProjectProfile/GetProjectDetailsAsync?parentProject=' + encodeURIComponent(project))
-        .then(response => response.json())
-        .then(res => {
+    $.ajax({
+        url: '/PACT/ProjectProfile/GetProjectDetailsAsync?parentProject=' + encodeURIComponent(project),
+        method: 'GET',
+        success: function (res) {
             if (res.success) {
                 if (titleInput)  titleInput.value  = res.projectTitle  ?? '';
                 if (budgetInput) budgetInput.value = res.budgetCvl     ?? '';
             }
-        })
-        .catch(err => console.error('Failed to load project details:', err));
+        },
+        error: function (err) {
+            console.error('Failed to load project details:', err);
+        }
+    });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
