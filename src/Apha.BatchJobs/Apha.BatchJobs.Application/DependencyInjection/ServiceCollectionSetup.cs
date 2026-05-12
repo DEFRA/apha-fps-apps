@@ -122,6 +122,16 @@ public static class ServiceCollectionSetup
 
         // RecreateSummaries Configuration and Services
         services.AddScoped<IRecreateSummariesContext, RecreateSummariesContext>();
+        services.AddScoped<IRecreateSummariesStepCatalog>(sp =>
+        {
+            var implementation = config.GetValue<string>("BatchJobs:RecreateSummariesImplementationMode");
+
+            return implementation?.Trim().ToLowerInvariant() switch
+            {
+                "sqlfiles" or "sql" => new SqlFileRecreateSummariesStepCatalog(),
+                _ => new DotNetRecreateSummariesStepCatalog()
+            };
+        });
         services.AddScoped<RecreateSummariesOrchestrator>();
     }
 

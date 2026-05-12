@@ -159,7 +159,8 @@ ORDER BY fpsyear, parentproject";
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = "SELECT COUNT(DISTINCT parentproject) FROM fps.tlkpproject WHERE fpsyear IN (2024, 2025, 2026)";
-                    return (int)cmd.ExecuteScalar();
+                    var scalar = cmd.ExecuteScalar();
+                    return scalar is int value ? value : 0;
                 }
             }
         }
@@ -248,8 +249,8 @@ ORDER BY fpsyear, parentproject";
     /// </summary>
     public class FpsYearTotalRow
     {
-        public string ParentProject { get; set; }
-        public string Program { get; set; }
+        public string ParentProject { get; set; } = string.Empty;
+        public string Program { get; set; } = string.Empty;
         public int FpsYear { get; set; }
         public decimal TotalAdditionalCosts { get; set; }
         public decimal TotalAnimalCosts { get; set; }
@@ -260,7 +261,7 @@ ORDER BY fpsyear, parentproject";
         public decimal TransferIncome { get; set; }
         public decimal TotalIncome { get; set; }
         public decimal RequiredProfit { get; set; }
-        public string ProjectStatus { get; set; }
+        public string ProjectStatus { get; set; } = string.Empty;
     }
 
     /// <summary>
@@ -268,9 +269,9 @@ ORDER BY fpsyear, parentproject";
     /// </summary>
     public class ValidationRule
     {
-        public string Description { get; set; }
+        public string Description { get; set; } = string.Empty;
         public bool IsValid { get; set; }
-        public string ErrorMessage { get; set; }
+        public string? ErrorMessage { get; set; }
     }
 
     /// <summary>
@@ -285,8 +286,8 @@ ORDER BY fpsyear, parentproject";
         public int ValidationsFailed { get; set; }
         public List<FpsYearTotalRow> SpResults { get; set; } = new();
         public List<ValidationRule> ValidationRules { get; set; } = new();
-        public string ErrorMessage { get; set; }
-        public string StackTrace { get; set; }
+        public string? ErrorMessage { get; set; }
+        public string? StackTrace { get; set; }
 
         public override string ToString()
         {

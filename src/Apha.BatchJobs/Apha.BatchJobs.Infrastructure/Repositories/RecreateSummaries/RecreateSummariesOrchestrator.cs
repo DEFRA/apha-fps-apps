@@ -17,6 +17,7 @@ namespace Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
 public sealed class RecreateSummariesOrchestrator
 {
     private readonly BatchJobsDbContext _dbContext;
+    private readonly IRecreateSummariesStepCatalog _stepCatalog;
     private readonly ILogger<RecreateSummariesOrchestrator> _logger;
 
     /// <summary>
@@ -24,9 +25,11 @@ public sealed class RecreateSummariesOrchestrator
     /// </summary>
     public RecreateSummariesOrchestrator(
         BatchJobsDbContext dbContext,
+        IRecreateSummariesStepCatalog stepCatalog,
         ILogger<RecreateSummariesOrchestrator> logger)
     {
         _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
+        _stepCatalog = stepCatalog ?? throw new ArgumentNullException(nameof(stepCatalog));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -55,8 +58,10 @@ public sealed class RecreateSummariesOrchestrator
 
         try
         {
+            _logger.LogInformation("[{RunId}] RecreateSummaries implementation: {Implementation}", runId, _stepCatalog.ImplementationName);
+
             // --- Steps 1–14 (mandatory, ordered) ---
-            var mandatorySteps = BuildMandatorySteps(month, triggeredBy);
+            var mandatorySteps = _stepCatalog.BuildMandatorySteps(month, triggeredBy);
 
             foreach (var step in mandatorySteps)
             {
@@ -93,7 +98,7 @@ public sealed class RecreateSummariesOrchestrator
             if (periodLocked == 0)
             {
                 // Steps 15–17: conditional refresh when period is not locked
-                var refreshSteps = BuildRefreshSteps(month);
+                var refreshSteps = _stepCatalog.BuildRefreshSteps(month);
 
                 foreach (var step in refreshSteps)
                 {
@@ -172,33 +177,4 @@ public sealed class RecreateSummariesOrchestrator
         return result is null || result == DBNull.Value ? 1 : Convert.ToInt32(result);
     }
 
-    // -------------------------------------------------------------------------
-    // Step factories — each step receives its SQL text at construction time.
-    // SQL is loaded from the Infrastructure/Sql/RecreateSummaries/ files.
-    // -------------------------------------------------------------------------
-
-    private static IReadOnlyList<IRecreateSummariesStep> BuildMandatorySteps(int month, string triggeredBy) =>
-    [
-        new DeleteFpsTotalsStep(SqlLoader.Load("01_delete_fps_totals.sql")),
-        new CreateFpsTotalsStep(SqlLoader.Load("02_create_fps_totals.sql")),
-        new InsertMissingProjectsStep(SqlLoader.Load("03_insert_missing_projects.sql")),   // WHILE loop driven by C#; see step impl
-        new DeleteTimeCostCalcsStep(SqlLoader.Load("04_delete_time_cost_calcs.sql")),
-        new CreateTimeCostCalcsStep(SqlLoader.Load("05_create_time_cost_calcs.sql")),
-        new DeleteProjectMonthCaseworkStep(SqlLoader.Load("06_delete_project_month_casework.sql")),
-        new CreateProjectMonthCaseworkStep(SqlLoader.Load("07_create_project_month_casework.sql")),
-        new DeleteProjectMonthFinalStep(SqlLoader.Load("08_delete_project_month_final.sql")),
-        new DeleteProjectMonth2Step(SqlLoader.Load("09_delete_project_month2.sql")),
-        new CreateProjectMonthSingleStep(SqlLoader.Load("10_create_project_month_single.sql")),
-        new DeleteProjectMonth3Step(SqlLoader.Load("11_delete_project_month3.sql")),
-        new CreateProjectMonthCumulativeStep(SqlLoader.Load("12_create_project_month_cumulative.sql")),
-        new CreateProjectMonthFinalStep(SqlLoader.Load("13_create_project_month_final.sql"), month),
-        new LogRecreateSummariesStep(SqlLoader.Load("14_log_recreate_summaries.sql"), month, triggeredBy),
-    ];
-
-    private static IReadOnlyList<IRecreateSummariesStep> BuildRefreshSteps(int month) =>
-    [
-        new RefreshPeriodMoStep(SqlLoader.Load("15_refresh_period_mo.sql"), month),
-        new RefreshPeriodPscStep(SqlLoader.Load("16_refresh_period_psc.sql"), month),
-        new RefreshPeriodTccStep(SqlLoader.Load("17_refresh_period_tcc.sql"), month),
-    ];
 }
