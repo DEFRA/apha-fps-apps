@@ -30,6 +30,8 @@ namespace Apha.PACT.Api.Extensions
             services.AddScoped<ITestCapabilityService, TestCapabilityService>();
             services.AddScoped<ITestRequirementService, TestRequirementService>();
             services.AddScoped<ITestorProductService, TestorProductService>();
+            services.AddScoped<IProjectMonthService, ProjectMonthService>();
+            services.AddScoped<IProjectProfileService, ProjectProfileService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
@@ -47,7 +49,10 @@ namespace Apha.PACT.Api.Extensions
             services.AddScoped<ITestRequirementRepository, TestRequirementRepository>();
             services.AddScoped<ITestorProductRepository, TestorProductRepository>();
             services.AddScoped<IMonthlyTimeRepository, MonthlyTimeRepository>();
-                 return services;
+            services.AddScoped<IProjectMonthRepository, ProjectMonthRepository>();
+            services.AddScoped<IProjectProfileRepository, ProjectProfileRepository>();
+
+            return services;
         }
     }
 }
