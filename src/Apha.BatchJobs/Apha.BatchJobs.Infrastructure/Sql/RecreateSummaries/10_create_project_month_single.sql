@@ -19,7 +19,7 @@ INSERT INTO fps.projectmonth2 (
     coiw,
     sumofcostprofile,
     portsales,
-    mstoneddue,
+    mstonedue,
     due__done,
     ontime,
     totalhours,
@@ -29,21 +29,34 @@ SELECT
     projectmonth.project,
     projectmonth.monthno,
     projectmonth.costprofile,
-    CASE WHEN total     IS NULL THEN 0 ELSE total     END AS subcontracts,
-    CASE WHEN animals   IS NULL THEN 0 ELSE animals   END AS animals,
-    CASE WHEN other     IS NULL THEN 0 ELSE other     END AS nonanimal,
-    CASE WHEN sumofcost IS NULL THEN 0 ELSE sumofcost END AS timecosts,
-    CASE WHEN sumoftransfercost IS NULL THEN 0 ELSE sumoftransfercost END AS transfercosts,
-    (COALESCE(total, 0) + COALESCE(sumofcost, 0) + COALESCE(sumoftransfercost, 0)) AS totalcost,
-    CASE WHEN sumofamount1 IS NULL THEN 0 ELSE sumofamount1 END AS invoices,
-    CASE WHEN workcost     IS NULL THEN 0 ELSE workcost     END AS coiw,
+    CASE WHEN total     IS NULL THEN '0'::money ELSE total::money END AS subcontracts,
+    CASE WHEN animals   IS NULL THEN '0'::money ELSE animals::money END AS animals,
+    CASE WHEN other     IS NULL THEN '0'::money ELSE other::money END AS nonanimal,
+    CASE WHEN sumofcost IS NULL THEN 0::double precision ELSE sumofcost END AS timecosts,
+    CASE
+        WHEN sumoftransfercost IS NULL THEN 0::double precision
+        ELSE sumoftransfercost::numeric::double precision
+    END AS transfercosts,
+    (
+        COALESCE(total, 0::numeric)
+        + COALESCE(sumofcost, 0::double precision)::numeric
+        + COALESCE(sumoftransfercost, '0'::money)::numeric
+    )::money AS totalcost,
+    CASE WHEN sumofamount1 IS NULL THEN '0'::money ELSE sumofamount1 END AS invoices,
+    CASE WHEN workcost     IS NULL THEN '0'::money ELSE workcost     END AS coiw,
     qryjobmonth_totprofile.sumofcostprofile,
-    CASE WHEN fee          IS NULL THEN 0 ELSE fee          END AS portsales,
-    qryjobmonthmilestone.mstoneddue,
+    CASE
+        WHEN fee IS NULL THEN 0::double precision
+        ELSE fee::numeric::double precision
+    END AS portsales,
+    qryjobmonthmilestone.mstonedue,
     qryjobmonthmilestone.due__done,
     qryjobmonthmilestone.ontime,
-    CASE WHEN sumofhours   IS NULL THEN 0 ELSE sumofhours   END AS totalhours,
-    CASE WHEN sumofpayrate IS NULL THEN 0 ELSE sumofpayrate END AS paycosts
+    CASE WHEN sumofhours   IS NULL THEN 0::double precision ELSE sumofhours END AS totalhours,
+    CASE
+        WHEN sumofpayrate IS NULL THEN 0::double precision
+        ELSE sumofpayrate::numeric::double precision
+    END AS paycosts
 
 FROM ((((((fps.projectmonth
 LEFT JOIN fps.qryjobmonth_subcontracts

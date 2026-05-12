@@ -24,38 +24,38 @@ SELECT DISTINCT
 
     CASE
         WHEN qrytotalanimalcosts.totalanimalcosts IS NULL THEN 0::double precision
-        ELSE qrytotalanimalcosts.totalanimalcosts
+        ELSE qrytotalanimalcosts.totalanimalcosts::numeric::double precision
     END AS totalanimalcosts,
 
     CASE
         WHEN qrytotalstaffcosts.totalstaffcosts IS NULL THEN 0::double precision
-        ELSE qrytotalstaffcosts.totalstaffcosts
+        ELSE qrytotalstaffcosts.totalstaffcosts::numeric::double precision
     END AS totalstaffcosts,
 
     CASE
         WHEN qrytotaltestcosts.totaltestcosts IS NULL THEN 0::double precision
-        ELSE qrytotaltestcosts.totaltestcosts
+        ELSE qrytotaltestcosts.totaltestcosts::numeric::double precision
     END AS totaltestcosts,
 
     CASE
         WHEN qrytotaladditionalcosts.totaladditionalcosts IS NULL THEN 0::double precision
-        ELSE qrytotaladditionalcosts.totaladditionalcosts::double precision
+        ELSE qrytotaladditionalcosts.totaladditionalcosts::numeric::double precision
     END +
     CASE
         WHEN qrytotalanimalcosts.totalanimalcosts IS NULL THEN 0::double precision
-        ELSE qrytotalanimalcosts.totalanimalcosts
+        ELSE qrytotalanimalcosts.totalanimalcosts::numeric::double precision
     END +
     CASE
         WHEN qrytotalstaffcosts.totalstaffcosts IS NULL THEN 0::double precision
-        ELSE qrytotalstaffcosts.totalstaffcosts
+        ELSE qrytotalstaffcosts.totalstaffcosts::numeric::double precision
     END +
     CASE
         WHEN qrytotaltestcosts.totaltestcosts IS NULL THEN 0::double precision
-        ELSE qrytotaltestcosts.totaltestcosts
+        ELSE qrytotaltestcosts.totaltestcosts::numeric::double precision
     END +
     CASE
         WHEN tlkpproject.plancaseworkdebit IS NULL THEN 0::double precision
-        ELSE tlkpproject.plancaseworkdebit::double precision
+        ELSE tlkpproject.plancaseworkdebit::numeric::double precision
     END AS totalcosts,
 
     tlkpproject.custincome,
@@ -79,7 +79,7 @@ SELECT DISTINCT
 
     CASE
         WHEN qrytotalstaffcosts.totalpaycosts IS NULL THEN 0::double precision
-        ELSE qrytotalstaffcosts.totalpaycosts
+        ELSE qrytotalstaffcosts.totalpaycosts::numeric::double precision
     END AS totalpaycosts,
 
     tlkpproject.fpsyear

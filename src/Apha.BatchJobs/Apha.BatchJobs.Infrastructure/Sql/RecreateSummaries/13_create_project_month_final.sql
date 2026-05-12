@@ -26,10 +26,10 @@ INSERT INTO fps.projectmonthfinal (
     cuminvoices,
     cumcoiw,
     cumportsales,
-    mstoneddue,
+    mstonedue,
     due__done,
     ontime,
-    sumofmstoneddue,
+    sumofmstonedue,
     sumofdue__done,
     sumofontime,
     cumflag,
@@ -51,28 +51,37 @@ SELECT DISTINCT
     projectmonth2.subcontracts,
     projectmonth2.animals,
     projectmonth2.nonanimal,
-    projectmonth2.timecosts,
-    projectmonth2.transfercosts,
+    projectmonth2.timecosts::numeric::money,
+    projectmonth2.transfercosts::numeric::money,
     projectmonth2.totalcost,
     projectmonth2.invoices,
     projectmonth2.coiw,
-    projectmonth2.portsales,
+    projectmonth2.portsales::numeric::money,
     CASE WHEN projectmonth2.monthno <= :month THEN cumcost * 1     ELSE NULL END AS cumcost,
     projectmonth3.cumprofile,
     projectmonth3.periodname,
     projectmonth3.sumofcostprofile,
     CASE WHEN projectmonth2.monthno <= :month THEN cuminvoices * 1 ELSE NULL END AS cuminvoices,
     CASE WHEN projectmonth2.monthno <= :month THEN cumcoiw * 1     ELSE NULL END AS cumcoiw,
-    CASE WHEN projectmonth2.monthno <= :month THEN cumportsales * 1 ELSE NULL END AS cumportsales,
-    projectmonth2.mstoneddue,
+    CASE
+        WHEN projectmonth2.monthno <= :month THEN cumportsales::numeric::money
+        ELSE NULL
+    END AS cumportsales,
+    projectmonth2.mstonedue,
     projectmonth2.due__done,
     projectmonth2.ontime,
-    projectmonth3.sumofmstoneddue,
+    projectmonth3.sumofmstonedue,
     CASE WHEN projectmonth2.monthno <= :month THEN sumofdue__done * 1 ELSE NULL END AS sumofdue__done,
     CASE WHEN projectmonth2.monthno <= :month THEN sumofontime * 1    ELSE NULL END AS sumofontime,
     CASE WHEN projectmonth2.monthno <= :month THEN 1                  ELSE NULL END AS cumflag,
-    CASE WHEN projectmonth2.monthno <= :month THEN 1 * projectmonthcasework.cwdebit  ELSE NULL END,
-    CASE WHEN projectmonth2.monthno <= :month THEN 1 * projectmonthcasework.cwcredit ELSE NULL END,
+    CASE
+        WHEN projectmonth2.monthno <= :month THEN projectmonthcasework.cwdebit::numeric::money
+        ELSE NULL
+    END,
+    CASE
+        WHEN projectmonth2.monthno <= :month THEN projectmonthcasework.cwcredit::numeric::money
+        ELSE NULL
+    END,
     CASE WHEN projectmonth2.monthno <= :month THEN 1 * projectmonth3.cumcwdebit      ELSE NULL END,
     CASE WHEN projectmonth2.monthno <= :month THEN 1 * projectmonth3.cumcwcredit     ELSE NULL END,
     projectmonth2.totalhours,

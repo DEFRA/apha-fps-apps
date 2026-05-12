@@ -7,5 +7,5 @@
 --   dbo.RecreateSummaries_Log -> fps.recreatesummaries_log
 --   getdate()                 -> CURRENT_TIMESTAMP
 
-INSERT INTO fps.recreatesummaries_log (userid, period, datadone)
+INSERT INTO fps.recreatesummaries_log (userid, period, datedone)
 VALUES (:userId, :month, CURRENT_TIMESTAMP);

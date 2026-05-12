@@ -8,6 +8,6 @@ INSERT INTO fps.projectmonthcasework
 SELECT DISTINCT
     qryprojectmonthcw.project,
     qryprojectmonthcw.monthno,
-    qryprojectmonthcw.cwdebit,
-    qryprojectmonthcw.cwcredit
+    qryprojectmonthcw.cwdebit::numeric::double precision,
+    qryprojectmonthcw.cwcredit::numeric::double precision
 FROM fps.qryprojectmonthcw;

@@ -21,7 +21,8 @@ INSERT INTO fps.timecostcalcs (
     division,
     pay,
     nonpay,
-    overhead
+    overhead,
+    fpsyear
 )
 SELECT DISTINCT
     workgroupgrade.workgroup,
@@ -40,18 +41,21 @@ SELECT DISTINCT
         ELSE 'Free'
     END AS class,
     monthlytime.hours            AS time,
-    CASE
-        WHEN tlkpprogram.sector_name = 'Charge' THEN hours
-        ELSE 0
-    END *
-    CASE tlkpproject.isdefraproject
-        WHEN 0 THEN profitcentregrade.chargerate
-        ELSE        profitcentregrade.defrachargerate
-    END AS cost,
+    (
+        CASE
+            WHEN tlkpprogram.sector_name = 'Charge' THEN hours
+            ELSE 0
+        END *
+        CASE tlkpproject.isdefraproject
+            WHEN 0 THEN profitcentregrade.chargerate
+            ELSE        profitcentregrade.defrachargerate
+        END
+    )::numeric::double precision AS cost,
     fps.tblkpprofitcentre.division,
     monthlytime.hours * profitcentregrade.payrate AS pay,
     monthlytime.hours * profitcentregrade.npr     AS nonpay,
-    monthlytime.hours * profitcentregrade.ohr     AS overhead
+    monthlytime.hours * profitcentregrade.ohr     AS overhead,
+    tlkpproject.fpsyear
 
 FROM (((fps.tblkpprofitcentre
     INNER JOIN fps.profitcentregrade
