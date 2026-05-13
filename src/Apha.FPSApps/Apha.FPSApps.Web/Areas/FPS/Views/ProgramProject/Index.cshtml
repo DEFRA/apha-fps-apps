@@ -33,15 +33,7 @@
         <!-- Title section -->
         <div class="govuk-grid-row">
             <div class="govuk-grid-column-full">
-                <div class="row" style="display:flex; align-items: center;">
-                    <div class="col-sm-12" style="padding:0px;">
-                        <div style="border-bottom: 2px solid #1d70b8; height:48px;">
-                            <h1 style="padding: 15px 0 5px 17px; font-size:16px; width: 50%; font-weight: 700; float:left; margin: 0;">
-                                Projects within Programme
-                            </h1>
-                        </div>
-                    </div>
-                </div>
+                <h1 class="govuk-heading-s sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2 govuk-!-padding-left-4">Projects within Programme</h1>
             </div>
         </div>
 
@@ -60,14 +52,16 @@
                                         </button>
                                         <ul>
                                             <li><a class="dropdown-item sidenav-title">Plan vs Actuals</a></li>
-                                            <li><a class="dropdown-item"
-                                                   data-nav-program="@Url.Action("Index", "ProjectStaffPlanActual", new { area = "FPS" })"
-                                                   href="@Url.Action("Index", "ProjectStaffPlanActual", new { area = "FPS", programNo = Model.SelectedProgramNo })">Staff</a>
+                                            <li><a class="dropdown-item"                                                  
+                                                   asp-area="FPS" asp-controller="ProjectStaffPlanActual" asp-action="Index"
+                                                   asp-route-programNo="@Model.SelectedProgramNo">Staff</a>
                                                 </li>
-                                            <li><a class="dropdown-item" href="#">Tests</a></li>
+                                            <li><a class="dropdown-item" 
+                                                    asp-area="FPS" asp-controller="ProjectTestPlanActual" asp-action="Index"  asp-route-programNo="@Model.SelectedProgramNo">Tests</a>
+                                                </li>
                                             <li><a class="dropdown-item"
-                                                   data-nav-program="@Url.Action("Index", "ProgramAnimalPlan", new { area = "FPS" })"
-                                                   href="@Url.Action("Index", "ProgramAnimalPlan", new { area = "FPS", programNo = Model.SelectedProgramNo })">Animals</a></li>
+                                                    asp-area="FPS" asp-controller="ProjectAnimalPlanActual" asp-action="Index"  asp-route-programNo="@Model.SelectedProgramNo">Animals</a>
+                                                </li>
                                             <li><a class="dropdown-item" href="#">Additional</a></li>
                                         </ul>
                                     </nav>
@@ -143,6 +137,7 @@
     <script src="~/js/ajax-form-validation.js"></script>
     <script>
         var currentProgramNo = '@Html.Raw(Model.SelectedProgramNo)';
+        var currentProjectCode = '';
 
         function toggleSidebar() {
             const sidebar = document.querySelector('.sidenav');
@@ -152,7 +147,9 @@
         function updateNavLinks(programNo) {
             document.querySelectorAll('a[data-nav-program]').forEach(function (link) {
                 const base = link.getAttribute('data-nav-program');
-                link.href = base + '?programNo=' + encodeURIComponent(programNo);
+                var url = base + '?programNo=' + encodeURIComponent(programNo);
+                if (currentProjectCode) url += '&projectCode=' + encodeURIComponent(currentProjectCode);
+                link.href = url;
             });
         }
 
@@ -174,17 +171,26 @@
             const id = $(btn).data('id');
             document.getElementById('selected-project-input').value = id;
             document.getElementById('hdnSelectedProject').value     = id;
+            currentProjectCode = id;
+            updateNavLinks(currentProgramNo);
 
             const planBtn = document.getElementById('btnPlan');
             if (planBtn) {
                 planBtn.href          = '@Url.Action("Index", "ProjectPlanning", new { area = "FPS" })?parentProject=' + encodeURIComponent(id);
                 planBtn.style.display = '';
             }
+
+            $('a[data-nav-program]').each(function () {
+                var base = $(this).data('nav-program');
+                $(this).attr('href', base + '?projectCode=' + encodeURIComponent(id));
+            });
         }
 
         function resetSelectedProject() {
             document.getElementById('selected-project-input').value = '';
             document.getElementById('hdnSelectedProject').value     = '';
+            currentProjectCode = '';
+            updateNavLinks(currentProgramNo);
             const planBtn = document.getElementById('btnPlan');
             if (planBtn) planBtn.style.display = 'none';
         }

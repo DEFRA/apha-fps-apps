@@ -1,151 +1,20 @@
-
-
-
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-html,body{
-    height:100%;
-    margin:0;
-}
 
-.content-wrapper {
-    flex: 1;
-}
-
-footer {
-    text-align: center;
-}
-
-.userdropdownbtn {
-    background: none;
-    color: #000;
-    position: absolute;
-    right: 2px;
-    display: flex;
-    font-size: 16px !important;
-    top: 22px;
-    align-items: center;
-}
-
-    .userdropdownbtn:focus {
-        outline: none;
-    }
-
-.userdropdown {
-    display: none;
-    background: none;
-    color: #000;
-    position: absolute;
-    right: 20px;
-    top: 60px;
-    z-index: 999;
-}
-
-    .userdropdown.show {
-        display: block;
-    }
-
-    .userdropdown > ul {
-        display: inline-block;
-        margin: 0;
-        padding: 0;
-        list-style-type: none;
-        width: 180px;
-        border: 1px solid #cecece;
-    }
-
-        .userdropdown > ul > li {
-            display: inline-flex;
-            width: 100%;
-            margin: 0;
-        }
-
-            .userdropdown > ul > li > a {
-                padding: 10px;
-                border-bottom: 1px solid #ccc;
-                background: white;
-                width: 100%;
-                color: #000;
-                display: flex;
-                text-decoration: none;
-                cursor: pointer;
-            }
-
-                .userdropdown > ul > li > a:hover {
-                    background: aliceblue;
-                }
-
-                .userdropdown > ul > li > a > img {
-                    margin-right: 5px;
-                }
-
-
-.userdropdownbtn::after {
-    display: inline-block;
-    margin-left: .255em;
-    vertical-align: .255em;
-    content: "";
-    border-top: .3em solid;
-    border-right: .3em solid transparent;
-    border-bottom: 0;
-    border-left: .3em solid transparent;
-}
 
 /* .header { */
-    /* background: #fff; */
-    /* color: #000; */
-   /* padding: 0; */
-		/* background: url('images/header_bannersmall2.jpg') no-repeat 96% 15%; */
+/* background: #fff; */
+/* color: #000; */
+/* padding: 0; */
+/* background: url('images/header_bannersmall2.jpg') no-repeat 96% 15%; */
 /* } */
 
 
-.header-nav {
-    display: flex;
-    justify-content: space-between;
-    border-bottom: 1px solid #ccc;
-    align-items: center;
-    padding: 0 10px;
-    background: #ecf5ff;
-	color:#0b0c0c;
-}
-
-.pims-log-wrapper {
-    display: flex;
-    align-items: center;
-    margin: 4px 0;
-}
-
-
-.user-menu {
-    background: transparent !important;
-    color: #000 !important;
-}
-.header-nav  .dropdown-menu {
-    /* top: 39px !important; */
-    padding: 0;
-    border-radius: 0;
-    border: 1px solid #003078;
-    border-bottom: 0;
-}
-
-.pims-log {
-    border: 1px solid #0374e9;
-    border-radius: 10px;
-   
-    color: #00005c;
-    text-shadow: 1px 1px #b0d7ff;
-    letter-spacing: 1px;
-    background: #fff;
-    font-weight: bold;
-    font-size: 20px;
-    text-align: center;
-    padding: 2px;
-    margin-left: 10px;
-}
+/* header-nav, app-log-wrapper, app-log, user-menu — moved to css/common/headernav/navstyle.css */
 
 .dropdown-item {
     font-size: 14px;
@@ -153,23 +22,12 @@ footer {
     line-height: 30px;
 }
 
-.dropdown-item:focus,
-.dropdown-item:hover {
-    background-color: #003078;
-    color: #fff;
-    font-size: 14px;
-}
+/* .dropdown-item:hover removed — overridden by css/common/headernav/navstyle.css */
 
 .input-group-text {
-        border-radius: 0 5px 5px 0;
-        padding: 8px;
-        border: 1px solid #919191;
-    }
-
-
-
-.header-nav .dropdown-menu {
-    top: 0% !important;
+    border-radius: 0 5px 5px 0;
+    padding: 8px;
+    border: 1px solid #919191;
 }
 
 .form-control {
@@ -186,26 +44,28 @@ footer {
 
 .form-select {
     display: inline-block;
-	}
-	
-	
-	
-.footer {position:relative;}
+}
 
 
 
-.dropdown .dropdown-item{
-	
-	padding: 1px 10px 3px 10px;
+.footer {
+    position: relative;
+}
+
+
+
+.dropdown .dropdown-item {
+
+    padding: 1px 10px 3px 10px;
 }
 
 .dropdown-menu a {
-	padding: 1px 10px 3px 10px;
+    padding: 1px 10px 3px 10px;
 }
 
 
 .logo {
-  
+
     height: 75px;
 }
 
@@ -224,10 +84,11 @@ footer {
 
 
 
-.nav-item:hover a,
-.nav-item.active a {
+.nav-item:hover a:not(.nav-button):not(.dropdown-item),
+.nav-item.active a:not(.nav-button):not(.dropdown-item) {
     background-color: rgba(255, 255, 255, 0.2);
 }
+
 /* 
 .breadcrumb {
     background-color: #e8f4fd;
@@ -248,13 +109,13 @@ footer {
 } */
 
 .main-content {
-  
+
     margin: 0 auto;
-     padding: 10px; 
+    padding: 10px;
     background-color: white;
 }
 
-	.content-area {
+.content-area {
     display: flex;
     gap: 16px;
     height: 326px;
@@ -302,7 +163,6 @@ footer {
     display: flex;
     gap: 10px;
     margin-bottom: 20px;
-    width: 75%;
     justify-content: flex-end;
 }
 
@@ -365,7 +225,8 @@ footer {
 }
 
 .form-group input,
-.form-group textarea, .form-group select {
+.form-group textarea,
+.form-group select {
     width: 100%;
     padding: 8px;
     border: 1px solid #ccc;
@@ -380,19 +241,19 @@ footer {
 
 /* .form-group input:focus, */
 /* .form-group textarea:focus { */
-    /* outline: none; */
-    /* border-color: #4a90e2; */
-    /* box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2); */
+/* outline: none; */
+/* border-color: #4a90e2; */
+/* box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2); */
 /* } */
- 
+
 
 
 .total-amount input {
-	
 
-	text-align:right;
-	
-   
+
+    text-align: right;
+
+
 }
 
 
@@ -418,7 +279,7 @@ footer {
 
 
 .user-table th {
-      background-color: #dadada;
+    background-color: #dadada;
     border: 1px solid #b1b1b1;
     padding: 2px 4px;
     text-align: left;
@@ -445,7 +306,7 @@ footer {
 .year-totals {
     /* background-color: #d4d0c8; */
     border: 1px solid #808080;
-    padding: 0px; 
+    padding: 0px;
 }
 
 .totals-list {
@@ -455,14 +316,16 @@ footer {
 }
 
 .total-item {
-   display: flex;
+    display: flex;
     font-size: 12px;
     padding: 2px 0;
     align-items: center;
     justify-content: flex-end;
 }
 
-.total-item  label{ margin-right:4px;  }
+.total-item label {
+    margin-right: 4px;
+}
 
 
 .grand-total {
@@ -474,14 +337,14 @@ footer {
 .container {
     width: 100%;
     height: 100vh;
-    padding: 8px;
+    padding: 5px;
 }
 
 .right-panel input {
     /* padding: 4px; */
     /* border: 1px solid #b7b7b7; */
     /* border-radius: 4px; */
-   font-family: "GDS Transport";
+    font-family: "GDS Transport";
     /* font-size: 14px; */
     /* font-weight: 600; */
     /* background-color: #ffffff; */
@@ -509,16 +372,16 @@ footer {
 }
 
 /* .tab-btn { */
-    /* padding: 8px 8px; */
-    /* border: none; */
-    /* background: #E8E8E8; */
-    /* border-right: 1px solid #C0C0C0; */
-    /* font-size: 14px; */
-    /* cursor: pointer; */
-    /* color: #424242; */
-    /* font-weight: 500; */
-    /* white-space: nowrap; */
-    /* flex: 1; */
+/* padding: 8px 8px; */
+/* border: none; */
+/* background: #E8E8E8; */
+/* border-right: 1px solid #C0C0C0; */
+/* font-size: 14px; */
+/* cursor: pointer; */
+/* color: #424242; */
+/* font-weight: 500; */
+/* white-space: nowrap; */
+/* flex: 1; */
 /* } */
 
 .tab-btn:hover {
@@ -539,8 +402,8 @@ footer {
 .tab-pane {
     display: none;
     padding: 12px;
-    height:360px;
-   
+    height: 360px;
+
 }
 
 .tab-pane.active {
@@ -556,8 +419,8 @@ footer {
     color: #424242;
 }
 
-.tab-content .active{
-	background:#fff;
+.tab-content .active {
+    background: #fff;
 }
 
 .content-section {
@@ -567,8 +430,17 @@ footer {
     overflow: hidden;
 }
 
-  .nav-btn { padding: 2px 8px; border: 1px solid #999; background-color: #f0f0f0; cursor: pointer; font-size: 11px; }
-        .nav-btn:hover { background-color: #e0e0e0; }
+.nav-btn {
+    padding: 2px 8px;
+    border: 1px solid #999;
+    background-color: #f0f0f0;
+    cursor: pointer;
+    font-size: 11px;
+}
+
+.nav-btn:hover {
+    background-color: #e0e0e0;
+}
 
 
 .menu-item {
@@ -591,10 +463,10 @@ footer {
 
 
 @media (max-width: 768px) {
-    
-    
-    
-    
+
+
+
+
     .main-content {
         padding: 10px;
     }
@@ -607,12 +479,13 @@ footer {
 
 
 
-.modal-header{
-	padding: 10px !important;
-	/* background: #ebebeb; */
+.modal-header {
+    padding: 10px !important;
+    /* background: #ebebeb; */
 }
-.modal-title{
-	font-size: 16px;
+
+.modal-title {
+    font-size: 16px;
 }
 
 .dropdown-menu {
@@ -621,53 +494,53 @@ footer {
 }
 
 .modal-header {
-	
-	justify-content: space-between;
+
+    justify-content: space-between;
 }
 
 
 
-.btn-color button{
-	
-	background: #1d70b8 ;
+.btn-color button {
+
+    background: #1d70b8;
 }
 
-.btn-color button:hover{
-	
-	background: #1d70b8 ;
+.btn-color button:hover {
+
+    background: #1d70b8;
 }
 
 
 /* .btn-color{ */
-		/* margin-top:5px; */
-		/* background-color: #4a90e2; */
-		/* padding:4px 5px; */
-		/* font-size:12px; */
-		/* border: 1px solid #4a90e2; */
-    /* color: #fff; */
-    /* border-radius: 4px; */
-	/* } */
-	
-	/* .btn-color:hover{ */
-		/* margin-top:5px; */
-		/* background-color: #4a90e2; */
-		/* padding:4px 5px; */
-		/* font-size:12px; */
-		/* border: 1px solid #4a90e2; */
-    /* color: #fff; */
-    /* border-radius: 4px; */
-	/* } */
+/* margin-top:5px; */
+/* background-color: #4a90e2; */
+/* padding:4px 5px; */
+/* font-size:12px; */
+/* border: 1px solid #4a90e2; */
+/* color: #fff; */
+/* border-radius: 4px; */
+/* } */
 
-button a{
-	color:#fff;
-	text-decoration:none;
+/* .btn-color:hover{ */
+/* margin-top:5px; */
+/* background-color: #4a90e2; */
+/* padding:4px 5px; */
+/* font-size:12px; */
+/* border: 1px solid #4a90e2; */
+/* color: #fff; */
+/* border-radius: 4px; */
+/* } */
+
+button a {
+    color: #fff;
+    text-decoration: none;
 }
 
 
 
 
 .footer {
-       position: fixed;
+    position: fixed;
     width: 100%;
     bottom: 0;
     box-sizing: border-box;
@@ -693,7 +566,7 @@ button a{
     align-items: center;
     gap: 10px;
     position: relative;
-	margin-bottom:12px;
+    margin-bottom: 12px;
 }
 
 .existing_project .form-row label {
@@ -707,13 +580,13 @@ button a{
 .existing_project .form-row select,
 .existing_project .form-row textarea {
     /* flex: 1; */
-   padding: .25rem .5rem;
-  
+    padding: .25rem .5rem;
+
     border-radius: .2rem;
     border: 1px solid #cccccc;
     background-color: white;
     font-size: 14px;
-     font-family: "GDS Transport";
+    font-family: "GDS Transport";
 }
 
 .existing_project .form-row textarea {
@@ -758,38 +631,22 @@ button a{
 .existing_project .submitted-select {
     width: 100px;
 }
+
 /* .existing_project select:focus,input:focus,textarea:focus { */
-    /* outline: 1px solid #0078d4; */
-    /* outline-offset: -1px; */
+/* outline: 1px solid #0078d4; */
+/* outline-offset: -1px; */
 /* } */
-.existing_project .form-row:nth-child(4) .tooltip,.form-row:nth-child(8) .tooltip {
+.existing_project .form-row:nth-child(4) .tooltip,
+.form-row:nth-child(8) .tooltip {
     display: block;
 }
 
-.width-200{
-	    width: 250px;
+.width-200 {
+    width: 250px;
 }
 
 
-.pims-log {
-    border: 1px solid #0374e9;
-    border-radius: 10px;
- 
-    color: #00005c;
-    text-shadow: 1px 1px #b0d7ff;
-    letter-spacing: 1px;
-    background: #fff;
-    font-weight: bold;
-    font-size: 20px;
-    text-align: center;
-    padding: 2px;
-    margin-left: 10px;
-	line-height: 1.3;
-}
-
-.header-nav .dropdown-toggle::after {
-    display: none !important;
-}
+/* app-log (duplicate) and header-nav .dropdown-toggle::after — moved to navstyle.css */
 
 .icon-bg {
     border: none;
@@ -797,15 +654,15 @@ button a{
 }
 
 
-        .modal footer {
-            padding: 12px 0px;
-            border-top: 1px solid #eee;
-            text-align: right;
-        }
+.modal footer {
+    padding: 12px 0px;
+    border-top: 1px solid #eee;
+    text-align: right;
+}
 
 .read-only {
-  background-color: #eeeeee !important;
-  /* border: 0; */
+    background-color: #eeeeee !important;
+    /* border: 0; */
 }
 
 
@@ -814,13 +671,13 @@ button a{
 
 
 .sidenav {
-      width: 220px;
-     height:auto;
+    width: 220px;
+    height: auto;
     background: #d4ebff;
     transition: all 0.3s ease;
     position: relative;
     border: 1px solid #1d70b8;
-   /* border-radius: 0 8px 8px 0;*/
+    /* border-radius: 0 8px 8px 0;*/
     margin-bottom: 50px;
 }
 
@@ -828,39 +685,38 @@ button a{
 .sidenav.collapsed {
     /*width: var(--sidebar-width-collapsed);*/
     width: 20px;
-     
+
 }
 
-.sidenav.collapsed ul li{
+.sidenav.collapsed ul li {
     list-style-type: none;
 }
 
-.sidenav.collapsed ul li a{
+.sidenav.collapsed ul li a {
     visibility: hidden;
 }
 
 
 
 
-.sidenav > ul
-{
+.sidenav>ul {
     margin: 0;
     padding: 0;
     list-style-type: none;
 }
 
-.sidenav > ul > li {
-   font-size: 14px;
+.sidenav>ul>li {
+    font-size: 14px;
     color: #fff;
     background-color: #1d70b8;
     border-radius: 0 8px 8px 0;
-  
-} 
+
+}
 
 
 
-.sidenav > ul > li a {
-       text-decoration: none;
+.sidenav>ul>li a {
+    text-decoration: none;
     padding: 8px;
     display: inline-flex;
     width: 100%;
@@ -868,9 +724,9 @@ button a{
 
 }
 
-.sidenav > ul > li a:hover{
+.sidenav>ul>li a:hover {
     background-color: #155790;
-	  color: #fff;
+    color: #fff;
 }
 
 .sidenav .dropdown-item {
@@ -920,7 +776,7 @@ button a{
     display: flex;
     flex-direction: column;
 }
-   
+
 
 
 .permissions-section {
@@ -950,10 +806,10 @@ button a{
 
 .rates-section {
     flex: 1;
-   background: #edf4ff;
-border: 1px solid #1d70b8;
+    background: #edf4ff;
+    border: 1px solid #1d70b8;
     padding: 15px;
-   
+
 }
 
 .rates-section h3 {
@@ -976,9 +832,9 @@ border: 1px solid #1d70b8;
 }
 
 /* .rate-row label { */
-    /* font-size: 14px; */
-    /* color: #000; */
-    /* flex: 1; */
+/* font-size: 14px; */
+/* color: #000; */
+/* flex: 1; */
 /* } */
 
 .rate-row input {
@@ -994,21 +850,22 @@ border: 1px solid #1d70b8;
     padding: 4px;
     border: 1px solid #b7b7b7;
     border-radius: 4px;
-   /* font-family: 'Inter', sans-serif;*/
+    font-family: 'Inter', sans-serif;
     font-size: 13px;
     /* font-weight: 600; */
     background-color: #ffffff;
 }
 
 .tabcolor {
-    	border-top-left-radius: 4px;
+    border-top-left-radius: 4px;
     border-top-right-radius: 4px;
     margin: 2px 2px 0px 2px
-	}
+}
+
 .tab-btn {
     padding: 8px 8px;
     border: none;
-       background: #bce0ff;
+    background: #bce0ff;
     border-right: 1px solid #1d70b8;
     font-size: 14px;
     cursor: pointer;
@@ -1017,10 +874,12 @@ border: 1px solid #1d70b8;
     white-space: nowrap;
     flex: 1;
     border-left: 1px solid #C0C0C0;
-	border-top: 1px solid #C0C0C0;
+    border-top: 1px solid #C0C0C0;
 }
 
-.tab-btn:hover {background: #bce0ff;}
+.tab-btn:hover {
+    background: #bce0ff;
+}
 
 
 
@@ -1046,26 +905,26 @@ border: 1px solid #1d70b8;
 
 
 /* .permissions-section .jobcodediv { */
-    /* overflow-x: auto; */
-    /* overflow-y: auto; */
-    /* max-height: 250px; */
-    /* max-width: 100%; */
-    /* -webkit-overflow-scrolling: touch; */
+/* overflow-x: auto; */
+/* overflow-y: auto; */
+/* max-height: 250px; */
+/* max-width: 100%; */
+/* -webkit-overflow-scrolling: touch; */
 /* } */
 
 /* .permissions-section .jobcodediv .custom-table { */
-    /* width: max-content; */
-    /* min-width: 100%; */
+/* width: max-content; */
+/* min-width: 100%; */
 /* } */
 
 
 
 .jobcodediv {
     max-height: 230px;
-	
+
     height: auto;
-	 max-width: 100%;
-	overflow-x: auto;   
+    max-width: 100%;
+    overflow-x: auto;
     overflow-y: auto;
     /* border: 1px solid #1d70b8 !important; */
     border-top: 0 !important;
@@ -1076,14 +935,14 @@ border: 1px solid #1d70b8;
     min-width: 100%;
 }
 
-.maxheight250{
-	
-	 max-height: 220px;
+.maxheight250 {
+
+    max-height: 220px;
 }
 
 .label_width {
-	
-	min-width: 190px;
+
+    min-width: 190px;
     text-align: right;
 }
 
@@ -1146,55 +1005,55 @@ main {
 }
 
 
-.floatRight{
-	
-	float:right;
+.floatRight {
+
+    float: right;
 }
 
- .markup-scroll-wrap {
-        overflow: auto;
-        max-height: 250px;
-        height: 250px;
-        display: block;
-        position: relative;
-    }
+.markup-scroll-wrap {
+    overflow: auto;
+    max-height: 250px;
+    height: 250px;
+    display: block;
+    position: relative;
+}
 
-    .markup-scroll-wrap #dataTable {
-        min-width: 860px;
-        width: 100%;
-    }
+.markup-scroll-wrap #dataTable {
+    min-width: 860px;
+    width: 100%;
+}
 
-    .markup-scroll-wrap #dataTable thead {
-        position: sticky;
-        top: 0;
-        z-index: 10;
-        background-color: #ffffff;
-    }
+.markup-scroll-wrap #dataTable thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: #ffffff;
+}
 
-    .markup-scroll-wrap #dataTable thead tr:first-child th {
-        position: sticky;
-        top: 0;
-        z-index: 10;
-        background-color: #ffffff;
-        border-bottom: 2px solid #1d70b8;
-    }
+.markup-scroll-wrap #dataTable thead tr:first-child th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: #ffffff;
+    border-bottom: 2px solid #1d70b8;
+}
 
-    .markup-scroll-wrap #dataTable thead tr:nth-child(2) th {
-        position: sticky;
-        top: 39px;
-        z-index: 10;
-        background-color: #ffffff;
-        border-bottom: 1px solid #1d70b8;
-    }
-    
-    .markup-scroll-wrap #dataTable thead tr:first-child th[style] {
-        background-clip: padding-box;
-    }
+.markup-scroll-wrap #dataTable thead tr:nth-child(2) th {
+    position: sticky;
+    top: 39px;
+    z-index: 10;
+    background-color: #ffffff;
+    border-bottom: 1px solid #1d70b8;
+}
 
-    /* Ensure tab panels hide correctly without govuk-frontend JS being present */
-    .govuk-tabs__panel--hidden {
-        display: none !important;
-    }
+.markup-scroll-wrap #dataTable thead tr:first-child th[style] {
+    background-clip: padding-box;
+}
+
+/* Ensure tab panels hide correctly without govuk-frontend JS being present */
+.govuk-tabs__panel--hidden {
+    display: none !important;
+}
 
 .project-requirement-page .project-user-menu {
     display: flex;
@@ -1632,13 +1491,13 @@ main {
 
 .costbook-home-page .home-search-shell {
     float: right;
-    
+
 }
 
 .costbook-home-page .home-search-shell input {
     float: right;
-       max-width: 259px !important;
-	   width:240px;
+    max-width: 259px !important;
+    width: 240px;
 }
 
 .costbook-home-page .home-input-group {
@@ -1684,7 +1543,7 @@ main {
     position: sticky;
     top: 0;
     z-index: 12;
-   
+
     box-shadow: inset 0 -1px 0 #1d70b8;
 }
 
@@ -1744,9 +1603,1237 @@ main {
 
 .home-search-shell .input-group-text {
     border-radius: 0 5px 5px 0;
-    padding:6px 6px 4px 6px;
+    padding: 6px 6px 4px 6px;
     border: 1px solid #919191;
 }
-.margin_left_5 {
+
+.govuk-pagination__item--current,
+.govuk-pagination__item--current .govuk-link {
+    color: white !important;
+}
+
+.tab-3-side-border {
+    border-top: 1px solid var(--govuk-border-colour);
+    border-left: 1px solid var(--govuk-border-colour);
+    border-right: 1px solid var(--govuk-border-colour);
+}
+
+.main-content-cs {
+    margin-left: 0;
+    min-height: 100vh;
+    padding: 20px 0 20px 20px;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.govuk-link {
+    color: rgba(var(--bs-link-color-rgb), var(--bs-link-opacity, 1)) !important;
+}
+
+/* .govuk-link:visited {
+    color: white !important;
+} */
+
+/* ── Column resize handles (used by costbook_resize_grid.js) ── */
+th.col-resizable {
+    position: relative;
+    overflow: visible;
+}
+
+.col-resizer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 6px;
+    height: 100%;
+    cursor: col-resize;
+    z-index: 1;
+    user-select: none;
+}
+
+.col-resizer:hover,
+.col-resizer.resizing {
+    background-color: rgba(29, 112, 184, 0.25);
+}
+
+/* =================================================================
+   Costbook – shared utility classes
+   ================================================================= */
+
+/* ── Spacing helpers ──────────────────────────────────────────── */
+.sup_margin_0 {
+    margin: 0 !important;
+}
+
+.sup_margin_bottom_10 {
+    margin-bottom: 10px;
+}
+
+.sup_margin_left_right_0 {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.sup_margin_left_right_10 {
+    margin: 0 10px;
+}
+
+/* ── Border helpers ───────────────────────────────────────────── */
+.sup_border {
+    border: 1px solid var(--govuk-border-colour);
+}
+
+.sup_border-bottom {
+    border-bottom: 1px solid var(--govuk-border-colour);
+}
+
+/* ── Width / label helpers ────────────────────────────────────── */
+.sup_label_auto_width {
+    max-width: 100%;
+}
+
+.sup_select_pagination_width {
+    min-width: 3.5em !important;
+}
+
+/* ── Spacing helpers (extended) ──────────────────────────────── */
+.sup_margin_top_bottom_5_10 {
+    margin: 5px 10px !important;
+}
+
+/* ── Flex helpers ─────────────────────────────────────────────── */
+.sup_flex_row_center_center {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
+/* ── Pagination footer ────────────────────────────────────────── */
+.sup_pagination_footer {
+    display: flex;
+    margin-top: 0;
+    border-top: 0;
+    padding: 0;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 0;
+    width: 100%;
+}
+
+/* (costbookmaintainance.css)     */
+.sup_pagination_wrapper {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    border-top: 1px solid var(--govuk-border-colour);
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+/* ── GOV.UK component overrides (from suppliement_style_costbook) */
+.govuk-pagination__item,
+.govuk-pagination__next,
+.govuk-pagination__prev {
+    font-size: 16px;
+    min-width: auto;
+    min-height: auto;
+    padding: 5px 10px;
+}
+
+.govuk-pagination__next,
+.govuk-pagination__prev {
+    font-weight: 500;
+}
+
+.govuk-select,
+.govuk-input,
+.govuk-input__prefix {
+    height: 2.2rem !important;
+}
+
+.govuk-checkboxes__input {
+    width: 34px;
+    height: 34px;
+}
+
+.govuk-checkboxes--small .govuk-checkboxes__item:hover .govuk-checkboxes__input:focus+.govuk-checkboxes__label:before {
+    box-shadow: 0 0 0 3px var(--govuk-focus-colour, #fd0), 0 0 0 6px var(--govuk-hover-colour, #cecece);
+}
+
+.govuk-checkboxes--small .govuk-checkboxes__item:hover .govuk-checkboxes__input:not(:disabled)+.govuk-checkboxes__label:before {
+    outline: 3px dashed transparent;
+    outline-offset: 1px;
+    box-shadow: 0 0 0 6px var(--govuk-hover-colour, #cecece);
+}
+
+.govuk-checkboxes__input:focus+.govuk-checkboxes__label:before {
+    border-width: 4px;
+    outline: 3px solid transparent;
+    outline-offset: 1px;
+    box-shadow: 0 0 0 3px var(--govuk-focus-colour, #fd0);
+}
+
+.govuk-checkboxes--small .govuk-checkboxes__label {
+    padding-left: 0;
+    font-weight: 600;
+}
+
+.govuk-checkboxes--small .govuk-checkboxes__label:before {
+    top: 5px;
+    left: 0;
+    width: 24px;
+    height: 24px;
+}
+
+.govuk-checkboxes--small .govuk-checkboxes__label:after {
+    top: 12px;
+    left: 6px;
+    width: 12px;
+    height: 6.5px;
+    border-width: 0 0 3px 3px;
+}
+
+.govuk-checkboxes--small .govuk-checkboxes__input {
+    margin-left: -4px;
+}
+
+/* Merged: vertical-align (suppliement) + font-size (costbookmaintainance) */
+.govuk-table__cell,
+.govuk-table__header {
+    vertical-align: middle !important;
+    font-size: 14px;
+}
+
+.govuk-input--width-2,
+.govuk-select--width-2 {
+    max-width: 2.75em;
+}
+
+.govuk-input--width-10 {
+    max-width: 11.5em;
+}
+
+.govuk-select--width-2 {
+    min-width: 3.3em !important;
+}
+
+.govuk-table__head>tr>th {
+    text-align: center !important;
+}
+
+/* =================================================================
+   Costbook Maintenance page   */
+:focus {
+    scroll-margin-top: 60px;
+}
+
+/* SC 2.5.8 – Minimum pointer target size for table icon buttons  */
+.govuk-table__cell button {
+    min-width: 24px;
+    min-height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+    border: none;
+    background: none;
+    cursor: pointer;
+}
+
+/* Equal-height columns for panels */
+.govuk-grid-row:has(.maint-panel) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+}
+
+.govuk-grid-row:has(.maint-panel)>[class*="govuk-grid-column"] {
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── GOV.UK overrides (maintenance-specific) ─────────────────── */
+.govuk-tabs__tab {
+    font-size: 14px;
+    width: fit-content;
+    text-decoration: none;
+}
+
+
+
+#tab-inflation {
+    font-size: 16px;
+}
+
+.govuk-error-message {
+    font-size: 14px;
+
+}
+
+.govuk-error-message[hidden] {
+    display: none !important;
+}
+
+.govuk-form-group--error {
+    border-left: none;
+    padding-left: 0;
+}
+
+.govuk-button-group .govuk-button {
+    margin-bottom: 5px !important;
+}
+
+.govuk-button-group .govuk-button,
+.govuk-button-group .govuk-link {
+    margin-right: auto !important;
+}
+
+/* ── maint-* Layout ──────────────────────────────────────────── */
+.maint-page-heading {
+    padding: 10px 0 0 2px;
+}
+
+.maint-layout-flex {
+    display: flex;
+}
+
+.maint-two-thirds {
+    width: 66.66%;
+}
+
+/* ── maint-* Bordered panel ──────────────────────────────────── */
+.maint-panel {
+    border: 1px solid #b1b4b6;
+    padding: 10px 15px 15px;
+    margin-bottom: 20px;
+    flex: 1;
+}
+
+.maint-panel .govuk-heading-s {
+    font-size: 14px;
+    margin-bottom: 0;
+}
+
+/* ── maint-* Typography ──────────────────────────────────────── */
+.maint-intro-text {
+    margin-bottom: 5px;
+}
+
+.maint-panel-subheading {
+    margin-bottom: 0;
+}
+
+.maint-hint-text {
+    font-size: 14px;
+}
+
+/* ── maint-* Form layout ─────────────────────────────────────── */
+.maint-field-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.maint-field-label {
+    min-width: 250px;
+    margin-bottom: 0;
+}
+
+.maint-field-row--top-spaced {
+    margin-top: 30px;
+}
+
+.maint-inline-form-group .govuk-error-message {
+    margin-left: 250px;
+}
+
+.maint-btn-group-end {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+}
+
+.maint-btn-group-end-align {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+/* ── maint-* Grid / table ────────────────────────────────────── */
+.maint-grid-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.maint-add-btn {
+    margin-bottom: 5px;
+}
+
+.maint-grid-scroll {
+    overflow-x: auto;
+    overflow-y: auto;
+    height: 260px;
+    max-height: 260px;
+}
+
+.maint-grid-scroll--bordered {
+    border: 1px solid #b1b4b6;
+}
+
+.maint-grid-table {
+    margin-bottom: 0;
+}
+
+.maint-grid-footnote {
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+/* ── maint-* Sortable headers ────────────────────────────────── */
+#tblAccCat th[data-sort-key],
+#tblCsg7 th[data-sort-key],
+#tblCapsStaff th[data-sort-key] {
+    cursor: pointer;
+    user-select: none;
+}
+
+#tblAccCat th[data-sort-key]:hover,
+#tblCsg7 th[data-sort-key]:hover,
+#tblCapsStaff th[data-sort-key]:hover {
+    background-color: #f0d94e;
+}
+
+.maint-sort-indicator {
+    font-size: 12px;
     margin-left: 2px;
+}
+
+/* ── maint-* Modals ──────────────────────────────────────────── */
+.maint-modal-title {
+    margin: 0;
+}
+
+.maint-modal-body {
+    overflow: hidden;
+    padding: 0;
+}
+
+.maint-modal-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-direction: row;
+}
+
+.maint-modal-body form .govuk-form-group:first-child {
+    margin-top: 15px;
+}
+
+/* ── maint-* Validation ──────────────────────────────────────── */
+.maint-mandatory-note {
+    text-align: right;
+    font-size: 14px;
+    margin-bottom: 8px;
+    margin-top: 8px;
+    color: #d4351c;
+}
+
+.maint-mandatory-asterisk {
+    color: #d4351c;
+    font-weight: bold;
+    margin-right: 2px;
+}
+
+.maint-db-error {
+    margin: 12px 0 8px;
+}
+
+/* ── Pagination label ────────────────────────────────────────── */
+.pagination-label {
+    font-size: 16px;
+}
+
+
+/* =================================================================
+   CSG7 Staff Years Query page
+    */
+#csg7Table th,
+#csg7Table td {
+    font-size: 1rem;
+}
+
+/* ── Scrollable table wrapper ─────────────────────────────────── */
+.csg7-table-wrap {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 250px;
+    height: 250px;
+    border: 1px solid var(--govuk-border-colour, #b1b4b6);
+}
+
+/* ── Table base ───────────────────────────────────────────────── */
+#csg7Table {
+    margin-bottom: 0;
+    min-width: 700px;
+}
+
+/* ── Header row – yellow background ──────────────────────────── */
+#csg7Table thead th {
+    background-color: #f9e77f;
+    color: #0b0c0c;
+    font-weight: 700;
+    white-space: nowrap;
+    border: 1px solid #b1b4b6;
+    position: sticky;
+    top: 0;
+    z-index: 4;
+}
+
+/* ── Sortable header cursor & hover ───────────────────────────── */
+#csg7Table th[data-column] {
+    cursor: pointer;
+    user-select: none;
+}
+
+#csg7Table th[data-column]:hover {
+    background-color: #f0d94e;
+}
+
+/* ── Sort indicator ───────────────────────────────────────────── */
+.csg7-sort-indicator {
+    font-size: 12px;
+    margin-left: 2px;
+}
+
+/* ── Cell borders ─────────────────────────────────────────────── */
+#csg7Table tbody td {
+    border: 1px solid #d5d5d5;
+    padding: 6px 10px;
+    vertical-align: middle;
+}
+
+/* ── Table font helpers (applied dynamically by JS) ───────────── */
+.tab-font {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.tab-font-size {
+    font-size: 14px;
+}
+
+/* =================================================================
+   Project Costs Query – table, sticky tfoot & pagination
+   ================================================================= */
+
+.pcq-table-wrap {
+    max-height: 250px;
+    height: 250px;
+    border: 1px solid var(--govuk-border-colour, #b1b4b6);
+}
+
+#projectCostsTable {
+    margin-bottom: 0;
+    min-width: 900px;
+}
+
+#projectCostsTable thead th {
+    background-color: #f9e77f;
+    color: #0b0c0c;
+    font-weight: 700;
+    white-space: nowrap;
+    border: 1px solid #b1b4b6;
+    position: sticky;
+    top: 0;
+    z-index: 4;
+}
+
+#projectCostsTable th[data-column] {
+    cursor: pointer;
+    user-select: none;
+}
+
+#projectCostsTable th[data-column]:hover {
+    background-color: #f0d94e;
+}
+
+/* Shared sort indicator – used by all query/maintenance tables */
+.sort-indicator,
+.sse-sort-indicator {
+    font-size: 12px;
+    margin-left: 2px;
+}
+
+#projectCostsTable tbody td {
+    border: 1px solid #d5d5d5;
+    padding: 6px 10px;
+    vertical-align: middle;
+}
+
+.pcq-tfoot {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    background-color: #e8ebee;
+}
+
+.pcq-tfoot__row td {
+    border: 1px solid #b1b4b6;
+    padding: 6px 8px;
+    vertical-align: middle;
+    white-space: nowrap;
+    font-weight: 700;
+    font-size: 14px;
+    color: #0b0c0c;
+}
+
+.pcq-record-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    font-size: 14px;
+    color: #0b0c0c;
+    background: #f3f2f1;
+    border-top: 1px solid #b1b4b6;
+}
+
+.pcq-record-bar__label {
+    font-weight: 400;
+}
+
+.pcq-record-bar__count {
+    font-weight: 700;
+}
+
+
+/* Keep the table layout fixed for alignment */
+/* #summaryTable {
+    margin-bottom: 0;
+} */
+
+/* ---- Sticky tfoot ---- */
+.ps-tfoot {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    background-color: #e8ebee;
+}
+
+.ps-tfoot__row td {
+    border: 1px solid #b1b4b6;
+    background: #f4f8fb !important;
+    padding: 6px 8px;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.ps-tfoot__label {
+    font-weight: 700;
+    text-align: right;
+    font-size: 14px;
+    color: #0b0c0c;
+}
+
+.ps-tfoot__label--right {
+    text-align: right;
+}
+
+.ps-tfoot__value {
+    text-align: right;
+}
+
+.ps-tfoot__input {
+    width: 130px;
+    padding: 4px 6px;
+    text-align: right;
+    font-size: 14px;
+    border: 1px solid #919191;
+    background-color: #fff;
+    display: inline-block;
+}
+
+/* Sortable header cursor */
+#summaryTable th[data-column] {
+    cursor: pointer;
+    user-select: none;
+    background-color: var(--govuk-surface-background-colour, #f4f8fb) !important;
+}
+
+/* Prevent flex child from overflowing header width */
+.project-requirement-page .project-main-column {
+    min-width: 0;
+}
+
+.tab-font {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.tab-font-size {
+    font-size: 14px;
+}
+
+/* =================================================================
+   Summary Staff Effort Query page
+   ================================================================= */
+
+/* ── Scrollable table wrapper ─────────────────────────────────── */
+.sse-table-wrap {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 250px;
+    height: 250px;
+    border: 1px solid var(--govuk-border-colour, #b1b4b6);
+}
+
+#sseTable {
+    margin-bottom: 0;
+    min-width: 900px;
+}
+
+#sseTable thead th {
+    background-color: #f9e77f;
+    color: #0b0c0c;
+    font-weight: 700;
+    white-space: nowrap;
+    border: 1px solid #b1b4b6;
+    position: sticky;
+    top: 0;
+    z-index: 4;
+}
+
+#sseTable th[data-column] {
+    cursor: pointer;
+    user-select: none;
+}
+
+#sseTable th[data-column]:hover {
+    background-color: #f0d94e;
+}
+
+
+#sseTable tbody td {
+    border: 1px solid #d5d5d5;
+    padding: 6px 10px;
+    vertical-align: middle;
+}
+
+/* =================================================================
+   Project Summary – table & sticky tfoot
+   Prefix: ps-  (Project Summary)
+   ================================================================= */
+
+/* Scrollable table wrapper */
+.project-summary-table-wrap {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 250px;
+    height: 250px;
+    border: 1px solid var(--govuk-border-colour, #b1b4b6);
+}
+
+/* =================================================================
+   FPS – Setup Resource page component styles
+   Class prefix: fps-sr-  (FPS Setup Resource)
+   ================================================================= */
+
+/* ---- Outer shell ---- */
+.fps-sr-shell {
+    margin-top: 12px;
+    /* border: 1px solid #505a5f; */
+    /* background: #e8ebee; */
+    padding: 12px;
+}
+
+/* ---- Inline-style replacements for setupresource.html ---- */
+.fps-sr-brand-pill-text {
+    display: inline-block;
+    padding: 2px;
+}
+
+.fps-sr-year-select,
+.fps-sr-year-option {
+    border: 0;
+    margin-left: 0;
+    outline: none;
+}
+
+.fps-sr-year-select:focus,
+.fps-sr-year-select:active {
+    outline: none;
+    border: 0;
+}
+
+.fps-sr-user-group {
+    display: flex;
+    align-items: center;
+    font-size: 16px;
+}
+
+.fps-sr-user-btn-reset {
+    border: 0;
+}
+
+.fps-sr-userdropdown-menu {
+    right: 15px;
+    left: auto;
+    top: 52px;
+}
+
+.fps-sr-breadcrumb-row {
+    padding: 5px;
+    border-bottom: 1px solid #b4b4b4;
+}
+
+.fps-sr-breadcrumb-flex {
+    display: flex;
+    font-size: 14px;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.fps-sr-breadcrumb-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.fps-sr-program-pill {
+    border: 2px solid #1d70b8;
+    border-radius: 5px;
+    font-size: 13px;
+    font-weight: 400;
+    background-color: #fff;
+    text-align: left;
+    display: flex;
+    margin-right: 10px;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.fps-sr-program-pill-text {
+    border-right: 1px solid #684e00;
+    text-align: left;
+    padding: 1px 5px;
+}
+
+.fps-sr-change-btn {
+    padding: 4px 14px;
+}
+
+.fps-sr-heading-main {
+    padding: 10px 0 10px 10px;
+}
+
+.fps-sr-hidden-row {
+    display: none;
+}
+
+.fps-sr-summary-card {
+    border-radius: 5px;
+    justify-content: flex-start;
+    margin-bottom: 10px;
+    background-color: #edf4ff;
+    border: 1px solid #1d70b8;
+    padding: 4px;
+}
+
+.fps-sr-muted-label {
+    color: #3e3e3e;
+}
+
+.fps-sr-fixed-input {
+    width: 170px;
+    padding: 4px;
+}
+
+.fps-sr-project-table-wrap {
+    overflow-x: auto;
+    max-height: 397px !important;
+    height: 397px;
+    border-top: 1px solid #1d70b8 !important;
+}
+
+.fps-sr-staff-table-wrap {
+    overflow-x: auto;
+    border-top: 1px solid #1d70b8 !important;
+}
+
+.fps-sr-table-mb0 {
+    margin-bottom: 0;
+}
+
+/* ---- Page-scoped GOV.UK table theme (matches setupresource mock) ---- */
+.fps-sr-themed-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #ddd;
+    margin-bottom: 0;
+    background: #fff;
+    table-layout: auto;
+}
+
+.fps-sr-themed-table .govuk-table__head .govuk-table__header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: var(--govuk-surface-background-colour, #f4f8fb);
+    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.05);
+    border: 1px solid #ddd;
+    border-bottom: 1px solid var(--govuk-border-colour, #b1b4b6);
+    color: #0b0c0c;
+    font-weight: 700;
+    vertical-align: middle;
+    padding: 9px 10px;
+}
+
+.fps-sr-themed-table .govuk-table__head>tr>th {
+    text-align: center;
+}
+
+.fps-sr-themed-table .govuk-table__body .govuk-table__cell {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    color: #0b0c0c;
+    padding: 6px 10px;
+    vertical-align: middle;
+    white-space: nowrap;
+    transition: background-color 120ms ease-in;
+}
+
+.fps-sr-themed-table .govuk-table__header--numeric,
+.fps-sr-themed-table .govuk-table__cell--numeric {
+    text-align: right;
+}
+
+.fps-sr-themed-table .govuk-table__body .govuk-table__row:hover .govuk-table__cell,
+.fps-sr-themed-table tbody tr:hover td {
+    background-color: #f5f5f5;
+}
+
+.fps-sr-modal-body-pt5 {
+    padding-top: 5px;
+}
+
+.fps-sr-hidden-btn {
+    display: none;
+}
+
+.fps-sr-header-inputs {
+    margin-bottom: 10px;
+}
+
+.fps-sr-inline-group {
+    display: inline;
+}
+
+.fps-sr-project-label {
+    margin-right: 12px;
+}
+
+.fps-sr-year-label {
+    margin-right: 12px;
+    margin-left: 20px;
+}
+
+/* ---- Top two-column section: RC Grades | WG Grades ---- */
+.fps-sr-top-grid {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 14px;
+    margin-bottom: 10px;
+    align-items: stretch;
+}
+
+.fps-sr-top-grid>div {
+    display: flex;
+    flex-direction: column;
+    height: 260px;
+}
+
+/* ---- Section headings ---- */
+.fps-sr-section-title {
+    font-size: 19px;
+    font-weight: 700;
+    line-height: 1.1;
+    margin: 0 0 4px;
+    flex-shrink: 0;
+}
+
+/* ---- Scrollable table wrapper (flex-grows to fill column height) ---- */
+.fps-sr-table-wrap {
+    border: 1px solid #6f777b;
+    background: #f3f2f1;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+}
+
+/* ---- Data tables (shared by RC, WG, and Staff grids) ---- */
+.fps-sr-data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0;
+}
+
+.fps-sr-data-table th,
+.fps-sr-data-table td {
+    border: 1px solid #b1b4b6;
+    font-size: 16px;
+    padding: 2px 8px;
+    line-height: 1.25;
+}
+
+.fps-sr-data-table th {
+    position: sticky;
+    top: 0;
+    background: #dfe3e8;
+    z-index: 1;
+    font-weight: 600;
+}
+
+.fps-sr-data-table tr.is-selected td {
+    background: #b9d9f4;
+    outline: 1px solid #e89ca1;
+}
+
+.fps-sr-data-table tr {
+    cursor: pointer;
+}
+
+.fps-sr-data-table td.text-right,
+.fps-sr-data-table th.text-right {
+    text-align: right;
+}
+
+/* ---- RC-grade filter input displayed above the WG grades table ---- */
+.fps-sr-filter-input {
+    height: 31px;
+    padding: 3px 6px;
+    font-size: 17px;
+    margin-bottom: 5px;
+    width: 100%;
+    box-sizing: border-box;
+    flex-shrink: 0;
+}
+
+/* ---- Bottom section: Staff table (left) | Person panel (right) ---- */
+.fps-sr-bottom-grid {
+    display: grid;
+    grid-template-columns: 1fr 220px;
+    gap: 10px;
+    align-items: start;
+}
+
+.fps-sr-staff-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.fps-sr-staff-edit-input {
+    min-width: 74px;
+    max-width: 92px;
+    height: 30px;
+    padding: 2px 6px;
+    text-align: right;
+}
+
+.fps-sr-staff-actions-cell {
+    white-space: nowrap;
+    text-align: center;
+}
+
+.fps-sr-email-edit-btn {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+}
+
+.fps-sr-row-action-btn {
+    border: 1px solid #1d70b8;
+    color: #1d70b8;
+    background: #fff;
+    font-size: 14px;
+    line-height: 1.2;
+    border-radius: 2px;
+    padding: 3px 8px;
+    margin-right: 6px;
+    cursor: pointer;
+}
+
+.fps-sr-row-action-btn:last-child {
+    margin-right: 0;
+}
+
+.fps-sr-save-btn {
+    background: #00703c;
+    border-color: #00703c;
+    color: #fff;
+}
+
+.fps-sr-cancel-btn {
+    border-color: #505a5f;
+    color: #0b0c0c;
+}
+
+.fps-sr-staff-header .govuk-input {
+    max-width: 130px;
+    height: 27px;
+    padding: 0 4px;
+    font-size: 17px;
+}
+
+.fps-sr-fixedheader-wrap {
+    border: 1px solid #6f777b;
+
+    height: 223px;
+    overflow-y: auto;
+}
+
+/* ---- Staff column totals bar ---- */
+.fps-sr-totals-bar {
+    display: grid;
+    grid-template-columns: 85px 85px 85px 95px;
+    justify-content: end;
+    border: 1px solid #6f777b;
+    border-top: 0;
+    background: #fff;
+}
+
+.fps-sr-totals-bar div {
+    border-left: 1px solid #b1b4b6;
+    padding: 2px 6px;
+    text-align: right;
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.fps-sr-totals-bar div:first-child {
+    border-left: 0;
+}
+
+/* ---- Person Selected aside panel ---- */
+.fps-sr-person-panel {
+    align-self: start;
+    border: 1px solid #1d70b8;
+    border-radius: 8px;
+    background: #a9c8e5;
+    padding: 14px;
+    margin-top: 30px;
+    height: 223px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+.fps-sr-person-title {
+    font-size: 36px;
+    line-height: 1.05;
+    margin: 0 0 12px;
+    font-weight: 700;
+    text-align: left;
+}
+
+.fps-sr-person-value {
+    display: block;
+    background: #fff;
+    border: 1px solid #1d70b8;
+    border-radius: 3px;
+    padding: 6px 8px;
+    font-size: 17px;
+    min-height: 38px;
+    margin-bottom: 14px;
+}
+
+.fps-sr-person-panel .govuk-button {
+    width: 100%;
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.3;
+    padding: 10px;
+    text-align: center;
+}
+
+/* ---- Responsive breakpoints ---- */
+@media (max-width: 1020px) {
+
+    .fps-sr-top-grid,
+    .fps-sr-bottom-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .fps-sr-top-grid>div {
+        height: auto;
+        min-height: 200px;
+    }
+
+    .fps-sr-totals-bar {
+        justify-content: stretch;
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* ---- Footer strip + copyright bar ---- */
+.fps-sr-footer {
+    margin-top: 0;
+    width: 100%;
+}
+
+.fps-sr-footer-top {
+    height: 7px;
+    background: #1d70b8;
+}
+
+.fps-sr-footer-body {
+    background: #dfe3e8;
+    color: #0b0c0c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 38px;
+    line-height: 1;
+    min-height: 42px;
+    padding: 4px 12px;
+}
+
+.fps-sr-page-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.fps-sr-page-footer-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    max-width: none;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    text-align: center;
+}
+
+.fps-sr-page-footer-text {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    line-height: 1.2;
+}
+
+main {
+    padding-bottom: 50px;
 }

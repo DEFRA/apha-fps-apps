@@ -1,0 +1,265 @@
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.FPS.Models.ProjectAnimalPlanActualViewModel
+@{
+    ViewData["Title"] = "Plan vs Actual - Animals";
+}
+
+<div class="container-fluid">
+    <!-- Breadcrumb and project selector -->
+    <div class="govuk-grid-row">
+        <div class="govuk-grid-column-full">
+            <div style="padding: 5px 5px; border-bottom: 1px solid #b4b4b4" class="row">
+                <div style="display: flex; font-size: 14px; align-items: center; justify-content: space-between;">
+                    <div class="col-md-6">
+                        <nav aria-label="Breadcrumb">
+                            <a href="@Url.Action("Index", "Home", new { area = "FPS" })">Home</a> &gt;
+                            Programme Management &gt; Plan Projects &gt;
+                            Plan Project Individually &gt; Plan vs Actual - Animals
+                        </nav>
+                    </div>
+                    <div style="display: flex; justify-content: flex-end;" class="col-md-6">
+                        <label class="fw-bold mt-2 me-2" for="projectSelect">Select a Project:</label>
+                        <select id="projectSelect" asp-items="Model.ProjectList" asp-for="SelectedProjectCode"
+                                class="form-select form-select-sm" style="width: auto; min-width: 280px;">
+                            <option value="">-- Select Project --</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Title section -->
+    <div class="govuk-grid-row">
+        <div class="govuk-grid-column-full">
+            <h1 class="govuk-heading-s sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2 govuk-!-padding-left-4">Compare FPS Plan with PACT Actuals</h1>
+            <a href="@Url.Action("Index", "ProgramProject", new { area = "FPS" })"
+               class="govuk-back-link" style="margin-bottom:8px;">Back</a>
+        </div>
+    </div>
+
+    <!-- Summary card -->
+    <div class="govuk-grid-row">
+        <div class="govuk-grid-column-full mt-2">
+            <div class="pva-summary-card" style="background-color:#edf4ff; border:1px solid #1d70b8; border-radius:5px; padding:8px;">
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="row">
+                            <div class="col-lg-5">
+                                <label class="govuk-label--s" for="summary-project-code">Project</label>
+                                <input type="text" id="summary-project-code" asp-for="SelectedProjectCode"
+                                       class="govuk-input" readonly>
+                            </div>
+                            <div class="col-lg-7">
+                                <label class="govuk-label--s" for="summary-project-description">Project Description</label>
+                                <textarea id="summary-project-description" asp-for="ProjectTitle"
+                                          class="govuk-textarea govuk-!-font-size-16 sup_margin_0" rows="1" readonly></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="row">
+                            <div class="col-lg-5">
+                                <label class="govuk-label--s" for="summary-program">Program</label>
+                                <input type="text" id="summary-program" asp-for="Program"
+                                       class="govuk-input" readonly>
+                            </div>
+                            <div class="col-lg-7">
+                                <label class="govuk-label--s" for="summary-contract">Contract</label>
+                                <input type="text" id="summary-contract" asp-for="Contract"
+                                       class="govuk-input" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Two-column grid area -->
+    <div class="govuk-grid-row">
+        <!-- Left: Planned Animals (FPS) -->
+        <div class="govuk-grid-column-one-half mt-2">
+            <div class="govuk-grid-row">
+                <div class="govuk-grid-column-full mt-2">
+                    <div id="gridContainer_@Model.AnimalPlanGrid.GridId" style="padding: 5px;">
+                        @await Html.PartialAsync("_DataGrid", Model.AnimalPlanGrid)
+                    </div>
+                </div>
+                <div class="govuk-grid-column-full mt-2">
+                    <div class="financial-summary mt-1" style="padding: 0 5px;">
+                        <div style="display:flex; align-items:center;">
+                            <span class="govuk-label--s" style="margin-left:auto; margin-right:8px; white-space:nowrap;">Total Planned Cost:</span>
+                            <input type="text" id="planned-total-cost" asp-for="TotalPlannedCost" readonly
+                                   class="govuk-input text-AlignRight"
+                                   value="@(Model.TotalPlannedCost.ToString("C"))" style="width:140px; margin-right:75px;"
+                                   aria-label="Total Planned Cost">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Actual Animal Costs (PACT) -->
+        <div class="govuk-grid-column-one-half mt-2">
+            <div class="govuk-grid-row">
+                <div class="govuk-grid-column-full mt-2">
+                    <div id="gridContainer_@Model.ActualAnimalCostGrid.GridId" style="padding: 5px;">
+                        @await Html.PartialAsync("_DataGrid", Model.ActualAnimalCostGrid)
+                    </div>
+                </div>
+                <div class="govuk-grid-column-full mt-2">
+                    <div class="financial-summary mt-1" style="padding: 0 5px;">
+                        <div style="display:flex; align-items:center; margin-bottom:4px;">
+                            <span class="govuk-label--s" style="margin-left:auto; margin-right:8px; white-space:nowrap;">Totals:</span>
+                            <input type="text" id="project-total-cost" asp-for="TotalActualCost" readonly
+                                   class="govuk-input text-AlignRight"
+                                   value="@(Model.TotalActualCost.ToString("C"))" style="width:160px;"
+                                   aria-label="Total Actual Cost">
+                        </div>
+                        <div style="display:flex; align-items:center;">
+                            <span class="govuk-label--s" style="margin-left:auto; margin-right:8px; white-space:nowrap;">Percent of Plan:</span>
+                            <input type="text" id="project-percent-plan" asp-for="PercentOfPlan" readonly
+                                   class="govuk-input text-AlignRight"
+                                   value="@(Model.PercentOfPlan.ToString("F2"))%" style="width:95px;"
+                                   aria-label="Percent of Plan">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/fps_js/ajax-form-validation.js"></script>
+    <script src="~/js/ajax-form-validation.js"></script>
+    <script src="~/js/fps_js/AnimalJob.js"></script>
+    <script>
+        AnimalJobConfig.getJobCode = function () { return currentProjectCode; };
+        AnimalJobConfig.requireJobCodeForAdd = true;
+        AnimalJobConfig.onSaved = function () {
+            window['gridManager_@Model.AnimalPlanGrid.GridId'].reloadGrid({ page: 1 });
+            refreshPlannedCost();
+        };
+        AnimalJobConfig.onUpdated = function () {
+            window['gridManager_@Model.AnimalPlanGrid.GridId'].reloadGrid({ page: 1 });
+            refreshPlannedCost();
+        };
+        AnimalJobConfig.onDeleted = function () {
+            window['gridManager_@Model.AnimalPlanGrid.GridId'].reloadGrid({ page: 1 });
+            refreshPlannedCost();
+        };
+    </script>
+    <script>
+        var currentProjectCode = '@Html.Raw(Model.SelectedProjectCode)';
+
+        $(document).ready(function () {
+            if (currentProjectCode) {
+                window['gridManager_@Model.AnimalPlanGrid.GridId'].reloadGrid({ page: 1 });
+                window['gridManager_@Model.ActualAnimalCostGrid.GridId'].reloadGrid({ page: 1 });
+                refreshPlannedCost();
+                refreshActualCost();
+            }
+        });
+
+        $('#projectSelect').on('change', function () {
+            currentProjectCode = $(this).val();
+            $('#summary-project-code').val(currentProjectCode);
+            $('#summary-project-description').val('');
+            $('#summary-program').val('');
+            $('#summary-contract').val('');
+            $('#planned-total-cost').val('£0.00');
+            $('#project-total-cost').val('£0.00');
+            $('#project-percent-plan').val('0.00%');
+
+            if (currentProjectCode) {
+                $.get('@Url.Action("GetProjectInfo", "ActualAnimalCost", new { area = "FPS" })',
+                    { projectCode: currentProjectCode },
+                    function (result) {
+                        if (result.success) {
+                            $('#summary-project-description').val(result.projectTitle);
+                            $('#summary-program').val(result.program);
+                            $('#summary-contract').val(result.contract);
+                        }
+                    }
+                );
+
+                window['gridManager_@Model.AnimalPlanGrid.GridId'].reloadGrid({ page: 1 });
+                window['gridManager_@Model.ActualAnimalCostGrid.GridId'].reloadGrid({ page: 1 });
+                refreshPlannedCost();
+                refreshActualCost();
+            }
+        });
+
+        function getAnimalPlanExtraFilters() {
+            return { jobCode: currentProjectCode };
+        }
+
+        function getActualAnimalExtraFilters() {
+            return { projectCode: currentProjectCode };
+        }
+
+        function refreshPlannedCost() {
+            if (!currentProjectCode) return;
+            $.get('@Url.Action("GetTotalPlannedCost", "ProjectAnimalPlanActual", new { area = "FPS" })',
+                { jobCode: currentProjectCode },
+                function (result) {
+                    if (result.success) {
+                        $('#planned-total-cost').val(formatCurrency(result.totalPlannedCost));
+                        calculatePercentOfPlan();
+                    }
+                }
+            );
+        }
+
+        function refreshActualCost() {
+            if (!currentProjectCode) return;
+            $.get('@Url.Action("GetTotalActualCost", "ActualAnimalCost", new { area = "FPS" })',
+                { projectCode: currentProjectCode },
+                function (result) {
+                    if (result.success) {
+                        $('#project-total-cost').val(formatCurrency(result.totalActualCost));
+                        calculatePercentOfPlan();
+                    }
+                }
+            );
+        }
+
+        function formatCurrency(value) {
+            return '\u00A3' + parseFloat(value || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+
+        function calculatePercentOfPlan() {
+            var plannedRaw = parseFloat($('#planned-total-cost').val().replace(/[£,\s]/g, '')) || 0;
+            var actualRaw = parseFloat($('#project-total-cost').val().replace(/[£,\s]/g, '')) || 0;
+            var pct = plannedRaw > 0 ? (actualRaw / plannedRaw) * 100 : 0;
+            $('#project-percent-plan').val(pct.toFixed(2) + '%');
+        }
+
+        function deleteActualAnimalCost(btn) {
+            var subContCounter = $(btn).data('id');
+            if (!subContCounter) return;
+            showGovukConfirm('Are you sure you want to delete this record?').then(function (confirmed) {
+                if (!confirmed) return;
+                $.ajax({
+                    url: '@Url.Action("Delete", "ActualAnimalCost", new { area = "FPS" })',
+                    type: 'DELETE',
+                    data: { subContCounter: subContCounter },
+                    success: function (result) {
+                        if (result.success) {
+                            window['gridManager_@Model.ActualAnimalCostGrid.GridId'].reloadGrid({ page: 1 });
+                            refreshActualCost();
+                            showGovukAlert('Record deleted successfully.');
+                        } else {
+                            showGovukAlert('Delete failed: ' + (result.message || 'Unknown error'));
+                        }
+                    },
+                    error: function () {
+                        showGovukAlert('An error occurred while deleting the record.');
+                    }
+                });
+            });
+        }
+    </script>
+}

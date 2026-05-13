@@ -1,0 +1,64 @@
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.PACT.Models.TestListViewModel
+
+@{
+    ViewData["Title"] = "Test/Product Maintenance";
+}
+
+<div class="content-wrapper">
+    <div class="govuk-grid-row sup_margin_left_right_0">
+        <div class="govuk-grid-column-full">
+            <h1 class="heading_with_txtbox govuk-heading-s sup_border-bottom sup_margin_bottom_10 p-tb-10 p-l-10">
+                <div class="sup_flex_left_center">
+                    Simple Test List
+                </div>
+            </h1>
+        </div>
+    </div>
+
+    <div class="govuk-grid-row sup_margin_left_right_0">
+        <div class="govuk-grid-column-full">
+            <div id="gridContainer_testGrid">
+                @await Html.PartialAsync("_DataGrid", Model.TestGrid)
+            </div>
+            <div class="sup_margin_top_bottom_5_10">
+                <p class="govuk-body">
+                    HINT - Using this form you can enter new tests at the bottom of the list, or amend descriptions
+                    prices and manager for any existing test<br /><br />
+
+                    if adding a new test, remember to set up the Test Capabilities. You also need to set up buyers
+                    (contracts wanting to buy this test) - otherwise PACT won't accept outputs
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal fade" id="testModal" tabindex="-1" role="dialog" aria-labelledby="testModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="testModalLabel">Add/Edit Test or Product</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                @await Html.PartialAsync("_AddEditTestOrProduct")
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <div id="testOrProductConfig"
+         data-url-get-owners="@Url.Action("GetOwners", "TestorProduct", new { area = "PACT" })"
+         data-url-get="@Url.Action("GetTestOrProduct", "TestorProduct", new { area = "PACT" })"
+         data-url-create="@Url.Action("CreateTestOrProduct", "TestorProduct", new { area = "PACT" })"
+         data-url-update="@Url.Action("UpdateTestOrProduct", "TestorProduct", new { area = "PACT" })"
+         data-url-delete="@Url.Action("DeleteTestOrProduct", "TestorProduct", new { area = "PACT" })">
+    </div>
+    <script src="~/js/ajax-form-validation.js"></script>
+    <script src="~/js/pact_js/test-or-product.js"></script>
+}

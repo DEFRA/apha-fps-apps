@@ -20,6 +20,7 @@ namespace Apha.PACT.Api.Mappings
             CreateMap<TimeCodeValidReq, TimeCodeValidDto>().ReverseMap();
             CreateMap<TimeCodeValidRes, TimeCodeValidDto>().ReverseMap();
             CreateMap<WorkGroupRes, WorkGroupDto>().ReverseMap();
+            CreateMap<MonthRes, MonthDto>().ReverseMap();
             CreateMap<ProjectInvoiceReq, ProjectInvoiceDto>().ReverseMap();
             CreateMap<ProjectInvoiceRes, ProjectInvoiceDto>().ReverseMap();
             CreateMap<ProjectSubContractReq, ProjectSubContractDto>().ReverseMap();
@@ -28,6 +29,16 @@ namespace Apha.PACT.Api.Mappings
             CreateMap<TestCapabilityRes, TestCapabilityDto>().ReverseMap();
             CreateMap<TestRequirementReq, TestRequirementtDto>().ReverseMap();
             CreateMap<TestRequirementtRes, TestRequirementtDto>().ReverseMap();            
+            CreateMap<TestorProductReq, TestorProductDto>().ReverseMap();
+            CreateMap<TestorProductRes, TestorProductDto>().ReverseMap();
+            CreateMap<MonthlyInvoicesSummaryDto, MonthlyInvoicesSummaryItemRes>().ReverseMap();
+            CreateMap<MonthlyInvoicesPivotDto, MonthlyInvoicesPivotRes>().ReverseMap();
+            CreateMap<MonthlySubContractsSummaryDto, MonthlySubContractsSummaryItemRes>().ReverseMap();
+            CreateMap<MonthlySubContractsPivotDto, MonthlySubContractsPivotRes>().ReverseMap();
+            CreateMap<ProjectMonthReq, ProjectMonthDto>().ReverseMap();
+            CreateMap<ProjectMonthRes, ProjectMonthDto>().ReverseMap();
+            CreateMap<ProjectProfileDto, ProjectProfileRes>().ReverseMap();
+            CreateMap<ProjectProfileCumulativeDto, ProjectProfileCumulativeRes>().ReverseMap();
         }
     }
 }

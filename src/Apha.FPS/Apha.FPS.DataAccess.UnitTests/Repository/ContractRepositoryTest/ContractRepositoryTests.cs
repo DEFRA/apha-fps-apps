@@ -10,10 +10,11 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ContractRepositoryTest
     public class ContractRepositoryTests
     {
         private const int DefaultTestFpsYear = 2024;
+        private const string DefaultUserEmail = "testuser@example.com";
 
         /// <summary>
         /// Creates a ContractRepository with in-memory Contracts, UserCategories, and Users data.
-        /// GetAllContractsAsync joins all three DbSets and filters by Username == "dbo",
+        /// GetAllContractsAsync joins all three DbSets and filters by UserEmail == requestContext.UserEmailId,
         /// so all three must be wired to exercise the filter logic in unit tests.
         /// </summary>
         private static ContractRepository CreateRepository(
@@ -23,6 +24,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ContractRepositoryTest
         {
             var fpsYearContext = Substitute.For<IFpsRequestContext>();
             fpsYearContext.FpsYear.Returns(DefaultTestFpsYear);
+            fpsYearContext.UserEmailId.Returns(DefaultUserEmail);
 
             var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);
 
@@ -40,7 +42,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ContractRepositoryTest
         #region GetAllContractsAsync
 
         [Fact]
-        public async Task GetAllContractsAsync_ReturnsContracts_WhenUserIsDboAndCategoryMatches()
+        public async Task GetAllContractsAsync_ReturnsContracts_WhenUserEmailMatchesAndCategoryMatches()
         {
             // Arrange
             var contracts = new List<Contract>
@@ -55,7 +57,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ContractRepositoryTest
             };
             var users = new List<User>
             {
-                new() { UserId = 1, Username = "dbo" }
+                new() { UserId = 1, UserEmail = DefaultUserEmail }
             };
             var repo = CreateRepository(contracts, userCategories, users);
 
@@ -68,9 +70,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ContractRepositoryTest
         }
 
         [Fact]
-        public async Task GetAllContractsAsync_ReturnsEmpty_WhenNoUserIsDbo()
+        public async Task GetAllContractsAsync_ReturnsEmpty_WhenUserEmailDoesNotMatch()
         {
-            // Arrange — user exists but Username is not "dbo", so JOIN filter excludes all
+            // Arrange — user exists but UserEmail does not match UserEmailId, so JOIN filter excludes all
             var contracts = new List<Contract>
             {
                 new() { ContractNo = "C001", Category = "CAT_A" }
@@ -81,7 +83,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ContractRepositoryTest
             };
             var users = new List<User>
             {
-                new() { UserId = 1, Username = "admin" }
+                new() { UserId = 1, UserEmail = "otheruser@example.com" }
             };
             var repo = CreateRepository(contracts, userCategories, users);
 
@@ -107,7 +109,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ContractRepositoryTest
             };
             var users = new List<User>
             {
-                new() { UserId = 1, Username = "dbo" }
+                new() { UserId = 1, UserEmail = DefaultUserEmail }
             };
             var repo = CreateRepository(contracts, userCategories, users);
 
@@ -129,7 +131,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ContractRepositoryTest
             };
             var users = new List<User>
             {
-                new() { UserId = 1, Username = "dbo" }
+                new() { UserId = 1, UserEmail = DefaultUserEmail }
             };
             var repo = CreateRepository(new List<Contract>(), userCategories, users);
 
@@ -142,9 +144,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ContractRepositoryTest
         }
 
         [Fact]
-        public async Task GetAllContractsAsync_ReturnsOnlyDboContracts_WhenMultipleUsersExist()
+        public async Task GetAllContractsAsync_ReturnsOnlyMatchingUserEmailContracts_WhenMultipleUsersExist()
         {
-            // Arrange — two users share a category, only the "dbo" user should produce results
+            // Arrange — two users share a category, only the matching email user should produce results
             var contracts = new List<Contract>
             {
                 new() { ContractNo = "C001", Category = "CAT_A" },
@@ -152,13 +154,13 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ContractRepositoryTest
             };
             var userCategories = new List<UserCategory>
             {
-                new() { UserId = 1, Category = "CAT_A" }, // dbo user
-                new() { UserId = 2, Category = "CAT_B" }  // non-dbo user
+                new() { UserId = 1, Category = "CAT_A" }, // matching email user
+                new() { UserId = 2, Category = "CAT_B" }  // non-matching email user
             };
             var users = new List<User>
             {
-                new() { UserId = 1, Username = "dbo" },
-                new() { UserId = 2, Username = "other" }
+                new() { UserId = 1, UserEmail = DefaultUserEmail },
+                new() { UserId = 2, UserEmail = "otheruser@example.com" }
             };
             var repo = CreateRepository(contracts, userCategories, users);
 

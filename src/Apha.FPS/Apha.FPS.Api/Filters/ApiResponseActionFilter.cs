@@ -29,7 +29,7 @@ namespace Apha.FPS.Api.Filters
             };
 
             await next();
-        }  
+        }
 
         private static bool IsPaginatedResult(object value)
         {

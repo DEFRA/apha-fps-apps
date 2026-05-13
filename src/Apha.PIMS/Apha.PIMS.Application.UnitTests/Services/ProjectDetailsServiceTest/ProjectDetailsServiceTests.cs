@@ -625,5 +625,249 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectDetailsServiceTest
         }
 
         #endregion
+
+        #region GetAllRiskAsync
+
+        [Fact]
+        public async Task GetAllRiskAsync_ReturnsListOfMappedRisks()
+        {
+            // Arrange
+            var riskEntities = new List<Risk>
+            {
+                new Risk { Riskid = 1, Riskrating = "Low Risk" },
+                new Risk { Riskid = 2, Riskrating = "Medium Risk" },
+                new Risk { Riskid = 3, Riskrating = "High Risk" }
+            };
+
+            var expectedDtos = new List<RiskDto>
+            {
+                new RiskDto { Riskid = 1, Riskrating = "Low Risk" },
+                new RiskDto { Riskid = 2, Riskrating = "Medium Risk" },
+                new RiskDto { Riskid = 3, Riskrating = "High Risk" }
+            };
+
+            _mockRepository.GetAllRiskAsync().Returns(Task.FromResult(riskEntities));
+            _mockMapper.Map<List<RiskDto>>(riskEntities).Returns(expectedDtos);
+
+            // Act
+            var result = await _sut.GetAllRiskAsync();
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Should().HaveCount(3);
+            result.Should().BeEquivalentTo(expectedDtos);
+
+            await _mockRepository.Received(1).GetAllRiskAsync();
+            _mockMapper.Received(1).Map<List<RiskDto>>(riskEntities);
+        }
+
+        [Fact]
+        public async Task GetAllRiskAsync_WithEmptyList_ReturnsEmptyList()
+        {
+            // Arrange
+            var emptyRiskList = new List<Risk>();
+            var emptyDtoList = new List<RiskDto>();
+
+            _mockRepository.GetAllRiskAsync().Returns(Task.FromResult(emptyRiskList));
+            _mockMapper.Map<List<RiskDto>>(emptyRiskList).Returns(emptyDtoList);
+
+            // Act
+            var result = await _sut.GetAllRiskAsync();
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Should().BeEmpty();
+
+            await _mockRepository.Received(1).GetAllRiskAsync();
+            _mockMapper.Received(1).Map<List<RiskDto>>(emptyRiskList);
+        }
+
+        [Fact]
+        public async Task GetAllRiskAsync_WhenRepositoryThrowsException_PropagatesException()
+        {
+            // Arrange
+            var expectedException = new Exception("Database connection failed");
+
+            _mockRepository.GetAllRiskAsync()
+                .Returns(Task.FromException<List<Risk>>(expectedException));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(
+                async () => await _sut.GetAllRiskAsync()
+            );
+
+            exception.Message.Should().Be("Database connection failed");
+
+            await _mockRepository.Received(1).GetAllRiskAsync();
+            _mockMapper.DidNotReceive().Map<List<RiskDto>>(Arg.Any<List<Risk>>());
+        }
+
+        #endregion
+
+        #region GetAllYearAsync
+
+        [Fact]
+        public async Task GetAllYearAsync_ReturnsListOfMappedYears()
+        {
+            // Arrange
+            var yearEntities = new List<Year>
+            {
+                new Year { Value = 2021, Latestmonthreleased = 12 },
+                new Year { Value = 2022, Latestmonthreleased = 12 },
+                new Year { Value = 2023, Latestmonthreleased = 6 }
+            };
+
+            var expectedDtos = new List<YearDto>
+            {
+                new YearDto { Value = 2021, Latestmonthreleased = 12 },
+                new YearDto { Value = 2022, Latestmonthreleased = 12 },
+                new YearDto { Value = 2023, Latestmonthreleased = 6 }
+            };
+
+            _mockRepository.GetAllYearAsync().Returns(Task.FromResult(yearEntities));
+            _mockMapper.Map<List<YearDto>>(yearEntities).Returns(expectedDtos);
+
+            // Act
+            var result = await _sut.GetAllYearAsync();
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Should().HaveCount(3);
+            result.Should().BeEquivalentTo(expectedDtos);
+
+            await _mockRepository.Received(1).GetAllYearAsync();
+            _mockMapper.Received(1).Map<List<YearDto>>(yearEntities);
+        }
+
+        [Fact]
+        public async Task GetAllYearAsync_WhenCurrentYearNotInList_AddsCurrentYear()
+        {
+            // Arrange
+            int currentYear = DateTime.Now.Year;
+            if (DateTime.Now.Month < 4)
+            {
+                currentYear--;
+            }
+
+            var yearEntities = new List<Year>
+            {
+                new Year { Value = currentYear - 2, Latestmonthreleased = 12 },
+                new Year { Value = currentYear - 1, Latestmonthreleased = 12 }
+            };
+
+            var expectedDtos = new List<YearDto>
+            {
+                new YearDto { Value = currentYear - 2, Latestmonthreleased = 12 },
+                new YearDto { Value = currentYear - 1, Latestmonthreleased = 12 },
+                new YearDto { Value = currentYear, Latestmonthreleased = null }
+            };
+
+            _mockRepository.GetAllYearAsync().Returns(Task.FromResult(yearEntities));
+            _mockMapper.Map<List<YearDto>>(Arg.Is<List<Year>>(list => list.Count == 3))
+                .Returns(expectedDtos);
+
+            // Act
+            var result = await _sut.GetAllYearAsync();
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Should().HaveCount(3);
+            result.Should().Contain(y => y.Value == currentYear && y.Latestmonthreleased == null);
+
+            await _mockRepository.Received(1).GetAllYearAsync();
+            _mockMapper.Received(1).Map<List<YearDto>>(Arg.Is<List<Year>>(list => list.Count == 3));
+        }
+
+        [Fact]
+        public async Task GetAllYearAsync_WhenCurrentYearAlreadyInList_DoesNotDuplicate()
+        {
+            // Arrange
+            int currentYear = DateTime.Now.Year;
+            if (DateTime.Now.Month < 4)
+            {
+                currentYear--;
+            }
+
+            var yearEntities = new List<Year>
+            {
+                new Year { Value = currentYear - 1, Latestmonthreleased = 12 },
+                new Year { Value = currentYear, Latestmonthreleased = 6 }
+            };
+
+            var expectedDtos = new List<YearDto>
+            {
+                new YearDto { Value = currentYear - 1, Latestmonthreleased = 12 },
+                new YearDto { Value = currentYear, Latestmonthreleased = 6 }
+            };
+
+            _mockRepository.GetAllYearAsync().Returns(Task.FromResult(yearEntities));
+            _mockMapper.Map<List<YearDto>>(yearEntities).Returns(expectedDtos);
+
+            // Act
+            var result = await _sut.GetAllYearAsync();
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Should().HaveCount(2);
+            result.Should().NotContain(y => y.Value == currentYear && y.Latestmonthreleased == null);
+
+            await _mockRepository.Received(1).GetAllYearAsync();
+            _mockMapper.Received(1).Map<List<YearDto>>(Arg.Is<List<Year>>(list => list.Count == 2));
+        }
+
+        [Fact]
+        public async Task GetAllYearAsync_WithEmptyList_AddsCurrentYear()
+        {
+            // Arrange
+            int currentYear = DateTime.Now.Year;
+            if (DateTime.Now.Month < 4)
+            {
+                currentYear--;
+            }
+
+            var emptyYearList = new List<Year>();
+
+            var expectedDtos = new List<YearDto>
+            {
+                new YearDto { Value = currentYear, Latestmonthreleased = null }
+            };
+
+            _mockRepository.GetAllYearAsync().Returns(Task.FromResult(emptyYearList));
+            _mockMapper.Map<List<YearDto>>(Arg.Is<List<Year>>(list => list.Count == 1))
+                .Returns(expectedDtos);
+
+            // Act
+            var result = await _sut.GetAllYearAsync();
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Should().HaveCount(1);
+            result.Should().Contain(y => y.Value == currentYear && y.Latestmonthreleased == null);
+
+            await _mockRepository.Received(1).GetAllYearAsync();
+            _mockMapper.Received(1).Map<List<YearDto>>(Arg.Is<List<Year>>(list => list.Count == 1));
+        }
+
+        [Fact]
+        public async Task GetAllYearAsync_WhenRepositoryThrowsException_PropagatesException()
+        {
+            // Arrange
+            var expectedException = new Exception("Database connection failed");
+
+            _mockRepository.GetAllYearAsync()
+                .Returns(Task.FromException<List<Year>>(expectedException));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(
+                async () => await _sut.GetAllYearAsync()
+            );
+
+            exception.Message.Should().Be("Database connection failed");
+
+            await _mockRepository.Received(1).GetAllYearAsync();
+            _mockMapper.DidNotReceive().Map<List<YearDto>>(Arg.Any<List<Year>>());
+        }
+
+        #endregion
     }
 }

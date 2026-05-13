@@ -1,0 +1,157 @@
+@using Apha.FPSApps.Web.Areas.PACT.Models
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model PactProgramMaintenanceViewModel
+
+@{
+    ViewData["Title"] = "Program Maintenance";
+}
+
+<div class="content-wrapper">
+    <div class="govuk-grid-row sup_margin_left_right_0">
+        <div class="govuk-grid-column-full sup_border-bottom sup_flex_center_start">
+            <div class="govuk-grid-column-one-quarter sup_p_0">
+                <h1 class="heading_with_txtbox govuk-heading-s sup_margin_bottom_0">
+                    Program Maintenance
+                </h1>
+            </div>
+            <div class="govuk-grid-column-one-half sup_margin_tb_5 sup_padding_right_8 sup_flex_end_center">
+                <label class="govuk-label govuk-!-font-weight-bold sup_margin_0 sup_margin_left_10" for="programSelect">Select a Program:</label>
+                <div class="sup_margin_left_10" style="position: relative; z-index: 50;">
+                    <input type="text" id="programSelect" placeholder="Select Program" autocomplete="off"
+                           class="govuk-input govuk-!-font-size-16 down-arrow-img" style="width: 400px; cursor: pointer;" />
+                    <div id="programDropdownPanel" style="display:none; position:absolute; top:100%; left:0; width:100%;
+                            max-height:260px; overflow-y:auto; background:#fff; border:1px solid #b1b4b6;
+                            box-shadow:0 4px 8px rgba(0,0,0,.2); z-index:2000;">
+                        <input type="text" id="programSearchBox" placeholder="Type to search program"
+                               style="width:100%; padding:6px 8px; border:0; border-bottom:1px solid #b1b4b6; outline:none; box-sizing:border-box;" />
+                        <table style="width:100%; border-collapse:collapse; font-size:14px;">
+                            <thead style="background:#f3f2f1; position:sticky; top:0; z-index:10;">
+                                <tr>
+                                    <th style="padding:6px 8px; text-align:left;">Code</th>
+                                    <th style="padding:6px 8px; text-align:left;">Program Name</th>
+                                </tr>
+                            </thead>
+                            <tbody id="programDropdownBody">
+                                @foreach (var item in Model.ProgramList)
+                                {
+                                    var parts = item.Text?.Split(" - ", 2);
+                                    <tr data-value="@item.Value" style="cursor:pointer;">
+                                        <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@parts?[0]</td>
+                                        <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@(parts?.Length > 1 ? parts[1] : "")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Program Detail Form + Selected Project Panel -->
+    <div class="govuk-grid-row sup_margin_left_right_0 sup_margin_top_10">
+        <div class="govuk-grid-column-one-half">
+            <div class="sup_padding_10 sup_border sup_overflow_hidden sup_margin_bottom_10">
+                <div class="govuk-grid-column-full sup_p_0 sup_padding_10 sup_border_bottom_0">
+                    <form id="programDetailForm">
+                        <!-- Validation error summary -->
+                        <div class="govuk-error-summary" role="alert"
+                             aria-labelledby="error-summary-title" tabindex="-1" style="display:none;">
+                            <h2 class="govuk-error-summary__title" id="error-summary-title">
+                                There is a problem
+                            </h2>
+                            <div class="govuk-error-summary__body">
+                                <ul class="govuk-list govuk-error-summary__list"></ul>
+                            </div>
+                        </div>
+                        <div class="govuk-grid-row">
+                            <div class="govuk-grid-column-one-half">
+                                <div class="govuk-form-group">
+                                    <label class="govuk-label govuk-!-font-weight-bold" asp-for="Program.ProgramNo">Program No:</label>
+                                    <input class="govuk-input govuk-!-font-size-16" asp-for="Program.ProgramNo" disabled />
+                                    <span asp-validation-for="Program.ProgramNo" class="govuk-error-message"></span>
+                                </div>
+                                <div class="govuk-form-group sup_margin_bottom_10">
+                                    <label class="govuk-label govuk-!-font-weight-bold" asp-for="Program.SectorName">Sector Name:</label>
+                                    <input class="govuk-input govuk-!-font-size-16" asp-for="Program.SectorName" />
+                                    <span asp-validation-for="Program.SectorName" class="govuk-error-message"></span>
+                                </div>
+                                <div class="govuk-form-group sup_margin_bottom_10">
+                                    <label class="govuk-label govuk-!-font-weight-bold" asp-for="Program.Manager">Leader:</label>
+                                    <input class="govuk-input govuk-!-font-size-16" asp-for="Program.Manager" />
+                                    <span asp-validation-for="Program.Manager" class="govuk-error-message"></span>
+                                </div>
+                                <div class="govuk-form-group sup_margin_bottom_10">
+                                    <label class="govuk-label govuk-!-font-weight-bold" asp-for="Program.Directorate">Directorate:</label>
+                                    <input class="govuk-input govuk-!-font-size-16" asp-for="Program.Directorate" />
+                                    <span asp-validation-for="Program.Directorate" class="govuk-error-message"></span>
+                                </div>
+                            </div>
+                            <div class="govuk-grid-column-one-half">
+                                <div class="govuk-form-group sup_margin_bottom_10">
+                                    <label class="govuk-label govuk-!-font-weight-bold" asp-for="Program.ProgramName">Program Name: <span class="sup_color_red">*</span></label>
+                                    <textarea class="govuk-textarea govuk-!-font-size-16 sup_margin_bottom_12"
+                                              asp-for="Program.ProgramName" rows="2"></textarea>
+                                    <span asp-validation-for="Program.ProgramName" class="govuk-error-message"></span>
+                                </div>
+                                <div class="govuk-form-group sup_margin_bottom_10">
+                                    <label class="govuk-label govuk-!-font-weight-bold" asp-for="Program.Customer">Customer:</label>
+                                    <input class="govuk-input govuk-!-font-size-16" asp-for="Program.Customer" />
+                                    <span asp-validation-for="Program.Customer" class="govuk-error-message"></span>
+                                </div>
+                                <div class="govuk-form-group sup_margin_bottom_10">
+                                    <label class="govuk-label govuk-!-font-weight-bold" asp-for="Program.Minim">Minim:</label>
+                                    <input class="govuk-input govuk-!-font-size-16" asp-for="Program.Minim" />
+                                    <span asp-validation-for="Program.Minim" class="govuk-error-message"></span>
+                                </div>
+                                <div class="govuk-form-group sup_margin_top_25 sup_text_align_right sup_margin_bottom_10">
+                                    <button type="button" class="govuk-button sup_margin_top_10 sup_margin_bottom_0" id="btnSaveProgram">Save</button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="govuk-grid-column-one-quarter">
+            <div class="sup_padding_10 sup_border">
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label class="govuk-label govuk-!-font-weight-bold" for="selectedProject">Selected Project:</label>
+                    <input class="govuk-input govuk-!-font-size-16" id="selectedProject" name="selectedProject" type="text" readonly>
+                </div>
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <button type="button" class="govuk-button sup_width_100" id="projectMaintenanceBtn">
+                        Project Maintenance
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Projects Grid -->
+    <div class="govuk-grid-row sup_margin_left_right_0 sup_margin_bottom_10">
+        <div class="govuk-grid-column-full">
+            <div id="@($"gridContainer_{Model.ProjectsGrid.GridId}")">
+                @await Html.PartialAsync("_DataGrid", Model.ProjectsGrid)
+            </div>
+        </div>
+    </div>
+</div>
+
+<input type="hidden" id="selectedProgramNo" value="@Model.SelectedProgramNo" />
+
+@section Scripts {
+    <script src="~/js/ajax-form-validation.js"></script>
+    <script>
+        var programMaintenanceConfig = {
+            getProgramUrl: '@Url.Action("GetProgram", "ProgramMaintenance", new { area = "PACT" })',
+            saveProgramUrl: '@Url.Action("Save", "ProgramMaintenance", new { area = "PACT" })',
+            projectMaintenanceUrl: '@Url.Action("Details", "ProjectMaintenance", new { area = "PACT" })'
+        };
+    </script>
+    <script src="~/js/pact_js/program-maintenance.js"></script>
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -12,7 +12,7 @@ namespace Apha.FPS.Api.Extensions
         {
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddMicrosoftIdentityWebApi(configuration.GetSection("AzureAd"));
-           
+
             services.AddAuthorization();
 
             return services;

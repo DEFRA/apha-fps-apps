@@ -110,29 +110,19 @@ namespace Apha.PACT.DataAccess.Repository
             var dict = (IDictionary<string, object>)filterModel;
 
             if (dict.TryGetValue("JobCodeId", out var jobCodeId) && jobCodeId != null)
-            {
-                queryJobCode = queryJobCode.Where(x => x.JobCodeId.Contains(jobCodeId.ToString()!));
-            }
+                queryJobCode = queryJobCode.Where(x => EF.Functions.ILike(x.JobCodeId, $"%{jobCodeId}%"));
 
             if (dict.TryGetValue("ParentProject", out var parentProject) && parentProject != null)
-            {
-                queryJobCode = queryJobCode.Where(x => x.ParentProject!.Contains(parentProject.ToString()!));
-            }
+                queryJobCode = queryJobCode.Where(x => EF.Functions.ILike(x.ParentProject!, $"%{parentProject}%"));
 
             if (dict.TryGetValue("JobCodeWorkGroup", out var workGroup) && workGroup != null)
-            {
-                queryJobCode = queryJobCode.Where(x => x.JobCodeWorkGroup!.Contains(workGroup.ToString()!));
-            }
+                queryJobCode = queryJobCode.Where(x => EF.Functions.ILike(x.JobCodeWorkGroup!, $"%{workGroup}%"));
 
             if (dict.TryGetValue("Type", out var type) && type != null)
-            {
-                queryJobCode = queryJobCode.Where(x => x.Type!.Contains(type.ToString()!));
-            }
+                queryJobCode = queryJobCode.Where(x => EF.Functions.ILike(x.Type!, $"%{type}%"));
 
             if (dict.TryGetValue("JobCodeName", out var jobCodeName) && jobCodeName != null)
-            {
-                queryJobCode = queryJobCode.Where(x => x.Type!.Contains(jobCodeName.ToString()!));
-            }
+                queryJobCode = queryJobCode.Where(x => EF.Functions.ILike(x.JobCodeName!, $"%{jobCodeName}%"));
 
             return queryJobCode;
         }

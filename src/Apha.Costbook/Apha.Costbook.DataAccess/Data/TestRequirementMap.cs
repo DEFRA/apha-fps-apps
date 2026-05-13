@@ -13,7 +13,7 @@ namespace Apha.Costbook.DataAccess.Data
         {
             entity.HasKey(e => new { e.Project, e.Year, e.TestCode }).HasName("pk_tbltestrequ");
 
-            entity.ToTable("tbltestrequ", "mabarchive");
+            entity.ToTable("tbltestrequ", DbConstants.MabArchiveSchemaName);
 
             entity.HasIndex(e => new { e.Project, e.Year }, "tblprojectyeartbltestrequ");
 

@@ -8,23 +8,36 @@ namespace Apha.FPS.DataAccess.Data
     {
         public void Configure(EntityTypeBuilder<TimeCodeValid> entity)
         {
-            entity.HasKey(e => new { e.WorkGroup, e.TimeCode, e.ParentProject })
-                .HasName("aaaaatimecodevalid_pk");
+           entity.HasKey(e => new { e.WorkGroup, e.TimeCode, e.ParentProject, e.FpsYear }).HasName("pk_timecodevalid");
 
             entity.ToTable("timecodevalid", "fps");
 
-            entity.HasIndex(e => e.JobCode).HasDatabaseName("reference20");
-            entity.HasIndex(e => new { e.TestCode, e.Portfolio }).HasDatabaseName("reference24");
-            entity.HasIndex(e => e.ParentProject).HasDatabaseName("reference3");
+            entity.HasIndex(e => e.JobCode, "reference20");
+            entity.HasIndex(e => new { e.TestCode, e.Portfolio }, "reference24");
 
-            entity.Property(e => e.WorkGroup).HasColumnType("citext").HasColumnName("workgroup");
-            entity.Property(e => e.TimeCode).HasColumnType("citext").HasColumnName("timecode");
-            entity.Property(e => e.ParentProject).HasColumnType("citext").HasColumnName("parentproject");
-            entity.Property(e => e.TestCode).HasMaxLength(50).HasColumnName("testcode");
-            entity.Property(e => e.JobCode).HasMaxLength(50).HasColumnName("jobcode");
-            entity.Property(e => e.Portfolio).HasMaxLength(20).HasColumnName("portfolio");
-            entity.Property(e => e.Active).HasColumnName("active");
+            entity.HasIndex(e => e.ParentProject, "reference3");
+
+            entity.Property(e => e.WorkGroup)
+                .HasMaxLength(50)
+                .HasColumnName("workgroup");
+            entity.Property(e => e.TimeCode)
+                .HasMaxLength(50)
+                .HasColumnName("timecode");
+            entity.Property(e => e.ParentProject)
+                .HasMaxLength(20)
+                .HasColumnName("parentproject");
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
+            entity.Property(e => e.Active).HasColumnName("active");
+            entity.Property(e => e.JobCode)
+                .HasMaxLength(50)
+                .HasColumnName("jobcode");
+            entity.Property(e => e.Portfolio)
+                .HasMaxLength(20)
+                .HasColumnName("portfolio");
+            entity.Property(e => e.TestCode)
+                .HasMaxLength(50)
+                .HasColumnName("testcode");
+
         }
     }
 }

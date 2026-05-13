@@ -1,5 +1,6 @@
-﻿using Apha.FPSApps.Application.Dtos;
+using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
+using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
@@ -24,6 +25,12 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<AnimalPlanItem, AnimalCostViewDto>().ReverseMap();
             CreateMap<AnimalPlanItem, AnimalRequestDto>().ReverseMap();
             CreateMap<CompareStaff2Item, TimeCostCalcsViewDto>().ReverseMap();
+            CreateMap<ActualProjectCostItem, ProjectSubContractDto>().ReverseMap();
+            CreateMap<DivisionViewModel, DivisionDto>().ReverseMap();
+            CreateMap<TestPlanItem, TestRequirementDto>().ReverseMap();
+            CreateMap<AdditionalCostItemViewModel, AdditionalCostDto>().ReverseMap();
+            CreateMap<TestPlanActualItem, TestRequirementDto>().ReverseMap();
+            CreateMap<ActualTestOutputItem, MonthlyOutputDto>().ReverseMap();
 
             // ProgrammeNewProject
             CreateMap<ProjectDto, ProgrammeNewProjectViewModel>().ReverseMap();

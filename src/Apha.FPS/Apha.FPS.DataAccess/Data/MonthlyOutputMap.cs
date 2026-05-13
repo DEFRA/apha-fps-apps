@@ -6,26 +6,32 @@ namespace Apha.FPS.DataAccess.Data
 {
     public class MonthlyOutputMap : IEntityTypeConfiguration<MonthlyOutput>
     {
-        public void Configure(EntityTypeBuilder<MonthlyOutput> entity)
+        public void Configure(EntityTypeBuilder<MonthlyOutput> builder)
         {
-            entity.HasKey(e => new { e.TestCode, e.Buyer, e.Month, e.WorkGroup, e.FpsYear })
-                .HasName("pk_monthlyoutput");
+            builder.HasKey(x => new { x.TestCode, x.Buyer, x.Month, x.WorkGroup, x.FpsYear })
+                   .HasName("pk_monthlyoutput");
 
-            entity.ToTable("monthlyoutput", "fps");
+            builder.ToTable("monthlyoutput", "fps");
 
-            entity.Property(e => e.TestCode)
-                .HasColumnType("citext")
+            builder.HasIndex(x => x.Month, "month");
+            builder.HasIndex(x => x.WorkGroup, "monthlyoutput_workgroup");
+            builder.HasIndex(x => new { x.TestCode, x.Buyer }, "reference14");
+            builder.HasIndex(x => new { x.WorkGroup, x.TestCode }, "reference25");
+            builder.HasIndex(x => x.TestCode, "testcode");
+
+            builder.Property(x => x.TestCode)
+                .HasMaxLength(20)
                 .HasColumnName("testcode");
-            entity.Property(e => e.Buyer)
-                .HasColumnType("citext")
+            builder.Property(x => x.Buyer)
+                .HasMaxLength(20)
                 .HasColumnName("buyer");
-            entity.Property(e => e.Month).HasColumnName("month");
-            entity.Property(e => e.WorkGroup)
-                .HasColumnType("citext")
+            builder.Property(x => x.Month).HasColumnName("month");
+            builder.Property(x => x.WorkGroup)
+                .HasMaxLength(50)
                 .HasColumnName("workgroup");
-            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
-            entity.Property(e => e.Volume).HasColumnName("volume");
-            entity.Property(e => e.WgBuyer)
+            builder.Property(x => x.FpsYear).HasColumnName("fpsyear");
+            builder.Property(x => x.Volume).HasColumnName("volume");
+            builder.Property(x => x.WgBuyer)
                 .HasMaxLength(50)
                 .HasColumnName("wgbuyer");
         }

@@ -3,6 +3,7 @@
     public partial class ProjectGroup
     {
         public string ProjectGroupName { get; set; } = null!;
+        public int FpsYear { get; set; }
     }
 }
 

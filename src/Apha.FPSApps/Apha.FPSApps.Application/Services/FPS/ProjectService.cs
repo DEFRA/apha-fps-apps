@@ -39,6 +39,9 @@ namespace Apha.FPSApps.Application.Services.FPS
         public async Task<ApiResponseDto<ProjectDto>> UpdatePactProjectAsync(ProjectDto project)
             => await _fpsClient.FpsProject.UpdatePactProjectAsync(project);
 
+        public async Task<ApiResponseDto<ProjectDto>> UpdatePactPortfolioAsync(ProjectDto project)
+            => await _fpsClient.FpsProject.UpdatePactPortfolioAsync(project);
+
         public async Task<ApiResponseDto<bool>> DeleteProjectAsync(string parentProject)
             => await _fpsClient.FpsProject.DeleteProjectAsync(parentProject);
 

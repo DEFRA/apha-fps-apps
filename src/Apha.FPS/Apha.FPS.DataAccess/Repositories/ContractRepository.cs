@@ -23,9 +23,9 @@ namespace Apha.FPS.DataAccess.Repositories
                             on contract.Category equals userCategory.Category
                         join user in _dbContext.Users
                             on userCategory.UserId equals user.UserId
-                          where user.Username == "dbo"
+                          where user.UserEmail != null && user.UserEmail.ToLower() == _requestContext.UserEmailId
                           select contract).AsNoTracking()
-                .ToListAsync(); 
+                          .ToListAsync(); 
         }
 
         public async Task<IEnumerable<Contract>> GetAllContractsByUserAsync()
@@ -39,9 +39,9 @@ namespace Apha.FPS.DataAccess.Repositories
                     Manager = c.Manager,
                     Customer = c.Customer,
                     Title = c.Title,
-                    RegisteredDate = c.RegisteredDate,
-                    StartDate = c.StartDate,
-                    EndDate = c.EndDate,
+                    RegisteredDate = c.RegisteredDate.HasValue ? c.RegisteredDate.Value.ToDateTime(TimeOnly.MinValue) : (DateTime?)null,
+                    StartDate = c.StartDate.HasValue ? c.StartDate.Value.ToDateTime(TimeOnly.MinValue) : (DateTime?)null,
+                    EndDate = c.EndDate.HasValue ? c.EndDate.Value.ToDateTime(TimeOnly.MinValue) : (DateTime?)null,
                     ContractDoc = c.ContractDoc,
                     Duration = c.Duration,
                     FpsYear = c.FpsYear

@@ -7,11 +7,12 @@
         public string MilestoneRef { get; set; } = null!;
         public string ObjectiveRef { get; set; } = null!;
         public string? MilestoneTitle { get; set; }
-        public DateOnly? PlanDate { get; set; }
-        public DateOnly? ActualDate { get; set; }
+        public DateTime? PlanDate { get; set; }
+        public DateTime? ActualDate { get; set; }
         public string? Comment { get; set; }
         public double? MonthNoFin { get; set; }
         public string? Year { get; set; }
         public int? FpsYear { get; set; }
+
     }
 }

@@ -1,0 +1,329 @@
+@model Apha.FPSApps.Web.Areas.PACT.Models.PortfolioMaintenanceViewModel
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    ViewData["Title"] = "Portfolio Maintenance";
+}
+
+<style>
+    /* Portfolio picker dropdown panel */
+    .portfolio-picker-wrapper {
+        position: relative;
+        display: inline-block;
+        width: 100%;
+    }
+
+    .tbl-dropdown-panel {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        z-index: 1050;
+        background: #fff;
+        border: 2px solid #0b0c0c;
+        min-width: 100%;
+        max-height: 320px;
+        overflow-y: auto;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+    }
+
+    .tbl-dropdown-panel.open {
+        display: block;
+    }
+
+    .tbl-dropdown-panel .select-search-box {
+        width: calc(100% - 80px);
+        padding: 6px 8px;
+        border: 1px solid #b1b4b6;
+        font-size: 14px;
+        margin: 6px 0 6px 6px;
+    }
+
+    .tbl-dropdown-panel .clear-search-btn {
+        margin: 6px 6px 6px 4px;
+        padding: 4px 8px;
+        font-size: 12px;
+        line-height: 1.2;
+        min-width: auto;
+    }
+
+    .tbl-dropdown-panel table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .tbl-dropdown-panel table thead th {
+        background: #f3f2f1;
+        padding: 6px 10px;
+        font-size: 14px;
+        font-weight: bold;
+        border-bottom: 2px solid #b1b4b6;
+        white-space: nowrap;
+    }
+
+    .tbl-dropdown-panel table tbody tr {
+        cursor: pointer;
+    }
+
+    .tbl-dropdown-panel table tbody tr:hover {
+        background-color: #d8e5f4;
+    }
+
+    .tbl-dropdown-panel table tbody td {
+        padding: 5px 10px;
+        font-size: 14px;
+        border-bottom: 1px solid #f3f2f1;
+    }
+</style>
+
+<!-- ── Top header bar: heading + portfolio picker ──────────────────────────── -->
+<div class="govuk-grid-row sup_margin_left_right_0 sup_p_0 sup_margin_bottom_10">
+    <div class="govuk-grid-column-full sup_p_0 sup_border-bottom">
+        <div class="govuk-grid-column-one-third">
+            <h1 class="heading_with_txtbox govuk-heading-s sup_margin_bottom_0 p-tb-10 p-l-10">
+                <div class="sup_flex_left_center">Portfolio Maintenance</div>
+            </h1>
+        </div>
+        <div class="govuk-grid-column-two-thirds sup_p_0">
+            <div class="govuk-grid-column-full sup_margin_top_bottom_5_10 sup_flex_left_center">
+                <label for="dpselectportfolio"
+                       class="govuk-label govuk-!-font-weight-bold sup_margin_top_bottom_5_10">
+                    Select a Portfolio
+                </label>
+                <div class="tableselectdropdown input-group searchfiels govuk-!-width-two-thirds portfolio-picker-wrapper">
+                    <input type="text" id="dpselectportfolio" placeholder="Select Portfolio"
+                           class="dropdown-input down-arrow-img govuk-input govuk-!-font-size-16"
+                           autocomplete="off" readonly style="cursor:pointer;" />
+                    <div class="tbl-dropdown-panel" id="portfolioDropdownPanel">
+                        <input type="text" class="select-search-box" placeholder="Type to search portfolio" />
+                        <button type="button" class="govuk-button govuk-button--secondary clear-search-btn"
+                                aria-label="Clear search">
+                            <span class="sup_error_text_color govuk-!-font-size-19">&times;</span>
+                        </button>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Portfolio Title</th>
+                                </tr>
+                            </thead>
+                            <tbody id="portfolioDropdownBody">
+                                @foreach (var item in Model.PortfolioOptions)
+                                {
+                                    var parts = item.Text.Split(" - ", 2);
+                                    <tr data-value="@item.Value" data-label="@item.Text">
+                                        <td>@parts[0]</td>
+                                        <td>@(parts.Length > 1 ? parts[1] : "")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Sidebar + main content ─────────────────────────────────────────────── -->
+<div class="govuk-grid-row sup_flex_row sup_margin_left_right_0 sup_margin_bottom_10">
+
+    <nav class="sidenav flex-column flex-shrink-0" id="shortnav">
+        <button type="button" class="toggle-btn" onclick="toggleSidebar()" style="right:-8px; top:30px;" allow-edit="true">
+            <img src="~/images/chevron-left-solid-full.svg" width="20" alt="toggle sidebar"
+                 style="margin:-4px 8px 0 -4px;" />
+        </button>
+        <ul>
+            <li class="sidebar-link-two"
+                style="border-radius:0 8px 8px 0; cursor:pointer; background-color:#1d70b8;">
+                <a id="sideNavTestPurchase" style="color:#fff;"
+                       asp-area="PACT"
+                       asp-controller="TestPurchaseRequirement"
+                       asp-action="Index"
+                       asp-route-parentProject="">
+                    Portfolio's Requirement to BUY Test
+                </a>
+            </li>
+            <li class="sidebar-link-two"
+                style="border-radius:0 8px 8px 0; cursor:pointer; background-color:#1d70b8;">
+                <a id="sideNavInvoices" style="color:#fff;"
+                       asp-area="PACT"
+                       asp-controller="ProjectInvoiceSubContract"
+                       asp-action="Index"
+                       asp-route-parentProject="">
+                    Invoices &amp; SubContracts
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Main content -->
+    <div class="govuk-grid-column-full">
+
+        <!-- ── Row 1: Left form panel + Right constituent tests grid ── -->
+        <div class="sup_margin_left_right_0 sup_p_0 sup_flex">
+
+            <!-- LEFT PANEL -->
+            <div class="govuk-grid-column-one-half sup_padding_left_0">
+                <div class="sup_border sup_padding_16 sup_margin_bottom_10">
+                    <form id="portfolioDetailForm">
+
+                        <input type="hidden" asp-for="CurrentPortfolio.ParentProject" id="hdnParentProject" />
+
+                        <!-- Validation error summary -->
+                        <div class="govuk-error-summary" id="portfolioErrorSummary" role="alert"
+                             aria-labelledby="error-summary-title" tabindex="-1" style="display:none;">
+                            <h2 class="govuk-error-summary__title" id="error-summary-title">There is a problem</h2>
+                            <div class="govuk-error-summary__body">
+                                <ul class="govuk-list govuk-error-summary__list" id="portfolioErrorList"></ul>
+                            </div>
+                        </div>
+
+                        <div class="govuk-form-group sup_margin_bottom_10">
+                            <label class="govuk-label govuk-!-font-weight-bold" asp-for="CurrentPortfolio.ParentProject">
+                                Parent Project
+                            </label>
+                            <input class="govuk-input govuk-!-font-size-16" asp-for="CurrentPortfolio.ParentProject"
+                                   id="txtParentProject" disabled />
+                            <span asp-validation-for="CurrentPortfolio.ParentProject" class="govuk-error-message"></span>
+                        </div>
+
+                        <div class="govuk-form-group sup_margin_bottom_10">
+                            <label class="govuk-label govuk-!-font-weight-bold" asp-for="CurrentPortfolio.ProjectTitle">
+                                Project Title <span class="sup_color_red">*</span>
+                            </label>
+                            <input class="govuk-input govuk-!-font-size-16" asp-for="CurrentPortfolio.ProjectTitle"
+                                   id="txtProjectTitle" />
+                            <span asp-validation-for="CurrentPortfolio.ProjectTitle" class="govuk-error-message"></span>
+                        </div>
+
+                        <div class="govuk-checkboxes govuk-checkboxes--small sup_margin_bottom_10"
+                             data-module="govuk-checkboxes">
+                            <div class="govuk-checkboxes__item">
+                                <input class="govuk-checkboxes__input" asp-for="CurrentPortfolio.Finished"
+                                       id="chkFinished" type="checkbox" value="true" />
+                                <label class="govuk-label govuk-checkboxes__label govuk-!-font-weight-bold"
+                                       asp-for="CurrentPortfolio.Finished">
+                                    Finished
+                                </label>
+                            </div>
+                        </div>
+
+                        <div style="display:flex; gap:16px; margin-bottom:10px;">
+                            <div class="govuk-form-group" style="flex:1; margin-bottom:0;">
+                                <label class="govuk-label govuk-!-font-weight-bold" asp-for="CurrentPortfolio.Program">
+                                    Programme <span class="sup_color_red">*</span>
+                                </label>
+                                <select class="govuk-select govuk-!-font-size-16" asp-for="CurrentPortfolio.Program"
+                                        id="dpProgramme" asp-items="Model.Programs" style="width:100%;">
+                                    <option value="">--select--</option>
+                                </select>
+                                <span asp-validation-for="CurrentPortfolio.Program" class="govuk-error-message"></span>
+                            </div>
+                            <div class="govuk-form-group" style="flex:1; margin-bottom:0;">
+                                <label class="govuk-label govuk-!-font-weight-bold" asp-for="CurrentPortfolio.ProjectManager">
+                                    Manager
+                                </label>
+                                <select class="govuk-select govuk-!-font-size-16" asp-for="CurrentPortfolio.ProjectManager"
+                                        id="dpManager" asp-items="Model.Managers" style="width:100%;">
+                                    <option value="">--select--</option>
+                                </select>
+                                <span asp-validation-for="CurrentPortfolio.ProjectManager" class="govuk-error-message"></span>
+                            </div>
+                        </div>
+
+                        <div style="display:flex; gap:16px; margin-bottom:10px;">
+                            <div class="govuk-form-group" style="flex:1; margin-bottom:0;">
+                                <label class="govuk-label govuk-!-font-weight-bold" asp-for="CurrentPortfolio.BudgetCvl">
+                                    Budget-cvt
+                                </label>
+                                <div class="govuk-input__wrapper">
+                                    <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                    <input class="govuk-input govuk-!-font-size-16" asp-for="CurrentPortfolio.BudgetCvl"
+                                           id="txtBudgetCvl" type="number" spellcheck="false" />
+                                </div>
+                                <span asp-validation-for="CurrentPortfolio.BudgetCvl" class="govuk-error-message"></span>
+                            </div>
+                            <div class="govuk-form-group" style="flex:1; margin-bottom:0;">
+                                <label class="govuk-label govuk-!-font-weight-bold" asp-for="CurrentPortfolio.TransferIncome">
+                                    Transfer Income
+                                </label>
+                                <div class="govuk-input__wrapper">
+                                    <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                    <input class="govuk-input govuk-!-font-size-16" asp-for="CurrentPortfolio.TransferIncome"
+                                           id="txtTransferIncome" type="number" spellcheck="false" />
+                                </div>
+                                <span asp-validation-for="CurrentPortfolio.TransferIncome" class="govuk-error-message"></span>
+                            </div>
+                        </div>
+
+                        <div class="govuk-form-group sup_margin_bottom_0 sup_margin_top_10">
+                            <label class="govuk-label govuk-!-font-weight-bold" asp-for="CurrentPortfolio.Comments">
+                                Comments
+                            </label>
+                            <textarea class="govuk-textarea govuk-!-font-size-16 sup_margin_bottom_10"
+                                      asp-for="CurrentPortfolio.Comments" id="txtComments" rows="2"></textarea>
+                            <span asp-validation-for="CurrentPortfolio.Comments" class="govuk-error-message"></span>
+                        </div>
+
+                        <div class="govuk-grid-row" style="text-align:right; margin:5px 0 5px 0;">
+                            <button type="button" class="govuk-button sup_margin_0" id="btnSavePortfolio"
+                                    data-module="govuk-button" disabled>
+                                Save
+                            </button>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+
+            <!-- RIGHT PANEL: Constituent Tests -->
+            <div class="govuk-grid-column-two-thirds sup_p_0 sup_margin_bottom_10">
+                <div id="gridContainer_constituentTestGrid">
+                    @await Html.PartialAsync("_DataGrid", Model.ConstituentTestGrid)
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Row 2: Selected PortfolioTest + Portfolio Time Codes button ── -->
+        <div class="govuk-grid-row sup_margin_0">
+            <div class="govuk-grid-column-full sup_p_0 sup_margin_bottom_10">
+                <div class="sup_overflow_hidden sup_border sup_flex">
+                    <div class="govuk-grid-column-one-half">
+                        <div class="govuk-form-group sup_margin_bottom_10 sup_margin_top_10">
+                            <label class="govuk-label govuk-!-font-weight-bold" for="txtSelectedPortfolioTest">
+                                Selected PortfolioTest is:
+                            </label>
+                            <input class="govuk-input govuk-!-font-size-16" id="txtSelectedPortfolioTest"
+                                   disabled readonly name="portfolioTest" type="text" />
+                        </div>
+                    </div>
+                    <div class="sup_margin_tb_20 sup_text_align_right sup_float_right govuk-grid-column-two-thirds">
+                        <button type="button" class="govuk-button sup_margin_0" id="btnPortfolioTimeCodes"
+                                data-module="govuk-button" disabled>
+                            Portfolio Time Codes
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Row 3: Work Groups grid ── -->
+        <div class="govuk-grid-row sup_p_0 sup_margin_bottom_10">
+            <div class="govuk-grid-column-full">
+                <div id="gridContainer_portfolioTimeCodeGrid">
+                    @await Html.PartialAsync("_DataGrid", Model.TimeCodeGrid)
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+<script src="~/js/ajax-form-validation.js"></script>
+<script src="~/js/pact_js/portfolioMaintenance.js"></script>
+@{
+    await Html.RenderPartialAsync("_ValidationScriptsPartial");
+}
+}

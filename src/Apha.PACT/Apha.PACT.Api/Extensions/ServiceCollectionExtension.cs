@@ -24,10 +24,14 @@ namespace Apha.PACT.Api.Extensions
             services.AddScoped<IJobCodeService, JobCodeService>();
             services.AddScoped<ITimeCodeValidService, TimeCodeValidService>();
             services.AddScoped<IWorkGroupService, WorkGroupService>();
+            services.AddScoped<IMonthService, MonthService>();
             services.AddScoped<IProjectInvoiceService, ProjectInvoiceService>();
             services.AddScoped<IProjectSubContractService, ProjectSubContractService>();
             services.AddScoped<ITestCapabilityService, TestCapabilityService>();
             services.AddScoped<ITestRequirementService, TestRequirementService>();
+            services.AddScoped<ITestorProductService, TestorProductService>();
+            services.AddScoped<IProjectMonthService, ProjectMonthService>();
+            services.AddScoped<IProjectProfileService, ProjectProfileService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
@@ -37,12 +41,18 @@ namespace Apha.PACT.Api.Extensions
             services.AddScoped<IJobCodeRepository, JobCodeRepository>();
             services.AddScoped<ITimeCodeValidRepository, TimeCodeValidRepository>();
             services.AddScoped<IWorkGroupRepository, WorkGroupRepository>();
+            services.AddScoped<IMonthRepository, MonthRepository>();
             services.AddScoped<IProjectInvoiceRepository, ProjectInvoiceRepository>();
             services.AddScoped<IProjectSubContractRepository, ProjectSubContractRepository>();
             services.AddScoped<IProjectRepository, ProjectRepository>();
             services.AddScoped<ITestCapabilityRepository, TestCapabilityRepository>();
             services.AddScoped<ITestRequirementRepository, TestRequirementRepository>();
-                 return services;
+            services.AddScoped<ITestorProductRepository, TestorProductRepository>();
+            services.AddScoped<IMonthlyTimeRepository, MonthlyTimeRepository>();
+            services.AddScoped<IProjectMonthRepository, ProjectMonthRepository>();
+            services.AddScoped<IProjectProfileRepository, ProjectProfileRepository>();
+
+            return services;
         }
     }
 }

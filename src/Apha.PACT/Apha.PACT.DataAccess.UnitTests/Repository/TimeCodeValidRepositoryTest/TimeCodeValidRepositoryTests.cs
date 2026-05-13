@@ -52,6 +52,41 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TimeCodeValidRepositoryTest
             int fpsYear = DefaultTestFpsYear)
             => CreateRepositoryWithMocks(timeCodes, fpsYear).Repo;
 
+        #region GetPagedByProjectAndTestCodeAsync
+
+        [Fact]
+        public async Task GetPagedByProjectAndTestCodeAsync_WithMatchingProjectAndTestCode_ReturnsFilteredPagedResult()
+        {
+            var timeCodes = new List<TimeCodeValid>
+            {
+                new() { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", TestCode = "TST1", FpsYear = DefaultTestFpsYear },
+                new() { TimeCode = "TC2", WorkGroup = "WG2", ParentProject = "PRJ1", TestCode = "TST2", FpsYear = DefaultTestFpsYear },
+                new() { TimeCode = "TC3", WorkGroup = "WG3", ParentProject = "PRJ2", TestCode = "TST1", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(timeCodes);
+            var query = new PaginationParameters<string>();
+
+            var result = await repo.GetPagedByProjectAndTestCodeAsync(query, "PRJ1", "TST1");
+
+            Assert.Single(result.Data);
+            Assert.Equal("TC1", result.Data.First().TimeCode);
+            Assert.Equal(1, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetPagedByProjectAndTestCodeAsync_NoMatch_ReturnsEmptyPagedResult()
+        {
+            var repo = CreateRepository([]);
+            var query = new PaginationParameters<string>();
+
+            var result = await repo.GetPagedByProjectAndTestCodeAsync(query, "PRJ_NONE", "TST_NONE");
+
+            Assert.Empty(result.Data);
+            Assert.Equal(0, result.PaginationData.TotalRecords);
+        }
+
+        #endregion
+
         #region GetByJobCodeAsync
 
         [Fact]

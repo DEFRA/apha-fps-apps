@@ -36,10 +36,30 @@ namespace Apha.PACT.DataAccess.Repository
                 queryTimeCode = queryTimeCode.Where(t => t.JobCode == jobCode);
             }
 
-            if(!string.IsNullOrEmpty(parentProject))
+            if (!string.IsNullOrEmpty(parentProject))
             {
                 queryTimeCode = queryTimeCode.Where(t => t.ParentProject == parentProject);
             }
+
+            // Apply filtering
+            queryTimeCode = ApplyTimeCodeFilter(queryTimeCode, query.Filter);
+
+            // Apply sorting
+            queryTimeCode = (IQueryable<TimeCodeValid>)ApplySorting(queryTimeCode, query.SortBy, query.Descending);
+
+            // Execute query
+            var result = await queryTimeCode.ToListAsync();
+
+            // Apply paging
+            return ApplyPaging(result, query.Page, query.PageSize);
+        }
+
+        public async Task<PagedData<TimeCodeValid>> GetPagedByProjectAndTestCodeAsync(
+            PaginationParameters<string> query, string parentProject, string testCode)
+        {
+            var queryTimeCode = _context.TimeCodeValids
+                .AsNoTracking()
+                .Where(t => t.ParentProject == parentProject && t.TestCode == testCode);
 
             // Apply filtering
             queryTimeCode = ApplyTimeCodeFilter(queryTimeCode, query.Filter);
@@ -224,24 +244,16 @@ namespace Apha.PACT.DataAccess.Repository
             var dict = (IDictionary<string, object>)filterModel;
 
             if (dict.TryGetValue("TimeCode", out var timeCode) && timeCode != null)
-            {
-                queryTimeCode = queryTimeCode.Where(x => x.TimeCode.Contains(timeCode.ToString()!));
-            }
+                queryTimeCode = queryTimeCode.Where(x => EF.Functions.ILike(x.TimeCode, $"%{timeCode}%"));
 
             if (dict.TryGetValue("ParentProject", out var parentProject) && parentProject != null)
-            {
-                queryTimeCode = queryTimeCode.Where(x => x.ParentProject!.Contains(parentProject.ToString()!));
-            }
+                queryTimeCode = queryTimeCode.Where(x => x.ParentProject != null && EF.Functions.ILike(x.ParentProject, $"%{parentProject}%"));
 
             if (dict.TryGetValue("WorkGroup", out var workGroup) && workGroup != null)
-            {
-                queryTimeCode = queryTimeCode.Where(x => x.WorkGroup!.Contains(workGroup.ToString()!));
-            }
+                queryTimeCode = queryTimeCode.Where(x => x.WorkGroup != null && EF.Functions.ILike(x.WorkGroup, $"%{workGroup}%"));
 
             if (dict.TryGetValue("JobCode", out var jobCode) && jobCode != null)
-            {
-                queryTimeCode = queryTimeCode.Where(x => x.JobCode!.Contains(jobCode.ToString()!));
-            }
+                queryTimeCode = queryTimeCode.Where(x => x.JobCode != null && EF.Functions.ILike(x.JobCode, $"%{jobCode}%"));
 
             return queryTimeCode;
         }

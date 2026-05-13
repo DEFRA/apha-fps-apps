@@ -8,30 +8,38 @@ namespace Apha.FPS.DataAccess.Data
     {
         public void Configure(EntityTypeBuilder<AdditionalCost> entity)
         {
-            entity.HasKey(e => new { e.JobCode, e.Account, e.Description })
-                .HasName("pk__tbladditionalcos__160f4887");
+            entity.HasKey(e => new { e.JobCode, e.Account, e.Description, e.FpsYear })
+                  .HasName("pk_tbladditionalcosts");
 
             entity.ToTable("tbladditionalcosts", "fps");
 
             entity.Property(e => e.JobCode)
-                .HasColumnType("citext")
+                .HasMaxLength(20)
                 .HasColumnName("jobcode");
+
             entity.Property(e => e.Account)
-                .HasColumnType("citext")
+                .HasMaxLength(50)
                 .HasColumnName("account");
+
             entity.Property(e => e.Description)
                 .HasMaxLength(20)
                 .HasColumnName("description");
+
             entity.Property(e => e.ItemCost)
+                .HasDefaultValueSql("0")
                 .HasColumnType("money")
                 .HasColumnName("itemcost");
+
             entity.Property(e => e.Freq)
                 .HasMaxLength(5)
                 .HasColumnName("freq");
+
             entity.Property(e => e.Supplier)
                 .HasMaxLength(50)
                 .HasColumnName("supplier");
-            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
+
+            entity.Property(e => e.FpsYear)
+                .HasColumnName("fpsyear");
         }
     }
 }

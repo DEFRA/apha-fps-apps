@@ -1,4 +1,4 @@
-﻿using Apha.Common.Contracts;
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.PACT;
 using Apha.PACT.Api.Controllers;
 using Apha.PACT.Application.Dtos;
@@ -210,6 +210,167 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProjectSubContractControllerTest
 
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.False((bool)okResult.Value!);
+        }
+
+        #endregion
+
+        #region GetFpsProjectSubContracts
+
+        [Fact]
+        public async Task GetFpsProjectSubContracts_ValidQueryWithProject_ReturnsOk()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var dtos = new List<ProjectSubContractDto> { new ProjectSubContractDto { SubContCounter = 1, Project = "PRJ1", AcctCode = "LargeAnimals" } };
+            var paginationData = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1, TotalPages = 1 };
+            var serviceResult = new PaginatedResult<ProjectSubContractDto>(dtos, paginationData);
+            var expectedResponse = new PaginationRes<ProjectSubContractRes>
+            {
+                Data = new List<ProjectSubContractRes> { new ProjectSubContractRes { SubContCounter = 1, Project = "PRJ1" } },
+                PaginationData = new Pagination { PageNumber = 1, PageSize = 10, TotalRecords = 1, TotalPages = 1 }
+            };
+
+            _serviceMock.GetFpsProjectSubContractsAsync(query, "PRJ1").Returns(serviceResult);
+            _mapperMock.Map<PaginationRes<ProjectSubContractRes>>(serviceResult).Returns(expectedResponse);
+
+            var result = await _controller.GetFpsProjectSubContracts(query, "PRJ1");
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(expectedResponse, okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetFpsProjectSubContracts_NullProject_ReturnsOk()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var serviceResult = new PaginatedResult<ProjectSubContractDto>(Enumerable.Empty<ProjectSubContractDto>(), new PaginationDto());
+            var expectedResponse = new PaginationRes<ProjectSubContractRes>();
+
+            _serviceMock.GetFpsProjectSubContractsAsync(query, null).Returns(serviceResult);
+            _mapperMock.Map<PaginationRes<ProjectSubContractRes>>(serviceResult).Returns(expectedResponse);
+
+            var result = await _controller.GetFpsProjectSubContracts(query, null);
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(expectedResponse, okResult.Value);
+        }
+
+        #endregion
+
+        #region GetFpsProjectTotal
+
+        [Fact]
+        public async Task GetFpsProjectTotal_ValidProject_ReturnsOk()
+        {
+            _serviceMock.GetFpsProjectSubContractTotalAmountAsync("PRJ1").Returns(1500.00m);
+
+            var result = await _controller.GetFpsProjectTotal("PRJ1");
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(1500.00m, okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetFpsProjectTotal_NullProject_ReturnsOk()
+        {
+            _serviceMock.GetFpsProjectSubContractTotalAmountAsync(null).Returns(0m);
+
+            var result = await _controller.GetFpsProjectTotal(null);
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(0m, okResult.Value);
+        }
+
+        #endregion
+
+        #region GetMonthlySubContractsSummary
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummary_ValidQuery_ReturnsOk()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var dto = new MonthlySubContractsPivotDto
+            {
+                Months = [1, 2, 3],
+                Rows =
+                [
+                    new MonthlySubContractsSummaryDto
+                    {
+                        Program = "ADMIN",
+                        ParentProject = "AH",
+                        MonthlyAmounts = new Dictionary<int, decimal> { { 1, 100m }, { 2, 200m } }
+                    }
+                ],
+                Pagination = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1, TotalPages = 1 }
+            };
+            var expectedRes = new MonthlySubContractsPivotRes
+            {
+                Months = [1, 2, 3],
+                Rows = [new MonthlySubContractsSummaryItemRes { Program = "ADMIN", ParentProject = "AH" }],
+                Pagination = new Pagination { PageNumber = 1, PageSize = 10, TotalRecords = 1, TotalPages = 1 }
+            };
+
+            _serviceMock.GetMonthlySubContractsSummaryAsync(query).Returns(dto);
+            _mapperMock.Map<MonthlySubContractsPivotRes>(dto).Returns(expectedRes);
+
+            var result = await _controller.GetMonthlySubContractsSummary(query);
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(expectedRes, okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummary_EmptyData_ReturnsOkWithEmptyPivot()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var dto = new MonthlySubContractsPivotDto();
+            var expectedRes = new MonthlySubContractsPivotRes();
+
+            _serviceMock.GetMonthlySubContractsSummaryAsync(query).Returns(dto);
+            _mapperMock.Map<MonthlySubContractsPivotRes>(dto).Returns(expectedRes);
+
+            var result = await _controller.GetMonthlySubContractsSummary(query);
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(expectedRes, okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummary_CallsServiceOnce()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var dto = new MonthlySubContractsPivotDto();
+
+            _serviceMock.GetMonthlySubContractsSummaryAsync(query).Returns(dto);
+            _mapperMock.Map<MonthlySubContractsPivotRes>(dto).Returns(new MonthlySubContractsPivotRes());
+
+            await _controller.GetMonthlySubContractsSummary(query);
+
+            await _serviceMock.Received(1).GetMonthlySubContractsSummaryAsync(query);
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummary_MapsServiceResultToRes()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var dto = new MonthlySubContractsPivotDto();
+
+            _serviceMock.GetMonthlySubContractsSummaryAsync(query).Returns(dto);
+            _mapperMock.Map<MonthlySubContractsPivotRes>(dto).Returns(new MonthlySubContractsPivotRes());
+
+            await _controller.GetMonthlySubContractsSummary(query);
+
+            _mapperMock.Received(1).Map<MonthlySubContractsPivotRes>(dto);
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummary_ServiceThrows_PropagatesException()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+
+            _serviceMock.GetMonthlySubContractsSummaryAsync(query)
+                .ThrowsAsync(new Exception("Service error"));
+
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetMonthlySubContractsSummary(query));
         }
 
         #endregion

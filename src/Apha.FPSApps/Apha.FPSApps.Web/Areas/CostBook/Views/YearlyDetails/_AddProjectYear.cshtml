@@ -1,0 +1,81 @@
+@using Microsoft.AspNetCore.Mvc.Rendering
+@model Apha.FPSApps.Web.Areas.CostBook.Models.ProjectYearRateItem
+
+<div class="modal-header">
+    <h5 class="modal-title"> Project Rates</h5>
+    <button type="button" class="close project-close-btn" aria-label="Close" onclick="closeModal()">×</button>
+</div>
+<div class="modal-body">
+    <form id="addNewProjectYearForm">
+        <input asp-for="Programme" type="hidden">
+
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-one-half">
+                <div class="input-group project-inline-input-group">
+                    <label asp-for="Project" class="govuk-label project-inline-label">Project</label>
+                    <input asp-for="Project" class="govuk-input" readonly>
+                </div>
+            </div>
+            <div class="govuk-grid-column-one-half">
+                <div class="input-group project-inline-input-group">
+                    <label asp-for="YearValue" class="govuk-label project-inline-label-wide">Year</label>
+                    <input asp-for="YearValue" class="govuk-input" readonly>
+                </div>
+            </div>
+        </div>
+        @if (Convert.ToString(Model.Programme??"").ToLower() == "comm")
+            {
+                <div class="govuk-grid-row govuk-!-margin-top-2">
+                    <div class="govuk-grid-column-one-half">
+
+                        <div class="rates-section">
+                            <h3 class="govuk-heading-s">Contingency Mark-up %</h3>
+                            <div class="rate-row">
+                                <label asp-for="MarkupTime" class="govuk-label">Time</label>
+                                <input asp-for="MarkupTime" type="number" step="any" class="govuk-input">
+                            </div>
+                            <div class="rate-row">
+                                <label asp-for="MarkupTests" class="govuk-label">Tests</label>
+                                <input asp-for="MarkupTests" type="number" step="any" class="govuk-input">
+                            </div>
+                            <div class="rate-row">
+                                <label asp-for="MarkupAnimals" class="govuk-label">Animals</label>
+                                <input asp-for="MarkupAnimals" type="number" step="any" class="govuk-input">
+                            </div>
+                            <div class="rate-row">
+                                <label asp-for="MarkupAdditional" class="govuk-label">Additional</label>
+                                <input asp-for="MarkupAdditional" type="number" step="any" class="govuk-input">
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="govuk-grid-column-one-half">
+
+                        <div class="rates-section">
+                            <h3 class="govuk-heading-s">Profit Margin %</h3>
+                            <div class="rate-row">
+                                <label asp-for="ProfitTime" class="govuk-label">Time</label>
+                                <input asp-for="ProfitTime" type="number" step="any" class="govuk-input">
+                            </div>
+                            <div class="rate-row">
+                                <label asp-for="ProfitTests" class="govuk-label">Tests</label>
+                                <input asp-for="ProfitTests" type="number" step="any" class="govuk-input">
+                            </div>
+                            <div class="rate-row">
+                                <label asp-for="ProfitAnimals" class="govuk-label">Animals</label>
+                                <input asp-for="ProfitAnimals" type="number" step="any" class="govuk-input">
+                            </div>
+                            <div class="rate-row">
+                                <label asp-for="ProfitAdditional" class="govuk-label">Additional</label>
+                                <input asp-for="ProfitAdditional" type="number" step="any" class="govuk-input">
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            }
+
+        <button type="submit" id="btnAddNewProjectYear" class="govuk-button">Save</button>
+        <button type="button" class="govuk-button govuk-button--secondary sup_margin_0" onclick="closeModal()">Cancel</button>
+    </form>
+</div>

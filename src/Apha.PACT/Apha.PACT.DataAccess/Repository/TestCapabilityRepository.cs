@@ -57,6 +57,27 @@ namespace Apha.PACT.DataAccess.Repository
             return ApplyPaging(result, query.Page, query.PageSize);
         }
 
+        public async Task<PagedData<TestCapability>> GetPagedTestCapabilityByPortfolioAsync(
+            PaginationParameters<string> query, string? portfolio)
+        {
+            var baseQuery = _context.TestCapabilities.AsNoTracking().AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(portfolio))
+                baseQuery = baseQuery.Where(t => t.PlanPortfolio == portfolio);
+
+            baseQuery = ApplyTestCapabilityFilter(baseQuery, query.Filter);
+
+            if (!string.IsNullOrWhiteSpace(query.SortBy))
+                baseQuery = query.Descending
+                    ? baseQuery.OrderByDescending(e => EF.Property<object>(e, query.SortBy))
+                    : baseQuery.OrderBy(e => EF.Property<object>(e, query.SortBy));
+            else
+                baseQuery = baseQuery.OrderBy(t => t.TestCode);
+
+            var result = await baseQuery.ToListAsync();
+            return ApplyPaging(result, query.Page, query.PageSize);
+        }
+
         public async Task<TestCapability?> GetByIdAsync(string testCode, string workGroup)
         {
             return await _context.TestCapabilities
@@ -111,13 +132,13 @@ namespace Apha.PACT.DataAccess.Repository
             if (filters is null) return query;
 
             if (filters.TryGetValue("TestCode", out string? testCode) && !string.IsNullOrWhiteSpace(testCode))
-                query = query.Where(t => t.TestCode.Contains(testCode));
+                query = query.Where(t => EF.Functions.ILike(t.TestCode, $"%{testCode}%"));
 
             if (filters.TryGetValue("WorkGroup", out string? workGroup) && !string.IsNullOrWhiteSpace(workGroup))
-                query = query.Where(t => t.WorkGroup.Contains(workGroup));
+                query = query.Where(t => EF.Functions.ILike(t.WorkGroup, $"%{workGroup}%"));
 
             if (filters.TryGetValue("PlanPortfolio", out string? portfolio) && !string.IsNullOrWhiteSpace(portfolio))
-                query = query.Where(t => t.PlanPortfolio.Contains(portfolio));
+                query = query.Where(t => EF.Functions.ILike(t.PlanPortfolio, $"%{portfolio}%"));
 
             return query;
         }

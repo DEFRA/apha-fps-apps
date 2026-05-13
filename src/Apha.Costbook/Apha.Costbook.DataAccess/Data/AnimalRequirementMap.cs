@@ -1,8 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Apha.Costbook.Core.Entities;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Apha.Costbook.DataAccess.Data
 {
@@ -12,7 +10,7 @@ namespace Apha.Costbook.DataAccess.Data
         {
             entity.HasKey(e => e.ArIdentity).HasName("aaaaatblanimalreq_pk");
 
-            entity.ToTable("tblanimalreq", "mabarchive");
+            entity.ToTable("tblanimalreq", DbConstants.MabArchiveSchemaName);
 
             entity.HasIndex(e => new { e.Project, e.Year, e.AnimalType }, "tblanimalreq_proj_ind");
 

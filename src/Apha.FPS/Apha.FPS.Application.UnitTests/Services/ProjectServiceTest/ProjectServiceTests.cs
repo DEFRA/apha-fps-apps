@@ -776,6 +776,75 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
 
         #endregion
 
+        #region UpdatePactPortfolioDetailsAsync
+
+        [Fact]
+        public async Task UpdatePactPortfolioDetailsAsync_WithValidDto_ReturnsMappedUpdatedDto()
+        {
+            // Arrange
+            var inputDto = new ProjectDto { ParentProject = "PP001", ProjectTitle = "Portfolio Update", Program = "P002", Manager = "Manager A", Finished = 1, Comments = "Done", BudgetCvl = 500m, TransferIncome = 600m };
+            var projectEntity = new Project { ParentProject = "PP001", ProjectTitle = "Portfolio Update", Program = "P002", Manager = "Manager A", Finished = 1, Comments = "Done", BudgetCvl = 500m, TransferIncome = 600m };
+            var updatedEntity = new Project { ParentProject = "PP001", ProjectTitle = "Portfolio Update", Program = "P002", Manager = "Manager A", Finished = 1, Comments = "Done", BudgetCvl = 500m, TransferIncome = 600m };
+            var expectedDto = new ProjectDto { ParentProject = "PP001", ProjectTitle = "Portfolio Update" };
+
+            _mockMapper.Map<Project>(inputDto).Returns(projectEntity);
+            _mockRepository.UpdatePactPortfolioDetailsAsync(projectEntity).Returns(updatedEntity);
+            _mockMapper.Map<ProjectDto>(updatedEntity).Returns(expectedDto);
+
+            // Act
+            var result = await _sut.UpdatePactPortfolioDetailsAsync(inputDto);
+
+            // Assert
+            result.Should().NotBeNull();
+            result!.ParentProject.Should().Be("PP001");
+            result.ProjectTitle.Should().Be("Portfolio Update");
+            _mockMapper.Received(1).Map<Project>(inputDto);
+            await _mockRepository.Received(1).UpdatePactPortfolioDetailsAsync(projectEntity);
+            _mockMapper.Received(1).Map<ProjectDto>(updatedEntity);
+        }
+
+        [Fact]
+        public async Task UpdatePactPortfolioDetailsAsync_WhenProjectNotFound_ReturnsNull()
+        {
+            // Arrange
+            var inputDto = new ProjectDto { ParentProject = "PP999", Program = "P001", Customer = "DEFRA", ProjectStatus = "Active" };
+            var projectEntity = new Project { ParentProject = "PP999", Program = "P001", Customer = "DEFRA", ProjectStatus = "Active" };
+
+            _mockMapper.Map<Project>(inputDto).Returns(projectEntity);
+            _mockRepository.UpdatePactPortfolioDetailsAsync(projectEntity).Returns((Project?)null);
+
+            // Act
+            var result = await _sut.UpdatePactPortfolioDetailsAsync(inputDto);
+
+            // Assert
+            result.Should().BeNull();
+            await _mockRepository.Received(1).UpdatePactPortfolioDetailsAsync(projectEntity);
+            _mockMapper.DidNotReceive().Map<ProjectDto>(Arg.Any<Project>());
+        }
+
+        [Fact]
+        public async Task UpdatePactPortfolioDetailsAsync_WhenRepositoryThrowsException_PropagatesException()
+        {
+            // Arrange
+            var inputDto = new ProjectDto { ParentProject = "PP001", Program = "P001", Customer = "DEFRA", ProjectStatus = "Active" };
+            var projectEntity = new Project { ParentProject = "PP001", Program = "P001", Customer = "DEFRA", ProjectStatus = "Active" };
+
+            _mockMapper.Map<Project>(inputDto).Returns(projectEntity);
+            _mockRepository.UpdatePactPortfolioDetailsAsync(projectEntity)
+                .Returns(Task.FromException<Project?>(new Exception("Database connection failed")));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(
+                async () => await _sut.UpdatePactPortfolioDetailsAsync(inputDto)
+            );
+
+            exception.Message.Should().Be("Database connection failed");
+            await _mockRepository.Received(1).UpdatePactPortfolioDetailsAsync(projectEntity);
+            _mockMapper.DidNotReceive().Map<ProjectDto>(Arg.Any<Project>());
+        }
+
+        #endregion
+
         #region DeleteProjectAsync
 
         [Fact]

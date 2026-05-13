@@ -1,0 +1,195 @@
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@using Microsoft.AspNetCore.Mvc.Rendering
+@model Apha.FPSApps.Web.Areas.PACT.Models.ProjectProfileViewModel
+
+@{
+    ViewData["Title"] = "Project Profile";
+}
+
+<style>
+    /* ── Chart canvas ──────── */
+
+    .chart-container {
+        position: relative;
+        width: 100%;
+        height: 280px;
+    }
+    
+    .chart-container canvas {
+        max-height: 280px;
+    }
+</style>
+
+<div class="content-wrapper">
+    <div class="govuk-grid-row sup_margin_left_right_0">
+        <div class="govuk-grid-column-full">
+            <h1 class="heading_with_txtbox govuk-heading-s sup_border-bottom sup_margin_bottom_10">
+                Profile the Project Budget by Month:
+                <button type="button" onclick="goBack()" class="govuk-back-link">Back</button>
+            </h1>
+        </div>
+    </div>
+    <div style="display: flex; flex-direction: row;">
+        <div style="display: flex; flex-direction: column;width:100%" class="govuk-grid-row sup_margin_0">
+            <!-- Left Column - Project Information -->
+            <div class="govuk-grid-column-full">
+                <div class="sup_border govuk-grid-column-full sup_border">
+                    <!-- Project Information -->
+                    <div class="govuk-grid-row">
+                        <div class="govuk-grid-column-full">
+                            <div class="govuk-form-group sup_margin_bottom_10 sup_p_t_b_5">
+                                <label asp-for="@Model.ParentProject"
+                                       class="govuk-label govuk-!-font-weight-bold">ParentProject:</label>
+                                <select asp-for="@Model.ParentProject"
+                                        asp-items="@Model.Projects"
+                                        class="govuk-select sup_select_option_width_100 govuk-!-font-size-16">
+                                    <option value="">-- Select Parent Project --</option>
+                                </select>
+                            </div>
+
+                            <div class="govuk-form-group sup_margin_bottom_10">
+                                <label asp-for="@Model.ProjectTitle"
+                                       class="govuk-label govuk-!-font-weight-bold">
+                                    ProjectTitle:
+                                </label>
+                                <input asp-for="@Model.ProjectTitle"
+                                       type="text"
+                                       class="govuk-input govuk-!-font-size-16" readonly>
+                                </div>
+
+                                <div class="govuk-form-group sup_margin_bottom_10">
+                                    <label asp-for="@Model.BudgetCvl"
+                                           class="govuk-label govuk-!-font-weight-bold">
+                                        Budget_cy1:
+                                    </label>
+                                    <input type="text"
+                                           asp-for="@Model.BudgetCvl"
+                                           class="govuk-input govuk-!-font-size-16"
+                                           readonly>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Graphs Section -->
+                    <div class="govuk-grid-column-full govuk-grid-row sup_margin_left_right_0 sup_p_0 sup_margin_top_10">
+                        <div class="govuk-grid-column-full">
+                            <div id="pactGraphTabs">
+                                <div class="govuk-tabs sup_margin_0">
+                                <div  class="sup_flex_space_between pact-graph-tabs">
+                                    <div>
+                                        <ul class="govuk-tabs__list sup_margin_0 sup_border_0">
+                                            <li class="govuk-tabs__list-item govuk-tabs__list-item--selected sup_p_0 sup_margin_0">
+                                                    <a class="govuk-tabs__tab sup_margin_0" href="#nonCumulativeTab">
+                                                    Profile by Month (NOT Cumulative)
+                                                </a>
+                                            </li>
+                                            <li class="govuk-tabs__list-item sup_p_0 sup_margin_0">
+                                                    <a class="govuk-tabs__tab sup_margin_0" href="#cumulativeTab">
+                                                    Cumulative Graph
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <div style="margin-left:8px; align-self:flex-start;">
+                                        <button type="button" class="govuk-button sup_margin_0 sup_flex_p_4" onclick="refreshGraph()">
+                                            <img src="../images/refresh_icon.svg" width="24" height="24" alt="Refresh">&nbsp;Refresh Graph
+                                        </button>
+                                    </div>
+                                   
+                                </div>
+                       
+                            </div>
+                                <!-- Tab Panel 1 - Non-Cumulative -->
+                                <div class="govuk-tabs__panel" id="nonCumulativeTab">
+                                    <div class="chart-container">
+                                        <canvas id="nonCumulativeChart"></canvas>
+                                    </div>
+                                </div>
+
+                                <!-- Tab Panel 2 - Cumulative -->
+                                <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="cumulativeTab">
+                                    <div class="chart-container">
+                                        <canvas id="cumulativeChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Right Column - Cost Profile Table -->
+                <div class="govuk-grid-column-one-third sup_p_0" style="padding-left: 10px !important;">
+                    <div class="sup_border">
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 5px; border-bottom: 1px solid #b1b4b6;">
+                            <h2 class="govuk-heading-s" style="margin: 0;">Cost Profile</h2>
+                        </div>
+                        <div id="gridContainer_costProfileGrid">
+                        </div>
+                    </div>
+                    <div class="sup_margin_10 sup_text_center">
+                        <div class="sup_flex_center_center_center">
+                            <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                            <input type="text" id="TotalCostProfile"
+                                   class="govuk-input govuk-!-font-size-16 govuk-input--width-5 sup_text_align_right"
+                                   readonly>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Add/Edit Cost Profile Modal -->
+        <div class="modal" id="costProfileModal" tabindex="-1">
+            <div class="modal-dialog modal-md">
+                <div class="modal-content" id="costProfileModalContent">
+                </div>
+            </div>
+        </div>
+
+        <!-- Load JavaScript -->
+<script src="~/js/pact_js/project_budget_profile.js"></script>
+<script src="~/js/pact_js/chart.js"></script>
+
+
+        <script>
+            // ── PACT Graph Tab switching ──────────────────────────────────────────────────
+            // Handles tab click events for the Project Budget Profile graph tabs.
+
+            (function initTabClickHandlers() {
+            document.addEventListener('DOMContentLoaded', function () {
+            var tabLinks = document.querySelectorAll('#pactGraphTabs .govuk-tabs__tab');
+
+            tabLinks.forEach(function (link) {
+            link.addEventListener('click', function (e) {
+            e.preventDefault();
+
+            var tabId = link.getAttribute('href').replace('#', '');
+
+            // Update selected state on list items
+            document.querySelectorAll('#pactGraphTabs .govuk-tabs__list-item').forEach(function (li) {
+            li.classList.remove('govuk-tabs__list-item--selected');
+            });
+            link.closest('.govuk-tabs__list-item').classList.add('govuk-tabs__list-item--selected');
+
+            // Show the target panel, hide all others
+            document.querySelectorAll('#pactGraphTabs .govuk-tabs__panel').forEach(function (p) {
+            if (p.id === tabId) {
+            p.classList.remove('govuk-tabs__panel--hidden');
+            p.style.display = 'block';
+            } else {
+            p.classList.add('govuk-tabs__panel--hidden');
+            p.style.display = 'none';
+            }
+            });
+
+            // Resize charts so Chart.js fills the newly visible canvas
+            setTimeout(function () {
+            if (nonCumulativeChart) nonCumulativeChart.resize();
+            if (cumulativeChart)    cumulativeChart.resize();
+            }, 50);
+            });
+            });
+            });
+            })();
+
+        </script>

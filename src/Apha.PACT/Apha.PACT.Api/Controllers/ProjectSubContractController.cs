@@ -44,6 +44,22 @@ namespace Apha.PACT.Api.Controllers
             return Ok(total);
         }
 
+        /// <summary>Retrieves a paginated list of animal-category sub-contract records (AcctCode IN LargeAnimals/SmallAnimals/Mice).</summary>
+        [HttpGet("animals")]
+        public async Task<IActionResult> GetFpsProjectSubContracts([FromQuery] QueryParameters<string> query, [FromQuery] string? project)
+        {
+            PaginatedResult<ProjectSubContractDto> pagedResult = await _service.GetFpsProjectSubContractsAsync(query, project);
+            return Ok(_mapper.Map<PaginationRes<ProjectSubContractRes>>(pagedResult));
+        }
+
+        /// <summary>Retrieves the total Amount for animal-category sub-contracts.</summary>
+        [HttpGet("animals/total")]
+        public async Task<IActionResult> GetFpsProjectTotal([FromQuery] string? project)
+        {
+            decimal total = await _service.GetFpsProjectSubContractTotalAmountAsync(project);
+            return Ok(total);
+        }
+
         /// <summary>Retrieves a Project Sub-Contract record by sub-contract counter.</summary>
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetById(int id)
@@ -79,6 +95,13 @@ namespace Apha.PACT.Api.Controllers
         {
             bool deleted = await _service.DeleteAsync(id);
             return Ok(deleted);
+        }
+
+        [HttpGet("monthly-summary")]
+        public async Task<IActionResult> GetMonthlySubContractsSummary([FromQuery] QueryParameters<string> query)
+        {
+            MonthlySubContractsPivotDto result = await _service.GetMonthlySubContractsSummaryAsync(query);
+            return Ok(_mapper.Map<MonthlySubContractsPivotRes>(result));
         }
     }
 }

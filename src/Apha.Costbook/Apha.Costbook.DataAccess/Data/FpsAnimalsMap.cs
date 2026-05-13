@@ -1,8 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Apha.Costbook.Core.Entities;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Apha.Costbook.DataAccess.Data
 {
@@ -12,17 +10,17 @@ namespace Apha.Costbook.DataAccess.Data
         {
             entity.HasKey(e => new { e.AnimalType, e.FpsYear }).HasName("pk_tblanimals");
 
-            entity.ToTable("tblanimals", "fps");
+            entity.ToTable("tblanimals", DbConstants.FpsSchemaName);
 
             entity.Property(e => e.AnimalType)
-                .HasColumnType("citext")
+                .HasColumnType(DbConstants.CitextColumnType)
                 .HasColumnName("animaltype");
-            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
+            entity.Property(e => e.FpsYear).HasColumnName(DbConstants.FpsYearColumnName);
             entity.Property(e => e.DailyRate)
-                .HasColumnType("money")
+                .HasColumnType(DbConstants.MoneyColumnType)
                 .HasColumnName("dailyrate");
             entity.Property(e => e.DefraDailyRate)
-                .HasColumnType("money")
+                .HasColumnType(DbConstants.MoneyColumnType)
                 .HasColumnName("defradailyrate");
             entity.Property(e => e.PlanByWeek)
                 .HasDefaultValue(false)
@@ -34,7 +32,6 @@ namespace Apha.Costbook.DataAccess.Data
                 .HasMaxLength(50)
                 .HasColumnName("species");
 
-            
         }
     }
 }

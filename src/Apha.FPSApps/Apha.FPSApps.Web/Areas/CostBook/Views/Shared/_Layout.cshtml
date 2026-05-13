@@ -1,159 +1,95 @@
-﻿@{
-    Layout = null;
-}
-@using System.Security.Claims
-@{
-    // Get display name from claims (try multiple claim types)
-    var displayName = User.FindFirst("name")?.Value
-                      ?? User.FindFirst(ClaimTypes.GivenName)?.Value
-                      ?? User.FindFirst(ClaimTypes.Name)?.Value?.Split('@')[0]
-                      ?? "Unknown User";
-   
-}
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@ViewData["Title"] - Costbook</title>
- 
 
-    <!-- CSS References in exact order as per legacy implementation -->
-    <link rel="stylesheet" href="~/css/govuk-frontend-6.0.0.min.css"/>
-    <link rel="stylesheet" href="~/css/bootstrap.min.css">
-    <link rel="stylesheet" href="~/css/costbook_styles/styles.css">
-    <link rel="stylesheet" href="~/css/main_style.css">
-    @* <link rel="stylesheet" href="`~/css/costbook_styles/suppliement_style_costbook.css" />  *@
-    <link rel="stylesheet" href="~/css/suppliement_style_over_gov.uk_style.css" />
-    <link rel="stylesheet" href="~/css/costbook_styles/layout_style.css" />
+    <!-- CSS References — 5-tier hierarchy -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/govuk-frontend-6.0.0.min.css" />
+    <link rel="stylesheet" href="~/css/supplement_style_for_gov.uk_style.css" />
+    <link rel="stylesheet" href="~/css/costbook_styles/styles.css" />
+    <link rel="stylesheet" href="~/css/main_style.css" />
+    <link rel="stylesheet" href="~/DataGrid/editable-grid.css" />
+    <link rel="stylesheet" href="~/css/common/headernav/navstyle.css" />
 
-            <link rel="stylesheet" href="~/DataGrid/editable-grid.css" />
-            <script src="~/lib/jquery/dist/jquery.js"></script>
-            @await RenderSectionAsync("Styles", required: false)
+    <script src="~/lib/jquery/dist/jquery.js"></script>
+    @await RenderSectionAsync("Styles", required: false)
 </head>
-        <body class="govuk-template__body costbook-home-page">
-            <header class="govuk-header" role="banner">
-                <div class="header-nav">
+<body>
+    <!-- ── Top Header ─────────────────────────────────────────────────── -->
+    @await Component.InvokeAsync("AppHeader", new { appName = "Costbook" })
 
-                    <div class="pims-log-wrapper">
+    <!-- ── Main Navigation ───────────────────────────────────────────── -->
+    @await Component.InvokeAsync("AppNav", new { appArea = "CostBook" })
 
-                        <div>
-                            <img src="~/images/defra_logo.png" alt="Defra logo" width="80px">
-                        </div>
-              
-                        <div class="pims-log">
-                            <span>Costbook</span>
-                        </div>
-           
-                    </div>
-			
-			
-		
-          
-			
-                    <div class="btn-group home-user-menu">
-                                @displayName<button type="button" aria-label="user dropdown arrow to go home page" class="btn btn-secondary dropdown-toggle user-menu home-user-btn" data-bs-toggle="dropdown" aria-expanded="false">
-                        <img src="~/images/circle-user-regular-full.svg" alt="user icon" width="24"> <img src="~/images/down-arrow.png" alt="dropdown arrow for logout of application" width="30px" height="30px">
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                    
-                        <li>
-                            <a href="/" class="dropdown-item" type="button" aria-hidden="true">
-                                <img src="~/images/house-user-solid-full.svg" alt="dropdown home icon" width="22px">  Home
-                            </a>
-                        </li>
-                    </ul>
-                </div>
+    <!-- ── Page Body ─────────────────────────────────────────────────── -->
+    <div class="sup_margin_bottom_10 content-wrapper">
+        @RenderBody()
+    </div>
+
+    <!-- ── Footer ────────────────────────────────────────────────────── -->
+    @await Component.InvokeAsync("AppFooter")
+
+    <!-- ── Shared modal popup (for add/edit forms) ───────────────────── -->
+    <div id="modalPopup" tabindex="-1" aria-labelledby="modalPopupLabel"
+         style="display:none; position:fixed; inset:0; z-index:1050;
+                background:rgba(0,0,0,0.5); align-items:center; justify-content:center;">
+        <div class="modal-dialog modal-lg" style="margin:auto; width:100%; max-width:700px;">
+            <div id="modaPopupBody" class="modal-content" style="border-radius:4px;">
             </div>
-        </header>
-        <div id="header"></div>
-        <script src="~/js/costbook_nav_menu.js"></script>
-        <script>
-            document.getElementById('header').innerHTML = htmlmenu;
-            initMenu();
-            btn();
-        </script>
-
-
-
-    <!-- Body Content Container -->
-         <div class="sup_margin_bottom_10 content-wrapper">
-        <main class="govuk-main-wrapper govuk-!-padding-top-0" id="main-content" role="main">
-            <div class="sup_margin_bottom_10 content-wrapper">
-                @RenderBody()
-            </div>
-
-
-
-    <!-- Bootstrap JS Reference -->
-                                <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-                            <!-- ── Shared modal popup (for add/edit forms) ───────────────────── -->
-                            <div id="modalPopup" tabindex="-1" aria-labelledby="modalPopupLabel"
-                                 style="display:none; position:fixed; inset:0; z-index:1050;
-                                background:rgba(0,0,0,0.5); align-items:center; justify-content:center;">
-                                <div class="modal-dialog modal-md" style="margin:auto; width:100%; max-width:700px;">
-                                    <div id="modaPopupBody" class="modal-content" style="border-radius:4px;">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- ── Scripts ───────────────────────────────────────────────────── -->
-                           
-                            <script src="~/lib/jquery-validation/dist/jquery.validate.js"></script>
-                            <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.js"></script>
-                            
-
-                            <script>
-                                        // ── Modal open / close helpers ────────────────────────────────────
-                                        (function () {
-                                            var modal = document.getElementById('modalPopup');
-                                            if (!modal) return;
-
-                                            var observer = new MutationObserver(function () {
-                                                if (modal.classList.contains('show')) {
-                                                    modal.style.display = 'flex';
-                                                    document.body.style.overflow = 'hidden';
-                                                } else {
-                                                    modal.style.display = 'none';
-                                                    document.body.style.overflow = '';
-                                                }
-                                            });
-                                            observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
-
-                                            modal.addEventListener('click', function (e) {
-                                                if (e.target === modal) {
-                                                    return false;
-                                                }
-                                            });
-
-                                            document.addEventListener('keydown', function (e) {
-                                                if (e.key === 'Escape' && modal.classList.contains('show')) {
-                                                    modal.classList.remove('show');
-                                                }
-                                            });
-                                        })();
-
-                                        // ── jQuery.fn.serializeObject helper ─────────────────────────────
-                                        $.fn.serializeObject = function () {
-                                            var obj = {};
-                                            this.serializeArray().forEach(function (item) {
-                                                obj[item.name] = item.value;
-                                            });
-                                            return obj;
-                                        };
-                            </script>
-    <!-- Scripts Section for page-specific JavaScript -->
-    @RenderSection("Scripts", required: false)
-        </main>
         </div>
-                        <!-- Footer Section -->
+    </div>
 
-                        <div class="govuk-footer sup_p_0 sup_margin_left_right_0">
-                            <div class="govuk-width-container sup_p_8 sup_text_center">
-                                <span class="fps-sr-page-footer-text">
-                                    © copyright Defra 2025
-                                </span>
-                            </div>
-                        </div>
+    <!-- ── Scripts ───────────────────────────────────────────────────── -->
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.js"></script>
+    <script src="~/js/govuk-modal-dialog.js"></script>
+    <fps-year-script></fps-year-script>
+
+    <script>
+        // ── Modal open / close helpers ────────────────────────────────────
+        (function () {
+            var modal = document.getElementById('modalPopup');
+            if (!modal) return;
+
+            var observer = new MutationObserver(function () {
+                if (modal.classList.contains('show')) {
+                    modal.style.display = 'flex';
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    modal.style.display = 'none';
+                    document.body.style.overflow = '';
+                }
+            });
+            observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
+
+            modal.addEventListener('click', function (e) {
+                if (e.target === modal) {
+                    return false;
+                }
+            });
+
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && modal.classList.contains('show')) {
+                    modal.classList.remove('show');
+                }
+            });
+        })();
+
+        // ── jQuery.fn.serializeObject helper ─────────────────────────────
+        $.fn.serializeObject = function () {
+            var obj = {};
+            this.serializeArray().forEach(function (item) {
+                obj[item.name] = item.value;
+            });
+            return obj;
+        };
+    </script>
+
+    <script src="~/js/common/headernav/navmenu.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

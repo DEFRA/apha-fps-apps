@@ -110,6 +110,12 @@
                                 }
                     </tr>
                     <!-- Filter Row -->
+                    @{
+                        bool hasFilterableColumns = Model.Columns != null &&
+                            ((IEnumerable<dynamic>)Model.Columns).Any(c => c.IsVisible && c.IsFilterable);
+                    }
+                    @if (hasFilterableColumns)
+                    {
                     <tr class="filter-row govuk-table__row">
                         @if (Model.ShowCheckboxColumn)
                         {
@@ -165,6 +171,7 @@
                                             <th scope="col"></th>
                                         }
                                     </tr>
+                    }
                 </thead>
                 <tbody class="govuk-table__body">
                     @{
@@ -286,40 +293,39 @@
             </table>
         </div>
     </div>
-                    <div class="sup_pagination_footer sup_p_0">
-        <div class="sup_pagination_wrapper">
-            <div class="sup_margin_top_bottom_5_10 sup_flex_center">
-                <label for="recordsPerPage" class="sup_margin_right_5">Records per page  </label>
-                <select id="@($"{Model.GridId}_pageSize")" class="govuk-select govuk-select--width-2 sup_width_4em govuk-!-font-size-16">
-                    @{
-                        var sizes = new[] { 5, 10, 20, 50, 100 };
-                        int currentSize = Model.Pagination?.PageSize ?? 5;
-                    }
-                    @foreach (var size in sizes)
-                    {
-                        <option value="@size" selected="@(size == currentSize ? "selected" : null)">
-                            @size
-                        </option>
-                    }
-                </select>
-            </div>
+     @if (Model.ShowPagination)
+     {
+         <div class="sup_pagination_footer sup_p_0">
+             <div class="sup_pagination_wrapper">
+                 <div class="sup_margin_top_bottom_5_10 sup_flex_center">
+                     <label for="recordsPerPage" class="sup_margin_right_5">Records per page  </label>
+                     <select id="@($"{Model.GridId}_pageSize")" class="govuk-select govuk-select--width-2 sup_width_4em govuk-!-font-size-16">
+                         @{
+                             var sizes = new[] { 5, 10, 20, 50, 100 };
+                             int currentSize = Model.Pagination?.PageSize ?? 5;
+                         }
+                         @foreach (var size in sizes)
+                         {
+                             <option value="@size" selected="@(size == currentSize ? "selected" : null)">
+                                 @size
+                             </option>
+                         }
+                     </select>
+                 </div>
 
-            @if (Model.ShowPagination)
-            {
+                 @await Component.InvokeAsync("Pagination", Model.Pagination)
+                     <span class="record-info sup_display_none">
+                         Page @Model.Pagination.PageNumber of @Model.Pagination.TotalPages
+                         &nbsp;|&nbsp;
+                         Showing @((Model.Pagination.PageSize * (Model.Pagination.PageNumber - 1)) + 1)
+                         -
+                         @(Math.Min(Model.Pagination.PageSize * Model.Pagination.PageNumber, Model.Pagination.TotalRecords))
+                         of @Model.Pagination.TotalRecords
+                     </span>
 
-                @await Component.InvokeAsync("Pagination", Model.Pagination)
-                <span class="record-info sup_display_none">
-                    Page @Model.Pagination.PageNumber of @Model.Pagination.TotalPages
-                    &nbsp;|&nbsp;
-                    Showing @((Model.Pagination.PageSize * (Model.Pagination.PageNumber - 1)) + 1)
-                    -
-                    @(Math.Min(Model.Pagination.PageSize * Model.Pagination.PageNumber, Model.Pagination.TotalRecords))
-                    of @Model.Pagination.TotalRecords
-                </span>
-
-            }
+             </div>
         </div>
-    </div>
+    }
 </div>
 
 <script type="text/javascript">
@@ -468,7 +474,7 @@
             });
 
             // Filter change
-            $(gridContainerSelector).on('change', '.grid-filter', function () {
+            $(gridContainerSelector).off('change', '.grid-filter').on('change', '.grid-filter', function () {
                 gridManager.reloadGrid({ page: 1 });
             });
 

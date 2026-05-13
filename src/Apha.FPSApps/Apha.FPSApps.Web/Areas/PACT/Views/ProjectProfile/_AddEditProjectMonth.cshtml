@@ -1,0 +1,66 @@
+@model Apha.FPSApps.Web.Areas.PACT.Models.ProjectMonthItem
+
+@{
+    var isEdit = Model.MonthNo != 0;
+}
+
+<div class="modal-header flex-space-center">
+    <h3 class="govuk-heading-s sup_margin_0">
+        @(isEdit
+        ? "Edit Cost Profile Month"
+        : "Add Cost Profile Month")
+    </h3>
+    <button type="button" class="btn-close" onclick="closeCostProfileModal()">×</button>
+</div>
+
+<div class="modal-body" style="overflow:hidden; padding:8px 16px 0 16px;">
+    <form id="projectMonthForm" class="govuk-grid-column-full">
+
+        <input type="hidden" name="isEdit" value="@isEdit.ToString().ToLower()" />
+        <input type="hidden" asp-for="Project" />
+        <input type="hidden" asp-for="MonthNo" />
+
+        <!-- Validation error summary -->
+        <div class="govuk-error-summary" role="alert"
+             aria-labelledby="error-summary-title" tabindex="-1" style="display:none;">
+            <h2 class="govuk-error-summary__title" id="error-summary-title">There is a problem</h2>
+            <div class="govuk-error-summary__body">
+                <ul class="govuk-list govuk-error-summary__list"></ul>
+            </div>
+        </div>
+
+        <div class="govuk-grid-row sup_margin_top_10">
+            <div class="govuk-grid-column-one-half">
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label class="govuk-label" asp-for="MonthNo">
+                        Month No:<span class="sup_color_red">*</span>
+                    </label>
+                    <input class="govuk-input govuk-!-font-size-16 govuk-input--width-5"
+                           asp-for="MonthNo"
+                           type="number" min="1" max="12"
+                           disabled />
+                    <span asp-validation-for="MonthNo" class="govuk-error-message"></span>
+                </div>
+            </div>
+            <div class="govuk-grid-column-one-half">
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label class="govuk-label" asp-for="CostProfile">Cost Profile (£):</label>
+                    <input class="govuk-input govuk-!-font-size-16 govuk-input--width-10"
+                           asp-for="CostProfile"
+                           type="number" step="0.01" />
+                    <span asp-validation-for="CostProfile" class="govuk-error-message"></span>
+                </div>
+            </div>
+        </div>
+
+    </form>
+</div>
+
+<div class="modal-footer">
+    <button type="button" class="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
+            onclick="closeCostProfileModal()">Cancel</button>
+    <button type="button" class="govuk-button govuk-!-margin-bottom-0"
+            onclick="saveProjectMonth()">
+        Save
+    </button>
+</div>

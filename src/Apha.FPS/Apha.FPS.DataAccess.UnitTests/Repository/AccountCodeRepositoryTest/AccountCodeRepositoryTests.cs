@@ -1,5 +1,5 @@
-﻿using Apha.Common.Helpers.Repository;
-using Apha.FPS.Core.Enities;
+using Apha.Common.Helpers.Repository;
+using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.DataAccess.Data;
 using Apha.FPS.DataAccess.Repositories;
@@ -85,7 +85,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AccountCodeRepositoryTest
         [Fact]
         public async Task GetAllAccountCodeAsync_ReturnsIEnumerable_NotNull()
         {
-            // Arrange — verifies the return type contract is always IEnumerable, never null
+            // Arrange � verifies the return type contract is always IEnumerable, never null
             var repo = CreateRepository(new List<AccountCode>());
 
             // Act

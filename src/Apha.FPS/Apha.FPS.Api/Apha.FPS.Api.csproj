@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Controllers\ProjectMaintenanceController.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
 	<PackageReference Include="Asp.Versioning.Mvc" Version="8.1.0" />
 	<PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" Version="8.1.0" />
 	<PackageReference Include="AutoMapper" Version="16.1.1" />	
@@ -20,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>    
-    <ProjectReference Include="..\..\Apha.Common\Apha.Common.csproj" />    
+    <ProjectReference Include="..\..\Apha.Common\Apha.Common.csproj" /> 
     <ProjectReference Include="..\Apha.FPS.Application\Apha.FPS.Application.csproj" />
     <ProjectReference Include="..\Apha.FPS.DataAccess\Apha.FPS.DataAccess.csproj" />
   </ItemGroup>

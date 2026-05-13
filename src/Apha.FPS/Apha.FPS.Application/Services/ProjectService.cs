@@ -109,6 +109,13 @@ namespace Apha.FPS.Application.Services
             return updated == null ? null : _mapper.Map<ProjectDto>(updated);
         }
 
+        public async Task<ProjectDto?> UpdatePactPortfolioDetailsAsync(ProjectDto projectDto)
+        {
+            var project = _mapper.Map<Project>(projectDto);
+            var updated = await _projectRepository.UpdatePactPortfolioDetailsAsync(project);
+            return updated == null ? null : _mapper.Map<ProjectDto>(updated);
+        }
+
         public async Task<bool> DeleteProjectAsync(string parentProject)
         {
             var hasAssociations = await _projectRepository.HasAssociatedJobCodesAsync(parentProject);

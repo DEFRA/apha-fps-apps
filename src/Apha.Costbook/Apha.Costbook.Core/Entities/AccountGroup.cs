@@ -1,11 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Apha.Costbook.DataAccess;
-
-public partial class AccountGroup
+﻿namespace Apha.Costbook.Core.Entities
 {
-    public string Csg7group { get; set; } = null!;
 
-    public bool? Useinflation { get; set; }
+    public partial class AccountGroup
+    {
+        public string Csg7group { get; set; } = null!;
+
+        public bool? Useinflation { get; set; }
+    }
 }

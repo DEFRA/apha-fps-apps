@@ -7,6 +7,7 @@ using Apha.FPS.Application.Pagination;
 using Apha.FPS.Core.Interfaces;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using Moq;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Xunit;
@@ -467,6 +468,120 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectControllerTest
             var result = await _controller.DeleteProjectAsync("");
 
             Assert.IsType<BadRequestObjectResult>(result);
+        }
+
+        #endregion
+
+        #region UpdatePactPortfolioDetailsAsync
+
+        [Fact]
+        public async Task UpdatePactPortfolioDetailsAsync_ValidRequest_ReturnsOkWithMappedResult()
+        {
+            // Arrange
+            var request    = new ProjectReq { ParentProject = "PROJ001" };
+            var projectDto = new ProjectDto { ParentProject = "PROJ001" };
+            var updatedDto = new ProjectDto { ParentProject = "PROJ001" };
+            var projectRes = new ProjectRes { ParentProject = "PROJ001" };
+
+            _mapperMock.Map<ProjectDto>(request).Returns(projectDto);
+            _serviceMock.UpdatePactPortfolioDetailsAsync(projectDto).Returns(updatedDto);
+            _mapperMock.Map<ProjectRes>(updatedDto).Returns(projectRes);
+
+            // Act
+            var result = await _controller.UpdatePactPortfolioDetailsAsync(request);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result.Result);
+            var response = Assert.IsType<ProjectRes>(okResult.Value);
+            Assert.Equal("PROJ001", response.ParentProject);
+        }
+
+        [Fact]
+        public async Task UpdatePactPortfolioDetailsAsync_ServiceReturnsNull_ReturnsNotFound()
+        {
+            // Arrange
+            var request    = new ProjectReq { ParentProject = "PROJ999" };
+            var projectDto = new ProjectDto { ParentProject = "PROJ999" };
+
+            _mapperMock.Map<ProjectDto>(request).Returns(projectDto);
+            _serviceMock.UpdatePactPortfolioDetailsAsync(projectDto).Returns((ProjectDto?)null);
+
+            // Act
+            var result = await _controller.UpdatePactPortfolioDetailsAsync(request);
+
+            // Assert
+            Assert.IsType<NotFoundResult>(result.Result);
+        }
+
+        [Fact]
+        public async Task UpdatePactPortfolioDetailsAsync_CallsMapperWithRequest()
+        {
+            // Arrange
+            var request    = new ProjectReq { ParentProject = "PROJ001" };
+            var projectDto = new ProjectDto { ParentProject = "PROJ001" };
+
+            _mapperMock.Map<ProjectDto>(request).Returns(projectDto);
+            _serviceMock.UpdatePactPortfolioDetailsAsync(projectDto).Returns((ProjectDto?)null);
+
+            // Act
+            await _controller.UpdatePactPortfolioDetailsAsync(request);
+
+            // Assert
+            _mapperMock.Received(1).Map<ProjectDto>(request);
+        }
+
+        [Fact]
+        public async Task UpdatePactPortfolioDetailsAsync_CallsServiceWithMappedDto()
+        {
+            // Arrange
+            var request    = new ProjectReq { ParentProject = "PROJ001" };
+            var projectDto = new ProjectDto { ParentProject = "PROJ001" };
+
+            _mapperMock.Map<ProjectDto>(request).Returns(projectDto);
+            _serviceMock.UpdatePactPortfolioDetailsAsync(projectDto).Returns((ProjectDto?)null);
+
+            // Act
+            await _controller.UpdatePactPortfolioDetailsAsync(request);
+
+            // Assert
+            await _serviceMock.Received(1).UpdatePactPortfolioDetailsAsync(projectDto);
+        }
+
+        [Fact]
+        public async Task UpdatePactPortfolioDetailsAsync_ValidRequest_ReturnsOkStatusCode200()
+        {
+            // Arrange
+            var request    = new ProjectReq { ParentProject = "PROJ001" };
+            var projectDto = new ProjectDto { ParentProject = "PROJ001" };
+            var updatedDto = new ProjectDto { ParentProject = "PROJ001" };
+            var projectRes = new ProjectRes { ParentProject = "PROJ001" };
+
+            _mapperMock.Map<ProjectDto>(request).Returns(projectDto);
+            _serviceMock.UpdatePactPortfolioDetailsAsync(projectDto).Returns(updatedDto);
+            _mapperMock.Map<ProjectRes>(updatedDto).Returns(projectRes);
+
+            // Act
+            var result = await _controller.UpdatePactPortfolioDetailsAsync(request);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result.Result);
+            Assert.Equal(200, okResult.StatusCode);
+        }
+
+        [Fact]
+        public async Task UpdatePactPortfolioDetailsAsync_ServiceThrows_PropagatesException()
+        {
+            // Arrange
+            var request    = new ProjectReq { ParentProject = "PROJ001" };
+            var projectDto = new ProjectDto { ParentProject = "PROJ001" };
+
+            _mapperMock.Map<ProjectDto>(request).Returns(projectDto);
+            _serviceMock.UpdatePactPortfolioDetailsAsync(projectDto)
+                        .Throws(new InvalidOperationException("Service error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => _controller.UpdatePactPortfolioDetailsAsync(request));
         }
 
         #endregion
