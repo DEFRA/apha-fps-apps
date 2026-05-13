@@ -54,6 +54,8 @@ public sealed class RecreateSummariesOrchestrator
         if (npgsqlConnection.State != System.Data.ConnectionState.Open)
             await npgsqlConnection.OpenAsync(cancellationToken);
 
+        var executionContext = new RecreateSummariesExecutionContext(_dbContext, npgsqlConnection);
+
         await using var transaction = await npgsqlConnection.BeginTransactionAsync(cancellationToken);
 
         try
@@ -68,7 +70,7 @@ public sealed class RecreateSummariesOrchestrator
                 _logger.LogInformation(
                     "[{RunId}] Executing step: {StepName}", runId, step.StepName);
 
-                var result = await step.ExecuteAsync(npgsqlConnection, cancellationToken);
+                var result = await step.ExecuteAsync(executionContext, cancellationToken);
                 results.Add(result);
 
                 _logger.LogInformation(
@@ -105,7 +107,7 @@ public sealed class RecreateSummariesOrchestrator
                     _logger.LogInformation(
                         "[{RunId}] Executing refresh step: {StepName}", runId, step.StepName);
 
-                    var result = await step.ExecuteAsync(npgsqlConnection, cancellationToken);
+                    var result = await step.ExecuteAsync(executionContext, cancellationToken);
                     results.Add(result);
 
                     _logger.LogInformation(
