@@ -614,6 +614,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
             var expectedDto = new ProjectDto { ParentProject = "PP001", ProjectTitle = "New Project" };
 
             _mockMapper.Map<Project>(inputDto).Returns(projectEntity);
+            _mockRepository.CheckProgramExistsAsync(Arg.Any<string>()).Returns(true);
             _mockRepository.CreateProjectAsync(projectEntity).Returns(createdEntity);
             _mockMapper.Map<ProjectDto>(createdEntity).Returns(expectedDto);
 
@@ -636,6 +637,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
             var projectEntity = new Project { ParentProject = "PP001", Program = "P001", Customer = "DEFRA", ProjectStatus = "Active" };
 
             _mockMapper.Map<Project>(inputDto).Returns(projectEntity);
+            _mockRepository.CheckProgramExistsAsync(Arg.Any<string>()).Returns(true);
             _mockRepository.CreateProjectAsync(projectEntity)
                 .Returns(Task.FromException<Project>(new Exception("Database connection failed")));
 
@@ -663,6 +665,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
             var expectedDto = new ProjectDto { ParentProject = "PP001", ProjectTitle = "Updated Project", ProjectStatus = "Closed" };
 
             _mockMapper.Map<Project>(inputDto).Returns(projectEntity);
+            _mockRepository.CheckProgramExistsAsync(Arg.Any<string>()).Returns(true);
             _mockRepository.UpdateProjectAsync(projectEntity).Returns(updatedEntity);
             _mockMapper.Map<ProjectDto>(updatedEntity).Returns(expectedDto);
 
@@ -686,6 +689,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
             var projectEntity = new Project { ParentProject = "PP001", Program = "P001", Customer = "DEFRA", ProjectStatus = "Active" };
 
             _mockMapper.Map<Project>(inputDto).Returns(projectEntity);
+            _mockRepository.CheckProgramExistsAsync(Arg.Any<string>()).Returns(true);
             _mockRepository.UpdateProjectAsync(projectEntity)
                 .Returns(Task.FromException<Project>(new Exception("Database connection failed")));
 
@@ -713,6 +717,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
             var expectedDto = new ProjectDto { ParentProject = "PP001", ProjectTitle = "PACT Update" };
 
             _mockMapper.Map<Project>(inputDto).Returns(projectEntity);
+            _mockRepository.CheckProgramExistsAsync(Arg.Any<string>()).Returns(true);
             _mockRepository.UpdatePactProjectDetailsAsync(projectEntity).Returns(updatedEntity);
             _mockMapper.Map<ProjectDto>(updatedEntity).Returns(expectedDto);
 
@@ -735,6 +740,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
             var projectEntity = new Project { ParentProject = "PP999", Program = "P001", Customer = "DEFRA", ProjectStatus = "Active" };
 
             _mockMapper.Map<Project>(inputDto).Returns(projectEntity);
+            _mockRepository.CheckProgramExistsAsync(Arg.Any<string>()).Returns(true);
             _mockRepository.UpdatePactProjectDetailsAsync(projectEntity).Returns((Project?)null);
 
             // Act
@@ -754,6 +760,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
             var projectEntity = new Project { ParentProject = "PP001", Program = "P001", Customer = "DEFRA", ProjectStatus = "Active" };
 
             _mockMapper.Map<Project>(inputDto).Returns(projectEntity);
+            _mockRepository.CheckProgramExistsAsync(Arg.Any<string>()).Returns(true);
             _mockRepository.UpdatePactProjectDetailsAsync(projectEntity)
                 .Returns(Task.FromException<Project?>(new Exception("Database connection failed")));
 
