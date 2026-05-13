@@ -360,7 +360,19 @@ internal sealed class RsPeriodMonthlyOutputTable
 {
     public int Period { get; set; }
     public required string Project { get; set; }
+    public string? OracleProjectCode { get; set; }
+    public string? SubAccountCode { get; set; }
+    public string? IsDefraProject { get; set; }
+    public string? Opc { get; set; }
+    public double? Occ { get; set; }
     public int Month { get; set; }
+    public string? Spc { get; set; }
+    public string? WorkGroup { get; set; }
+    public double? Scc { get; set; }
+    public string? TestCode { get; set; }
+    public double? Volume { get; set; }
+    public decimal? TestPrice { get; set; }
+    public decimal? TotalCost { get; set; }
 }
 
 internal sealed class RsProjSubContractTable
@@ -377,7 +389,14 @@ internal sealed class RsPeriodProjSubContractTable
     public int Period { get; set; }
     public int SubContCounter { get; set; }
     public required string Project { get; set; }
+    public string? OracleProjectCode { get; set; }
+    public string? SubAccountCode { get; set; }
+    public string? IsDefraProject { get; set; }
+    public string? Opc { get; set; }
+    public double? Occ { get; set; }
     public int Month { get; set; }
+    public decimal? Amount { get; set; }
+    public string? AcctCode { get; set; }
 }
 
 internal sealed class RsTblWgEmployeeTable
@@ -390,8 +409,21 @@ internal sealed class RsPeriodTimeCostCalcsTable
 {
     public int Period { get; set; }
     public required string Project { get; set; }
+    public string? OracleProjectCode { get; set; }
+    public string? SubAccountCode { get; set; }
     public int Month { get; set; }
+    public string? DefraProject { get; set; }
+    public double? Occ { get; set; }
+    public string? Opc { get; set; }
+    public string? Spc { get; set; }
+    public double? Scc { get; set; }
     public required string Name { get; set; }
     public string? GradeCode { get; set; }
     public string? SpNumber { get; set; }
+    public decimal? ChargeRate { get; set; }
+    public double? Pay { get; set; }
+    public double? NonPay { get; set; }
+    public double? Overhead { get; set; }
+    public double? Time { get; set; }
+    public double? TotalCost { get; set; }
 }

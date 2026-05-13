@@ -28,8 +28,8 @@ internal sealed class LinqRecreateSummariesStepCatalog : IRecreateSummariesStepC
 
     public IReadOnlyList<IRecreateSummariesExecutionStep> BuildRefreshSteps(int month) =>
     [
-        new SqlRecreateSummariesExecutionStepAdapter(new Application.Jobs.ScheduledJobs.RecreateSummaries.Steps.RefreshPeriodMoStep(SqlLoader.Load("15_refresh_period_mo.sql"), month)),
-        new SqlRecreateSummariesExecutionStepAdapter(new Application.Jobs.ScheduledJobs.RecreateSummaries.Steps.RefreshPeriodPscStep(SqlLoader.Load("16_refresh_period_psc.sql"), month)),
-        new SqlRecreateSummariesExecutionStepAdapter(new Application.Jobs.ScheduledJobs.RecreateSummaries.Steps.RefreshPeriodTccStep(SqlLoader.Load("17_refresh_period_tcc.sql"), month)),
+        new LinqRefreshPeriodMoStep(month),
+        new LinqRefreshPeriodPscStep(month),
+        new LinqRefreshPeriodTccStep(month),
     ];
 }

@@ -57,6 +57,27 @@ public sealed class ServiceCollectionSetupTests
         }
     }
 
+    [Fact]
+    public void ConfigureBatchJobServices_WhenRecreateSummariesModeIsDotNetLinq_ShouldResolveLinqCatalog()
+    {
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["ConnectionStrings:BatchJobsConnectionString"] = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=admin123",
+                ["BatchJobs:RecreateSummariesImplementationMode"] = "DotNetLinq"
+            })
+            .Build();
+
+        var services = new ServiceCollection();
+        ServiceCollectionSetup.ConfigureBatchJobServices(services, config);
+
+        using var serviceProvider = services.BuildServiceProvider();
+        var catalog = serviceProvider.GetRequiredService<Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries.IRecreateSummariesStepCatalog>();
+
+        Assert.Equal("LinqRecreateSummariesStepCatalog", catalog.GetType().Name);
+        Assert.Equal("DotNetLinq", catalog.ImplementationName);
+    }
+
     private static string GetBatchJobsRoot()
     {
         var current = new DirectoryInfo(AppContext.BaseDirectory);

@@ -129,6 +129,8 @@ public static class ServiceCollectionSetup
             return implementation?.Trim().ToLowerInvariant() switch
             {
                 "sqlfiles" or "sql" => new SqlFileRecreateSummariesStepCatalog(),
+                "dotnetlinq" or "linq" => new LinqRecreateSummariesStepCatalog(),
+                "dotnetsql" => new DotNetRecreateSummariesStepCatalog(),
                 _ => new DotNetRecreateSummariesStepCatalog()
             };
         });

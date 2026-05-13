@@ -731,7 +731,19 @@ public class BatchJobsDbContext : DbContext
             entity.HasKey(e => new { e.Period, e.Project, e.Month });
             entity.Property(e => e.Period).HasColumnName("period");
             entity.Property(e => e.Project).HasColumnName("project");
+            entity.Property(e => e.OracleProjectCode).HasColumnName("oracleprojectcode");
+            entity.Property(e => e.SubAccountCode).HasColumnName("subaccountcode");
+            entity.Property(e => e.IsDefraProject).HasColumnName("isdefraproject");
+            entity.Property(e => e.Opc).HasColumnName("opc");
+            entity.Property(e => e.Occ).HasColumnName("occ");
             entity.Property(e => e.Month).HasColumnName("month");
+            entity.Property(e => e.Spc).HasColumnName("spc");
+            entity.Property(e => e.WorkGroup).HasColumnName("workgroup");
+            entity.Property(e => e.Scc).HasColumnName("scc");
+            entity.Property(e => e.TestCode).HasColumnName("testcode");
+            entity.Property(e => e.Volume).HasColumnName("volume");
+            entity.Property(e => e.TestPrice).HasColumnName("testprice");
+            entity.Property(e => e.TotalCost).HasColumnName("totalcost");
         });
 
         modelBuilder.Entity<RsProjSubContractTable>(entity =>
@@ -752,7 +764,14 @@ public class BatchJobsDbContext : DbContext
             entity.Property(e => e.Period).HasColumnName("period");
             entity.Property(e => e.SubContCounter).HasColumnName("subcontcounter");
             entity.Property(e => e.Project).HasColumnName("project");
+            entity.Property(e => e.OracleProjectCode).HasColumnName("oracleprojectcode");
+            entity.Property(e => e.SubAccountCode).HasColumnName("subaccountcode");
+            entity.Property(e => e.IsDefraProject).HasColumnName("isdefraproject");
+            entity.Property(e => e.Opc).HasColumnName("opc");
+            entity.Property(e => e.Occ).HasColumnName("occ");
             entity.Property(e => e.Month).HasColumnName("month");
+            entity.Property(e => e.Amount).HasColumnName("amount");
+            entity.Property(e => e.AcctCode).HasColumnName("acctcode");
         });
 
         modelBuilder.Entity<RsTblWgEmployeeTable>(entity =>
@@ -769,10 +788,23 @@ public class BatchJobsDbContext : DbContext
             entity.HasKey(e => new { e.Period, e.Project, e.Month, e.Name });
             entity.Property(e => e.Period).HasColumnName("period");
             entity.Property(e => e.Project).HasColumnName("project");
+            entity.Property(e => e.OracleProjectCode).HasColumnName("oracleprojectcode");
+            entity.Property(e => e.SubAccountCode).HasColumnName("subaccountcode");
             entity.Property(e => e.Month).HasColumnName("month");
+            entity.Property(e => e.DefraProject).HasColumnName("defraproject");
+            entity.Property(e => e.Occ).HasColumnName("occ");
+            entity.Property(e => e.Opc).HasColumnName("opc");
+            entity.Property(e => e.Spc).HasColumnName("spc");
+            entity.Property(e => e.Scc).HasColumnName("scc");
             entity.Property(e => e.Name).HasColumnName("name");
             entity.Property(e => e.GradeCode).HasColumnName("gradecode");
             entity.Property(e => e.SpNumber).HasColumnName("spnumber");
+            entity.Property(e => e.ChargeRate).HasColumnName("chargerate");
+            entity.Property(e => e.Pay).HasColumnName("pay");
+            entity.Property(e => e.NonPay).HasColumnName("nonpay");
+            entity.Property(e => e.Overhead).HasColumnName("overhead");
+            entity.Property(e => e.Time).HasColumnName("time");
+            entity.Property(e => e.TotalCost).HasColumnName("totalcost");
         });
 
         modelBuilder.Entity<RsRecreateSummariesLogTable>(entity =>
