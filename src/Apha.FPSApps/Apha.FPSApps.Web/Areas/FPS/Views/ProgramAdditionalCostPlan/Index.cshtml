@@ -8,7 +8,7 @@
     #gridContainer_@Model.AdditionalCostGrid.GridId .grid-scroll-container {
         height: 255px;
         max-height: 255px;
-    }
+    }   
 </style>
 
 <div class="container-fluid">
@@ -45,7 +45,7 @@
                 <div class="row">
                     <div class="col-lg-7">
                         <label class="govuk-label--s" for="managerName" style="color:#3e3e3e">Programme Manager</label>
-                        <input type="text" value="@Model.Manager" id="managerName" readonly class="projectplan-code govuk-input">
+                        <input type="text" value="@Model.Manager" id="managerName" readonly class="projectplan-code govuk-input" readonly>
                     </div>
                     <div class="col-lg-5">
                         <label class="govuk-label--s" for="Target" style="color:#3e3e3e">Target</label>
@@ -174,7 +174,7 @@
             $('#for_project').val(jobCode);
             $('#BudgetCVL').val(formatCurrency(budget));
             $('#Additional_Cost').val(formatCurrency(0));
-            $('#Remainder').val(formatCurrency(budget));
+            setRemainder(budget);
 
             $('#tbl_@Model.ProjectsGrid.GridId tbody tr').removeClass('selected-row');
             row.addClass('selected-row');
@@ -185,7 +185,7 @@
                     if (result.success) {
                         var total = parseFloat(result.totalItemCost) || 0;
                         $('#Additional_Cost').val(formatCurrency(total));
-                        $('#Remainder').val(formatCurrency(budget - total));
+                        setRemainder(budget - total);
                     }
                 }
             );
@@ -208,11 +208,25 @@
 
             $('#Additional_Cost').val(formatCurrency(total));
             var budget = parseFloat($('#BudgetCVL').val().replace(/[£,\s]/g, '')) || 0;
-            $('#Remainder').val(formatCurrency(budget - total));
+            setRemainder(budget - total);
         }
 
         function formatCurrency(value) {
             return '\u00A3' + parseFloat(value || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+
+        function setRemainder(value) {
+            var num = parseFloat(value) || 0;
+            var $el = $('#Remainder');
+            if (num < 0) {
+                $el.val('-(' + formatCurrency(Math.abs(num)) + ')');
+                $el.addClass('text-danger');
+                $el.removeClass('text-primary');
+            } else {
+                $el.val(formatCurrency(num));
+                $el.removeClass('text-danger');
+                $el.addClass('text-primary');
+            }
         }
     </script>
 }
