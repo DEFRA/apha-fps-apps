@@ -11,7 +11,9 @@ internal sealed class LinqCreateFpsTotalsStep : LinqRecreateSummariesExecutionSt
     {
         var db = context.DbContext;
 
-        var rows = await (
+        // Two-step: fetch raw nullable values first (avoid COALESCE on PostgreSQL money columns),
+        // then apply defaults in C#.
+        var rawRows = await (
             from p in db.RsTlkpProject.AsNoTracking()
             join add0 in db.RsQryTotalAdditionalCosts.AsNoTracking() on p.ParentProject equals add0.JobCode into add1
             from add in add1.DefaultIfEmpty()
@@ -21,34 +23,55 @@ internal sealed class LinqCreateFpsTotalsStep : LinqRecreateSummariesExecutionSt
             from stf in stf1.DefaultIfEmpty()
             join tst0 in db.RsQryTotalTestCosts.AsNoTracking() on p.ParentProject equals tst0.JobCode into tst1
             from tst in tst1.DefaultIfEmpty()
-            select new RsFpsYearTotalsTable
+            select new
             {
                 ParentProject = p.ParentProject,
                 Program = p.Program,
-                TotalAdditionalCosts = add != null ? add.TotalAdditionalCosts ?? 0m : 0m,
-                TotalAnimalCosts = ani != null ? (double?)ani.TotalAnimalCosts ?? 0d : 0d,
-                TotalStaffCosts = stf != null ? (double?)stf.TotalStaffCosts ?? 0d : 0d,
-                TotalTestCosts = tst != null ? (double?)tst.TotalTestCosts ?? 0d : 0d,
-                TotalCosts =
-                    (add != null ? (double?)add.TotalAdditionalCosts ?? 0d : 0d) +
-                    (ani != null ? (double?)ani.TotalAnimalCosts ?? 0d : 0d) +
-                    (stf != null ? (double?)stf.TotalStaffCosts ?? 0d : 0d) +
-                    (tst != null ? (double?)tst.TotalTestCosts ?? 0d : 0d) +
-                    ((double?)p.PlanCaseworkDebit ?? 0d),
+                AddCosts = add.TotalAdditionalCosts,
+                AniCosts = ani.TotalAnimalCosts,
+                StfCosts = stf.TotalStaffCosts,
+                TstCosts = tst.TotalTestCosts,
+                StfPayCosts = stf.TotalPayCosts,
                 CustIncome = p.CustIncome,
                 TransferIncome = p.TransferIncome,
-                TotalIncome = p.CustIncome + p.TransferIncome,
                 BudgetCvl = p.BudgetCvl,
-                RequiredProfit = p.Profit,
+                Profit = p.Profit,
                 Manager = p.Manager,
                 Customer = p.Customer,
                 ProjectStatus = p.ProjectStatus,
-                PvsIncome = p.PvsIncome ?? 0m,
-                PlanCaseworkDebit = p.PlanCaseworkDebit ?? 0m,
-                TotalPayCosts = stf != null ? (double?)stf.TotalPayCosts ?? 0d : 0d,
+                PvsIncome = p.PvsIncome,
+                PlanCaseworkDebit = p.PlanCaseworkDebit,
                 FpsYear = p.FpsYear
             })
             .ToListAsync(cancellationToken);
+
+        var rows = rawRows.Select(r => new RsFpsYearTotalsTable
+        {
+            ParentProject = r.ParentProject,
+            Program = r.Program,
+            TotalAdditionalCosts = r.AddCosts ?? 0m,
+            TotalAnimalCosts = (double?)(r.AniCosts) ?? 0d,
+            TotalStaffCosts = (double?)(r.StfCosts) ?? 0d,
+            TotalTestCosts = (double?)(r.TstCosts) ?? 0d,
+            TotalCosts =
+                ((double?)(r.AddCosts) ?? 0d) +
+                ((double?)(r.AniCosts) ?? 0d) +
+                ((double?)(r.StfCosts) ?? 0d) +
+                ((double?)(r.TstCosts) ?? 0d) +
+                ((double?)(r.PlanCaseworkDebit) ?? 0d),
+            CustIncome = r.CustIncome,
+            TransferIncome = r.TransferIncome,
+            TotalIncome = r.CustIncome + r.TransferIncome,
+            BudgetCvl = r.BudgetCvl,
+            RequiredProfit = r.Profit,
+            Manager = r.Manager,
+            Customer = r.Customer,
+            ProjectStatus = r.ProjectStatus,
+            PvsIncome = r.PvsIncome ?? 0m,
+            PlanCaseworkDebit = r.PlanCaseworkDebit ?? 0m,
+            TotalPayCosts = (double?)(r.StfPayCosts) ?? 0d,
+            FpsYear = r.FpsYear
+        }).ToList();
 
         await db.RsFpsYearTotals.AddRangeAsync(rows, cancellationToken);
         return await db.SaveChangesAsync(cancellationToken);

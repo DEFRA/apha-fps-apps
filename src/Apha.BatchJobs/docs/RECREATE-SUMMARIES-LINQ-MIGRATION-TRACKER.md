@@ -28,7 +28,7 @@ Scope: Build a true parallel .NET and LINQ implementation for RecreateSummaries 
 | 6 | Implement LINQ refresh steps 15-17 | Completed | Completed | Added LINQ implementations for refresh steps and switched LINQ catalog refresh path from SQL adapters to LINQ. |
 | 7 | Wire runtime mode selector | Completed | Completed | Added explicit DotNetLinq runtime selection in DI and updated debug/docs to use it. |
 | 8 | Build parity test harness | Completed | Completed | Added an opt-in xUnit parity harness that runs SQL baseline and DotNetLinq back to back, snapshots target tables, compares hashes, and writes a JSON report. |
-| 9 | Run full parity test suite | Not started | Not started | Pending user approval to start. |
+| 9 | Run full parity test suite | Completed | Completed | Ran the opt-in parity harness against SqlFiles and DotNetLinq; fixed the worktree-safe repo-root lookup and PostgreSQL money-column translation issues, then confirmed identical snapshots. |
 
 ## Validation Evidence
 
@@ -133,6 +133,16 @@ Step 2 validation checklist:
 
 Validation outcome: Pass.
 
+Step 9 validation checklist:
+
+- Ran the opt-in parity harness with RUN_RECREATE_SUMMARIES_PARITY=true and a real PostgreSQL batch_jobs_foundation_db connection.
+- Confirmed the harness runs SqlFiles and DotNetLinq back to back, resets target tables between runs, and compares row counts plus SHA256 hashes.
+- Fixed repo-root resolution for the git worktree layout by locating the BatchJobs.csproj directory and returning its parent repo root.
+- Fixed PostgreSQL money-column translation issues in the LINQ implementations by materializing raw rows first and moving defaults/aggregations into C# where needed.
+- Verified the full parity test passes with 1 test succeeded and 0 failed.
+
+Validation outcome: Pass.
+
 ## Change Log
 
 - 2026-05-13: Created tracker and marked Step 1 complete.
@@ -144,3 +154,4 @@ Validation outcome: Pass.
 - 2026-05-13: Completed Step 6 by implementing LINQ execution steps for RecreateSummaries refresh steps 15-17.
 - 2026-05-13: Completed Step 7 by wiring runtime selection for DotNetLinq and updating the debug profile/docs.
 - 2026-05-13: Completed Step 8 by adding an opt-in parity harness, JSON report generation, and focused selector validation in the unit test project.
+- 2026-05-13: Completed Step 9 by fixing parity harness repo-root detection for the git worktree layout, resolving PostgreSQL money-column translation issues in the LINQ steps, and passing the full parity suite.

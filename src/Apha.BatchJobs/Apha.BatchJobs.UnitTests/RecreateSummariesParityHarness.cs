@@ -232,18 +232,28 @@ internal sealed class RecreateSummariesParityHarness
 
     private static string FindRepoRoot()
     {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null)
-        {
-            if (Directory.Exists(Path.Combine(current.FullName, ".git")) && Directory.Exists(Path.Combine(current.FullName, "src", "Apha.BatchJobs")))
-            {
-                return current.FullName;
-            }
+        // In git worktrees .git is a file, not a directory, so we locate the BatchJobs
+        // project directory and return its parent repo root. dotnet CLI sets CWD to the
+        // repo root; the test host AppContext.BaseDirectory is the bin output folder.
+        var startPaths = new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory };
+        const string marker = "BatchJobs.csproj";
 
-            current = current.Parent;
+        foreach (var start in startPaths)
+        {
+            var current = new DirectoryInfo(start);
+            while (current is not null)
+            {
+                if (File.Exists(Path.Combine(current.FullName, marker)))
+                {
+                    return current.Parent?.FullName ?? current.FullName;
+                }
+
+                current = current.Parent;
+            }
         }
 
-        throw new DirectoryNotFoundException("Could not locate repository root for parity harness.");
+        throw new DirectoryNotFoundException(
+            $"Could not locate repository root for parity harness (looked for '{marker}' walking up from CWD '{Directory.GetCurrentDirectory()}' and '{AppContext.BaseDirectory}').");
     }
 
     private sealed record SnapshotDefinition(string Name, string Sql);

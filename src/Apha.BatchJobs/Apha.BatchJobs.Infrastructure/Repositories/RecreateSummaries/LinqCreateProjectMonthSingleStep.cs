@@ -11,7 +11,9 @@ internal sealed class LinqCreateProjectMonthSingleStep : LinqRecreateSummariesEx
     {
         var db = context.DbContext;
 
-        var rows = await (
+        // Two-step: fetch raw nullable values first (avoid COALESCE on PostgreSQL money columns),
+        // then apply defaults in C#.
+        var rawRows = await (
             from pm in db.RsProjectMonth.AsNoTracking()
             join sc0 in db.RsQryJobMonthSubContracts.AsNoTracking()
                 on new { pm.Project, Month = pm.MonthNo } equals new { sc0.Project, sc0.Month } into sc1
@@ -34,30 +36,51 @@ internal sealed class LinqCreateProjectMonthSingleStep : LinqRecreateSummariesEx
             join tp0 in db.RsQryJobMonthTotProfile.AsNoTracking()
                 on pm.Project equals tp0.Project into tp1
             from tp in tp1.DefaultIfEmpty()
-            select new RsProjectMonth2Table
+            select new
             {
                 Project = pm.Project,
                 MonthNo = pm.MonthNo,
                 CostProfile = pm.CostProfile,
-                SubContracts = sc != null ? sc.Total ?? 0m : 0m,
-                Animals = sc != null ? sc.Animals ?? 0m : 0m,
-                NonAnimal = sc != null ? sc.Other ?? 0m : 0m,
-                TimeCosts = tm != null ? tm.SumOfCost ?? 0d : 0d,
-                TransferCosts = tr != null ? (double?)tr.SumOfTransferCost ?? 0d : 0d,
-                TotalCost = (sc != null ? sc.Total ?? 0m : 0m)
-                    + (decimal)(tm != null ? tm.SumOfCost ?? 0d : 0d)
-                    + (tr != null ? tr.SumOfTransferCost ?? 0m : 0m),
-                Invoices = iv != null ? iv.SumOfAmount1 ?? 0m : 0m,
-                Coiw = tm != null ? tm.WorkCost ?? 0m : 0m,
-                SumOfCostProfile = tp != null ? tp.SumOfCostProfile : null,
-                PortSales = ps != null ? (double?)ps.Fee ?? 0d : 0d,
-                MstoneDue = ms != null ? ms.MstoneDue : null,
-                DueDone = ms != null ? ms.DueDone : null,
-                OnTime = ms != null ? ms.OnTime : null,
-                TotalHours = tm != null ? tm.SumOfHours ?? 0d : 0d,
-                PayCosts = tm != null ? (double?)tm.SumOfPayRate ?? 0d : 0d
+                ScTotal = sc.Total,
+                ScAnimals = sc.Animals,
+                ScOther = sc.Other,
+                TmSumOfCost = tm.SumOfCost,
+                TrSumOfTransferCost = tr.SumOfTransferCost,
+                IvSumOfAmount1 = iv.SumOfAmount1,
+                TmWorkCost = tm.WorkCost,
+                TpSumOfCostProfile = tp.SumOfCostProfile,
+                PsFee = ps.Fee,
+                MsMstoneDue = ms.MstoneDue,
+                MsDueDone = ms.DueDone,
+                MsOnTime = ms.OnTime,
+                TmSumOfHours = tm.SumOfHours,
+                TmSumOfPayRate = tm.SumOfPayRate
             })
             .ToListAsync(cancellationToken);
+
+        var rows = rawRows.Select(r => new RsProjectMonth2Table
+        {
+            Project = r.Project,
+            MonthNo = r.MonthNo,
+            CostProfile = r.CostProfile,
+            SubContracts = r.ScTotal ?? 0m,
+            Animals = r.ScAnimals ?? 0m,
+            NonAnimal = r.ScOther ?? 0m,
+            TimeCosts = r.TmSumOfCost ?? 0d,
+            TransferCosts = (double?)(r.TrSumOfTransferCost) ?? 0d,
+            TotalCost = (r.ScTotal ?? 0m)
+                + (decimal)(r.TmSumOfCost ?? 0d)
+                + (r.TrSumOfTransferCost ?? 0m),
+            Invoices = r.IvSumOfAmount1 ?? 0m,
+            Coiw = r.TmWorkCost ?? 0m,
+            SumOfCostProfile = r.TpSumOfCostProfile,
+            PortSales = (double?)(r.PsFee) ?? 0d,
+            MstoneDue = r.MsMstoneDue,
+            DueDone = r.MsDueDone,
+            OnTime = r.MsOnTime,
+            TotalHours = r.TmSumOfHours ?? 0d,
+            PayCosts = (double?)(r.TmSumOfPayRate) ?? 0d
+        }).ToList();
 
         await db.RsProjectMonth2.AddRangeAsync(rows, cancellationToken);
         return await db.SaveChangesAsync(cancellationToken);

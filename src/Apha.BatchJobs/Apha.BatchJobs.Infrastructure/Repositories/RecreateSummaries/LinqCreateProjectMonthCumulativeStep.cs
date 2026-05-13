@@ -11,7 +11,9 @@ internal sealed class LinqCreateProjectMonthCumulativeStep : LinqRecreateSummari
     {
         var db = context.DbContext;
 
-        var rows = await (
+        // Two-step: materialize the join first, then group and aggregate in C# to avoid
+        // COALESCE(SUM(money_col), 0::numeric) PostgreSQL type errors on money columns.
+        var rawRows = await (
             from tp in db.RsTblPeriod.AsNoTracking()
             join tpm in db.RsTblkPeriodMonth.AsNoTracking()
                 on tp.PeriodName equals tpm.PeriodName
@@ -19,31 +21,54 @@ internal sealed class LinqCreateProjectMonthCumulativeStep : LinqRecreateSummari
                 on tpm.MonthNo equals pm2.MonthNo
             join pmcw in db.RsProjectMonthCasework.AsNoTracking()
                 on new { pm2.Project, pm2.MonthNo } equals new { pmcw.Project, pmcw.MonthNo }
-            group new { pm2, pmcw } by new { tp.EndPeriod, tp.PeriodName, pm2.Project, pm2.SumOfCostProfile }
-            into g
-            select new RsProjectMonth3Table
+            select new
+            {
+                tp.EndPeriod,
+                tp.PeriodName,
+                pm2.Project,
+                pm2.SumOfCostProfile,
+                pm2.TotalCost,
+                pm2.Invoices,
+                pm2.Coiw,
+                pm2.PortSales,
+                pm2.CostProfile,
+                pm2.MstoneDue,
+                pm2.DueDone,
+                pm2.OnTime,
+                pm2.TotalHours,
+                pm2.SubContracts,
+                pm2.TransferCosts,
+                pm2.PayCosts,
+                pmcw.CwDebit,
+                pmcw.CwCredit
+            })
+            .ToListAsync(cancellationToken);
+
+        var rows = rawRows
+            .GroupBy(r => new { r.EndPeriod, r.PeriodName, r.Project, r.SumOfCostProfile })
+            .Select(g => new RsProjectMonth3Table
             {
                 EndPeriod = g.Key.EndPeriod,
                 PeriodName = g.Key.PeriodName,
                 Project = g.Key.Project,
-                CumCost = g.Sum(x => x.pm2.TotalCost) ?? 0m,
-                CumInvoices = g.Sum(x => x.pm2.Invoices) ?? 0m,
-                CumCoiw = g.Sum(x => x.pm2.Coiw) ?? 0m,
-                CumPortSales = (decimal?)g.Sum(x => x.pm2.PortSales ?? 0d),
-                CumProfile = g.Sum(x => x.pm2.CostProfile) ?? 0m,
+                CumCost = g.Sum(x => x.TotalCost) ?? 0m,
+                CumInvoices = g.Sum(x => x.Invoices) ?? 0m,
+                CumCoiw = g.Sum(x => x.Coiw) ?? 0m,
+                CumPortSales = (decimal?)g.Sum(x => x.PortSales ?? 0d),
+                CumProfile = g.Sum(x => x.CostProfile) ?? 0m,
                 SumOfCostProfile = g.Key.SumOfCostProfile,
-                SumOfMstoneDue = g.Sum(x => x.pm2.MstoneDue ?? 0d),
-                SumOfDueDone = g.Sum(x => x.pm2.DueDone ?? 0d),
-                SumOfOnTime = g.Sum(x => x.pm2.OnTime ?? 0d),
-                CumCwDebit = (decimal?)g.Sum(x => x.pmcw.CwDebit ?? 0d),
-                CumCwCredit = (decimal?)g.Sum(x => x.pmcw.CwCredit ?? 0d),
-                CumTotalHours = g.Sum(x => x.pm2.TotalHours ?? 0d),
-                CumSubContracts = g.Sum(x => (double)(x.pm2.SubContracts ?? 0m)),
-                CumTestCosts = g.Sum(x => x.pm2.TransferCosts ?? 0d),
-                CumPayCosts = g.Sum(x => x.pm2.PayCosts ?? 0d)
+                SumOfMstoneDue = g.Sum(x => x.MstoneDue ?? 0d),
+                SumOfDueDone = g.Sum(x => x.DueDone ?? 0d),
+                SumOfOnTime = g.Sum(x => x.OnTime ?? 0d),
+                CumCwDebit = (decimal?)g.Sum(x => x.CwDebit ?? 0d),
+                CumCwCredit = (decimal?)g.Sum(x => x.CwCredit ?? 0d),
+                CumTotalHours = g.Sum(x => x.TotalHours ?? 0d),
+                CumSubContracts = g.Sum(x => (double)(x.SubContracts ?? 0m)),
+                CumTestCosts = g.Sum(x => x.TransferCosts ?? 0d),
+                CumPayCosts = g.Sum(x => x.PayCosts ?? 0d)
             })
             .Distinct()
-            .ToListAsync(cancellationToken);
+            .ToList();
 
         await db.RsProjectMonth3.AddRangeAsync(rows, cancellationToken);
         return await db.SaveChangesAsync(cancellationToken);
