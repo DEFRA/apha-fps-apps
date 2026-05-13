@@ -76,6 +76,47 @@ public class BatchJobsDbContext : DbContext
     /// </summary>
     internal DbSet<FpsProjectAllCurrentYearTable> FpsProjectAllCurrentYear { get; set; }
 
+    // RecreateSummaries table/view model sets
+    internal DbSet<RsFpsYearTotalsTable> RsFpsYearTotals { get; set; }
+    internal DbSet<RsTlkpProjectTable> RsTlkpProject { get; set; }
+    internal DbSet<RsTlkpProgramTable> RsTlkpProgram { get; set; }
+    internal DbSet<RsQryTotalAdditionalCostsView> RsQryTotalAdditionalCosts { get; set; }
+    internal DbSet<RsQryTotalAnimalCostsView> RsQryTotalAnimalCosts { get; set; }
+    internal DbSet<RsQryTotalStaffCostsView> RsQryTotalStaffCosts { get; set; }
+    internal DbSet<RsQryTotalTestCostsView> RsQryTotalTestCosts { get; set; }
+    internal DbSet<RsProjectMonthTable> RsProjectMonth { get; set; }
+    internal DbSet<RsTimeCostCalcsTable> RsTimeCostCalcs { get; set; }
+    internal DbSet<RsProjectMonthCaseworkTable> RsProjectMonthCasework { get; set; }
+    internal DbSet<RsQryProjectMonthCwView> RsQryProjectMonthCw { get; set; }
+    internal DbSet<RsTblkpProfitCentreTable> RsTblkpProfitCentre { get; set; }
+    internal DbSet<RsProfitCentreGradeTable> RsProfitCentreGrade { get; set; }
+    internal DbSet<RsWorkGroupGradeTable> RsWorkGroupGrade { get; set; }
+    internal DbSet<RsTimeCodeValidTable> RsTimeCodeValid { get; set; }
+    internal DbSet<RsVpactTblStaffView> RsVpactTblStaff { get; set; }
+    internal DbSet<RsMonthlyTimeTable> RsMonthlyTime { get; set; }
+    internal DbSet<RsProjectMonth2Table> RsProjectMonth2 { get; set; }
+    internal DbSet<RsProjectMonth3Table> RsProjectMonth3 { get; set; }
+    internal DbSet<RsProjectMonthFinalTable> RsProjectMonthFinal { get; set; }
+    internal DbSet<RsTblPeriodTable> RsTblPeriod { get; set; }
+    internal DbSet<RsTblkPeriodMonthTable> RsTblkPeriodMonth { get; set; }
+    internal DbSet<RsQryJobMonthSubContractsView> RsQryJobMonthSubContracts { get; set; }
+    internal DbSet<RsQryJobMonthTimeView> RsQryJobMonthTime { get; set; }
+    internal DbSet<RsQryJobMonthMilestoneView> RsQryJobMonthMilestone { get; set; }
+    internal DbSet<RsQryJobMonthTransfersTotalView> RsQryJobMonthTransfersTotal { get; set; }
+    internal DbSet<RsQryJobMonthInvoicesView> RsQryJobMonthInvoices { get; set; }
+    internal DbSet<RsQryJobMonthPortfolioSalesView> RsQryJobMonthPortfolioSales { get; set; }
+    internal DbSet<RsQryJobMonthTotProfileView> RsQryJobMonthTotProfile { get; set; }
+    internal DbSet<RsRecreateSummariesLogTable> RsRecreateSummariesLog { get; set; }
+    internal DbSet<RsCostCentreTable> RsCostCentre { get; set; }
+    internal DbSet<RsMonthlyOutputTable> RsMonthlyOutput { get; set; }
+    internal DbSet<RsWorkGroupTable> RsWorkGroup { get; set; }
+    internal DbSet<RsTlkpTestReqmtTable> RsTlkpTestReqmt { get; set; }
+    internal DbSet<RsPeriodMonthlyOutputTable> RsPeriodMonthlyOutput { get; set; }
+    internal DbSet<RsProjSubContractTable> RsProjSubContract { get; set; }
+    internal DbSet<RsPeriodProjSubContractTable> RsPeriodProjSubContract { get; set; }
+    internal DbSet<RsTblWgEmployeeTable> RsTblWgEmployee { get; set; }
+    internal DbSet<RsPeriodTimeCostCalcsTable> RsPeriodTimeCostCalcs { get; set; }
+
     /// <summary>
     /// Configures the model for the database context.
     /// </summary>
@@ -385,6 +426,484 @@ public class BatchJobsDbContext : DbContext
             entity.Property(e => e.RefreshedAt).HasColumnName("refreshed_at").IsRequired().HasDefaultValueSql("NOW()");
 
             entity.HasIndex(e => e.Year).HasDatabaseName("idx_fps_project_all_current_year_fps_year");
+        });
+
+        ConfigureRecreateSummariesModels(modelBuilder);
+    }
+
+    private static void ConfigureRecreateSummariesModels(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<RsFpsYearTotalsTable>(entity =>
+        {
+            entity.ToTable("fpsyeartotals", schema: "fps");
+            entity.HasKey(e => new { e.ParentProject, e.FpsYear });
+            entity.Property(e => e.ParentProject).HasColumnName("parentproject");
+            entity.Property(e => e.Program).HasColumnName("program");
+            entity.Property(e => e.TotalAdditionalCosts).HasColumnName("totaladditionalcosts");
+            entity.Property(e => e.TotalAnimalCosts).HasColumnName("totalanimalcosts");
+            entity.Property(e => e.TotalStaffCosts).HasColumnName("totalstaffcosts");
+            entity.Property(e => e.TotalTestCosts).HasColumnName("totaltestcosts");
+            entity.Property(e => e.TotalCosts).HasColumnName("totalcosts");
+            entity.Property(e => e.CustIncome).HasColumnName("custincome");
+            entity.Property(e => e.TransferIncome).HasColumnName("transferincome");
+            entity.Property(e => e.TotalIncome).HasColumnName("totalincome");
+            entity.Property(e => e.BudgetCvl).HasColumnName("budget_cvl");
+            entity.Property(e => e.RequiredProfit).HasColumnName("requiredprofit");
+            entity.Property(e => e.Manager).HasColumnName("manager");
+            entity.Property(e => e.Customer).HasColumnName("customer");
+            entity.Property(e => e.ProjectStatus).HasColumnName("projectstatus");
+            entity.Property(e => e.PvsIncome).HasColumnName("pvsincome");
+            entity.Property(e => e.PlanCaseworkDebit).HasColumnName("plancaseworkdebit");
+            entity.Property(e => e.TotalPayCosts).HasColumnName("totalpaycosts");
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
+        });
+
+        modelBuilder.Entity<RsTlkpProjectTable>(entity =>
+        {
+            entity.ToTable("tlkpproject", schema: "fps");
+            entity.HasKey(e => e.ParentProject);
+            entity.Property(e => e.ParentProject).HasColumnName("parentproject");
+            entity.Property(e => e.Program).HasColumnName("program");
+            entity.Property(e => e.PlanCaseworkDebit).HasColumnName("plancaseworkdebit");
+            entity.Property(e => e.CustIncome).HasColumnName("custincome");
+            entity.Property(e => e.TransferIncome).HasColumnName("transferincome");
+            entity.Property(e => e.BudgetCvl).HasColumnName("budget_cvl");
+            entity.Property(e => e.Profit).HasColumnName("profit");
+            entity.Property(e => e.Manager).HasColumnName("manager");
+            entity.Property(e => e.Customer).HasColumnName("customer");
+            entity.Property(e => e.ProjectStatus).HasColumnName("projectstatus");
+            entity.Property(e => e.PvsIncome).HasColumnName("pvsincome");
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
+            entity.Property(e => e.CostCentre).HasColumnName("costcentre");
+            entity.Property(e => e.IsDefraProject).HasColumnName("isdefraproject");
+            entity.Property(e => e.OracleProjectCode).HasColumnName("oracleprojectcode");
+            entity.Property(e => e.SubAccountCode).HasColumnName("subaccountcode");
+        });
+
+        modelBuilder.Entity<RsTlkpProgramTable>(entity =>
+        {
+            entity.ToTable("tlkpprogram", schema: "fps");
+            entity.HasKey(e => e.ProgramNo);
+            entity.Property(e => e.ProgramNo).HasColumnName("programno");
+            entity.Property(e => e.SectorName).HasColumnName("sector_name");
+        });
+
+        modelBuilder.Entity<RsProjectMonthTable>(entity =>
+        {
+            entity.ToTable("projectmonth", schema: "fps");
+            entity.HasKey(e => new { e.Project, e.MonthNo });
+            entity.Property(e => e.Project).HasColumnName("project");
+            entity.Property(e => e.MonthNo).HasColumnName("monthno");
+            entity.Property(e => e.CostProfile).HasColumnName("costprofile");
+        });
+
+        modelBuilder.Entity<RsTimeCostCalcsTable>(entity =>
+        {
+            entity.ToTable("timecostcalcs", schema: "fps");
+            entity.HasKey(e => new { e.Project, e.Month, e.StaffId, e.JobCode });
+            entity.Property(e => e.WorkGroup).HasColumnName("workgroup");
+            entity.Property(e => e.JobCode).HasColumnName("jobcode");
+            entity.Property(e => e.Project).HasColumnName("project");
+            entity.Property(e => e.Month).HasColumnName("month");
+            entity.Property(e => e.StaffId).HasColumnName("staffid");
+            entity.Property(e => e.GradeCode).HasColumnName("gradecode");
+            entity.Property(e => e.Name).HasColumnName("name");
+            entity.Property(e => e.ChargeRate).HasColumnName("chargerate");
+            entity.Property(e => e.Class).HasColumnName("class");
+            entity.Property(e => e.Time).HasColumnName("time");
+            entity.Property(e => e.Cost).HasColumnName("cost");
+            entity.Property(e => e.Division).HasColumnName("division");
+            entity.Property(e => e.Pay).HasColumnName("pay");
+            entity.Property(e => e.NonPay).HasColumnName("nonpay");
+            entity.Property(e => e.Overhead).HasColumnName("overhead");
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
+        });
+
+        modelBuilder.Entity<RsProjectMonthCaseworkTable>(entity =>
+        {
+            entity.ToTable("projectmonthcasework", schema: "fps");
+            entity.HasKey(e => new { e.Project, e.MonthNo });
+            entity.Property(e => e.Project).HasColumnName("project");
+            entity.Property(e => e.MonthNo).HasColumnName("monthno");
+            entity.Property(e => e.CwDebit).HasColumnName("cwdebit");
+            entity.Property(e => e.CwCredit).HasColumnName("cwcredit");
+        });
+
+        modelBuilder.Entity<RsProjectMonth2Table>(entity =>
+        {
+            entity.ToTable("projectmonth2", schema: "fps");
+            entity.HasKey(e => new { e.Project, e.MonthNo });
+            entity.Property(e => e.Project).HasColumnName("project");
+            entity.Property(e => e.MonthNo).HasColumnName("monthno");
+            entity.Property(e => e.CostProfile).HasColumnName("costprofile");
+            entity.Property(e => e.SubContracts).HasColumnName("subcontracts");
+            entity.Property(e => e.Animals).HasColumnName("animals");
+            entity.Property(e => e.NonAnimal).HasColumnName("nonanimal");
+            entity.Property(e => e.TimeCosts).HasColumnName("timecosts");
+            entity.Property(e => e.TransferCosts).HasColumnName("transfercosts");
+            entity.Property(e => e.TotalCost).HasColumnName("totalcost");
+            entity.Property(e => e.Invoices).HasColumnName("invoices");
+            entity.Property(e => e.Coiw).HasColumnName("coiw");
+            entity.Property(e => e.SumOfCostProfile).HasColumnName("sumofcostprofile");
+            entity.Property(e => e.PortSales).HasColumnName("portsales");
+            entity.Property(e => e.MstoneDue).HasColumnName("mstonedue");
+            entity.Property(e => e.DueDone).HasColumnName("due__done");
+            entity.Property(e => e.OnTime).HasColumnName("ontime");
+            entity.Property(e => e.TotalHours).HasColumnName("totalhours");
+            entity.Property(e => e.PayCosts).HasColumnName("paycosts");
+        });
+
+        modelBuilder.Entity<RsProjectMonth3Table>(entity =>
+        {
+            entity.ToTable("projectmonth3", schema: "fps");
+            entity.HasKey(e => new { e.Project, e.EndPeriod });
+            entity.Property(e => e.Project).HasColumnName("project");
+            entity.Property(e => e.EndPeriod).HasColumnName("endperiod");
+            entity.Property(e => e.PeriodName).HasColumnName("periodname");
+            entity.Property(e => e.CumCost).HasColumnName("cumcost");
+            entity.Property(e => e.CumInvoices).HasColumnName("cuminvoices");
+            entity.Property(e => e.CumCoiw).HasColumnName("cumcoiw");
+            entity.Property(e => e.CumPortSales).HasColumnName("cumportsales");
+            entity.Property(e => e.CumProfile).HasColumnName("cumprofile");
+            entity.Property(e => e.SumOfCostProfile).HasColumnName("sumofcostprofile");
+            entity.Property(e => e.SumOfMstoneDue).HasColumnName("sumofmstonedue");
+            entity.Property(e => e.SumOfDueDone).HasColumnName("sumofdue__done");
+            entity.Property(e => e.SumOfOnTime).HasColumnName("sumofontime");
+            entity.Property(e => e.CumCwDebit).HasColumnName("cumcwdebit");
+            entity.Property(e => e.CumCwCredit).HasColumnName("cumcwcredit");
+            entity.Property(e => e.CumTotalHours).HasColumnName("cumtotalhours");
+            entity.Property(e => e.CumSubContracts).HasColumnName("cumsubcontracts");
+            entity.Property(e => e.CumTestCosts).HasColumnName("cumtestcosts");
+            entity.Property(e => e.CumPayCosts).HasColumnName("cumpaycosts");
+        });
+
+        modelBuilder.Entity<RsProjectMonthFinalTable>(entity =>
+        {
+            entity.ToTable("projectmonthfinal", schema: "fps");
+            entity.HasKey(e => new { e.Project, e.MonthNo });
+            entity.Property(e => e.Project).HasColumnName("project");
+            entity.Property(e => e.MonthNo).HasColumnName("monthno");
+            entity.Property(e => e.CostProfile).HasColumnName("costprofile");
+            entity.Property(e => e.SubContracts).HasColumnName("subcontracts");
+            entity.Property(e => e.Animals).HasColumnName("animals");
+            entity.Property(e => e.NonAnimals).HasColumnName("nonanimals");
+            entity.Property(e => e.TimeCosts).HasColumnName("timecosts");
+            entity.Property(e => e.TransferCosts).HasColumnName("transfercosts");
+            entity.Property(e => e.TotalCost).HasColumnName("totalcost");
+            entity.Property(e => e.Invoices).HasColumnName("invoices");
+            entity.Property(e => e.Coiw).HasColumnName("coiw");
+            entity.Property(e => e.PortSales).HasColumnName("portsales");
+            entity.Property(e => e.CumCost).HasColumnName("cumcost");
+            entity.Property(e => e.CumProfile).HasColumnName("cumprofile");
+            entity.Property(e => e.PeriodName).HasColumnName("periodname");
+            entity.Property(e => e.SumOfCostProfile).HasColumnName("sumofcostprofile");
+            entity.Property(e => e.CumInvoices).HasColumnName("cuminvoices");
+            entity.Property(e => e.CumCoiw).HasColumnName("cumcoiw");
+            entity.Property(e => e.CumPortSales).HasColumnName("cumportsales");
+            entity.Property(e => e.MstoneDue).HasColumnName("mstonedue");
+            entity.Property(e => e.DueDone).HasColumnName("due__done");
+            entity.Property(e => e.OnTime).HasColumnName("ontime");
+            entity.Property(e => e.SumOfMstoneDue).HasColumnName("sumofmstonedue");
+            entity.Property(e => e.SumOfDueDone).HasColumnName("sumofdue__done");
+            entity.Property(e => e.SumOfOnTime).HasColumnName("sumofontime");
+            entity.Property(e => e.CumFlag).HasColumnName("cumflag");
+            entity.Property(e => e.CwDebit).HasColumnName("cwdebit");
+            entity.Property(e => e.CwCredit).HasColumnName("cwcredit");
+            entity.Property(e => e.CumCwDebit).HasColumnName("cumcwdebit");
+            entity.Property(e => e.CumCwCredit).HasColumnName("cumcwcredit");
+            entity.Property(e => e.TotalHours).HasColumnName("totalhours");
+            entity.Property(e => e.CumTotalHours).HasColumnName("cumtotalhours");
+            entity.Property(e => e.CumSubContracts).HasColumnName("cumsubcontracts");
+            entity.Property(e => e.CumTestCosts).HasColumnName("cumtestcosts");
+            entity.Property(e => e.PayCosts).HasColumnName("paycosts");
+            entity.Property(e => e.CumPayCosts).HasColumnName("cumpaycosts");
+        });
+
+        modelBuilder.Entity<RsTblPeriodTable>(entity =>
+        {
+            entity.ToTable("tblperiod", schema: "fps");
+            entity.HasKey(e => e.EndPeriod);
+            entity.Property(e => e.EndPeriod).HasColumnName("endperiod");
+            entity.Property(e => e.PeriodName).HasColumnName("periodname");
+            entity.Property(e => e.PeriodLocked).HasColumnName("periodlocked");
+        });
+
+        modelBuilder.Entity<RsTblkPeriodMonthTable>(entity =>
+        {
+            entity.ToTable("tblkperiodmonth", schema: "fps");
+            entity.HasKey(e => new { e.PeriodName, e.MonthNo });
+            entity.Property(e => e.PeriodName).HasColumnName("periodname");
+            entity.Property(e => e.MonthNo).HasColumnName("monthno");
+        });
+
+        modelBuilder.Entity<RsTblkpProfitCentreTable>(entity =>
+        {
+            entity.ToTable("tblkpprofitcentre", schema: "fps");
+            entity.HasKey(e => e.ProfitCentre);
+            entity.Property(e => e.ProfitCentre).HasColumnName("profitcentre");
+            entity.Property(e => e.Division).HasColumnName("division");
+        });
+
+        modelBuilder.Entity<RsProfitCentreGradeTable>(entity =>
+        {
+            entity.ToTable("profitcentregrade", schema: "fps");
+            entity.HasKey(e => e.PcGrade);
+            entity.Property(e => e.PcGrade).HasColumnName("pcgrade");
+            entity.Property(e => e.ProfitCentre).HasColumnName("profitcentre");
+            entity.Property(e => e.ChargeRate).HasColumnName("chargerate");
+            entity.Property(e => e.DefraChargeRate).HasColumnName("defrachargerate");
+            entity.Property(e => e.PayRate).HasColumnName("payrate");
+            entity.Property(e => e.Npr).HasColumnName("npr");
+            entity.Property(e => e.Ohr).HasColumnName("ohr");
+        });
+
+        modelBuilder.Entity<RsWorkGroupGradeTable>(entity =>
+        {
+            entity.ToTable("workgroupgrade", schema: "fps");
+            entity.HasKey(e => e.WgGrade);
+            entity.Property(e => e.WgGrade).HasColumnName("wggrade");
+            entity.Property(e => e.ProfitCentreGrade).HasColumnName("profitcentregrade");
+            entity.Property(e => e.WorkGroup).HasColumnName("workgroup");
+            entity.Property(e => e.GradeCode).HasColumnName("gradecode");
+        });
+
+        modelBuilder.Entity<RsTimeCodeValidTable>(entity =>
+        {
+            entity.ToTable("timecodevalid", schema: "fps");
+            entity.HasKey(e => new { e.WorkGroup, e.TimeCode, e.ParentProject });
+            entity.Property(e => e.WorkGroup).HasColumnName("workgroup");
+            entity.Property(e => e.TimeCode).HasColumnName("timecode");
+            entity.Property(e => e.ParentProject).HasColumnName("parentproject");
+        });
+
+        modelBuilder.Entity<RsMonthlyTimeTable>(entity =>
+        {
+            entity.ToTable("monthlytime", schema: "fps");
+            entity.HasKey(e => new { e.PactStaffId, e.WorkGroup, e.TimeCode, e.ParentProject, e.Month });
+            entity.Property(e => e.PactStaffId).HasColumnName("pactstaffid");
+            entity.Property(e => e.WorkGroup).HasColumnName("workgroup");
+            entity.Property(e => e.TimeCode).HasColumnName("timecode");
+            entity.Property(e => e.ParentProject).HasColumnName("parentproject");
+            entity.Property(e => e.Month).HasColumnName("month");
+            entity.Property(e => e.Hours).HasColumnName("hours");
+        });
+
+        modelBuilder.Entity<RsCostCentreTable>(entity =>
+        {
+            entity.ToTable("costcentre", schema: "fps");
+            entity.HasKey(e => e.CostCentre);
+            entity.Property(e => e.CostCentre).HasColumnName("costcentre");
+            entity.Property(e => e.ProfitCentre).HasColumnName("profitcentre");
+        });
+
+        modelBuilder.Entity<RsWorkGroupTable>(entity =>
+        {
+            entity.ToTable("workgroup", schema: "fps");
+            entity.HasKey(e => e.WorkGroup);
+            entity.Property(e => e.WorkGroup).HasColumnName("workgroup");
+            entity.Property(e => e.ProfitCentre).HasColumnName("profitcentre");
+            entity.Property(e => e.CostCentre).HasColumnName("costcentre");
+        });
+
+        modelBuilder.Entity<RsMonthlyOutputTable>(entity =>
+        {
+            entity.ToTable("monthlyoutput", schema: "fps");
+            entity.HasKey(e => new { e.Buyer, e.WorkGroup, e.TestCode, e.Month });
+            entity.Property(e => e.Buyer).HasColumnName("buyer");
+            entity.Property(e => e.WorkGroup).HasColumnName("workgroup");
+            entity.Property(e => e.TestCode).HasColumnName("testcode");
+            entity.Property(e => e.Month).HasColumnName("month");
+            entity.Property(e => e.Volume).HasColumnName("volume");
+        });
+
+        modelBuilder.Entity<RsTlkpTestReqmtTable>(entity =>
+        {
+            entity.ToTable("tlkptestreqmt", schema: "fps");
+            entity.HasKey(e => new { e.ProjectBuyerCode, e.TestCode });
+            entity.Property(e => e.ProjectBuyerCode).HasColumnName("projectbuyercode");
+            entity.Property(e => e.TestCode).HasColumnName("testcode");
+            entity.Property(e => e.UnitPrice).HasColumnName("unitprice");
+        });
+
+        modelBuilder.Entity<RsPeriodMonthlyOutputTable>(entity =>
+        {
+            entity.ToTable("period_monthlyoutput", schema: "fps");
+            entity.HasKey(e => new { e.Period, e.Project, e.Month });
+            entity.Property(e => e.Period).HasColumnName("period");
+            entity.Property(e => e.Project).HasColumnName("project");
+            entity.Property(e => e.Month).HasColumnName("month");
+        });
+
+        modelBuilder.Entity<RsProjSubContractTable>(entity =>
+        {
+            entity.ToTable("proj_subcontract", schema: "fps");
+            entity.HasKey(e => e.SubContCounter);
+            entity.Property(e => e.SubContCounter).HasColumnName("subcontcounter");
+            entity.Property(e => e.Project).HasColumnName("project");
+            entity.Property(e => e.Month).HasColumnName("month");
+            entity.Property(e => e.Amount).HasColumnName("amount");
+            entity.Property(e => e.AcctCode).HasColumnName("acctcode");
+        });
+
+        modelBuilder.Entity<RsPeriodProjSubContractTable>(entity =>
+        {
+            entity.ToTable("period_proj_subcontract", schema: "fps");
+            entity.HasKey(e => new { e.Period, e.SubContCounter });
+            entity.Property(e => e.Period).HasColumnName("period");
+            entity.Property(e => e.SubContCounter).HasColumnName("subcontcounter");
+            entity.Property(e => e.Project).HasColumnName("project");
+            entity.Property(e => e.Month).HasColumnName("month");
+        });
+
+        modelBuilder.Entity<RsTblWgEmployeeTable>(entity =>
+        {
+            entity.ToTable("tblwgemployee", schema: "fps");
+            entity.HasKey(e => e.PactId);
+            entity.Property(e => e.PactId).HasColumnName("pactid");
+            entity.Property(e => e.SpNumber).HasColumnName("spnumber");
+        });
+
+        modelBuilder.Entity<RsPeriodTimeCostCalcsTable>(entity =>
+        {
+            entity.ToTable("period_timecostcalcs", schema: "fps");
+            entity.HasKey(e => new { e.Period, e.Project, e.Month, e.Name });
+            entity.Property(e => e.Period).HasColumnName("period");
+            entity.Property(e => e.Project).HasColumnName("project");
+            entity.Property(e => e.Month).HasColumnName("month");
+            entity.Property(e => e.Name).HasColumnName("name");
+            entity.Property(e => e.GradeCode).HasColumnName("gradecode");
+            entity.Property(e => e.SpNumber).HasColumnName("spnumber");
+        });
+
+        modelBuilder.Entity<RsRecreateSummariesLogTable>(entity =>
+        {
+            entity.ToTable("recreatesummaries_log", schema: "fps");
+            entity.HasKey(e => new { e.UserId, e.Period, e.DateDone });
+            entity.Property(e => e.UserId).HasColumnName("userid");
+            entity.Property(e => e.Period).HasColumnName("period");
+            entity.Property(e => e.DateDone).HasColumnName("datedone");
+        });
+
+        // Views consumed by RecreateSummaries
+        modelBuilder.Entity<RsQryTotalAdditionalCostsView>(entity =>
+        {
+            entity.ToView("qrytotaladditionalcosts", schema: "fps");
+            entity.HasNoKey();
+            entity.Property(e => e.JobCode).HasColumnName("jobcode");
+            entity.Property(e => e.TotalAdditionalCosts).HasColumnName("totaladditionalcosts");
+        });
+
+        modelBuilder.Entity<RsQryTotalAnimalCostsView>(entity =>
+        {
+            entity.ToView("qrytotalanimalcosts", schema: "fps");
+            entity.HasNoKey();
+            entity.Property(e => e.JobCode).HasColumnName("jobcode");
+            entity.Property(e => e.TotalAnimalCosts).HasColumnName("totalanimalcosts");
+        });
+
+        modelBuilder.Entity<RsQryTotalStaffCostsView>(entity =>
+        {
+            entity.ToView("qrytotalstaffcosts", schema: "fps");
+            entity.HasNoKey();
+            entity.Property(e => e.JobCode).HasColumnName("jobcode");
+            entity.Property(e => e.TotalStaffCosts).HasColumnName("totalstaffcosts");
+            entity.Property(e => e.TotalPayCosts).HasColumnName("totalpaycosts");
+        });
+
+        modelBuilder.Entity<RsQryTotalTestCostsView>(entity =>
+        {
+            entity.ToView("qrytotaltestcosts", schema: "fps");
+            entity.HasNoKey();
+            entity.Property(e => e.JobCode).HasColumnName("jobcode");
+            entity.Property(e => e.TotalTestCosts).HasColumnName("totaltestcosts");
+        });
+
+        modelBuilder.Entity<RsQryProjectMonthCwView>(entity =>
+        {
+            entity.ToView("qryprojectmonthcw", schema: "fps");
+            entity.HasNoKey();
+            entity.Property(e => e.Project).HasColumnName("project");
+            entity.Property(e => e.MonthNo).HasColumnName("monthno");
+            entity.Property(e => e.CwDebit).HasColumnName("cwdebit");
+            entity.Property(e => e.CwCredit).HasColumnName("cwcredit");
+        });
+
+        modelBuilder.Entity<RsVpactTblStaffView>(entity =>
+        {
+            entity.ToView("vpacttblstaff", schema: "fps");
+            entity.HasNoKey();
+            entity.Property(e => e.PactId).HasColumnName("pactid");
+            entity.Property(e => e.Name).HasColumnName("name");
+            entity.Property(e => e.WorkGroupGrade).HasColumnName("workgroupgrade");
+        });
+
+        modelBuilder.Entity<RsQryJobMonthSubContractsView>(entity =>
+        {
+            entity.ToView("qryjobmonth_subcontracts", schema: "fps");
+            entity.HasNoKey();
+            entity.Property(e => e.Project).HasColumnName("project");
+            entity.Property(e => e.Month).HasColumnName("month");
+            entity.Property(e => e.Total).HasColumnName("total");
+            entity.Property(e => e.Animals).HasColumnName("animals");
+            entity.Property(e => e.Other).HasColumnName("other");
+        });
+
+        modelBuilder.Entity<RsQryJobMonthTimeView>(entity =>
+        {
+            entity.ToView("qryjobmonth_time", schema: "fps");
+            entity.HasNoKey();
+            entity.Property(e => e.Project).HasColumnName("project");
+            entity.Property(e => e.Month).HasColumnName("month");
+            entity.Property(e => e.SumOfCost).HasColumnName("sumofcost");
+            entity.Property(e => e.SumOfHours).HasColumnName("sumofhours");
+            entity.Property(e => e.SumOfPayRate).HasColumnName("sumofpayrate");
+            entity.Property(e => e.WorkCost).HasColumnName("workcost");
+        });
+
+        modelBuilder.Entity<RsQryJobMonthMilestoneView>(entity =>
+        {
+            entity.ToView("qryjobmonthmilestone", schema: "fps");
+            entity.HasNoKey();
+            entity.Property(e => e.Project).HasColumnName("project");
+            entity.Property(e => e.DueMonth).HasColumnName("duemonth");
+            entity.Property(e => e.MstoneDue).HasColumnName("mstonedue");
+            entity.Property(e => e.DueDone).HasColumnName("due__done");
+            entity.Property(e => e.OnTime).HasColumnName("ontime");
+        });
+
+        modelBuilder.Entity<RsQryJobMonthTransfersTotalView>(entity =>
+        {
+            entity.ToView("qryjobmonth_transferstotal", schema: "fps");
+            entity.HasNoKey();
+            entity.Property(e => e.Project).HasColumnName("project");
+            entity.Property(e => e.Month).HasColumnName("month");
+            entity.Property(e => e.SumOfTransferCost).HasColumnName("sumoftransfercost");
+        });
+
+        modelBuilder.Entity<RsQryJobMonthInvoicesView>(entity =>
+        {
+            entity.ToView("qryjobmonth_invoices", schema: "fps");
+            entity.HasNoKey();
+            entity.Property(e => e.ProjectParent).HasColumnName("projectparent");
+            entity.Property(e => e.Month).HasColumnName("month");
+            entity.Property(e => e.SumOfAmount1).HasColumnName("sumofamount1");
+        });
+
+        modelBuilder.Entity<RsQryJobMonthPortfolioSalesView>(entity =>
+        {
+            entity.ToView("qryjobmonthportfoliosales", schema: "fps");
+            entity.HasNoKey();
+            entity.Property(e => e.PlanPortfolio).HasColumnName("planportfolio");
+            entity.Property(e => e.Month).HasColumnName("month");
+            entity.Property(e => e.Fee).HasColumnName("fee");
+        });
+
+        modelBuilder.Entity<RsQryJobMonthTotProfileView>(entity =>
+        {
+            entity.ToView("qryjobmonth_totprofile", schema: "fps");
+            entity.HasNoKey();
+            entity.Property(e => e.Project).HasColumnName("project");
+            entity.Property(e => e.SumOfCostProfile).HasColumnName("sumofcostprofile");
         });
     }
 }
