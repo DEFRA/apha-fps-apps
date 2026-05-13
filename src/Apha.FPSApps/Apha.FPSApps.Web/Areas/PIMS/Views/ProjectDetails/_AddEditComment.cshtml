@@ -18,6 +18,7 @@
                 <div class="govuk-error-summary" role="alert"
                      aria-labelledby="editFormErrorTitle" tabindex="-1" style="display: none;">
                     <h2 class="govuk-error-summary__title" id="editFormErrorTitle">
+                        There is a problem
                     </h2>
                     <div class="govuk-error-summary__body">
                         <ul class="govuk-list govuk-error-summary__list"></ul>
@@ -30,7 +31,7 @@
                     </label>
                     <select class="govuk-select" asp-for="Year" required
                             asp-items="Model.YearOptions" style="width: stretch;">
-                        <option value="">Select a Year</option>
+                        
                     </select>
                     <span asp-validation-for="Year" class="govuk-error-message" style="display:none;"></span>
                 </div>
