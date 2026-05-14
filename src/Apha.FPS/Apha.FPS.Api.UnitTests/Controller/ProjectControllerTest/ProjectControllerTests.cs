@@ -154,13 +154,11 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectControllerTest
         }
 
         [Fact]
-        public async Task GetProjectByIdAsync_NotFound_ReturnsNotFound()
+        public async Task GetProjectByIdAsync_NotFound_ThrowsArgumentException()
         {
             _serviceMock.GetProjectByIdAsync("NOPE").Returns((ProjectDto?)null);
 
-            var result = await _controller.GetProjectByIdAsync("NOPE");
-
-            Assert.IsType<NotFoundResult>(result.Result);
+            await Assert.ThrowsAsync<ArgumentException>(() => _controller.GetProjectByIdAsync("NOPE"));
         }
 
         [Fact]
@@ -275,14 +273,12 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectControllerTest
         }
 
         [Fact]
-        public async Task ChangeProjectCodeAsync_OldCodeNotFound_ReturnsNotFound()
+        public async Task ChangeProjectCodeAsync_OldCodeNotFound_ThrowsArgumentException()
         {
             var req = new ChangeProjectCodeReq("NOPE", "NEW1");
             _serviceMock.GetProjectByIdAsync("NOPE").Returns((ProjectDto?)null);
 
-            var result = await _controller.ChangeProjectCodeAsync(req);
-
-            Assert.IsType<NotFoundObjectResult>(result);
+            await Assert.ThrowsAsync<ArgumentException>(() => _controller.ChangeProjectCodeAsync(req));
         }
 
         [Fact]
@@ -402,7 +398,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectControllerTest
         }
 
         [Fact]
-        public async Task UpdatePactProjectDetailsAsync_NotFound_ReturnsNotFound()
+        public async Task UpdatePactProjectDetailsAsync_NotFound_ThrowsArgumentException()
         {
             var req = new ProjectReq { ParentProject = "PP001", ProjectTitle = "Alpha" };
             var dto = new ProjectDto { ParentProject = "PP001" };
@@ -410,9 +406,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectControllerTest
             _mapperMock.Map<ProjectDto>(req).Returns(dto);
             _serviceMock.UpdatePactProjectDetailsAsync(dto).Returns((ProjectDto?)null);
 
-            var result = await _controller.UpdatePactProjectDetailsAsync(req);
-
-            Assert.IsType<NotFoundResult>(result.Result);
+            await Assert.ThrowsAsync<ArgumentException>(() => _controller.UpdatePactProjectDetailsAsync(req));
         }
 
         #endregion
@@ -453,21 +447,17 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectControllerTest
         }
 
         [Fact]
-        public async Task DeleteProjectAsync_NotFound_ReturnsNotFound()
+        public async Task DeleteProjectAsync_NotFound_ThrowsArgumentException()
         {
             _serviceMock.DeleteProjectAsync("NOPE").Returns(false);
 
-            var result = await _controller.DeleteProjectAsync("NOPE");
-
-            Assert.IsType<NotFoundResult>(result);
+            await Assert.ThrowsAsync<ArgumentException>(() => _controller.DeleteProjectAsync("NOPE"));
         }
 
         [Fact]
-        public async Task DeleteProjectAsync_EmptyId_ReturnsBadRequest()
+        public async Task DeleteProjectAsync_EmptyId_ThrowsArgumentException()
         {
-            var result = await _controller.DeleteProjectAsync("");
-
-            Assert.IsType<BadRequestObjectResult>(result);
+            await Assert.ThrowsAsync<ArgumentException>(() => _controller.DeleteProjectAsync(""));
         }
 
         #endregion
@@ -497,7 +487,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectControllerTest
         }
 
         [Fact]
-        public async Task UpdatePactPortfolioDetailsAsync_ServiceReturnsNull_ReturnsNotFound()
+        public async Task UpdatePactPortfolioDetailsAsync_ServiceReturnsNull_ThrowsArgumentException()
         {
             // Arrange
             var request    = new ProjectReq { ParentProject = "PROJ999" };
@@ -506,11 +496,8 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectControllerTest
             _mapperMock.Map<ProjectDto>(request).Returns(projectDto);
             _serviceMock.UpdatePactPortfolioDetailsAsync(projectDto).Returns((ProjectDto?)null);
 
-            // Act
-            var result = await _controller.UpdatePactPortfolioDetailsAsync(request);
-
-            // Assert
-            Assert.IsType<NotFoundResult>(result.Result);
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentException>(() => _controller.UpdatePactPortfolioDetailsAsync(request));
         }
 
         [Fact]
@@ -519,9 +506,12 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectControllerTest
             // Arrange
             var request    = new ProjectReq { ParentProject = "PROJ001" };
             var projectDto = new ProjectDto { ParentProject = "PROJ001" };
+            var updatedDto = new ProjectDto { ParentProject = "PROJ001" };
+            var projectRes = new ProjectRes { ParentProject = "PROJ001" };
 
             _mapperMock.Map<ProjectDto>(request).Returns(projectDto);
-            _serviceMock.UpdatePactPortfolioDetailsAsync(projectDto).Returns((ProjectDto?)null);
+            _serviceMock.UpdatePactPortfolioDetailsAsync(projectDto).Returns(updatedDto);
+            _mapperMock.Map<ProjectRes>(updatedDto).Returns(projectRes);
 
             // Act
             await _controller.UpdatePactPortfolioDetailsAsync(request);
@@ -536,9 +526,12 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectControllerTest
             // Arrange
             var request    = new ProjectReq { ParentProject = "PROJ001" };
             var projectDto = new ProjectDto { ParentProject = "PROJ001" };
+            var updatedDto = new ProjectDto { ParentProject = "PROJ001" };
+            var projectRes = new ProjectRes { ParentProject = "PROJ001" };
 
             _mapperMock.Map<ProjectDto>(request).Returns(projectDto);
-            _serviceMock.UpdatePactPortfolioDetailsAsync(projectDto).Returns((ProjectDto?)null);
+            _serviceMock.UpdatePactPortfolioDetailsAsync(projectDto).Returns(updatedDto);
+            _mapperMock.Map<ProjectRes>(updatedDto).Returns(projectRes);
 
             // Act
             await _controller.UpdatePactPortfolioDetailsAsync(request);

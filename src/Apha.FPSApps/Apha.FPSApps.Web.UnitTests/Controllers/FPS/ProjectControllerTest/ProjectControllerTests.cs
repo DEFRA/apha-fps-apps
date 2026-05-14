@@ -127,7 +127,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectControllerTest
             var jsonResult = Assert.IsType<JsonResult>(result);
             var value = GetJsonResultValue<JsonResponse>(jsonResult);
             Assert.False(value!.success);
-            Assert.Equal("Failed to create project.", value.message);
+            Assert.Equal("Create failed", value.message);
         }
 
         [Fact]
@@ -281,7 +281,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectControllerTest
             var jsonResult = Assert.IsType<JsonResult>(result);
             var value = GetJsonResultValue<JsonResponse>(jsonResult);
             Assert.False(value!.success);
-            Assert.Equal("Failed to delete project.", value.message);
+            Assert.Equal("Delete failed", value.message);
         }
 
         [Theory]
@@ -328,7 +328,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectControllerTest
             var jsonResult = Assert.IsType<JsonResult>(result);
             var value = GetJsonResultValue<JsonResponse>(jsonResult);
             Assert.False(value!.success);
-            Assert.Equal("Failed to change project code.", value.message);
+            Assert.Equal("Change failed", value.message);
         }
 
         [Theory]
