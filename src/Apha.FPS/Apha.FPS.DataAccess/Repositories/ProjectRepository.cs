@@ -150,8 +150,7 @@ namespace Apha.FPS.DataAccess.Repositories
             entity.Disease = project.Disease;
             entity.IsDefraProject = project.IsDefraProject;
             entity.Finished = project.Finished;
-            entity.Comments = project.Comments;
-            entity.BudgetCvl = project.BudgetCvl;
+            entity.Comments = project.Comments;            
             entity.TransferIncome = project.TransferIncome;
             entity.PvsIncome = project.PvsIncome;
             entity.WipEoy = project.WipEoy;

@@ -111,9 +111,10 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
 
         public async Task<ApiResponseDto<decimal>> GetTotalAmountAsync(string? parentProject)
         {
-            string url = string.IsNullOrWhiteSpace(parentProject)
-                ? PactApiEndpoints.GetProjectInvoiceTotalAmount
-                : QueryStringHelper.AddQueryString(PactApiEndpoints.GetProjectInvoiceTotalAmount, new { parentProject });
+            if (string.IsNullOrWhiteSpace(parentProject))
+                return ApiResponseDto<decimal>.SuccessResponse(0m);
+
+            string url = QueryStringHelper.AddQueryString(PactApiEndpoints.GetProjectInvoiceTotalAmount, new { parentProject });
 
             var response = await _http.GetAsync<decimal?>(url);
             if (response.Success)
