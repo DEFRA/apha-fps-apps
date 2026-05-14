@@ -273,22 +273,22 @@ namespace Apha.FPS.DataAccess.Repositories
             var dict = (IDictionary<string, object>)filterModel;
 
             if (dict.TryGetValue("PactId", out var pactId) && pactId != null)
-                query = query.Where(x => x.PactId != null && x.PactId.ToLower().Contains(pactId.ToString()!.ToLower()));
+                query = query.Where(x => EF.Functions.ILike(x.PactId!.ToLower(), $"%{pactId.ToString()!.ToLower()}%"));
 
             if (dict.TryGetValue("SpNumber", out var spNumber) && spNumber != null)
-                query = query.Where(x => x.SpNumber != null && x.SpNumber.ToLower().Contains(spNumber.ToString()!.ToLower()));
+                query = query.Where(x => EF.Functions.ILike(x.SpNumber!.ToLower(), $"%{spNumber.ToString()!.ToLower()}%"));
 
             if (dict.TryGetValue("Name", out var name) && name != null)
-                query = query.Where(x => x.Name != null && x.Name.ToLower().Contains(name.ToString()!.ToLower()));
+                query = query.Where(x => EF.Functions.ILike(x.Name!.ToLower(), $"%{name.ToString()!.ToLower()}%"));
 
             if (dict.TryGetValue("WorkGroupGrade", out var wgg) && wgg != null)
-                query = query.Where(x => x.WorkGroupGrade != null && x.WorkGroupGrade.ToLower().Contains(wgg.ToString()!.ToLower()));
+                query = query.Where(x => EF.Functions.ILike(x.WorkGroupGrade!.ToLower(), $"%{wgg.ToString()!.ToLower()}%"));
 
             if (dict.TryGetValue("Title", out var title) && title != null)
-                query = query.Where(x => x.Title != null && x.Title.ToLower().Contains(title.ToString()!.ToLower()));
+                query = query.Where(x => EF.Functions.ILike(x.Title!.ToLower(), $"%{title.ToString()!.ToLower()}%"));
 
             if (dict.TryGetValue("PersonStatus", out var personStatus) && personStatus != null)
-                query = query.Where(x => x.PersonStatus != null && x.PersonStatus.ToLower().Contains(personStatus.ToString()!.ToLower()));
+                query = query.Where(x => EF.Functions.ILike(x.PersonStatus!.ToLower(), $"%{personStatus.ToString()!.ToLower()}%"));
 
             return query;
         }

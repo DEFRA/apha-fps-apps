@@ -2000,12 +2000,12 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             Assert.Equal(2, result.Data.Count());
         }
 
-        // ── ApplyWorkGroupPeopleFilter – EF.Functions.Like string filter branches ──
+        // ── ApplyWorkGroupPeopleFilter – string filter branches ───────────────
 
         [Fact]
         public async Task GetWorkGroupPeopleAsync_Filter_ByPactId_ReturnsMatchingPeople()
         {
-            // Covers the EF.Functions.Like body on line 276 (PactId branch)
+            // Arrange
             var people = new List<WorkGroupPeople>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1", PactId = "PACT001" },
@@ -2019,8 +2019,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
                 Filter = "{\"PactId\":\"PACT001\"}"
             };
 
+            // Act
             var result = await repo.GetWorkGroupPeopleAsync(query);
 
+            // Assert
             Assert.Single(result.Data);
             Assert.Equal("Alice", result.Data.First().Name);
         }
@@ -2028,7 +2030,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         [Fact]
         public async Task GetWorkGroupPeopleAsync_Filter_BySpNumber_ReturnsMatchingPeople()
         {
-            // Covers the EF.Functions.Like body on line 279 (SpNumber branch)
+            // Arrange
             var people = new List<WorkGroupPeople>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1", SpNumber = "SP001" },
@@ -2042,8 +2044,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
                 Filter = "{\"SpNumber\":\"SP001\"}"
             };
 
+            // Act
             var result = await repo.GetWorkGroupPeopleAsync(query);
 
+            // Assert
             Assert.Single(result.Data);
             Assert.Equal("Alice", result.Data.First().Name);
         }
@@ -2051,7 +2055,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         [Fact]
         public async Task GetWorkGroupPeopleAsync_Filter_ByName_ReturnsMatchingPeople()
         {
-            // Covers the EF.Functions.Like body on line 282 (Name branch)
+            // Arrange
             var people = new List<WorkGroupPeople>
             {
                 new() { Name = "Alice Smith", WorkGroupGrade = "WG1" },
@@ -2065,8 +2069,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
                 Filter = "{\"Name\":\"alice\"}"
             };
 
+            // Act
             var result = await repo.GetWorkGroupPeopleAsync(query);
 
+            // Assert
             Assert.Single(result.Data);
             Assert.Equal("Alice Smith", result.Data.First().Name);
         }
@@ -2074,7 +2080,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         [Fact]
         public async Task GetWorkGroupPeopleAsync_Filter_ByWorkGroupGrade_ReturnsMatchingPeople()
         {
-            // Covers the EF.Functions.Like body on line 285 (WorkGroupGrade branch)
+            // Arrange
             var people = new List<WorkGroupPeople>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1" },
@@ -2092,8 +2098,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
                 Filter = "{\"WorkGroupGrade\":\"WG1\"}"
             };
 
+            // Act
             var result = await repo.GetWorkGroupPeopleAsync(query);
 
+            // Assert
             Assert.Single(result.Data);
             Assert.Equal("Alice", result.Data.First().Name);
         }
@@ -2101,7 +2109,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         [Fact]
         public async Task GetWorkGroupPeopleAsync_Filter_ByTitle_ReturnsMatchingPeople()
         {
-            // Covers the EF.Functions.Like body on line 288 (Title branch)
+            // Arrange
             var people = new List<WorkGroupPeople>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1", Title = "Analyst" },
@@ -2115,8 +2123,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
                 Filter = "{\"Title\":\"Analyst\"}"
             };
 
+            // Act
             var result = await repo.GetWorkGroupPeopleAsync(query);
 
+            // Assert
             Assert.Single(result.Data);
             Assert.Equal("Alice", result.Data.First().Name);
         }
@@ -2124,7 +2134,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         [Fact]
         public async Task GetWorkGroupPeopleAsync_Filter_ByPersonStatus_ReturnsMatchingPeople()
         {
-            // Covers the EF.Functions.Like body on line 291 (PersonStatus branch)
+            // Arrange
             var people = new List<WorkGroupPeople>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1", PersonStatus = "Active" },
@@ -2138,8 +2148,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
                 Filter = "{\"PersonStatus\":\"Active\"}"
             };
 
+            // Act
             var result = await repo.GetWorkGroupPeopleAsync(query);
 
+            // Assert
             Assert.Single(result.Data);
             Assert.Equal("Alice", result.Data.First().Name);
         }
@@ -2147,7 +2159,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         [Fact]
         public async Task GetWorkGroupPeopleAsync_Filter_AllStringFields_FiltersCorrectly()
         {
-            // Covers all 6 EF.Functions.Like branches simultaneously
+            // Arrange
             var people = new List<WorkGroupPeople>
             {
                 new() { Name = "Alice Smith", WorkGroupGrade = "WG1", PactId = "PACT001",
@@ -2167,10 +2179,177 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
                 Filter = "{\"PactId\":\"PACT001\",\"SpNumber\":\"SP001\",\"Name\":\"alice\",\"WorkGroupGrade\":\"WG1\",\"Title\":\"Analyst\",\"PersonStatus\":\"Active\"}"
             };
 
+            // Act
             var result = await repo.GetWorkGroupPeopleAsync(query);
 
+            // Assert
             Assert.Single(result.Data);
             Assert.Equal("Alice Smith", result.Data.First().Name);
+        }
+
+        #endregion
+
+        #region ApplyEmployeeFilter – missing branch coverage
+
+        [Fact]
+        public async Task GetEmployeesByPrefixAsync_WithEmptyFilter_ReturnsAll()
+        {
+            // Covers the string.IsNullOrEmpty(filter) early-return in ApplyEmployeeFilter
+            // Arrange
+            var employees = new List<Employee>
+            {
+                new() { SPNumber = "SP001", FirstName = "Alice", LastName = "Smith" },
+                new() { SPNumber = "SP002", FirstName = "Bob",   LastName = "Jones" }
+            };
+            var repo = CreateRepository(employees);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = "" };
+
+            // Act
+            var result = await repo.GetEmployeesByPrefixAsync(query, "SP");
+
+            // Assert – empty filter returns all records unfiltered
+            Assert.Equal(2, result.Data.Count());
+        }
+
+        [Fact]
+        public async Task GetEmployeesByPrefixAsync_WithNullFilterModel_ReturnsAll()
+        {
+            // Covers the filterModel == null branch in ApplyEmployeeFilter
+            // JSON literal "null" deserialises to null ExpandoObject
+            // Arrange
+            var employees = new List<Employee>
+            {
+                new() { SPNumber = "SP001", FirstName = "Alice", LastName = "Smith" },
+                new() { SPNumber = "SP002", FirstName = "Bob",   LastName = "Jones" }
+            };
+            var repo = CreateRepository(employees);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = "null" };
+
+            // Act
+            var result = await repo.GetEmployeesByPrefixAsync(query, "SP");
+
+            // Assert – null filterModel falls through; all rows returned
+            Assert.Equal(2, result.Data.Count());
+        }
+
+        [Fact]
+        public async Task GetEmployeesByPrefixAsync_WithAllNullFilterValues_SkipsAllPredicates()
+        {
+            // Covers the "&& spNumber != null", "&& firstName != null", etc. guards in
+            // ApplyEmployeeFilter – when a key is present but the JSON value is null
+            // the predicate must be skipped and all rows must be returned.
+            // Arrange
+            var employees = new List<Employee>
+            {
+                new() { SPNumber = "SP001", FirstName = "Alice", LastName = "Smith",  Title = "Analyst" },
+                new() { SPNumber = "SP002", FirstName = "Bob",   LastName = "Jones",  Title = "Manager" }
+            };
+            var repo = CreateRepository(employees);
+            // All four string-filter keys present with explicit JSON null values
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"SPNumber\":null,\"FirstName\":null,\"LastName\":null,\"Title\":null}"
+            };
+
+            // Act
+            var result = await repo.GetEmployeesByPrefixAsync(query, "SP");
+
+            // Assert – null-value guards skip every predicate; both rows returned
+            Assert.Equal(2, result.Data.Count());
+        }
+
+        [Fact]
+        public async Task GetEmployeesByPrefixAsync_WithAllStringFilters_FiltersCorrectly()
+        {
+            // Covers all 4 ILike branches in ApplyEmployeeFilter simultaneously
+            // Arrange
+            var employees = new List<Employee>
+            {
+                new() { SPNumber = "SP001", FirstName = "Alice", LastName = "Smith",  Title = "Analyst" },
+                new() { SPNumber = "SP002", FirstName = "Alice", LastName = "Brown",  Title = "Manager" },
+                new() { SPNumber = "SP003", FirstName = "Bob",   LastName = "Smith",  Title = "Analyst" }
+            };
+            var repo = CreateRepository(employees);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"SPNumber\":\"SP001\",\"FirstName\":\"Alice\",\"LastName\":\"Smith\",\"Title\":\"Analyst\"}"
+            };
+
+            // Act
+            var result = await repo.GetEmployeesByPrefixAsync(query, "SP");
+
+            // Assert – only SP001 matches all four filters
+            Assert.Single(result.Data);
+            Assert.Equal("SP001", result.Data.First().SPNumber);
+        }
+
+        #endregion
+
+        #region GetAllManagersAsync – empty GradeCode branch
+
+        [Fact]
+        public async Task GetAllManagersAsync_ExcludesEmptyGradeCode()
+        {
+            // Covers the grade.GradeCode.Length > 0 branch in GetAllManagersAsync
+            // A grade with an empty string GradeCode must be excluded even though it is not null.
+            // Arrange
+            var staffActiveViews = new List<StaffActiveView>
+            {
+                new() { StaffID = "S001", Name = "Manager One", WorkgroupGrade = "WG01" },
+                new() { StaffID = "S002", Name = "Manager Two", WorkgroupGrade = "WG02" }
+            };
+            var workgroupGrades = new List<WorkgroupGradeGeneralView>
+            {
+                new() { WgGrade = "WG01", GradeCode = "M01", WorkGroup = "Management" },
+                new() { WgGrade = "WG02", GradeCode = "",    WorkGroup = "Management" }  // empty – excluded
+            };
+            var repo = CreateRepository(
+                new List<Employee>(),
+                staffActiveViews,
+                workgroupGrades);
+
+            // Act
+            var result = await repo.GetAllManagersAsync();
+
+            // Assert – the record with empty GradeCode is excluded
+            var resultList = result.ToList();
+            Assert.Single(resultList);
+            Assert.Equal("Manager One", resultList[0].Name);
+        }
+
+        #endregion
+
+        #region GetAllManagersAsync – null staff Name branch
+
+        [Fact]
+        public async Task GetAllManagersAsync_ExcludesNullStaffName()
+        {
+            // Covers the staff.Name != null guard in GetAllManagersAsync
+            // Arrange
+            var staffActiveViews = new List<StaffActiveView>
+            {
+                new() { StaffID = "S001", Name = "Manager One", WorkgroupGrade = "WG01" },
+                new() { StaffID = "S002", Name = null,          WorkgroupGrade = "WG02" }  // excluded
+            };
+            var workgroupGrades = new List<WorkgroupGradeGeneralView>
+            {
+                new() { WgGrade = "WG01", GradeCode = "M01", WorkGroup = "Management" },
+                new() { WgGrade = "WG02", GradeCode = "M02", WorkGroup = "Management" }
+            };
+            var repo = CreateRepository(
+                new List<Employee>(),
+                staffActiveViews,
+                workgroupGrades);
+
+            // Act
+            var result = await repo.GetAllManagersAsync();
+
+            // Assert – the entry with null Name is excluded
+            var resultList = result.ToList();
+            Assert.Single(resultList);
+            Assert.Equal("Manager One", resultList[0].Name);
         }
 
         #endregion
