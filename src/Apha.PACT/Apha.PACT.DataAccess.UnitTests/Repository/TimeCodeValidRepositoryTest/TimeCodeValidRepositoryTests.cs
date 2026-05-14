@@ -155,6 +155,134 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TimeCodeValidRepositoryTest
 
         #endregion
 
+        #region GetPagedTimeCodesTestCodeAsync
+
+        [Fact]
+        public async Task GetPagedTimeCodesTestCodeAsync_WithTestCodeAndParentProject_ReturnsFilteredPagedResult()
+        {
+            // Arrange
+            var timeCodes = new List<TimeCodeValid>
+            {
+                new() { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", TestCode = "TST1", FpsYear = DefaultTestFpsYear },
+                new() { TimeCode = "TC2", WorkGroup = "WG2", ParentProject = "PRJ2", TestCode = "TST2", FpsYear = DefaultTestFpsYear },
+                new() { TimeCode = "TC3", WorkGroup = "WG3", ParentProject = "PRJ1", TestCode = "TST2", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(timeCodes);
+            var query = new PaginationParameters<string>();
+
+            // Act
+            var result = await repo.GetPagedTimeCodesTestCodeAsync(query, null, "TST1", "PRJ1");
+
+            // Assert
+            Assert.Single(result.Data);
+            Assert.Equal("TC1", result.Data.First().TimeCode);
+            Assert.Equal("TST1", result.Data.First().TestCode);
+            Assert.Equal(1, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetPagedTimeCodesTestCodeAsync_WithTestCodeOnly_ReturnsAllMatchingTestCode()
+        {
+            // Arrange
+            var timeCodes = new List<TimeCodeValid>
+            {
+                new() { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", TestCode = "TST1", FpsYear = DefaultTestFpsYear },
+                new() { TimeCode = "TC2", WorkGroup = "WG2", ParentProject = "PRJ2", TestCode = "TST1", FpsYear = DefaultTestFpsYear },
+                new() { TimeCode = "TC3", WorkGroup = "WG3", ParentProject = "PRJ1", TestCode = "TST2", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(timeCodes);
+            var query = new PaginationParameters<string>();
+
+            // Act
+            var result = await repo.GetPagedTimeCodesTestCodeAsync(query, null, "TST1", null);
+
+            // Assert
+            Assert.Equal(2, result.Data.Count());
+            Assert.All(result.Data, tc => Assert.Equal("TST1", tc.TestCode));
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetPagedTimeCodesTestCodeAsync_WithParentProjectOnly_ReturnsAllMatchingProject()
+        {
+            // Arrange
+            var timeCodes = new List<TimeCodeValid>
+            {
+                new() { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", TestCode = "TST1", FpsYear = DefaultTestFpsYear },
+                new() { TimeCode = "TC2", WorkGroup = "WG2", ParentProject = "PRJ2", TestCode = "TST2", FpsYear = DefaultTestFpsYear },
+                new() { TimeCode = "TC3", WorkGroup = "WG3", ParentProject = "PRJ1", TestCode = "TST2", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(timeCodes);
+            var query = new PaginationParameters<string>();
+
+            // Act
+            var result = await repo.GetPagedTimeCodesTestCodeAsync(query, null, null, "PRJ1");
+
+            // Assert
+            Assert.Equal(2, result.Data.Count());
+            Assert.All(result.Data, tc => Assert.Equal("PRJ1", tc.ParentProject));
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetPagedTimeCodesTestCodeAsync_WithNullParameters_ReturnsAllRecordsPaged()
+        {
+            // Arrange
+            var timeCodes = new List<TimeCodeValid>
+            {
+                new() { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", TestCode = "TST1", FpsYear = DefaultTestFpsYear },
+                new() { TimeCode = "TC2", WorkGroup = "WG2", ParentProject = "PRJ2", TestCode = "TST2", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(timeCodes);
+            var query = new PaginationParameters<string>();
+
+            // Act
+            var result = await repo.GetPagedTimeCodesTestCodeAsync(query, null, null, null);
+
+            // Assert
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetPagedTimeCodesTestCodeAsync_NoMatch_ReturnsEmptyPagedResult()
+        {
+            // Arrange
+            var repo = CreateRepository([]);
+            var query = new PaginationParameters<string>();
+
+            // Act
+            var result = await repo.GetPagedTimeCodesTestCodeAsync(query, null, "TST_NONE", "PRJ_NONE");
+
+            // Assert
+            Assert.Empty(result.Data);
+            Assert.Equal(0, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetPagedTimeCodesTestCodeAsync_WithPagination_ReturnsCorrectPage()
+        {
+            // Arrange
+            var timeCodes = new List<TimeCodeValid>
+            {
+                new() { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", TestCode = "TST1", FpsYear = DefaultTestFpsYear },
+                new() { TimeCode = "TC2", WorkGroup = "WG2", ParentProject = "PRJ1", TestCode = "TST1", FpsYear = DefaultTestFpsYear },
+                new() { TimeCode = "TC3", WorkGroup = "WG3", ParentProject = "PRJ1", TestCode = "TST1", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(timeCodes);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 2 };
+
+            // Act
+            var result = await repo.GetPagedTimeCodesTestCodeAsync(query, null, "TST1", "PRJ1");
+
+            // Assert
+            Assert.Equal(2, result.Data.Count());
+            Assert.Equal(3, result.PaginationData.TotalRecords);
+            Assert.Equal(1, result.PaginationData.PageNumber);
+            Assert.Equal(2, result.PaginationData.PageSize);
+        }
+
+        #endregion
+
         #region GetTimeCodeValidAsync
 
         [Fact]

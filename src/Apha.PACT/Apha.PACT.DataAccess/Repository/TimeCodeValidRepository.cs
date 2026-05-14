@@ -53,7 +53,33 @@ namespace Apha.PACT.DataAccess.Repository
             // Apply paging
             return ApplyPaging(result, query.Page, query.PageSize);
         }
+        public async Task<PagedData<TimeCodeValid>> GetPagedTimeCodesTestCodeAsync(
+           PaginationParameters<string> query, string? jobCode, string? testCode, string? parentProject)
+        {
+            var queryTimeCode = _context.TimeCodeValids.AsNoTracking().AsQueryable();
 
+            if (!string.IsNullOrEmpty(testCode))
+            {
+                queryTimeCode = queryTimeCode.Where(t => t.TestCode == testCode);
+            }
+
+            if (!string.IsNullOrEmpty(parentProject))
+            {
+                queryTimeCode = queryTimeCode.Where(t => t.ParentProject == parentProject);
+            }
+
+            // Apply filtering
+            queryTimeCode = ApplyTimeCodeFilter(queryTimeCode, query.Filter);
+
+            // Apply sorting
+            queryTimeCode = (IQueryable<TimeCodeValid>)ApplySorting(queryTimeCode, query.SortBy, query.Descending);
+
+            // Execute query
+            var result = await queryTimeCode.ToListAsync();
+
+            // Apply paging
+            return ApplyPaging(result, query.Page, query.PageSize);
+        }
         public async Task<PagedData<TimeCodeValid>> GetPagedByProjectAndTestCodeAsync(
             PaginationParameters<string> query, string parentProject, string testCode)
         {

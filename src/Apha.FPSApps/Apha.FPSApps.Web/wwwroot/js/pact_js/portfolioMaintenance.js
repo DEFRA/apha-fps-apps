@@ -1,4 +1,5 @@
 // Portfolio Maintenance page script
+// Last updated: 2025-01-XX (Portfolio Time Codes button navigation)
 
 var currentParentProject = '';
 var currentTestCode = '';
@@ -85,9 +86,22 @@ $(document).ready(function () {
     });
 
     // ── Portfolio Time Codes button ───────────────────────────────────────────
-    $('#btnPortfolioTimeCodes').on('click', function () {
-        if (!currentParentProject) return;
-        loadTimeCodeGrid(currentParentProject, currentTestCode);
+    $('#btnPortfolioTimeCodes').on('click', function (e) {
+        e.preventDefault(); // Prevent any default behavior
+        e.stopPropagation(); // Stop event bubbling
+
+        console.log('Portfolio Time Codes button clicked');
+        console.log('Current parent project:', currentParentProject);
+
+        if (!currentParentProject) {
+            alert('Please select a portfolio first.');
+            return;
+        }
+
+        // Navigate to Portfolio Time Codes page with selected portfolio
+        var url = '/PACT/PortfolioTimeCodes/Index?parentProject=' + encodeURIComponent(currentParentProject);
+        console.log('Navigating to:', url);
+        window.location.href = url;
     });
 
     // ── Modal submit ──────────────────────────────────────────────────────────

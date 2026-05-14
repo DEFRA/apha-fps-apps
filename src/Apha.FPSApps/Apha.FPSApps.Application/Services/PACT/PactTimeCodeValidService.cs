@@ -24,6 +24,9 @@ namespace Apha.FPSApps.Application.Services.PACT
         public async Task<ApiResponseDto<List<TimeCodeValidDto>>> GetPagedTimeCodesAsync(QueryParameters<string> query, string? jobCode, string? parentProject)
             => await _pactClient.PactTimeCodeValid.GetPagedTimeCodesAsync(query, jobCode, parentProject);
 
+        public async Task<ApiResponseDto<List<TimeCodeValidDto>>> GetPagedTimeCodesTestCodeAsync(QueryParameters<string> query, string? jobCode, string? testCode, string? parentProject)
+            => await _pactClient.PactTimeCodeValid.GetPagedTimeCodesTestCodeAsync(query, jobCode, testCode, parentProject);
+
         public async Task<ApiResponseDto<List<TimeCodeValidDto>>> GetPagedByProjectAndTestCodeAsync(QueryParameters<string> query, string parentProject, string testCode)
             => await _pactClient.PactTimeCodeValid.GetPagedByProjectAndTestCodeAsync(query, parentProject, testCode);
 

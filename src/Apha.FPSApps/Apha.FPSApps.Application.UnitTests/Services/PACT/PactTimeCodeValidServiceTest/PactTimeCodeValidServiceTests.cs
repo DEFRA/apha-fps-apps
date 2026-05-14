@@ -211,6 +211,164 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.PactTimeCodeValidServ
 
         #endregion
 
+        #region GetPagedTimeCodesTestCodeAsync Tests
+
+        [Fact]
+        public async Task GetPagedTimeCodesTestCodeAsync_WithAllParameters_ReturnsPaginatedTimeCodes()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var jobCode = "JC001";
+            var testCode = "TST001";
+            var parentProject = "PP001";
+            var timeCodes = new List<TimeCodeValidDto>
+            {
+                new TimeCodeValidDto { TimeCode = "TC001", WorkGroup = "WG001", ParentProject = parentProject, JobCode = jobCode, TestCode = testCode }
+            };
+            var expectedResponse = ApiResponseDto<List<TimeCodeValidDto>>.SuccessResponse(
+                timeCodes,
+                new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1 }
+            );
+            _pactTimeCodeValidApiClient.GetPagedTimeCodesTestCodeAsync(query, jobCode, testCode, parentProject)
+                .Returns(expectedResponse);
+
+            // Act
+            var result = await _service.GetPagedTimeCodesTestCodeAsync(query, jobCode, testCode, parentProject);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+            Assert.Equal("TC001", result.Data![0].TimeCode);
+            await _pactTimeCodeValidApiClient.Received(1).GetPagedTimeCodesTestCodeAsync(query, jobCode, testCode, parentProject);
+        }
+
+        [Fact]
+        public async Task GetPagedTimeCodesTestCodeAsync_WithTestCodeOnly_ReturnsPaginatedTimeCodes()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var testCode = "TST001";
+            var timeCodes = new List<TimeCodeValidDto>
+            {
+                new TimeCodeValidDto { TimeCode = "TC001", WorkGroup = "WG001", TestCode = testCode },
+                new TimeCodeValidDto { TimeCode = "TC002", WorkGroup = "WG002", TestCode = testCode }
+            };
+            var expectedResponse = ApiResponseDto<List<TimeCodeValidDto>>.SuccessResponse(
+                timeCodes,
+                new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 2 }
+            );
+            _pactTimeCodeValidApiClient.GetPagedTimeCodesTestCodeAsync(query, null, testCode, null)
+                .Returns(expectedResponse);
+
+            // Act
+            var result = await _service.GetPagedTimeCodesTestCodeAsync(query, null, testCode, null);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data?.Count);
+            await _pactTimeCodeValidApiClient.Received(1).GetPagedTimeCodesTestCodeAsync(query, null, testCode, null);
+        }
+
+        [Fact]
+        public async Task GetPagedTimeCodesTestCodeAsync_WithJobCodeAndParentProject_ReturnsPaginatedTimeCodes()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var jobCode = "JC001";
+            var parentProject = "PP001";
+            var timeCodes = new List<TimeCodeValidDto>
+            {
+                new TimeCodeValidDto { TimeCode = "TC001", WorkGroup = "WG001", ParentProject = parentProject, JobCode = jobCode }
+            };
+            var expectedResponse = ApiResponseDto<List<TimeCodeValidDto>>.SuccessResponse(
+                timeCodes,
+                new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1 }
+            );
+            _pactTimeCodeValidApiClient.GetPagedTimeCodesTestCodeAsync(query, jobCode, null, parentProject)
+                .Returns(expectedResponse);
+
+            // Act
+            var result = await _service.GetPagedTimeCodesTestCodeAsync(query, jobCode, null, parentProject);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+            await _pactTimeCodeValidApiClient.Received(1).GetPagedTimeCodesTestCodeAsync(query, jobCode, null, parentProject);
+        }
+
+        [Fact]
+        public async Task GetPagedTimeCodesTestCodeAsync_WithNullParameters_ReturnsAllTimeCodes()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var timeCodes = new List<TimeCodeValidDto>
+            {
+                new TimeCodeValidDto { TimeCode = "TC001", WorkGroup = "WG001" },
+                new TimeCodeValidDto { TimeCode = "TC002", WorkGroup = "WG002" }
+            };
+            var expectedResponse = ApiResponseDto<List<TimeCodeValidDto>>.SuccessResponse(
+                timeCodes,
+                new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 2 }
+            );
+            _pactTimeCodeValidApiClient.GetPagedTimeCodesTestCodeAsync(query, null, null, null)
+                .Returns(expectedResponse);
+
+            // Act
+            var result = await _service.GetPagedTimeCodesTestCodeAsync(query, null, null, null);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data?.Count);
+            await _pactTimeCodeValidApiClient.Received(1).GetPagedTimeCodesTestCodeAsync(query, null, null, null);
+        }
+
+        [Fact]
+        public async Task GetPagedTimeCodesTestCodeAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "API Error", Code = "API_ERROR" } };
+            var expectedResponse = ApiResponseDto<List<TimeCodeValidDto>>.FailureResponse(errors, new ApiMetaDto());
+            _pactTimeCodeValidApiClient.GetPagedTimeCodesTestCodeAsync(query, "JC001", "TST001", "PP001")
+                .Returns(expectedResponse);
+
+            // Act
+            var result = await _service.GetPagedTimeCodesTestCodeAsync(query, "JC001", "TST001", "PP001");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            await _pactTimeCodeValidApiClient.Received(1).GetPagedTimeCodesTestCodeAsync(query, "JC001", "TST001", "PP001");
+        }
+
+        [Fact]
+        public async Task GetPagedTimeCodesTestCodeAsync_WithEmptyResult_ReturnsSuccessWithEmptyList()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var expectedResponse = ApiResponseDto<List<TimeCodeValidDto>>.SuccessResponse(
+                new List<TimeCodeValidDto>(),
+                new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 0 }
+            );
+            _pactTimeCodeValidApiClient.GetPagedTimeCodesTestCodeAsync(query, null, "NONEXISTENT", null)
+                .Returns(expectedResponse);
+
+            // Act
+            var result = await _service.GetPagedTimeCodesTestCodeAsync(query, null, "NONEXISTENT", null);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!);
+        }
+
+        #endregion
+
         #region CreateTimeCodeValidAsync Tests
 
         [Fact]

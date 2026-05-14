@@ -39,6 +39,12 @@ namespace Apha.PACT.Api.Controllers
             return Ok(_mapper.Map<PaginationRes<TimeCodeValidRes>>(pagedResult));
         }
 
+        [HttpGet("pagedTest")]
+        public async Task<IActionResult> GetPagedTest([FromQuery] QueryParameters<string> query, [FromQuery] string? jobCode,string? testCode, [FromQuery] string? parentProject)
+        {
+            var pagedResult = await _service.GetPagedTimeCodesTestCodeAsync(query, jobCode,testCode, parentProject);
+            return Ok(_mapper.Map<PaginationRes<TimeCodeValidRes>>(pagedResult));
+        }
         [HttpGet("paged/project/{parentProject}/testcode/{testCode}")]
         public async Task<IActionResult> GetPagedByProjectAndTestCode(
             [FromQuery] QueryParameters<string> query, string parentProject, string testCode)

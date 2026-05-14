@@ -184,6 +184,147 @@ namespace Apha.PACT.Application.UnitTests.Services.TimeCodeValidServiceTest
 
         #endregion
 
+        #region GetPagedTimeCodesTestCodeAsync
+
+        [Fact]
+        public async Task GetPagedTimeCodesTestCodeAsync_WithAllParameters_ReturnsPaginatedResult()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string>();
+            var entities = new List<TimeCodeValid>
+            {
+                new TimeCodeValid { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC1", TestCode = "TST1" }
+            };
+            var pagedData = new PagedData<TimeCodeValid>(entities, new PaginationData { PageNumber = 1, PageSize = 10, TotalRecords = 1 });
+            var pagedResult = new PaginatedResult<TimeCodeValidDto>();
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetPagedTimeCodesTestCodeAsync(mappedParams, "JC1", "TST1", "PRJ1").Returns(pagedData);
+            _mockMapper.Map<PaginatedResult<TimeCodeValidDto>>(pagedData).Returns(pagedResult);
+
+            // Act
+            var result = await _sut.GetPagedTimeCodesTestCodeAsync(query, "JC1", "TST1", "PRJ1");
+
+            // Assert
+            result.Should().Be(pagedResult);
+            _mockMapper.Received(1).Map<PaginationParameters<string>>(query);
+            await _mockRepository.Received(1).GetPagedTimeCodesTestCodeAsync(mappedParams, "JC1", "TST1", "PRJ1");
+        }
+
+        [Fact]
+        public async Task GetPagedTimeCodesTestCodeAsync_WithTestCodeOnly_ReturnsPaginatedResult()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string>();
+            var entities = new List<TimeCodeValid>
+            {
+                new TimeCodeValid { TimeCode = "TC1", WorkGroup = "WG1", TestCode = "TST1" },
+                new TimeCodeValid { TimeCode = "TC2", WorkGroup = "WG2", TestCode = "TST1" }
+            };
+            var pagedData = new PagedData<TimeCodeValid>(entities, new PaginationData { PageNumber = 1, PageSize = 10, TotalRecords = 2 });
+            var pagedResult = new PaginatedResult<TimeCodeValidDto>();
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetPagedTimeCodesTestCodeAsync(mappedParams, null, "TST1", null).Returns(pagedData);
+            _mockMapper.Map<PaginatedResult<TimeCodeValidDto>>(pagedData).Returns(pagedResult);
+
+            // Act
+            var result = await _sut.GetPagedTimeCodesTestCodeAsync(query, null, "TST1", null);
+
+            // Assert
+            result.Should().Be(pagedResult);
+            await _mockRepository.Received(1).GetPagedTimeCodesTestCodeAsync(mappedParams, null, "TST1", null);
+        }
+
+        [Fact]
+        public async Task GetPagedTimeCodesTestCodeAsync_WithJobCodeAndParentProject_ReturnsPaginatedResult()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string>();
+            var entities = new List<TimeCodeValid>
+            {
+                new TimeCodeValid { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC1" }
+            };
+            var pagedData = new PagedData<TimeCodeValid>(entities, new PaginationData { PageNumber = 1, PageSize = 10, TotalRecords = 1 });
+            var pagedResult = new PaginatedResult<TimeCodeValidDto>();
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetPagedTimeCodesTestCodeAsync(mappedParams, "JC1", null, "PRJ1").Returns(pagedData);
+            _mockMapper.Map<PaginatedResult<TimeCodeValidDto>>(pagedData).Returns(pagedResult);
+
+            // Act
+            var result = await _sut.GetPagedTimeCodesTestCodeAsync(query, "JC1", null, "PRJ1");
+
+            // Assert
+            result.Should().Be(pagedResult);
+            await _mockRepository.Received(1).GetPagedTimeCodesTestCodeAsync(mappedParams, "JC1", null, "PRJ1");
+        }
+
+        [Fact]
+        public async Task GetPagedTimeCodesTestCodeAsync_WithNullParameters_PassesNullsToRepository()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string>();
+            var pagedData = new PagedData<TimeCodeValid>(new List<TimeCodeValid>(), new PaginationData());
+            var pagedResult = new PaginatedResult<TimeCodeValidDto>();
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetPagedTimeCodesTestCodeAsync(mappedParams, null, null, null).Returns(pagedData);
+            _mockMapper.Map<PaginatedResult<TimeCodeValidDto>>(pagedData).Returns(pagedResult);
+
+            // Act
+            var result = await _sut.GetPagedTimeCodesTestCodeAsync(query, null, null, null);
+
+            // Assert
+            result.Should().Be(pagedResult);
+            await _mockRepository.Received(1).GetPagedTimeCodesTestCodeAsync(mappedParams, null, null, null);
+        }
+
+        [Fact]
+        public async Task GetPagedTimeCodesTestCodeAsync_WithTestCodeAndParentProject_ReturnsPaginatedResult()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string>();
+            var entities = new List<TimeCodeValid>
+            {
+                new TimeCodeValid { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", TestCode = "TST1" }
+            };
+            var pagedData = new PagedData<TimeCodeValid>(entities, new PaginationData { PageNumber = 1, PageSize = 10, TotalRecords = 1 });
+            var pagedResult = new PaginatedResult<TimeCodeValidDto>();
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetPagedTimeCodesTestCodeAsync(mappedParams, null, "TST1", "PRJ1").Returns(pagedData);
+            _mockMapper.Map<PaginatedResult<TimeCodeValidDto>>(pagedData).Returns(pagedResult);
+
+            // Act
+            var result = await _sut.GetPagedTimeCodesTestCodeAsync(query, null, "TST1", "PRJ1");
+
+            // Assert
+            result.Should().Be(pagedResult);
+            await _mockRepository.Received(1).GetPagedTimeCodesTestCodeAsync(mappedParams, null, "TST1", "PRJ1");
+        }
+
+        [Fact]
+        public async Task GetPagedTimeCodesTestCodeAsync_RepositoryThrows_PropagatesException()
+        {
+            // Arrange
+            var query = new QueryParameters<string>();
+            var mappedParams = new PaginationParameters<string>();
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetPagedTimeCodesTestCodeAsync(mappedParams, "JC1", "TST1", "PRJ1")
+                .ThrowsAsync(new Exception("DB error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _sut.GetPagedTimeCodesTestCodeAsync(query, "JC1", "TST1", "PRJ1"));
+        }
+
+        #endregion
+
         #region GetTimeCodeValidAsync
 
         [Fact]
