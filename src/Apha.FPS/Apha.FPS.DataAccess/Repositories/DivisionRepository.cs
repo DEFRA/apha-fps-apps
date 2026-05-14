@@ -3,6 +3,8 @@ using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using System.Dynamic;
 
 namespace Apha.FPS.DataAccess.Repositories
 {
@@ -187,36 +189,24 @@ namespace Apha.FPS.DataAccess.Repositories
         private static IQueryable<Division> ApplyDivisionFilter(IQueryable<Division> query, string? filter)
         {
             if (string.IsNullOrWhiteSpace(filter))
-            {
                 return query;
-            }
 
-            var filterDict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(filter);
-            if (filterDict == null || filterDict.Count == 0)
-            {
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            if (filterModel == null)
                 return query;
-            }
 
-            if (filterDict.TryGetValue("DivisionId", out var divisionId) && !string.IsNullOrWhiteSpace(divisionId))
-            {
-                if (int.TryParse(divisionId, out var divisionIdValue))
-                {
-                    query = query.Where(d => d.DivisionId == divisionIdValue);
-                }
-            }
+            var dict = (IDictionary<string, object>)filterModel;
 
-            if (filterDict.TryGetValue("AgencyId", out var agencyId) && !string.IsNullOrWhiteSpace(agencyId))
-            {
-                if (int.TryParse(agencyId, out var agencyIdValue))
-                {
-                    query = query.Where(d => d.AgencyId == agencyIdValue);
-                }
-            }
+            if (dict.TryGetValue("DivisionId", out var divisionId) && divisionId != null
+                && int.TryParse(divisionId.ToString(), out var divisionIdValue))
+                query = query.Where(d => d.DivisionId == divisionIdValue);
 
-            if (filterDict.TryGetValue("DivName", out var divName) && !string.IsNullOrWhiteSpace(divName))
-            {
-                query = query.Where(d => d.DivName.Contains(divName));
-            }
+            if (dict.TryGetValue("AgencyId", out var agencyId) && agencyId != null
+                && int.TryParse(agencyId.ToString(), out var agencyIdValue))
+                query = query.Where(d => d.AgencyId == agencyIdValue);
+
+            if (dict.TryGetValue("DivName", out var divName) && divName != null)
+                query = query.Where(d => EF.Functions.ILike(d.DivName, $"%{divName}%"));
 
             return query;
         }

@@ -29,7 +29,9 @@ namespace Apha.FPS.DataAccess.Repositories
 
             queryStaffJob = (IQueryable<StaffJobView>)ApplySorting(queryStaffJob, query.SortBy, query.Descending);
 
-            var result = await queryStaffJob.ToListAsync();
+            var result = (await queryStaffJob.ToListAsync())
+                .Select(ComputeStaffCost)
+                .ToList();
 
             return base.ApplyPaging(result, query.Page, query.PageSize);
         }
@@ -37,7 +39,7 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<decimal> GetTotalStaffCostAsync(string jobCode)
         {
             var query = await BuildJobStaffCostQueryAsync(jobCode);
-            var result = await query.ToListAsync();
+            var result = (await query.ToListAsync()).Select(ComputeStaffCost).ToList();
             return result != null ? ((result.Sum(x => x.StaffCost)) ?? 0m) : 0m;
         }
 
@@ -52,7 +54,7 @@ namespace Apha.FPS.DataAccess.Repositories
                              Name = s.Name ?? "",
                              WorkGroupGrade = s.WorkgroupGrade ?? "",
                              HrsAvail = s.HrsAvail ?? 0
-                         }).OrderBy(e => e.Name);
+                         }).Distinct().OrderBy(e => e.Name);
 
             return await query.ToListAsync();
         }
@@ -95,7 +97,8 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<StaffJobView?> GetViewByStaffIdAsync(string staffId, string jobCode)
         {
             var queryStaffJob = await BuildJobStaffCostQueryAsync(jobCode);
-            return await queryStaffJob.Where(e => e.StaffID == staffId).FirstOrDefaultAsync();
+            var record = await queryStaffJob.Where(e => e.StaffID == staffId).FirstOrDefaultAsync();
+            return record != null ? ComputeStaffCost(record) : null;
         }
 
         public async Task<StaffJob> AddAsync(StaffJob staffJob)
@@ -158,7 +161,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     existingStaffJob.PlannedHours = staffJob.PlannedHours;
                     existingStaffJob.FpsYear = _requestContext.FpsYear;
 
-                    var logEntry = CreateStaffJobLogEntry(existingStaffJob.StaffId, existingStaffJob.JobCode, existingStaffJob.PlannedHours, "I");
+                    var logEntry = CreateStaffJobLogEntry(existingStaffJob.StaffId, existingStaffJob.JobCode, existingStaffJob.PlannedHours, "U");
 
                     _dbContext.StaffJobLogs.Add(logEntry);
                     await _dbContext.SaveChangesAsync();
@@ -205,6 +208,14 @@ namespace Apha.FPS.DataAccess.Repositories
             });
         }
 
+        private static StaffJobView ComputeStaffCost(StaffJobView view)
+        {
+            view.StaffCost = (decimal)view.PlannedHours *
+                             (view.ChargeRate ?? 0m) *
+                             ((view.SectorName ?? "").Trim().ToLower() == "charge" ? 1m : 0m);
+            return view;
+        }
+
         private StaffJobLog CreateStaffJobLogEntry(string staffId, string jobCode, double plannedHours, string insertDelete)
         {
             return new StaffJobLog
@@ -226,18 +237,30 @@ namespace Apha.FPS.DataAccess.Repositories
                 .Select(e => e.Setting)
                 .FirstOrDefaultAsync();
 
+
+            var projProgram = (from p in _dbContext.ProjectViews
+                              join prg in _dbContext.ProgramViews on
+                                  new { p.Program, p.UserId } equals new { Program = prg.ProgramNo, prg.UserId }
+                              where p.ParentProject == jobCode
+                                    && p.UserEmail != null
+                                    && p.UserEmail.ToLower() == _requestContext.UserEmailId
+                              select new
+                              {
+                                  p.ParentProject,
+                                  prg.SectorName,
+                                  p.IsDefraProject, 
+                                  prg.UserId,
+                                  prg.UserEmail
+                              }).Distinct();
+
             return (from sj in _dbContext.StaffJobTblViews
                     join s in _dbContext.StaffGeneralViews on sj.StaffId equals s.StaffId
                     join wg in _dbContext.WorkgroupGrades on s.WorkGroupGrade equals wg.WgGrade
                     join pc in _dbContext.ProfitcentreGrades on wg.ProfitCentreGrade equals pc.PcGrade
-                    join p in _dbContext.ProjectViews on
-                        new { sj.JobCode, sj.UserId } equals new { JobCode = p.ParentProject, p.UserId }
-                    join prg in _dbContext.ProgramViews on
-                        new { p.Program, sj.UserId } equals new { Program = prg.ProgramNo, prg.UserId }
-                    let dailyRate = (p.IsDefraProject == -1 ? pc.DefraChargeRate : pc.ChargeRate)
+                    join pp in projProgram on
+                        new { sj.JobCode, sj.UserId } equals new { JobCode = pp.ParentProject, pp.UserId }
+                    let dailyRate = (pp.IsDefraProject == -1 ? pc.DefraChargeRate : pc.ChargeRate)
                     where sj.JobCode == jobCode
-                        && p.UserEmail != null
-                        && p.UserEmail.ToLower() == _requestContext.UserEmailId
                     select new StaffJobView
                     {
                         StaffID = sj.StaffId,
@@ -246,15 +269,12 @@ namespace Apha.FPS.DataAccess.Repositories
                         Name = s.Name,
                         WorkGroupGrade = s.WorkGroupGrade,
                         ChargeRate = dailyRate,
-                        StaffCost =
-                                   (decimal)(sj.PlannedHours ?? 0) *
-                                   (dailyRate) *
-                                   ((prg.SectorName ?? "").ToLower().Trim() == "charge" ? 1m : 0m),
+                        StaffCost = 0m,
                         GradeCode = wg.GradeCode,
                         WorkGroup = wg.Workgroup,
-                        SectorName = prg.SectorName,
+                        SectorName = pp.SectorName,
                         Days = dutyHours != null ? (sj.PlannedHours ?? 0) / Convert.ToDouble(dutyHours) : 0
-                    }).Distinct().OrderBy(e => e.Name).AsQueryable();
+                    }).Distinct().OrderBy(e => e.Name).AsQueryable();            
         }
 
         private static IQueryable ApplySorting(IQueryable<StaffJobView> query, string? sortBy, bool descending)
@@ -302,12 +322,12 @@ namespace Apha.FPS.DataAccess.Repositories
 
             if (dict.TryGetValue("Name", out var name) && name != null)
             {
-                queryStaffJob = queryStaffJob.Where(x => x.Name!.Contains(name.ToString()!));
+                queryStaffJob = queryStaffJob.Where(x => EF.Functions.ILike(x.Name!, $"%{name}%"));
             }
 
             if (dict.TryGetValue("PlannedHours", out var plannedHours) && plannedHours != null)
             {
-                queryStaffJob = queryStaffJob.Where(x => x.PlannedHours.ToString().Contains(plannedHours.ToString()!));
+                queryStaffJob = queryStaffJob.Where(x => EF.Functions.ILike(x.PlannedHours.ToString(), $"%{plannedHours}%"));
             }
 
             return queryStaffJob;

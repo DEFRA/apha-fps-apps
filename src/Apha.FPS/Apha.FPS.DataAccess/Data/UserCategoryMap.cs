@@ -10,7 +10,7 @@ namespace Apha.FPS.DataAccess.Data
 
         public void Configure(EntityTypeBuilder<UserCategory> entity)
         {
-            entity.HasKey(e => new { e.UserId, e.Category }).HasName("tbluser_category_pk___6__10");
+            entity.HasKey(e => new { e.UserId, e.Category, e.FpsYear }).HasName("pk_tbluser_category");
 
             entity.ToTable("tbluser_category", "fps");
 

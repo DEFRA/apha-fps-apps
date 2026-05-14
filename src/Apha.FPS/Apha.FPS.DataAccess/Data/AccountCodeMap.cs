@@ -1,4 +1,4 @@
-using Apha.FPS.Core.Enities;
+using Apha.FPS.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -8,7 +8,7 @@ namespace Apha.FPS.DataAccess.Data
     {
         public void Configure(EntityTypeBuilder<AccountCode> entity)
         {
-            entity.HasKey(e => e.Code).HasName("tlkpaccountcode_pk_tlkpaccountcode");
+            entity.HasKey(e => e.Code).HasName("pk_tlkpaccountcode");
 
             entity.ToTable("tlkpaccountcode", "fps");
 

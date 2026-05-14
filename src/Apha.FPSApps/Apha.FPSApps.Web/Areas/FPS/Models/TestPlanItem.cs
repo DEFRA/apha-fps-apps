@@ -23,7 +23,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [Display(Name = "No")]
         [Range(0, double.MaxValue, ErrorMessage = "No Required must be 0 or greater.")]
         [GridColumn(Order = 4, Width = 110, Type = GridColumnType.DecimalNumber)]
-        public double? NoRequired { get; set; }
+        public double NoRequired { get; set; }
 
         [Display(Name = "AgrPrice")]
         [Range(0, double.MaxValue, ErrorMessage = "Unit Price must be 0 or greater.")]
@@ -34,7 +34,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [Display(Name = "Fee")]
         [DisplayFormat(DataFormatString = "{0:F2}", ApplyFormatInEditMode = false)]
         [GridColumn(Order = 6, Width = 110, Type = GridColumnType.GbpValue)]
-        public decimal? TestCost => (UnitPrice ?? 0) * (decimal)(NoRequired ?? 0);
+        public decimal? TestCost => (UnitPrice ?? 0) * (decimal)NoRequired;  
 
         [GridColumn(IsVisible = false)]
         public bool IsEdit { get; set; }

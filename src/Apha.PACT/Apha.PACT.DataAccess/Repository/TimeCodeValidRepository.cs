@@ -270,24 +270,16 @@ namespace Apha.PACT.DataAccess.Repository
             var dict = (IDictionary<string, object>)filterModel;
 
             if (dict.TryGetValue("TimeCode", out var timeCode) && timeCode != null)
-            {
-                queryTimeCode = queryTimeCode.Where(x => x.TimeCode.Contains(timeCode.ToString()!));
-            }
+                queryTimeCode = queryTimeCode.Where(x => EF.Functions.ILike(x.TimeCode, $"%{timeCode}%"));
 
             if (dict.TryGetValue("ParentProject", out var parentProject) && parentProject != null)
-            {
-                queryTimeCode = queryTimeCode.Where(x => x.ParentProject!.Contains(parentProject.ToString()!));
-            }
+                queryTimeCode = queryTimeCode.Where(x => x.ParentProject != null && EF.Functions.ILike(x.ParentProject, $"%{parentProject}%"));
 
             if (dict.TryGetValue("WorkGroup", out var workGroup) && workGroup != null)
-            {
-                queryTimeCode = queryTimeCode.Where(x => x.WorkGroup!.Contains(workGroup.ToString()!));
-            }
+                queryTimeCode = queryTimeCode.Where(x => x.WorkGroup != null && EF.Functions.ILike(x.WorkGroup, $"%{workGroup}%"));
 
             if (dict.TryGetValue("JobCode", out var jobCode) && jobCode != null)
-            {
-                queryTimeCode = queryTimeCode.Where(x => x.JobCode!.Contains(jobCode.ToString()!));
-            }
+                queryTimeCode = queryTimeCode.Where(x => x.JobCode != null && EF.Functions.ILike(x.JobCode, $"%{jobCode}%"));
 
             return queryTimeCode;
         }

@@ -1,4 +1,3 @@
-using Apha.FPS.Core.Enities;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -66,6 +65,7 @@ namespace Apha.FPS.DataAccess.Data
 
 
         public virtual DbSet<AdditionalCost> AdditionalCosts { get; set; }
+        public virtual DbSet<AdditionalCostView> AdditionalCostViews { get; set; }
         public virtual DbSet<AdditionalCostLog> AdditionalCostLogs { get; set; }
         public virtual DbSet<AccountCategory> AccountCategories { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -176,8 +176,6 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new TimeCostCalcsMap());
             modelBuilder.Entity<TimeCostCalcs>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
-
-
             modelBuilder.ApplyConfiguration(new DivisionMap());
             modelBuilder.ApplyConfiguration(new DivisionGradeMap());
             modelBuilder.Entity<DivisionGrade>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
@@ -185,10 +183,14 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new AdditionalCostMap());
             modelBuilder.Entity<AdditionalCost>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
+            modelBuilder.ApplyConfiguration(new AdditionalCostViewMap());
+            modelBuilder.Entity<AdditionalCostView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
             modelBuilder.ApplyConfiguration(new AdditionalCostLogMap());
             modelBuilder.Entity<AdditionalCostLog>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new AccountCategoryMap());
+            modelBuilder.Entity<AccountCategory>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new MonthlyOutputMap());
             modelBuilder.Entity<MonthlyOutput>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);

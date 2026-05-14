@@ -49,6 +49,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SubContractControllerTest
                 .Returns([]);
             _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>())
                 .Returns(new PaginationModel());
+            _subContractService.GetPagedProjectSubContractsManualAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string?>())
+                .Returns(ApiResponseDto<List<ProjectSubContractDto>>.SuccessResponse([], new PaginationDto()));
         }
 
         private void SetupProjectsList(List<ProjectDto> projects)
@@ -85,7 +87,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SubContractControllerTest
                 new() { Project = parentProject, Month = month, Amount = 1000m }
             };
 
-            _subContractService.GetPagedProjectSubContractsAsync(Arg.Any<QueryParameters<string>>(), parentProject)
+            _subContractService.GetPagedProjectSubContractsManualAsync(Arg.Any<QueryParameters<string>>(), parentProject)
                 .Returns(ApiResponseDto<List<ProjectSubContractDto>>.SuccessResponse(subContracts, new PaginationDto()));
             SetupProjectsList(projects);
             SetupMonthsList([]);
@@ -111,7 +113,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SubContractControllerTest
         public async Task Index_WithNullParameters_ReturnsViewWithEmptyFilters()
         {
             // Arrange
-            _subContractService.GetPagedProjectSubContractsAsync(Arg.Any<QueryParameters<string>>(), null)
+            _subContractService.GetPagedProjectSubContractsManualAsync(Arg.Any<QueryParameters<string>>(), null)
                 .Returns(ApiResponseDto<List<ProjectSubContractDto>>.SuccessResponse([], new PaginationDto()));
             SetupProjectsList([]);
             SetupMonthsList([]);
@@ -138,7 +140,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SubContractControllerTest
                 new() { ParentProject = "PRJ003" }
             };
 
-            _subContractService.GetPagedProjectSubContractsAsync(Arg.Any<QueryParameters<string>>(), null)
+            _subContractService.GetPagedProjectSubContractsManualAsync(Arg.Any<QueryParameters<string>>(), null)
                 .Returns(ApiResponseDto<List<ProjectSubContractDto>>.SuccessResponse([], new PaginationDto()));
             SetupProjectsList(projects);
             SetupMonthsList([]);
@@ -165,8 +167,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SubContractControllerTest
                 new() { Monthnumber = 2, Monthname = "February" }
             };
 
-            _subContractService.GetPagedProjectSubContractsAsync(Arg.Any<QueryParameters<string>>(), null)
-                .Returns(ApiResponseDto<List<ProjectSubContractDto>>.SuccessResponse([], new PaginationDto()));
             SetupProjectsList([]);
             SetupMonthsList(months);
             SetupSubContractsGridMapper();
@@ -185,7 +185,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SubContractControllerTest
         {
             // Arrange
             const int month = 5;
-            _subContractService.GetPagedProjectSubContractsAsync(Arg.Any<QueryParameters<string>>(), null)
+            _subContractService.GetPagedProjectSubContractsManualAsync(Arg.Any<QueryParameters<string>>(), null)
                 .Returns(ApiResponseDto<List<ProjectSubContractDto>>.SuccessResponse([], new PaginationDto()));
             SetupProjectsList([]);
             SetupMonthsList([]);
@@ -211,7 +211,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SubContractControllerTest
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = "{}" };
             const string parentProject = "PRJ001";
 
-            _subContractService.GetPagedProjectSubContractsAsync(Arg.Any<QueryParameters<string>>(), parentProject)
+            _subContractService.GetPagedProjectSubContractsManualAsync(Arg.Any<QueryParameters<string>>(), parentProject)
                 .Returns(ApiResponseDto<List<ProjectSubContractDto>>.SuccessResponse([], new PaginationDto()));
             SetupSubContractsGridMapper();
 
@@ -231,7 +231,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SubContractControllerTest
             var request = new PaginationFilter<string> { Filter = "{}" };
             const int month = 7;
 
-            _subContractService.GetPagedProjectSubContractsAsync(Arg.Any<QueryParameters<string>>(), null)
+            _subContractService.GetPagedProjectSubContractsManualAsync(Arg.Any<QueryParameters<string>>(), null)
                 .Returns(ApiResponseDto<List<ProjectSubContractDto>>.SuccessResponse([], new PaginationDto()));
             SetupSubContractsGridMapper();
 
@@ -263,7 +263,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SubContractControllerTest
             var request = new PaginationFilter<string> { Filter = "{\"Project\":\"PRJ001\"}" };
             const int month = 3;
 
-            _subContractService.GetPagedProjectSubContractsAsync(Arg.Any<QueryParameters<string>>(), null)
+            _subContractService.GetPagedProjectSubContractsManualAsync(Arg.Any<QueryParameters<string>>(), null)
                 .Returns(ApiResponseDto<List<ProjectSubContractDto>>.SuccessResponse([], new PaginationDto()));
             SetupSubContractsGridMapper();
 
@@ -283,7 +283,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SubContractControllerTest
             var request = new PaginationFilter<string> { Filter = null };
             const int month = 4;
 
-            _subContractService.GetPagedProjectSubContractsAsync(Arg.Any<QueryParameters<string>>(), null)
+            _subContractService.GetPagedProjectSubContractsManualAsync(Arg.Any<QueryParameters<string>>(), null)
                 .Returns(ApiResponseDto<List<ProjectSubContractDto>>.SuccessResponse([], new PaginationDto()));
             SetupSubContractsGridMapper();
 
@@ -683,7 +683,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SubContractControllerTest
         public async Task Index_ProjectServiceReturnsEmpty_ViewModelHasEmptyProjectsList()
         {
             // Arrange
-            _subContractService.GetPagedProjectSubContractsAsync(Arg.Any<QueryParameters<string>>(), null)
+            _subContractService.GetPagedProjectSubContractsManualAsync(Arg.Any<QueryParameters<string>>(), null)
                 .Returns(ApiResponseDto<List<ProjectSubContractDto>>.SuccessResponse([], new PaginationDto()));
             SetupProjectsList([]);
             SetupMonthsList([]);
@@ -709,7 +709,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SubContractControllerTest
                 new() { ParentProject = "PRJ002" }
             };
 
-            _subContractService.GetPagedProjectSubContractsAsync(Arg.Any<QueryParameters<string>>(), null)
+            _subContractService.GetPagedProjectSubContractsManualAsync(Arg.Any<QueryParameters<string>>(), null)
                 .Returns(ApiResponseDto<List<ProjectSubContractDto>>.SuccessResponse([], new PaginationDto()));
             SetupProjectsList(projects);
             SetupMonthsList([]);
@@ -734,8 +734,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SubContractControllerTest
             var errors = new List<ApiErrorDto> { new() { Message = "Service error" } };
             _projectService.GetAllPactProjectsAsync()
                 .Returns(ApiResponseDto<List<ProjectDto>>.FailureResponse(errors, new ApiMetaDto()));
-            _subContractService.GetPagedProjectSubContractsAsync(Arg.Any<QueryParameters<string>>(), null)
-                .Returns(ApiResponseDto<List<ProjectSubContractDto>>.SuccessResponse([], new PaginationDto()));
             SetupMonthsList([]);
             SetupSubContractsGridMapper();
 
@@ -754,8 +752,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SubContractControllerTest
             // Arrange
             _projectService.GetAllPactProjectsAsync()
                 .Returns(new ApiResponseDto<List<ProjectDto>> { Success = true, Data = null });
-            _subContractService.GetPagedProjectSubContractsAsync(Arg.Any<QueryParameters<string>>(), null)
-                .Returns(ApiResponseDto<List<ProjectSubContractDto>>.SuccessResponse([], new PaginationDto()));
             SetupMonthsList([]);
             SetupSubContractsGridMapper();
 
@@ -776,7 +772,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SubContractControllerTest
         public async Task Index_MonthServiceReturnsEmpty_ViewModelHasEmptyMonthsList()
         {
             // Arrange
-            _subContractService.GetPagedProjectSubContractsAsync(Arg.Any<QueryParameters<string>>(), null)
+            _subContractService.GetPagedProjectSubContractsManualAsync(Arg.Any<QueryParameters<string>>(), null)
                 .Returns(ApiResponseDto<List<ProjectSubContractDto>>.SuccessResponse([], new PaginationDto()));
             SetupProjectsList([]);
             SetupMonthsList([]);
@@ -802,7 +798,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SubContractControllerTest
                 new() { Monthnumber = 2, Monthname = "February" }
             };
 
-            _subContractService.GetPagedProjectSubContractsAsync(Arg.Any<QueryParameters<string>>(), null)
+            _subContractService.GetPagedProjectSubContractsManualAsync(Arg.Any<QueryParameters<string>>(), null)
                 .Returns(ApiResponseDto<List<ProjectSubContractDto>>.SuccessResponse([], new PaginationDto()));
             SetupProjectsList([]);
             SetupMonthsList(months);
@@ -827,8 +823,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SubContractControllerTest
             var errors = new List<ApiErrorDto> { new() { Message = "Month service error" } };
             _monthService.GetAllMonthsAsync()
                 .Returns(ApiResponseDto<List<MonthDto>>.FailureResponse(errors, new ApiMetaDto()));
-            _subContractService.GetPagedProjectSubContractsAsync(Arg.Any<QueryParameters<string>>(), null)
-                .Returns(ApiResponseDto<List<ProjectSubContractDto>>.SuccessResponse([], new PaginationDto()));
             SetupProjectsList([]);
             SetupSubContractsGridMapper();
 
@@ -847,8 +841,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SubContractControllerTest
             // Arrange
             _monthService.GetAllMonthsAsync()
                 .Returns(new ApiResponseDto<List<MonthDto>> { Success = true, Data = null });
-            _subContractService.GetPagedProjectSubContractsAsync(Arg.Any<QueryParameters<string>>(), null)
-                .Returns(ApiResponseDto<List<ProjectSubContractDto>>.SuccessResponse([], new PaginationDto()));
             SetupProjectsList([]);
             SetupSubContractsGridMapper();
 
@@ -869,7 +861,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SubContractControllerTest
         public async Task Index_BuildsGridWithCorrectConfiguration()
         {
             // Arrange
-            _subContractService.GetPagedProjectSubContractsAsync(Arg.Any<QueryParameters<string>>(), null)
+            _subContractService.GetPagedProjectSubContractsManualAsync(Arg.Any<QueryParameters<string>>(), null)
                 .Returns(ApiResponseDto<List<ProjectSubContractDto>>.SuccessResponse([], new PaginationDto()));
             SetupProjectsList([]);
             SetupMonthsList([]);
@@ -893,7 +885,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SubContractControllerTest
             var request = new PaginationFilter<string> { Filter = "{}" };
             const string parentProject = "PRJ001";
 
-            _subContractService.GetPagedProjectSubContractsAsync(Arg.Any<QueryParameters<string>>(), parentProject)
+            _subContractService.GetPagedProjectSubContractsManualAsync(Arg.Any<QueryParameters<string>>(), parentProject)
                 .Returns(ApiResponseDto<List<ProjectSubContractDto>>.SuccessResponse([], new PaginationDto()));
             SetupSubContractsGridMapper();
 
@@ -914,7 +906,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SubContractControllerTest
             const string parentProject = "PRJ001";
             const int month = 6;
 
-            _subContractService.GetPagedProjectSubContractsAsync(Arg.Any<QueryParameters<string>>(), parentProject)
+            _subContractService.GetPagedProjectSubContractsManualAsync(Arg.Any<QueryParameters<string>>(), parentProject)
                 .Returns(ApiResponseDto<List<ProjectSubContractDto>>.SuccessResponse([], new PaginationDto()));
             SetupSubContractsGridMapper();
 

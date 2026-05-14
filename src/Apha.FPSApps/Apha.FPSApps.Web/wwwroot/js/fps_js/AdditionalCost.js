@@ -27,7 +27,7 @@ function addAdditionalCost() {
 }
 
 function saveAdditionalCost() {
-    var jobCode = AdditionalCostConfig.getJobCode();
+    var jobCode = AdditionalCostConfig.getJobCode();    
     var data = {
         JobCode: jobCode,
         Description: $('#Description').val(),
@@ -83,19 +83,19 @@ function editAdditionalCost(btn) {
 }
 
 function updateAdditionalCost() {
-    var jobCode = AdditionalCostConfig.getJobCode();
+    var jobCode = AdditionalCostConfig.getJobCode();    
     var originalAccount = $('#OriginalAccount').val();
     var data = {
         JobCode: jobCode,
         Description: $('#Description').val(),
-        Account: $('#Account').val(),
+        Account: $('#Account').val() || $('#OriginalAccount').val(),
         ItemCost: parseFloat($('#ItemCost').val()) || 0,
         Freq: $('#Freq').val(),
         Supplier: $('#Supplier').val()
     };
 
     $.ajax({
-        url: '/FPS/AdditionalCostJob/Edit?jobCode=' + encodeURIComponent(jobCode) + '&account=' + encodeURIComponent(originalAccount),
+        url: '/FPS/AdditionalCostJob/Edit',
         type: 'POST',
         data: JSON.stringify(data),
         contentType: 'application/json; charset=utf-8',

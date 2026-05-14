@@ -35,6 +35,10 @@ namespace Apha.PACT.Api.Mappings
             CreateMap<MonthlyInvoicesPivotDto, MonthlyInvoicesPivotRes>().ReverseMap();
             CreateMap<MonthlySubContractsSummaryDto, MonthlySubContractsSummaryItemRes>().ReverseMap();
             CreateMap<MonthlySubContractsPivotDto, MonthlySubContractsPivotRes>().ReverseMap();
+            CreateMap<ProjectMonthReq, ProjectMonthDto>().ReverseMap();
+            CreateMap<ProjectMonthRes, ProjectMonthDto>().ReverseMap();
+            CreateMap<ProjectProfileDto, ProjectProfileRes>().ReverseMap();
+            CreateMap<ProjectProfileCumulativeDto, ProjectProfileCumulativeRes>().ReverseMap();
         }
     }
 }

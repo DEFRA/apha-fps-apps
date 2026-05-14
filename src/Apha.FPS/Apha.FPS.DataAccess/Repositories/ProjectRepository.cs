@@ -150,8 +150,7 @@ namespace Apha.FPS.DataAccess.Repositories
             entity.Disease = project.Disease;
             entity.IsDefraProject = project.IsDefraProject;
             entity.Finished = project.Finished;
-            entity.Comments = project.Comments;
-            entity.BudgetCvl = project.BudgetCvl;
+            entity.Comments = project.Comments;            
             entity.TransferIncome = project.TransferIncome;
             entity.PvsIncome = project.PvsIncome;
             entity.WipEoy = project.WipEoy;
@@ -219,13 +218,13 @@ namespace Apha.FPS.DataAccess.Repositories
             var dict = (IDictionary<string, object>)filterModel;
 
             if (dict.TryGetValue("ParentProject", out var parentProject) && parentProject != null)
-                query = query.Where(x => x.ParentProject.Contains(parentProject.ToString()!));
+                query = query.Where(x => EF.Functions.ILike(x.ParentProject, $"%{parentProject}%"));
 
             if (dict.TryGetValue("ProjectTitle", out var projectTitle) && projectTitle != null)
-                query = query.Where(x => x.ProjectTitle.Contains(projectTitle.ToString()!));
+                query = query.Where(x => EF.Functions.ILike(x.ProjectTitle, $"%{projectTitle}%"));
 
             if (dict.TryGetValue("Manager", out var manager) && manager != null)
-                query = query.Where(x => x.Manager!.Contains(manager.ToString()!));
+                query = query.Where(x => EF.Functions.ILike(x.Manager!, $"%{manager}%"));
 
             return query;
         }
@@ -269,12 +268,12 @@ namespace Apha.FPS.DataAccess.Repositories
 
             if (dict.TryGetValue("ParentProject", out var parentProject) && parentProject != null)
             {
-                queryProjects = queryProjects.Where(x => x.ParentProject.Contains(parentProject.ToString()!));
+                queryProjects = queryProjects.Where(x => EF.Functions.ILike(x.ParentProject, $"%{parentProject}%"));
             }
 
             if (dict.TryGetValue("ProjectTitle", out var projectTitle) && projectTitle != null)
             {
-                queryProjects = queryProjects.Where(x => x.ProjectTitle.Contains(projectTitle.ToString()!));
+                queryProjects = queryProjects.Where(x => EF.Functions.ILike(x.ProjectTitle, $"%{projectTitle}%"));
             }
 
             return queryProjects;

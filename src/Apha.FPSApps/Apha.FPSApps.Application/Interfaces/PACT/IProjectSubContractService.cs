@@ -7,6 +7,7 @@ namespace Apha.FPSApps.Application.Interfaces.PACT
     public interface IProjectSubContractService
     {
         Task<ApiResponseDto<List<ProjectSubContractDto>>> GetPagedProjectSubContractsAsync(QueryParameters<string> query, string? project);
+        Task<ApiResponseDto<List<ProjectSubContractDto>>> GetPagedProjectSubContractsManualAsync(QueryParameters<string> query, string? project);
         Task<ApiResponseDto<decimal>> GetTotalAmountAsync(string? project);
         Task<ApiResponseDto<ProjectSubContractDto>> GetByIdAsync(int subContCounter);
         Task<ApiResponseDto<ProjectSubContractDto>> CreateAsync(ProjectSubContractDto dto);

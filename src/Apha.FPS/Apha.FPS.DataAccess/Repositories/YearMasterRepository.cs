@@ -1,4 +1,4 @@
-using Apha.FPS.Core.Enities;
+using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;

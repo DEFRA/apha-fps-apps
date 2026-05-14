@@ -8,7 +8,9 @@ using Apha.FPSApps.Web.Areas.PACT.Controllers;
 using Apha.FPSApps.Web.Areas.PACT.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using NSubstitute;
 using System.Text.Json;
 using Xunit;
@@ -44,6 +46,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioMaintenanceContro
                 _timeCodeService,
                 _programService,
                 _employeeService);
+
+            _controller.TempData = new TempDataDictionary(
+                new DefaultHttpContext(),
+                Substitute.For<ITempDataProvider>());
         }
 
         private static JsonElement GetJsonElement(JsonResult jsonResult)
@@ -109,15 +115,15 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioMaintenanceContro
         public async Task Index_WhenServicesReturnNullData_ReturnsViewWithEmptyCollections()
         {
             _projectService.GetAllPactProjectsAsync()
-                .Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse(null));
+                .Returns(new ApiResponseDto<List<ProjectDto>> { Success = true });
             _programService.GetAllProgramsAsync()
-                .Returns(ApiResponseDto<IEnumerable<ProgramDto>>.SuccessResponse(null));
+                .Returns(new ApiResponseDto<IEnumerable<ProgramDto>> { Success = true });
             _employeeService.GetAllPactManagersAsync()
-                .Returns(ApiResponseDto<List<ManagerDto>>.SuccessResponse(null));
+                .Returns(new ApiResponseDto<List<ManagerDto>> { Success = true });
             _testCapabilityService.GetAllWorkGroupsAsync()
-                .Returns(ApiResponseDto<List<WorkGroupDto>>.SuccessResponse(null));
+                .Returns(new ApiResponseDto<List<WorkGroupDto>> { Success = true });
             _testorProductService.GetAllTestorProductsAsync()
-                .Returns(ApiResponseDto<List<TestorProductDto>>.SuccessResponse(null));
+                .Returns(new ApiResponseDto<List<TestorProductDto>> { Success = true });
             _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string>());
             _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(new PaginationModel());
@@ -208,7 +214,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioMaintenanceContro
         public async Task GetPortfolio_WhenSuccessButNullData_ReturnsFailureJson()
         {
             _projectService.GetProjectByIdAsync("PP1")
-                .Returns(ApiResponseDto<ProjectDto>.SuccessResponse(null));
+                .Returns(new ApiResponseDto<ProjectDto> { Success = true });
 
             var result = await _controller.GetPortfolio("PP1");
 

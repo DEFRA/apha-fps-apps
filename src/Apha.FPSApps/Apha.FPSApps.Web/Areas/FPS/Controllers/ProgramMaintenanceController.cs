@@ -97,12 +97,16 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                         }))
                 });
             }
+            
+            // Ensure Target is always stored as a positive value
+            if (model.Target.HasValue)
+                model.Target = Math.Abs(model.Target.Value);
 
             var dto = _mapper.Map<ProgramDto>(model);
             var response = await _programService.AddProgramAsync(dto);
             if (response.Success)
             {
-                return Json(new { success = true, data = response.Data, message = "Employee created successfully" });
+                return Json(new { success = true, data = response.Data, message = "Program created successfully" });
             }
 
             return Json(new
@@ -147,6 +151,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                         }))
                 });
             }
+
+            // Ensure Target is always stored as a positive value
+            if (model.Target.HasValue)
+                model.Target = Math.Abs(model.Target.Value);
 
             var dto = _mapper.Map<ProgramDto>(model);
             var response = await _programService.UpdateProgramAsync(dto);
@@ -207,6 +215,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 programItems = _mapper.Map<List<ProgramViewModel>>(response.Data.ToList());
             }
             PaginationModel paginationModel = _mapper.Map<PaginationModel>(response.Pagination) ?? new PaginationModel();
+
+            paginationModel.SortColumn = query?.SortBy;
+            paginationModel.SortDirection = query?.Descending ?? false;
 
             var programGridConfig = new DataGridConfig<ProgramViewModel>
             {

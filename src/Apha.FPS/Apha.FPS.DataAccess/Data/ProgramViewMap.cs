@@ -22,7 +22,6 @@ namespace Apha.FPS.DataAccess.Data
                 .HasColumnName("directorate");
             entity.Property(e => e.Dt2UserName)
                 .HasMaxLength(50)
-                .UseCollation("latin1_general_ci_as")
                 .HasColumnName("dt2username");
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.Manager)
@@ -35,7 +34,7 @@ namespace Apha.FPS.DataAccess.Data
                 .HasMaxLength(80)
                 .HasColumnName("programname");
             entity.Property(e => e.ProgramNo)
-                .HasColumnType("citext")
+                .HasMaxLength(10)
                 .HasColumnName("programno");
             entity.Property(e => e.SectorName)
                 .HasMaxLength(50)
@@ -46,7 +45,6 @@ namespace Apha.FPS.DataAccess.Data
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.UserEmail)
                 .HasMaxLength(255)
-                .UseCollation("latin1_general_ci_as")
                 .HasColumnName("useremail");
         }
     }

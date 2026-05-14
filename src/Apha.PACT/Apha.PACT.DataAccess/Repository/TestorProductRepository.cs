@@ -107,31 +107,23 @@ namespace Apha.PACT.DataAccess.Repository
 
             var dict = (IDictionary<string, object>)filterModel;
 
-            if (dict.TryGetValue("ItemCode", out var itemCode) && itemCode != null)
-            {
-                query = query.Where(x => x.ItemCode.Contains(itemCode.ToString()!));
-            }
+            query = ApplyILikeFilter(dict, "ItemCode",        query, (q, v) => q.Where(x => EF.Functions.ILike(x.ItemCode, v)));
+            query = ApplyILikeFilter(dict, "ItemDescription", query, (q, v) => q.Where(x => x.ItemDescription != null && EF.Functions.ILike(x.ItemDescription, v)));
+            query = ApplyILikeFilter(dict, "ShortDescription",query, (q, v) => q.Where(x => x.ShortDescription != null && EF.Functions.ILike(x.ShortDescription, v)));
+            query = ApplyILikeFilter(dict, "Owner",           query, (q, v) => q.Where(x => x.Owner != null && EF.Functions.ILike(x.Owner, v)));
+            query = ApplyILikeFilter(dict, "TestManager",     query, (q, v) => q.Where(x => x.TestManager != null && EF.Functions.ILike(x.TestManager, v)));
 
-            if (dict.TryGetValue("ItemDescription", out var itemDescription) && itemDescription != null)
-            {
-                query = query.Where(x => x.ItemDescription!.Contains(itemDescription.ToString()!));
-            }
+            return query;
+        }
 
-            if (dict.TryGetValue("ShortDescription", out var shortDescription) && shortDescription != null)
-            {
-                query = query.Where(x => x.ShortDescription!.Contains(shortDescription.ToString()!));
-            }
-
-            if (dict.TryGetValue("Owner", out var owner) && owner != null)
-            {
-                query = query.Where(x => x.Owner!.Contains(owner.ToString()!));
-            }
-
-            if (dict.TryGetValue("TestManager", out var testManager) && testManager != null)
-            {
-                query = query.Where(x => x.TestManager!.Contains(testManager.ToString()!));
-            }
-
+        private static IQueryable<TestorProduct> ApplyILikeFilter(
+            IDictionary<string, object> dict,
+            string key,
+            IQueryable<TestorProduct> query,
+            Func<IQueryable<TestorProduct>, string, IQueryable<TestorProduct>> applyWhere)
+        {
+            if (dict.TryGetValue(key, out var value) && value != null)
+                query = applyWhere(query, $"%{value}%");
             return query;
         }
 

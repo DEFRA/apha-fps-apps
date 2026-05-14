@@ -16,16 +16,14 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [Display(Name = "Animal Type")]
         [GridColumn(Width = 150, Type = GridColumnType.Text, IsFilterable = true)]
         public string AnimalType { get; set; } = null!;
-
-        [Required(ErrorMessage = "Number of days is required")]
+        
         [Display(Name = "Days")]
-        [Range(0, double.MaxValue, ErrorMessage = "Days must be a positive value")]
+        [Range(0, double.MaxValue, ErrorMessage = "Days must be 0 or greater")]
         [GridColumn(Width = 80, Type = GridColumnType.DecimalNumber)]
         public double NumberOfDays { get; set; }
-
-        [Required(ErrorMessage = "Number of animals is required")]
+       
         [Display(Name = "No. Required")]
-        [Range(0, double.MaxValue, ErrorMessage = "Number of animals must be a positive value")]
+        [Range(0, double.MaxValue, ErrorMessage = "Number of animals must be 0 or greater")]
         [GridColumn(Width = 100, Type = GridColumnType.DecimalNumber)]
         public double NumberOfAnimals { get; set; }
 

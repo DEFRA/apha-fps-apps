@@ -14,13 +14,14 @@ namespace Apha.PACT.DataAccess.Data
             entity.ToTable("testorproduct", "fps");
 
             entity.Property(e => e.ItemCode)
-                .HasColumnType("citext")
+                .HasMaxLength(20)
                 .HasColumnName("itemcode");
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.ChargeMethod)
                 .HasMaxLength(5)
                 .HasColumnName("chargemethod");
             entity.Property(e => e.DefraUnitPrice)
+                .HasDefaultValueSql("0")
                 .HasColumnType("money")
                 .HasColumnName("defraunitprice");
             entity.Property(e => e.ItemDescription)
