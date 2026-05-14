@@ -88,6 +88,8 @@ public class JobExecutionRepository : IJobExecutionRepository
         if (record == null)
             throw new ArgumentNullException(nameof(record));
 
+        // The worker uses a shared DbContext across repositories. Do not clear ChangeTracker here to avoid nested transaction errors.
+
         var runGuid = ParseRunId(record.RunId);
         _logger.LogInformation(
             "Update execution record requested | JobName={JobName} | RunId={RunId} | ExecutionId={ExecutionId} | Status={Status}",

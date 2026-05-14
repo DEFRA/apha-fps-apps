@@ -9,6 +9,104 @@ internal sealed class CreateFpsTotalsStep : RecreateSummariesExecutionStepBase
 
     protected override async Task<int> ExecuteCoreAsync(RecreateSummariesExecutionContext context, CancellationToken cancellationToken)
     {
+        /*
+        Source: docs/database/dbscript/recreatesummaries/sp_RecreateSummaries_child_procedures.sql
+
+        CREATE procEDURE [dbo].[sp_createFPSTotals] AS
+        INSERT INTO FPSYearTotals
+        SELECT DISTINCT
+            tlkpProject.ParentProject,
+            tlkpProject.Program,
+
+            CASE
+                WHEN qryTotalAdditionalCosts.TotalAdditionalCosts IS NULL THEN
+                    0
+                ELSE
+                    qryTotalAdditionalCosts.TotalAdditionalCosts
+                END AS TotalAdditionalCosts,
+            CASE
+                WHEN qryTotalAnimalCosts.TotalAnimalCosts IS NULL THEN
+                    0
+                ELSE
+                    qryTotalAnimalCosts.TotalAnimalCosts
+                END AS TotalAnimalCosts,
+            CASE
+                WHEN qryTotalStaffCosts.TotalStaffCosts IS NULL THEN
+                    0
+                ELSE
+                    qryTotalStaffCosts.TotalStaffCosts
+                END AS TotalStaffCosts,
+            CASE
+                WHEN qryTotalTestCosts.TotalTestCosts IS NULL THEN
+                    0
+                ELSE
+                    qryTotalTestCosts.TotalTestCosts
+                END AS TotalTestCosts,
+            CASE
+                WHEN qryTotalAdditionalCosts.TotalAdditionalCosts IS NULL THEN
+                    0
+                ELSE
+                    qryTotalAdditionalCosts.TotalAdditionalCosts
+                END +
+            CASE
+                WHEN qryTotalAnimalCosts.TotalAnimalCosts IS NULL THEN
+                    0
+                ELSE
+                    qryTotalAnimalCosts.TotalAnimalCosts
+                END  +
+            CASE
+                WHEN qryTotalStaffCosts.TotalStaffCosts IS NULL THEN
+                    0
+                ELSE
+                    qryTotalStaffCosts.TotalStaffCosts
+                END +
+            CASE
+                WHEN qryTotalTestCosts.TotalTestCosts IS NULL THEN
+                    0
+                ELSE
+                    qryTotalTestCosts.TotalTestCosts
+                END +
+            CASE
+                WHEN tlkpProject.PlanCaseworkDebit IS NULL THEN
+                    0
+                ELSE
+                    tlkpProject.PlanCaseworkDebit
+                END AS TotalCosts,
+            tlkpProject.CustIncome,
+            tlkpProject.TransferIncome,
+            custincome + Transferincome AS TotalIncome,
+            tlkpProject.Budget_CVL,
+            tlkpProject.Profit as RequiredProfit,
+            tlkpProject.Manager,
+            tlkpProject.Customer,
+            tlkpProject.ProjectStatus,
+            CASE
+                WHEN tlkpProject.PVSIncome IS NULL THEN
+                    0
+                ELSE
+                    tlkpProject.PVSIncome
+                END AS PVSIncome,
+            CASE
+                WHEN tlkpProject.PlanCaseworkDebit IS NULL THEN
+                    0
+                ELSE
+                    tlkpProject.PlanCaseworkDebit
+                END AS PlanCaseworkDebit,
+
+            CASE
+                WHEN qryTotalStaffCosts.TotalPayCosts IS NULL THEN
+                    0
+                ELSE
+                    qryTotalStaffCosts.TotalPayCosts
+                END AS TotalPayCosts
+
+        FROM (((tlkpProject
+        LEFT JOIN qryTotalAdditionalCosts ON tlkpProject.ParentProject = qryTotalAdditionalCosts.JobCode)
+        LEFT JOIN qryTotalAnimalCosts ON tlkpProject.ParentProject = qryTotalAnimalCosts.JobCode)
+        LEFT JOIN qryTotalStaffCosts ON tlkpProject.ParentProject = qryTotalStaffCosts.Jobcode)
+        LEFT JOIN qryTotalTestCosts ON tlkpProject.ParentProject = qryTotalTestCosts.JobCode
+        */
+
         var db = context.DbContext;
 
         // Two-step: fetch raw nullable values first (avoid COALESCE on PostgreSQL money columns),
@@ -71,8 +169,13 @@ internal sealed class CreateFpsTotalsStep : RecreateSummariesExecutionStepBase
             PlanCaseworkDebit = r.PlanCaseworkDebit ?? 0m,
             TotalPayCosts = (double?)(r.StfPayCosts) ?? 0d,
             FpsYear = r.FpsYear
-        }).ToList();
+        })
+        // Enforce target table key uniqueness (parentproject + fpsyear) before tracking.
+        .GroupBy(r => new { r.ParentProject, r.FpsYear })
+        .Select(g => g.First())
+        .ToList();
 
+        db.ChangeTracker.Clear();
         await db.RsFpsYearTotals.AddRangeAsync(rows, cancellationToken);
         return await db.SaveChangesAsync(cancellationToken);
     }

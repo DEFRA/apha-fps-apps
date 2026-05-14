@@ -92,6 +92,10 @@ public class BatchLockRepository : IBatchLockRepository
         if (string.IsNullOrWhiteSpace(runId))
             throw new ArgumentException("Run ID cannot be null or empty.", nameof(runId));
 
+        // Guard against stale tracking state leaking from prior operations in the
+        // same scoped DbContext (e.g., failed job step writes).
+        _context.ChangeTracker.Clear();
+
         var lockToRelease = await _context.BatchLocks
             .FirstOrDefaultAsync(l => l.JobName == jobName && l.RunId == runId, cancellationToken);
 
