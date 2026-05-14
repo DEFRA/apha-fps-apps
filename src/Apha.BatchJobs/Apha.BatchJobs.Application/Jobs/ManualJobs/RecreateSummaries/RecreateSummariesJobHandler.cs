@@ -1,6 +1,8 @@
 using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Domain.Interfaces;
 using Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
+using Apha.BatchJobs.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace Apha.BatchJobs.Application.Jobs.ScheduledJobs.RecreateSummaries;
@@ -15,8 +17,10 @@ namespace Apha.BatchJobs.Application.Jobs.ScheduledJobs.RecreateSummaries;
 /// Lock lifecycle is owned exclusively by <see cref="JobOrchestrator"/>.
 /// This handler must not acquire or release the distributed lock.
 /// </summary>
+
 public sealed class RecreateSummariesJobHandler : IBatchJob
 {
+    private readonly IDbContextFactory<BatchJobsDbContext> _dbContextFactory;
     private readonly RecreateSummariesOrchestrator _orchestrator;
     private readonly IRecreateSummariesContext _jobContext;
     private readonly ICorrelationService _correlationService;
@@ -45,11 +49,13 @@ public sealed class RecreateSummariesJobHandler : IBatchJob
     /// Initializes a new instance of <see cref="RecreateSummariesJobHandler"/>.
     /// </summary>
     public RecreateSummariesJobHandler(
+        IDbContextFactory<BatchJobsDbContext> dbContextFactory,
         RecreateSummariesOrchestrator orchestrator,
         IRecreateSummariesContext jobContext,
         ICorrelationService correlationService,
         ILogger<RecreateSummariesJobHandler> logger)
     {
+        _dbContextFactory = dbContextFactory ?? throw new ArgumentNullException(nameof(dbContextFactory));
         _orchestrator = orchestrator ?? throw new ArgumentNullException(nameof(orchestrator));
         _jobContext = jobContext ?? throw new ArgumentNullException(nameof(jobContext));
         _correlationService = correlationService ?? throw new ArgumentNullException(nameof(correlationService));

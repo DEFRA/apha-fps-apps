@@ -1,6 +1,8 @@
 using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Domain.Configuration;
 using Apha.BatchJobs.Domain.Interfaces;
+using Apha.BatchJobs.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -16,54 +18,33 @@ namespace Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive;
 /// Lock lifecycle is owned exclusively by JobOrchestrator. This handler must not
 /// acquire or release the distributed lock.
 /// </summary>
+
 public sealed class MabArchiveJobHandler : IBatchJob
 {
+    private readonly IDbContextFactory<BatchJobsDbContext> _dbContextFactory;
     private readonly IServiceProvider _serviceProvider;
     private readonly IExecutionYearContext _executionYearContext;
-    private readonly Func<Func<Task>, Task> _transactionWrapper;
     private readonly ILogger<MabArchiveJobHandler> _logger;
     private readonly ICorrelationService _correlationService;
     private readonly MabArchiveSettings _settings;
 
-    /// <summary>
-    /// Canonical job name.
-    /// </summary>
     public string Name => "MABArchive";
-
-    /// <summary>
-    /// Idempotency strategy: full year-scoped rebuild with deterministic ordering.
-    /// </summary>
     public string IdempotencyStrategy => "YearScopedRebuildWithDeterministicOrdering";
-
-    /// <summary>
-    /// EventBridge Scheduler cron expression: Monday-Friday at 20:00 (8pm) UTC.
-    /// </summary>
     public string? ScheduleExpression => "cron(0 20 ? * MON-FRI *)";
-
-    /// <summary>
-    /// Human-readable schedule description.
-    /// </summary>
     public string? ScheduleDescription => "Weekdays (Monday to Friday) at 8:00 PM UTC";
-
-    /// <summary>
-    /// Maximum execution timeout: 30 minutes.
-    /// </summary>
     public int? MaxExecutionSeconds => 1800;
 
-    /// <summary>
-    /// Initializes a new instance of the MabArchiveJobHandler.
-    /// </summary>
     public MabArchiveJobHandler(
+        IDbContextFactory<BatchJobsDbContext> dbContextFactory,
         IServiceProvider serviceProvider,
         IExecutionYearContext executionYearContext,
-        Func<Func<Task>, Task> transactionWrapper,
         ICorrelationService correlationService,
         ILogger<MabArchiveJobHandler> logger,
         IOptions<MabArchiveSettings> settings)
     {
+        _dbContextFactory = dbContextFactory ?? throw new ArgumentNullException(nameof(dbContextFactory));
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         _executionYearContext = executionYearContext ?? throw new ArgumentNullException(nameof(executionYearContext));
-        _transactionWrapper = transactionWrapper ?? throw new ArgumentNullException(nameof(transactionWrapper));
         _correlationService = correlationService ?? throw new ArgumentNullException(nameof(correlationService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _settings = settings?.Value ?? new MabArchiveSettings();
@@ -75,7 +56,7 @@ public sealed class MabArchiveJobHandler : IBatchJob
     /// </summary>
     public async Task ExecuteAsync(CancellationToken cancellationToken = default)
     {
-        var runId = $"run-{DateTime.UtcNow:yyyyMMdd-HHmmss}-{Guid.NewGuid().ToString("N").Substring(0, 8)}";
+        var runId = $"run-{DateTime.UtcNow:yyyyMMdd-HHmmss}-{Guid.NewGuid().ToString("N")[..8]}";
         var startedAt = DateTime.UtcNow;
         var correlationId = _correlationService.GetCorrelationId() ?? _correlationService.GenerateCorrelationId();
 
@@ -92,6 +73,8 @@ public sealed class MabArchiveJobHandler : IBatchJob
         _logger.LogInformation("RunId: {RunId} | Timestamp: {StartTime:yyyy-MM-dd HH:mm:ss.fff} | ProcessId: {ProcessId}",
             runId, startedAt, Environment.ProcessId);
 
+        await using var dbContext = _dbContextFactory.CreateDbContext();
+
         try
         {
             var orchestrator = _serviceProvider.GetRequiredService<MabArchiveLoadOrchestrator>();
@@ -104,10 +87,18 @@ public sealed class MabArchiveJobHandler : IBatchJob
                 context.PrimaryYear,
                 context.CurrentMonth);
 
+            // Transaction wrapper using the provided context
+            async Task TransactionWrapper(Func<Task> action)
+            {
+                await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+                await action();
+                await transaction.CommitAsync(cancellationToken);
+            }
+
             await orchestrator.ExecuteAsync(
                 runId,
                 context,
-                _transactionWrapper,
+                TransactionWrapper,
                 cancellationToken);
 
             var duration = DateTime.UtcNow - startedAt;

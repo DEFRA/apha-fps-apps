@@ -2,6 +2,8 @@ using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Domain.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Apha.BatchJobs.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.Application.Jobs.FECProcess;
 
@@ -12,6 +14,7 @@ namespace Apha.BatchJobs.Application.Jobs.FECProcess;
 /// </summary>
 public sealed class FECProcessHandler : IBatchJob
 {
+    private readonly IDbContextFactory<BatchJobsDbContext> _dbContextFactory;
     private readonly ILogger<FECProcessHandler> _logger;
     private readonly BatchJobSettings _settings;
 
@@ -47,9 +50,11 @@ public sealed class FECProcessHandler : IBatchJob
     /// <param name="logger">Logger instance.</param>
     /// <param name="settings">Batch job runtime settings.</param>
     public FECProcessHandler(
+        IDbContextFactory<BatchJobsDbContext> dbContextFactory,
         ILogger<FECProcessHandler> logger,
         IOptions<BatchJobSettings> settings)
     {
+        _dbContextFactory = dbContextFactory ?? throw new ArgumentNullException(nameof(dbContextFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _settings = settings?.Value ?? new BatchJobSettings();
     }

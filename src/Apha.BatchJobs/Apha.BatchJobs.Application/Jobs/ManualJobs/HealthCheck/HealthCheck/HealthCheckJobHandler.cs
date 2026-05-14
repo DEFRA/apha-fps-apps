@@ -2,6 +2,8 @@ using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Domain.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Apha.BatchJobs.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.Application.Jobs.HealthCheck;
 
@@ -11,6 +13,7 @@ namespace Apha.BatchJobs.Application.Jobs.HealthCheck;
 /// </summary>
 public sealed class HealthCheckJobHandler : IBatchJob
 {
+    private readonly IDbContextFactory<BatchJobsDbContext> _dbContextFactory;
     private readonly ILogger<HealthCheckJobHandler> _logger;
     private readonly BatchJobSettings _settings;
 
@@ -47,9 +50,11 @@ public sealed class HealthCheckJobHandler : IBatchJob
     /// <param name="logger">Logger instance.</param>
     /// <param name="settings">Batch job runtime settings.</param>
     public HealthCheckJobHandler(
+        IDbContextFactory<BatchJobsDbContext> dbContextFactory,
         ILogger<HealthCheckJobHandler> logger,
         IOptions<BatchJobSettings> settings)
     {
+        _dbContextFactory = dbContextFactory ?? throw new ArgumentNullException(nameof(dbContextFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _settings = settings?.Value ?? new BatchJobSettings();
     }
