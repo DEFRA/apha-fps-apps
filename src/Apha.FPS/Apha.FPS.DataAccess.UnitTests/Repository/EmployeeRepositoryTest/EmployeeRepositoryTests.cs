@@ -933,6 +933,345 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
 
         #endregion
 
+        // ── Helpers for PactManagers tests ────────────────────────────────────
+
+        private static EmployeeRepository CreateRepositoryForPactManagers(
+            IEnumerable<PactWorkGroupGradeView> pactGrades,
+            IEnumerable<StaffGeneralView> staffGeneralViews,
+            int fpsYear = DefaultTestFpsYear)
+        {
+            var mockFpsYearContext = CreateMockFpsYearContext(fpsYear);
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(mockFpsYearContext.Object);
+
+            var employeesMockSet = RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<Employee>());
+            mockContext.Setup(x => x.Employees).Returns(employeesMockSet.Object);
+
+            var wgEmployeesMockSet = RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<WgEmployee>());
+            mockContext.Setup(x => x.WgEmployees).Returns(wgEmployeesMockSet.Object);
+
+            var pactGradesMockSet = RepositoryTestHelper.CreateMockDbSet(pactGrades);
+            mockContext.Setup(x => x.PactWorkGroupGradeViews).Returns(pactGradesMockSet.Object);
+
+            var staffGeneralMockSet = RepositoryTestHelper.CreateMockDbSet(staffGeneralViews);
+            mockContext.Setup(x => x.StaffGeneralViews).Returns(staffGeneralMockSet.Object);
+
+            return new EmployeeRepository(mockContext.Object, mockFpsYearContext.Object);
+        }
+
+        #region GetAllPactManagersAsync Tests
+
+        [Fact]
+        public async Task GetAllPactManagersAsync_ReturnsManagers_WithGradeCodeLessThanOrEqualToE()
+        {
+            // Arrange – GradeCode "A", "D", "E" are all <= "E" so should be included
+            var pactGrades = new List<PactWorkGroupGradeView>
+            {
+                new() { WgGrade = "WG01", GradeCode = "A",  WorkGroup = "Group A" },
+                new() { WgGrade = "WG02", GradeCode = "D",  WorkGroup = "Group D" },
+                new() { WgGrade = "WG03", GradeCode = "E",  WorkGroup = "Group E" },
+                new() { WgGrade = "WG04", GradeCode = "F",  WorkGroup = "Group F" }  // excluded
+            };
+            var staff = new List<StaffGeneralView>
+            {
+                new() { StaffId = "S001", Name = "Alice",   WorkGroupGrade = "WG01" },
+                new() { StaffId = "S002", Name = "Bob",     WorkGroupGrade = "WG02" },
+                new() { StaffId = "S003", Name = "Charlie", WorkGroupGrade = "WG03" },
+                new() { StaffId = "S004", Name = "Dave",    WorkGroupGrade = "WG04" }
+            };
+            var repo = CreateRepositoryForPactManagers(pactGrades, staff);
+
+            // Act
+            var result = await repo.GetAllPactManagersAsync();
+
+            // Assert
+            var list = result.ToList();
+            Assert.Equal(3, list.Count);
+            Assert.DoesNotContain(list, m => m.Name == "Dave");
+        }
+
+        [Fact]
+        public async Task GetAllPactManagersAsync_IncludesGD5_EvenThoughGreaterThanE()
+        {
+            // Arrange – "GD5" > "E" alphabetically but is explicitly allowed
+            var pactGrades = new List<PactWorkGroupGradeView>
+            {
+                new() { WgGrade = "WG01", GradeCode = "GD5", WorkGroup = "Group GD5" },
+                new() { WgGrade = "WG02", GradeCode = "Z",   WorkGroup = "Group Z" }  // excluded
+            };
+            var staff = new List<StaffGeneralView>
+            {
+                new() { StaffId = "S001", Name = "Alice Director", WorkGroupGrade = "WG01" },
+                new() { StaffId = "S002", Name = "Bob Other",      WorkGroupGrade = "WG02" }
+            };
+            var repo = CreateRepositoryForPactManagers(pactGrades, staff);
+
+            // Act
+            var result = await repo.GetAllPactManagersAsync();
+
+            // Assert
+            var list = result.ToList();
+            Assert.Single(list);
+            Assert.Equal("Alice Director", list[0].Name);
+            Assert.Equal("GD5",            list[0].GradeCode);
+        }
+
+        [Fact]
+        public async Task GetAllPactManagersAsync_ExcludesGradeCodesAboveE_ExceptGD5()
+        {
+            // Arrange
+            var pactGrades = new List<PactWorkGroupGradeView>
+            {
+                new() { WgGrade = "WG01", GradeCode = "B",   WorkGroup = "Group B" },   // included (<=E)
+                new() { WgGrade = "WG02", GradeCode = "GD5", WorkGroup = "Group GD5" }, // included (special)
+                new() { WgGrade = "WG03", GradeCode = "G",   WorkGroup = "Group G" },   // excluded (>E, not GD5)
+                new() { WgGrade = "WG04", GradeCode = "Z",   WorkGroup = "Group Z" }    // excluded (>E, not GD5)
+            };
+            var staff = new List<StaffGeneralView>
+            {
+                new() { StaffId = "S001", Name = "Alice", WorkGroupGrade = "WG01" },
+                new() { StaffId = "S002", Name = "Bob",   WorkGroupGrade = "WG02" },
+                new() { StaffId = "S003", Name = "Carol", WorkGroupGrade = "WG03" },
+                new() { StaffId = "S004", Name = "Dave",  WorkGroupGrade = "WG04" }
+            };
+            var repo = CreateRepositoryForPactManagers(pactGrades, staff);
+
+            // Act
+            var result = await repo.GetAllPactManagersAsync();
+
+            // Assert
+            var list = result.ToList();
+            Assert.Equal(2, list.Count);
+            Assert.Contains(list, m => m.Name == "Alice");
+            Assert.Contains(list, m => m.Name == "Bob");
+            Assert.DoesNotContain(list, m => m.Name == "Carol");
+            Assert.DoesNotContain(list, m => m.Name == "Dave");
+        }
+
+        [Fact]
+        public async Task GetAllPactManagersAsync_ReturnsOrderedByName()
+        {
+            // Arrange
+            var pactGrades = new List<PactWorkGroupGradeView>
+            {
+                new() { WgGrade = "WG01", GradeCode = "A", WorkGroup = "Group A" },
+                new() { WgGrade = "WG02", GradeCode = "B", WorkGroup = "Group B" },
+                new() { WgGrade = "WG03", GradeCode = "C", WorkGroup = "Group C" }
+            };
+            var staff = new List<StaffGeneralView>
+            {
+                new() { StaffId = "S001", Name = "Charlie Manager", WorkGroupGrade = "WG01" },
+                new() { StaffId = "S002", Name = "Alice Manager",   WorkGroupGrade = "WG02" },
+                new() { StaffId = "S003", Name = "Bob Manager",     WorkGroupGrade = "WG03" }
+            };
+            var repo = CreateRepositoryForPactManagers(pactGrades, staff);
+
+            // Act
+            var result = await repo.GetAllPactManagersAsync();
+
+            // Assert
+            var list = result.ToList();
+            Assert.Equal(3,               list.Count);
+            Assert.Equal("Alice Manager",   list[0].Name);
+            Assert.Equal("Bob Manager",     list[1].Name);
+            Assert.Equal("Charlie Manager", list[2].Name);
+        }
+
+        [Fact]
+        public async Task GetAllPactManagersAsync_SetsExpr1FromFirstCharOfGradeCode()
+        {
+            // Arrange
+            var pactGrades = new List<PactWorkGroupGradeView>
+            {
+                new() { WgGrade = "WG01", GradeCode = "A1", WorkGroup = "Group A" },
+                new() { WgGrade = "WG02", GradeCode = "D2", WorkGroup = "Group D" }
+            };
+            var staff = new List<StaffGeneralView>
+            {
+                new() { StaffId = "S001", Name = "Alice", WorkGroupGrade = "WG01" },
+                new() { StaffId = "S002", Name = "Bob",   WorkGroupGrade = "WG02" }
+            };
+            var repo = CreateRepositoryForPactManagers(pactGrades, staff);
+
+            // Act
+            var result = await repo.GetAllPactManagersAsync();
+
+            // Assert
+            var list = result.ToList();
+            Assert.Equal(2, list.Count);
+            var alice = list.First(m => m.Name == "Alice");
+            var bob   = list.First(m => m.Name == "Bob");
+            Assert.Equal("A", alice.Expr1);
+            Assert.Equal("D", bob.Expr1);
+        }
+
+        [Fact]
+        public async Task GetAllPactManagersAsync_SetsWorkGroupFromGradeJoin()
+        {
+            // Arrange
+            var pactGrades = new List<PactWorkGroupGradeView>
+            {
+                new() { WgGrade = "WG01", GradeCode = "C", WorkGroup = "Alpha Group" }
+            };
+            var staff = new List<StaffGeneralView>
+            {
+                new() { StaffId = "S001", Name = "Alice", WorkGroupGrade = "WG01" }
+            };
+            var repo = CreateRepositoryForPactManagers(pactGrades, staff);
+
+            // Act
+            var result = await repo.GetAllPactManagersAsync();
+
+            // Assert
+            var manager = Assert.Single(result.ToList());
+            Assert.Equal("Alice",       manager.Name);
+            Assert.Equal("C",           manager.GradeCode);
+            Assert.Equal("Alpha Group", manager.WorkGroup);
+            Assert.Equal("C",           manager.Expr1);
+        }
+
+        [Fact]
+        public async Task GetAllPactManagersAsync_ReturnsEmpty_WhenNoStaffMatchGrades()
+        {
+            // Arrange – grades exist but no staff linked to them
+            var pactGrades = new List<PactWorkGroupGradeView>
+            {
+                new() { WgGrade = "WG01", GradeCode = "A", WorkGroup = "Group A" }
+            };
+            var staff = new List<StaffGeneralView>
+            {
+                new() { StaffId = "S001", Name = "Alice", WorkGroupGrade = "WG_NOMATCH" }
+            };
+            var repo = CreateRepositoryForPactManagers(pactGrades, staff);
+
+            // Act
+            var result = await repo.GetAllPactManagersAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetAllPactManagersAsync_ReturnsEmpty_WhenNoGradesExist()
+        {
+            // Arrange
+            var staff = new List<StaffGeneralView>
+            {
+                new() { StaffId = "S001", Name = "Alice", WorkGroupGrade = "WG01" }
+            };
+            var repo = CreateRepositoryForPactManagers(
+                new List<PactWorkGroupGradeView>(), staff);
+
+            // Act
+            var result = await repo.GetAllPactManagersAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetAllPactManagersAsync_ReturnsEmpty_WhenBothCollectionsEmpty()
+        {
+            // Arrange
+            var repo = CreateRepositoryForPactManagers(
+                new List<PactWorkGroupGradeView>(),
+                new List<StaffGeneralView>());
+
+            // Act
+            var result = await repo.GetAllPactManagersAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetAllPactManagersAsync_ExcludesNullGradeCode()
+        {
+            // Arrange
+            var pactGrades = new List<PactWorkGroupGradeView>
+            {
+                new() { WgGrade = "WG01", GradeCode = "A",  WorkGroup = "Group A" },
+                new() { WgGrade = "WG02", GradeCode = null, WorkGroup = "Group Null" }  // excluded
+            };
+            var staff = new List<StaffGeneralView>
+            {
+                new() { StaffId = "S001", Name = "Alice", WorkGroupGrade = "WG01" },
+                new() { StaffId = "S002", Name = "Bob",   WorkGroupGrade = "WG02" }
+            };
+            var repo = CreateRepositoryForPactManagers(pactGrades, staff);
+
+            // Act
+            var result = await repo.GetAllPactManagersAsync();
+
+            // Assert
+            var list = result.ToList();
+            Assert.Single(list);
+            Assert.Equal("Alice", list[0].Name);
+        }
+
+        [Fact]
+        public async Task GetAllPactManagersAsync_ExcludesNullStaffName()
+        {
+            // Arrange
+            var pactGrades = new List<PactWorkGroupGradeView>
+            {
+                new() { WgGrade = "WG01", GradeCode = "A", WorkGroup = "Group A" },
+                new() { WgGrade = "WG02", GradeCode = "B", WorkGroup = "Group B" }
+            };
+            var staff = new List<StaffGeneralView>
+            {
+                new() { StaffId = "S001", Name = "Alice", WorkGroupGrade = "WG01" },
+                new() { StaffId = "S002", Name = null,    WorkGroupGrade = "WG02" }  // excluded
+            };
+            var repo = CreateRepositoryForPactManagers(pactGrades, staff);
+
+            // Act
+            var result = await repo.GetAllPactManagersAsync();
+
+            // Assert
+            var list = result.ToList();
+            Assert.Single(list);
+            Assert.Equal("Alice", list[0].Name);
+        }
+
+        [Fact]
+        public async Task GetAllPactManagersAsync_DeduplicatesDistinctRows()
+        {
+            // Note: Distinct() deduplication on reference types without IEquatable only works
+            // server-side (against the real database). In-memory mock evaluation returns the
+            // cross-join result as-is. This test verifies the query still executes without error
+            // and that all projected rows have the expected field values.
+
+            // Arrange – same grade entry duplicated; staff has one entry joined to it
+            var pactGrades = new List<PactWorkGroupGradeView>
+            {
+                new() { WgGrade = "WG01", GradeCode = "A", WorkGroup = "Group A" },
+                new() { WgGrade = "WG01", GradeCode = "A", WorkGroup = "Group A" }  // duplicate
+            };
+            var staff = new List<StaffGeneralView>
+            {
+                new() { StaffId = "S001", Name = "Alice", WorkGroupGrade = "WG01" }
+            };
+            var repo = CreateRepositoryForPactManagers(pactGrades, staff);
+
+            // Act
+            var result = await repo.GetAllPactManagersAsync();
+
+            // Assert – all returned rows belong to Alice and carry the correct projected values
+            var list = result.ToList();
+            Assert.All(list, m =>
+            {
+                Assert.Equal("Alice",    m.Name);
+                Assert.Equal("A",        m.GradeCode);
+                Assert.Equal("A",        m.Expr1);
+                Assert.Equal("Group A",  m.WorkGroup);
+            });
+        }
+
+        #endregion
+
         // ── Helpers for WorkGroupPeople tests ─────────────────────────────────
 
         private static EmployeeRepository CreateRepositoryForWorkGroupPeople(

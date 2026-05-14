@@ -234,8 +234,6 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new MonthlyTimeMap());
 
-            //modelBuilder.ApplyConfiguration(new TimeCostCalcMap());
-
             modelBuilder.ApplyConfiguration(new ProjectMonthMap());
 
             modelBuilder.ApplyConfiguration(new TimeCodeValidMap());
