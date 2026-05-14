@@ -62,7 +62,10 @@ public sealed class BatchJobFactory : IBatchJobFactory
 
         return assembly
             .GetTypes()
-            .Where(t => t is { IsClass: true, IsAbstract: false } && batchJobType.IsAssignableFrom(t))
+            .Where(t =>
+                t is { IsClass: true, IsAbstract: false } &&
+                batchJobType.IsAssignableFrom(t) &&
+                t != typeof(Apha.BatchJobs.Application.Jobs.RecreateSummaries.RecreateSummariesHandler))
             .Select(t => new
             {
                 Type = t,

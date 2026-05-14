@@ -220,6 +220,33 @@ This path works because:
 
 ---
 
+## Local Modification Report - May 14, 2026
+
+Cloud reference used:
+- `docs/database/dbscript/CloudDump/tablesInCloud`
+
+Extracted cloud column types:
+- `fps.timecostcalcs.cost` = `double precision`
+- `fps.timecostcalcs.pay/nonpay/overhead` = `money`
+- `fps.period_timecostcalcs.totalcost` = `money`
+
+Local changes made to align runtime code with CloudDump schema:
+1. `Apha.BatchJobs.Infrastructure/Data/RecreateSummariesTables.cs`
+   - `RsTimeCostCalcsTable.Cost` kept as `double?`
+   - `RsPeriodTimeCostCalcsTable.TotalCost` set to `decimal?` (money boundary)
+2. `Apha.BatchJobs.Infrastructure/Data/BatchJobsDbContext.cs`
+   - `RsTimeCostCalcsTable.Cost` mapped without `HasColumnType("money")`
+   - `RsPeriodTimeCostCalcsTable.TotalCost` mapped with `HasColumnType("money")`
+   - `pay/nonpay/overhead` remain mapped as `money`
+3. `Apha.BatchJobs.Infrastructure/Repositories/RecreateSummaries/RefreshPeriodTccStep.cs`
+   - Added explicit conversion for `TotalCost` from `double?` to `decimal?` before insert into `fps.period_timecostcalcs.totalcost`
+
+Notes:
+- No SQL DDL files were changed in this update.
+- No local database table alteration was applied by this agent in this update.
+
+---
+
 ## Problem Context
 
 The FPS schema mixes two cost representations:

@@ -11,17 +11,25 @@ internal sealed class CreateProjectMonthCaseworkStep : RecreateSummariesExecutio
     {
         var db = context.DbContext;
 
-        var rows = await db.RsQryProjectMonthCw
+        var rawRows = await db.RsQryProjectMonthCw
             .AsNoTracking()
-            .Select(x => new RsProjectMonthCaseworkTable
+            .Select(x => new
             {
                 Project = x.Project,
                 MonthNo = x.MonthNo,
-                CwDebit = (double?)x.CwDebit,
-                CwCredit = (double?)x.CwCredit
+                CwDebit = x.CwDebit,
+                CwCredit = x.CwCredit
             })
             .Distinct()
             .ToListAsync(cancellationToken);
+
+        var rows = rawRows.Select(x => new RsProjectMonthCaseworkTable
+        {
+            Project = x.Project,
+            MonthNo = x.MonthNo,
+            CwDebit = x.CwDebit.HasValue ? (double?)x.CwDebit.Value : null,
+            CwCredit = x.CwCredit.HasValue ? (double?)x.CwCredit.Value : null
+        }).ToList();
 
         await db.RsProjectMonthCasework.AddRangeAsync(rows, cancellationToken);
         return await db.SaveChangesAsync(cancellationToken);

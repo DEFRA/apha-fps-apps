@@ -49,7 +49,7 @@ internal sealed class RefreshPeriodTccStep : RecreateSummariesExecutionStepBase
                 NonPay = tcc.NonPay,
                 Overhead = tcc.Overhead,
                 Time = tcc.Time,
-                TotalCost = tcc.Cost
+                TotalCost = (decimal?)tcc.Cost
             })
             .ToListAsync(cancellationToken);
 

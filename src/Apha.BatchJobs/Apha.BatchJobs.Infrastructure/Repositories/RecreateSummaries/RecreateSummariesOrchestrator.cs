@@ -48,64 +48,35 @@ public sealed class RecreateSummariesOrchestrator
         string triggeredBy,
         CancellationToken cancellationToken = default)
     {
-        var results = new List<StepResult>();
+        IReadOnlyList<StepResult>? completedResults = null;
+        var executionStrategy = _dbContext.Database.CreateExecutionStrategy();
 
-        var npgsqlConnection = (NpgsqlConnection)_dbContext.Database.GetDbConnection();
-        if (npgsqlConnection.State != System.Data.ConnectionState.Open)
-            await npgsqlConnection.OpenAsync(cancellationToken);
-
-        var executionContext = new RecreateSummariesExecutionContext(_dbContext, npgsqlConnection);
-
-        await using var transaction = await npgsqlConnection.BeginTransactionAsync(cancellationToken);
-
-        try
+        await executionStrategy.ExecuteAsync(async () =>
         {
-            _logger.LogInformation("[{RunId}] RecreateSummaries implementation: {Implementation}", runId, _stepCatalog.ImplementationName);
+            var results = new List<StepResult>();
 
-            // --- Steps 1–14 (mandatory, ordered) ---
-            var mandatorySteps = _stepCatalog.BuildMandatorySteps(month, triggeredBy);
+            // Ensure retries start from a clean tracking graph.
+            _dbContext.ChangeTracker.Clear();
 
-            foreach (var step in mandatorySteps)
+            var npgsqlConnection = (NpgsqlConnection)_dbContext.Database.GetDbConnection();
+            if (npgsqlConnection.State != System.Data.ConnectionState.Open)
+                await _dbContext.Database.OpenConnectionAsync(cancellationToken);
+
+            var executionContext = new RecreateSummariesExecutionContext(_dbContext, npgsqlConnection);
+
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+            try
             {
-                _logger.LogInformation(
-                    "[{RunId}] Executing step: {StepName}", runId, step.StepName);
+                _logger.LogInformation("[{RunId}] RecreateSummaries implementation: {Implementation}", runId, _stepCatalog.ImplementationName);
 
-                var result = await step.ExecuteAsync(executionContext, cancellationToken);
-                results.Add(result);
+                // --- Steps 1–14 (mandatory, ordered) ---
+                var mandatorySteps = _stepCatalog.BuildMandatorySteps(month, triggeredBy);
 
-                _logger.LogInformation(
-                    "[{RunId}] Step {StepName} → {Status} | RowsAffected={Rows} | Duration={Ms}ms",
-                    runId, result.StepName, result.Status, result.RowsAffected,
-                    (int)(result.EndTime - result.StartTime).TotalMilliseconds);
-
-                if (result.Status == Domain.Enums.StepStatus.Failed)
-                {
-                    _logger.LogError(
-                        "[{RunId}] Step {StepName} failed: {Error}. Rolling back.",
-                        runId, result.StepName, result.ErrorMessage);
-
-                    await transaction.RollbackAsync(cancellationToken);
-                    throw new InvalidOperationException(
-                        $"RecreateSummaries step '{result.StepName}' failed: {result.ErrorMessage}");
-                }
-            }
-
-            // --- Period-lock check (Phase 6) ---
-            var periodLocked = await GetPeriodLockedAsync(npgsqlConnection, month, cancellationToken);
-
-            _logger.LogInformation(
-                "[{RunId}] Period lock check | Month={Month} | PeriodLocked={PeriodLocked}",
-                runId, month, periodLocked);
-
-            if (periodLocked == 0)
-            {
-                // Steps 15–17: conditional refresh when period is not locked
-                var refreshSteps = _stepCatalog.BuildRefreshSteps(month);
-
-                foreach (var step in refreshSteps)
+                foreach (var step in mandatorySteps)
                 {
                     _logger.LogInformation(
-                        "[{RunId}] Executing refresh step: {StepName}", runId, step.StepName);
+                        "[{RunId}] Executing step: {StepName}", runId, step.StepName);
 
                     var result = await step.ExecuteAsync(executionContext, cancellationToken);
                     results.Add(result);
@@ -118,65 +89,104 @@ public sealed class RecreateSummariesOrchestrator
                     if (result.Status == Domain.Enums.StepStatus.Failed)
                     {
                         _logger.LogError(
-                            "[{RunId}] Refresh step {StepName} failed: {Error}. Rolling back.",
+                            "[{RunId}] Step {StepName} failed: {Error}. Rolling back.",
                             runId, result.StepName, result.ErrorMessage);
 
                         await transaction.RollbackAsync(cancellationToken);
+                        _dbContext.ChangeTracker.Clear();
                         throw new InvalidOperationException(
-                            $"RecreateSummaries refresh step '{result.StepName}' failed: {result.ErrorMessage}");
+                            $"RecreateSummaries step '{result.StepName}' failed: {result.ErrorMessage}");
                     }
                 }
-            }
-            else
-            {
-                // Period is locked — skip refresh steps, record as Skipped
-                foreach (var stepName in _stepCatalog.BuildRefreshSteps(month).Select(step => step.StepName))
+
+                // --- Period-lock check (Phase 6) ---
+                var periodLocked = await GetPeriodLockedAsync(month, cancellationToken);
+
+                _logger.LogInformation(
+                    "[{RunId}] Period lock check | Month={Month} | PeriodLocked={PeriodLocked}",
+                    runId, month, periodLocked);
+
+                if (periodLocked == 0)
                 {
-                    var skipped = new StepResult(stepName, 0, DateTime.UtcNow, DateTime.UtcNow,
-                        Domain.Enums.StepStatus.Skipped, "Period is locked");
-                    results.Add(skipped);
-                    _logger.LogInformation("[{RunId}] Step {StepName} skipped — period is locked.", runId, stepName);
+                    // Steps 15–17: conditional refresh when period is not locked
+                    var refreshSteps = _stepCatalog.BuildRefreshSteps(month);
+
+                    foreach (var step in refreshSteps)
+                    {
+                        _logger.LogInformation(
+                            "[{RunId}] Executing refresh step: {StepName}", runId, step.StepName);
+
+                        var result = await step.ExecuteAsync(executionContext, cancellationToken);
+                        results.Add(result);
+
+                        _logger.LogInformation(
+                            "[{RunId}] Step {StepName} → {Status} | RowsAffected={Rows} | Duration={Ms}ms",
+                            runId, result.StepName, result.Status, result.RowsAffected,
+                            (int)(result.EndTime - result.StartTime).TotalMilliseconds);
+
+                        if (result.Status == Domain.Enums.StepStatus.Failed)
+                        {
+                            _logger.LogError(
+                                "[{RunId}] Refresh step {StepName} failed: {Error}. Rolling back.",
+                                runId, result.StepName, result.ErrorMessage);
+
+                            await transaction.RollbackAsync(cancellationToken);
+                            _dbContext.ChangeTracker.Clear();
+                            throw new InvalidOperationException(
+                                $"RecreateSummaries refresh step '{result.StepName}' failed: {result.ErrorMessage}");
+                        }
+                    }
                 }
+                else
+                {
+                    // Period is locked — skip refresh steps, record as Skipped
+                    foreach (var stepName in _stepCatalog.BuildRefreshSteps(month).Select(step => step.StepName))
+                    {
+                        var skipped = new StepResult(stepName, 0, DateTime.UtcNow, DateTime.UtcNow,
+                            Domain.Enums.StepStatus.Skipped, "Period is locked");
+                        results.Add(skipped);
+                        _logger.LogInformation("[{RunId}] Step {StepName} skipped — period is locked.", runId, stepName);
+                    }
+                }
+
+                await transaction.CommitAsync(cancellationToken);
+                _dbContext.ChangeTracker.Clear();
+
+                _logger.LogInformation("[{RunId}] Transaction committed. All steps completed.", runId);
+                completedResults = results;
             }
-
-            await transaction.CommitAsync(cancellationToken);
-
-            _logger.LogInformation("[{RunId}] Transaction committed. All steps completed.", runId);
-            return results;
-        }
-        catch (Exception) when (results.Count > 0 &&
-                                results[^1].Status != Domain.Enums.StepStatus.Failed)
-        {
-            // Unexpected exception outside a step failure — attempt rollback
-            try { await transaction.RollbackAsync(CancellationToken.None); }
-            catch (Exception rollbackEx)
+            catch (Exception) when (results.Count > 0 &&
+                                    results[^1].Status != Domain.Enums.StepStatus.Failed)
             {
-                _logger.LogError(rollbackEx, "[{RunId}] Rollback failed.", runId);
+                // Unexpected exception outside a step failure — attempt rollback
+                try { await transaction.RollbackAsync(CancellationToken.None); }
+                catch (Exception rollbackEx)
+                {
+                    _logger.LogError(rollbackEx, "[{RunId}] Rollback failed.", runId);
+                }
+
+                // Prevent replay of tracked Added/Modified entities by other repositories sharing this scoped context.
+                _dbContext.ChangeTracker.Clear();
+                throw;
             }
-            throw;
-        }
+        });
+
+        return completedResults ?? Array.Empty<StepResult>();
     }
 
     // -------------------------------------------------------------------------
     // Period-lock helper (Phase 6)
     // -------------------------------------------------------------------------
 
-    private static async Task<int> GetPeriodLockedAsync(
-        NpgsqlConnection connection,
-        int month,
-        CancellationToken cancellationToken)
+    private async Task<int> GetPeriodLockedAsync(int month, CancellationToken cancellationToken)
     {
-        const string sql = """
-            SELECT periodlocked
-            FROM   fps.tblperiod
-            WHERE  endperiod = @month;
-            """;
+        var periodLocked = await _dbContext.RsTblPeriod
+            .AsNoTracking()
+            .Where(p => p.EndPeriod == month)
+            .Select(p => p.PeriodLocked)
+            .FirstOrDefaultAsync(cancellationToken);
 
-        await using var cmd = new NpgsqlCommand(sql, connection);
-        cmd.Parameters.AddWithValue("month", month);
-
-        var result = await cmd.ExecuteScalarAsync(cancellationToken);
-        return result is null || result == DBNull.Value ? 1 : Convert.ToInt32(result);
+        return periodLocked ?? 1;
     }
 
 }

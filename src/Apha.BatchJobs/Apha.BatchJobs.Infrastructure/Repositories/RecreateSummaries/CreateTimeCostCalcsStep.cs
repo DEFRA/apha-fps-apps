@@ -11,7 +11,9 @@ internal sealed class CreateTimeCostCalcsStep : RecreateSummariesExecutionStepBa
     {
         var db = context.DbContext;
 
-        var rows = await (
+        // Read nullable money/decimal values first, then compute money fields in decimal
+        // to avoid provider SQL casts from money -> double precision.
+        var rawRows = await (
             from pc in db.RsTblkpProfitCentre.AsNoTracking()
             join pcg in db.RsProfitCentreGrade.AsNoTracking()
                 on pc.ProfitCentre equals pcg.ProfitCentre
@@ -28,27 +30,56 @@ internal sealed class CreateTimeCostCalcsStep : RecreateSummariesExecutionStepBa
                 on tcv.ParentProject equals p.ParentProject
             join prg in db.RsTlkpProgram.AsNoTracking()
                 on p.Program equals prg.ProgramNo
-            select new RsTimeCostCalcsTable
+            select new
             {
-                WorkGroup = wgg.WorkGroup ?? string.Empty,
+                WorkGroup = wgg.WorkGroup,
                 JobCode = mt.TimeCode,
                 Project = tcv.ParentProject,
                 Month = mt.Month,
                 StaffId = vps.PactId,
                 GradeCode = wgg.GradeCode,
                 Name = vps.Name,
+                IsCharge = prg.SectorName == "Charge",
+                Hours = mt.Hours,
                 ChargeRate = (p.IsDefraProject ?? 0) == 0 ? pcg.ChargeRate : pcg.DefraChargeRate,
-                Class = prg.SectorName == "Charge" ? "Charge" : "Free",
-                Time = mt.Hours,
-                Cost = (prg.SectorName == "Charge" ? (mt.Hours ?? 0d) : 0d)
-                    * ((double?)((p.IsDefraProject ?? 0) == 0 ? pcg.ChargeRate : pcg.DefraChargeRate) ?? 0d),
                 Division = pc.Division,
-                Pay = (mt.Hours ?? 0d) * ((double?)pcg.PayRate ?? 0d),
-                NonPay = (mt.Hours ?? 0d) * ((double?)pcg.Npr ?? 0d),
-                Overhead = (mt.Hours ?? 0d) * ((double?)pcg.Ohr ?? 0d),
+                PayRate = pcg.PayRate,
+                Npr = pcg.Npr,
+                Ohr = pcg.Ohr,
                 FpsYear = p.FpsYear
             })
             .ToListAsync(cancellationToken);
+
+        var rows = rawRows.Select(r =>
+        {
+            var hours = r.Hours ?? 0d;
+            var hoursDecimal = (decimal)hours;
+            var chargeRateDouble = (double)(r.ChargeRate ?? 0m);
+            var chargeRate = r.ChargeRate ?? 0m;
+            var payRate = r.PayRate ?? 0m;
+            var npr = r.Npr ?? 0m;
+            var ohr = r.Ohr ?? 0m;
+
+            return new RsTimeCostCalcsTable
+            {
+                WorkGroup = r.WorkGroup ?? string.Empty,
+                JobCode = r.JobCode,
+                Project = r.Project,
+                Month = r.Month,
+                StaffId = r.StaffId,
+                GradeCode = r.GradeCode,
+                Name = r.Name,
+                ChargeRate = r.ChargeRate,
+                Class = r.IsCharge ? "Charge" : "Free",
+                Time = r.Hours,
+                Cost = r.IsCharge ? hours * chargeRateDouble : 0d,
+                Division = r.Division,
+                Pay = hoursDecimal * payRate,
+                NonPay = hoursDecimal * npr,
+                Overhead = hoursDecimal * ohr,
+                FpsYear = r.FpsYear
+            };
+        }).ToList();
 
         await db.RsTimeCostCalcs.AddRangeAsync(rows, cancellationToken);
         return await db.SaveChangesAsync(cancellationToken);

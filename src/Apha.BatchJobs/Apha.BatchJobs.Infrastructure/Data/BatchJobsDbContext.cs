@@ -473,9 +473,13 @@ public class BatchJobsDbContext : DbContext
             entity.Property(e => e.Customer).HasColumnName("customer");
             entity.Property(e => e.ProjectStatus).HasColumnName("projectstatus");
             entity.Property(e => e.PvsIncome).HasColumnName("pvsincome");
-            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
+            entity.Property(e => e.FpsYear)
+                .HasColumnName("fpsyear")
+                .HasConversion<double>();
             entity.Property(e => e.CostCentre).HasColumnName("costcentre");
-            entity.Property(e => e.IsDefraProject).HasColumnName("isdefraproject");
+            entity.Property(e => e.IsDefraProject)
+                .HasColumnName("isdefraproject")
+                .HasConversion<double?>();
             entity.Property(e => e.OracleProjectCode).HasColumnName("oracleprojectcode");
             entity.Property(e => e.SubAccountCode).HasColumnName("subaccountcode");
         });
@@ -513,9 +517,9 @@ public class BatchJobsDbContext : DbContext
             entity.Property(e => e.Time).HasColumnName("time");
             entity.Property(e => e.Cost).HasColumnName("cost");
             entity.Property(e => e.Division).HasColumnName("division");
-            entity.Property(e => e.Pay).HasColumnName("pay");
-            entity.Property(e => e.NonPay).HasColumnName("nonpay");
-            entity.Property(e => e.Overhead).HasColumnName("overhead");
+            entity.Property(e => e.Pay).HasColumnName("pay").HasColumnType("money");
+            entity.Property(e => e.NonPay).HasColumnName("nonpay").HasColumnType("money");
+            entity.Property(e => e.Overhead).HasColumnName("overhead").HasColumnType("money");
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
         });
 
@@ -684,7 +688,9 @@ public class BatchJobsDbContext : DbContext
             entity.Property(e => e.WorkGroup).HasColumnName("workgroup");
             entity.Property(e => e.TimeCode).HasColumnName("timecode");
             entity.Property(e => e.ParentProject).HasColumnName("parentproject");
-            entity.Property(e => e.Month).HasColumnName("month");
+            entity.Property(e => e.Month)
+                .HasColumnName("month")
+                .HasConversion<double>();
             entity.Property(e => e.Hours).HasColumnName("hours");
         });
 
@@ -800,11 +806,11 @@ public class BatchJobsDbContext : DbContext
             entity.Property(e => e.GradeCode).HasColumnName("gradecode");
             entity.Property(e => e.SpNumber).HasColumnName("spnumber");
             entity.Property(e => e.ChargeRate).HasColumnName("chargerate");
-            entity.Property(e => e.Pay).HasColumnName("pay");
-            entity.Property(e => e.NonPay).HasColumnName("nonpay");
-            entity.Property(e => e.Overhead).HasColumnName("overhead");
+            entity.Property(e => e.Pay).HasColumnName("pay").HasColumnType("money");
+            entity.Property(e => e.NonPay).HasColumnName("nonpay").HasColumnType("money");
+            entity.Property(e => e.Overhead).HasColumnName("overhead").HasColumnType("money");
             entity.Property(e => e.Time).HasColumnName("time");
-            entity.Property(e => e.TotalCost).HasColumnName("totalcost");
+            entity.Property(e => e.TotalCost).HasColumnName("totalcost").HasColumnType("money");
         });
 
         modelBuilder.Entity<RsRecreateSummariesLogTable>(entity =>
@@ -855,7 +861,9 @@ public class BatchJobsDbContext : DbContext
             entity.ToView("qryprojectmonthcw", schema: "fps");
             entity.HasNoKey();
             entity.Property(e => e.Project).HasColumnName("project");
-            entity.Property(e => e.MonthNo).HasColumnName("monthno");
+            entity.Property(e => e.MonthNo)
+                  .HasColumnName("monthno")
+                  .HasConversion<double>();
             entity.Property(e => e.CwDebit).HasColumnName("cwdebit");
             entity.Property(e => e.CwCredit).HasColumnName("cwcredit");
         });
@@ -874,7 +882,9 @@ public class BatchJobsDbContext : DbContext
             entity.ToView("qryjobmonth_subcontracts", schema: "fps");
             entity.HasNoKey();
             entity.Property(e => e.Project).HasColumnName("project");
-            entity.Property(e => e.Month).HasColumnName("month");
+            entity.Property(e => e.Month)
+                  .HasColumnName("month")
+                  .HasConversion<double>();
             entity.Property(e => e.Total).HasColumnName("total");
             entity.Property(e => e.Animals).HasColumnName("animals");
             entity.Property(e => e.Other).HasColumnName("other");
@@ -885,7 +895,9 @@ public class BatchJobsDbContext : DbContext
             entity.ToView("qryjobmonth_time", schema: "fps");
             entity.HasNoKey();
             entity.Property(e => e.Project).HasColumnName("project");
-            entity.Property(e => e.Month).HasColumnName("month");
+            entity.Property(e => e.Month)
+                  .HasColumnName("month")
+                  .HasConversion<double>();
             entity.Property(e => e.SumOfCost).HasColumnName("sumofcost");
             entity.Property(e => e.SumOfHours).HasColumnName("sumofhours");
             entity.Property(e => e.SumOfPayRate).HasColumnName("sumofpayrate");
@@ -897,7 +909,9 @@ public class BatchJobsDbContext : DbContext
             entity.ToView("qryjobmonthmilestone", schema: "fps");
             entity.HasNoKey();
             entity.Property(e => e.Project).HasColumnName("project");
-            entity.Property(e => e.DueMonth).HasColumnName("duemonth");
+            entity.Property(e => e.DueMonth)
+                  .HasColumnName("duemonth")
+                  .HasConversion<double>();
             entity.Property(e => e.MstoneDue).HasColumnName("mstonedue");
             entity.Property(e => e.DueDone).HasColumnName("due__done");
             entity.Property(e => e.OnTime).HasColumnName("ontime");
@@ -908,7 +922,9 @@ public class BatchJobsDbContext : DbContext
             entity.ToView("qryjobmonth_transferstotal", schema: "fps");
             entity.HasNoKey();
             entity.Property(e => e.Project).HasColumnName("project");
-            entity.Property(e => e.Month).HasColumnName("month");
+            entity.Property(e => e.Month)
+                  .HasColumnName("month")
+                  .HasConversion<double>();
             entity.Property(e => e.SumOfTransferCost).HasColumnName("sumoftransfercost");
         });
 
@@ -917,7 +933,9 @@ public class BatchJobsDbContext : DbContext
             entity.ToView("qryjobmonth_invoices", schema: "fps");
             entity.HasNoKey();
             entity.Property(e => e.ProjectParent).HasColumnName("projectparent");
-            entity.Property(e => e.Month).HasColumnName("month");
+            entity.Property(e => e.Month)
+                  .HasColumnName("month")
+                  .HasConversion<double>();
             entity.Property(e => e.SumOfAmount1).HasColumnName("sumofamount1");
         });
 
@@ -926,7 +944,9 @@ public class BatchJobsDbContext : DbContext
             entity.ToView("qryjobmonthportfoliosales", schema: "fps");
             entity.HasNoKey();
             entity.Property(e => e.PlanPortfolio).HasColumnName("planportfolio");
-            entity.Property(e => e.Month).HasColumnName("month");
+            entity.Property(e => e.Month)
+                  .HasColumnName("month")
+                  .HasConversion<double>();
             entity.Property(e => e.Fee).HasColumnName("fee");
         });
 

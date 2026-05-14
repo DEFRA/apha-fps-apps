@@ -90,9 +90,13 @@ public sealed class MabArchiveJobHandler : IBatchJob
             // Transaction wrapper using the provided context
             async Task TransactionWrapper(Func<Task> action)
             {
-                await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
-                await action();
-                await transaction.CommitAsync(cancellationToken);
+                var executionStrategy = dbContext.Database.CreateExecutionStrategy();
+                await executionStrategy.ExecuteAsync(async () =>
+                {
+                    await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+                    await action();
+                    await transaction.CommitAsync(cancellationToken);
+                });
             }
 
             await orchestrator.ExecuteAsync(

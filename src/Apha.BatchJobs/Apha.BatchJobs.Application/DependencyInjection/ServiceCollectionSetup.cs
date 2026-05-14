@@ -80,6 +80,21 @@ public static class ServiceCollectionSetup
                     });
             });
 
+            // Some jobs resolve DbContext instances through IDbContextFactory for per-operation scopes.
+            services.AddDbContextFactory<BatchJobsDbContext>(options =>
+            {
+                options.UseNpgsql(
+                    connectionString,
+                    npgsqlOptions =>
+                    {
+                        npgsqlOptions.EnableRetryOnFailure(
+                            maxRetryCount: 5,
+                            maxRetryDelay: TimeSpan.FromSeconds(10),
+                            errorCodesToAdd: null);
+                        npgsqlOptions.CommandTimeout(dbCommandTimeoutSeconds);
+                    });
+            });
+
             services.AddScoped<IBatchLockRepository, BatchLockRepository>();
             services.AddScoped<IJobExecutionRepository, JobExecutionRepository>();
         }

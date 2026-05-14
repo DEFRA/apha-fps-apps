@@ -97,9 +97,9 @@ internal sealed class RsTimeCostCalcsTable
     public double? Time { get; set; }
     public double? Cost { get; set; }
     public string? Division { get; set; }
-    public double? Pay { get; set; }
-    public double? NonPay { get; set; }
-    public double? Overhead { get; set; }
+    public decimal? Pay { get; set; }
+    public decimal? NonPay { get; set; }
+    public decimal? Overhead { get; set; }
     public int FpsYear { get; set; }
 }
 
@@ -421,9 +421,9 @@ internal sealed class RsPeriodTimeCostCalcsTable
     public string? GradeCode { get; set; }
     public string? SpNumber { get; set; }
     public decimal? ChargeRate { get; set; }
-    public double? Pay { get; set; }
-    public double? NonPay { get; set; }
-    public double? Overhead { get; set; }
+    public decimal? Pay { get; set; }
+    public decimal? NonPay { get; set; }
+    public decimal? Overhead { get; set; }
     public double? Time { get; set; }
-    public double? TotalCost { get; set; }
+    public decimal? TotalCost { get; set; }
 }
