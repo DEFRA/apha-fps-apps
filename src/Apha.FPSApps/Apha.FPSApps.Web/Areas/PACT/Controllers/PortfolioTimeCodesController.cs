@@ -262,10 +262,10 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                     success = false,
                     message = "Please correct the errors below.",
                     errors = ModelState
-                        .Where(kvp => kvp.Value!.Errors.Any())
+                        .Where(kvp => kvp.Value!.Errors.Any() && kvp.Key != "$")
                         .SelectMany(kvp => kvp.Value!.Errors.Select(e => new
                         {
-                            field = kvp.Key,
+                            field = kvp.Key.StartsWith("$.") ? kvp.Key[2..] : kvp.Key,
                             message = e.ErrorMessage
                         }))
                 });

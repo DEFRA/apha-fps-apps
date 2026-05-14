@@ -118,7 +118,7 @@ function saveJobCode() {
                 $('#modalPopup').removeClass('show');
                 refreshJobCodeGrid();
             } else {
-                displayValidationErrors(response.errors, response.message);
+                displayServerValidationErrors(response.errors, response.message, '#jobCodeForm');
             }
         },
         error: function () {
@@ -285,7 +285,7 @@ function saveTimeCode() {
                 $('#modalPopup').removeClass('show');
                 refreshTimeCodeGrid();
             } else {
-                displayValidationErrors(response.errors, response.message);
+                displayServerValidationErrors(response.errors, response.message, '#timeCodeForm');
             }
         },
         error: function () {
@@ -369,45 +369,3 @@ function refreshTimeCodeGrid() {
             });
     }
 }
-
-// ========================================
-// Validation Error Display
-// ========================================
-
-function displayValidationErrors(errors, message) {
-    const errorSummary = $('.govuk-error-summary');
-    const errorList = errorSummary.find('.govuk-error-summary__list');
-    errorList.empty();
-
-    // Clear previous error messages
-    $('.govuk-error-message').hide();
-    $('.govuk-form-group').removeClass('govuk-form-group--error');
-
-    if (message) {
-        errorList.append(`<li>${message}</li>`);
-    }
-
-    if (errors && errors.length > 0) {
-        errors.forEach(function (error) {
-            errorList.append(`<li><a href="#${error.field}">${error.message}</a></li>`);
-
-            const field = $(`[name="${error.field}"]`);
-            field.closest('.govuk-form-group').addClass('govuk-form-group--error');
-            field.siblings('.govuk-error-message').text(error.message).show();
-        });
-    }
-
-    errorSummary.show();
-}
-
-// ========================================
-// Modal Close Handler
-// ========================================
-
-$(document).ready(function () {
-    $('#modalPopup').on('click', function (e) {
-        if (e.target === this) {
-            $(this).removeClass('show');
-        }
-    });
-});
