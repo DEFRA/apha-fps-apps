@@ -83,9 +83,7 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<Agency> Agencies { get; set; }
 
 
-        public virtual DbSet<AdditionalCost> AdditionalCosts { get; set; }
         public virtual DbSet<AdditionalCostView> AdditionalCostViews { get; set; }
-        public virtual DbSet<AdditionalCostLog> AdditionalCostLogs { get; set; }
         public virtual DbSet<AccountCategory> AccountCategories { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
