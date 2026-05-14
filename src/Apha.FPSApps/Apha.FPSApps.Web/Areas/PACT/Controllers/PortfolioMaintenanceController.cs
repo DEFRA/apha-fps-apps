@@ -50,6 +50,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
         public async Task<IActionResult> Index()
         {
+            TempData["PactOrigin"] = "Portfolio";
             var allPortfolios = await _projectService.GetAllPactProjectsAsync();
             var programs = await _programService.GetAllProgramsAsync();
             var managers = await _employeeService.GetAllPactManagersAsync();

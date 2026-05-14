@@ -17,8 +17,21 @@
                        onchange="navigateToProjectCode(this.value)" />
             </span>
             <span>
-                <a href="@Url.Action("Index", "ProjectMaintenance", new { area = "PACT" })"
-                   class="govuk-back-link">Back</a>
+                @if (Model.FromPortfolio)
+                {
+                    <a class="govuk-back-link"
+                       asp-area="PACT"
+                       asp-controller="PortfolioMaintenance"
+                       asp-action="Index">Back</a>
+                }
+                else
+                {
+                    <a class="govuk-back-link"
+                       asp-area="PACT"
+                       asp-controller="ProjectMaintenance"
+                       asp-action="Details"
+                       asp-route-id="@Model.ParentProject">Back</a>
+                }
             </span>
         </h1>
     </div>
@@ -49,9 +62,7 @@
 
         function navigateToProjectCode(code) {
             code = (code || '').trim();
-            if (code) {
-                fpsNavigateTo('/PACT/TestPurchaseRequirement/Index?parentProject=' + encodeURIComponent(code));
-            }
+            fpsNavigateTo('/PACT/TestPurchaseRequirement/Index?parentProject=' + encodeURIComponent(code));
         }
 
         function getGridManager() {

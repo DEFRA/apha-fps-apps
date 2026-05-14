@@ -37,6 +37,8 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
         public async Task<ApiResponseDto<List<TestRequirementDto>>> GetPagedTestReqmtbyProjectAsync(
            QueryParameters<string> query, string parentProject)
         {
+            if (string.IsNullOrWhiteSpace(parentProject))
+                return ApiResponseDto<List<TestRequirementDto>>.SuccessResponse([]);
 
             var baseUrl = string.Format(PactApiEndpoints.GetPagedTestReqmtbyProject, Uri.EscapeDataString(parentProject));
             var url = QueryStringHelper.AddQueryString(baseUrl, query);

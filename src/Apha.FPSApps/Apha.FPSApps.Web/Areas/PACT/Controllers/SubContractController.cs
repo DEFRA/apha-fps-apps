@@ -195,7 +195,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             }
 
             var query = _mapper.Map<QueryParameters<string>>(request);
-            var response = await _subContractService.GetPagedProjectSubContractsAsync(query, parentProject);
+            var response = await _subContractService.GetPagedProjectSubContractsManualAsync(query, parentProject);
 
             var items = response.Data != null
                 ? _mapper.Map<List<SubContractItem>>(response.Data)
