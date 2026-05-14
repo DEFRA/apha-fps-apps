@@ -13,5 +13,7 @@ namespace Apha.FPS.Application.Interfaces
         Task<bool> DeleteEmployeeAsync(string spNumber);
         Task<IEnumerable<ManagerDto>> GetAllManagersAsync();
         Task<IEnumerable<ManagerDto>> GetAllPactManagersAsync();
+        Task<IEnumerable<PersonDto>> GetAllPersonAsync();
+        Task<PaginatedResult<WorkGroupPeopleDto>> GetWorkGroupPeopleAsync(QueryParameters<string> queryFilter, string? workGroup = null);
     }
 }

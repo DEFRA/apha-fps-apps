@@ -111,5 +111,18 @@ namespace Apha.FPS.Application.Services
             var managers = await _employeeRepository.GetAllPactManagersAsync();
             return _mapper.Map<IEnumerable<ManagerDto>>(managers);
         }
+
+        public async Task<IEnumerable<PersonDto>> GetAllPersonAsync()
+        {
+            var items = await _employeeRepository.GetAllPersonAsync();
+            return _mapper.Map<IEnumerable<PersonDto>>(items);
+        }
+
+        public async Task<PaginatedResult<WorkGroupPeopleDto>> GetWorkGroupPeopleAsync(QueryParameters<string> queryFilter, string? workGroup = null)
+        {
+            var filter = _mapper.Map<PaginationParameters<string>>(queryFilter);
+            var items = await _employeeRepository.GetWorkGroupPeopleAsync(filter, workGroup);
+            return _mapper.Map<PaginatedResult<WorkGroupPeopleDto>>(items);
+        }
     }
 }

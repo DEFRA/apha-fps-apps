@@ -73,6 +73,8 @@ namespace Apha.FPSApps.Infrastructure.Mappings
 
             // View Project Plan vs Actual Tests
             CreateMap<MonthlyOutputDto, MonthlyOutputRes>().ReverseMap();
+            CreateMap<WorkGroupPeopleDto, WorkGroupPeopleRes>().ReverseMap();
+            CreateMap<PersonDto, PersonRes>().ReverseMap();
         }
     }
 }

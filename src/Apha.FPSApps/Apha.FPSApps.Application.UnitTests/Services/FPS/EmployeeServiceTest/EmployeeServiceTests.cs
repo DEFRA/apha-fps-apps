@@ -4,6 +4,7 @@ using Apha.FPSApps.Application.Interfaces.FpsApiClients;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Application.Services.FPS;
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 using Xunit;
 
 namespace Apha.FPSApps.Application.UnitTests.Services.FPS.EmployeeServiceTest
@@ -613,6 +614,184 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.EmployeeServiceTest
                 e.FirstName == employee.FirstName &&
                 e.LastName == employee.LastName
             ));
+        }
+
+        #endregion
+
+        #region GetAllPersonAsync Tests
+
+        [Fact]
+        public async Task GetAllPersonAsync_WithSuccessResponse_ReturnsPersonList()
+        {
+            // Arrange
+            var persons = new List<PersonDto>
+            {
+                new() { Name = "Alice", WorkGroupGrade = "WG1", WorkGroup = "Group A" },
+                new() { Name = "Bob",   WorkGroupGrade = "WG2", WorkGroup = "Group B" }
+            };
+            var expectedResponse = ApiResponseDto<List<PersonDto>>.SuccessResponse(persons);
+
+            _fpsEmployeeApiClient.GetAllPersonAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _employeeService.GetAllPersonAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data?.Count);
+            Assert.Equal("Alice", result.Data![0].Name);
+            await _fpsEmployeeApiClient.Received(1).GetAllPersonAsync();
+        }
+
+        [Fact]
+        public async Task GetAllPersonAsync_WithEmptyList_ReturnsEmptySuccessResponse()
+        {
+            // Arrange
+            var expectedResponse = ApiResponseDto<List<PersonDto>>.SuccessResponse([]);
+            _fpsEmployeeApiClient.GetAllPersonAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _employeeService.GetAllPersonAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!);
+            await _fpsEmployeeApiClient.Received(1).GetAllPersonAsync();
+        }
+
+        [Fact]
+        public async Task GetAllPersonAsync_WithFailureResponse_ReturnsFailure()
+        {
+            // Arrange
+            var failureResponse = ApiResponseDto<List<PersonDto>>.FailureResponse([], new ApiMetaDto());
+            _fpsEmployeeApiClient.GetAllPersonAsync().Returns(failureResponse);
+
+            // Act
+            var result = await _employeeService.GetAllPersonAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            await _fpsEmployeeApiClient.Received(1).GetAllPersonAsync();
+        }
+
+        [Fact]
+        public async Task GetAllPersonAsync_ClientThrows_PropagatesException()
+        {
+            // Arrange
+            _fpsEmployeeApiClient.GetAllPersonAsync()
+                .ThrowsAsync(new Exception("API unavailable"));
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<Exception>(
+                async () => await _employeeService.GetAllPersonAsync());
+            Assert.Equal("API unavailable", ex.Message);
+            await _fpsEmployeeApiClient.Received(1).GetAllPersonAsync();
+        }
+
+        #endregion
+
+        #region GetWorkGroupPeopleAsync Tests
+
+        [Fact]
+        public async Task GetWorkGroupPeopleAsync_WithNoWorkGroup_ReturnsSuccessResponse()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var people = new List<WorkGroupPeopleDto>
+            {
+                new() { Name = "Alice", WorkGroupGrade = "WG1" },
+                new() { Name = "Bob",   WorkGroupGrade = "WG2" }
+            };
+            var paginatedResult = new PaginatedResult<WorkGroupPeopleDto>(people, 2, 1, 10);
+            var expectedResponse = ApiResponseDto<PaginatedResult<WorkGroupPeopleDto>>
+                .SuccessResponse(paginatedResult);
+
+            _fpsEmployeeApiClient.GetWorkGroupPeopleAsync(query, null).Returns(expectedResponse);
+
+            // Act
+            var result = await _employeeService.GetWorkGroupPeopleAsync(query);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data?.data.Count());
+            await _fpsEmployeeApiClient.Received(1).GetWorkGroupPeopleAsync(query, null);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupPeopleAsync_WithWorkGroup_PassesWorkGroupToClient()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var paginatedResult = new PaginatedResult<WorkGroupPeopleDto>([], 0, 1, 10);
+            var expectedResponse = ApiResponseDto<PaginatedResult<WorkGroupPeopleDto>>
+                .SuccessResponse(paginatedResult);
+
+            _fpsEmployeeApiClient.GetWorkGroupPeopleAsync(query, "WG1").Returns(expectedResponse);
+
+            // Act
+            var result = await _employeeService.GetWorkGroupPeopleAsync(query, "WG1");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            await _fpsEmployeeApiClient.Received(1).GetWorkGroupPeopleAsync(query, "WG1");
+        }
+
+        [Fact]
+        public async Task GetWorkGroupPeopleAsync_WithEmptyResult_ReturnsEmptyPaginatedResult()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var paginatedResult = new PaginatedResult<WorkGroupPeopleDto>([], 0, 1, 10);
+            var expectedResponse = ApiResponseDto<PaginatedResult<WorkGroupPeopleDto>>
+                .SuccessResponse(paginatedResult);
+
+            _fpsEmployeeApiClient.GetWorkGroupPeopleAsync(query, null).Returns(expectedResponse);
+
+            // Act
+            var result = await _employeeService.GetWorkGroupPeopleAsync(query);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!.data);
+            await _fpsEmployeeApiClient.Received(1).GetWorkGroupPeopleAsync(query, null);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupPeopleAsync_WithFailureResponse_ReturnsFailure()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var failureResponse = ApiResponseDto<PaginatedResult<WorkGroupPeopleDto>>.FailureResponse([], new ApiMetaDto());
+
+            _fpsEmployeeApiClient.GetWorkGroupPeopleAsync(query, null).Returns(failureResponse);
+
+            // Act
+            var result = await _employeeService.GetWorkGroupPeopleAsync(query);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupPeopleAsync_ClientThrows_PropagatesException()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            _fpsEmployeeApiClient
+                .GetWorkGroupPeopleAsync(query, null)
+                .ThrowsAsync(new Exception("API error"));
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<Exception>(
+                async () => await _employeeService.GetWorkGroupPeopleAsync(query));
+            Assert.Equal("API error", ex.Message);
         }
 
         #endregion

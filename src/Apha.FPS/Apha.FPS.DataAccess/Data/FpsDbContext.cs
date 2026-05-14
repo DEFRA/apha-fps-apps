@@ -67,6 +67,7 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<AdditionalCost> AdditionalCosts { get; set; }
         public virtual DbSet<AdditionalCostLog> AdditionalCostLogs { get; set; }
         public virtual DbSet<AccountCategory> AccountCategories { get; set; }
+        public virtual DbSet<WorkGroupPeople> WorkGroupPeoples { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new UserMap());
@@ -190,6 +191,8 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new MonthlyOutputMap());
             modelBuilder.Entity<MonthlyOutput>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new WorkGroupPeopleMap());
         }
     }
 }

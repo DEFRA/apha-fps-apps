@@ -56,5 +56,15 @@ namespace Apha.FPSApps.Application.Services.FPS
             var managers = await _fpsClient.FpsEmployee.GetAllPactManagerAsync();
             return managers;
         }
+
+        public async Task<ApiResponseDto<List<PersonDto>>> GetAllPersonAsync()
+        {
+            return await _fpsClient.FpsEmployee.GetAllPersonAsync();
+        }
+
+        public async Task<ApiResponseDto<PaginatedResult<WorkGroupPeopleDto>>> GetWorkGroupPeopleAsync(QueryParameters<string> query, string? workGroup = null)
+        {
+            return await _fpsClient.FpsEmployee.GetWorkGroupPeopleAsync(query, workGroup);
+        }
     }
 }

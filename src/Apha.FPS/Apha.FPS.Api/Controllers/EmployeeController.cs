@@ -140,5 +140,28 @@ namespace Apha.FPS.Api.Controllers
             var result = await _employeeService.GetAllPactManagersAsync();
             return Ok(_mapper.Map<List<ManagerRes>>(result));
         }
+
+        /// <summary>
+        /// <summary>
+        /// Gets all persons (PACT staff joined with work group).
+        /// </summary>
+        /// <returns>A list of persons with Name, WorkGroupGrade and WorkGroup.</returns>
+        [HttpGet("persons")]
+        public async Task<IActionResult> GetAllPersonAsync()
+        {
+            var result = await _employeeService.GetAllPersonAsync();
+            return Ok(_mapper.Map<List<PersonRes>>(result));
+        }
+
+        /// <summary>
+        /// Gets a paginated, filtered and sorted list of all PACT staff people, optionally filtered by work group.
+        /// </summary>
+        [HttpGet("workgrouppeople/paginated")]
+        public async Task<IActionResult> GetWorkGroupPeoplePaginatedAsync([FromQuery] PaginationReq<string> query, [FromQuery] string? workGroup = null)
+        {
+            var filter = _mapper.Map<QueryParameters<string>>(query);
+            var result = await _employeeService.GetWorkGroupPeopleAsync(filter, workGroup);
+            return Ok(_mapper.Map<PaginationRes<WorkGroupPeopleRes>>(result));
+        }
     }
 }

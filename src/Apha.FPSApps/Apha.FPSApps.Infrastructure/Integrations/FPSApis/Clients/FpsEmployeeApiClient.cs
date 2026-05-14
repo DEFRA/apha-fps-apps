@@ -128,5 +128,37 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                 return ApiResponseDto<List<ManagerDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
             }
         }
+
+        public async Task<ApiResponseDto<List<PersonDto>>> GetAllPersonAsync()
+        {
+            var response = await _http.GetAsync<List<PersonRes>>(FpsApiEndpoints.GetAllPerson);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<PersonDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<PersonDto>>>(response);
+            return ApiResponseDto<List<PersonDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+        public async Task<ApiResponseDto<PaginatedResult<WorkGroupPeopleDto>>> GetWorkGroupPeopleAsync(QueryParameters<string> query, string? workGroup = null)
+        {
+            var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetWorkGroupPeoplePaginated, query);
+            if (!string.IsNullOrWhiteSpace(workGroup))
+                url += $"&workGroup={Uri.EscapeDataString(workGroup)}";
+            var response = await _http.GetAsync<List<WorkGroupPeopleRes>>(url);
+            if (response.Success)
+            {
+                var dto = _mapper.Map<ApiResponseDto<List<WorkGroupPeopleDto>>>(response);
+                var pagination = response.Pagination;
+                var result = new PaginatedResult<WorkGroupPeopleDto>(
+                    dto.Data ?? new List<WorkGroupPeopleDto>(),
+                    pagination?.TotalRecords ?? 0,
+                    pagination?.PageNumber ?? query.Page,
+                    pagination?.PageSize ?? query.PageSize);
+                return ApiResponseDto<PaginatedResult<WorkGroupPeopleDto>>.SuccessResponse(result);
+            }
+
+            var failDto = _mapper.Map<ApiResponseDto<List<WorkGroupPeopleDto>>>(response);
+            return ApiResponseDto<PaginatedResult<WorkGroupPeopleDto>>.FailureResponse(failDto.Errors, failDto.Meta);
+        }
     }
 }
