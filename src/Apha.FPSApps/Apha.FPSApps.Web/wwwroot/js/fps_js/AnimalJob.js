@@ -192,7 +192,7 @@ function calculateAnimalCost() {
     var days = parseFloat($('#NumberOfDays').val()) || 0;
     var animals = parseFloat($('#NumberOfAnimals').val()) || 0;
     var rate = parseFloat($('#DailyRate').val()) || 0;
-    $('#AnimalCost').val(((days + animals)* rate).toFixed(2));
+    $('#AnimalCost').val(((days * animals)* rate).toFixed(2));
 }
 
 $(document).on('change', '#NumberOfDays, #NumberOfAnimals', function () {

@@ -43,18 +43,24 @@
         <div class="col-12">
             <div class="govuk-form-group sup_margin_0">
                 <label for="Account" class="govuk-label p-0">Account <span class="sup_color_red">*</span></label>
-                <select id="Account" name="Account" required class="govuk-select sup_width_100">
-                    <option value="">-- Select Account --</option>
-                    @if (Model.AccountList != null)
-                    {
-                        foreach (var account in Model.AccountList)
+                @if (isEditMode)
+                {
+                    <input type="text" class="govuk-input sup_width_100" asp-for="@Model.Account" readonly />                    
+                }
+                else
+                {
+                    <select id="Account" name="Account" required class="govuk-select sup_width_100">
+                        <option value="">-- Select Account --</option>
+                        @if (Model.AccountList != null)
                         {
-                            <option value="@account.Value"
-                                    selected="@(account.Selected ? "selected" : null)">@account.Text</option>
+                            foreach (var account in Model.AccountList)
+                            {
+                                <option value="@account.Value">@account.Text</option>
+                            }
                         }
-                    }
-                </select>
-                <span asp-validation-for="Account" class="govuk-error-message" style="display:none;"></span>
+                    </select>
+                    <span asp-validation-for="Account" class="govuk-error-message" style="display:none;"></span>
+                }
             </div>
         </div>
         <div class="col-12">
