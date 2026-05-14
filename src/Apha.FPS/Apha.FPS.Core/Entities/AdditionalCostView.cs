@@ -1,0 +1,25 @@
+namespace Apha.FPS.Core.Entities
+{
+    public partial class AdditionalCostView
+    {
+        public string JobCode { get; set; } = null!;
+
+        public string Account { get; set; } = null!;
+
+        public string Description { get; set; } = null!;
+
+        public decimal ItemCost { get; set; }
+
+        public string? Freq { get; set; }
+
+        public string? Supplier { get; set; }
+
+        public int? FpsYear { get; set; }
+
+        public int? UserId { get; set; }
+
+        public string? Dt2UserName { get; set; }
+
+        public string? UserEmail { get; set; }
+    }
+}
