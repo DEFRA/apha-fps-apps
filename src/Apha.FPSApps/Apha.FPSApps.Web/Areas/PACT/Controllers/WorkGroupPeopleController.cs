@@ -139,7 +139,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             if (!string.IsNullOrWhiteSpace(personName))
                 return await FetchByPersonNameAsync(query, personName);
 
-            return await FetchAllPactStaffAsync(query);
+            return await FetchAllWorkGroupPeoplesAsync(query);
         }
 
         /// <summary>
@@ -193,11 +193,11 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         }
 
         /// <summary>
-        /// Fetches a paginated, filtered, and sorted list of all PACT staff
+        /// Fetches a paginated, filtered, and sorted list of all work group people
         /// with no work group or person name restriction applied.
         /// </summary>
         /// <param name="query">Query parameters including pagination, sort, and filter.</param>
-        private async Task<(List<WorkGroupPeopleItem>, PaginationModel)> FetchAllPactStaffAsync(
+        private async Task<(List<WorkGroupPeopleItem>, PaginationModel)> FetchAllWorkGroupPeoplesAsync(
             QueryParameters<string> query)
         {
             var response = await _employeeService.GetWorkGroupPeopleAsync(query);

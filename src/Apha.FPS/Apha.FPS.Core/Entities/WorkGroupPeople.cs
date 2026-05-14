@@ -23,5 +23,6 @@ namespace Apha.FPS.Core.Entities
         public double? SickSpecial { get; set; }
 
         public double? HrsAvail { get; set; }
+        public int? FpsYear { get; set; }
     }
 }

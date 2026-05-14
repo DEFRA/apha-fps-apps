@@ -197,6 +197,7 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.Entity<MonthlyOutput>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new WorkGroupPeopleMap());
+            modelBuilder.Entity<WorkGroupPeople>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
         }
     }
 }
