@@ -702,8 +702,34 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.EmployeeServiceTest
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var people = new List<WorkGroupPeopleDto>
             {
-                new() { Name = "Alice", WorkGroupGrade = "WG1" },
-                new() { Name = "Bob",   WorkGroupGrade = "WG2" }
+                new()
+                {
+                    PactId       = "P001",
+                    SpNumber     = "SP123",
+                    Name         = "Alice",
+                    WorkGroupGrade = "WG1",
+                    Title        = "Senior Officer",
+                    PersonStatus = "Active",
+                    PersonClass  = "Permanent",
+                    HrsPaid      = 37.5,
+                    Leave        = 5.0,
+                    SickSpecial  = 2.5,
+                    HrsAvail     = 30.0
+                },
+                new()
+                {
+                    PactId       = "P002",
+                    SpNumber     = "SP456",
+                    Name         = "Bob",
+                    WorkGroupGrade = "WG2",
+                    Title        = "Officer",
+                    PersonStatus = "Inactive",
+                    PersonClass  = "Temporary",
+                    HrsPaid      = null,
+                    Leave        = null,
+                    SickSpecial  = null,
+                    HrsAvail     = null
+                }
             };
             var paginatedResult = new PaginatedResult<WorkGroupPeopleDto>(people, 2, 1, 10);
             var expectedResponse = ApiResponseDto<PaginatedResult<WorkGroupPeopleDto>>
@@ -718,6 +744,33 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.EmployeeServiceTest
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(2, result.Data?.data.Count());
+
+            var first = result.Data!.data.First();
+            Assert.Equal("P001",           first.PactId);
+            Assert.Equal("SP123",          first.SpNumber);
+            Assert.Equal("Alice",          first.Name);
+            Assert.Equal("WG1",            first.WorkGroupGrade);
+            Assert.Equal("Senior Officer", first.Title);
+            Assert.Equal("Active",         first.PersonStatus);
+            Assert.Equal("Permanent",      first.PersonClass);
+            Assert.Equal(37.5,             first.HrsPaid);
+            Assert.Equal(5.0,              first.Leave);
+            Assert.Equal(2.5,              first.SickSpecial);
+            Assert.Equal(30.0,             first.HrsAvail);
+
+            var second = result.Data!.data.Last();
+            Assert.Equal("P002",      second.PactId);
+            Assert.Equal("SP456",     second.SpNumber);
+            Assert.Equal("Bob",       second.Name);
+            Assert.Equal("WG2",       second.WorkGroupGrade);
+            Assert.Equal("Officer",   second.Title);
+            Assert.Equal("Inactive",  second.PersonStatus);
+            Assert.Equal("Temporary", second.PersonClass);
+            Assert.Null(second.HrsPaid);
+            Assert.Null(second.Leave);
+            Assert.Null(second.SickSpecial);
+            Assert.Null(second.HrsAvail);
+
             await _fpsEmployeeApiClient.Received(1).GetWorkGroupPeopleAsync(query, null);
         }
 
