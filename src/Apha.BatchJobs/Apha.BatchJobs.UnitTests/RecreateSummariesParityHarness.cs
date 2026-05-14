@@ -232,9 +232,8 @@ internal sealed class RecreateSummariesParityHarness
 
     private static string FindRepoRoot()
     {
-        // In git worktrees .git is a file, not a directory, so we locate the BatchJobs
-        // project directory and return its parent repo root. dotnet CLI sets CWD to the
-        // repo root; the test host AppContext.BaseDirectory is the bin output folder.
+        // In git worktrees .git can be a file, so detect the BatchJobs project folder first,
+        // then resolve the repository root from there.
         var startPaths = new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory };
         const string marker = "BatchJobs.csproj";
 
@@ -245,7 +244,17 @@ internal sealed class RecreateSummariesParityHarness
             {
                 if (File.Exists(Path.Combine(current.FullName, marker)))
                 {
-                    return current.Parent?.FullName ?? current.FullName;
+                    var parent = current.Parent;
+
+                    // Expected layout: <repo>/src/Apha.BatchJobs/BatchJobs.csproj
+                    if (parent is not null &&
+                        string.Equals(parent.Name, "src", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return parent.Parent?.FullName ?? parent.FullName;
+                    }
+
+                    // Fallback for alternate layouts.
+                    return parent?.FullName ?? current.FullName;
                 }
 
                 current = current.Parent;

@@ -73,7 +73,7 @@ internal sealed class CreateProjectMonthSingleStep : RecreateSummariesExecutionS
                 + (r.TrSumOfTransferCost ?? 0m),
             Invoices = r.IvSumOfAmount1 ?? 0m,
             Coiw = r.IvWorkCost ?? 0m,
-            SumOfCostProfile = r.TpSumOfCostProfile,
+            SumOfCostProfile = r.TpSumOfCostProfile == null ? null : (decimal?)r.TpSumOfCostProfile,
             PortSales = (double?)(r.PsFee) ?? 0d,
             MstoneDue = r.MsMstoneDue,
             DueDone = r.MsDueDone,
