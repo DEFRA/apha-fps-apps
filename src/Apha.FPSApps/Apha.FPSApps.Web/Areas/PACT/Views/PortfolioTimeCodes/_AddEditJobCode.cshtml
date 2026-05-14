@@ -15,16 +15,6 @@
 
         <input type="hidden" name="isEdit" value="@isEdit.ToString().ToLower()" />
 
-        <!-- Project Dropdown at Top -->
-        <div class="govuk-form-group sup_margin_bottom_10">
-            <label class="govuk-label govuk-!-font-weight-bold" asp-for="ParentProject"><span class="sup_color_red">* </span>Project:</label>
-            <select asp-for="ParentProject" class="govuk-select govuk-!-font-size-16"
-                    asp-items="@(ViewBag.Projects as List<SelectListItem>)" required>
-                <option value="">--select project--</option>
-            </select>
-            <span asp-validation-for="ParentProject" class="govuk-error-message"></span>
-        </div>
-
         <!-- Validation error summary -->
         <div class="govuk-error-summary" role="alert"
              aria-labelledby="error-summary-title" tabindex="-1" style="display:none;">
@@ -34,6 +24,16 @@
             <div class="govuk-error-summary__body">
                 <ul class="govuk-list govuk-error-summary__list"></ul>
             </div>
+        </div>
+
+        <!-- Project Dropdown at Top -->
+        <div class="govuk-form-group sup_margin_bottom_10">
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="ParentProject"><span class="sup_color_red">* </span>Project:</label>
+            <select asp-for="ParentProject" class="govuk-select govuk-!-font-size-16"
+                    asp-items="@(ViewBag.Projects as List<SelectListItem>)" required>
+                <option value="">--select project--</option>
+            </select>
+            <span asp-validation-for="ParentProject" class="govuk-error-message"></span>
         </div>
 
         <!-- Job Code -->
