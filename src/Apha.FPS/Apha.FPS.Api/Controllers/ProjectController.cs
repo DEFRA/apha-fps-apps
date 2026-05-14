@@ -35,7 +35,7 @@ namespace Apha.FPS.Api.Controllers
         {
             var project = await _projectService.GetProjectByIdAsync(parentProject);
             if (project == null)
-                return NotFound();
+                throw new ArgumentException($"Project record with ID: {parentProject} not found", nameof(parentProject));
             return Ok(_mapper.Map<ProjectRes>(project));
         }
 
@@ -76,7 +76,7 @@ namespace Apha.FPS.Api.Controllers
                 throw new ArgumentException("Both old and new project codes are required.");
             var existing = await _projectService.GetProjectByIdAsync(request.OldCode);
             if (existing == null)
-                return NotFound($"Project with code '{request.OldCode}' not found.");
+                throw new ArgumentException($"Project record with code: {request.OldCode} not found", nameof(request.OldCode));
             await _projectService.ChangeProjectCodeAsync(request.OldCode, request.NewCode);
             return Ok(true);
         }
@@ -132,7 +132,7 @@ namespace Apha.FPS.Api.Controllers
             var projectDto = _mapper.Map<ProjectDto>(request);
             var updated = await _projectService.UpdatePactProjectDetailsAsync(projectDto);
             if (updated == null)
-                return NotFound();
+                throw new ArgumentException($"Project record with ID: {request.ParentProject} not found", nameof(request.ParentProject));
             return Ok(_mapper.Map<ProjectRes>(updated));
         }
 
@@ -142,7 +142,7 @@ namespace Apha.FPS.Api.Controllers
             var projectDto = _mapper.Map<ProjectDto>(request);
             var updated = await _projectService.UpdatePactPortfolioDetailsAsync(projectDto);
             if (updated == null)
-                return NotFound();
+                throw new ArgumentException($"Project record with ID: {request.ParentProject} not found", nameof(request.ParentProject));
             return Ok(_mapper.Map<ProjectRes>(updated));
         }
 
@@ -151,17 +151,17 @@ namespace Apha.FPS.Api.Controllers
         {
             var projectDto = _mapper.Map<ProjectDto>(request);
             var updated = await _projectService.UpdateProjectAsync(projectDto);
-            return Ok(_mapper.Map<ProjectRes>(updated));
+            return Ok(_mapper.Map<ProjectRes>(updated));    
         }
 
         [HttpDelete("{parentProject}")]
         public async Task<IActionResult> DeleteProjectAsync(string parentProject)
         {
             if (string.IsNullOrWhiteSpace(parentProject))
-                return BadRequest("Parent project cannot be empty.");
+                throw new ArgumentException("Parent project cannot be empty.", nameof(parentProject));
             var deleted = await _projectService.DeleteProjectAsync(parentProject);
             if (!deleted)
-                return NotFound();
+                throw new ArgumentException($"Project record with ID: {parentProject} not found", nameof(parentProject));
             return Ok(deleted);
         }
     }

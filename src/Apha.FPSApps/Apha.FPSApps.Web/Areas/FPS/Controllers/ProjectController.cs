@@ -71,7 +71,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return Json(new
             {
                 success = false,
-                message = "Failed to create project.",
+                message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to create project.",
                 errors = (response.Errors ?? new()).Select(e => new
                 {
                     field = e.Code ?? string.Empty,
@@ -146,7 +146,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return Json(new
             {
                 success = false,
-                message = "Failed to delete project.",
+                message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to delete project.",
                 errors = (response.Errors ?? new()).Select(e => new
                 {
                     field = e.Code ?? string.Empty,
@@ -174,7 +174,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return Json(new
             {
                 success = false,
-                message = "Failed to change project code.",
+                message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to change project code.",
                 errors = (response.Errors ?? new()).Select(e => new
                 {
                     field = e.Code ?? string.Empty,
