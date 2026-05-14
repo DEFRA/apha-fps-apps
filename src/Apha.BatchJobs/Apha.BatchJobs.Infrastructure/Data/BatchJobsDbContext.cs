@@ -548,7 +548,7 @@ public class BatchJobsDbContext : DbContext
             entity.Property(e => e.TotalCost).HasColumnName("totalcost");
             entity.Property(e => e.Invoices).HasColumnName("invoices");
             entity.Property(e => e.Coiw).HasColumnName("coiw");
-            entity.Property(e => e.SumOfCostProfile).HasColumnName("sumofcostprofile");
+            entity.Property(e => e.SumOfCostProfile).HasColumnName("sumofcostprofile").HasColumnType("money");
             entity.Property(e => e.PortSales).HasColumnName("portsales");
             entity.Property(e => e.MstoneDue).HasColumnName("mstonedue");
             entity.Property(e => e.DueDone).HasColumnName("due__done");
@@ -569,7 +569,7 @@ public class BatchJobsDbContext : DbContext
             entity.Property(e => e.CumCoiw).HasColumnName("cumcoiw");
             entity.Property(e => e.CumPortSales).HasColumnName("cumportsales");
             entity.Property(e => e.CumProfile).HasColumnName("cumprofile");
-            entity.Property(e => e.SumOfCostProfile).HasColumnName("sumofcostprofile");
+            entity.Property(e => e.SumOfCostProfile).HasColumnName("sumofcostprofile").HasColumnType("money");
             entity.Property(e => e.SumOfMstoneDue).HasColumnName("sumofmstonedue");
             entity.Property(e => e.SumOfDueDone).HasColumnName("sumofdue__done");
             entity.Property(e => e.SumOfOnTime).HasColumnName("sumofontime");
@@ -600,7 +600,7 @@ public class BatchJobsDbContext : DbContext
             entity.Property(e => e.CumCost).HasColumnName("cumcost");
             entity.Property(e => e.CumProfile).HasColumnName("cumprofile");
             entity.Property(e => e.PeriodName).HasColumnName("periodname");
-            entity.Property(e => e.SumOfCostProfile).HasColumnName("sumofcostprofile");
+            entity.Property(e => e.SumOfCostProfile).HasColumnName("sumofcostprofile").HasColumnType("money");
             entity.Property(e => e.CumInvoices).HasColumnName("cuminvoices");
             entity.Property(e => e.CumCoiw).HasColumnName("cumcoiw");
             entity.Property(e => e.CumPortSales).HasColumnName("cumportsales");
@@ -901,7 +901,6 @@ public class BatchJobsDbContext : DbContext
             entity.Property(e => e.SumOfCost).HasColumnName("sumofcost");
             entity.Property(e => e.SumOfHours).HasColumnName("sumofhours");
             entity.Property(e => e.SumOfPayRate).HasColumnName("sumofpayrate");
-            entity.Property(e => e.WorkCost).HasColumnName("workcost");
         });
 
         modelBuilder.Entity<RsQryJobMonthMilestoneView>(entity =>
@@ -937,6 +936,7 @@ public class BatchJobsDbContext : DbContext
                   .HasColumnName("month")
                   .HasConversion<double>();
             entity.Property(e => e.SumOfAmount1).HasColumnName("sumofamount1");
+            entity.Property(e => e.WorkCost).HasColumnName("workcost");
         });
 
         modelBuilder.Entity<RsQryJobMonthPortfolioSalesView>(entity =>
@@ -955,7 +955,7 @@ public class BatchJobsDbContext : DbContext
             entity.ToView("qryjobmonth_totprofile", schema: "fps");
             entity.HasNoKey();
             entity.Property(e => e.Project).HasColumnName("project");
-            entity.Property(e => e.SumOfCostProfile).HasColumnName("sumofcostprofile");
+            entity.Property(e => e.SumOfCostProfile).HasColumnName("sumofcostprofile").HasColumnType("money");
         });
     }
 }

@@ -4,7 +4,6 @@ using Apha.BatchJobs.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Npgsql;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories;
 
@@ -48,40 +47,24 @@ public class BatchLockRepository : IBatchLockRepository
             .Where(l => l.JobName == jobName && l.ExpiresAt < now)
             .ExecuteDeleteAsync(cancellationToken);
 
-        // Attempt atomic INSERT. The DB-level partial unique index on
-        // (job_name) WHERE is_active = TRUE means only one row per job can
-        // exist with is_active = TRUE. A concurrent inserter receives a
-        // unique constraint violation (Postgres SqlState 23505) rather than
-        // silently winning the race.
-        var newLock = new BatchLock
-        {
-            LockId = 0,
-            JobName = jobName,
-            RunId = runId,
-            AcquiredAt = now,
-            ExpiresAt = now.AddSeconds(timeoutSeconds),
-            IsActive = true
-        };
+        // Attempt atomic insert without raising an error on contention.
+        // With uq_job_lock_job_name_active (partial unique on active rows),
+        // this returns 1 when lock is acquired and 0 when already held.
+        var insertedRows = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+            INSERT INTO fps.job_lock (acquired_at, expires_at, job_name, run_id, is_active)
+            VALUES ({now}, {now.AddSeconds(timeoutSeconds)}, {jobName}, {runId}, TRUE)
+            ON CONFLICT DO NOTHING;", cancellationToken);
 
-        _context.BatchLocks.Add(newLock);
-
-        try
+        if (insertedRows > 0)
         {
-            await _context.SaveChangesAsync(cancellationToken);
             _logger.LogInformation("Lock acquired | JobName={JobName} | RunId={RunId}", jobName, runId);
             return true;
         }
-        catch (DbUpdateException ex) when (IsUniqueConstraintViolation(ex))
-        {
-            // Another process holds an active lock for this job.
-            _context.ChangeTracker.Clear();
-            _logger.LogInformation("Lock contention detected | JobName={JobName} | RunId={RunId}", jobName, runId);
-            return false;
-        }
-    }
 
-    private static bool IsUniqueConstraintViolation(DbUpdateException ex) =>
-        ex.InnerException is PostgresException pg && pg.SqlState == "23505";
+        _context.ChangeTracker.Clear();
+        _logger.LogInformation("Lock contention detected | JobName={JobName} | RunId={RunId}", jobName, runId);
+        return false;
+    }
 
     /// <inheritdoc />
     public async Task ReleaseLockAsync(string jobName, string runId, CancellationToken cancellationToken = default)

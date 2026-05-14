@@ -181,7 +181,7 @@ internal sealed class RsProjectMonth2Table
     public decimal? TotalCost { get; set; }
     public decimal? Invoices { get; set; }
     public decimal? Coiw { get; set; }
-    public double? SumOfCostProfile { get; set; }
+    public decimal? SumOfCostProfile { get; set; }
     public double? PortSales { get; set; }
     public double? MstoneDue { get; set; }
     public double? DueDone { get; set; }
@@ -200,7 +200,7 @@ internal sealed class RsProjectMonth3Table
     public decimal? CumCoiw { get; set; }
     public decimal? CumPortSales { get; set; }
     public decimal? CumProfile { get; set; }
-    public double? SumOfCostProfile { get; set; }
+    public decimal? SumOfCostProfile { get; set; }
     public double? SumOfMstoneDue { get; set; }
     public double? SumOfDueDone { get; set; }
     public double? SumOfOnTime { get; set; }
@@ -229,7 +229,7 @@ internal sealed class RsProjectMonthFinalTable
     public decimal? CumCost { get; set; }
     public decimal? CumProfile { get; set; }
     public string? PeriodName { get; set; }
-    public double? SumOfCostProfile { get; set; }
+    public decimal? SumOfCostProfile { get; set; }
     public decimal? CumInvoices { get; set; }
     public decimal? CumCoiw { get; set; }
     public decimal? CumPortSales { get; set; }
@@ -281,7 +281,6 @@ internal sealed class RsQryJobMonthTimeView
     public double? SumOfCost { get; set; }
     public double? SumOfHours { get; set; }
     public decimal? SumOfPayRate { get; set; }
-    public decimal? WorkCost { get; set; }
 }
 
 internal sealed class RsQryJobMonthMilestoneView
@@ -305,6 +304,7 @@ internal sealed class RsQryJobMonthInvoicesView
     public required string ProjectParent { get; set; }
     public int Month { get; set; }
     public decimal? SumOfAmount1 { get; set; }
+    public decimal? WorkCost { get; set; }
 }
 
 internal sealed class RsQryJobMonthPortfolioSalesView
@@ -317,7 +317,7 @@ internal sealed class RsQryJobMonthPortfolioSalesView
 internal sealed class RsQryJobMonthTotProfileView
 {
     public required string Project { get; set; }
-    public double? SumOfCostProfile { get; set; }
+    public decimal? SumOfCostProfile { get; set; }
 }
 
 internal sealed class RsRecreateSummariesLogTable
