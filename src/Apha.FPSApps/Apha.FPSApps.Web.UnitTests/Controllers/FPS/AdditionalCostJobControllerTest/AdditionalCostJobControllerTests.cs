@@ -295,7 +295,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.AdditionalCostJobController
             _additionalCostService.UpdateAdditionalCostAsync(jobCode, account, dto).Returns(serviceResponse);
 
             // Act
-            var result = await _controller.Edit(jobCode, account, viewModel);
+            var result = await _controller.Edit(viewModel);
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
@@ -312,7 +312,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.AdditionalCostJobController
             var viewModel = BuildViewModel();
 
             // Act
-            var result = await _controller.Edit("JOB001", "ACC001", viewModel);
+            var result = await _controller.Edit(viewModel);
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
@@ -337,7 +337,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.AdditionalCostJobController
             _additionalCostService.UpdateAdditionalCostAsync(jobCode, account, dto).Returns(serviceResponse);
 
             // Act
-            var result = await _controller.Edit(jobCode, account, viewModel);
+            var result = await _controller.Edit(viewModel);
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);

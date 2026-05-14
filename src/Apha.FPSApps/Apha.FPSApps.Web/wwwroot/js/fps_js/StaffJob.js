@@ -43,7 +43,7 @@ function saveStaffJob() {
         return;
     }
     var staffId = $('#StaffID').val();
-    var staffName = $('#Name option:selected').val();
+    var staffName = $('#Name').val();
     var data = {
         StaffID: staffId,
         JobCode: StaffJobConfig.getJobCode(),
@@ -105,7 +105,7 @@ function updateStaffJob() {
     }
     var staffId = $('#StaffID').val();
     var jobCode = form.find('[name="JobCode"]').val();
-    var staffName = $('#Name option:selected').val();
+    var staffName = $('#Name').val();
     var data = {
         StaffID: staffId,
         JobCode: jobCode,
@@ -218,8 +218,20 @@ function calculateStaffCost() {
     $('#Days').val((hours / _hoursPerDay).toFixed(2));
 }
 
+function calculateHoursFromDays() {
+    var days = parseFloat($('#Days').val()) || 0;
+    var hours = days * _hoursPerDay;
+    $('#PlannedHours').val(hours.toFixed(2));
+    var rate = parseFloat($('#ChargeRate').val()) || 0;
+    $('#StaffCost').val((rate * hours).toFixed(2));
+}
+
 $(document).on('change', '#PlannedHours, #ChargeRate', function () {
     calculateStaffCost();
+});
+
+$(document).on('change', '#Days', function () {
+    calculateHoursFromDays();
 });
 
 $(document).ready(function () {

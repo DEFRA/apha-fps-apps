@@ -31,19 +31,25 @@
         <div class="col-12">
             <div class="govuk-form-group sup_margin_0">
                 <label for="AnimalType" class="govuk-label p-0">Animal Type <span class="sup_color_red">*</span></label>
-                <select id="AnimalType" name="AnimalType" required class="govuk-select govuk-!-font-size-16 sup_width_100"
-                        onchange="onAnimalTypeSelected(this)">
-                    <option value="">-- Select Animal Type --</option>
-                    @if (Model.AnimalTypeList != null)
-                    {
-                        foreach (var animal in Model.AnimalTypeList)
+                @if (isEditMode)
+                {
+                     <input type="text" class="govuk-input sup_width_100" asp-for="@Model.AnimalType" readonly /> 
+                }
+                else
+                {
+                    <select id="AnimalType" name="AnimalType" required class="govuk-select govuk-!-font-size-16 sup_width_100"
+                            onchange="onAnimalTypeSelected(this)">
+                        <option value="">-- Select Animal Type --</option>
+                        @if (Model.AnimalTypeList != null)
                         {
-                            var isSelected = isEditMode && string.Equals(animal.Value, Model.AnimalType, StringComparison.OrdinalIgnoreCase);
-                            <option value="@animal.Value" selected="@(isSelected ? "selected" : null)">@animal.Text</option>
+                            foreach (var animal in Model.AnimalTypeList)
+                            {
+                                <option value="@animal.Value">@animal.Text</option>
+                            }
                         }
-                    }
-                </select>
-                <span asp-validation-for="AnimalType" class="govuk-error-message" style="display:none;"></span>
+                    </select>
+                    <span asp-validation-for="AnimalType" class="govuk-error-message" style="display:none;"></span>
+                }
             </div>
         </div>
         <div class="col-12">
@@ -58,7 +64,7 @@
             <div class="col-12">
                 <div class="govuk-form-group sup_margin_0">
                     <label for="NumberOfDays" class="govuk-label" asp-for="NumberOfDays">Days</label>
-                    <input type="number" step="0.01" asp-for="NumberOfDays" required class="govuk-input" id="NumberOfDays"
+                    <input type="number" step="0.01" asp-for="NumberOfDays" class="govuk-input" id="NumberOfDays"
                            onchange="calculateAnimalCost()">
                         <span asp-validation-for="NumberOfDays" class="govuk-error-message" style="display:none;"></span>
                     </div>
@@ -66,7 +72,7 @@
                 <div class="col-12">
                     <div class="govuk-form-group sup_margin_0">
                         <label for="NumberOfAnimals" class="govuk-label" asp-for="NumberOfAnimals">No. Required</label>
-                        <input type="number" step="0.01" asp-for="NumberOfAnimals" required class="govuk-input" id="NumberOfAnimals"
+                        <input type="number" step="0.01" asp-for="NumberOfAnimals" class="govuk-input" id="NumberOfAnimals"
                                onchange="calculateAnimalCost()">
                             <span asp-validation-for="NumberOfAnimals" class="govuk-error-message" style="display:none;"></span>
                         </div>

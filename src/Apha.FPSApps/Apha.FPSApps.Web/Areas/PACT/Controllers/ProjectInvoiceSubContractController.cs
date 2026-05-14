@@ -52,6 +52,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return View(new ProjectInvoiceSubContractViewModel
             {
                 ParentProject = parentProject ?? string.Empty,
+                FromPortfolio = TempData.Peek("PactOrigin") as string == "Portfolio",
                 InvoicesGrid = invoicesGridTask.Result,
                 SubContractsGrid = subContractsGridTask.Result,
                 TotalInvoiceAmount = invoiceTotalTask.Result.Data,
@@ -304,7 +305,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
         private async Task<DataGridConfig<ProjectSubContractItem>> BuildSubContractsGridAsync(
             PaginationFilter<string> request, string? parentProject)
-        {
+            {
             var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}")
                              ?? new Dictionary<string, string>();
 

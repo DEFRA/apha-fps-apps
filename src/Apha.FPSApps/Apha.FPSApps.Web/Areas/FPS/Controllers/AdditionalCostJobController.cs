@@ -150,7 +150,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Edit(string jobCode, string account, [FromBody] AdditionalCostItemViewModel model)
+        public async Task<IActionResult> Edit([FromBody] AdditionalCostItemViewModel model)
         {
             if (!ModelState.IsValid)
             {
@@ -169,7 +169,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             }
 
             var dto = _mapper.Map<AdditionalCostDto>(model);
-            var result = await _additionalCostService.UpdateAdditionalCostAsync(jobCode, account, dto);
+            var result = await _additionalCostService.UpdateAdditionalCostAsync(model.JobCode!, model.Account, dto);
 
             if (result.Success)
             {
