@@ -436,11 +436,11 @@ namespace Apha.FPS.Application.UnitTests.Services.EmployeeServiceTest
         [InlineData(null)]
         [InlineData("")]
         [InlineData("   ")]
-        public async Task GetEmployeeByIdAsync_WithInvalidSpNumber_ThrowsArgumentException(string spNumber)
+        public async Task GetEmployeeByIdAsync_WithInvalidSpNumber_ThrowsArgumentException(string? spNumber)
         {
             // Act & Assert
             var exception = await Assert.ThrowsAsync<ArgumentException>(
-                async () => await _sut.GetEmployeeByIdAsync(spNumber)
+                async () => await _sut.GetEmployeeByIdAsync(spNumber!)
             );
 
             exception.ParamName.Should().Be("spNumber");
@@ -679,11 +679,11 @@ namespace Apha.FPS.Application.UnitTests.Services.EmployeeServiceTest
         [InlineData(null)]
         [InlineData("")]
         [InlineData("   ")]
-        public async Task DeleteEmployeeAsync_WithInvalidSpNumber_ThrowsArgumentException(string spNumber)
+        public async Task DeleteEmployeeAsync_WithInvalidSpNumber_ThrowsArgumentException(string? spNumber)
         {
             // Act & Assert
             var exception = await Assert.ThrowsAsync<ArgumentException>(
-                async () => await _sut.DeleteEmployeeAsync(spNumber)
+                async () => await _sut.DeleteEmployeeAsync(spNumber!)
             );
 
             exception.ParamName.Should().Be("spNumber");

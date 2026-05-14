@@ -1,7 +1,5 @@
-using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
-using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Pagination;
 using AutoMapper;

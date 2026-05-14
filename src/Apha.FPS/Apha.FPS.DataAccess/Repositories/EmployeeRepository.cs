@@ -220,6 +220,11 @@ namespace Apha.FPS.DataAccess.Repositories
             return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
         }
 
+        private static IQueryable ApplyOrder<T>(IQueryable<WorkGroupPeople> query, Expression<Func<WorkGroupPeople, T>> keySelector, bool descending)
+        {
+            return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
+        }
+
         public async Task<IEnumerable<Person>> GetAllPersonAsync()
         {
             return await _dbContext.WorkGroupPeoples
@@ -334,9 +339,5 @@ namespace Apha.FPS.DataAccess.Repositories
             };
         }
 
-        private static IQueryable ApplyOrder<T>(IQueryable<WorkGroupPeople> query, Expression<Func<WorkGroupPeople, T>> keySelector, bool descending)
-        {
-            return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
+            }
         }
-    }
-}
