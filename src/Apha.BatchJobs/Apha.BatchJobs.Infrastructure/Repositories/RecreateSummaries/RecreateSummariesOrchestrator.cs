@@ -130,7 +130,7 @@ public sealed class RecreateSummariesOrchestrator
             else
             {
                 // Period is locked — skip refresh steps, record as Skipped
-                foreach (var stepName in new[] { "RefreshPeriodMo", "RefreshPeriodPsc", "RefreshPeriodTcc" })
+                foreach (var stepName in _stepCatalog.BuildRefreshSteps(month).Select(step => step.StepName))
                 {
                     var skipped = new StepResult(stepName, 0, DateTime.UtcNow, DateTime.UtcNow,
                         Domain.Enums.StepStatus.Skipped, "Period is locked");

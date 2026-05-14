@@ -13,7 +13,16 @@ internal sealed class SqlRecreateSummariesExecutionStepAdapter : IRecreateSummar
     public SqlRecreateSummariesExecutionStepAdapter(IRecreateSummariesStep inner)
         => _inner = inner ?? throw new ArgumentNullException(nameof(inner));
 
-    public string StepName => _inner.StepName;
+    public string StepName
+    {
+        get
+        {
+            var name = _inner.StepName;
+            return name.StartsWith("sql", StringComparison.OrdinalIgnoreCase)
+                ? name
+                : $"sql{name}";
+        }
+    }
 
     public Task<StepResult> ExecuteAsync(RecreateSummariesExecutionContext context, CancellationToken cancellationToken = default)
         => _inner.ExecuteAsync(context.Connection, cancellationToken);
