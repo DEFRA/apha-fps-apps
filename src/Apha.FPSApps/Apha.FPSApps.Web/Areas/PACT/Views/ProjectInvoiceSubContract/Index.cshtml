@@ -17,8 +17,11 @@
                        onchange="navigateToProjectCode(this.value)" />
             </span>
             <span>
-                <a href="@Url.Action("Index", "ProjectMaintenance", new { area = "PACT" })"
-                   class="govuk-back-link">Back</a>
+                <a class="govuk-back-link"
+                   asp-area="PACT"
+                   asp-controller="ProjectMaintenance"
+                   asp-action="Details"
+                   asp-route-id="@Model.ParentProject">Back</a>
             </span>
         </h1>
     </div>
