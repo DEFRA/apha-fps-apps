@@ -19,19 +19,19 @@ namespace Apha.FPS.Application.Services
             _mapper = mapper;
         }
 
-        public async Task<PaginatedResult<WorkGroupEmployeeViewDto>> GetWorkGroupEmployeeAsync(QueryParameters<string> query, string wgGrade)
+        public async Task<PaginatedResult<WorkGroupEmployeeDto>> GetWorkGroupEmployeeAsync(QueryParameters<string> query, string wgGrade)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(wgGrade);
             var filter = _mapper.Map<PaginationParameters<string>>(query);
             var pagedData = await _repository.GetWorkGroupEmployeeAsync(filter, wgGrade);
-            return _mapper.Map<PaginatedResult<WorkGroupEmployeeViewDto>>(pagedData);
+            return _mapper.Map<PaginatedResult<WorkGroupEmployeeDto>>(pagedData);
         }
 
-        public async Task<WorkGroupEmployeeViewDto?> GetWorkGroupEmployeeByIdAsync(string pactId)
+        public async Task<WorkGroupEmployeeDto?> GetWorkGroupEmployeeByIdAsync(string pactId)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(pactId);
             var entity = await _repository.GetWorkGroupEmployeeByIdAsync(pactId);
-            return _mapper.Map<WorkGroupEmployeeViewDto>(entity);
+            return _mapper.Map<WorkGroupEmployeeDto>(entity);
         }
 
         public async Task<WorkGroupEmployeeDto> UpdateWorkGroupEmployeeAsync(WorkGroupEmployeeDto dto)
@@ -42,10 +42,10 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<WorkGroupEmployeeDto>(updated);
         }
 
-        public async Task DeleteWorkGroupEmployeeAsync(string pactId)
+        public async Task<bool> DeleteWorkGroupEmployeeAsync(string pactId)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(pactId);
-            await _repository.DeleteWorkGroupEmployeeAsync(pactId);
+            return await _repository.DeleteWorkGroupEmployeeAsync(pactId);
         }
     }
 }

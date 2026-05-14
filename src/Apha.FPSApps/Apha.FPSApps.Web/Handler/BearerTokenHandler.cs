@@ -24,12 +24,13 @@ namespace Apha.FPSApps.Web.Handler
              HttpRequestMessage request,
              CancellationToken cancellationToken)
         {
-           
-                var user = _httpContextAccessor.HttpContext?.User;
+            var user = _httpContextAccessor.HttpContext?.User;
 
-                if (user == null || !user.Identity?.IsAuthenticated == true)
-                    throw new UnauthorizedAccessException("User is not authenticated.");
+            if (user == null || user.Identity?.IsAuthenticated != true)
+                throw new UnauthorizedAccessException("User is not authenticated.");
 
+            try
+            {
                 var accessToken = await _tokenAcquisition
                     .GetAccessTokenForUserAsync(_scopes, user: user);
 
@@ -37,7 +38,13 @@ namespace Apha.FPSApps.Web.Handler
                     new AuthenticationHeaderValue("Bearer", accessToken);
 
                 return await base.SendAsync(request, cancellationToken);
-           
+            }
+            catch (MicrosoftIdentityWebChallengeUserException)
+            {
+                // Token cache miss or consent required — propagate so ExceptionMiddleware
+                // can issue an OIDC challenge and redirect the user back to Azure AD
+                throw;
+            }
         }
     }
 }

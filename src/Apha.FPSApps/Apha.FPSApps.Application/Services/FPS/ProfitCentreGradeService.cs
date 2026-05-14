@@ -6,18 +6,18 @@ using Apha.FPSApps.Application.Pagination;
 
 namespace Apha.FPSApps.Application.Services.FPS
 {
-    public class ResourceCentreGradeService : IResourceCentreGradeService
+    public class ProfitCentreGradeService : IProfitCentreGradeService
     {
         private readonly IFpsApiClient _fpsClient;
 
-        public ResourceCentreGradeService(IFpsApiClient fpsClient)
+        public ProfitCentreGradeService(IFpsApiClient fpsClient)
         {
             _fpsClient = fpsClient;
         }
 
-        public async Task<ApiResponseDto<List<ProfitCentreGradeDto>>> GetResourceCentreGradesAsync(string profitCentre)
+        public async Task<ApiResponseDto<List<ProfitCentreGradeDto>>> GetProfitCentreGradesAsync(string profitCentre)
         {
-            return await _fpsClient.FpsResourceCentreGrade.GetResourceCentreGradesAsync(new QueryParameters<string>(), profitCentre);
+            return await _fpsClient.FpsProfitCentreGrade.GetProfitCentreGradesAsync(new QueryParameters<string>(), profitCentre);
         }
     }
 }

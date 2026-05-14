@@ -11,54 +11,17 @@ namespace Apha.FPS.DataAccess.Repositories
     public class WorkGroupEmployeeRepository : BaseRepository, IWorkGroupEmployeeRepository
     {
         private readonly FpsDbContext _dbContext;
+        private readonly IFpsRequestContext _requestContext;
 
-        public WorkGroupEmployeeRepository(FpsDbContext dbContext) : base(dbContext)
+        public WorkGroupEmployeeRepository(FpsDbContext dbContext, IFpsRequestContext requestContext) : base(dbContext)
         {
             _dbContext = dbContext;
+            _requestContext = requestContext;
         }
-
-        /// <summary>
-        /// Returns a paginated list of staff for the given WG grade, excluding inactive employees.
-        /// </summary>
-        public async Task<PagedData<WorkGroupEmployeeView>> GetWorkGroupEmployeeAsync(
-            PaginationParameters<string> query,
-            string wgGrade)
-        {
-            var raw = await _dbContext.WgEmployees
-                .AsNoTracking()
-                .Where(wg => wg.WorkGroupGrade == wgGrade && wg.PersonStatus != "I")
-                .Join(
-                    _dbContext.Employees.AsNoTracking(),
-                    wg => wg.SpNumber,
-                    e => e.SPNumber,
-                    (wg, e) => new WorkGroupEmployeeView
-                    {
-                        PactId         = wg.PactId,
-                        SpNumber       = wg.SpNumber,
-                        WorkGroupGrade = wg.WorkGroupGrade,
-                        Name           = (e.LastName ?? "") + " " + (e.FirstName ?? ""),
-                        PersonStatus   = wg.PersonStatus,
-                        PersonClass    = wg.PersonClass,
-                        HrsPaid        = wg.HrsPaid,
-                        Leave          = wg.Leave,
-                        SickSpecial    = wg.SickSpecial,
-                        HrsAvail       = wg.HrsAvail,
-                        MakeAvailable  = wg.MakeAvailable,
-                    })
-                .ToListAsync(default);
-
-            var filtered = ApplyFilter(raw.AsQueryable(), query.Filter);
-            var sorted   = ApplySorting(filtered, query.SortBy, query.Descending);
-
-            return ApplyPaging(sorted, query.Page, query.PageSize);
-        }
-
-        /// <summary>
-        /// Returns a single WG employee by PACTid, joined with Employee to include Name.
-        /// </summary>
+       
         public async Task<WorkGroupEmployeeView?> GetWorkGroupEmployeeByIdAsync(string pactId)
         {
-            return await _dbContext.WgEmployees
+            return await _dbContext.WorkGroupEmployees
                 .AsNoTracking()
                 .Where(wg => wg.PactId == pactId)
                 .Join(
@@ -82,13 +45,10 @@ namespace Apha.FPS.DataAccess.Repositories
                 .FirstOrDefaultAsync(default);
         }
 
-        /// <summary>
-        /// Updates WorkGroupEmployee; computes HrsAvail = HrsPaid - (Leave + SickSpecial).
-        /// </summary>
         public async Task<WorkGroupEmployee> UpdateWorkGroupEmployeeAsync(WorkGroupEmployee entity)
         {
             ArgumentNullException.ThrowIfNull(entity);
-            var existing = await _dbContext.WgEmployees
+            var existing = await _dbContext.WorkGroupEmployees
                 .FirstOrDefaultAsync(x => x.PactId == entity.PactId);
             if (existing == null)
                 throw new KeyNotFoundException($"WorkGroupEmployee with PACTid '{entity.PactId}' was not found.");
@@ -104,19 +64,60 @@ namespace Apha.FPS.DataAccess.Repositories
             await _dbContext.SaveChangesAsync(default);
             return existing;
         }
-
-        /// <summary>
-        /// Deletes a WG employee by PACTid.
-        /// </summary>
-        public async Task DeleteWorkGroupEmployeeAsync(string pactId)
+      
+        public async Task<PagedData<WorkGroupEmployeeView>> GetWorkGroupEmployeeAsync(
+            PaginationParameters<string> query,
+            string wgGrade)
         {
-            var entity = await _dbContext.WgEmployees
+            var all = await _dbContext.WorkGroupEmployeeViews
+                .AsNoTracking()
+                .Where(x => x.WorkGroupGrade == wgGrade
+                         && x.PersonStatus != "I"
+                         && x.UserEmail != null && x.UserEmail.ToLower() == _requestContext.UserEmailId)
+                .Join(
+                    _dbContext.Employees.AsNoTracking(),
+                    wg => wg.SpNumber,
+                    e => e.SPNumber,
+                    (wg, e) => new WorkGroupEmployeeView
+                    {
+                        PactId         = wg.PactId,
+                        SpNumber       = wg.SpNumber,
+                        WorkGroupGrade = wg.WorkGroupGrade,
+                        Name           = (e.LastName ?? "") + " " + (e.FirstName ?? ""),
+                        PersonStatus   = wg.PersonStatus,
+                        PersonClass    = wg.PersonClass,
+                        HrsPaid        = wg.HrsPaid,
+                        Leave          = wg.Leave,
+                        SickSpecial    = wg.SickSpecial,
+                        HrsAvail       = wg.HrsAvail,
+                        MakeAvailable  = wg.MakeAvailable,
+                        TimeRecorder   = wg.TimeRecorder,
+                        StartDate      = wg.StartDate,
+                        EndDate        = wg.EndDate,
+                        HoursPerWeek   = wg.HoursPerWeek,
+                        FpsYear        = wg.FpsYear,
+                        UserId         = wg.UserId,
+                        Dt2Username    = wg.Dt2Username,
+                        UserEmail      = wg.UserEmail,
+                    })
+                .ToListAsync();
+
+            var filtered = ApplyFilter(all.AsQueryable(), query.Filter);
+            var sorted   = ApplySorting(filtered, query.SortBy, query.Descending);
+
+            return ApplyPaging(sorted, query.Page, query.PageSize);
+        }
+
+        public async Task<bool> DeleteWorkGroupEmployeeAsync(string pactId)
+        {
+            var entity = await _dbContext.WorkGroupEmployees
                 .FirstOrDefaultAsync(x => x.PactId == pactId);
             if (entity == null)
-                throw new KeyNotFoundException($"WorkGroupEmployee with PACTid '{pactId}' was not found.");
+                return false;
 
-            _dbContext.WgEmployees.Remove(entity);
+            _dbContext.WorkGroupEmployees.Remove(entity);
             await _dbContext.SaveChangesAsync(default);
+            return true;
         }
 
         private static IQueryable<WorkGroupEmployeeView> ApplyFilter(IQueryable<WorkGroupEmployeeView> query, string? filter)

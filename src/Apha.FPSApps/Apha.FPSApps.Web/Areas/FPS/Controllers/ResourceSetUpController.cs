@@ -20,14 +20,14 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
     {
         private readonly IMapper _mapper;
         private readonly IProfitCentreService _profitCentreService;
-        private readonly IResourceCentreGradeService _rcGradeService;
+        private readonly IProfitCentreGradeService _rcGradeService;
         private readonly IWorkGroupGradeService _wgGradeService;
         private readonly IWorkGroupEmployeeService _WorkGroupEmployeeService;
 
         public ResourceSetUpController(
             IMapper mapper,
             IProfitCentreService profitCentreService,
-            IResourceCentreGradeService rcGradeService,
+            IProfitCentreGradeService rcGradeService,
             IWorkGroupGradeService wgGradeService,
             IWorkGroupEmployeeService WorkGroupEmployeeService)
         {
@@ -50,14 +50,14 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             };
 
             // Load RC grades server-side when a profit centre is selected (same pattern as ProgramStaffPlan)
-            var rcGradeItems = new List<ResourceCentreGradeItem>();
+            var rcGradeItems = new List<ProfitCentreGradeItem>();
             if (!string.IsNullOrWhiteSpace(selectedProfitCentre))
             {
-                var rcResponse = await _rcGradeService.GetResourceCentreGradesAsync(selectedProfitCentre);
+                var rcResponse = await _rcGradeService.GetProfitCentreGradesAsync(selectedProfitCentre);
                 if (rcResponse.Success && rcResponse.Data != null)
                 {
                     rcGradeItems = rcResponse.Data
-                        .Select(d => new ResourceCentreGradeItem
+                        .Select(d => new ProfitCentreGradeItem
                         {
                             PcGrade        = d.PcGrade,
                             RcGradeDisplay = d.PcGrade,
@@ -67,7 +67,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 }
             }
 
-            viewModel.RcGradeGrid = new DataGridConfig<ResourceCentreGradeItem>
+            viewModel.RcGradeGrid = new DataGridConfig<ProfitCentreGradeItem>
             {
                 GridId             = "rcGradeGrid",
                 Title              = "RC Grades Available",
@@ -80,7 +80,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ExtraFilterMethod  = "getRcGradeExtraFilters",
                 BindGridUrl        = "/FPS/ResourceSetUp/LoadRcGradeGrid",
                 Data               = rcGradeItems.Take(10).ToList(),
-                Columns            = GridDataProvider.GetColumnsDefination<ResourceCentreGradeItem>(),
+                Columns            = GridDataProvider.GetColumnsDefination<ProfitCentreGradeItem>(),
                 Pagination         = new PaginationModel { TotalRecords = rcGradeItems.Count, PageNumber = 1, PageSize = 10 }
             };
 
@@ -130,14 +130,14 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 return Json(new { success = false, message = "Profit Centre is required." });
             }
 
-            var response = await _rcGradeService.GetResourceCentreGradesAsync(profitCentre);
+            var response = await _rcGradeService.GetProfitCentreGradesAsync(profitCentre);
             if (!response.Success)
             {
                 return Json(new { success = false, message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to load RC grades." });
             }
 
             var items = (response.Data ?? new List<ProfitCentreGradeDto>())
-                .Select(d => new ResourceCentreGradeItem
+                .Select(d => new ProfitCentreGradeItem
                 {
                     PcGrade        = d.PcGrade,
                     RcGradeDisplay = d.PcGrade,
@@ -159,7 +159,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var totalRecords = items.Count();
             var pagedItems = items.Skip((page - 1) * pageSize).Take(pageSize).ToList();
 
-            var gridConfig = new DataGridConfig<ResourceCentreGradeItem>
+            var gridConfig = new DataGridConfig<ProfitCentreGradeItem>
             {
                 GridId             = "rcGradeGrid",
                 Title              = "RC Grades Available",
@@ -172,7 +172,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ExtraFilterMethod  = "getRcGradeExtraFilters",
                 BindGridUrl        = "/FPS/ResourceSetUp/LoadRcGradeGrid",
                 Data               = pagedItems,
-                Columns            = GridDataProvider.GetColumnsDefination<ResourceCentreGradeItem>(),
+                Columns            = GridDataProvider.GetColumnsDefination<ProfitCentreGradeItem>(),
                 Pagination         = new PaginationModel { TotalRecords = totalRecords, PageNumber = page, PageSize = pageSize, SortColumn = sortBy, SortDirection = descending },
                 CurrentFilters     = filterDict
             };
@@ -263,7 +263,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 return Json(new { success = false, message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to load WG staff." });
             }
 
-            var rawData = response.Data ?? new List<WorkGroupEmployeeViewDto>();
+            var rawData = response.Data ?? new List<WorkGroupEmployeeDto>();
             var staffItems = rawData.Select(d => new WorkGroupEmployeeItem
             {
                 PactId        = d.PactId,

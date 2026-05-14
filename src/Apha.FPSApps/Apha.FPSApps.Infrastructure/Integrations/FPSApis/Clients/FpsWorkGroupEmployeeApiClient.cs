@@ -21,19 +21,19 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             _mapper = mapper;
         }
 
-        public async Task<ApiResponseDto<List<WorkGroupEmployeeViewDto>>> GetWorkGroupEmployeeAsync(QueryParameters<string> query, string wgGrade)
+        public async Task<ApiResponseDto<List<WorkGroupEmployeeDto>>> GetWorkGroupEmployeeAsync(QueryParameters<string> query, string wgGrade)
         {
             var baseUrl = string.Format(FpsApiEndpoints.GetWgStaff, Uri.EscapeDataString(wgGrade));
             var url = QueryStringHelper.AddQueryString(baseUrl, query);
-            var response = await _http.GetAsync<List<WorkGroupEmployeeViewRes>>(url);
+            var response = await _http.GetAsync<List<WorkGroupEmployeeRes>>(url);
             if (response.Success)
             {
-                return _mapper.Map<ApiResponseDto<List<WorkGroupEmployeeViewDto>>>(response);
+                return _mapper.Map<ApiResponseDto<List<WorkGroupEmployeeDto>>>(response);
             }
             else
             {
-                var responseDto = _mapper.Map<ApiResponseDto<List<WorkGroupEmployeeViewDto>>>(response);
-                return ApiResponseDto<List<WorkGroupEmployeeViewDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+                var responseDto = _mapper.Map<ApiResponseDto<List<WorkGroupEmployeeDto>>>(response);
+                return ApiResponseDto<List<WorkGroupEmployeeDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
             }
         }
 

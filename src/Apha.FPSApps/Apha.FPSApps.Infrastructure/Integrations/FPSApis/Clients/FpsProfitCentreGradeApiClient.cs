@@ -3,25 +3,25 @@ using Apha.Common.Contracts.FPS;
 using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
-using Apha.FPSApps.Application.Interfaces.FpsApiClients;  // IFpsResourceCentreGradeApiClient
+using Apha.FPSApps.Application.Interfaces.FpsApiClients;  // IFpsProfitCentreGradeApiClient
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
 
 namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 {
-    public class FpsResourceCentreGradeApiClient : IFpsResourceCentreGradeApiClient
+    public class FpsProfitCentreGradeApiClient : IFpsProfitCentreGradeApiClient
     {
         private readonly IFpsHttpExecutor _http;
         private readonly IMapper _mapper;
 
-        public FpsResourceCentreGradeApiClient(IFpsHttpExecutor http, IMapper mapper)
+        public FpsProfitCentreGradeApiClient(IFpsHttpExecutor http, IMapper mapper)
         {
             _http = http;
             _mapper = mapper;
         }
 
-        public async Task<ApiResponseDto<List<ProfitCentreGradeDto>>> GetResourceCentreGradesAsync(QueryParameters<string> query, string profitCentre)
+        public async Task<ApiResponseDto<List<ProfitCentreGradeDto>>> GetProfitCentreGradesAsync(QueryParameters<string> query, string profitCentre)
         {
             var baseUrl = string.Format(FpsApiEndpoints.GetRcGrades, Uri.EscapeDataString(profitCentre));
             var url = QueryStringHelper.AddQueryString(baseUrl, query);

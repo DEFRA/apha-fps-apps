@@ -15,9 +15,9 @@ namespace Apha.FPSApps.Application.Services.FPS
             _fpsClient = fpsClient;
         }
 
-        public async Task<ApiResponseDto<List<WorkgroupGradeDto>>> GetWorkGroupGradeAsync(string pcGrade)
+        public async Task<ApiResponseDto<List<WorkgroupGradeDto>>> GetWorkGroupGradeAsync(string profitCentre)
         {
-            return await _fpsClient.FpsWorkGroupGrade.GetWorkGroupGradeAsync(new QueryParameters<string>(), pcGrade);
+            return await _fpsClient.FpsWorkGroupGrade.GetWorkGroupGradeAsync(new QueryParameters<string>(), profitCentre);
         }
 
         public async Task<ApiResponseDto<bool>> DeleteWorkGroupGradeAsync(string wgGrade)

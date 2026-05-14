@@ -36,7 +36,7 @@ namespace Apha.FPS.Api.Controllers
         public async Task<IActionResult> GetWorkGroupGradeAsync([FromQuery] PaginationReq<string> query, [FromQuery] string pcGrade)
         {
             var filter = _mapper.Map<QueryParameters<string>>(query);
-            var result = await _WorkGroupGradeService.GetWorkGroupGradeAsync(filter, pcGrade);
+            var result = await _WorkGroupGradeService.GetWorkGroupGradeAsync(filter, profitCentreGrade: pcGrade);
             return Ok(_mapper.Map<PaginationRes<WorkgroupGradeRes>>(result));
         }
 
@@ -47,8 +47,10 @@ namespace Apha.FPS.Api.Controllers
         [HttpDelete("{wgGrade}")]
         public async Task<IActionResult> DeleteWorkGroupGradeAsync(string wgGrade)
         {
-            await _WorkGroupGradeService.DeleteWorkGroupGradeAsync(wgGrade);
-            return NoContent();
+            var isDeleted = await _WorkGroupGradeService.DeleteWorkGroupGradeAsync(wgGrade);
+            if (!isDeleted)
+                throw new KeyNotFoundException("WorkGroupGrade not found.");
+            return Ok(isDeleted);
         }
     }
 }

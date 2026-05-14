@@ -28,7 +28,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreServiceTest
         public async Task GetProfitCentresAsync_WithValidData_ReturnsMappedList()
         {
             // Arrange
-            var entities = new List<ProfitCentre>
+            var entities = new List<ProfitCentreView>
             {
                 new() { ProfitCentreId = "PC01", ProfitCentreName = "Profit Centre One", Division = "DIV1" },
                 new() { ProfitCentreId = "PC02", ProfitCentreName = "Profit Centre Two", Division = "DIV1" }
@@ -55,7 +55,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreServiceTest
         public async Task GetProfitCentresAsync_WithEmptyRepository_ReturnsEmptyList()
         {
             // Arrange
-            var entities = new List<ProfitCentre>();
+            var entities = new List<ProfitCentreView>();
             var expected = new List<ProfitCentreDto>();
 
             _mockRepository.GetProfitCentresAsync().Returns(entities);

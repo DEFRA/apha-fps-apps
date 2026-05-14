@@ -20,9 +20,9 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             _mapper = mapper;
         }
 
-        public async Task<ApiResponseDto<List<WorkgroupGradeDto>>> GetWorkGroupGradeAsync(QueryParameters<string> query, string pcGrade)
+        public async Task<ApiResponseDto<List<WorkgroupGradeDto>>> GetWorkGroupGradeAsync(QueryParameters<string> query, string profitCentre)
         {
-            var url = string.Format(FpsApiEndpoints.GetWgGrades, Uri.EscapeDataString(pcGrade));
+            var url = string.Format(FpsApiEndpoints.GetWgGrades, Uri.EscapeDataString(profitCentre));
             var response = await _http.GetAsync<List<WorkgroupGradeRes>>(url);
             if (response.Success)
             {

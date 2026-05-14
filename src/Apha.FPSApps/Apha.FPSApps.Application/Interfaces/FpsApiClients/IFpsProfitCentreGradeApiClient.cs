@@ -4,8 +4,8 @@ using Apha.FPSApps.Application.Pagination;
 
 namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
 {
-    public interface IFpsResourceCentreGradeApiClient
+    public interface IFpsProfitCentreGradeApiClient
     {
-        Task<ApiResponseDto<List<ProfitCentreGradeDto>>> GetResourceCentreGradesAsync(QueryParameters<string> query, string profitCentre);
+        Task<ApiResponseDto<List<ProfitCentreGradeDto>>> GetProfitCentreGradesAsync(QueryParameters<string> query, string profitCentre);
     }
 }

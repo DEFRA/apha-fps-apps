@@ -35,20 +35,20 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkGroupGradeServiceTest
             // Arrange
             var query        = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var mappedParams = new PaginationParameters<string> { Page = 1, PageSize = 10 };
-            var pagedData    = new PagedData<WorkgroupGrade>();
+            var pagedData    = new PagedData<WorkGroupGradeView>();
             var expected     = new PaginatedResult<WorkgroupGradeDto>();
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
-            _mockRepository.GetWorkGroupGradeAsync(mappedParams, DefaultPcGrade).Returns(pagedData);
+            _mockRepository.GetWorkGroupGradesAsync(mappedParams, profitCentreGrade: DefaultPcGrade).Returns(pagedData);
             _mockMapper.Map<PaginatedResult<WorkgroupGradeDto>>(pagedData).Returns(expected);
 
             // Act
-            var result = await _sut.GetWorkGroupGradeAsync(query, DefaultPcGrade);
+            var result = await _sut.GetWorkGroupGradeAsync(query, profitCentreGrade: DefaultPcGrade);
 
             // Assert
             result.Should().Be(expected);
             _mockMapper.Received(1).Map<PaginationParameters<string>>(query);
-            await _mockRepository.Received(1).GetWorkGroupGradeAsync(mappedParams, DefaultPcGrade);
+            await _mockRepository.Received(1).GetWorkGroupGradesAsync(mappedParams, profitCentreGrade: DefaultPcGrade);
             _mockMapper.Received(1).Map<PaginatedResult<WorkgroupGradeDto>>(pagedData);
         }
 
@@ -62,10 +62,10 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkGroupGradeServiceTest
 
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentException>(() =>
-                _sut.GetWorkGroupGradeAsync(query, pcGrade));
+                _sut.GetWorkGroupGradeAsync(query, profitCentreGrade: pcGrade));
 
             await _mockRepository.DidNotReceive()
-                .GetWorkGroupGradeAsync(Arg.Any<PaginationParameters<string>>(), Arg.Any<string>());
+                .GetWorkGroupGradesAsync(Arg.Any<PaginationParameters<string>>(), Arg.Any<string>());
         }
 
         [Fact]
@@ -76,12 +76,12 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkGroupGradeServiceTest
             var mappedParams = new PaginationParameters<string>();
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
-            _mockRepository.GetWorkGroupGradeAsync(mappedParams, DefaultPcGrade)
+            _mockRepository.GetWorkGroupGradesAsync(mappedParams, profitCentreGrade: DefaultPcGrade)
                 .ThrowsAsync(new InvalidOperationException("DB failure"));
 
             // Act & Assert
             await Assert.ThrowsAsync<InvalidOperationException>(() =>
-                _sut.GetWorkGroupGradeAsync(query, DefaultPcGrade));
+                _sut.GetWorkGroupGradeAsync(query, profitCentreGrade: DefaultPcGrade));
         }
 
         #endregion
@@ -89,15 +89,16 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkGroupGradeServiceTest
         #region DeleteWorkGroupGradeAsync Tests
 
         [Fact]
-        public async Task DeleteWorkGroupGradeAsync_WithValidWgGrade_CallsRepository()
+        public async Task DeleteWorkGroupGradeAsync_WithValidWgGrade_ReturnsTrue()
         {
             // Arrange
-            _mockRepository.DeleteWorkGroupGradeAsync(DefaultWgGrade).Returns(Task.CompletedTask);
+            _mockRepository.DeleteWorkGroupGradeAsync(DefaultWgGrade).Returns(true);
 
             // Act
-            await _sut.DeleteWorkGroupGradeAsync(DefaultWgGrade);
+            var result = await _sut.DeleteWorkGroupGradeAsync(DefaultWgGrade);
 
             // Assert
+            Assert.True(result);
             await _mockRepository.Received(1).DeleteWorkGroupGradeAsync(DefaultWgGrade);
         }
 

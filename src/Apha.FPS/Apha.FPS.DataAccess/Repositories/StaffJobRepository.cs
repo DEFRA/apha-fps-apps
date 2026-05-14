@@ -60,12 +60,12 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<decimal?> GetStaffChargeRate(string staffId, string jobcode)
         {
             var result =
-                    from wg in _dbContext.WgEmployees
+                    from wg in _dbContext.WorkGroupEmployees
                     join e in _dbContext.Employees
                         on wg.SpNumber equals e.SPNumber
                     join w in _dbContext.WorkgroupGrades
                         on wg.WorkGroupGrade equals w.WgGrade
-                    join p in _dbContext.ProfitcentreGrades
+                    join p in _dbContext.ProfitCentreGrades
                         on w.ProfitCentreGrade equals p.PcGrade
                     join s in _dbContext.StaffJobs
                         on wg.PactId equals s.StaffId
@@ -229,7 +229,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return (from sj in _dbContext.StaffJobTblViews
                     join s in _dbContext.StaffGeneralViews on sj.StaffId equals s.StaffId
                     join wg in _dbContext.WorkgroupGrades on s.WorkGroupGrade equals wg.WgGrade
-                    join pc in _dbContext.ProfitcentreGrades on wg.ProfitCentreGrade equals pc.PcGrade
+                    join pc in _dbContext.ProfitCentreGrades on wg.ProfitCentreGrade equals pc.PcGrade
                     join p in _dbContext.ProjectViews on
                         new { sj.JobCode, sj.UserId } equals new { JobCode = p.ParentProject, p.UserId }
                     join prg in _dbContext.ProgramViews on

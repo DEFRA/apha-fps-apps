@@ -5,7 +5,7 @@ namespace Apha.FPS.Core.Interfaces
 {
     public interface IWorkGroupGradeRepository
     {
-        Task<PagedData<WorkgroupGrade>> GetWorkGroupGradeAsync(PaginationParameters<string> query, string pcGrade);
-        Task DeleteWorkGroupGradeAsync(string wgGrade);
+        Task<PagedData<WorkGroupGradeView>> GetWorkGroupGradesAsync(PaginationParameters<string> query, string profitCentreGrade);
+        Task<bool> DeleteWorkGroupGradeAsync(string wgGrade);
     }
 }

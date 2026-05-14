@@ -17,18 +17,18 @@ namespace Apha.FPS.Application.Services
             _mapper = mapper;
         }
 
-        public async Task<PaginatedResult<WorkgroupGradeDto>> GetWorkGroupGradeAsync(QueryParameters<string> query, string pcGrade)
+        public async Task<PaginatedResult<WorkgroupGradeDto>> GetWorkGroupGradeAsync(QueryParameters<string> query, string profitCentreGrade)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(pcGrade);
+            ArgumentException.ThrowIfNullOrWhiteSpace(profitCentreGrade);
             var filter = _mapper.Map<Apha.FPS.Core.Pagination.PaginationParameters<string>>(query);
-            var pagedData = await _repository.GetWorkGroupGradeAsync(filter, pcGrade);
+            var pagedData = await _repository.GetWorkGroupGradesAsync(filter, profitCentreGrade);
             return _mapper.Map<PaginatedResult<WorkgroupGradeDto>>(pagedData);
         }
 
-        public async Task DeleteWorkGroupGradeAsync(string wgGrade)
+        public async Task<bool> DeleteWorkGroupGradeAsync(string wgGrade)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(wgGrade);
-            await _repository.DeleteWorkGroupGradeAsync(wgGrade);
+            return await _repository.DeleteWorkGroupGradeAsync(wgGrade);
         }
     }
 }

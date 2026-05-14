@@ -6,7 +6,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
     /// <summary>
     /// Grid item for the RC Grades Available table (fsubpCGrade — read-only, no add/edit/delete).
     /// </summary>
-    public class ResourceCentreGradeItem
+    public class ProfitCentreGradeItem
     {
         [GridColumn(Type = GridColumnType.ReadOnly, IsVisible = false)]
         public string PcGrade { get; set; } = null!;

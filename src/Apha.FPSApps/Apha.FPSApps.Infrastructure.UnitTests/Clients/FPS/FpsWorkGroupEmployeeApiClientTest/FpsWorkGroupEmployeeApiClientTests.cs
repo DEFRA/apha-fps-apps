@@ -34,21 +34,21 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsWorkGroupEmployee
         {
             // Arrange
             var query   = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var resList = new List<WorkGroupEmployeeViewRes>
+            var resList = new List<WorkGroupEmployeeRes>
             {
                 new() { PactId = DefaultPactId, SpNumber = "SP001", WorkGroupGrade = DefaultWgGrade }
             };
-            var apiResponse = new ApiResponse<List<WorkGroupEmployeeViewRes>> { Success = true, Data = resList };
-            var dtoList     = new List<WorkGroupEmployeeViewDto>
+            var apiResponse = new ApiResponse<List<WorkGroupEmployeeRes>> { Success = true, Data = resList };
+            var dtoList     = new List<WorkGroupEmployeeDto>
             {
                 new() { PactId = DefaultPactId, SpNumber = "SP001", WorkGroupGrade = DefaultWgGrade }
             };
-            var expectedDto = ApiResponseDto<List<WorkGroupEmployeeViewDto>>.SuccessResponse(dtoList);
+            var expectedDto = ApiResponseDto<List<WorkGroupEmployeeDto>>.SuccessResponse(dtoList);
 
-            _http.GetAsync<List<WorkGroupEmployeeViewRes>>(
+            _http.GetAsync<List<WorkGroupEmployeeRes>>(
                     Arg.Is<string>(url => url.Contains("wgstaff") && url.Contains(DefaultWgGrade)))
                 .Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<WorkGroupEmployeeViewDto>>>(apiResponse).Returns(expectedDto);
+            _mapper.Map<ApiResponseDto<List<WorkGroupEmployeeDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
             var result = await _client.GetWorkGroupEmployeeAsync(query, DefaultWgGrade);
@@ -57,7 +57,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsWorkGroupEmployee
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Single(result.Data!);
-            await _http.Received(1).GetAsync<List<WorkGroupEmployeeViewRes>>(
+            await _http.Received(1).GetAsync<List<WorkGroupEmployeeRes>>(
                 Arg.Is<string>(url => url.Contains("wgstaff") && url.Contains(DefaultWgGrade)));
         }
 
@@ -66,20 +66,20 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsWorkGroupEmployee
         {
             // Arrange
             var query       = new QueryParameters<string>();
-            var apiResponse = new ApiResponse<List<WorkGroupEmployeeViewRes>>
+            var apiResponse = new ApiResponse<List<WorkGroupEmployeeRes>>
             {
                 Success = false,
                 Errors  = new List<ApiError> { new() { Message = "API Error", Code = "ERROR" } }
             };
-            var mappedResponse = new ApiResponseDto<List<WorkGroupEmployeeViewDto>>
+            var mappedResponse = new ApiResponseDto<List<WorkGroupEmployeeDto>>
             {
                 Success = false,
                 Errors  = new List<ApiErrorDto> { new() { Message = "API Error", Code = "ERROR" } },
                 Meta    = new ApiMetaDto()
             };
 
-            _http.GetAsync<List<WorkGroupEmployeeViewRes>>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<WorkGroupEmployeeViewDto>>>(apiResponse).Returns(mappedResponse);
+            _http.GetAsync<List<WorkGroupEmployeeRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<WorkGroupEmployeeDto>>>(apiResponse).Returns(mappedResponse);
 
             // Act
             var result = await _client.GetWorkGroupEmployeeAsync(query, DefaultWgGrade);

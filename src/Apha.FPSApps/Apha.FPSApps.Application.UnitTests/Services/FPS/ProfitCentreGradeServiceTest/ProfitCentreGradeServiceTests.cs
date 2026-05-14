@@ -6,28 +6,28 @@ using Apha.FPSApps.Application.Services.FPS;
 using NSubstitute;
 using Xunit;
 
-namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ResourceCentreGradeServiceTest
+namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProfitCentreGradeServiceTest
 {
-    public class ResourceCentreGradeServiceTests
+    public class ProfitCentreGradeServiceTests
     {
         private const string DefaultProfitCentre = "PC01";
 
         private readonly IFpsApiClient _fpsClient;
-        private readonly IFpsResourceCentreGradeApiClient _fpsRcGradeApiClient;
-        private readonly ResourceCentreGradeService _sut;
+        private readonly IFpsProfitCentreGradeApiClient _fpsRcGradeApiClient;
+        private readonly ProfitCentreGradeService _sut;
 
-        public ResourceCentreGradeServiceTests()
+        public ProfitCentreGradeServiceTests()
         {
             _fpsClient           = Substitute.For<IFpsApiClient>();
-            _fpsRcGradeApiClient = Substitute.For<IFpsResourceCentreGradeApiClient>();
-            _fpsClient.FpsResourceCentreGrade.Returns(_fpsRcGradeApiClient);
-            _sut = new ResourceCentreGradeService(_fpsClient);
+            _fpsRcGradeApiClient = Substitute.For<IFpsProfitCentreGradeApiClient>();
+            _fpsClient.FpsProfitCentreGrade.Returns(_fpsRcGradeApiClient);
+            _sut = new ProfitCentreGradeService(_fpsClient);
         }
 
-        #region GetResourceCentreGradesAsync Tests
+        #region GetProfitCentreGradesAsync Tests
 
         [Fact]
-        public async Task GetResourceCentreGradesAsync_WithSuccessResponse_ReturnsGradeList()
+        public async Task GetProfitCentreGradesAsync_WithSuccessResponse_ReturnsGradeList()
         {
             // Arrange
             var grades = new List<ProfitCentreGradeDto>
@@ -37,31 +37,31 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ResourceCentreGradeSer
             };
             var expectedResponse = ApiResponseDto<List<ProfitCentreGradeDto>>.SuccessResponse(grades);
 
-            _fpsRcGradeApiClient.GetResourceCentreGradesAsync(Arg.Any<QueryParameters<string>>(), DefaultProfitCentre)
+            _fpsRcGradeApiClient.GetProfitCentreGradesAsync(Arg.Any<QueryParameters<string>>(), DefaultProfitCentre)
                 .Returns(expectedResponse);
 
             // Act
-            var result = await _sut.GetResourceCentreGradesAsync(DefaultProfitCentre);
+            var result = await _sut.GetProfitCentreGradesAsync(DefaultProfitCentre);
 
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(2, result.Data?.Count);
             await _fpsRcGradeApiClient.Received(1)
-                .GetResourceCentreGradesAsync(Arg.Any<QueryParameters<string>>(), DefaultProfitCentre);
+                .GetProfitCentreGradesAsync(Arg.Any<QueryParameters<string>>(), DefaultProfitCentre);
         }
 
         [Fact]
-        public async Task GetResourceCentreGradesAsync_WithEmptyResult_ReturnsSuccessWithEmptyList()
+        public async Task GetProfitCentreGradesAsync_WithEmptyResult_ReturnsSuccessWithEmptyList()
         {
             // Arrange
             var expectedResponse = ApiResponseDto<List<ProfitCentreGradeDto>>.SuccessResponse(new List<ProfitCentreGradeDto>());
 
-            _fpsRcGradeApiClient.GetResourceCentreGradesAsync(Arg.Any<QueryParameters<string>>(), DefaultProfitCentre)
+            _fpsRcGradeApiClient.GetProfitCentreGradesAsync(Arg.Any<QueryParameters<string>>(), DefaultProfitCentre)
                 .Returns(expectedResponse);
 
             // Act
-            var result = await _sut.GetResourceCentreGradesAsync(DefaultProfitCentre);
+            var result = await _sut.GetProfitCentreGradesAsync(DefaultProfitCentre);
 
             // Assert
             Assert.NotNull(result);
@@ -70,7 +70,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ResourceCentreGradeSer
         }
 
         [Fact]
-        public async Task GetResourceCentreGradesAsync_WhenApiFails_ReturnsFailureResponse()
+        public async Task GetProfitCentreGradesAsync_WhenApiFails_ReturnsFailureResponse()
         {
             // Arrange
             var errors = new List<ApiErrorDto>
@@ -79,11 +79,11 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ResourceCentreGradeSer
             };
             var expectedResponse = ApiResponseDto<List<ProfitCentreGradeDto>>.FailureResponse(errors, new ApiMetaDto());
 
-            _fpsRcGradeApiClient.GetResourceCentreGradesAsync(Arg.Any<QueryParameters<string>>(), DefaultProfitCentre)
+            _fpsRcGradeApiClient.GetProfitCentreGradesAsync(Arg.Any<QueryParameters<string>>(), DefaultProfitCentre)
                 .Returns(expectedResponse);
 
             // Act
-            var result = await _sut.GetResourceCentreGradesAsync(DefaultProfitCentre);
+            var result = await _sut.GetProfitCentreGradesAsync(DefaultProfitCentre);
 
             // Assert
             Assert.NotNull(result);

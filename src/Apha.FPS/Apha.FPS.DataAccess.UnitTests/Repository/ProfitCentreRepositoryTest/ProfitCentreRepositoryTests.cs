@@ -9,17 +9,18 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProfitCentreRepositoryTest
 {
     public class ProfitCentreRepositoryTests
     {
-        private static ProfitCentreRepository CreateRepository(IEnumerable<ProfitCentre> profitCentres)
+        private static ProfitCentreRepository CreateRepository(IEnumerable<ProfitCentreView> profitCentres)
         {
             var requestContext = Substitute.For<IFpsRequestContext>();
             requestContext.FpsYear.Returns(2024);
+            requestContext.UserEmailId.Returns("test@example.com");
 
             var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestContext);
 
             var mockSet = RepositoryTestHelper.CreateMockDbSet(profitCentres);
-            mockContext.Setup(x => x.ProfitCentres).Returns(mockSet.Object);
+            mockContext.Setup(x => x.ProfitCentreViews).Returns(mockSet.Object);
 
-            return new ProfitCentreRepository(mockContext.Object);
+            return new ProfitCentreRepository(mockContext.Object, requestContext);
         }
 
         #region GetProfitCentresAsync Tests
@@ -28,11 +29,11 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProfitCentreRepositoryTest
         public async Task GetProfitCentresAsync_ReturnsAllProfitCentres_WhenDataExists()
         {
             // Arrange
-            var profitCentres = new List<ProfitCentre>
+            var profitCentres = new List<ProfitCentreView>
             {
-                new() { ProfitCentreId = "PC01", ProfitCentreName = "Profit Centre One", Division = "DIV1" },
-                new() { ProfitCentreId = "PC02", ProfitCentreName = "Profit Centre Two", Division = "DIV1" },
-                new() { ProfitCentreId = "PC03", ProfitCentreName = "Profit Centre Three", Division = "DIV2" }
+                new() { ProfitCentreId = "PC01", ProfitCentreName = "Profit Centre One", Division = "DIV1", UserEmail = "test@example.com" },
+                new() { ProfitCentreId = "PC02", ProfitCentreName = "Profit Centre Two", Division = "DIV1", UserEmail = "test@example.com" },
+                new() { ProfitCentreId = "PC03", ProfitCentreName = "Profit Centre Three", Division = "DIV2", UserEmail = "test@example.com" }
             };
             var repo = CreateRepository(profitCentres);
 
@@ -48,7 +49,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProfitCentreRepositoryTest
         public async Task GetProfitCentresAsync_ReturnsEmpty_WhenNoDataExists()
         {
             // Arrange
-            var repo = CreateRepository(new List<ProfitCentre>());
+            var repo = CreateRepository(new List<ProfitCentreView>());
 
             // Act
             var result = await repo.GetProfitCentresAsync();
@@ -62,11 +63,11 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProfitCentreRepositoryTest
         public async Task GetProfitCentresAsync_ReturnsOrderedByProfitCentreId()
         {
             // Arrange
-            var profitCentres = new List<ProfitCentre>
+            var profitCentres = new List<ProfitCentreView>
             {
-                new() { ProfitCentreId = "PC03", ProfitCentreName = "Centre Three", Division = "DIV1" },
-                new() { ProfitCentreId = "PC01", ProfitCentreName = "Centre One",   Division = "DIV1" },
-                new() { ProfitCentreId = "PC02", ProfitCentreName = "Centre Two",   Division = "DIV1" }
+                new() { ProfitCentreId = "PC03", ProfitCentreName = "Centre Three", Division = "DIV1", UserEmail = "test@example.com" },
+                new() { ProfitCentreId = "PC01", ProfitCentreName = "Centre One",   Division = "DIV1", UserEmail = "test@example.com" },
+                new() { ProfitCentreId = "PC02", ProfitCentreName = "Centre Two",   Division = "DIV1", UserEmail = "test@example.com" }
             };
             var repo = CreateRepository(profitCentres);
 
@@ -84,9 +85,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProfitCentreRepositoryTest
         public async Task GetProfitCentresAsync_ReturnsSingle_WhenOneItemExists()
         {
             // Arrange
-            var profitCentres = new List<ProfitCentre>
+            var profitCentres = new List<ProfitCentreView>
             {
-                new() { ProfitCentreId = "PC01", ProfitCentreName = "Centre One", Division = "DIV1" }
+                new() { ProfitCentreId = "PC01", ProfitCentreName = "Centre One", Division = "DIV1", UserEmail = "test@example.com" }
             };
             var repo = CreateRepository(profitCentres);
 

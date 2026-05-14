@@ -2,7 +2,7 @@ using Apha.FPS.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Apha.FPS.DataAccess.Data
+namespace Apha.FPS.DataAccess
 {
     public class ProfitCentreGradeMap : IEntityTypeConfiguration<ProfitCentreGrade>
     {

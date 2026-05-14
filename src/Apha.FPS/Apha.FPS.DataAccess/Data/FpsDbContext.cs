@@ -21,12 +21,12 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<Program> Programs { get; set; }
         public virtual DbSet<Project> Projects { get; set; }
         public virtual DbSet<StaffJob> StaffJobs { get; set; }
-        public virtual DbSet<WorkGroupEmployee> WgEmployees { get; set; }
+        public virtual DbSet<WorkGroupEmployee> WorkGroupEmployees { get; set; }
         public virtual DbSet<Employee> Employees { get; set; }
         public virtual DbSet<FpsSetting> TblSettings { get; set; }
         public virtual DbSet<Workgroup> Workgroups { get; set; }
         public virtual DbSet<WorkgroupGrade> WorkgroupGrades { get; set; }
-        public virtual DbSet<ProfitCentreGrade> ProfitcentreGrades { get; set; }
+        public virtual DbSet<ProfitCentreGrade> ProfitCentreGrades { get; set; }
         public virtual DbSet<DivisionGrade> DivisionGrades { get; set; }
         public virtual DbSet<UserProfitcentre> UserProfitcentres { get; set; }
         public virtual DbSet<ProfitCentre> ProfitCentres { get; set; }
@@ -42,7 +42,7 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<SubAccount> SubAccounts { get; set; }
         public virtual DbSet<UserCategory> UserCategories { get; set; }
         public virtual DbSet<StaffActiveView> StaffActiveView { get; set; }
-        public virtual DbSet<WorkgroupGradeGeneralView> WorkgroupGradeGeneralView { get; set; }
+        public virtual DbSet<WorkgroupGradeGeneralView> WorkgroupGradeGeneralViews { get; set; }
 
         public virtual DbSet<ProgramView> ProgramViews { get; set; }
         public virtual DbSet<ProjectView> ProjectViews { get; set; }
@@ -60,6 +60,7 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<TimeCostCalcs> TimeCostCalcs { get; set; }
 
         public virtual DbSet<MonthlyOutput> MonthlyOutputs { get; set; }
+        public virtual DbSet<MonthlyTime> MonthlyTimes { get; set; }
 
         public virtual DbSet<Division> Divisions { get; set; }
         public virtual DbSet<Agency> Agencies { get; set; }
@@ -68,6 +69,10 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<AdditionalCost> AdditionalCosts { get; set; }
         public virtual DbSet<AdditionalCostLog> AdditionalCostLogs { get; set; }
         public virtual DbSet<AccountCategory> AccountCategories { get; set; }
+        public virtual DbSet<ProfitCentreView> ProfitCentreViews { get; set; }
+        public virtual DbSet<ProfitCentreGradeView> ProfitCentreGradeViews { get; set; }
+        public virtual DbSet<WorkGroupGradeView> WorkGroupGradeViews { get; set; }
+        public virtual DbSet<WorkGroupEmployeeView> WorkGroupEmployeeViews { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new UserMap());
@@ -106,6 +111,10 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.Entity<UserProfitcentre>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new ProfitCentreMap());
+            modelBuilder.ApplyConfiguration(new ProfitCentreViewMap());
+            modelBuilder.ApplyConfiguration(new ProfitCentreGradeViewMap());
+            modelBuilder.ApplyConfiguration(new WorkGroupGradeViewMap());
+            modelBuilder.ApplyConfiguration(new WorkGroupEmployeeViewMap());
 
             modelBuilder.ApplyConfiguration(new JobCodeMap());
             modelBuilder.Entity<JobCode>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
@@ -192,6 +201,9 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new MonthlyOutputMap());
             modelBuilder.Entity<MonthlyOutput>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new MonthlyTimeMap());
+            modelBuilder.Entity<MonthlyTime>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
         }
     }
 }

@@ -1,5 +1,4 @@
 using Apha.Common.Helpers.Repository;
-using Apha.FPS.Core.Enities;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -43,9 +42,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
 
             // Setup WgEmployees DbSet (for DeleteEmployeeAsync guard)
             var wgEmployeesMockSet = RepositoryTestHelper.CreateMockDbSet(wgEmployees ?? Enumerable.Empty<WorkGroupEmployee>());
-            mockContext.Setup(x => x.WgEmployees).Returns(wgEmployeesMockSet.Object);
+            mockContext.Setup(x => x.WorkGroupEmployees).Returns(wgEmployeesMockSet.Object);
 
-            // Setup StaffActiveView DbSet (for GetAllManagersAsync)
+            // Setup StaffActiveView
             if (staffActiveViews != null)
             {
                 var staffMockSet = RepositoryTestHelper.CreateMockDbSet(staffActiveViews);
@@ -56,7 +55,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             if (workgroupGrades != null)
             {
                 var gradeMockSet = RepositoryTestHelper.CreateMockDbSet(workgroupGrades);
-                mockContext.Setup(x => x.WorkgroupGradeGeneralView).Returns(gradeMockSet.Object);
+                mockContext.Setup(x => x.WorkgroupGradeGeneralViews).Returns(gradeMockSet.Object);
             }
 
             return new EmployeeRepository(mockContext.Object, mockFpsYearContext.Object);
@@ -628,7 +627,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             mockContext.Setup(x => x.Employees).Returns(employeesMockSet.Object);
 
             var wgEmployeesMockSet = RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<WorkGroupEmployee>());
-            mockContext.Setup(x => x.WgEmployees).Returns(wgEmployeesMockSet.Object);
+            mockContext.Setup(x => x.WorkGroupEmployees).Returns(wgEmployeesMockSet.Object);
 
             var repo = new EmployeeRepository(mockContext.Object, mockFpsYearContext.Object);
 

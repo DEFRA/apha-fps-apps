@@ -8,19 +8,19 @@ namespace Apha.FPS.DataAccess.Repositories
     public class ProfitCentreRepository : BaseRepository, IProfitCentreRepository
     {
         private readonly FpsDbContext _dbContext;
+        private readonly IFpsRequestContext _requestContext;
 
-        public ProfitCentreRepository(FpsDbContext dbContext) : base(dbContext)
+        public ProfitCentreRepository(FpsDbContext dbContext, IFpsRequestContext requestContext) : base(dbContext)
         {
             _dbContext = dbContext;
+            _requestContext = requestContext;
         }
 
-        /// <summary>
-        /// Returns all profit centres ordered by ProfitCentreId.
-        /// </summary>
-        public async Task<List<ProfitCentre>> GetProfitCentresAsync()
+        public async Task<List<ProfitCentreView>> GetProfitCentresAsync()
         {
-            return await _dbContext.ProfitCentres
+            return await _dbContext.ProfitCentreViews
                 .AsNoTracking()
+                .Where(x => x.UserEmail != null && x.UserEmail.ToLower() == _requestContext.UserEmailId)
                 .OrderBy(x => x.ProfitCentreId)
                 .ToListAsync();
         }

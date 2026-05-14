@@ -31,11 +31,11 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.WorkGroupEmployeeServi
         public async Task GetWorkGroupEmployeeAsync_WithSuccessResponse_ReturnsEmployeeList()
         {
             // Arrange
-            var employees = new List<WorkGroupEmployeeViewDto>
+            var employees = new List<WorkGroupEmployeeDto>
             {
                 new() { PactId = DefaultPactId, SpNumber = "SP001", WorkGroupGrade = DefaultWgGrade }
             };
-            var expectedResponse = ApiResponseDto<List<WorkGroupEmployeeViewDto>>.SuccessResponse(employees);
+            var expectedResponse = ApiResponseDto<List<WorkGroupEmployeeDto>>.SuccessResponse(employees);
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
 
             _fpsWgEmployeeApiClient.GetWorkGroupEmployeeAsync(query, DefaultWgGrade).Returns(expectedResponse);
@@ -55,7 +55,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.WorkGroupEmployeeServi
         {
             // Arrange
             var errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "API_ERROR" } };
-            var expectedResponse = ApiResponseDto<List<WorkGroupEmployeeViewDto>>.FailureResponse(errors, new ApiMetaDto());
+            var expectedResponse = ApiResponseDto<List<WorkGroupEmployeeDto>>.FailureResponse(errors, new ApiMetaDto());
             var query = new QueryParameters<string>();
 
             _fpsWgEmployeeApiClient.GetWorkGroupEmployeeAsync(query, DefaultWgGrade).Returns(expectedResponse);

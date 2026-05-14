@@ -11,27 +11,27 @@ using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Xunit;
 
-namespace Apha.FPS.Api.UnitTests.Controller.ResourceCentreGradeControllerTest
+namespace Apha.FPS.Api.UnitTests.Controller.ProfitCentreGradeControllerTest
 {
-    public class ResourceCentreGradeControllerTests
+    public class ProfitCentreGradeControllerTests
     {
         private const string DefaultProfitCentre = "PC01";
 
-        private readonly IResourceCentreGradeService _serviceMock;
+        private readonly IProfitCentreGradeService _serviceMock;
         private readonly IMapper _mapperMock;
-        private readonly ResourceCentreGradeController _controller;
+        private readonly ProfitCentreGradeController _controller;
 
-        public ResourceCentreGradeControllerTests()
+        public ProfitCentreGradeControllerTests()
         {
-            _serviceMock = Substitute.For<IResourceCentreGradeService>();
+            _serviceMock = Substitute.For<IProfitCentreGradeService>();
             _mapperMock  = Substitute.For<IMapper>();
-            _controller  = new ResourceCentreGradeController(_serviceMock, _mapperMock);
+            _controller  = new ProfitCentreGradeController(_serviceMock, _mapperMock);
         }
 
-        #region GetResourceCentreGradesAsync Tests
+        #region GetProfitCentreGradesAsync Tests
 
         [Fact]
-        public async Task GetResourceCentreGradesAsync_WithValidRequest_ReturnsOk()
+        public async Task GetProfitCentreGradesAsync_WithValidRequest_ReturnsOk()
         {
             // Arrange
             var query  = new PaginationReq<string> { Page = 1, PageSize = 10 };
@@ -49,32 +49,32 @@ namespace Apha.FPS.Api.UnitTests.Controller.ResourceCentreGradeControllerTest
             };
 
             _mapperMock.Map<QueryParameters<string>>(query).Returns(mapped);
-            _serviceMock.GetResourceCentreGradesAsync(mapped, DefaultProfitCentre).Returns(serviceResult);
+            _serviceMock.GetProfitCentreGradesAsync(mapped, DefaultProfitCentre).Returns(serviceResult);
             _mapperMock.Map<PaginationRes<ProfitCentreGradeRes>>(serviceResult).Returns(expectedRes);
 
             // Act
-            var result = await _controller.GetResourceCentreGradesAsync(query, DefaultProfitCentre);
+            var result = await _controller.GetProfitCentreGradesAsync(query, DefaultProfitCentre);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             okResult.Value.Should().Be(expectedRes);
-            await _serviceMock.Received(1).GetResourceCentreGradesAsync(mapped, DefaultProfitCentre);
+            await _serviceMock.Received(1).GetProfitCentreGradesAsync(mapped, DefaultProfitCentre);
         }
 
         [Fact]
-        public async Task GetResourceCentreGradesAsync_WhenServiceThrows_PropagatesException()
+        public async Task GetProfitCentreGradesAsync_WhenServiceThrows_PropagatesException()
         {
             // Arrange
             var query  = new PaginationReq<string> { Page = 1, PageSize = 10 };
             var mapped = new QueryParameters<string> { Page = 1, PageSize = 10 };
 
             _mapperMock.Map<QueryParameters<string>>(query).Returns(mapped);
-            _serviceMock.GetResourceCentreGradesAsync(mapped, DefaultProfitCentre)
+            _serviceMock.GetProfitCentreGradesAsync(mapped, DefaultProfitCentre)
                 .ThrowsAsync(new ArgumentException("Invalid profit centre"));
 
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentException>(() =>
-                _controller.GetResourceCentreGradesAsync(query, DefaultProfitCentre));
+                _controller.GetProfitCentreGradesAsync(query, DefaultProfitCentre));
         }
 
         [Fact]
@@ -82,7 +82,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.ResourceCentreGradeControllerTest
         {
             // Act & Assert
             Assert.Throws<ArgumentNullException>(() =>
-                new ResourceCentreGradeController(null!, _mapperMock));
+                new ProfitCentreGradeController(null!, _mapperMock));
         }
 
         [Fact]
@@ -90,7 +90,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.ResourceCentreGradeControllerTest
         {
             // Act & Assert
             Assert.Throws<ArgumentNullException>(() =>
-                new ResourceCentreGradeController(_serviceMock, null!));
+                new ProfitCentreGradeController(_serviceMock, null!));
         }
 
         #endregion

@@ -10,27 +10,27 @@ using AutoMapper;
 using NSubstitute;
 using Xunit;
 
-namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsResourceCentreGradeApiClientTest
+namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreGradeApiClientTest
 {
-    public class FpsResourceCentreGradeApiClientTests
+    public class FpsProfitCentreGradeApiClientTests
     {
         private const string DefaultProfitCentre = "PC01";
 
         private readonly IFpsHttpExecutor _http;
         private readonly IMapper _mapper;
-        private readonly FpsResourceCentreGradeApiClient _client;
+        private readonly FpsProfitCentreGradeApiClient _client;
 
-        public FpsResourceCentreGradeApiClientTests()
+        public FpsProfitCentreGradeApiClientTests()
         {
             _http   = Substitute.For<IFpsHttpExecutor>();
             _mapper = Substitute.For<IMapper>();
-            _client = new FpsResourceCentreGradeApiClient(_http, _mapper);
+            _client = new FpsProfitCentreGradeApiClient(_http, _mapper);
         }
 
-        #region GetResourceCentreGradesAsync Tests
+        #region GetProfitCentreGradesAsync Tests
 
         [Fact]
-        public async Task GetResourceCentreGradesAsync_WithSuccessResponse_ReturnsMappedGradeList()
+        public async Task GetProfitCentreGradesAsync_WithSuccessResponse_ReturnsMappedGradeList()
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
@@ -57,7 +57,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsResourceCentreGra
             _mapper.Map<ApiResponseDto<List<ProfitCentreGradeDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
-            var result = await _client.GetResourceCentreGradesAsync(query, DefaultProfitCentre);
+            var result = await _client.GetProfitCentreGradesAsync(query, DefaultProfitCentre);
 
             // Assert
             Assert.NotNull(result);
@@ -68,7 +68,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsResourceCentreGra
         }
 
         [Fact]
-        public async Task GetResourceCentreGradesAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        public async Task GetProfitCentreGradesAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
@@ -88,7 +88,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsResourceCentreGra
             _mapper.Map<ApiResponseDto<List<ProfitCentreGradeDto>>>(apiResponse).Returns(mappedResponse);
 
             // Act
-            var result = await _client.GetResourceCentreGradesAsync(query, DefaultProfitCentre);
+            var result = await _client.GetProfitCentreGradesAsync(query, DefaultProfitCentre);
 
             // Assert
             Assert.NotNull(result);
@@ -98,7 +98,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsResourceCentreGra
         }
 
         [Fact]
-        public async Task GetResourceCentreGradesAsync_WithEmptyResult_ReturnsSuccessWithEmptyList()
+        public async Task GetProfitCentreGradesAsync_WithEmptyResult_ReturnsSuccessWithEmptyList()
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
@@ -113,7 +113,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsResourceCentreGra
             _mapper.Map<ApiResponseDto<List<ProfitCentreGradeDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
-            var result = await _client.GetResourceCentreGradesAsync(query, DefaultProfitCentre);
+            var result = await _client.GetProfitCentreGradesAsync(query, DefaultProfitCentre);
 
             // Assert
             Assert.NotNull(result);
@@ -122,7 +122,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsResourceCentreGra
         }
 
         [Fact]
-        public async Task GetResourceCentreGradesAsync_BuildsUrlWithProfitCentreEncoded()
+        public async Task GetProfitCentreGradesAsync_BuildsUrlWithProfitCentreEncoded()
         {
             // Arrange
             const string profitCentre = "PC 01"; // contains space — should be URL-encoded
@@ -134,7 +134,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsResourceCentreGra
             _mapper.Map<ApiResponseDto<List<ProfitCentreGradeDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
-            await _client.GetResourceCentreGradesAsync(query, profitCentre);
+            await _client.GetProfitCentreGradesAsync(query, profitCentre);
 
             // Assert — URL must contain URL-encoded profit centre
             await _http.Received(1).GetAsync<List<ProfitCentreGradeRes>>(

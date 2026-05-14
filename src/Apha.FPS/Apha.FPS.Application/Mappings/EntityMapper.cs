@@ -50,10 +50,13 @@ namespace Apha.FPS.Application.Mappings
 
             // ResourceSetUp
             CreateMap<ProfitCentre, ProfitCentreDto>().ReverseMap();
+            CreateMap<ProfitCentreView, ProfitCentreDto>()
+                .ForMember(d => d.ProfitCentreId, o => o.MapFrom(s => s.ProfitCentreId));
             CreateMap<ProfitCentreGrade, ProfitCentreGradeDto>().ReverseMap();
             CreateMap<WorkgroupGrade, WorkgroupGradeDto>().ReverseMap();
+            CreateMap<WorkGroupGradeView, WorkgroupGradeDto>().ReverseMap();
             CreateMap<WorkGroupEmployee, WorkGroupEmployeeDto>().ReverseMap();
-            CreateMap<WorkGroupEmployeeView, WorkGroupEmployeeViewDto>().ReverseMap();
+            CreateMap<WorkGroupEmployeeView, WorkGroupEmployeeDto>().ReverseMap();
         }
     }
 }

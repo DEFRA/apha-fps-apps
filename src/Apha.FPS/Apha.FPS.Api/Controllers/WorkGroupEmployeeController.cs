@@ -3,6 +3,7 @@ using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
+using Apha.FPS.Application.Services;
 using Asp.Versioning;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -38,7 +39,7 @@ namespace Apha.FPS.Api.Controllers
         {
             var filter = _mapper.Map<QueryParameters<string>>(query);
             var result = await _WorkGroupEmployeeService.GetWorkGroupEmployeeAsync(filter, wgGrade);
-            return Ok(_mapper.Map<PaginationRes<WorkGroupEmployeeViewRes>>(result));
+            return Ok(_mapper.Map<PaginationRes<WorkGroupEmployeeRes>>(result));
         }
 
         /// <summary>
@@ -73,8 +74,13 @@ namespace Apha.FPS.Api.Controllers
         [HttpDelete("{pactId}")]
         public async Task<IActionResult> DeleteWorkGroupEmployeeAsync(string pactId)
         {
-            await _WorkGroupEmployeeService.DeleteWorkGroupEmployeeAsync(pactId);
-            return NoContent();
+            var isDeleted = await _WorkGroupEmployeeService.DeleteWorkGroupEmployeeAsync(pactId);
+            if (!isDeleted)
+                throw new KeyNotFoundException("WorkGroupEmployee not found.");
+            return Ok(isDeleted);
         }
+
+  
+
     }
 }

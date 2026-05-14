@@ -33,7 +33,6 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<ActualTestOutputItem, MonthlyOutputDto>().ReverseMap();
 
             // Resource Set-Up
-            CreateMap<WorkGroupEmployeeItem, WorkGroupEmployeeViewDto>().ReverseMap();
             CreateMap<WorkGroupEmployeeItem, WorkGroupEmployeeDto>().ReverseMap();
         }
     }

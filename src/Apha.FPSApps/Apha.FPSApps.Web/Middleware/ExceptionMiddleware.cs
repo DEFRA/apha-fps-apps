@@ -26,12 +26,28 @@ namespace Apha.FPSApps.Web.Middleware
             }
             catch (Exception ex)
             {
+                if (context.Response.HasStarted)
+                    return;
+
+                // Short-circuit: OIDC challenge must be issued immediately without
+                // logging as an error or going through general exception handling
+                var oidcChallenge = ex as MicrosoftIdentityWebChallengeUserException
+                    ?? ex.InnerException as MicrosoftIdentityWebChallengeUserException;
+
+                if (oidcChallenge != null)
+                {
+                    await context.ChallengeAsync(
+                        OpenIdConnectDefaults.AuthenticationScheme,
+                        new AuthenticationProperties
+                        {
+                            RedirectUri = context.Request.Path + context.Request.QueryString
+                        });
+                    return;
+                }
+
                 var correlationId = context.Request.Headers["X-Correlation-ID"].ToString();
                 var (errorType, errorCode, statusCode) = ClassifyException(ex);
                 LogException(context, ex, errorType, errorCode, correlationId);
-
-                if (context.Response.HasStarted)
-                    return;
 
                 await HandleExceptionAsync(context, ex, statusCode);
             }
@@ -39,23 +55,6 @@ namespace Apha.FPSApps.Web.Middleware
 
         private async Task HandleExceptionAsync(HttpContext context, Exception ex, int statusCode)
         {
-            // Unwrap: UnauthorizedAccessException may wrap MicrosoftIdentityWebChallengeUserException
-            var oidcChallenge = ex as MicrosoftIdentityWebChallengeUserException
-                ?? ex.InnerException as MicrosoftIdentityWebChallengeUserException;
-
-            //trigger an OIDC challenge to redirect to Azure AD.
-            if (oidcChallenge != null)
-            {
-                // Redirect to Azure AD for re-authentication, returning to the current path
-                await context.ChallengeAsync(
-                    OpenIdConnectDefaults.AuthenticationScheme,
-                    new AuthenticationProperties
-                    {
-                        RedirectUri = context.Request.Path + context.Request.QueryString
-                    });
-                return;
-            }
-
             context.Response.StatusCode = statusCode;
 
             //Pending to create a user friendly error page and redirect to that page

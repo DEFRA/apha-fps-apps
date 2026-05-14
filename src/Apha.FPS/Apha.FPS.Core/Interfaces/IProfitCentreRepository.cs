@@ -4,6 +4,6 @@ namespace Apha.FPS.Core.Interfaces
 {
     public interface IProfitCentreRepository
     {
-        Task<List<ProfitCentre>> GetProfitCentresAsync();
+        Task<List<ProfitCentreView>> GetProfitCentresAsync();
     }
 }

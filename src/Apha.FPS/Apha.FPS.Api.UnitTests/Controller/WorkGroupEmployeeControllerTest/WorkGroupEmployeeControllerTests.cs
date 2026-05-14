@@ -37,21 +37,21 @@ namespace Apha.FPS.Api.UnitTests.Controller.WorkGroupEmployeeControllerTest
             // Arrange
             var query  = new PaginationReq<string> { Page = 1, PageSize = 10 };
             var mapped = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var employees = new List<WorkGroupEmployeeViewDto>
+            var employees = new List<WorkGroupEmployeeDto>
             {
                 new() { PactId = DefaultPactId, SpNumber = "SP001", WorkGroupGrade = DefaultWgGrade }
             };
             var paginationDto = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1, TotalPages = 1 };
-            var serviceResult = new PaginatedResult<WorkGroupEmployeeViewDto>(employees, paginationDto);
-            var expectedRes   = new PaginationRes<WorkGroupEmployeeViewRes>
+            var serviceResult = new PaginatedResult<WorkGroupEmployeeDto>(employees, paginationDto);
+            var expectedRes   = new PaginationRes<WorkGroupEmployeeRes>
             {
-                Data           = new List<WorkGroupEmployeeViewRes> { new() { PactId = DefaultPactId } },
+                Data           = new List<WorkGroupEmployeeRes> { new() { PactId = DefaultPactId } },
                 PaginationData = new Pagination { PageNumber = 1, PageSize = 10, TotalRecords = 1 }
             };
 
             _mapperMock.Map<QueryParameters<string>>(query).Returns(mapped);
             _serviceMock.GetWorkGroupEmployeeAsync(mapped, DefaultWgGrade).Returns(serviceResult);
-            _mapperMock.Map<PaginationRes<WorkGroupEmployeeViewRes>>(serviceResult).Returns(expectedRes);
+            _mapperMock.Map<PaginationRes<WorkGroupEmployeeRes>>(serviceResult).Returns(expectedRes);
 
             // Act
             var result = await _controller.GetWorkGroupEmployeeAsync(query, DefaultWgGrade);
@@ -86,7 +86,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.WorkGroupEmployeeControllerTest
         public async Task GetWorkGroupEmployeeByIdAsync_WithValidPactId_ReturnsOk()
         {
             // Arrange
-            var dto = new WorkGroupEmployeeViewDto
+            var dto = new WorkGroupEmployeeDto
             {
                 PactId         = DefaultPactId,
                 SpNumber       = "SP001",
@@ -110,7 +110,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.WorkGroupEmployeeControllerTest
         public async Task GetWorkGroupEmployeeByIdAsync_WhenNotFound_ThrowsKeyNotFoundException()
         {
             // Arrange
-            _serviceMock.GetWorkGroupEmployeeByIdAsync(DefaultPactId).Returns((WorkGroupEmployeeViewDto?)null);
+            _serviceMock.GetWorkGroupEmployeeByIdAsync(DefaultPactId).Returns((WorkGroupEmployeeDto?)null);
 
             // Act & Assert
             await Assert.ThrowsAsync<KeyNotFoundException>(() =>
@@ -164,25 +164,25 @@ namespace Apha.FPS.Api.UnitTests.Controller.WorkGroupEmployeeControllerTest
         #region DeleteWorkGroupEmployeeAsync Tests
 
         [Fact]
-        public async Task DeleteWorkGroupEmployeeAsync_WithValidPactId_ReturnsNoContent()
+        public async Task DeleteWorkGroupEmployeeAsync_WithValidPactId_ReturnsOk()
         {
             // Arrange
-            _serviceMock.DeleteWorkGroupEmployeeAsync(DefaultPactId).Returns(Task.CompletedTask);
+            _serviceMock.DeleteWorkGroupEmployeeAsync(DefaultPactId).Returns(true);
 
             // Act
             var result = await _controller.DeleteWorkGroupEmployeeAsync(DefaultPactId);
 
             // Assert
-            Assert.IsType<NoContentResult>(result);
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(true, okResult.Value);
             await _serviceMock.Received(1).DeleteWorkGroupEmployeeAsync(DefaultPactId);
         }
 
         [Fact]
-        public async Task DeleteWorkGroupEmployeeAsync_WhenServiceThrows_PropagatesException()
+        public async Task DeleteWorkGroupEmployeeAsync_WhenNotFound_ThrowsKeyNotFoundException()
         {
             // Arrange
-            _serviceMock.DeleteWorkGroupEmployeeAsync(DefaultPactId)
-                .ThrowsAsync(new KeyNotFoundException("Employee not found."));
+            _serviceMock.DeleteWorkGroupEmployeeAsync(DefaultPactId).Returns(false);
 
             // Act & Assert
             await Assert.ThrowsAsync<KeyNotFoundException>(() =>

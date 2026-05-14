@@ -50,7 +50,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.WorkGroupGradeControllerTest
             };
 
             _mapperMock.Map<QueryParameters<string>>(query).Returns(mapped);
-            _serviceMock.GetWorkGroupGradeAsync(mapped, DefaultPcGrade).Returns(serviceResult);
+            _serviceMock.GetWorkGroupGradeAsync(mapped, profitCentreGrade: DefaultPcGrade).Returns(serviceResult);
             _mapperMock.Map<PaginationRes<WorkgroupGradeRes>>(serviceResult).Returns(expectedRes);
 
             // Act
@@ -59,7 +59,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.WorkGroupGradeControllerTest
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             okResult.Value.Should().Be(expectedRes);
-            await _serviceMock.Received(1).GetWorkGroupGradeAsync(mapped, DefaultPcGrade);
+            await _serviceMock.Received(1).GetWorkGroupGradeAsync(mapped, profitCentreGrade: DefaultPcGrade);
         }
 
         [Fact]
@@ -70,7 +70,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.WorkGroupGradeControllerTest
             var mapped = new QueryParameters<string> { Page = 1, PageSize = 10 };
 
             _mapperMock.Map<QueryParameters<string>>(query).Returns(mapped);
-            _serviceMock.GetWorkGroupGradeAsync(mapped, DefaultPcGrade)
+            _serviceMock.GetWorkGroupGradeAsync(mapped, profitCentreGrade: DefaultPcGrade)
                 .ThrowsAsync(new ArgumentException("Invalid pc grade"));
 
             // Act & Assert
@@ -83,25 +83,25 @@ namespace Apha.FPS.Api.UnitTests.Controller.WorkGroupGradeControllerTest
         #region DeleteWorkGroupGradeAsync Tests
 
         [Fact]
-        public async Task DeleteWorkGroupGradeAsync_WithValidWgGrade_ReturnsNoContent()
+        public async Task DeleteWorkGroupGradeAsync_WithValidWgGrade_ReturnsOk()
         {
             // Arrange
-            _serviceMock.DeleteWorkGroupGradeAsync(DefaultWgGrade).Returns(Task.CompletedTask);
+            _serviceMock.DeleteWorkGroupGradeAsync(DefaultWgGrade).Returns(true);
 
             // Act
             var result = await _controller.DeleteWorkGroupGradeAsync(DefaultWgGrade);
 
             // Assert
-            Assert.IsType<NoContentResult>(result);
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(true, okResult.Value);
             await _serviceMock.Received(1).DeleteWorkGroupGradeAsync(DefaultWgGrade);
         }
 
         [Fact]
-        public async Task DeleteWorkGroupGradeAsync_WhenServiceThrows_PropagatesException()
+        public async Task DeleteWorkGroupGradeAsync_WhenNotFound_ThrowsKeyNotFoundException()
         {
             // Arrange
-            _serviceMock.DeleteWorkGroupGradeAsync(DefaultWgGrade)
-                .ThrowsAsync(new KeyNotFoundException("WG grade not found."));
+            _serviceMock.DeleteWorkGroupGradeAsync(DefaultWgGrade).Returns(false);
 
             // Act & Assert
             await Assert.ThrowsAsync<KeyNotFoundException>(() =>

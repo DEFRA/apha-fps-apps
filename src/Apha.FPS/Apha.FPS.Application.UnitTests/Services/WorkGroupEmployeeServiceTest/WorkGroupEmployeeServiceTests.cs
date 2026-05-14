@@ -36,11 +36,11 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkGroupEmployeeServiceTest
             var query        = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var mappedParams = new PaginationParameters<string> { Page = 1, PageSize = 10 };
             var pagedData    = new PagedData<WorkGroupEmployeeView>();
-            var expected     = new PaginatedResult<WorkGroupEmployeeViewDto>();
+            var expected     = new PaginatedResult<WorkGroupEmployeeDto>();
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
             _mockRepository.GetWorkGroupEmployeeAsync(mappedParams, DefaultWgGrade).Returns(pagedData);
-            _mockMapper.Map<PaginatedResult<WorkGroupEmployeeViewDto>>(pagedData).Returns(expected);
+            _mockMapper.Map<PaginatedResult<WorkGroupEmployeeDto>>(pagedData).Returns(expected);
 
             // Act
             var result = await _sut.GetWorkGroupEmployeeAsync(query, DefaultWgGrade);
@@ -49,7 +49,7 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkGroupEmployeeServiceTest
             result.Should().Be(expected);
             _mockMapper.Received(1).Map<PaginationParameters<string>>(query);
             await _mockRepository.Received(1).GetWorkGroupEmployeeAsync(mappedParams, DefaultWgGrade);
-            _mockMapper.Received(1).Map<PaginatedResult<WorkGroupEmployeeViewDto>>(pagedData);
+            _mockMapper.Received(1).Map<PaginatedResult<WorkGroupEmployeeDto>>(pagedData);
         }
 
         [Theory]
@@ -77,10 +77,10 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkGroupEmployeeServiceTest
         {
             // Arrange
             var entity   = new WorkGroupEmployeeView { PactId = DefaultPactId };
-            var expected = new WorkGroupEmployeeViewDto { PactId = DefaultPactId };
+            var expected = new WorkGroupEmployeeDto { PactId = DefaultPactId };
 
             _mockRepository.GetWorkGroupEmployeeByIdAsync(DefaultPactId).Returns(entity);
-            _mockMapper.Map<WorkGroupEmployeeViewDto>(entity).Returns(expected);
+            _mockMapper.Map<WorkGroupEmployeeDto>(entity).Returns(expected);
 
             // Act
             var result = await _sut.GetWorkGroupEmployeeByIdAsync(DefaultPactId);
@@ -88,7 +88,7 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkGroupEmployeeServiceTest
             // Assert
             result.Should().Be(expected);
             await _mockRepository.Received(1).GetWorkGroupEmployeeByIdAsync(DefaultPactId);
-            _mockMapper.Received(1).Map<WorkGroupEmployeeViewDto>(entity);
+            _mockMapper.Received(1).Map<WorkGroupEmployeeDto>(entity);
         }
 
         [Theory]
@@ -108,7 +108,7 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkGroupEmployeeServiceTest
         {
             // Arrange
             _mockRepository.GetWorkGroupEmployeeByIdAsync(DefaultPactId).Returns((WorkGroupEmployeeView?)null);
-            _mockMapper.Map<WorkGroupEmployeeViewDto>(null).Returns((WorkGroupEmployeeViewDto?)null);
+            _mockMapper.Map<WorkGroupEmployeeDto>(null).Returns((WorkGroupEmployeeDto?)null);
 
             // Act
             var result = await _sut.GetWorkGroupEmployeeByIdAsync(DefaultPactId);
@@ -173,15 +173,16 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkGroupEmployeeServiceTest
         #region DeleteWorkGroupEmployeeAsync Tests
 
         [Fact]
-        public async Task DeleteWorkGroupEmployeeAsync_WithValidPactId_CallsRepository()
+        public async Task DeleteWorkGroupEmployeeAsync_WithValidPactId_ReturnsTrue()
         {
             // Arrange
-            _mockRepository.DeleteWorkGroupEmployeeAsync(DefaultPactId).Returns(Task.CompletedTask);
+            _mockRepository.DeleteWorkGroupEmployeeAsync(DefaultPactId).Returns(true);
 
             // Act
-            await _sut.DeleteWorkGroupEmployeeAsync(DefaultPactId);
+            var result = await _sut.DeleteWorkGroupEmployeeAsync(DefaultPactId);
 
             // Assert
+            Assert.True(result);
             await _mockRepository.Received(1).DeleteWorkGroupEmployeeAsync(DefaultPactId);
         }
 

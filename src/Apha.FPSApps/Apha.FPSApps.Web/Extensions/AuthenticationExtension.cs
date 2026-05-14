@@ -23,7 +23,7 @@ namespace Apha.FPSApps.Web.Extensions
 
              })
             .EnableTokenAcquisitionToCallDownstreamApi()
-             .AddInMemoryTokenCaches();
+             .AddDistributedTokenCaches();
 
             return services;
         }

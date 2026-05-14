@@ -20,7 +20,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
 
         private readonly IMapper _mapper;
         private readonly IProfitCentreService _profitCentreService;
-        private readonly IResourceCentreGradeService _rcGradeService;
+        private readonly IProfitCentreGradeService _rcGradeService;
         private readonly IWorkGroupGradeService _wgGradeService;
         private readonly IWorkGroupEmployeeService _wgEmployeeService;
         private readonly ResourceSetUpController _controller;
@@ -29,7 +29,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
         {
             _mapper              = Substitute.For<IMapper>();
             _profitCentreService = Substitute.For<IProfitCentreService>();
-            _rcGradeService      = Substitute.For<IResourceCentreGradeService>();
+            _rcGradeService      = Substitute.For<IProfitCentreGradeService>();
             _wgGradeService      = Substitute.For<IWorkGroupGradeService>();
             _wgEmployeeService   = Substitute.For<IWorkGroupEmployeeService>();
 
@@ -81,7 +81,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
             Assert.NotNull(model.RcGradeGrid);
             Assert.NotNull(model.WgGradeGrid);
             Assert.NotNull(model.WgStaffGrid);
-            await _rcGradeService.DidNotReceive().GetResourceCentreGradesAsync(Arg.Any<string>());
+            await _rcGradeService.DidNotReceive().GetProfitCentreGradesAsync(Arg.Any<string>());
         }
 
         [Fact]
@@ -93,7 +93,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
 
             _profitCentreService.GetProfitCentresAsync()
                 .Returns(ApiResponseDto<List<ProfitCentreDto>>.SuccessResponse(profitCentres));
-            _rcGradeService.GetResourceCentreGradesAsync(DefaultProfitCentre)
+            _rcGradeService.GetProfitCentreGradesAsync(DefaultProfitCentre)
                 .Returns(ApiResponseDto<List<ProfitCentreGradeDto>>.SuccessResponse(rcGrades));
 
             // Act
@@ -107,7 +107,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
             Assert.Equal(2,                   model.ProfitCentreList.Count);
             Assert.NotNull(model.RcGradeGrid);
             Assert.Equal("rcGradeGrid", model.RcGradeGrid.GridId);
-            await _rcGradeService.Received(1).GetResourceCentreGradesAsync(DefaultProfitCentre);
+            await _rcGradeService.Received(1).GetProfitCentreGradesAsync(DefaultProfitCentre);
         }
 
         [Fact]
@@ -137,7 +137,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
 
             _profitCentreService.GetProfitCentresAsync()
                 .Returns(ApiResponseDto<List<ProfitCentreDto>>.SuccessResponse(profitCentres));
-            _rcGradeService.GetResourceCentreGradesAsync(DefaultProfitCentre)
+            _rcGradeService.GetProfitCentreGradesAsync(DefaultProfitCentre)
                 .Returns(ApiResponseDto<List<ProfitCentreGradeDto>>.FailureResponse(errors, new ApiMetaDto()));
 
             // Act
@@ -217,7 +217,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
         {
             // Arrange
             var rcGrades = BuildRcGradeList();
-            _rcGradeService.GetResourceCentreGradesAsync(DefaultProfitCentre)
+            _rcGradeService.GetProfitCentreGradesAsync(DefaultProfitCentre)
                 .Returns(ApiResponseDto<List<ProfitCentreGradeDto>>.SuccessResponse(rcGrades));
 
             // Act
@@ -225,7 +225,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
 
             // Assert
             Assert.IsType<PartialViewResult>(result);
-            await _rcGradeService.Received(1).GetResourceCentreGradesAsync(DefaultProfitCentre);
+            await _rcGradeService.Received(1).GetProfitCentreGradesAsync(DefaultProfitCentre);
         }
 
         [Theory]
@@ -241,7 +241,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
             var value      = GetJsonResultElement(jsonResult);
 
             Assert.False(value.GetProperty("success").GetBoolean());
-            await _rcGradeService.DidNotReceive().GetResourceCentreGradesAsync(Arg.Any<string>());
+            await _rcGradeService.DidNotReceive().GetProfitCentreGradesAsync(Arg.Any<string>());
         }
 
         [Fact]
@@ -249,7 +249,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
         {
             // Arrange
             var errors = new List<ApiErrorDto> { new() { Message = "Load failed", Code = "ERR" } };
-            _rcGradeService.GetResourceCentreGradesAsync(DefaultProfitCentre)
+            _rcGradeService.GetProfitCentreGradesAsync(DefaultProfitCentre)
                 .Returns(ApiResponseDto<List<ProfitCentreGradeDto>>.FailureResponse(errors, new ApiMetaDto()));
 
             // Act
@@ -267,7 +267,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
         {
             // Arrange
             var rcGrades = BuildRcGradeList();
-            _rcGradeService.GetResourceCentreGradesAsync(DefaultProfitCentre)
+            _rcGradeService.GetProfitCentreGradesAsync(DefaultProfitCentre)
                 .Returns(ApiResponseDto<List<ProfitCentreGradeDto>>.SuccessResponse(rcGrades));
 
             // Act
@@ -275,7 +275,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
 
             // Assert
             var partialResult = Assert.IsType<PartialViewResult>(result);
-            var gridConfig    = Assert.IsType<Apha.FPSApps.Web.Models.Components.DataGrid.DataGridConfig<ResourceCentreGradeItem>>(partialResult.Model);
+            var gridConfig    = Assert.IsType<Apha.FPSApps.Web.Models.Components.DataGrid.DataGridConfig<ProfitCentreGradeItem>>(partialResult.Model);
             Assert.Single(gridConfig.Data);
         }
 
@@ -284,7 +284,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
         {
             // Arrange
             var rcGrades = BuildRcGradeList();
-            _rcGradeService.GetResourceCentreGradesAsync(DefaultProfitCentre)
+            _rcGradeService.GetProfitCentreGradesAsync(DefaultProfitCentre)
                 .Returns(ApiResponseDto<List<ProfitCentreGradeDto>>.SuccessResponse(rcGrades));
 
             // Act
@@ -292,7 +292,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
 
             // Assert
             var partialResult = Assert.IsType<PartialViewResult>(result);
-            var gridConfig    = Assert.IsType<Apha.FPSApps.Web.Models.Components.DataGrid.DataGridConfig<ResourceCentreGradeItem>>(partialResult.Model);
+            var gridConfig    = Assert.IsType<Apha.FPSApps.Web.Models.Components.DataGrid.DataGridConfig<ProfitCentreGradeItem>>(partialResult.Model);
             Assert.Equal(200m, gridConfig.Data.First().ChargeRate);
         }
 

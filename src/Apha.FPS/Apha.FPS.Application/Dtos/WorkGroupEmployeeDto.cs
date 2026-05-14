@@ -5,6 +5,7 @@ namespace Apha.FPS.Application.Dtos
         public string PactId { get; set; } = null!;
         public string SpNumber { get; set; } = null!;
         public string WorkGroupGrade { get; set; } = null!;
+        public string Name { get; set; } = null!;
         public string PersonStatus { get; set; } = null!;
         public string? PersonClass { get; set; }
         public double HrsPaid { get; set; }

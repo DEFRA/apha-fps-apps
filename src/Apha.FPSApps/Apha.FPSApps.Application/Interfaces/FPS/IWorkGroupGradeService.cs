@@ -5,7 +5,7 @@ namespace Apha.FPSApps.Application.Interfaces.FPS
 {
     public interface IWorkGroupGradeService
     {
-        Task<ApiResponseDto<List<WorkgroupGradeDto>>> GetWorkGroupGradeAsync(string pcGrade);
+        Task<ApiResponseDto<List<WorkgroupGradeDto>>> GetWorkGroupGradeAsync(string profitCentre);
         Task<ApiResponseDto<bool>> DeleteWorkGroupGradeAsync(string wgGrade);
     }
 }

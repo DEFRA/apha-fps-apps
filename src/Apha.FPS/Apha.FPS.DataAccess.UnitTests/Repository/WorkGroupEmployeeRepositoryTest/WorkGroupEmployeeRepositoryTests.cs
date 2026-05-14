@@ -17,13 +17,27 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupEmployeeRepositoryTe
             IEnumerable<WorkGroupEmployee> employees,
             IEnumerable<Employee>? staffMembers = null)
         {
+            const string testEmail = "test@example.com";
+
             var requestContext = Substitute.For<IFpsRequestContext>();
             requestContext.FpsYear.Returns(2024);
+            requestContext.UserEmailId.Returns(testEmail);
 
             var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestContext);
 
             var employeesMockSet = RepositoryTestHelper.CreateMockDbSet(employees);
-            mockContext.Setup(x => x.WgEmployees).Returns(employeesMockSet.Object);
+            mockContext.Setup(x => x.WorkGroupEmployees).Returns(employeesMockSet.Object);
+
+            var viewWgEmployees = employees.Select(e => new WorkGroupEmployeeView
+            {
+                PactId         = e.PactId,
+                SpNumber       = e.SpNumber,
+                WorkGroupGrade = e.WorkGroupGrade,
+                PersonStatus   = e.PersonStatus,
+                UserEmail      = testEmail
+            });
+            var viewWgEmployeesMockSet = RepositoryTestHelper.CreateMockDbSet(viewWgEmployees);
+            mockContext.Setup(x => x.WorkGroupEmployeeViews).Returns(viewWgEmployeesMockSet.Object);
 
             var staff = staffMembers ?? employees.Select(e => new Employee
             {
@@ -34,7 +48,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupEmployeeRepositoryTe
             var staffMockSet = RepositoryTestHelper.CreateMockDbSet(staff);
             mockContext.Setup(x => x.Employees).Returns(staffMockSet.Object);
 
-            return new WorkGroupEmployeeRepository(mockContext.Object);
+            return new WorkGroupEmployeeRepository(mockContext.Object, requestContext);
         }
 
         #region GetWorkGroupEmployeeAsync Tests
@@ -192,6 +206,40 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupEmployeeRepositoryTe
             // Act & Assert
             await Assert.ThrowsAsync<KeyNotFoundException>(() =>
                 repo.UpdateWorkGroupEmployeeAsync(entity));
+        }
+
+        #endregion
+
+        #region DeleteWorkGroupEmployeeAsync Tests
+
+        [Fact]
+        public async Task DeleteWorkGroupEmployeeAsync_WithExistingPactId_ReturnsTrueAndRemoves()
+        {
+            // Arrange
+            var employees = new List<WorkGroupEmployee>
+            {
+                new() { PactId = DefaultPactId, SpNumber = "SP001", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A" }
+            };
+            var repo = CreateRepository(employees);
+
+            // Act
+            var result = await repo.DeleteWorkGroupEmployeeAsync(DefaultPactId);
+
+            // Assert
+            Assert.True(result);
+        }
+
+        [Fact]
+        public async Task DeleteWorkGroupEmployeeAsync_WithNonExistentPactId_ReturnsFalse()
+        {
+            // Arrange
+            var repo = CreateRepository(new List<WorkGroupEmployee>());
+
+            // Act
+            var result = await repo.DeleteWorkGroupEmployeeAsync("NONEXISTENT");
+
+            // Assert
+            Assert.False(result);
         }
 
         #endregion

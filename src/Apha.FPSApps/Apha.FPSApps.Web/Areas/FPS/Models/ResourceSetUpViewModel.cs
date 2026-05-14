@@ -17,7 +17,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public List<SelectListItem> ProfitCentreList { get; set; } = new();
 
         /// <summary>RC Grades Available grid (fsubpCGrade — read-only).</summary>
-        public DataGridConfig<ResourceCentreGradeItem> RcGradeGrid { get; set; } = new DataGridConfig<ResourceCentreGradeItem>();
+        public DataGridConfig<ProfitCentreGradeItem> RcGradeGrid { get; set; } = new DataGridConfig<ProfitCentreGradeItem>();
 
         /// <summary>WG Grades Available grid (fsubWGGrade — delete only).</summary>
         public DataGridConfig<WorkGroupGradeItem> WgGradeGrid { get; set; } = new DataGridConfig<WorkGroupGradeItem>();
