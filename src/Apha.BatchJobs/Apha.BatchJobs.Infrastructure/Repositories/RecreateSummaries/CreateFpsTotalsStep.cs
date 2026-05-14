@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
 
-internal sealed class LinqCreateFpsTotalsStep : LinqRecreateSummariesExecutionStepBase
+internal sealed class CreateFpsTotalsStep : RecreateSummariesExecutionStepBase
 {
     public override string StepName => "CreateFpsTotals";
 

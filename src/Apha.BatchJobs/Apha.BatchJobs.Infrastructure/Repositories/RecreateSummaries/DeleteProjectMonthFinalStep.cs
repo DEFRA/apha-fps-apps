@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
 
-internal sealed class LinqDeleteProjectMonthFinalStep : LinqRecreateSummariesExecutionStepBase
+internal sealed class DeleteProjectMonthFinalStep : RecreateSummariesExecutionStepBase
 {
     public override string StepName => "DeleteProjectMonthFinal";
 

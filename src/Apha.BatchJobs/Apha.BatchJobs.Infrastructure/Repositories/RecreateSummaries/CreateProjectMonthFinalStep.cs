@@ -3,11 +3,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
 
-internal sealed class LinqCreateProjectMonthFinalStep : LinqRecreateSummariesExecutionStepBase
+internal sealed class CreateProjectMonthFinalStep : RecreateSummariesExecutionStepBase
 {
     private readonly int _month;
 
-    public LinqCreateProjectMonthFinalStep(int month)
+    public CreateProjectMonthFinalStep(int month)
     {
         _month = month;
     }

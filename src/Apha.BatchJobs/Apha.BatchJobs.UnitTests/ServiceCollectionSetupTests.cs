@@ -74,7 +74,7 @@ public sealed class ServiceCollectionSetupTests
         using var serviceProvider = services.BuildServiceProvider();
         var catalog = serviceProvider.GetRequiredService<Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries.IRecreateSummariesStepCatalog>();
 
-        Assert.Equal("LinqRecreateSummariesStepCatalog", catalog.GetType().Name);
+        Assert.Equal("RecreateSummariesStepCatalog", catalog.GetType().Name);
         Assert.Equal("DotNetLinq", catalog.ImplementationName);
     }
 

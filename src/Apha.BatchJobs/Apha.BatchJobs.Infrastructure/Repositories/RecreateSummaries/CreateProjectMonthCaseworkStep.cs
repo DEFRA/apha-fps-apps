@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
 
-internal sealed class LinqCreateProjectMonthCaseworkStep : LinqRecreateSummariesExecutionStepBase
+internal sealed class CreateProjectMonthCaseworkStep : RecreateSummariesExecutionStepBase
 {
     public override string StepName => "CreateProjectMonthCasework";
 

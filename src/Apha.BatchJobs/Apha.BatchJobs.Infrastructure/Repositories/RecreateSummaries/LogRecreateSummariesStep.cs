@@ -2,12 +2,12 @@ using Apha.BatchJobs.Infrastructure.Data;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
 
-internal sealed class LinqLogRecreateSummariesStep : LinqRecreateSummariesExecutionStepBase
+internal sealed class LogRecreateSummariesStep : RecreateSummariesExecutionStepBase
 {
     private readonly int _month;
     private readonly string _triggeredBy;
 
-    public LinqLogRecreateSummariesStep(int month, string triggeredBy)
+    public LogRecreateSummariesStep(int month, string triggeredBy)
     {
         _month = month;
         _triggeredBy = triggeredBy;

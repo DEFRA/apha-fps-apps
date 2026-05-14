@@ -1,5 +1,6 @@
 using Apha.BatchJobs.Application.Jobs.ScheduledJobs.RecreateSummaries;
 using Apha.BatchJobs.Application.Jobs.ScheduledJobs.RecreateSummaries.Steps;
+using AppSteps = Apha.BatchJobs.Application.Jobs.ScheduledJobs.RecreateSummaries.Steps;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
 
@@ -13,27 +14,27 @@ internal sealed class DotNetRecreateSummariesStepCatalog : IRecreateSummariesSte
 
     public IReadOnlyList<IRecreateSummariesExecutionStep> BuildMandatorySteps(int month, string triggeredBy) =>
     [
-        Wrap(new DeleteFpsTotalsStep(StepSql.DeleteFpsTotals)),
-        Wrap(new CreateFpsTotalsStep(StepSql.CreateFpsTotals)),
-        Wrap(new InsertMissingProjectsStep(StepSql.InsertMissingProjects)),
-        Wrap(new DeleteTimeCostCalcsStep(StepSql.DeleteTimeCostCalcs)),
-        Wrap(new CreateTimeCostCalcsStep(StepSql.CreateTimeCostCalcs)),
-        Wrap(new DeleteProjectMonthCaseworkStep(StepSql.DeleteProjectMonthCasework)),
-        Wrap(new CreateProjectMonthCaseworkStep(StepSql.CreateProjectMonthCasework)),
-        Wrap(new DeleteProjectMonthFinalStep(StepSql.DeleteProjectMonthFinal)),
-        Wrap(new DeleteProjectMonth2Step(StepSql.DeleteProjectMonth2)),
-        Wrap(new CreateProjectMonthSingleStep(StepSql.CreateProjectMonthSingle)),
-        Wrap(new DeleteProjectMonth3Step(StepSql.DeleteProjectMonth3)),
-        Wrap(new CreateProjectMonthCumulativeStep(StepSql.CreateProjectMonthCumulative)),
-        Wrap(new CreateProjectMonthFinalStep(StepSql.CreateProjectMonthFinal, month)),
-        Wrap(new LogRecreateSummariesStep(StepSql.LogRecreateSummaries, month, triggeredBy)),
+        Wrap(new AppSteps.DeleteFpsTotalsStep(StepSql.DeleteFpsTotals)),
+        Wrap(new AppSteps.CreateFpsTotalsStep(StepSql.CreateFpsTotals)),
+        Wrap(new AppSteps.InsertMissingProjectsStep(StepSql.InsertMissingProjects)),
+        Wrap(new AppSteps.DeleteTimeCostCalcsStep(StepSql.DeleteTimeCostCalcs)),
+        Wrap(new AppSteps.CreateTimeCostCalcsStep(StepSql.CreateTimeCostCalcs)),
+        Wrap(new AppSteps.DeleteProjectMonthCaseworkStep(StepSql.DeleteProjectMonthCasework)),
+        Wrap(new AppSteps.CreateProjectMonthCaseworkStep(StepSql.CreateProjectMonthCasework)),
+        Wrap(new AppSteps.DeleteProjectMonthFinalStep(StepSql.DeleteProjectMonthFinal)),
+        Wrap(new AppSteps.DeleteProjectMonth2Step(StepSql.DeleteProjectMonth2)),
+        Wrap(new AppSteps.CreateProjectMonthSingleStep(StepSql.CreateProjectMonthSingle)),
+        Wrap(new AppSteps.DeleteProjectMonth3Step(StepSql.DeleteProjectMonth3)),
+        Wrap(new AppSteps.CreateProjectMonthCumulativeStep(StepSql.CreateProjectMonthCumulative)),
+        Wrap(new AppSteps.CreateProjectMonthFinalStep(StepSql.CreateProjectMonthFinal, month)),
+        Wrap(new AppSteps.LogRecreateSummariesStep(StepSql.LogRecreateSummaries, month, triggeredBy)),
     ];
 
     public IReadOnlyList<IRecreateSummariesExecutionStep> BuildRefreshSteps(int month) =>
     [
-        Wrap(new RefreshPeriodMoStep(StepSql.RefreshPeriodMo, month)),
-        Wrap(new RefreshPeriodPscStep(StepSql.RefreshPeriodPsc, month)),
-        Wrap(new RefreshPeriodTccStep(StepSql.RefreshPeriodTcc, month)),
+        Wrap(new AppSteps.RefreshPeriodMoStep(StepSql.RefreshPeriodMo, month)),
+        Wrap(new AppSteps.RefreshPeriodPscStep(StepSql.RefreshPeriodPsc, month)),
+        Wrap(new AppSteps.RefreshPeriodTccStep(StepSql.RefreshPeriodTcc, month)),
     ];
 
     private static IRecreateSummariesExecutionStep Wrap(IRecreateSummariesStep step)

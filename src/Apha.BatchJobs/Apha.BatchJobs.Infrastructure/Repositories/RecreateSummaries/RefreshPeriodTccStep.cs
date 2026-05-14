@@ -3,11 +3,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
 
-internal sealed class LinqRefreshPeriodTccStep : LinqRecreateSummariesExecutionStepBase
+internal sealed class RefreshPeriodTccStep : RecreateSummariesExecutionStepBase
 {
     private readonly int _period;
 
-    public LinqRefreshPeriodTccStep(int period)
+    public RefreshPeriodTccStep(int period)
     {
         _period = period;
     }

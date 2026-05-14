@@ -3,11 +3,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
 
-internal sealed class LinqRefreshPeriodPscStep : LinqRecreateSummariesExecutionStepBase
+internal sealed class RefreshPeriodPscStep : RecreateSummariesExecutionStepBase
 {
     private readonly int _period;
 
-    public LinqRefreshPeriodPscStep(int period)
+    public RefreshPeriodPscStep(int period)
     {
         _period = period;
     }

@@ -22,7 +22,7 @@ internal sealed class RsFpsYearTotalsTable
     public decimal? PvsIncome { get; set; }
     public decimal? PlanCaseworkDebit { get; set; }
     public double? TotalPayCosts { get; set; }
-    public string? FpsYear { get; set; }
+    public int FpsYear { get; set; }
 }
 
 internal sealed class RsTlkpProjectTable
@@ -38,7 +38,7 @@ internal sealed class RsTlkpProjectTable
     public string? Customer { get; set; }
     public string? ProjectStatus { get; set; }
     public decimal? PvsIncome { get; set; }
-    public string? FpsYear { get; set; }
+    public int FpsYear { get; set; }
     public double? CostCentre { get; set; }
     public short? IsDefraProject { get; set; }
     public string? OracleProjectCode { get; set; }
@@ -100,7 +100,7 @@ internal sealed class RsTimeCostCalcsTable
     public double? Pay { get; set; }
     public double? NonPay { get; set; }
     public double? Overhead { get; set; }
-    public string? FpsYear { get; set; }
+    public int FpsYear { get; set; }
 }
 
 internal sealed class RsProjectMonthCaseworkTable

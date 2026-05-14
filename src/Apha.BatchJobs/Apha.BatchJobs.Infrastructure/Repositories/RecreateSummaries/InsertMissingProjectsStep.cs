@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
 
-internal sealed class LinqInsertMissingProjectsStep : LinqRecreateSummariesExecutionStepBase
+internal sealed class InsertMissingProjectsStep : RecreateSummariesExecutionStepBase
 {
     public override string StepName => "InsertMissingProjects";
 

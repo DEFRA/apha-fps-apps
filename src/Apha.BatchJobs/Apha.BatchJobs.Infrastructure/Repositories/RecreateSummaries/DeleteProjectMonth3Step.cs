@@ -2,10 +2,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
 
-internal sealed class LinqDeleteTimeCostCalcsStep : LinqRecreateSummariesExecutionStepBase
+internal sealed class DeleteProjectMonth3Step : RecreateSummariesExecutionStepBase
 {
-    public override string StepName => "DeleteTimeCostCalcs";
+    public override string StepName => "DeleteProjectMonth3";
 
     protected override Task<int> ExecuteCoreAsync(RecreateSummariesExecutionContext context, CancellationToken cancellationToken)
-        => context.DbContext.RsTimeCostCalcs.ExecuteDeleteAsync(cancellationToken);
+        => context.DbContext.RsProjectMonth3.ExecuteDeleteAsync(cancellationToken);
 }

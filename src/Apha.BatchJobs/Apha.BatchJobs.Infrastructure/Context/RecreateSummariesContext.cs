@@ -9,12 +9,12 @@ public sealed class RecreateSummariesContext : IRecreateSummariesContext
 {
     /// <summary>
     /// Initializes context from optional environment overrides.
-    /// Defaults remain month=0 and triggeredBy=system for backward compatibility.
+    /// Defaults remain month=1 and triggeredBy=system for backward compatibility.
     /// </summary>
     public RecreateSummariesContext()
     {
         var monthOverride = Environment.GetEnvironmentVariable("BATCH_RECREATE_SUMMARIES_MONTH");
-        if (int.TryParse(monthOverride, out var parsedMonth) && parsedMonth is >= 0 and <= 12)
+        if (int.TryParse(monthOverride, out var parsedMonth) && parsedMonth is >= 1 and <= 12)
         {
             Month = parsedMonth;
         }
@@ -27,7 +27,7 @@ public sealed class RecreateSummariesContext : IRecreateSummariesContext
     }
 
     /// <inheritdoc />
-    public int Month { get; set; }
+    public int Month { get; set; } = 1;
 
     /// <inheritdoc />
     public string TriggeredBy { get; set; } = "system";
