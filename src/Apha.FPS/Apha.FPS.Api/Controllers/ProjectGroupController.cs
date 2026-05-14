@@ -40,5 +40,16 @@ namespace Apha.FPS.Api.Controllers
             var projectGroups = await _projectGroupService.GetAllProjectGroupsAsync();
             return Ok(_mapper.Map<List<ProjectGroupRes>>(projectGroups));
         }
+
+        /// <summary>
+        /// Retrieves project groups filtered by the current user.
+        /// </summary>
+        /// <returns>List of project groups for the current user.</returns>
+        [HttpGet("by-user")]
+        public async Task<ActionResult<List<ProjectGroupRes>>> GetProjectGroupsByUserAsync()
+        {
+            var projectGroups = await _projectGroupService.GetAllProjectGroupsByUserAsync();
+            return Ok(_mapper.Map<List<ProjectGroupRes>>(projectGroups));
+        }
     }
 }
