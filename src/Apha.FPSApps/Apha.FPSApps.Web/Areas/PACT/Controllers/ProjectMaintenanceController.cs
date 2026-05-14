@@ -148,6 +148,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         // ── DETAILS ──────────────────────────────────────────────────────────
         public async Task<IActionResult> Details([FromRoute(Name = "id")] string parentProject)
         {
+            TempData["PactOrigin"] = "Project";
             var projectResponse = await _projectService.GetProjectByIdAsync(parentProject);
             if (!projectResponse.Success || projectResponse.Data == null)
                 return NotFound();
