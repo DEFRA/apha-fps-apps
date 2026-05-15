@@ -98,11 +98,11 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             return ApiResponseDto<decimal>.FailureResponse(dto.Errors, dto.Meta ?? new ApiMetaDto());
         }
 
-        public async Task<ApiResponseDto<List<ProjectSubContractDto>>> GetFpsProjectSubContractsAsync(QueryParameters<string> query, string? project)
+        public async Task<ApiResponseDto<List<ProjectSubContractDto>>> GetFpsProjectSubContractsAsync(QueryParameters<string> query, string? project, bool filterByAnimalAcctCodes = false)
         {
-            string baseUrl = string.IsNullOrWhiteSpace(project)
-                ? PactApiEndpoints.GetFpsProjectSubContracts
-                : QueryStringHelper.AddQueryString(PactApiEndpoints.GetFpsProjectSubContracts, new { project });
+            string baseUrl = QueryStringHelper.AddQueryString(PactApiEndpoints.GetFpsProjectSubContracts, new { filterByAnimalAcctCodes });
+            if (!string.IsNullOrWhiteSpace(project))
+                baseUrl = QueryStringHelper.AddQueryString(baseUrl, new { project });
             string url = QueryStringHelper.AddQueryString(baseUrl, query);
 
             var response = await _http.GetAsync<List<ProjectSubContractRes>>(url);
@@ -113,11 +113,11 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             return ApiResponseDto<List<ProjectSubContractDto>>.FailureResponse(dto.Errors, dto.Meta ?? new ApiMetaDto());
         }
 
-        public async Task<ApiResponseDto<decimal>> GetFpsProjectSubContractTotalAmountAsync(string? project)
+        public async Task<ApiResponseDto<decimal>> GetFpsProjectSubContractTotalAmountAsync(string? project, bool filterByAnimalAcctCodes = false)
         {
-            string url = string.IsNullOrWhiteSpace(project)
-                ? PactApiEndpoints.GetFpsProjectSubContractTotalAmount
-                : QueryStringHelper.AddQueryString(PactApiEndpoints.GetFpsProjectSubContractTotalAmount, new { project });
+            string url = QueryStringHelper.AddQueryString(PactApiEndpoints.GetFpsProjectSubContractTotalAmount, new { filterByAnimalAcctCodes });
+            if (!string.IsNullOrWhiteSpace(project))
+                url = QueryStringHelper.AddQueryString(url, new { project });
 
             try
             {

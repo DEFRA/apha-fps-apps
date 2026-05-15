@@ -170,10 +170,30 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectSubContractRepository
             var repo = CreateRepository(subContracts);
             var query = new PaginationParameters<string>();
 
-            var result = await repo.GetFpsProjectSubContractsAsync(query, "PRJ1");
+            var result = await repo.GetFpsProjectSubContractsAsync(query, "PRJ1", filterByAnimalAcctCodes: true);
 
             Assert.Equal(2, result.PaginationData.TotalRecords);
             Assert.All(result.Data, d => Assert.Equal("PRJ1", d.Project));
+        }
+
+        [Fact]
+        public async Task GetFpsProjectSubContractsAsync_FilterByAnimalFalse_WithProject_ReturnsNonAnimalRecordsForProject()
+        {
+            var subContracts = new List<ProjectSubContract>
+            {
+                new() { SubContCounter = 1, Project = "PRJ1", AcctCode = "LargeAnimals", FpsYear = DefaultTestFpsYear },
+                new() { SubContCounter = 2, Project = "PRJ1", AcctCode = "SubContract",  FpsYear = DefaultTestFpsYear },
+                new() { SubContCounter = 3, Project = "PRJ1", AcctCode = "Consumables",  FpsYear = DefaultTestFpsYear },
+                new() { SubContCounter = 4, Project = "PRJ2", AcctCode = "SubContract",  FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(subContracts);
+            var query = new PaginationParameters<string>();
+
+            var result = await repo.GetFpsProjectSubContractsAsync(query, "PRJ1", filterByAnimalAcctCodes: false);
+
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+            Assert.All(result.Data, d => Assert.Equal("PRJ1", d.Project));
+            Assert.DoesNotContain(result.Data, d => d.AcctCode == "LargeAnimals");
         }
 
         [Fact]
@@ -188,9 +208,28 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectSubContractRepository
             var repo = CreateRepository(subContracts);
             var query = new PaginationParameters<string>();
 
-            var result = await repo.GetFpsProjectSubContractsAsync(query, null);
+            var result = await repo.GetFpsProjectSubContractsAsync(query, null, filterByAnimalAcctCodes: true);
 
             Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetFpsProjectSubContractsAsync_FilterByAnimalFalse_NullProject_ReturnsAllNonAnimalRecords()
+        {
+            var subContracts = new List<ProjectSubContract>
+            {
+                new() { SubContCounter = 1, Project = "PRJ1", AcctCode = "LargeAnimals", FpsYear = DefaultTestFpsYear },
+                new() { SubContCounter = 2, Project = "PRJ2", AcctCode = "Mice",         FpsYear = DefaultTestFpsYear },
+                new() { SubContCounter = 3, Project = "PRJ1", AcctCode = "SubContract",  FpsYear = DefaultTestFpsYear },
+                new() { SubContCounter = 4, Project = "PRJ2", AcctCode = "Consumables",  FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(subContracts);
+            var query = new PaginationParameters<string>();
+
+            var result = await repo.GetFpsProjectSubContractsAsync(query, null, filterByAnimalAcctCodes: false);
+
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+            Assert.DoesNotContain(result.Data, d => d.AcctCode == "LargeAnimals" || d.AcctCode == "Mice");
         }
 
         [Fact]
@@ -203,7 +242,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectSubContractRepository
             var repo = CreateRepository(subContracts);
             var query = new PaginationParameters<string>();
 
-            var result = await repo.GetFpsProjectSubContractsAsync(query, null);
+            var result = await repo.GetFpsProjectSubContractsAsync(query, null, filterByAnimalAcctCodes: true);
 
             Assert.Equal(0, result.PaginationData.TotalRecords);
         }
@@ -224,7 +263,24 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectSubContractRepository
             };
             var repo = CreateRepository(subContracts);
 
-            var result = await repo.GetFpsProjectSubContractTotalAmountAsync("PRJ1");
+            var result = await repo.GetFpsProjectSubContractTotalAmountAsync("PRJ1", filterByAnimalAcctCodes: true);
+
+            Assert.Equal(500m, result);
+        }
+
+        [Fact]
+        public async Task GetFpsProjectSubContractTotalAmountAsync_FilterByAnimalFalse_WithProject_ReturnsSumOfNonAnimalAmounts()
+        {
+            var subContracts = new List<ProjectSubContract>
+            {
+                new() { SubContCounter = 1, Project = "PRJ1", AcctCode = "LargeAnimals", Amount = 400m, FpsYear = DefaultTestFpsYear },
+                new() { SubContCounter = 2, Project = "PRJ1", AcctCode = "SubContract",  Amount = 300m, FpsYear = DefaultTestFpsYear },
+                new() { SubContCounter = 3, Project = "PRJ1", AcctCode = "Consumables",  Amount = 200m, FpsYear = DefaultTestFpsYear },
+                new() { SubContCounter = 4, Project = "PRJ2", AcctCode = "SubContract",  Amount = 999m, FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(subContracts);
+
+            var result = await repo.GetFpsProjectSubContractTotalAmountAsync("PRJ1", filterByAnimalAcctCodes: false);
 
             Assert.Equal(500m, result);
         }
@@ -240,9 +296,26 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectSubContractRepository
             };
             var repo = CreateRepository(subContracts);
 
-            var result = await repo.GetFpsProjectSubContractTotalAmountAsync(null);
+            var result = await repo.GetFpsProjectSubContractTotalAmountAsync(null, filterByAnimalAcctCodes: true);
 
             Assert.Equal(500m, result);
+        }
+
+        [Fact]
+        public async Task GetFpsProjectSubContractTotalAmountAsync_FilterByAnimalFalse_NullProject_ReturnsTotalOfAllNonAnimalAmounts()
+        {
+            var subContracts = new List<ProjectSubContract>
+            {
+                new() { SubContCounter = 1, Project = "PRJ1", AcctCode = "LargeAnimals", Amount = 300m, FpsYear = DefaultTestFpsYear },
+                new() { SubContCounter = 2, Project = "PRJ2", AcctCode = "Mice",         Amount = 200m, FpsYear = DefaultTestFpsYear },
+                new() { SubContCounter = 3, Project = "PRJ1", AcctCode = "SubContract",  Amount = 400m, FpsYear = DefaultTestFpsYear },
+                new() { SubContCounter = 4, Project = "PRJ2", AcctCode = "Consumables",  Amount = 150m, FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(subContracts);
+
+            var result = await repo.GetFpsProjectSubContractTotalAmountAsync(null, filterByAnimalAcctCodes: false);
+
+            Assert.Equal(550m, result);
         }
 
         [Fact]
@@ -250,7 +323,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectSubContractRepository
         {
             var repo = CreateRepository([]);
 
-            var result = await repo.GetFpsProjectSubContractTotalAmountAsync(null);
+            var result = await repo.GetFpsProjectSubContractTotalAmountAsync(null, filterByAnimalAcctCodes: true);
 
             Assert.Equal(0m, result);
         }

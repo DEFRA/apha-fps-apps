@@ -280,7 +280,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectSubContractSer
                 subContracts,
                 new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 2 }
             );
-            _pactProjectSubContractApiClient.GetFpsProjectSubContractsAsync(query, project).Returns(expectedResponse);
+            _pactProjectSubContractApiClient.GetFpsProjectSubContractsAsync(query, project, false).Returns(expectedResponse);
 
             // Act
             var result = await _service.GetFpsProjectSubContractsAsync(query, project);
@@ -289,7 +289,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectSubContractSer
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(2, result.Data?.Count);
-            await _pactProjectSubContractApiClient.Received(1).GetFpsProjectSubContractsAsync(query, project);
+            await _pactProjectSubContractApiClient.Received(1).GetFpsProjectSubContractsAsync(query, project, false);
         }
 
         [Fact]
@@ -298,7 +298,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectSubContractSer
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var expectedResponse = ApiResponseDto<List<ProjectSubContractDto>>.SuccessResponse(new List<ProjectSubContractDto>());
-            _pactProjectSubContractApiClient.GetFpsProjectSubContractsAsync(query, null).Returns(expectedResponse);
+            _pactProjectSubContractApiClient.GetFpsProjectSubContractsAsync(query, null, false).Returns(expectedResponse);
 
             // Act
             var result = await _service.GetFpsProjectSubContractsAsync(query, null);
@@ -316,7 +316,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectSubContractSer
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "API Error", Code = "API_ERROR" } };
             var expectedResponse = ApiResponseDto<List<ProjectSubContractDto>>.FailureResponse(errors, new ApiMetaDto());
-            _pactProjectSubContractApiClient.GetFpsProjectSubContractsAsync(query, null).Returns(expectedResponse);
+            _pactProjectSubContractApiClient.GetFpsProjectSubContractsAsync(query, null, false).Returns(expectedResponse);
 
             // Act
             var result = await _service.GetFpsProjectSubContractsAsync(query, null);
@@ -338,7 +338,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectSubContractSer
             // Arrange
             var project = "PP001";
             var expectedResponse = ApiResponseDto<decimal>.SuccessResponse(1500.00m);
-            _pactProjectSubContractApiClient.GetFpsProjectSubContractTotalAmountAsync(project).Returns(expectedResponse);
+            _pactProjectSubContractApiClient.GetFpsProjectSubContractTotalAmountAsync(project, false).Returns(expectedResponse);
 
             // Act
             var result = await _service.GetFpsProjectSubContractTotalAmountAsync(project);
@@ -347,7 +347,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectSubContractSer
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(1500.00m, result.Data);
-            await _pactProjectSubContractApiClient.Received(1).GetFpsProjectSubContractTotalAmountAsync(project);
+            await _pactProjectSubContractApiClient.Received(1).GetFpsProjectSubContractTotalAmountAsync(project, false);
         }
 
         [Fact]
@@ -356,7 +356,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectSubContractSer
             // Arrange
             var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "API Error", Code = "API_ERROR" } };
             var expectedResponse = ApiResponseDto<decimal>.FailureResponse(errors, new ApiMetaDto());
-            _pactProjectSubContractApiClient.GetFpsProjectSubContractTotalAmountAsync(null).Returns(expectedResponse);
+            _pactProjectSubContractApiClient.GetFpsProjectSubContractTotalAmountAsync(null, false).Returns(expectedResponse);
 
             // Act
             var result = await _service.GetFpsProjectSubContractTotalAmountAsync(null);
