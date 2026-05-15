@@ -52,8 +52,8 @@ Scope: Convert MABArchive year-load pipeline from SQL templates in code to LINQ/
 | --- | --- | --- | --- | --- | --- |
 | 1 | my_tlkpprogram | Low | Completed | Not Started | LINQ loader implemented (MyTlkpProgramLinqLoader); parity snapshot compare pending. |
 | 2 | g_tlkpproject | Medium | Not Started | Not Started | GROUP BY dedupe parity required. |
-| 3 | my_tlkpproject | Low | Not Started | Not Started | Single source table filter/projection. |
-| 4 | my_fpsyeartotals | Low | Not Started | Not Started | Single source table filter/projection. |
+| 3 | my_tlkpproject | Low | Completed | Not Started | LINQ loader implemented (MyTlkpProjectLinqLoader); parity snapshot compare pending. |
+| 4 | my_fpsyeartotals | Low | Completed | Not Started | LINQ loader implemented (MyFpsYearTotalsLinqLoader); parity snapshot compare pending. |
 | 5 | my_monthlyoutput | Low | Not Started | Not Started | Single source table filter/projection. |
 | 6 | my_monthlytime | Low | Not Started | Not Started | Single source table filter/projection. |
 | 7 | my_proj_invoice | Low | Not Started | Not Started | Single source table filter/projection. |
@@ -143,6 +143,7 @@ For each converted loader:
 | 2026-05-15 | 3 | Refactored loader framework by adding MabArchiveLoaderBase and MabArchiveLinqLoaderBase in Infrastructure/Repositories/MabArchive/Loaders/MabArchiveLoaders.cs; SQL loaders continue through MabArchiveSqlLoaderBase and IMabArchiveLoader.LoadAsync signature remains unchanged. Verified with build-batchjobs-worker task (success) and MABArchive unit tests (6 passed, 0 failed). | Pass | Copilot |
 | 2026-05-15 | 3 | Added configurable MABArchive loader mode selector in DependencyInjection/ServiceCollectionSetup.cs (BatchJobs:MabArchiveImplementationMode). Added ServiceCollectionSetupTests coverage for default SQL registration and DotNetLinq mode wiring. Verified with build-batchjobs-worker task (success) and targeted unit tests (10 passed, 0 failed). | Pass | Copilot |
 | 2026-05-15 | 4 | Implemented first LINQ loader (my_tlkpprogram) via MyTlkpProgramLinqLoader and switched DotNetLinq mode to strict no-fallback registration (LINQ loaders only). Updated unit tests to validate strict mode behavior. | Pass | Copilot |
+| 2026-05-15 | 4 | Implemented additional low-risk LINQ loaders: MyTlkpProjectLinqLoader (seq 3) and MyFpsYearTotalsLinqLoader (seq 4). Updated strict DotNetLinq selector test to assert LINQ-only set {1,3,4}. | Pass | Copilot |
 | TBD | TBD | TBD | TBD | TBD |
 
 ## Daily Update Template

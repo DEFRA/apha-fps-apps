@@ -116,10 +116,12 @@ public sealed class ServiceCollectionSetupTests
         using var serviceProvider = services.BuildServiceProvider();
         var loaders = serviceProvider.GetServices<IMabArchiveLoader>().ToList();
 
-        Assert.Single(loaders);
-        Assert.Equal(1, loaders[0].Sequence);
-        Assert.Equal("my_tlkpprogram", loaders[0].Name);
-        Assert.Equal("MyTlkpProgramLinqLoader", loaders[0].GetType().Name);
+        var ordered = loaders.OrderBy(l => l.Sequence).ToList();
+
+        Assert.Equal(3, ordered.Count);
+        Assert.Equal(new[] { 1, 3, 4 }, ordered.Select(l => l.Sequence));
+        Assert.Equal(new[] { "my_tlkpprogram", "my_tlkpproject", "my_fpsyeartotals" }, ordered.Select(l => l.Name));
+        Assert.All(ordered, l => Assert.Contains("LinqLoader", l.GetType().Name, StringComparison.Ordinal));
     }
 
     private static string GetBatchJobsRoot()
