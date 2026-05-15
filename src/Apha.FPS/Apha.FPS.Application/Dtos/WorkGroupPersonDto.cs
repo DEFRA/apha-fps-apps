@@ -1,6 +1,6 @@
-namespace Apha.FPS.Core.Entities
+namespace Apha.FPS.Application.Dtos
 {
-    public class Person
+    public class WorkGroupPersonDto
     {
         public string? Name { get; set; }
         public string? WorkGroupGrade { get; set; }

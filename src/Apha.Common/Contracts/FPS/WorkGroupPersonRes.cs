@@ -1,6 +1,6 @@
 namespace Apha.Common.Contracts.FPS
 {
-    public class PersonRes
+    public class WorkGroupPersonRes
     {
         public string? Name { get; set; }
         public string? WorkGroupGrade { get; set; }

@@ -151,7 +151,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         private async Task<(List<WorkGroupPeopleItem>, PaginationModel)> FetchByWorkGroupAsync(
             QueryParameters<string> query, string workGroup)
         {
-            var response = await _employeeService.GetWorkGroupPeopleAsync(query, workGroup);
+            var response = await _employeeService.GetWorkGroupStaffAsync(query, workGroup);
             if (!response.Success || response.Data == null)
                 return ([], new PaginationModel());
 
@@ -176,7 +176,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             QueryParameters<string> query, string personName)
         {
             query.Search = personName;
-            var response = await _employeeService.GetWorkGroupPeopleAsync(query);
+            var response = await _employeeService.GetWorkGroupStaffAsync(query);
             if (!response.Success || response.Data == null)
                 return ([], new PaginationModel());
 
@@ -200,7 +200,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         private async Task<(List<WorkGroupPeopleItem>, PaginationModel)> FetchAllWorkGroupPeoplesAsync(
             QueryParameters<string> query)
         {
-            var response = await _employeeService.GetWorkGroupPeopleAsync(query);
+            var response = await _employeeService.GetWorkGroupStaffAsync(query);
             if (!response.Success || response.Data == null)
                 return ([], new PaginationModel());
 
@@ -230,9 +230,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// <summary>
         /// Retrieves the list of all persons (PACT staff) for the person selection dropdown.
         /// </summary>
-        private async Task<List<PersonDto>> GetPersonSelectListAsync()
+        private async Task<List<WorkGroupPersonDto>> GetPersonSelectListAsync()
         {
-            var response = await _employeeService.GetAllPersonAsync();
+            var response = await _employeeService.GetAllWorkGroupPersonAsync();
             if (!response.Success || response.Data == null)
                 return [];
 

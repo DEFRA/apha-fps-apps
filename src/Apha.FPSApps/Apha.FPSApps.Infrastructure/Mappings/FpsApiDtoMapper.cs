@@ -79,8 +79,8 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<SubAccountDto, SubAccountRes>()
                 .ForMember(d => d.SubAccount, o => o.MapFrom(s => s.SubAccount)).ReverseMap();
             CreateMap<CostCentreWorkgroupDto, CostCentreWorkgroupRes>().ReverseMap();
-            CreateMap<WorkGroupPeopleDto, WorkGroupPeopleRes>().ReverseMap();
-            CreateMap<PersonDto, PersonRes>().ReverseMap();
+            CreateMap<WorkGroupStaffDto, WorkGroupStaffRes>().ReverseMap();
+            CreateMap<WorkGroupPersonDto, WorkGroupPersonRes>().ReverseMap();
         }
     }
 }

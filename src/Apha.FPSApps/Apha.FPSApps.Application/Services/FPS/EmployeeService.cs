@@ -1,4 +1,4 @@
-﻿using Apha.FPSApps.Application.Dtos;
+using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.FpsApiClients;
@@ -57,14 +57,14 @@ namespace Apha.FPSApps.Application.Services.FPS
             return managers;
         }
 
-        public async Task<ApiResponseDto<List<PersonDto>>> GetAllPersonAsync()
+        public async Task<ApiResponseDto<List<WorkGroupPersonDto>>> GetAllWorkGroupPersonAsync()
         {
-            return await _fpsClient.FpsEmployee.GetAllPersonAsync();
+            return await _fpsClient.FpsEmployee.GetAllWorkGroupPersonAsync();
         }
 
-        public async Task<ApiResponseDto<PaginatedResult<WorkGroupPeopleDto>>> GetWorkGroupPeopleAsync(QueryParameters<string> query, string? workGroup = null)
+        public async Task<ApiResponseDto<PaginatedResult<WorkGroupStaffDto>>> GetWorkGroupStaffAsync(QueryParameters<string> query, string? workGroup = null)
         {
-            return await _fpsClient.FpsEmployee.GetWorkGroupPeopleAsync(query, workGroup);
+            return await _fpsClient.FpsEmployee.GetWorkGroupStaffAsync(query, workGroup);
         }
     }
 }

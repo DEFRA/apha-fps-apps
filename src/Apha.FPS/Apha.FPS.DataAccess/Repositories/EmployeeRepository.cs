@@ -1,4 +1,4 @@
-﻿using Apha.FPS.Core.Entities;
+using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
@@ -220,19 +220,19 @@ namespace Apha.FPS.DataAccess.Repositories
             return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
         }
 
-        private static IQueryable ApplyOrder<T>(IQueryable<WorkGroupPeople> query, Expression<Func<WorkGroupPeople, T>> keySelector, bool descending)
+        private static IQueryable ApplyOrder<T>(IQueryable<WorkGroupStaff> query, Expression<Func<WorkGroupStaff, T>> keySelector, bool descending)
         {
             return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
         }
 
-        public async Task<IEnumerable<Person>> GetAllPersonAsync()
+        public async Task<IEnumerable<WorkGroupPerson>> GetAllWorkGroupPersonAsync()
         {
-            return await _dbContext.WorkGroupPeoples
+            return await _dbContext.WorkGroupStaffs
                 .AsNoTracking()
                 .Join(_dbContext.WorkgroupGrades,
                     s => s.WorkGroupGrade,
                     g => g.WgGrade,
-                    (s, g) => new Person
+                    (s, g) => new WorkGroupPerson
                     {
                         Name = s.Name,
                         WorkGroupGrade = s.WorkGroupGrade,
@@ -243,9 +243,9 @@ namespace Apha.FPS.DataAccess.Repositories
                 .ToListAsync();
         }
 
-        public async Task<PagedData<WorkGroupPeople>> GetWorkGroupPeopleAsync(PaginationParameters<string> query, string? workGroup = null)
+        public async Task<PagedData<WorkGroupStaff>> GetWorkGroupStaffAsync(PaginationParameters<string> query, string? workGroup = null)
         {
-            var queryStaff = _dbContext.WorkGroupPeoples
+            var queryStaff = _dbContext.WorkGroupStaffs
                 .AsNoTracking()
                 .AsQueryable();
 
@@ -253,15 +253,15 @@ namespace Apha.FPS.DataAccess.Repositories
                 queryStaff = queryStaff.Where(s => s.WorkGroupGrade == workGroup ||
                     _dbContext.WorkgroupGrades.Any(g => g.WgGrade == s.WorkGroupGrade && g.Workgroup == workGroup));
 
-            queryStaff = ApplyWorkGroupPeopleFilter(queryStaff, query.Filter);
-            queryStaff = (IQueryable<WorkGroupPeople>)ApplyWorkGroupPeopleSorting(queryStaff, query.SortBy, query.Descending);
+            queryStaff = ApplyWorkGroupStaffFilter(queryStaff, query.Filter);
+            queryStaff = (IQueryable<WorkGroupStaff>)ApplyWorkGroupStaffSorting(queryStaff, query.SortBy, query.Descending);
 
             var result = await queryStaff.ToListAsync();
-            result = ApplyWorkGroupPeopleNumericFilter(result, query.Filter);
+            result = ApplyWorkGroupStaffNumericFilter(result, query.Filter);
             return ApplyPaging(result, query.Page, query.PageSize);
         }
 
-        private static IQueryable<WorkGroupPeople> ApplyWorkGroupPeopleFilter(IQueryable<WorkGroupPeople> query, string? filter)
+        private static IQueryable<WorkGroupStaff> ApplyWorkGroupStaffFilter(IQueryable<WorkGroupStaff> query, string? filter)
         {
             if (string.IsNullOrEmpty(filter))
                 return query;
@@ -292,7 +292,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
             return query;
         }
-        private static List<WorkGroupPeople> ApplyWorkGroupPeopleNumericFilter(List<WorkGroupPeople> list, string? filter)
+        private static List<WorkGroupStaff> ApplyWorkGroupStaffNumericFilter(List<WorkGroupStaff> list, string? filter)
         {
             if (string.IsNullOrEmpty(filter))
                 return list;
@@ -318,7 +318,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return list;
         }
 
-        private static IQueryable ApplyWorkGroupPeopleSorting(IQueryable<WorkGroupPeople> query, string? sortBy, bool descending)
+        private static IQueryable ApplyWorkGroupStaffSorting(IQueryable<WorkGroupStaff> query, string? sortBy, bool descending)
         {
             if (string.IsNullOrEmpty(sortBy))
                 return query.OrderBy(s => s.Name);

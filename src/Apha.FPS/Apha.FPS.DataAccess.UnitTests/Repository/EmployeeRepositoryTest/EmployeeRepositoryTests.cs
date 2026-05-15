@@ -1275,10 +1275,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
 
         #endregion
 
-        // ── Helpers for WorkGroupPeople tests ─────────────────────────────────
+        // ── Helpers for WorkGroupStaff tests ─────────────────────────────────
 
-        private static EmployeeRepository CreateRepositoryForWorkGroupPeople(
-            IEnumerable<WorkGroupPeople> workGroupPeople,
+        private static EmployeeRepository CreateRepositoryForWorkGroupStaff(
+            IEnumerable<WorkGroupStaff> WorkGroupStaff,
             IEnumerable<WorkgroupGrade>? workgroupGrades = null,
             int fpsYear = DefaultTestFpsYear)
         {
@@ -1293,9 +1293,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             var wgEmployeesMockSet = RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<WgEmployee>());
             mockContext.Setup(x => x.WgEmployees).Returns(wgEmployeesMockSet.Object);
 
-            // WorkGroupPeoples DbSet
-            var wgPeopleMockSet = RepositoryTestHelper.CreateMockDbSet(workGroupPeople);
-            mockContext.Setup(x => x.WorkGroupPeoples).Returns(wgPeopleMockSet.Object);
+            // WorkGroupStaffs DbSet
+            var wgPeopleMockSet = RepositoryTestHelper.CreateMockDbSet(WorkGroupStaff);
+            mockContext.Setup(x => x.WorkGroupStaffs).Returns(wgPeopleMockSet.Object);
 
             // WorkgroupGrades DbSet
             var gradesMockSet = RepositoryTestHelper.CreateMockDbSet(workgroupGrades ?? Enumerable.Empty<WorkgroupGrade>());
@@ -1304,13 +1304,13 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             return new EmployeeRepository(mockContext.Object, mockFpsYearContext.Object);
         }
 
-        #region GetAllPersonAsync Tests
+        #region GetAllWorkGroupPersonAsync Tests
 
         [Fact]
         public async Task GetAllPersonAsync_ReturnsPersonsJoinedWithWorkgroupGrades()
         {
             // Arrange
-            var people = new List<WorkGroupPeople>
+            var people = new List<WorkGroupStaff>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1" },
                 new() { Name = "Bob",   WorkGroupGrade = "WG2" }
@@ -1320,10 +1320,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
                 new() { WgGrade = "WG1", Workgroup = "Group A" },
                 new() { WgGrade = "WG2", Workgroup = "Group B" }
             };
-            var repo = CreateRepositoryForWorkGroupPeople(people, grades);
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
 
             // Act
-            var result = await repo.GetAllPersonAsync();
+            var result = await repo.GetAllWorkGroupPersonAsync();
 
             // Assert
             var list = result.ToList();
@@ -1335,7 +1335,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         public async Task GetAllPersonAsync_ReturnsOrderedByName()
         {
             // Arrange
-            var people = new List<WorkGroupPeople>
+            var people = new List<WorkGroupStaff>
             {
                 new() { Name = "Charlie", WorkGroupGrade = "WG1" },
                 new() { Name = "Alice",   WorkGroupGrade = "WG2" },
@@ -1347,10 +1347,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
                 new() { WgGrade = "WG2", Workgroup = "Group B" },
                 new() { WgGrade = "WG3", Workgroup = "Group C" }
             };
-            var repo = CreateRepositoryForWorkGroupPeople(people, grades);
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
 
             // Act
-            var result = await repo.GetAllPersonAsync();
+            var result = await repo.GetAllWorkGroupPersonAsync();
 
             // Assert
             var list = result.ToList();
@@ -1363,12 +1363,12 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         public async Task GetAllPersonAsync_ReturnsEmptyList_WhenNoPeopleExist()
         {
             // Arrange
-            var repo = CreateRepositoryForWorkGroupPeople(
-                new List<WorkGroupPeople>(),
+            var repo = CreateRepositoryForWorkGroupStaff(
+                new List<WorkGroupStaff>(),
                 new List<WorkgroupGrade>());
 
             // Act
-            var result = await repo.GetAllPersonAsync();
+            var result = await repo.GetAllWorkGroupPersonAsync();
 
             // Assert
             Assert.NotNull(result);
@@ -1379,7 +1379,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         public async Task GetAllPersonAsync_ExcludesPeopleWithNoMatchingGrade()
         {
             // Arrange
-            var people = new List<WorkGroupPeople>
+            var people = new List<WorkGroupStaff>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1" },
                 new() { Name = "Bob",   WorkGroupGrade = "WG_NOMATCH" }
@@ -1388,10 +1388,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             {
                 new() { WgGrade = "WG1", Workgroup = "Group A" }
             };
-            var repo = CreateRepositoryForWorkGroupPeople(people, grades);
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
 
             // Act
-            var result = await repo.GetAllPersonAsync();
+            var result = await repo.GetAllWorkGroupPersonAsync();
 
             // Assert
             var list = result.ToList();
@@ -1403,7 +1403,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         public async Task GetAllPersonAsync_SetsWorkGroupFromGradeJoin()
         {
             // Arrange
-            var people = new List<WorkGroupPeople>
+            var people = new List<WorkGroupStaff>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1" }
             };
@@ -1411,10 +1411,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             {
                 new() { WgGrade = "WG1", Workgroup = "Alpha Group" }
             };
-            var repo = CreateRepositoryForWorkGroupPeople(people, grades);
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
 
             // Act
-            var result = await repo.GetAllPersonAsync();
+            var result = await repo.GetAllWorkGroupPersonAsync();
 
             // Assert
             var person = Assert.Single(result.ToList());
@@ -1425,13 +1425,13 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
 
         #endregion
 
-        #region GetWorkGroupPeopleAsync Tests
+        #region GetWorkGroupStaffAsync Tests
 
         [Fact]
-        public async Task GetWorkGroupPeopleAsync_NoFilter_ReturnsAllPeopleOrderedByName()
+        public async Task GetWorkGroupStaffAsync_NoFilter_ReturnsAllPeopleOrderedByName()
         {
             // Arrange
-            var people = new List<WorkGroupPeople>
+            var people = new List<WorkGroupStaff>
             {
                 new() { Name = "Charlie", WorkGroupGrade = "WG1", PactId = "P003" },
                 new() { Name = "Alice",   WorkGroupGrade = "WG1", PactId = "P001" },
@@ -1442,11 +1442,11 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
                 new() { WgGrade = "WG1", Workgroup = "Group A" },
                 new() { WgGrade = "WG2", Workgroup = "Group B" }
             };
-            var repo = CreateRepositoryForWorkGroupPeople(people, grades);
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = null };
 
             // Act
-            var result = await repo.GetWorkGroupPeopleAsync(query);
+            var result = await repo.GetWorkGroupStaffAsync(query);
 
             // Assert
             Assert.Equal(3, result.Data.Count());
@@ -1454,10 +1454,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         }
 
         [Fact]
-        public async Task GetWorkGroupPeopleAsync_FilterByWorkGroup_ReturnsMatchingPeople()
+        public async Task GetWorkGroupStaffAsync_FilterByWorkGroup_ReturnsMatchingPeople()
         {
             // Arrange
-            var people = new List<WorkGroupPeople>
+            var people = new List<WorkGroupStaff>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1" },
                 new() { Name = "Bob",   WorkGroupGrade = "WG2" }
@@ -1467,11 +1467,11 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
                 new() { WgGrade = "WG1", Workgroup = "Group A" },
                 new() { WgGrade = "WG2", Workgroup = "Group B" }
             };
-            var repo = CreateRepositoryForWorkGroupPeople(people, grades);
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = null };
 
             // Act
-            var result = await repo.GetWorkGroupPeopleAsync(query, "Group A");
+            var result = await repo.GetWorkGroupStaffAsync(query, "Group A");
 
             // Assert
             // workGroup filter matches via join: WG1 belongs to Group A
@@ -1479,7 +1479,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         }
 
         [Fact]
-        public async Task GetWorkGroupPeopleAsync_FilterByLeave_ReturnsMatchingPeople()
+        public async Task GetWorkGroupStaffAsync_FilterByLeave_ReturnsMatchingPeople()
         {
             // Note: EF.Functions.Like (used for string fields such as Name/PersonStatus) is not
             // supported in client-side mock evaluation and can only be tested via integration tests.
@@ -1487,7 +1487,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             // correctly with in-memory mock DbSets.
 
             // Arrange
-            var people = new List<WorkGroupPeople>
+            var people = new List<WorkGroupStaff>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1", Leave = 50.0 },
                 new() { Name = "Bob",   WorkGroupGrade = "WG2", Leave = 120.0 }
@@ -1497,7 +1497,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
                 new() { WgGrade = "WG1", Workgroup = "Group A" },
                 new() { WgGrade = "WG2", Workgroup = "Group B" }
             };
-            var repo = CreateRepositoryForWorkGroupPeople(people, grades);
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
             var query = new PaginationParameters<string>
             {
                 Page = 1, PageSize = 10,
@@ -1505,7 +1505,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             };
 
             // Act
-            var result = await repo.GetWorkGroupPeopleAsync(query);
+            var result = await repo.GetWorkGroupStaffAsync(query);
 
             // Assert
             Assert.Single(result.Data);
@@ -1513,7 +1513,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         }
 
         [Fact]
-        public async Task GetWorkGroupPeopleAsync_FilterBySickSpecial_ReturnsMatchingPeople()
+        public async Task GetWorkGroupStaffAsync_FilterBySickSpecial_ReturnsMatchingPeople()
         {
             // Note: EF.Functions.Like (used for string fields such as Name/PersonStatus) is not
             // supported in client-side mock evaluation and can only be tested via integration tests.
@@ -1521,7 +1521,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             // works correctly with in-memory mock DbSets.
 
             // Arrange
-            var people = new List<WorkGroupPeople>
+            var people = new List<WorkGroupStaff>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1", SickSpecial = 10.0 },
                 new() { Name = "Bob",   WorkGroupGrade = "WG2", SickSpecial = 99.5 }
@@ -1531,7 +1531,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
                 new() { WgGrade = "WG1", Workgroup = "Group A" },
                 new() { WgGrade = "WG2", Workgroup = "Group B" }
             };
-            var repo = CreateRepositoryForWorkGroupPeople(people, grades);
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
             var query = new PaginationParameters<string>
             {
                 Page = 1, PageSize = 10,
@@ -1539,7 +1539,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             };
 
             // Act
-            var result = await repo.GetWorkGroupPeopleAsync(query);
+            var result = await repo.GetWorkGroupStaffAsync(query);
 
             // Assert
             Assert.Single(result.Data);
@@ -1547,10 +1547,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         }
 
         [Fact]
-        public async Task GetWorkGroupPeopleAsync_NumericFilter_HrsPaid_ReturnsMatchingPeople()
+        public async Task GetWorkGroupStaffAsync_NumericFilter_HrsPaid_ReturnsMatchingPeople()
         {
             // Arrange
-            var people = new List<WorkGroupPeople>
+            var people = new List<WorkGroupStaff>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1", HrsPaid = 100.5 },
                 new() { Name = "Bob",   WorkGroupGrade = "WG2", HrsPaid = 200.0 }
@@ -1560,7 +1560,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
                 new() { WgGrade = "WG1", Workgroup = "Group A" },
                 new() { WgGrade = "WG2", Workgroup = "Group B" }
             };
-            var repo = CreateRepositoryForWorkGroupPeople(people, grades);
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
             var query = new PaginationParameters<string>
             {
                 Page = 1, PageSize = 10,
@@ -1568,7 +1568,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             };
 
             // Act
-            var result = await repo.GetWorkGroupPeopleAsync(query);
+            var result = await repo.GetWorkGroupStaffAsync(query);
 
             // Assert
             Assert.Single(result.Data);
@@ -1576,21 +1576,21 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         }
 
         [Fact]
-        public async Task GetWorkGroupPeopleAsync_Pagination_ReturnsCorrectPage()
+        public async Task GetWorkGroupStaffAsync_Pagination_ReturnsCorrectPage()
         {
             // Arrange
             var people = Enumerable.Range(1, 15)
-                .Select(i => new WorkGroupPeople { Name = $"Person{i:D2}", WorkGroupGrade = "WG1" })
+                .Select(i => new WorkGroupStaff { Name = $"Person{i:D2}", WorkGroupGrade = "WG1" })
                 .ToList();
             var grades = new List<WorkgroupGrade>
             {
                 new() { WgGrade = "WG1", Workgroup = "Group A" }
             };
-            var repo = CreateRepositoryForWorkGroupPeople(people, grades);
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
             var query = new PaginationParameters<string> { Page = 2, PageSize = 5, Filter = null };
 
             // Act
-            var result = await repo.GetWorkGroupPeopleAsync(query);
+            var result = await repo.GetWorkGroupStaffAsync(query);
 
             // Assert
             Assert.Equal(5, result.Data.Count());
@@ -1598,10 +1598,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         }
 
         [Fact]
-        public async Task GetWorkGroupPeopleAsync_SortByName_Descending_ReturnsSortedResults()
+        public async Task GetWorkGroupStaffAsync_SortByName_Descending_ReturnsSortedResults()
         {
             // Arrange
-            var people = new List<WorkGroupPeople>
+            var people = new List<WorkGroupStaff>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1" },
                 new() { Name = "Charlie", WorkGroupGrade = "WG1" },
@@ -1612,7 +1612,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
                 new() { WgGrade = "WG1", Workgroup = "Group A" },
                 new() { WgGrade = "WG2", Workgroup = "Group B" }
             };
-            var repo = CreateRepositoryForWorkGroupPeople(people, grades);
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
             var query = new PaginationParameters<string>
             {
                 Page = 1, PageSize = 10,
@@ -1620,7 +1620,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             };
 
             // Act
-            var result = await repo.GetWorkGroupPeopleAsync(query);
+            var result = await repo.GetWorkGroupStaffAsync(query);
 
             // Assert
             var list = result.Data.ToList();
@@ -1630,35 +1630,35 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         }
 
         [Fact]
-        public async Task GetWorkGroupPeopleAsync_EmptyDatabase_ReturnsEmptyPaginatedResult()
+        public async Task GetWorkGroupStaffAsync_EmptyDatabase_ReturnsEmptyPaginatedResult()
         {
             // Arrange
-            var repo = CreateRepositoryForWorkGroupPeople(
-                new List<WorkGroupPeople>(),
+            var repo = CreateRepositoryForWorkGroupStaff(
+                new List<WorkGroupStaff>(),
                 new List<WorkgroupGrade>());
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = null };
 
             // Act
-            var result = await repo.GetWorkGroupPeopleAsync(query);
+            var result = await repo.GetWorkGroupStaffAsync(query);
 
             // Assert
             Assert.NotNull(result);
             Assert.Empty(result.Data);
         }
 
-        // ── ApplyWorkGroupPeopleNumericFilter – missing branches ──────────────
+        // ── ApplyWorkGroupStaffNumericFilter – missing branches ──────────────
 
         [Fact]
-        public async Task GetWorkGroupPeopleAsync_NumericFilter_HrsAvail_ReturnsMatchingPeople()
+        public async Task GetWorkGroupStaffAsync_NumericFilter_HrsAvail_ReturnsMatchingPeople()
         {
             // Arrange
-            var people = new List<WorkGroupPeople>
+            var people = new List<WorkGroupStaff>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1", HrsAvail = 30.0 },
                 new() { Name = "Bob",   WorkGroupGrade = "WG1", HrsAvail = 40.0 }
             };
             var grades = new List<WorkgroupGrade> { new() { WgGrade = "WG1", Workgroup = "Group A" } };
-            var repo = CreateRepositoryForWorkGroupPeople(people, grades);
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
             var query = new PaginationParameters<string>
             {
                 Page = 1, PageSize = 10,
@@ -1666,7 +1666,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             };
 
             // Act
-            var result = await repo.GetWorkGroupPeopleAsync(query);
+            var result = await repo.GetWorkGroupStaffAsync(query);
 
             // Assert
             Assert.Single(result.Data);
@@ -1674,17 +1674,17 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         }
 
         [Fact]
-        public async Task GetWorkGroupPeopleAsync_NumericFilter_MultipleFields_FiltersCorrectly()
+        public async Task GetWorkGroupStaffAsync_NumericFilter_MultipleFields_FiltersCorrectly()
         {
             // Covers HrsPaid + Leave + SickSpecial + HrsAvail applied together
             // Arrange
-            var people = new List<WorkGroupPeople>
+            var people = new List<WorkGroupStaff>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1", HrsPaid = 37.5, Leave = 5.0, SickSpecial = 1.0, HrsAvail = 31.5 },
                 new() { Name = "Bob",   WorkGroupGrade = "WG1", HrsPaid = 20.0, Leave = 5.0, SickSpecial = 1.0, HrsAvail = 14.0 }
             };
             var grades = new List<WorkgroupGrade> { new() { WgGrade = "WG1", Workgroup = "Group A" } };
-            var repo = CreateRepositoryForWorkGroupPeople(people, grades);
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
             // Filter targets Alice's unique HrsPaid value AND common Leave/SickSpecial values
             var query = new PaginationParameters<string>
             {
@@ -1693,7 +1693,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             };
 
             // Act
-            var result = await repo.GetWorkGroupPeopleAsync(query);
+            var result = await repo.GetWorkGroupStaffAsync(query);
 
             // Assert
             Assert.Single(result.Data);
@@ -1701,17 +1701,17 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         }
 
         [Fact]
-        public async Task GetWorkGroupPeopleAsync_NumericFilter_NullValue_IsIgnored()
+        public async Task GetWorkGroupStaffAsync_NumericFilter_NullValue_IsIgnored()
         {
             // Covers the !string.IsNullOrWhiteSpace guard – field present but value is whitespace-only
             // Arrange
-            var people = new List<WorkGroupPeople>
+            var people = new List<WorkGroupStaff>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1", HrsPaid = 10.0 },
                 new() { Name = "Bob",   WorkGroupGrade = "WG1", HrsPaid = 20.0 }
             };
             var grades = new List<WorkgroupGrade> { new() { WgGrade = "WG1", Workgroup = "Group A" } };
-            var repo = CreateRepositoryForWorkGroupPeople(people, grades);
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
             // JSON value is a blank string – the whitespace guard should skip filtering
             var query = new PaginationParameters<string>
             {
@@ -1720,46 +1720,46 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             };
 
             // Act
-            var result = await repo.GetWorkGroupPeopleAsync(query);
+            var result = await repo.GetWorkGroupStaffAsync(query);
 
             // Assert – both records returned because the whitespace filter value is ignored
             Assert.Equal(2, result.Data.Count());
         }
 
         [Fact]
-        public async Task GetWorkGroupPeopleAsync_NumericFilter_EmptyFilter_ReturnsAll()
+        public async Task GetWorkGroupStaffAsync_NumericFilter_EmptyFilter_ReturnsAll()
         {
-            // Covers the string.IsNullOrEmpty(filter) early-return in ApplyWorkGroupPeopleNumericFilter
+            // Covers the string.IsNullOrEmpty(filter) early-return in ApplyWorkGroupStaffNumericFilter
             // Arrange
-            var people = new List<WorkGroupPeople>
+            var people = new List<WorkGroupStaff>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1", HrsPaid = 10.0 },
                 new() { Name = "Bob",   WorkGroupGrade = "WG1", HrsPaid = 20.0 }
             };
             var grades = new List<WorkgroupGrade> { new() { WgGrade = "WG1", Workgroup = "Group A" } };
-            var repo = CreateRepositoryForWorkGroupPeople(people, grades);
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = "" };
 
             // Act
-            var result = await repo.GetWorkGroupPeopleAsync(query);
+            var result = await repo.GetWorkGroupStaffAsync(query);
 
             // Assert
             Assert.Equal(2, result.Data.Count());
         }
 
         [Fact]
-        public async Task GetWorkGroupPeopleAsync_NumericFilter_NullItem_ReturnsAll()
+        public async Task GetWorkGroupStaffAsync_NumericFilter_NullItem_ReturnsAll()
         {
-            // Covers filterModel == null branch in ApplyWorkGroupPeopleNumericFilter
+            // Covers filterModel == null branch in ApplyWorkGroupStaffNumericFilter
             // (invalid JSON that deserialises to null rather than an ExpandoObject)
             // Arrange
-            var people = new List<WorkGroupPeople>
+            var people = new List<WorkGroupStaff>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1" },
                 new() { Name = "Bob",   WorkGroupGrade = "WG1" }
             };
             var grades = new List<WorkgroupGrade> { new() { WgGrade = "WG1", Workgroup = "Group A" } };
-            var repo = CreateRepositoryForWorkGroupPeople(people, grades);
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
             // JSON literal "null" deserialises to null ExpandoObject
             var query = new PaginationParameters<string>
             {
@@ -1768,24 +1768,24 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             };
 
             // Act
-            var result = await repo.GetWorkGroupPeopleAsync(query);
+            var result = await repo.GetWorkGroupStaffAsync(query);
 
             // Assert – null filterModel falls through; all rows returned
             Assert.Equal(2, result.Data.Count());
         }
 
         [Fact]
-        public async Task GetWorkGroupPeopleAsync_NumericFilter_NoMatchingField_ReturnsAll()
+        public async Task GetWorkGroupStaffAsync_NumericFilter_NoMatchingField_ReturnsAll()
         {
             // Covers the path where filter JSON is valid but contains no numeric field keys
             // Arrange
-            var people = new List<WorkGroupPeople>
+            var people = new List<WorkGroupStaff>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1", HrsPaid = 10.0 },
                 new() { Name = "Bob",   WorkGroupGrade = "WG1", HrsPaid = 20.0 }
             };
             var grades = new List<WorkgroupGrade> { new() { WgGrade = "WG1", Workgroup = "Group A" } };
-            var repo = CreateRepositoryForWorkGroupPeople(people, grades);
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
             var query = new PaginationParameters<string>
             {
                 Page = 1, PageSize = 10,
@@ -1793,24 +1793,24 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             };
 
             // Act
-            var result = await repo.GetWorkGroupPeopleAsync(query);
+            var result = await repo.GetWorkGroupStaffAsync(query);
 
             // Assert
             Assert.Equal(2, result.Data.Count());
         }
 
         [Fact]
-        public async Task GetWorkGroupPeopleAsync_NumericFilter_RecordWithNullValue_IsExcluded()
+        public async Task GetWorkGroupStaffAsync_NumericFilter_RecordWithNullValue_IsExcluded()
         {
             // Covers the x.HrsPaid.HasValue guard – record with null HrsPaid not matched
             // Arrange
-            var people = new List<WorkGroupPeople>
+            var people = new List<WorkGroupStaff>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1", HrsPaid = 100.0 },
                 new() { Name = "Bob",   WorkGroupGrade = "WG1", HrsPaid = null }
             };
             var grades = new List<WorkgroupGrade> { new() { WgGrade = "WG1", Workgroup = "Group A" } };
-            var repo = CreateRepositoryForWorkGroupPeople(people, grades);
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
             var query = new PaginationParameters<string>
             {
                 Page = 1, PageSize = 10,
@@ -1818,14 +1818,14 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             };
 
             // Act
-            var result = await repo.GetWorkGroupPeopleAsync(query);
+            var result = await repo.GetWorkGroupStaffAsync(query);
 
             // Assert – Bob has null HrsPaid so is excluded
             Assert.Single(result.Data);
             Assert.Equal("Alice", result.Data.First().Name);
         }
 
-        // ── ApplyWorkGroupPeopleSorting – all remaining sort keys ─────────────
+        // ── ApplyWorkGroupStaffSorting – all remaining sort keys ─────────────
 
         [Theory]
         // Assert checks result.Data.First().Name; expected = Name of person with lowest/highest sort-key value
@@ -1849,11 +1849,11 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         [InlineData("HrsAvail",      true,  "Charlie")]
         [InlineData("Name",          false, "Alice")]   // ascending – already tested via Descending test
         [InlineData("UnknownKey",    false, "Alice")]   // unknown key → default OrderBy(Name) asc
-        public async Task GetWorkGroupPeopleAsync_SortBy_SortsCorrectly(
+        public async Task GetWorkGroupStaffAsync_SortBy_SortsCorrectly(
             string sortBy, bool descending, string expectedFirstName)
         {
             // Arrange
-            var people = new List<WorkGroupPeople>
+            var people = new List<WorkGroupStaff>
             {
                 new() { Name = "Bob",     WorkGroupGrade = "WG2", PactId = "P002", SpNumber = "SP002",
                         Title = "Developer", PersonStatus = "OnLeave",
@@ -1871,7 +1871,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
                 new() { WgGrade = "WG2", Workgroup = "Group B" },
                 new() { WgGrade = "WG3", Workgroup = "Group C" }
             };
-            var repo = CreateRepositoryForWorkGroupPeople(people, grades);
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
             var query = new PaginationParameters<string>
             {
                 Page = 1, PageSize = 10,
@@ -1879,25 +1879,25 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             };
 
             // Act
-            var result = await repo.GetWorkGroupPeopleAsync(query);
+            var result = await repo.GetWorkGroupStaffAsync(query);
 
             // Assert
             Assert.Equal(expectedFirstName, result.Data.First().Name);
         }
 
         [Fact]
-        public async Task GetWorkGroupPeopleAsync_SortBy_EmptySortBy_DefaultsToNameAscending()
+        public async Task GetWorkGroupStaffAsync_SortBy_EmptySortBy_DefaultsToNameAscending()
         {
-            // Covers the string.IsNullOrEmpty(sortBy) early-return in ApplyWorkGroupPeopleSorting
+            // Covers the string.IsNullOrEmpty(sortBy) early-return in ApplyWorkGroupStaffSorting
             // Arrange
-            var people = new List<WorkGroupPeople>
+            var people = new List<WorkGroupStaff>
             {
                 new() { Name = "Charlie", WorkGroupGrade = "WG1" },
                 new() { Name = "Alice",   WorkGroupGrade = "WG1" },
                 new() { Name = "Bob",     WorkGroupGrade = "WG1" }
             };
             var grades = new List<WorkgroupGrade> { new() { WgGrade = "WG1", Workgroup = "Group A" } };
-            var repo = CreateRepositoryForWorkGroupPeople(people, grades);
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
             var query = new PaginationParameters<string>
             {
                 Page = 1, PageSize = 10,
@@ -1905,27 +1905,27 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             };
 
             // Act
-            var result = await repo.GetWorkGroupPeopleAsync(query);
+            var result = await repo.GetWorkGroupStaffAsync(query);
 
             // Assert – defaults to ascending by Name
             Assert.Equal("Alice",   result.Data.First().Name);
             Assert.Equal("Charlie", result.Data.Last().Name);
         }
 
-        // ── ApplyWorkGroupPeopleFilter – null/empty guard paths ───────────────
+        // ── ApplyWorkGroupStaffFilter – null/empty guard paths ───────────────
 
         [Fact]
-        public async Task GetWorkGroupPeopleAsync_Filter_EmptyJsonObject_ReturnsAll()
+        public async Task GetWorkGroupStaffAsync_Filter_EmptyJsonObject_ReturnsAll()
         {
-            // Covers valid JSON with no recognised keys in ApplyWorkGroupPeopleFilter
+            // Covers valid JSON with no recognised keys in ApplyWorkGroupStaffFilter
             // Arrange
-            var people = new List<WorkGroupPeople>
+            var people = new List<WorkGroupStaff>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1" },
                 new() { Name = "Bob",   WorkGroupGrade = "WG1" }
             };
             var grades = new List<WorkgroupGrade> { new() { WgGrade = "WG1", Workgroup = "Group A" } };
-            var repo = CreateRepositoryForWorkGroupPeople(people, grades);
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
             var query = new PaginationParameters<string>
             {
                 Page = 1, PageSize = 10,
@@ -1933,25 +1933,25 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             };
 
             // Act
-            var result = await repo.GetWorkGroupPeopleAsync(query);
+            var result = await repo.GetWorkGroupStaffAsync(query);
 
             // Assert
             Assert.Equal(2, result.Data.Count());
         }
 
         [Fact]
-        public async Task GetWorkGroupPeopleAsync_Filter_NullFilterModel_ReturnsAll()
+        public async Task GetWorkGroupStaffAsync_Filter_NullFilterModel_ReturnsAll()
         {
-            // Covers the filterModel == null branch in ApplyWorkGroupPeopleFilter
+            // Covers the filterModel == null branch in ApplyWorkGroupStaffFilter
             // JSON literal "null" deserialises to null ExpandoObject
             // Arrange
-            var people = new List<WorkGroupPeople>
+            var people = new List<WorkGroupStaff>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1" },
                 new() { Name = "Bob",   WorkGroupGrade = "WG1" }
             };
             var grades = new List<WorkgroupGrade> { new() { WgGrade = "WG1", Workgroup = "Group A" } };
-            var repo = CreateRepositoryForWorkGroupPeople(people, grades);
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
             var query = new PaginationParameters<string>
             {
                 Page = 1, PageSize = 10,
@@ -1959,21 +1959,21 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             };
 
             // Act
-            var result = await repo.GetWorkGroupPeopleAsync(query);
+            var result = await repo.GetWorkGroupStaffAsync(query);
 
             // Assert
             Assert.Equal(2, result.Data.Count());
         }
 
         [Fact]
-        public async Task GetWorkGroupPeopleAsync_Filter_AllKeysWithNullValues_SkipsAllPredicates()
+        public async Task GetWorkGroupStaffAsync_Filter_AllKeysWithNullValues_SkipsAllPredicates()
         {
             // Covers the "&& pactId != null", "&& spNumber != null", "&& name != null",
             // "&& wgg != null", "&& title != null", "&& personStatus != null" guards in
-            // ApplyWorkGroupPeopleFilter – when a key is present but the JSON value is null
+            // ApplyWorkGroupStaffFilter – when a key is present but the JSON value is null
             // the predicate must be skipped and all rows must be returned.
             // Arrange
-            var people = new List<WorkGroupPeople>
+            var people = new List<WorkGroupStaff>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1", PactId = "P001", SpNumber = "SP001",
                         Title = "Analyst", PersonStatus = "Active" },
@@ -1985,7 +1985,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
                 new() { WgGrade = "WG1", Workgroup = "Group A" },
                 new() { WgGrade = "WG2", Workgroup = "Group B" }
             };
-            var repo = CreateRepositoryForWorkGroupPeople(people, grades);
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
             // All six string-filter keys present with explicit JSON null values
             var query = new PaginationParameters<string>
             {
@@ -1994,25 +1994,25 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             };
 
             // Act
-            var result = await repo.GetWorkGroupPeopleAsync(query);
+            var result = await repo.GetWorkGroupStaffAsync(query);
 
             // Assert – null-value guards skip every predicate; both rows returned
             Assert.Equal(2, result.Data.Count());
         }
 
-        // ── ApplyWorkGroupPeopleFilter – string filter branches ───────────────
+        // ── ApplyWorkGroupStaffFilter – string filter branches ───────────────
 
         [Fact]
-        public async Task GetWorkGroupPeopleAsync_Filter_ByPactId_ReturnsMatchingPeople()
+        public async Task GetWorkGroupStaffAsync_Filter_ByPactId_ReturnsMatchingPeople()
         {
             // Arrange
-            var people = new List<WorkGroupPeople>
+            var people = new List<WorkGroupStaff>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1", PactId = "PACT001" },
                 new() { Name = "Bob",   WorkGroupGrade = "WG1", PactId = "PACT002" }
             };
             var grades = new List<WorkgroupGrade> { new() { WgGrade = "WG1", Workgroup = "Group A" } };
-            var repo = CreateRepositoryForWorkGroupPeople(people, grades);
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
             var query = new PaginationParameters<string>
             {
                 Page = 1, PageSize = 10,
@@ -2020,7 +2020,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             };
 
             // Act
-            var result = await repo.GetWorkGroupPeopleAsync(query);
+            var result = await repo.GetWorkGroupStaffAsync(query);
 
             // Assert
             Assert.Single(result.Data);
@@ -2028,16 +2028,16 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         }
 
         [Fact]
-        public async Task GetWorkGroupPeopleAsync_Filter_BySpNumber_ReturnsMatchingPeople()
+        public async Task GetWorkGroupStaffAsync_Filter_BySpNumber_ReturnsMatchingPeople()
         {
             // Arrange
-            var people = new List<WorkGroupPeople>
+            var people = new List<WorkGroupStaff>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1", SpNumber = "SP001" },
                 new() { Name = "Bob",   WorkGroupGrade = "WG1", SpNumber = "SP002" }
             };
             var grades = new List<WorkgroupGrade> { new() { WgGrade = "WG1", Workgroup = "Group A" } };
-            var repo = CreateRepositoryForWorkGroupPeople(people, grades);
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
             var query = new PaginationParameters<string>
             {
                 Page = 1, PageSize = 10,
@@ -2045,7 +2045,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             };
 
             // Act
-            var result = await repo.GetWorkGroupPeopleAsync(query);
+            var result = await repo.GetWorkGroupStaffAsync(query);
 
             // Assert
             Assert.Single(result.Data);
@@ -2053,16 +2053,16 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         }
 
         [Fact]
-        public async Task GetWorkGroupPeopleAsync_Filter_ByName_ReturnsMatchingPeople()
+        public async Task GetWorkGroupStaffAsync_Filter_ByName_ReturnsMatchingPeople()
         {
             // Arrange
-            var people = new List<WorkGroupPeople>
+            var people = new List<WorkGroupStaff>
             {
                 new() { Name = "Alice Smith", WorkGroupGrade = "WG1" },
                 new() { Name = "Bob Jones",   WorkGroupGrade = "WG1" }
             };
             var grades = new List<WorkgroupGrade> { new() { WgGrade = "WG1", Workgroup = "Group A" } };
-            var repo = CreateRepositoryForWorkGroupPeople(people, grades);
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
             var query = new PaginationParameters<string>
             {
                 Page = 1, PageSize = 10,
@@ -2070,7 +2070,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             };
 
             // Act
-            var result = await repo.GetWorkGroupPeopleAsync(query);
+            var result = await repo.GetWorkGroupStaffAsync(query);
 
             // Assert
             Assert.Single(result.Data);
@@ -2078,10 +2078,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         }
 
         [Fact]
-        public async Task GetWorkGroupPeopleAsync_Filter_ByWorkGroupGrade_ReturnsMatchingPeople()
+        public async Task GetWorkGroupStaffAsync_Filter_ByWorkGroupGrade_ReturnsMatchingPeople()
         {
             // Arrange
-            var people = new List<WorkGroupPeople>
+            var people = new List<WorkGroupStaff>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1" },
                 new() { Name = "Bob",   WorkGroupGrade = "WG2" }
@@ -2091,7 +2091,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
                 new() { WgGrade = "WG1", Workgroup = "Group A" },
                 new() { WgGrade = "WG2", Workgroup = "Group B" }
             };
-            var repo = CreateRepositoryForWorkGroupPeople(people, grades);
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
             var query = new PaginationParameters<string>
             {
                 Page = 1, PageSize = 10,
@@ -2099,7 +2099,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             };
 
             // Act
-            var result = await repo.GetWorkGroupPeopleAsync(query);
+            var result = await repo.GetWorkGroupStaffAsync(query);
 
             // Assert
             Assert.Single(result.Data);
@@ -2107,16 +2107,16 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         }
 
         [Fact]
-        public async Task GetWorkGroupPeopleAsync_Filter_ByTitle_ReturnsMatchingPeople()
+        public async Task GetWorkGroupStaffAsync_Filter_ByTitle_ReturnsMatchingPeople()
         {
             // Arrange
-            var people = new List<WorkGroupPeople>
+            var people = new List<WorkGroupStaff>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1", Title = "Analyst" },
                 new() { Name = "Bob",   WorkGroupGrade = "WG1", Title = "Manager" }
             };
             var grades = new List<WorkgroupGrade> { new() { WgGrade = "WG1", Workgroup = "Group A" } };
-            var repo = CreateRepositoryForWorkGroupPeople(people, grades);
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
             var query = new PaginationParameters<string>
             {
                 Page = 1, PageSize = 10,
@@ -2124,7 +2124,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             };
 
             // Act
-            var result = await repo.GetWorkGroupPeopleAsync(query);
+            var result = await repo.GetWorkGroupStaffAsync(query);
 
             // Assert
             Assert.Single(result.Data);
@@ -2132,16 +2132,16 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         }
 
         [Fact]
-        public async Task GetWorkGroupPeopleAsync_Filter_ByPersonStatus_ReturnsMatchingPeople()
+        public async Task GetWorkGroupStaffAsync_Filter_ByPersonStatus_ReturnsMatchingPeople()
         {
             // Arrange
-            var people = new List<WorkGroupPeople>
+            var people = new List<WorkGroupStaff>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1", PersonStatus = "Active" },
                 new() { Name = "Bob",   WorkGroupGrade = "WG1", PersonStatus = "Retired" }
             };
             var grades = new List<WorkgroupGrade> { new() { WgGrade = "WG1", Workgroup = "Group A" } };
-            var repo = CreateRepositoryForWorkGroupPeople(people, grades);
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
             var query = new PaginationParameters<string>
             {
                 Page = 1, PageSize = 10,
@@ -2149,7 +2149,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             };
 
             // Act
-            var result = await repo.GetWorkGroupPeopleAsync(query);
+            var result = await repo.GetWorkGroupStaffAsync(query);
 
             // Assert
             Assert.Single(result.Data);
@@ -2157,10 +2157,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         }
 
         [Fact]
-        public async Task GetWorkGroupPeopleAsync_Filter_AllStringFields_FiltersCorrectly()
+        public async Task GetWorkGroupStaffAsync_Filter_AllStringFields_FiltersCorrectly()
         {
             // Arrange
-            var people = new List<WorkGroupPeople>
+            var people = new List<WorkGroupStaff>
             {
                 new() { Name = "Alice Smith", WorkGroupGrade = "WG1", PactId = "PACT001",
                         SpNumber = "SP001", Title = "Analyst", PersonStatus = "Active" },
@@ -2172,7 +2172,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
                 new() { WgGrade = "WG1", Workgroup = "Group A" },
                 new() { WgGrade = "WG2", Workgroup = "Group B" }
             };
-            var repo = CreateRepositoryForWorkGroupPeople(people, grades);
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
             var query = new PaginationParameters<string>
             {
                 Page = 1, PageSize = 10,
@@ -2180,7 +2180,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             };
 
             // Act
-            var result = await repo.GetWorkGroupPeopleAsync(query);
+            var result = await repo.GetWorkGroupStaffAsync(query);
 
             // Assert
             Assert.Single(result.Data);

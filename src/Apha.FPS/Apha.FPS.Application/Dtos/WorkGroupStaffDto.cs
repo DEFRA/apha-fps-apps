@@ -1,6 +1,6 @@
-namespace Apha.Common.Contracts.FPS
+namespace Apha.FPS.Application.Dtos
 {
-    public class WorkGroupPeopleRes
+    public class WorkGroupStaffDto
     {
         public string? PactId { get; set; }
         public string? SpNumber { get; set; }

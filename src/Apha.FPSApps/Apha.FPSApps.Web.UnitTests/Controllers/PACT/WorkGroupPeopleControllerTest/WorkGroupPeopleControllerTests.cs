@@ -34,7 +34,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupPeopleControllerT
         {
             _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string>());
-            _mapper.Map<List<WorkGroupPeopleItem>>(Arg.Any<List<WorkGroupPeopleDto>>())
+            _mapper.Map<List<WorkGroupPeopleItem>>(Arg.Any<List<WorkGroupStaffDto>>())
                 .Returns([]);
             _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>())
                 .Returns(new PaginationModel());
@@ -42,9 +42,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupPeopleControllerT
 
         private void SetupDefaultPeopleResponse()
         {
-            _employeeService.GetWorkGroupPeopleAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string?>())
-                .Returns(ApiResponseDto<PaginatedResult<WorkGroupPeopleDto>>.SuccessResponse(
-                    new PaginatedResult<WorkGroupPeopleDto>([], 0, 1, 10)));
+            _employeeService.GetWorkGroupStaffAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string?>())
+                .Returns(ApiResponseDto<PaginatedResult<WorkGroupStaffDto>>.SuccessResponse(
+                    new PaginatedResult<WorkGroupStaffDto>([], 0, 1, 10)));
         }
 
         private void SetupDefaultWorkGroupOptions()
@@ -55,8 +55,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupPeopleControllerT
 
         private void SetupDefaultPersonOptions()
         {
-            _employeeService.GetAllPersonAsync()
-                .Returns(ApiResponseDto<List<PersonDto>>.SuccessResponse([]));
+            _employeeService.GetAllWorkGroupPersonAsync()
+                .Returns(ApiResponseDto<List<WorkGroupPersonDto>>.SuccessResponse([]));
         }
 
         // ── Index ──────────────────────────────────────────────────────────────
@@ -109,13 +109,13 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupPeopleControllerT
         public async Task Index_PopulatesPersonOptions_WhenServiceReturnsData()
         {
             // Arrange
-            var persons = new List<PersonDto>
+            var persons = new List<WorkGroupPersonDto>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1", WorkGroup = "Group A" },
                 new() { Name = "Bob",   WorkGroupGrade = "WG2", WorkGroup = "Group B" }
             };
-            _employeeService.GetAllPersonAsync()
-                .Returns(ApiResponseDto<List<PersonDto>>.SuccessResponse(persons));
+            _employeeService.GetAllWorkGroupPersonAsync()
+                .Returns(ApiResponseDto<List<WorkGroupPersonDto>>.SuccessResponse(persons));
             SetupDefaultPeopleResponse();
             SetupDefaultWorkGroupOptions();
             SetupPeopleGridMapper();
@@ -152,8 +152,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupPeopleControllerT
         public async Task Index_PersonServiceFails_ReturnsEmptyPersonOptions()
         {
             // Arrange
-            _employeeService.GetAllPersonAsync()
-                .Returns(ApiResponseDto<List<PersonDto>>.FailureResponse([], new ApiMetaDto()));
+            _employeeService.GetAllWorkGroupPersonAsync()
+                .Returns(ApiResponseDto<List<WorkGroupPersonDto>>.FailureResponse([], new ApiMetaDto()));
             SetupDefaultPeopleResponse();
             SetupDefaultWorkGroupOptions();
             SetupPeopleGridMapper();
@@ -190,8 +190,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupPeopleControllerT
         public async Task Index_PersonServiceReturnsNull_ReturnsEmptyPersonOptions()
         {
             // Arrange
-            _employeeService.GetAllPersonAsync()
-                .Returns(ApiResponseDto<List<PersonDto>>.SuccessResponse(null!));
+            _employeeService.GetAllWorkGroupPersonAsync()
+                .Returns(ApiResponseDto<List<WorkGroupPersonDto>>.SuccessResponse(null!));
             SetupDefaultPeopleResponse();
             SetupDefaultWorkGroupOptions();
             SetupPeopleGridMapper();
@@ -261,7 +261,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupPeopleControllerT
             await _controller.LoadPeopleGrid(request, "WG1", null);
 
             // Assert
-            await _employeeService.Received(1).GetWorkGroupPeopleAsync(
+            await _employeeService.Received(1).GetWorkGroupStaffAsync(
                 Arg.Any<QueryParameters<string>>(), "WG1");
         }
 
@@ -270,16 +270,16 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupPeopleControllerT
         {
             // Arrange
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = "{}" };
-            var people = new List<WorkGroupPeopleDto>
+            var people = new List<WorkGroupStaffDto>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1" }
             };
-            _employeeService.GetWorkGroupPeopleAsync(Arg.Any<QueryParameters<string>>(), null)
-                .Returns(ApiResponseDto<PaginatedResult<WorkGroupPeopleDto>>.SuccessResponse(
-                    new PaginatedResult<WorkGroupPeopleDto>(people, 1, 1, 10)));
+            _employeeService.GetWorkGroupStaffAsync(Arg.Any<QueryParameters<string>>(), null)
+                .Returns(ApiResponseDto<PaginatedResult<WorkGroupStaffDto>>.SuccessResponse(
+                    new PaginatedResult<WorkGroupStaffDto>(people, 1, 1, 10)));
             _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string>());
-            _mapper.Map<List<WorkGroupPeopleItem>>(Arg.Any<List<WorkGroupPeopleDto>>())
+            _mapper.Map<List<WorkGroupPeopleItem>>(Arg.Any<List<WorkGroupStaffDto>>())
                 .Returns([]);
             _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>())
                 .Returns(new PaginationModel());
@@ -306,7 +306,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupPeopleControllerT
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
             Assert.Equal("_DataGrid", partial.ViewName);
-            await _employeeService.Received(1).GetWorkGroupPeopleAsync(
+            await _employeeService.Received(1).GetWorkGroupStaffAsync(
                 Arg.Any<QueryParameters<string>>(), Arg.Is<string?>(x => x == null));
         }
 
@@ -329,8 +329,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupPeopleControllerT
         {
             // Arrange
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = "{}" };
-            _employeeService.GetWorkGroupPeopleAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string?>())
-                .Returns(ApiResponseDto<PaginatedResult<WorkGroupPeopleDto>>.FailureResponse([], new ApiMetaDto()));
+            _employeeService.GetWorkGroupStaffAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string?>())
+                .Returns(ApiResponseDto<PaginatedResult<WorkGroupStaffDto>>.FailureResponse([], new ApiMetaDto()));
             SetupPeopleGridMapper();
 
             // Act
@@ -346,8 +346,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupPeopleControllerT
         {
             // Arrange
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = "{}" };
-            _employeeService.GetWorkGroupPeopleAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string?>())
-                .Returns(ApiResponseDto<PaginatedResult<WorkGroupPeopleDto>>.SuccessResponse(null!));
+            _employeeService.GetWorkGroupStaffAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string?>())
+                .Returns(ApiResponseDto<PaginatedResult<WorkGroupStaffDto>>.SuccessResponse(null!));
             SetupPeopleGridMapper();
 
             // Act
@@ -385,7 +385,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupPeopleControllerT
             await _controller.LoadPeopleGrid(request, "WG1", "Alice");
 
             // Assert: workGroup is non-null so FetchByWorkGroupAsync path is taken
-            await _employeeService.Received(1).GetWorkGroupPeopleAsync(
+            await _employeeService.Received(1).GetWorkGroupStaffAsync(
                 Arg.Any<QueryParameters<string>>(), "WG1");
         }
 

@@ -1,4 +1,4 @@
-﻿using Apha.FPS.Application.Dtos;
+using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Core.Entities;
@@ -112,17 +112,17 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<IEnumerable<ManagerDto>>(managers);
         }
 
-        public async Task<IEnumerable<PersonDto>> GetAllPersonAsync()
+        public async Task<IEnumerable<WorkGroupPersonDto>> GetAllWorkGroupPersonAsync()
         {
-            var items = await _employeeRepository.GetAllPersonAsync();
-            return _mapper.Map<IEnumerable<PersonDto>>(items);
+            var items = await _employeeRepository.GetAllWorkGroupPersonAsync();
+            return _mapper.Map<IEnumerable<WorkGroupPersonDto>>(items);
         }
 
-        public async Task<PaginatedResult<WorkGroupPeopleDto>> GetWorkGroupPeopleAsync(QueryParameters<string> queryFilter, string? workGroup = null)
+        public async Task<PaginatedResult<WorkGroupStaffDto>> GetWorkGroupStaffAsync(QueryParameters<string> queryFilter, string? workGroup = null)
         {
             var filter = _mapper.Map<PaginationParameters<string>>(queryFilter);
-            var items = await _employeeRepository.GetWorkGroupPeopleAsync(filter, workGroup);
-            return _mapper.Map<PaginatedResult<WorkGroupPeopleDto>>(items);
+            var items = await _employeeRepository.GetWorkGroupStaffAsync(filter, workGroup);
+            return _mapper.Map<PaginatedResult<WorkGroupStaffDto>>(items);
         }
     }
 }

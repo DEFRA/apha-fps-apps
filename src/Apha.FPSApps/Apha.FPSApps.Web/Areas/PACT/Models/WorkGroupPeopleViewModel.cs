@@ -12,6 +12,6 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
 
         public List<WorkGroupDto> WorkGroupOptions { get; set; } = new();
 
-        public List<PersonDto> PersonOptions { get; set; } = new();
+        public List<WorkGroupPersonDto> PersonOptions { get; set; } = new();
     }
 }

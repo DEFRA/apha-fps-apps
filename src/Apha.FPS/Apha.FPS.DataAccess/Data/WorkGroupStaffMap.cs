@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Apha.FPS.DataAccess.Data
 {
-    public class WorkGroupPeopleMap : IEntityTypeConfiguration<WorkGroupPeople>
+    public class WorkGroupStaffMap : IEntityTypeConfiguration<WorkGroupStaff>
     {
-        public void Configure(EntityTypeBuilder<WorkGroupPeople> entity)
+        public void Configure(EntityTypeBuilder<WorkGroupStaff> entity)
         {
             entity
                .HasNoKey()

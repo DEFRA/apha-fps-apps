@@ -1,6 +1,6 @@
 namespace Apha.FPSApps.Application.Dtos.FPS
 {
-    public class PersonDto
+    public class WorkGroupPersonDto
     {
         public string? Name { get; set; }
         public string? WorkGroupGrade { get; set; }
