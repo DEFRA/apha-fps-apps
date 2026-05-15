@@ -17,13 +17,20 @@
                        onchange="navigateToProjectCode(this.value)" />
             </span>
             <span>
-                @if (Model.FromPortfolio)
+                @if (Model.NavigationOrigin == "PortfolioTimeCodes")
                 {
                     <a class="govuk-back-link"
                        asp-area="PACT"
                        asp-controller="PortfolioTimeCodes"
                        asp-action="Index"
                        asp-route-parentProject="@Model.ParentProject">Back</a>
+                }
+                else if (Model.NavigationOrigin == "PortfolioMaintenance")
+                {
+                    <a class="govuk-back-link"
+                       asp-area="PACT"
+                       asp-controller="PortfolioMaintenance"
+                       asp-action="Index">Back</a>
                 }
                 else
                 {

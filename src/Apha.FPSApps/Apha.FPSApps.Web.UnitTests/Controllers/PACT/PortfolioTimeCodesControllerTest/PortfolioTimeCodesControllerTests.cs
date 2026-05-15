@@ -1126,7 +1126,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
             Assert.Equal("TestPurchaseRequirement", redirectResult.ControllerName);
             Assert.Equal("PACT", redirectResult.RouteValues!["area"]);
             Assert.Equal(parentProject, redirectResult.RouteValues["parentProject"]);
-            Assert.Equal("Portfolio", _controller.TempData["PactOrigin"]);
+            Assert.Equal("PortfolioTimeCodes", _controller.TempData["PactOrigin"]);
         }
 
         [Fact]
@@ -1142,7 +1142,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
             var redirectResult = Assert.IsType<RedirectToActionResult>(result);
             Assert.Equal("Index", redirectResult.ActionName);
             Assert.Equal("TestPurchaseRequirement", redirectResult.ControllerName);
-            Assert.Equal("Portfolio", _controller.TempData["PactOrigin"]);
+            Assert.Equal("PortfolioTimeCodes", _controller.TempData["PactOrigin"]);
         }
 
         #endregion

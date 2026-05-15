@@ -560,7 +560,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         public IActionResult NavigateToTestPurchaseRequirements(string parentProject)
         {
             // Set TempData to indicate navigation came from Portfolio Time Codes
-            TempData["PactOrigin"] = "Portfolio";
+            TempData["PactOrigin"] = "PortfolioTimeCodes";
 
             // Redirect to Test Purchase Requirements
             return RedirectToAction("Index", "TestPurchaseRequirement", new { area = "PACT", parentProject });
