@@ -406,7 +406,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
         {
             // Arrange
             _wgEmployeeService.GetWorkGroupEmployeeByIdAsync(DefaultPactId)
-                .Returns(ApiResponseDto<WorkGroupEmployeeDto>.SuccessResponse(null));
+                .Returns(ApiResponseDto<WorkGroupEmployeeDto>.SuccessResponse(null!));
 
             // Act
             var result = await _controller.EditWgStaff(DefaultPactId);
