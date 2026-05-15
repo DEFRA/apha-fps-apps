@@ -1,0 +1,176 @@
+﻿{
+    "executedAtUtc":  "2026-05-15T08:50:30.6232583Z",
+    "database":  "localhost:5432/batch_jobs_foundation_db",
+    "year":  2025,
+    "snapshotFormat":  "sha256(string_agg(md5(to_jsonb(row)::text) ordered by md5))",
+    "targets":  [
+                    {
+                        "sequence":  1,
+                        "loader":  "my_tlkpprogram",
+                        "table":  "mabarchive.my_tlkpprogram",
+                        "rowCount":  3,
+                        "rowHash":  "fc7d2988af45f99c0c521b753a726ac2931094b969bf265890b842c1b6b4a729.Trim()"
+                    },
+                    {
+                        "sequence":  2,
+                        "loader":  "g_tlkpproject",
+                        "table":  "mabarchive.g_tlkpproject",
+                        "rowCount":  4,
+                        "rowHash":  "d670353540c2d347a72d68a8879ef7a034acd26a9643b962aeed26849b3eb01d.Trim()"
+                    },
+                    {
+                        "sequence":  3,
+                        "loader":  "my_tlkpproject",
+                        "table":  "mabarchive.my_tlkpproject",
+                        "rowCount":  4,
+                        "rowHash":  "b199b6dae7b8ea5ceae74ee3ff7799ceb81041fac732cacd980f753afc630b54.Trim()"
+                    },
+                    {
+                        "sequence":  4,
+                        "loader":  "my_fpsyeartotals",
+                        "table":  "mabarchive.my_fpsyeartotals",
+                        "rowCount":  8,
+                        "rowHash":  "660d06f7c141d0fe3ddab776277a4674698bf663e05a1c1c793bd37b1ea74216.Trim()"
+                    },
+                    {
+                        "sequence":  5,
+                        "loader":  "my_monthlyoutput",
+                        "table":  "mabarchive.my_monthlyoutput",
+                        "rowCount":  48,
+                        "rowHash":  "230640253cafdb259bc7c573744f54b931c7d9d73099acc50aa2ec1f27918909.Trim()"
+                    },
+                    {
+                        "sequence":  6,
+                        "loader":  "my_monthlytime",
+                        "table":  "mabarchive.my_monthlytime",
+                        "rowCount":  48,
+                        "rowHash":  "f4480d5306bec04f45e77822320c6bb58c723f56aa0b73990253405e3db0915d.Trim()"
+                    },
+                    {
+                        "sequence":  7,
+                        "loader":  "my_proj_invoice",
+                        "table":  "mabarchive.my_proj_invoice",
+                        "rowCount":  12,
+                        "rowHash":  "e9c8d7e5eb904f2c3d2669f2d1b49f031863343170681cebb71a629b1ce8cd24.Trim()"
+                    },
+                    {
+                        "sequence":  8,
+                        "loader":  "my_proj_subcontract",
+                        "table":  "mabarchive.my_proj_subcontract",
+                        "rowCount":  12,
+                        "rowHash":  "c9c420c0512c2b73f7caa1ee9698e2e513298a7fcc921638e484880acdd80122.Trim()"
+                    },
+                    {
+                        "sequence":  9,
+                        "loader":  "my_projectmonthfinal",
+                        "table":  "mabarchive.my_projectmonthfinal",
+                        "rowCount":  48,
+                        "rowHash":  "531b2ddbb45b2c79eaad0ef1527342051c69ca0421ad71f0f780d2762788e843.Trim()"
+                    },
+                    {
+                        "sequence":  10,
+                        "loader":  "my_tbladditionalcosts",
+                        "table":  "mabarchive.my_tbladditionalcosts",
+                        "rowCount":  12,
+                        "rowHash":  "0bea3a362533d230e2eef9bce7df85a6327a3d95fa259a15cdd2cc4c69c96a0b.Trim()"
+                    },
+                    {
+                        "sequence":  11,
+                        "loader":  "my_tblanimalreq",
+                        "table":  "mabarchive.my_tblanimalreq",
+                        "rowCount":  11,
+                        "rowHash":  "a4b8c1a585244bf93d1559e63459066d4f3bd943d7acab38b5cab03815c72bda.Trim()"
+                    },
+                    {
+                        "sequence":  12,
+                        "loader":  "my_tblcontract",
+                        "table":  "mabarchive.my_tblcontract",
+                        "rowCount":  4,
+                        "rowHash":  "254aa910e78f42c9cf29eb87c80bac700797c8a54af78d9f212d940f727d4296.Trim()"
+                    },
+                    {
+                        "sequence":  13,
+                        "loader":  "my_tblstaffjob",
+                        "table":  "mabarchive.my_tblstaffjob",
+                        "rowCount":  8,
+                        "rowHash":  "ea80ae9159c25b8cc334b52799b85233fe5da3e888e5288bcc16d09b6acb511a.Trim()"
+                    },
+                    {
+                        "sequence":  14,
+                        "loader":  "my_timecostcalcs",
+                        "table":  "mabarchive.my_timecostcalcs",
+                        "rowCount":  96,
+                        "rowHash":  "3809dc9140294d582b0d12344f9e8a3ee8f19f877bb1c4140a7af81f5408e885.Trim()"
+                    },
+                    {
+                        "sequence":  15,
+                        "loader":  "my_tlkptestreqmt",
+                        "table":  "mabarchive.my_tlkptestreqmt",
+                        "rowCount":  4,
+                        "rowHash":  "96342ffccd1193c120d4807bd75dc0daa5d41f99a135cf1f242d7de181183a9f.Trim()"
+                    },
+                    {
+                        "sequence":  16,
+                        "loader":  "tlkpyear",
+                        "table":  "mabarchive.tlkpyear",
+                        "rowCount":  1,
+                        "rowHash":  "896dfbc9b0c21213570681a7172a7ae2120bdda716786d962b93dc9977e2d6c0.Trim()"
+                    },
+                    {
+                        "sequence":  17,
+                        "loader":  "my_workgroupgrade",
+                        "table":  "mabarchive.my_workgroupgrade",
+                        "rowCount":  3,
+                        "rowHash":  "2e14d403b8f380f3f09269684fa2d3079864c82cd74a592154fc37e4654e0728.Trim()"
+                    },
+                    {
+                        "sequence":  18,
+                        "loader":  "my_profitcentregrade",
+                        "table":  "mabarchive.my_profitcentregrade",
+                        "rowCount":  3,
+                        "rowHash":  "3ea84bfa475085bd4cd2e371fc6620b47bca6138dbe4840b771bb205268f400b.Trim()"
+                    },
+                    {
+                        "sequence":  19,
+                        "loader":  "my_tblprofitcentre",
+                        "table":  "mabarchive.my_tblprofitcentre",
+                        "rowCount":  3,
+                        "rowHash":  "484c718620c8c9a0ebd77ba843a44ab1591a4f0eb48bee35b5e7e68fc90b109a.Trim()"
+                    },
+                    {
+                        "sequence":  20,
+                        "loader":  "my_testorproduct",
+                        "table":  "mabarchive.my_testorproduct",
+                        "rowCount":  4,
+                        "rowHash":  "cbdb740062a4d0a174363ba604194fa95a9c26ce2fb7ff796783247e96ba96c9.Trim()"
+                    },
+                    {
+                        "sequence":  21,
+                        "loader":  "my_staff",
+                        "table":  "mabarchive.my_staff",
+                        "rowCount":  4,
+                        "rowHash":  "3a979e68c4362a98cfcf926c0cbe6bbe3b371c88724359ec94365a7620c3ea37.Trim()"
+                    },
+                    {
+                        "sequence":  22,
+                        "loader":  "my_workgroup",
+                        "table":  "mabarchive.my_workgroup",
+                        "rowCount":  3,
+                        "rowHash":  "747f8c96c11ef746c43630d54aeab75ddb301ee797048a4daf02e80a0ad38d72.Trim()"
+                    },
+                    {
+                        "sequence":  23,
+                        "loader":  "my_tblanimals",
+                        "table":  "mabarchive.my_tblanimals",
+                        "rowCount":  4,
+                        "rowHash":  "f6af72c02b2d0d3d7a4be71db0516f615a609db764d999378a55b95a8ae1a1f1.Trim()"
+                    },
+                    {
+                        "sequence":  24,
+                        "loader":  "my_tlkpproject_all",
+                        "table":  "mabarchive.my_tlkpproject_all",
+                        "rowCount":  8,
+                        "rowHash":  "3946d3998917abd4969a9a3d22fca1f8bc8d8c39775a8dfe358cc5a0f6db3570.Trim()"
+                    }
+                ]
+}

@@ -15,9 +15,29 @@ public class MabArchiveLoaderMetadataTests
                 t.Namespace == "Apha.BatchJobs.Infrastructure.Repositories.MabArchive.Loaders")
             .ToList();
 
-        Assert.Equal(24, loaderTypes.Count);
+        static bool InheritsFromSqlLoaderBase(Type type)
+        {
+            var current = type.BaseType;
+            while (current is not null)
+            {
+                if (string.Equals(current.Name, "MabArchiveSqlLoaderBase", StringComparison.Ordinal))
+                {
+                    return true;
+                }
 
-        var loaders = loaderTypes
+                current = current.BaseType;
+            }
+
+            return false;
+        }
+
+        var sqlLoaderTypes = loaderTypes
+            .Where(InheritsFromSqlLoaderBase)
+            .ToList();
+
+        Assert.Equal(24, sqlLoaderTypes.Count);
+
+        var loaders = sqlLoaderTypes
             .Select(t => (IMabArchiveLoader)Activator.CreateInstance(t)!)
             .OrderBy(l => l.Sequence)
             .ToList();

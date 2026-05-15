@@ -1,5 +1,6 @@
 ﻿using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Application.DependencyInjection;
+using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -76,6 +77,49 @@ public sealed class ServiceCollectionSetupTests
 
         Assert.Equal("RecreateSummariesStepCatalog", catalog.GetType().Name);
         Assert.Equal("DotNetLinq", catalog.ImplementationName);
+    }
+
+    [Fact]
+    public void ConfigureBatchJobServices_DefaultMabArchiveMode_ShouldRegisterSqlLoaders()
+    {
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["ConnectionStrings:BatchJobsConnectionString"] = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=admin123"
+            })
+            .Build();
+
+        var services = new ServiceCollection();
+        ServiceCollectionSetup.ConfigureBatchJobServices(services, config);
+
+        using var serviceProvider = services.BuildServiceProvider();
+        var loaders = serviceProvider.GetServices<IMabArchiveLoader>().ToList();
+
+        Assert.Equal(24, loaders.Count);
+        Assert.DoesNotContain(loaders, l => string.Equals(l.GetType().Name, "MyTlkpProgramLinqLoader", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void ConfigureBatchJobServices_WhenMabArchiveModeIsDotNetLinq_ShouldRegisterLinqLoadersOnly()
+    {
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["ConnectionStrings:BatchJobsConnectionString"] = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=admin123",
+                ["BatchJobs:MabArchiveImplementationMode"] = "DotNetLinq"
+            })
+            .Build();
+
+        var services = new ServiceCollection();
+        ServiceCollectionSetup.ConfigureBatchJobServices(services, config);
+
+        using var serviceProvider = services.BuildServiceProvider();
+        var loaders = serviceProvider.GetServices<IMabArchiveLoader>().ToList();
+
+        Assert.Single(loaders);
+        Assert.Equal(1, loaders[0].Sequence);
+        Assert.Equal("my_tlkpprogram", loaders[0].Name);
+        Assert.Equal("MyTlkpProgramLinqLoader", loaders[0].GetType().Name);
     }
 
     private static string GetBatchJobsRoot()

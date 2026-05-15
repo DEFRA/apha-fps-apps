@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.MabArchive.Loaders;
 
-internal abstract class MabArchiveSqlLoaderBase : IMabArchiveLoader
+internal abstract class MabArchiveLoaderBase : IMabArchiveLoader
 {
     public abstract int Sequence { get; }
 
@@ -13,10 +13,30 @@ internal abstract class MabArchiveSqlLoaderBase : IMabArchiveLoader
 
     public Task<int> LoadAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
     {
+        return ExecuteAsync(context, year, cancellationToken);
+    }
+
+    protected abstract Task<int> ExecuteAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken);
+}
+
+internal abstract class MabArchiveSqlLoaderBase : MabArchiveLoaderBase
+{
+    protected override Task<int> ExecuteAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
+    {
         return context.Database.ExecuteSqlInterpolatedAsync(BuildSql(year), cancellationToken);
     }
 
     protected abstract FormattableString BuildSql(int year);
+}
+
+internal abstract class MabArchiveLinqLoaderBase : MabArchiveLoaderBase
+{
+    protected override Task<int> ExecuteAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
+    {
+        return LoadWithLinqAsync(context, year, cancellationToken);
+    }
+
+    protected abstract Task<int> LoadWithLinqAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken);
 }
 
 internal sealed class MyTlkpProgramLoader : MabArchiveSqlLoaderBase
@@ -37,6 +57,41 @@ WHERE p.fpsyear = {0}
     public override string Name => "my_tlkpprogram";
 
     protected override FormattableString BuildSql(int year) => FormattableStringFactory.Create(SqlTemplate, year);
+}
+
+internal sealed class MyTlkpProgramLinqLoader : MabArchiveLinqLoaderBase
+{
+    public override int Sequence => 1;
+
+    public override string Name => "my_tlkpprogram";
+
+    protected override async Task<int> LoadWithLinqAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
+    {
+        var rows = await context.MaSrcTlkpProgram
+            .AsNoTracking()
+            .Where(p => p.FpsYear == year)
+            .Select(p => new MaDstMyTlkpProgram
+            {
+                Year = year,
+                ProgramNo = p.ProgramNo,
+                ProgramName = p.ProgramName,
+                Directorate = p.Directorate,
+                Minim = p.Minim,
+                SectorName = p.SectorName,
+                Customer = p.Customer,
+                Target = p.Target,
+                Manager = p.Manager
+            })
+            .ToListAsync(cancellationToken);
+
+        if (rows.Count == 0)
+        {
+            return 0;
+        }
+
+        await context.MaDstMyTlkpProgram.AddRangeAsync(rows, cancellationToken);
+        return await context.SaveChangesAsync(cancellationToken);
+    }
 }
 
 internal sealed class GTlkpProjectLoader : MabArchiveSqlLoaderBase
