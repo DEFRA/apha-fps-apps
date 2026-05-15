@@ -49,8 +49,7 @@ function onWorkGroupPickChange(workGroup) {
         });
 
     if (!workGroup) {
-        var gm = getPeopleGridManager();
-        if (gm) gm.clearGrid();
+        reloadAllPeopleGrid();
         return;
     }
 
@@ -79,8 +78,7 @@ function onPersonPickChange(personName) {
     document.getElementById('btnShowTimeByJob').disabled = !personName;
 
     if (!personName) {
-        var gm = getPeopleGridManager();
-        if (gm) gm.clearGrid();
+        reloadAllPeopleGrid();
         return;
     }
 
@@ -103,6 +101,23 @@ function reloadPeopleGrid(workGroup) {
         page: 1,
         pageSize: 10
     }, { workGroup: workGroup });
+}
+
+/**
+ * Reloads the people grid with no filter applied, showing all staff.
+ * Resets pagination, sort, and filter state.
+ */
+function reloadAllPeopleGrid() {
+    var gm = getPeopleGridManager();
+    if (!gm) return;
+
+    gm.reloadGrid({
+        filter: '{}',
+        sortBy: '',
+        descending: false,
+        page: 1,
+        pageSize: 10
+    });
 }
 
 /**
@@ -142,12 +157,12 @@ function onPersonRowSelect(rowData) {
     var name = $(rowData).find('[data-property="Name"]').text().trim();
     document.getElementById('selectedPerson').value = name;
     document.getElementById('btnShowTimeByJob').disabled = !name;
-    currentPersonName = name || null;
 }
 
 /**
  * Selects the first selectable row in the people grid and fires its row-select
  * callback, populating the People Information panel automatically.
+ * Only updates currentPersonName when a person filter is already active.
  */
 function selectFirstPersonRow() {
     var $firstRow = $('#tbl_' + peopleGridId + ' tbody tr.selectable-row:first');
@@ -155,6 +170,13 @@ function selectFirstPersonRow() {
         $('#tbl_' + peopleGridId + ' tbody tr').removeClass('selected-row');
         $firstRow.addClass('selected-row');
         onPersonRowSelect($firstRow[0]);
+        // Only persist the selected person back to the filter state when
+        // the grid is already in person-filter mode; never override it when
+        // showing all-staff or work-group filtered results.
+        if (currentPersonName) {
+            var name = $firstRow.find('[data-property="Name"]').text().trim();
+            currentPersonName = name || null;
+        }
     }
 }
 

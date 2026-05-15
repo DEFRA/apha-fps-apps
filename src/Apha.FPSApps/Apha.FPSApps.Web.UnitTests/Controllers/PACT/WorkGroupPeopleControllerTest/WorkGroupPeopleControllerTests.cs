@@ -92,6 +92,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupPeopleControllerT
             };
             _testCapabilityService.GetAllWorkGroupsAsync()
                 .Returns(ApiResponseDto<List<WorkGroupDto>>.SuccessResponse(workGroups));
+            _mapper.Map<List<WorkGroup>>(Arg.Any<List<WorkGroupDto>>())
+                .Returns(workGroups.Select(w => new WorkGroup { WorkGroupName = w.WorkGroupName, ProfitCentre = w.ProfitCentre }).ToList());
             SetupDefaultPeopleResponse();
             SetupDefaultPersonOptions();
             SetupPeopleGridMapper();
@@ -116,6 +118,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupPeopleControllerT
             };
             _employeeService.GetAllWorkGroupPersonAsync()
                 .Returns(ApiResponseDto<List<WorkGroupPersonDto>>.SuccessResponse(persons));
+            _mapper.Map<List<WorkGroupPerson>>(Arg.Any<List<WorkGroupPersonDto>>())
+                .Returns(persons.Select(p => new WorkGroupPerson { Name = p.Name, WorkGroupGrade = p.WorkGroupGrade, WorkGroup = p.WorkGroup }).ToList());
             SetupDefaultPeopleResponse();
             SetupDefaultWorkGroupOptions();
             SetupPeopleGridMapper();

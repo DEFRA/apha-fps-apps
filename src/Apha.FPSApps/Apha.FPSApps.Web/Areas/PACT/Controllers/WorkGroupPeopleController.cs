@@ -1,5 +1,3 @@
-using Apha.FPSApps.Application.Dtos.FPS;
-using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
@@ -38,7 +36,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// </summary>
         public async Task<IActionResult> Index()
         {
-            var defaultRequest = new PaginationFilter<string> { Page = 1, PageSize = 10 };
+            var defaultRequest = new PaginationFilter<string> { Filter = "{}" };
             var peopleGrid = await BuildPeopleGridAsync(defaultRequest, null, null);
             var workGroupOptions = await GetWorkGroupSelectListAsync();
             var personOptions = await GetPersonSelectListAsync();
@@ -73,6 +71,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                     message = "Invalid request data",
                     errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
                 });
+
 
             var gridConfig = await BuildPeopleGridAsync(request, workGroup, personName);
             return PartialView("_DataGrid", gridConfig);
@@ -218,25 +217,25 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// <summary>
         /// Retrieves the list of available work groups for the work group selection dropdown.
         /// </summary>
-        private async Task<List<WorkGroupDto>> GetWorkGroupSelectListAsync()
+        private async Task<List<WorkGroup>> GetWorkGroupSelectListAsync()
         {
             var response = await _testCapabilityService.GetAllWorkGroupsAsync();
             if (!response.Success || response.Data == null)
                 return [];
 
-            return response.Data;
+            return _mapper.Map<List<WorkGroup>>(response.Data);
         }
 
         /// <summary>
         /// Retrieves the list of all persons (PACT staff) for the person selection dropdown.
         /// </summary>
-        private async Task<List<WorkGroupPersonDto>> GetPersonSelectListAsync()
+        private async Task<List<WorkGroupPerson>> GetPersonSelectListAsync()
         {
             var response = await _employeeService.GetAllWorkGroupPersonAsync();
             if (!response.Success || response.Data == null)
                 return [];
 
-            return response.Data;
+            return _mapper.Map<List<WorkGroupPerson>>(response.Data);
         }
     }
 }

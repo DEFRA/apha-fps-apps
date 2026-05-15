@@ -39,6 +39,8 @@ namespace Apha.FPSApps.Web.Mappings
 
             CreateMap<ProjectMonthItem, ProjectMonthDto>().ReverseMap();
             CreateMap<WorkGroupStaffDto, WorkGroupPeopleItem>().ReverseMap();
+            CreateMap<WorkGroupDto, WorkGroup>().ReverseMap();
+            CreateMap<WorkGroupPersonDto, WorkGroupPerson>().ReverseMap();
         }
     }
 }
