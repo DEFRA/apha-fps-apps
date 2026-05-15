@@ -1,4 +1,4 @@
-﻿using Apha.FPS.Application.Dtos;
+using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Application.Services;
 using Apha.FPS.Core.Entities;
@@ -436,11 +436,11 @@ namespace Apha.FPS.Application.UnitTests.Services.EmployeeServiceTest
         [InlineData(null)]
         [InlineData("")]
         [InlineData("   ")]
-        public async Task GetEmployeeByIdAsync_WithInvalidSpNumber_ThrowsArgumentException(string spNumber)
+        public async Task GetEmployeeByIdAsync_WithInvalidSpNumber_ThrowsArgumentException(string? spNumber)
         {
             // Act & Assert
             var exception = await Assert.ThrowsAsync<ArgumentException>(
-                async () => await _sut.GetEmployeeByIdAsync(spNumber)
+                async () => await _sut.GetEmployeeByIdAsync(spNumber!)
             );
 
             exception.ParamName.Should().Be("spNumber");
@@ -679,11 +679,11 @@ namespace Apha.FPS.Application.UnitTests.Services.EmployeeServiceTest
         [InlineData(null)]
         [InlineData("")]
         [InlineData("   ")]
-        public async Task DeleteEmployeeAsync_WithInvalidSpNumber_ThrowsArgumentException(string spNumber)
+        public async Task DeleteEmployeeAsync_WithInvalidSpNumber_ThrowsArgumentException(string? spNumber)
         {
             // Act & Assert
             var exception = await Assert.ThrowsAsync<ArgumentException>(
-                async () => await _sut.DeleteEmployeeAsync(spNumber)
+                async () => await _sut.DeleteEmployeeAsync(spNumber!)
             );
 
             exception.ParamName.Should().Be("spNumber");
@@ -783,6 +783,186 @@ namespace Apha.FPS.Application.UnitTests.Services.EmployeeServiceTest
             exception.Message.Should().Be("Database connection failed");
             await _mockRepository.Received(1).GetAllManagersAsync();
             _mockMapper.DidNotReceive().Map<IEnumerable<ManagerDto>>(Arg.Any<IEnumerable<Manager>>());
+        }
+
+        #endregion
+
+        #region GetAllWorkGroupPersonAsync
+
+        [Fact]
+        public async Task GetAllPersonAsync_WithData_ReturnsMappedPersonDtos()
+        {
+            // Arrange
+            var persons = new List<WorkGroupPerson>
+            {
+                new() { Name = "Alice", WorkGroupGrade = "WG1", WorkGroup = "Group A" },
+                new() { Name = "Bob",   WorkGroupGrade = "WG2", WorkGroup = "Group B" }
+            };
+            var expectedDtos = new List<WorkGroupPersonDto>
+            {
+                new() { Name = "Alice", WorkGroupGrade = "WG1", WorkGroup = "Group A" },
+                new() { Name = "Bob",   WorkGroupGrade = "WG2", WorkGroup = "Group B" }
+            };
+
+            _mockRepository.GetAllWorkGroupPersonAsync().Returns(persons);
+            _mockMapper.Map<IEnumerable<WorkGroupPersonDto>>(persons).Returns(expectedDtos);
+
+            // Act
+            var result = await _sut.GetAllWorkGroupPersonAsync();
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Should().HaveCount(2);
+            result.First().Name.Should().Be("Alice");
+
+            await _mockRepository.Received(1).GetAllWorkGroupPersonAsync();
+            _mockMapper.Received(1).Map<IEnumerable<WorkGroupPersonDto>>(persons);
+        }
+
+        [Fact]
+        public async Task GetAllPersonAsync_EmptyRepository_ReturnsEmptyList()
+        {
+            // Arrange
+            _mockRepository.GetAllWorkGroupPersonAsync().Returns(new List<WorkGroupPerson>());
+            _mockMapper.Map<IEnumerable<WorkGroupPersonDto>>(Arg.Any<IEnumerable<WorkGroupPerson>>())
+                .Returns(new List<WorkGroupPersonDto>());
+
+            // Act
+            var result = await _sut.GetAllWorkGroupPersonAsync();
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Should().BeEmpty();
+            await _mockRepository.Received(1).GetAllWorkGroupPersonAsync();
+        }
+
+        [Fact]
+        public async Task GetAllPersonAsync_RepositoryThrows_PropagatesException()
+        {
+            // Arrange
+            _mockRepository.GetAllWorkGroupPersonAsync()
+                .Throws(new Exception("Database error"));
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<Exception>(
+                async () => await _sut.GetAllWorkGroupPersonAsync());
+            ex.Message.Should().Be("Database error");
+            await _mockRepository.Received(1).GetAllWorkGroupPersonAsync();
+        }
+
+        #endregion
+
+        #region GetWorkGroupStaffAsync
+
+        [Fact]
+        public async Task GetWorkGroupStaffAsync_WithNoWorkGroup_ReturnsAllStaff()
+        {
+            // Arrange
+            var queryFilter = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+            var repoResult = new PagedData<WorkGroupStaff>
+            {
+                Data = new List<WorkGroupStaff>
+                {
+                    new() { Name = "Alice", WorkGroupGrade = "WG1" }
+                },
+                PaginationData = new PaginationData { TotalRecords = 1, PageNumber = 1, PageSize = 10 }
+            };
+            var expectedDto = new PaginatedResult<WorkGroupStaffDto>
+            {
+                Data = [new() { Name = "Alice", WorkGroupGrade = "WG1" }],
+                PaginationData = new PaginationDto { TotalRecords = 1 }
+            };
+
+            _mockMapper.Map<PaginationParameters<string>>(queryFilter).Returns(mappedParams);
+            _mockRepository.GetWorkGroupStaffAsync(mappedParams, null).Returns(repoResult);
+            _mockMapper.Map<PaginatedResult<WorkGroupStaffDto>>(repoResult).Returns(expectedDto);
+
+            // Act
+            var result = await _sut.GetWorkGroupStaffAsync(queryFilter);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Data.Should().HaveCount(1);
+            result.Data.First().Name.Should().Be("Alice");
+
+            await _mockRepository.Received(1).GetWorkGroupStaffAsync(mappedParams, null);
+            _mockMapper.Received(1).Map<PaginatedResult<WorkGroupStaffDto>>(repoResult);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupStaffAsync_WithWorkGroup_PassesWorkGroupToRepository()
+        {
+            // Arrange
+            var queryFilter = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+            var repoResult = new PagedData<WorkGroupStaff>
+            {
+                Data = new List<WorkGroupStaff> { new() { Name = "Alice" } },
+                PaginationData = new PaginationData { TotalRecords = 1 }
+            };
+            var expectedDto = new PaginatedResult<WorkGroupStaffDto>
+            {
+                Data = [new() { Name = "Alice" }],
+                PaginationData = new PaginationDto { TotalRecords = 1 }
+            };
+
+            _mockMapper.Map<PaginationParameters<string>>(queryFilter).Returns(mappedParams);
+            _mockRepository.GetWorkGroupStaffAsync(mappedParams, "WG1").Returns(repoResult);
+            _mockMapper.Map<PaginatedResult<WorkGroupStaffDto>>(repoResult).Returns(expectedDto);
+
+            // Act
+            var result = await _sut.GetWorkGroupStaffAsync(queryFilter, "WG1");
+
+            // Assert
+            result.Should().NotBeNull();
+            await _mockRepository.Received(1).GetWorkGroupStaffAsync(mappedParams, "WG1");
+        }
+
+        [Fact]
+        public async Task GetWorkGroupStaffAsync_EmptyResult_ReturnsEmptyPaginatedResult()
+        {
+            // Arrange
+            var queryFilter = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+            var repoResult = new PagedData<WorkGroupStaff>
+            {
+                Data = new List<WorkGroupStaff>(),
+                PaginationData = new PaginationData { TotalRecords = 0, PageNumber = 1, PageSize = 10 }
+            };
+            var expectedDto = new PaginatedResult<WorkGroupStaffDto>
+            {
+                Data = [],
+                PaginationData = new PaginationDto { TotalRecords = 0 }
+            };
+
+            _mockMapper.Map<PaginationParameters<string>>(queryFilter).Returns(mappedParams);
+            _mockRepository.GetWorkGroupStaffAsync(mappedParams, null).Returns(repoResult);
+            _mockMapper.Map<PaginatedResult<WorkGroupStaffDto>>(repoResult).Returns(expectedDto);
+
+            // Act
+            var result = await _sut.GetWorkGroupStaffAsync(queryFilter);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Data.Should().BeEmpty();
+            result.PaginationData.TotalRecords.Should().Be(0);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupStaffAsync_RepositoryThrows_PropagatesException()
+        {
+            // Arrange
+            var queryFilter = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            _mockMapper.Map<PaginationParameters<string>>(queryFilter)
+                .Returns(new PaginationParameters<string>());
+            _mockRepository.GetWorkGroupStaffAsync(Arg.Any<PaginationParameters<string>>(), Arg.Any<string?>())
+                .Throws(new Exception("DB failure"));
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<Exception>(
+                async () => await _sut.GetWorkGroupStaffAsync(queryFilter));
+            ex.Message.Should().Be("DB failure");
         }
 
         #endregion
