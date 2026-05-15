@@ -144,22 +144,16 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectInvoiceA
         }
 
         [Fact]
-        public async Task GetTotalAmountAsync_WithNullParentProject_UsesBaseUrl()
+        public async Task GetTotalAmountAsync_WithNullParentProject_ReturnsZeroWithoutHttpCall()
         {
-            // Arrange
-            var apiResponse = new ApiResponse<decimal?> { Success = true, Data = 0m };
-            var expectedDto = ApiResponseDto<decimal>.SuccessResponse(0m);
-
-            _http.GetAsync<decimal?>("api/v1/projectinvoice/total").Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<decimal>>(apiResponse).Returns(expectedDto);
-
             // Act
             var result = await _client.GetTotalAmountAsync(null);
 
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
-            await _http.Received(1).GetAsync<decimal?>("api/v1/projectinvoice/total");
+            Assert.Equal(0m, result.Data);
+            await _http.DidNotReceive().GetAsync<decimal?>(Arg.Any<string>());
         }
 
         [Fact]
@@ -182,7 +176,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectInvoiceA
             _mapper.Map<ApiResponseDto<decimal>>(apiResponse).Returns(mappedResponse);
 
             // Act
-            var result = await _client.GetTotalAmountAsync(null);
+            var result = await _client.GetTotalAmountAsync("PROJ-001");
 
             // Assert
             Assert.NotNull(result);

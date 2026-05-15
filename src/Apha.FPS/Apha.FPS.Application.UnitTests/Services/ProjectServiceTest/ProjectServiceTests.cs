@@ -614,6 +614,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
             var expectedDto = new ProjectDto { ParentProject = "PP001", ProjectTitle = "New Project" };
 
             _mockMapper.Map<Project>(inputDto).Returns(projectEntity);
+            _mockRepository.CheckProgramExistsAsync(Arg.Any<string>()).Returns(true);
             _mockRepository.CreateProjectAsync(projectEntity).Returns(createdEntity);
             _mockMapper.Map<ProjectDto>(createdEntity).Returns(expectedDto);
 
@@ -636,6 +637,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
             var projectEntity = new Project { ParentProject = "PP001", Program = "P001", Customer = "DEFRA", ProjectStatus = "Active" };
 
             _mockMapper.Map<Project>(inputDto).Returns(projectEntity);
+            _mockRepository.CheckProgramExistsAsync(Arg.Any<string>()).Returns(true);
             _mockRepository.CreateProjectAsync(projectEntity)
                 .Returns(Task.FromException<Project>(new Exception("Database connection failed")));
 
@@ -663,6 +665,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
             var expectedDto = new ProjectDto { ParentProject = "PP001", ProjectTitle = "Updated Project", ProjectStatus = "Closed" };
 
             _mockMapper.Map<Project>(inputDto).Returns(projectEntity);
+            _mockRepository.CheckProgramExistsAsync(Arg.Any<string>()).Returns(true);
             _mockRepository.UpdateProjectAsync(projectEntity).Returns(updatedEntity);
             _mockMapper.Map<ProjectDto>(updatedEntity).Returns(expectedDto);
 
@@ -686,6 +689,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
             var projectEntity = new Project { ParentProject = "PP001", Program = "P001", Customer = "DEFRA", ProjectStatus = "Active" };
 
             _mockMapper.Map<Project>(inputDto).Returns(projectEntity);
+            _mockRepository.CheckProgramExistsAsync(Arg.Any<string>()).Returns(true);
             _mockRepository.UpdateProjectAsync(projectEntity)
                 .Returns(Task.FromException<Project>(new Exception("Database connection failed")));
 
@@ -713,6 +717,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
             var expectedDto = new ProjectDto { ParentProject = "PP001", ProjectTitle = "PACT Update" };
 
             _mockMapper.Map<Project>(inputDto).Returns(projectEntity);
+            _mockRepository.CheckProgramExistsAsync(Arg.Any<string>()).Returns(true);
             _mockRepository.UpdatePactProjectDetailsAsync(projectEntity).Returns(updatedEntity);
             _mockMapper.Map<ProjectDto>(updatedEntity).Returns(expectedDto);
 
@@ -735,6 +740,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
             var projectEntity = new Project { ParentProject = "PP999", Program = "P001", Customer = "DEFRA", ProjectStatus = "Active" };
 
             _mockMapper.Map<Project>(inputDto).Returns(projectEntity);
+            _mockRepository.CheckProgramExistsAsync(Arg.Any<string>()).Returns(true);
             _mockRepository.UpdatePactProjectDetailsAsync(projectEntity).Returns((Project?)null);
 
             // Act
@@ -754,6 +760,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
             var projectEntity = new Project { ParentProject = "PP001", Program = "P001", Customer = "DEFRA", ProjectStatus = "Active" };
 
             _mockMapper.Map<Project>(inputDto).Returns(projectEntity);
+            _mockRepository.CheckProgramExistsAsync(Arg.Any<string>()).Returns(true);
             _mockRepository.UpdatePactProjectDetailsAsync(projectEntity)
                 .Returns(Task.FromException<Project?>(new Exception("Database connection failed")));
 
@@ -910,6 +917,278 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
             exception.Message.Should().Be("Database connection failed");
             await _mockRepository.Received(1).HasAssociatedJobCodesAsync(parentProject);
             await _mockRepository.Received(1).DeleteProjectAsync(parentProject);
+        }
+
+        #endregion
+
+        #region CheckProjectExistsAsync
+
+        [Fact]
+        public async Task CheckProjectExistsAsync_WhenProjectExists_ReturnsTrue()
+        {
+            _mockRepository.CheckProjectExistsAsync("PP001").Returns(true);
+
+            var result = await _sut.CheckProjectExistsAsync("PP001");
+
+            result.Should().BeTrue();
+            await _mockRepository.Received(1).CheckProjectExistsAsync("PP001");
+        }
+
+        [Fact]
+        public async Task CheckProjectExistsAsync_WhenProjectDoesNotExist_ReturnsFalse()
+        {
+            _mockRepository.CheckProjectExistsAsync("NOPE").Returns(false);
+
+            var result = await _sut.CheckProjectExistsAsync("NOPE");
+
+            result.Should().BeFalse();
+            await _mockRepository.Received(1).CheckProjectExistsAsync("NOPE");
+        }
+
+        [Fact]
+        public async Task CheckProjectExistsAsync_WhenNullCode_ThrowsArgumentNullException()
+        {
+            await Assert.ThrowsAsync<ArgumentNullException>(
+                async () => await _sut.CheckProjectExistsAsync(null!));
+        }
+
+        [Fact]
+        public async Task CheckProjectExistsAsync_WhenRepositoryThrows_PropagatesException()
+        {
+            _mockRepository.CheckProjectExistsAsync("PP001")
+                .Returns(Task.FromException<bool>(new Exception("Database connection failed")));
+
+            var exception = await Assert.ThrowsAsync<Exception>(
+                async () => await _sut.CheckProjectExistsAsync("PP001"));
+
+            exception.Message.Should().Be("Database connection failed");
+        }
+
+        #endregion
+
+        #region CheckProjectExistsInFarmFileAsync
+
+        [Fact]
+        public async Task CheckProjectExistsInFarmFileAsync_WhenExists_ReturnsTrue()
+        {
+            _mockRepository.CheckProjectExistsInFarmFileAsync("PP001").Returns(true);
+
+            var result = await _sut.CheckProjectExistsInFarmFileAsync("PP001");
+
+            result.Should().BeTrue();
+            await _mockRepository.Received(1).CheckProjectExistsInFarmFileAsync("PP001");
+        }
+
+        [Fact]
+        public async Task CheckProjectExistsInFarmFileAsync_WhenNotExists_ReturnsFalse()
+        {
+            _mockRepository.CheckProjectExistsInFarmFileAsync("PP001").Returns(false);
+
+            var result = await _sut.CheckProjectExistsInFarmFileAsync("PP001");
+
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task CheckProjectExistsInFarmFileAsync_WhenNullCode_ThrowsArgumentNullException()
+        {
+            await Assert.ThrowsAsync<ArgumentNullException>(
+                async () => await _sut.CheckProjectExistsInFarmFileAsync(null!));
+        }
+
+        #endregion
+
+        #region ChangeProjectCodeAsync
+
+        [Fact]
+        public async Task ChangeProjectCodeAsync_WithValidCodes_CallsRepository()
+        {
+            _mockRepository.CheckProjectExistsAsync("OLD1").Returns(true);
+            _mockRepository.CheckProjectExistsAsync("NEW1").Returns(false);
+            _mockRepository.CheckProjectExistsInFarmFileAsync("OLD1").Returns(false);
+
+            await _sut.ChangeProjectCodeAsync("OLD1", "NEW1");
+
+            await _mockRepository.Received(1).ChangeProjectCodeAsync("OLD1", "NEW1");
+        }
+
+        [Fact]
+        public async Task ChangeProjectCodeAsync_WhenOldCodeEmpty_ThrowsBusinessValidationErrorException()
+        {
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                async () => await _sut.ChangeProjectCodeAsync("", "NEW1"));
+
+            exception.Errors.Should().Contain(e => e.Code == "OLD_CODE_REQUIRED");
+        }
+
+        [Fact]
+        public async Task ChangeProjectCodeAsync_WhenNewCodeEmpty_ThrowsBusinessValidationErrorException()
+        {
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                async () => await _sut.ChangeProjectCodeAsync("OLD1", ""));
+
+            exception.Errors.Should().Contain(e => e.Code == "NEW_CODE_REQUIRED");
+        }
+
+        [Fact]
+        public async Task ChangeProjectCodeAsync_WhenOldCodeNotFound_ThrowsBusinessValidationErrorException()
+        {
+            _mockRepository.CheckProjectExistsAsync("OLD1").Returns(false);
+            _mockRepository.CheckProjectExistsAsync("NEW1").Returns(false);
+            _mockRepository.CheckProjectExistsInFarmFileAsync("OLD1").Returns(false);
+
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                async () => await _sut.ChangeProjectCodeAsync("OLD1", "NEW1"));
+
+            exception.Errors.Should().Contain(e => e.Code == "OLD_CODE_NOT_FOUND");
+        }
+
+        [Fact]
+        public async Task ChangeProjectCodeAsync_WhenNewCodeAlreadyExists_ThrowsBusinessValidationErrorException()
+        {
+            _mockRepository.CheckProjectExistsAsync("OLD1").Returns(true);
+            _mockRepository.CheckProjectExistsAsync("NEW1").Returns(true);
+            _mockRepository.CheckProjectExistsInFarmFileAsync("OLD1").Returns(false);
+
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                async () => await _sut.ChangeProjectCodeAsync("OLD1", "NEW1"));
+
+            exception.Errors.Should().Contain(e => e.Code == "CODE_ALREADY_EXISTS");
+        }
+
+        [Fact]
+        public async Task ChangeProjectCodeAsync_WhenFarmFileDataExists_ThrowsBusinessValidationErrorException()
+        {
+            _mockRepository.CheckProjectExistsAsync("OLD1").Returns(true);
+            _mockRepository.CheckProjectExistsAsync("NEW1").Returns(false);
+            _mockRepository.CheckProjectExistsInFarmFileAsync("OLD1").Returns(true);
+
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                async () => await _sut.ChangeProjectCodeAsync("OLD1", "NEW1"));
+
+            exception.Errors.Should().Contain(e => e.Code == "FARM_FILE_DATA_EXISTS");
+        }
+
+        #endregion
+
+        #region DeleteProjectAndChildrenAsync
+
+        [Fact]
+        public async Task DeleteProjectAndChildrenAsync_WithValidProject_CallsRepository()
+        {
+            _mockRepository.HasPlannedTestsAsync("PP001").Returns(false);
+            _mockRepository.HasMonthlyOutputAsync("PP001").Returns(false);
+            _mockRepository.HasMonthlyTimeAsync("PP001").Returns(false);
+            _mockRepository.HasProjectInvoicesAsync("PP001").Returns(false);
+            _mockRepository.HasProjectSubcontractsAsync("PP001").Returns(false);
+
+            await _sut.DeleteProjectAndChildrenAsync("PP001");
+
+            await _mockRepository.Received(1).DeleteProjectAndChildrenAsync("PP001");
+        }
+
+        [Fact]
+        public async Task DeleteProjectAndChildrenAsync_WhenEmptyCode_ThrowsBusinessValidationErrorException()
+        {
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                async () => await _sut.DeleteProjectAndChildrenAsync(""));
+
+            exception.Errors.Should().Contain(e => e.Code == "PARENT_PROJECT_REQUIRED");
+            await _mockRepository.DidNotReceive().DeleteProjectAndChildrenAsync(Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task DeleteProjectAndChildrenAsync_WhenHasPlannedTests_ThrowsBusinessValidationErrorException()
+        {
+            _mockRepository.HasPlannedTestsAsync("PP001").Returns(true);
+            _mockRepository.HasMonthlyOutputAsync("PP001").Returns(false);
+            _mockRepository.HasMonthlyTimeAsync("PP001").Returns(false);
+            _mockRepository.HasProjectInvoicesAsync("PP001").Returns(false);
+            _mockRepository.HasProjectSubcontractsAsync("PP001").Returns(false);
+
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                async () => await _sut.DeleteProjectAndChildrenAsync("PP001"));
+
+            exception.Errors.Should().Contain(e => e.Code == "HAS_PLANNED_TESTS");
+            await _mockRepository.DidNotReceive().DeleteProjectAndChildrenAsync(Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task DeleteProjectAndChildrenAsync_WhenHasMonthlyOutput_ThrowsBusinessValidationErrorException()
+        {
+            _mockRepository.HasPlannedTestsAsync("PP001").Returns(false);
+            _mockRepository.HasMonthlyOutputAsync("PP001").Returns(true);
+            _mockRepository.HasMonthlyTimeAsync("PP001").Returns(false);
+            _mockRepository.HasProjectInvoicesAsync("PP001").Returns(false);
+            _mockRepository.HasProjectSubcontractsAsync("PP001").Returns(false);
+
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                async () => await _sut.DeleteProjectAndChildrenAsync("PP001"));
+
+            exception.Errors.Should().Contain(e => e.Code == "HAS_MONTHLY_OUTPUT");
+        }
+
+        [Fact]
+        public async Task DeleteProjectAndChildrenAsync_WhenHasMonthlyTime_ThrowsBusinessValidationErrorException()
+        {
+            _mockRepository.HasPlannedTestsAsync("PP001").Returns(false);
+            _mockRepository.HasMonthlyOutputAsync("PP001").Returns(false);
+            _mockRepository.HasMonthlyTimeAsync("PP001").Returns(true);
+            _mockRepository.HasProjectInvoicesAsync("PP001").Returns(false);
+            _mockRepository.HasProjectSubcontractsAsync("PP001").Returns(false);
+
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                async () => await _sut.DeleteProjectAndChildrenAsync("PP001"));
+
+            exception.Errors.Should().Contain(e => e.Code == "HAS_MONTHLY_TIME");
+        }
+
+        [Fact]
+        public async Task DeleteProjectAndChildrenAsync_WhenHasInvoices_ThrowsBusinessValidationErrorException()
+        {
+            _mockRepository.HasPlannedTestsAsync("PP001").Returns(false);
+            _mockRepository.HasMonthlyOutputAsync("PP001").Returns(false);
+            _mockRepository.HasMonthlyTimeAsync("PP001").Returns(false);
+            _mockRepository.HasProjectInvoicesAsync("PP001").Returns(true);
+            _mockRepository.HasProjectSubcontractsAsync("PP001").Returns(false);
+
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                async () => await _sut.DeleteProjectAndChildrenAsync("PP001"));
+
+            exception.Errors.Should().Contain(e => e.Code == "HAS_INVOICES");
+        }
+
+        [Fact]
+        public async Task DeleteProjectAndChildrenAsync_WhenHasSubcontracts_ThrowsBusinessValidationErrorException()
+        {
+            _mockRepository.HasPlannedTestsAsync("PP001").Returns(false);
+            _mockRepository.HasMonthlyOutputAsync("PP001").Returns(false);
+            _mockRepository.HasMonthlyTimeAsync("PP001").Returns(false);
+            _mockRepository.HasProjectInvoicesAsync("PP001").Returns(false);
+            _mockRepository.HasProjectSubcontractsAsync("PP001").Returns(true);
+
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                async () => await _sut.DeleteProjectAndChildrenAsync("PP001"));
+
+            exception.Errors.Should().Contain(e => e.Code == "HAS_SUBCONTRACTS");
+        }
+
+        [Fact]
+        public async Task DeleteProjectAndChildrenAsync_WhenMultipleBlockers_ThrowsWithAllErrors()
+        {
+            _mockRepository.HasPlannedTestsAsync("PP001").Returns(true);
+            _mockRepository.HasMonthlyOutputAsync("PP001").Returns(true);
+            _mockRepository.HasMonthlyTimeAsync("PP001").Returns(false);
+            _mockRepository.HasProjectInvoicesAsync("PP001").Returns(false);
+            _mockRepository.HasProjectSubcontractsAsync("PP001").Returns(false);
+
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                async () => await _sut.DeleteProjectAndChildrenAsync("PP001"));
+
+            exception.Errors.Should().HaveCount(2);
+            exception.Errors.Should().Contain(e => e.Code == "HAS_PLANNED_TESTS");
+            exception.Errors.Should().Contain(e => e.Code == "HAS_MONTHLY_OUTPUT");
+            await _mockRepository.DidNotReceive().DeleteProjectAndChildrenAsync(Arg.Any<string>());
         }
 
         #endregion

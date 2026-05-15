@@ -5,5 +5,6 @@ namespace Apha.FPS.Application.Interfaces
     public interface IProjectGroupService
     {
         Task<IEnumerable<ProjectGroupDto>> GetAllProjectGroupsAsync();
+        Task<IEnumerable<ProjectGroupDto>> GetAllProjectGroupsByUserAsync();
     }
 }

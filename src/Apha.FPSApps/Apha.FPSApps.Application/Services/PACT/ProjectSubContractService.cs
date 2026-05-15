@@ -18,6 +18,9 @@ namespace Apha.FPSApps.Application.Services.PACT
         public async Task<ApiResponseDto<List<ProjectSubContractDto>>> GetPagedProjectSubContractsAsync(QueryParameters<string> query, string? project)
             => await _pactClient.PactProjectSubContract.GetPagedProjectSubContractsAsync(query, project);
 
+        public async Task<ApiResponseDto<List<ProjectSubContractDto>>> GetPagedProjectSubContractsManualAsync(QueryParameters<string> query, string? project)
+            => await _pactClient.PactProjectSubContract.GetPagedProjectSubContractsManualAsync(query, project);
+
         public async Task<ApiResponseDto<decimal>> GetTotalAmountAsync(string? project)
             => await _pactClient.PactProjectSubContract.GetTotalAmountAsync(project);
 
