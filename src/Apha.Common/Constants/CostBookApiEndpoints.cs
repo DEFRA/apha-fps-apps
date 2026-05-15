@@ -54,5 +54,11 @@ namespace Apha.Common.Constants
         public const string GetAccountCategories = "api/v1/yearlydetails/lookups/accountcategories";
         public const string GetTestCodeLookups = "api/v1/yearlydetails/lookups/testcodes";
         public const string GetAllAnimals = "api/v1/yearlydetails/lookups/animals";
+
+        // Project Summary
+        public const string GetProfitIncludedTotal = "api/v1/projectsummary/{0}/years/{1}/profittotal";
+        public const string GetStaffYearsPivot = "api/v1/projectsummary/{0}/staff-years";
+        public const string GetStaffEffortPivot = "api/v1/projectsummary/{0}/staff-effort";
+        public const string GetProjectCostsPivot = "api/v1/projectsummary/{0}/project-costs";
     }
 }

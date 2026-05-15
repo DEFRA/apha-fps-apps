@@ -28,12 +28,12 @@ namespace Apha.Costbook.Api.Extensions
             services.AddScoped<ICustomerService, CustomerService>();
             services.AddScoped<IStaffService, StaffService>();
             services.AddScoped<IYearlyDetailsService, YearlyDetailsService>();
-
+            services.AddScoped<IProjectSummaryService, ProjectSummaryService>();
             return services;
         }
+
         public static IServiceCollection AddRepositories(this IServiceCollection services)
         {
-            // Add your data access services here
             services.AddScoped<IFPSYearContext, FPSYearContext>();
             services.AddScoped<IProjectRepository, ProjectRepository>();
             services.AddScoped<IContractRepository, ContractRepository>();

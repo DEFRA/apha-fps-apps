@@ -1,4 +1,6 @@
-﻿namespace Apha.FPSApps.Application.Interfaces.CostBookApiClients
+﻿using Apha.FPSApps.Application.Interfaces.CostBookApiClients;
+
+namespace Apha.FPSApps.Application.Interfaces.CostBookApiClients
 {
     public interface ICostBookApiClient
     {
@@ -9,5 +11,6 @@
         ICostBookStaffApiClient Staff { get; }
         ICostBookContractApiClient Contracts { get; }
         ICostBookYearlyDetailsApiClient YearlyDetails { get; }
+        ICostBookProjectSummaryApiClient ProjectSummary { get; }
     }
 }

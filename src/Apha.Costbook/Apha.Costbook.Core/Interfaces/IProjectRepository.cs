@@ -1,10 +1,5 @@
 ﻿using Apha.Costbook.Core.Entities;
 using Apha.Costbook.Core.Pagination;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Apha.Costbook.Core.Interfaces
 {
@@ -20,5 +15,9 @@ namespace Apha.Costbook.Core.Interfaces
         Task<bool> DeleteProjectAsync(string id);
         Task<string> GetNextProjectNumberAsync(string? baseNumber);
         Task<bool> RecostProjectAsync(string projectID);
+        Task<double> GetProfitIncludedTotalAsync(string projectId, int year);
+        Task<StaffYearsPivotData> GetStaffYearsPivotAsync(string projectId, PaginationParameters<string>? parameters = null);
+        Task<StaffEffortPivotData> GetStaffEffortAsync(string projectId, PaginationParameters<string>? parameters = null);
+        Task<ProjectCostsPivotData> GetProjectCostsPivotAsync(string projectId, PaginationParameters<string>? parameters = null);
     }
 }

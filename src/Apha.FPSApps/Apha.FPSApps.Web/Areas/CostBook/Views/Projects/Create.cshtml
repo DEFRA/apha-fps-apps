@@ -22,6 +22,38 @@
             document.getElementById(displayId).value = '';
             document.getElementById(hiddenId).value = '';
         }
+
+        // Auto-calculate StartFYear when StartDate changes
+        if (pickerId === 'StartdatePicker') {
+            calculateStartFYear();
+        }
+    }
+
+    function calculateStartFYear() {
+        var picker = document.getElementById('StartdatePicker');
+        var startFYearInput = document.getElementById('StartFYear');
+        var financialYearsSelect = document.getElementById('FinancialYears');
+
+        if (!picker || !startFYearInput || !financialYearsSelect) return;
+
+        if (!picker.value) {
+            startFYearInput.value = '';
+            return;
+        }
+
+        var parts = picker.value.split('-');
+        var year = parseInt(parts[0], 10);
+        var month = parseInt(parts[1], 10);
+        var financialYears = financialYearsSelect.value;
+
+        // Mirrors MS Access SetStartDate / C# CalculateStartFinancialYear logic
+        if (financialYears === '0') {
+            startFYearInput.value = year;
+        } else if (month <= 3) {
+            startFYearInput.value = year - 1;
+        } else {
+            startFYearInput.value = year;
+        }
     }
 </script>
 
