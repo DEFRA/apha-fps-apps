@@ -215,9 +215,11 @@ WHERE parentproject IN (
         try
         {
             var totalRowsAffected = 0;
+            _context.ChangeTracker.Clear();
 
             foreach (var loader in _orderedLoaders)
             {
+                _context.ChangeTracker.Clear();
                 currentLoaderNumber = loader.Sequence;
                 currentLoaderName = loader.Name;
 
@@ -225,6 +227,7 @@ WHERE parentproject IN (
 
                 var rowCount = await loader.LoadAsync(_context, targetYear, cancellationToken);
                 totalRowsAffected += rowCount;
+                _context.ChangeTracker.Clear();
 
                 _logger.LogInformation("[{LoaderNumber}/{TotalLoaders}] {LoaderName}: {RowCount} rows for year {Year}", loader.Sequence, _orderedLoaders.Count, loader.Name, rowCount, targetYear);
             }

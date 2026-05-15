@@ -11,7 +11,7 @@ internal sealed class MaSrcTlkpProgram
     public string? Minim { get; set; }
     public string? SectorName { get; set; }
     public string? Customer { get; set; }
-    public string? Target { get; set; }
+    public decimal? Target { get; set; }
     public string? Manager { get; set; }
 }
 
@@ -83,7 +83,7 @@ internal sealed class MaDstMyTlkpProgram
     public string? Minim { get; set; }
     public string? SectorName { get; set; }
     public string? Customer { get; set; }
-    public string? Target { get; set; }
+    public decimal? Target { get; set; }
     public string? Manager { get; set; }
 }
 
@@ -159,7 +159,7 @@ internal sealed class MaSrcMonthlyOutput
     public int FpsYear { get; set; }
     public required string TestCode { get; set; }
     public required string Buyer { get; set; }
-    public int Month { get; set; }
+    public double Month { get; set; }
     public required string WorkGroup { get; set; }
     public double? Volume { get; set; }
     public string? WgBuyer { get; set; }
@@ -170,7 +170,7 @@ internal sealed class MaDstMyMonthlyOutput
     public int Year { get; set; }
     public required string TestCode { get; set; }
     public required string Buyer { get; set; }
-    public int Month { get; set; }
+    public double Month { get; set; }
     public required string WorkGroup { get; set; }
     public double? Volume { get; set; }
     public string? WgBuyer { get; set; }
@@ -181,7 +181,7 @@ internal sealed class MaSrcMonthlyTime
     public int FpsYear { get; set; }
     public required string PactStaffId { get; set; }
     public required string TimeCode { get; set; }
-    public int Month { get; set; }
+    public double Month { get; set; }
     public required string ParentProject { get; set; }
     public required string WorkGroup { get; set; }
     public double? Hours { get; set; }
@@ -192,7 +192,7 @@ internal sealed class MaDstMyMonthlyTime
     public int Year { get; set; }
     public required string PactStaffId { get; set; }
     public required string TimeCode { get; set; }
-    public int Month { get; set; }
+    public double Month { get; set; }
     public required string ParentProject { get; set; }
     public required string WorkGroup { get; set; }
     public double? Hours { get; set; }
@@ -232,15 +232,15 @@ internal sealed class MaSrcProjSubContract
     public int SubContCounter { get; set; }
     public required string Project { get; set; }
     public string? TestJob { get; set; }
-    public int Month { get; set; }
+    public double Month { get; set; }
     public decimal? Amount { get; set; }
     public string? WorkGroup { get; set; }
     public string? AcctCode { get; set; }
     public string? Supplier { get; set; }
     public string? Description { get; set; }
-    public string? SupplierNumber { get; set; }
+    public int? SupplierNumber { get; set; }
     public decimal? DailyRate { get; set; }
-    public double? AnimalDays { get; set; }
+    public int? AnimalDays { get; set; }
 }
 
 internal sealed class MaDstMyProjSubContract
@@ -249,24 +249,24 @@ internal sealed class MaDstMyProjSubContract
     public int SubContCounter { get; set; }
     public required string Project { get; set; }
     public string? TestJob { get; set; }
-    public int Month { get; set; }
+    public double Month { get; set; }
     public decimal? Amount { get; set; }
     public string? WorkGroup { get; set; }
     public string? AcctCode { get; set; }
     public string? Supplier { get; set; }
     public string? Description { get; set; }
-    public string? SupplierNumber { get; set; }
+    public int? SupplierNumber { get; set; }
     public decimal? DailyRate { get; set; }
-    public double? AnimalDays { get; set; }
+    public int? AnimalDays { get; set; }
 }
 
 internal sealed class MaSrcProjectMonthFinal
 {
     public int FpsYear { get; set; }
     public required string Project { get; set; }
-    public int MonthNo { get; set; }
+    public double MonthNo { get; set; }
     public string? PeriodName { get; set; }
-    public int? CumFlag { get; set; }
+    public double? CumFlag { get; set; }
     public decimal? CostProfile { get; set; }
     public decimal? SubContracts { get; set; }
     public decimal? Animals { get; set; }
@@ -283,7 +283,7 @@ internal sealed class MaSrcProjectMonthFinal
     public decimal? CumInvoices { get; set; }
     public decimal? CumCoiw { get; set; }
     public decimal? CumPortSales { get; set; }
-    public double? MstoneDue { get; set; }
+    public int? MstoneDue { get; set; }
     public double? DueDone { get; set; }
     public double? OnTime { get; set; }
     public double? SumOfMstoneDue { get; set; }
@@ -305,9 +305,9 @@ internal sealed class MaDstMyProjectMonthFinal
 {
     public int Year { get; set; }
     public required string Project { get; set; }
-    public int MonthNo { get; set; }
+    public double MonthNo { get; set; }
     public string? PeriodName { get; set; }
-    public int? CumFlag { get; set; }
+    public double? CumFlag { get; set; }
     public decimal? CostProfile { get; set; }
     public decimal? SubContracts { get; set; }
     public decimal? Animals { get; set; }
@@ -324,7 +324,7 @@ internal sealed class MaDstMyProjectMonthFinal
     public decimal? CumInvoices { get; set; }
     public decimal? CumCoiw { get; set; }
     public decimal? CumPortSales { get; set; }
-    public double? MstoneDue { get; set; }
+    public int? MstoneDue { get; set; }
     public double? DueDone { get; set; }
     public double? OnTime { get; set; }
     public double? SumOfMstoneDue { get; set; }
@@ -351,7 +351,6 @@ internal sealed class MaSrcTblAdditionalCosts
     public decimal? ItemCost { get; set; }
     public string? Freq { get; set; }
     public string? Supplier { get; set; }
-    public int? AcCounter { get; set; }
 }
 
 internal sealed class MaDstMyTblAdditionalCosts
@@ -372,7 +371,7 @@ internal sealed class MaSrcTblAnimalReq
     public required string JobCode { get; set; }
     public string? AnimalType { get; set; }
     public double? NumberOfDays { get; set; }
-    public int? NumberOfAnimals { get; set; }
+    public double? NumberOfAnimals { get; set; }
 }
 
 internal sealed class MaDstMyTblAnimalReq
@@ -381,7 +380,7 @@ internal sealed class MaDstMyTblAnimalReq
     public required string JobCode { get; set; }
     public string? AnimalType { get; set; }
     public double? NumberOfDays { get; set; }
-    public int? NumberOfAnimals { get; set; }
+    public double? NumberOfAnimals { get; set; }
 }
 
 internal sealed class MaSrcTblContract
@@ -395,8 +394,8 @@ internal sealed class MaSrcTblContract
     public DateTime? RegisteredDate { get; set; }
     public DateTime? StartDate { get; set; }
     public DateTime? EndDate { get; set; }
-    public string? ContractDoc { get; set; }
-    public double? Duration { get; set; }
+    public byte[]? ContractDoc { get; set; }
+    public int? Duration { get; set; }
 }
 
 internal sealed class MaDstMyTblContract
@@ -410,8 +409,8 @@ internal sealed class MaDstMyTblContract
     public DateTime? RegisteredDate { get; set; }
     public DateTime? StartDate { get; set; }
     public DateTime? EndDate { get; set; }
-    public string? ContractDoc { get; set; }
-    public double? Duration { get; set; }
+    public byte[]? ContractDoc { get; set; }
+    public int? Duration { get; set; }
 }
 
 internal sealed class MaSrcTblStaffJob
@@ -436,7 +435,7 @@ internal sealed class MaSrcTimeCostCalcs
     public required string WorkGroup { get; set; }
     public required string JobCode { get; set; }
     public required string Project { get; set; }
-    public int Month { get; set; }
+    public double Month { get; set; }
     public required string StaffId { get; set; }
     public string? GradeCode { get; set; }
     public string? Name { get; set; }
@@ -457,7 +456,7 @@ internal sealed class MaDstMyTimeCostCalcs
     public required string WorkGroup { get; set; }
     public required string JobCode { get; set; }
     public required string Project { get; set; }
-    public int Month { get; set; }
+    public double Month { get; set; }
     public required string StaffId { get; set; }
     public string? GradeCode { get; set; }
     public string? Name { get; set; }
@@ -478,7 +477,7 @@ internal sealed class MaSrcTlkpTestReqmt
     public required string TestCode { get; set; }
     public string? Buyer { get; set; }
     public decimal? UnitPrice { get; set; }
-    public int? NoRequired { get; set; }
+    public double? NoRequired { get; set; }
     public required string ProjectBuyerCode { get; set; }
     public string? TestBuyerCode { get; set; }
 }
@@ -489,7 +488,7 @@ internal sealed class MaDstMyTlkpTestReqmt
     public required string TestCode { get; set; }
     public string? Buyer { get; set; }
     public decimal? UnitPrice { get; set; }
-    public int? NoRequired { get; set; }
+    public double? NoRequired { get; set; }
     public required string ProjectBuyerCode { get; set; }
     public string? TestBuyerCode { get; set; }
 }
@@ -559,7 +558,7 @@ internal sealed class MaSrcTblkpProfitCentre
     public string? Division { get; set; }
     public decimal? ContTarget { get; set; }
     public string? ProfitCentreHead { get; set; }
-    public string? DivisionId { get; set; }
+    public int? DivisionId { get; set; }
 }
 
 internal sealed class MaDstMyTblProfitCentre
@@ -570,7 +569,7 @@ internal sealed class MaDstMyTblProfitCentre
     public string? Division { get; set; }
     public decimal? ContTarget { get; set; }
     public string? ProfitCentreHead { get; set; }
-    public string? DivisionId { get; set; }
+    public int? DivisionId { get; set; }
 }
 
 internal sealed class MaSrcTestOrProduct
@@ -649,9 +648,9 @@ internal sealed class MaSrcWorkGroup
     public string? Owner { get; set; }
     public string? Description { get; set; }
     public decimal? CentralOverhead { get; set; }
-    public string? SendEmail { get; set; }
-    public decimal? Cos90 { get; set; }
-    public string? CostCentreOld { get; set; }
+    public short? SendEmail { get; set; }
+    public short? Cos90 { get; set; }
+    public double? CostCentreOld { get; set; }
     public string? EmailRecipient { get; set; }
 }
 
@@ -664,9 +663,9 @@ internal sealed class MaDstMyWorkGroup
     public string? Owner { get; set; }
     public string? Description { get; set; }
     public decimal? CentralOverhead { get; set; }
-    public string? SendEmail { get; set; }
-    public decimal? Cos90 { get; set; }
-    public string? CostCentreOld { get; set; }
+    public short? SendEmail { get; set; }
+    public short? Cos90 { get; set; }
+    public double? CostCentreOld { get; set; }
     public string? EmailRecipient { get; set; }
 }
 
@@ -677,7 +676,7 @@ internal sealed class MaSrcTblAnimals
     public string? Species { get; set; }
     public string? SecurityLevel { get; set; }
     public decimal? DailyRate { get; set; }
-    public string? PlanByWeek { get; set; }
+    public bool? PlanByWeek { get; set; }
     public decimal? DefraDailyRate { get; set; }
 }
 
@@ -688,7 +687,7 @@ internal sealed class MaDstMyTblAnimals
     public string? Species { get; set; }
     public string? SecurityLevel { get; set; }
     public decimal? DailyRate { get; set; }
-    public string? PlanByWeek { get; set; }
+    public bool? PlanByWeek { get; set; }
     public decimal? DefraDailyRate { get; set; }
 }
 

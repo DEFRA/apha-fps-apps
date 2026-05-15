@@ -485,7 +485,7 @@ public class BatchJobsDbContext : DbContext
     {
         modelBuilder.Entity<MaSrcTlkpProgram>(entity =>
         {
-            entity.ToTable("tlkpprogram", schema: "fps");
+            entity.ToView("tlkpprogram", schema: "fps");
             entity.HasKey(e => new { e.FpsYear, e.ProgramNo });
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.ProgramNo).HasColumnName("programno");
@@ -500,7 +500,7 @@ public class BatchJobsDbContext : DbContext
 
         modelBuilder.Entity<MaSrcTlkpProject>(entity =>
         {
-            entity.ToTable("tlkpproject", schema: "fps");
+            entity.ToView("tlkpproject", schema: "fps");
             entity.HasKey(e => new { e.FpsYear, e.ParentProject });
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.ParentProject).HasColumnName("parentproject");
@@ -538,7 +538,7 @@ public class BatchJobsDbContext : DbContext
 
         modelBuilder.Entity<MaSrcFpsYearTotals>(entity =>
         {
-            entity.ToTable("fpsyeartotals", schema: "fps");
+            entity.ToView("fpsyeartotals", schema: "fps");
             entity.HasKey(e => new { e.FpsYear, e.ParentProject });
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.ParentProject).HasColumnName("parentproject");
@@ -651,7 +651,7 @@ public class BatchJobsDbContext : DbContext
 
         modelBuilder.Entity<MaSrcMonthlyOutput>(entity =>
         {
-            entity.ToTable("monthlyoutput", schema: "fps");
+            entity.ToView("monthlyoutput", schema: "fps");
             entity.HasKey(e => new { e.FpsYear, e.TestCode, e.Buyer, e.Month, e.WorkGroup });
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.TestCode).HasColumnName("testcode");
@@ -677,7 +677,7 @@ public class BatchJobsDbContext : DbContext
 
         modelBuilder.Entity<MaSrcMonthlyTime>(entity =>
         {
-            entity.ToTable("monthlytime", schema: "fps");
+            entity.ToView("monthlytime", schema: "fps");
             entity.HasKey(e => new { e.FpsYear, e.PactStaffId, e.TimeCode, e.Month, e.ParentProject, e.WorkGroup });
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.PactStaffId).HasColumnName("pactstaffid");
@@ -703,7 +703,7 @@ public class BatchJobsDbContext : DbContext
 
         modelBuilder.Entity<MaSrcProjInvoice>(entity =>
         {
-            entity.ToTable("proj_invoice", schema: "fps");
+            entity.ToView("proj_invoice", schema: "fps");
             entity.HasKey(e => new { e.FpsYear, e.InvoiceCounter, e.ProjectParent, e.Month });
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.ProjectParent).HasColumnName("projectparent");
@@ -735,7 +735,7 @@ public class BatchJobsDbContext : DbContext
 
         modelBuilder.Entity<MaSrcProjSubContract>(entity =>
         {
-            entity.ToTable("proj_subcontract", schema: "fps");
+            entity.ToView("proj_subcontract", schema: "fps");
             entity.HasKey(e => new { e.FpsYear, e.SubContCounter });
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.SubContCounter).HasColumnName("subcontcounter");
@@ -773,7 +773,7 @@ public class BatchJobsDbContext : DbContext
 
         modelBuilder.Entity<MaSrcProjectMonthFinal>(entity =>
         {
-            entity.ToTable("projectmonthfinal", schema: "fps");
+            entity.ToView("projectmonthfinal", schema: "fps");
             entity.HasKey(e => new { e.FpsYear, e.Project, e.MonthNo, e.PeriodName });
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.Project).HasColumnName("project");
@@ -859,7 +859,7 @@ public class BatchJobsDbContext : DbContext
 
         modelBuilder.Entity<MaSrcTblAdditionalCosts>(entity =>
         {
-            entity.ToTable("tbladditionalcosts", schema: "fps");
+            entity.ToView("tbladditionalcosts", schema: "fps");
             entity.HasKey(e => new { e.FpsYear, e.JobCode, e.Account, e.Description });
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.JobCode).HasColumnName("jobcode");
@@ -868,7 +868,6 @@ public class BatchJobsDbContext : DbContext
             entity.Property(e => e.ItemCost).HasColumnName("itemcost");
             entity.Property(e => e.Freq).HasColumnName("freq");
             entity.Property(e => e.Supplier).HasColumnName("supplier");
-            entity.Property(e => e.AcCounter).HasColumnName("ac_counter");
         });
 
         modelBuilder.Entity<MaDstMyTblAdditionalCosts>(entity =>
@@ -887,7 +886,7 @@ public class BatchJobsDbContext : DbContext
 
         modelBuilder.Entity<MaSrcTblAnimalReq>(entity =>
         {
-            entity.ToTable("tblanimalreq", schema: "fps");
+            entity.ToView("tblanimalreq", schema: "fps");
             entity.HasKey(e => new { e.FpsYear, e.JobCode, e.AnimalType });
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.JobCode).HasColumnName("jobcode");
@@ -909,7 +908,7 @@ public class BatchJobsDbContext : DbContext
 
         modelBuilder.Entity<MaSrcTblContract>(entity =>
         {
-            entity.ToTable("tblcontract", schema: "fps");
+            entity.ToView("tblcontract", schema: "fps");
             entity.HasKey(e => new { e.FpsYear, e.ContractNo });
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.ContractNo).HasColumnName("contractno");
@@ -943,7 +942,7 @@ public class BatchJobsDbContext : DbContext
 
         modelBuilder.Entity<MaSrcTblStaffJob>(entity =>
         {
-            entity.ToTable("tblstaffjob", schema: "fps");
+            entity.ToView("tblstaffjob", schema: "fps");
             entity.HasKey(e => new { e.FpsYear, e.StaffId, e.JobCode });
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.StaffId).HasColumnName("staffid");
@@ -963,7 +962,7 @@ public class BatchJobsDbContext : DbContext
 
         modelBuilder.Entity<MaSrcTimeCostCalcs>(entity =>
         {
-            entity.ToTable("timecostcalcs", schema: "fps");
+            entity.ToView("timecostcalcs", schema: "fps");
             entity.HasKey(e => new { e.FpsYear, e.Project, e.Month, e.StaffId, e.JobCode });
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.WorkGroup).HasColumnName("workgroup");
@@ -1009,7 +1008,7 @@ public class BatchJobsDbContext : DbContext
 
         modelBuilder.Entity<MaSrcTlkpTestReqmt>(entity =>
         {
-            entity.ToTable("tlkptestreqmt", schema: "fps");
+            entity.ToView("tlkptestreqmt", schema: "fps");
             entity.HasKey(e => new { e.FpsYear, e.ProjectBuyerCode, e.TestCode });
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.TestCode).HasColumnName("testcode");
@@ -1035,7 +1034,7 @@ public class BatchJobsDbContext : DbContext
 
         modelBuilder.Entity<MaSrcTblDbVariable>(entity =>
         {
-            entity.ToTable("tbldb_variables", schema: "fps");
+            entity.ToView("tbldb_variables", schema: "fps");
             entity.HasKey(e => e.DbVarName);
             entity.Property(e => e.DbVarName).HasColumnName("db_var_name");
             entity.Property(e => e.DbVarValue).HasColumnName("db_var_value");
@@ -1051,7 +1050,7 @@ public class BatchJobsDbContext : DbContext
 
         modelBuilder.Entity<MaSrcWorkGroupGrade>(entity =>
         {
-            entity.ToTable("workgroupgrade", schema: "fps");
+            entity.ToView("workgroupgrade", schema: "fps");
             entity.HasKey(e => new { e.FpsYear, e.WgGrade });
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.WgGrade).HasColumnName("wggrade");
@@ -1073,7 +1072,7 @@ public class BatchJobsDbContext : DbContext
 
         modelBuilder.Entity<MaSrcProfitCentreGrade>(entity =>
         {
-            entity.ToTable("profitcentregrade", schema: "fps");
+            entity.ToView("profitcentregrade", schema: "fps");
             entity.HasKey(e => new { e.FpsYear, e.PcGrade });
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.PcGrade).HasColumnName("pcgrade");
@@ -1105,7 +1104,7 @@ public class BatchJobsDbContext : DbContext
 
         modelBuilder.Entity<MaSrcTblkpProfitCentre>(entity =>
         {
-            entity.ToTable("tblkpprofitcentre", schema: "fps");
+            entity.ToView("tblkpprofitcentre", schema: "fps");
             entity.HasKey(e => e.ProfitCentre);
             entity.Property(e => e.ProfitCentre).HasColumnName("profitcentre");
             entity.Property(e => e.ProfitCentreName).HasColumnName("profitcentrename");
@@ -1130,7 +1129,7 @@ public class BatchJobsDbContext : DbContext
 
         modelBuilder.Entity<MaSrcTestOrProduct>(entity =>
         {
-            entity.ToTable("testorproduct", schema: "fps");
+            entity.ToView("testorproduct", schema: "fps");
             entity.HasKey(e => new { e.FpsYear, e.ItemCode });
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.ItemCode).HasColumnName("itemcode");
@@ -1164,7 +1163,7 @@ public class BatchJobsDbContext : DbContext
 
         modelBuilder.Entity<MaSrcTblWgEmployee>(entity =>
         {
-            entity.ToTable("tblwgemployee", schema: "fps");
+            entity.ToView("tblwgemployee", schema: "fps");
             entity.HasKey(e => new { e.FpsYear, e.PactId });
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.PactId).HasColumnName("pactid");
@@ -1180,7 +1179,7 @@ public class BatchJobsDbContext : DbContext
 
         modelBuilder.Entity<MaSrcTblEmployee>(entity =>
         {
-            entity.ToTable("tblemployee", schema: "fps");
+            entity.ToView("tblemployee", schema: "fps");
             entity.HasKey(e => e.SpNumber);
             entity.Property(e => e.SpNumber).HasColumnName("spnumber");
             entity.Property(e => e.LastName).HasColumnName("lastname");
@@ -1207,7 +1206,7 @@ public class BatchJobsDbContext : DbContext
 
         modelBuilder.Entity<MaSrcWorkGroup>(entity =>
         {
-            entity.ToTable("workgroup", schema: "fps");
+            entity.ToView("workgroup", schema: "fps");
             entity.HasKey(e => new { e.FpsYear, e.WorkGroup });
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.WorkGroup).HasColumnName("workgroup");
@@ -1241,7 +1240,7 @@ public class BatchJobsDbContext : DbContext
 
         modelBuilder.Entity<MaSrcTblAnimals>(entity =>
         {
-            entity.ToTable("tblanimals", schema: "fps");
+            entity.ToView("tblanimals", schema: "fps");
             entity.HasKey(e => new { e.FpsYear, e.AnimalType });
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.AnimalType).HasColumnName("animaltype");

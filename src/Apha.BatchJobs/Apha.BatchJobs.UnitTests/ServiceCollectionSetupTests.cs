@@ -118,9 +118,37 @@ public sealed class ServiceCollectionSetupTests
 
         var ordered = loaders.OrderBy(l => l.Sequence).ToList();
 
-        Assert.Equal(3, ordered.Count);
-        Assert.Equal(new[] { 1, 3, 4 }, ordered.Select(l => l.Sequence));
-        Assert.Equal(new[] { "my_tlkpprogram", "my_tlkpproject", "my_fpsyeartotals" }, ordered.Select(l => l.Name));
+        Assert.Equal(24, ordered.Count);
+        Assert.Equal(new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24 }, ordered.Select(l => l.Sequence));
+        Assert.Equal(
+            new[]
+            {
+                "my_tlkpprogram",
+                "g_tlkpproject",
+                "my_tlkpproject",
+                "my_fpsyeartotals",
+                "my_monthlyoutput",
+                "my_monthlytime",
+                "my_proj_invoice",
+                "my_proj_subcontract",
+                "my_projectmonthfinal",
+                "my_tbladditionalcosts",
+                "my_tblanimalreq",
+                "my_tblcontract",
+                "my_tblstaffjob",
+                "my_timecostcalcs",
+                "my_tlkptestreqmt",
+                "tlkpyear",
+                "my_workgroupgrade",
+                "my_profitcentregrade",
+                "my_tblprofitcentre",
+                "my_testorproduct",
+                "my_staff",
+                "my_workgroup",
+                "my_tblanimals",
+                "my_tlkpproject_all"
+            },
+            ordered.Select(l => l.Name));
         Assert.All(ordered, l => Assert.Contains("LinqLoader", l.GetType().Name, StringComparison.Ordinal));
     }
 
