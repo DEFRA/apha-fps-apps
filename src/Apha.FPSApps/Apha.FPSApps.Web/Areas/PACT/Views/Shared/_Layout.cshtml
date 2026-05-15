@@ -1,12 +1,3 @@
-@using System.Security.Claims
-@{
-    // Get display name from claims (try multiple claim types)
-    var displayName = User.FindFirst("name")?.Value
-                      ?? User.FindFirst(ClaimTypes.GivenName)?.Value
-                      ?? User.FindFirst(ClaimTypes.Name)?.Value?.Split('@')[0]
-                      ?? "Unknown User";
-   
-}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,157 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@ViewData["Title"]</title>
 
-    <!-- Shared stylesheets -->      
-    <link rel="stylesheet" href="~/css/pact_styles/govuk-frontend-6.0.0.min.css" /> 
-    <link rel="stylesheet" href="~/css/pact_styles/custom_style.css" />    
-    <link rel="stylesheet" href="~/css/pact_styles/navstyle.css" />    
-    <link rel="stylesheet" href="~/css/pact_styles/style.css" /> 
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/govuk-frontend-6.0.0.min.css" />
+    <link rel="stylesheet" href="~/css/supplement_style_for_gov.uk_style.css" />
+    <link rel="stylesheet" href="~/css/pact_styles/styles.css" />
+    <link rel="stylesheet" href="~/css/main_style.css" />
     <link rel="stylesheet" href="~/DataGrid/editable-grid.css" />
-    <link href="~/css/suppliement_style_over_gov.uk_style.css" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/common/headernav/navstyle.css" />
     <!-- jQuery (required before any scripts) -->
     <script src="~/lib/jquery/dist/jquery.js"></script>
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
     <!-- ── Top Header ─────────────────────────────────────────────────── -->
-    <header>
-        <div class="header-nav">
-            <div class="pims-log-wrapper">
-                <div>
-                    <img src="~/images/defra_logo.png" width="80" alt="Animal & Plant Health Agency" />
-                </div>                
-				<div class="pims-log">
-					<span>PACT</span>
-				</div>
-				<div>
-                @await Component.InvokeAsync("YearSelector")
-            </div>
-            </div>
-        </div>
-    </header>
+    @await Component.InvokeAsync("AppHeader", new { appName = "PACT", showYearSelector = true })
 
     <!-- ── Main Navigation ───────────────────────────────────────────── -->
-    <div id="header">
-        <div style="display: flex; flex-direction: row;">
-            <button class="userdropdownbtn" style="border: 0; margin-right: 20px;" id="userdropdownbtn" allow-edit="true">@displayName &nbsp; <img src="~/images/circle-user-regular-full.svg" alt="user icon" width="24" /></button>
-        </div>
-        <div class="userdropdown" id="userdropdowndp">
-            <ul>                   
-                <li>
-                    <a href="/" style="display: flex; align-items: center;" type="button">
-                        <img src="~/images/house-user-solid-full.svg" alt="dropdown home icon" width="22">
-                        Home
-                    </a>
-                </li>
-            </ul>          
-        </div>
-        
-        <nav class="main-nav">
-            <!-- Project & Programme Dropdown -->
-            <div class="nav-item dropdown">
-                <button class="nav-button dropdown-toggle" data-dropdown="project-management" allow-edit="true">
-                    <div class="align-menu-text">
-                        <span>Project & Programme</span>
-                    </div>
-                    <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow for dropdown menu" width="12"></span>
-                </button>
-                <div class="dropdown-menu" id="project-management">
-                    <a class="dropdown-item" asp-area="PACT" asp-controller="ProgramMaintenance" asp-action="Index">Program Maintenance</a>
-                    <a class="dropdown-item" asp-area="PACT" asp-controller="ProjectMaintenance" asp-action="Index">Project Maintenance</a>
-                    <a class="dropdown-item" asp-area="PACT" asp-controller="PortfolioMaintenance" asp-action="Index">Portfolio Maintenance</a>
-                </div>
-            </div>
-
-            <!-- Monthly Project Dropdown -->
-            <div class="nav-item dropdown">
-                <button class="nav-button dropdown-toggle" data-dropdown="monthly-data" allow-edit="true">
-                    <div class="align-menu-text">
-                        <span>Monthly Project Data </span>
-                    </div>
-                    <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow for dropdown menu" width="12"></span>
-                </button>
-                <div class="dropdown-menu" id="monthly-data">
-                    <a class="dropdown-item" asp-area="PACT" asp-controller="Invoice" asp-action="Index">Project Invoices (Manual)</a>
-
-                    <a class="dropdown-item" href="#">OM, OG, FT & UT Invoices (Batch Mode from RMS)</a>
-
-                    <a class="dropdown-item" asp-area="PACT" asp-controller="InvoiceByMonth" asp-action="Index">Invoices by Month</a>
-                    <a class="dropdown-item" href="#">FT & UT Project Work In Progress (WIP Over-ride)</a>
-
-                    <a class="dropdown-item" href="#">SubContracts (Exceptional Costs) (Manual)</a>
-                    <a class="dropdown-item" href="#">SubContracts (Exceptional Costs) (Batch mode from RMS)</a>
-                    <a class="dropdown-item" href="#">SubContracts By Month</a>
-                </div>
-            </div>
-
-            <!-- Work Group Dropdown -->
-            <div class="nav-item dropdown">
-                <button class="nav-button dropdown-toggle" data-dropdown="work-group" allow-edit="true">
-                    <div class="align-menu-text">
-                        <span> Work Group Static Data </span>
-                    </div>
-                    <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow for dropdown menu" width="12"></span>
-                </button>
-                <div class="dropdown-menu" id="work-group">
-                    <a href="#" class="dropdown-item">Work Group People</a>
-                    <a class="dropdown-item" asp-area="PACT" asp-controller="TestCapability" asp-action="Index">Test Capabilities</a>
-                    <a class="dropdown-item" asp-area="PACT" asp-controller="TestorProduct" asp-action="Index">Test Maintenance List</a>
-                </div>
-            </div>
-		
-            <!-- Bosworth Interface Dropdown -->
-            <div class="nav-item dropdown">
-                <button class="nav-button dropdown-toggle" data-dropdown="bosworth-interface" allow-edit="true">
-                    <div class="align-menu-text">
-                        <span> Bosworth Interface </span>
-                    </div>
-                    <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow for dropdown menu" width="12"></span>
-                </button>
-                <div class="dropdown-menu" id="bosworth-interface">
-                    <a href="#" class="dropdown-item">Resource Management</a>
-                    <a href="#" class="dropdown-item">Time Purchase Pivot Wizard</a>
-                    <a href="#" class="dropdown-item">Time Sales Pivot Wizard</a>
-                    <a href="#" class="dropdown-item">Test Sale Pivot Wizard</a>
-                </div>
-            </div>
-
-            <!-- Time & Output Dropdown -->
-            <div class="nav-item dropdown">
-                <button class="nav-button dropdown-toggle" data-dropdown="time-data" allow-edit="true">
-                    <div class="align-menu-text">
-                        <span> Time & Output Data </span>
-                    </div>
-                    <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow for dropdown menu" width="12"></span>
-                </button>
-                <div class="dropdown-menu" id="time-data">
-                    <a href="timerecording.html" class="dropdown-item">Time record data entry</a>
-                    <a href="output_record_dataentry.html" class="dropdown-item">Output record data entry</a>
-                    <a href="create_email_time_output_summary.html" class="dropdown-item">Create & email time & output summaries</a>
-                    <a href="create_print_individual_cos90s.html" class="dropdown-item">Create & print individual COS90s</a>
-                    <a href="#" class="dropdown-item">Search Audit Log for Monthly Output Change</a>
-                    <a href="#" class="dropdown-item">Search Audit Log for Monthly Time Change</a>
-                </div>
-            </div>
-            <div class="nav-item">
-                <button class="nav-button" allow-edit="true">
-                    Reports
-                </button>
-            </div>
-        </nav>
-    </div>
-
+    @await Component.InvokeAsync("AppNav", new { appArea = "PACT" })
     <!-- ── Page Body ─────────────────────────────────────────────────── -->
         <div class="sup_margin_bottom_10 content-wrapper">
         @RenderBody()
     </div>    
     <!-- ── Footer ────────────────────────────────────────────────────── -->
-    <div class="govuk-footer sup_p_0 sup_margin_left_right_0">
-        <div class="govuk-width-container sup_p_8 sup_text_center">
-            <span>
-                &copy; copyright Defra 2025
-            </span>
-        </div>
-    </div>
+    @await Component.InvokeAsync("AppFooter")
 
     <!-- ── Shared modal popup (for add/edit forms) ───────────────────── -->
     <div id="modalPopup" tabindex="-1" aria-labelledby="modalPopupLabel"         
@@ -177,7 +40,7 @@
     </div>
 
     <!-- ── Scripts ───────────────────────────────────────────────────── -->    
-    <script src="~/js/pact_js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/lib/jquery-validation/dist/jquery.validate.js"></script>
     <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.js"></script>
     <script src="~/js/govuk-modal-dialog.js"></script>
@@ -223,7 +86,8 @@
         };
     </script>
 
-    <script src="~/js/pact_js/pactnavmenu.js"></script>
+    <script src="~/js/common/headernav/navmenu.js"></script>
+    <script src="~/js/site.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

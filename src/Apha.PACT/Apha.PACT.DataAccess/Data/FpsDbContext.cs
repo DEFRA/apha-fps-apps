@@ -29,6 +29,10 @@ namespace Apha.PACT.DataAccess.Data
         public virtual DbSet<MonthlyOutput> MonthlyOutputs { get; set; }
         public virtual DbSet<MonthlyTime> MonthlyTimes { get; set; }
         public virtual DbSet<MonthlyInvoicesSummary> MonthlyInvoicesSummary { get; set; }
+        public virtual DbSet<MonthlySubContractsSummary> MonthlySubContractsSummary { get; set; }
+        public virtual DbSet<ProjectMonth> ProjectMonths { get; set; }
+        public virtual DbSet<ProjectMonthFinal> ProjectMonthFinals { get; set; }
+        public virtual DbSet<PeriodMonth> PeriodMonths { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -70,9 +74,19 @@ namespace Apha.PACT.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new MonthMap());
 
-
             modelBuilder.ApplyConfiguration(new MonthlyInvoicesSummaryMap());
             modelBuilder.Entity<MonthlyInvoicesSummary>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new MonthlySubContractSummaryMap());
+            modelBuilder.Entity<MonthlySubContractsSummary>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new ProjectMonthFinalMap());
+            modelBuilder.Entity<ProjectMonthFinal>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new ProjectMonthMap());
+            modelBuilder.Entity<ProjectMonth>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new PeriodMonthMap());
         }
     }
 }

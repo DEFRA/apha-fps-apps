@@ -32,6 +32,9 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<TestPlanActualItem, TestRequirementDto>().ReverseMap();
             CreateMap<ActualTestOutputItem, MonthlyOutputDto>().ReverseMap();
 
+            // ProgrammeNewProject
+            CreateMap<ProjectDto, ProgrammeNewProjectViewModel>().ReverseMap();
+
             // Resource Set-Up
             CreateMap<WorkGroupEmployeeItem, WorkGroupEmployeeDto>().ReverseMap();
         }

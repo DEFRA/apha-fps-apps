@@ -12,7 +12,7 @@ namespace Apha.FPS.DataAccess.Data
             entity.ToView("vworkgroupgrade_general", "fps");
 
             entity.Property(e => e.GradeCode)
-                .HasMaxLength(50)
+                .HasMaxLength(10)
                 .HasColumnName("gradecode");
             entity.Property(e => e.ProfitCentreGrade)
                 .HasMaxLength(20)

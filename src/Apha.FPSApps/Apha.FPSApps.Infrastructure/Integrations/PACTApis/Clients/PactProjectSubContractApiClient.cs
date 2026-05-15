@@ -25,6 +25,22 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
 
         public async Task<ApiResponseDto<List<ProjectSubContractDto>>> GetPagedProjectSubContractsAsync(QueryParameters<string> query, string? project)
         {
+            if (string.IsNullOrWhiteSpace(project))
+                return ApiResponseDto<List<ProjectSubContractDto>>.SuccessResponse([]);
+
+            string baseUrl = QueryStringHelper.AddQueryString(PactApiEndpoints.GetPagedProjectSubContracts, new { project });
+            string url = QueryStringHelper.AddQueryString(baseUrl, query);           
+
+            var response = await _http.GetAsync<List<ProjectSubContractRes>>(url);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<ProjectSubContractDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<ProjectSubContractDto>>>(response);
+            return ApiResponseDto<List<ProjectSubContractDto>>.FailureResponse(dto.Errors, dto.Meta ?? new ApiMetaDto());
+        }
+
+        public async Task<ApiResponseDto<List<ProjectSubContractDto>>> GetPagedProjectSubContractsManualAsync(QueryParameters<string> query, string? project)
+        {
             string baseUrl = string.IsNullOrWhiteSpace(project)
                 ? PactApiEndpoints.GetPagedProjectSubContracts
                 : QueryStringHelper.AddQueryString(PactApiEndpoints.GetPagedProjectSubContracts, new { project });
@@ -86,9 +102,10 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
 
         public async Task<ApiResponseDto<decimal>> GetTotalAmountAsync(string? project)
         {
-            string url = string.IsNullOrWhiteSpace(project)
-                ? PactApiEndpoints.GetProjectSubContractTotalAmount
-                : QueryStringHelper.AddQueryString(PactApiEndpoints.GetProjectSubContractTotalAmount, new { project });
+            if (string.IsNullOrWhiteSpace(project))
+                return ApiResponseDto<decimal>.SuccessResponse(0m);
+
+            string url = QueryStringHelper.AddQueryString(PactApiEndpoints.GetProjectSubContractTotalAmount, new { project });
 
             var response = await _http.GetAsync<decimal?>(url);
             if (response.Success)
@@ -134,6 +151,20 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
                     new List<ApiErrorDto> { new ApiErrorDto { Code = InternalCodeError, Message = ex.Message } },
                     new ApiMetaDto { CorrelationId = Guid.NewGuid().ToString(), TimestampUtc = DateTime.UtcNow });
             }
+        }
+
+        public async Task<ApiResponseDto<MonthlySubContractsPivotDto>> GetMonthlySubContractsSummaryAsync(QueryParameters<string> query)
+        {
+            string url = QueryStringHelper.AddQueryString(PactApiEndpoints.GetMonthlySubContractsSummary, query);
+            var response = await _http.GetAsync<MonthlySubContractsPivotRes>(url);
+            if (response.Success)
+            {
+                var dto = _mapper.Map<MonthlySubContractsPivotDto>(response.Data);
+                return ApiResponseDto<MonthlySubContractsPivotDto>.SuccessResponse(dto);
+            }
+
+            var failresponseDto = _mapper.Map<ApiResponseDto<MonthlySubContractsPivotDto>>(response);
+            return ApiResponseDto<MonthlySubContractsPivotDto>.FailureResponse(failresponseDto.Errors, failresponseDto.Meta);
         }
     }
 }

@@ -6,31 +6,34 @@ namespace Apha.FPS.DataAccess.Data
 {
     public class MonthlyTimeMap : IEntityTypeConfiguration<MonthlyTime>
     {
-        public void Configure(EntityTypeBuilder<MonthlyTime> builder)
+        public void Configure(EntityTypeBuilder<MonthlyTime> entity)
         {
-            builder.ToTable("monthlytime", "fps");
+            entity.HasKey(e => new { e.PactStaffId, e.TimeCode, e.Month, e.ParentProject, e.FpsYear }).HasName("pk_monthlytime");
 
-            builder.HasKey(e => new { e.PactStaffId, e.TimeCode, e.Month, e.ParentProject, e.FpsYear })
-                   .HasName("pk_monthlytime");
+            entity.ToTable("monthlytime", "fps");
 
-            builder.Property(e => e.PactStaffId)
+            entity.HasIndex(e => e.PactStaffId, "ijnd_staffid");
+            entity.HasIndex(e => e.WorkGroup, "monthlytime_workgroup");
+
+            entity.HasIndex(e => new { e.WorkGroup, e.TimeCode, e.ParentProject }, "reference23");
+
+            entity.HasIndex(e => e.TimeCode, "timecode");
+            entity.Property(e => e.PactStaffId)
                 .HasMaxLength(50)
                 .HasColumnName("pactstaffid");
-            builder.Property(e => e.TimeCode)
+            entity.Property(e => e.TimeCode)
                 .HasMaxLength(50)
                 .HasColumnName("timecode");
-            builder.Property(e => e.Month)
-                .HasColumnName("month");
-            builder.Property(e => e.ParentProject)
+            entity.Property(e => e.Month).HasColumnName("month");
+            entity.Property(e => e.ParentProject)
                 .HasMaxLength(20)
                 .HasColumnName("parentproject");
-            builder.Property(e => e.FpsYear)
-                .HasColumnName("fpsyear");
-            builder.Property(e => e.Hours)
-                .HasColumnName("hours");
-            builder.Property(e => e.WorkGroup)
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
+            entity.Property(e => e.Hours).HasColumnName("hours");
+            entity.Property(e => e.WorkGroup)
                 .HasMaxLength(50)
                 .HasColumnName("workgroup");
+
         }
     }
 }

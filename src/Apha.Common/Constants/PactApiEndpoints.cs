@@ -52,7 +52,7 @@ namespace Apha.Common.Constants
         public const string UpdateProjectInvoice = "api/v1/projectinvoice/{0}";
         public const string DeleteProjectInvoice = "api/v1/projectinvoice/{0}";
         public const string GetMonthlyInvoicesSummary = "api/v1/projectinvoice/monthly-summary";
-
+        
         // Project SubContract
         public const string GetPagedProjectSubContracts = "api/v1/projectsubcontract";
         public const string GetProjectSubContractTotalAmount = "api/v1/projectsubcontract/total";
@@ -62,6 +62,7 @@ namespace Apha.Common.Constants
         public const string DeleteProjectSubContract = "api/v1/projectsubcontract/{0}";
         public const string GetFpsProjectSubContracts = "api/v1/projectsubcontract/animals";
         public const string GetFpsProjectSubContractTotalAmount = "api/v1/projectsubcontract/animals/total";
+        public const string GetMonthlySubContractsSummary = "api/v1/projectsubcontract/monthly-summary";
 
         // WorkGroup Test Capability
         public const string GetPagedTestCapabilityByWorkGroup = "api/v1/testcapability/paged/workgroup";
@@ -84,5 +85,16 @@ namespace Apha.Common.Constants
         // Lookups
         //public const string GetAllTestorProducts = "api/v1/testcapability/testorproducts";
         public const string GetTestReqmtPricing = "api/v1/testrequirement/pricing";
+
+        // Project Month (Cost Profile Grid)
+        public const string GetProjectMonthsByProject = "api/v1/projectmonth/project/{0}";
+        public const string GetProjectMonthById = "api/v1/projectmonth/project/{0}/month/{1}";
+        public const string CreateProjectMonth = "api/v1/projectmonth";
+        public const string UpdateProjectMonth = "api/v1/projectmonth";
+        public const string DeleteProjectMonth = "api/v1/projectmonth/project/{0}/month/{1}";
+
+        // Project Profile
+        public const string GetProjectProfile = "api/v1/projectprofile/{0}/data";
+        public const string GetProjectProfileCumulative = "api/v1/projectprofile/{0}/data/cumulative";
     }
 }

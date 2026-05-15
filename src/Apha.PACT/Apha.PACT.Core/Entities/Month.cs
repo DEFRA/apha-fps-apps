@@ -8,6 +8,6 @@ namespace Apha.PACT.Core.Entities
     {
         public required short MonthNumber { get; set; }
 
-        public required string  MonthName { get; set; }
+        public required string MonthName { get; set; }
     }
 }

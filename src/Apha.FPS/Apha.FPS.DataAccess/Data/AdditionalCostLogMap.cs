@@ -23,11 +23,11 @@ namespace Apha.FPS.DataAccess.Data
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
 
             entity.Property(e => e.JobCode)
-                .HasColumnType("citext")
+                .HasMaxLength(20)
                 .HasColumnName("jobcode");
 
             entity.Property(e => e.Account)
-                .HasColumnType("citext")
+                .HasMaxLength(50)
                 .HasColumnName("account");
 
             entity.Property(e => e.Description)

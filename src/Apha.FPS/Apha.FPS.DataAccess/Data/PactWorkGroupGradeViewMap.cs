@@ -25,7 +25,7 @@ namespace Apha.FPS.DataAccess.Data
                 .HasColumnName("directrate_wg");
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.GradeCode)
-                .HasColumnType("citext")
+                .HasMaxLength(10)
                 .HasColumnName("gradecode");
             entity.Property(e => e.HrsChangedBy)
                 .HasMaxLength(50)
@@ -40,13 +40,13 @@ namespace Apha.FPS.DataAccess.Data
                 .HasColumnType("money")
                 .HasColumnName("payrate_wg");
             entity.Property(e => e.ProfitCentreGrade)
-                .HasColumnType("citext")
+                .HasMaxLength(20)
                 .HasColumnName("profitcentregrade");
             entity.Property(e => e.WgGrade)
-                .HasColumnType("citext")
+                .HasMaxLength(50)
                 .HasColumnName("wg_grade");
             entity.Property(e => e.WorkGroup)
-                .HasColumnType("citext")
+                .HasMaxLength(50)
                 .HasColumnName("workgroup");
         }
     }

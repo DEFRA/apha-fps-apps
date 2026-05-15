@@ -39,6 +39,8 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IAgencyService, AgencyService>();
             services.AddScoped<IAdditionalCostService, AdditionalCostService>();
             services.AddScoped<IMonthlyOutputService, MonthlyOutputService>();
+            services.AddScoped<IAccountCodeService, AccountCodeService>();
+            services.AddScoped<ISubAccountService, SubAccountService>();
             services.AddScoped<IProfitCentreService, ProfitCentreService>();
             services.AddScoped<IProfitCentreGradeService, ProfitCentreGradeService>();
             services.AddScoped<IWorkGroupGradeService, WorkGroupGradeService>();
@@ -66,6 +68,9 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IAgencyRepository, AgencyRepository>();
             services.AddScoped<IAdditionalCostRepository, AdditionalCostRepository>();
             services.AddScoped<IMonthlyOutputRepository, MonthlyOutputRepository>();
+            services.AddScoped<IAccountCodeRepository, AccountCodeRepository>();
+            services.AddScoped<ISubAccountRepository, SubAccountRepository>();
+            services.AddScoped<IStoredProcRepository, StoredProcRepository>();
             services.AddScoped<IProfitCentreRepository, ProfitCentreRepository>();
             services.AddScoped<IProfitCentreGradeRepository, ProfitCentreGradeRepository>();
             services.AddScoped<IWorkGroupGradeRepository, WorkGroupGradeRepository>();

@@ -52,7 +52,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreGrade
             var expectedDto = ApiResponseDto<List<ProfitCentreGradeDto>>.SuccessResponse(gradeList);
 
             _http.GetAsync<List<ProfitCentreGradeRes>>(
-                    Arg.Is<string>(url => url.Contains("rcgrades") && url.Contains(DefaultProfitCentre)))
+                    Arg.Is<string>(url => url.Contains("pcgrades") && url.Contains(DefaultProfitCentre)))
                 .Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<ProfitCentreGradeDto>>>(apiResponse).Returns(expectedDto);
 
@@ -64,7 +64,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreGrade
             Assert.True(result.Success);
             Assert.Equal(2, result.Data?.Count);
             await _http.Received(1).GetAsync<List<ProfitCentreGradeRes>>(
-                Arg.Is<string>(url => url.Contains("rcgrades") && url.Contains(DefaultProfitCentre)));
+                Arg.Is<string>(url => url.Contains("pcgrades") && url.Contains(DefaultProfitCentre)));
         }
 
         [Fact]

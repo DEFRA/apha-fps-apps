@@ -132,13 +132,13 @@ namespace Apha.PACT.DataAccess.Repository
             if (filters is null) return query;
 
             if (filters.TryGetValue("TestCode", out string? testCode) && !string.IsNullOrWhiteSpace(testCode))
-                query = query.Where(t => t.TestCode.Contains(testCode));
+                query = query.Where(t => EF.Functions.ILike(t.TestCode, $"%{testCode}%"));
 
             if (filters.TryGetValue("WorkGroup", out string? workGroup) && !string.IsNullOrWhiteSpace(workGroup))
-                query = query.Where(t => t.WorkGroup.Contains(workGroup));
+                query = query.Where(t => EF.Functions.ILike(t.WorkGroup, $"%{workGroup}%"));
 
             if (filters.TryGetValue("PlanPortfolio", out string? portfolio) && !string.IsNullOrWhiteSpace(portfolio))
-                query = query.Where(t => t.PlanPortfolio.Contains(portfolio));
+                query = query.Where(t => EF.Functions.ILike(t.PlanPortfolio, $"%{portfolio}%"));
 
             return query;
         }

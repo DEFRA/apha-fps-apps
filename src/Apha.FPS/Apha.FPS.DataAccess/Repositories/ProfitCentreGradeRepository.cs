@@ -42,7 +42,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     HrsAvailable   = x.HrsAvailable,
                     OldChargeRate  = x.OldChargeRate,
                     DefraChargeRate = x.DefraChargeRate,
-                    FpsYear        = x.FpsYear
+                    FpsYear        = x.FpsYear.HasValue ? x.FpsYear.Value : 0
                 })
                 .ToListAsync();
 

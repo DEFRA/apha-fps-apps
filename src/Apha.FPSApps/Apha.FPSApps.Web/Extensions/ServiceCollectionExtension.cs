@@ -62,6 +62,8 @@ namespace Apha.FPSApps.Web.Extensions
 
             services.AddScoped<ITestorProductService, TestorProductService>();
             services.AddScoped<IMonthlyOutputService, MonthlyOutputService>();
+            services.AddScoped<IProjectProfileService, ProjectProfileService>();
+            services.AddScoped<IProjectMonthService, ProjectMonthService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)

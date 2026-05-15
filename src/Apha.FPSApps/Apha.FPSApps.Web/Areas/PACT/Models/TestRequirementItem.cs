@@ -42,7 +42,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         public short IsDefraProject { get; set; }
 
         [Display(Name = "RecUnitPrice")]
-        [GridColumn(Order = 8, Width = 110, Type = GridColumnType.UsdValue)]
+        [GridColumn(Order = 8, Width = 110, Type = GridColumnType.GbpValue)]
         public decimal? RecUnitPrice { get; set; }
 
         // ── Hidden (not shown in grid or form, kept for mapping) ─────────────

@@ -74,6 +74,14 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             // View Project Plan vs Actual Tests
             CreateMap<MonthlyOutputDto, MonthlyOutputRes>().ReverseMap();
 
+            // ProgrammeNewProject (merged into ProjectDto - mappings above)
+            CreateMap<AccountCodeDto, AccountCodeRes>().ReverseMap();
+            CreateMap<SubAccountDto, SubAccountRes>()
+                .ForMember(d => d.SubAccount, o => o.MapFrom(s => s.SubAccount)).ReverseMap();
+            CreateMap<CostCentreWorkgroupDto, CostCentreWorkgroupRes>().ReverseMap();
+            CreateMap<WorkGroupStaffDto, WorkGroupStaffRes>().ReverseMap();
+            CreateMap<WorkGroupPersonDto, WorkGroupPersonRes>().ReverseMap();
+
             // Resource Set-Up
             CreateMap<ProfitCentreDto, ProfitCentreRes>().ReverseMap();
             CreateMap<ProfitCentreGradeDto, ProfitCentreGradeRes>().ReverseMap();
