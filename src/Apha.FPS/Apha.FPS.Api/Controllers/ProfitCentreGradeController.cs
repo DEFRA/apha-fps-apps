@@ -15,7 +15,7 @@ namespace Apha.FPS.Api.Controllers
     [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
     [ApiController]
     [ApiVersion("1.0")]
-    [Route("api/v{version:apiVersion}/rcgrades")]
+    [Route("api/v{version:apiVersion}/pcgrades")]
     public class ProfitCentreGradeController : ControllerBase
     {
         private readonly IProfitCentreGradeService _ProfitCentreGradeService;

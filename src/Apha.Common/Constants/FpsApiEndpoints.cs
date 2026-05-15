@@ -95,8 +95,8 @@ namespace Apha.Common.Constants
         // Resource Set-Up — Profit Centres
         public const string GetProfitCentres = "api/v1/profitcentres";
 
-        // Resource Set-Up — RC Grades
-        public const string GetRcGrades = "api/v1/rcgrades?profitCentre={0}";
+        // Resource Set-Up — PC Grades
+        public const string GetPcGrades = "api/v1/pcgrades?profitCentre={0}";
 
         // Resource Set-Up — WG Grades
         public const string GetWgGrades = "api/v1/wggrades?pcGrade={0}";

@@ -23,7 +23,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
         public async Task<ApiResponseDto<List<ProfitCentreGradeDto>>> GetProfitCentreGradesAsync(QueryParameters<string> query, string profitCentre)
         {
-            var baseUrl = string.Format(FpsApiEndpoints.GetRcGrades, Uri.EscapeDataString(profitCentre));
+            var baseUrl = string.Format(FpsApiEndpoints.GetPcGrades, Uri.EscapeDataString(profitCentre));
             var url = QueryStringHelper.AddQueryString(baseUrl, query);
             var response = await _http.GetAsync<List<ProfitCentreGradeRes>>(url);
             if (response.Success)
