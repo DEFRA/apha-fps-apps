@@ -40,10 +40,9 @@ docker-compose --profile nodb up --build
 - ASPNETCORE_ENVIRONMENT: Demo or Development.
 - BATCH_JOB_NAME: HealthCheck, ScheduleJobs, FECProcess, or other registered job.
 - ConnectionStrings__BatchJobsConnectionString: required for withdb mode.
-- BatchJobs__RecreateSummariesImplementationMode: optional, defaults to DotNet.
-	Supported values: SqlFiles, DotNet, DotNetSql, DotNetLinq.
-	Use DotNetLinq to run the LINQ-based .NET implementation of RecreateSummaries.
-	Use DotNet or DotNetSql to run the SQL-in-C# implementation path.
+- BatchJobs__RecreateSummariesImplementationMode: optional and retained for backward compatibility.
+	Runtime always uses the LINQ-based RecreateSummaries implementation.
+	Retired SQL implementations are preserved under docs/legacy for reference only.
 - BATCH_RECREATE_SUMMARIES_MONTH: optional RecreateSummaries month override (0-12).
 - BATCH_RECREATE_SUMMARIES_TRIGGERED_BY: optional RecreateSummaries user identity override.
 

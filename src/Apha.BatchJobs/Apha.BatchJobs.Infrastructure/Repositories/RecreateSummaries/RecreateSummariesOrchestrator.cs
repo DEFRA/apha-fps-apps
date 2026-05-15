@@ -1,5 +1,4 @@
 using Apha.BatchJobs.Application.Jobs.ScheduledJobs.RecreateSummaries;
-using Apha.BatchJobs.Application.Jobs.ScheduledJobs.RecreateSummaries.Steps;
 using Apha.BatchJobs.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;

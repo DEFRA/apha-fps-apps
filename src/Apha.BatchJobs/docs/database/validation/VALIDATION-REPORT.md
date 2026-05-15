@@ -66,7 +66,7 @@ The RecreateSummaries stored procedure has been successfully validated against s
 
 ### Code-Based Query Validation
 
-The C# validator (`RecreateSummariesValidator.cs`) performs the following checks:
+The legacy C# validator (removed from active source) performed the following checks:
 
 #### ✅ Rule: Year Coverage
 - [PASS] Year 2024 has results (4 projects)
@@ -176,7 +176,7 @@ Sample validations:
 ### Validation Code
 - **Language:** C# (.NET 6+)
 - **ORM:** Npgsql direct SQL
-- **Location:** `src/Apha.BatchJobs/RecreateSummariesValidator.cs`
+- **Location (historical):** `src/Apha.BatchJobs/RecreateSummariesValidator.cs` (removed)
 - **Executable:** Standalone console app for CI/CD validation
 
 ### Test Environment
