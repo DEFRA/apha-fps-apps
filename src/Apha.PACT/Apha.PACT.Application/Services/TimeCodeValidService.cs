@@ -45,12 +45,7 @@ namespace Apha.PACT.Application.Services
             var pagedData = await _repository.GetPagedTimeCodesAsync(parameters, jobCode, parentProject);
             return _mapper.Map<PaginatedResult<TimeCodeValidDto>>(pagedData);
         }
-        public async Task<PaginatedResult<TimeCodeValidDto>> GetPagedTimeCodesTestCodeAsync(QueryParameters<string> query, string? jobCode, string? testCode, string? parentProject)
-        {
-            var parameters = _mapper.Map<PaginationParameters<string>>(query);
-            var pagedData = await _repository.GetPagedTimeCodesTestCodeAsync(parameters, jobCode,testCode, parentProject);
-            return _mapper.Map<PaginatedResult<TimeCodeValidDto>>(pagedData);
-        }
+
         public async Task<PaginatedResult<TimeCodeValidDto>> GetPagedByProjectAndTestCodeAsync(QueryParameters<string> query, string parentProject, string testCode)
         {
             var parameters = _mapper.Map<PaginationParameters<string>>(query);

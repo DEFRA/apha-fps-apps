@@ -153,8 +153,8 @@ function selectTimeCode(row) {
 // ========================================
 
 function addTimeCode() {
-    if (!currentJobCodeId) {
-        alert('Please select a job code first.');
+    if (!currentParentProject) {
+        alert('Please select a portfolio first.');
         return;
     }
 

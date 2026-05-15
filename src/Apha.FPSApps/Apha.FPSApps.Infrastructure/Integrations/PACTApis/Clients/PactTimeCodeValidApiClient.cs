@@ -66,36 +66,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             return ApiResponseDto<List<TimeCodeValidDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
 
-        public async Task<ApiResponseDto<List<TimeCodeValidDto>>> GetPagedTimeCodesTestCodeAsync(QueryParameters<string> query, string? jobCode, string? testCode, string? parentProject)
-        {
-            string baseUrl;
-            if (!string.IsNullOrWhiteSpace(jobCode) && !string.IsNullOrWhiteSpace(testCode) && !string.IsNullOrWhiteSpace(parentProject))
-                baseUrl = string.Format(PactApiEndpoints.GetPagedTimeCodesByJobCodeAndTestCode, Uri.EscapeDataString(jobCode), Uri.EscapeDataString(testCode), Uri.EscapeDataString(parentProject));
-            else if (!string.IsNullOrWhiteSpace(jobCode) && !string.IsNullOrWhiteSpace(testCode))
-                baseUrl = string.Format(PactApiEndpoints.GetPagedTimeCodesByJobCodeAndTestCode, Uri.EscapeDataString(jobCode), Uri.EscapeDataString(testCode));
-            else if (!string.IsNullOrWhiteSpace(jobCode) && !string.IsNullOrWhiteSpace(parentProject))
-                baseUrl = string.Format(PactApiEndpoints.GetPagedTimeCodesByJobCodeAndProject, Uri.EscapeDataString(jobCode), Uri.EscapeDataString(parentProject));
-            else if (!string.IsNullOrWhiteSpace(testCode) && !string.IsNullOrWhiteSpace(parentProject))
-                baseUrl = string.Format(PactApiEndpoints.GetPagedTimeCodesByProjectAndTestCode, Uri.EscapeDataString(parentProject), Uri.EscapeDataString(testCode));
-            else if (!string.IsNullOrWhiteSpace(jobCode))
-                baseUrl = string.Format(PactApiEndpoints.GetPagedTimeCodesByJobCode, Uri.EscapeDataString(jobCode));
-            else if (!string.IsNullOrWhiteSpace(testCode))
-                baseUrl = string.Format(PactApiEndpoints.GetPagedTimeCodesByTestCode, Uri.EscapeDataString(testCode));
-            else if (!string.IsNullOrWhiteSpace(parentProject))
-                baseUrl = string.Format(PactApiEndpoints.GetPagedTimeCodesByProject, Uri.EscapeDataString(parentProject));
-            else
-                baseUrl = PactApiEndpoints.GetPagedTimeCodes;
-
-            var url = QueryStringHelper.AddQueryString(baseUrl, query);
-
-            var response = await _http.GetAsync<List<TimeCodeValidRes>>(url);
-            if (response.Success)
-                return _mapper.Map<ApiResponseDto<List<TimeCodeValidDto>>>(response);
-
-            var dto = _mapper.Map<ApiResponseDto<List<TimeCodeValidDto>>>(response);
-            return ApiResponseDto<List<TimeCodeValidDto>>.FailureResponse(dto.Errors, dto.Meta);
-        }
-
         public async Task<ApiResponseDto<List<TimeCodeValidDto>>> GetPagedByProjectAndTestCodeAsync(QueryParameters<string> query, string parentProject, string testCode)
         {
             var baseUrl = string.Format(PactApiEndpoints.GetPagedTimeCodesByProjectAndTestCode,

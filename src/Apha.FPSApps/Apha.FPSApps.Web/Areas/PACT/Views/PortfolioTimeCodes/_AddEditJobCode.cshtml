@@ -1,4 +1,4 @@
-@model Apha.FPSApps.Web.Areas.PACT.Models.JobCodeViewModel
+@model Apha.FPSApps.Web.Areas.PACT.Models.PortfolioJobCodeViewModel
 @using Microsoft.AspNetCore.Mvc.Rendering
 
 @{
@@ -40,7 +40,7 @@
             @if (isEdit)
             {
                 <input type="hidden" asp-for="JobCodeId" />
-                <input class="govuk-input govuk-!-font-size-16" value="@Model.JobCodeId" readonly />
+                <input class="govuk-input govuk-!-font-size-16" value="@Model.JobCodeId" disabled />
             }
             else
             {

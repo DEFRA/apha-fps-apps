@@ -8,7 +8,9 @@ using Apha.FPSApps.Web.Areas.PACT.Controllers;
 using Apha.FPSApps.Web.Areas.PACT.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using NSubstitute;
 using System.Text.Json;
 
@@ -33,6 +35,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
                 _projectService,
                 _jobCodeService,
                 _timeCodeService);
+
+            _controller.TempData = new TempDataDictionary(
+                new DefaultHttpContext(),
+                Substitute.For<ITempDataProvider>());
         }
 
         private static JsonElement GetJsonResultElement(JsonResult jsonResult)
@@ -45,7 +51,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
         {
             _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string>());
-            _mapper.Map<List<JobCodeViewModel>>(Arg.Any<List<JobCodeDto>>())
+            _mapper.Map<List<PortfolioJobCodeViewModel>>(Arg.Any<List<JobCodeDto>>())
                 .Returns([]);
             _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>())
                 .Returns(new PaginationModel());
@@ -81,36 +87,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
         }
 
         #region Index
-
-        [Fact]
-        public async Task Index_WithValidParentProject_ReturnsViewWithPopulatedGrids()
-        {
-            // Arrange
-            const string parentProject = "PRJ001";
-            var projects = new List<ProjectDto> { new() { ParentProject = parentProject, ProjectTitle = "Test Project" } };
-            var workGroups = new List<WorkGroupDto> { new() { WorkGroupName = "WG1" } };
-            var jobCodes = new List<JobCodeDto> { new() { JobCodeId = "JC1", ParentProject = parentProject } };
-            var timeCodes = new List<TimeCodeValidDto> { new() { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = parentProject } };
-
-            SetupProjectsList(projects);
-            SetupWorkGroupsList(workGroups);
-            SetupJobCodeGridMapper();
-            SetupTimeCodeGridMapper();
-            _jobCodeService.GetPagedJobCodesAsync(Arg.Any<QueryParameters<string>>(), parentProject)
-                .Returns(ApiResponseDto<List<JobCodeDto>>.SuccessResponse(jobCodes, new PaginationDto()));
-            _timeCodeService.GetPagedTimeCodesTestCodeAsync(Arg.Any<QueryParameters<string>>(), null, null, parentProject)
-                .Returns(ApiResponseDto<List<TimeCodeValidDto>>.SuccessResponse(timeCodes, new PaginationDto()));
-
-            // Act
-            var result = await _controller.Index(parentProject);
-
-            // Assert
-            var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<PortfolioTimeCodesViewModel>(viewResult.Model);
-            Assert.Equal(parentProject, model.SelectedPortfolio);
-            Assert.NotNull(model.JobCodeGrid);
-            Assert.NotNull(model.TimeCodeGrid);
-        }
 
         [Fact]
         public async Task Index_WithNullParentProject_ReturnsViewWithEmptyGrids()
@@ -158,6 +134,44 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
             Assert.Equal(2, model.WorkGroups.Count);
         }
 
+        [Fact]
+        public async Task Index_WithValidParentProject_ReturnsViewWithPopulatedGrids()
+        {
+            // Arrange
+            const string parentProject = "PRJ001";
+            var projects = new List<ProjectDto> { new() { ParentProject = parentProject, ProjectTitle = "Project 1" } };
+            var workGroups = new List<WorkGroupDto> { new() { WorkGroupName = "WG1" } };
+            var jobCodes = new List<JobCodeDto> { new() { JobCodeId = "JC1", ParentProject = parentProject } };
+            var timeCodes = new List<TimeCodeValidDto> { new() { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = parentProject } };
+
+            SetupProjectsList(projects);
+            SetupWorkGroupsList(workGroups);
+
+            _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
+                .Returns(new QueryParameters<string>());
+            _mapper.Map<List<PortfolioJobCodeViewModel>>(Arg.Any<List<JobCodeDto>>())
+                .Returns([new PortfolioJobCodeViewModel { JobCodeId = "JC1", ParentProject = parentProject }]);
+            _mapper.Map<List<TimeCodeValidityViewModel>>(Arg.Any<List<TimeCodeValidDto>>())
+                .Returns([new TimeCodeValidityViewModel { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = parentProject }]);
+            _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>())
+                .Returns(new PaginationModel());
+
+            _jobCodeService.GetPagedJobCodesAsync(Arg.Any<QueryParameters<string>>(), parentProject)
+                .Returns(ApiResponseDto<List<JobCodeDto>>.SuccessResponse(jobCodes, new PaginationDto()));
+            _timeCodeService.GetPagedTimeCodesAsync(Arg.Any<QueryParameters<string>>(), null, parentProject)
+                .Returns(ApiResponseDto<List<TimeCodeValidDto>>.SuccessResponse(timeCodes, new PaginationDto()));
+
+            // Act
+            var result = await _controller.Index(parentProject);
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<PortfolioTimeCodesViewModel>(viewResult.Model);
+            Assert.Equal(parentProject, model.SelectedPortfolio);
+            Assert.NotEmpty(model.JobCodeGrid.Data);
+            Assert.NotEmpty(model.TimeCodeGrid.Data);
+        }
+
         #endregion
 
         #region LoadJobCodeGrid
@@ -180,7 +194,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
             Assert.Equal("_DataGrid", partial.ViewName);
-            Assert.IsType<DataGridConfig<JobCodeViewModel>>(partial.Model);
+            Assert.IsType<DataGridConfig<PortfolioJobCodeViewModel>>(partial.Model);
         }
 
         [Fact]
@@ -219,10 +233,13 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
             // Arrange
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = "{}" };
             const string parentProject = "PRJ001";
-            var timeCodes = new List<TimeCodeValidDto> { new() { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = parentProject } };
+            var timeCodes = new List<TimeCodeValidDto>
+            {
+                new() { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = parentProject }
+            };
 
             SetupTimeCodeGridMapper();
-            _timeCodeService.GetPagedTimeCodesTestCodeAsync(Arg.Any<QueryParameters<string>>(), null, null, parentProject)
+            _timeCodeService.GetPagedTimeCodesAsync(Arg.Any<QueryParameters<string>>(), null, parentProject)
                 .Returns(ApiResponseDto<List<TimeCodeValidDto>>.SuccessResponse(timeCodes, new PaginationDto()));
 
             // Act
@@ -232,6 +249,50 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
             var partial = Assert.IsType<PartialViewResult>(result);
             Assert.Equal("_DataGrid", partial.ViewName);
             Assert.IsType<DataGridConfig<TimeCodeValidityViewModel>>(partial.Model);
+        }
+
+        [Fact]
+        public async Task LoadTimeCodeGrid_WithJobCodeId_PassesJobCodeToService()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = "{}" };
+            const string parentProject = "PRJ001";
+            const string jobCodeId = "JC1";
+
+            SetupTimeCodeGridMapper();
+            _timeCodeService.GetPagedTimeCodesAsync(Arg.Any<QueryParameters<string>>(), null, parentProject)
+                .Returns(ApiResponseDto<List<TimeCodeValidDto>>.SuccessResponse([], new PaginationDto()));
+
+            // Act
+            var result = await _controller.LoadTimeCodeGrid(request, parentProject, jobCodeId, null);
+
+            // Assert
+            var partial = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partial.ViewName);
+            await _timeCodeService.Received(1).GetPagedTimeCodesAsync(
+                Arg.Any<QueryParameters<string>>(),
+                null,
+                parentProject);
+        }
+
+        [Fact]
+        public async Task LoadTimeCodeGrid_WithTestCode_PassesTestCodeToService()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = "{}" };
+            const string parentProject = "PRJ001";
+            const string testCode = "TST1";
+
+            SetupTimeCodeGridMapper();
+            _timeCodeService.GetPagedTimeCodesAsync(Arg.Any<QueryParameters<string>>(), null, parentProject)
+                .Returns(ApiResponseDto<List<TimeCodeValidDto>>.SuccessResponse([], new PaginationDto()));
+
+            // Act
+            var result = await _controller.LoadTimeCodeGrid(request, parentProject, null, testCode);
+
+            // Assert
+            var partial = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partial.ViewName);
         }
 
         [Fact]
@@ -248,27 +309,31 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
         }
 
         [Fact]
-        public async Task LoadTimeCodeGrid_WithJobCodeIdAndTestCode_CallsServiceWithCorrectParameters()
+        public async Task LoadTimeCodeGrid_WithEmptyParentProject_ReturnsBadRequest()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Filter = "{}" };
+
+            // Act
+            var result = await _controller.LoadTimeCodeGrid(request, string.Empty, null, null);
+
+            // Assert
+            Assert.IsType<BadRequestObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task LoadTimeCodeGrid_WithInvalidModelState_ReturnsBadRequest()
         {
             // Arrange
             var request = new PaginationFilter<string> { Filter = "{}" };
             const string parentProject = "PRJ001";
-            const string jobCodeId = "JC1";
-            const string testCode = "TST1";
-
-            SetupTimeCodeGridMapper();
-            _timeCodeService.GetPagedTimeCodesTestCodeAsync(Arg.Any<QueryParameters<string>>(), null, testCode, parentProject)
-                .Returns(ApiResponseDto<List<TimeCodeValidDto>>.SuccessResponse([], new PaginationDto()));
+            _controller.ModelState.AddModelError("Page", "Invalid page");
 
             // Act
-            await _controller.LoadTimeCodeGrid(request, parentProject, jobCodeId, testCode);
+            var result = await _controller.LoadTimeCodeGrid(request, parentProject, null, null);
 
             // Assert
-            await _timeCodeService.Received(1).GetPagedTimeCodesTestCodeAsync(
-                Arg.Any<QueryParameters<string>>(),
-                null,
-                testCode,
-                parentProject);
+            Assert.IsType<BadRequestObjectResult>(result);
         }
 
         #endregion
@@ -291,7 +356,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
             Assert.Equal("_AddEditJobCode", partial.ViewName);
-            var model = Assert.IsType<JobCodeViewModel>(partial.Model);
+            var model = Assert.IsType<PortfolioJobCodeViewModel>(partial.Model);
             Assert.Equal(parentProject, model.ParentProject);
         }
 
@@ -322,7 +387,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
         public async Task CreateJobCode_Post_WithValidModel_ReturnsSuccessJson()
         {
             // Arrange
-            var model = new JobCodeViewModel { JobCodeId = "JC1", ParentProject = "PRJ001", JobCodeWorkGroup = "WG1" };
+            var model = new PortfolioJobCodeViewModel { JobCodeId = "JC1", ParentProject = "PRJ001", JobCodeWorkGroup = "WG1" };
             var dto = new JobCodeDto { JobCodeId = "JC1", ParentProject = "PRJ001", JobCodeWorkGroup = "WG1" };
 
             _mapper.Map<JobCodeDto>(model).Returns(dto);
@@ -342,7 +407,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
         public async Task CreateJobCode_Post_WithInvalidModelState_ReturnsErrorJson()
         {
             // Arrange
-            var model = new JobCodeViewModel();
+            var model = new PortfolioJobCodeViewModel();
             _controller.ModelState.AddModelError("JobCodeId", "Required");
 
             // Act
@@ -359,7 +424,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
         public async Task CreateJobCode_Post_WhenServiceFails_ReturnsErrorJson()
         {
             // Arrange
-            var model = new JobCodeViewModel { JobCodeId = "JC1" };
+            var model = new PortfolioJobCodeViewModel { JobCodeId = "JC1" };
             var dto = new JobCodeDto { JobCodeId = "JC1" };
 
             _mapper.Map<JobCodeDto>(model).Returns(dto);
@@ -386,7 +451,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
             // Arrange
             const string jobCodeId = "JC1";
             var dto = new JobCodeDto { JobCodeId = jobCodeId, ParentProject = "PRJ001" };
-            var model = new JobCodeViewModel { JobCodeId = jobCodeId, ParentProject = "PRJ001" };
+            var model = new PortfolioJobCodeViewModel { JobCodeId = jobCodeId, ParentProject = "PRJ001" };
 
             _jobCodeService.GetJobCodeByIdAsync(jobCodeId)
                 .Returns(ApiResponseDto<JobCodeDto>.SuccessResponse(dto));
@@ -394,7 +459,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
             _jobCodeService.GetTypesAsync()
                 .Returns(ApiResponseDto<List<string>>.SuccessResponse([]));
             SetupProjectsList([]);
-            _mapper.Map<JobCodeViewModel>(dto).Returns(model);
+            _mapper.Map<PortfolioJobCodeViewModel>(dto).Returns(model);
 
             // Act
             var result = await _controller.EditJobCode(jobCodeId);
@@ -402,7 +467,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
             Assert.Equal("_AddEditJobCode", partial.ViewName);
-            Assert.IsType<JobCodeViewModel>(partial.Model);
+            Assert.IsType<PortfolioJobCodeViewModel>(partial.Model);
         }
 
         [Fact]
@@ -428,7 +493,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
         public async Task EditJobCode_Post_WithValidModel_ReturnsSuccessJson()
         {
             // Arrange
-            var model = new JobCodeViewModel { JobCodeId = "JC1", ParentProject = "PRJ001" };
+            var model = new PortfolioJobCodeViewModel { JobCodeId = "JC1", ParentProject = "PRJ001" };
             var dto = new JobCodeDto { JobCodeId = "JC1", ParentProject = "PRJ001" };
 
             _mapper.Map<JobCodeDto>(model).Returns(dto);
@@ -448,7 +513,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
         public async Task EditJobCode_Post_WithInvalidModelState_ReturnsErrorJson()
         {
             // Arrange
-            var model = new JobCodeViewModel();
+            var model = new PortfolioJobCodeViewModel();
             _controller.ModelState.AddModelError("JobCodeId", "Required");
 
             // Act
@@ -464,7 +529,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
         public async Task EditJobCode_Post_WhenServiceFails_ReturnsErrorJson()
         {
             // Arrange
-            var model = new JobCodeViewModel { JobCodeId = "JC1" };
+            var model = new PortfolioJobCodeViewModel { JobCodeId = "JC1" };
             var dto = new JobCodeDto { JobCodeId = "JC1" };
 
             _mapper.Map<JobCodeDto>(model).Returns(dto);
@@ -1040,6 +1105,44 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
             var jsonElement = GetJsonResultElement(jsonResult);
             Assert.False(jsonElement.GetProperty("success").GetBoolean());
             Assert.True(jsonElement.TryGetProperty("message", out _));
+        }
+
+        #endregion
+
+        #region NavigateToTestPurchaseRequirements
+
+        [Fact]
+        public void NavigateToTestPurchaseRequirements_WithValidParentProject_SetsTemDataAndRedirects()
+        {
+            // Arrange
+            const string parentProject = "PRJ001";
+
+            // Act
+            var result = _controller.NavigateToTestPurchaseRequirements(parentProject);
+
+            // Assert
+            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
+            Assert.Equal("Index", redirectResult.ActionName);
+            Assert.Equal("TestPurchaseRequirement", redirectResult.ControllerName);
+            Assert.Equal("PACT", redirectResult.RouteValues!["area"]);
+            Assert.Equal(parentProject, redirectResult.RouteValues["parentProject"]);
+            Assert.Equal("Portfolio", _controller.TempData["PactOrigin"]);
+        }
+
+        [Fact]
+        public void NavigateToTestPurchaseRequirements_WithEmptyParentProject_StillSetsTemDataAndRedirects()
+        {
+            // Arrange
+            const string parentProject = "";
+
+            // Act
+            var result = _controller.NavigateToTestPurchaseRequirements(parentProject);
+
+            // Assert
+            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
+            Assert.Equal("Index", redirectResult.ActionName);
+            Assert.Equal("TestPurchaseRequirement", redirectResult.ControllerName);
+            Assert.Equal("Portfolio", _controller.TempData["PactOrigin"]);
         }
 
         #endregion

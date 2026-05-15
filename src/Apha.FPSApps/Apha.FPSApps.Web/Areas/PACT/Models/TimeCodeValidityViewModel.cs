@@ -21,6 +21,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         public string WorkGroup { get; set; } = null!;
 
         [Display(Name = "Active")]
+        [Required(ErrorMessage = "Active is required")]
         [GridColumn(Order = 2, Width = 80, Type = GridColumnType.Checkbox, IsFilterable = true)]
         public bool Active { get; set; }
 
@@ -68,6 +69,14 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
+            // Business Rule: Active must be true (checkbox must be checked)
+            if (!Active)
+            {
+                yield return new ValidationResult(
+                    "The Active checkbox must be checked.",
+                    new[] { nameof(Active) });
+            }
+
             var hasJobCode = !string.IsNullOrWhiteSpace(JobCode);
             var hasPortfolio = !string.IsNullOrWhiteSpace(Portfolio);
             var hasTestCode = !string.IsNullOrWhiteSpace(TestCode);

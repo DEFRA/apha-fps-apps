@@ -91,15 +91,15 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return PartialView("_DataGrid", gridConfig);
         }
 
-        private async Task<DataGridConfig<JobCodeViewModel>> BuildJobCodeGridAsync(
+        private async Task<DataGridConfig<PortfolioJobCodeViewModel>> BuildJobCodeGridAsync(
             PaginationFilter<string> request, string parentProject)
         {
             var query = _mapper.Map<QueryParameters<string>>(request);
             var response = await _jobCodeService.GetPagedJobCodesAsync(query, parentProject);
 
             var items = response.Success && response.Data != null
-                ? _mapper.Map<List<JobCodeViewModel>>(response.Data)
-                : new List<JobCodeViewModel>();
+                ? _mapper.Map<List<PortfolioJobCodeViewModel>>(response.Data)
+                : new List<PortfolioJobCodeViewModel>();
 
             var pagination = response.Success && response.Pagination != null
                 ? _mapper.Map<PaginationModel>(response.Pagination)
@@ -110,7 +110,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}")
                 ?? new Dictionary<string, string>();
 
-            return new DataGridConfig<JobCodeViewModel>
+            return new DataGridConfig<PortfolioJobCodeViewModel>
             {
                 GridId = "jobCodeGrid",
                 Title = "Project Job Codes",
@@ -126,15 +126,15 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 RowSelectFunction = "selectJobCode",
                 BindGridUrl = $"/PACT/PortfolioTimeCodes/LoadJobCodeGrid?parentProject={Uri.EscapeDataString(parentProject)}",
                 Data = items,
-                Columns = GridDataProvider.GetColumnsDefination<JobCodeViewModel>(),
+                Columns = GridDataProvider.GetColumnsDefination<PortfolioJobCodeViewModel>(),
                 Pagination = pagination,
                 CurrentFilters = filterDict
             };
         }
 
-        private static DataGridConfig<JobCodeViewModel> BuildEmptyJobCodeGrid()
+        private static DataGridConfig<PortfolioJobCodeViewModel> BuildEmptyJobCodeGrid()
         {
-            return new DataGridConfig<JobCodeViewModel>
+            return new DataGridConfig<PortfolioJobCodeViewModel>
             {
                 GridId = "jobCodeGrid",
                 Title = "Project Job Codes",
@@ -147,7 +147,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 RowSelectFunction = "selectJobCode",
                 BindGridUrl = "/PACT/PortfolioTimeCodes/LoadJobCodeGrid",
                 Data = [],
-                Columns = GridDataProvider.GetColumnsDefination<JobCodeViewModel>()
+                Columns = GridDataProvider.GetColumnsDefination<PortfolioJobCodeViewModel>()
             };
         }
 
@@ -177,7 +177,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
             // Option 1: Show ALL time codes for the project (regardless of Job Code selection)
             // Pass null for jobCode to not filter by it
-            var response = await _timeCodeService.GetPagedTimeCodesTestCodeAsync(query, null, testCodeId, parentProject);
+            //var response = await _timeCodeService.GetPagedTimeCodesTestCodeAsync(query, null, testCodeId, parentProject);
+            var response = await _timeCodeService.GetPagedTimeCodesAsync(query, null, parentProject);
 
             var items = response.Success && response.Data != null
                 ? _mapper.Map<List<TimeCodeValidityViewModel>>(response.Data)
@@ -250,11 +251,11 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             ViewBag.Types = types.Data?.Select(t => new SelectListItem(t, t)).ToList() ?? [];
             ViewBag.Projects = projects.Data?.Select(p => new SelectListItem(p.ParentProject, p.ParentProject)).ToList() ?? [];
 
-            return PartialView("_AddEditJobCode", new JobCodeViewModel { ParentProject = parentProject });
+            return PartialView("_AddEditJobCode", new PortfolioJobCodeViewModel { ParentProject = parentProject });
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateJobCode([FromBody] JobCodeViewModel model)
+        public async Task<IActionResult> CreateJobCode([FromBody] PortfolioJobCodeViewModel model)
         {
             if (!ModelState.IsValid)
                 return Json(new
@@ -302,11 +303,11 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             ViewBag.Types = types.Data?.Select(t => new SelectListItem(t, t)).ToList() ?? [];
             ViewBag.Projects = projects.Data?.Select(p => new SelectListItem(p.ParentProject, p.ParentProject)).ToList() ?? [];
 
-            return PartialView("_AddEditJobCode", _mapper.Map<JobCodeViewModel>(result.Data));
+            return PartialView("_AddEditJobCode", _mapper.Map<PortfolioJobCodeViewModel>(result.Data));
         }
 
         [HttpPost]
-        public async Task<IActionResult> EditJobCode([FromBody] JobCodeViewModel model)
+        public async Task<IActionResult> EditJobCode([FromBody] PortfolioJobCodeViewModel model)
         {
             if (!ModelState.IsValid)
                 return Json(new
@@ -551,6 +552,18 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 return Json(new { success = true });
 
             return Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Delete failed" });
+        }
+
+        // ── NAVIGATION ───────────────────────────────────────────────────────
+
+        [HttpGet]
+        public IActionResult NavigateToTestPurchaseRequirements(string parentProject)
+        {
+            // Set TempData to indicate navigation came from Portfolio Time Codes
+            TempData["PactOrigin"] = "Portfolio";
+
+            // Redirect to Test Purchase Requirements
+            return RedirectToAction("Index", "TestPurchaseRequirement", new { area = "PACT", parentProject });
         }
 
     }

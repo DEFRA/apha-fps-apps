@@ -90,9 +90,6 @@ $(document).ready(function () {
         e.preventDefault(); // Prevent any default behavior
         e.stopPropagation(); // Stop event bubbling
 
-        console.log('Portfolio Time Codes button clicked');
-        console.log('Current parent project:', currentParentProject);
-
         if (!currentParentProject) {
             alert('Please select a portfolio first.');
             return;
@@ -100,7 +97,6 @@ $(document).ready(function () {
 
         // Navigate to Portfolio Time Codes page with selected portfolio
         var url = '/PACT/PortfolioTimeCodes/Index?parentProject=' + encodeURIComponent(currentParentProject);
-        console.log('Navigating to:', url);
         window.location.href = url;
     });
 
@@ -173,6 +169,7 @@ function loadPortfolioData(parentProject) {
 
                 // Update sidebar nav links — preserves existing query params (e.g. year)
                 updateNavHref('#sideNavTestPurchase', parentProject);
+                updateNavHref('#sideNavTimeCodes', parentProject);
                 updateNavHref('#sideNavInvoices', parentProject);
 
                 resetFormButtons(true);

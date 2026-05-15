@@ -13,6 +13,7 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<PactProjectViewModel, ProjectDto>().ReverseMap();
             CreateMap<ProjectJobCodeViewModel, JobCodeDto>().ReverseMap();
             CreateMap<JobCodeViewModel, JobCodeDto>().ReverseMap();
+            CreateMap<PortfolioJobCodeViewModel, JobCodeDto>().ReverseMap();
             CreateMap<TimeCodeValidDto, TimeCodeViewModel>().ReverseMap();
             CreateMap<TimeCodeValidDto, TimeCodeValidityViewModel>()
                 .ForMember(dest => dest.Project, opt => opt.MapFrom(src => src.ParentProject))
