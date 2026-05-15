@@ -61,7 +61,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
         {
             _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string>());
-            _mapper.Map<List<TimeCodeValidityViewModel>>(Arg.Any<List<TimeCodeValidDto>>())
+            _mapper.Map<List<ValidTimeCodeViewModel>>(Arg.Any<List<TimeCodeValidDto>>())
                 .Returns([]);
             _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>())
                 .Returns(new PaginationModel());
@@ -151,8 +151,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
                 .Returns(new QueryParameters<string>());
             _mapper.Map<List<PortfolioJobCodeViewModel>>(Arg.Any<List<JobCodeDto>>())
                 .Returns([new PortfolioJobCodeViewModel { JobCodeId = "JC1", ParentProject = parentProject }]);
-            _mapper.Map<List<TimeCodeValidityViewModel>>(Arg.Any<List<TimeCodeValidDto>>())
-                .Returns([new TimeCodeValidityViewModel { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = parentProject }]);
+            _mapper.Map<List<ValidTimeCodeViewModel>>(Arg.Any<List<TimeCodeValidDto>>())
+                .Returns([new ValidTimeCodeViewModel { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = parentProject }]);
             _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>())
                 .Returns(new PaginationModel());
 
@@ -248,7 +248,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
             Assert.Equal("_DataGrid", partial.ViewName);
-            Assert.IsType<DataGridConfig<TimeCodeValidityViewModel>>(partial.Model);
+            Assert.IsType<DataGridConfig<ValidTimeCodeViewModel>>(partial.Model);
         }
 
         [Fact]
@@ -608,7 +608,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
             Assert.Equal("_AddEditTimeCode", partial.ViewName);
-            var model = Assert.IsType<TimeCodeValidityViewModel>(partial.Model);
+            var model = Assert.IsType<ValidTimeCodeViewModel>(partial.Model);
             Assert.Equal(parentProject, model.ParentProject);
             Assert.Null(model.JobCode);
         }
@@ -639,7 +639,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
         public async Task CreateTimeCode_Post_WithValidModel_ReturnsSuccessJson()
         {
             // Arrange
-            var model = new TimeCodeValidityViewModel
+            var model = new ValidTimeCodeViewModel
             {
                 WorkGroup = "WG1",
                 TimeCode = "TC1",
@@ -670,7 +670,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
         public async Task CreateTimeCode_Post_WithJobCode_ClearsPortfolioAndTestCode()
         {
             // Arrange
-            var model = new TimeCodeValidityViewModel
+            var model = new ValidTimeCodeViewModel
             {
                 WorkGroup = "WG1",
                 TimeCode = "TC1",
@@ -682,7 +682,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
             };
             var dto = new TimeCodeValidDto { WorkGroup = "WG1", TimeCode = "TC1", ParentProject = "PRJ001" };
 
-            _mapper.Map<TimeCodeValidDto>(Arg.Any<TimeCodeValidityViewModel>())
+            _mapper.Map<TimeCodeValidDto>(Arg.Any<ValidTimeCodeViewModel>())
                 .Returns(dto);
             _timeCodeService.CreateTimeCodeValidAsync(Arg.Any<TimeCodeValidDto>())
                 .Returns(ApiResponseDto<TimeCodeValidDto>.SuccessResponse(dto));
@@ -700,7 +700,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
         public async Task CreateTimeCode_Post_WithOnlyPortfolio_KeepsPortfolioAndClearsJobCode()
         {
             // Arrange - Portfolio only, no JobCode initially
-            var model = new TimeCodeValidityViewModel
+            var model = new ValidTimeCodeViewModel
             {
                 WorkGroup = "WG1",
                 TimeCode = "TC1",
@@ -711,7 +711,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
             };
             var dto = new TimeCodeValidDto { WorkGroup = "WG1", TimeCode = "TC1", ParentProject = "PRJ001" };
 
-            _mapper.Map<TimeCodeValidDto>(Arg.Any<TimeCodeValidityViewModel>())
+            _mapper.Map<TimeCodeValidDto>(Arg.Any<ValidTimeCodeViewModel>())
                 .Returns(dto);
             _timeCodeService.CreateTimeCodeValidAsync(Arg.Any<TimeCodeValidDto>())
                 .Returns(ApiResponseDto<TimeCodeValidDto>.SuccessResponse(dto));
@@ -728,7 +728,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
         public async Task CreateTimeCode_Post_WithInvalidModelState_ReturnsErrorJson()
         {
             // Arrange
-            var model = new TimeCodeValidityViewModel();
+            var model = new ValidTimeCodeViewModel();
             _controller.ModelState.AddModelError("TimeCode", "Required");
 
             // Act
@@ -744,7 +744,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
         public async Task CreateTimeCode_Post_WhenServiceFails_ReturnsErrorJson()
         {
             // Arrange
-            var model = new TimeCodeValidityViewModel
+            var model = new ValidTimeCodeViewModel
             {
                 WorkGroup = "WG1",
                 TimeCode = "TC1",
@@ -782,7 +782,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
                 TimeCode = timeCode,
                 ParentProject = parentProject
             };
-            var model = new TimeCodeValidityViewModel
+            var model = new ValidTimeCodeViewModel
             {
                 WorkGroup = workGroup,
                 TimeCode = timeCode,
@@ -793,7 +793,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
                 .Returns(ApiResponseDto<List<TimeCodeValidDto>>.SuccessResponse([dto], new PaginationDto()));
             SetupWorkGroupsList([]);
             SetupProjectsList([]);
-            _mapper.Map<TimeCodeValidityViewModel>(dto).Returns(model);
+            _mapper.Map<ValidTimeCodeViewModel>(dto).Returns(model);
 
             // Act
             var result = await _controller.EditTimeCode(workGroup, timeCode, null, parentProject);
@@ -801,7 +801,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
             Assert.Equal("_AddEditTimeCode", partial.ViewName);
-            var returnedModel = Assert.IsType<TimeCodeValidityViewModel>(partial.Model);
+            var returnedModel = Assert.IsType<ValidTimeCodeViewModel>(partial.Model);
             Assert.Equal(workGroup, returnedModel.OriginalWorkGroup);
         }
 
@@ -902,7 +902,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
         public async Task EditTimeCode_Post_WithValidModelAndNoWorkGroupChange_ReturnsSuccessJson()
         {
             // Arrange
-            var model = new TimeCodeValidityViewModel
+            var model = new ValidTimeCodeViewModel
             {
                 WorkGroup = "WG1",
                 OriginalWorkGroup = "WG1",
@@ -933,7 +933,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
         public async Task EditTimeCode_Post_WithWorkGroupChange_DeletesOldAndCreatesNew()
         {
             // Arrange
-            var model = new TimeCodeValidityViewModel
+            var model = new ValidTimeCodeViewModel
             {
                 WorkGroup = "WG2",
                 OriginalWorkGroup = "WG1",
@@ -968,7 +968,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
         public async Task EditTimeCode_Post_WithWorkGroupChangeAndDeleteFails_ReturnsErrorJson()
         {
             // Arrange
-            var model = new TimeCodeValidityViewModel
+            var model = new ValidTimeCodeViewModel
             {
                 WorkGroup = "WG2",
                 OriginalWorkGroup = "WG1",
@@ -993,7 +993,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
         public async Task EditTimeCode_Post_WithJobCode_ClearsPortfolioAndTestCode()
         {
             // Arrange
-            var model = new TimeCodeValidityViewModel
+            var model = new ValidTimeCodeViewModel
             {
                 WorkGroup = "WG1",
                 OriginalWorkGroup = "WG1",
@@ -1006,7 +1006,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
             };
             var dto = new TimeCodeValidDto { WorkGroup = "WG1", TimeCode = "TC1", ParentProject = "PRJ001" };
 
-            _mapper.Map<TimeCodeValidDto>(Arg.Any<TimeCodeValidityViewModel>())
+            _mapper.Map<TimeCodeValidDto>(Arg.Any<ValidTimeCodeViewModel>())
                 .Returns(dto);
             _timeCodeService.UpdateTimeCodeValidAsync(Arg.Any<TimeCodeValidDto>())
                 .Returns(ApiResponseDto<TimeCodeValidDto>.SuccessResponse(dto));
@@ -1024,7 +1024,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
         public async Task EditTimeCode_Post_WithInvalidModelState_ReturnsErrorJson()
         {
             // Arrange
-            var model = new TimeCodeValidityViewModel();
+            var model = new ValidTimeCodeViewModel();
             _controller.ModelState.AddModelError("TimeCode", "Required");
 
             // Act
@@ -1040,7 +1040,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
         public async Task EditTimeCode_Post_WhenUpdateFails_ReturnsErrorJson()
         {
             // Arrange
-            var model = new TimeCodeValidityViewModel
+            var model = new ValidTimeCodeViewModel
             {
                 WorkGroup = "WG1",
                 OriginalWorkGroup = "WG1",

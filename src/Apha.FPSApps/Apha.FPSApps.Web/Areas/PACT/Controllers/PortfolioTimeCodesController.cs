@@ -170,7 +170,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return PartialView("_DataGrid", gridConfig);
         }
 
-        private async Task<DataGridConfig<TimeCodeValidityViewModel>> BuildTimeCodeTestCodeGridAsync(
+        private async Task<DataGridConfig<ValidTimeCodeViewModel>> BuildTimeCodeTestCodeGridAsync(
             PaginationFilter<string> request, string parentProject, string? jobCodeId, string? testCodeId)
         {
             var query = _mapper.Map<QueryParameters<string>>(request);
@@ -181,8 +181,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var response = await _timeCodeService.GetPagedTimeCodesAsync(query, null, parentProject);
 
             var items = response.Success && response.Data != null
-                ? _mapper.Map<List<TimeCodeValidityViewModel>>(response.Data)
-                : new List<TimeCodeValidityViewModel>();
+                ? _mapper.Map<List<ValidTimeCodeViewModel>>(response.Data)
+                : new List<ValidTimeCodeViewModel>();
 
             var pagination = response.Success && response.Pagination != null
                 ? _mapper.Map<PaginationModel>(response.Pagination)
@@ -196,7 +196,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             // Option 1: Always show all time codes for the project
             var title = $"Time Code Validity for Project: {parentProject}";
 
-            return new DataGridConfig<TimeCodeValidityViewModel>
+            return new DataGridConfig<ValidTimeCodeViewModel>
             {
                 GridId = "timeCodeGrid",
                 Title = title,
@@ -211,15 +211,15 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 ExtraFilterMethod = "getTimeCodeExtraFilters",
                 BindGridUrl = $"/PACT/PortfolioTimeCodes/LoadTimeCodeGrid?parentProject={Uri.EscapeDataString(parentProject)}",
                 Data = items,
-                Columns = GridDataProvider.GetColumnsDefination<TimeCodeValidityViewModel>(),
+                Columns = GridDataProvider.GetColumnsDefination<ValidTimeCodeViewModel>(),
                 Pagination = pagination,
                 CurrentFilters = filterDict
             };
         }
 
-        private static DataGridConfig<TimeCodeValidityViewModel> BuildEmptyTimeCodeGrid()
+        private static DataGridConfig<ValidTimeCodeViewModel> BuildEmptyTimeCodeGrid()
         {
-            return new DataGridConfig<TimeCodeValidityViewModel>
+            return new DataGridConfig<ValidTimeCodeViewModel>
             {
                 GridId = "timeCodeGrid",
                 Title = "Time Code Validity",
@@ -234,7 +234,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 ExtraFilterMethod = "getTimeCodeExtraFilters",
                 BindGridUrl = "/PACT/PortfolioTimeCodes/LoadTimeCodeGrid",
                 Data = [],
-                Columns = GridDataProvider.GetColumnsDefination<TimeCodeValidityViewModel>()
+                Columns = GridDataProvider.GetColumnsDefination<ValidTimeCodeViewModel>()
             };
         }
 
@@ -364,7 +364,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             ViewBag.Projects = projects.Data?.Select(p => new SelectListItem(p.ParentProject, p.ParentProject)).ToList() ?? [];
 
             // Option 1: Don't pre-populate JobCode - let user choose between JobCode or Portfolio/TestCode
-            return PartialView("_AddEditTimeCode", new TimeCodeValidityViewModel
+            return PartialView("_AddEditTimeCode", new ValidTimeCodeViewModel
             {
                 ParentProject = parentProject,
                 JobCode = null,  // Leave empty to allow user choice
@@ -374,7 +374,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateTimeCode([FromBody] TimeCodeValidityViewModel model)
+        public async Task<IActionResult> CreateTimeCode([FromBody] ValidTimeCodeViewModel model)
         {
             // Business Rule: Enforce mutual exclusivity
             // If JobCode has value, clear Portfolio and TestCode
@@ -460,7 +460,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 ViewBag.WorkGroups = workGroups.Data?.Select(w => new SelectListItem(w.WorkGroupName, w.WorkGroupName)).ToList() ?? [];
                 ViewBag.Projects = projects.Data?.Select(p => new SelectListItem(p.ParentProject, p.ParentProject)).ToList() ?? [];
 
-                var model = _mapper.Map<TimeCodeValidityViewModel>(item);
+                var model = _mapper.Map<ValidTimeCodeViewModel>(item);
                 model.OriginalWorkGroup = item.WorkGroup;
 
                 return PartialView("_AddEditTimeCode", model);
@@ -472,7 +472,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> EditTimeCode([FromBody] TimeCodeValidityViewModel model)
+        public async Task<IActionResult> EditTimeCode([FromBody] ValidTimeCodeViewModel model)
         {
             // Business Rule: Enforce mutual exclusivity
             // If JobCode has value, clear Portfolio and TestCode

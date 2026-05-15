@@ -18,7 +18,6 @@ namespace Apha.Common.Constants
         public const string GetPagedTimeCodes = "api/v1/timecodevalid/paged";
         public const string GetPagedTimeCodesByJobCode = "api/v1/timecodevalid/paged?jobCode={0}";
         public const string GetPagedTimeCodesByProject = "api/v1/timecodevalid/paged?parentProject={0}";
-        public const string GetPagedTimeCodesByTestCode = "api/v1/timecodevalid/paged?testCode={0}";
         public const string GetPagedTimeCodesByJobCodeAndProject = "api/v1/timecodevalid/paged?jobCode={0}&parentProject={1}";
         public const string GetPagedTimeCodesByProjectAndTestCode = "api/v1/timecodevalid/paged/project/{0}/testcode/{1}";
         public const string CreateTimeCodeValid = "api/v1/timecodevalid";

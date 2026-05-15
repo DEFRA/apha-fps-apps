@@ -9,6 +9,6 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         public List<SelectListItem> PortfolioOptions { get; set; } = [];
         public List<SelectListItem> WorkGroups { get; set; } = [];
         public DataGridConfig<PortfolioJobCodeViewModel> JobCodeGrid { get; set; } = new DataGridConfig<PortfolioJobCodeViewModel>();
-        public DataGridConfig<TimeCodeValidityViewModel> TimeCodeGrid { get; set; } = new DataGridConfig<TimeCodeValidityViewModel>();
+        public DataGridConfig<ValidTimeCodeViewModel> TimeCodeGrid { get; set; } = new DataGridConfig<ValidTimeCodeViewModel>();
     }
 }

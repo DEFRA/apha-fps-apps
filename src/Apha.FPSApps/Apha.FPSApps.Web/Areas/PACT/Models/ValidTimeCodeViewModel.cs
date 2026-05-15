@@ -12,7 +12,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
     /// - EITHER JobCode has a value (and Portfolio + TestCode are null)
     /// - OR Portfolio + TestCode have values (and JobCode is null)
     /// </summary>
-    public class TimeCodeValidityViewModel : IValidatableObject
+    public class ValidTimeCodeViewModel : IValidatableObject
     {
         [Display(Name = "Work Group")]
         [Required(ErrorMessage = "Work Group is required")]
