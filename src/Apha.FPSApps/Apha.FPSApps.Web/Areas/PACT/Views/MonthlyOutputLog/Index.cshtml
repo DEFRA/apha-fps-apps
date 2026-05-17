@@ -1,0 +1,202 @@
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.PACT.Models.MonthlyOutputLogViewModel
+
+@{
+    ViewData["Title"] = "Monthly Output Log";
+}
+
+<!-- Page heading -->
+<div class="govuk-grid-row sup_margin_left_right_0">
+    <div class="govuk-grid-column-full">
+        <h1 class="heading_with_txtbox govuk-heading-s sup_border-bottom p-tb-10 p-l-10">
+            <span class="sup_flex_left_center">Monthly Output Log</span>
+        </h1>
+    </div>
+</div>
+
+<!-- Search criteria panel -->
+<div class="govuk-grid-row sup_margin_left_right_0 sup_margin_bottom_10">
+    <div class="govuk-grid-column-full">
+        <div class="sup_border sup_padding_16">
+            <div class="govuk-grid-row">
+
+                <!-- Left column -->
+                <div class="govuk-grid-column-one-half">
+
+                    <div class="govuk-form-group sup_margin_bottom_10">
+                        <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="ddWorkGroup">
+                            Work Group
+                        </label>
+                        <select id="ddWorkGroup" class="govuk-select govuk-!-font-size-16" style="width:100%;">
+                            <option value="">-- All --</option>
+                            @foreach (var item in Model.WorkGroupOptions)
+                            {
+                                <option value="@item.Value">@item.Text</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="govuk-form-group sup_margin_bottom_10">
+                        <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="ddTestCode">
+                            Test Code
+                        </label>
+                        <select id="ddTestCode" class="govuk-select govuk-!-font-size-16" style="width:100%;">
+                            <option value="">-- All --</option>
+                            @foreach (var item in Model.TestCodeOptions)
+                            {
+                                <option value="@item.Value">@item.Text</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="govuk-form-group sup_margin_bottom_10">
+                        <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="ddBuyingProject">
+                            Buying Project
+                        </label>
+                        <select id="ddBuyingProject" class="govuk-select govuk-!-font-size-16" style="width:100%;">
+                            <option value="">-- All --</option>
+                            @foreach (var item in Model.ProjectOptions)
+                            {
+                                <option value="@item.Value">@item.Text</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="govuk-form-group sup_margin_bottom_10">
+                        <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="txtBuyingTest">
+                            OR Buying Test
+                        </label>
+                        <input id="txtBuyingTest" type="text"
+                               class="govuk-input govuk-!-font-size-16"
+                               placeholder="Enter buying test code" />
+                    </div>
+
+                </div>
+
+                <!-- Right column -->
+                <div class="govuk-grid-column-one-half">
+
+                    <div class="govuk-form-group sup_margin_bottom_10">
+                        <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="txtMonth">
+                            Month
+                        </label>
+                        <input id="txtMonth" type="number" min="1" max="12"
+                               class="govuk-input govuk-!-font-size-16"
+                               placeholder="1 – 12" style="width:120px;" />
+                    </div>
+
+                    <div class="govuk-form-group sup_margin_bottom_10">
+                        <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="dtDateImported">
+                            Date Imported
+                        </label>
+                        <input id="dtDateImported" type="date"
+                               class="govuk-input govuk-!-font-size-16"
+                               style="width:200px;" />
+                    </div>
+
+                    <div class="govuk-form-group sup_margin_bottom_10">
+                        <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="txtUserId">
+                            MAB User SP No.
+                        </label>
+                        <input id="txtUserId" type="text"
+                               class="govuk-input govuk-!-font-size-16"
+                               placeholder="Enter user SP number" style="width:200px;" />
+                    </div>
+
+                    <div class="govuk-form-group sup_margin_bottom_10">
+                        <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="ddAction">
+                            Action
+                        </label>
+                        <select id="ddAction" class="govuk-select govuk-!-font-size-16" style="width:160px;">
+                            <option value="">-- All --</option>
+                            @foreach (var item in Model.ActionOptions)
+                            {
+                                <option value="@item.Value">@item.Text</option>
+                            }
+                        </select>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="govuk-grid-row">
+                <div class="govuk-grid-column-full" style="display:flex; gap:10px; padding-top:6px;">
+                    <button id="btnSearch" type="button" class="govuk-button govuk-!-font-size-16 sup_margin_bottom_0">
+                        Search
+                    </button>
+                    <button id="btnClearAll" type="button"
+                            class="govuk-button govuk-button--secondary govuk-!-font-size-16 sup_margin_bottom_0">
+                        Clear All
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Grid -->
+<div class="govuk-grid-row sup_margin_left_right_0 sup_margin_bottom_10">
+    <div class="govuk-grid-column-full">
+        <div id="gridContainer_moLogGrid">
+            @await Html.PartialAsync("_DataGrid", Model.LogGrid)
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const searchUrl = '@Url.Action("Search", "MonthlyOutputLog", new { area = "PACT" })';
+        const gridContainerId = 'gridContainer_moLogGrid';
+
+        function getSearchParams(page, pageSize, sortBy, descending) {
+            return {
+                'request.Page':      page      ?? 1,
+                'request.PageSize':  pageSize  ?? 20,
+                'request.SortBy':    sortBy    ?? '',
+                'request.Descending': descending ?? false,
+                'request.Filter':    '{}',
+                workGroup:           $('#ddWorkGroup').val()    || null,
+                testCode:            $('#ddTestCode').val()     || null,
+                buyer:               $('#ddBuyingProject').val()|| null,
+                buyingTest:          $('#txtBuyingTest').val()  || null,
+                dateImported:        $('#dtDateImported').val() || null,
+                month:               $('#txtMonth').val()       || null,
+                userId:              $('#txtUserId').val()      || null,
+                insertDelete:        $('#ddAction').val()       || null
+            };
+        }
+
+        function runSearch(page, pageSize, sortBy, descending) {
+            const params = getSearchParams(page, pageSize, sortBy, descending);
+            $.post(searchUrl, params)
+                .done(function (html) {
+                    $('#' + gridContainerId).html(html);
+                })
+                .fail(function () {
+                    console.error('Search request failed.');
+                });
+        }
+
+        $('#btnSearch').on('click', function () {
+            runSearch(1, 20, '', false);
+        });
+
+        $('#btnClearAll').on('click', function () {
+            $('#ddWorkGroup').val('');
+            $('#ddTestCode').val('');
+            $('#ddBuyingProject').val('');
+            $('#txtBuyingTest').val('');
+            $('#txtMonth').val('');
+            $('#dtDateImported').val('');
+            $('#txtUserId').val('');
+            $('#ddAction').val('');
+            runSearch(1, 20, '', false);
+        });
+
+        // Allow the _DataGrid partial's pagination/sort callbacks to trigger a new search
+        window['getExtraFilters_moLogGrid'] = function (page, pageSize, sortBy, descending) {
+            return getSearchParams(page, pageSize, sortBy, descending);
+        };
+    </script>
+}

@@ -1,3 +1,4 @@
+using Apha.Common.Contracts;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
@@ -41,9 +42,12 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 new QueryParameters<string> { Page = 1, PageSize = 9999 }, null);
             var projectsResponse = await _projectService.GetAllPactProjectsAsync();
 
+            var defaultRequest = new PaginationFilter<string> { Filter = "{}" };
+            var grid = await BuildLogGrid(defaultRequest,null,null,null,null,null,null,null,null);
+
             var viewModel = new MonthlyOutputLogViewModel
             {
-                LogGrid = BuildEmptyGrid(),
+                LogGrid = grid,
                 WorkGroupOptions = workGroupsResponse.Success && workGroupsResponse.Data != null
                     ? workGroupsResponse.Data
                         .Select(w => new SelectListItem(w.WorkGroupName, w.WorkGroupName))
@@ -90,19 +94,44 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 });
 
             var effectiveBuyer = !string.IsNullOrWhiteSpace(buyingTest) ? buyingTest : buyer;
+ 
+            var gridConfig = await BuildLogGrid(request, workGroup, testCode, buyer, effectiveBuyer,
+                dateImported, month, userId, insertDelete);
+        
+            return PartialView("_DataGrid", gridConfig);
+        }
+
+        private async Task<DataGridConfig<MonthlyOutputLogItem>> BuildLogGrid(
+           PaginationFilter<string> request,
+           string? workGroup,
+           string? testCode,
+           string? buyer,
+           string? buyingTest,
+           DateTime? dateImported,
+           double? month,
+           string? userId,
+           string? insertDelete)
+        {
+             
+
+            var effectiveBuyer = !string.IsNullOrWhiteSpace(buyingTest) ? buyingTest : buyer;
 
             var query = _mapper.Map<QueryParameters<string>>(request);
             var response = await _logService.SearchAsync(
                 query, workGroup, testCode, effectiveBuyer,
                 dateImported, month, userId, insertDelete);
 
-            if (!response.Success || response.Data == null)
-            {
-                var emptyGrid = BuildEmptyGrid();
-                return PartialView("_DataGrid", emptyGrid);
-            }
 
-            var items = response.Data.Select(d => _mapper.Map<MonthlyOutputLogItem>(d)).ToList();
+            var  items = response.Data != null ? _mapper.Map<List<MonthlyOutputLogItem>>(response.Data) : [];
+
+            // var items = response.Data.Select(d => _mapper.Map<MonthlyOutputLogItem>(d)).ToList();
+            var pagination = response.Pagination != null
+                    ? _mapper.Map<PaginationModel>(response.Pagination)
+                    : new PaginationModel();
+
+            pagination.SortColumn = request.SortBy;
+            pagination.SortDirection = request.Descending;
+
             var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}")
                              ?? new Dictionary<string, string>();
 
@@ -117,36 +146,12 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 ShowPagination = true,
                 Data = items,
                 Columns = GridDataProvider.GetColumnsDefination<MonthlyOutputLogItem>(null),
-                Pagination = new PaginationModel
-                {
-                    PageNumber = response.Pagination?.PageNumber ?? 1,
-                    PageSize = response.Pagination?.PageSize ?? 20,
-                    //TotalPages = response.Pagination?.TotalPages ?? 1,
-                    TotalRecords = response.Pagination?.TotalRecords ?? items.Count,
-                    SortColumn = request.SortBy,
-                    SortDirection = request.Descending
-                },
+                Pagination = pagination,                
                 CurrentFilters = filterDict,
                 BindGridUrl = "/PACT/MonthlyOutputLog/Search"
             };
 
-            return PartialView("_DataGrid", gridConfig);
+            return gridConfig;
         }
-
-        private static DataGridConfig<MonthlyOutputLogItem> BuildEmptyGrid() =>
-            new()
-            {
-                GridId = "moLogGrid",
-                Title = "Monthly Output Log",
-                ShowCheckboxColumn = false,
-                AllowAdd = false,
-                AllowEdit = false,
-                AllowDelete = false,
-                ShowPagination = false,
-                Data = new List<MonthlyOutputLogItem>(),
-                Columns = GridDataProvider.GetColumnsDefination<MonthlyOutputLogItem>(null),
-                Pagination = new PaginationModel(),
-                BindGridUrl = "/PACT/MonthlyOutputLog/Search"
-            };
     }
 }
