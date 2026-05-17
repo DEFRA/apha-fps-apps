@@ -1,6 +1,5 @@
 using Apha.FPSApps.Application.Dtos.FPS;
-using Apha.FPSApps.Application.Dtos.PACT;
-using Apha.FPSApps.Web.Areas.PACT.Models;
+using Apha.FPSApps.Application.Dtos.PACT;using Apha.FPSApps.Web.Areas.PACT.Models;
 using AutoMapper;
 
 namespace Apha.FPSApps.Web.Mappings
@@ -41,6 +40,7 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<WorkGroupStaffDto, WorkGroupPeopleItem>().ReverseMap();
             CreateMap<WorkGroupDto, WorkGroup>().ReverseMap();
             CreateMap<WorkGroupPersonDto, WorkGroupPerson>().ReverseMap();
+            CreateMap<MonthlyOutputLogDto, MonthlyOutputLogItem>().ReverseMap();
         }
     }
 }
