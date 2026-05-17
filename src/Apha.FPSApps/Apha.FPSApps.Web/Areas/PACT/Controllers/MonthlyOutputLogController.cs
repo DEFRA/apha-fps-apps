@@ -1,4 +1,3 @@
-using Apha.Common.Contracts;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
@@ -20,26 +19,28 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
     {
         private readonly IMapper _mapper;
         private readonly IPactMonthlyOutputService _logService;
-        private readonly ITestCapabilityService _testCapabilityService;
+        private readonly IWorkGroupService _workGroupService;
+        private readonly ITestorProductService _TestorProductService;
         private readonly IProjectService _projectService;
 
         public MonthlyOutputLogController(
             IMapper mapper,
             IPactMonthlyOutputService logService,
-            ITestCapabilityService testCapabilityService,
+            IWorkGroupService workGroupService,
+            ITestorProductService TestorProductService,
             IProjectService projectService)
         {
             _mapper = mapper;
             _logService = logService;
-            _testCapabilityService = testCapabilityService;
+            _workGroupService = workGroupService;
+            _TestorProductService = TestorProductService;
             _projectService = projectService;
         }
 
         public async Task<IActionResult> Index()
         {
-            var workGroupsResponse = await _testCapabilityService.GetAllWorkGroupsAsync();
-            var testsResponse = await _testCapabilityService.GetPagedByWorkGroupAsync(
-                new QueryParameters<string> { Page = 1, PageSize = 9999 }, null);
+            var workGroupsResponse = await _workGroupService.GetAllWorkGroupsAsync();
+            var testsResponse = await _TestorProductService.GetAllTestorProductsAsync();
             var projectsResponse = await _projectService.GetAllPactProjectsAsync();
 
             var defaultRequest = new PaginationFilter<string> { Filter = "{}" };
@@ -56,7 +57,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                     : new List<SelectListItem>(),
                 TestCodeOptions = testsResponse.Success && testsResponse.Data != null
                     ? testsResponse.Data
-                        .Select(t => new SelectListItem(t.TestCode, t.TestCode))
+                        .Select(t => new SelectListItem(t.ItemCode, t.ItemCode))
                         .DistinctBy(x => x.Value)
                         .OrderBy(x => x.Text)
                         .ToList()
