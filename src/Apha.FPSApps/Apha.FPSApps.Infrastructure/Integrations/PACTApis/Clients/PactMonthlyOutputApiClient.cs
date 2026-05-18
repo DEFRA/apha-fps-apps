@@ -23,30 +23,24 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
 
         public async Task<ApiResponseDto<List<MonthlyOutputLogDto>>> SearchAsync(
             QueryParameters<string> query,
-            string? workGroup,
-            string? testCode,
-            string? buyer,
-            DateTime? dateImported,
-            double? month,
-            string? userId,
-            string? insertDelete)
+            MonthlyOutputLogFilterDto filter)
         {
             var url = QueryStringHelper.AddQueryString(PactApiEndpoints.SearchMonthlyOutputLog, query);
 
-            if (!string.IsNullOrWhiteSpace(workGroup))
-                url += $"&workGroup={Uri.EscapeDataString(workGroup)}";
-            if (!string.IsNullOrWhiteSpace(testCode))
-                url += $"&testCode={Uri.EscapeDataString(testCode)}";
-            if (!string.IsNullOrWhiteSpace(buyer))
-                url += $"&buyer={Uri.EscapeDataString(buyer)}";
-            if (dateImported.HasValue)
-                url += $"&dateImported={Uri.EscapeDataString(dateImported.Value.ToString("yyyy-MM-dd"))}";
-            if (month.HasValue)
-                url += $"&month={month.Value}";
-            if (!string.IsNullOrWhiteSpace(userId))
-                url += $"&userId={Uri.EscapeDataString(userId)}";
-            if (!string.IsNullOrWhiteSpace(insertDelete))
-                url += $"&insertDelete={Uri.EscapeDataString(insertDelete)}";
+            if (!string.IsNullOrWhiteSpace(filter.WorkGroup))
+                url += $"&workGroup={Uri.EscapeDataString(filter.WorkGroup)}";
+            if (!string.IsNullOrWhiteSpace(filter.TestCode))
+                url += $"&testCode={Uri.EscapeDataString(filter.TestCode)}";
+            if (!string.IsNullOrWhiteSpace(filter.Buyer))
+                url += $"&buyer={Uri.EscapeDataString(filter.Buyer)}";
+            if (filter.DateImported.HasValue)
+                url += $"&dateImported={Uri.EscapeDataString(filter.DateImported.Value.ToString("yyyy-MM-dd"))}";
+            if (filter.Month.HasValue)
+                url += $"&month={filter.Month.Value}";
+            if (!string.IsNullOrWhiteSpace(filter.UserId))
+                url += $"&userId={Uri.EscapeDataString(filter.UserId)}";
+            if (!string.IsNullOrWhiteSpace(filter.InsertDelete))
+                url += $"&insertDelete={Uri.EscapeDataString(filter.InsertDelete)}";
 
             var response = await _http.GetAsync<List<MonthlyOutputLogRes>>(url);
             if (response.Success)

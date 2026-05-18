@@ -1,3 +1,4 @@
+using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
@@ -108,7 +109,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return PartialView("_DataGrid", gridConfig);
         }
 
-        private bool HasSearchCriteria(
+        private static bool HasSearchCriteria(
             string? workGroup,
             string? testCode,
             string? buyer,
@@ -142,9 +143,17 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var effectiveBuyer = !string.IsNullOrWhiteSpace(buyingTest) ? buyingTest : buyer;
 
             var query = _mapper.Map<QueryParameters<string>>(request);
-            var response = await _logService.SearchAsync(
-                query, workGroup, testCode, effectiveBuyer,
-                dateImported, month, userId, insertDelete);
+            var filter = new MonthlyOutputLogFilterDto
+            {
+                WorkGroup = workGroup,
+                TestCode = testCode,
+                Buyer = effectiveBuyer,
+                DateImported = dateImported,
+                Month = month,
+                UserId = userId,
+                InsertDelete = insertDelete
+            };
+            var response = await _logService.SearchAsync(query, filter);
 
 
             var  items = response.Data != null ? _mapper.Map<List<MonthlyOutputLogItem>>(response.Data) : [];

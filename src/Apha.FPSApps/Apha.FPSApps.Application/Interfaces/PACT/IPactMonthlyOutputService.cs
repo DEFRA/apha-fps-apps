@@ -8,12 +8,6 @@ namespace Apha.FPSApps.Application.Interfaces.PACT
     {
         Task<ApiResponseDto<List<MonthlyOutputLogDto>>> SearchAsync(
             QueryParameters<string> query,
-            string? workGroup,
-            string? testCode,
-            string? buyer,
-            DateTime? dateImported,
-            double? month,
-            string? userId,
-            string? insertDelete);
+            MonthlyOutputLogFilterDto filter);
     }
 }

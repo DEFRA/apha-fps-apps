@@ -17,14 +17,7 @@ namespace Apha.FPSApps.Application.Services.PACT
 
         public async Task<ApiResponseDto<List<MonthlyOutputLogDto>>> SearchAsync(
             QueryParameters<string> query,
-            string? workGroup,
-            string? testCode,
-            string? buyer,
-            DateTime? dateImported,
-            double? month,
-            string? userId,
-            string? insertDelete)
-            => await _pactApiClient.PactMonthlyOutput.SearchAsync(
-                query, workGroup, testCode, buyer, dateImported, month, userId, insertDelete);
+            MonthlyOutputLogFilterDto filter)
+            => await _pactApiClient.PactMonthlyOutput.SearchAsync(query, filter);
     }
 }
