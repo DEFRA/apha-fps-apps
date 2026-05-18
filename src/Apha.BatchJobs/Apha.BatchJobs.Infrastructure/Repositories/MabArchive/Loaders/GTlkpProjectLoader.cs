@@ -1,9 +1,9 @@
-﻿using Apha.BatchJobs.Infrastructure.Data;
+using Apha.BatchJobs.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.MabArchive.Loaders;
 
-internal sealed class GTlkpProjectDotNetLoader : MabArchiveDotNetLoaderBase
+internal sealed class GTlkpProjectLoader : MabArchiveDotNetLoaderBase
 {
     public override int Sequence => 2;
 
@@ -38,12 +38,9 @@ internal sealed class GTlkpProjectDotNetLoader : MabArchiveDotNetLoaderBase
 
         if (rows.Count == 0)
         {
-            return 0;
+            // ...existing code...
         }
-
-        await context.MaDstGTlkpProject.AddRangeAsync(rows, cancellationToken);
-        return await context.SaveChangesAsync(cancellationToken);
+        // ...existing code...
     }
+    // ...existing code...
 }
-
-
