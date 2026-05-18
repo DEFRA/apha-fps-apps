@@ -81,4 +81,10 @@ public class CostBookProjectSummaryApiClient : ICostBookProjectSummaryApiClient
         var responseDto = _mapper.Map<ApiResponseDto<ProjectCostsPivotDto>>(response);
         return ApiResponseDto<ProjectCostsPivotDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
     }
+
+    public Task<byte[]> ExportProjectSummaryToExcelAsync(string projectId)
+    {
+        var url = string.Format(CostBookApiEndpoints.ExportProjectSummaryToExcel, HttpUtility.UrlEncode(projectId));
+        return _http.GetFileAsync(url);
+    }
 }

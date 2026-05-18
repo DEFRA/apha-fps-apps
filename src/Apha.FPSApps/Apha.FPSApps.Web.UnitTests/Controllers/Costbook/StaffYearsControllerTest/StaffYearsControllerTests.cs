@@ -218,7 +218,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.Costbook.StaffYearsControllerTe
                 Assert.IsType<ViewResult>(result).Model!);
 
             var yearColumns = model.Grid.Columns
-                .Where(c => c.PropertyName.StartsWith("Y") && c.PropertyName != "Total")
+                .Where(c => c.PropertyName.StartsWith("Y", StringComparison.Ordinal) && c.PropertyName != "Total")
                 .ToList();
             Assert.Equal(10, yearColumns.Count);
         }
@@ -431,7 +431,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.Costbook.StaffYearsControllerTe
                 Assert.IsType<PartialViewResult>(result).Model!);
 
             var yearCols = grid.Columns
-                .Where(c => c.PropertyName.StartsWith("Y") && c.PropertyName != "Total")
+                .Where(c => c.PropertyName.StartsWith("Y", StringComparison.Ordinal) && c.PropertyName != "Total")
                 .ToList();
             Assert.Equal("2022", yearCols[0].DisplayName);
             Assert.Equal("2023", yearCols[1].DisplayName);
@@ -470,7 +470,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.Costbook.StaffYearsControllerTe
                 Assert.IsType<PartialViewResult>(result).Model!);
 
             var yearColumns = grid.Columns
-                .Where(c => c.PropertyName.StartsWith("Y") && c.PropertyName != "Total")
+                .Where(c => c.PropertyName.StartsWith("Y", StringComparison.Ordinal) && c.PropertyName != "Total")
                 .ToList();
             Assert.Equal(10, yearColumns.Count);
         }

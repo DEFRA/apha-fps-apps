@@ -849,6 +849,55 @@ namespace Apha.Costbook.DataAccess.Repositories
             return new PagedData<Project>(pagedItems, paginationData);
         }
 
+        public async Task<ProjectSummaryExportData> GetProjectSummaryExportDataAsync(string projectId)
+        {
+            var decodedProjectId = HttpUtility.UrlDecode(projectId);
+
+            var project = await _context.Projects
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.ProjectId == decodedProjectId);
+
+            var years = await _context.ProjectYears
+                .AsNoTracking()
+                .Where(py => py.Project == decodedProjectId)
+                .OrderBy(py => py.YearValue)
+                .ToListAsync();
+
+            var staffRows = await _context.StaffRequirements
+                .AsNoTracking()
+                .Where(s => s.Project == decodedProjectId)
+                .OrderBy(s => s.Year).ThenBy(s => s.WgGrade)
+                .ToListAsync();
+
+            var testRows = await _context.TestRequirements
+                .AsNoTracking()
+                .Where(t => t.Project == decodedProjectId)
+                .OrderBy(t => t.Year).ThenBy(t => t.TestCode)
+                .ToListAsync();
+
+            var animalRows = await _context.AnimalRequirements
+                .AsNoTracking()
+                .Where(a => a.Project == decodedProjectId)
+                .OrderBy(a => a.Year).ThenBy(a => a.AnimalType)
+                .ToListAsync();
+
+            var additionalRows = await _context.AdditionalCosts
+                .AsNoTracking()
+                .Where(ac => ac.Project == decodedProjectId)
+                .OrderBy(ac => ac.Year).ThenBy(ac => ac.Description)
+                .ToListAsync();
+
+            return new ProjectSummaryExportData
+            {
+                Project = project,
+                Years = years,
+                StaffRequirements = staffRows,
+                TestRequirements = testRows,
+                AnimalRequirements = animalRows,
+                AdditionalCosts = additionalRows
+            };
+        }
+
         private static int fnYearGapSign(int yearGap)
         {
             if (yearGap == 0) return 0;

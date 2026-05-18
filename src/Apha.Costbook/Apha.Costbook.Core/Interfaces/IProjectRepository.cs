@@ -19,5 +19,6 @@ namespace Apha.Costbook.Core.Interfaces
         Task<StaffYearsPivotData> GetStaffYearsPivotAsync(string projectId, PaginationParameters<string>? parameters = null);
         Task<StaffEffortPivotData> GetStaffEffortAsync(string projectId, PaginationParameters<string>? parameters = null);
         Task<ProjectCostsPivotData> GetProjectCostsPivotAsync(string projectId, PaginationParameters<string>? parameters = null);
+        Task<ProjectSummaryExportData> GetProjectSummaryExportDataAsync(string projectId);
     }
 }

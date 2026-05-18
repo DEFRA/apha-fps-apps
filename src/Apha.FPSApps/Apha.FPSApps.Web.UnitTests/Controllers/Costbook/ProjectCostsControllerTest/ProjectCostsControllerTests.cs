@@ -8,15 +8,16 @@ using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 
 namespace Apha.FPSApps.Web.UnitTests.Controllers.Costbook.ProjectCostsControllerTest
 {
     public class ProjectCostsControllerTests
     {
         private readonly ICostBookProjectSummaryService _projectSummaryService;
-        private readonly ICostBookYearlyDetailsService  _yearlyDetailsService;
-        private readonly IMapper                        _mapper;
-        private readonly ProjectCostsController         _controller;
+        private readonly ICostBookYearlyDetailsService _yearlyDetailsService;
+        private readonly IMapper _mapper;
+        private readonly ProjectCostsController _controller;
 
         public ProjectCostsControllerTests()
         {
@@ -29,6 +30,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.Costbook.ProjectCostsController
                 _yearlyDetailsService,
                 _mapper);
         }
+        
 
         // ── helpers ──────────────────────────────────────────────────────────
 
@@ -217,7 +219,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.Costbook.ProjectCostsController
             var model = Assert.IsType<ProjectCostsViewModel>(
                 Assert.IsType<ViewResult>(result).Model!);
 
-            var yearColumns = model.Grid.Columns.Where(c => c.PropertyName.StartsWith("Y") && c.PropertyName != "Total").ToList();
+            var yearColumns = model.Grid.Columns.Where(c => c.PropertyName.StartsWith("Y", StringComparison.Ordinal) && c.PropertyName != "Total").ToList();
             Assert.Equal(10, yearColumns.Count);
         }
 
@@ -344,9 +346,95 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.Costbook.ProjectCostsController
             var grid = Assert.IsType<DataGridConfig<ProjectCostsPivotRow>>(
                 Assert.IsType<PartialViewResult>(result).Model!);
 
-            var yearCols = grid.Columns.Where(c => c.PropertyName.StartsWith("Y") && c.PropertyName != "Total").ToList();
+            var yearCols = grid.Columns.Where(c => c.PropertyName.StartsWith("Y", StringComparison.Ordinal) && c.PropertyName != "Total").ToList();
             Assert.Equal("2022", yearCols[0].DisplayName);
             Assert.Equal("2023", yearCols[1].DisplayName);
         }
+
+        #region ExportToExcel
+
+        [Fact]
+        public async Task ExportToExcel_WithValidProjectId_ReturnsFileContentResult()
+        {
+            // Arrange
+            var projectId = "P001";
+            var fileBytes = new byte[] { 1, 2, 3, 4 };
+            _projectSummaryService.ExportProjectSummaryToExcelAsync(projectId)
+                .Returns(fileBytes);
+
+            // Act
+            var result = await _controller.ExportToExcel(projectId);
+
+            // Assert
+            var fileResult = Assert.IsType<FileContentResult>(result);
+            Assert.Equal(
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                fileResult.ContentType);
+            Assert.Equal($"ProjectSummary_{projectId}.xlsx", fileResult.FileDownloadName);
+            Assert.Equal(fileBytes, fileResult.FileContents);
+        }
+
+        [Fact]
+        public async Task ExportToExcel_WithValidProjectId_CallsServiceWithCorrectProjectId()
+        {
+            // Arrange
+            var projectId = "P001";
+            _projectSummaryService.ExportProjectSummaryToExcelAsync(projectId)
+                .Returns(new byte[] { 1, 2, 3 });
+
+            // Act
+            await _controller.ExportToExcel(projectId);
+
+            // Assert
+            await _projectSummaryService.Received(1).ExportProjectSummaryToExcelAsync(projectId);
+        }
+
+        [Fact]
+        public async Task ExportToExcel_WithValidProjectId_FileNameContainsProjectId()
+        {
+            // Arrange
+            var projectId = "PROJ-123";
+            _projectSummaryService.ExportProjectSummaryToExcelAsync(projectId)
+                .Returns(new byte[] { 1, 2, 3 });
+
+            // Act
+            var result = await _controller.ExportToExcel(projectId);
+
+            // Assert
+            var fileResult = Assert.IsType<FileContentResult>(result);
+            Assert.Contains(projectId, fileResult.FileDownloadName);
+        }
+
+        [Fact]
+        public async Task ExportToExcel_ServiceReturnsEmptyBytes_ReturnsFileContentResultWithEmptyContent()
+        {
+            // Arrange
+            var projectId = "P001";
+            _projectSummaryService.ExportProjectSummaryToExcelAsync(projectId)
+                .Returns(Array.Empty<byte>());
+
+            // Act
+            var result = await _controller.ExportToExcel(projectId);
+
+            // Assert
+            var fileResult = Assert.IsType<FileContentResult>(result);
+            Assert.Empty(fileResult.FileContents);
+            Assert.Equal($"ProjectSummary_{projectId}.xlsx", fileResult.FileDownloadName);
+        }
+
+        [Fact]
+        public async Task ExportToExcel_ServiceThrows_PropagatesException()
+        {
+            // Arrange
+            var projectId = "P001";
+            _projectSummaryService.ExportProjectSummaryToExcelAsync(projectId)
+                .ThrowsAsync(new InvalidOperationException("Export failed"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => _controller.ExportToExcel(projectId));
+        }
+
+        #endregion
     }
 }

@@ -32,4 +32,9 @@ public class CostBookProjectSummaryService : ICostBookProjectSummaryService
     {
         return _client.ProjectSummary.GetProjectCostsPivotAsync(projectId, query);
     }
+
+    public Task<byte[]> ExportProjectSummaryToExcelAsync(string projectId)
+    {
+        return _client.ProjectSummary.ExportProjectSummaryToExcelAsync(projectId);
+    }
 }

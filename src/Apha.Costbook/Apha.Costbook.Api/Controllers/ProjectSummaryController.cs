@@ -56,6 +56,15 @@ public class ProjectSummaryController : ControllerBase
         return Ok(_mapper.Map<ProjectCostsPivotRes>(result));
     }
 
+    /// <summary>Exports the full project summary (staff, tests, animals, additional costs per year) as an Excel workbook.</summary>
+    [HttpGet("{id}/export-excel")]
+    public async Task<IActionResult> ExportToExcel(string id)
+    {
+        var bytes = await _service.ExportProjectSummaryToExcelAsync(id);
+        var fileName = $"ProjectSummary_{id}.xlsx";
+        return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+    }
+
     private static ApiResponse<T> BuildOk<T>(T data) => new()
     {
         Success = true,

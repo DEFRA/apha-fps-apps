@@ -16,6 +16,6 @@
         <li><a class="dropdown-item" asp-area="CostBook" asp-controller="StaffYears" asp-action="Index" asp-route-projectId="@Model.ProjectHeaderDto.ProjectId">CSG7 Staff Years</a></li>
         <li><a class="dropdown-item" asp-area="CostBook" asp-controller="StaffEffort" asp-action="Index" asp-route-projectId="@Model.ProjectHeaderDto.ProjectId">SID3 Staff Effort</a></li>
         <li><a class="dropdown-item" asp-area="CostBook" asp-controller="ProjectSummary" asp-action="Index" asp-route-projectId="@Model.ProjectHeaderDto.ProjectId">Project Summary</a></li>
-        <li><a class="dropdown-item" href="#">Excel Report</a></li>
+        <li><a class="dropdown-item" asp-area="CostBook" asp-controller="ProjectCosts" asp-action="ExportToExcel" asp-route-projectId="@Model.ProjectHeaderDto.ProjectId">Excel Report</a></li>
     </ul>
 </nav>

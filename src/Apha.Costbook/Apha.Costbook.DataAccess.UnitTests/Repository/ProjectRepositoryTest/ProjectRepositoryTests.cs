@@ -552,7 +552,7 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.ProjectRepositoryTest
 
         #endregion
 
-      
+
 
         #region GetNextProjectNumberAsync
 
@@ -905,8 +905,8 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             Assert.NotNull(result);
             var row = Assert.Single(result.Rows);
             Assert.Equal("C", row.Grade);
-            Assert.Equal(1.0,  row.YearlyAmounts[2024], precision: 5);
-            Assert.Equal(0.5,  row.YearlyAmounts[2025], precision: 5);
+            Assert.Equal(1.0, row.YearlyAmounts[2024], precision: 5);
+            Assert.Equal(0.5, row.YearlyAmounts[2025], precision: 5);
         }
 
         [Fact]
@@ -1648,6 +1648,324 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             Assert.NotNull(result);
             Assert.DoesNotContain(result.Rows, r => r.Category == "Pay");
             Assert.DoesNotContain(result.Rows, r => r.Category == "Overheads");
+        }
+
+        #endregion
+
+        #region GetProjectSummaryExportDataAsync
+
+        /// <summary>
+        /// Creates a ProjectRepository with all data sets required by GetProjectSummaryExportDataAsync.
+        /// </summary>
+        private static ProjectRepository CreateRepositoryForExport(
+            IEnumerable<Project>? projects = null,
+            IEnumerable<ProjectYear>? projectYears = null,
+            IEnumerable<StaffRequirement>? staffRequirements = null,
+            IEnumerable<TestRequirement>? testRequirements = null,
+            IEnumerable<AnimalRequirement>? animalRequirements = null,
+            IEnumerable<AdditionalCost>? additionalCosts = null)
+        {
+            var mockFPSYearContext = new Mock<IFPSYearContext>();
+            var mockSettingsRepository = new Mock<ISettingsRepository>();
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<CostbookDbContext>(mockFPSYearContext.Object);
+
+            var projectsMockSet = RepositoryTestHelper.CreateMockDbSet(projects ?? new List<Project>());
+            mockContext.Setup(x => x.Projects).Returns(projectsMockSet.Object);
+            mockContext.Setup(x => x.Set<Project>()).Returns(projectsMockSet.Object);
+
+            var projectYearsMockSet = RepositoryTestHelper.CreateMockDbSet(projectYears ?? new List<ProjectYear>());
+            mockContext.Setup(x => x.ProjectYears).Returns(projectYearsMockSet.Object);
+            mockContext.Setup(x => x.Set<ProjectYear>()).Returns(projectYearsMockSet.Object);
+
+            var staffMockSet = RepositoryTestHelper.CreateMockDbSet(staffRequirements ?? new List<StaffRequirement>());
+            mockContext.Setup(x => x.StaffRequirements).Returns(staffMockSet.Object);
+            mockContext.Setup(x => x.Set<StaffRequirement>()).Returns(staffMockSet.Object);
+
+            var testReqMockSet = RepositoryTestHelper.CreateMockDbSet(testRequirements ?? new List<TestRequirement>());
+            mockContext.Setup(x => x.TestRequirements).Returns(testReqMockSet.Object);
+            mockContext.Setup(x => x.Set<TestRequirement>()).Returns(testReqMockSet.Object);
+
+            var animalMockSet = RepositoryTestHelper.CreateMockDbSet(animalRequirements ?? new List<AnimalRequirement>());
+            mockContext.Setup(x => x.AnimalRequirements).Returns(animalMockSet.Object);
+            mockContext.Setup(x => x.Set<AnimalRequirement>()).Returns(animalMockSet.Object);
+
+            var additionalCostMockSet = RepositoryTestHelper.CreateMockDbSet(additionalCosts ?? new List<AdditionalCost>());
+            mockContext.Setup(x => x.AdditionalCosts).Returns(additionalCostMockSet.Object);
+            mockContext.Setup(x => x.Set<AdditionalCost>()).Returns(additionalCostMockSet.Object);
+
+            RepositoryTestHelper.SetupSaveChanges(mockContext);
+
+            return new ProjectRepository(mockContext.Object, mockSettingsRepository.Object);
+        }
+        #endregion
+
+        #region GetProjectSummaryExportDataAsync
+
+        [Fact]
+        public async Task GetProjectSummaryExportDataAsync_WithAllData_ReturnsPopulatedExportData()
+        {
+            // Arrange
+            var projects = new List<Project>
+            {
+                new() { ProjectId = "2024/001", ProjectTitle = "Test Project", Inflation = 3 }
+            };
+            var projectYears = new List<ProjectYear>
+            {
+                new() { Project = "2024/001", YearValue = 2024 },
+                new() { Project = "2024/001", YearValue = 2025 }
+            };
+            var staffRequirements = new List<StaffRequirement>
+            {
+                new() { Project = "2024/001", WgGrade = "A1", Year = 2024, Nohours = 100.0, Chargerate = 50.0 }
+            };
+            var testRequirements = new List<TestRequirement>
+            {
+                new() { Project = "2024/001", TestCode = "BLOOD", Year = 2024, UnitPrice = 15.0, NumberOfTests = 10.0 }
+            };
+            var animalRequirements = new List<AnimalRequirement>
+            {
+                new() { Project = "2024/001", AnimalType = "Mouse", Year = 2024, DailyRate = 5.0, NumberOfDays = 30.0, NumberOfAnimals = 3.0 }
+            };
+            var additionalCosts = new List<AdditionalCost>
+            {
+                new() { Project = "2024/001", Description = "Consumables", AccountCat = "CAT1", Year = 2024, ItemCost = 200.0 }
+            };
+            var repo = CreateRepositoryForExport(projects, projectYears, staffRequirements, testRequirements, animalRequirements, additionalCosts);
+
+            // Act
+            var result = await repo.GetProjectSummaryExportDataAsync("2024/001");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.NotNull(result.Project);
+            Assert.Equal("2024/001", result.Project.ProjectId);
+            Assert.Equal(2, result.Years.Count);
+            Assert.Single(result.StaffRequirements);
+            Assert.Single(result.TestRequirements);
+            Assert.Single(result.AnimalRequirements);
+            Assert.Single(result.AdditionalCosts);
+        }
+
+        [Fact]
+        public async Task GetProjectSummaryExportDataAsync_WithNoMatchingProject_ReturnsNullProject()
+        {
+            // Arrange — project list is empty; all child collections also empty
+            var repo = CreateRepositoryForExport();
+
+            // Act
+            var result = await repo.GetProjectSummaryExportDataAsync("NONEXISTENT");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Null(result.Project);
+        }
+
+        [Fact]
+        public async Task GetProjectSummaryExportDataAsync_OnlyReturnsDataForRequestedProject()
+        {
+            // Arrange — two projects; only data for "2024/001" should appear in results
+            var projects = new List<Project>
+            {
+                new() { ProjectId = "2024/001" },
+                new() { ProjectId = "2024/002" }
+            };
+            var projectYears = new List<ProjectYear>
+            {
+                new() { Project = "2024/001", YearValue = 2024 },
+                new() { Project = "2024/002", YearValue = 2024 }
+            };
+            var staffRequirements = new List<StaffRequirement>
+            {
+                new() { Project = "2024/001", WgGrade = "A1", Year = 2024, Nodays = 10.0 },
+                new() { Project = "2024/002", WgGrade = "B1", Year = 2024, Nodays = 10.0 }
+            };
+            var testRequirements = new List<TestRequirement>
+            {
+                new() { Project = "2024/001", TestCode = "BLOOD", Year = 2024 },
+                new() { Project = "2024/002", TestCode = "URINE", Year = 2024 }
+            };
+            var animalRequirements = new List<AnimalRequirement>
+            {
+                new() { Project = "2024/001", AnimalType = "Mouse", Year = 2024 },
+                new() { Project = "2024/002", AnimalType = "Rat",   Year = 2024 }
+            };
+            var additionalCosts = new List<AdditionalCost>
+            {
+                new() { Project = "2024/001", Description = "Cost A", AccountCat = "CAT1", Year = 2024 },
+                new() { Project = "2024/002", Description = "Cost B", AccountCat = "CAT2", Year = 2024 }
+            };
+            var repo = CreateRepositoryForExport(projects, projectYears, staffRequirements, testRequirements, animalRequirements, additionalCosts);
+
+            // Act
+            var result = await repo.GetProjectSummaryExportDataAsync("2024/001");
+
+            // Assert
+            Assert.All(result.Years, y => Assert.Equal("2024/001", y.Project));
+            Assert.All(result.StaffRequirements, sr => Assert.Equal("2024/001", sr.Project));
+            Assert.All(result.TestRequirements, tr => Assert.Equal("2024/001", tr.Project));
+            Assert.All(result.AnimalRequirements, ar => Assert.Equal("2024/001", ar.Project));
+            Assert.All(result.AdditionalCosts, ac => Assert.Equal("2024/001", ac.Project));
+        }
+
+        [Fact]
+        public async Task GetProjectSummaryExportDataAsync_YearsOrderedAscendingByYearValue()
+        {
+            // Arrange — years inserted out of order
+            var projects = new List<Project> { new() { ProjectId = "2024/001" } };
+            var projectYears = new List<ProjectYear>
+            {
+                new() { Project = "2024/001", YearValue = 2026 },
+                new() { Project = "2024/001", YearValue = 2024 },
+                new() { Project = "2024/001", YearValue = 2025 }
+            };
+            var repo = CreateRepositoryForExport(projects, projectYears);
+
+            // Act
+            var result = await repo.GetProjectSummaryExportDataAsync("2024/001");
+
+            // Assert
+            Assert.Equal(3, result.Years.Count);
+            Assert.Equal(2024, result.Years[0].YearValue);
+            Assert.Equal(2025, result.Years[1].YearValue);
+            Assert.Equal(2026, result.Years[2].YearValue);
+        }
+
+        [Fact]
+        public async Task GetProjectSummaryExportDataAsync_StaffOrderedByYearThenWgGrade()
+        {
+            // Arrange — staff inserted out of order
+            var projects = new List<Project> { new() { ProjectId = "2024/001" } };
+            var staffRequirements = new List<StaffRequirement>
+            {
+                new() { Project = "2024/001", WgGrade = "C1", Year = 2024, Nodays = 10.0 },
+                new() { Project = "2024/001", WgGrade = "A1", Year = 2025, Nodays = 10.0 },
+                new() { Project = "2024/001", WgGrade = "B1", Year = 2024, Nodays = 10.0 }
+            };
+            var repo = CreateRepositoryForExport(projects, staffRequirements: staffRequirements);
+
+            // Act
+            var result = await repo.GetProjectSummaryExportDataAsync("2024/001");
+
+            // Assert
+            Assert.Equal(3, result.StaffRequirements.Count);
+            Assert.Equal(2024, result.StaffRequirements[0].Year);
+            Assert.Equal("B1", result.StaffRequirements[0].WgGrade);
+            Assert.Equal(2024, result.StaffRequirements[1].Year);
+            Assert.Equal("C1", result.StaffRequirements[1].WgGrade);
+            Assert.Equal(2025, result.StaffRequirements[2].Year);
+            Assert.Equal("A1", result.StaffRequirements[2].WgGrade);
+        }
+
+        [Fact]
+        public async Task GetProjectSummaryExportDataAsync_TestsOrderedByYearThenTestCode()
+        {
+            // Arrange
+            var projects = new List<Project> { new() { ProjectId = "2024/001" } };
+            var testRequirements = new List<TestRequirement>
+            {
+                new() { Project = "2024/001", TestCode = "URINE", Year = 2024 },
+                new() { Project = "2024/001", TestCode = "BLOOD", Year = 2024 },
+                new() { Project = "2024/001", TestCode = "BLOOD", Year = 2025 }
+            };
+            var repo = CreateRepositoryForExport(projects, testRequirements: testRequirements);
+
+            // Act
+            var result = await repo.GetProjectSummaryExportDataAsync("2024/001");
+
+            // Assert
+            Assert.Equal(3, result.TestRequirements.Count);
+            Assert.Equal(2024, result.TestRequirements[0].Year);
+            Assert.Equal("BLOOD", result.TestRequirements[0].TestCode);
+            Assert.Equal(2024, result.TestRequirements[1].Year);
+            Assert.Equal("URINE", result.TestRequirements[1].TestCode);
+            Assert.Equal(2025, result.TestRequirements[2].Year);
+        }
+
+        [Fact]
+        public async Task GetProjectSummaryExportDataAsync_AnimalsOrderedByYearThenAnimalType()
+        {
+            // Arrange
+            var projects = new List<Project> { new() { ProjectId = "2024/001" } };
+            var animalRequirements = new List<AnimalRequirement>
+            {
+                new() { Project = "2024/001", AnimalType = "Rat",   Year = 2024 },
+                new() { Project = "2024/001", AnimalType = "Mouse", Year = 2024 },
+                new() { Project = "2024/001", AnimalType = "Mouse", Year = 2025 }
+            };
+            var repo = CreateRepositoryForExport(projects, animalRequirements: animalRequirements);
+
+            // Act
+            var result = await repo.GetProjectSummaryExportDataAsync("2024/001");
+
+            // Assert
+            Assert.Equal(3, result.AnimalRequirements.Count);
+            Assert.Equal(2024, result.AnimalRequirements[0].Year);
+            Assert.Equal("Mouse", result.AnimalRequirements[0].AnimalType);
+            Assert.Equal(2024, result.AnimalRequirements[1].Year);
+            Assert.Equal("Rat", result.AnimalRequirements[1].AnimalType);
+            Assert.Equal(2025, result.AnimalRequirements[2].Year);
+        }
+
+        [Fact]
+        public async Task GetProjectSummaryExportDataAsync_AdditionalCostsOrderedByYearThenDescription()
+        {
+            // Arrange
+            var projects = new List<Project> { new() { ProjectId = "2024/001" } };
+            var additionalCosts = new List<AdditionalCost>
+            {
+                new() { Project = "2024/001", Description = "Travel",      AccountCat = "T", Year = 2024 },
+                new() { Project = "2024/001", Description = "Consumables", AccountCat = "C", Year = 2024 },
+                new() { Project = "2024/001", Description = "Travel",      AccountCat = "T", Year = 2025 }
+            };
+            var repo = CreateRepositoryForExport(projects, additionalCosts: additionalCosts);
+
+            // Act
+            var result = await repo.GetProjectSummaryExportDataAsync("2024/001");
+
+            // Assert
+            Assert.Equal(3, result.AdditionalCosts.Count);
+            Assert.Equal(2024, result.AdditionalCosts[0].Year);
+            Assert.Equal("Consumables", result.AdditionalCosts[0].Description);
+            Assert.Equal(2024, result.AdditionalCosts[1].Year);
+            Assert.Equal("Travel", result.AdditionalCosts[1].Description);
+            Assert.Equal(2025, result.AdditionalCosts[2].Year);
+        }
+
+        [Fact]
+        public async Task GetProjectSummaryExportDataAsync_WithNoChildData_ReturnsEmptyCollections()
+        {
+            // Arrange — project exists but no related records in any child table
+            var projects = new List<Project> { new() { ProjectId = "2024/001" } };
+            var repo = CreateRepositoryForExport(projects);
+
+            // Act
+            var result = await repo.GetProjectSummaryExportDataAsync("2024/001");
+
+            // Assert
+            Assert.NotNull(result.Project);
+            Assert.Equal("2024/001", result.Project.ProjectId);
+            Assert.Empty(result.Years);
+            Assert.Empty(result.StaffRequirements);
+            Assert.Empty(result.TestRequirements);
+            Assert.Empty(result.AnimalRequirements);
+            Assert.Empty(result.AdditionalCosts);
+        }
+
+        [Fact]
+        public async Task GetProjectSummaryExportDataAsync_HandlesUrlEncodedProjectId()
+        {
+            // Arrange
+            var projects = new List<Project> { new() { ProjectId = "2024/001" } };
+            var repo = CreateRepositoryForExport(projects);
+            var encodedId = HttpUtility.UrlEncode("2024/001");
+
+            // Act
+            var result = await repo.GetProjectSummaryExportDataAsync(encodedId);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.NotNull(result.Project);
+            Assert.Equal("2024/001", result.Project.ProjectId);
         }
 
         #endregion

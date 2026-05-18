@@ -149,5 +149,13 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
         /// <summary>Rounds to 2dp and strips trailing zeros so ToString() renders like MS Access (e.g. 1500 not 1500.00).</summary>
         private static decimal Fmt(double v)
             => decimal.Parse(Math.Round((decimal)v, 2, MidpointRounding.AwayFromZero).ToString("G29"));
+
+        [HttpGet]
+        public async Task<IActionResult> ExportToExcel(string projectId)
+        {
+            var bytes = await _projectSummaryService.ExportProjectSummaryToExcelAsync(projectId);
+            var fileName = $"ProjectSummary_{projectId}.xlsx";
+            return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+        }
     }
 }

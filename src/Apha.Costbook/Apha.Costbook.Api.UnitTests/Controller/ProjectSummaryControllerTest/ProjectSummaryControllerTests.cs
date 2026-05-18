@@ -274,4 +274,79 @@ public class ProjectSummaryControllerTests
 
         await _service.Received(1).GetProjectCostsPivotAsync(id, Arg.Any<QueryParameters<string>?>());
     }
+
+    // ─── ExportToExcel ────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task ExportToExcel_WithValidId_ReturnsFileContentResult()
+    {
+        // Arrange
+        var id = "PRJ-001";
+        var fileBytes = new byte[] { 1, 2, 3, 4 };
+
+        _service.ExportProjectSummaryToExcelAsync(id).Returns(fileBytes);
+
+        // Act
+        var result = await _controller.ExportToExcel(id);
+
+        // Assert
+        var fileResult = Assert.IsType<FileContentResult>(result);
+        Assert.Equal(
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            fileResult.ContentType);
+        Assert.Equal($"ProjectSummary_{id}.xlsx", fileResult.FileDownloadName);
+        Assert.Equal(fileBytes, fileResult.FileContents);
+
+        await _service.Received(1).ExportProjectSummaryToExcelAsync(id);
+    }
+
+    [Fact]
+    public async Task ExportToExcel_WithValidId_FileNameContainsProjectId()
+    {
+        // Arrange
+        var id = "PRJ-001";
+
+        _service.ExportProjectSummaryToExcelAsync(id).Returns(new byte[] { 1, 2, 3 });
+
+        // Act
+        var result = await _controller.ExportToExcel(id);
+
+        // Assert
+        var fileResult = Assert.IsType<FileContentResult>(result);
+        Assert.Contains(id, fileResult.FileDownloadName);
+        Assert.EndsWith(".xlsx", fileResult.FileDownloadName);
+    }
+
+    [Fact]
+    public async Task ExportToExcel_ServiceReturnsEmptyBytes_ReturnsFileContentResultWithEmptyContent()
+    {
+        // Arrange
+        var id = "PRJ-001";
+
+        _service.ExportProjectSummaryToExcelAsync(id).Returns(Array.Empty<byte>());
+
+        // Act
+        var result = await _controller.ExportToExcel(id);
+
+        // Assert
+        var fileResult = Assert.IsType<FileContentResult>(result);
+        Assert.Empty(fileResult.FileContents);
+        Assert.Equal($"ProjectSummary_{id}.xlsx", fileResult.FileDownloadName);
+
+        await _service.Received(1).ExportProjectSummaryToExcelAsync(id);
+    }
+
+    [Fact]
+    public async Task ExportToExcel_WithException_ThrowsException()
+    {
+        // Arrange
+        var id = "PRJ-001";
+
+        _service.ExportProjectSummaryToExcelAsync(id).Throws(new Exception("Export failed"));
+
+        // Act & Assert
+        await Assert.ThrowsAsync<Exception>(() => _controller.ExportToExcel(id));
+
+        await _service.Received(1).ExportProjectSummaryToExcelAsync(id);
+    }
 }

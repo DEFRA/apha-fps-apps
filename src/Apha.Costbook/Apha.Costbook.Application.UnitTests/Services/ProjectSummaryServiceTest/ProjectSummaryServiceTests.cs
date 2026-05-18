@@ -5,6 +5,7 @@ using Apha.Costbook.Core.Entities;
 using Apha.Costbook.Core.Interfaces;
 using Apha.Costbook.Core.Pagination;
 using AutoMapper;
+using ClosedXML.Excel;
 using NSubstitute;
 
 namespace Apha.Costbook.Application.UnitTests.Services.ProjectSummaryServiceTest;
@@ -543,6 +544,359 @@ public class ProjectSummaryServiceTests
         Assert.Equal(2000.0, row.YearlyAmounts[2023]);
         Assert.Equal(2500.0, row.YearlyAmounts[2024]);
         Assert.Equal(6000.0, row.Total);
+    }
+
+    #endregion
+
+    #region ExportProjectSummaryToExcelAsync Tests
+
+    private static ProjectSummaryExportData BuildExportData(string projectId) => new()
+    {
+        Project = new Project { ProjectId = projectId, Inflation = 3},
+        Years = [new ProjectYear { Project = projectId, YearValue = 2024 }],
+        StaffRequirements =
+        [
+            new StaffRequirement { Project = projectId, Year = 2024, WgGrade = "WG1-GradeA", Chargerate = 50.0, Nohours = 100.0 }
+        ],
+        TestRequirements =
+        [
+            new TestRequirement { Project = projectId, Year = 2024, TestCode = "BLOOD", UnitPrice = 15.0, NumberOfTests = 10.0 }
+        ],
+        AnimalRequirements =
+        [
+            new AnimalRequirement { Project = projectId, Year = 2024, AnimalType = "Mouse", DailyRate = 5.0, NumberOfDays = 30.0, NumberOfAnimals = 3.0 }
+        ],
+        AdditionalCosts =
+        [
+            new AdditionalCost { Project = projectId, Year = 2024, Description = "Consumables", AccountCat = "CAT1", ItemCost = 200.0 }
+        ]
+    };
+
+    [Fact]
+    public async Task ExportProjectSummaryToExcelAsync_WithValidData_ReturnsNonEmptyByteArray()
+    {
+        // Arrange
+        var projectId = "P001";
+        _mockRepository.GetProjectSummaryExportDataAsync(projectId)
+            .Returns(BuildExportData(projectId));
+
+        // Act
+        var result = await _service.ExportProjectSummaryToExcelAsync(projectId);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.NotEmpty(result);
+        await _mockRepository.Received(1).GetProjectSummaryExportDataAsync(projectId);
+    }
+
+    [Fact]
+    public async Task ExportProjectSummaryToExcelAsync_WithValidData_ReturnsValidXlsxBytes()
+    {
+        // Arrange
+        var projectId = "P001";
+        _mockRepository.GetProjectSummaryExportDataAsync(projectId)
+            .Returns(BuildExportData(projectId));
+
+        // Act
+        var result = await _service.ExportProjectSummaryToExcelAsync(projectId);
+
+        // Assert — load back with ClosedXML to confirm it is a valid workbook
+        using var stream = new MemoryStream(result);
+        using var workbook = new XLWorkbook(stream);
+        Assert.Single(workbook.Worksheets);
+        Assert.Equal("Project Summary", workbook.Worksheets.First().Name);
+    }
+
+    [Fact]
+    public async Task ExportProjectSummaryToExcelAsync_HeaderBlock_ContainsProjectIdAndInflation()
+    {
+        // Arrange
+        var projectId = "P001";
+        _mockRepository.GetProjectSummaryExportDataAsync(projectId)
+            .Returns(BuildExportData(projectId));
+
+        // Act
+        var result = await _service.ExportProjectSummaryToExcelAsync(projectId);
+
+        // Assert
+        using var stream = new MemoryStream(result);
+        using var workbook = new XLWorkbook(stream);
+        var ws = workbook.Worksheet("Project Summary");
+
+        Assert.Equal("Costbook Project Summary", ws.Cell(1, 1).GetString());
+        Assert.Equal("Project",                  ws.Cell(2, 1).GetString());
+        Assert.Equal(projectId,                  ws.Cell(2, 2).GetString());
+        Assert.Equal("Inflation",                ws.Cell(4, 1).GetString());
+        Assert.Equal(3,                          ws.Cell(4, 2).GetValue<int>());   // int?, not double
+    }
+
+    [Fact]
+    public async Task ExportProjectSummaryToExcelAsync_WithNullProject_FallsBackToProjectIdInCell()
+    {
+        // Arrange
+        var projectId = "P001";
+        var exportData = new ProjectSummaryExportData
+        {
+            Project = null,
+            Years = [new ProjectYear { Project = projectId, YearValue = 2024 }],
+            StaffRequirements = [],
+            TestRequirements = [],
+            AnimalRequirements = [],
+            AdditionalCosts = []
+        };
+        _mockRepository.GetProjectSummaryExportDataAsync(projectId).Returns(exportData);
+
+        // Act
+        var result = await _service.ExportProjectSummaryToExcelAsync(projectId);
+
+        // Assert
+        using var stream = new MemoryStream(result);
+        using var workbook = new XLWorkbook(stream);
+        var ws = workbook.Worksheet("Project Summary");
+
+        Assert.Equal(projectId, ws.Cell(2, 2).GetString());
+        Assert.Equal(0.0, ws.Cell(4, 2).GetDouble());
+    }
+
+    [Fact]
+    public async Task ExportProjectSummaryToExcelAsync_WithStaffData_WritesStaffRowsToSheet()
+    {
+        // Arrange
+        var projectId = "P001";
+        var exportData = new ProjectSummaryExportData
+        {
+            Project = new Project { ProjectId = projectId, Inflation = 0 },
+            Years = [new ProjectYear { Project = projectId, YearValue = 2024 }],
+            StaffRequirements =
+            [
+                new StaffRequirement { Project = projectId, Year = 2024, WgGrade = "WG1-GradeA", Chargerate = 50.0, Nohours = 8.0 }
+            ],
+            TestRequirements = [],
+            AnimalRequirements = [],
+            AdditionalCosts = []
+        };
+        _mockRepository.GetProjectSummaryExportDataAsync(projectId).Returns(exportData);
+
+        // Act
+        var result = await _service.ExportProjectSummaryToExcelAsync(projectId);
+
+        // Assert — locate WgGrade value in the sheet
+        using var stream = new MemoryStream(result);
+        using var workbook = new XLWorkbook(stream);
+        var ws = workbook.Worksheet("Project Summary");
+
+        var wgGradeCell = ws.CellsUsed()
+            .FirstOrDefault(c => c.GetString() == "WG1-GradeA");
+        Assert.NotNull(wgGradeCell);
+
+        // Cost = Chargerate * Nohours = 400
+        var costCell = ws.Cell(wgGradeCell.Address.RowNumber, 6);
+        Assert.Equal(400.0, costCell.GetDouble());
+    }
+
+    [Fact]
+    public async Task ExportProjectSummaryToExcelAsync_WithTestData_WritesTestRowsToSheet()
+    {
+        // Arrange
+        var projectId = "P001";
+        var exportData = new ProjectSummaryExportData
+        {
+            Project = new Project { ProjectId = projectId, Inflation = 0 },
+            Years = [new ProjectYear { Project = projectId, YearValue = 2024 }],
+            StaffRequirements = [],
+            TestRequirements =
+            [
+                new TestRequirement { Project = projectId, Year = 2024, TestCode = "BLOOD", UnitPrice = 20.0, NumberOfTests = 5.0 }
+            ],
+            AnimalRequirements = [],
+            AdditionalCosts = []
+        };
+        _mockRepository.GetProjectSummaryExportDataAsync(projectId).Returns(exportData);
+
+        // Act
+        var result = await _service.ExportProjectSummaryToExcelAsync(projectId);
+
+        // Assert
+        using var stream = new MemoryStream(result);
+        using var workbook = new XLWorkbook(stream);
+        var ws = workbook.Worksheet("Project Summary");
+
+        var testCodeCell = ws.CellsUsed()
+            .FirstOrDefault(c => c.GetString() == "BLOOD");
+        Assert.NotNull(testCodeCell);
+
+        // Cost = UnitPrice * NumberOfTests = 100
+        var costCell = ws.Cell(testCodeCell.Address.RowNumber, 6);
+        Assert.Equal(100.0, costCell.GetDouble());
+    }
+
+    [Fact]
+    public async Task ExportProjectSummaryToExcelAsync_WithAnimalData_WritesAnimalRowsToSheet()
+    {
+        // Arrange
+        var projectId = "P001";
+        var exportData = new ProjectSummaryExportData
+        {
+            Project = new Project { ProjectId = projectId, Inflation = 0 },
+            Years = [new ProjectYear { Project = projectId, YearValue = 2024 }],
+            StaffRequirements = [],
+            TestRequirements = [],
+            AnimalRequirements =
+            [
+                new AnimalRequirement { Project = projectId, Year = 2024, AnimalType = "Mouse", DailyRate = 4.0, NumberOfDays = 5.0, NumberOfAnimals = 3.0 }
+            ],
+            AdditionalCosts = []
+        };
+        _mockRepository.GetProjectSummaryExportDataAsync(projectId).Returns(exportData);
+
+        // Act
+        var result = await _service.ExportProjectSummaryToExcelAsync(projectId);
+
+        // Assert
+        using var stream = new MemoryStream(result);
+        using var workbook = new XLWorkbook(stream);
+        var ws = workbook.Worksheet("Project Summary");
+
+        var animalCell = ws.CellsUsed()
+            .FirstOrDefault(c => c.GetString() == "Mouse");
+        Assert.NotNull(animalCell);
+
+        // Cost = DailyRate * NumberOfDays * NumberOfAnimals = 60
+        var costCell = ws.Cell(animalCell.Address.RowNumber, 6);
+        Assert.Equal(60.0, costCell.GetDouble());
+    }
+
+    [Fact]
+    public async Task ExportProjectSummaryToExcelAsync_WithAdditionalCostData_WritesAdditionalCostRowsToSheet()
+    {
+        // Arrange
+        var projectId = "P001";
+        var exportData = new ProjectSummaryExportData
+        {
+            Project = new Project { ProjectId = projectId, Inflation = 0 },
+            Years = [new ProjectYear { Project = projectId, YearValue = 2024 }],
+            StaffRequirements = [],
+            TestRequirements = [],
+            AnimalRequirements = [],
+            AdditionalCosts =
+            [
+                new AdditionalCost { Project = projectId, Year = 2024, Description = "Lab Supplies", AccountCat = "MISC", ItemCost = 350.0 }
+            ]
+        };
+        _mockRepository.GetProjectSummaryExportDataAsync(projectId).Returns(exportData);
+
+        // Act
+        var result = await _service.ExportProjectSummaryToExcelAsync(projectId);
+
+        // Assert
+        using var stream = new MemoryStream(result);
+        using var workbook = new XLWorkbook(stream);
+        var ws = workbook.Worksheet("Project Summary");
+
+        var descCell = ws.CellsUsed()
+            .FirstOrDefault(c => c.GetString() == "Lab Supplies");
+        Assert.NotNull(descCell);
+
+        var costCell = ws.Cell(descCell.Address.RowNumber, 6);
+        Assert.Equal(350.0, costCell.GetDouble());
+    }
+
+    [Fact]
+    public async Task ExportProjectSummaryToExcelAsync_WithMultipleYears_WritesYearHeadersForEachYear()
+    {
+        // Arrange
+        var projectId = "P001";
+        var exportData = new ProjectSummaryExportData
+        {
+            Project = new Project { ProjectId = projectId, Inflation = 0 },
+            Years =
+            [
+                new ProjectYear { Project = projectId, YearValue = 2023 },
+                new ProjectYear { Project = projectId, YearValue = 2024 }
+            ],
+            StaffRequirements = [],
+            TestRequirements = [],
+            AnimalRequirements = [],
+            AdditionalCosts = []
+        };
+        _mockRepository.GetProjectSummaryExportDataAsync(projectId).Returns(exportData);
+
+        // Act
+        var result = await _service.ExportProjectSummaryToExcelAsync(projectId);
+
+        // Assert
+        using var stream = new MemoryStream(result);
+        using var workbook = new XLWorkbook(stream);
+        var ws = workbook.Worksheet("Project Summary");
+
+        var yearCells = ws.CellsUsed()
+            .Where(c => c.Value.IsNumber && (c.GetDouble() == 2023 || c.GetDouble() == 2024))
+            .Select(c => c.GetDouble())
+            .Distinct()
+            .OrderBy(v => v)
+            .ToList();
+
+        Assert.Contains(2023.0, yearCells);
+        Assert.Contains(2024.0, yearCells);
+    }
+
+    [Fact]
+    public async Task ExportProjectSummaryToExcelAsync_WithNoYearsOrSections_ReturnsValidWorkbookWithHeaderOnly()
+    {
+        // Arrange
+        var projectId = "P001";
+        var exportData = new ProjectSummaryExportData
+        {
+            Project = new Project { ProjectId = projectId, Inflation = 0 },
+            Years = [],
+            StaffRequirements = [],
+            TestRequirements = [],
+            AnimalRequirements = [],
+            AdditionalCosts = []
+        };
+        _mockRepository.GetProjectSummaryExportDataAsync(projectId).Returns(exportData);
+
+        // Act
+        var result = await _service.ExportProjectSummaryToExcelAsync(projectId);
+
+        // Assert
+        Assert.NotEmpty(result);
+        using var stream = new MemoryStream(result);
+        using var workbook = new XLWorkbook(stream);
+        var ws = workbook.Worksheet("Project Summary");
+        Assert.Equal("Costbook Project Summary", ws.Cell(1, 1).GetString());
+    }
+
+    [Fact]
+    public async Task ExportProjectSummaryToExcelAsync_DataForDifferentYear_IsNotWrittenUnderWrongYearSection()
+    {
+        // Arrange — staff belongs to 2023 but only 2024 is in Years list
+        var projectId = "P001";
+        var exportData = new ProjectSummaryExportData
+        {
+            Project = new Project { ProjectId = projectId, Inflation = 0 },
+            Years = [new ProjectYear { Project = projectId, YearValue = 2024 }],
+            StaffRequirements =
+            [
+                new StaffRequirement { Project = projectId, Year = 2023, WgGrade = "WG1-GradeX", Chargerate = 99.0, Nohours = 99.0 }
+            ],
+            TestRequirements = [],
+            AnimalRequirements = [],
+            AdditionalCosts = []
+        };
+        _mockRepository.GetProjectSummaryExportDataAsync(projectId).Returns(exportData);
+
+        // Act
+        var result = await _service.ExportProjectSummaryToExcelAsync(projectId);
+
+        // Assert — WG1-GradeX should not appear because its year (2023) doesn't match the only rendered year (2024)
+        using var stream = new MemoryStream(result);
+        using var workbook = new XLWorkbook(stream);
+        var ws = workbook.Worksheet("Project Summary");
+
+        var orphanCell = ws.CellsUsed()
+            .FirstOrDefault(c => c.GetString() == "WG1-GradeX");
+        Assert.Null(orphanCell);
     }
 
     #endregion
