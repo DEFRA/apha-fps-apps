@@ -2,6 +2,7 @@ using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
+using Apha.FPSApps.Application.Services.PACT;
 using Apha.FPSApps.Web.Areas.PACT.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
@@ -138,11 +139,11 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
            string? userId,
            string? insertDelete)
         {
-             
+            List<MonthlyOutputLogItem> items = [];
+            PaginationModel pagination;
 
             var effectiveBuyer = !string.IsNullOrWhiteSpace(buyingTest) ? buyingTest : buyer;
 
-            var query = _mapper.Map<QueryParameters<string>>(request);
             var filter = new MonthlyOutputLogFilterDto
             {
                 WorkGroup = workGroup,
@@ -153,14 +154,20 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 UserId = userId,
                 InsertDelete = insertDelete
             };
-            var response = await _logService.SearchAsync(query, filter);
 
-
-            var  items = response.Data != null ? _mapper.Map<List<MonthlyOutputLogItem>>(response.Data) : [];
-
-            var pagination = response.Pagination != null
-                    ? _mapper.Map<PaginationModel>(response.Pagination)
-                    : new PaginationModel();
+            if (HasSearchCriteria(workGroup, testCode, buyer, buyingTest, dateImported, month, userId, insertDelete))
+            {
+                var query = _mapper.Map<QueryParameters<string>>(request);
+                var response = await _logService.SearchAsync(query, filter);
+                items = response.Data != null ? _mapper.Map<List<MonthlyOutputLogItem>>(response.Data) : [];
+                pagination = response.Pagination != null
+                        ? _mapper.Map<PaginationModel>(response.Pagination)
+                        : new PaginationModel();
+            }
+            else
+            {
+                pagination = new PaginationModel();
+            }
 
             pagination.SortColumn = request.SortBy;
             pagination.SortDirection = request.Descending;
