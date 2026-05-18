@@ -13,5 +13,6 @@
         IPactTestorProductApiClient PactTestList { get; }
         IPactProjectMonthApiClient PactProjectMonth { get; }
         IPactProjectProfileApiClient PactProjectProfile { get; }
+        IPactCalenderMonthApiClient PactCalenderMonth { get; }
     }
 }

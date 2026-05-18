@@ -1,7 +1,9 @@
-﻿using Apha.Common.Contracts.PACT;
+﻿using Apha.Common.Contracts;
+using Apha.Common.Contracts.PACT;
 using Apha.PACT.Api.Controllers;
 using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Interfaces;
+using Apha.PACT.Application.Pagination;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
@@ -25,41 +27,136 @@ namespace Apha.PACT.Api.UnitTests.Controller.WorkGroupControllerTest
         #region GetAll
 
         [Fact]
-        public async Task GetAll_HappyPath_ReturnsOk()
+        public async Task GetAll_HappyPath_ReturnsOkWithMappedResult()
         {
-            var dtos = new List<WorkGroupDto> { new WorkGroupDto { WorkGroupName = "WG1" } };
-            var mapped = new List<WorkGroupRes> { new WorkGroupRes { WorkGroupName = "WG1" } };
+            // Arrange
+            var dtos = new List<WorkGroupDto> { new() { WorkGroupName = "WG1", ProfitCentre = "PC1" } };
+            var mapped = new List<WorkGroupRes> { new() { WorkGroupName = "WG1", ProfitCentre = "PC1" } };
 
             _serviceMock.GetAllWorkGroupsAsync().Returns(dtos);
             _mapperMock.Map<IEnumerable<WorkGroupRes>>(dtos).Returns(mapped);
 
+            // Act
             var result = await _controller.GetAll();
 
+            // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(mapped, okResult.Value);
+            await _serviceMock.Received(1).GetAllWorkGroupsAsync();
+            _mapperMock.Received(1).Map<IEnumerable<WorkGroupRes>>(dtos);
         }
 
         [Fact]
         public async Task GetAll_EmptyList_ReturnsOkWithEmptyCollection()
         {
+            // Arrange
             var dtos = new List<WorkGroupDto>();
             var mapped = new List<WorkGroupRes>();
 
             _serviceMock.GetAllWorkGroupsAsync().Returns(dtos);
             _mapperMock.Map<IEnumerable<WorkGroupRes>>(dtos).Returns(mapped);
 
+            // Act
             var result = await _controller.GetAll();
 
+            // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            Assert.Equal(mapped, okResult.Value);
+            var returnValue = Assert.IsAssignableFrom<IEnumerable<WorkGroupRes>>(okResult.Value);
+            Assert.Empty(returnValue);
         }
 
         [Fact]
         public async Task GetAll_ServiceThrows_PropagatesException()
         {
+            // Arrange
             _serviceMock.GetAllWorkGroupsAsync().ThrowsAsync(new Exception("Service error"));
 
+            // Act & Assert
             await Assert.ThrowsAsync<Exception>(() => _controller.GetAll());
+        }
+
+        #endregion
+
+        #region GetPagedWorkGroupTimeCodes
+
+        [Fact]
+        public async Task GetPagedWorkGroupTimeCodes_WithData_ReturnsOkWithMappedResult()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var serviceResult = new PaginatedResult<WorkGroupTimeCodeDto>
+            {
+                Data = [new() { PACTStaffID = "S1", TimeCode = "TC1" }]
+            };
+            var mapped = new PaginationRes<WorkGroupTimeCodeRes>
+            {
+                Data = [new() { PACTStaffID = "S1", TimeCode = "TC1" }]
+            };
+
+            _serviceMock.GetWorkGroupTimeCodeAsync(query, "WG1", 3).Returns(serviceResult);
+            _mapperMock.Map<PaginationRes<WorkGroupTimeCodeRes>>(serviceResult).Returns(mapped);
+
+            // Act
+            var result = await _controller.GetPagedWorkGroupTimeCodes(query, "WG1", 3);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(mapped, okResult.Value);
+            await _serviceMock.Received(1).GetWorkGroupTimeCodeAsync(query, "WG1", 3);
+            _mapperMock.Received(1).Map<PaginationRes<WorkGroupTimeCodeRes>>(serviceResult);
+        }
+
+        [Fact]
+        public async Task GetPagedWorkGroupTimeCodes_NullWorkGroupAndMonth_ReturnsOk()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var serviceResult = new PaginatedResult<WorkGroupTimeCodeDto> { Data = [] };
+            var mapped = new PaginationRes<WorkGroupTimeCodeRes> { Data = [] };
+
+            _serviceMock.GetWorkGroupTimeCodeAsync(query, null, null).Returns(serviceResult);
+            _mapperMock.Map<PaginationRes<WorkGroupTimeCodeRes>>(serviceResult).Returns(mapped);
+
+            // Act
+            var result = await _controller.GetPagedWorkGroupTimeCodes(query, null, null);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(mapped, okResult.Value);
+            await _serviceMock.Received(1).GetWorkGroupTimeCodeAsync(query, null, null);
+        }
+
+        [Fact]
+        public async Task GetPagedWorkGroupTimeCodes_EmptyResult_ReturnsOkWithEmptyData()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var serviceResult = new PaginatedResult<WorkGroupTimeCodeDto> { Data = [] };
+            var mapped = new PaginationRes<WorkGroupTimeCodeRes> { Data = [] };
+
+            _serviceMock.GetWorkGroupTimeCodeAsync(query, "WG2", 1).Returns(serviceResult);
+            _mapperMock.Map<PaginationRes<WorkGroupTimeCodeRes>>(serviceResult).Returns(mapped);
+
+            // Act
+            var result = await _controller.GetPagedWorkGroupTimeCodes(query, "WG2", 1);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var returnValue = Assert.IsType<PaginationRes<WorkGroupTimeCodeRes>>(okResult.Value);
+            Assert.Empty(returnValue.Data);
+        }
+
+        [Fact]
+        public async Task GetPagedWorkGroupTimeCodes_ServiceThrows_PropagatesException()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+
+            _serviceMock.GetWorkGroupTimeCodeAsync(query, Arg.Any<string?>(), Arg.Any<int?>())
+                        .ThrowsAsync(new Exception("Service error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetPagedWorkGroupTimeCodes(query, "WG1", 1));
         }
 
         #endregion

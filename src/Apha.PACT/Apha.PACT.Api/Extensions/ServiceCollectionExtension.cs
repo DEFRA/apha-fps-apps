@@ -32,6 +32,7 @@ namespace Apha.PACT.Api.Extensions
             services.AddScoped<ITestorProductService, TestorProductService>();
             services.AddScoped<IProjectMonthService, ProjectMonthService>();
             services.AddScoped<IProjectProfileService, ProjectProfileService>();
+            services.AddScoped<ICalenderMonthService, CalenderMonthService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
@@ -51,6 +52,7 @@ namespace Apha.PACT.Api.Extensions
             services.AddScoped<IMonthlyTimeRepository, MonthlyTimeRepository>();
             services.AddScoped<IProjectMonthRepository, ProjectMonthRepository>();
             services.AddScoped<IProjectProfileRepository, ProjectProfileRepository>();
+            services.AddScoped<ICalenderMonthRepository, CalenderMonthRepository>();
 
             return services;
         }

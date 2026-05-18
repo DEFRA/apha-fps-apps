@@ -269,6 +269,12 @@ function initWorkGroupPeoplePage() {
             $(this).trigger('change');
         }
     });
+
+    // ── Show Time Records button ───────────────────────────────────────────
+    $('#btnShowTimeRecords').on('click', function () {
+        if (!currentWorkGroup) return;
+        window.location.href = '/PACT/WorkGroupShowTimeRecord?workGroup=' + encodeURIComponent(currentWorkGroup);
+    });
 }
 
 $(document).ready(function () {
