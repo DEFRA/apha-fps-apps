@@ -240,7 +240,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
                 var sourceInvoices = await _invoiceService.GetPagedProjectInvoiceManualAsync(query, null);
 
-                if (!sourceInvoices.Success || sourceInvoices.Data == null || !sourceInvoices.Data.Any())
+                if (!sourceInvoices.Success || sourceInvoices.Data == null || sourceInvoices.Data.Count == 0)
                 {
                     return Json(new { success = false, message = $"No invoices found for month {sourceMonth}." });
                 }
@@ -254,7 +254,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 };
                 var targetInvoices = await _invoiceService.GetPagedProjectInvoiceManualAsync(targetQuery, null);
 
-                if (targetInvoices.Success && targetInvoices.Data != null && targetInvoices.Data.Any())
+                if (targetInvoices.Success && targetInvoices.Data != null && targetInvoices.Data.Count > 0)
                 {
                     return Json(new { success = false, message = $"Target month {targetMonth} already contains invoices. Please delete them first." });
                 }
@@ -318,7 +318,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                                  ?? new Dictionary<string, string>();
 
                 // Clean up any empty Month values from the filter
-                if (filterDict.ContainsKey("Month") && string.IsNullOrEmpty(filterDict["Month"]))
+                if (filterDict.TryGetValue("Month", out var monthValue) && string.IsNullOrEmpty(monthValue))
                 {
                     filterDict.Remove("Month");
                 }

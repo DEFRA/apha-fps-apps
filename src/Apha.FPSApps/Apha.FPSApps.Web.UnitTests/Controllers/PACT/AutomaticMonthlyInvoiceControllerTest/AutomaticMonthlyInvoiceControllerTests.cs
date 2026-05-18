@@ -54,13 +54,13 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
         private void SetupProjectsList(List<ProjectDto> projects)
         {
             _projectService.GetAllPactProjectsAsync()
-                .Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse(projects));
+                .Returns(Task.FromResult(ApiResponseDto<List<ProjectDto>>.SuccessResponse(projects)));
         }
 
         private void SetupMonthsList(List<MonthDto> months)
         {
             _monthService.GetAllMonthsAsync()
-                .Returns(ApiResponseDto<List<MonthDto>>.SuccessResponse(months));
+                .Returns(Task.FromResult(ApiResponseDto<List<MonthDto>>.SuccessResponse(months)));
         }
 
         #region Index Tests
@@ -148,7 +148,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
         {
             // Arrange
             _monthService.GetAllMonthsAsync()
-                .Returns((ApiResponseDto<List<MonthDto>>?)null);
+                .Returns(Task.FromResult<ApiResponseDto<List<MonthDto>>>(null!));
             SetupInvoicesGridMapper();
 
             // Act
