@@ -605,7 +605,7 @@
             const form    = $form[0];
             const year    = form.querySelector('[name="Year"]').value.trim();
             const topic   = form.querySelector('[name="Topic"]').value || null;
-            const comment = form.querySelector('[name="Commenttext"]').value.trim()|| null;
+            const comment = form.querySelector('[name="CommentText"]').value.trim()|| null;
             const token   = form.querySelector('input[name="__RequestVerificationToken"]').value;
             const payload = { Project: currentProject, Year: parseInt(year), Comment: comment, Topic: topic, Commentno: isAddingNew ? 0 : parseInt(currentEditIndex) };
 

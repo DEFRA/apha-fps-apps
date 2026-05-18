@@ -53,7 +53,7 @@ namespace Apha.PIMS.Api.Controllers
         {
             CommentDto dto = _mapper.Map<CommentDto>(request);
             CommentDto result = await _service.AddAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { commentno = result.Commentno }, _mapper.Map<CommentRes>(result));
+            return CreatedAtAction(nameof(GetById), new { commentno = result.CommentNo }, _mapper.Map<CommentRes>(result));
         }
 
 
@@ -61,7 +61,7 @@ namespace Apha.PIMS.Api.Controllers
         public async Task<IActionResult> Update(int commentno, [FromBody] CommentReq request)
         {
             CommentDto dto = _mapper.Map<CommentDto>(request);
-            dto.Commentno = commentno;
+            dto.CommentNo = commentno;
             CommentDto result = await _service.UpdateAsync(dto);
             return Ok(_mapper.Map<CommentRes>(result));
         }

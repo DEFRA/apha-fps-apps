@@ -12,7 +12,7 @@
         <div class="govuk-edit-modal__body">
             <form id="editRecordForm">
                 @Html.AntiForgeryToken()
-                <input type="hidden" asp-for="Commentno" />
+                <input type="hidden" asp-for="CommentNo" />
                 <input type="hidden" asp-for="Project" />
                 <input type="hidden" asp-for="IsAddingNew" />
                 <div class="govuk-error-summary" role="alert"
@@ -45,10 +45,10 @@
                     <span asp-validation-for="Topic" class="govuk-error-message" style="display:none;"></span>
                 </div>
                 <div class="govuk-form-group govuk-!-margin-bottom-6">
-                    <label class="govuk-label font-size-16" asp-for="Commenttext">Comment</label>
-                    <textarea class="govuk-textarea" asp-for="Commenttext"
+                    <label class="govuk-label font-size-16" asp-for="CommentText">Comment</label>
+                    <textarea class="govuk-textarea" asp-for="CommentText"
                               rows="4" placeholder="Enter your comments"></textarea>
-                    <span asp-validation-for="Commenttext" class="govuk-error-message" style="display:none;"></span>
+                    <span asp-validation-for="CommentText" class="govuk-error-message" style="display:none;"></span>
                 </div>
             </form>
         </div>

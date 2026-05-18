@@ -132,39 +132,39 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectCommentControllerTest
         public async Task GetById_WithValidComment_ReturnsOkResult_WithMappedComment()
         {
             // Arrange
-            var commentno = 1;
+            var CommentNo = 1;
             var commentDto = new CommentDto
             {
-                Commentno = commentno,
+                CommentNo = CommentNo,
                 Project = "PP001",
                 Year = 2024,
                 Topic = "Budget",
-                Commenttext = "Review required",
-                Madeby = "user1",
-                Dateentered = new DateTime(2024, 1, 15)
+                CommentText = "Review required",
+                MadeBy = "user1",
+                DateEntered = new DateTime(2024, 1, 15)
             };
             var commentRes = new CommentRes
             {
-                Commentno = commentno,
+                CommentNo = CommentNo,
                 Project = "PP001",
                 Year = 2024,
                 Topic = "Budget",
                 Comment = "Review required",
-                Madeby = "user1",
-                Dateentered = new DateTime(2024, 1, 15)
+                MadeBy = "user1",
+                DateEntered = new DateTime(2024, 1, 15)
             };
 
-            _service.GetByIdAsync(commentno).Returns(commentDto);
+            _service.GetByIdAsync(CommentNo).Returns(commentDto);
             _mapper.Map<CommentRes>(commentDto).Returns(commentRes);
 
             // Act
-            var result = await _controller.GetById(commentno);
+            var result = await _controller.GetById(CommentNo);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(commentRes, okResult.Value);
 
-            await _service.Received(1).GetByIdAsync(commentno);
+            await _service.Received(1).GetByIdAsync(CommentNo);
             _mapper.Received(1).Map<CommentRes>(commentDto);
         }
 
@@ -172,16 +172,16 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectCommentControllerTest
         public async Task GetById_WhenCommentNotFound_ThrowsKeyNotFoundException()
         {
             // Arrange
-            var commentno = 999;
-            _service.GetByIdAsync(commentno).Returns((CommentDto?)null);
+            var CommentNo = 999;
+            _service.GetByIdAsync(CommentNo).Returns((CommentDto?)null);
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<KeyNotFoundException>(
-                () => _controller.GetById(commentno));
+                () => _controller.GetById(CommentNo));
 
-            Assert.Equal($"Comment {commentno} not found.", exception.Message);
+            Assert.Equal($"Comment {CommentNo} not found.", exception.Message);
 
-            await _service.Received(1).GetByIdAsync(commentno);
+            await _service.Received(1).GetByIdAsync(CommentNo);
             _mapper.DidNotReceive().Map<CommentRes>(Arg.Any<CommentDto>());
         }
 
@@ -189,13 +189,13 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectCommentControllerTest
         public async Task GetById_WhenServiceThrowsException_PropagatesException()
         {
             // Arrange
-            var commentno = 1;
-            _service.GetByIdAsync(commentno).Throws(new Exception("Database error"));
+            var CommentNo = 1;
+            _service.GetByIdAsync(CommentNo).Throws(new Exception("Database error"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _controller.GetById(commentno));
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetById(CommentNo));
 
-            await _service.Received(1).GetByIdAsync(commentno);
+            await _service.Received(1).GetByIdAsync(CommentNo);
             _mapper.DidNotReceive().Map<CommentRes>(Arg.Any<CommentDto>());
         }
 
@@ -213,35 +213,35 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectCommentControllerTest
                 Year = 2024,
                 Topic = "Budget",
                 Comment = "Initial review required",
-                Madeby = "user1"
+                MadeBy = "user1"
             };
             var dto = new CommentDto
             {
                 Project = "PP001",
                 Year = 2024,
                 Topic = "Budget",
-                Commenttext = "Initial review required",
-                Madeby = "user1"
+                CommentText = "Initial review required",
+                MadeBy = "user1"
             };
             var createdDto = new CommentDto
             {
-                Commentno = 42,
+                CommentNo = 42,
                 Project = "PP001",
                 Year = 2024,
                 Topic = "Budget",
-                Commenttext = "Initial review required",
-                Madeby = "user1",
-                Dateentered = new DateTime(2024, 6, 1)
+                CommentText = "Initial review required",
+                MadeBy = "user1",
+                DateEntered = new DateTime(2024, 6, 1)
             };
             var createdRes = new CommentRes
             {
-                Commentno = 42,
+                CommentNo = 42,
                 Project = "PP001",
                 Year = 2024,
                 Topic = "Budget",
                 Comment = "Initial review required",
-                Madeby = "user1",
-                Dateentered = new DateTime(2024, 6, 1)
+                MadeBy = "user1",
+                DateEntered = new DateTime(2024, 6, 1)
             };
 
             _mapper.Map<CommentDto>(request).Returns(dto);
@@ -255,7 +255,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectCommentControllerTest
             var createdResult = Assert.IsType<CreatedAtActionResult>(result);
             Assert.Equal(nameof(_controller.GetById), createdResult.ActionName);
             Assert.NotNull(createdResult.RouteValues);
-            Assert.Equal(42, createdResult.RouteValues["commentno"]);
+            Assert.Equal(42, createdResult.RouteValues["CommentNo"]);
             Assert.Equal(createdRes, createdResult.Value);
 
             _mapper.Received(1).Map<CommentDto>(request);
@@ -268,7 +268,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectCommentControllerTest
         {
             // Arrange
             var request = new CommentReq { Project = "PP001", Topic = "Budget", Comment = "Review required" };
-            var dto = new CommentDto { Project = "PP001", Topic = "Budget", Commenttext = "Review required" };
+            var dto = new CommentDto { Project = "PP001", Topic = "Budget", CommentText = "Review required" };
 
             _mapper.Map<CommentDto>(request).Returns(dto);
             _service.AddAsync(dto).Throws(new Exception("Database error"));
@@ -286,43 +286,43 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectCommentControllerTest
         #region Update
 
         [Fact]
-        public async Task Update_ReturnsOkResult_WithMappedComment_AndSetsCommentno()
+        public async Task Update_ReturnsOkResult_WithMappedComment_AndSetsCommentNo()
         {
             // Arrange
-            var commentno = 10;
+            var CommentNo = 10;
             var request = new CommentReq
             {
                 Project = "PP001",
                 Year = 2024,
                 Topic = "Risk",
                 Comment = "Updated risk review",
-                Madeby = "user2"
+                MadeBy = "user2"
             };
             var dto = new CommentDto
             {
                 Project = "PP001",
                 Year = 2024,
                 Topic = "Risk",
-                Commenttext = "Updated risk review",
-                Madeby = "user2"
+                CommentText = "Updated risk review",
+                MadeBy = "user2"
             };
             var updatedDto = new CommentDto
             {
-                Commentno = commentno,
+                CommentNo = CommentNo,
                 Project = "PP001",
                 Year = 2024,
                 Topic = "Risk",
-                Commenttext = "Updated risk review",
-                Madeby = "user2"
+                CommentText = "Updated risk review",
+                MadeBy = "user2"
             };
             var updatedRes = new CommentRes
             {
-                Commentno = commentno,
+                CommentNo = CommentNo,
                 Project = "PP001",
                 Year = 2024,
                 Topic = "Risk",
                 Comment = "Updated risk review",
-                Madeby = "user2"
+                MadeBy = "user2"
             };
 
             _mapper.Map<CommentDto>(request).Returns(dto);
@@ -330,14 +330,14 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectCommentControllerTest
             _mapper.Map<CommentRes>(updatedDto).Returns(updatedRes);
 
             // Act
-            var result = await _controller.Update(commentno, request);
+            var result = await _controller.Update(CommentNo, request);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(updatedRes, okResult.Value);
 
-            // Verify commentno was set on the dto before service call
-            Assert.Equal(commentno, dto.Commentno);
+            // Verify CommentNo was set on the dto before service call
+            Assert.Equal(CommentNo, dto.CommentNo);
 
             _mapper.Received(1).Map<CommentDto>(request);
             await _service.Received(1).UpdateAsync(dto);
@@ -348,15 +348,15 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectCommentControllerTest
         public async Task Update_WhenServiceThrowsException_PropagatesException()
         {
             // Arrange
-            var commentno = 10;
+            var CommentNo = 10;
             var request = new CommentReq { Project = "PP001", Topic = "Risk", Comment = "Updated risk review" };
-            var dto = new CommentDto { Project = "PP001", Topic = "Risk", Commenttext = "Updated risk review" };
+            var dto = new CommentDto { Project = "PP001", Topic = "Risk", CommentText = "Updated risk review" };
 
             _mapper.Map<CommentDto>(request).Returns(dto);
             _service.UpdateAsync(dto).Throws(new Exception("Database error"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _controller.Update(commentno, request));
+            await Assert.ThrowsAsync<Exception>(() => _controller.Update(CommentNo, request));
 
             _mapper.Received(1).Map<CommentDto>(request);
             await _service.Received(1).UpdateAsync(dto);
@@ -371,47 +371,47 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectCommentControllerTest
         public async Task Delete_WhenCommentExists_ReturnsOkWithTrue()
         {
             // Arrange
-            var commentno = 1;
-            _service.DeleteAsync(commentno).Returns(true);
+            var CommentNo = 1;
+            _service.DeleteAsync(CommentNo).Returns(true);
 
             // Act
-            var result = await _controller.Delete(commentno);
+            var result = await _controller.Delete(CommentNo);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(true, okResult.Value);
 
-            await _service.Received(1).DeleteAsync(commentno);
+            await _service.Received(1).DeleteAsync(CommentNo);
         }
 
         [Fact]
         public async Task Delete_WhenCommentDoesNotExist_ReturnsOkWithFalse()
         {
             // Arrange
-            var commentno = 999;
-            _service.DeleteAsync(commentno).Returns(false);
+            var CommentNo = 999;
+            _service.DeleteAsync(CommentNo).Returns(false);
 
             // Act
-            var result = await _controller.Delete(commentno);
+            var result = await _controller.Delete(CommentNo);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(false, okResult.Value);
 
-            await _service.Received(1).DeleteAsync(commentno);
+            await _service.Received(1).DeleteAsync(CommentNo);
         }
 
         [Fact]
         public async Task Delete_WhenServiceThrowsException_PropagatesException()
         {
             // Arrange
-            var commentno = 1;
-            _service.DeleteAsync(commentno).Throws(new Exception("Database error"));
+            var CommentNo = 1;
+            _service.DeleteAsync(CommentNo).Throws(new Exception("Database error"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _controller.Delete(commentno));
+            await Assert.ThrowsAsync<Exception>(() => _controller.Delete(CommentNo));
 
-            await _service.Received(1).DeleteAsync(commentno);
+            await _service.Received(1).DeleteAsync(CommentNo);
         }
 
         #endregion
