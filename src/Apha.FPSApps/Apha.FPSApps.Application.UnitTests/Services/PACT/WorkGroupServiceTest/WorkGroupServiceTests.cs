@@ -102,7 +102,16 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupServiceTest
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var timeCodes = new List<WorkGroupTimeCodeDto>
             {
-                new() { PACTStaffID = "S1", TimeCode = "TC1", WorkGroup = "WG1" }
+                new()
+                {
+                    PACTStaffID = "S1",
+                    ParentProject = "PP1",
+                    WorkGroup = "WG1",
+                    Name = "John Smith",
+                    TimeCode = "TC1",
+                    Month = 3,
+                    Hours = 7.5
+                }
             };
             var expectedResponse = ApiResponseDto<List<WorkGroupTimeCodeDto>>.SuccessResponse(
                 timeCodes, new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1 });
@@ -115,6 +124,14 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupServiceTest
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Single(result.Data!);
+            var item = result.Data!.First();
+            Assert.Equal("S1", item.PACTStaffID);
+            Assert.Equal("PP1", item.ParentProject);
+            Assert.Equal("WG1", item.WorkGroup);
+            Assert.Equal("John Smith", item.Name);
+            Assert.Equal("TC1", item.TimeCode);
+            Assert.Equal(3, item.Month);
+            Assert.Equal(7.5, item.Hours);
             await _pactWorkGroupApiClient.Received(1).GetPagedWorkGroupTimeCodesAsync(query, "WG1", 3);
         }
 
