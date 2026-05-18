@@ -94,13 +94,37 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                     errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
                 });
 
-            var effectiveBuyer = !string.IsNullOrWhiteSpace(buyingTest) ? buyingTest : buyer;
- 
-            var gridConfig = await BuildLogGrid(request, workGroup, testCode, buyer, effectiveBuyer,
+            if (!HasSearchCriteria(workGroup, testCode, buyer, buyingTest, dateImported, month, userId, insertDelete))
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Please enter some criteria"
+                });
+            }
+            var gridConfig = await BuildLogGrid(request, workGroup, testCode, buyer, buyingTest,
                 dateImported, month, userId, insertDelete);
         
             return PartialView("_DataGrid", gridConfig);
         }
+
+        private bool HasSearchCriteria(
+            string? workGroup,
+            string? testCode,
+            string? buyer,
+            string? buyingTest,
+            DateTime? dateImported,
+            double? month,
+            string? userId,
+            string? insertDelete) =>
+                !string.IsNullOrWhiteSpace(workGroup) ||
+                !string.IsNullOrWhiteSpace(testCode) ||
+                !string.IsNullOrWhiteSpace(buyer) ||
+                !string.IsNullOrWhiteSpace(buyingTest) ||
+                dateImported.HasValue ||
+                month.HasValue ||
+                !string.IsNullOrWhiteSpace(userId) ||
+                !string.IsNullOrWhiteSpace(insertDelete);
 
         private async Task<DataGridConfig<MonthlyOutputLogItem>> BuildLogGrid(
            PaginationFilter<string> request,
@@ -125,7 +149,6 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
             var  items = response.Data != null ? _mapper.Map<List<MonthlyOutputLogItem>>(response.Data) : [];
 
-            // var items = response.Data.Select(d => _mapper.Map<MonthlyOutputLogItem>(d)).ToList();
             var pagination = response.Pagination != null
                     ? _mapper.Map<PaginationModel>(response.Pagination)
                     : new PaginationModel();
