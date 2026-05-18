@@ -1,15 +1,15 @@
-using Apha.BatchJobs.Infrastructure.Data;
+﻿using Apha.BatchJobs.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.MabArchive.Loaders;
 
-internal sealed class MyTlkpProgramLinqLoader : MabArchiveLinqLoaderBase
+internal sealed class MyTlkpProgramDotNetLoader : MabArchiveDotNetLoaderBase
 {
     public override int Sequence => 1;
 
     public override string Name => "my_tlkpprogram";
 
-    protected override async Task<int> LoadWithLinqAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
+    protected override async Task<int> LoadWithDotNetAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
     {
         var sourceRows = await context.MaSrcTlkpProgram
             .AsNoTracking()
@@ -59,3 +59,5 @@ internal sealed class MyTlkpProgramLinqLoader : MabArchiveLinqLoaderBase
         return inserted;
     }
 }
+
+

@@ -1,15 +1,15 @@
-using Apha.BatchJobs.Infrastructure.Data;
+﻿using Apha.BatchJobs.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.MabArchive.Loaders;
 
-internal sealed class MyTblAnimalsLinqLoader : MabArchiveLinqLoaderBase
+internal sealed class MyTblAnimalsDotNetLoader : MabArchiveDotNetLoaderBase
 {
     public override int Sequence => 23;
 
     public override string Name => "my_tblanimals";
 
-    protected override async Task<int> LoadWithLinqAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
+    protected override async Task<int> LoadWithDotNetAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
     {
         var rows = await context.MaSrcTblAnimals
             .AsNoTracking()
@@ -35,3 +35,5 @@ internal sealed class MyTblAnimalsLinqLoader : MabArchiveLinqLoaderBase
         return await context.SaveChangesAsync(cancellationToken);
     }
 }
+
+

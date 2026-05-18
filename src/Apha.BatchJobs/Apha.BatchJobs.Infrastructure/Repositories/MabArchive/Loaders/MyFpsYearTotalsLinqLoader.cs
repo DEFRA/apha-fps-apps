@@ -1,15 +1,15 @@
-using Apha.BatchJobs.Infrastructure.Data;
+﻿using Apha.BatchJobs.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.MabArchive.Loaders;
 
-internal sealed class MyFpsYearTotalsLinqLoader : MabArchiveLinqLoaderBase
+internal sealed class MyFpsYearTotalsDotNetLoader : MabArchiveDotNetLoaderBase
 {
     public override int Sequence => 4;
 
     public override string Name => "my_fpsyeartotals";
 
-    protected override async Task<int> LoadWithLinqAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
+    protected override async Task<int> LoadWithDotNetAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
     {
         var rows = await context.MaSrcFpsYearTotals
             .AsNoTracking()
@@ -47,3 +47,5 @@ internal sealed class MyFpsYearTotalsLinqLoader : MabArchiveLinqLoaderBase
         return await context.SaveChangesAsync(cancellationToken);
     }
 }
+
+

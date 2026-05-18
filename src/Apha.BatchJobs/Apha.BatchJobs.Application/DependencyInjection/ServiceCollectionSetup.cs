@@ -149,6 +149,7 @@ public static class ServiceCollectionSetup
         var configuredMode = config["BatchJobs:MabArchiveImplementationMode"];
 
         var preferLinq =
+            string.Equals(configuredMode, "DotNet", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(configuredMode, "DotNetLinq", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(configuredMode, "Linq", StringComparison.OrdinalIgnoreCase);
 
@@ -157,7 +158,7 @@ public static class ServiceCollectionSetup
             .Where(t =>
                 t is { IsClass: true, IsAbstract: false } &&
                 loaderType.IsAssignableFrom(t) &&
-                t.IsSubclassOf(preferLinq ? typeof(MabArchiveLinqLoaderBase) : typeof(MabArchiveSqlLoaderBase)))
+                t.IsSubclassOf(preferLinq ? typeof(MabArchiveDotNetLoaderBase) : typeof(MabArchiveSqlLoaderBase)))
             .ToList();
 
         foreach (var loader in loaderImplementations)

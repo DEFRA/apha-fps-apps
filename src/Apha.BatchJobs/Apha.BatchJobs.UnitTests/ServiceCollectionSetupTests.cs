@@ -96,17 +96,17 @@ public sealed class ServiceCollectionSetupTests
         var loaders = serviceProvider.GetServices<IMabArchiveLoader>().ToList();
 
         Assert.Equal(24, loaders.Count);
-        Assert.DoesNotContain(loaders, l => string.Equals(l.GetType().Name, "MyTlkpProgramLinqLoader", StringComparison.Ordinal));
+        Assert.DoesNotContain(loaders, l => string.Equals(l.GetType().Name, "MyTlkpProgramDotNetLoader", StringComparison.Ordinal));
     }
 
     [Fact]
-    public void ConfigureBatchJobServices_WhenMabArchiveModeIsDotNetLinq_ShouldRegisterLinqLoadersOnly()
+    public void ConfigureBatchJobServices_WhenMabArchiveModeIsDotNet_ShouldRegisterDotNetLoadersOnly()
     {
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["ConnectionStrings:BatchJobsConnectionString"] = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=admin123",
-                ["BatchJobs:MabArchiveImplementationMode"] = "DotNetLinq"
+                ["BatchJobs:MabArchiveImplementationMode"] = "DotNet"
             })
             .Build();
 
@@ -149,7 +149,7 @@ public sealed class ServiceCollectionSetupTests
                 "my_tlkpproject_all"
             },
             ordered.Select(l => l.Name));
-        Assert.All(ordered, l => Assert.Contains("LinqLoader", l.GetType().Name, StringComparison.Ordinal));
+        Assert.All(ordered, l => Assert.Contains("DotNetLoader", l.GetType().Name, StringComparison.Ordinal));
     }
 
     private static string GetBatchJobsRoot()

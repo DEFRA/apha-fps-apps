@@ -518,7 +518,7 @@ public class BatchJobsDbContext : DbContext
             entity.Property(e => e.WipLimit).HasColumnName("wip_limit");
             entity.Property(e => e.WipCurrent).HasColumnName("wip_current");
             entity.Property(e => e.ProjectStatus).HasColumnName("projectstatus");
-            entity.Property(e => e.DateCreated).HasColumnName("datecreated");
+            entity.Property(e => e.DateCreated).HasColumnName("datecreated").HasColumnType("timestamp without time zone");
             entity.Property(e => e.FecCost).HasColumnName("feccost");
             entity.Property(e => e.Profit).HasColumnName("profit");
             entity.Property(e => e.BudgetCvl).HasColumnName("budget_cvl");
@@ -604,7 +604,7 @@ public class BatchJobsDbContext : DbContext
             entity.Property(e => e.WipLimit).HasColumnName("wip_limit");
             entity.Property(e => e.WipCurrent).HasColumnName("wip_current");
             entity.Property(e => e.ProjectStatus).HasColumnName("projectstatus");
-            entity.Property(e => e.DateCreated).HasColumnName("datecreated");
+            entity.Property(e => e.DateCreated).HasColumnName("datecreated").HasColumnType("timestamp without time zone");
             entity.Property(e => e.FecCost).HasColumnName("feccost");
             entity.Property(e => e.Profit).HasColumnName("profit");
             entity.Property(e => e.BudgetCvl).HasColumnName("budget_cvl");
@@ -893,6 +893,7 @@ public class BatchJobsDbContext : DbContext
             entity.Property(e => e.AnimalType).HasColumnName("animaltype");
             entity.Property(e => e.NumberOfDays).HasColumnName("numberofdays");
             entity.Property(e => e.NumberOfAnimals).HasColumnName("numberofanimals");
+            entity.Property(e => e.IndCounter).HasColumnName("indcounter");
         });
 
         modelBuilder.Entity<MaDstMyTblAnimalReq>(entity =>
@@ -904,6 +905,7 @@ public class BatchJobsDbContext : DbContext
             entity.Property(e => e.AnimalType).HasColumnName("animaltype");
             entity.Property(e => e.NumberOfDays).HasColumnName("numberofdays");
             entity.Property(e => e.NumberOfAnimals).HasColumnName("numberofanimals");
+            entity.Property(e => e.ArCounter).HasColumnName("ar_counter");
         });
 
         modelBuilder.Entity<MaSrcTblContract>(entity =>

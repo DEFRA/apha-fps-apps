@@ -3,13 +3,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.MabArchive.Loaders;
 
-internal sealed class MyTlkpTestReqmtLinqLoader : MabArchiveLinqLoaderBase
+internal sealed class MyTlkpTestReqmtDotNetLoader : MabArchiveDotNetLoaderBase
 {
     public override int Sequence => 15;
 
     public override string Name => "my_tlkptestreqmt";
 
-    protected override async Task<int> LoadWithLinqAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
+    protected override async Task<int> LoadWithDotNetAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
     {
         return await context.Database.ExecuteSqlInterpolatedAsync($@"
 INSERT INTO mabarchive.my_tlkptestreqmt (

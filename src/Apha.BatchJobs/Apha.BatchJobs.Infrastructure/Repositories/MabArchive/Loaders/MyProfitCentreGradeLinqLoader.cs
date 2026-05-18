@@ -1,15 +1,15 @@
-using Apha.BatchJobs.Infrastructure.Data;
+﻿using Apha.BatchJobs.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.MabArchive.Loaders;
 
-internal sealed class MyProfitCentreGradeLinqLoader : MabArchiveLinqLoaderBase
+internal sealed class MyProfitCentreGradeDotNetLoader : MabArchiveDotNetLoaderBase
 {
     public override int Sequence => 18;
 
     public override string Name => "my_profitcentregrade";
 
-    protected override async Task<int> LoadWithLinqAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
+    protected override async Task<int> LoadWithDotNetAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
     {
         var rows = await context.MaSrcProfitCentreGrade
             .AsNoTracking()
@@ -38,3 +38,5 @@ internal sealed class MyProfitCentreGradeLinqLoader : MabArchiveLinqLoaderBase
         return await context.SaveChangesAsync(cancellationToken);
     }
 }
+
+

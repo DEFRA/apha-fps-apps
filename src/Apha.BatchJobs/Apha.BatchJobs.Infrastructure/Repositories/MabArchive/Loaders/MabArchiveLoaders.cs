@@ -29,14 +29,14 @@ internal abstract class MabArchiveSqlLoaderBase : MabArchiveLoaderBase
     protected abstract FormattableString BuildSql(int year);
 }
 
-internal abstract class MabArchiveLinqLoaderBase : MabArchiveLoaderBase
+internal abstract class MabArchiveDotNetLoaderBase : MabArchiveLoaderBase
 {
     protected override Task<int> ExecuteAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
     {
-        return LoadWithLinqAsync(context, year, cancellationToken);
+        return LoadWithDotNetAsync(context, year, cancellationToken);
     }
 
-    protected abstract Task<int> LoadWithLinqAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken);
+    protected abstract Task<int> LoadWithDotNetAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken);
 }
 
 internal sealed class MyTlkpProgramLoader : MabArchiveSqlLoaderBase

@@ -1,15 +1,15 @@
-using Apha.BatchJobs.Infrastructure.Data;
+﻿using Apha.BatchJobs.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.MabArchive.Loaders;
 
-internal sealed class MyProjectMonthFinalLinqLoader : MabArchiveLinqLoaderBase
+internal sealed class MyProjectMonthFinalDotNetLoader : MabArchiveDotNetLoaderBase
 {
     public override int Sequence => 9;
 
     public override string Name => "my_projectmonthfinal";
 
-    protected override async Task<int> LoadWithLinqAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
+    protected override async Task<int> LoadWithDotNetAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
     {
         var rows = await context.MaSrcProjectMonthFinal
             .AsNoTracking()
@@ -65,3 +65,5 @@ internal sealed class MyProjectMonthFinalLinqLoader : MabArchiveLinqLoaderBase
         return await context.SaveChangesAsync(cancellationToken);
     }
 }
+
+

@@ -1,4 +1,4 @@
-# MABArchive LINQ Conversion Tracker
+﻿# MABArchive LINQ Conversion Tracker
 
 Status date: 2026-05-15
 Owner: BatchJobs migration stream
@@ -42,7 +42,7 @@ Scope: Convert MABArchive year-load pipeline from SQL templates in code to LINQ/
 | 4 | Low-risk loader conversion | Completed | In Progress | LINQ loaders implemented for all low-risk sequences 1,3,4,5,6,7,8,9,11,12,13,14,15,17,18,20,22,23,24; selector remains strict DotNetLinq mode without SQL fallback. |
 | 5 | Medium-risk loader conversion | Completed | In Progress | LINQ loaders implemented for sequences 2,16,19,21 (group/join/cast/string logic). |
 | 6 | High-risk loader conversion | Completed | In Progress | Implemented LINQ loader for seq 10 with MAX(ac_counter) + ordered row numbering semantics. |
-| 7 | Full parity + performance validation | Not Started | Not Started | Compare SQL baseline vs LINQ output for all loaders. |
+| 7 | Full parity + performance validation | In Progress | In Progress | Full SQL-vs-.NET snapshot compares now pass for month <=4 and month >4 across all 24 loaders after loader 3 DateCreated mapping alignment and loader 11 ar_counter sequence alignment; performance tolerance validation still pending. |
 | 8 | Rollout and fallback retirement | Not Started | Not Started | Keep switch for controlled rollout then retire SQL path. |
 | 9 | Cleanup and final sign-off | Not Started | Not Started | Remove retired SQL code and finalize tracker evidence. |
 
@@ -50,30 +50,30 @@ Scope: Convert MABArchive year-load pipeline from SQL templates in code to LINQ/
 
 | Seq | Loader | Complexity | LINQ Status | Parity Status | Notes |
 | --- | --- | --- | --- | --- | --- |
-| 1 | my_tlkpprogram | Low | Completed | Not Started | LINQ loader implemented (MyTlkpProgramLinqLoader); parity snapshot compare pending. |
-| 2 | g_tlkpproject | Medium | Completed | Not Started | LINQ loader implemented (GTlkpProjectLinqLoader) with GROUP BY-equivalent dedupe projection; parity snapshot compare pending. |
-| 3 | my_tlkpproject | Low | Completed | Not Started | LINQ loader implemented (MyTlkpProjectLinqLoader); parity snapshot compare pending. |
-| 4 | my_fpsyeartotals | Low | Completed | Not Started | LINQ loader implemented (MyFpsYearTotalsLinqLoader); parity snapshot compare pending. |
-| 5 | my_monthlyoutput | Low | Completed | Not Started | LINQ loader implemented (MyMonthlyOutputLinqLoader); parity snapshot compare pending. |
-| 6 | my_monthlytime | Low | Completed | Not Started | LINQ loader implemented (MyMonthlyTimeLinqLoader); parity snapshot compare pending. |
-| 7 | my_proj_invoice | Low | Completed | Not Started | LINQ loader implemented (MyProjInvoiceLinqLoader); parity snapshot compare pending. |
-| 8 | my_proj_subcontract | Low | Completed | Not Started | LINQ loader implemented (MyProjSubcontractLinqLoader); parity snapshot compare pending. |
-| 9 | my_projectmonthfinal | Low | Completed | Not Started | LINQ loader implemented (MyProjectMonthFinalLinqLoader); parity snapshot compare pending. |
-| 10 | my_tbladditionalcosts | High | Completed | Not Started | LINQ loader implemented (MyTblAdditionalCostsLinqLoader) preserving ORDER BY(jobcode,account,description) + MAX(ac_counter)+ROW_NUMBER semantics; parity snapshot compare pending. |
-| 11 | my_tblanimalreq | Low | Completed | Not Started | LINQ loader implemented (MyTblAnimalReqLinqLoader); parity snapshot compare pending. |
-| 12 | my_tblcontract | Low | Completed | Not Started | LINQ loader implemented (MyTblContractLinqLoader); parity snapshot compare pending. |
-| 13 | my_tblstaffjob | Low | Completed | Not Started | LINQ loader implemented (MyTblStaffJobLinqLoader); parity snapshot compare pending. |
-| 14 | my_timecostcalcs | Low | Completed | Not Started | LINQ loader implemented (MyTimeCostCalcsLinqLoader); parity snapshot compare pending. |
-| 15 | my_tlkptestreqmt | Low | Completed | Not Started | LINQ loader implemented (MyTlkpTestReqmtLinqLoader); parity snapshot compare pending. |
-| 16 | tlkpyear | Medium | Completed | Not Started | LINQ loader implemented (TlkpYearLinqLoader) preserving month variable lookup + cast behavior; parity snapshot compare pending. |
-| 17 | my_workgroupgrade | Low | Completed | Not Started | LINQ loader implemented (MyWorkgroupGradeLinqLoader); parity snapshot compare pending. |
-| 18 | my_profitcentregrade | Low | Completed | Not Started | LINQ loader implemented (MyProfitCentreGradeLinqLoader); parity snapshot compare pending. |
-| 19 | my_tblprofitcentre | Medium | Completed | Not Started | LINQ loader implemented (MyTblProfitCentreLinqLoader); no fpsyear filter preserved per current SQL behavior; parity snapshot compare pending. |
-| 20 | my_testorproduct | Low | Completed | Not Started | LINQ loader implemented (MyTestOrProductLinqLoader); parity snapshot compare pending. |
-| 21 | my_staff | Medium | Completed | Not Started | LINQ loader implemented (MyStaffLinqLoader) preserving join and COALESCE-style name composition; parity snapshot compare pending. |
-| 22 | my_workgroup | Low | Completed | Not Started | LINQ loader implemented (MyWorkgroupLinqLoader); parity snapshot compare pending. |
-| 23 | my_tblanimals | Low | Completed | Not Started | LINQ loader implemented (MyTblAnimalsLinqLoader); parity snapshot compare pending. |
-| 24 | my_tlkpproject_all | Low | Completed | Not Started | LINQ loader implemented (MyTlkpProjectAllLinqLoader); parity snapshot compare pending; used by refresh-only path too. |
+| 1 | my_tlkpprogram | Low | Completed | Completed | LINQ loader implemented (MyTlkpProgramDotNetLoader); full snapshot compare passed for month <=4 and month >4. |
+| 2 | g_tlkpproject | Medium | Completed | Completed | LINQ loader implemented (GTlkpProjectDotNetLoader) with GROUP BY-equivalent dedupe projection; full snapshot compare passed for month <=4 and month >4. |
+| 3 | my_tlkpproject | Low | Completed | Completed | LINQ loader implemented (MyTlkpProjectDotNetLoader); DateCreated mapping aligned and full snapshot compare passed for month <=4 and month >4. |
+| 4 | my_fpsyeartotals | Low | Completed | Completed | LINQ loader implemented (MyFpsYearTotalsDotNetLoader); full snapshot compare passed for month <=4 and month >4. |
+| 5 | my_monthlyoutput | Low | Completed | Completed | LINQ loader implemented (MyMonthlyOutputDotNetLoader); full snapshot compare passed for month <=4 and month >4. |
+| 6 | my_monthlytime | Low | Completed | Completed | LINQ loader implemented (MyMonthlyTimeDotNetLoader); full snapshot compare passed for month <=4 and month >4. |
+| 7 | my_proj_invoice | Low | Completed | Completed | LINQ loader implemented (MyProjInvoiceDotNetLoader); full snapshot compare passed for month <=4 and month >4. |
+| 8 | my_proj_subcontract | Low | Completed | Completed | LINQ loader implemented (MyProjSubcontractDotNetLoader); full snapshot compare passed for month <=4 and month >4. |
+| 9 | my_projectmonthfinal | Low | Completed | Completed | LINQ loader implemented (MyProjectMonthFinalDotNetLoader); full snapshot compare passed for month <=4 and month >4. |
+| 10 | my_tbladditionalcosts | High | Completed | Completed | LINQ loader implemented (MyTblAdditionalCostsDotNetLoader) preserving ORDER BY(jobcode,account,description) + MAX(ac_counter)+ROW_NUMBER semantics; full snapshot compare passed for month <=4 and month >4. |
+| 11 | my_tblanimalreq | Low | Completed | Completed | LINQ loader implemented (MyTblAnimalReqDotNetLoader); ar_counter sequence alignment fixed and full snapshot compare passed for month <=4 and month >4. |
+| 12 | my_tblcontract | Low | Completed | Completed | LINQ loader implemented (MyTblContractDotNetLoader); full snapshot compare passed for month <=4 and month >4. |
+| 13 | my_tblstaffjob | Low | Completed | Completed | LINQ loader implemented (MyTblStaffJobDotNetLoader); full snapshot compare passed for month <=4 and month >4. |
+| 14 | my_timecostcalcs | Low | Completed | Completed | LINQ loader implemented (MyTimeCostCalcsDotNetLoader); full snapshot compare passed for month <=4 and month >4. |
+| 15 | my_tlkptestreqmt | Low | Completed | Completed | LINQ loader implemented (MyTlkpTestReqmtDotNetLoader); full snapshot compare passed for month <=4 and month >4. |
+| 16 | tlkpyear | Medium | Completed | Completed | LINQ loader implemented (TlkpYearDotNetLoader) preserving month variable lookup + cast behavior; full snapshot compare passed for month <=4 and month >4. |
+| 17 | my_workgroupgrade | Low | Completed | Completed | LINQ loader implemented (MyWorkgroupGradeDotNetLoader); full snapshot compare passed for month <=4 and month >4. |
+| 18 | my_profitcentregrade | Low | Completed | Completed | LINQ loader implemented (MyProfitCentreGradeDotNetLoader); full snapshot compare passed for month <=4 and month >4. |
+| 19 | my_tblprofitcentre | Medium | Completed | Completed | LINQ loader implemented (MyTblProfitCentreDotNetLoader); no fpsyear filter preserved per current SQL behavior; full snapshot compare passed for month <=4 and month >4. |
+| 20 | my_testorproduct | Low | Completed | Completed | LINQ loader implemented (MyTestOrProductDotNetLoader); full snapshot compare passed for month <=4 and month >4. |
+| 21 | my_staff | Medium | Completed | Completed | LINQ loader implemented (MyStaffDotNetLoader) preserving join and COALESCE-style name composition; full snapshot compare passed for month <=4 and month >4. |
+| 22 | my_workgroup | Low | Completed | Completed | LINQ loader implemented (MyWorkgroupDotNetLoader); full snapshot compare passed for month <=4 and month >4. |
+| 23 | my_tblanimals | Low | Completed | Completed | LINQ loader implemented (MyTblAnimalsDotNetLoader); full snapshot compare passed for month <=4 and month >4. |
+| 24 | my_tlkpproject_all | Low | Completed | Completed | LINQ loader implemented (MyTlkpProjectAllDotNetLoader); full snapshot compare passed for month <=4 and month >4; used by refresh-only path too. |
 
 ## Validation Gates By Phase
 
@@ -140,15 +140,22 @@ For each converted loader:
 | 2026-05-15 | 2 | Implemented MABArchive DbContext mapping slice for loaders 11-14 (tblanimalreq, tblcontract, tblstaffjob, timecostcalcs source + target models, DbSet registration, and ConfigureMabArchiveModels mappings). Verified with build-batchjobs-worker task (success) and MABArchive unit tests (6 passed, 0 failed). | Pass | Copilot |
 | 2026-05-15 | 2 | Implemented MABArchive DbContext mapping slice for loaders 15-18 (tlkptestreqmt, tlkpyear with tbldb_variables source, workgroupgrade, profitcentregrade source + target models, DbSet registration, and ConfigureMabArchiveModels mappings). Verified with build-batchjobs-worker task (success) and MABArchive unit tests (6 passed, 0 failed). | Pass | Copilot |
 | 2026-05-15 | 2 | Implemented MABArchive DbContext mapping slice for loaders 19-24 (tblprofitcentre, testorproduct, staff join sources, workgroup, tblanimals, tlkpproject_all target models; DbSet registration; ConfigureMabArchiveModels mappings). Verified with build-batchjobs-worker task (success) and MABArchive unit tests (6 passed, 0 failed). | Pass | Copilot |
-| 2026-05-15 | 3 | Refactored loader framework by adding MabArchiveLoaderBase and MabArchiveLinqLoaderBase in Infrastructure/Repositories/MabArchive/Loaders/MabArchiveLoaders.cs; SQL loaders continue through MabArchiveSqlLoaderBase and IMabArchiveLoader.LoadAsync signature remains unchanged. Verified with build-batchjobs-worker task (success) and MABArchive unit tests (6 passed, 0 failed). | Pass | Copilot |
+| 2026-05-15 | 3 | Refactored loader framework by adding MabArchiveLoaderBase and MabArchiveDotNetLoaderBase in Infrastructure/Repositories/MabArchive/Loaders/MabArchiveLoaders.cs; SQL loaders continue through MabArchiveSqlLoaderBase and IMabArchiveLoader.LoadAsync signature remains unchanged. Verified with build-batchjobs-worker task (success) and MABArchive unit tests (6 passed, 0 failed). | Pass | Copilot |
 | 2026-05-15 | 3 | Added configurable MABArchive loader mode selector in DependencyInjection/ServiceCollectionSetup.cs (BatchJobs:MabArchiveImplementationMode). Added ServiceCollectionSetupTests coverage for default SQL registration and DotNetLinq mode wiring. Verified with build-batchjobs-worker task (success) and targeted unit tests (10 passed, 0 failed). | Pass | Copilot |
-| 2026-05-15 | 4 | Implemented first LINQ loader (my_tlkpprogram) via MyTlkpProgramLinqLoader and switched DotNetLinq mode to strict no-fallback registration (LINQ loaders only). Updated unit tests to validate strict mode behavior. | Pass | Copilot |
-| 2026-05-15 | 4 | Implemented additional low-risk LINQ loaders: MyTlkpProjectLinqLoader (seq 3) and MyFpsYearTotalsLinqLoader (seq 4). Updated strict DotNetLinq selector test to assert LINQ-only set {1,3,4}. | Pass | Copilot |
-| 2026-05-15 | 4 | Implemented additional low-risk LINQ loaders for seq 5-9: MyMonthlyOutputLinqLoader, MyMonthlyTimeLinqLoader, MyProjInvoiceLinqLoader, MyProjSubcontractLinqLoader, and MyProjectMonthFinalLinqLoader. Updated strict DotNetLinq selector test to assert LINQ-only set {1,3,4,5,6,7,8,9}. Verified with build-batchjobs-worker task (success) and targeted unit tests (7 passed, 0 failed). | Pass | Copilot |
-| 2026-05-15 | 4 | Implemented additional low-risk LINQ loaders for seq 11-15 as separate step files: MyTblAnimalReqLinqLoader, MyTblContractLinqLoader, MyTblStaffJobLinqLoader, MyTimeCostCalcsLinqLoader, and MyTlkpTestReqmtLinqLoader. Updated strict DotNetLinq selector test to assert LINQ-only set {1,3,4,5,6,7,8,9,11,12,13,14,15}. Verified with build-batchjobs-worker task (success) and targeted unit tests (7 passed, 0 failed). | Pass | Copilot |
-| 2026-05-15 | 4 | Implemented additional low-risk LINQ loaders for seq 17,18,20,22,23,24 as separate step files: MyWorkgroupGradeLinqLoader, MyProfitCentreGradeLinqLoader, MyTestOrProductLinqLoader, MyWorkgroupLinqLoader, MyTblAnimalsLinqLoader, and MyTlkpProjectAllLinqLoader. Updated strict DotNetLinq selector test to assert LINQ-only set {1,3,4,5,6,7,8,9,11,12,13,14,15,17,18,20,22,23,24}. Verified with build-batchjobs-worker task (success) and targeted unit tests (7 passed, 0 failed). | Pass | Copilot |
-| 2026-05-15 | 5 | Implemented medium-risk LINQ loaders for seq 2,16,19,21 as separate step files: GTlkpProjectLinqLoader, TlkpYearLinqLoader, MyTblProfitCentreLinqLoader, and MyStaffLinqLoader. Updated strict DotNetLinq selector test to assert LINQ-only set {1,2,3,4,5,6,7,8,9,11,12,13,14,15,16,17,18,19,20,21,22,23,24}. Verified with build-batchjobs-worker task (success) and targeted dotnet test filter for ServiceCollectionSetupTests/MabArchiveLoaderMetadataTests (7 passed, 0 failed). | Pass | Copilot |
-| 2026-05-15 | 6 | Implemented high-risk LINQ loader for seq 10 (MyTblAdditionalCostsLinqLoader) as a separate step file, preserving ORDER BY(jobcode,account,description) and MAX(ac_counter)+ROW_NUMBER equivalent counter generation. Updated strict DotNetLinq selector test to assert full LINQ-only set {1..24}. Verified with build-batchjobs-worker task (success) and targeted dotnet test filter for ServiceCollectionSetupTests/MabArchiveLoaderMetadataTests (7 passed, 0 failed). | Pass | Copilot |
+| 2026-05-15 | 4 | Implemented first LINQ loader (my_tlkpprogram) via MyTlkpProgramDotNetLoader and switched DotNetLinq mode to strict no-fallback registration (LINQ loaders only). Updated unit tests to validate strict mode behavior. | Pass | Copilot |
+| 2026-05-15 | 4 | Implemented additional low-risk LINQ loaders: MyTlkpProjectDotNetLoader (seq 3) and MyFpsYearTotalsDotNetLoader (seq 4). Updated strict DotNetLinq selector test to assert LINQ-only set {1,3,4}. | Pass | Copilot |
+| 2026-05-15 | 4 | Implemented additional low-risk LINQ loaders for seq 5-9: MyMonthlyOutputDotNetLoader, MyMonthlyTimeDotNetLoader, MyProjInvoiceDotNetLoader, MyProjSubcontractDotNetLoader, and MyProjectMonthFinalDotNetLoader. Updated strict DotNetLinq selector test to assert LINQ-only set {1,3,4,5,6,7,8,9}. Verified with build-batchjobs-worker task (success) and targeted unit tests (7 passed, 0 failed). | Pass | Copilot |
+| 2026-05-15 | 4 | Implemented additional low-risk LINQ loaders for seq 11-15 as separate step files: MyTblAnimalReqDotNetLoader, MyTblContractDotNetLoader, MyTblStaffJobDotNetLoader, MyTimeCostCalcsDotNetLoader, and MyTlkpTestReqmtDotNetLoader. Updated strict DotNetLinq selector test to assert LINQ-only set {1,3,4,5,6,7,8,9,11,12,13,14,15}. Verified with build-batchjobs-worker task (success) and targeted unit tests (7 passed, 0 failed). | Pass | Copilot |
+| 2026-05-15 | 4 | Implemented additional low-risk LINQ loaders for seq 17,18,20,22,23,24 as separate step files: MyWorkgroupGradeDotNetLoader, MyProfitCentreGradeDotNetLoader, MyTestOrProductDotNetLoader, MyWorkgroupDotNetLoader, MyTblAnimalsDotNetLoader, and MyTlkpProjectAllDotNetLoader. Updated strict DotNetLinq selector test to assert LINQ-only set {1,3,4,5,6,7,8,9,11,12,13,14,15,17,18,20,22,23,24}. Verified with build-batchjobs-worker task (success) and targeted unit tests (7 passed, 0 failed). | Pass | Copilot |
+| 2026-05-15 | 5 | Implemented medium-risk LINQ loaders for seq 2,16,19,21 as separate step files: GTlkpProjectDotNetLoader, TlkpYearDotNetLoader, MyTblProfitCentreDotNetLoader, and MyStaffDotNetLoader. Updated strict DotNetLinq selector test to assert LINQ-only set {1,2,3,4,5,6,7,8,9,11,12,13,14,15,16,17,18,19,20,21,22,23,24}. Verified with build-batchjobs-worker task (success) and targeted dotnet test filter for ServiceCollectionSetupTests/MabArchiveLoaderMetadataTests (7 passed, 0 failed). | Pass | Copilot |
+| 2026-05-15 | 6 | Implemented high-risk LINQ loader for seq 10 (MyTblAdditionalCostsDotNetLoader) as a separate step file, preserving ORDER BY(jobcode,account,description) and MAX(ac_counter)+ROW_NUMBER equivalent counter generation. Updated strict DotNetLinq selector test to assert full LINQ-only set {1..24}. Verified with build-batchjobs-worker task (success) and targeted dotnet test filter for ServiceCollectionSetupTests/MabArchiveLoaderMetadataTests (7 passed, 0 failed). | Pass | Copilot |
+| 2026-05-15 | 7 | Completed LINQ suffix removal for MABArchive loader abstractions/implementations (MabArchiveDotNetLoaderBase + *DotNetLoader class names), fixed DotNet mode DI selection, and validated with targeted tests: ServiceCollectionSetupTests, MabArchiveLoaderMetadataTests, and MabArchiveLoadOrchestratorParityTests (12 passed, 0 failed). | Pass | Copilot |
+| 2026-05-15 | 7 | Executed full SQL vs .NET snapshot compare for month <=4 path using cloned DBs (mabarchive_sql_month_le4, mabarchive_dotnet_month_le4). Compare artifacts: docs/database/validation/mabarchive-baseline-20260515-182012.json vs docs/database/validation/mabarchive-baseline-20260515-182122.json. Result: 24 compared, 2 mismatches (seq 3 my_tlkpproject hash mismatch; seq 11 my_tblanimalreq hash mismatch; row counts matched for both). | Fail | Copilot |
+| 2026-05-15 | 7 | Executed full SQL vs .NET snapshot compare for month >4 path using cloned DBs (mabarchive_sql_month_gt4, mabarchive_dotnet_month_gt4). Compare artifacts: docs/database/validation/mabarchive-baseline-20260515-182249.json vs docs/database/validation/mabarchive-baseline-20260515-182322.json. Result: 24 compared, 2 mismatches (seq 3 my_tlkpproject hash mismatch; seq 11 my_tblanimalreq hash mismatch; row counts matched for both). | Fail | Copilot |
+| 2026-05-15 | 7 | Resolved loader 3 parity drift by mapping my_tlkpproject datecreated as timestamp without time zone in DbContext and removing UTC coercion in MyTlkpProjectDotNetLoader. Revalidated worker build (success). | Pass | Copilot |
+| 2026-05-15 | 7 | Resolved loader 11 parity drift by aligning MyTblAnimalReqDotNetLoader ar_counter generation to sequence semantics (read next sequence value + explicit assignment + setval synchronization) while preserving source indcounter ordering. Revalidated worker build (success). | Pass | Copilot |
+| 2026-05-15 | 7 | Re-executed full SQL vs .NET snapshot compare for month <=4 path using cloned DBs (mabarchive_sql_month_le4, mabarchive_dotnet_month_le4). Compare artifacts: docs/database/validation/mabarchive-baseline-20260515-185445.json vs docs/database/validation/mabarchive-baseline-20260515-185531.json. Result: 24 compared, 0 mismatches. | Pass | Copilot |
+| 2026-05-15 | 7 | Re-executed full SQL vs .NET snapshot compare for month >4 path using cloned DBs (mabarchive_sql_month_gt4, mabarchive_dotnet_month_gt4). Compare artifacts: docs/database/validation/mabarchive-baseline-20260515-185620.json vs docs/database/validation/mabarchive-baseline-20260515-185653.json. Result: 24 compared, 0 mismatches. | Pass | Copilot |
 | TBD | TBD | TBD | TBD | TBD |
 
 ## Daily Update Template
@@ -160,3 +167,4 @@ For each converted loader:
 - Deviations found:
 - Decisions required:
 - Next step:
+

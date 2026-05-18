@@ -1,15 +1,15 @@
-using Apha.BatchJobs.Infrastructure.Data;
+﻿using Apha.BatchJobs.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.MabArchive.Loaders;
 
-internal sealed class MyTblAdditionalCostsLinqLoader : MabArchiveLinqLoaderBase
+internal sealed class MyTblAdditionalCostsDotNetLoader : MabArchiveDotNetLoaderBase
 {
     public override int Sequence => 10;
 
     public override string Name => "my_tbladditionalcosts";
 
-    protected override async Task<int> LoadWithLinqAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
+    protected override async Task<int> LoadWithDotNetAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
     {
         var maxAcCounter = await context.MaDstMyTblAdditionalCosts
             .AsNoTracking()
@@ -46,3 +46,5 @@ internal sealed class MyTblAdditionalCostsLinqLoader : MabArchiveLinqLoaderBase
         return await context.SaveChangesAsync(cancellationToken);
     }
 }
+
+

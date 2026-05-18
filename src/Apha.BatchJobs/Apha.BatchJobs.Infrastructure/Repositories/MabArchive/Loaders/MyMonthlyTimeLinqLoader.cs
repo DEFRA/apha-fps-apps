@@ -1,15 +1,15 @@
-using Apha.BatchJobs.Infrastructure.Data;
+﻿using Apha.BatchJobs.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.MabArchive.Loaders;
 
-internal sealed class MyMonthlyTimeLinqLoader : MabArchiveLinqLoaderBase
+internal sealed class MyMonthlyTimeDotNetLoader : MabArchiveDotNetLoaderBase
 {
     public override int Sequence => 6;
 
     public override string Name => "my_monthlytime";
 
-    protected override async Task<int> LoadWithLinqAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
+    protected override async Task<int> LoadWithDotNetAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
     {
         var rows = await context.MaSrcMonthlyTime
             .AsNoTracking()
@@ -35,3 +35,5 @@ internal sealed class MyMonthlyTimeLinqLoader : MabArchiveLinqLoaderBase
         return await context.SaveChangesAsync(cancellationToken);
     }
 }
+
+

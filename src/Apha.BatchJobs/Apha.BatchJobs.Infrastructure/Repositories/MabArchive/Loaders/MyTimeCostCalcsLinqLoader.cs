@@ -1,15 +1,15 @@
-using Apha.BatchJobs.Infrastructure.Data;
+﻿using Apha.BatchJobs.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.MabArchive.Loaders;
 
-internal sealed class MyTimeCostCalcsLinqLoader : MabArchiveLinqLoaderBase
+internal sealed class MyTimeCostCalcsDotNetLoader : MabArchiveDotNetLoaderBase
 {
     public override int Sequence => 14;
 
     public override string Name => "my_timecostcalcs";
 
-    protected override async Task<int> LoadWithLinqAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
+    protected override async Task<int> LoadWithDotNetAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
     {
         var rows = await context.MaSrcTimeCostCalcs
             .AsNoTracking()
@@ -45,3 +45,5 @@ internal sealed class MyTimeCostCalcsLinqLoader : MabArchiveLinqLoaderBase
         return await context.SaveChangesAsync(cancellationToken);
     }
 }
+
+

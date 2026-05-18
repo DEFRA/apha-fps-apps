@@ -372,6 +372,7 @@ internal sealed class MaSrcTblAnimalReq
     public string? AnimalType { get; set; }
     public double? NumberOfDays { get; set; }
     public double? NumberOfAnimals { get; set; }
+    public int? IndCounter { get; set; }
 }
 
 internal sealed class MaDstMyTblAnimalReq
@@ -381,6 +382,7 @@ internal sealed class MaDstMyTblAnimalReq
     public string? AnimalType { get; set; }
     public double? NumberOfDays { get; set; }
     public double? NumberOfAnimals { get; set; }
+    public int ArCounter { get; set; }
 }
 
 internal sealed class MaSrcTblContract
