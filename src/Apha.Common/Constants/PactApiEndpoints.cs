@@ -100,5 +100,8 @@ namespace Apha.Common.Constants
         // Project Profile
         public const string GetProjectProfile = "api/v1/projectprofile/{0}/data";
         public const string GetProjectProfileCumulative = "api/v1/projectprofile/{0}/data/cumulative";
+
+        // Monthly Output Log
+        public const string SearchMonthlyOutputLog = "api/v1/monthlyoutput/log/search";
     }
 }
