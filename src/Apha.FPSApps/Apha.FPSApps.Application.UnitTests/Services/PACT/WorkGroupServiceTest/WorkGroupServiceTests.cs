@@ -210,7 +210,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupServiceTest
 
             // Act & Assert
             var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
-                () => _service.GetPagedWorkGroupTimeCodesAsync(query, null, 3));
+                () => _service.GetPagedWorkGroupTimeCodesAsync(query, null!, 3));
 
             Assert.Single(ex.Errors);
             Assert.Equal("WORKGROUP_REQUIRED", ex.Errors[0].Code);
@@ -241,7 +241,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupServiceTest
             _pactWorkGroupApiClient.GetPagedWorkGroupTimeCodesAsync(query, "WG1", 1).Returns(expectedResponse);
 
             // Act
-            var result = await _service.GetPagedWorkGroupTimeCodesAsync(query, "WG1");
+            var result = await _service.GetPagedWorkGroupTimeCodesAsync(query, "WG1", 1);
 
             // Assert
             Assert.NotNull(result);
@@ -257,7 +257,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupServiceTest
 
             // Act & Assert
             var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
-                () => _service.GetPagedWorkGroupTimeCodesAsync(query, null));
+                () => _service.GetPagedWorkGroupTimeCodesAsync(query, null!, 1));
 
             Assert.Single(ex.Errors);
             Assert.Equal("WORKGROUP_REQUIRED", ex.Errors[0].Code);

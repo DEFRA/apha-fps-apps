@@ -184,7 +184,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
 
             var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
-                () => _sut.GetWorkGroupTimeCodeAsync(query, null, 3));
+                () => _sut.GetWorkGroupTimeCodeAsync(query, null!, 3));
 
             Assert.Single(ex.Errors);
             Assert.Equal("WORKGROUP_REQUIRED", ex.Errors[0].Code);
@@ -216,7 +216,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
             _mockRepository.GetWorkGroupTimeCodeAsync(mappedParams, "WG1", 1).Returns(pagedData);
             _mockMapper.Map<PaginatedResult<WorkGroupTimeCodeDto>>(pagedData).Returns(expected);
 
-            var result = await _sut.GetWorkGroupTimeCodeAsync(query, "WG1");
+            var result = await _sut.GetWorkGroupTimeCodeAsync(query, "WG1", 1);
 
             result.Should().Be(expected);
             await _mockRepository.Received(1).GetWorkGroupTimeCodeAsync(mappedParams, "WG1", 1);
@@ -228,7 +228,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
 
             var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
-                () => _sut.GetWorkGroupTimeCodeAsync(query, null));
+                () => _sut.GetWorkGroupTimeCodeAsync(query, null!, 1));
 
             Assert.Single(ex.Errors);
             Assert.Equal("WORKGROUP_REQUIRED", ex.Errors[0].Code);
