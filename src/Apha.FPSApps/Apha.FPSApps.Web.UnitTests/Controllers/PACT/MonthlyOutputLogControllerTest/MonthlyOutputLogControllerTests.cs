@@ -62,19 +62,19 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.MonthlyOutputLogController
                 .Returns(new PaginationModel());
         }
 
-        private ApiResponseDto<List<WorkGroupDto>> BuildWorkGroupResponse() =>
+        private static ApiResponseDto<List<WorkGroupDto>> BuildWorkGroupResponse() =>
             ApiResponseDto<List<WorkGroupDto>>.SuccessResponse(
                 new List<WorkGroupDto> { new() { WorkGroupName = "WG1" } });
 
-        private ApiResponseDto<List<TestorProductDto>> BuildTestorProductResponse() =>
+        private static ApiResponseDto<List<TestorProductDto>> BuildTestorProductResponse() =>
             ApiResponseDto<List<TestorProductDto>>.SuccessResponse(
                 new List<TestorProductDto> { new() { ItemCode = "TC1" } });
 
-        private ApiResponseDto<List<ProjectDto>> BuildProjectResponse() =>
+        private static ApiResponseDto<List<ProjectDto>> BuildProjectResponse() =>
             ApiResponseDto<List<ProjectDto>>.SuccessResponse(
                 new List<ProjectDto> { new() { ParentProject = "P001", ProjectTitle = "Project One" } });
 
-        private ApiResponseDto<List<MonthlyOutputLogDto>> BuildLogResponse(int count = 2)
+        private static ApiResponseDto<List<MonthlyOutputLogDto>> BuildLogResponse(int count = 2)
         {
             var data = Enumerable.Range(1, count)
                 .Select(i => new MonthlyOutputLogDto { SequenceNo = i, TestCode = $"TC{i}", WorkGroup = "WG1", Buyer = "BuyerA" })
@@ -219,7 +219,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.MonthlyOutputLogController
             var partialViewResult = Assert.IsType<PartialViewResult>(result);
             Assert.Equal("_DataGrid", partialViewResult.ViewName);
             var model = Assert.IsType<DataGridConfig<MonthlyOutputLogItem>>(partialViewResult.Model);
-            Assert.Equal(2, model.Data.Count());
+            Assert.Equal(2, model.Data.Count);
         }
 
         [Fact]
