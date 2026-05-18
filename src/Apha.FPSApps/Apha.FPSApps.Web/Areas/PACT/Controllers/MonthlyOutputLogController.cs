@@ -179,8 +179,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 ShowPagination = true,
                 Data = items,
                 Columns = GridDataProvider.GetColumnsDefination<MonthlyOutputLogItem>(null),
-                Pagination = pagination,                
+                Pagination = pagination,
                 CurrentFilters = filterDict,
+                ExtraFilterMethod = "getExtraFilters_moLogGrid",
                 BindGridUrl = "/PACT/MonthlyOutputLog/Search"
             };
 
