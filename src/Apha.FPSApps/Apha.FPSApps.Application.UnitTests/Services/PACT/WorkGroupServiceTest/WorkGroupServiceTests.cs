@@ -3,6 +3,7 @@ using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.PactApiClients;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Application.Services.PACT;
+using Apha.FPSApps.Application.Validation;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 
@@ -136,20 +137,20 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupServiceTest
         }
 
         [Fact]
-        public async Task GetPagedWorkGroupTimeCodesAsync_NullWorkGroupAndMonth_PassesNullsToApiClient()
+        public async Task GetPagedWorkGroupTimeCodesAsync_ValidWorkGroupAndMonth_PassesToApiClient()
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var expectedResponse = ApiResponseDto<List<WorkGroupTimeCodeDto>>.SuccessResponse([]);
-            _pactWorkGroupApiClient.GetPagedWorkGroupTimeCodesAsync(query, null, null).Returns(expectedResponse);
+            _pactWorkGroupApiClient.GetPagedWorkGroupTimeCodesAsync(query, "WG1", 1).Returns(expectedResponse);
 
             // Act
-            var result = await _service.GetPagedWorkGroupTimeCodesAsync(query, null, null);
+            var result = await _service.GetPagedWorkGroupTimeCodesAsync(query, "WG1", 1);
 
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
-            await _pactWorkGroupApiClient.Received(1).GetPagedWorkGroupTimeCodesAsync(query, null, null);
+            await _pactWorkGroupApiClient.Received(1).GetPagedWorkGroupTimeCodesAsync(query, "WG1", 1);
         }
 
         [Fact]
@@ -159,10 +160,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupServiceTest
             var query = new QueryParameters<string> { Page = 2, PageSize = 5 };
             var expectedResponse = ApiResponseDto<List<WorkGroupTimeCodeDto>>.SuccessResponse(
                 [], new PaginationDto { PageNumber = 2, PageSize = 5, TotalRecords = 0 });
-            _pactWorkGroupApiClient.GetPagedWorkGroupTimeCodesAsync(query, "WG2", null).Returns(expectedResponse);
+            _pactWorkGroupApiClient.GetPagedWorkGroupTimeCodesAsync(query, "WG2", 2).Returns(expectedResponse);
 
             // Act
-            var result = await _service.GetPagedWorkGroupTimeCodesAsync(query, "WG2", null);
+            var result = await _service.GetPagedWorkGroupTimeCodesAsync(query, "WG2", 2);
 
             // Assert
             Assert.NotNull(result);
@@ -194,11 +195,72 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupServiceTest
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             _pactWorkGroupApiClient
-                .GetPagedWorkGroupTimeCodesAsync(query, Arg.Any<string?>(), Arg.Any<int?>())
+                .GetPagedWorkGroupTimeCodesAsync(query, Arg.Any<string?>(), Arg.Any<int>())
                 .ThrowsAsync(new Exception("Connection error"));
 
             // Act & Assert
             await Assert.ThrowsAsync<Exception>(() => _service.GetPagedWorkGroupTimeCodesAsync(query, "WG1", 1));
+        }
+
+        [Fact]
+        public async Task GetPagedWorkGroupTimeCodesAsync_NullWorkGroup_ThrowsBusinessValidationErrorException()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                () => _service.GetPagedWorkGroupTimeCodesAsync(query, null, 3));
+
+            Assert.Single(ex.Errors);
+            Assert.Equal("WORKGROUP_REQUIRED", ex.Errors[0].Code);
+            await _pactWorkGroupApiClient.DidNotReceive().GetPagedWorkGroupTimeCodesAsync(
+                Arg.Any<QueryParameters<string>>(), Arg.Any<string?>(), Arg.Any<int>());
+        }
+
+        [Fact]
+        public async Task GetPagedWorkGroupTimeCodesAsync_EmptyWorkGroup_ThrowsBusinessValidationErrorException()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                () => _service.GetPagedWorkGroupTimeCodesAsync(query, "   ", 3));
+
+            Assert.Single(ex.Errors);
+            Assert.Equal("WORKGROUP_REQUIRED", ex.Errors[0].Code);
+        }
+
+        [Fact]
+        public async Task GetPagedWorkGroupTimeCodesAsync_DefaultMonthNumber_PassesDefaultToApiClient()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var expectedResponse = ApiResponseDto<List<WorkGroupTimeCodeDto>>.SuccessResponse([]);
+            _pactWorkGroupApiClient.GetPagedWorkGroupTimeCodesAsync(query, "WG1", 1).Returns(expectedResponse);
+
+            // Act
+            var result = await _service.GetPagedWorkGroupTimeCodesAsync(query, "WG1");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            await _pactWorkGroupApiClient.Received(1).GetPagedWorkGroupTimeCodesAsync(query, "WG1", 1);
+        }
+
+        [Fact]
+        public async Task GetPagedWorkGroupTimeCodesAsync_NullWorkGroupDefaultMonth_ThrowsOnlyWorkGroupError()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                () => _service.GetPagedWorkGroupTimeCodesAsync(query, null));
+
+            Assert.Single(ex.Errors);
+            Assert.Equal("WORKGROUP_REQUIRED", ex.Errors[0].Code);
         }
 
         #endregion

@@ -8,9 +8,43 @@ var currentWorkGroup  = null;
 var currentMonthNumber = null;
 
 /**
+ * Returns the current work group and month number as extra filter parameters
+ * for every grid request (initial load, sort, pagination, and filter events).
+ * Called by the _DataGrid partial via the ExtraFilterMethod hook.
+ */
+function getTimeRecordsExtraFilters() {
+    return {
+        workGroup: currentWorkGroup || null,
+        monthNumber: currentMonthNumber || 1
+    };
+}
+
+/**
+ * Validates that a Work Group has been selected.
+ * Shows a GDS error message and error styling on the input if blank.
+ * Clears the error when a valid value is present.
+ * @returns {boolean} true if valid, false if the field is empty.
+ */
+function validateWorkGroupSelected() {
+    var $input = $('#workGroupSelect');
+    var $error = $('#workGroupError');
+    if (!currentWorkGroup) {
+        $input.addClass('govuk-input--error');
+        $error.show();
+        return false;
+    }
+    $input.removeClass('govuk-input--error');
+    $error.hide();
+    return true;
+}
+
+/**
  * Reloads the time records grid resetting pagination, sort, and filter state.
+ * Aborts and shows a validation error if no Work Group is selected.
  */
 function reloadTimeRecordsGrid() {
+    if (!validateWorkGroupSelected()) return;
+
     var gm = window['gridManager_' + timeRecordsGridId];
     if (!gm) return;
 
@@ -70,7 +104,8 @@ function initWorkGroupShowTimeRecordPage() {
         $wgInput.val(text);
         $wgPanel.hide();
         currentWorkGroup = value || null;
-        if (currentWorkGroup) reloadTimeRecordsGrid();
+        validateWorkGroupSelected();
+        reloadTimeRecordsGrid();
     });
 
     $(document).on('click', function (e) {
@@ -108,8 +143,8 @@ function initWorkGroupShowTimeRecordPage() {
         var text  = $(this).data('text');
         $cmInput.val(text);
         $cmPanel.hide();
-        currentMonthNumber = value || null;
-        if (currentMonthNumber) reloadTimeRecordsGrid();
+        currentMonthNumber = value ? parseInt(value, 10) : 1;
+        reloadTimeRecordsGrid();
     });
 
     $(document).on('click', function (e) {
@@ -128,6 +163,16 @@ function initWorkGroupShowTimeRecordPage() {
         }
     }
 
+    // ── Pre-select calendar month passed from the previous page ───────────
+    var preselectedMonthNumber = parseInt($('#hdnSelectedMonthNumber').val(), 10);
+    if (!isNaN(preselectedMonthNumber) && preselectedMonthNumber > 0) {
+        var $cmMatchRow = $('#calenderMonthDropdownBody tr[data-value="' + preselectedMonthNumber + '"]');
+        if ($cmMatchRow.length) {
+            $cmInput.val($cmMatchRow.data('text'));
+            currentMonthNumber = preselectedMonthNumber;
+        }
+    }
+
     // ── Enter key support for grid column filters ─────────────────────────
     $('#gridContainer_' + timeRecordsGridId).on('keypress', '.grid-filter', function (e) {
         if (e.which === 13) {
@@ -135,9 +180,6 @@ function initWorkGroupShowTimeRecordPage() {
             $(this).trigger('change');
         }
     });
-
-    // ── Initial grid load ─────────────────────────────────────────────────
-    //reloadTimeRecordsGrid();
 
     // ── Update Total Hours whenever the grid reloads ───────────────────
     document.addEventListener('gridReloaded', function (e) {

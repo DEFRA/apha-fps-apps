@@ -6,6 +6,6 @@ namespace Apha.PACT.Application.Interfaces
     public interface IWorkGroupService
     {
         Task<IEnumerable<WorkGroupDto>> GetAllWorkGroupsAsync();
-        Task<PaginatedResult<WorkGroupTimeCodeDto>> GetWorkGroupTimeCodeAsync(QueryParameters<string> query, string? workGroup, int? monthNumber);
+        Task<PaginatedResult<WorkGroupTimeCodeDto>> GetWorkGroupTimeCodeAsync(QueryParameters<string> query, string workGroup, int monthNumber);
     }
 }

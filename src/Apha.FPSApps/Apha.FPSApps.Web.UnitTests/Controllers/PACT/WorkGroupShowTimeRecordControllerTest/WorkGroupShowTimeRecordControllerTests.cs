@@ -55,7 +55,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupShowTimeRecordCon
         private void SetupDefaultTimeRecordsResponse()
         {
             _workGroupService.GetPagedWorkGroupTimeCodesAsync(
-                    Arg.Any<QueryParameters<string>>(), Arg.Any<string?>(), Arg.Any<int?>())
+                    Arg.Any<QueryParameters<string>>(), Arg.Any<string>(), Arg.Any<int>())
                 .Returns(ApiResponseDto<List<WorkGroupTimeCodeDto>>.SuccessResponse([]));
         }
 
@@ -114,6 +114,42 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupShowTimeRecordCon
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<WorkGroupShowTimeRecordViewModel>(viewResult.Model);
             Assert.Null(model.SelectedWorkGroup);
+        }
+
+        [Fact]
+        public async Task Index_WithMonthNumber_SetsSelectedMonthNumber()
+        {
+            // Arrange
+            SetupDefaultWorkGroupsResponse();
+            SetupDefaultCalenderMonthsResponse();
+            SetupDefaultTimeRecordsResponse();
+            SetupDefaultTimeRecordsMapper();
+
+            // Act
+            var result = await _controller.Index("WG1", 3);
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<WorkGroupShowTimeRecordViewModel>(viewResult.Model);
+            Assert.Equal(3, model.SelectedMonthNumber);
+        }
+
+        [Fact]
+        public async Task Index_WithoutMonthNumber_SelectedMonthNumberDefaultsToOne()
+        {
+            // Arrange
+            SetupDefaultWorkGroupsResponse();
+            SetupDefaultCalenderMonthsResponse();
+            SetupDefaultTimeRecordsResponse();
+            SetupDefaultTimeRecordsMapper();
+
+            // Act
+            var result = await _controller.Index();
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<WorkGroupShowTimeRecordViewModel>(viewResult.Model);
+            Assert.Equal(1, model.SelectedMonthNumber);
         }
 
         [Fact]
@@ -284,7 +320,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupShowTimeRecordCon
             SetupDefaultTimeRecordsMapper();
 
             // Act
-            var result = await _controller.LoadTimeRecordsGrid(request, null, null);
+            var result = await _controller.LoadTimeRecordsGrid(request, "WG1", 1);
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -299,7 +335,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupShowTimeRecordCon
             _controller.ModelState.AddModelError("Page", "Invalid page");
 
             // Act
-            var result = await _controller.LoadTimeRecordsGrid(request, null, null);
+            var result = await _controller.LoadTimeRecordsGrid(request, "WG1", 1);
 
             // Assert
             Assert.IsType<JsonResult>(result);
@@ -330,11 +366,11 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupShowTimeRecordCon
             SetupDefaultTimeRecordsMapper();
 
             // Act
-            await _controller.LoadTimeRecordsGrid(request, null, null);
+            await _controller.LoadTimeRecordsGrid(request, "WG1", 1);
 
             // Assert
             await _workGroupService.Received(1).GetPagedWorkGroupTimeCodesAsync(
-                Arg.Any<QueryParameters<string>>(), null, null);
+                Arg.Any<QueryParameters<string>>(), "WG1", 1);
         }
 
         [Fact]
@@ -343,12 +379,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupShowTimeRecordCon
             // Arrange
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = "{}" };
             _workGroupService.GetPagedWorkGroupTimeCodesAsync(
-                    Arg.Any<QueryParameters<string>>(), Arg.Any<string?>(), Arg.Any<int?>())
+                    Arg.Any<QueryParameters<string>>(), Arg.Any<string>(), Arg.Any<int>())
                 .Returns(ApiResponseDto<List<WorkGroupTimeCodeDto>>.FailureResponse([], new ApiMetaDto()));
             SetupDefaultTimeRecordsMapper();
 
             // Act
-            var result = await _controller.LoadTimeRecordsGrid(request, null, null);
+            var result = await _controller.LoadTimeRecordsGrid(request, "WG1", 1);
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -363,12 +399,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupShowTimeRecordCon
             // Arrange
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = "{}" };
             _workGroupService.GetPagedWorkGroupTimeCodesAsync(
-                    Arg.Any<QueryParameters<string>>(), Arg.Any<string?>(), Arg.Any<int?>())
+                    Arg.Any<QueryParameters<string>>(), Arg.Any<string>(), Arg.Any<int>())
                 .Returns(ApiResponseDto<List<WorkGroupTimeCodeDto>>.SuccessResponse(null!));
             SetupDefaultTimeRecordsMapper();
 
             // Act
-            var result = await _controller.LoadTimeRecordsGrid(request, null, null);
+            var result = await _controller.LoadTimeRecordsGrid(request, "WG1", 1);
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -385,7 +421,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupShowTimeRecordCon
             SetupDefaultTimeRecordsMapper();
 
             // Act
-            var result = await _controller.LoadTimeRecordsGrid(request, null, null);
+            var result = await _controller.LoadTimeRecordsGrid(request, "WG1", 1);
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -408,7 +444,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupShowTimeRecordCon
                 new() { PACTStaffID = "S1" }
             };
             _workGroupService.GetPagedWorkGroupTimeCodesAsync(
-                    Arg.Any<QueryParameters<string>>(), Arg.Any<string?>(), Arg.Any<int?>())
+                    Arg.Any<QueryParameters<string>>(), Arg.Any<string>(), Arg.Any<int>())
                 .Returns(ApiResponseDto<List<WorkGroupTimeCodeDto>>.SuccessResponse(
                     timeCodeDtos, new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1 }));
             _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
@@ -417,7 +453,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupShowTimeRecordCon
                 .Returns(mappedItems);
 
             // Act
-            var result = await _controller.LoadTimeRecordsGrid(request, "WG1", null);
+            var result = await _controller.LoadTimeRecordsGrid(request, "WG1", 1);
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -432,13 +468,13 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupShowTimeRecordCon
             // Arrange
             var request = new PaginationFilter<string> { Page = 2, PageSize = 5, Filter = "{}" };
             _workGroupService.GetPagedWorkGroupTimeCodesAsync(
-                    Arg.Any<QueryParameters<string>>(), Arg.Any<string?>(), Arg.Any<int?>())
+                    Arg.Any<QueryParameters<string>>(), Arg.Any<string>(), Arg.Any<int>())
                 .Returns(ApiResponseDto<List<WorkGroupTimeCodeDto>>.SuccessResponse(
                     [], new PaginationDto { PageNumber = 2, PageSize = 5, TotalRecords = 20 }));
             SetupDefaultTimeRecordsMapper();
 
             // Act
-            var result = await _controller.LoadTimeRecordsGrid(request, null, null);
+            var result = await _controller.LoadTimeRecordsGrid(request, "WG1", 1);
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -454,12 +490,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupShowTimeRecordCon
             // Arrange
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = "{}", SortBy = "Name", Descending = true };
             _workGroupService.GetPagedWorkGroupTimeCodesAsync(
-                    Arg.Any<QueryParameters<string>>(), Arg.Any<string?>(), Arg.Any<int?>())
+                    Arg.Any<QueryParameters<string>>(), Arg.Any<string>(), Arg.Any<int>())
                 .Returns(new ApiResponseDto<List<WorkGroupTimeCodeDto>> { Success = true, Data = [], Pagination = null });
             SetupDefaultTimeRecordsMapper();
 
             // Act
-            var result = await _controller.LoadTimeRecordsGrid(request, null, null);
+            var result = await _controller.LoadTimeRecordsGrid(request, "WG1", 1);
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -477,7 +513,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupShowTimeRecordCon
             SetupDefaultTimeRecordsMapper();
 
             // Act
-            var result = await _controller.LoadTimeRecordsGrid(request, null, null);
+            var result = await _controller.LoadTimeRecordsGrid(request, "WG1", 1);
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);

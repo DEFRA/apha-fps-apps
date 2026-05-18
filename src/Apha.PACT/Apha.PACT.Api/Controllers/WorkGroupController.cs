@@ -58,8 +58,8 @@ namespace Apha.PACT.Api.Controllers
         [HttpGet("paged/timecodes")]
         public async Task<IActionResult> GetPagedWorkGroupTimeCodes(
             [FromQuery] QueryParameters<string> query,
-            [FromQuery] string? workGroup = null,
-            [FromQuery] int? monthNumber = null)
+            [FromQuery] string workGroup,
+            [FromQuery] int monthNumber = 1)
         {
             var result = await _service.GetWorkGroupTimeCodeAsync(query, workGroup, monthNumber);
             return Ok(_mapper.Map<PaginationRes<WorkGroupTimeCodeRes>>(result));

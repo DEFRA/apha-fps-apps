@@ -10,6 +10,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         /// <summary>Selected work group name.</summary>
         public string? SelectedWorkGroup { get; set; }
 
+        /// <summary>Selected calendar month number.</summary>
+        public int? SelectedMonthNumber { get; set; }
+
         /// <summary>Work group dropdown options.</summary>
         public List<WorkGroup> WorkGroupOptions { get; set; } = new List<WorkGroup>();
 

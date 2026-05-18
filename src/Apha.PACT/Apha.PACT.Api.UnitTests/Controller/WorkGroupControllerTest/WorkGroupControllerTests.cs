@@ -114,16 +114,16 @@ namespace Apha.PACT.Api.UnitTests.Controller.WorkGroupControllerTest
             var serviceResult = new PaginatedResult<WorkGroupTimeCodeDto> { Data = [] };
             var mapped = new PaginationRes<WorkGroupTimeCodeRes> { Data = [] };
 
-            _serviceMock.GetWorkGroupTimeCodeAsync(query, null, null).Returns(serviceResult);
+            _serviceMock.GetWorkGroupTimeCodeAsync(query, "WG2", 1).Returns(serviceResult);
             _mapperMock.Map<PaginationRes<WorkGroupTimeCodeRes>>(serviceResult).Returns(mapped);
 
             // Act
-            var result = await _controller.GetPagedWorkGroupTimeCodes(query, null, null);
+            var result = await _controller.GetPagedWorkGroupTimeCodes(query, "WG2", 1);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(mapped, okResult.Value);
-            await _serviceMock.Received(1).GetWorkGroupTimeCodeAsync(query, null, null);
+            await _serviceMock.Received(1).GetWorkGroupTimeCodeAsync(query, "WG2", 1);
         }
 
         [Fact]
@@ -152,7 +152,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.WorkGroupControllerTest
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
 
-            _serviceMock.GetWorkGroupTimeCodeAsync(query, Arg.Any<string?>(), Arg.Any<int?>())
+            _serviceMock.GetWorkGroupTimeCodeAsync(query, Arg.Any<string>(), Arg.Any<int>())
                         .ThrowsAsync(new Exception("Service error"));
 
             // Act & Assert

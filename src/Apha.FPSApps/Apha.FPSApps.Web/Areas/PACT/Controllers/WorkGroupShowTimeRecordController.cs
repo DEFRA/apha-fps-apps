@@ -42,17 +42,18 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// </summary>
         /// <param name="workGroup">Optional work group name used to pre-select the work group dropdown on page load.</param>
         /// <returns>A <see cref="ViewResult"/> containing a <see cref="WorkGroupShowTimeRecordViewModel"/> with dropdown options and the initial time records grid.</returns>
-        public async Task<IActionResult> Index(string? workGroup = null)
+        public async Task<IActionResult> Index(string? workGroup = null, int monthNumber = 1)
         {
             var workGroupOptions = await GetWorkGroupsAsync();
             var calenderMonthOptions = await GetCalenderMonthsAsync();
 
             var defaultRequest = new PaginationFilter<string> { Filter = "{}" };
-            var timeRecordsGrid = await BuildTimeRecordsGridAsync(defaultRequest, workGroup, null);
+            var timeRecordsGrid = await BuildTimeRecordsGridAsync(defaultRequest, workGroup!, monthNumber);
 
             var viewModel = new WorkGroupShowTimeRecordViewModel
             {
                 SelectedWorkGroup = workGroup,
+                SelectedMonthNumber = monthNumber,
                 WorkGroupOptions = workGroupOptions,
                 CalenderMonthOptions = calenderMonthOptions,
                 TimeRecordsGrid = timeRecordsGrid
@@ -76,7 +77,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// </returns>
         [HttpPost]
         public async Task<IActionResult> LoadTimeRecordsGrid(
-            PaginationFilter<string> request, string? workGroup, int? monthNumber)
+            PaginationFilter<string> request, string workGroup, int monthNumber = 1)
         {
             if (!ModelState.IsValid)
                 return Json(new
@@ -102,7 +103,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// <param name="monthNumber">Optional calendar month number to pass as a filter to the service.</param>
         /// <returns>A fully configured <see cref="DataGridConfig{WorkGroupTimeCodeItem}"/> ready to be rendered by the <c>_DataGrid</c> partial view.</returns>
         private async Task<DataGridConfig<WorkGroupTimeCodeItem>> BuildTimeRecordsGridAsync(
-            PaginationFilter<string> request, string? workGroup, int? monthNumber)
+            PaginationFilter<string> request, string workGroup, int monthNumber = 1)
         {
             var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}")
                              ?? [];
