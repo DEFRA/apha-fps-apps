@@ -1,0 +1,194 @@
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@using Microsoft.AspNetCore.Mvc.Rendering
+@model Apha.FPSApps.Web.Areas.PACT.Models.AutomaticMonthlyInvoiceViewModel
+
+@{
+    ViewData["Title"] = "Automatic Monthly Invoice Creation";
+}
+
+<div class="govuk-grid-row sup_margin_left_right_0 sup_margin_top_10">
+    <div class="govuk-grid-column-full sup_flex_center_start sup_border-bottom sup_margin_bottom_10">
+        <h1 class="govuk-heading-l sup_margin_bottom_10">Automatic Monthly Invoice Creation</h1>
+    </div>
+</div>
+
+<div class="govuk-grid-row sup_margin_0">
+    <div class="govuk-grid-column-one-half sup_margin_bottom_10">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+            <h2 class="govuk-heading-s sup_margin_0"></h2>
+            <button type="button" 
+                    class="govuk-button sup_margin_0" 
+                    data-module="govuk-button"
+                    onclick="openCopyInvoiceModal()">Copy Invoices</button>
+        </div>
+        <div id="gridContainer_automaticInvoiceGrid">
+            @await Html.PartialAsync("_DataGrid", Model.InvoicesGrid)
+        </div>
+    </div>
+    <div class="govuk-grid-column-one-half sup_padding_left_20">
+        <h2 class="govuk-heading-s sup_margin_bottom_0">Using this Form</h2>
+
+        <div class="sup_margin_top_10">
+            <p class="govuk-body-s sup_margin_bottom_10">
+                This form allows you to create monthly invoices automatically for those<br/> 
+                projects which are simply credited with 1/12th of the Contract value<br/> 
+                each Month. These are in fact ALL projects in the 3 listed categories.
+            </p>
+
+            <p class="govuk-body-s sup_margin_bottom_10">
+                The form works by allowing you to copy last month's invoices and paste<br/> 
+                them into the current month.
+            </p>
+
+            <p class="govuk-body-s">
+                First select the month you wish to copy from (all should be the same but<br/> 
+                use last month's for consistency)
+            </p>
+
+            <div class="sup_flex_left_center sup_margin_bottom_10">
+                <span class="govuk-label govuk-!-font-size-16 govuk-!-font-weight-bold">
+                    Select Month ... &nbsp;
+                </span>
+                <select id="monthPick" 
+                        class="govuk-select"
+                        style="width: 200px;"
+                        onchange="onMonthPickChange(this.value)">
+                    <option value="">-- Select Month --</option>
+                    @foreach (var month in Model.Months)
+                    {
+                        @if (month.Value == Model.SelectedMonth?.ToString())
+                        {
+                            <option value="@month.Value" selected>@month.Text</option>
+                        }
+                        else
+                        {
+                            <option value="@month.Value">@month.Text</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <p class="govuk-body-s sup_margin_bottom_10">
+                The sub form should now be showing the invoices for the three <br/> 
+                categories, for your chosen month.
+            </p>
+
+            <p class="govuk-body-s sup_margin_bottom_10">
+                Highlight all the invoices using the cursor, and copy into the clipboard.
+            </p>
+
+            <p class="govuk-body-s sup_margin_bottom_10">
+                Now select the current month in the picklist. The subform should empty - <br/> 
+                as no invoices have yet been created.
+            </p>
+
+            <p class="govuk-body-s sup_margin_bottom_0">
+                Place the cursor in the top row and use the Paste Append menu option<br/> 
+                to paste the values into the current month. The Month number should<br/> 
+                default to that selected in the picklist
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Copy Invoice Modal -->
+<div class="modal" id="copyInvoiceModal" aria-labelledby="copyInvoiceModalLabel" aria-modal="true" role="dialog">
+    <div class="modal-dialog modal-md sup_overflow_visible">
+        <div class="modal-content">
+
+            <div class="modal-header flex-space-center">
+                <h3 class="govuk-heading-s sup_margin_0" id="copyInvoiceModalLabel">
+                    Copy Invoice to target month
+                </h3>
+                <button type="button" class="btn-close" onclick="closeCopyInvoiceModal()" aria-label="Close">&#x2715;</button>
+            </div>
+
+            <div class="modal-body sup_padding_top_0 sup_overflow_visible">
+            <form id="formCopyInvoice" novalidate>
+                <!-- DB-level error banner (hidden by default) -->
+                <div id="formCopyInvoice-db-error" class="govuk-error-summary sup_margin_top_10 sup_margin_bottom_0" role="alert"
+                     aria-labelledby="formCopyInvoice-db-error-title" hidden>
+                    <h2 class="govuk-error-summary__title" id="formCopyInvoice-db-error-title">
+                        There is a problem
+                    </h2>
+                    <div class="govuk-error-summary__body">
+                        <p class="govuk-body" id="formCopyInvoice-db-error-msg"></p>
+                    </div>
+                </div>
+
+                <fieldset class="govuk-fieldset">
+                    <legend class="govuk-visually-hidden">Copy Invoice</legend>
+
+                    <span class="app-mandatory-note sup_padding_top_10" aria-hidden="true">
+                        <span class="app-required">*</span> Mandatory Fields
+                    </span>
+
+                    <div class="govuk-grid-row">
+                        <div class="govuk-grid-column-one-half">
+                            <div class="govuk-form-group sup_margin_bottom_10" id="fg-selected-month">
+                                <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
+                                       for="txtSelectedMonth">
+                                    From Month
+                                </label>
+                                <input class="govuk-input govuk-!-font-size-16 govuk-!-width-full" 
+                                       id="txtSelectedMonth"
+                                       name="txtSelectedMonth" 
+                                       type="text" 
+                                       readonly 
+                                       disabled 
+                                       autocomplete="off" />
+                            </div>
+                        </div>
+                        <div class="govuk-grid-column-one-half">
+                            <div class="govuk-form-group sup_margin_bottom_10" id="fg-targetmonth">
+                                <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
+                                       for="targetMonthSelect">
+                                    To target month <span class="app-required" aria-hidden="true">*</span>
+                                </label>
+                                <select id="targetMonthSelect" 
+                                        class="govuk-select sup_select_option_width_100 govuk-!-font-size-16" 
+                                        required>
+                                    <option value="">-- Select Month --</option>
+                                    @foreach (var month in Model.Months)
+                                    {
+                                        <option value="@month.Value">@month.Text</option>
+                                    }
+                                </select>
+                                <p id="modal-targetmonth-error" class="govuk-error-message" hidden>
+                                    <span class="govuk-visually-hidden">Error:</span>
+                                    <span id="modal-targetmonth-error-msg"></span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </fieldset>
+            </form>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="govuk-button govuk-button--secondary sup_margin_bottom_20"
+                    data-module="govuk-button" onclick="closeCopyInvoiceModal()">Cancel</button>
+            <div>
+                <button type="button" class="govuk-button sup_margin_bottom_20" data-module="govuk-button"
+                        id="copiedInvoiceSaveBtn" onclick="saveCopiedInvoice()">Save</button>
+            </div>
+        </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/ajax-form-validation.js"></script>
+    <script src="~/js/pact_js/automatic-monthly-invoice.js"></script>
+    <script>
+        // Initialize state
+        var currentMonth = '@(Model.SelectedMonth?.ToString() ?? "")';
+        var automaticInvoiceGridId = '@Model.InvoicesGrid.GridId';
+        var previousMonthForCopy = null;
+
+        if (currentMonth) {
+            document.getElementById('monthPick').value = currentMonth;
+        }
+    </script>
+}
