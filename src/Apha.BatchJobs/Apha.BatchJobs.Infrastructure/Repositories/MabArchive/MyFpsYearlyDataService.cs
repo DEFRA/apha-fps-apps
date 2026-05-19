@@ -225,11 +225,24 @@ WHERE parentproject IN (
 
                 _logger.LogInformation("[{LoaderNumber}/{TotalLoaders}] Starting {LoaderName} for year {Year}", loader.Sequence, _orderedLoaders.Count, loader.Name, targetYear);
 
-                var rowCount = await loader.LoadAsync(_context, targetYear, cancellationToken);
+                   // Validation hook: record load performance and results
+                   var sw = System.Diagnostics.Stopwatch.StartNew();
+                   var rowCount = await loader.LoadAsync(_context, targetYear, cancellationToken);
+                   sw.Stop();
+
+                   // Log performance and validate row count sanity
+                   if (rowCount < 0)
+                   {
+                       _logger.LogWarning("[{LoaderNumber}] {LoaderName}: Unexpected negative row count {RowCount}. May indicate logic error.", loader.Sequence, loader.Name, rowCount);
+                   }
+                   if (sw.ElapsedMilliseconds > 30000)  // 30 seconds per loader is excessive
+                   {
+                       _logger.LogWarning("[{LoaderNumber}] {LoaderName}: Slow load detected ({DurationMs}ms for {RowCount} rows). May indicate N+1 or missing index.", loader.Sequence, loader.Name, sw.ElapsedMilliseconds, rowCount);
+                   }
                 totalRowsAffected += rowCount;
                 _context.ChangeTracker.Clear();
 
-                _logger.LogInformation("[{LoaderNumber}/{TotalLoaders}] {LoaderName}: {RowCount} rows for year {Year}", loader.Sequence, _orderedLoaders.Count, loader.Name, rowCount, targetYear);
+                   _logger.LogInformation("[{LoaderNumber}/{TotalLoaders}] ✓ {LoaderName}: {RowCount} rows in {DurationMs}ms for year {Year}", loader.Sequence, _orderedLoaders.Count, loader.Name, rowCount, sw.ElapsedMilliseconds, targetYear);
             }
 
             _logger.LogInformation("LoadYearDataAsync complete: {TotalRowCount} total rows loaded for year {Year}", totalRowsAffected, targetYear);

@@ -38,7 +38,38 @@ internal sealed class MyStaffDotNetLoader : MabArchiveDotNetLoaderBase
         }
 
         await context.MaDstMyStaff.AddRangeAsync(rows, cancellationToken);
-        return await context.SaveChangesAsync(cancellationToken);
+           var inserted = await context.SaveChangesAsync(cancellationToken);
+
+           // ✅ VALIDATION: Verify all rows were inserted
+           if (inserted != rows.Count)
+           {
+               throw new InvalidOperationException(
+                   $"Seq 21 MyStaff: Row count mismatch. Expected to insert {rows.Count} rows, " +
+                   $"but SaveChangesAsync returned {inserted}.");
+           }
+
+           // ✅ VALIDATION: Verify JOIN result count against source WgEmployee table
+           var sourceCount = await context.MaSrcTblWgEmployee
+               .AsNoTracking()
+               .Where(w => w.FpsYear == year)
+               .CountAsync(cancellationToken);
+
+           if (rows.Count != sourceCount)
+           {
+               throw new InvalidOperationException(
+                   $"Seq 21 MyStaff: Row count mismatch. Loaded {rows.Count} rows from JOIN, " +
+                   $"but source WgEmployee has {sourceCount}. Missing Employee JOIN records?");
+           }
+
+           // ✅ VALIDATION: Verify critical fields populated (Name should not be just ", ")
+           var invalidNames = rows.Count(r => string.IsNullOrWhiteSpace(r.Name) || r.Name == ", ");
+           if (invalidNames > 0)
+           {
+               throw new InvalidOperationException(
+                   $"Seq 21 MyStaff: {invalidNames} rows have invalid Name field (both LastName and FirstName NULL).");
+           }
+
+           return inserted;
     }
 }
 
