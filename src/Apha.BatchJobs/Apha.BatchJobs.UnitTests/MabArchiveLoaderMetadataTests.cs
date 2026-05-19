@@ -15,12 +15,12 @@ public class MabArchiveLoaderMetadataTests
                 t.Namespace == "Apha.BatchJobs.Infrastructure.Repositories.MabArchive.Loaders")
             .ToList();
 
-        static bool InheritsFromSqlLoaderBase(Type type)
+        static bool InheritsFromDotNetLoaderBase(Type type)
         {
             var current = type.BaseType;
             while (current is not null)
             {
-                if (string.Equals(current.Name, "MabArchiveSqlLoaderBase", StringComparison.Ordinal))
+                if (string.Equals(current.Name, "MabArchiveDotNetLoaderBase", StringComparison.Ordinal))
                 {
                     return true;
                 }
@@ -31,13 +31,13 @@ public class MabArchiveLoaderMetadataTests
             return false;
         }
 
-        var sqlLoaderTypes = loaderTypes
-            .Where(InheritsFromSqlLoaderBase)
+        var dotNetLoaderTypes = loaderTypes
+            .Where(InheritsFromDotNetLoaderBase)
             .ToList();
 
-        Assert.Equal(24, sqlLoaderTypes.Count);
+        Assert.Equal(24, dotNetLoaderTypes.Count);
 
-        var loaders = sqlLoaderTypes
+        var loaders = dotNetLoaderTypes
             .Select(t => (IMabArchiveLoader)Activator.CreateInstance(t)!)
             .OrderBy(l => l.Sequence)
             .ToList();

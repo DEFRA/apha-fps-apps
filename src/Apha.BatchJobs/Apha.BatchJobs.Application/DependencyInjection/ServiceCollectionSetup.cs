@@ -129,7 +129,7 @@ public static class ServiceCollectionSetup
 
         // MABArchive Configuration and Services
         services.Configure<MabArchiveSettings>(config.GetSection("MabArchive"));
-        RegisterMabArchiveLoaders(services, config);
+        RegisterMabArchiveLoaders(services);
         services.AddScoped<IReloadFpsTotalsService, ReloadFpsTotalsService>();
         services.AddScoped<IMyFpsYearlyDataService, MyFpsYearlyDataService>();
         services.AddScoped<IEmailNotificationService, EmailNotificationService>();
@@ -142,23 +142,17 @@ public static class ServiceCollectionSetup
         services.AddScoped<RecreateSummariesOrchestrator>();
     }
 
-    private static void RegisterMabArchiveLoaders(IServiceCollection services, IConfiguration config)
+    private static void RegisterMabArchiveLoaders(IServiceCollection services)
     {
         var loaderType = typeof(IMabArchiveLoader);
-        var loaderAssembly = typeof(MyTlkpProgramLoader).Assembly;
-        var configuredMode = config["BatchJobs:MabArchiveImplementationMode"];
-
-        var preferLinq =
-            string.Equals(configuredMode, "DotNet", StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(configuredMode, "DotNetLinq", StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(configuredMode, "Linq", StringComparison.OrdinalIgnoreCase);
+        var loaderAssembly = typeof(MyTlkpProgramDotNetLoader).Assembly;
 
         var loaderImplementations = loaderAssembly
             .GetTypes()
             .Where(t =>
                 t is { IsClass: true, IsAbstract: false } &&
                 loaderType.IsAssignableFrom(t) &&
-                t.IsSubclassOf(preferLinq ? typeof(MabArchiveDotNetLoaderBase) : typeof(MabArchiveSqlLoaderBase)))
+                t.IsSubclassOf(typeof(MabArchiveDotNetLoaderBase)))
             .ToList();
 
         foreach (var loader in loaderImplementations)

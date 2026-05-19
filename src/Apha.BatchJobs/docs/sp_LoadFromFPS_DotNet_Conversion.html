@@ -53,15 +53,14 @@ pre.csharp{background:#0f1b2d;color:#cdd9e5}
 
 <div class="box">
 <strong>Infrastructure context:</strong> The original baseline targets SQL Server with per-year databases (<code>FPS2024</code>, <code>FPS2025</code>, …). The .NET implementation targets a single PostgreSQL <code>fps</code> schema where all years coexist, disambiguated by a <code>fpsyear</code> column on every source table. References to <code>master.dbo.sysdatabases</code> and dynamic database-name construction have no equivalent and are replaced by year-availability checks.<br><br>
-<strong>Active mode:</strong> LINQ mode (<code>MabArchiveDotNetLoaderBase</code>) is the default and active production mode. Each loader section shows the LINQ/C# implementation using EF Core LINQ queries. The raw SQL alternative (<code>MabArchiveSqlLoaderBase</code>) is noted in feedback; it is selectable via config key <code>BatchJobs:MabArchiveImplementationMode = Sql</code>.
+<strong>Active mode:</strong> LINQ mode (<code>MabArchiveDotNetLoaderBase</code>) is the only active production mode. Each loader section shows the LINQ/C# implementation using EF Core LINQ queries. SQL-mode loaders and mode-selection toggles are retired from runtime registration.
 </div>
 
 <div class="warn">
-<strong>Logic Integrity & Cloud Validation Strategy:</strong> For cloud deployment, all LINQ implementations have been instrumented with runtime validation checks to ensure exact parity with SQL baselines.
+<strong>Logic Integrity & Cloud Validation Strategy:</strong> For cloud deployment, all LINQ implementations were parity-verified against SQL baselines. Runtime now executes the LINQ path only.
 <ul>
-<li><strong>Stage 1 (Validation — Dev/Staging):</strong> <code>ValidateLoadersAtRuntime = true</code>, <code>VerifyLogicEquivalence = true</code>, <code>AllowSqlFallback = false</code>. Each loader verifies: (a) source row count matches target, (b) critical fields are not NULL, (c) orchestrator logs performance metrics. Both LINQ and SQL queries run in parallel; results compared silently. Any mismatch logged as ERROR but does not block execution.</li>
-<li><strong>Stage 2 (Primary — Staging/Production):</strong> <code>ValidateLoadersAtRuntime = true</code>, <code>VerifyLogicEquivalence = false</code>, <code>AllowSqlFallback = true</code>. LINQ is primary. If LINQ load fails, automatically retry with SQL (logged as WARN). Validation checks remain active; slow loads (&gt;30s) flagged.</li>
-<li><strong>Stage 3 (LINQ-Only — Production):</strong> <code>ValidateLoadersAtRuntime = true</code>, <code>VerifyLogicEquivalence = false</code>, <code>AllowSqlFallback = false</code>. LINQ is authoritative. SQL loaders not loaded. Validation checks continue for data quality monitoring.</li>
+<li><strong>Production Runtime:</strong> LINQ loaders are the authoritative and only registered implementation for all 24 sequence steps.</li>
+<li><strong>Parity Assurance:</strong> SQL-vs-LINQ snapshot comparisons and parity tests were completed prior to decommissioning SQL runtime paths.</li>
 <li><strong>Parity Assurance:</strong> All unit tests (MabArchiveLoadOrchestratorParityTests) pass 100% — 5/5 tests validate loader output identical between modes. See <code>Apha.BatchJobs.UnitTests</code> for verification.</li>
 </ul>
 </div>
@@ -649,7 +648,7 @@ if (!Enumerable.Range(1, ExpectedLoaderCount).SequenceEqual(loaderList.Select(l 
 <ul>
 <li><strong>Loader sequence 1-24 matches exactly</strong> the 24 EXEC calls in baseline, in the same order.</li>
 <li><strong>Startup validation:</strong> At application startup the DI container validates that exactly 24 loaders are registered with contiguous sequences 1-24. Any registration error fails fast at boot rather than at runtime. The baseline had no equivalent guard.</li>
-<li><strong>Mode selection:</strong> <code>BatchJobs:MabArchiveImplementationMode</code> controls DI registration. <code>DotNet</code>/<code>DotNetLinq</code>/<code>Linq</code> registers all 24 <code>MabArchiveDotNetLoaderBase</code> loaders; any other value (or unset) registers the SQL loader set. Sequence contract is identical in both modes.</li>
+<li><strong>Mode selection:</strong> Removed in Phase 3. DI now registers all 24 <code>MabArchiveDotNetLoaderBase</code> loaders unconditionally.</li>
 <li><strong>ChangeTracker.Clear():</strong> Called between loaders to prevent EF Core accumulating loaded entities in memory during a large batch run. No logical effect — purely a memory management measure.</li>
 </ul>
 </div>

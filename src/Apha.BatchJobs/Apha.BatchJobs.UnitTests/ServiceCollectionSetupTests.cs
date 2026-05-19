@@ -64,8 +64,7 @@ public sealed class ServiceCollectionSetupTests
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ConnectionStrings:BatchJobsConnectionString"] = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=admin123",
-                ["BatchJobs:RecreateSummariesImplementationMode"] = "DotNetLinq"
+                ["ConnectionStrings:BatchJobsConnectionString"] = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=admin123"
             })
             .Build();
 
@@ -80,7 +79,7 @@ public sealed class ServiceCollectionSetupTests
     }
 
     [Fact]
-    public void ConfigureBatchJobServices_DefaultMabArchiveMode_ShouldRegisterSqlLoaders()
+    public void ConfigureBatchJobServices_DefaultMabArchiveMode_ShouldRegisterDotNetLoadersOnly()
     {
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -96,17 +95,17 @@ public sealed class ServiceCollectionSetupTests
         var loaders = serviceProvider.GetServices<IMabArchiveLoader>().ToList();
 
         Assert.Equal(24, loaders.Count);
-        Assert.DoesNotContain(loaders, l => string.Equals(l.GetType().Name, "MyTlkpProgramDotNetLoader", StringComparison.Ordinal));
+        Assert.All(loaders, l => Assert.Contains("DotNetLoader", l.GetType().Name, StringComparison.Ordinal));
     }
 
     [Fact]
-    public void ConfigureBatchJobServices_WhenMabArchiveModeIsDotNet_ShouldRegisterDotNetLoadersOnly()
+    public void ConfigureBatchJobServices_WhenMabArchiveModeIsConfigured_ShouldStillRegisterDotNetLoadersOnly()
     {
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["ConnectionStrings:BatchJobsConnectionString"] = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=admin123",
-                ["BatchJobs:MabArchiveImplementationMode"] = "DotNet"
+                ["BatchJobs:MabArchiveImplementationMode"] = "Sql"
             })
             .Build();
 

@@ -4,8 +4,7 @@ namespace Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
 
 /// <summary>
 /// Contract for a single executable RecreateSummaries step.
-/// This abstraction allows SQL-command and LINQ-based implementations to share
-/// one orchestration pipeline.
+/// This abstraction supports the LINQ/EF Core orchestration pipeline.
 /// </summary>
 public interface IRecreateSummariesExecutionStep
 {
