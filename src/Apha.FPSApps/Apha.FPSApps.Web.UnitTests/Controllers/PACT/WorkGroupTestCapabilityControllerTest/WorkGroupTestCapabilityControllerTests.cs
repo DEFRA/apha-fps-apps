@@ -431,25 +431,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
         }
 
         [Fact]
-        public async Task LoadTestCapabilityGrid_ConfiguresGridWithCRUDFunctions()
-        {
-            // Arrange
-            var request = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = "{}" };
-            SetupPagedTestCapabilityResponse(new List<TestCapabilityDto>());
-            SetupMapper();
-
-            // Act
-            var result = await _controller.LoadTestCapabilityGrid(request, "WG001");
-
-            // Assert
-            var partialViewResult = Assert.IsType<PartialViewResult>(result);
-            var model = Assert.IsType<DataGridConfig<WorkGroupTestCapabilityItem>>(partialViewResult.Model);
-            Assert.Equal("addTestCapability", model.AddFunction);
-            Assert.Equal("editTestCapability", model.EditFunction);
-            Assert.Equal("deleteTestCapability", model.DeleteFunction);
-        }
-
-        [Fact]
         public async Task LoadTestCapabilityGrid_ConfiguresGridWithFilterMethod()
         {
             // Arrange
@@ -483,6 +464,26 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
             Assert.False(model.AllowExport);
             Assert.False(model.AllowEdit);
             Assert.False(model.AllowDelete);
+        }
+
+        [Fact]
+        public async Task LoadTestCapabilityGrid_DoesNotSetCRUDFunctions()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = "{}" };
+            SetupPagedTestCapabilityResponse(new List<TestCapabilityDto>());
+            SetupMapper();
+
+            // Act
+            var result = await _controller.LoadTestCapabilityGrid(request, "WG001");
+
+            // Assert
+            var partialViewResult = Assert.IsType<PartialViewResult>(result);
+            var model = Assert.IsType<DataGridConfig<WorkGroupTestCapabilityItem>>(partialViewResult.Model);
+            Assert.True(string.IsNullOrEmpty(model.AddFunction));
+            Assert.True(string.IsNullOrEmpty(model.EditFunction));
+            Assert.True(string.IsNullOrEmpty(model.DeleteFunction));
+            Assert.True(string.IsNullOrEmpty(model.ExportUrl));
         }
 
         [Fact]
