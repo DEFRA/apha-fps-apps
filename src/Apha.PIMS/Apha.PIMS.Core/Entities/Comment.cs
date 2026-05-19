@@ -6,18 +6,17 @@ namespace Apha.PIMS.Core.Entities
 
     public partial class Comment
     {
-        public int Commentno { get; set; }
+        public int CommentNo { get; set; }
 
         public string Project { get; set; } = null!;
 
         public short Year { get; set; }
 
-        public DateTime? Dateentered { get; set; }
+        public DateTime? DateEntered { get; set; }
 
         public string Topic { get; set; } = null!;
 
-        public string? Commenttext { get; set; }
-
-        public string? Madeby { get; set; }
+        public string? CommentText { get; set; }
+        public string? MadeBy { get; set; }
     }
 }

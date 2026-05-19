@@ -30,19 +30,19 @@ namespace Apha.PIMS.DataAccess.Repository
             return base.ApplyPaging(result, query.Page, query.PageSize);
         }
 
-        public async Task<Comment?> GetByIdAsync(int commentno)
+        public async Task<Comment?> GetByIdAsync(int commentNo)
         {
             return await _dbContext.Comments
-                .FirstOrDefaultAsync(c => c.Commentno == commentno);
+                .FirstOrDefaultAsync(c => c.CommentNo == commentNo);
         }
 
-        public async Task<bool> ExistsAsync(string project, short year, string topic, int? excludeCommentno = null)
+        public async Task<bool> ExistsAsync(string project, short year, string topic, int? excludeCommentNo = null)
         {
             IQueryable<Comment> query = _dbContext.Comments
                 .Where(c => c.Project == project && c.Year == year && c.Topic == topic);
 
-            if (excludeCommentno.HasValue)
-                query = query.Where(c => c.Commentno != excludeCommentno.Value);
+            if (excludeCommentNo.HasValue)
+                query = query.Where(c => c.CommentNo != excludeCommentNo.Value);
 
             return await query.AnyAsync();
         }
@@ -61,9 +61,9 @@ namespace Apha.PIMS.DataAccess.Repository
             return entity;
         }
 
-        public async Task<bool> DeleteAsync(int commentno)
+        public async Task<bool> DeleteAsync(int commentNo)
         {
-            Comment? entity = await _dbContext.Comments.FindAsync(commentno);
+            Comment? entity = await _dbContext.Comments.FindAsync(commentNo);
             if (entity is null) return false;
             _dbContext.Comments.Remove(entity);
             await _dbContext.SaveChangesAsync();
@@ -87,12 +87,12 @@ namespace Apha.PIMS.DataAccess.Repository
         {
             return property switch
             {
-                "commentno" => ApplyOrder(query, c => c.Commentno, descending),
+                "commentno" => ApplyOrder(query, c => c.CommentNo, descending),
                 "project" => ApplyOrder(query, c => c.Project, descending),
                 "year" => ApplyOrder(query, c => c.Year, descending),
                 "topic" => ApplyOrder(query, c => c.Topic, descending),
-                "dateentered" => ApplyOrder(query, c => c.Dateentered, descending),
-                "madeby" => ApplyOrder(query, c => c.Madeby, descending),
+                "dateentered" => ApplyOrder(query, c => c.DateEntered, descending),
+                "madeby" => ApplyOrder(query, c => c.MadeBy, descending),
                 _ => query
             };
         }

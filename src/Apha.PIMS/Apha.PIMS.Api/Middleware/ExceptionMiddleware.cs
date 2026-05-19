@@ -49,7 +49,7 @@ namespace Apha.PIMS.Api.Middleware
             };
 
             var errorType = _configuration["ExceptionTypes:General"]
-                            ?? "FPS.GENERAL_EXCEPTION";
+                            ?? "PIMS.GENERAL_EXCEPTION";
 
             switch (ex)
             {
