@@ -22,13 +22,24 @@ namespace Apha.FPSApps.Application.Services.PACT
         public async Task<ApiResponseDto<List<WorkGroupTimeCodeDto>>> GetPagedWorkGroupTimeCodesAsync(
             QueryParameters<string> query, string workGroup, int monthNumber)
         {
+            ValidateWorkGroup(workGroup);
+            return await _pactClient.PactWorkGroup.GetPagedWorkGroupTimeCodesAsync(query, workGroup, monthNumber);
+        }
+
+        public async Task<ApiResponseDto<List<WorkGroupValidTimeCodeDto>>> GetPagedWorkGroupValidTimeCodesAsync(
+            QueryParameters<string> query, string workGroup)
+        {
+            ValidateWorkGroup(workGroup);
+            return await _pactClient.PactWorkGroup.GetPagedWorkGroupValidTimeCodesAsync(query, workGroup);
+        }
+
+        private static void ValidateWorkGroup(string workGroup)
+        {
             var errors = new List<BusinessValidationError>();
             if (string.IsNullOrWhiteSpace(workGroup))
                 errors.Add(new BusinessValidationError("WorkGroup is required", "WORKGROUP_REQUIRED"));
             if (errors.Count > 0)
                 throw new BusinessValidationErrorException(errors);
-
-            return await _pactClient.PactWorkGroup.GetPagedWorkGroupTimeCodesAsync(query, workGroup, monthNumber);
         }
     }
 }

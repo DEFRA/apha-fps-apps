@@ -47,5 +47,20 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             var dto = _mapper.Map<ApiResponseDto<List<WorkGroupTimeCodeDto>>>(response);
             return ApiResponseDto<List<WorkGroupTimeCodeDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
+
+        public async Task<ApiResponseDto<List<WorkGroupValidTimeCodeDto>>> GetPagedWorkGroupValidTimeCodesAsync(
+            QueryParameters<string> query, string workGroup)
+        {
+            var url = QueryStringHelper.AddQueryString(PactApiEndpoints.GetPagedWorkGroupValidTimeCodes, query);
+            if (!string.IsNullOrWhiteSpace(workGroup))
+                url += $"&workGroup={Uri.EscapeDataString(workGroup)}";
+
+            var response = await _http.GetAsync<List<WorkGroupValidTimeCodeRes>>(url);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<WorkGroupValidTimeCodeDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<WorkGroupValidTimeCodeDto>>>(response);
+            return ApiResponseDto<List<WorkGroupValidTimeCodeDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
     }
 }

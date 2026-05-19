@@ -264,5 +264,143 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupServiceTest
         }
 
         #endregion
+
+        #region GetPagedWorkGroupValidTimeCodesAsync
+
+        [Fact]
+        public async Task GetPagedWorkGroupValidTimeCodesAsync_WithData_ReturnsSuccessResponse()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var validTimeCodes = new List<WorkGroupValidTimeCodeDto>
+            {
+                new()
+                {
+                    WorkGroup = "WG1",
+                    TimeCode = "TC1",
+                    ParentProject = "PP1",
+                    Manager = "John Smith",
+                    Active = true
+                }
+            };
+            var expectedResponse = ApiResponseDto<List<WorkGroupValidTimeCodeDto>>.SuccessResponse(
+                validTimeCodes, new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1 });
+            _pactWorkGroupApiClient.GetPagedWorkGroupValidTimeCodesAsync(query, "WG1").Returns(expectedResponse);
+
+            // Act
+            var result = await _service.GetPagedWorkGroupValidTimeCodesAsync(query, "WG1");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+            var item = result.Data!.First();
+            Assert.Equal("WG1", item.WorkGroup);
+            Assert.Equal("TC1", item.TimeCode);
+            Assert.Equal("PP1", item.ParentProject);
+            Assert.Equal("John Smith", item.Manager);
+            Assert.True(item.Active);
+            await _pactWorkGroupApiClient.Received(1).GetPagedWorkGroupValidTimeCodesAsync(query, "WG1");
+        }
+
+        [Fact]
+        public async Task GetPagedWorkGroupValidTimeCodesAsync_EmptyResult_ReturnsSuccessWithEmptyData()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 2, PageSize = 5 };
+            var expectedResponse = ApiResponseDto<List<WorkGroupValidTimeCodeDto>>.SuccessResponse(
+                [], new PaginationDto { PageNumber = 2, PageSize = 5, TotalRecords = 0 });
+            _pactWorkGroupApiClient.GetPagedWorkGroupValidTimeCodesAsync(query, "WG2").Returns(expectedResponse);
+
+            // Act
+            var result = await _service.GetPagedWorkGroupValidTimeCodesAsync(query, "WG2");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!);
+            await _pactWorkGroupApiClient.Received(1).GetPagedWorkGroupValidTimeCodesAsync(query, "WG2");
+        }
+
+        [Fact]
+        public async Task GetPagedWorkGroupValidTimeCodesAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "API_ERROR" } };
+            var expectedResponse = ApiResponseDto<List<WorkGroupValidTimeCodeDto>>.FailureResponse(errors, new ApiMetaDto());
+            _pactWorkGroupApiClient.GetPagedWorkGroupValidTimeCodesAsync(query, "WG1").Returns(expectedResponse);
+
+            // Act
+            var result = await _service.GetPagedWorkGroupValidTimeCodesAsync(query, "WG1");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            await _pactWorkGroupApiClient.Received(1).GetPagedWorkGroupValidTimeCodesAsync(query, "WG1");
+        }
+
+        [Fact]
+        public async Task GetPagedWorkGroupValidTimeCodesAsync_ApiClientThrows_PropagatesException()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            _pactWorkGroupApiClient
+                .GetPagedWorkGroupValidTimeCodesAsync(query, Arg.Any<string>())
+                .ThrowsAsync(new Exception("Connection error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _service.GetPagedWorkGroupValidTimeCodesAsync(query, "WG1"));
+        }
+
+        [Fact]
+        public async Task GetPagedWorkGroupValidTimeCodesAsync_NullWorkGroup_ThrowsBusinessValidationErrorException()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                () => _service.GetPagedWorkGroupValidTimeCodesAsync(query, null!));
+
+            Assert.Single(ex.Errors);
+            Assert.Equal("WORKGROUP_REQUIRED", ex.Errors[0].Code);
+            await _pactWorkGroupApiClient.DidNotReceive().GetPagedWorkGroupValidTimeCodesAsync(
+                Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task GetPagedWorkGroupValidTimeCodesAsync_EmptyWorkGroup_ThrowsBusinessValidationErrorException()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                () => _service.GetPagedWorkGroupValidTimeCodesAsync(query, ""));
+
+            Assert.Single(ex.Errors);
+            Assert.Equal("WORKGROUP_REQUIRED", ex.Errors[0].Code);
+            await _pactWorkGroupApiClient.DidNotReceive().GetPagedWorkGroupValidTimeCodesAsync(
+                Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task GetPagedWorkGroupValidTimeCodesAsync_WhitespaceWorkGroup_ThrowsBusinessValidationErrorException()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                () => _service.GetPagedWorkGroupValidTimeCodesAsync(query, "   "));
+
+            Assert.Single(ex.Errors);
+            Assert.Equal("WORKGROUP_REQUIRED", ex.Errors[0].Code);
+            await _pactWorkGroupApiClient.DidNotReceive().GetPagedWorkGroupValidTimeCodesAsync(
+                Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
+        }
+
+        #endregion
     }
 }

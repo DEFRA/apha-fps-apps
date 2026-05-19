@@ -27,15 +27,28 @@ namespace Apha.PACT.Application.Services
 
         public async Task<PaginatedResult<WorkGroupTimeCodeDto>> GetWorkGroupTimeCodeAsync(QueryParameters<string> query, string workGroup, int monthNumber)
         {
+            ValidateWorkGroup(workGroup);
+            var parameters = _mapper.Map<PaginationParameters<string>>(query);
+            var pagedData = await _repository.GetWorkGroupTimeCodeAsync(parameters, workGroup, monthNumber);
+            return _mapper.Map<PaginatedResult<WorkGroupTimeCodeDto>>(pagedData);
+        }
+
+        public async Task<PaginatedResult<WorkGroupValidTimeCodeDto>> GetWorkGroupValidTimeCodeAsync(
+            QueryParameters<string> query, string workGroup)
+        {
+            ValidateWorkGroup(workGroup);
+            var parameters = _mapper.Map<PaginationParameters<string>>(query);
+            var pagedData = await _repository.GetWorkGroupValidTimeCodeAsync(parameters, workGroup);
+            return _mapper.Map<PaginatedResult<WorkGroupValidTimeCodeDto>>(pagedData);
+        }
+
+        private static void ValidateWorkGroup(string workGroup)
+        {
             var errors = new List<BusinessValidationError>();
             if (string.IsNullOrWhiteSpace(workGroup))
                 errors.Add(new BusinessValidationError("WorkGroup is required", "WORKGROUP_REQUIRED"));
             if (errors.Count > 0)
                 throw new BusinessValidationErrorException(errors);
-
-            var parameters = _mapper.Map<PaginationParameters<string>>(query);
-            var pagedData = await _repository.GetWorkGroupTimeCodeAsync(parameters, workGroup, monthNumber);
-            return _mapper.Map<PaginatedResult<WorkGroupTimeCodeDto>>(pagedData);
         }
     }
 }
