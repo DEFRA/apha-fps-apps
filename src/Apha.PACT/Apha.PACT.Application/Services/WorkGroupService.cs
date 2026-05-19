@@ -1,6 +1,9 @@
 using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Interfaces;
+using Apha.PACT.Application.Pagination;
+using Apha.PACT.Application.Validation;
 using Apha.PACT.Core.Interfaces;
+using Apha.PACT.Core.Pagination;
 using AutoMapper;
 
 namespace Apha.PACT.Application.Services
@@ -20,6 +23,19 @@ namespace Apha.PACT.Application.Services
         {
             var items = await _repository.GetAllWorkGroupsAsync();
             return _mapper.Map<IEnumerable<WorkGroupDto>>(items);
+        }
+
+        public async Task<PaginatedResult<WorkGroupTimeCodeDto>> GetWorkGroupTimeCodeAsync(QueryParameters<string> query, string workGroup, int monthNumber)
+        {
+            var errors = new List<BusinessValidationError>();
+            if (string.IsNullOrWhiteSpace(workGroup))
+                errors.Add(new BusinessValidationError("WorkGroup is required", "WORKGROUP_REQUIRED"));
+            if (errors.Count > 0)
+                throw new BusinessValidationErrorException(errors);
+
+            var parameters = _mapper.Map<PaginationParameters<string>>(query);
+            var pagedData = await _repository.GetWorkGroupTimeCodeAsync(parameters, workGroup, monthNumber);
+            return _mapper.Map<PaginatedResult<WorkGroupTimeCodeDto>>(pagedData);
         }
     }
 }

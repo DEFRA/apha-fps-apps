@@ -215,6 +215,8 @@ function initWorkGroupPeoplePage() {
         var text  = $(this).find('td:first').text().trim();
         $wgInput.val(text);
         $wgPanel.hide();
+        $('#workgroupValidationError').hide();
+        $('#selectedWorkgroup').removeClass('govuk-input--error');
         onWorkGroupPickChange(value);
     });
 
@@ -268,6 +270,21 @@ function initWorkGroupPeoplePage() {
             e.preventDefault();
             $(this).trigger('change');
         }
+    });
+
+    // ── Show Time Records button ───────────────────────────────────────────
+    $('#btnShowTimeRecords').on('click', function () {
+        var $error = $('#workgroupValidationError');
+        var $input = $('#selectedWorkgroup');
+        if (!currentWorkGroup) {
+            $input.addClass('govuk-input--error');
+            $error.show();
+            alert('Please select a Work Group first.');
+            return;
+        }
+        $input.removeClass('govuk-input--error');
+        $error.hide();
+        window.location.href = '/PACT/WorkGroupShowTimeRecord?workGroup=' + encodeURIComponent(currentWorkGroup);
     });
 }
 
