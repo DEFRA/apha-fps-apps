@@ -59,6 +59,18 @@
     </div>
 </div>
 
+<div class="govuk-grid-column-full sup_flex_space_between sup_padding_left_8 sup_margin_bottom_10">
+    <div class="sup_flex_center_start govuk-grid-column-two-thirds sup_p_0">
+        <label for="selectedProject" class="govuk-label govuk-!-font-weight-bold sup_margin_right_10">I have selected:</label>
+        <input type="text" id="selectedProject" class="govuk-input govuk-!-width-one-third" readonly="" disabled="">
+    </div>
+    <div class="sup_float_right">
+        <button type="button" class="govuk-button sup_p_8 sup_margin_0" id="btnShowProjectAdministraction" aria-label="Show me Project Administration" data-module="govuk-button" disabled>
+            Show me Project Administraction....
+        </button>
+    </div>
+</div>
+
 <input type="hidden" id="hdnSelectedWorkGroup" value="@Model.SelectedWorkGroup" />
 
 @section Scripts {
