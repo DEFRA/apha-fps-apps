@@ -181,6 +181,19 @@ function selectFirstPersonRow() {
 }
 
 /**
+ * Navigates to the Test Capabilities for WorkGroup page with the currently
+ * selected work group pre-populated.
+ */
+function navigateToTestCapabilities() {
+    if (!currentWorkGroup) {
+        console.warn('No work group selected.');
+        return;
+    }
+    // Navigate to WorkGroupTestCapability with workgroup as query parameter
+    window.location.href = '/PACT/WorkGroupTestCapability?workgroup=' + encodeURIComponent(currentWorkGroup);
+}
+
+/**
  * Initialises the WorkGroup and Person searchable dropdowns,
  * and wires up Enter-key support for people grid filter inputs.
  * Intended to be called on document ready.
@@ -273,6 +286,9 @@ function initWorkGroupPeoplePage() {
 
 $(document).ready(function () {
     initWorkGroupPeoplePage();
+
+    // Wire up the "Show me valid Test Outputs" button
+    $('#btnShowTestOutputs').on('click', navigateToTestCapabilities);
 
     // Select first row on initial page load
     selectFirstPersonRow();
