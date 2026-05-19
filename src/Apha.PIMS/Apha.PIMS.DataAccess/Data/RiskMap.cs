@@ -12,9 +12,15 @@ namespace Apha.PIMS.DataAccess.Data
         public void Configure(EntityTypeBuilder<Risk> entity)
         {
             entity.HasKey(e => e.Riskid).HasName("pk_tlkprisk");
+
             entity.ToTable("tlkprisk", "mabarchive");
-            entity.Property(e => e.Riskid).HasColumnName("riskid");
-            entity.Property(e => e.Riskrating).HasMaxLength(50).HasColumnName("riskrating");
+
+            entity.Property(e => e.Riskid)
+                .ValueGeneratedNever()
+                .HasColumnName("riskid");
+            entity.Property(e => e.Riskrating)
+                .HasMaxLength(15)
+                .HasColumnName("riskrating");
         }
     }
 }

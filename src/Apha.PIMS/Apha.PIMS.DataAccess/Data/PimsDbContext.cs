@@ -30,11 +30,8 @@ namespace Apha.PIMS.DataAccess.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder
-                .HasPostgresExtension("partman", "pg_partman")
-                .HasPostgresExtension("citext")
-                .HasAnnotation("Npgsql:CollationDefinition:public.latin1_general_ci_as", "en-US-u-ks-level2,en-US-u-ks-level2,icu,False");
-            
+            modelBuilder.UseCollation("en_GB.utf8");           
+
             modelBuilder.ApplyConfiguration(new ProjectMap());
             modelBuilder.ApplyConfiguration(new ProjectsMap());
             modelBuilder.ApplyConfiguration(new CommentMap());
