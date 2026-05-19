@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>sp_RecreateSummaries Baseline with SQL, Logic Explanation, and .NET Placeholders</title>
+
+<style>
+body{font-family:Segoe UI,Arial,sans-serif;background:#f6f7f9;color:#1f2933;line-height:1.55;margin:0}
+.page{max-width:1320px;margin:32px auto;background:#fff;padding:40px 48px;border:1px solid #d9dee7;box-shadow:0 4px 18px rgba(15,23,42,.08)}
+h1{font-size:30px;margin:0 0 8px;color:#102a43}
+h2{font-size:22px;margin-top:34px;padding-bottom:8px;border-bottom:2px solid #dbe4ee;color:#183b56}
+h3{font-size:18px;margin-top:26px;color:#243b53}
+.subtitle{color:#52606d;font-size:15px;margin-bottom:24px}
+.box{background:#eef4ff;border-left:5px solid #315b96;padding:14px 18px;margin:20px 0}
+.warn{background:#fff7ed;border-left:5px solid #c2410c;padding:14px 18px;margin:20px 0}
+.stop{background:#fee2e2;border-left:5px solid #991b1b;padding:14px 18px;margin:20px 0}
+.good{background:#ecfdf5;border-left:5px solid #047857;padding:14px 18px;margin:20px 0}
+table{border-collapse:collapse;width:100%;margin:14px 0 24px;font-size:14px}
+th{background:#e8eef7;color:#102a43;text-align:left;padding:10px;border:1px solid #cbd5e1}
+td{padding:10px;border:1px solid #d8dee9;vertical-align:top}
+code{font-family:Consolas,Monaco,monospace;font-size:13px}
+pre{background:#111827;color:#e5e7eb;padding:16px;overflow-x:auto;border-radius:6px;font-size:13px;line-height:1.45;white-space:pre-wrap}
+.placeholder pre{background:#f8fafc;color:#64748b;border:1px dashed #94a3b8}
+.status{display:inline-block;margin:4px 0 8px;padding:3px 10px;border-radius:12px;background:#dcfce7;color:#166534;font-size:12px}
+.pending{background:#fee2e2;color:#991b1b}
+.blank{background:#fef3c7;color:#92400e}
+.small{font-size:13px;color:#64748b}
+.footer{margin-top:42px;padding-top:16px;border-top:1px solid #d8dee9;color:#697386;font-size:13px}
+
+.logic{background:#f8fafc;border-left:5px solid #64748b;padding:14px 18px;margin:12px 0 20px}
+.logic-title{font-weight:700;color:#334155;margin-bottom:6px}
+</style>
+
+</head>
+<body>
+<div class="page">
+<h1>sp_RecreateSummaries Baseline with SQL, Logic Explanation, and .NET Placeholders</h1>
+<div class="subtitle">Working SQL Logic to .NET conversion baseline. Each executable object includes original SQL, a simple developer-friendly logic explanation, and a blank .NET placeholder.</div>
+
+<div class="warn"><strong>Freeze Rule:</strong> Nested dependency extraction identified one nested executable object, <code>sp_Get_SP_No</code>, called by <code>usp_LogRecreateSummaries</code>. It is now included in this baseline. Remaining referenced objects from the dependency extract are tables/views only.</div>
+<div class="box"><strong>Original Logic Preservation:</strong> This document preserves the original SQL Server logic exactly as the baseline. PostgreSQL/year/fpsyear adaptations must be handled later during conversion design, not inside this SQL baseline.</div>
+
+<h2>1. Direct Executable Object Inventory</h2>
+<table>
+<tr><th>Object</th><th>Original SQL Code</th><th>Converted .NET Code</th><th>Notes</th></tr>
+<tr><td><code>sp_RecreateSummaries</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Main orchestration procedure.</td></tr>
+<tr><td><code>sp_deleteFPSTotals</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Deletes FPSYearTotals before rebuild.</td></tr>
+<tr><td><code>sp_createFPSTotals</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Recreates FPSYearTotals.</td></tr>
+<tr><td><code>sp_InsertMissingProjects</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Ensures ProjectMonth rows exist for all projects/months.</td></tr>
+<tr><td><code>sp_deleteTimeCostCalcs</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Deletes TimeCostCalcs.</td></tr>
+<tr><td><code>sp_CreateTimeCostCalcs</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Recreates TimeCostCalcs.</td></tr>
+<tr><td><code>sp_DeleteProjectMonthCasework</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Deletes ProjectMonthCasework.</td></tr>
+<tr><td><code>sp_CreateProjectMonthCasework</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Recreates ProjectMonthCasework.</td></tr>
+<tr><td><code>sp_DeleteProjectMonthFinal</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Deletes ProjectMonthFinal.</td></tr>
+<tr><td><code>sp_deleteProjectMonth2</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Deletes ProjectMonth2.</td></tr>
+<tr><td><code>sp_qryJobMonth_Single</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Populates ProjectMonth2 monthly aggregates.</td></tr>
+<tr><td><code>sp_DeleteProjectMonth3</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Deletes ProjectMonth3.</td></tr>
+<tr><td><code>sp_qryJobMonthCum</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Populates ProjectMonth3 cumulative aggregates.</td></tr>
+<tr><td><code>sp_qryJobMonth_Final</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Populates ProjectMonthFinal using @Month.</td></tr>
+<tr><td><code>usp_LogRecreateSummaries</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Logs the run.</td></tr>
+<tr><td><code>sp_Get_SP_No</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Nested stored procedure called by usp_LogRecreateSummaries to derive user id from SYSTEM_USER.</td></tr>
+<tr><td><code>usp_Refresh_Period_MO</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Refreshes Period_MonthlyOutput for unlocked period.</td></tr>
+<tr><td><code>usp_Refresh_Period_PSC</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Refreshes Period_Proj_SubContract for unlocked period.</td></tr>
+<tr><td><code>usp_Refresh_Period_TCC</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Refreshes Period_TimeCostCalcs for unlocked period.</td></tr>
+</table>
+
+<h2>2. Confirmed Direct Call Chain</h2>
+<pre>sp_RecreateSummaries(@Month)
+├── sp_deleteFPSTotals
+├── sp_createFPSTotals
+├── sp_InsertMissingProjects
+├── sp_deleteTimeCostCalcs
+├── sp_CreateTimeCostCalcs
+├── sp_DeleteProjectMonthCasework
+├── sp_CreateProjectMonthCasework
+├── sp_DeleteProjectMonthFinal
+├── sp_deleteProjectMonth2
+├── sp_qryJobMonth_Single
+├── sp_DeleteProjectMonth3
+├── sp_qryJobMonthCum
+├── sp_qryJobMonth_Final @Month
+├── usp_LogRecreateSummaries @Month
+│   └── sp_Get_SP_No
+└── If tblPeriod.PeriodLocked = 0 for EndPeriod = @Month:
+    ├── usp_Refresh_Period_MO @Month
+    ├── usp_Refresh_Period_PSC @Month
+    └── usp_Refresh_Period_TCC @Month</pre>
+
+<h2>3. SQL and .NET Code Baseline Sections</h2>
+
+<h3>sp_RecreateSummaries</h3>
+<p class="small">Main orchestration procedure.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div class="">
+<pre><code>CREATE PROC [dbo].[sp_RecreateSummaries] @Month int AS
+declare @periodLocked as smallint
+
+EXECUTE sp_deleteFPSTotals
+EXECUTE sp_createFPSTotals
+EXECUTE sp_InsertMissingProjects
+EXECUTE sp_deleteTimeCostCalcs
+EXECUTE sp_CreateTimeCostCalcs
+EXECUTE sp_DeleteProjectMonthCasework
+EXECUTE sp_CreateProjectMonthCasework
+EXECUTE sp_DeleteProjectMonthFinal
+EXECUTE sp_deleteProjectMonth2
+EXECUTE sp_qryJobMonth_Single
+EXECUTE sp_DeleteProjectMonth3
+EXECUTE sp_qryJobMonthCum
+EXECUTE sp_qryJobMonth_Final @Month
+EXECUTE usp_LogRecreateSummaries @Month
+
+select @periodLocked=periodLocked
+FROM tblPeriod
+where endperiod=@month
+
+if @periodLocked=0
+begin
+ EXECUTE usp_Refresh_Period_MO @month
+ EXECUTE usp_Refresh_Period_psc @month
+ EXECUTE usp_Refresh_Period_tcc @month
+end</code></pre>
+</div>
+<div class=\"logic\"><div class=\"logic-title\">Logic Explanation for Developers</div>
+<ul>
+<li>This is the main orchestration procedure for rebuilding FPS summary data for a supplied <code>@Month</code>.</li>
+<li>It first deletes and recreates <code>FPSYearTotals</code>.</li>
+<li>It ensures missing project/month rows exist by calling <code>sp_InsertMissingProjects</code>.</li>
+<li>It rebuilds <code>TimeCostCalcs</code>, <code>ProjectMonthCasework</code>, <code>ProjectMonth2</code>, <code>ProjectMonth3</code>, and finally <code>ProjectMonthFinal</code>.</li>
+<li>It logs the run using <code>usp_LogRecreateSummaries</code>.</li>
+<li>It checks <code>tblPeriod.PeriodLocked</code> for the supplied month. If the period is not locked, it refreshes period-level Monthly Output, Project Subcontract, and Time Cost Calc tables.</li>
+</ul>
+<div class="warn"><strong>Developer Note:</strong> Preserve the exact execution order. Later steps depend on outputs created by earlier steps.</div>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>sp_deleteFPSTotals</h3>
+<p class="small">Deletes FPSYearTotals before rebuild.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div class="">
+<pre><code>CREATE procEDURE [dbo].[sp_deleteFPSTotals] AS
+DELETE from FPSYearTotals</code></pre>
+</div>
+<div class=\"logic\"><div class=\"logic-title\">Logic Explanation for Developers</div>
+<ul>
+<li>Deletes all rows from <code>FPSYearTotals</code>.</li>
+<li>This prepares the totals table for a complete rebuild by <code>sp_createFPSTotals</code>.</li>
+</ul>
+<div class="warn"><strong>Developer Note:</strong> Preserve the original delete-before-insert behavior. Do not change scope or filtering inside this SQL baseline.</div>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>sp_createFPSTotals</h3>
+<p class="small">Recreates FPSYearTotals.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div class="">
+<pre><code>CREATE procEDURE [dbo].[sp_createFPSTotals] AS
+INSERT INTO FPSYearTotals
+SELECT DISTINCT 
+    tlkpProject.ParentProject,
+    tlkpProject.Program, 
+    CASE WHEN qryTotalAdditionalCosts.TotalAdditionalCosts IS NULL THEN 0 ELSE qryTotalAdditionalCosts.TotalAdditionalCosts END AS TotalAdditionalCosts, 
+    CASE WHEN qryTotalAnimalCosts.TotalAnimalCosts IS NULL THEN 0 ELSE qryTotalAnimalCosts.TotalAnimalCosts END AS TotalAnimalCosts, 
+    CASE WHEN qryTotalStaffCosts.TotalStaffCosts IS NULL THEN 0 ELSE qryTotalStaffCosts.TotalStaffCosts END AS TotalStaffCosts, 
+    CASE WHEN qryTotalTestCosts.TotalTestCosts IS NULL THEN 0 ELSE qryTotalTestCosts.TotalTestCosts END AS TotalTestCosts, 
+    CASE WHEN qryTotalAdditionalCosts.TotalAdditionalCosts IS NULL THEN 0 ELSE qryTotalAdditionalCosts.TotalAdditionalCosts END + 
+    CASE WHEN qryTotalAnimalCosts.TotalAnimalCosts IS NULL THEN 0 ELSE qryTotalAnimalCosts.TotalAnimalCosts END  + 
+    CASE WHEN qryTotalStaffCosts.TotalStaffCosts IS NULL THEN 0 ELSE qryTotalStaffCosts.TotalStaffCosts END +
+    CASE WHEN qryTotalTestCosts.TotalTestCosts IS NULL THEN 0 ELSE qryTotalTestCosts.TotalTestCosts END +
+    CASE WHEN tlkpProject.PlanCaseworkDebit IS NULL THEN 0 ELSE tlkpProject.PlanCaseworkDebit END AS TotalCosts,
+    tlkpProject.CustIncome, 
+    tlkpProject.TransferIncome, 
+    custincome+Transferincome AS TotalIncome, 
+    tlkpProject.Budget_CVL,
+    tlkpProject.Profit as RequiredProfit, 
+    tlkpProject.Manager, 
+    tlkpProject.Customer, 
+    tlkpProject.ProjectStatus, 
+    CASE WHEN tlkpProject.PVSIncome IS NULL THEN 0 ELSE tlkpProject.PVSIncome END AS PVSIncome,
+    CASE WHEN tlkpProject.PlanCaseworkDebit IS NULL THEN 0 ELSE tlkpProject.PlanCaseworkDebit END AS PlanCaseworkDebit,
+    CASE WHEN qryTotalStaffCosts.TotalPayCosts IS NULL THEN 0 ELSE qryTotalStaffCosts.TotalPayCosts END AS TotalPayCosts
+FROM (((tlkpProject 
+LEFT JOIN qryTotalAdditionalCosts ON tlkpProject.ParentProject = qryTotalAdditionalCosts.JobCode) 
+LEFT JOIN qryTotalAnimalCosts ON tlkpProject.ParentProject = qryTotalAnimalCosts.JobCode) 
+LEFT JOIN qryTotalStaffCosts ON tlkpProject.ParentProject = qryTotalStaffCosts.Jobcode) 
+LEFT JOIN qryTotalTestCosts ON tlkpProject.ParentProject = qryTotalTestCosts.JobCode</code></pre>
+</div>
+<div class=\"logic\"><div class=\"logic-title\">Logic Explanation for Developers</div>
+<ul>
+<li>Rebuilds <code>FPSYearTotals</code> from <code>tlkpProject</code> and cost summary views.</li>
+<li>Uses left joins so that projects are retained even when some cost categories are missing.</li>
+<li>Calculates additional, animal, staff, test, total, income, PVS, casework debit, and pay cost fields.</li>
+<li>Uses <code>CASE WHEN ... IS NULL THEN 0</code> logic to avoid null values breaking total calculations.</li>
+</ul>
+<div class="warn"><strong>Developer Note:</strong> Null handling is business-critical. The .NET conversion must match these zero-default calculations exactly.</div>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>sp_InsertMissingProjects</h3>
+<p class="small">Ensures ProjectMonth rows exist for all projects/months.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div class="">
+<pre><code>CREATE proc [dbo].[sp_InsertMissingProjects] AS  DECLARE @Month int  DECLARE @Message varchar(10)  SELECT @month = 1  WHILE (@month &lt; 13)   BEGIN   INSERT INTO ProjectMonth (Project, MonthNo)   SELECT DISTINCT tlkpProject.ParentProject,     @month AS MonthNo   FROM   tlkpProject LEFT JOIN ProjectMonth ON      tlkpProject.ParentProject = ProjectMonth.Project     AND @month = ProjectMonth.MonthNo    WHERE ((ProjectMonth.Project IS NULL))   ORDER BY ParentProject   SELECT @month = @month + 1   IF @month = 13    BREAK   ELSE    CONTINUE  END</code></pre>
+</div>
+<div class=\"logic\"><div class=\"logic-title\">Logic Explanation for Developers</div>
+<ul>
+<li>Loops month numbers from 1 to 12.</li>
+<li>For each month, inserts missing <code>ProjectMonth</code> rows for projects in <code>tlkpProject</code>.</li>
+<li>A row is inserted only when that project/month combination does not already exist.</li>
+<li>This creates the base project-month grid used by later monthly summary logic.</li>
+</ul>
+<div class="warn"><strong>Developer Note:</strong> This procedure is not calculating financial values; it is ensuring baseline rows exist for every project/month.</div>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>sp_deleteTimeCostCalcs</h3>
+<p class="small">Deletes TimeCostCalcs.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div class="">
+<pre><code>/****** Object:  Stored Procedure dbo.sp_deleteTimeCostCalcs    Script Date: 3/4/00 1:48:21 PM ******/  /****** Object:  Stored Procedure dbo.sp_deleteTimeCostCalcs    Script Date: 1/12/99 12:14:26 PM ******/  CREATE procEDURE [dbo].[sp_deleteTimeCostCalcs] AS  DELETE FROM timecostcalcs</code></pre>
+</div>
+<div class=\"logic\"><div class=\"logic-title\">Logic Explanation for Developers</div>
+<ul>
+<li>Deletes all rows from <code>TimeCostCalcs</code>.</li>
+<li>This prepares the table for a full rebuild by <code>sp_CreateTimeCostCalcs</code>.</li>
+</ul>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>sp_CreateTimeCostCalcs</h3>
+<p class="small">Recreates TimeCostCalcs.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div class="">
+<pre><code>CREATE procEDURE [dbo].[sp_CreateTimeCostCalcs] AS  /*Based on Create-TimeCostCals from Access FE*/  INSERT  TimeCostCalcs  (WorkGroup,     JobCode,     Project,      Month,      StaffID,      GradeCode,      Name,     ChargeRate,      Class,      Time,      Cost,      Division,     Pay,     NonPay,     OverHead)    SELECT DISTINCT  WorkGroupGrade.WorkGroup,     MonthlyTime.TimeCode AS JobCode,      TimeCodeValid.ParentProject AS Project,      MonthlyTime.Month,      vPacttblStaff.PACTid AS StaffID,      WorkGroupGrade.GradeCode,      vPacttblStaff.Name,      case tlkpProject.isdefraproject      when 0 then       ProfitCentreGrade.ChargeRate      else       ProfitCentreGrade.DefraChargeRate     end as chargerate,     CASE       WHEN tlkpProgram.sector_name=&#x27;Charge&#x27; THEN       &#x27;Charge&#x27;      ELSE       &#x27;Free&#x27;     END AS Class,     MonthlyTime.Hours AS Time,      CASE       WHEN tlkpProgram.sector_name=&#x27;Charge&#x27; THEN       hours        ELSE       0     END *     case tlkpProject.isdefraproject      when 0 then       ProfitCentreGrade.ChargeRate      else       ProfitCentreGrade.DefraChargeRate     end AS Cost,      tblkpProfitCentre.Division,     MonthlyTime.Hours * ProfitCentreGrade.PayRate AS Pay,     MonthlyTime.Hours * ProfitCentreGrade.NPR  AS NonPay,     MonthlyTime.Hours *ProfitCentreGrade.OHR AS OverHead    FROM (((tblkpProfitCentre    INNER JOIN ProfitCentreGrade ON tblkpProfitCentre.ProfitCentre = ProfitCentreGrade.ProfitCentre)   INNER JOIN WorkGroupGrade ON ProfitCentreGrade.PCGrade = WorkGroupGrade.ProfitCentreGrade)    INNER JOIN (TimeCodeValid    INNER JOIN (vPACTtblStaff    INNER JOIN MonthlyTime ON VPACTtblStaff.PACTid = MonthlyTime.PactStaffID)     ON (TimeCodeValid.WorkGroup = MonthlyTime.WorkGroup)     AND (TimeCodeValid.TimeCode = MonthlyTime.TimeCode)     AND (TimeCodeValid.ParentProject = MonthlyTime.ParentProject))     ON WorkGroupGrade.WGGrade = vPACTtblStaff.WorkGroupGrade)    INNER JOIN tlkpProject ON TimeCodeValid.ParentProject = tlkpProject.ParentProject  INNER JOIN tlkpProgram ON tlkpProgram.ProgramNo = tlkpProject.Program</code></pre>
+</div>
+<div class=\"logic\"><div class=\"logic-title\">Logic Explanation for Developers</div>
+<ul>
+<li>Recreates <code>TimeCostCalcs</code> from monthly time records, valid time codes, staff, workgroup grade, profit centre grade, project, and program data.</li>
+<li>Determines charge rate based on whether the project is a Defra project.</li>
+<li>Classifies time as <code>Charge</code> or <code>Free</code> based on <code>tlkpProgram.sector_name</code>.</li>
+<li>Calculates cost only for chargeable work.</li>
+<li>Calculates pay, non-pay, and overhead from monthly hours and profit centre grade rates.</li>
+</ul>
+<div class="warn"><strong>Developer Note:</strong> The charge/free classification and Defra charge-rate switch must be preserved exactly.</div>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>sp_DeleteProjectMonthCasework</h3>
+<p class="small">Deletes ProjectMonthCasework.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div class="">
+<pre><code>/****** Object:  Stored Procedure dbo.sp_DeleteProjectMonthCasework    Script Date: 3/4/00 1:48:21 PM ******/  CREATE procEDURE [dbo].[sp_DeleteProjectMonthCasework] AS  DELETE FROM ProjectMonthCasework</code></pre>
+</div>
+<div class=\"logic\"><div class=\"logic-title\">Logic Explanation for Developers</div>
+<ul>
+<li>Deletes all rows from <code>ProjectMonthCasework</code>.</li>
+<li>This prepares the casework summary table for a complete rebuild.</li>
+</ul>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>sp_CreateProjectMonthCasework</h3>
+<p class="small">Recreates ProjectMonthCasework.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div class="">
+<pre><code>/****** Object:  Stored Procedure dbo.sp_CreateProjectMonthCasework    Script Date: 3/4/00 1:48:21 PM ******/  /****** Object:  Stored Procedure dbo.sp_CreateProjectMonthCasework    Script Date: 6/24/99 4:11:48 PM ******/  CREATE procEDURE [dbo].[sp_CreateProjectMonthCasework] AS  INSERT ProjectMonthCasework  SELECT DISTINCT qryProjectMonthCW.Project,    qryProjectMonthCW.MonthNo,   qryProjectMonthCW.CWDebit,   qryProjectMonthCW.CWCredit      FROM qryProjectMonthCW</code></pre>
+</div>
+<div class=\"logic\"><div class=\"logic-title\">Logic Explanation for Developers</div>
+<ul>
+<li>Recreates <code>ProjectMonthCasework</code> from <code>qryProjectMonthCW</code>.</li>
+<li>Inserts distinct project/month casework debit and credit values.</li>
+<li>This output is later used by <code>sp_qryJobMonth_Final</code> when building <code>ProjectMonthFinal</code>.</li>
+</ul>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>sp_DeleteProjectMonthFinal</h3>
+<p class="small">Deletes ProjectMonthFinal.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div class="">
+<pre><code>/****** Object:  Stored Procedure dbo.sp_DeleteProjectMonthFinal    Script Date: 3/4/00 1:48:21 PM ******/  /****** Object:  Stored Procedure dbo.sp_DeleteProjectMonthFinal    Script Date: 1/12/99 12:14:26 PM ******/  CREATE procEDURE [dbo].[sp_DeleteProjectMonthFinal] AS  DELETE FROM ProjectMonthFinal</code></pre>
+</div>
+<div class=\"logic\"><div class=\"logic-title\">Logic Explanation for Developers</div>
+<ul>
+<li>Deletes all rows from <code>ProjectMonthFinal</code>.</li>
+<li>This prepares the final summary table for a complete rebuild.</li>
+</ul>
+<div class="warn"><strong>Developer Note:</strong> This must run before <code>sp_qryJobMonth_Final</code>.</div>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>sp_deleteProjectMonth2</h3>
+<p class="small">Deletes ProjectMonth2.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div class="">
+<pre><code>/****** Object:  Stored Procedure dbo.sp_deleteProjectMonth2    Script Date: 3/4/00 1:48:21 PM ******/  /****** Object:  Stored Procedure dbo.sp_deleteProjectMonth2    Script Date: 1/12/99 12:14:26 PM ******/  CREATE procEDURE [dbo].[sp_deleteProjectMonth2] AS  DELETE FROM ProjectMonth2</code></pre>
+</div>
+<div class=\"logic\"><div class=\"logic-title\">Logic Explanation for Developers</div>
+<ul>
+<li>Deletes all rows from <code>ProjectMonth2</code>.</li>
+<li>This prepares the monthly aggregate table for a complete rebuild.</li>
+</ul>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>sp_qryJobMonth_Single</h3>
+<p class="small">Populates ProjectMonth2 monthly aggregates.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div class="">
+<pre><code>CREATE proc [dbo].[sp_qryJobMonth_Single] AS     INSERT INTO  ProjectMonth2     ( Project,     MonthNo,     CostProfile,     Subcontracts,     Animals,     NonAnimal,     TimeCosts,     TransferCosts,     TotalCost,     Invoices,     COIW,     SumOfCostProfile,     PortSales,     MstoneDue,     Due__Done,     OnTime,    TotalHours,    PayCosts        )  SELECT  ProjectMonth.Project,    ProjectMonth.MonthNo,    ProjectMonth.CostProfile,    CASE    WHEN Total IS NULL THEN 0    ELSE Total   END AS Subcontracts,    CASE    WHEN Animals IS NULL THEN 0    ELSE Animals   END AS Animals,   CASE    WHEN Other IS NULL THEN 0    ELSE Other   END AS NonAnimal,    CASE    WHEN sumofcost IS NULL THEN 0    ELSE sumofcost   END AS TimeCosts,    CASE    WHEN SumOfTransferCost IS NULL THEN 0    ELSE sumoftransfercost   END AS TransferCosts,    (ISNULL(Total,0) + ISNULL(SumOfCost,0) + ISNULL(sumoftransfercost, 0)) AS TotalCost,   CASE    WHEN SumOfAmount1 IS NULL THEN 0    ELSE sumofamount1   END AS Invoices,    CASE    WHEN WorkCost IS NULL THEN 0    ELSE workcost   END AS COIW,   qryJobMonth_TotProfile.SumOfCostProfile,    CASE    WHEN Fee IS NULL THEN 0    ELSE fee   END AS PortSales,   qryJobMonthMilestone.MstoneDue,    qryJobMonthMilestone.Due__Done,    qryJobMonthMilestone.OnTime,   CASE    WHEN sumofHours IS NULL THEN 0    ELSE sumofhours   END AS TotalHours,   CASE    WHEN SumOfPayRate IS NULL THEN 0    ELSE SumOfPayRate   END AS SumOfPayRate  FROM    ((((((ProjectMonth    LEFT JOIN qryJobMonth_SubContracts ON     (ProjectMonth.MonthNo = qryJobMonth_SubContracts.Month) AND     (ProjectMonth.Project = qryJobMonth_SubContracts.Project))    LEFT JOIN qryJobMonth_Time ON     (ProjectMonth.MonthNo = qryJobMonth_Time.Month) AND     (ProjectMonth.Project = qryJobMonth_Time.Project))    LEFT JOIN qryJobMonthMilestone ON     (ProjectMonth.MonthNo = qryJobMonthMilestone.DueMonth) AND     (ProjectMonth.Project = qryJobMonthMilestone.Project))    LEFT JOIN qryJobMonth_TransfersTotal ON     (ProjectMonth.MonthNo = qryJobMonth_TransfersTotal.Month) AND     (ProjectMonth.Project = qryJobMonth_TransfersTotal.Project))    LEFT JOIN qryJobMonth_Invoices ON     (ProjectMonth.MonthNo = qryJobMonth_Invoices.Month) AND     (ProjectMonth.Project = qryJobMonth_Invoices.ProjectParent))    LEFT JOIN qryJobMonthPortfolioSales ON     (ProjectMonth.MonthNo = qryJobMonthPortfolioSales.Month) AND     (ProjectMonth.Project = qryJobMonthPortfolioSales.PlanPortfolio))    LEFT JOIN qryJobMonth_TotProfile ON     ProjectMonth.Project = qryJobMonth_TotProfile.Project</code></pre>
+</div>
+<div class=\"logic\"><div class=\"logic-title\">Logic Explanation for Developers</div>
+<ul>
+<li>Populates <code>ProjectMonth2</code>, the monthly aggregate table.</li>
+<li>Starts from the base <code>ProjectMonth</code> grid and left joins multiple monthly source views.</li>
+<li>Calculates monthly subcontract, animal, non-animal, time cost, transfer cost, total cost, invoice, COIW, portfolio sales, milestone, total hours, and pay cost values.</li>
+<li>Uses null-to-zero handling for many numeric columns so missing source data becomes zero rather than null.</li>
+</ul>
+<div class="warn"><strong>Developer Note:</strong> Preserve all left joins and null-to-zero behavior. Changing joins to inner joins would drop projects/months and change reporting totals.</div>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>sp_DeleteProjectMonth3</h3>
+<p class="small">Deletes ProjectMonth3.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div class="">
+<pre><code>/****** Object:  Stored Procedure dbo.sp_DeleteProjectMonth3    Script Date: 3/4/00 1:48:21 PM ******/  /****** Object:  Stored Procedure dbo.sp_DeleteProjectMonth3    Script Date: 1/12/99 12:14:26 PM ******/  CREATE procEDURE [dbo].[sp_DeleteProjectMonth3] AS  DELETE FROM ProjectMonth3</code></pre>
+</div>
+<div class=\"logic\"><div class=\"logic-title\">Logic Explanation for Developers</div>
+<ul>
+<li>Deletes all rows from <code>ProjectMonth3</code>.</li>
+<li>This prepares the cumulative period aggregate table for a complete rebuild.</li>
+</ul>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>sp_qryJobMonthCum</h3>
+<p class="small">Populates ProjectMonth3 cumulative aggregates.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div class="">
+<pre><code>CREATE procedure [dbo].[sp_qryJobMonthCum] as  INSERT INTO  ProjectMonth3    ( EndPeriod,     PeriodName,     Project,     CumCost,     CumInvoices,     CumCOIW,     CumPortSales,     CumProfile,     SumOfCostProfile,     SumOfMstoneDue,     SumOfDue__Done,     SumOfOnTime,    CumCWDebit,    CumCWCredit,    CumTotalHours,    CumSubcontracts,    CumTestCosts,    CumPayCosts     )  SELECT DISTINCT tblPeriod.EndPeriod,    tblPeriod.PeriodName,     ProjectMonth2.Project,     SUM(ProjectMonth2.TotalCost) AS CumCost,     SUM(ProjectMonth2.Invoices) AS CumInvoices,     SUM(ProjectMonth2.COIW) AS CumCOIW,     SUM(ProjectMonth2.PortSales) AS CumPortSales,     SUM(ProjectMonth2.CostProfile) AS CumProfile,     ProjectMonth2.SumOfCostProfile,     SUM(ProjectMonth2.MstoneDue) AS SumOfMstoneDue,     SUM(ProjectMonth2.Due__Done)AS SumOfDue__Done,     SUM(ProjectMonth2.OnTime) AS SumOfOnTime,    SUM(ProjectMonthCaseWork.CWDebit) AS CumCWDebit,    SUM(ProjectMonthCasework.CWCredit) AS CumCWCredit,    SUM(ProjectMonth2.TotalHours) AS CumTotalHours,    SUM(ProjectMonth2.Subcontracts) AS CumSubcontracts,    SUM(ProjectMonth2.TransferCosts) AS CumTestCosts,    SUM(ProjectMonth2.PayCosts) AS CumPayCosts  FROM (tblPeriod    INNER JOIN tblkPeriodMonth ON tblPeriod.PeriodName = tblkPeriodMonth.PeriodName)    INNER JOIN ProjectMonth2 ON tblkPeriodMonth.MonthNo = ProjectMonth2.MonthNo   INNER JOIN ProjectMonthCasework ON (ProjectMonth2.Monthno = ProjectMonthCasework.monthNo)    AND  (ProjectMonth2.Project = ProjectMonthCasework.Project)   GROUP BY  tblPeriod.EndPeriod,     tblPeriod.PeriodName,     ProjectMonth2.Project,     ProjectMonth2.SumOfCostProfile</code></pre>
+</div>
+<div class=\"logic\"><div class=\"logic-title\">Logic Explanation for Developers</div>
+<ul>
+<li>Populates <code>ProjectMonth3</code>, the cumulative period aggregate table.</li>
+<li>Uses <code>tblPeriod</code> and <code>tblkPeriodMonth</code> to determine which months belong to each period.</li>
+<li>Sums monthly values from <code>ProjectMonth2</code> and casework values from <code>ProjectMonthCasework</code>.</li>
+<li>Groups by period end, period name, project, and cost profile.</li>
+</ul>
+<div class="warn"><strong>Developer Note:</strong> Period/month mapping is business-critical. Do not replace this with a simple month-to-date calculation unless it exactly matches the SQL period tables.</div>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>sp_qryJobMonth_Final</h3>
+<p class="small">Populates ProjectMonthFinal using @Month.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div class="">
+<pre><code>CREATE proc [dbo].[sp_qryJobMonth_Final] @Month int AS  INSERT INTO  ProjectMonthFinal     ( Project,     MonthNo,     CostProfile,     Subcontracts,     Animals,     NonAnimals,     TimeCosts,     TransferCosts,     TotalCost,     Invoices,     COIW,     PortSales,     CumCost,     CumProfile,     PeriodName,     SumOfCostProfile,     CumInvoices,     CumCOIW,     CumPortSales,     MstoneDue,     Due__Done,     OnTime,     SumOfMstoneDue,     SumOfDue__Done,     SumOfOnTime,     CumFlag,    CWDebit,    CWCredit,    CumCWDebit,    CumCWCredit,    TotalHours,    CumTotalHours,    CumSubcontracts,    CumTestCosts,    PayCosts,    CumPayCosts )    SELECT DISTINCT   ProjectMonth2.Project,    ProjectMonth2.MonthNo,    ProjectMonth2.CostProfile,    ProjectMonth2.Subcontracts,    ProjectMonth2.Animals,    ProjectMonth2.NonAnimal,    ProjectMonth2.TimeCosts,    ProjectMonth2.TransferCosts,    ProjectMonth2.TotalCost,    ProjectMonth2.Invoices,    ProjectMonth2.COIW,    ProjectMonth2.PortSales,    CASE    WHEN ProjectMonth2.monthno &lt;= @month THEN CumCost * 1   ELSE NULL   END AS Expr1,   ProjectMonth3.CumProfile,     ProjectMonth3.PeriodName,    ProjectMonth3.SumOfCostProfile,    CASE    WHEN ProjectMonth2.monthno&lt;= @month THEN CumInvoices * 1    ELSE NULL   END AS Expr2,   CASE    WHEN ProjectMonth2.monthno&lt;= @month THEN CumCOIW * 1    ELSE NULL   END AS Expr3,   CASE    WHEN ProjectMonth2.monthno&lt;= @month THEN CumPortSales * 1    ELSE NULL   END AS Expr4,   ProjectMonth2.MstoneDue,    ProjectMonth2.Due__Done,    ProjectMonth2.OnTime,    ProjectMonth3.SumOfMstoneDue,   CASE    WHEN ProjectMonth2.monthno&lt;= @month THEN SumOfDue__Done * 1    ELSE NULL   END AS Expr6,   CASE    WHEN ProjectMonth2.monthno&lt;= @month THEN SumOfOnTime * 1    ELSE NULL   END AS Expr7,   CASE    WHEN ProjectMonth2.monthno&lt;= @month THEN 1    ELSE NULL   END AS CumFlag,      CASE    WHEN ProjectMonth2.monthno&lt;= @month THEN 1 * ProjectMonthCasework.CWDebit    ELSE NULL   END,   CASE    WHEN ProjectMonth2.monthno&lt;= @month THEN 1 * ProjectMonthCasework.CWCredit    ELSE NULL   END,   CASE    WHEN ProjectMonth2.monthno&lt;= @month THEN 1 * ProjectMonth3.CumCWDebit    ELSE NULL   END,   CASE    WHEN ProjectMonth2.monthno&lt;= @month THEN 1 * ProjectMonth3.CumCWCredit    ELSE NULL   END,   ProjectMonth2.TotalHours,   CASE    WHEN ProjectMonth2.monthno&lt;= @month THEN 1 * ProjectMonth3.CumTotalHours    ELSE NULL   END,   CASE    WHEN ProjectMonth2.monthno&lt;= @month THEN 1 * ProjectMonth3.CumSubcontracts    ELSE NULL   END ,   CASE    WHEN ProjectMonth2.monthno&lt;= @month THEN 1 * ProjectMonth3.CumTestCosts    ELSE NULL   END,   ProjectMonth2.PayCosts,   CASE    WHEN ProjectMonth2.monthno&lt;= @month THEN 1 * ProjectMonth3.CumPayCosts    ELSE NULL   END       FROM  ProjectMonth2    INNER JOIN ProjectMonth3    ON (ProjectMonth2.Project = ProjectMonth3.Project)    AND (ProjectMonth2.MonthNo = ProjectMonth3.EndPeriod)   INNER JOIN ProjectMonthCasework    ON (ProjectMonth2.Project = ProjectMonthCasework.Project)    AND (ProjectMonth2.MonthNo = ProjectMonthCasework.MonthNo)</code></pre>
+</div>
+<div class=\"logic\"><div class=\"logic-title\">Logic Explanation for Developers</div>
+<ul>
+<li>Builds <code>ProjectMonthFinal</code>, the final project/month reporting table.</li>
+<li>Joins <code>ProjectMonth2</code>, <code>ProjectMonth3</code>, and <code>ProjectMonthCasework</code>.</li>
+<li>Copies monthly values directly from <code>ProjectMonth2</code>.</li>
+<li>Includes cumulative values only when <code>ProjectMonth2.MonthNo &lt;= @Month</code>; otherwise those cumulative fields are set to <code>NULL</code>.</li>
+<li>Sets <code>CumFlag</code> to <code>1</code> only for months up to the supplied <code>@Month</code>.</li>
+</ul>
+<div class="warn"><strong>Developer Note:</strong> The <code>@Month</code> condition controls which cumulative fields are visible. This logic must be preserved exactly.</div>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>usp_LogRecreateSummaries</h3>
+<p class="small">Logs the run.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div class="">
+<pre><code>CREATE procedure [dbo].[usp_LogRecreateSummaries] @Month as smallint   as   set nocount on   DECLARE @Mno varchar(20)     EXEC [dbo].[sp_Get_SP_No]    @Mno = @Mno OUTPUT     INSERT Into RecreateSummaries_Log(UserID, Period, DateDone)   Values(@Mno,@Month,getdate())</code></pre>
+</div>
+<div class=\"logic\"><div class=\"logic-title\">Logic Explanation for Developers</div>
+<ul>
+<li>Logs execution of the recreate summaries process.</li>
+<li>Calls <code>sp_Get_SP_No</code> to derive the current user identifier from <code>SYSTEM_USER</code>.</li>
+<li>Inserts a row into <code>RecreateSummaries_Log</code> with user id, period/month, and current date/time.</li>
+</ul>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+
+<h3>sp_Get_SP_No</h3>
+<p class="small">Nested stored procedure called by <code>usp_LogRecreateSummaries</code> to derive user id from <code>SYSTEM_USER</code>.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div>
+<pre><code>CREATE PROCEDURE [dbo].[sp_Get_SP_No]
+@Mno varchar(20) OUTPUT
+AS
+SELECT @MNo = SUBSTRING(SYSTEM_USER, CHARINDEX(&#x27;\&#x27;, SYSTEM_USER) + 1, 20)
+GO</code></pre>
+</div>
+<div class=\"logic\"><div class=\"logic-title\">Logic Explanation for Developers</div>
+<ul>
+<li>Extracts the Windows/user login name from <code>SYSTEM_USER</code>.</li>
+<li>It takes the text after the backslash character and returns it through the output parameter <code>@Mno</code>.</li>
+<li>Used by <code>usp_LogRecreateSummaries</code> for logging.</li>
+</ul>
+<div class="warn"><strong>Developer Note:</strong> In .NET, equivalent user identity handling must match the deployment authentication context.</div>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+<h3>usp_Refresh_Period_MO</h3>
+<p class="small">Refreshes Period_MonthlyOutput for unlocked period.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div class="">
+<pre><code>CREATE procedure [dbo].[usp_Refresh_Period_MO]   @period int  as  delete from [dbo].[Period_MonthlyOutput]  where period=@period  INSERT INTO [dbo].[Period_MonthlyOutput]  (  [Period]        ,[Project]        ,[OracleProjectCode]        ,[SubAccountCode]        ,[IsDefraProject]        ,[OPC]        ,[OCC]        ,[Month]        ,[SPC]        ,[WorkGroup]        ,[SCC]        ,[TestCode]        ,[Volume]        ,[TestPrice]        ,[TotalCost]  )  SELECT  @Period,   tlkpProject.ParentProject AS Project,    tlkpProject.OracleProjectCode,    tlkpProject.SubAccountCode,    case tlkpProject.IsDefraProject when 0 then &#x27;No&#x27; else &#x27;Yes&#x27; end IsDefraProject,    CostCentre.ProfitCentre AS OPC,    CostCentre.CostCentre AS OCC,    MonthlyOutput.Month,    WorkGroup.ProfitCentre AS SPC,    WorkGroup.WorkGroup,    WorkGroup.CostCentre AS SCC,     MonthlyOutput.TestCode,    MonthlyOutput.Volume,    tlkpTestReqmt.UnitPrice as TestPrice,    convert(money,[UnitPrice]*[Volume]) AS TotalCost    FROM ((tlkpProject LEFT JOIN CostCentre    ON tlkpProject.CostCentre = CostCentre.CostCentre)    INNER JOIN (MonthlyOutput    INNER JOIN WorkGroup ON MonthlyOutput.WorkGroup = WorkGroup.WorkGroup)    ON tlkpProject.ParentProject = MonthlyOutput.Buyer)    INNER JOIN tlkpTestReqmt    ON (MonthlyOutput.Buyer = tlkpTestReqmt.projectBuyerCode)    AND (MonthlyOutput.TestCode = tlkpTestReqmt.TestCode)</code></pre>
+</div>
+<div class=\"logic\"><div class=\"logic-title\">Logic Explanation for Developers</div>
+<ul>
+<li>Refreshes <code>Period_MonthlyOutput</code> for the supplied period.</li>
+<li>Deletes existing rows for that period first.</li>
+<li>Reinserts period-level monthly output rows by joining project, cost centre, monthly output, workgroup, and test requirement data.</li>
+<li>Calculates test total cost as <code>UnitPrice * Volume</code> converted to money.</li>
+<li>Converts <code>IsDefraProject</code> into text values <code>Yes</code> or <code>No</code>.</li>
+</ul>
+<div class="warn"><strong>Developer Note:</strong> This procedure only runs when the period is unlocked in the main procedure.</div>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>usp_Refresh_Period_PSC</h3>
+<p class="small">Refreshes Period_Proj_SubContract for unlocked period.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div class="">
+<pre><code>CREATE procedure [dbo].[usp_Refresh_Period_PSC]   @period int  as  delete from [dbo].Period_Proj_SubContract  where period=@period  INSERT INTO [dbo].[Period_Proj_SubContract]    ([Period]        ,[SubContCounter]        ,[Project]        ,[OracleProjectCode]        ,[SubAccountCode]        ,[IsDefraProject]        ,[OPC]        ,[OCC]        ,[Month]        ,[Amount]        ,[AcctCode])  Select @period,       dbo.Proj_SubContract.SubContCounter,    dbo.Proj_SubContract.Project,    dbo.tlkpProject.OracleProjectCode,       dbo.tlkpProject.SubAccountCode,    CASE tlkpProject.IsDefraProject WHEN 0 THEN &#x27;No&#x27; ELSE &#x27;Yes&#x27; END AS IsDefraProject,    dbo.CostCentre.ProfitCentre AS OPC,       dbo.CostCentre.CostCentre AS OCC,    dbo.Proj_SubContract.Month,    dbo.Proj_SubContract.Amount,    dbo.Proj_SubContract.AcctCode    FROM         dbo.CostCentre RIGHT OUTER JOIN                        dbo.tlkpProject ON dbo.CostCentre.CostCentre = dbo.tlkpProject.CostCentre INNER JOIN                        dbo.Proj_SubContract ON dbo.tlkpProject.ParentProject = dbo.Proj_SubContract.Project</code></pre>
+</div>
+<div class=\"logic\"><div class=\"logic-title\">Logic Explanation for Developers</div>
+<ul>
+<li>Refreshes <code>Period_Proj_SubContract</code> for the supplied period.</li>
+<li>Deletes existing period rows first.</li>
+<li>Reinserts subcontract period rows using project, cost centre, and subcontract data.</li>
+<li>Includes project coding fields such as Oracle project code, subaccount, profit centre, cost centre, and account code.</li>
+</ul>
+<div class="warn"><strong>Developer Note:</strong> This procedure only runs when the period is unlocked in the main procedure.</div>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>usp_Refresh_Period_TCC</h3>
+<p class="small">Refreshes Period_TimeCostCalcs for unlocked period.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div class="">
+<pre><code>CREATE procedure [dbo].[usp_Refresh_Period_TCC]   @period int  as  delete from [dbo].[Period_TimeCostCalcs]  where period=@period    INSERT INTO .[dbo].[Period_TimeCostCalcs]  (        [Period]        ,[Project]        ,[OracleProjectCode]        ,[SubAccountCode]        ,[Month]        ,[DefraProject]        ,[OCC]        ,[OPC]        ,[SPC]        ,[SCC]        ,[Name]        ,[GradeCode]        ,[SPNumber]        ,[ChargeRate]        ,[Pay]        ,[Nonpay]        ,[Overhead]        ,[Time]        ,[TotalCost])    SELECT @Period,    tlkpProject.ParentProject AS Project,    tlkpProject.OracleProjectCode,    tlkpProject.SubAccountCode,    TimeCostCalcs.Month,    case tlkpProject.IsDefraProject when 0 then &#x27;No&#x27; else &#x27;Yes&#x27; end AS DefraProject,    CostCentre.CostCentre AS OCC,    CostCentre.ProfitCentre AS OPC,    WorkGroup.ProfitCentre AS SPC,    WorkGroup.CostCentre AS SCC,    TimeCostCalcs.Name,    TimeCostCalcs.GradeCode,    tblWGEmployee.SPNumber,    TimeCostCalcs.ChargeRate,    TimeCostCalcs.Pay,    TimeCostCalcs.Nonpay,    TimeCostCalcs.Overhead,    TimeCostCalcs.Time,    TimeCostCalcs.Cost AS TotalCost  FROM dbo.tblWGEmployee INNER JOIN ((tlkpProject LEFT JOIN CostCentre ON tlkpProject.CostCentre = CostCentre.CostCentre) INNER JOIN (TimeCostCalcs INNER JOIN WorkGroup ON TimeCostCalcs.WorkGroup = WorkGroup.WorkGroup) ON tlkpProject.ParentProject = TimeCostCalcs.Project) ON tblWGEmployee.PACTid = TimeCostCalcs.StaffID</code></pre>
+</div>
+<div class=\"logic\"><div class=\"logic-title\">Logic Explanation for Developers</div>
+<ul>
+<li>Refreshes <code>Period_TimeCostCalcs</code> for the supplied period.</li>
+<li>Deletes existing period rows first.</li>
+<li>Reinserts time cost period rows by joining employee, project, cost centre, time cost calculations, and workgroup data.</li>
+<li>Copies charge rate, pay, non-pay, overhead, time, and total cost from <code>TimeCostCalcs</code>.</li>
+<li>Converts Defra project flag into text values <code>Yes</code> or <code>No</code>.</li>
+</ul>
+<div class="warn"><strong>Developer Note:</strong> This procedure depends on <code>TimeCostCalcs</code> already being rebuilt earlier in the main flow.</div>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h2>4. Next Required Extraction</h2>
+<div class="warn">
+<strong>Next step:</strong> Run dependency extraction for all direct child objects above to identify nested stored procedures, SQL functions, and trigger-side executable logic. Tables and views remain data dependencies only.
+</div>
+
+
+<h2>4. Nested Dependency Extraction Conclusion</h2>
+<div class="good">
+<strong>Confirmed:</strong> The direct child dependency extraction returned no additional nested stored procedures/functions/triggers except <code>sp_Get_SP_No</code>, which is called by <code>usp_LogRecreateSummaries</code>. All other referenced objects in the extraction are tables/views and remain data dependencies only.
+</div>
+
+<div class="footer">Generated from the provided SSMS extraction. No unavailable SQL has been fabricated.</div>
+
+<h2>Developer Handoff Notes</h2>
+
+<div class="box">
+<strong>Purpose of this document:</strong> This document is the SQL-to-.NET conversion baseline for <code>sp_RecreateSummaries</code>. Developers should use the embedded SQL as the source of truth and the plain-English explanation as the implementation guide.
+</div>
+
+<table>
+<tr>
+    <th>Area</th>
+    <th>Developer Guidance</th>
+</tr>
+<tr>
+    <td>Original SQL Code</td>
+    <td>Do not reinterpret or optimize the SQL logic during baseline conversion. First convert behavior as-is, then validate outputs.</td>
+</tr>
+<tr>
+    <td>.NET Code Placeholder</td>
+    <td>Use this section to later add the converted C#/.NET implementation or pseudocode after the SQL baseline is accepted.</td>
+</tr>
+<tr>
+    <td>Tables and Views</td>
+    <td>Tables and views are data dependencies. They are not converted to .NET code because they are migrated to PostgreSQL separately.</td>
+</tr>
+<tr>
+    <td>Stored Procedures / Functions / Triggers</td>
+    <td>These are executable SQL logic and must be converted where included in this document.</td>
+</tr>
+<tr>
+    <td>Validation</td>
+    <td>Validate by comparing SQL Server output and .NET/PostgreSQL output using row counts, key project samples, financial totals, null handling, and period/month behavior.</td>
+</tr>
+<tr>
+    <td>Change Control</td>
+    <td>Any business logic change must be documented separately. This baseline is for behavior preservation, not redesign.</td>
+</tr>
+</table>
+
+<div class="warn">
+<strong>Implementation Guardrail:</strong> During conversion, do not mix original SQL baseline documentation with PostgreSQL adaptation decisions. First understand and preserve the original behavior. Then handle PostgreSQL-specific changes in the implementation design.
+</div>
+
+<div class="good">
+<strong>Recommended Developer Workflow:</strong>
+<ol>
+    <li>Read the execution sequence first.</li>
+    <li>Review each SQL block and its logic explanation.</li>
+    <li>Implement equivalent .NET service/method for each executable object.</li>
+    <li>Keep delete-before-insert behavior exactly where SQL does it.</li>
+    <li>Run SQL-vs-.NET validation using the same input period/year/month.</li>
+    <li>Record any deviation as a conversion issue, not as an accepted change.</li>
+</ol>
+</div>
+
+
+<div class="box">
+<strong>Process-specific note for sp_RecreateSummaries:</strong> <code>ProjectMonthFinal</code> is rebuilt only after prerequisite tables such as <code>TimeCostCalcs</code>, <code>ProjectMonthCasework</code>, <code>ProjectMonth2</code>, and <code>ProjectMonth3</code> are recreated. The supplied <code>@Month</code> controls cumulative values in the final output.
+</div>
+
+
+</div>
+</body>
+</html>

@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><title>sp_LoadFromFPS Baseline with SQL, Logic Explanation, and .NET Placeholders</title>
+<style>
+body{font-family:Segoe UI,Arial,sans-serif;background:#f6f7f9;color:#1f2933;line-height:1.55;margin:0}
+.page{max-width:1280px;margin:32px auto;background:#fff;padding:40px 48px;border:1px solid #d9dee7;box-shadow:0 4px 18px rgba(15,23,42,.08)}
+h1{font-size:30px;margin:0 0 8px;color:#102a43}
+h2{font-size:22px;margin-top:34px;padding-bottom:8px;border-bottom:2px solid #dbe4ee;color:#183b56}
+h3{font-size:18px;margin-top:26px;color:#243b53}
+.subtitle{color:#52606d;font-size:15px;margin-bottom:24px}
+.box{background:#eef4ff;border-left:5px solid #315b96;padding:14px 18px;margin:20px 0}
+.warn{background:#fff7ed;border-left:5px solid #c2410c;padding:14px 18px;margin:20px 0}
+.stop{background:#fee2e2;border-left:5px solid #991b1b;padding:14px 18px;margin:20px 0}
+.good{background:#ecfdf5;border-left:5px solid #047857;padding:14px 18px;margin:20px 0}
+table{border-collapse:collapse;width:100%;margin:14px 0 24px;font-size:14px}
+th{background:#e8eef7;color:#102a43;text-align:left;padding:10px;border:1px solid #cbd5e1}
+td{padding:10px;border:1px solid #d8dee9;vertical-align:top}
+code{font-family:Consolas,Monaco,monospace;font-size:13px}
+pre{background:#111827;color:#e5e7eb;padding:16px;overflow-x:auto;border-radius:6px;font-size:13px;line-height:1.45;white-space:pre}
+.placeholder pre{background:#f8fafc;color:#64748b;border:1px dashed #94a3b8}
+.status{display:inline-block;margin:4px 0 8px;padding:3px 10px;border-radius:12px;background:#dcfce7;color:#166534;font-size:12px}
+.pending{background:#fee2e2;color:#991b1b}
+.blank{background:#fef3c7;color:#92400e}
+.small{font-size:13px;color:#64748b}
+.footer{margin-top:42px;padding-top:16px;border-top:1px solid #d8dee9;color:#697386;font-size:13px}
+
+.logic{background:#f8fafc;border-left:5px solid #64748b;padding:14px 18px;margin:12px 0 20px}
+.logic-title{font-weight:700;color:#334155;margin-bottom:6px}
+</style>
+</head>
+<body><div class="page">
+<h1>sp_LoadFromFPS Baseline with SQL, Logic Explanation, and .NET Placeholders</h1>
+<div class="subtitle">Working SQL Logic to .NET conversion baseline. Each executable object includes original SQL where available, a simple developer-friendly logic explanation, and a blank .NET placeholder.</div>
+<div class="warn"><strong>Freeze Rule:</strong> Do not mark this baseline final until every SQL placeholder is replaced with exact SQL extracted from SSMS.</div>
+<div class="box"><strong>Original Logic Preservation:</strong> This document keeps the original SQL Server logic as the baseline. Target PostgreSQL/fpsyear adaptations will be handled later during conversion design.</div>
+<h2>1. Object Inventory</h2>
+<table><tr><th>Object</th><th>Original SQL Code</th><th>Converted .NET Code</th><th>Notes</th></tr><tr><td><code>FPSYYYY.dbo.sp_deleteFPSTotals</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Dynamic FPS yearly database procedure.</td></tr>
+<tr><td><code>FPSYYYY.dbo.sp_createFPSTotals</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Dynamic FPS yearly database procedure.</td></tr>
+<tr><td><code>MAB_Archive_CM.dbo.sp_LoadFromFPS</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Main active orchestration procedure.</td></tr>
+<tr><td><code>MAB_Archive_CM.dbo.sp_DeleteYearsFPSData</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Direct child procedure.</td></tr>
+<tr><td><code>MAB_Archive_CM.dbo.sp_AddYearsFPSData</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Direct child procedure / loader orchestrator.</td></tr>
+<tr><td><code>MAB_Archive_CM.dbo.sp_AddMY_tlkpProgram</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Called by sp_AddYearsFPSData.</td></tr>
+<tr><td><code>MAB_Archive_CM.dbo.sp_AddG_tlkpProject</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Called by sp_AddYearsFPSData.</td></tr>
+<tr><td><code>MAB_Archive_CM.dbo.sp_AddMY_tlkpProject</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Called by sp_AddYearsFPSData.</td></tr>
+<tr><td><code>MAB_Archive_CM.dbo.sp_AddMY_FPSYearTotals</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Called by sp_AddYearsFPSData.</td></tr>
+<tr><td><code>MAB_Archive_CM.dbo.sp_AddMY_MonthlyOutput</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Called by sp_AddYearsFPSData.</td></tr>
+<tr><td><code>MAB_Archive_CM.dbo.sp_AddMY_MonthlyTime</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Called by sp_AddYearsFPSData.</td></tr>
+<tr><td><code>MAB_Archive_CM.dbo.sp_AddMY_Proj_Invoice</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Called by sp_AddYearsFPSData.</td></tr>
+<tr><td><code>MAB_Archive_CM.dbo.sp_AddMY_Proj_SubContract</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Called by sp_AddYearsFPSData.</td></tr>
+<tr><td><code>MAB_Archive_CM.dbo.sp_AddMY_ProjectMonthFinal</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Called by sp_AddYearsFPSData.</td></tr>
+<tr><td><code>MAB_Archive_CM.dbo.sp_AddMY_tblAdditionalCosts</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Called by sp_AddYearsFPSData.</td></tr>
+<tr><td><code>MAB_Archive_CM.dbo.sp_AddMY_tblAnimalReq</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Called by sp_AddYearsFPSData.</td></tr>
+<tr><td><code>MAB_Archive_CM.dbo.sp_AddMY_tblContract</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Called by sp_AddYearsFPSData.</td></tr>
+<tr><td><code>MAB_Archive_CM.dbo.sp_AddMY_tblStaffJob</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Called by sp_AddYearsFPSData.</td></tr>
+<tr><td><code>MAB_Archive_CM.dbo.sp_AddMY_TimeCostCalcs</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Called by sp_AddYearsFPSData.</td></tr>
+<tr><td><code>MAB_Archive_CM.dbo.sp_AddMY_tlkpTestReqmt</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Called by sp_AddYearsFPSData.</td></tr>
+<tr><td><code>MAB_Archive_CM.dbo.sp_addMY_YearDetails</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Called by sp_AddYearsFPSData.</td></tr>
+<tr><td><code>MAB_Archive_CM.dbo.sp_addMY_WorkGroupGrade</code></td><td>SQL placeholder</td><td>.NET placeholder</td><td>Called by sp_AddYearsFPSData.</td></tr>
+<tr><td><code>MAB_Archive_CM.dbo.sp_addMY_ProfitCentreGrade</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Called by sp_AddYearsFPSData.</td></tr>
+<tr><td><code>MAB_Archive_CM.dbo.sp_AddMY_tblProfitCentre</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Called by sp_AddYearsFPSData.</td></tr>
+<tr><td><code>MAB_Archive_CM.dbo.sp_AddMY_TestOrProduct</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Called by sp_AddYearsFPSData.</td></tr>
+<tr><td><code>MAB_Archive_CM.dbo.sp_AddMY_Staff</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Called by sp_AddYearsFPSData.</td></tr>
+<tr><td><code>MAB_Archive_CM.dbo.sp_AddMY_Workgroup</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Called by sp_AddYearsFPSData.</td></tr>
+<tr><td><code>MAB_Archive_CM.dbo.sp_AddMY_tblAnimals</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Called by sp_AddYearsFPSData.</td></tr>
+<tr><td><code>MAB_Archive_CM.dbo.sp_AddMY_tlkpProject_All</code></td><td>SQL embedded</td><td>.NET placeholder</td><td>Called by sp_AddYearsFPSData and directly by Jan-Apr partial path.</td></tr></table>
+<h2>2. Call Chain</h2>
+<pre>sp_LoadFromFPS
+├── FPSYYYY.dbo.sp_deleteFPSTotals
+├── FPSYYYY.dbo.sp_createFPSTotals
+├── sp_DeleteYearsFPSData
+├── sp_AddYearsFPSData
+│   └── sp_AddMY_* loader procedures
+└── sp_AddMY_tlkpProject_All  -- Jan-Apr direct partial refresh path</pre>
+<h2>3. SQL and .NET Code Baseline Sections</h2>
+
+<h3>FPSYYYY.dbo.sp_deleteFPSTotals</h3>
+<p class="small">Dynamic FPS yearly database procedure.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div class="">
+<pre><code>CREATE procEDURE [dbo].[sp_deleteFPSTotals] AS
+DELETE from FPSYearTotals</code></pre>
+</div>
+<div class="logic"><div class="logic-title">Logic Explanation for Developers</div>
+<ul>
+<li>Deletes all rows from <code>FPSYearTotals</code> in the selected FPS yearly database.</li>
+<li>This is executed before <code>sp_createFPSTotals</code> so totals are rebuilt from scratch.</li>
+<li>In the original SQL Server design, the selected yearly database is dynamic, for example <code>FPS2025.dbo.sp_deleteFPSTotals</code>.</li>
+</ul>
+<div class="warn"><strong>Developer Note:</strong> Preserve the original delete-before-create behavior. Do not apply target PostgreSQL year/fpsyear redesign changes inside this baseline.</div>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>FPSYYYY.dbo.sp_createFPSTotals</h3>
+<p class="small">Dynamic FPS yearly database procedure.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div class="">
+<pre><code>CREATE procEDURE [dbo].[sp_createFPSTotals] AS
+INSERT INTO FPSYearTotals
+SELECT DISTINCT 
+    tlkpProject.ParentProject,
+    tlkpProject.Program, 
+    CASE WHEN qryTotalAdditionalCosts.TotalAdditionalCosts IS NULL THEN 0 ELSE qryTotalAdditionalCosts.TotalAdditionalCosts END AS TotalAdditionalCosts, 
+    CASE WHEN qryTotalAnimalCosts.TotalAnimalCosts IS NULL THEN 0 ELSE qryTotalAnimalCosts.TotalAnimalCosts END AS TotalAnimalCosts, 
+    CASE WHEN qryTotalStaffCosts.TotalStaffCosts IS NULL THEN 0 ELSE qryTotalStaffCosts.TotalStaffCosts END AS TotalStaffCosts, 
+    CASE WHEN qryTotalTestCosts.TotalTestCosts IS NULL THEN 0 ELSE qryTotalTestCosts.TotalTestCosts END AS TotalTestCosts, 
+    CASE WHEN qryTotalAdditionalCosts.TotalAdditionalCosts IS NULL THEN 0 ELSE qryTotalAdditionalCosts.TotalAdditionalCosts END + 
+    CASE WHEN qryTotalAnimalCosts.TotalAnimalCosts IS NULL THEN 0 ELSE qryTotalAnimalCosts.TotalAnimalCosts END  + 
+    CASE WHEN qryTotalStaffCosts.TotalStaffCosts IS NULL THEN 0 ELSE qryTotalStaffCosts.TotalStaffCosts END +
+    CASE WHEN qryTotalTestCosts.TotalTestCosts IS NULL THEN 0 ELSE qryTotalTestCosts.TotalTestCosts END +
+    CASE WHEN tlkpProject.PlanCaseworkDebit IS NULL THEN 0 ELSE tlkpProject.PlanCaseworkDebit END AS TotalCosts,
+    tlkpProject.CustIncome, 
+    tlkpProject.TransferIncome, 
+    custincome+Transferincome AS TotalIncome, 
+    tlkpProject.Budget_CVL,
+    tlkpProject.Profit as RequiredProfit, 
+    tlkpProject.Manager, 
+    tlkpProject.Customer, 
+    tlkpProject.ProjectStatus, 
+    CASE WHEN tlkpProject.PVSIncome IS NULL THEN 0 ELSE tlkpProject.PVSIncome END AS PVSIncome,
+    CASE WHEN tlkpProject.PlanCaseworkDebit IS NULL THEN 0 ELSE tlkpProject.PlanCaseworkDebit END AS PlanCaseworkDebit,
+    CASE WHEN qryTotalStaffCosts.TotalPayCosts IS NULL THEN 0 ELSE qryTotalStaffCosts.TotalPayCosts END AS TotalPayCosts
+FROM (((tlkpProject 
+LEFT JOIN qryTotalAdditionalCosts ON tlkpProject.ParentProject = qryTotalAdditionalCosts.JobCode) 
+LEFT JOIN qryTotalAnimalCosts ON tlkpProject.ParentProject = qryTotalAnimalCosts.JobCode) 
+LEFT JOIN qryTotalStaffCosts ON tlkpProject.ParentProject = qryTotalStaffCosts.Jobcode) 
+LEFT JOIN qryTotalTestCosts ON tlkpProject.ParentProject = qryTotalTestCosts.JobCode</code></pre>
+</div>
+<div class="logic"><div class="logic-title">Logic Explanation for Developers</div>
+<ul>
+<li>Recreates <code>FPSYearTotals</code> in the selected FPS yearly database.</li>
+<li>Starts from <code>tlkpProject</code> and left joins cost summary sources.</li>
+<li>Calculates additional costs, animal costs, staff costs, test costs, total costs, income values, required profit, PVS income, casework debit, and pay costs.</li>
+<li>Uses explicit null-to-zero handling through <code>CASE WHEN ... IS NULL THEN 0</code>.</li>
+</ul>
+<div class="warn"><strong>Developer Note:</strong> Null handling and left joins are critical. The .NET conversion must preserve the same total calculations.</div>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>MAB_Archive_CM.dbo.sp_LoadFromFPS</h3>
+<p class="small">Main active orchestration procedure.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div class="">
+<pre><code>CREATE PROCEDURE [dbo].[sp_LoadFromFPS]
+AS
+BEGIN
+declare @cFPSVersion varchar(20)
+declare @FPSYear int
+declare @RC int
+Declare @sql VARCHAR(50)
+
+SET @FPSYear=DatePart(yyyy,Getdate())-1
+SET @cFPSVersion=&#x27;FPS&#x27;+cast(@FPSYear as varchar(4))
+
+if (SELECT Count(*) FROM master.dbo.sysdatabases where name =@cFPSVersion)&gt;0
+begin
+set @sql = @cFPSVersion +&#x27;.dbo.sp_deleteFPSTotals&#x27;
+Exec @sql
+set @sql = @cFPSVersion +&#x27;.dbo.sp_createFPSTotals&#x27;
+Exec @sql    
+Exec sp_DeleteYearsFPSData @cFPSVersion, @FPSYear
+Exec sp_AddYearsFPSData @cFPSVersion, @FPSYear
+end
+
+if DATEPART(month, GETDATE()) &gt;4
+begin
+SET @FPSYear=DatePart(yyyy,Getdate())
+SET @cFPSVersion=&#x27;FPS&#x27;+cast(@FPSYear as varchar(4))
+
+if (SELECT Count(*) FROM master.dbo.sysdatabases where name =@cFPSVersion)&gt;0
+begin
+set @sql = @cFPSVersion +&#x27;.dbo.sp_deleteFPSTotals&#x27;
+Exec @sql
+set @sql = @cFPSVersion +&#x27;.dbo.sp_createFPSTotals&#x27;
+Exec @sql   
+Exec sp_DeleteYearsFPSData @cFPSVersion, @FPSYear
+Exec sp_AddYearsFPSData @cFPSVersion, @FPSYear
+end
+end
+else
+begin
+SET @FPSYear=DatePart(yyyy,Getdate())
+SET @cFPSVersion=&#x27;FPS&#x27;+cast(@FPSYear as varchar(4))
+
+if (SELECT Count(*) FROM Master.dbo.sysdatabases where name =@cFPSVersion)&gt;0
+begin  
+DELETE from MY_tlkpProject_all WHERE Year=@FPSYear
+Exec sp_AddMY_tlkpProject_All @cFPSVersion, @FPSYear
+end
+end
+END</code></pre>
+</div>
+<div class="logic"><div class="logic-title">Logic Explanation for Developers</div>
+<ul>
+<li>This is the main MAB Archive load orchestration procedure.</li>
+<li>It first calculates the previous calendar year and constructs the FPS source database name, for example <code>FPS2024</code>.</li>
+<li>If that previous-year FPS database exists, it rebuilds FPS totals and then deletes/reloads the archive data for that year.</li>
+<li>It then checks the current month.</li>
+<li>If the current month is greater than April, it performs the same full process for the current year.</li>
+<li>If the current month is January-April, it does not run a full current-year archive reload. It only refreshes <code>MY_tlkpProject_all</code> for the current year.</li>
+</ul>
+<div class="warn"><strong>Developer Note:</strong> The Jan-Apr partial refresh path is business-critical. Do not convert it into a full current-year refresh.</div>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>MAB_Archive_CM.dbo.sp_DeleteYearsFPSData</h3>
+<p class="small">Direct child procedure.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div class="">
+<pre><code>CREATE PROCEDURE [dbo].[sp_DeleteYearsFPSData]
+(@cFPSVersion as varchar(20), @FPSYear as int)
+AS
+BEGIN
+declare @sqlstr as varchar(800)
+
+set @sqlstr =&#x27;DELETE FROM G_tlkpProject
+WHERE G_tlkpProject.ParentProject
+IN(SELECT ParentProject
+FROM &#x27;+ @cFPSVersion + &#x27;.dbo.tlkpProject)&#x27;
+Exec(@sqlstr)
+
+DELETE from MY_FPSYearTotals WHERE Year=@FPSYear
+DELETE from MY_MonthlyOutput WHERE Year=@FPSYear
+DELETE from MY_Monthlytime WHERE Year=@FPSYear
+DELETE from MY_Proj_invoice WHERE Year=@FPSYear
+DELETE from MY_Proj_SubContract WHERE Year=@FPSYear
+DELETE from MY_ProjectMonthFinal WHERE Year=@FPSYear
+DELETE from MY_tblAdditionalCosts WHERE Year=@FPSYear
+DELETE from MY_tblAnimalReq WHERE Year=@FPSYear
+DELETE from MY_tblContract WHERE Year=@FPSYear
+DELETE from MY_tblStaffJob WHERE Year=@FPSYear
+DELETE from MY_TimeCostCalcs WHERE Year=@FPSYear
+DELETE from MY_tlkpTestReqmt WHERE Year=@FPSYear
+DELETE from MY_tlkpProject WHERE Year=@FPSYear
+DELETE from MY_tlkpProgram WHERE Year=@FPSYear
+DELETE from tlkpYear WHERE Year=@FPSYear
+DELETE from MY_ProfitCentreGrade WHERE Year=@FPSYear
+DELETE from MY_WorkGroupGrade WHERE Year=@FPSYear
+DELETE from MY_tblProfitCentre WHERE Year=@FPSYear
+DELETE from MY_TestOrProduct WHERE Year=@FPSYear
+DELETE from MY_Staff WHERE Year=@FPSYear
+DELETE from MY_Workgroup WHERE Year=@FPSYear
+DELETE from MY_tblAnimals WHERE Year=@FPSYear
+DELETE from MY_tlkpProject_all WHERE Year=@FPSYear
+END</code></pre>
+</div>
+<div class="logic"><div class="logic-title">Logic Explanation for Developers</div>
+<ul>
+<li>Deletes existing MAB Archive data for the supplied <code>@FPSYear</code>.</li>
+<li>First dynamically deletes <code>G_tlkpProject</code> rows whose parent projects exist in the selected FPS database.</li>
+<li>Then deletes year-scoped rows from multiple <code>MY_*</code> archive tables.</li>
+<li>This prepares the archive tables for reload by <code>sp_AddYearsFPSData</code>.</li>
+</ul>
+<div class="warn"><strong>Developer Note:</strong> Delete order and target tables must be preserved. The dynamic <code>G_tlkpProject</code> delete is part of the baseline behavior.</div>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>MAB_Archive_CM.dbo.sp_AddYearsFPSData</h3>
+<p class="small">Direct child procedure / loader orchestrator.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div class="">
+<pre><code>CREATE PROCEDURE [dbo].[sp_AddYearsFPSData]
+(@cFPSVersion as varchar(20), @vcFPSYear as int)
+AS
+BEGIN
+Exec sp_AddMY_tlkpProgram @cFPSVersion, @vcFPSYear
+Exec sp_AddG_tlkpProject @cFPSVersion
+Exec sp_AddMY_tlkpProject @cFPSVersion, @vcFPSYear
+Exec sp_AddMY_FPSYearTotals @cFPSVersion, @vcFPSYear
+Exec sp_AddMY_MonthlyOutput @cFPSVersion, @vcFPSYear
+Exec sp_AddMY_MonthlyTime @cFPSVersion, @vcFPSYear
+Exec sp_AddMY_Proj_Invoice @cFPSVersion, @vcFPSYear
+Exec sp_AddMY_Proj_SubContract @cFPSVersion, @vcFPSYear
+Exec sp_AddMY_ProjectMonthFinal @cFPSVersion, @vcFPSYear
+Exec sp_AddMY_tblAdditionalCosts @cFPSVersion, @vcFPSYear
+Exec sp_AddMY_tblAnimalReq @cFPSVersion, @vcFPSYear
+Exec sp_AddMY_tblContract @cFPSVersion, @vcFPSYear
+Exec sp_AddMY_tblStaffJob @cFPSVersion, @vcFPSYear
+Exec sp_AddMY_TimeCostCalcs @cFPSVersion, @vcFPSYear
+Exec sp_AddMY_tlkpTestReqmt @cFPSVersion, @vcFPSYear
+Exec sp_addMY_YearDetails @cFPSVersion, @vcFPSYear
+Exec sp_addMY_WorkGroupGrade @cFPSVersion, @vcFPSYear
+Exec sp_addMY_ProfitCentreGrade @cFPSVersion, @vcFPSYear
+Exec sp_AddMY_tblProfitCentre @cFPSVersion, @vcFPSYear
+Exec sp_AddMY_TestOrProduct @cFPSVersion, @vcFPSYear
+Exec sp_AddMY_Staff @cFPSVersion, @vcFPSYear
+Exec sp_AddMY_Workgroup @cFPSVersion, @vcFPSYear
+Exec sp_AddMY_tblAnimals @cFPSVersion, @vcFPSYear
+Exec sp_AddMY_tlkpProject_All @cFPSVersion, @vcFPSYear
+END</code></pre>
+</div>
+<div class="logic"><div class="logic-title">Logic Explanation for Developers</div>
+<ul>
+<li>This is the full-year archive load orchestrator.</li>
+<li>It calls each <code>sp_AddMY_*</code> loader procedure in a fixed sequence.</li>
+<li>Each child loader copies data from the selected FPS yearly database into the corresponding MAB Archive table.</li>
+<li>The supplied <code>@cFPSVersion</code> controls the source database, and <code>@vcFPSYear</code> tags the archive rows with the year.</li>
+</ul>
+<div class="warn"><strong>Developer Note:</strong> Preserve this exact loader sequence unless a later validation proves it can safely change.</div>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>MAB_Archive_CM.dbo.sp_AddMY_tlkpProgram</h3>
+<p class="small">Called by sp_AddYearsFPSData.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div>
+<pre><code>--PL 01.10.24  --Updated to run from DEFACPVWPSQL001 via linked server to VLA88  --    CREATE procedure [dbo].[sp_AddMY_tlkpProgram] (@cFPSVersion as VarChar(20), @vcFPSYear as int)  AS  declare @sqlstr as varchar(800)  set @sqlstr =&#x27;INSERT INTO  MY_tlkpProgram(Year,   [ProgramNo] ,   [ProgramName],   [Directorate] ,   [MINIM] ,   [SECTOR_NAME] ,   [CUSTOMER] ,   [Target] ,   [Manager]    )  SELECT &#x27; + Cast(@vcFPSYear as VarChar(4)) +&#x27; as year,    [ProgramNo] ,   [ProgramName],   [Directorate] ,   [MINIM] ,   [SECTOR_NAME] ,   [CUSTOMER] ,   [Target] ,   [Manager]       FROM  &#x27;+ @cFPSVersion + &#x27;.dbo.tlkpProgram&#x27;    exec(@sqlstr)</code></pre>
+</div>
+<div class="logic"><div class="logic-title">Logic Explanation for Developers</div>
+<ul>
+<li>Placeholder for the original SQL of this loader.</li>
+<li>Expected role from the call chain: copy program reference data from the selected FPS yearly database into the matching MAB Archive table for the supplied year.</li>
+</ul>
+<div class="warn"><strong>Developer Note:</strong> Replace this explanation with exact details once the SQL is supplied from SSMS.</div>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>MAB_Archive_CM.dbo.sp_AddG_tlkpProject</h3>
+<p class="small">Called by sp_AddYearsFPSData.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div>
+<pre><code>--PL 01.10.2024  --Updated to run from DEFACPVWPSQL001 via linked server to VLA88  --    CREATE procedure [dbo].[sp_AddG_tlkpProject] (@cFPSVersion as varchar(20))  AS  declare @sqlstr as varchar(800)  set @sqlstr =&#x27;INSERT INTO  G_tlkpProject(  ParentProject, ProjectTitle, CostBookNo, Disease, Contract,       ShortTitle, ProjectStatus)  SELECT ParentProject, ProjectTitle, CostBookNo, Disease, Contract,       ShortTitle, ProjectStatus  FROM  &#x27;+ @cFPSVersion + &#x27;.dbo.tlkpProject  GROUP BY ParentProject, ProjectTitle, CostBookNo, Disease,       Contract, ShortTitle,ProjectStatus&#x27;        Exec(@sqlstr)</code></pre>
+</div>
+<div class="logic"><div class="logic-title">Logic Explanation for Developers</div>
+<ul>
+<li>Placeholder for the original SQL of this loader.</li>
+<li>Expected role from the call chain: copy or maintain global project reference data in <code>G_tlkpProject</code> from the selected FPS source database.</li>
+</ul>
+<div class="warn"><strong>Developer Note:</strong> Exact source columns and grouping must be confirmed from SSMS SQL text.</div>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>MAB_Archive_CM.dbo.sp_AddMY_tlkpProject</h3>
+<p class="small">Called by sp_AddYearsFPSData.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div>
+<pre><code>--PL 01.10.24  --Updated to run from DEFACPVWPSQL001 via linked server to VLA88  --    CREATE procedure [dbo].[sp_AddMY_tlkpProject] (@cFPSVersion as VarChar(20), @vcFPSYear as int)  AS  declare @sqlstr as varchar(2000)  set @sqlstr =&#x27;INSERT INTO  MY_tlkpProject(Year,   [ParentProject] ,   [Program] ,   [Customer] ,   [Manager],   [TransferIncome],   [CustIncome],   [WIP_EOY] ,   [WIP_Limit] ,   [WIP_Current] ,   [ProjectStatus] ,   [DateCreated] ,   [FECcost],   [Profit] ,   [Budget_CVL] ,   [CaseworkSub] ,   [PVSIncome] ,   [PlanCaseworkDebit],   [Disease] ,   [Contract] ,   [Finished]  ,   [Comments] ,   [CarryOver] ,   [IsDefraProject] ,   [CostCentre] ,   [OracleProjectCode] ,   [SubAccountCode] ,   [ProjectGroup] ,   [IncomeAccountCode]    )  SELECT &#x27; + Cast(@vcFPSYear as VarChar(4)) +&#x27; as year,    [ParentProject] ,   [Program] ,   [Customer] ,   [Manager],   [TransferIncome],   [CustIncome],   [WIP_EOY] ,   [WIP_Limit] ,   [WIP_Current] ,   [ProjectStatus] ,   [DateCreated] ,   [FECcost],   [Profit] ,   [Budget_CVL] ,   [CaseworkSub] ,   [PVSIncome] ,   [PlanCaseworkDebit],   [Disease] ,   [Contract] ,   [Finished]  ,   [Comments] ,   [CarryOver] ,   [IsDefraProject] ,   [CostCentre] ,   [OracleProjectCode] ,   [SubAccountCode] ,   [ProjectGroup] ,   [IncomeAccountCode]      FROM  &#x27;+ @cFPSVersion + &#x27;.dbo.tlkpProject&#x27;    exec (@sqlstr)</code></pre>
+</div>
+<div class="logic"><div class="logic-title">Logic Explanation for Developers</div>
+<ul>
+<li>Placeholder for the original SQL of this loader.</li>
+<li>Expected role from the call chain: copy project master data for the supplied year from the selected FPS database into MAB Archive.</li>
+</ul>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>MAB_Archive_CM.dbo.sp_AddMY_FPSYearTotals</h3>
+<p class="small">Called by sp_AddYearsFPSData.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div>
+<pre><code>--PL 01.10.24  --Updated to run on DEFACPVWPSQL001 via linked server to VLA88  --      CREATE procedure [dbo].[sp_AddMY_FPSYearTotals] (@cFPSVersion as varchar(20), @vcFPSYear as int)  AS  declare @sqlstr as varchar(800)  set @sqlstr =&#x27;INSERT INTO  MY_FPSYearTotals  SELECT &#x27; + Cast(@vcFPSYear as varChar(10)) +&#x27;,    [ParentProject] ,   [Program] ,   [TotalAdditionalCosts] ,   [TotalAnimalCosts] ,   [TotalStaffCosts] ,   [TotalTestCosts],   [TotalCosts] ,   [CustIncome] ,   [TransferIncome] ,   [TotalIncome] ,   [Budget_CVL],   [RequiredProfit],   [Manager] ,   [Customer] ,   [ProjectStatus] ,   [PVSIncome] ,   [PlanCaseworkDebit],   TotalPayCosts  FROM  &#x27;+ @cFPSVersion + &#x27;.dbo.FPSYearTotals&#x27;  Exec(@sqlstr)</code></pre>
+</div>
+<div class="logic"><div class="logic-title">Logic Explanation for Developers</div>
+<ul>
+<li>Placeholder for the original SQL of this loader.</li>
+<li>Expected role from the call chain: copy rebuilt <code>FPSYearTotals</code> from the selected FPS database into the yearly MAB Archive totals table.</li>
+</ul>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>MAB_Archive_CM.dbo.sp_AddMY_MonthlyOutput</h3>
+<p class="small">Called by sp_AddYearsFPSData.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div>
+<pre><code>--PL 01.10.24  --Updated to run from DEFACPVWPSQL001 via linked server to VLA88  --    CREATE procedure [dbo].[sp_AddMY_MonthlyOutput] (@cFPSVersion as VarChar(20), @vcFPSYear as int)  AS  declare @sqlstr as varchar(800)  set @sqlstr =&#x27;INSERT INTO  MY_MonthlyOutput  SELECT &#x27; + Cast(@vcFPSYear as VarChar(4)) +&#x27;,    [TestCode] ,   [Buyer] ,   [Month] ,   [WorkGroup] ,   [Volume] ,   [WGBuyer]     FROM  &#x27;+ @cFPSVersion + &#x27;.dbo.MonthlyOutput&#x27;  Exec(@sqlstr)</code></pre>
+</div>
+<div class="logic"><div class="logic-title">Logic Explanation for Developers</div>
+<ul>
+<li>Placeholder for the original SQL of this loader.</li>
+<li>Expected role from the call chain: copy monthly output records from the selected FPS database into MAB Archive for the supplied year.</li>
+</ul>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>MAB_Archive_CM.dbo.sp_AddMY_MonthlyTime</h3>
+<p class="small">Called by sp_AddYearsFPSData.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div>
+<pre><code>--PL 01.10.24  --Updated to run from DEFACPVWPSQL001 via linked server to VLA88  --    CREATE procedure [dbo].[sp_AddMY_MonthlyTime] (@cFPSVersion as VarChar(20), @vcFPSYear as int)  AS  declare @sqlstr as varchar(800)  set @sqlstr =&#x27;INSERT INTO  MY_MonthlyTime  SELECT &#x27; + Cast(@vcFPSYear as VarChar(4)) +&#x27;,    [PACTStaffID] ,   [TimeCode] ,   [Month] ,   [ParentProject] ,   [WorkGroup] ,   [Hours]     FROM  &#x27;+ @cFPSVersion + &#x27;.dbo.MonthlyTime&#x27;  Exec(@sqlstr)</code></pre>
+</div>
+<div class="logic"><div class="logic-title">Logic Explanation for Developers</div>
+<ul>
+<li>Placeholder for the original SQL of this loader.</li>
+<li>Expected role from the call chain: copy monthly time records from the selected FPS database into MAB Archive for the supplied year.</li>
+</ul>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>MAB_Archive_CM.dbo.sp_AddMY_Proj_Invoice</h3>
+<p class="small">Called by sp_AddYearsFPSData.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div>
+<pre><code>--PL 01.10.2024  --Updated to run from DEFACPVWPSQL001 via linked server to VLA88  --    CREATE procedure [dbo].[sp_AddMY_Proj_Invoice] (@cFPSVersion as VarChar(20), @vcFPSYear as int)  AS  declare @sqlstr as varchar(800)  set @sqlstr =&#x27;INSERT INTO  MY_Proj_Invoice  SELECT &#x27; + Cast(@vcFPSYear as VarChar(4)) +&#x27;,       [ProjectParent] ,   [Month] ,   [Amount] ,   [CostOfWork] ,   [WIP] ,   [ProfitLoss] ,   [Detail] ,   [InvoiceCounter] ,   [Type]     FROM  &#x27;+ @cFPSVersion + &#x27;.dbo.Proj_Invoice&#x27;  Exec(@sqlstr)</code></pre>
+</div>
+<div class="logic"><div class="logic-title">Logic Explanation for Developers</div>
+<ul>
+<li>Placeholder for the original SQL of this loader.</li>
+<li>Expected role from the call chain: copy project invoice records from the selected FPS database into MAB Archive for the supplied year.</li>
+</ul>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>MAB_Archive_CM.dbo.sp_AddMY_Proj_SubContract</h3>
+<p class="small">Called by sp_AddYearsFPSData.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div>
+<pre><code>--PL 01.10.24   --Updated to run from DEFACPVWPSQL001 via linked server to VLA88  --      CREATE procedure [dbo].[sp_AddMY_Proj_SubContract] (@cFPSVersion as VarChar(20), @vcFPSYear as int)  AS  declare @sqlstr as varchar(800)  set @sqlstr =&#x27;INSERT INTO  MY_Proj_SubContract               ([Year]             ,[SubContCounter]             ,[Project]             ,[TestJob]             ,[Month]             ,[Amount]             ,[WorkGroup]             ,[AcctCode]             ,[Supplier]             ,[Description]             ,[SupplierNumber]             ,[DailyRate]             ,[AnimalDays])    SELECT &#x27; + Cast(@vcFPSYear as VarChar(4)) +&#x27;,       [SubContCounter] ,   [Project] ,   [TestJob] ,   [Month] ,   [Amount],   [WorkGroup] ,   [AcctCode] ,   [Supplier] ,   [Description] ,   [SupplierNumber] ,   [DailyRate] ,   [AnimalDays]     FROM  &#x27;+ @cFPSVersion + &#x27;.dbo.Proj_SubContract&#x27;  Exec(@sqlstr)</code></pre>
+</div>
+<div class="logic"><div class="logic-title">Logic Explanation for Developers</div>
+<ul>
+<li>Placeholder for the original SQL of this loader.</li>
+<li>Expected role from the call chain: copy project subcontract records from the selected FPS database into MAB Archive for the supplied year.</li>
+</ul>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>MAB_Archive_CM.dbo.sp_AddMY_ProjectMonthFinal</h3>
+<p class="small">Called by sp_AddYearsFPSData.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div>
+<pre><code>--PL 01.10.2024  --Updated to run from DEFACPVWPSQL001 via linked servef to VLA88  --      CREATE procedure [dbo].[sp_AddMY_ProjectMonthFinal] (@cFPSVersion as VarChar(20), @vcFPSYear as int)  AS  declare @sqlstr as varchar(1200)  set @sqlstr =&#x27;INSERT INTO  MY_ProjectMonthFinal  SELECT &#x27; + Cast(@vcFPSYear as VarChar(4)) +&#x27;,       [Project] ,   [MonthNo] ,   [PeriodName] ,   [CumFlag] ,   [CostProfile] ,   [Subcontracts] ,   [Animals] ,   [NonAnimals] ,   [TimeCosts] ,   [TransferCosts] ,   [TotalCost] ,   [Invoices] ,   [COIW] ,   [PortSales],   [CumCost],   [CumProfile] ,   [SumOfCostProfile] ,   [CumInvoices] ,   [CumCOIW] ,   [CumPortSales] ,   [MstoneDue] ,   [Due__Done] ,   [OnTime] ,   [SumOfMstoneDue] ,   [SumOfDue__Done] ,   [SumOfOnTime],   [CWDebit] ,   [CWCredit] ,   [CumCWDebit] ,   [CumCWCredit] ,   [TotalHours] ,   [CumTotalHours] ,   [CumSubContracts] ,   [CumTestCosts],   PayCosts ,   cumPayCosts     FROM  &#x27;+ @cFPSVersion + &#x27;.dbo.ProjectMonthFinal&#x27;  Exec(@sqlstr)</code></pre>
+</div>
+<div class="logic"><div class="logic-title">Logic Explanation for Developers</div>
+<ul>
+<li>Placeholder for the original SQL of this loader.</li>
+<li>Expected role from the call chain: copy <code>ProjectMonthFinal</code> from the selected FPS database into MAB Archive for the supplied year.</li>
+</ul>
+<div class="warn"><strong>Developer Note:</strong> This loader imports the already-prepared final project/month summary output from FPS source. It does not itself rebuild the FPS summary chain.</div>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>MAB_Archive_CM.dbo.sp_AddMY_tblAdditionalCosts</h3>
+<p class="small">Called by sp_AddYearsFPSData.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div>
+<pre><code>--PL 01.10.24  --Updated to run from DEFACPVWPSQL001 voia linked server to VLA88  --    CREATE procedure [dbo].[sp_AddMY_tblAdditionalCosts] (@cFPSVersion as VarChar(20), @vcFPSYear as int)  AS  declare @sqlstr as varchar(800)  set @sqlstr =&#x27;INSERT INTO  MY_tblAdditionalCosts( [Year]  ,   [JobCode] ,   [Account],   [Description] ,   [ItemCost] ,   [Freq],   [Supplier])  SELECT &#x27; + Cast(@vcFPSYear as VarChar(4)) +&#x27;,    [JobCode] ,   [Account],   [Description] ,   [ItemCost] ,   [Freq],   [Supplier]   FROM  &#x27;+ @cFPSVersion + &#x27;.dbo.tblAdditionalCosts&#x27;  Exec(@sqlstr)</code></pre>
+</div>
+<div class="logic"><div class="logic-title">Logic Explanation for Developers</div>
+<ul>
+<li>Placeholder for the original SQL of this loader.</li>
+<li>Expected role from the call chain: copy additional cost records from selected FPS source into MAB Archive for the supplied year.</li>
+</ul>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>MAB_Archive_CM.dbo.sp_AddMY_tblAnimalReq</h3>
+<p class="small">Called by sp_AddYearsFPSData.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div>
+<pre><code>--PL 01.10.24  --Updated to run frm DEFACPVWPSQL001 via linked server to VLA88  --    CREATE procedure [dbo].[sp_AddMY_tblAnimalReq] (@cFPSVersion as VarChar(20), @vcFPSYear as int)  AS  declare @sqlstr as varchar(800)  set @sqlstr =&#x27;INSERT INTO  MY_tblAnimalReq(   [Year],    [JobCode] ,   [AnimalType] ,   [NumberOfDays] ,   [NumberOfAnimals] )  SELECT &#x27; + Cast(@vcFPSYear as VarChar(4)) +&#x27;,    [JobCode] ,   [AnimalType] ,   [NumberOfDays] ,   [NumberOfAnimals]       FROM  &#x27;+ @cFPSVersion + &#x27;.dbo.tblAnimalReq&#x27;  Exec(@sqlstr)</code></pre>
+</div>
+<div class="logic"><div class="logic-title">Logic Explanation for Developers</div>
+<ul>
+<li>Placeholder for the original SQL of this loader.</li>
+<li>Expected role from the call chain: copy animal requirement records from selected FPS source into MAB Archive for the supplied year.</li>
+</ul>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>MAB_Archive_CM.dbo.sp_AddMY_tblContract</h3>
+<p class="small">Called by sp_AddYearsFPSData.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div>
+<pre><code>--PL 01.10.24  --Amended to run on DEFACPVWPSQL001 via linked server to VLA88  --    CREATE procedure [dbo].[sp_AddMY_tblContract] (@cFPSVersion as VarChar(20), @vcFPSYear as int)  AS  declare @sqlstr as varchar(800)  set @sqlstr =&#x27;INSERT INTO  MY_tblContract   SELECT &#x27; + Cast(@vcFPSYear as VarChar(4)) +&#x27;,    [ContractNo]  ,   [Category]  ,   [Manager]  ,   [Customer] ,   [Title]  ,   [RegisteredDate]  ,   [StartDate]  ,   [EndDate] ,   [ContractDoc],   [Duration]    FROM  &#x27;+ @cFPSVersion + &#x27;.dbo.tblContract&#x27;  Exec(@sqlstr)</code></pre>
+</div>
+<div class="logic"><div class="logic-title">Logic Explanation for Developers</div>
+<ul>
+<li>Placeholder for the original SQL of this loader.</li>
+<li>Expected role from the call chain: copy contract records from selected FPS source into MAB Archive for the supplied year.</li>
+</ul>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>MAB_Archive_CM.dbo.sp_AddMY_tblStaffJob</h3>
+<p class="small">Called by sp_AddYearsFPSData.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div>
+<pre><code>--PL 01.10.24  --Amended to run on DEFACPVWPSQL001 via linked server to VLA88  --    CREATE procedure [dbo].[sp_AddMY_tblStaffJob] (@cFPSVersion as VarChar(20), @vcFPSYear as int)  AS  declare @sqlstr as varchar(800)  set @sqlstr =&#x27;INSERT INTO  MY_tblStaffJob(   [Year],   [StaffID] ,   [Jobcode] ,   [plannedhours] )  SELECT &#x27; + Cast(@vcFPSYear as VarChar(4)) +&#x27;,    [StaffID] ,   [Jobcode] ,   [plannedhours]       FROM  &#x27;+ @cFPSVersion + &#x27;.dbo.tblStaffJob&#x27;  Exec(@sqlstr)</code></pre>
+</div>
+<div class="logic"><div class="logic-title">Logic Explanation for Developers</div>
+<ul>
+<li>Placeholder for the original SQL of this loader.</li>
+<li>Expected role from the call chain: copy staff job plan/assignment records from selected FPS source into MAB Archive for the supplied year.</li>
+</ul>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>MAB_Archive_CM.dbo.sp_AddMY_TimeCostCalcs</h3>
+<p class="small">Called by sp_AddYearsFPSData.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div>
+<pre><code>--PL 01.10.24  --Updated to run on DEFACPVWPSQL001 via linked server to VLA88  --    CREATE procedure [dbo].[sp_AddMY_TimeCostCalcs] (@cFPSVersion as VarChar(20), @vcFPSYear as int)  AS  declare @sqlstr as varchar(800)  set @sqlstr =&#x27;INSERT INTO  MY_TimeCostCalcs  SELECT &#x27; + Cast(@vcFPSYear as VarChar(4)) +&#x27;,    [WorkGroup] ,   [JobCode] ,   [Project],   [Month] ,   [StaffID] ,   [GradeCode] ,   [Name] ,   [ChargeRate],   [Class] ,   [Time],   [Cost] ,   [Division] ,   [JobCodeOld] ,   [Pay] ,   [NonPay] ,   [Overhead]      FROM  &#x27;+ @cFPSVersion + &#x27;.dbo.TimeCostCalcs&#x27;  Exec(@sqlstr)</code></pre>
+</div>
+<div class="logic"><div class="logic-title">Logic Explanation for Developers</div>
+<ul>
+<li>Placeholder for the original SQL of this loader.</li>
+<li>Expected role from the call chain: copy <code>TimeCostCalcs</code> from selected FPS source into MAB Archive for the supplied year.</li>
+</ul>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>MAB_Archive_CM.dbo.sp_AddMY_tlkpTestReqmt</h3>
+<p class="small">Called by sp_AddYearsFPSData.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div>
+<pre><code>--PL 01.10.24  --Updated to run on DEFACPVWPSQL001 via loinked server to VLA88  --    CREATE procedure [dbo].[sp_AddMY_tlkpTestReqmt] (@cFPSVersion as VarChar(20), @vcFPSYear as int)  AS  declare @sqlstr as varchar(800)  set @sqlstr =&#x27;INSERT INTO  MY_tlkpTestReqmt(                year,    [TestCode] ,   [Buyer] ,   [UnitPrice],   [NoRequired] ,   [ProjectBuyerCode] ,   [TestBuyerCode])  SELECT &#x27; + Cast(@vcFPSYear as VarChar(4)) +&#x27;,    [TestCode] ,   [Buyer] ,   [UnitPrice],   [NoRequired] ,   [ProjectBuyerCode] ,   [TestBuyerCode]  FROM  &#x27;+ @cFPSVersion + &#x27;.dbo.tlkpTestReqmt&#x27;  Exec(@sqlstr)</code></pre>
+</div>
+<div class="logic"><div class="logic-title">Logic Explanation for Developers</div>
+<ul>
+<li>Placeholder for the original SQL of this loader.</li>
+<li>Expected role from the call chain: copy test requirement reference rows from selected FPS source into MAB Archive for the supplied year.</li>
+</ul>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>MAB_Archive_CM.dbo.sp_addMY_YearDetails</h3>
+<p class="small">Called by sp_AddYearsFPSData.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div>
+<pre><code>--PL 01.10.24  --Updarted to run from DEFACPVWPSQL001 via linked server to VLA88  --    CREATE PROCEDURE [dbo].[sp_addMY_YearDetails] (@cFPSVersion as VarChar(20), @vcFPSYear as int)  AS  declare @sqlstr as varchar(800)  set @sqlstr =&#x27;INSERT INTO  tlkpYear   Select &#x27; + Cast(@vcFPSYear as VarChar(4)) + &#x27;, [db_var_value] from &#x27; + @cFPSVersion + &#x27;.dbo.tblDB_Variables  Where db_Var_name=&#x27;&#x27;month&#x27;&#x27;&#x27;  Exec(@sqlstr)</code></pre>
+</div>
+<div class="logic"><div class="logic-title">Logic Explanation for Developers</div>
+<ul>
+<li>Placeholder for the original SQL of this loader.</li>
+<li>Expected role from the call chain: copy or create year detail records for the supplied archive year.</li>
+</ul>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>MAB_Archive_CM.dbo.sp_addMY_WorkGroupGrade</h3>
+<p class="small">Called by sp_AddYearsFPSData.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div>
+<pre><code>CREATE procEDURE [dbo].[sp_deleteFPSTotals] AS
+DELETE from FPSYearTotals</code></pre>
+</div>
+<div class="logic"><div class="logic-title">Logic Explanation for Developers</div>
+<ul>
+<li>Placeholder for the original SQL of this loader.</li>
+<li>Expected role from the call chain: copy workgroup grade reference data from selected FPS source into MAB Archive for the supplied year.</li>
+</ul>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>MAB_Archive_CM.dbo.sp_addMY_ProfitCentreGrade</h3>
+<p class="small">Called by sp_AddYearsFPSData.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div>
+<pre><code>--PL 01.10.24
+--Amended to run on DEFACPVWPSQL001 via linked server to VLA88
+--
+CREATE procedure [dbo].[sp_AddMY_ProfitCentreGrade] (@cFPSVersion as VarChar(20), @vcFPSYear as int)
+AS
+declare @sqlstr as varchar(800)
+set @sqlstr =&#x27;INSERT INTO  MY_ProfitCentreGrade(
+   [Year] ,
+   [PCGrade] ,
+   [DivisionGrade] ,
+   [GradeCode],
+   [ProfitCentre] ,
+   [ChargeRate] ,
+   [DirectRate]  ,
+   [PayRate]  ,
+   [NPR] ,
+   [OHR]
+)
+SELECT &#x27; + Cast(@vcFPSYear as VarChar(4)) +&#x27; as year,
+   [PCGrade] ,
+   [DivisionGrade] ,
+   [GradeCode],
+   [ProfitCentre] ,
+   [ChargeRate] ,
+   [DirectRate]  ,
+   [PayRate]  ,
+   [NPR] ,
+   [OHR]
+FROM  &#x27;+ @cFPSVersion + &#x27;.dbo.ProfitCentreGrade&#x27;
+
+exec(@sqlstr)</code></pre>
+</div>
+<div class="logic"><div class="logic-title">Logic Explanation for Developers</div>
+<ul>
+<li>Placeholder for the original SQL of this loader.</li>
+<li>Expected role from the call chain: copy profit centre grade reference data from selected FPS source into MAB Archive for the supplied year.</li>
+</ul>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>MAB_Archive_CM.dbo.sp_AddMY_tblProfitCentre</h3>
+<p class="small">Called by sp_AddYearsFPSData.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div>
+<pre><code>--PL 01.10.24  --Amended to run on DEFACPVWPSQL001 via linked server to VLA88  --      CREATE procedure [dbo].[sp_AddMY_tblProfitCentre] (@cFPSVersion as VarChar(20), @vcFPSYear as int)  AS  declare @sqlstr as varchar(800)  set @sqlstr =&#x27;INSERT INTO  MY_tblProfitCentre  SELECT &#x27; + Cast(@vcFPSYear as VarChar(4)) + &#x27;,       [ProfitCentre],   [ProfitCentreName] L,   [Division] ,   [CONTTARGET]  ,   [ProfitCentreHead] ,   [DivisionID]      FROM  &#x27;+ @cFPSVersion + &#x27;.dbo.tblkpProfitCentre&#x27;  Exec(@sqlstr)</code></pre>
+</div>
+<div class="logic"><div class="logic-title">Logic Explanation for Developers</div>
+<ul>
+<li>Placeholder for the original SQL of this loader.</li>
+<li>Expected role from the call chain: copy profit centre reference data from selected FPS source into MAB Archive for the supplied year.</li>
+</ul>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>MAB_Archive_CM.dbo.sp_AddMY_TestOrProduct</h3>
+<p class="small">Called by sp_AddYearsFPSData.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div>
+<pre><code>--PL 01.10.24  --Amended to run on DEFACPVWPSQL001 via linked server to VLA88  --    CREATE procedure [dbo].[sp_AddMY_TestOrProduct] (@cFPSVersion as varchar(20), @vcFPSYear as int)  AS  declare @sqlstr as varchar(800)  set @sqlstr =&#x27;INSERT INTO  MY_TestOrProduct  SELECT &#x27; + Cast(@vcFPSYear as varChar(10)) +&#x27;         ,[ItemCode]        ,[ItemDescription]        ,[TestManager]        ,[JobStatus]        ,[UnitPriceVLA]        ,[PriceAHVG]        ,[Owner]        ,[ChargeMethod]        ,[ShortDescription]        ,[DefraUnitPrice]  FROM  &#x27;+ @cFPSVersion + &#x27;.dbo.TestOrProduct&#x27;  Exec(@sqlstr)</code></pre>
+</div>
+<div class="logic"><div class="logic-title">Logic Explanation for Developers</div>
+<ul>
+<li>Placeholder for the original SQL of this loader.</li>
+<li>Expected role from the call chain: copy test/product reference data from selected FPS source into MAB Archive for the supplied year.</li>
+</ul>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>MAB_Archive_CM.dbo.sp_AddMY_Staff</h3>
+<p class="small">Called by sp_AddYearsFPSData.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div>
+<pre><code>--PL 04.10.24  --Updated to run on DEFACPVWPSQL001 via linked server to VLA88  --PL 07.10.24  --Updated to avoid using views in VLA88.FPSyyyy    CREATE procedure [dbo].[sp_AddMY_Staff] (@cFPSVersion as VarChar(20), @vcFPSYear as int)  AS  declare @sqlstr as varchar(2000)  set @sqlstr =&#x27;INSERT INTO  MY_Staff(    [Year]        ,[StaffID]        ,[Name]        ,[WorkGroupGrade]        ,[Title]        ,[PersonStatus]        ,[PersonClass]        ,[HrsPaid]        ,[Leave]        ,[SickSpecial]        ,[HrsAvail]     )  SELECT &#x27; + Cast(@vcFPSYear as VarChar(4)) +&#x27; as year,           WGE.PactID as [StaffID]        ,ISNULL(E.Lastname,&#x27;&#x27;&#x27;&#x27;) + &#x27;&#x27;, &#x27;&#x27; + ISNULL(E.firstname,&#x27;&#x27;&#x27;&#x27;) as Name        ,WGE.[WorkGroupGrade]        ,E.[Title]        ,WGE.[PersonStatus]        ,WGE.[PersonClass]        ,WGE.[HrsPaid]        ,WGE.[Leave]        ,WGE.[SickSpecial]        ,WGE.[HrsAvail]    FROM &#x27;+ @cFPSVersion + &#x27;.dbo.tblWGEmployee as WGE, &#x27;+ @cFPSVersion + &#x27;.dbo.tblEmployee as E  WHERE WGE.SPNumber = E.SPNumber AND  WGE.WorkGroupGrade IN   (   SELECT WGG.WGGrade from &#x27;+ @cFPSVersion + &#x27;.dbo.WorkgroupGrade AS WGG   WHERE WGG.WorkGroup IN   (    SELECT WG.WorkGroup FROM &#x27;+ @cFPSVersion + &#x27;.dbo.WorkGroup AS WG    WHERE WG.ProfitCentre IN    (     SELECT UPC.ProfitCentre FROM &#x27;+ @cFPSVersion + &#x27;.dbo.tblUser_ProfitCentre AS UPC     WHERE UPC.[User_ID] IN     (      SELECT U.[User_ID] FROM &#x27;+ @cFPSVersion + &#x27;.dbo.tblUsers AS U WHERE U.UserName=USER_NAME(1)     )    )   )  )&#x27;    exec(@sqlstr)</code></pre>
+</div>
+<div class="logic"><div class="logic-title">Logic Explanation for Developers</div>
+<ul>
+<li>Placeholder for the original SQL of this loader.</li>
+<li>Expected role from the call chain: copy staff reference data from selected FPS source into MAB Archive for the supplied year.</li>
+</ul>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>MAB_Archive_CM.dbo.sp_AddMY_Workgroup</h3>
+<p class="small">Called by sp_AddYearsFPSData.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div>
+<pre><code>--PL 01.10.24
+--Amended to run on DEFACPVWPSQL001 via linked server to VLA88
+--
+CREATE procedure [dbo].[sp_AddMY_WorkGroup] (@cFPSVersion as VarChar(20), @vcFPSYear as int)
+AS
+declare @sqlstr as varchar(800)
+set @sqlstr =&#x27;INSERT INTO  MY_WorkGroup(
+      [Year]
+     ,[WorkGroup]
+     ,[ProfitCentre]
+     ,[CostCentre]
+     ,[Owner]
+     ,[Description]
+     ,[CentralOverhead]
+     ,[SendEmail]
+     ,[COS90]
+     ,[CostCentreOld]
+     ,[Email_Recipient]
+)
+SELECT &#x27; + Cast(@vcFPSYear as VarChar(4)) +&#x27; as year,
+     [WorkGroup]
+    ,[ProfitCentre]
+    ,[CostCentre]
+    ,[Owner]
+    ,[Description]
+    ,[CentralOverhead]
+    ,[SendEmail]
+    ,[COS90]
+    ,[CostCentreOld]
+    ,[Email_Recipient]
+FROM  &#x27;+ @cFPSVersion + &#x27;.dbo.WorkGroup&#x27;
+
+exec(@sqlstr)</code></pre>
+</div>
+<div class="logic"><div class="logic-title">Logic Explanation for Developers</div>
+<ul>
+<li>Placeholder for the original SQL of this loader.</li>
+<li>Expected role from the call chain: copy workgroup reference data from selected FPS source into MAB Archive for the supplied year.</li>
+</ul>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>MAB_Archive_CM.dbo.sp_AddMY_tblAnimals</h3>
+<p class="small">Called by sp_AddYearsFPSData.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div>
+<pre><code>--PL 01.10.24  --Amended to run on DEFACPVWPSQL001 via linked server to VLA88  --      CREATE procedure [dbo].[sp_AddMY_tblAnimals] (@cFPSVersion as VarChar(20), @vcFPSYear as int)  AS  declare @sqlstr as varchar(800)  set @sqlstr =&#x27;INSERT INTO  MY_tblAnimals(   [Year]     ,[AnimalType]        ,[Species]        ,[Security_Level]        ,[DailyRate]        ,[PlanByWeek]     , [DefraDailyRate]     )  SELECT &#x27; + Cast(@vcFPSYear as VarChar(4)) +&#x27;         ,[AnimalType]        ,[Species]        ,[Security_Level]        ,[DailyRate]        ,[PlanByWeek]     , [DefraDailyRate]   FROM  &#x27;+ @cFPSVersion + &#x27;.dbo.tblAnimals&#x27;  Exec(@sqlstr)</code></pre>
+</div>
+<div class="logic"><div class="logic-title">Logic Explanation for Developers</div>
+<ul>
+<li>Placeholder for the original SQL of this loader.</li>
+<li>Expected role from the call chain: copy animal reference data from selected FPS source into MAB Archive for the supplied year.</li>
+</ul>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h3>MAB_Archive_CM.dbo.sp_AddMY_tlkpProject_All</h3>
+<p class="small">Called by sp_AddYearsFPSData and directly by Jan-Apr partial path.</p>
+<div class="status">Original SQL Code: Embedded</div>
+<div>
+<pre><code>--PL 01.10.24  --Amended to run on DEFACPVWPSQL001 via linked server to VLA88  --N.B. server name (if needed) passed in as part of @cFPSVersion param  --    CREATE procedure [dbo].[sp_AddMY_tlkpProject_All] (@cFPSVersion as VarChar(20), @vcFPSYear as int)  AS  declare @sqlstr as varchar(2000)  set @sqlstr =&#x27;INSERT INTO  MY_tlkpProject_all(Year,   [ParentProject] ,   [Program] ,   [Customer] ,   [Manager],   [TransferIncome],   [CustIncome],   [WIP_EOY] ,   [WIP_Limit] ,   [WIP_Current] ,   [ProjectStatus] ,   [DateCreated] ,   [FECcost],   [Profit] ,   [Budget_CVL] ,   [CaseworkSub] ,   [PVSIncome] ,   [PlanCaseworkDebit],   [Disease] ,   [Contract] ,   [Finished]  ,   [Comments] ,   [CarryOver] ,   [IsDefraProject] ,   [CostCentre] ,   [OracleProjectCode] ,   [SubAccountCode] ,   [ProjectGroup] ,   [IncomeAccountCode]    )  SELECT &#x27; + Cast(@vcFPSYear as VarChar(4)) +&#x27; as year,    [ParentProject] ,   [Program] ,   [Customer] ,   [Manager],   [TransferIncome],   [CustIncome],   [WIP_EOY] ,   [WIP_Limit] ,   [WIP_Current] ,   [ProjectStatus] ,   [DateCreated] ,   [FECcost],   [Profit] ,   [Budget_CVL] ,   [CaseworkSub] ,   [PVSIncome] ,   [PlanCaseworkDebit],   [Disease] ,   [Contract] ,   [Finished]  ,   [Comments] ,   [CarryOver] ,   [IsDefraProject] ,   [CostCentre] ,   [OracleProjectCode] ,   [SubAccountCode] ,   [ProjectGroup] ,   [IncomeAccountCode]      FROM  &#x27;+ @cFPSVersion + &#x27;.dbo.tlkpProject&#x27;    exec (@sqlstr)</code></pre>
+</div>
+<div class="logic"><div class="logic-title">Logic Explanation for Developers</div>
+<ul>
+<li>Placeholder for the original SQL of this loader.</li>
+<li>Called as the final loader inside <code>sp_AddYearsFPSData</code>.</li>
+<li>Also called directly by <code>sp_LoadFromFPS</code> in the Jan-Apr partial current-year refresh path.</li>
+<li>Expected role: refresh yearly project lookup data in <code>MY_tlkpProject_all</code>.</li>
+</ul>
+<div class="warn"><strong>Developer Note:</strong> This is used in both full refresh and partial refresh paths, so its SQL must be captured exactly before final freeze.</div>
+</div>
+<div class="status blank">Converted .NET Code: Placeholder</div>
+<div class="placeholder">
+<pre><code>// TODO: Converted .NET code will be added after original SQL baseline is frozen.</code></pre>
+</div>
+
+
+<h2>4. Remaining SQL Extraction Required</h2>
+<div class="warn">
+<strong>Important:</strong> All currently supplied <code>sp_AddMY_*</code> loader procedure SQL has been embedded. Nested dependency extraction for these loader procedures returned no rows, confirming no additional stored procedures, functions, or triggers were found.
+</div>
+
+
+<h2>5. SQL Extraction Status After Loader Update</h2>
+<div class="good">
+<strong>Loader SQL embedded:</strong> The uploaded SSMS extraction has been applied to the <code>sp_LoadFromFPS</code> baseline. The major <code>sp_AddMY_*</code> and related loader procedures supplied in the extract now have original SQL code embedded.
+</div>
+<div class="warn">
+<strong>Next validation required:</strong> Run nested dependency extraction for these loader procedures to confirm whether any of them call additional stored procedures, functions, or triggers. If no nested executable dependencies are found, the executable SQL baseline can be considered complete for this process.
+</div>
+
+
+<h2>6. Final Nested Dependency Check Result</h2>
+<div class="good">
+<strong>Confirmed from SSMS dependency extraction:</strong> The nested dependency checks for the <code>sp_AddMY_*</code> loader procedures returned no rows. Therefore, no additional nested stored procedures, SQL functions, or triggers were found under the <code>sp_LoadFromFPS</code> loader chain.
+</div>
+<div class="box">
+<strong>Final Executable SQL Scope Position:</strong> The executable SQL conversion scope for <code>sp_LoadFromFPS</code> is now limited to the main procedure, its direct child procedures, the dynamic FPS totals procedures, and the listed loader procedures already embedded in this document. Remaining referenced objects are tables/views and are data dependencies only.
+</div>
+
+<div class="footer">Generated as a careful working template. Missing SQL must be filled only from exact SSMS extraction.</div>
+</div></body></html>
