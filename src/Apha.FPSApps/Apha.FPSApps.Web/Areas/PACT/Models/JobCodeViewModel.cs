@@ -8,7 +8,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
     {
         [Display(Name = "Job Code")]
         [Required(ErrorMessage = "Job Code is required")]
-        [StringLength(50)]       
+        [StringLength(50)]
         [GridColumn(Order = 1, Width = 296, Type = GridColumnType.Text, IsFilterable = true)]
         public string JobCodeId { get; set; } = null!;
 
@@ -18,17 +18,17 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         public string? ParentProject { get; set; }
 
         [Display(Name = "Work Group")]
-        [StringLength(50)]       
+        [StringLength(50)]
         [GridColumn(Order = 4, Width = 296, Type = GridColumnType.Text, IsFilterable = true)]
         public string? JobCodeWorkGroup { get; set; }
 
         [Display(Name = "Type")]
-        [StringLength(15)]       
+        [StringLength(15)]
         [GridColumn(Order = 3, Width = 296, Type = GridColumnType.Text, IsFilterable = true)]
         public string? Type { get; set; }
 
         [Display(Name = "Job Code Name")]
-        [StringLength(255)]        
+        [StringLength(255)]
         [GridColumn(Order = 2, Width = 296, Type = GridColumnType.Text, IsFilterable = true)]
         public string? JobCodeName { get; set; }
     }

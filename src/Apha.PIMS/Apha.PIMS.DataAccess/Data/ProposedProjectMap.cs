@@ -15,7 +15,7 @@ namespace Apha.PIMS.DataAccess.Data
 
             entity.ToTable("tblproposedproject", "mabarchive");
 
-            entity.HasIndex(e => e.Parentproject, "project_index").IsUnique();
+            entity.HasIndex(e => e.Parentproject, "uq_tblproposedproject_parentproject").IsUnique();
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Costbookno)

@@ -1,4 +1,4 @@
-﻿using Apha.FPS.Core.Entities;
+using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Pagination;
 
 namespace Apha.FPS.Core.Interfaces
@@ -14,5 +14,7 @@ namespace Apha.FPS.Core.Interfaces
         Task<bool> DeleteEmployeeAsync(string spNumber);
         Task<IEnumerable<Manager>> GetAllManagersAsync();
         Task<IEnumerable<Manager>> GetAllPactManagersAsync();
+        Task<IEnumerable<WorkGroupPerson>> GetAllWorkGroupPersonAsync();
+        Task<PagedData<WorkGroupStaff>> GetWorkGroupStaffAsync(PaginationParameters<string> query, string? workGroup = null);
     }
 }

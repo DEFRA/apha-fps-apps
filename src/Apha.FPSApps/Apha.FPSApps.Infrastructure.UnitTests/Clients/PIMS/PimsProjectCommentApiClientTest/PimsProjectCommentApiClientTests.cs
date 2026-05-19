@@ -39,14 +39,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
             url = QueryStringHelper.AddQueryString(url, new { project, year });
             var commentResList = new List<CommentRes>
             {
-                new CommentRes { Commentno = 1, Project = project, Year = year, Topic = "Topic1", Comment = "Comment1" },
-                new CommentRes { Commentno = 2, Project = project, Year = year, Topic = "Topic2", Comment = "Comment2" }
+                new CommentRes { CommentNo = 1, Project = project, Year = year, Topic = "Topic1", Comment = "Comment1" },
+                new CommentRes { CommentNo = 2, Project = project, Year = year, Topic = "Topic2", Comment = "Comment2" }
             };
             var apiResponse = new ApiResponse<List<CommentRes>> { Success = true, Data = commentResList };
             var mappedDto = ApiResponseDto<List<CommentDto>>.SuccessResponse(new List<CommentDto>
             {
-                new CommentDto { Commentno = 1, Project = project, Year = year, Topic = "Topic1", Comment = "Comment1" },
-                new CommentDto { Commentno = 2, Project = project, Year = year, Topic = "Topic2", Comment = "Comment2" }
+                new CommentDto { CommentNo = 1, Project = project, Year = year, Topic = "Topic1", Comment = "Comment1" },
+                new CommentDto { CommentNo = 2, Project = project, Year = year, Topic = "Topic2", Comment = "Comment2" }
             });
 
             _http.GetAsync<List<CommentRes>>(url).Returns(apiResponse);
@@ -137,7 +137,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
             var apiResponse = new ApiResponse<List<CommentRes>>
             {
                 Success = true,
-                Data = new List<CommentRes> { new CommentRes { Commentno = 1, Project = project } }
+                Data = new List<CommentRes> { new CommentRes { CommentNo = 1, Project = project } }
             };
 
             _http.GetAsync<List<CommentRes>>(url).Returns(apiResponse);
@@ -186,25 +186,25 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
         public async Task GetByIdAsync_WithSuccessResponse_ReturnsMappedComment()
         {
             // Arrange
-            var commentno = 1;
-            var url = string.Format(PimsApiEndpoints.GetCommentById, commentno);
-            var commentRes = new CommentRes { Commentno = commentno, Project = "PP001", Topic = "Topic1", Comment = "Comment1" };
+            var CommentNo = 1;
+            var url = string.Format(PimsApiEndpoints.GetCommentById, CommentNo);
+            var commentRes = new CommentRes { CommentNo = CommentNo, Project = "PP001", Topic = "Topic1", Comment = "Comment1" };
             var apiResponse = new ApiResponse<CommentRes> { Success = true, Data = commentRes };
             var mappedDto = ApiResponseDto<CommentDto>.SuccessResponse(
-                new CommentDto { Commentno = commentno, Project = "PP001", Topic = "Topic1", Comment = "Comment1" }
+                new CommentDto { CommentNo = CommentNo, Project = "PP001", Topic = "Topic1", Comment = "Comment1" }
             );
 
             _http.GetAsync<CommentRes>(url).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<CommentDto>>(apiResponse).Returns(mappedDto);
 
             // Act
-            var result = await _client.GetByIdAsync(commentno);
+            var result = await _client.GetByIdAsync(CommentNo);
 
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.NotNull(result.Data);
-            Assert.Equal(commentno, result.Data.Commentno);
+            Assert.Equal(CommentNo, result.Data.CommentNo);
             await _http.Received(1).GetAsync<CommentRes>(url);
             _mapper.Received(1).Map<ApiResponseDto<CommentDto>>(apiResponse);
         }
@@ -213,8 +213,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
         public async Task GetByIdAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            var commentno = 999;
-            var url = string.Format(PimsApiEndpoints.GetCommentById, commentno);
+            var CommentNo = 999;
+            var url = string.Format(PimsApiEndpoints.GetCommentById, CommentNo);
             var errors = new List<ApiError>
             {
                 new ApiError { Message = "Comment not found", Code = "NOT_FOUND" }
@@ -231,7 +231,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
             _mapper.Map<ApiResponseDto<CommentDto>>(apiResponse).Returns(mappedDto);
 
             // Act
-            var result = await _client.GetByIdAsync(commentno);
+            var result = await _client.GetByIdAsync(CommentNo);
 
             // Assert
             Assert.NotNull(result);
@@ -247,12 +247,12 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
         public async Task GetByIdAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
         {
             // Arrange
-            var commentno = 1;
-            var url = string.Format(PimsApiEndpoints.GetCommentById, commentno);
+            var CommentNo = 1;
+            var url = string.Format(PimsApiEndpoints.GetCommentById, CommentNo);
             _http.GetAsync<CommentRes>(url).ThrowsAsync(new Exception("Network error"));
 
             // Act
-            var result = await _client.GetByIdAsync(commentno);
+            var result = await _client.GetByIdAsync(CommentNo);
 
             // Assert
             Assert.NotNull(result);
@@ -268,15 +268,15 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
         public async Task GetByIdAsync_WhenMapperThrowsException_ReturnsInternalError()
         {
             // Arrange
-            var commentno = 1;
-            var url = string.Format(PimsApiEndpoints.GetCommentById, commentno);
-            var apiResponse = new ApiResponse<CommentRes> { Success = true, Data = new CommentRes { Commentno = commentno } };
+            var CommentNo = 1;
+            var url = string.Format(PimsApiEndpoints.GetCommentById, CommentNo);
+            var apiResponse = new ApiResponse<CommentRes> { Success = true, Data = new CommentRes { CommentNo = CommentNo } };
 
             _http.GetAsync<CommentRes>(url).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<CommentDto>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
 
             // Act
-            var result = await _client.GetByIdAsync(commentno);
+            var result = await _client.GetByIdAsync(CommentNo);
 
             // Assert
             Assert.NotNull(result);
@@ -292,16 +292,16 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
         public async Task GetByIdAsync_EnsuresCorrectApiEndpoint_CallsWithCorrectUrl()
         {
             // Arrange
-            var commentno = 42;
-            var expectedUrl = string.Format(PimsApiEndpoints.GetCommentById, commentno);
-            var apiResponse = new ApiResponse<CommentRes> { Success = true, Data = new CommentRes { Commentno = commentno } };
-            var mappedDto = ApiResponseDto<CommentDto>.SuccessResponse(new CommentDto { Commentno = commentno });
+            var CommentNo = 42;
+            var expectedUrl = string.Format(PimsApiEndpoints.GetCommentById, CommentNo);
+            var apiResponse = new ApiResponse<CommentRes> { Success = true, Data = new CommentRes { CommentNo = CommentNo } };
+            var mappedDto = ApiResponseDto<CommentDto>.SuccessResponse(new CommentDto { CommentNo = CommentNo });
 
             _http.GetAsync<CommentRes>(expectedUrl).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<CommentDto>>(apiResponse).Returns(mappedDto);
 
             // Act
-            await _client.GetByIdAsync(commentno);
+            await _client.GetByIdAsync(CommentNo);
 
             // Assert
             await _http.Received(1).GetAsync<CommentRes>(Arg.Is<string>(s => s == expectedUrl));
@@ -315,12 +315,12 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
         public async Task CreateCommentAsync_WithSuccessResponse_ReturnsMappedComment()
         {
             // Arrange
-            var dto = new CommentDto { Project = "PP001", Year = 2024, Topic = "Topic1", Comment = "Comment1", Madeby = "User1" };
-            var request = new CommentReq { Project = "PP001", Year = 2024, Topic = "Topic1", Comment = "Comment1", Madeby = "User1" };
-            var commentRes = new CommentRes { Commentno = 1, Project = "PP001", Year = 2024, Topic = "Topic1", Comment = "Comment1" };
+            var dto = new CommentDto { Project = "PP001", Year = 2024, Topic = "Topic1", Comment = "Comment1", MadeBy = "User1" };
+            var request = new CommentReq { Project = "PP001", Year = 2024, Topic = "Topic1", Comment = "Comment1", MadeBy = "User1" };
+            var commentRes = new CommentRes { CommentNo = 1, Project = "PP001", Year = 2024, Topic = "Topic1", Comment = "Comment1" };
             var apiResponse = new ApiResponse<CommentRes> { Success = true, Data = commentRes };
             var mappedDto = ApiResponseDto<CommentDto>.SuccessResponse(
-                new CommentDto { Commentno = 1, Project = "PP001", Year = 2024, Topic = "Topic1", Comment = "Comment1" }
+                new CommentDto { CommentNo = 1, Project = "PP001", Year = 2024, Topic = "Topic1", Comment = "Comment1" }
             );
 
             _mapper.Map<CommentReq>(dto).Returns(request);
@@ -334,7 +334,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.NotNull(result.Data);
-            Assert.Equal(1, result.Data.Commentno);
+            Assert.Equal(1, result.Data.CommentNo);
             _mapper.Received(1).Map<CommentReq>(dto);
             await _http.Received(1).PostAsync<CommentReq, CommentRes>(PimsApiEndpoints.CreateComment, request);
             _mapper.Received(1).Map<ApiResponseDto<CommentDto>>(apiResponse);
@@ -449,29 +449,29 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
         public async Task UpdateCommentAsync_WithSuccessResponse_ReturnsMappedComment()
         {
             // Arrange
-            var commentno = 1;
-            var dto = new CommentDto { Commentno = commentno, Project = "PP001", Topic = "UpdatedTopic", Comment = "UpdatedComment" };
-            var request = new CommentReq { Commentno = commentno, Project = "PP001", Topic = "UpdatedTopic", Comment = "UpdatedComment" };
-            var commentRes = new CommentRes { Commentno = commentno, Project = "PP001", Topic = "UpdatedTopic", Comment = "UpdatedComment" };
+            var CommentNo = 1;
+            var dto = new CommentDto { CommentNo = CommentNo, Project = "PP001", Topic = "UpdatedTopic", Comment = "UpdatedComment" };
+            var request = new CommentReq { CommentNo = CommentNo, Project = "PP001", Topic = "UpdatedTopic", Comment = "UpdatedComment" };
+            var commentRes = new CommentRes { CommentNo = CommentNo, Project = "PP001", Topic = "UpdatedTopic", Comment = "UpdatedComment" };
             var apiResponse = new ApiResponse<CommentRes> { Success = true, Data = commentRes };
             var mappedDto = ApiResponseDto<CommentDto>.SuccessResponse(
-                new CommentDto { Commentno = commentno, Project = "PP001", Topic = "UpdatedTopic", Comment = "UpdatedComment" }
+                new CommentDto { CommentNo = CommentNo, Project = "PP001", Topic = "UpdatedTopic", Comment = "UpdatedComment" }
             );
 
             _mapper.Map<CommentReq>(dto).Returns(request);
-            _http.PutAsync<CommentReq, CommentRes>(string.Format(PimsApiEndpoints.UpdateComment, commentno), request).Returns(apiResponse);
+            _http.PutAsync<CommentReq, CommentRes>(string.Format(PimsApiEndpoints.UpdateComment, CommentNo), request).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<CommentDto>>(apiResponse).Returns(mappedDto);
 
             // Act
-            var result = await _client.UpdateCommentAsync(commentno, dto);
+            var result = await _client.UpdateCommentAsync(CommentNo, dto);
 
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.NotNull(result.Data);
-            Assert.Equal(commentno, result.Data.Commentno);
+            Assert.Equal(CommentNo, result.Data.CommentNo);
             _mapper.Received(1).Map<CommentReq>(dto);
-            await _http.Received(1).PutAsync<CommentReq, CommentRes>(string.Format(PimsApiEndpoints.UpdateComment, commentno), request);
+            await _http.Received(1).PutAsync<CommentReq, CommentRes>(string.Format(PimsApiEndpoints.UpdateComment, CommentNo), request);
             _mapper.Received(1).Map<ApiResponseDto<CommentDto>>(apiResponse);
         }
 
@@ -479,9 +479,9 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
         public async Task UpdateCommentAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            var commentno = 1;
-            var dto = new CommentDto { Commentno = commentno, Project = "PP001" };
-            var request = new CommentReq { Commentno = commentno, Project = "PP001" };
+            var CommentNo = 1;
+            var dto = new CommentDto { CommentNo = CommentNo, Project = "PP001" };
+            var request = new CommentReq { CommentNo = CommentNo, Project = "PP001" };
             var errors = new List<ApiError>
             {
                 new ApiError { Message = "Validation error", Code = "VALIDATION_ERROR" }
@@ -495,11 +495,11 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
             };
 
             _mapper.Map<CommentReq>(dto).Returns(request);
-            _http.PutAsync<CommentReq, CommentRes>(string.Format(PimsApiEndpoints.UpdateComment, commentno), request).Returns(apiResponse);
+            _http.PutAsync<CommentReq, CommentRes>(string.Format(PimsApiEndpoints.UpdateComment, CommentNo), request).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<CommentDto>>(apiResponse).Returns(mappedDto);
 
             // Act
-            var result = await _client.UpdateCommentAsync(commentno, dto);
+            var result = await _client.UpdateCommentAsync(CommentNo, dto);
 
             // Assert
             Assert.NotNull(result);
@@ -507,23 +507,23 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
             Assert.NotNull(result.Errors);
             Assert.Single(result.Errors);
             Assert.Equal("Validation error", result.Errors[0].Message);
-            await _http.Received(1).PutAsync<CommentReq, CommentRes>(string.Format(PimsApiEndpoints.UpdateComment, commentno), request);
+            await _http.Received(1).PutAsync<CommentReq, CommentRes>(string.Format(PimsApiEndpoints.UpdateComment, CommentNo), request);
         }
 
         [Fact]
         public async Task UpdateCommentAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
         {
             // Arrange
-            var commentno = 1;
-            var dto = new CommentDto { Commentno = commentno, Project = "PP001" };
-            var request = new CommentReq { Commentno = commentno, Project = "PP001" };
+            var CommentNo = 1;
+            var dto = new CommentDto { CommentNo = CommentNo, Project = "PP001" };
+            var request = new CommentReq { CommentNo = CommentNo, Project = "PP001" };
 
             _mapper.Map<CommentReq>(dto).Returns(request);
-            _http.PutAsync<CommentReq, CommentRes>(string.Format(PimsApiEndpoints.UpdateComment, commentno), request)
+            _http.PutAsync<CommentReq, CommentRes>(string.Format(PimsApiEndpoints.UpdateComment, CommentNo), request)
                 .ThrowsAsync(new Exception("Network error"));
 
             // Act
-            var result = await _client.UpdateCommentAsync(commentno, dto);
+            var result = await _client.UpdateCommentAsync(CommentNo, dto);
 
             // Assert
             Assert.NotNull(result);
@@ -539,12 +539,12 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
         public async Task UpdateCommentAsync_WhenMapperThrowsExceptionOnRequestMapping_ReturnsInternalError()
         {
             // Arrange
-            var commentno = 1;
-            var dto = new CommentDto { Commentno = commentno, Project = "PP001" };
+            var CommentNo = 1;
+            var dto = new CommentDto { CommentNo = CommentNo, Project = "PP001" };
             _mapper.Map<CommentReq>(dto).Throws(new AutoMapperMappingException("Mapping failed"));
 
             // Act
-            var result = await _client.UpdateCommentAsync(commentno, dto);
+            var result = await _client.UpdateCommentAsync(CommentNo, dto);
 
             // Assert
             Assert.NotNull(result);
@@ -560,19 +560,19 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
         public async Task UpdateCommentAsync_EnsuresCorrectApiEndpoint_CallsPutWithCorrectUrl()
         {
             // Arrange
-            var commentno = 42;
-            var expectedUrl = string.Format(PimsApiEndpoints.UpdateComment, commentno);
-            var dto = new CommentDto { Commentno = commentno };
-            var request = new CommentReq { Commentno = commentno };
-            var apiResponse = new ApiResponse<CommentRes> { Success = true, Data = new CommentRes { Commentno = commentno } };
-            var mappedDto = ApiResponseDto<CommentDto>.SuccessResponse(new CommentDto { Commentno = commentno });
+            var CommentNo = 42;
+            var expectedUrl = string.Format(PimsApiEndpoints.UpdateComment, CommentNo);
+            var dto = new CommentDto { CommentNo = CommentNo };
+            var request = new CommentReq { CommentNo = CommentNo };
+            var apiResponse = new ApiResponse<CommentRes> { Success = true, Data = new CommentRes { CommentNo = CommentNo } };
+            var mappedDto = ApiResponseDto<CommentDto>.SuccessResponse(new CommentDto { CommentNo = CommentNo });
 
             _mapper.Map<CommentReq>(dto).Returns(request);
             _http.PutAsync<CommentReq, CommentRes>(expectedUrl, request).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<CommentDto>>(apiResponse).Returns(mappedDto);
 
             // Act
-            await _client.UpdateCommentAsync(commentno, dto);
+            await _client.UpdateCommentAsync(CommentNo, dto);
 
             // Assert
             await _http.Received(1).PutAsync<CommentReq, CommentRes>(
@@ -589,8 +589,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
         public async Task DeleteCommentAsync_WithSuccessResponse_ReturnsTrue()
         {
             // Arrange
-            var commentno = 1;
-            var url = string.Format(PimsApiEndpoints.DeleteComment, commentno);
+            var CommentNo = 1;
+            var url = string.Format(PimsApiEndpoints.DeleteComment, CommentNo);
             var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
             var mappedDto = ApiResponseDto<bool>.SuccessResponse(true);
 
@@ -598,7 +598,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedDto);
 
             // Act
-            var result = await _client.DeleteCommentAsync(commentno);
+            var result = await _client.DeleteCommentAsync(CommentNo);
 
             // Assert
             Assert.NotNull(result);
@@ -612,8 +612,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
         public async Task DeleteCommentAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            var commentno = 999;
-            var url = string.Format(PimsApiEndpoints.DeleteComment, commentno);
+            var CommentNo = 999;
+            var url = string.Format(PimsApiEndpoints.DeleteComment, CommentNo);
             var errors = new List<ApiError>
             {
                 new ApiError { Message = "Comment not found", Code = "NOT_FOUND" }
@@ -630,7 +630,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedDto);
 
             // Act
-            var result = await _client.DeleteCommentAsync(commentno);
+            var result = await _client.DeleteCommentAsync(CommentNo);
 
             // Assert
             Assert.NotNull(result);
@@ -647,12 +647,12 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
         public async Task DeleteCommentAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
         {
             // Arrange
-            var commentno = 1;
-            var url = string.Format(PimsApiEndpoints.DeleteComment, commentno);
+            var CommentNo = 1;
+            var url = string.Format(PimsApiEndpoints.DeleteComment, CommentNo);
             _http.DeleteAsync<bool>(url).ThrowsAsync(new Exception("Network error"));
 
             // Act
-            var result = await _client.DeleteCommentAsync(commentno);
+            var result = await _client.DeleteCommentAsync(CommentNo);
 
             // Assert
             Assert.NotNull(result);
@@ -668,15 +668,15 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
         public async Task DeleteCommentAsync_WhenMapperThrowsException_ReturnsInternalError()
         {
             // Arrange
-            var commentno = 1;
-            var url = string.Format(PimsApiEndpoints.DeleteComment, commentno);
+            var CommentNo = 1;
+            var url = string.Format(PimsApiEndpoints.DeleteComment, CommentNo);
             var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
 
             _http.DeleteAsync<bool>(url).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
 
             // Act
-            var result = await _client.DeleteCommentAsync(commentno);
+            var result = await _client.DeleteCommentAsync(CommentNo);
 
             // Assert
             Assert.NotNull(result);
@@ -692,8 +692,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
         public async Task DeleteCommentAsync_EnsuresCorrectApiEndpoint_CallsDeleteWithCorrectUrl()
         {
             // Arrange
-            var commentno = 42;
-            var expectedUrl = string.Format(PimsApiEndpoints.DeleteComment, commentno);
+            var CommentNo = 42;
+            var expectedUrl = string.Format(PimsApiEndpoints.DeleteComment, CommentNo);
             var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
             var mappedDto = ApiResponseDto<bool>.SuccessResponse(true);
 
@@ -701,7 +701,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedDto);
 
             // Act
-            await _client.DeleteCommentAsync(commentno);
+            await _client.DeleteCommentAsync(CommentNo);
 
             // Assert
             await _http.Received(1).DeleteAsync<bool>(Arg.Is<string>(s => s == expectedUrl));

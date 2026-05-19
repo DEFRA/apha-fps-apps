@@ -28,6 +28,9 @@ namespace Apha.PACT.Application.Mappings
             CreateMap<Month, MonthDto>().ReverseMap();
             CreateMap<ProjectMonth, ProjectMonthDto>().ReverseMap();
             CreateMap<ProjectMonthFinal, ProjectMonthFinalDto>().ReverseMap();
+            CreateMap<MonthlyOutputLog, MonthlyOutputLogDto>().ReverseMap();
+            CreateMap<CalenderMonth, CalenderMonthDto>().ReverseMap();
+            CreateMap<WorkGroupTimeCode, WorkGroupTimeCodeDto>().ReverseMap();
         }
     }
 }

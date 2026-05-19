@@ -67,7 +67,8 @@
                                                    asp-route-programNo="@Model.SelectedProgramNo"
                                                    asp-route-projectCode="@Model.SelectedProjectCode">Animals</a>
                                             </li>
-                                            <li><a class="dropdown-item" href="#">Additional</a></li>
+                                            <li><a class="dropdown-item"  
+                                                       asp-area="FPS" asp-controller="ProjectAdditionalPlanActual" asp-action="Index" asp-route-programNo="@Model.SelectedProgramNo">Additional</a></li>
                                         </ul>
                                     </nav>
 

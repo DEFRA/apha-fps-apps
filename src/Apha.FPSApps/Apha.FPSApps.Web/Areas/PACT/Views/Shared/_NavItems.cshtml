@@ -37,7 +37,7 @@
                     <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow for dropdown menu" width="12" /></span>
                 </button>
                 <div class="dropdown-menu" id="work-group">
-                    <a class="dropdown-item" href="#">Work Group People</a>
+                    <a class="dropdown-item" asp-area="PACT" asp-controller="WorkGroupPeople" asp-action="Index">Work Group People</a>
                     <a class="dropdown-item" asp-area="PACT" asp-controller="TestCapability" asp-action="Index">Test Capabilities</a>
                     <a class="dropdown-item" asp-area="PACT" asp-controller="TestorProduct" asp-action="Index">Test Maintenance List</a>
                 </div>
@@ -68,7 +68,7 @@
                     <a class="dropdown-item" href="#">Output record data entry</a>
                     <a class="dropdown-item" href="#">Create &amp; email time &amp; output summaries</a>
                     <a class="dropdown-item" href="#">Create &amp; print individual COS90s</a>
-                    <a class="dropdown-item" href="#">Search Audit Log for Monthly Output Change</a>
+                    <a class="dropdown-item" asp-area="PACT" asp-controller="MonthlyOutputLog" asp-action="Index">Search Audit Log for Monthly Output Change</a>
                     <a class="dropdown-item" href="#">Search Audit Log for Monthly Time Change</a>
                 </div>
             </div>
