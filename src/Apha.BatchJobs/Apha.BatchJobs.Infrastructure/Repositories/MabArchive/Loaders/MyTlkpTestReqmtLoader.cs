@@ -11,26 +11,27 @@ internal sealed class MyTlkpTestReqmtDotNetLoader : MabArchiveDotNetLoaderBase
 
     protected override async Task<int> LoadWithDotNetAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
     {
-        return await context.Database.ExecuteSqlInterpolatedAsync($@"
-INSERT INTO mabarchive.my_tlkptestreqmt (
-    year,
-    testcode,
-    buyer,
-    unitprice,
-    norequired,
-    projectbuyercode,
-    testbuyercode
-)
-SELECT
-    {year},
-    t.testcode,
-    t.buyer,
-    t.unitprice,
-    t.norequired,
-    t.projectbuyercode,
-    t.testbuyercode
-FROM fps.tlkptestreqmt AS t
-WHERE t.fpsyear = {year};
-", cancellationToken);
+        var rows = await context.MaSrcTlkpTestReqmt
+            .AsNoTracking()
+            .Where(t => t.FpsYear == year)
+            .Select(t => new MaDstMyTlkpTestReqmt
+            {
+                Year = year,
+                TestCode = t.TestCode,
+                Buyer = t.Buyer,
+                UnitPrice = t.UnitPrice,
+                NoRequired = t.NoRequired,
+                ProjectBuyerCode = t.ProjectBuyerCode,
+                TestBuyerCode = t.TestBuyerCode
+            })
+            .ToListAsync(cancellationToken);
+
+        if (rows.Count == 0)
+        {
+            return 0;
+        }
+
+        await context.MaDstMyTlkpTestReqmt.AddRangeAsync(rows, cancellationToken);
+        return await context.SaveChangesAsync(cancellationToken);
     }
 }
