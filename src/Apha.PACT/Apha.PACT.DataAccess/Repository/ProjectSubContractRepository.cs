@@ -45,11 +45,14 @@ namespace Apha.PACT.DataAccess.Repository
         private static readonly IReadOnlyList<string> AnimalAcctCodes =
             new[] { "LargeAnimals", "SmallAnimals", "Mice" };
 
-        public async Task<PagedData<ProjectSubContract>> GetFpsProjectSubContractsAsync(PaginationParameters<string> query, string? project)
+        public async Task<PagedData<ProjectSubContract>> GetFpsProjectSubContractsAsync(PaginationParameters<string> query, string? project, bool filterByAnimalAcctCodes = false)
         {
-            IQueryable<ProjectSubContract> q = _context.ProjectSubContracts
-                .AsNoTracking()
-                .Where(s => AnimalAcctCodes.Contains(s.AcctCode));
+            IQueryable<ProjectSubContract> q = _context.ProjectSubContracts.AsNoTracking();
+
+            if (filterByAnimalAcctCodes)
+                q = q.Where(s => AnimalAcctCodes.Contains(s.AcctCode));
+            else
+                q = q.Where(s => !AnimalAcctCodes.Contains(s.AcctCode));
 
             if (!string.IsNullOrEmpty(project))
                 q = q.Where(s => s.Project == project);
@@ -61,11 +64,14 @@ namespace Apha.PACT.DataAccess.Repository
             return ApplyPaging(result, query.Page, query.PageSize);
         }
 
-        public async Task<decimal> GetFpsProjectSubContractTotalAmountAsync(string? project)
+        public async Task<decimal> GetFpsProjectSubContractTotalAmountAsync(string? project, bool filterByAnimalAcctCodes = false)
         {
-            IQueryable<ProjectSubContract> q = _context.ProjectSubContracts
-                .AsNoTracking()
-                .Where(s => AnimalAcctCodes.Contains(s.AcctCode));
+            IQueryable<ProjectSubContract> q = _context.ProjectSubContracts.AsNoTracking();
+
+            if (filterByAnimalAcctCodes)
+                q = q.Where(s => AnimalAcctCodes.Contains(s.AcctCode));
+            else
+                q = q.Where(s => !AnimalAcctCodes.Contains(s.AcctCode));
 
             if (!string.IsNullOrEmpty(project))
                 q = q.Where(s => s.Project == project);
