@@ -54,7 +54,7 @@ Validation outcome: Pass.
 Step 7 validation checklist:
 
 - Updated DI runtime selector to support DotNetLinq and Linq aliases.
-- Retired SQL runtime paths (SqlFiles and DotNetSql) after parity confirmation; source retained under docs/legacy for reference.
+- Retired SQL runtime paths (SqlFiles and DotNetSql) after parity confirmation; legacy source subsequently removed as part of docs cleanup (2026-05-19).
 - Updated RecreateSummaries debug launch profile to explicitly use DotNetLinq.
 - Updated BatchJobs README to document supported implementation mode names.
 - Verified no diagnostics errors in changed files.
