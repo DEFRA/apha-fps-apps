@@ -11,14 +11,15 @@ internal sealed class CreateProjectMonthCaseworkStep : RecreateSummariesExecutio
     {
         var db = context.DbContext;
 
+        // Strict SQL alignment: SELECT DISTINCT from qryProjectMonthCW, all fields, null handling.
         var rawRows = await db.RsQryProjectMonthCw
             .AsNoTracking()
             .Select(x => new
             {
                 Project = x.Project,
                 MonthNo = x.MonthNo,
-                CwDebit = x.CwDebit,
-                CwCredit = x.CwCredit
+                CwDebit = x.CwDebit ?? 0m,
+                CwCredit = x.CwCredit ?? 0m
             })
             .Distinct()
             .ToListAsync(cancellationToken);
@@ -27,8 +28,8 @@ internal sealed class CreateProjectMonthCaseworkStep : RecreateSummariesExecutio
         {
             Project = x.Project,
             MonthNo = x.MonthNo,
-            CwDebit = x.CwDebit.HasValue ? (double?)x.CwDebit.Value : null,
-            CwCredit = x.CwCredit.HasValue ? (double?)x.CwCredit.Value : null
+            CwDebit = (double)x.CwDebit,
+            CwCredit = (double)x.CwCredit
         }).ToList();
 
         await db.RsProjectMonthCasework.AddRangeAsync(rows, cancellationToken);

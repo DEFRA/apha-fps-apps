@@ -11,74 +11,54 @@ internal sealed class CreateTimeCostCalcsStep : RecreateSummariesExecutionStepBa
     {
         var db = context.DbContext;
 
-        // Read nullable money/decimal values first, then compute money fields in decimal
-        // to avoid provider SQL casts from money -> double precision.
+        // Strict SQL alignment: join order, null handling, all fields, calculation order.
         var rawRows = await (
             from pc in db.RsTblkpProfitCentre.AsNoTracking()
-            join pcg in db.RsProfitCentreGrade.AsNoTracking()
-                on pc.ProfitCentre equals pcg.ProfitCentre
-            join wgg in db.RsWorkGroupGrade.AsNoTracking()
-                on pcg.PcGrade equals wgg.ProfitCentreGrade
-            join vps in db.RsVpactTblStaff.AsNoTracking()
-                on wgg.WgGrade equals vps.WorkGroupGrade
-            join mt in db.RsMonthlyTime.AsNoTracking()
-                on vps.PactId equals mt.PactStaffId
-            join tcv in db.RsTimeCodeValid.AsNoTracking()
-                on new { mt.WorkGroup, mt.TimeCode, mt.ParentProject }
-                equals new { tcv.WorkGroup, tcv.TimeCode, tcv.ParentProject }
-            join p in db.RsTlkpProject.AsNoTracking()
-                on tcv.ParentProject equals p.ParentProject
-            join prg in db.RsTlkpProgram.AsNoTracking()
-                on p.Program equals prg.ProgramNo
+            join pcg in db.RsProfitCentreGrade.AsNoTracking() on pc.ProfitCentre equals pcg.ProfitCentre
+            join wgg in db.RsWorkGroupGrade.AsNoTracking() on pcg.PcGrade equals wgg.ProfitCentreGrade
+            join vps in db.RsVpactTblStaff.AsNoTracking() on wgg.WgGrade equals vps.WorkGroupGrade
+            join mt in db.RsMonthlyTime.AsNoTracking() on vps.PactId equals mt.PactStaffId
+            join tcv in db.RsTimeCodeValid.AsNoTracking() on new { mt.WorkGroup, mt.TimeCode, mt.ParentProject } equals new { tcv.WorkGroup, tcv.TimeCode, tcv.ParentProject }
+            join p in db.RsTlkpProject.AsNoTracking() on tcv.ParentProject equals p.ParentProject
+            join prg in db.RsTlkpProgram.AsNoTracking() on p.Program equals prg.ProgramNo
             select new
             {
-                WorkGroup = wgg.WorkGroup,
+                WorkGroup = wgg.WorkGroup ?? string.Empty,
                 JobCode = mt.TimeCode,
                 Project = tcv.ParentProject,
                 Month = mt.Month,
                 StaffId = vps.PactId,
-                GradeCode = wgg.GradeCode,
-                Name = vps.Name,
+                GradeCode = wgg.GradeCode ?? string.Empty,
+                Name = vps.Name ?? string.Empty,
                 IsCharge = prg.SectorName == "Charge",
-                Hours = mt.Hours,
-                ChargeRate = (p.IsDefraProject ?? 0) == 0 ? pcg.ChargeRate : pcg.DefraChargeRate,
-                Division = pc.Division,
-                PayRate = pcg.PayRate,
-                Npr = pcg.Npr,
-                Ohr = pcg.Ohr,
+                Hours = mt.Hours ?? 0d,
+                ChargeRate = (p.IsDefraProject ?? 0) == 0 ? (pcg.ChargeRate ?? 0m) : (pcg.DefraChargeRate ?? 0m),
+                Division = pc.Division ?? string.Empty,
+                PayRate = pcg.PayRate ?? 0m,
+                Npr = pcg.Npr ?? 0m,
+                Ohr = pcg.Ohr ?? 0m,
                 FpsYear = p.FpsYear
             })
             .ToListAsync(cancellationToken);
 
-        var rows = rawRows.Select(r =>
+        var rows = rawRows.Select(r => new RsTimeCostCalcsTable
         {
-            var hours = r.Hours ?? 0d;
-            var hoursDecimal = (decimal)hours;
-            var chargeRateDouble = (double)(r.ChargeRate ?? 0m);
-            var chargeRate = r.ChargeRate ?? 0m;
-            var payRate = r.PayRate ?? 0m;
-            var npr = r.Npr ?? 0m;
-            var ohr = r.Ohr ?? 0m;
-
-            return new RsTimeCostCalcsTable
-            {
-                WorkGroup = r.WorkGroup ?? string.Empty,
-                JobCode = r.JobCode,
-                Project = r.Project,
-                Month = r.Month,
-                StaffId = r.StaffId,
-                GradeCode = r.GradeCode,
-                Name = r.Name,
-                ChargeRate = r.ChargeRate,
-                Class = r.IsCharge ? "Charge" : "Free",
-                Time = r.Hours,
-                Cost = r.IsCharge ? hours * chargeRateDouble : 0d,
-                Division = r.Division,
-                Pay = hoursDecimal * payRate,
-                NonPay = hoursDecimal * npr,
-                Overhead = hoursDecimal * ohr,
-                FpsYear = r.FpsYear
-            };
+            WorkGroup = r.WorkGroup,
+            JobCode = r.JobCode,
+            Project = r.Project,
+            Month = r.Month,
+            StaffId = r.StaffId,
+            GradeCode = r.GradeCode,
+            Name = r.Name,
+            ChargeRate = r.ChargeRate,
+            Class = r.IsCharge ? "Charge" : "Free",
+            Time = r.Hours,
+            Cost = r.IsCharge ? r.Hours * (double)r.ChargeRate : 0d,
+            Division = r.Division,
+            Pay = (decimal)r.Hours * r.PayRate,
+            NonPay = (decimal)r.Hours * r.Npr,
+            Overhead = (decimal)r.Hours * r.Ohr,
+            FpsYear = r.FpsYear
         }).ToList();
 
         await db.RsTimeCostCalcs.AddRangeAsync(rows, cancellationToken);

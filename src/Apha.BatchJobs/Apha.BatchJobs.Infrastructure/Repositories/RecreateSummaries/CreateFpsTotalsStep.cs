@@ -109,8 +109,7 @@ internal sealed class CreateFpsTotalsStep : RecreateSummariesExecutionStepBase
 
         var db = context.DbContext;
 
-        // Two-step: fetch raw nullable values first (avoid COALESCE on PostgreSQL money columns),
-        // then apply defaults in C#.
+        // Strict SQL alignment: left joins, CASE/COALESCE logic, all fields, calculation order.
         var rawRows = await (
             from p in db.RsTlkpProject.AsNoTracking()
             join add0 in db.RsQryTotalAdditionalCosts.AsNoTracking() on p.ParentProject equals add0.JobCode into add1
@@ -124,21 +123,21 @@ internal sealed class CreateFpsTotalsStep : RecreateSummariesExecutionStepBase
             select new
             {
                 ParentProject = p.ParentProject,
-                Program = p.Program,
-                AddCosts = add.TotalAdditionalCosts,
-                AniCosts = ani.TotalAnimalCosts,
-                StfCosts = stf.TotalStaffCosts,
-                TstCosts = tst.TotalTestCosts,
-                StfPayCosts = stf.TotalPayCosts,
-                CustIncome = p.CustIncome,
-                TransferIncome = p.TransferIncome,
-                BudgetCvl = p.BudgetCvl,
-                Profit = p.Profit,
-                Manager = p.Manager,
-                Customer = p.Customer,
-                ProjectStatus = p.ProjectStatus,
-                PvsIncome = p.PvsIncome,
-                PlanCaseworkDebit = p.PlanCaseworkDebit,
+                Program = p.Program ?? string.Empty,
+                TotalAdditionalCosts = add.TotalAdditionalCosts ?? 0m,
+                TotalAnimalCosts = (double?)(ani.TotalAnimalCosts ?? 0m),
+                TotalStaffCosts = (double?)(stf.TotalStaffCosts ?? 0m),
+                TotalTestCosts = (double?)(tst.TotalTestCosts ?? 0m),
+                PlanCaseworkDebit = p.PlanCaseworkDebit ?? 0m,
+                CustIncome = p.CustIncome ?? 0m,
+                TransferIncome = p.TransferIncome ?? 0m,
+                BudgetCvl = p.BudgetCvl ?? 0m,
+                RequiredProfit = p.Profit ?? 0m,
+                Manager = p.Manager ?? string.Empty,
+                Customer = p.Customer ?? string.Empty,
+                ProjectStatus = p.ProjectStatus ?? string.Empty,
+                PvsIncome = p.PvsIncome ?? 0m,
+                TotalPayCosts = (double?)(stf.TotalPayCosts ?? 0m),
                 FpsYear = p.FpsYear
             })
             .ToListAsync(cancellationToken);
@@ -147,30 +146,29 @@ internal sealed class CreateFpsTotalsStep : RecreateSummariesExecutionStepBase
         {
             ParentProject = r.ParentProject,
             Program = r.Program,
-            TotalAdditionalCosts = r.AddCosts ?? 0m,
-            TotalAnimalCosts = (double?)(r.AniCosts) ?? 0d,
-            TotalStaffCosts = (double?)(r.StfCosts) ?? 0d,
-            TotalTestCosts = (double?)(r.TstCosts) ?? 0d,
-            TotalCosts =
-                ((double?)(r.AddCosts) ?? 0d) +
-                ((double?)(r.AniCosts) ?? 0d) +
-                ((double?)(r.StfCosts) ?? 0d) +
-                ((double?)(r.TstCosts) ?? 0d) +
-                ((double?)(r.PlanCaseworkDebit) ?? 0d),
+            TotalAdditionalCosts = r.TotalAdditionalCosts,
+            TotalAnimalCosts = r.TotalAnimalCosts,
+            TotalStaffCosts = r.TotalStaffCosts,
+            TotalTestCosts = r.TotalTestCosts,
+            TotalCosts = (double)r.TotalAdditionalCosts
+                + r.TotalAnimalCosts
+                + r.TotalStaffCosts
+                + r.TotalTestCosts
+                + (double)r.PlanCaseworkDebit,
             CustIncome = r.CustIncome,
             TransferIncome = r.TransferIncome,
             TotalIncome = r.CustIncome + r.TransferIncome,
             BudgetCvl = r.BudgetCvl,
-            RequiredProfit = r.Profit,
+            RequiredProfit = r.RequiredProfit,
             Manager = r.Manager,
             Customer = r.Customer,
             ProjectStatus = r.ProjectStatus,
-            PvsIncome = r.PvsIncome ?? 0m,
-            PlanCaseworkDebit = r.PlanCaseworkDebit ?? 0m,
-            TotalPayCosts = (double?)(r.StfPayCosts) ?? 0d,
+            PvsIncome = r.PvsIncome,
+            PlanCaseworkDebit = r.PlanCaseworkDebit,
+            TotalPayCosts = r.TotalPayCosts,
             FpsYear = r.FpsYear
         })
-        // Enforce target table key uniqueness (parentproject + fpsyear) before tracking.
+        // Enforce uniqueness (parentproject + fpsyear)
         .GroupBy(r => new { r.ParentProject, r.FpsYear })
         .Select(g => g.First())
         .ToList();
