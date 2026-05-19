@@ -75,90 +75,12 @@
 
     // ── Navigation ────────────────────────────────────────────────────────
     function navigateToTestCapability() {
-        window.location.href = '/PACT/TestCapability';
-    }
-
-    // ── Grid CRUD Functions ───────────────────────────────────────────────
-    // These functions call the ORIGINAL TestCapability controller for CRUD operations
-    // to avoid duplicating modal forms
-
-    function addTestCapability() {
-        $.get('/PACT/TestCapability/CreateTestCapability', function (html) {
-            $('#modaPopupBody').html(html);
-            $('#modalPopup').addClass('show');
-        });
-    }
-
-    function editTestCapability(rowData) {
-        var testCode = encodeURIComponent($(rowData).data('id') || '');
-        var workGroup = encodeURIComponent(
-            $(rowData).closest('tr').find('[data-property="WorkGroup"]').text().trim());
-        $.get('/PACT/TestCapability/EditTestCapability?testCode=' + testCode + '&workGroup=' + workGroup,
-            function (html) {
-                $('#modaPopupBody').html(html);
-                $('#modalPopup').addClass('show');
-            });
-    }
-
-    function saveTestCapability() {
-        clearValidationErrors('#modaPopupBody');
-        var form = $('#testCapabilityForm');
-        if (!isFormValid(form)) {
-            displayClientValidationErrors(form, '#modaPopupBody');
-            return;
+        var workgroup = currentWorkGroup || $('#selectedWorkgroup').val();
+        if (workgroup) {
+            window.location.href = '/PACT/TestCapability?workgroup=' + encodeURIComponent(workgroup);
+        } else {
+            window.location.href = '/PACT/TestCapability';
         }
-        var isEdit = form.find('[name="isEdit"]').val() === 'true';
-        var data = {
-            TestCode: form.find('[name="TestCode"]').val(),
-            WorkGroup: form.find('[name="WorkGroup"]').val(),
-            PlanPortfolio: form.find('[name="PlanPortfolio"]').val()
-        };
-        var url = isEdit
-            ? '/PACT/TestCapability/EditTestCapability'
-            : '/PACT/TestCapability/CreateTestCapability';
-        $.ajax({
-            url: url,
-            type: 'POST',
-            contentType: 'application/json; charset=utf-8',
-            data: JSON.stringify(data),
-            success: function (result) {
-                if (result.success) {
-                    $('#modalPopup').removeClass('show');
-                    showGovukAlert(isEdit ? 'Record updated successfully.' : 'Record saved successfully.');
-                    reloadTestCapabilityGrid(currentWorkGroup);
-                } else {
-                    displayServerValidationErrors(result.errors, result.message, '#modaPopupBody');
-                }
-            },
-            error: function () {
-                showGovukAlert('Request failed. Please try again.');
-            }
-        });
-    }
-
-    function deleteTestCapability(rowData) {
-        var testCode = encodeURIComponent($(rowData).data('id') || '');
-        var workGroup = encodeURIComponent(
-            $(rowData).closest('tr').find('[data-property="WorkGroup"]').text().trim());
-        showGovukConfirm('Delete this Test Capability record?').then(function (confirmed) {
-            if (!confirmed) return;
-            $.ajax({
-                url: '/PACT/TestCapability/DeleteTestCapability?testCode=' + testCode + '&workGroup=' + workGroup,
-                type: 'DELETE',
-                headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
-                success: function (result) {
-                    if (result.success) {
-                        reloadTestCapabilityGrid(currentWorkGroup);
-                        showGovukAlert('Test Capability record deleted successfully.');
-                    } else {
-                        showGovukAlert(result.message ? result.message : 'Delete failed.');
-                    }
-                },
-                error: function () {
-                    showGovukAlert('An error occurred while deleting.');
-                }
-            });
-        });
     }
 
     // ── Extra Filter Method (for pagination/sorting) ──────────────────────
@@ -176,7 +98,23 @@
         // Update the portfolio input field
         if (portfolio) {
             $('#selectedPortfolio').val(portfolio);
+            // Enable the Project Administration button
+            $('#btnShowProjectAdministration').prop('disabled', false);
+        } else {
+            // Disable the button if no portfolio selected
+            $('#btnShowProjectAdministration').prop('disabled', true);
         }
+    }
+
+    // ── Navigate to Portfolio Maintenance ─────────────────────────────────
+    function navigateToPortfolioMaintenance() {
+        var portfolio = $('#selectedPortfolio').val();
+        if (!portfolio) {
+            showGovukAlert('Please select a test capability row first.');
+            return;
+        }
+        // Navigate to Portfolio Maintenance with selected portfolio
+        window.location.href = '/PACT/PortfolioMaintenance?portfolio=' + encodeURIComponent(portfolio);
     }
 
     // ── URL Parameter Helper ──────────────────────────────────────────────
@@ -194,10 +132,7 @@
         reloadTestCapabilityGrid: reloadTestCapabilityGrid,
         clearTestCapabilityGrid: clearTestCapabilityGrid,
         navigateToTestCapability: navigateToTestCapability,
-        addTestCapability: addTestCapability,
-        editTestCapability: editTestCapability,
-        saveTestCapability: saveTestCapability,
-        deleteTestCapability: deleteTestCapability,
+        navigateToPortfolioMaintenance: navigateToPortfolioMaintenance,
         getTestCapabilityExtraFilters: getTestCapabilityExtraFilters,
         onTestCapabilityRowSelect: onTestCapabilityRowSelect,
         getCapabilityGridManager: getCapabilityGridManager
@@ -208,10 +143,7 @@
     window.reloadTestCapabilityGrid = reloadTestCapabilityGrid;
     window.clearTestCapabilityGrid = clearTestCapabilityGrid;
     window.navigateToTestCapability = navigateToTestCapability;
-    window.addTestCapability = addTestCapability;
-    window.editTestCapability = editTestCapability;
-    window.saveTestCapability = saveTestCapability;
-    window.deleteTestCapability = deleteTestCapability;
+    window.navigateToPortfolioMaintenance = navigateToPortfolioMaintenance;
     window.getTestCapabilityExtraFilters = getTestCapabilityExtraFilters;
     window.onTestCapabilityRowSelect = onTestCapabilityRowSelect;
     window.getCapabilityGridManager = getCapabilityGridManager;
