@@ -186,7 +186,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupValidTimeCodeCont
             Assert.False(model.ValidTimeCodesGrid.AllowEdit);
             Assert.False(model.ValidTimeCodesGrid.AllowDelete);
             Assert.True(model.ValidTimeCodesGrid.ShowPagination);
-            Assert.False(model.ValidTimeCodesGrid.AllowRowSelection);
+            Assert.True(model.ValidTimeCodesGrid.AllowRowSelection);
+            Assert.Equal("onValidTimeCodeRowSelect", model.ValidTimeCodesGrid.RowSelectFunction);
             Assert.Equal("TimeCode", model.ValidTimeCodesGrid.KeyProperty);
         }
 
