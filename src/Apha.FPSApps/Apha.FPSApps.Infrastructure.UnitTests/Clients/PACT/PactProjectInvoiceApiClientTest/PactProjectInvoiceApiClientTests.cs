@@ -1,3 +1,4 @@
+using Apha.Common.Constants;
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.PACT;
 using Apha.FPSApps.Application.Dtos;
@@ -143,22 +144,44 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectInvoiceA
         }
 
         [Fact]
-        public async Task GetTotalAmountAsync_WithNullParentProject_UsesBaseUrl()
+        public async Task GetTotalAmountAsync_WithNullParentProject_ReturnsZeroWithoutHttpCall()
         {
-            // Arrange
-            var apiResponse = new ApiResponse<decimal?> { Success = true, Data = 0m };
-            var expectedDto = ApiResponseDto<decimal>.SuccessResponse(0m);
-
-            _http.GetAsync<decimal?>("api/v1/projectinvoice/total").Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<decimal>>(apiResponse).Returns(expectedDto);
-
             // Act
             var result = await _client.GetTotalAmountAsync(null);
 
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
-            await _http.Received(1).GetAsync<decimal?>("api/v1/projectinvoice/total");
+            Assert.Equal(0m, result.Data);
+            await _http.DidNotReceive().GetAsync<decimal?>(Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task GetTotalAmountAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<decimal?>
+            {
+                Success = false,
+                Errors = [new ApiError { Message = "Server error" }]
+            };
+            var mappedResponse = new ApiResponseDto<decimal>
+            {
+                Success = false,
+                Errors = [new ApiErrorDto { Message = "Server error" }],
+                Meta = new ApiMetaDto()
+            };
+
+            _http.GetAsync<decimal?>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<decimal>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.GetTotalAmountAsync("PROJ-001");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
         }
 
         #endregion
@@ -376,6 +399,86 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectInvoiceA
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.NotNull(result.Errors);
+        }
+
+        #endregion
+
+        #region GetMonthlyInvoicesSummaryAsync Tests
+
+        [Fact]
+        public async Task GetMonthlyInvoicesSummaryAsync_SuccessResponse_ReturnsMappedPivotDto()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var pivotRes = new MonthlyInvoicesPivotRes
+            {
+                Months = [1, 2],
+                Rows = [],
+                Pagination = new Pagination()
+            };
+            var apiResponse = new ApiResponse<MonthlyInvoicesPivotRes> { Success = true, Data = pivotRes };
+            var expectedDto = new ApiResponseDto<MonthlyInvoicesPivotDto>
+            {
+                Success = true,
+                Data = new MonthlyInvoicesPivotDto { Months = [1, 2] }
+            };
+
+            _http.GetAsync<MonthlyInvoicesPivotRes>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<MonthlyInvoicesPivotDto>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.GetMonthlyInvoicesSummaryAsync(query);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(expectedDto.Data, result.Data);
+        }
+
+        [Fact]
+        public async Task GetMonthlyInvoicesSummaryAsync_FailureResponse_ReturnsFailure()
+        {
+            // Arrange
+            var query = new QueryParameters<string>();
+            var apiResponse = new ApiResponse<MonthlyInvoicesPivotRes>
+            {
+                Success = false,
+                Errors = [new ApiError { Message = "Server error" }]
+            };
+            var mappedResponse = new ApiResponseDto<MonthlyInvoicesPivotDto>
+            {
+                Success = false,
+                Errors = [new ApiErrorDto { Message = "Server error" }],
+                Meta = new ApiMetaDto()
+            };
+
+            _http.GetAsync<MonthlyInvoicesPivotRes>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<MonthlyInvoicesPivotDto>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.GetMonthlyInvoicesSummaryAsync(query);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+        }
+
+        [Fact]
+        public async Task GetMonthlyInvoicesSummaryAsync_UsesCorrectEndpoint()
+        {
+            // Arrange
+            var query = new QueryParameters<string>();
+            var apiResponse = new ApiResponse<MonthlyInvoicesPivotRes> { Success = true, Data = new MonthlyInvoicesPivotRes() };
+            _http.GetAsync<MonthlyInvoicesPivotRes>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<MonthlyInvoicesPivotDto>>(apiResponse)
+                .Returns(new ApiResponseDto<MonthlyInvoicesPivotDto> { Success = true });
+
+            // Act
+            await _client.GetMonthlyInvoicesSummaryAsync(query);
+
+            // Assert
+            await _http.Received(1).GetAsync<MonthlyInvoicesPivotRes>(
+                Arg.Is<string>(url => url.StartsWith(PactApiEndpoints.GetMonthlyInvoicesSummary)));
         }
 
         #endregion

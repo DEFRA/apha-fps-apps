@@ -1,4 +1,5 @@
 using Apha.FPSApps.Web.Models.Components.DataGrid;
+using System.ComponentModel.DataAnnotations;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Models
 {
@@ -16,6 +17,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [GridColumn(Width = 120, Type = GridColumnType.ReadOnly, IsFilterable = true)]
         public string? AcctCode { get; set; }
 
+        [Display(Name = "F Month")]
         [GridColumn(Width = 70, Type = GridColumnType.ReadOnly)]
         public double? Month { get; set; }
 

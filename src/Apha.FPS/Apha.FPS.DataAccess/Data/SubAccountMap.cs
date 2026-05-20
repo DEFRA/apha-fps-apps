@@ -8,7 +8,7 @@ namespace Apha.FPS.DataAccess.Data
     {
         public void Configure(EntityTypeBuilder<SubAccount> entity)
         {
-            entity.HasKey(e => e.SubAccountCode).HasName("tlkpsubaccount_pk_tlkpsubaccount");
+            entity.HasKey(e => e.SubAccountCode).HasName("pk_tlkpsubaccount");
 
             entity.ToTable("tlkpsubaccount", "fps");
 

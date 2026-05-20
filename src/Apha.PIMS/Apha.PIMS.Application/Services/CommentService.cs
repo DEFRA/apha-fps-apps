@@ -27,9 +27,9 @@ namespace Apha.PIMS.Application.Services
             return _mapper.Map<PaginatedResult<CommentDto>>(result);
         }
 
-        public async Task<CommentDto?> GetByIdAsync(int commentno)
+        public async Task<CommentDto?> GetByIdAsync(int CommentNo)
         {
-            Comment? entity = await _repository.GetByIdAsync(commentno);
+            Comment? entity = await _repository.GetByIdAsync(CommentNo);
             return entity is null ? null : _mapper.Map<CommentDto>(entity);
         }
 
@@ -62,7 +62,7 @@ namespace Apha.PIMS.Application.Services
                 ]);
 
             Comment entity = _mapper.Map<Comment>(dto);
-            entity.Dateentered = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
+            entity.DateEntered = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
             Comment created = await _repository.AddAsync(entity);
             return _mapper.Map<CommentDto>(created);
         }
@@ -83,21 +83,21 @@ namespace Apha.PIMS.Application.Services
             if (errors.Count > 0)
                 throw new BusinessValidationErrorException(errors);
 
-            Comment existing = await _repository.GetByIdAsync(dto.Commentno)
-                ?? throw new KeyNotFoundException($"Comment {dto.Commentno} not found.");
+            Comment existing = await _repository.GetByIdAsync(dto.CommentNo)
+                ?? throw new KeyNotFoundException($"Comment {dto.CommentNo} not found.");
 
             existing.Project = dto.Project!;
             existing.Year = (short)dto.Year!.Value;
             existing.Topic = dto.Topic!;
-            existing.Commenttext = dto.Commenttext;
-            existing.Madeby = dto.Madeby;
+            existing.CommentText = dto.CommentText;
+            existing.MadeBy = dto.MadeBy;
             Comment updated = await _repository.UpdateAsync(existing);
             return _mapper.Map<CommentDto>(updated);
         }
 
-        public async Task<bool> DeleteAsync(int commentno)
+        public async Task<bool> DeleteAsync(int CommentNo)
         {
-            return await _repository.DeleteAsync(commentno);
+            return await _repository.DeleteAsync(CommentNo);
         }
 
         public async Task<IEnumerable<CommentTopicDto>> GetCommentTopicsAsync()

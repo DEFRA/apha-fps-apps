@@ -1,4 +1,4 @@
-﻿using Apha.FPS.Core.Enities;
+using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;

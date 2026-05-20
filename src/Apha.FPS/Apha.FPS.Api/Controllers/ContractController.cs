@@ -28,5 +28,12 @@ namespace Apha.FPS.Api.Controllers
             var contracts = await _contractService.GetAllContractsAsync();
             return Ok(_mapper.Map<List<ContractRes>>(contracts));
         }
+
+        [HttpGet("by-user")]
+        public async Task<ActionResult<List<ContractRes>>> GetContractsByUserAsync()
+        {
+            var contracts = await _contractService.GetAllContractsByUserAsync();
+            return Ok(_mapper.Map<List<ContractRes>>(contracts));
+        }
     }
 }

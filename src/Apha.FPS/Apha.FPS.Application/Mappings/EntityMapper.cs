@@ -1,7 +1,5 @@
-﻿using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
-using Apha.FPS.Core.Enities;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Pagination;
 using AutoMapper;
@@ -44,6 +42,9 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<TimeCostCalcsView, TimeCostCalcsViewDto>().ReverseMap();
             CreateMap<AdditionalCost, AdditionalCostDto>().ReverseMap();
             CreateMap<AccountCategory, AccountCategoryDto>().ReverseMap();
+            CreateMap<MonthlyOutput, MonthlyOutputDto>().ReverseMap();
+            CreateMap<WorkGroupStaff, WorkGroupStaffDto>().ReverseMap();
+            CreateMap<WorkGroupPerson, WorkGroupPersonDto>().ReverseMap();
         }
     }
 }

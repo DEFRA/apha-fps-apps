@@ -45,11 +45,14 @@ namespace Apha.PACT.DataAccess.Repository
         private static readonly IReadOnlyList<string> AnimalAcctCodes =
             new[] { "LargeAnimals", "SmallAnimals", "Mice" };
 
-        public async Task<PagedData<ProjectSubContract>> GetFpsProjectSubContractsAsync(PaginationParameters<string> query, string? project)
+        public async Task<PagedData<ProjectSubContract>> GetFpsProjectSubContractsAsync(PaginationParameters<string> query, string? project, bool filterByAnimalAcctCodes = false)
         {
-            IQueryable<ProjectSubContract> q = _context.ProjectSubContracts
-                .AsNoTracking()
-                .Where(s => AnimalAcctCodes.Contains(s.AcctCode));
+            IQueryable<ProjectSubContract> q = _context.ProjectSubContracts.AsNoTracking();
+
+            if (filterByAnimalAcctCodes)
+                q = q.Where(s => AnimalAcctCodes.Contains(s.AcctCode));
+            else
+                q = q.Where(s => !AnimalAcctCodes.Contains(s.AcctCode));
 
             if (!string.IsNullOrEmpty(project))
                 q = q.Where(s => s.Project == project);
@@ -61,11 +64,14 @@ namespace Apha.PACT.DataAccess.Repository
             return ApplyPaging(result, query.Page, query.PageSize);
         }
 
-        public async Task<decimal> GetFpsProjectSubContractTotalAmountAsync(string? project)
+        public async Task<decimal> GetFpsProjectSubContractTotalAmountAsync(string? project, bool filterByAnimalAcctCodes = false)
         {
-            IQueryable<ProjectSubContract> q = _context.ProjectSubContracts
-                .AsNoTracking()
-                .Where(s => AnimalAcctCodes.Contains(s.AcctCode));
+            IQueryable<ProjectSubContract> q = _context.ProjectSubContracts.AsNoTracking();
+
+            if (filterByAnimalAcctCodes)
+                q = q.Where(s => AnimalAcctCodes.Contains(s.AcctCode));
+            else
+                q = q.Where(s => !AnimalAcctCodes.Contains(s.AcctCode));
 
             if (!string.IsNullOrEmpty(project))
                 q = q.Where(s => s.Project == project);
@@ -106,6 +112,34 @@ namespace Apha.PACT.DataAccess.Repository
             return true;
         }
 
+        public async Task<List<MonthlySubContractsSummary>> GetMonthlySubContractsSummaryAsync(PaginationParameters<string> parameters)
+        {
+            IQueryable<MonthlySubContractsSummary> query = _context.MonthlySubContractsSummary.AsNoTracking();
+
+            // Parse filter JSON from DataGrid: {"Program":"ADMIN","ParentProject":"AH"}
+            if (!string.IsNullOrWhiteSpace(parameters.Filter))
+            {
+                dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(parameters.Filter);
+                if (filterModel != null)
+                {
+                    IDictionary<string, object> dict = (IDictionary<string, object>)filterModel;
+
+                    if (dict.TryGetValue("Program", out object? program) && program != null)
+                        query = query.Where(x => EF.Functions.ILike(x.Program, $"%{program}%"));
+
+                    if (dict.TryGetValue("ParentProject", out object? parentProject) && parentProject != null)
+                        query = query.Where(x => EF.Functions.ILike(x.ParentProject, $"%{parentProject}%"));
+                }
+            }
+
+            // Always order raw rows by Program, Project, Month so grouping is stable
+            return await query
+                .OrderBy(x => x.Program)
+                .ThenBy(x => x.ParentProject)
+                .ThenBy(x => x.Month)
+                .ToListAsync();
+        }
+
         private static IQueryable<ProjectSubContract> ApplySubContractFilter(IQueryable<ProjectSubContract> query, string? filter)
         {
             if (string.IsNullOrEmpty(filter)) return query;
@@ -115,15 +149,40 @@ namespace Apha.PACT.DataAccess.Repository
 
             IDictionary<string, object> dict = (IDictionary<string, object>)filterModel;
 
-            if (dict.TryGetValue("Project", out object? project) && project != null)
-                query = query.Where(x => x.Project != null && x.Project.Contains(project.ToString()!));
+            query = ApplyStringFilter(dict, "Project", query, (q, v) => q.Where(x => x.Project != null && EF.Functions.ILike(x.Project, v)));
+            query = ApplyStringFilter(dict, "AcctCode", query, (q, v) => q.Where(x => x.AcctCode != null && EF.Functions.ILike(x.AcctCode, v)));
+            query = ApplyStringFilter(dict, "TestJob", query, (q, v) => q.Where(x => x.TestJob != null && EF.Functions.ILike(x.TestJob, v)));
+            query = ApplyStringFilter(dict, "WorkGroup", query, (q, v) => q.Where(x => x.WorkGroup != null && EF.Functions.ILike(x.WorkGroup, v)));
+            query = ApplyStringFilter(dict, "Description", query, (q, v) => q.Where(x => x.Description != null && EF.Functions.ILike(x.Description, v)));
+            query = ApplyStringFilter(dict, "Supplier", query, (q, v) => q.Where(x => x.Supplier != null && EF.Functions.ILike(x.Supplier, v)));
+            query = ApplyMonthFilter(dict, query);
+            query = ApplySupplierNumberFilter(dict, query);
 
-            if (dict.TryGetValue("AcctCode", out object? acctCode) && acctCode != null)
-                query = query.Where(x => x.AcctCode != null && x.AcctCode.Contains(acctCode.ToString()!));
+            return query;
+        }
 
-            if (dict.TryGetValue("TestJob", out object? testJob) && testJob != null)
-                query = query.Where(x => x.TestJob != null && x.TestJob.Contains(testJob.ToString()!));
+        private static IQueryable<ProjectSubContract> ApplyStringFilter(
+            IDictionary<string, object> dict,
+            string key,
+            IQueryable<ProjectSubContract> query,
+            Func<IQueryable<ProjectSubContract>, string, IQueryable<ProjectSubContract>> applyWhere)
+        {
+            if (dict.TryGetValue(key, out object? value) && value != null)
+                query = applyWhere(query, $"%{value}%");
+            return query;
+        }
 
+        private static IQueryable<ProjectSubContract> ApplyMonthFilter(IDictionary<string, object> dict, IQueryable<ProjectSubContract> query)
+        {
+            if (dict.TryGetValue("Month", out object? month) && month != null && int.TryParse(month.ToString(), out int monthValue))
+                query = query.Where(x => (int?)x.Month == monthValue);
+            return query;
+        }
+
+        private static IQueryable<ProjectSubContract> ApplySupplierNumberFilter(IDictionary<string, object> dict, IQueryable<ProjectSubContract> query)
+        {
+            if (dict.TryGetValue("SupplierNumber", out object? supplierNumber) && supplierNumber != null && int.TryParse(supplierNumber.ToString(), out int supplierNumberValue))
+                query = query.Where(x => x.SupplierNumber == supplierNumberValue);
             return query;
         }
 

@@ -1,4 +1,5 @@
 // Portfolio Maintenance page script
+// Last updated: 2025-01-XX (Portfolio Time Codes button navigation)
 
 var currentParentProject = '';
 var currentTestCode = '';
@@ -85,15 +86,48 @@ $(document).ready(function () {
     });
 
     // ── Portfolio Time Codes button ───────────────────────────────────────────
-    $('#btnPortfolioTimeCodes').on('click', function () {
-        if (!currentParentProject) return;
-        loadTimeCodeGrid(currentParentProject, currentTestCode);
+    $('#btnPortfolioTimeCodes').on('click', function (e) {
+        e.preventDefault(); // Prevent any default behavior
+        e.stopPropagation(); // Stop event bubbling
+
+        if (!currentParentProject) {
+            alert('Please select a portfolio first.');
+            return;
+        }
+
+        // Navigate to Portfolio Time Codes page with selected portfolio
+        var url = '/PACT/PortfolioTimeCodes/Index?parentProject=' + encodeURIComponent(currentParentProject);
+        window.location.href = url;
     });
 
     // ── Modal submit ──────────────────────────────────────────────────────────
     $(document).on('click', '#modalSubmitBtn', function () {
         var fn = $('#modaPopupBody').data('submitFn');
         if (fn && window[fn]) window[fn]();
+    });
+
+    // ── Re-select first row after constituent tests grid reloads (filter/sort) ─
+    document.addEventListener('gridReloaded', function (e) {
+        if (e.detail.gridId !== 'constituentTestGrid') return;
+
+        var $firstRow = $('#tbl_constituentTestGrid tbody tr').first();
+        var firstTestCode = ($firstRow.length && $firstRow.data('id')) ? String($firstRow.data('id')) : '';
+
+        if (firstTestCode) {
+            var previousTestCode = currentTestCode;
+            currentTestCode = firstTestCode;
+            currentPortfolio = currentParentProject;
+            $firstRow.addClass('selected-row');
+            $('#txtSelectedPortfolioTest').val(currentParentProject + ' - ' + currentTestCode);
+            // Only reload the work groups grid when the selected test has changed
+            if (currentTestCode !== previousTestCode) {
+                loadTimeCodeGrid(currentParentProject, currentTestCode);
+            }
+        } else {
+            currentTestCode = '';
+            $('#txtSelectedPortfolioTest').val('');
+            loadTimeCodeGrid(currentParentProject, '');
+        }
     });
 });
 
@@ -135,6 +169,7 @@ function loadPortfolioData(parentProject) {
 
                 // Update sidebar nav links — preserves existing query params (e.g. year)
                 updateNavHref('#sideNavTestPurchase', parentProject);
+                updateNavHref('#sideNavTimeCodes', parentProject);
                 updateNavHref('#sideNavInvoices', parentProject);
 
                 resetFormButtons(true);
@@ -254,6 +289,14 @@ function selectConstituentTest(row) {
     loadTimeCodeGrid(currentParentProject, testCode);
 }
 
+// ── Extra filters supplied to the Work Groups grid on every reload ──────
+function getTimeCodeGridExtraFilters() {
+    return {
+        parentProject: currentParentProject,
+        testCode: currentTestCode
+    };
+}
+
 // ── Time Codes / Work Groups grid ────────────────────────────────────────
 function loadTimeCodeGrid(parentProject, testCode, page, pageSize) {
     var payload = {
@@ -263,8 +306,11 @@ function loadTimeCodeGrid(parentProject, testCode, page, pageSize) {
         descending: false,
         filter: '{}'
     };
-    var url = '/PACT/PortfolioMaintenance/LoadTimeCodeGrid?parentProject=' + encodeURIComponent(parentProject);
-    if (testCode) url += '&testCode=' + encodeURIComponent(testCode);
+    var url = '/PACT/PortfolioMaintenance/LoadTimeCodeGrid';
+    if (parentProject) {
+        url += '?parentProject=' + encodeURIComponent(parentProject);
+        if (testCode) url += '&testCode=' + encodeURIComponent(testCode);
+    }
 
     $.ajax({
         url: url,

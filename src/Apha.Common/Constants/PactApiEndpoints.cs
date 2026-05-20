@@ -30,6 +30,13 @@ namespace Apha.Common.Constants
 
         // Work Group
         public const string GetAllWorkGroups = "api/v1/workgroup";
+        public const string GetPagedWorkGroupTimeCodes = "api/v1/workgroup/paged/timecodes";
+
+        // Month
+        public const string GetAllMonths = "api/v1/months";
+
+        // Calender Month
+        public const string GetCalenderMonths = "api/v1/calendermonth";
 
         // Test List
         public const string GetPagedTestOrProducts = "api/v1/testorproduct/paged";
@@ -42,12 +49,14 @@ namespace Apha.Common.Constants
 
         // Project Invoice
         public const string GetPagedProjectInvoices = "api/v1/projectinvoice?parentProject={0}";
+        public const string GetPagedProjectInvoiceManual = "api/v1/projectinvoice";
         public const string GetProjectInvoiceTotalAmount = "api/v1/projectinvoice/total";
         public const string GetProjectInvoiceById = "api/v1/projectinvoice/{0}";
         public const string CreateProjectInvoice = "api/v1/projectinvoice";
         public const string UpdateProjectInvoice = "api/v1/projectinvoice/{0}";
         public const string DeleteProjectInvoice = "api/v1/projectinvoice/{0}";
-
+        public const string GetMonthlyInvoicesSummary = "api/v1/projectinvoice/monthly-summary";
+        
         // Project SubContract
         public const string GetPagedProjectSubContracts = "api/v1/projectsubcontract";
         public const string GetProjectSubContractTotalAmount = "api/v1/projectsubcontract/total";
@@ -57,6 +66,7 @@ namespace Apha.Common.Constants
         public const string DeleteProjectSubContract = "api/v1/projectsubcontract/{0}";
         public const string GetFpsProjectSubContracts = "api/v1/projectsubcontract/animals";
         public const string GetFpsProjectSubContractTotalAmount = "api/v1/projectsubcontract/animals/total";
+        public const string GetMonthlySubContractsSummary = "api/v1/projectsubcontract/monthly-summary";
 
         // WorkGroup Test Capability
         public const string GetPagedTestCapabilityByWorkGroup = "api/v1/testcapability/paged/workgroup";
@@ -79,5 +89,19 @@ namespace Apha.Common.Constants
         // Lookups
         //public const string GetAllTestorProducts = "api/v1/testcapability/testorproducts";
         public const string GetTestReqmtPricing = "api/v1/testrequirement/pricing";
+
+        // Project Month (Cost Profile Grid)
+        public const string GetProjectMonthsByProject = "api/v1/projectmonth/project/{0}";
+        public const string GetProjectMonthById = "api/v1/projectmonth/project/{0}/month/{1}";
+        public const string CreateProjectMonth = "api/v1/projectmonth";
+        public const string UpdateProjectMonth = "api/v1/projectmonth";
+        public const string DeleteProjectMonth = "api/v1/projectmonth/project/{0}/month/{1}";
+
+        // Project Profile
+        public const string GetProjectProfile = "api/v1/projectprofile/{0}/data";
+        public const string GetProjectProfileCumulative = "api/v1/projectprofile/{0}/data/cumulative";
+
+        // Monthly Output Log
+        public const string SearchMonthlyOutputLog = "api/v1/monthlyoutput/log/search";
     }
 }

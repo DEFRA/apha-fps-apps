@@ -23,11 +23,33 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
 
         public async Task<ApiResponseDto<List<ProjectInvoiceDto>>> GetPagedProjectInvoicesAsync(QueryParameters<string> query, string? parentProject)
         {
+
             string baseUrl = string.IsNullOrWhiteSpace(parentProject)
                 ? PactApiEndpoints.GetPagedProjectInvoices
                 : string.Format(PactApiEndpoints.GetPagedProjectInvoices, Uri.EscapeDataString(parentProject));
+
             string url = QueryStringHelper.AddQueryString(baseUrl, query);
-            
+
+            var response = await _http.GetAsync<List<ProjectInvoiceRes>>(url);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<ProjectInvoiceDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<ProjectInvoiceDto>>>(response);
+            return ApiResponseDto<List<ProjectInvoiceDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+        public async Task<ApiResponseDto<List<ProjectInvoiceDto>>> GetPagedProjectInvoiceManualAsync(QueryParameters<string> query, string? parentProject)
+        {
+            string baseUrl = PactApiEndpoints.GetPagedProjectInvoiceManual;
+
+            // Add parentProject as query parameter if provided
+            if (!string.IsNullOrWhiteSpace(parentProject))
+            {
+                baseUrl += $"?parentProject={Uri.EscapeDataString(parentProject)}";
+            }
+
+            string url = QueryStringHelper.AddQueryString(baseUrl, query);
+
             var response = await _http.GetAsync<List<ProjectInvoiceRes>>(url);
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<List<ProjectInvoiceDto>>>(response);
@@ -89,9 +111,10 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
 
         public async Task<ApiResponseDto<decimal>> GetTotalAmountAsync(string? parentProject)
         {
-            string url = string.IsNullOrWhiteSpace(parentProject)
-                ? PactApiEndpoints.GetProjectInvoiceTotalAmount
-                : QueryStringHelper.AddQueryString(PactApiEndpoints.GetProjectInvoiceTotalAmount, new { parentProject });
+            if (string.IsNullOrWhiteSpace(parentProject))
+                return ApiResponseDto<decimal>.SuccessResponse(0m);
+
+            string url = QueryStringHelper.AddQueryString(PactApiEndpoints.GetProjectInvoiceTotalAmount, new { parentProject });
 
             var response = await _http.GetAsync<decimal?>(url);
             if (response.Success)
@@ -99,6 +122,18 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
 
             var dto = _mapper.Map<ApiResponseDto<decimal>>(response);
             return ApiResponseDto<decimal>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+        public async Task<ApiResponseDto<MonthlyInvoicesPivotDto>> GetMonthlyInvoicesSummaryAsync(QueryParameters<string> query)
+        {
+            string url = QueryStringHelper.AddQueryString(PactApiEndpoints.GetMonthlyInvoicesSummary, query);
+            var response = await _http.GetAsync<MonthlyInvoicesPivotRes>(url);
+
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<MonthlyInvoicesPivotDto>>(response);            
+
+            var responseDto = _mapper.Map<ApiResponseDto<MonthlyInvoicesPivotDto>>(response);
+            return ApiResponseDto<MonthlyInvoicesPivotDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
     }
 }

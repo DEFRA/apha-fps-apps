@@ -17,6 +17,8 @@ namespace Apha.FPSApps.Application.Services.PACT
 
         public async Task<ApiResponseDto<List<ProjectInvoiceDto>>> GetPagedProjectInvoicesAsync(QueryParameters<string> query, string? parentProject)
             => await _pactClient.PactProjectInvoice.GetPagedProjectInvoicesAsync(query, parentProject);
+        public async Task<ApiResponseDto<List<ProjectInvoiceDto>>> GetPagedProjectInvoiceManualAsync(QueryParameters<string> query, string? parentProject)
+            => await _pactClient.PactProjectInvoice.GetPagedProjectInvoiceManualAsync(query, parentProject);
 
         public async Task<ApiResponseDto<decimal>> GetTotalAmountAsync(string? parentProject)
             => await _pactClient.PactProjectInvoice.GetTotalAmountAsync(parentProject);
@@ -32,5 +34,8 @@ namespace Apha.FPSApps.Application.Services.PACT
 
         public async Task<ApiResponseDto<bool>> DeleteAsync(int invoiceCounter)
             => await _pactClient.PactProjectInvoice.DeleteAsync(invoiceCounter);
+
+        public async Task<ApiResponseDto<MonthlyInvoicesPivotDto>> GetMonthlyInvoicesSummaryAsync(QueryParameters<string> query)
+            => await _pactClient.PactProjectInvoice.GetMonthlyInvoicesSummaryAsync(query);
     }
 }

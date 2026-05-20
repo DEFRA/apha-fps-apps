@@ -16,20 +16,18 @@ namespace Apha.FPS.DataAccess.Data
 
             entity.Property(e => e.Dt2UserName)
                 .HasMaxLength(50)
-                .UseCollation("latin1_general_ci_as")
                 .HasColumnName("dt2username");
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.JobCode)
-                .HasColumnType("citext")
+                .HasMaxLength(20)
                 .HasColumnName("jobcode");
             entity.Property(e => e.PlannedHours).HasColumnName("plannedhours");
             entity.Property(e => e.StaffId)
-                .HasColumnType("citext")
+                .HasMaxLength(50)
                 .HasColumnName("staffid");
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.UserEmail)
                 .HasMaxLength(255)
-                .UseCollation("latin1_general_ci_as")
                 .HasColumnName("useremail");
         }
     }

@@ -73,6 +73,18 @@ namespace Apha.PIMS.Application.Services
         public async Task<List<YearDto>> GetAllYearAsync()
         {
             List<Year> entities = await _repository.GetAllYearAsync();
+
+            int currentYear = DateTime.Now.Year;
+            if (DateTime.Now.Month < 4)
+            {
+                currentYear--;
+            }
+
+            if (!entities.Any(e => e.Value == currentYear))
+            {
+                entities.Add(new Year { Value = currentYear, Latestmonthreleased = null });
+            }
+
             return _mapper.Map<List<YearDto>>(entities);
         }
     }

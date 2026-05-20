@@ -28,7 +28,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> LoadAdditionalCostGrid(PaginationFilter<string> request, string? jobCode = null)
+        public async Task<IActionResult> LoadAdditionalCostGrid(PaginationFilter<string> request, string? jobCode = null, string? title = null)
         {
             if (!ModelState.IsValid)
             {
@@ -54,10 +54,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             paginationModel.SortColumn = request.SortBy;
             paginationModel.SortDirection = request.Descending;
 
+            var gridTitle = title ?? "Additional Cost Plan";
             var gridConfig = new DataGridConfig<AdditionalCostItemViewModel>
             {
                 GridId = "additionalCostGrid",
-                Title = "Additional Cost Plan",
+                Title = gridTitle,
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 AllowAdd = true,
@@ -68,7 +69,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 EditFunction = "editAdditionalCost",
                 DeleteFunction = "deleteAdditionalCost",
                 ExtraFilterMethod = "getAdditionalCostExtraFilters",
-                BindGridUrl = "/FPS/AdditionalCostJob/LoadAdditionalCostGrid",
+                BindGridUrl = $"/FPS/AdditionalCostJob/LoadAdditionalCostGrid?title={Uri.EscapeDataString(gridTitle)}",
                 Data = items,
                 Columns = GridDataProvider.GetColumnsDefination<AdditionalCostItemViewModel>(null),
                 Pagination = paginationModel,
@@ -150,7 +151,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Edit(string jobCode, string account, [FromBody] AdditionalCostItemViewModel model)
+        public async Task<IActionResult> Edit([FromBody] AdditionalCostItemViewModel model)
         {
             if (!ModelState.IsValid)
             {
@@ -169,7 +170,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             }
 
             var dto = _mapper.Map<AdditionalCostDto>(model);
-            var result = await _additionalCostService.UpdateAdditionalCostAsync(jobCode, account, dto);
+            var result = await _additionalCostService.UpdateAdditionalCostAsync(model.JobCode!, model.Account, dto);
 
             if (result.Success)
             {

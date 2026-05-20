@@ -1,10 +1,12 @@
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PACT;
+using Apha.FPSApps.Application.Pagination;
 
 namespace Apha.FPSApps.Application.Interfaces.PactApiClients
 {
     public interface IPactWorkGroupApiClient
     {
         Task<ApiResponseDto<List<WorkGroupDto>>> GetAllWorkGroupsAsync();
+        Task<ApiResponseDto<List<WorkGroupTimeCodeDto>>> GetPagedWorkGroupTimeCodesAsync(QueryParameters<string> query, string? workGroup, int? monthNumber);
     }
 }

@@ -16,7 +16,7 @@ namespace Apha.PACT.DataAccess.Data
             entity.HasIndex(e => e.ProfitCentre, "workgroup_profitcentre");
 
             entity.Property(e => e.WorkGroupName)
-                .HasColumnType("citext")
+                .HasMaxLength(50)
                 .HasColumnName("workgroup");
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.CentralOverhead)
@@ -36,7 +36,7 @@ namespace Apha.PACT.DataAccess.Data
                 .HasMaxLength(50)
                 .HasColumnName("owner");
             entity.Property(e => e.ProfitCentre)
-                .HasColumnType("citext")
+                .HasMaxLength(50)
                 .HasColumnName("profitcentre");
             entity.Property(e => e.SendEmail).HasColumnName("sendemail");
         }

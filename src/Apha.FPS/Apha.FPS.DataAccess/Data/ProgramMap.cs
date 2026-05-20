@@ -10,11 +10,11 @@ namespace Apha.FPS.DataAccess.Data
 
         public void Configure(EntityTypeBuilder<Program> entity)
         {
-            entity.HasKey(e => e.ProgramNo).HasName("tlkpprogram_pk__tlkpprogram__2180fb33");
+            entity.HasKey(e => new { e.ProgramNo, e.FpsYear }).HasName("pk_tlkpprogram");
 
             entity.ToTable("tlkpprogram", "fps");
 
-            entity.HasIndex(e => e.Minim, "dbo_tlkpprogram_tlkpprogram_minim");
+            entity.HasIndex(e => e.Minim, "tlkpprogram_minim");
 
             entity.Property(e => e.ProgramNo)
                 .HasMaxLength(10)

@@ -10,7 +10,7 @@ namespace Apha.Costbook.DataAccess.Data
         {
             entity.HasKey(e => e.AcIdentity).HasName("aaaaatbladditionalcosts_pk");
 
-            entity.ToTable("tbladditionalcosts", "mabarchive");
+            entity.ToTable("tbladditionalcosts", DbConstants.MabArchiveSchemaName);
 
             entity.HasIndex(e => e.Project, "tbladditionalcosts_tbladditionalcostsproject");
 

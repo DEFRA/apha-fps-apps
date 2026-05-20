@@ -5,7 +5,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models;
 
 public class AddEditCommentViewModel
 {
-    public int Commentno { get; set; }
+    public int CommentNo { get; set; }
     [Required(ErrorMessage = "Project is required")]
     [Display(Name = "Project")]
     public string? Project { get; set; }
@@ -16,7 +16,7 @@ public class AddEditCommentViewModel
     [Display(Name = "Topic")]
     public string? Topic { get; set; } 
     [Required]
-    public string? Commenttext { get; set; }
+    public string? CommentText { get; set; }
     public bool IsAddingNew { get; set; }
 
     public List<SelectListItem> YearOptions { get; set; } = [];

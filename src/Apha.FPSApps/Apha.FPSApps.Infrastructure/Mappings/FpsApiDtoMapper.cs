@@ -1,4 +1,4 @@
-﻿using Apha.Common.Contracts;
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.Common.Contracts.PACT;
 using Apha.FPSApps.Application.Dtos;
@@ -70,6 +70,17 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<AdditionalCostDto, AdditionalCostReq>().ReverseMap();
             CreateMap<AdditionalCostDto, AdditionalCostRes>().ReverseMap();
             CreateMap<AccountCategoryDto, AccountCategoryRes>().ReverseMap();
+
+            // View Project Plan vs Actual Tests
+            CreateMap<MonthlyOutputDto, MonthlyOutputRes>().ReverseMap();
+
+            // ProgrammeNewProject (merged into ProjectDto - mappings above)
+            CreateMap<AccountCodeDto, AccountCodeRes>().ReverseMap();
+            CreateMap<SubAccountDto, SubAccountRes>()
+                .ForMember(d => d.SubAccount, o => o.MapFrom(s => s.SubAccount)).ReverseMap();
+            CreateMap<CostCentreWorkgroupDto, CostCentreWorkgroupRes>().ReverseMap();
+            CreateMap<WorkGroupStaffDto, WorkGroupStaffRes>().ReverseMap();
+            CreateMap<WorkGroupPersonDto, WorkGroupPersonRes>().ReverseMap();
         }
     }
 }
