@@ -90,7 +90,7 @@ public sealed class JobStatusController : ControllerBase
                 {
                     canRun = false,
                     reason = "Job is already running",
-                    runId = status.ActiveLock?.RunId,
+                    jobQueueId = status.ActiveLock?.JobQueueId,
                     acquiredAt = status.ActiveLock?.AcquiredAt,
                     expiresAt = status.ActiveLock?.ExpiresAt
                 });
@@ -139,7 +139,7 @@ public sealed class JobStatusController : ControllerBase
                 accepted = false,
                 reason = "Job is already running",
                 jobName,
-                runId = status.ActiveLock?.RunId,
+                jobQueueId = status.ActiveLock?.JobQueueId,
                 acquiredAt = status.ActiveLock?.AcquiredAt,
                 expiresAt = status.ActiveLock?.ExpiresAt
             });

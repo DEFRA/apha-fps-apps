@@ -39,7 +39,7 @@ public sealed class JobStatusService : IJobStatusService
             ActiveLock = activeLock is { IsActive: true }
                 ? new ActiveLockInfo
                 {
-                    RunId = activeLock.RunId,
+                    JobQueueId = activeLock.JobQueueId,
                     AcquiredAt = activeLock.AcquiredAt,
                     ExpiresAt = activeLock.ExpiresAt
                 }
@@ -48,7 +48,7 @@ public sealed class JobStatusService : IJobStatusService
                 ? null
                 : new LastExecutionInfo
                 {
-                    RunId = lastExec.RunId,
+                    JobQueueId = lastExec.JobQueueId,
                     Status = lastExec.Status.ToString(),
                     StartedAt = lastExec.StartedAt,
                     CompletedAt = lastExec.CompletedAt

@@ -49,7 +49,7 @@ public sealed class JobOrchestratorTests
         job.Name.Returns("TestJob");
 
         _factory.Create("TestJob").Returns(job);
-        _lockRepo.TryAcquireLockAsync("TestJob", Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+        _lockRepo.TryAcquireLockAsync("TestJob", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
                  .Returns(true);
         _execRepo.CreateExecutionRecordAsync(
                      Arg.Do<JobExecutionRecord>(r => capturedCreateStatus.Add(r.Status)),
@@ -61,7 +61,8 @@ public sealed class JobOrchestratorTests
                  .Returns(Task.CompletedTask);
 
         // Act
-        var result = await _orchestrator.RunAsync("TestJob", RunMode.Manual);
+        var jobQueueId = Guid.NewGuid();
+        var result = await _orchestrator.RunAsync("TestJob", RunMode.Manual, jobQueueId, "test-user");
 
         // Assert — job was called
         await job.Received(1).ExecuteAsync(Arg.Any<CancellationToken>());
@@ -75,12 +76,12 @@ public sealed class JobOrchestratorTests
         Assert.Equal(JobStatus.Completed, capturedUpdateStatus[0]);
 
         // Assert — lock was released
-        await _lockRepo.Received(1).ReleaseLockAsync("TestJob", Arg.Any<string>(), Arg.Any<CancellationToken>());
+        await _lockRepo.Received(1).ReleaseLockAsync("TestJob", jobQueueId, Arg.Any<CancellationToken>());
 
         // Assert — result is correct
         Assert.Equal(JobStatus.Completed, result.Status);
         Assert.Equal("TestJob", result.JobName);
-        Assert.False(string.IsNullOrWhiteSpace(result.RunId));
+        Assert.Equal(jobQueueId, result.JobQueueId);
         Assert.Equal(42, result.ExecutionId);
     }
 
@@ -92,11 +93,12 @@ public sealed class JobOrchestratorTests
     public async Task RunAsync_WhenLockNotAcquired_SkipsExecutionAndReturnsSkipped()
     {
         // Arrange
-        _lockRepo.TryAcquireLockAsync("TestJob", Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+        _lockRepo.TryAcquireLockAsync("TestJob", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
                  .Returns(false);
 
         // Act
-        var result = await _orchestrator.RunAsync("TestJob", RunMode.Scheduled);
+        var jobQueueId = Guid.NewGuid();
+        var result = await _orchestrator.RunAsync("TestJob", RunMode.Scheduled, jobQueueId, "test-user");
 
         // Assert — job factory was never called
         _factory.DidNotReceive().Create(Arg.Any<string>());
@@ -126,7 +128,7 @@ public sealed class JobOrchestratorTests
            .Returns(Task.FromException(new InvalidOperationException("Simulated failure")));
 
         _factory.Create("FailingJob").Returns(job);
-        _lockRepo.TryAcquireLockAsync("FailingJob", Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+        _lockRepo.TryAcquireLockAsync("FailingJob", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
                  .Returns(true);
         _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
                  .Returns(99);
@@ -136,8 +138,9 @@ public sealed class JobOrchestratorTests
                  .Returns(Task.CompletedTask);
 
         // Act — orchestrator should re-throw
+        var jobQueueId = Guid.NewGuid();
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _orchestrator.RunAsync("FailingJob", RunMode.Scheduled));
+            () => _orchestrator.RunAsync("FailingJob", RunMode.Scheduled, jobQueueId, "test-user"));
 
         // Assert — failure record written
         Assert.Single(capturedUpdateStatus);
@@ -146,7 +149,7 @@ public sealed class JobOrchestratorTests
         Assert.Equal("Simulated failure", capturedErrorMessage[0]);
 
         // Assert — lock still released even after failure
-        await _lockRepo.Received(1).ReleaseLockAsync("FailingJob", Arg.Any<string>(), Arg.Any<CancellationToken>());
+        await _lockRepo.Received(1).ReleaseLockAsync("FailingJob", jobQueueId, Arg.Any<CancellationToken>());
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -165,7 +168,7 @@ public sealed class JobOrchestratorTests
            .Returns(Task.FromException<Task>(new OperationCanceledException()));
 
         _factory.Create("CancellableJob").Returns(job);
-        _lockRepo.TryAcquireLockAsync("CancellableJob", Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+        _lockRepo.TryAcquireLockAsync("CancellableJob", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
                  .Returns(true);
         _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
                  .Returns(77);
@@ -175,49 +178,53 @@ public sealed class JobOrchestratorTests
                  .Returns(Task.CompletedTask);
 
         // Act — should re-throw as OperationCanceledException
+        var jobQueueId = Guid.NewGuid();
         await Assert.ThrowsAsync<OperationCanceledException>(
-            () => _orchestrator.RunAsync("CancellableJob", RunMode.Manual));
+            () => _orchestrator.RunAsync("CancellableJob", RunMode.Manual, jobQueueId, "test-user"));
 
         // Assert — cancelled record written
         Assert.Single(capturedUpdateStatus);
         Assert.Equal(JobStatus.Cancelled, capturedUpdateStatus[0]);
 
         // Assert — lock released
-        await _lockRepo.Received(1).ReleaseLockAsync("CancellableJob", Arg.Any<string>(), Arg.Any<CancellationToken>());
+        await _lockRepo.Received(1).ReleaseLockAsync("CancellableJob", jobQueueId, Arg.Any<CancellationToken>());
     }
 
     // ─────────────────────────────────────────────────────────────
-    // RunId is a valid GUID per run
+    // JobQueueId is provided by caller and propagated correctly
     // ─────────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task RunAsync_GeneratesUniqueRunIdPerExecution()
+    public async Task RunAsync_PropagatesCallerProvidedJobQueueIdToLockAndRecord()
     {
         // Arrange
         var job = Substitute.For<IBatchJob>();
         job.Name.Returns("IdJob");
 
         _factory.Create("IdJob").Returns(job);
-        _lockRepo.TryAcquireLockAsync("IdJob", Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+        _lockRepo.TryAcquireLockAsync("IdJob", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
                  .Returns(true);
         _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
                  .Returns(1);
 
-        // Act
-        var result1 = await _orchestrator.RunAsync("IdJob", RunMode.Manual);
-        var result2 = await _orchestrator.RunAsync("IdJob", RunMode.Manual);
+        // Act — caller provides distinct UUIDs for each execution
+        var jobQueueId1 = Guid.NewGuid();
+        var jobQueueId2 = Guid.NewGuid();
+        var result1 = await _orchestrator.RunAsync("IdJob", RunMode.Manual, jobQueueId1, "test-user");
+        var result2 = await _orchestrator.RunAsync("IdJob", RunMode.Manual, jobQueueId2, "test-user");
 
-        // Assert — each run gets a different RunId
-        Assert.NotEqual(result2.RunId, result1.RunId);
-        Assert.True(Guid.TryParseExact(result1.RunId, "N", out _), "RunId should be a valid GUID without dashes");
+        // Assert — each run returns the caller-provided jobQueueId
+        Assert.Equal(jobQueueId1, result1.JobQueueId);
+        Assert.Equal(jobQueueId2, result2.JobQueueId);
+        Assert.NotEqual(result2.JobQueueId, result1.JobQueueId);
     }
 
     // ─────────────────────────────────────────────────────────────
-    // Lock is passed the RunId that the execution record also uses
+    // JobQueueId is passed consistently between lock and execution record
     // ─────────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task RunAsync_UsesConsistentRunIdAcrossLockAndExecutionRecord()
+    public async Task RunAsync_UsesConsistentJobQueueIdAcrossLockAndExecutionRecord()
     {
         // Arrange
         var job = Substitute.For<IBatchJob>();
@@ -225,32 +232,33 @@ public sealed class JobOrchestratorTests
 
         _factory.Create("ConsistentJob").Returns(job);
 
-        string? capturedLockRunId = null;
-        string? capturedRecordRunId = null;
-        string? capturedReleaseRunId = null;
+        Guid? capturedLockJobQueueId = null;
+        Guid? capturedRecordJobQueueId = null;
+        Guid? capturedReleaseJobQueueId = null;
 
-        _lockRepo.TryAcquireLockAsync("ConsistentJob", Arg.Do<string>(id => capturedLockRunId = id),
+        _lockRepo.TryAcquireLockAsync("ConsistentJob", Arg.Do<Guid>(id => capturedLockJobQueueId = id),
                  Arg.Any<int>(), Arg.Any<CancellationToken>())
                  .Returns(true);
 
         _execRepo.CreateExecutionRecordAsync(
-                 Arg.Do<JobExecutionRecord>(r => capturedRecordRunId = r.RunId),
+                 Arg.Do<JobExecutionRecord>(r => capturedRecordJobQueueId = r.JobQueueId),
                  Arg.Any<CancellationToken>())
                  .Returns(5);
 
-        _lockRepo.ReleaseLockAsync("ConsistentJob", Arg.Do<string>(id => capturedReleaseRunId = id), Arg.Any<CancellationToken>())
+        _lockRepo.ReleaseLockAsync("ConsistentJob", Arg.Do<Guid>(id => capturedReleaseJobQueueId = id), Arg.Any<CancellationToken>())
             .Returns(Task.CompletedTask);
 
         // Act
-        var result = await _orchestrator.RunAsync("ConsistentJob", RunMode.Scheduled);
+        var jobQueueId = Guid.NewGuid();
+        var result = await _orchestrator.RunAsync("ConsistentJob", RunMode.Scheduled, jobQueueId, "test-user");
 
-        // Assert — RunId correlation is preserved across lock acquire, execution record, lock release, and final result.
-        Assert.NotNull(capturedLockRunId);
-        Assert.NotNull(capturedRecordRunId);
-        Assert.NotNull(capturedReleaseRunId);
-        Assert.Equal(capturedRecordRunId, capturedLockRunId);
-        Assert.Equal(capturedRecordRunId, capturedReleaseRunId);
-        Assert.Equal(capturedRecordRunId, result.RunId);
+        // Assert — JobQueueId correlation is preserved across lock acquire, execution record, lock release, and final result.
+        Assert.NotNull(capturedLockJobQueueId);
+        Assert.NotNull(capturedRecordJobQueueId);
+        Assert.NotNull(capturedReleaseJobQueueId);
+        Assert.Equal(capturedRecordJobQueueId, capturedLockJobQueueId);
+        Assert.Equal(capturedRecordJobQueueId, capturedReleaseJobQueueId);
+        Assert.Equal(capturedRecordJobQueueId, result.JobQueueId);
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -262,7 +270,7 @@ public sealed class JobOrchestratorTests
     {
         // Arrange — first call acquires lock, second call gets false (DB unique constraint)
         var lockCallCount = 0;
-        _lockRepo.TryAcquireLockAsync("ConcurrentJob", Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+        _lockRepo.TryAcquireLockAsync("ConcurrentJob", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
                  .Returns(_ => ++lockCallCount == 1);  // first true, subsequent false
 
         var job = Substitute.For<IBatchJob>();
@@ -275,8 +283,8 @@ public sealed class JobOrchestratorTests
                  .Returns(Task.CompletedTask);
 
         // Act — simulate two concurrent runs
-        var task1 = _orchestrator.RunAsync("ConcurrentJob", RunMode.Scheduled);
-        var task2 = _orchestrator.RunAsync("ConcurrentJob", RunMode.Scheduled);
+        var task1 = _orchestrator.RunAsync("ConcurrentJob", RunMode.Scheduled, Guid.NewGuid(), "test-user");
+        var task2 = _orchestrator.RunAsync("ConcurrentJob", RunMode.Scheduled, Guid.NewGuid(), "test-user");
         var results = await Task.WhenAll(task1, task2);
 
         // Assert — exactly one completed, one skipped
@@ -313,7 +321,7 @@ public sealed class JobOrchestratorTests
                 Task.CompletedTask);
 
         _factory.Create("RetrySuccessJob").Returns(job);
-        _lockRepo.TryAcquireLockAsync("RetrySuccessJob", Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+        _lockRepo.TryAcquireLockAsync("RetrySuccessJob", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(true);
         _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
             .Returns(200);
@@ -321,7 +329,7 @@ public sealed class JobOrchestratorTests
             .Returns(Task.CompletedTask);
 
         // Act
-        var result = await orchestrator.RunAsync("RetrySuccessJob", RunMode.Manual);
+        var result = await orchestrator.RunAsync("RetrySuccessJob", RunMode.Manual, Guid.NewGuid(), "test-user");
 
         // Assert
         Assert.Equal(JobStatus.Completed, result.Status);
@@ -353,7 +361,7 @@ public sealed class JobOrchestratorTests
             .Returns(Task.FromException(new TimeoutException("Transient persistent failure")));
 
         _factory.Create("RetryFailJob").Returns(job);
-        _lockRepo.TryAcquireLockAsync("RetryFailJob", Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+        _lockRepo.TryAcquireLockAsync("RetryFailJob", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(true);
         _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
             .Returns(201);
@@ -362,7 +370,7 @@ public sealed class JobOrchestratorTests
 
         // Act
         await Assert.ThrowsAsync<TimeoutException>(
-            () => orchestrator.RunAsync("RetryFailJob", RunMode.Scheduled));
+            () => orchestrator.RunAsync("RetryFailJob", RunMode.Scheduled, Guid.NewGuid(), "test-user"));
 
         // Assert (first attempt + 2 retries)
         await job.Received(3).ExecuteAsync(Arg.Any<CancellationToken>());
@@ -399,7 +407,7 @@ public sealed class JobOrchestratorTests
         job.ExecuteAsync(Arg.Any<CancellationToken>()).Returns(Task.FromException(nonRetryableEx));
 
         _factory.Create("NonRetryableJob").Returns(job);
-        _lockRepo.TryAcquireLockAsync("NonRetryableJob", Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+        _lockRepo.TryAcquireLockAsync("NonRetryableJob", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(true);
         _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
             .Returns(300);
@@ -408,7 +416,7 @@ public sealed class JobOrchestratorTests
 
         // Act
         await Assert.ThrowsAsync(exceptionType,
-            () => orchestrator.RunAsync("NonRetryableJob", RunMode.Manual));
+            () => orchestrator.RunAsync("NonRetryableJob", RunMode.Manual, Guid.NewGuid(), "test-user"));
 
         // Assert — only one attempt, no retries
         await job.Received(1).ExecuteAsync(Arg.Any<CancellationToken>());
@@ -442,7 +450,7 @@ public sealed class JobOrchestratorTests
         job.Name.Returns("TimeoutJob");
         _factory.Create("TimeoutJob").Returns(job);
 
-        _lockRepo.TryAcquireLockAsync("TimeoutJob", Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+        _lockRepo.TryAcquireLockAsync("TimeoutJob", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(true);
 
         _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
@@ -451,12 +459,12 @@ public sealed class JobOrchestratorTests
             .Returns(Task.CompletedTask);
 
         // Act
-        await orchestrator.RunAsync("TimeoutJob", RunMode.Scheduled);
+        await orchestrator.RunAsync("TimeoutJob", RunMode.Scheduled, Guid.NewGuid(), "test-user");
 
         // Assert
         await _lockRepo.Received(1).TryAcquireLockAsync(
             "TimeoutJob",
-            Arg.Any<string>(),
+            Arg.Any<Guid>(),
             1234,
             Arg.Any<CancellationToken>());
     }

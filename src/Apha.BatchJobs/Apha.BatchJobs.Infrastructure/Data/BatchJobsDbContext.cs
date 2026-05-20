@@ -183,7 +183,7 @@ public class BatchJobsDbContext : DbContext
             entity.Property(e => e.JobName).HasColumnName("job_name").IsRequired().HasMaxLength(255);
             entity.Property(e => e.AcquiredAt).HasColumnName("acquired_at").IsRequired();
             entity.Property(e => e.ExpiresAt).HasColumnName("expires_at").IsRequired();
-            entity.Property(e => e.RunId).HasColumnName("run_id").IsRequired().HasMaxLength(64);
+            entity.Property(e => e.JobQueueId).HasColumnName("jobqueueid").IsRequired();
             entity.Property(e => e.IsActive).HasColumnName("is_active").IsRequired().HasDefaultValue(true);
             entity.HasIndex(e => e.JobName).HasDatabaseName("idx_job_lock_job_name");
             entity.HasIndex(e => new { e.JobName, e.IsActive }).HasDatabaseName("idx_job_lock_job_name_active");

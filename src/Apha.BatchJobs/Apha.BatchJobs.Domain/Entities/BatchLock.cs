@@ -26,9 +26,9 @@ public sealed class BatchLock
     public required DateTime ExpiresAt { get; set; }
 
     /// <summary>
-    /// The run ID holding this lock.
+    /// The UUID for the job queue entry holding this lock (caller-injected).
     /// </summary>
-    public required string RunId { get; set; }
+    public required Guid JobQueueId { get; set; }
 
     /// <summary>
     /// Whether the lock is currently active.

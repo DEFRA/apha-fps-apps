@@ -18,9 +18,14 @@ public sealed class JobExecutionRecord
     public required string JobName { get; set; }
 
     /// <summary>
-    /// Unique run ID for this execution instance.
+    /// Unique UUID for this job queue entry (caller-injected, strict mode).
     /// </summary>
-    public required string RunId { get; set; }
+    public required Guid JobQueueId { get; set; }
+
+    /// <summary>
+    /// User ID or system identifier requesting the job execution.
+    /// </summary>
+    public required string UserId { get; set; }
 
     /// <summary>
     /// Type of batch job.

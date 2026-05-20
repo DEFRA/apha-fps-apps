@@ -63,41 +63,44 @@ public sealed class JobOrchestrator : IJobOrchestrator
     public async Task<JobExecutionResult> RunAsync(
         string jobName,
         RunMode runMode,
+        Guid jobQueueId,
+        string userId,
         CancellationToken cancellationToken = default)
     {
-        var runId = Guid.NewGuid().ToString("N");
         var startedAt = DateTime.UtcNow;
         using var runScope = _logger.BeginScope(new Dictionary<string, object>
         {
-            ["RunId"] = runId,
+            ["JobQueueId"] = jobQueueId,
             ["JobName"] = jobName,
-            ["RunMode"] = runMode.ToString()
+            ["RunMode"] = runMode.ToString(),
+            ["UserId"] = userId
         });
 
-        _logger.LogInformation("--- Orchestrator: Starting '{JobName}' | RunId={RunId} | Mode={RunMode}",
-            jobName, runId, runMode);
+        _logger.LogInformation("--- Orchestrator: Starting '{JobName}' | JobQueueId={JobQueueId} | Mode={RunMode} | UserId={UserId}",
+            jobName, jobQueueId, runMode, userId);
 
         // Step 1 — Acquire distributed lock
         _logger.LogInformation("Acquiring execution lock for '{JobName}'...", jobName);
         var lockAcquired = await _lockRepository.TryAcquireLockAsync(
-            jobName, runId, _lockTimeoutSeconds, cancellationToken);
+            jobName, jobQueueId, _lockTimeoutSeconds, cancellationToken);
 
         if (!lockAcquired)
         {
             _logger.LogWarning(
                 "Job '{JobName}' is already running (lock held by another process). Skipping this run.",
                 jobName);
-            return new JobExecutionResult(runId, jobName, JobStatus.Skipped, TimeSpan.Zero);
+            return new JobExecutionResult(jobQueueId, jobName, JobStatus.Skipped, TimeSpan.Zero);
         }
 
-        _logger.LogInformation("Lock acquired for '{JobName}' | RunId={RunId}", jobName, runId);
+        _logger.LogInformation("Lock acquired for '{JobName}' | JobQueueId={JobQueueId}", jobName, jobQueueId);
 
         // Step 2 — Create execution record (Started)
         var record = new JobExecutionRecord
         {
             ExecutionId = 0,   // DB assigns real ID on insert
             JobName = jobName,
-            RunId = runId,
+            JobQueueId = jobQueueId,
+            UserId = userId,
             JobType = JobType.Unknown,
             RunMode = runMode,
             Status = JobStatus.Running,
@@ -120,7 +123,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
             }
             else
             {
-                _logger.LogInformation("Execution record created | RunId={RunId}", runId);
+                _logger.LogInformation("Execution record created | JobQueueId={JobQueueId}", jobQueueId);
             }
         }
         catch (Exception ex)
@@ -182,8 +185,8 @@ public sealed class JobOrchestrator : IJobOrchestrator
                     if (!isRetryable)
                     {
                         _logger.LogError(ex,
-                            "Job '{JobName}' failed with non-retryable exception | Attempt={Attempt}/{TotalAttempts} | ExceptionType={ExceptionType} | ErrorMessage={ErrorMessage} | RunId={RunId}",
-                            jobName, attempt, totalAttempts, ex.GetType().Name, ex.Message, runId);
+                            "Job '{JobName}' failed with non-retryable exception | Attempt={Attempt}/{TotalAttempts} | ExceptionType={ExceptionType} | ErrorMessage={ErrorMessage} | JobQueueId={JobQueueId}",
+                            jobName, attempt, totalAttempts, ex.GetType().Name, ex.Message, jobQueueId);
                         break;
                     }
 
@@ -192,8 +195,8 @@ public sealed class JobOrchestrator : IJobOrchestrator
                     if (!canRetry)
                     {
                         _logger.LogError(ex,
-                            "Job '{JobName}' failed after retries exhausted | Attempt={Attempt}/{TotalAttempts} | ExceptionType={ExceptionType} | ErrorMessage={ErrorMessage} | RunId={RunId}",
-                            jobName, attempt, totalAttempts, ex.GetType().Name, ex.Message, runId);
+                            "Job '{JobName}' failed after retries exhausted | Attempt={Attempt}/{TotalAttempts} | ExceptionType={ExceptionType} | ErrorMessage={ErrorMessage} | JobQueueId={JobQueueId}",
+                            jobName, attempt, totalAttempts, ex.GetType().Name, ex.Message, jobQueueId);
                         break;
                     }
 
@@ -202,8 +205,8 @@ public sealed class JobOrchestrator : IJobOrchestrator
                     if (elapsedRetrySeconds >= _maxRetryDurationSeconds)
                     {
                         _logger.LogError(ex,
-                            "Job '{JobName}' retry duration capped | Attempt={Attempt}/{TotalAttempts} | ElapsedRetrySeconds={ElapsedSeconds} | MaxRetrySeconds={MaxSeconds} | RunId={RunId}",
-                            jobName, attempt, totalAttempts, (int)elapsedRetrySeconds, _maxRetryDurationSeconds, runId);
+                            "Job '{JobName}' retry duration capped | Attempt={Attempt}/{TotalAttempts} | ElapsedRetrySeconds={ElapsedSeconds} | MaxRetrySeconds={MaxSeconds} | JobQueueId={JobQueueId}",
+                            jobName, attempt, totalAttempts, (int)elapsedRetrySeconds, _maxRetryDurationSeconds, jobQueueId);
                         break;
                     }
 
@@ -213,14 +216,14 @@ public sealed class JobOrchestrator : IJobOrchestrator
                     var finalDelaySeconds = basedelaySeconds + jitterSeconds;
 
                     _logger.LogWarning(ex,
-                        "Job '{JobName}' failed | Attempt={Attempt}/{TotalAttempts} | ExceptionType={ExceptionType} | Retrying after {RetryDelaySeconds}s (+{JitterSeconds}s jitter) | RunId={RunId}",
+                        "Job '{JobName}' failed | Attempt={Attempt}/{TotalAttempts} | ExceptionType={ExceptionType} | Retrying after {RetryDelaySeconds}s (+{JitterSeconds}s jitter) | JobQueueId={JobQueueId}",
                         jobName,
                         attempt,
                         totalAttempts,
                         ex.GetType().Name,
                         basedelaySeconds,
                         jitterSeconds,
-                        runId);
+                        jobQueueId);
 
                     try
                     {
@@ -274,13 +277,13 @@ public sealed class JobOrchestrator : IJobOrchestrator
             // Step 5 — Release lock (always)
             try
             {
-                await _lockRepository.ReleaseLockAsync(jobName, runId, CancellationToken.None);
-                _logger.LogInformation("Lock released for '{JobName}' | RunId={RunId}", jobName, runId);
+                await _lockRepository.ReleaseLockAsync(jobName, jobQueueId, CancellationToken.None);
+                _logger.LogInformation("Lock released for '{JobName}' | JobQueueId={JobQueueId}", jobName, jobQueueId);
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Could not release lock for '{JobName}' | RunId={RunId} — lock will expire after {Timeout}s",
-                    jobName, runId, _lockTimeoutSeconds);
+                _logger.LogWarning(ex, "Could not release lock for '{JobName}' | JobQueueId={JobQueueId} — lock will expire after {Timeout}s",
+                    jobName, jobQueueId, _lockTimeoutSeconds);
             }
         }
 
@@ -293,8 +296,8 @@ public sealed class JobOrchestrator : IJobOrchestrator
         };
 
         _logger.LogInformation(
-            "--- Orchestrator: '{JobName}' finished | Status={Status} | Duration={Duration:mm\\:ss\\.fff} | RunId={RunId}",
-            jobName, status, finalDuration, runId);
+            "--- Orchestrator: '{JobName}' finished | Status={Status} | Duration={Duration:mm\\:ss\\.fff} | JobQueueId={JobQueueId}",
+            jobName, status, finalDuration, jobQueueId);
 
         if (jobException is OperationCanceledException cancelEx)
             throw cancelEx;
@@ -302,7 +305,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
         if (jobException != null)
             throw jobException;
 
-        return new JobExecutionResult(runId, jobName, status, finalDuration, executionId);
+        return new JobExecutionResult(jobQueueId, jobName, status, finalDuration, executionId);
     }
 
     /// <summary>

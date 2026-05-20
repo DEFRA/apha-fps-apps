@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS operational.job_status (
 
 -- Queue table that represents one execution instance of a job.
 CREATE TABLE IF NOT EXISTS operational.job_queue (
-    jobqueueid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    jobqueueid UUID PRIMARY KEY,
     jobid INTEGER NOT NULL,
     statusid INTEGER NOT NULL,
     startdatetime TIMESTAMPTZ NOT NULL,

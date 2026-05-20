@@ -1,0 +1,6 @@
+@Apha.BatchJobs.Fps.Api_HostAddress = http://localhost:5160
+
+GET {{Apha.BatchJobs.Fps.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

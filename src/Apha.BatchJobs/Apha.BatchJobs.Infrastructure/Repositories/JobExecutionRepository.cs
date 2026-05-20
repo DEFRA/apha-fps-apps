@@ -35,12 +35,12 @@ public class JobExecutionRepository : IJobExecutionRepository
         if (record == null)
             throw new ArgumentNullException(nameof(record));
 
-        var runGuid = ParseRunId(record.RunId);
         var now = DateTime.UtcNow;
         _logger.LogInformation(
-            "Create execution record requested | JobName={JobName} | RunId={RunId} | Status={Status}",
+            "Create execution record requested | JobName={JobName} | JobQueueId={JobQueueId} | UserId={UserId} | Status={Status}",
             record.JobName,
-            record.RunId,
+            record.JobQueueId,
+            record.UserId,
             record.Status);
 
         var jobId = await EnsureJobMasterAsync(record.JobName, cancellationToken);
@@ -48,7 +48,7 @@ public class JobExecutionRepository : IJobExecutionRepository
 
         var queueRow = new TblJobQueue
         {
-            JobQueueId = runGuid,
+            JobQueueId = record.JobQueueId,
             JobId = jobId,
             StatusId = statusId,
             StartDateTime = record.StartedAt,
@@ -61,9 +61,9 @@ public class JobExecutionRepository : IJobExecutionRepository
         _context.TblJobQueue.Add(queueRow);
         _context.TblJobQueueLog.Add(new TblJobQueueLog
         {
-            JobQueueId = runGuid,
+            JobQueueId = record.JobQueueId,
             StatusId = statusId,
-            PerformedBy = SystemActor,
+            PerformedBy = record.UserId,
             LogTime = now,
             Note = "Execution started"
         });
@@ -71,10 +71,10 @@ public class JobExecutionRepository : IJobExecutionRepository
         await _context.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation(
-            "Execution record created | JobName={JobName} | RunId={RunId} | ExecutionId={ExecutionId} | Status={Status}",
+            "Execution record created | JobName={JobName} | JobQueueId={JobQueueId} | UserId={UserId} | Status={Status}",
             record.JobName,
-            record.RunId,
-            0,
+            record.JobQueueId,
+            record.UserId,
             record.Status);
 
         // Foundation queue uses GUID correlation ID. The int return is retained
@@ -90,24 +90,23 @@ public class JobExecutionRepository : IJobExecutionRepository
 
         // The worker uses a shared DbContext across repositories. Do not clear ChangeTracker here to avoid nested transaction errors.
 
-        var runGuid = ParseRunId(record.RunId);
         _logger.LogInformation(
-            "Update execution record requested | JobName={JobName} | RunId={RunId} | ExecutionId={ExecutionId} | Status={Status}",
+            "Update execution record requested | JobName={JobName} | JobQueueId={JobQueueId} | UserId={UserId} | Status={Status}",
             record.JobName,
-            record.RunId,
-            record.ExecutionId,
+            record.JobQueueId,
+            record.UserId,
             record.Status);
 
         var queueRow = await _context.TblJobQueue
-            .FirstOrDefaultAsync(q => q.JobQueueId == runGuid, cancellationToken);
+            .FirstOrDefaultAsync(q => q.JobQueueId == record.JobQueueId, cancellationToken);
 
         if (queueRow == null)
         {
             _logger.LogInformation(
-                "Execution record not found for update | JobName={JobName} | RunId={RunId} | ExecutionId={ExecutionId}",
+                "Execution record not found for update | JobName={JobName} | JobQueueId={JobQueueId} | UserId={UserId}",
                 record.JobName,
-                record.RunId,
-                record.ExecutionId);
+                record.JobQueueId,
+                record.UserId);
             return;
         }
 
@@ -121,19 +120,19 @@ public class JobExecutionRepository : IJobExecutionRepository
 
         _context.TblJobQueueLog.Add(new TblJobQueueLog
         {
-            JobQueueId = runGuid,
+            JobQueueId = record.JobQueueId,
             StatusId = statusId,
-            PerformedBy = SystemActor,
+            PerformedBy = record.UserId,
             LogTime = now,
             Note = BuildStatusNote(record.Status)
         });
 
         await _context.SaveChangesAsync(cancellationToken);
         _logger.LogInformation(
-            "Execution record updated | JobName={JobName} | RunId={RunId} | ExecutionId={ExecutionId} | Status={Status}",
+            "Execution record updated | JobName={JobName} | JobQueueId={JobQueueId} | UserId={UserId} | Status={Status}",
             record.JobName,
-            record.RunId,
-            record.ExecutionId,
+            record.JobQueueId,
+            record.UserId,
             record.Status);
     }
 
@@ -171,7 +170,8 @@ public class JobExecutionRepository : IJobExecutionRepository
         {
             ExecutionId = 0,
             JobName = last.JobName,
-            RunId = last.JobQueueId.ToString("N"),
+            JobQueueId = last.JobQueueId,
+            UserId = SystemActor,
             JobType = JobType.Unknown,
             RunMode = RunMode.Manual,
             Status = parsedStatus,

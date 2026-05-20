@@ -11,19 +11,19 @@ public interface IBatchLockRepository
     /// Attempts to acquire a distributed lock for a job.
     /// </summary>
     /// <param name="jobName">The name of the job requiring a lock.</param>
-    /// <param name="runId">Unique run ID for this execution.</param>
+    /// <param name="jobQueueId">Unique UUID for the job queue entry (caller-injected).</param>
     /// <param name="timeoutSeconds">Lock timeout duration.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>True if lock acquired; false if already locked by another process.</returns>
-    Task<bool> TryAcquireLockAsync(string jobName, string runId, int timeoutSeconds, CancellationToken cancellationToken = default);
+    Task<bool> TryAcquireLockAsync(string jobName, Guid jobQueueId, int timeoutSeconds, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Releases a lock held by the given run ID.
+    /// Releases a lock held by the given job queue ID.
     /// </summary>
     /// <param name="jobName">The name of the job.</param>
-    /// <param name="runId">The run ID holding the lock.</param>
+    /// <param name="jobQueueId">The job queue UUID holding the lock.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    Task ReleaseLockAsync(string jobName, string runId, CancellationToken cancellationToken = default);
+    Task ReleaseLockAsync(string jobName, Guid jobQueueId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets the current lock for a job, if one exists.

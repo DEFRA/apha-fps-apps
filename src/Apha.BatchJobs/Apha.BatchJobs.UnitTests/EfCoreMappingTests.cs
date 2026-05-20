@@ -35,12 +35,12 @@ public sealed class EfCoreMappingTests
     }
 
     [Fact]
-    public void BatchLock_RunId_MaxLength_Is_64()
+    public void BatchLock_JobQueueId_Is_Mapped()
     {
         using var ctx = new BatchJobsDbContext(_options);
         var prop = ctx.Model.FindEntityType(typeof(Domain.Entities.BatchLock))!
-                       .FindProperty(nameof(Domain.Entities.BatchLock.RunId))!;
-        Assert.Equal(64, prop.GetMaxLength());
+                       .FindProperty(nameof(Domain.Entities.BatchLock.JobQueueId));
+        Assert.NotNull(prop);
     }
 
     [Fact]

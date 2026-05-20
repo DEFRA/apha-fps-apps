@@ -13,16 +13,18 @@ public interface IJobOrchestrator
     /// </summary>
     /// <param name="jobName">The registered name of the job to run.</param>
     /// <param name="runMode">Whether this is a scheduled or ad-hoc run.</param>
+    /// <param name="jobQueueId">The caller-injected UUID for this job queue entry (strict mode - always required).</param>
+    /// <param name="userId">The user/system ID requesting the job execution.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>The execution result including RunId, status, and duration.</returns>
-    Task<JobExecutionResult> RunAsync(string jobName, RunMode runMode, CancellationToken cancellationToken = default);
+    /// <returns>The execution result including JobQueueId, status, and duration.</returns>
+    Task<JobExecutionResult> RunAsync(string jobName, RunMode runMode, Guid jobQueueId, string userId, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
 /// Holds the outcome of a <see cref="IJobOrchestrator.RunAsync"/> call.
 /// </summary>
 public sealed record JobExecutionResult(
-    string RunId,
+    Guid JobQueueId,
     string JobName,
     JobStatus Status,
     TimeSpan Duration,

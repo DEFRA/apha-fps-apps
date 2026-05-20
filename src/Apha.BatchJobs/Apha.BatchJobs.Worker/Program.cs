@@ -109,53 +109,78 @@ try
     var jobName = args.Length > 0 ? args[0] : (Environment.GetEnvironmentVariable("BATCH_JOB_NAME") ?? "HealthCheck");
     var runModeEnv = Environment.GetEnvironmentVariable("BATCH_RUN_MODE") ?? "Manual";
     var runMode = Enum.TryParse<RunMode>(runModeEnv, ignoreCase: true, out var parsedMode) ? parsedMode : RunMode.Manual;
-    requestedJobName = jobName;
-    requestedRunMode = runMode.ToString();
-
-    logger.LogInformation("Requested job: {JobName} | RunMode: {RunMode}", jobName, runMode);
-
-    // Cancel job execution only when the host is stopping.
-    // Do not use GracefulShutdownWindowSeconds as a hard runtime cap.
-    using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
-        hostLifetime.ApplicationStopping);
-
-    if (hostLifetime.ApplicationStopping.IsCancellationRequested)
+    // Strict mode: caller must inject JobQueueId (UUID format)
+    var jobQueueIdEnv = Environment.GetEnvironmentVariable("BATCH_JOBQUEUE_ID");
+    Guid jobQueueId = Guid.Empty;
+    string userId = "system";
+    
+    if (string.IsNullOrWhiteSpace(jobQueueIdEnv))
     {
-        logger.LogWarning(
-            "Host stopping signal was already set before job start â€” skipping execution | JobName={JobName} | GracefulWindowSeconds={GracefulWindowSeconds}",
-            jobName, gracefulShutdownWindowSeconds);
-        exitCode = ExitCodeCancelled;
-        failureCategory = "Cancellation";
-        runOutcome = "Cancelled";
+        logger.LogError("Configuration error: BATCH_JOBQUEUE_ID environment variable is required (strict mode)");
+        exitCode = ExitCodeConfigurationError;
+        failureCategory = "ConfigurationError";
+        runOutcome = "Failed";
+    }
+    else if (!Guid.TryParse(jobQueueIdEnv, out jobQueueId))
+    {
+        logger.LogError("Configuration error: BATCH_JOBQUEUE_ID must be a valid UUID | Value={JobQueueId}", jobQueueIdEnv);
+        exitCode = ExitCodeConfigurationError;
+        failureCategory = "ConfigurationError";
+        runOutcome = "Failed";
     }
     else
     {
-        // Run through orchestrator (handles lock, execution records, and job execution)
-        await using var executionScope = serviceProvider.CreateAsyncScope();
-        var orchestrator = executionScope.ServiceProvider.GetRequiredService<IJobOrchestrator>();
-        var result = await orchestrator.RunAsync(jobName, runMode, linkedCts.Token);
+        // Get optional userId from caller (API/UI)
+        userId = Environment.GetEnvironmentVariable("BATCH_USER_ID") ?? "system";
+        requestedJobName = jobName;
+        requestedRunMode = runMode.ToString();
+    
 
-        capturedRunId = result.RunId;
-        capturedExecutionId = result.ExecutionId;
+        logger.LogInformation("Requested job: {JobName} | RunMode: {RunMode} | JobQueueId={JobQueueId} | UserId={UserId}", jobName, runMode, jobQueueId, userId);
 
-        logger.LogInformation("===========================================");
-        logger.LogInformation(
-            "Job '{JobName}' finished | Status={Status} | RunId={RunId} | ExecutionId={ExecutionId}",
-            result.JobName, result.Status, result.RunId, result.ExecutionId);
-        var computedExitCode = result.Status == JobStatus.Skipped ? ExitCodeSkipped : ExitCodeSuccess;
-        logger.LogInformation("===========================================");
+        // Cancel job execution only when the host is stopping.
+        // Do not use GracefulShutdownWindowSeconds as a hard runtime cap.
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
+            hostLifetime.ApplicationStopping);
 
-        // Exit 4 = skipped (lock already held) â€” not a failure
-        exitCode = computedExitCode;
-        if (result.Status == JobStatus.Skipped)
+        if (hostLifetime.ApplicationStopping.IsCancellationRequested)
         {
-            failureCategory = "LockContentionSkip";
-            runOutcome = "Skipped";
+            logger.LogWarning(
+                "Host stopping signal was already set before job start — skipping execution | JobName={JobName} | GracefulWindowSeconds={GracefulWindowSeconds}",
+                jobName, gracefulShutdownWindowSeconds);
+            exitCode = ExitCodeCancelled;
+            failureCategory = "Cancellation";
+            runOutcome = "Cancelled";
         }
         else
         {
-            failureCategory = "None";
-            runOutcome = "Succeeded";
+            // Run through orchestrator (handles lock, execution records, and job execution)
+            await using var executionScope = serviceProvider.CreateAsyncScope();
+            var orchestrator = executionScope.ServiceProvider.GetRequiredService<IJobOrchestrator>();
+            var result = await orchestrator.RunAsync(jobName, runMode, jobQueueId, userId, linkedCts.Token);
+
+            capturedRunId = result.JobQueueId.ToString();
+            capturedExecutionId = result.ExecutionId;
+
+            logger.LogInformation("===========================================");
+            logger.LogInformation(
+                "Job '{JobName}' finished | Status={Status} | JobQueueId={JobQueueId} | ExecutionId={ExecutionId}",
+                result.JobName, result.Status, result.JobQueueId, result.ExecutionId);
+            var computedExitCode = result.Status == JobStatus.Skipped ? ExitCodeSkipped : ExitCodeSuccess;
+            logger.LogInformation("===========================================");
+
+            // Exit 4 = skipped (lock already held) — not a failure
+            exitCode = computedExitCode;
+            if (result.Status == JobStatus.Skipped)
+            {
+                failureCategory = "LockContentionSkip";
+                runOutcome = "Skipped";
+            }
+            else
+            {
+                failureCategory = "None";
+                runOutcome = "Succeeded";
+            }
         }
     }
 }

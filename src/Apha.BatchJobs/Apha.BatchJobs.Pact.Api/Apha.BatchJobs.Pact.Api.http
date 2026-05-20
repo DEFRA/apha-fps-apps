@@ -1,0 +1,6 @@
+@Apha.BatchJobs.Pact.Api_HostAddress = http://localhost:5089
+
+GET {{Apha.BatchJobs.Pact.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

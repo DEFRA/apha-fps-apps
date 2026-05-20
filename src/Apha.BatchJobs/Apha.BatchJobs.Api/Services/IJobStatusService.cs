@@ -51,8 +51,8 @@ public sealed class JobStatusResult
 /// <summary>Active lock information returned to the UI.</summary>
 public sealed class ActiveLockInfo
 {
-    /// <summary>Unique run ID holding the lock.</summary>
-    public required string RunId { get; init; }
+    /// <summary>Unique job queue ID holding the lock.</summary>
+    public required Guid JobQueueId { get; init; }
 
     /// <summary>When the lock was acquired.</summary>
     public required DateTime AcquiredAt { get; init; }
@@ -64,8 +64,8 @@ public sealed class ActiveLockInfo
 /// <summary>Last execution summary returned to the UI.</summary>
 public sealed class LastExecutionInfo
 {
-    /// <summary>Unique run ID for the last execution.</summary>
-    public required string RunId { get; init; }
+    /// <summary>Unique job queue ID for the last execution.</summary>
+    public required Guid JobQueueId { get; init; }
 
     /// <summary>Status of the last execution (Completed, Failed, Skipped, etc).</summary>
     public required string Status { get; init; }

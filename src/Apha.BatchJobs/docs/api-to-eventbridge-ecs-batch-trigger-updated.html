@@ -1,0 +1,1518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Batch Job Triggering Approach Recommendation - EventBridge Common Model</title>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; color: #222; line-height: 1.55; margin: 0; background: #f6f7f9; }
+    .page { max-width: 1220px; margin: 24px auto; background: #fff; padding: 32px 42px; border: 1px solid #ddd; }
+    h1 { font-size: 26px; margin: 0 0 8px; color: #1f2937; }
+    h2 { font-size: 20px; margin-top: 32px; border-bottom: 2px solid #e5e7eb; padding-bottom: 6px; color: #1f2937; }
+    h3 { font-size: 16px; margin-top: 24px; color: #374151; }
+    h4 { font-size: 14px; margin-top: 18px; color: #374151; }
+    .subtitle { color: #555; margin-bottom: 24px; }
+    .callout { background: #eef6ff; border-left: 4px solid #2563eb; padding: 12px 16px; margin: 18px 0; }
+    .success { background: #f0fdf4; border-left: 4px solid #16a34a; padding: 12px 16px; margin: 18px 0; }
+    .warning { background: #fff7ed; border-left: 4px solid #ea580c; padding: 12px 16px; margin: 18px 0; }
+    .neutral { background: #f9fafb; border-left: 4px solid #6b7280; padding: 12px 16px; margin: 18px 0; }
+    table { border-collapse: collapse; width: 100%; margin: 14px 0 22px; font-size: 13px; }
+    th, td { border: 1px solid #d1d5db; padding: 9px 10px; vertical-align: top; }
+    th { background: #f3f4f6; text-align: left; color: #111827; }
+    pre { background: #111827; color: #f9fafb; padding: 14px 16px; border-radius: 4px; overflow-x: auto; font-size: 13px; line-height: 1.45; }
+    code { background: #f3f4f6; padding: 2px 4px; border-radius: 3px; }
+    pre code { background: transparent; padding: 0; color: inherit; }
+    .flow { font-family: Consolas, Monaco, monospace; background: #f9fafb; border: 1px solid #d1d5db; padding: 14px 16px; margin: 14px 0; white-space: pre-wrap; }
+    ul, ol { margin-top: 8px; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; background: #dcfce7; color: #166534; font-size: 12px; font-weight: bold; }
+    .badge-blue { display: inline-block; padding: 2px 8px; border-radius: 999px; background: #dbeafe; color: #1d4ed8; font-size: 12px; font-weight: bold; }
+    .badge-gray { display: inline-block; padding: 2px 8px; border-radius: 999px; background: #e5e7eb; color: #374151; font-size: 12px; font-weight: bold; }
+    .small { font-size: 12px; color: #555; }
+    .code-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0 8px; }
+    .code-card { border: 1px solid #d1d5db; background: #fafafa; padding: 10px 12px; }
+    .code-card h4 { margin-top: 4px; }
+    .footer { margin-top: 36px; color: #555; font-size: 13px; border-top: 1px solid #e5e7eb; padding-top: 16px; }
+    @media (max-width: 980px) {
+      .code-compare { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1>Batch Job Triggering Approach Recommendation</h1>
+    <p class="subtitle">Updated recommendation for using EventBridge as the common trigger layer for manual/API-triggered jobs, scheduled jobs, and future file-driven jobs.</p>
+
+    <div class="callout">
+      <strong>Updated decision:</strong> The preferred approach is now <strong>API → EventBridge → ECS Task</strong>. This aligns with the team preference, reduces API-side infrastructure dependency, and creates commonality with scheduled jobs that already use EventBridge to invoke ECS tasks.
+    </div>
+
+    <div class="neutral">
+      <strong>Context:</strong> The worker/batch application already contains orchestration, locking, logging, execution control, status management, and job-specific execution logic. The decision here is only about the trigger/orchestration entry point.
+    </div>
+
+    <h2>1. Approach Comparison</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Approach</th>
+          <th>Flow</th>
+          <th>Infra Dependency in API</th>
+          <th>Best Use Case</th>
+          <th>Pros</th>
+          <th>Cons / Trade-off</th>
+          <th>Updated Fitment</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>1. API → ECS RunTask</strong></td>
+          <td>API directly invokes ECS Fargate task using <code>RunTask</code>.</td>
+          <td>Medium. Can be minimized using runtime discovery, but API still remains ECS-aware.</td>
+          <td>Manual / adhoc jobs where immediate ECS task ARN is important.</td>
+          <td>Immediate ECS task creation response, task ARN available immediately, simpler direct debugging.</td>
+          <td>API needs ECS permissions and runtime awareness; some infra dependency remains with API.</td>
+          <td><span class="badge-gray">Not Selected</span><br/>Good technically, but not aligned to lower API infra dependency goal.</td>
+        </tr>
+        <tr>
+          <td><strong>2. API → EventBridge → ECS Task</strong></td>
+          <td>API emits event; EventBridge rule invokes ECS task.</td>
+          <td>Low. API only knows event bus/source/detail type.</td>
+          <td>Manual/API-triggered jobs where infra routing should be owned outside API.</td>
+          <td>API does not know ECS target details; infra owns routing; same model can be used for scheduled jobs.</td>
+          <td>More moving parts; API gets event accepted response, not immediate ECS task ARN. Correlation must be handled explicitly.</td>
+          <td><span class="badge">Recommended</span><br/>Best fit considering infra-decoupling and common trigger model.</td>
+        </tr>
+        <tr>
+          <td><strong>3. S3 Event → EventBridge → ECS Task</strong></td>
+          <td>S3 object/file event triggers ECS task through EventBridge.</td>
+          <td>Very low in API.</td>
+          <td>File-driven batch processing.</td>
+          <td>Good for file arrival automation and future ingestion use cases.</td>
+          <td>Not suitable for user/manual trigger unless S3 is artificially introduced.</td>
+          <td><span class="badge-blue">Future Option</span><br/>Useful only if a job should be triggered by file arrival.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>2. Final Recommendation</h2>
+    <div class="success">
+      Use <strong>API → EventBridge → ECS Task</strong> as the standard trigger model for manual/API-triggered batch jobs.
+    </div>
+
+    <h3>2.1 Single-Slide Summary (Presentation Shortcut)</h3>
+    <div class="callout">
+      <strong>Decision in one line:</strong> Keep API as a business-event publisher and move ECS runtime orchestration ownership to infrastructure via EventBridge target configuration.
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>What to Say in Review</th>
+          <th>Where to Show in This Document</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Event-based trigger keeps API simpler and less infra-coupled.</td>
+          <td>Section <strong>8.2.1</strong> (side-by-side code) + <strong>8.2.2</strong> (JSON comparison).</td>
+        </tr>
+        <tr>
+          <td>ECS task definition remains stable; infra controls runtime/network routing externally.</td>
+          <td>Section <strong>8.2.2</strong> (task-definition context and RunTask JSON comparison).</td>
+        </tr>
+        <tr>
+          <td>Infra team becomes clear authority for EventBridge target, IAM, network, retry, and DLQ.</td>
+          <td>Section <strong>10.5</strong> (infra authority model and IaC-style target JSON).</td>
+        </tr>
+        <tr>
+          <td>Result: fewer API redeploys for infra changes and better operational consistency with schedules.</td>
+          <td>Sections <strong>2</strong>, <strong>8.2.2</strong>, and <strong>10.5.2</strong>.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>The key reason for this change is that the preferred trade-off is now tilted towards <strong>lower API infrastructure dependency</strong> and <strong>commonality with scheduled jobs</strong>. Scheduled jobs already use EventBridge to invoke ECS tasks. By using EventBridge for manual/API triggers as well, both scheduled and manual jobs follow the same operational pattern.</p>
+
+    <div class="flow">Manual/API-triggered flow
+
+UI
+ ↓
+PACT API / FPS API
+ ↓
+EventBridge PutEvents
+ ↓
+EventBridge Rule
+ ↓
+ECS RunTask Target
+ ↓
+Worker Task
+ ↓
+Job Orchestrator
+ ↓
+PostgreSQL + CloudWatch</div>
+
+    <div class="flow">Scheduled job flow
+
+EventBridge Schedule / Rule
+ ↓
+ECS RunTask Target
+ ↓
+Worker Task
+ ↓
+Job Orchestrator
+ ↓
+PostgreSQL + CloudWatch</div>
+
+    <h2>3. What from Animesh's Homework Can Be Reused</h2>
+    <p>Animesh has already outlined the correct foundation for this approach. The following points can be directly reused and refined for the PoC:</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Animesh's Point</th>
+          <th>How We Will Use It</th>
+          <th>Refinement Needed</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Develop parameterized .NET batch app.</td>
+          <td>Use the existing worker app/orchestrator and pass job details using env variables.</td>
+          <td>Standardize env names: <code>BATCH_JOB_NAME</code>, <code>BATCH_RUN_MODE</code>, <code>BATCH_JOB_EXECUTION_ID</code>.</td>
+        </tr>
+        <tr>
+          <td>Package batch app as Docker container and push to ECR.</td>
+          <td>Use existing GitHub workflow pattern for image build and ECR push.</td>
+          <td>Tag images consistently and update ECS task definition revision during deployment.</td>
+        </tr>
+        <tr>
+          <td>Create ECS Task Definition.</td>
+          <td>Task definition remains the worker blueprint: image, CPU/memory, roles, logs, default env.</td>
+          <td>Keep it Fargate compatible and use <code>awsvpc</code> network mode.</td>
+        </tr>
+        <tr>
+          <td>EventBridge triggers ECS RunTask.</td>
+          <td>This becomes the central model for both manual and scheduled jobs.</td>
+          <td>Infra team owns EventBridge target configuration, ECS networking, role, retry and DLQ.</td>
+        </tr>
+        <tr>
+          <td>Different jobs can be triggered using environment overrides.</td>
+          <td>This matches the current worker design where job name is injected through env variable.</td>
+          <td>Use an EventBridge input transformer to map event detail into ECS container overrides.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>4. Ownership Split</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Area</th>
+          <th>Owner</th>
+          <th>Responsibilities</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>PACT API / FPS API</td>
+          <td>Application team</td>
+          <td>Validate request, generate <code>jobExecutionId</code>, emit EventBridge event, return accepted response to UI.</td>
+        </tr>
+        <tr>
+          <td>EventBridge</td>
+          <td>Infra / platform team</td>
+          <td>Own event bus, rules, targets, input transformer, ECS target, retry and DLQ.</td>
+        </tr>
+        <tr>
+          <td>ECS Task Definition</td>
+          <td>Infra + application team</td>
+          <td>Define image, CPU/memory, roles, logging, environment defaults, container name.</td>
+        </tr>
+        <tr>
+          <td>Worker App</td>
+          <td>Application team</td>
+          <td>Read env variables, perform orchestration, acquire lock, execute handler, update status/logs.</td>
+        </tr>
+        <tr>
+          <td>Status Store</td>
+          <td>Application/data team</td>
+          <td>Store job execution status, correlation id, running/completed/failed state, audit history.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>5. Event Contract</h2>
+    <p>The API publishes a small event to EventBridge. It does not include ECS cluster, subnets, security groups, task definition, or container runtime details.</p>
+
+    <h3>5.1 Event from FPS API</h3>
+    <pre><code>{
+  "source": "fps.api",
+  "detail-type": "BatchJob.TriggerRequested",
+  "detail": {
+    "jobExecutionId": "b8f9d4a16bb64a6c97e44e9c2e09f111",
+    "jobName": "FECProcess",
+    "runMode": "Manual",
+    "requestedBy": "user@atos.net",
+    "requestedAtUtc": "2026-05-07T07:00:00Z"
+  }
+}</code></pre>
+
+    <h3>5.2 Event from PACT API</h3>
+    <pre><code>{
+  "source": "pact.api",
+  "detail-type": "BatchJob.TriggerRequested",
+  "detail": {
+    "jobExecutionId": "51e6c34a83e14d6aa7f96f7b4e1b9f4d",
+    "jobName": "RecreateSummaries",
+    "runMode": "Manual",
+    "requestedBy": "user@atos.net",
+    "requestedAtUtc": "2026-05-07T07:00:00Z"
+  }
+}</code></pre>
+
+    <div class="warning">
+      <strong>Important:</strong> In the EventBridge approach, the API does not get ECS TaskArn immediately. The API should return <code>jobExecutionId</code> and status <code>TriggerAccepted</code>. The worker can later update the database with ECS/container/runtime details when it starts.
+    </div>
+
+    <h2>6. Job Execution ID and Correlation</h2>
+    <p>Since the API may not touch the database before the worker starts, the API can generate a <code>jobExecutionId</code> itself and include it in the event. This ID becomes the business-level correlation key.</p>
+
+    <div class="flow">API generates jobExecutionId
+ ↓
+API publishes EventBridge event
+ ↓
+API returns jobExecutionId to UI
+ ↓
+EventBridge invokes ECS worker task
+ ↓
+Worker receives jobExecutionId as env variable
+ ↓
+Worker creates/updates job status in DB
+ ↓
+UI polls status using jobExecutionId</div>
+
+    <p>If the UI polls before the worker inserts the row, the status API can return <code>PendingStart</code> / <code>TriggerAccepted</code> for that <code>jobExecutionId</code>.</p>
+
+    <h3>6.1 JobExecutionId to JobQueueId Flow (Updated)</h3>
+    <p><strong>Clarification:</strong> <code>jobExecutionId</code> is API-generated correlation ID. <code>jobQueueId</code> is database/runtime execution row identity from <code>operational.tbljobqueue</code>. Both should be linked once worker starts.</p>
+
+    <div class="flow">1) API receives trigger request
+2) API generates jobExecutionId (GUID) and publishes EventBridge event
+3) API returns TriggerAccepted + jobExecutionId to UI
+4) Worker starts with BATCH_JOB_EXECUTION_ID=jobExecutionId
+5) Worker inserts execution row in operational.tbljobqueue
+   - DB generates jobQueueId (identity/sequence)
+   - Row stores correlation/jobExecutionId
+6) Worker and status APIs expose both IDs for traceability
+7) UI continues polling by jobExecutionId (stable external key)
+   - API may additionally return jobQueueId once available</div>
+
+    <h4>6.1.1 Suggested Status Response After Worker Row Exists</h4>
+    <pre><code>{
+  "jobExecutionId": "b8f9d4a16bb64a6c97e44e9c2e09f111",
+  "jobQueueId": 987654,
+  "status": "Running",
+  "message": "Worker started and queue record created."
+}</code></pre>
+
+    <h4>6.1.2 Correlation Rule</h4>
+    <ul>
+      <li>External/UI/API correlation key: <code>jobExecutionId</code>.</li>
+      <li>Internal database/worker key: <code>jobQueueId</code>.</li>
+      <li>Every log line and status payload should include <code>jobExecutionId</code>; include <code>jobQueueId</code> once known.</li>
+    </ul>
+
+    <h2>7. EventBridge Rule and ECS Target</h2>
+
+    <h3>7.1 Event Pattern</h3>
+    <p>One rule can listen to both APIs if they use the same event contract:</p>
+    <pre><code>{
+  "source": ["fps.api", "pact.api"],
+  "detail-type": ["BatchJob.TriggerRequested"]
+}</code></pre>
+
+    <p>Alternatively, separate rules can be created per API/job type if stricter routing or ownership separation is required.</p>
+
+    <h3>7.2 ECS Target Configuration</h3>
+    <p>The EventBridge rule target is configured as an ECS task target. Infra owns these values:</p>
+    <ul>
+      <li>ECS cluster ARN</li>
+      <li>Worker task definition ARN/revision</li>
+      <li>Launch type or capacity provider strategy</li>
+      <li>Subnets</li>
+      <li>Security groups</li>
+      <li>Assign public IP setting</li>
+      <li>EventBridge invoke role</li>
+      <li>Retry policy</li>
+      <li>Dead-letter queue</li>
+    </ul>
+
+    <h3>7.3 Input Transformer to Container Overrides</h3>
+    <p>The input transformer maps the event payload into ECS RunTask overrides so the worker receives job parameters as environment variables.</p>
+
+    <h4>Input Paths</h4>
+    <pre><code>{
+  "jobExecutionId": "$.detail.jobExecutionId",
+  "jobName": "$.detail.jobName",
+  "runMode": "$.detail.runMode",
+  "requestedBy": "$.detail.requestedBy"
+}</code></pre>
+
+    <h4>Input Template</h4>
+    <pre><code>{
+  "containerOverrides": [
+    {
+      "name": "batch-container",
+      "environment": [
+        { "name": "BATCH_JOB_EXECUTION_ID", "value": "&lt;jobExecutionId&gt;" },
+        { "name": "BATCH_JOB_NAME", "value": "&lt;jobName&gt;" },
+        { "name": "BATCH_RUN_MODE", "value": "&lt;runMode&gt;" },
+        { "name": "BATCH_REQUESTED_BY", "value": "&lt;requestedBy&gt;" }
+      ]
+    }
+  ]
+}</code></pre>
+
+    <h2>8. API Implementation Blueprint</h2>
+
+    <h3>8.1 API Configuration</h3>
+    <p>API configuration remains minimal:</p>
+    <pre><code>{
+  "EventBridge": {
+    "EventBusName": "default",
+    "Source": "fps.api",
+    "DetailType": "BatchJob.TriggerRequested"
+  }
+}</code></pre>
+
+    <p>For PACT API:</p>
+    <pre><code>{
+  "EventBridge": {
+    "EventBusName": "default",
+    "Source": "pact.api",
+    "DetailType": "BatchJob.TriggerRequested"
+  }
+}</code></pre>
+
+    <h3>8.2 API Code - Publish Event</h3>
+    <pre><code>using Amazon.EventBridge;
+using Amazon.EventBridge.Model;
+using System.Text.Json;
+
+public async Task&lt;string&gt; TriggerBatchJobAsync(
+    string jobName,
+    string requestedBy,
+    CancellationToken cancellationToken = default)
+{
+    ArgumentException.ThrowIfNullOrWhiteSpace(jobName);
+
+    var jobExecutionId = Guid.NewGuid().ToString("N");
+
+    var detail = JsonSerializer.Serialize(new
+    {
+        jobExecutionId,
+        jobName,
+        runMode = "Manual",
+        requestedBy,
+        requestedAtUtc = DateTime.UtcNow
+    });
+
+    var request = new PutEventsRequest
+    {
+        Entries =
+        [
+            new PutEventsRequestEntry
+            {
+                EventBusName = _configuration["EventBridge:EventBusName"] ?? "default",
+                Source = _configuration["EventBridge:Source"] ?? "fps.api",
+                DetailType = _configuration["EventBridge:DetailType"] ?? "BatchJob.TriggerRequested",
+                Detail = detail
+            }
+        ]
+    };
+
+    var response = await _eventBridge.PutEventsAsync(request, cancellationToken);
+
+    if (response.FailedEntryCount &gt; 0)
+    {
+        var failureText = string.Join("; ", response.Entries
+            .Where(e =&gt; !string.IsNullOrWhiteSpace(e.ErrorCode))
+            .Select(e =&gt; $"{e.ErrorCode}: {e.ErrorMessage}"));
+
+        throw new InvalidOperationException($"Failed to publish batch trigger event. {failureText}");
+    }
+
+    return jobExecutionId;
+}</code></pre>
+
+    <h3>8.2.1 Side-by-Side Code: Event Publish vs Direct ECS RunTask</h3>
+    <div class="neutral">
+      <strong>Why this comparison matters:</strong> both snippets can trigger the worker, but the EventBridge producer code is smaller, cleaner, and avoids hardcoding ECS runtime/network details in the API.
+    </div>
+
+    <div class="code-compare">
+      <div class="code-card">
+        <h4>Option A (Recommended): API publishes EventBridge event</h4>
+        <pre><code>using Amazon.EventBridge;
+using Amazon.EventBridge.Model;
+using System.Text.Json;
+
+public async Task&lt;string&gt; TriggerViaEventAsync(string jobName, string requestedBy)
+{
+    var jobExecutionId = Guid.NewGuid().ToString("N");
+
+    var detail = JsonSerializer.Serialize(new
+    {
+        jobExecutionId,
+        jobName,
+        runMode = "Manual",
+        requestedBy,
+        requestedAtUtc = DateTime.UtcNow
+    });
+
+    await _eventBridge.PutEventsAsync(new PutEventsRequest
+    {
+        Entries =
+        [
+            new PutEventsRequestEntry
+            {
+                EventBusName = _configuration["EventBridge:EventBusName"] ?? "default",
+                Source = "fps.api",
+                DetailType = "BatchJob.TriggerRequested",
+                Detail = detail
+            }
+        ]
+    });
+
+    return jobExecutionId;
+}</code></pre>
+      </div>
+
+      <div class="code-card">
+        <h4>Option B (Direct): API calls ECS RunTask</h4>
+        <pre><code>using Amazon.ECS;
+using Amazon.ECS.Model;
+
+public async Task&lt;string&gt; TriggerViaEcsAsync(string jobName, string requestedBy)
+{
+    var jobExecutionId = Guid.NewGuid().ToString("N");
+
+    var response = await _ecs.RunTaskAsync(new RunTaskRequest
+    {
+        Cluster = _configuration["Ecs:ClusterArn"],
+        TaskDefinition = _configuration["Ecs:TaskDefinitionArn"],
+        LaunchType = LaunchType.FARGATE,
+        NetworkConfiguration = new NetworkConfiguration
+        {
+            AwsvpcConfiguration = new AwsVpcConfiguration
+            {
+                Subnets = _configuration.GetSection("Ecs:Subnets").Get&lt;List&lt;string&gt;&gt;()!,
+                SecurityGroups = _configuration.GetSection("Ecs:SecurityGroups").Get&lt;List&lt;string&gt;&gt;()!,
+                AssignPublicIp = AssignPublicIp.DISABLED
+            }
+        },
+        Overrides = new TaskOverride
+        {
+            ContainerOverrides =
+            [
+                new ContainerOverride
+                {
+                    Name = _configuration["Ecs:ContainerName"],
+                    Environment =
+                    [
+                        new KeyValuePair { Name = "BATCH_JOB_EXECUTION_ID", Value = jobExecutionId },
+                        new KeyValuePair { Name = "BATCH_JOB_NAME", Value = jobName },
+                        new KeyValuePair { Name = "BATCH_RUN_MODE", Value = "Manual" },
+                        new KeyValuePair { Name = "BATCH_REQUESTED_BY", Value = requestedBy }
+                    ]
+                }
+            ]
+        }
+    });
+
+    return response.Tasks.First().TaskArn;
+}</code></pre>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>What API Must Know</th>
+          <th>Event Publish (Recommended)</th>
+          <th>Direct ECS RunTask</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Config footprint in API</td>
+          <td>Small: event bus + source + detail type.</td>
+          <td>Large: cluster ARN, task definition ARN, container name, subnets, security groups, launch settings.</td>
+        </tr>
+        <tr>
+          <td>IAM needed by API</td>
+          <td><code>events:PutEvents</code> only.</td>
+          <td><code>ecs:RunTask</code> + <code>iam:PassRole</code> (+ broader ECS runtime awareness).</td>
+        </tr>
+        <tr>
+          <td>Ownership model</td>
+          <td>Infra owns routing and ECS target details in EventBridge.</td>
+          <td>API must carry and maintain infra/runtime coupling.</td>
+        </tr>
+        <tr>
+          <td>Operational commonality</td>
+          <td>Same trigger layer as scheduled jobs (EventBridge).</td>
+          <td>Separate trigger path from scheduled model.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="success">
+      <strong>Conclusion from code and config:</strong> calling via EventBridge is simpler at the API boundary and materially less infra-dependent. API remains a producer of business events, while infrastructure owns execution routing to ECS.
+    </div>
+
+    <h3>8.2.2 JSON Comparison: ECS Task Definition Context per Trigger Model</h3>
+    <p>In practice, the core worker task definition is largely the same in both approaches. The key difference is <strong>where runtime/network settings are managed</strong>: EventBridge target configuration (infra-owned) vs API-side RunTask payload (application-owned).</p>
+
+    <div class="code-compare">
+      <div class="code-card">
+        <h4>EventBridge Model (Recommended): Stable task definition, infra-owned routing</h4>
+        <pre><code>{
+  "family": "fps-batch-worker",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::&lt;account-id&gt;:role/ecs-task-execution-role",
+  "taskRoleArn": "arn:aws:iam::&lt;account-id&gt;:role/fps-batch-worker-task-role",
+  "containerDefinitions": [
+    {
+      "name": "batch-container",
+      "image": "&lt;ecr-image-uri&gt;",
+      "essential": true,
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/fps-batch-worker",
+          "awslogs-region": "eu-west-2",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "environment": [
+        { "name": "DOTNET_ENVIRONMENT", "value": "Production" }
+      ]
+    }
+  ]
+}</code></pre>
+      </div>
+
+      <div class="code-card">
+        <h4>Direct ECS Model: API must carry infra runtime settings in RunTask JSON</h4>
+        <pre><code>{
+  "cluster": "arn:aws:ecs:&lt;region&gt;:&lt;account-id&gt;:cluster/fps-batch-cluster",
+  "taskDefinition": "fps-batch-worker:42",
+  "launchType": "FARGATE",
+  "networkConfiguration": {
+    "awsvpcConfiguration": {
+      "subnets": ["subnet-a", "subnet-b"],
+      "securityGroups": ["sg-12345"],
+      "assignPublicIp": "DISABLED"
+    }
+  },
+  "overrides": {
+    "containerOverrides": [
+      {
+        "name": "batch-container",
+        "environment": [
+          { "name": "BATCH_JOB_EXECUTION_ID", "value": "&lt;jobExecutionId&gt;" },
+          { "name": "BATCH_JOB_NAME", "value": "&lt;jobName&gt;" },
+          { "name": "BATCH_RUN_MODE", "value": "Manual" },
+          { "name": "BATCH_REQUESTED_BY", "value": "&lt;requestedBy&gt;" }
+        ]
+      }
+    ]
+  }
+}</code></pre>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Comparison Point</th>
+          <th>EventBridge Model</th>
+          <th>Direct ECS Model</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Where networking values live</td>
+          <td>EventBridge target config (infra authority).</td>
+          <td>API RunTask payload (application must carry infra values).</td>
+        </tr>
+        <tr>
+          <td>Task definition churn</td>
+          <td>Low; mostly image/version and worker defaults.</td>
+          <td>Task definition still stable, but API code/config churn increases.</td>
+        </tr>
+        <tr>
+          <td>Blast radius of infra changes</td>
+          <td>Infra can change subnets/SG/capacity via target without API redeploy.</td>
+          <td>Infra change often requires API config/code update and redeploy.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>8.3 API Response to UI</h3>
+    <pre><code>{
+  "jobExecutionId": "b8f9d4a16bb64a6c97e44e9c2e09f111",
+  "jobName": "FECProcess",
+  "status": "TriggerAccepted",
+  "message": "Batch job trigger accepted. Worker task will start asynchronously."
+}</code></pre>
+
+    <h3>8.4 Publish Reliability and Failure Contract</h3>
+    <p>The API publish path uses bounded retry for transient EventBridge ingress failures and returns a deterministic <code>503</code> payload when publish is not accepted.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Behavior</th>
+          <th>Current Contract</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Transient publish handling</td>
+          <td>Up to 3 attempts with exponential backoff and jitter for throttling/timeout/5xx style failures.</td>
+        </tr>
+        <tr>
+          <td>Request cancellation</td>
+          <td>Cancellation token is respected and operation exits immediately when caller cancels.</td>
+        </tr>
+        <tr>
+          <td>Publish failure response</td>
+          <td>API returns <code>503 ServiceUnavailable</code> with machine-readable <code>reasonCode</code>.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h4>8.4.1 503 Response Shape (Publish Not Accepted)</h4>
+    <pre><code>{
+  "accepted": false,
+  "publishAccepted": false,
+  "reason": "Event publish failed",
+  "reasonCode": "PublishTransientFailedAfterRetry",
+  "jobName": "FECProcess",
+  "jobExecutionId": "b8f9d4a16bb64a6c97e44e9c2e09f111",
+  "message": "Unable to publish trigger event to EventBridge. Please retry."
+}</code></pre>
+
+    <h4>8.4.2 reasonCode Values</h4>
+    <table>
+      <thead>
+        <tr>
+          <th>reasonCode</th>
+          <th>Meaning</th>
+          <th>Client Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>PublishTransientFailedAfterRetry</code></td>
+          <td>Transient publish issues persisted after bounded retries.</td>
+          <td>Retry operation from UI/client.</td>
+        </tr>
+        <tr>
+          <td><code>PublishNonRetryableFailed</code></td>
+          <td>Non-transient publish failure was returned by AWS SDK/EventBridge path.</td>
+          <td>Do not auto-retry repeatedly; surface error and investigate.</td>
+        </tr>
+        <tr>
+          <td><code>PublishConfigurationInvalid</code></td>
+          <td>Required EventBridge API configuration is missing/invalid.</td>
+          <td>Fix API configuration before retrying.</td>
+        </tr>
+        <tr>
+          <td><code>PublishInvalidResponse</code></td>
+          <td>EventBridge response shape was invalid (for example, missing entry/event id).</td>
+          <td>Retry once, then investigate service/runtime logs.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>8.5 Implemented Polling Endpoint for Option 2 (No New Lifecycle Table)</h3>
+    <p>To avoid indefinite <code>PendingStart</code> without adding a new API lifecycle table, the API exposes an inference endpoint that combines:</p>
+    <ul>
+      <li><code>jobExecutionId</code> (from trigger response)</li>
+      <li><code>acceptedAtUtc</code> (from trigger response)</li>
+      <li>Execution existence check in <code>operational.tbljobqueue</code></li>
+      <li>Timeout rule: <code>acceptedAtUtc + timeoutSeconds + bufferSeconds</code></li>
+    </ul>
+
+    <pre><code>GET /api/batch-jobs/triggers/{jobExecutionId}/startup-status
+    ?acceptedAtUtc=2026-05-08T10:12:30Z
+    &timeoutSeconds=3600
+    &bufferSeconds=120</code></pre>
+
+    <p>Returned status is one of:</p>
+    <ul>
+      <li><code>PendingStart</code> (no queue row yet, still within timeout window)</li>
+      <li><code>StartFailedTimeoutLikely</code> (no queue row after timeout window)</li>
+      <li><code>Running</code> / <code>Completed</code> / <code>Failed</code> (queue row exists and worker status observed)</li>
+    </ul>
+
+    <div class="warning">
+      <strong>Current option-2 caveat:</strong> API does not programmatically query DLQ. <code>StartFailedTimeoutLikely</code> is an inference based on timeout + missing execution row, while DLQ alarms/operations remain infra-driven.
+    </div>
+
+    <h3>8.6 Failure Handling Approach (Publish Side vs ECS Startup)</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Failure Point</th>
+          <th>Detection</th>
+          <th>API/Infra Response</th>
+          <th>UI/Client Contract</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Publish failure before EventBridge acceptance</td>
+          <td><code>PutEvents</code> exception or failed entry from AWS SDK.</td>
+          <td>API retries bounded (3 attempts). On final failure returns <code>503</code> + <code>reasonCode</code>.</td>
+          <td>Treat as not accepted; safe to retry trigger with same business intent.</td>
+        </tr>
+        <tr>
+          <td>Event accepted but ECS task/container does not start</td>
+          <td>No execution row by startup deadline and/or DLQ signal from exhausted EventBridge target retries.</td>
+          <td>Mark lifecycle as <code>StartFailedTimeout</code> (inferred) or <code>StartFailedDeliveryExhausted</code> (DLQ confirmed).</td>
+          <td>Show startup failure state; allow retry and surface operator guidance.</td>
+        </tr>
+        <tr>
+          <td>Container started but application crashed early</td>
+          <td>ECS task stop reason + worker logs + status row transitions.</td>
+          <td>Status transitions to <code>Failed</code> with failure metadata persisted for troubleshooting.</td>
+          <td>Show execution failed after start (not publish failure).</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h4>8.6.1 Recommended Retry Semantics</h4>
+    <ul>
+      <li><strong>Publish-side failure:</strong> API-level retry only, because EventBridge never accepted the event.</li>
+      <li><strong>Post-accept delivery failure:</strong> EventBridge target retry + DLQ path only, not API retry loop.</li>
+      <li><strong>Startup timeout:</strong> one user/client retrigger action after deadline; avoid aggressive automatic retrigger storms.</li>
+    </ul>
+
+    <h4>8.6.2 Compact Failure Sequence (Review-Friendly)</h4>
+    <div class="flow">Failure Path A: Publish-side failure (before EventBridge acceptance)
+
+UI
+ -> API Trigger Endpoint
+ -> PutEvents attempt #1/#2/#3
+ -> still failed
+ -> API returns 503 + reasonCode=PublishTransientFailedAfterRetry
+ -> UI shows "Not accepted" and offers retry
+
+Failure Path B: Event accepted, but ECS container fails to start
+
+UI
+ -> API Trigger Endpoint
+ -> PutEvents accepted (TriggerAccepted + jobExecutionId)
+ -> EventBridge Rule/Target invokes ECS
+ -> ECS startup fails (image pull/IAM/network/capacity)
+ -> no worker-start signal by startupDeadlineUtc
+ -> API projects StartFailedTimeout
+ -> if DLQ evidence arrives: project StartFailedDeliveryExhausted
+ -> UI shows startup failure with retry + operator diagnostics</div>
+
+    <p class="small">Presenter tip: emphasize that Path A is producer-boundary reliability (API retries), while Path B is post-accept delivery reliability (EventBridge retry/DLQ + startup deadline projection).</p>
+
+    <h2>9. Worker Implementation Blueprint</h2>
+
+    <h3>9.1 Worker Reads Environment Variables</h3>
+    <pre><code>var jobExecutionId = Environment.GetEnvironmentVariable("BATCH_JOB_EXECUTION_ID");
+var jobName = Environment.GetEnvironmentVariable("BATCH_JOB_NAME");
+var runMode = Environment.GetEnvironmentVariable("BATCH_RUN_MODE") ?? "Manual";
+var requestedBy = Environment.GetEnvironmentVariable("BATCH_REQUESTED_BY");
+
+if (string.IsNullOrWhiteSpace(jobExecutionId))
+{
+    jobExecutionId = Guid.NewGuid().ToString("N");
+}
+
+if (string.IsNullOrWhiteSpace(jobName))
+{
+    throw new InvalidOperationException("BATCH_JOB_NAME is required.");
+}
+
+await orchestrator.RunAsync(jobExecutionId, jobName, runMode, requestedBy, cancellationToken);</code></pre>
+
+    <h3>9.2 Worker Status Handling</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Stage</th>
+          <th>Status</th>
+          <th>Owner</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>API event accepted</td>
+          <td><code>TriggerAccepted</code></td>
+          <td>API response only, or DB if API writes initial record</td>
+        </tr>
+        <tr>
+          <td>Worker starts</td>
+          <td><code>Running</code></td>
+          <td>Worker</td>
+        </tr>
+        <tr>
+          <td>Worker completes</td>
+          <td><code>Completed</code></td>
+          <td>Worker</td>
+        </tr>
+        <tr>
+          <td>Worker fails</td>
+          <td><code>Failed</code></td>
+          <td>Worker</td>
+        </tr>
+        <tr>
+          <td>Worker has not started yet</td>
+          <td><code>PendingStart</code></td>
+          <td>Status API fallback when row not found</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>10. Infra Implementation Blueprint for PoC</h2>
+
+    <h3>10.1 Prerequisites</h3>
+    <ol>
+      <li>Parameterized .NET worker app available.</li>
+      <li>Docker image built and pushed to ECR.</li>
+      <li>ECS cluster available.</li>
+      <li>Fargate-compatible ECS task definition created for worker.</li>
+      <li>CloudWatch log group configured for worker logs.</li>
+      <li>EventBridge rule created for API trigger events.</li>
+      <li>EventBridge target configured to run ECS task.</li>
+      <li>EventBridge invoke role created with permission to run ECS task and pass task roles.</li>
+      <li>DLQ configured for failed EventBridge deliveries.</li>
+    </ol>
+
+    <h3>10.2 EventBridge Invoke Role - Conceptual IAM</h3>
+    <pre><code>{
+  "Effect": "Allow",
+  "Action": [
+    "ecs:RunTask"
+  ],
+  "Resource": "arn:aws:ecs:&lt;region&gt;:&lt;account-id&gt;:task-definition/fps-batch-worker:*"
+}</code></pre>
+
+    <pre><code>{
+  "Effect": "Allow",
+  "Action": [
+    "iam:PassRole"
+  ],
+  "Resource": [
+    "arn:aws:iam::&lt;account-id&gt;:role/&lt;ecs-task-execution-role&gt;",
+    "arn:aws:iam::&lt;account-id&gt;:role/&lt;ecs-task-role&gt;"
+  ]
+}</code></pre>
+
+    <h3>10.3 API Task Role Permission</h3>
+    <p>API no longer needs <code>ecs:RunTask</code>. It only needs permission to publish events:</p>
+    <pre><code>{
+  "Effect": "Allow",
+  "Action": [
+    "events:PutEvents"
+  ],
+  "Resource": "arn:aws:events:&lt;region&gt;:&lt;account-id&gt;:event-bus/default"
+}</code></pre>
+
+    <h3>10.4 PoC Validation Steps</h3>
+    <ol>
+      <li>Deploy worker task definition with a simple job handler, for example <code>HealthCheck</code> or <code>FECProcessMock</code>.</li>
+      <li>Create EventBridge rule for <code>BatchJob.TriggerRequested</code>.</li>
+      <li>Configure ECS task as target with Fargate networking.</li>
+      <li>Configure input transformer to convert event detail into container environment overrides.</li>
+      <li>Call FPS API endpoint to publish event.</li>
+      <li>Confirm API returns <code>jobExecutionId</code> and <code>TriggerAccepted</code>.</li>
+      <li>Verify EventBridge matched the event and invoked ECS task.</li>
+      <li>Verify ECS task started and exited successfully.</li>
+      <li>Verify worker logs show received env variables.</li>
+      <li>Verify worker inserted/updated job execution status.</li>
+      <li>Test invalid job name and verify worker fails safely.</li>
+      <li>Test EventBridge delivery failure path and DLQ behavior.</li>
+    </ol>
+
+    <h3>10.5 Infra Authority Model: What Infra Team Manages</h3>
+    <div class="callout">
+      <strong>Authority shift in recommended model:</strong> API team owns only event contract and publish call; infra team owns execution routing and runtime infrastructure settings end-to-end.
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Infra Setting</th>
+          <th>Managed By Infra In</th>
+          <th>Why This Matters</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Event bus, rules, event patterns</td>
+          <td>IaC (Terraform/CloudFormation) for EventBridge.</td>
+          <td>Routing changes are versioned and auditable without API release.</td>
+        </tr>
+        <tr>
+          <td>ECS target binding (cluster, task definition revision)</td>
+          <td>EventBridge target block in IaC.</td>
+          <td>Infra can roll task revisions without changing API trigger code.</td>
+        </tr>
+        <tr>
+          <td>Fargate networking (subnets, security groups, public IP)</td>
+          <td>EventBridge ECS target network configuration.</td>
+          <td>Network posture is centralized under platform controls.</td>
+        </tr>
+        <tr>
+          <td>Invoke role and pass-role permissions</td>
+          <td>IAM role/policy modules for EventBridge invoke role.</td>
+          <td>Least-privilege is enforced in one place, not duplicated in APIs.</td>
+        </tr>
+        <tr>
+          <td>Retry policy and DLQ behavior</td>
+          <td>EventBridge target retry + SQS DLQ resources.</td>
+          <td>Reliability controls are tuned operationally by infra team.</td>
+        </tr>
+        <tr>
+          <td>Input transformer mapping</td>
+          <td>EventBridge rule target input transformer.</td>
+          <td>Env override mapping can evolve without app-level ECS orchestration code.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h4>10.5.1 Example Infra-Managed ECS Target (IaC-style JSON shape)</h4>
+    <pre><code>{
+  "ruleName": "batch-triggered-jobs",
+  "eventPattern": {
+    "source": ["fps.api", "pact.api"],
+    "detail-type": ["BatchJob.TriggerRequested"]
+  },
+  "target": {
+    "arn": "arn:aws:ecs:&lt;region&gt;:&lt;account-id&gt;:cluster/fps-batch-cluster",
+    "roleArn": "arn:aws:iam::&lt;account-id&gt;:role/eventbridge-ecs-invoke-role",
+    "ecsParameters": {
+      "taskDefinitionArn": "arn:aws:ecs:&lt;region&gt;:&lt;account-id&gt;:task-definition/fps-batch-worker:42",
+      "launchType": "FARGATE",
+      "networkConfiguration": {
+        "awsvpcConfiguration": {
+          "subnets": ["subnet-a", "subnet-b"],
+          "securityGroups": ["sg-12345"],
+          "assignPublicIp": "DISABLED"
+        }
+      }
+    },
+    "retryPolicy": {
+      "maximumRetryAttempts": 24,
+      "maximumEventAgeInSeconds": 3600
+    },
+    "deadLetterConfig": {
+      "arn": "arn:aws:sqs:&lt;region&gt;:&lt;account-id&gt;:batch-trigger-dlq"
+    }
+  }
+}</code></pre>
+
+    <h4>10.5.2 Suggested Infra Change Workflow</h4>
+    <ol>
+      <li>Infra team updates EventBridge/ECS target/IAM settings in IaC module.</li>
+      <li>Change is peer-reviewed and promoted across environments.</li>
+      <li>API remains unchanged unless event contract itself changes.</li>
+      <li>Operations validates with CloudWatch + EventBridge metrics + DLQ alarms.</li>
+      <li>Application team only consumes trigger accepted/result status contract.</li>
+    </ol>
+
+    <h2>11. End-to-End Reliability Flow and Settings</h2>
+
+    <h3>11.0 Ownership Boundary Clarification (PACT vs FPS vs Worker)</h3>
+    <div class="callout">
+      <strong>Important ownership model:</strong> PACT API and FPS API are separate trigger owners with separate UIs. Each API owns its own trigger lifecycle tracking and status projection. The worker domain remains execution-focused and is not the place for API-specific trigger lifecycle states.
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Concern</th>
+          <th>Owner</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Trigger accepted / pending startup / startup timeout / delivery exhausted</td>
+          <td>PACT API or FPS API (independently)</td>
+          <td>Stored and exposed from each API's own trigger lifecycle store.</td>
+        </tr>
+        <tr>
+          <td>EventBridge retry and DLQ routing</td>
+          <td>Infra (per API event route)</td>
+          <td>Each API flow should have clear routing ownership and DLQ handling.</td>
+        </tr>
+        <tr>
+          <td>Job execution runtime status once task starts</td>
+          <td>Worker runtime/domain</td>
+          <td>Worker remains responsible for running/completed/failed execution semantics.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>11.1 Configured Reliability Boundaries</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Boundary</th>
+          <th>Configured Setting</th>
+          <th>Intent</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>API → EventBridge ingress</td>
+          <td>API-side bounded transient retry: <code>maxAttempts=3</code>, exponential backoff + jitter.</td>
+          <td>Handle throttling/timeouts/5xx before event acceptance.</td>
+        </tr>
+        <tr>
+          <td>EventBridge Rule → ECS target</td>
+          <td>Retry policy: <code>MaximumRetryAttempts=24</code>, <code>MaximumEventAgeInSeconds=3600</code>.</td>
+          <td>Handle transient target invocation failures after EventBridge has accepted the event.</td>
+        </tr>
+        <tr>
+          <td>EventBridge Rule → DLQ</td>
+          <td><code>DeadLetterConfig</code> enabled to SQS DLQ (for example <code>batch-trigger-dlq</code>).</td>
+          <td>Capture events that could not be delivered to ECS target within retry window.</td>
+        </tr>
+        <tr>
+          <td>API failure response contract</td>
+          <td><code>503</code> with deterministic <code>reasonCode</code>.</td>
+          <td>Allow UI/client to decide retry vs operator action consistently.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="warning">
+      <strong>Important boundary rule:</strong> EventBridge target retry/DLQ only applies <em>after</em> EventBridge accepts the event. If <code>PutEvents</code> fails at API ingress, only API-side retry/handling applies.
+    </div>
+
+    <h3>11.2 End-to-End Sequence (Manual Trigger)</h3>
+    <div class="flow">1) User triggers job from UI.
+2) API validates request and running-state guard (400/404/409 paths if invalid).
+3) API generates jobExecutionId.
+4) API calls PutEvents to EventBridge.
+   - If ingress transient failure: API retries up to 3 attempts.
+   - If still failed: API returns 503 with reasonCode.
+5) EventBridge accepts event and matches rule.
+6) EventBridge invokes ECS RunTask target.
+   - If target invocation transiently fails: EventBridge retries per policy.
+   - If retries exhaust or event age exceeded: Event pushed to DLQ.
+7) Worker container starts, reads env overrides.
+  8) API-side lifecycle tracker marks startup observed and projects Running based on worker/runtime signals.
+  9) Worker writes execution outcomes (Running/Completed/Failed) and logs with jobExecutionId.
+  10) UI polls its own API and renders lifecycle + execution state.</div>
+
+    <h3>11.3 Scenario Matrix and Handling</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Scenario</th>
+          <th>Where It Fails</th>
+          <th>Observed Signal</th>
+          <th>Handling</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Invalid request or unknown job</td>
+          <td>API validation/status guard</td>
+          <td><code>400</code> / <code>404</code></td>
+          <td>Client corrects request; no EventBridge call is made.</td>
+        </tr>
+        <tr>
+          <td>Job already running</td>
+          <td>API status guard</td>
+          <td><code>409 Conflict</code></td>
+          <td>Client waits/polls current execution; prevent duplicate start.</td>
+        </tr>
+        <tr>
+          <td>Ingress transient publish failure</td>
+          <td>API → EventBridge PutEvents</td>
+          <td>API warning logs with retry attempts</td>
+          <td>Automatic API retry (3 attempts).</td>
+        </tr>
+        <tr>
+          <td>Ingress transient failure after retries</td>
+          <td>API → EventBridge PutEvents</td>
+          <td><code>503</code> + <code>reasonCode=PublishTransientFailedAfterRetry</code></td>
+          <td>UI/client can safely retry trigger.</td>
+        </tr>
+        <tr>
+          <td>Ingress non-retryable publish failure</td>
+          <td>API → EventBridge PutEvents</td>
+          <td><code>503</code> + <code>reasonCode=PublishNonRetryableFailed</code></td>
+          <td>Escalate to operator; verify AWS/EventBridge response and config.</td>
+        </tr>
+        <tr>
+          <td>API EventBridge config missing/invalid</td>
+          <td>API configuration</td>
+          <td><code>503</code> + <code>reasonCode=PublishConfigurationInvalid</code></td>
+          <td>Fix API settings and redeploy/reload config.</td>
+        </tr>
+        <tr>
+          <td>EventBridge accepted but target invoke transiently fails</td>
+          <td>EventBridge Rule → ECS target</td>
+          <td>EventBridge target failure metrics/logs</td>
+          <td>Automatic EventBridge target retries per policy.</td>
+        </tr>
+        <tr>
+          <td>ECS container failed to start (image pull/IAM/network/capacity)</td>
+          <td>ECS startup/runtime after target invoke</td>
+          <td>No running worker signal, ECS stopped-task reason, possible timeout or DLQ follow-on</td>
+          <td>Project <code>StartFailedTimeout</code> (deadline) or <code>StartFailedDeliveryExhausted</code> (DLQ confirmed); surface retry + operator diagnostics.</td>
+        </tr>
+        <tr>
+          <td>Target retries exhausted / event too old</td>
+          <td>EventBridge Rule → ECS target</td>
+          <td>Message in DLQ</td>
+          <td>Operate from DLQ: inspect payload, fix cause, replay or retrigger.</td>
+        </tr>
+        <tr>
+          <td>Worker starts but job logic fails</td>
+          <td>Worker runtime</td>
+          <td>Status <code>Failed</code> in DB, worker logs</td>
+          <td>Application-level remediation and possible retrigger by jobExecutionId intent.</td>
+        </tr>
+        <tr>
+          <td>Polling before worker inserts row</td>
+          <td>Status read timing gap</td>
+          <td>Status API returns <code>PendingStart</code> / <code>TriggerAccepted</code></td>
+          <td>Client continues polling with backoff.</td>
+        </tr>
+        <tr>
+          <td>No startup observed after timeout window (option 2)</td>
+          <td>Inference endpoint timeout rule</td>
+          <td><code>StartFailedTimeoutLikely</code></td>
+          <td>Show terminal startup-failure in UI with retry option; investigate CloudWatch + DLQ alarms.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>11.4 DLQ Operational Handling</h3>
+    <ol>
+      <li>Monitor DLQ depth and EventBridge target failure metrics with alerts.</li>
+      <li>On DLQ message, inspect <code>jobExecutionId</code>, <code>jobName</code>, and failure reason metadata.</li>
+      <li>Fix infra/runtime issue (IAM/network/task definition/cluster capacity) before replay.</li>
+      <li>Replay from DLQ or manually retrigger, ensuring idempotency rules are respected.</li>
+      <li>Track incident closure with evidence from CloudWatch and status API records.</li>
+    </ol>
+
+    <h3>11.5 Recommended Execution Status Model</h3>
+    <p>This model prevents indefinite <code>PendingStart</code> behavior when EventBridge accepted the event but ECS task launch could not be completed.</p>
+
+    <p class="small">Note: This status model is API-side lifecycle projection for each API owner (PACT/FPS). It is not a required change to worker domain enums/entities.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Status</th>
+          <th>Set By</th>
+          <th>When</th>
+          <th>UI Meaning</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>TriggerAccepted</code></td>
+          <td>API</td>
+          <td>PutEvents accepted by EventBridge.</td>
+          <td>Request accepted; startup in progress.</td>
+        </tr>
+        <tr>
+          <td><code>PendingStart</code></td>
+          <td>Status API projection</td>
+          <td>Accepted but worker start signal not yet observed.</td>
+          <td>Still waiting for ECS task start.</td>
+        </tr>
+        <tr>
+          <td><code>Running</code></td>
+          <td>API projection from worker/runtime signals</td>
+          <td>Worker task starts and startup has been observed/correlated by API.</td>
+          <td>Job actively executing.</td>
+        </tr>
+        <tr>
+          <td><code>Completed</code></td>
+          <td>API projection from worker/runtime signals</td>
+          <td>Worker finishes successfully and API projects terminal status to UI.</td>
+          <td>Success terminal state.</td>
+        </tr>
+        <tr>
+          <td><code>Failed</code></td>
+          <td>API projection from worker/runtime signals</td>
+          <td>Worker started but job failed; API projects failure to UI.</td>
+          <td>Execution failed after start.</td>
+        </tr>
+        <tr>
+          <td><code>StartFailedTimeout</code></td>
+          <td>Reconciler/timeout evaluator</td>
+          <td>No worker start observed before startup SLA deadline.</td>
+          <td>Startup failure; safe to retry trigger.</td>
+        </tr>
+        <tr>
+          <td><code>StartFailedDeliveryExhausted</code></td>
+          <td>DLQ processor</td>
+          <td>Event landed in DLQ after EventBridge target retries exhausted/age exceeded.</td>
+          <td>Delivery failure; investigate infra and replay/retry.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>11.6 Transition Rules (How It Works End-to-End)</h3>
+    <div class="flow">Trigger request
+ -> API validates
+ -> if invalid: 400/404/409 terminal response
+
+API publishes to EventBridge
+ -> if ingress failure after API retries: 503 with reasonCode (no accepted execution)
+ -> if accepted: create/update execution as TriggerAccepted with startupDeadlineUtc
+
+Polling path before worker starts
+ -> Status API returns PendingStart while nowUtc &lt;= startupDeadlineUtc
+
+Worker starts
+ -> API marks startup observed and projects Running
+ -> API projects Completed or Failed based on worker/runtime outcome signals
+
+Worker did not start in time
+ -> Timeout evaluator sets StartFailedTimeout
+
+EventBridge target delivery exhausted
+ -> DLQ consumer sets StartFailedDeliveryExhausted
+ -> include failure metadata for operations and replay decision</div>
+
+    <h3>11.7 Suggested Startup SLA and Deadlines</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Parameter</th>
+          <th>Suggested Value</th>
+          <th>Rationale</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>startupDeadlineUtc</code></td>
+          <td>AcceptedAt + 10 minutes</td>
+          <td>Long enough for transient target retry and ECS startup latency.</td>
+        </tr>
+        <tr>
+          <td>Status poll interval</td>
+          <td>2-5 seconds with client backoff</td>
+          <td>Avoid aggressive API polling while preserving responsiveness.</td>
+        </tr>
+        <tr>
+          <td>PendingStart auto-timeout</td>
+          <td>Hard transition at deadline</td>
+          <td>Prevents indefinite spinner behavior in UI.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>11.8 API Payload Examples for UI</h3>
+    <h4>11.8.1 Trigger Accepted</h4>
+    <pre><code>{
+  "accepted": true,
+  "jobExecutionId": "b8f9d4a16bb64a6c97e44e9c2e09f111",
+  "status": "TriggerAccepted",
+  "acceptedAtUtc": "2026-05-08T10:12:30Z",
+  "startupDeadlineUtc": "2026-05-08T10:22:30Z",
+  "message": "Request accepted. Waiting for worker startup."
+}</code></pre>
+
+    <h4>11.8.2 Polling While Startup Pending</h4>
+    <pre><code>{
+  "jobExecutionId": "b8f9d4a16bb64a6c97e44e9c2e09f111",
+  "status": "PendingStart",
+  "acceptedAtUtc": "2026-05-08T10:12:30Z",
+  "startupDeadlineUtc": "2026-05-08T10:22:30Z",
+  "message": "Event accepted. ECS task has not started yet."
+}</code></pre>
+
+    <h4>11.8.3 Startup Failure by Timeout</h4>
+    <pre><code>{
+  "jobExecutionId": "b8f9d4a16bb64a6c97e44e9c2e09f111",
+  "status": "StartFailedTimeout",
+  "reason": "Worker start not observed before startup deadline.",
+  "canRetry": true,
+  "message": "Task startup timed out. Please retry or contact support if repeated."
+}</code></pre>
+
+    <h4>11.8.4 Startup Failure by Delivery Exhaustion (DLQ)</h4>
+    <pre><code>{
+  "jobExecutionId": "b8f9d4a16bb64a6c97e44e9c2e09f111",
+  "status": "StartFailedDeliveryExhausted",
+  "reason": "EventBridge could not invoke ECS target within retry policy.",
+  "failureSource": "EventBridgeDLQ",
+  "canRetry": true,
+  "message": "Trigger delivery failed after retries. Operations team has been alerted."
+}</code></pre>
+
+    <h3>11.9 Compact State Diagram</h3>
+    <div class="flow">[Trigger Request]
+   |
+   +-- API validation fails ---------------------------> [400/404/409]
+   |
+   +-- PutEvents ingress fails after API retries ------> [503 + reasonCode]
+   |
+   +-- PutEvents accepted -----------------------------> [TriggerAccepted]
+                                                    |
+                                                    +--> [PendingStart]
+                                                            |
+                                                            +--> Worker starts ----------> [Running] --> [Completed]
+                                                            |                              |
+                                                            |                              +----------> [Failed]
+                                                            |
+                                                            +--> Startup deadline passed -> [StartFailedTimeout]
+                                                            |
+                                                            +--> EventBridge target retries exhausted / DLQ
+                                                                                           -> [StartFailedDeliveryExhausted]</div>
+
+    <p class="small">Operational note: <code>StartFailedDeliveryExhausted</code> is typically set by a DLQ consumer/reconciler that correlates DLQ messages to <code>jobExecutionId</code>.</p>
+    <p class="small">In this sample's option-2 implementation, the API does not set <code>StartFailedDeliveryExhausted</code> itself because it does not query DLQ programmatically.</p>
+
+    <h2>12. PoC Scope</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>PoC Item</th>
+          <th>Included?</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>FPS API publishes EventBridge event</td>
+          <td>Yes</td>
+          <td>Minimum API implementation.</td>
+        </tr>
+        <tr>
+          <td>PACT API publishes EventBridge event</td>
+          <td>Optional</td>
+          <td>Can reuse the same pattern after FPS API PoC succeeds.</td>
+        </tr>
+        <tr>
+          <td>Worker task receives job name using env override</td>
+          <td>Yes</td>
+          <td>Required for current worker model.</td>
+        </tr>
+        <tr>
+          <td>DB job status updates</td>
+          <td>Recommended</td>
+          <td>Can be mocked initially, then connected to actual job tables.</td>
+        </tr>
+        <tr>
+          <td>Scheduled job trigger</td>
+          <td>Yes</td>
+          <td>Validate same worker/task path with EventBridge schedule.</td>
+        </tr>
+        <tr>
+          <td>S3 event trigger</td>
+          <td>No</td>
+          <td>Future use case only.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>13. Key Trade-offs and Mitigations</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Trade-off</th>
+          <th>Impact</th>
+          <th>Mitigation</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>API does not get ECS TaskArn immediately.</td>
+          <td>API cannot prove task started, only that event was accepted.</td>
+          <td>Use <code>jobExecutionId</code> as business tracking ID. Worker updates DB when it starts.</td>
+        </tr>
+        <tr>
+          <td>More moving parts than direct RunTask.</td>
+          <td>EventBridge rule/target needs infra setup.</td>
+          <td>Standardize Terraform/CloudFormation module for scheduled and manual jobs.</td>
+        </tr>
+        <tr>
+          <td>Correlation is indirect.</td>
+          <td>Need to trace API → EventBridge → ECS → Worker logs.</td>
+          <td>Pass <code>BATCH_JOB_EXECUTION_ID</code> and include it in every log/status update.</td>
+        </tr>
+        <tr>
+          <td>Event delivery failure is asynchronous.</td>
+          <td>Failure may not be visible to API immediately.</td>
+          <td>Configure EventBridge retry and DLQ; monitor DLQ and EventBridge metrics.</td>
+        </tr>
+        <tr>
+          <td>Ingress publish can fail before EventBridge accepts event.</td>
+          <td>Target retry/DLQ does not apply for pre-accept failures.</td>
+          <td>Handle at producer boundary with bounded retry and deterministic <code>503 + reasonCode</code>.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>14. Final Design Summary</h2>
+    <div class="success">
+      Final direction: Use <strong>EventBridge as the common trigger layer</strong> for API/manual jobs and scheduled jobs, with ECS Fargate as the worker execution runtime.
+    </div>
+
+    <div class="flow">PACT API / FPS API
+  → PutEvents only
+  → No ECS cluster/subnet/security group config in API
+
+EventBridge
+  → Owns routing
+  → Owns ECS target setup
+  → Passes job details to worker using container overrides
+
+Worker Task
+  → Reads BATCH_JOB_NAME, BATCH_RUN_MODE, BATCH_JOB_EXECUTION_ID
+  → Executes existing orchestration
+  → Updates status/logs
+  → Exits</div>
+
+    <h3>Minimum API Dependency</h3>
+    <ul>
+      <li><code>EventBridge:EventBusName</code></li>
+      <li><code>EventBridge:Source</code></li>
+      <li><code>EventBridge:DetailType</code></li>
+      <li>IAM permission: <code>events:PutEvents</code></li>
+    </ul>
+
+    <h3>Infra-Owned Configuration</h3>
+    <ul>
+      <li>ECS cluster</li>
+      <li>Worker task definition</li>
+      <li>Worker container name</li>
+      <li>Subnets/security groups</li>
+      <li>Launch type/capacity provider</li>
+      <li>EventBridge rule and target</li>
+      <li>Input transformer</li>
+      <li>Retry policy and DLQ</li>
+    </ul>
+
+    <div class="footer">
+      Prepared as updated recommendation and PoC implementation blueprint for EventBridge-based batch job triggering.
+    </div>
+  </div>
+</body>
+</html>

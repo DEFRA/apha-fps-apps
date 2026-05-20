@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Repository Architecture - Apha.BatchJobs</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            min-height: 100vh;
+        }
+        h1 {
+            color: #4ecdc4;
+            margin: 30px 0 20px 0;
+            border-bottom: 3px solid #4ecdc4;
+            padding-bottom: 10px;
+            font-size: 2em;
+        }
+        h2 {
+            color: #333;
+            margin: 25px 0 15px 0;
+            background: #e0f7f6;
+            padding: 10px 15px;
+            border-radius: 4px;
+            font-size: 1.5em;
+        }
+        h3 {
+            color: #555;
+            margin: 20px 0 10px 0;
+            font-size: 1.2em;
+        }
+        p {
+            margin-bottom: 15px;
+            color: #555;
+        }
+        .arch-section {
+            background: #f0fffe;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #4ecdc4;
+            border-radius: 4px;
+        }
+        .project-box {
+            background: white;
+            border: 2px solid #4ecdc4;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+            border-left-width: 5px;
+        }
+        .project-box.api {
+            border-color: #ff6b6b;
+            border-left-color: #ff6b6b;
+        }
+        .project-box.worker {
+            border-color: #6bcf7f;
+            border-left-color: #6bcf7f;
+        }
+        .project-box.app {
+            border-color: #4ecdc4;
+            border-left-color: #4ecdc4;
+        }
+        .project-box.domain {
+            border-color: #f39c12;
+            border-left-color: #f39c12;
+        }
+        .project-box.infra {
+            border-color: #9b59b6;
+            border-left-color: #9b59b6;
+        }
+        .project-box.tests {
+            border-color: #3498db;
+            border-left-color: #3498db;
+        }
+        .project-box h4 {
+            color: #333;
+            margin: 0 0 10px 0;
+            font-size: 1.1em;
+        }
+        .project-box .label {
+            display: inline-block;
+            padding: 4px 8px;
+            background: #f0f0f0;
+            border-radius: 3px;
+            font-size: 0.85em;
+            margin: 5px 5px 5px 0;
+            font-weight: 600;
+        }
+        .project-box.api .label {
+            background: #ffe0e0;
+            color: #c92a2a;
+        }
+        .project-box.worker .label {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .project-box.app .label {
+            background: #e0f7f6;
+            color: #00695c;
+        }
+        .project-box.domain .label {
+            background: #fef5e7;
+            color: #d68910;
+        }
+        .project-box.infra .label {
+            background: #f4ecf7;
+            color: #6c3483;
+        }
+        .project-box.tests .label {
+            background: #e8f4f8;
+            color: #1e5a7d;
+        }
+        .project-box ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .project-box li {
+            margin-bottom: 5px;
+            font-size: 0.95em;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        table th {
+            background: #4ecdc4;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+        table td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+        }
+        table tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        table tr:hover {
+            background: #e0f7f6;
+        }
+        .dependency-tree {
+            background: #f4f4f4;
+            padding: 20px;
+            border-radius: 4px;
+            margin: 15px 0;
+            font-family: monospace;
+            line-height: 1.8;
+            overflow-x: auto;
+        }
+        .code-block {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin: 15px 0;
+            border-left: 3px solid #999;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        .highlight {
+            background: #fff3cd;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        ul, ol {
+            margin: 15px 0 15px 25px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+        .diagram {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 4px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .info-box {
+            background: #e8f4f8;
+            border: 1px solid #3498db;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        a {
+            color: #4ecdc4;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #ddd;
+        }
+        .nav a {
+            padding: 10px 20px;
+            background: #4ecdc4;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .nav a:hover {
+            background: #45b7b3;
+        }
+        .toc {
+            background: #f0fffe;
+            padding: 20px;
+            border: 2px solid #4ecdc4;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .toc h3 {
+            margin-top: 0;
+        }
+        .toc ul {
+            margin: 10px 0 0 25px;
+        }
+        .toc li {
+            margin-bottom: 5px;
+        }
+        .toc a {
+            color: #4ecdc4;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏗️ Repository Architecture</h1>
+        <p><strong>Apha.BatchJobs Solution Structure & Layer Organization</strong></p>
+
+        <div class="toc">
+            <h3>Table of Contents</h3>
+            <ul>
+                <li><a href="#overview">Architecture Overview</a></li>
+                <li><a href="#projects">Project Breakdown</a></li>
+                <li><a href="#layers">Layer Responsibilities</a></li>
+                <li><a href="#entrypoints">Entry Points (API vs Worker)</a></li>
+                <li><a href="#dependencies">Dependency Graph</a></li>
+                <li><a href="#testing">Testing Strategy</a></li>
+                <li><a href="#conventions">Coding Conventions</a></li>
+            </ul>
+        </div>
+
+        <h2 id="overview">🎯 Architecture Overview</h2>
+        <div class="arch-section">
+            <h3>Design Pattern</h3>
+            <p>Apha.BatchJobs implements a <strong>Layered Architecture</strong> with clear separation of concerns across five distinct layers:</p>
+            
+            <div class="diagram">
+                <strong>Architecture Stack</strong><br><br>
+                <code>
+┌─────────────────────────────────────┐<br>
+│    Apha.BatchJobs.Api               │  ← HTTP Entry Point (Status/Trigger)<br>
+├─────────────────────────────────────┤<br>
+│    Apha.BatchJobs.Worker            │  ← Background Job Orchestration<br>
+├─────────────────────────────────────┤<br>
+│    Apha.BatchJobs.Application       │  ← Business Logic & Use Cases<br>
+├─────────────────────────────────────┤<br>
+│    Apha.BatchJobs.Domain            │  ← Domain Models & Entities<br>
+├─────────────────────────────────────┤<br>
+│    Apha.BatchJobs.Infrastructure    │  ← Data Access & External Services<br>
+└─────────────────────────────────────┘<br>
+                </code>
+            </div>
+
+            <h3>Unique Characteristics</h3>
+            <ul>
+                <li><strong>Dual Entry Points:</strong> Both HTTP API and background worker in single solution</li>
+                <li><strong>Domain-Driven:</strong> Emphasizes domain models over data models</li>
+                <li><strong>Shared Application Logic:</strong> API and Worker both consume Application layer</li>
+                <li><strong>Infrastructure Abstraction:</strong> Persistence implementation hidden behind interfaces</li>
+                <li><strong>Consolidated Tests:</strong> Single UnitTests project covering all layers</li>
+            </ul>
+        </div>
+
+        <h2 id="projects">📦 Project Breakdown</h2>
+
+        <h3>1. Entry Points (Dual Interface)</h3>
+        
+        <div class="project-box api">
+            <h4>🌐 Apha.BatchJobs.Api</h4>
+            <span class="label">Entry Point: HTTP</span>
+            <span class="label">ASP.NET Core</span>
+            <span class="label">REST Endpoints</span>
+            
+            <p><strong>Purpose:</strong> Exposes HTTP endpoints for triggering and monitoring batch jobs</p>
+            
+            <h5>Key Responsibilities</h5>
+            <ul>
+                <li>Define REST API controllers and routes</li>
+                <li>Request validation and contract mapping</li>
+                <li>Call Application layer use cases</li>
+                <li>Return standardized API responses</li>
+                <li>Implement authentication/authorization</li>
+            </ul>
+            
+            <h5>Example Endpoints</h5>
+            <div class="code-block">
+POST   /api/v1/jobs/trigger          - Queue a new job
+GET    /api/v1/jobs/{jobId}/status   - Get job execution status
+GET    /api/v1/jobs/history          - List recent jobs
+GET    /api/v1/health                - Health check endpoint
+            </div>
+            
+            <h5>Dependencies</h5>
+            <ul>
+                <li>Apha.BatchJobs.Application</li>
+                <li>Apha.Common (shared utilities)</li>
+                <li>ASP.NET Core 10.0</li>
+            </ul>
+        </div>
+
+        <div class="project-box worker">
+            <h4>⚙️ Apha.BatchJobs.Worker</h4>
+            <span class="label">Entry Point: Background Service</span>
+            <span class="label">Worker Host</span>
+            <span class="label">Job Orchestration</span>
+            
+            <p><strong>Purpose:</strong> Runs as a background service that dequeues and executes batch jobs</p>
+            
+            <h5>Key Responsibilities</h5>
+            <ul>
+                <li>Initialize job scheduler/orchestrator</li>
+                <li>Poll for pending jobs from database</li>
+                <li>Execute jobs using Application layer</li>
+                <li>Update job status and completion state</li>
+                <li>Handle retries, failures, and logging</li>
+                <li>Manage graceful shutdown</li>
+            </ul>
+            
+            <h5>Run Modes</h5>
+            <ul>
+                <li><strong>Manual:</strong> Execute specific job by name</li>
+                <li><strong>Scheduled:</strong> Auto-poll for jobs on timer</li>
+                <li><strong>Health Check:</strong> Basic connectivity verification</li>
+            </ul>
+            
+            <h5>Dependencies</h5>
+            <ul>
+                <li>Apha.BatchJobs.Application</li>
+                <li>Apha.Common (shared utilities)</li>
+                <li>Microsoft.Extensions.Hosting (.NET Worker Host)</li>
+            </ul>
+        </div>
+
+        <h3>2. Business Logic Layer</h3>
+
+        <div class="project-box app">
+            <h4>🧠 Apha.BatchJobs.Application</h4>
+            <span class="label">Business Logic</span>
+            <span class="label">Use Cases</span>
+            <span class="label">Orchestration</span>
+            
+            <p><strong>Purpose:</strong> Contains all business logic, use case implementations, and orchestration of domain objects</p>
+            
+            <h5>Key Responsibilities</h5>
+            <ul>
+                <li>Implement business workflows (e.g., ScheduleJobs, RecreateSummaries)</li>
+                <li>Coordinate between Domain and Infrastructure layers</li>
+                <li>Handle transactions and data consistency</li>
+                <li>Implement application-level services</li>
+                <li>Transform domain objects for API/Worker responses</li>
+            </ul>
+            
+            <h5>Typical Structure</h5>
+            <ul>
+                <li><strong>Services/</strong> - Use case implementations</li>
+                <li><strong>Abstractions/Interfaces/</strong> - Contracts for repositories, external services</li>
+                <li><strong>DTOs/</strong> - Data transfer objects for cross-layer communication</li>
+                <li><strong>Mappers/</strong> - Map between Domain and DTO models</li>
+            </ul>
+            
+            <h5>Dependencies</h5>
+            <ul>
+                <li>Apha.BatchJobs.Domain</li>
+                <li>Apha.Common (shared utilities)</li>
+            </ul>
+        </div>
+
+        <h3>3. Domain Layer</h3>
+
+        <div class="project-box domain">
+            <h4>🎲 Apha.BatchJobs.Domain</h4>
+            <span class="label">Domain Models</span>
+            <span class="label">Entities</span>
+            <span class="label">Value Objects</span>
+            
+            <p><strong>Purpose:</strong> Represents the core business domain with entities, value objects, and domain logic</p>
+            
+            <h5>Key Responsibilities</h5>
+            <ul>
+                <li>Define domain entities (Job, JobExecution, Schedule, etc.)</li>
+                <li>Model business rules and constraints</li>
+                <li>Implement domain-level validation</li>
+                <li>Define repository interfaces (contracts)</li>
+                <li>Define aggregate roots</li>
+            </ul>
+            
+            <h5>Typical Entities</h5>
+            <ul>
+                <li><strong>Job:</strong> Represents a batch job definition</li>
+                <li><strong>JobExecution:</strong> Represents a single execution run</li>
+                <li><strong>JobSchedule:</strong> Defines scheduling parameters</li>
+                <li><strong>BatchContext:</strong> Execution context and parameters</li>
+            </ul>
+            
+            <h5>Dependencies</h5>
+            <ul>
+                <li>Apha.Common (shared utilities)</li>
+                <li>.NET Core libraries only</li>
+            </ul>
+        </div>
+
+        <h3>4. Infrastructure Layer</h3>
+
+        <div class="project-box infra">
+            <h4>💾 Apha.BatchJobs.Infrastructure</h4>
+            <span class="label">Data Access</span>
+            <span class="label">External Services</span>
+            <span class="label">Implementations</span>
+            
+            <p><strong>Purpose:</strong> Implements repository interfaces, database context, and external service integrations</p>
+            
+            <h5>Key Responsibilities</h5>
+            <ul>
+                <li>Implement Domain layer repository interfaces</li>
+                <li>Configure Entity Framework Core DbContext</li>
+                <li>Execute database migrations</li>
+                <li>Implement external service clients (if needed)</li>
+                <li>Handle database connection pooling</li>
+                <li>Implement caching layers</li>
+            </ul>
+            
+            <h5>Typical Components</h5>
+            <ul>
+                <li><strong>BatchJobsDbContext:</strong> EF Core DbContext for domain entities</li>
+                <li><strong>Repositories/:</strong> Repository implementations</li>
+                <li><strong>Migrations/:</strong> EF Core migration scripts</li>
+                <li><strong>Configuration/:</strong> Entity mapping configuration</li>
+                <li><strong>Services/:</strong> External service integrations</li>
+            </ul>
+            
+            <h5>Database Technology</h5>
+            <ul>
+                <li><strong>Database:</strong> PostgreSQL 16+</li>
+                <li><strong>ORM:</strong> Entity Framework Core 10.0</li>
+                <li><strong>Migrations:</strong> EF Code-first</li>
+            </ul>
+            
+            <h5>Dependencies</h5>
+            <ul>
+                <li>Apha.BatchJobs.Domain</li>
+                <li>Apha.Common (shared utilities)</li>
+                <li>Entity Framework Core 10.0</li>
+                <li>Npgsql (PostgreSQL provider)</li>
+            </ul>
+        </div>
+
+        <h3>5. Testing Layer</h3>
+
+        <div class="project-box tests">
+            <h4>🧪 Apha.BatchJobs.UnitTests</h4>
+            <span class="label">Unit Tests</span>
+            <span class="label">Integration Tests</span>
+            <span class="label">Consolidated</span>
+            
+            <p><strong>Purpose:</strong> Provides comprehensive test coverage for all layers in single project</p>
+            
+            <h5>Test Organization</h5>
+            <ul>
+                <li><strong>Domain/</strong> - Domain entity and value object tests</li>
+                <li><strong>Application/</strong> - Use case and service tests</li>
+                <li><strong>Infrastructure/</strong> - Repository and database tests</li>
+                <li><strong>Api/</strong> - Controller and endpoint tests (if isolated)</li>
+                <li><strong>Integration/</strong> - End-to-end workflow tests</li>
+            </ul>
+            
+            <h5>Test Approach</h5>
+            <ul>
+                <li><strong>Unit Tests:</strong> Fast, in-memory, no external dependencies</li>
+                <li><strong>Integration Tests:</strong> Use real PostgreSQL instance (test db)</li>
+                <li><strong>Mocking:</strong> Moq for interface mocking</li>
+                <li><strong>Fixtures:</strong> Reusable test data setup</li>
+            </ul>
+            
+            <h5>Dependencies</h5>
+            <ul>
+                <li>All other projects in solution</li>
+                <li>xUnit (test framework)</li>
+                <li>Moq (mocking framework)</li>
+                <li>FluentAssertions (readable assertions)</li>
+            </ul>
+        </div>
+
+        <h2 id="layers">📋 Layer Responsibilities Matrix</h2>
+
+        <table>
+            <tr>
+                <th>Layer</th>
+                <th>Project</th>
+                <th>Primary Responsibility</th>
+                <th>Dependencies</th>
+                <th>External Dependencies</th>
+            </tr>
+            <tr>
+                <td><strong>Presentation</strong></td>
+                <td>Api / Worker</td>
+                <td>Request handling, routing, response formatting</td>
+                <td>Application, Common</td>
+                <td>ASP.NET Core, Hosting</td>
+            </tr>
+            <tr>
+                <td><strong>Application</strong></td>
+                <td>Application</td>
+                <td>Use case orchestration, business workflows</td>
+                <td>Domain, Common</td>
+                <td>None (framework-agnostic)</td>
+            </tr>
+            <tr>
+                <td><strong>Domain</strong></td>
+                <td>Domain</td>
+                <td>Core business logic, entities, rules</td>
+                <td>Common</td>
+                <td>None (.NET Core only)</td>
+            </tr>
+            <tr>
+                <td><strong>Infrastructure</strong></td>
+                <td>Infrastructure</td>
+                <td>Data persistence, external services</td>
+                <td>Domain, Common</td>
+                <td>EF Core, PostgreSQL, Npgsql</td>
+            </tr>
+            <tr>
+                <td><strong>Testing</strong></td>
+                <td>UnitTests</td>
+                <td>Quality assurance across layers</td>
+                <td>All projects</td>
+                <td>xUnit, Moq, FluentAssertions</td>
+            </tr>
+        </table>
+
+        <h2 id="entrypoints">🚪 Entry Points Detailed</h2>
+        <div class="arch-section">
+            <h3>Apha.BatchJobs.Api - HTTP Entry Point</h3>
+            <p>Runs as an ASP.NET Core HTTP service, typically hosted on port 8080.</p>
+            
+            <h5>Startup Flow</h5>
+            <ol>
+                <li>Configure dependency injection (API, Application, Infrastructure services)</li>
+                <li>Configure Entity Framework DbContext with PostgreSQL connection</li>
+                <li>Wire up middleware pipeline (logging, error handling, authentication)</li>
+                <li>Map API route handlers</li>
+                <li>Start HTTP server</li>
+            </ol>
+
+            <h3>Apha.BatchJobs.Worker - Background Job Entry Point</h3>
+            <p>Runs as a .NET Worker Service, continuously polling for jobs.</p>
+            
+            <h5>Startup Flow</h5>
+            <ol>
+                <li>Configure dependency injection (Worker, Application, Infrastructure services)</li>
+                <li>Configure Entity Framework DbContext with PostgreSQL connection</li>
+                <li>Register background job services and orchestrators</li>
+                <li>Start hosted services</li>
+                <li>Begin polling for pending jobs</li>
+            </ol>
+
+            <h3>Deployment Modes</h3>
+            <table>
+                <tr>
+                    <th>Mode</th>
+                    <th>Entry Point</th>
+                    <th>Purpose</th>
+                    <th>Environment Variables</th>
+                </tr>
+                <tr>
+                    <td>API Only</td>
+                    <td>Apha.BatchJobs.Api</td>
+                    <td>HTTP trigger/status service only</td>
+                    <td>ASPNETCORE_ENVIRONMENT, Port</td>
+                </tr>
+                <tr>
+                    <td>Worker Only</td>
+                    <td>Apha.BatchJobs.Worker</td>
+                    <td>Background job execution only</td>
+                    <td>BATCH_JOB_NAME, BATCH_RUN_MODE</td>
+                </tr>
+                <tr>
+                    <td>Combined</td>
+                    <td>Both (separate containers)</td>
+                    <td>Full system: HTTP + execution</td>
+                    <td>All of above (separately configured)</td>
+                </tr>
+            </table>
+        </div>
+
+        <h2 id="dependencies">🔗 Dependency Graph</h2>
+        <div class="arch-section">
+            <h3>Compile-time Dependencies</h3>
+            <div class="dependency-tree">
+Apha.BatchJobs.Api
+├── Apha.BatchJobs.Application
+│   ├── Apha.BatchJobs.Domain
+│   │   └── Apha.Common
+│   └── Apha.Common
+├── Apha.Common
+└── ASP.NET Core 10.0
+
+Apha.BatchJobs.Worker
+├── Apha.BatchJobs.Application
+│   ├── Apha.BatchJobs.Domain
+│   │   └── Apha.Common
+│   └── Apha.Common
+├── Apha.Common
+└── Microsoft.Extensions.Hosting
+
+Apha.BatchJobs.Infrastructure
+├── Apha.BatchJobs.Domain
+│   └── Apha.Common
+├── Apha.Common
+├── Entity Framework Core 10.0
+├── Npgsql (PostgreSQL)
+└── [External service clients if any]
+
+Apha.BatchJobs.UnitTests
+├── Apha.BatchJobs.Api
+├── Apha.BatchJobs.Worker
+├── Apha.BatchJobs.Application
+├── Apha.BatchJobs.Domain
+├── Apha.BatchJobs.Infrastructure
+├── xUnit
+├── Moq
+└── FluentAssertions
+            </div>
+
+            <h3>Important Notes</h3>
+            <ul>
+                <li><strong>No circular dependencies:</strong> Strict one-way dependency flow</li>
+                <li><strong>Domain layer independence:</strong> Domain contains no infrastructure code</li>
+                <li><strong>Application layer purity:</strong> No direct database access (uses repository interfaces)</li>
+                <li><strong>Infrastructure isolation:</strong> Database implementation hidden from higher layers</li>
+            </ul>
+        </div>
+
+        <h2 id="testing">🧪 Testing Strategy</h2>
+        <div class="arch-section">
+            <h3>Test Organization</h3>
+            <table>
+                <tr>
+                    <th>Layer</th>
+                    <th>Test Type</th>
+                    <th>Test Data</th>
+                    <th>Dependencies</th>
+                </tr>
+                <tr>
+                    <td>Domain</td>
+                    <td>Unit Tests</td>
+                    <td>In-memory objects</td>
+                    <td>None (pure logic)</td>
+                </tr>
+                <tr>
+                    <td>Application</td>
+                    <td>Unit + Integration</td>
+                    <td>Mock repositories</td>
+                    <td>Moq interfaces</td>
+                </tr>
+                <tr>
+                    <td>Infrastructure</td>
+                    <td>Integration Tests</td>
+                    <td>Test PostgreSQL db</td>
+                    <td>Real database instance</td>
+                </tr>
+                <tr>
+                    <td>API/Worker</td>
+                    <td>Integration Tests</td>
+                    <td>Mock services</td>
+                    <td>HttpClient, Service collection</td>
+                </tr>
+            </table>
+
+            <h3>CI/CD Test Execution</h3>
+            <ol>
+                <li>Unit tests run in-memory (fast)</li>
+                <li>PostgreSQL service starts in GitHub Actions</li>
+                <li>Integration tests run with real database</li>
+                <li>Database cleaned up after test suite</li>
+            </ol>
+        </div>
+
+        <h2 id="conventions">📐 Coding Conventions</h2>
+        <div class="arch-section">
+            <h3>Naming Conventions</h3>
+            <ul>
+                <li><strong>Interfaces:</strong> Prefixed with <span class="highlight">I</span> (e.g., IJobRepository)</li>
+                <li><strong>Implementations:</strong> Suffixed with layer name (e.g., JobRepositoryPostgres)</li>
+                <li><strong>Services:</strong> Suffixed with <span class="highlight">Service</span> (e.g., JobSchedulingService)</li>
+                <li><strong>DTOs:</strong> Suffixed with <span class="highlight">Dto</span> (e.g., JobExecutionDto)</li>
+                <li><strong>Entities:</strong> No suffix, plain domain model names (e.g., Job, JobExecution)</li>
+            </ul>
+
+            <h3>Namespace Conventions</h3>
+            <div class="code-block">
+Apha.BatchJobs.Api
+  ├── Controllers
+  ├── Middleware
+  └── Startup
+
+Apha.BatchJobs.Application
+  ├── Services
+  ├── Abstractions
+  ├── DTOs
+  └── Mappers
+
+Apha.BatchJobs.Domain
+  ├── Entities
+  ├── ValueObjects
+  └── Abstractions
+
+Apha.BatchJobs.Infrastructure
+  ├── Repositories
+  ├── Data
+  ├── Configuration
+  └── Services
+            </div>
+
+            <h3>Design Principles</h3>
+            <ul>
+                <li><strong>Dependency Injection:</strong> Constructor injection preferred, field injection avoided</li>
+                <li><strong>Repository Pattern:</strong> All data access through repository interfaces</li>
+                <li><strong>Immutability:</strong> Value objects should be immutable</li>
+                <li><strong>Single Responsibility:</strong> Each class has one reason to change</li>
+                <li><strong>Testability:</strong> Code written with testability in mind</li>
+            </ul>
+        </div>
+
+        <div class="nav">
+            <a href="Repository-Architecture.html" onclick="history.back()">← Back to Architecture</a>
+            <a href="Standards-Compliance.html">Next: Compliance →</a>
+        </div>
+    </div>
+</body>
+</html>

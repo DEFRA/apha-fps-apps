@@ -27,19 +27,19 @@ public class BatchLockRepository : IBatchLockRepository
     }
 
     /// <inheritdoc />
-    public async Task<bool> TryAcquireLockAsync(string jobName, string runId, int timeoutSeconds, CancellationToken cancellationToken = default)
+    public async Task<bool> TryAcquireLockAsync(string jobName, Guid jobQueueId, int timeoutSeconds, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(jobName))
             throw new ArgumentException("Job name cannot be null or empty.", nameof(jobName));
 
-        if (string.IsNullOrWhiteSpace(runId))
-            throw new ArgumentException("Run ID cannot be null or empty.", nameof(runId));
+        if (jobQueueId == Guid.Empty)
+            throw new ArgumentException("Job queue ID cannot be empty.", nameof(jobQueueId));
 
         var now = DateTime.UtcNow;
         _logger.LogInformation(
-            "Lock acquisition requested | JobName={JobName} | RunId={RunId} | TimeoutSeconds={TimeoutSeconds}",
+            "Lock acquisition requested | JobName={JobName} | JobQueueId={JobQueueId} | TimeoutSeconds={TimeoutSeconds}",
             jobName,
-            runId,
+            jobQueueId,
             timeoutSeconds);
 
         // Remove expired locks first so the unique partial index slot is freed.
@@ -51,46 +51,46 @@ public class BatchLockRepository : IBatchLockRepository
         // With uq_job_lock_job_name_active (partial unique on active rows),
         // this returns 1 when lock is acquired and 0 when already held.
         var insertedRows = await _context.Database.ExecuteSqlInterpolatedAsync($@"
-            INSERT INTO fps.job_lock (acquired_at, expires_at, job_name, run_id, is_active)
-            VALUES ({now}, {now.AddSeconds(timeoutSeconds)}, {jobName}, {runId}, TRUE)
+            INSERT INTO fps.job_lock (acquired_at, expires_at, job_name, jobqueueid, is_active)
+            VALUES ({now}, {now.AddSeconds(timeoutSeconds)}, {jobName}, {jobQueueId}, TRUE)
             ON CONFLICT DO NOTHING;", cancellationToken);
 
         if (insertedRows > 0)
         {
-            _logger.LogInformation("Lock acquired | JobName={JobName} | RunId={RunId}", jobName, runId);
+            _logger.LogInformation("Lock acquired | JobName={JobName} | JobQueueId={JobQueueId}", jobName, jobQueueId);
             return true;
         }
 
         _context.ChangeTracker.Clear();
-        _logger.LogInformation("Lock contention detected | JobName={JobName} | RunId={RunId}", jobName, runId);
+        _logger.LogInformation("Lock contention detected | JobName={JobName} | JobQueueId={JobQueueId}", jobName, jobQueueId);
         return false;
     }
 
     /// <inheritdoc />
-    public async Task ReleaseLockAsync(string jobName, string runId, CancellationToken cancellationToken = default)
+    public async Task ReleaseLockAsync(string jobName, Guid jobQueueId, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(jobName))
             throw new ArgumentException("Job name cannot be null or empty.", nameof(jobName));
 
-        if (string.IsNullOrWhiteSpace(runId))
-            throw new ArgumentException("Run ID cannot be null or empty.", nameof(runId));
+        if (jobQueueId == Guid.Empty)
+            throw new ArgumentException("Job queue ID cannot be empty.", nameof(jobQueueId));
 
         // Guard against stale tracking state leaking from prior operations in the
         // same scoped DbContext (e.g., failed job step writes).
         _context.ChangeTracker.Clear();
 
         var lockToRelease = await _context.BatchLocks
-            .FirstOrDefaultAsync(l => l.JobName == jobName && l.RunId == runId, cancellationToken);
+            .FirstOrDefaultAsync(l => l.JobName == jobName && l.JobQueueId == jobQueueId, cancellationToken);
 
         if (lockToRelease != null)
         {
             _context.BatchLocks.Remove(lockToRelease);
             await _context.SaveChangesAsync(cancellationToken);
-            _logger.LogInformation("Lock released | JobName={JobName} | RunId={RunId}", jobName, runId);
+            _logger.LogInformation("Lock released | JobName={JobName} | JobQueueId={JobQueueId}", jobName, jobQueueId);
         }
         else
         {
-            _logger.LogInformation("No lock found to release | JobName={JobName} | RunId={RunId}", jobName, runId);
+            _logger.LogInformation("No lock found to release | JobName={JobName} | JobQueueId={JobQueueId}", jobName, jobQueueId);
         }
     }
 

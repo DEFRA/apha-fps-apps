@@ -163,10 +163,10 @@ public static class ServiceCollectionSetup
 
     private sealed class NoDbBatchLockRepository : IBatchLockRepository
     {
-        public Task<bool> TryAcquireLockAsync(string jobName, string runId, int timeoutSeconds, CancellationToken cancellationToken = default)
+        public Task<bool> TryAcquireLockAsync(string jobName, Guid jobQueueId, int timeoutSeconds, CancellationToken cancellationToken = default)
             => Task.FromResult(true);
 
-        public Task ReleaseLockAsync(string jobName, string runId, CancellationToken cancellationToken = default)
+        public Task ReleaseLockAsync(string jobName, Guid jobQueueId, CancellationToken cancellationToken = default)
             => Task.CompletedTask;
 
         public Task<BatchLock?> GetActiveLockAsync(string jobName, CancellationToken cancellationToken = default)

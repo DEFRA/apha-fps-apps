@@ -46,8 +46,10 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
         await using var context = CreateDbContext();
         var repository = new BatchLockRepository(context);
 
-        var first = await repository.TryAcquireLockAsync("IntegrationLockJob", Guid.NewGuid().ToString("N"), 300);
-        var second = await repository.TryAcquireLockAsync("IntegrationLockJob", Guid.NewGuid().ToString("N"), 300);
+        var jobQueueId1 = Guid.NewGuid();
+        var jobQueueId2 = Guid.NewGuid();
+        var first = await repository.TryAcquireLockAsync("IntegrationLockJob", jobQueueId1, 300);
+        var second = await repository.TryAcquireLockAsync("IntegrationLockJob", jobQueueId2, 300);
 
         Assert.True(first);
         Assert.False(second);
@@ -58,14 +60,14 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
     {
         Assert.True(CanRunIntegrationTests(), _skipReason);
 
-        var runId = Guid.NewGuid().ToString("N");
+        var jobQueueId = Guid.NewGuid();
 
         await using (var context = CreateDbContext())
         {
             var repository = new BatchLockRepository(context);
-            var acquired = await repository.TryAcquireLockAsync("IntegrationReleaseJob", runId, 300);
+            var acquired = await repository.TryAcquireLockAsync("IntegrationReleaseJob", jobQueueId, 300);
             Assert.True(acquired);
-            await repository.ReleaseLockAsync("IntegrationReleaseJob", runId);
+            await repository.ReleaseLockAsync("IntegrationReleaseJob", jobQueueId);
         }
 
         await using var verifyContext = CreateDbContext();
@@ -80,12 +82,13 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
     {
         Assert.True(CanRunIntegrationTests(), _skipReason);
 
-        var runId = Guid.NewGuid().ToString("N");
+        var jobQueueId = Guid.NewGuid();
         var record = new JobExecutionRecord
         {
             ExecutionId = 0,
             JobName = "IntegrationExecutionJob",
-            RunId = runId,
+            JobQueueId = jobQueueId,
+            UserId = "test-user",
             JobType = JobType.Unknown,
             RunMode = RunMode.Manual,
             Status = JobStatus.Running,
@@ -100,12 +103,12 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
         }
 
         var queueRows = await ScalarIntAsync(
-            "SELECT COUNT(*) FROM fps.job_queue WHERE jobqueueid = @runId::uuid",
-            new NpgsqlParameter("runId", Guid.Parse(runId)));
+            "SELECT COUNT(*) FROM operational.job_queue WHERE jobqueueid = @jobQueueId",
+            new NpgsqlParameter("jobQueueId", jobQueueId));
 
         var logRows = await ScalarIntAsync(
-            "SELECT COUNT(*) FROM fps.job_queue_log ql INNER JOIN fps.job_queue q ON q.jobqueueid = ql.jobqueueid WHERE q.jobqueueid = @runId::uuid",
-            new NpgsqlParameter("runId", Guid.Parse(runId)));
+            "SELECT COUNT(*) FROM operational.job_queue_log ql INNER JOIN operational.job_queue q ON q.jobqueueid = ql.jobqueueid WHERE q.jobqueueid = @jobQueueId",
+            new NpgsqlParameter("jobQueueId", jobQueueId));
 
         Assert.Equal(1, queueRows);
         Assert.Equal(1, logRows);
@@ -116,7 +119,7 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
     {
         Assert.True(CanRunIntegrationTests(), _skipReason);
 
-        var runId = Guid.NewGuid().ToString("N");
+        var jobQueueId = Guid.NewGuid();
         var startedAt = DateTime.UtcNow.AddMinutes(-1);
 
         await using (var context = CreateDbContext())
@@ -127,7 +130,8 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
             {
                 ExecutionId = 0,
                 JobName = "IntegrationUpdateJob",
-                RunId = runId,
+                JobQueueId = jobQueueId,
+                UserId = "test-user",
                 JobType = JobType.Unknown,
                 RunMode = RunMode.Scheduled,
                 Status = JobStatus.Running,
@@ -139,7 +143,8 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
             {
                 ExecutionId = 0,
                 JobName = "IntegrationUpdateJob",
-                RunId = runId,
+                JobQueueId = jobQueueId,
+                UserId = "test-user",
                 JobType = JobType.Unknown,
                 RunMode = RunMode.Scheduled,
                 Status = JobStatus.Completed,
@@ -151,11 +156,11 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
 
         var statusName = await ScalarStringAsync(
             "SELECT s.status FROM fps.job_queue q INNER JOIN fps.job_status s ON s.statusid = q.statusid WHERE q.jobqueueid = @runId::uuid",
-            new NpgsqlParameter("runId", Guid.Parse(runId)));
+            new NpgsqlParameter("runId", jobQueueId));
 
         var logCount = await ScalarIntAsync(
             "SELECT COUNT(*) FROM fps.job_queue_log WHERE jobqueueid = @runId::uuid",
-            new NpgsqlParameter("runId", Guid.Parse(runId)));
+            new NpgsqlParameter("runId", jobQueueId));
 
         Assert.Equal("Completed", statusName);
         Assert.Equal(2, logCount);
@@ -166,18 +171,18 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
     {
         Assert.True(CanRunIntegrationTests(), _skipReason);
 
-        var firstRunId = Guid.NewGuid().ToString("N");
-        var secondRunId = Guid.NewGuid().ToString("N");
+        var firstJobQueueId = Guid.NewGuid();
+        var secondJobQueueId = Guid.NewGuid();
 
         await using var context = CreateDbContext();
         var repository = new BatchLockRepository(context);
 
-        var first = await repository.TryAcquireLockAsync("IntegrationExpiryJob", firstRunId, 1);
+        var first = await repository.TryAcquireLockAsync("IntegrationExpiryJob", firstJobQueueId, 1);
         Assert.True(first);
 
         await Task.Delay(1300);
 
-        var second = await repository.TryAcquireLockAsync("IntegrationExpiryJob", secondRunId, 300);
+        var second = await repository.TryAcquireLockAsync("IntegrationExpiryJob", secondJobQueueId, 300);
         Assert.True(second);
     }
 
@@ -194,13 +199,13 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
             var badRepository = new BatchLockRepository(badContext);
 
             await Assert.ThrowsAnyAsync<Exception>(
-                () => badRepository.TryAcquireLockAsync("IntegrationOutageJob", Guid.NewGuid().ToString("N"), 30));
+                () => badRepository.TryAcquireLockAsync("IntegrationOutageJob", Guid.NewGuid(), 30));
         }
 
         await using (var goodContext = CreateDbContext())
         {
             var goodRepository = new BatchLockRepository(goodContext);
-            var recovered = await goodRepository.TryAcquireLockAsync("IntegrationOutageJob", Guid.NewGuid().ToString("N"), 300);
+            var recovered = await goodRepository.TryAcquireLockAsync("IntegrationOutageJob", Guid.NewGuid(), 300);
             Assert.True(recovered);
         }
     }
@@ -214,7 +219,7 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
     {
         Assert.True(CanRunIntegrationTests(), _skipReason);
 
-        var runId = Guid.NewGuid().ToString("N");
+        var jobQueueId = Guid.NewGuid();
 
         // Create initial record
         await using (var context = CreateDbContext())
@@ -224,7 +229,8 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
             {
                 ExecutionId = 0,
                 JobName = "DegradationPartialFailJob",
-                RunId = runId,
+                JobQueueId = jobQueueId,
+                UserId = "test-user",
                 JobType = JobType.Unknown,
                 RunMode = RunMode.Manual,
                 Status = JobStatus.Running,
@@ -244,7 +250,8 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
             {
                 ExecutionId = 0,
                 JobName = "DegradationPartialFailJob",
-                RunId = runId,
+                JobQueueId = jobQueueId,
+                UserId = "test-user",
                 JobType = JobType.Unknown,
                 RunMode = RunMode.Manual,
                 Status = JobStatus.Failed,
@@ -260,11 +267,11 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
         // Verify record was updated with error details
         var statusName = await ScalarStringAsync(
             "SELECT s.status FROM fps.job_queue q INNER JOIN fps.job_status s ON s.statusid = q.statusid WHERE q.jobqueueid = @runId::uuid",
-            new NpgsqlParameter("runId", Guid.Parse(runId)));
+            new NpgsqlParameter("runId", jobQueueId));
 
         var errorMsg = await ScalarStringAsync(
             "SELECT q.errormessage FROM fps.job_queue q WHERE q.jobqueueid = @runId::uuid",
-            new NpgsqlParameter("runId", Guid.Parse(runId)));
+            new NpgsqlParameter("runId", jobQueueId));
 
         Assert.Equal("Failed", statusName);
         Assert.NotNull(errorMsg);
@@ -280,14 +287,14 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
     {
         Assert.True(CanRunIntegrationTests(), _skipReason);
 
-        var firstRunId = Guid.NewGuid().ToString("N");
-        var secondRunId = Guid.NewGuid().ToString("N");
+        var firstJobQueueId = Guid.NewGuid();
+        var secondJobQueueId = Guid.NewGuid();
 
         // First worker acquires lock
         await using (var context = CreateDbContext())
         {
             var repository = new BatchLockRepository(context);
-            var acquired = await repository.TryAcquireLockAsync("DegradationLockContentionJob", firstRunId, 2);
+            var acquired = await repository.TryAcquireLockAsync("DegradationLockContentionJob", firstJobQueueId, 2);
             Assert.True(acquired);
 
             // Create execution record for first run
@@ -296,7 +303,8 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
             {
                 ExecutionId = 0,
                 JobName = "DegradationLockContentionJob",
-                RunId = firstRunId,
+                JobQueueId = firstJobQueueId,
+                UserId = "test-user",
                 JobType = JobType.Unknown,
                 RunMode = RunMode.Scheduled,
                 Status = JobStatus.Running,
@@ -309,15 +317,15 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
         await using (var context = CreateDbContext())
         {
             var repository = new BatchLockRepository(context);
-            var acquired = await repository.TryAcquireLockAsync("DegradationLockContentionJob", secondRunId, 300);
+            var acquired = await repository.TryAcquireLockAsync("DegradationLockContentionJob", secondJobQueueId, 300);
             Assert.False(acquired);
         }
 
         // Verify only first execution record exists
         var executionCount = await ScalarIntAsync(
             "SELECT COUNT(*) FROM fps.job_queue WHERE jobqueueid IN (@firstRunId::uuid, @secondRunId::uuid)",
-            new NpgsqlParameter("firstRunId", Guid.Parse(firstRunId)),
-            new NpgsqlParameter("secondRunId", Guid.Parse(secondRunId)));
+            new NpgsqlParameter("firstRunId", firstJobQueueId),
+            new NpgsqlParameter("secondRunId", secondJobQueueId));
 
         Assert.Equal(1, executionCount);
 
@@ -328,8 +336,8 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
         await using (var context = CreateDbContext())
         {
             var repository = new BatchLockRepository(context);
-            var thirdRunId = Guid.NewGuid().ToString("N");
-            var acquired = await repository.TryAcquireLockAsync("DegradationLockContentionJob", thirdRunId, 300);
+            var thirdJobQueueId = Guid.NewGuid();
+            var acquired = await repository.TryAcquireLockAsync("DegradationLockContentionJob", thirdJobQueueId, 300);
             Assert.True(acquired);
         }
     }
@@ -339,11 +347,11 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
     /// Validates: execution record logs include structured timestamp and status information.
     /// </summary>
     [Fact]
-    public async Task ExecutionLog_ContainsStructuredFields_QueryableByRunId()
+    public async Task ExecutionLog_ContainsStructuredFields_QueryableByJobQueueId()
     {
         Assert.True(CanRunIntegrationTests(), _skipReason);
 
-        var runId = Guid.NewGuid().ToString("N");
+        var jobQueueId = Guid.NewGuid();
 
         // Create and complete execution with logs
         await using (var context = CreateDbContext())
@@ -354,7 +362,8 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
             {
                 ExecutionId = 0,
                 JobName = "DegradationLogValidationJob",
-                RunId = runId,
+                JobQueueId = jobQueueId,
+                UserId = "test-user",
                 JobType = JobType.Unknown,
                 RunMode = RunMode.Manual,
                 Status = JobStatus.Running,
@@ -368,7 +377,8 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
             {
                 ExecutionId = 0,
                 JobName = "DegradationLogValidationJob",
-                RunId = runId,
+                JobQueueId = jobQueueId,
+                UserId = "test-user",
                 JobType = JobType.Unknown,
                 RunMode = RunMode.Manual,
                 Status = JobStatus.Completed,
@@ -379,10 +389,10 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
             });
         }
 
-        // Query by RunId and verify log entries
+        // Query by JobQueueId and verify log entries
         var logCount = await ScalarIntAsync(
             "SELECT COUNT(*) FROM fps.job_queue_log ql INNER JOIN fps.job_queue q ON q.jobqueueid = ql.jobqueueid WHERE q.jobqueueid = @runId::uuid",
-            new NpgsqlParameter("runId", Guid.Parse(runId)));
+            new NpgsqlParameter("runId", jobQueueId));
 
         // Expect at least 2 logs: Created and Completed
         Assert.True(logCount >= 2, $"Expected at least 2 log entries, got {logCount}");
@@ -390,7 +400,7 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
         // Verify structured fields in execution record
         var firstLogTime = await ScalarStringAsync(
             "SELECT ql.logtime FROM fps.job_queue_log ql INNER JOIN fps.job_queue q ON q.jobqueueid = ql.jobqueueid WHERE q.jobqueueid = @runId::uuid ORDER BY ql.jobqueuelogid ASC LIMIT 1",
-            new NpgsqlParameter("runId", Guid.Parse(runId)));
+            new NpgsqlParameter("runId", jobQueueId));
 
         Assert.NotNull(firstLogTime);
     }
