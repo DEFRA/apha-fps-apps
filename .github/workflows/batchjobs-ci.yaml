@@ -73,6 +73,8 @@ jobs:
         run: |
           COMMIT_MSG="$(git log -1 --pretty=%B)"
           echo "Last commit message: $COMMIT_MSG"
+
+          # Match sibling app workflows: push image only when commit message contains 'ecrpush'.
           if [[ "$COMMIT_MSG" == *"ecrpush"* ]]; then
             echo "should_push=true" >> "$GITHUB_OUTPUT"
           else
@@ -104,6 +106,7 @@ jobs:
   push-image:
     name: Push BatchJobs image to ECR
     needs: build-smoke-and-image
+    # Push only when commit message contains ecrpush (same behavior as sibling repos).
     if: needs.build-smoke-and-image.outputs.should_push == 'true'
     runs-on: ubuntu-latest
     permissions:

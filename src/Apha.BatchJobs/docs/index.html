@@ -1899,6 +1899,7 @@ Use the BatchJobs worker production Dockerfile below as the canonical build arti
 <ul>
   <li>Build using Docker context at repository root and Dockerfile path <code>src/Apha.BatchJobs/Dockerfile</code>.</li>
   <li>Push image to ECR repository <code>apha/batchjobs</code> (same repository used by BatchJobs CI).</li>
+  <li>For <code>main</code> and non-main branches, keep push behavior aligned with other repositories: push to ECR only when commit message contains <code>ecrpush</code>.</li>
   <li>Tag image using release tag + commit SHA pattern and retain immutable traceability.</li>
   <li>Update worker ECS task definition revision with the newly pushed image URI.</li>
   <li>Promote across environments via controlled CD pipeline approvals.</li>
@@ -1972,6 +1973,12 @@ ENTRYPOINT ["dotnet", "Apha.BatchJobs.Worker.dll"]</code></pre>
 <pre><code># from repository root
 docker build -f src/Apha.BatchJobs/Dockerfile -t &lt;ecr-registry&gt;/apha/batchjobs:&lt;tag&gt; .
 docker push &lt;ecr-registry&gt;/apha/batchjobs:&lt;tag&gt;</code></pre>
+
+<h4>15.12.1.3 CI/CD Policy (Same as Other Apps)</h4>
+<pre><code>if commit message contains "ecrpush":
+  push image to ECR after build/test success
+else:
+  do not push image to ECR</code></pre>
 
 <p>
 <b>DevOps and Github Team Ask:</b><br>
