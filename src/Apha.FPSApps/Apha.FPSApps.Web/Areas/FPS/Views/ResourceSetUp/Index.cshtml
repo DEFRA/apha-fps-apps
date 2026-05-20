@@ -1,5 +1,6 @@
 @using Apha.FPSApps.Web.Models.Components.DataGrid
 @model Apha.FPSApps.Web.Areas.FPS.Models.ResourceSetUpViewModel
+@inject Apha.FPSApps.Web.Handler.IFpsYearContext FpsYearContext
 
 @{
     ViewData["Title"] = "Resource Set-Up";
@@ -64,6 +65,7 @@
                         </div>
                         <div style="display: flex; justify-content: flex-end;" class="col-md-6">
                             <form asp-action="Index" asp-controller="ResourceSetUp" asp-area="FPS" method="get" style="display: flex; align-items: center;">
+                                <input type="hidden" name="year" value="@FpsYearContext.Year" />
                                 <label class="fw-bold mt-2" for="profitCentreSelect">Resource Centre:</label>
                                 <select id="profitCentreSelect"
                                         name="profitCentre"
