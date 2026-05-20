@@ -12,30 +12,30 @@
 BEGIN;
 
 -- Step 1: Clear any existing locks (old schema won't match new schema anyway)
-DELETE FROM operational.job_lock;
+DELETE FROM fps.job_lock;
 
 -- Step 2: Drop old run_id column and indexes that reference it
-ALTER TABLE operational.job_lock
+ALTER TABLE fps.job_lock
     DROP COLUMN IF EXISTS run_id;
 
 -- Step 3: Add jobqueueid column if not already present
-ALTER TABLE operational.job_lock
+ALTER TABLE fps.job_lock
     ADD COLUMN IF NOT EXISTS jobqueueid UUID NOT NULL UNIQUE;
 
 -- Step 4: Recreate partial unique index for strict mode (one active lock per job)
 DROP INDEX IF EXISTS uq_job_lock_job_name_active;
 CREATE UNIQUE INDEX uq_job_lock_job_name_active
-    ON operational.job_lock (job_name)
+    ON fps.job_lock (job_name)
     WHERE is_active = TRUE;
 
 -- Step 5: Ensure job_queue.jobqueueid has no DEFAULT (caller must inject)
 -- Note: This requires manual DDL review in production; EF Core handles application-layer enforcement
-ALTER TABLE operational.job_queue
+ALTER TABLE fps.job_queue
     ALTER COLUMN jobqueueid DROP DEFAULT IF EXISTS;
 
 COMMIT;
 
 -- Verification queries (run after migration to confirm):
--- SELECT COUNT(*) FROM operational.job_lock;                         -- Should be 0 after cleanup
--- SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'job_lock' AND table_schema = 'operational' ORDER BY ordinal_position;
--- SELECT column_name, column_default FROM information_schema.columns WHERE table_name = 'job_queue' AND table_schema = 'operational' AND column_name = 'jobqueueid';
+-- SELECT COUNT(*) FROM fps.job_lock;                                 -- Should be 0 after cleanup
+-- SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'job_lock' AND table_schema = 'fps' ORDER BY ordinal_position;
+-- SELECT column_name, column_default FROM information_schema.columns WHERE table_name = 'job_queue' AND table_schema = 'fps' AND column_name = 'jobqueueid';

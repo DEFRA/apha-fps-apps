@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -322,13 +322,13 @@ UI polls status using jobExecutionId</div>
     <p>If the UI polls before the worker inserts the row, the status API can return <code>PendingStart</code> / <code>TriggerAccepted</code> for that <code>jobExecutionId</code>.</p>
 
     <h3>6.1 JobExecutionId to JobQueueId Flow (Updated)</h3>
-    <p><strong>Clarification:</strong> <code>jobExecutionId</code> is API-generated correlation ID. <code>jobQueueId</code> is database/runtime execution row identity from <code>operational.tbljobqueue</code>. Both should be linked once worker starts.</p>
+    <p><strong>Clarification:</strong> <code>jobExecutionId</code> is API-generated correlation ID. <code>jobQueueId</code> is database/runtime execution row identity from <code>fps.job_queue</code>. Both should be linked once worker starts.</p>
 
     <div class="flow">1) API receives trigger request
 2) API generates jobExecutionId (GUID) and publishes EventBridge event
 3) API returns TriggerAccepted + jobExecutionId to UI
 4) Worker starts with BATCH_JOB_EXECUTION_ID=jobExecutionId
-5) Worker inserts execution row in operational.tbljobqueue
+5) Worker inserts execution row in fps.job_queue
    - DB generates jobQueueId (identity/sequence)
    - Row stores correlation/jobExecutionId
 6) Worker and status APIs expose both IDs for traceability
@@ -775,7 +775,7 @@ public async Task&lt;string&gt; TriggerViaEcsAsync(string jobName, string reques
     <ul>
       <li><code>jobExecutionId</code> (from trigger response)</li>
       <li><code>acceptedAtUtc</code> (from trigger response)</li>
-      <li>Execution existence check in <code>operational.tbljobqueue</code></li>
+      <li>Execution existence check in <code>fps.job_queue</code></li>
       <li>Timeout rule: <code>acceptedAtUtc + timeoutSeconds + bufferSeconds</code></li>
     </ul>
 
@@ -1887,6 +1887,92 @@ The BatchJobs solution needs dedicated source control, automated build and deplo
   <li><b>Secrets Handling:</b> Ensure deployment credentials, AWS access, and environment configuration are managed securely using approved secret management mechanisms.</li>
   <li><b>Release Traceability:</b> Support release tagging, versioning, deployment history, and rollback mechanisms for operational control.</li>
 </ul>
+
+<h3>15.12.1 Exact Team Ask: Worker Containerization for Same ECR and ECS</h3>
+<p>
+Use the BatchJobs worker production Dockerfile below as the canonical build artifact for deployment. This follows the same DEFRA multi-stage pattern used by other root solutions and is intended for the same ECR and ECS runtime model.
+</p>
+
+<p>
+<b>DevOps Team - exact actions:</b>
+</p>
+<ul>
+  <li>Build using Docker context at repository root and Dockerfile path <code>src/Apha.BatchJobs/Dockerfile</code>.</li>
+  <li>Push image to ECR repository <code>apha/batchjobs</code> (same repository used by BatchJobs CI).</li>
+  <li>Tag image using release tag + commit SHA pattern and retain immutable traceability.</li>
+  <li>Update worker ECS task definition revision with the newly pushed image URI.</li>
+  <li>Promote across environments via controlled CD pipeline approvals.</li>
+</ul>
+
+<p>
+<b>AWS Infra Team - exact actions:</b>
+</p>
+<ul>
+  <li>Run the image on the existing BatchJobs ECS/Fargate worker runtime (same cluster/service model already agreed for BatchJobs).</li>
+  <li>Keep EventBridge target mapped to the worker task definition revision deployed by DevOps.</li>
+  <li>Maintain IAM/task execution roles, networking, logging, and secret injection for this worker image.</li>
+</ul>
+
+<h4>15.12.1.1 Canonical Worker Dockerfile (production)</h4>
+<pre><code># ================================
+# -------- Development Stage ---------
+# ================================
+ARG PARENT_VERSION=dotnet10.0
+FROM defradigital/dotnetcore-development:$PARENT_VERSION AS development
+ARG PARENT_VERSION=dotnet10.0
+
+LABEL uk.gov.defra.parent-image=defra-dotnetcore-development:${PARENT_VERSION}
+
+WORKDIR /home/dotnet/src
+
+# Build context is repository root; copy only BatchJobs solution tree.
+COPY --chown=root:dotnet --chmod=640 src/Apha.BatchJobs/ ./
+USER root
+RUN find . -type d -exec chmod g+wx {} \;
+USER dotnet
+
+# Restore, build and publish the worker project.
+RUN dotnet restore ./Apha.BatchJobs.Worker/Apha.BatchJobs.Worker.csproj
+RUN dotnet publish ./Apha.BatchJobs.Worker/Apha.BatchJobs.Worker.csproj -c Release -o /home/dotnet/out /p:UseAppHost=false
+
+# ================================
+# -------- Production Stage --------
+# ================================
+ARG PARENT_VERSION=dotnet10.0
+FROM defradigital/dotnetcore:$PARENT_VERSION AS production
+ARG PARENT_VERSION=dotnet10.0
+LABEL uk.gov.defra.parent-image=defra-dotnetcore:${PARENT_VERSION}
+
+USER 0
+RUN apk update && apk add --no-cache icu-libs krb5-libs
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
+ENV ASPNETCORE_ENVIRONMENT=Production
+ENV DOTNET_EnableDiagnostics=0
+ENV DOTNET_GCConserveMemory=1
+
+WORKDIR /app
+
+# Copy published output as root.
+COPY --from=development /home/dotnet/out/ ./
+
+# Files: read only, Dirs: read+execute only.
+RUN find . -type f -exec chmod 444 {} \; &amp;&amp; \
+    find . -type d -exec chmod 555 {} \;
+
+USER app
+
+LABEL maintainer="Apha Engineering"
+LABEL managed="true"
+LABEL application="batch-jobs-worker"
+LABEL description="Containerized .NET 10 BatchJobs worker for ECS/Fargate"
+
+ENTRYPOINT ["dotnet", "Apha.BatchJobs.Worker.dll"]</code></pre>
+
+<h4>15.12.1.2 Build/Push Commands (reference)</h4>
+<pre><code># from repository root
+docker build -f src/Apha.BatchJobs/Dockerfile -t &lt;ecr-registry&gt;/apha/batchjobs:&lt;tag&gt; .
+docker push &lt;ecr-registry&gt;/apha/batchjobs:&lt;tag&gt;</code></pre>
+
 <p>
 <b>DevOps and Github Team Ask:</b><br>
 Please set up or confirm the repository model, CI/CD automation, branch policies, and deployment controls required to deliver and operate the BatchJobs solution safely across environments.
@@ -1933,10 +2019,13 @@ Please review and confirm the UI requirements for batch job initiation, approval
 The following tables and SQL objects are required to support the Batch Jobs solution. These objects must be created, maintained, and versioned in the target PostgreSQL database schema(s):
 </p>
 <ul>
-  <li><b>Job Execution Tracking:</b>
+  <li><b>Core Runtime Tables (fps schema):</b>
     <ul>
-      <li><code>JobExecutionRecord</code> (tracks jobQueueId, userId, job name, status, timestamps, etc.)</li>
-      <li><code>BatchLock</code> (prevents concurrent execution of critical jobs)</li>
+      <li><code>fps.job_master</code> (batch job definitions and metadata)</li>
+      <li><code>fps.job_status</code> (status dictionary per job)</li>
+      <li><code>fps.job_queue</code> (one row per execution instance keyed by <code>jobQueueId</code>)</li>
+      <li><code>fps.job_queue_log</code> (chronological execution/status audit trail)</li>
+      <li><code>fps.job_lock</code> (distributed lock state to prevent overlapping runs)</li>
     </ul>
   </li>
   <li><b>Domain-Specific Tables:</b>
@@ -1949,12 +2038,322 @@ The following tables and SQL objects are required to support the Batch Jobs solu
     <ul>
       <li>Stored procedures, functions, and views required for orchestration, data migration, and reporting</li>
       <li>Migration scripts for schema changes and data seeding</li>
+      <li>All new/changed objects should target <code>fps</code> schema only (no <code>operational</code> schema dependencies)</li>
     </ul>
   </li>
 </ul>
 <p>
 <b>DBA Ask:</b><br>
 Please review the required tables and SQL objects, ensure they are created and versioned appropriately, and provide support for schema changes, migrations, and performance tuning as needed for Batch Jobs.
+</p>
+
+<h3>15.15.1 Batch Job Core Tables and ERD</h3>
+<p>
+This section defines the core operational tables requested for batch-job orchestration and tracking. It also clarifies how <code>jobExecutionId</code> and <code>jobQueueId</code> should be represented.
+</p>
+
+<h4>15.15.1.1 Table: fps.job_master</h4>
+<p>
+<b>Purpose:</b> Master table for job metadata and configuration. Each row represents one unique job definition.
+</p>
+<table>
+  <thead>
+    <tr>
+      <th>Field Name</th>
+      <th>Data Type</th>
+      <th>Constraints</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>jobid</code></td>
+      <td>integer</td>
+      <td>primary key</td>
+      <td>Unique Job ID (sequence-backed).</td>
+    </tr>
+    <tr>
+      <td><code>jobname</code></td>
+      <td>varchar(100)</td>
+      <td>not null, unique</td>
+      <td>Human-readable job name (for example, MABArchive).</td>
+    </tr>
+    <tr>
+      <td><code>frequency</code></td>
+      <td>varchar(50)</td>
+      <td>null</td>
+      <td>Scheduling pattern (for example, Daily, OnDemand).</td>
+    </tr>
+    <tr>
+      <td><code>note</code></td>
+      <td>varchar(250)</td>
+      <td>null</td>
+      <td>Additional notes (for example, scheduler or ownership details).</td>
+    </tr>
+    <tr>
+      <td><code>timetolive</code></td>
+      <td>integer</td>
+      <td>not null</td>
+      <td>Expected run duration window used for timeout and operational guardrails.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h4>15.15.1.2 Table: fps.job_status</h4>
+<p>
+<b>Purpose:</b> Master status dictionary used by execution and log tables.
+</p>
+<table>
+  <thead>
+    <tr>
+      <th>Field Name</th>
+      <th>Data Type</th>
+      <th>Constraints</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>statusid</code></td>
+      <td>integer</td>
+      <td>primary key</td>
+      <td>Unique status identifier.</td>
+    </tr>
+    <tr>
+      <td><code>jobid</code></td>
+      <td>integer</td>
+      <td>not null, foreign key to <code>fps.job_master.jobid</code></td>
+      <td>Job definition this status applies to.</td>
+    </tr>
+    <tr>
+      <td><code>status</code></td>
+      <td>varchar(100)</td>
+      <td>not null</td>
+      <td>Status label (for example, TriggerAccepted, Running, Failed, Completed).</td>
+    </tr>
+  </tbody>
+</table>
+
+<h4>15.15.1.3 Table: fps.job_queue</h4>
+<p>
+<b>Purpose:</b> One row per execution instance of a job.
+</p>
+<table>
+  <thead>
+    <tr>
+      <th>Field Name</th>
+      <th>Data Type</th>
+      <th>Constraints</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>jobqueueid</code></td>
+      <td>uuid</td>
+      <td>primary key, not null</td>
+      <td>Primary execution correlation key for runtime and DB tracking.</td>
+    </tr>
+    <tr>
+      <td><code>jobid</code></td>
+      <td>integer</td>
+      <td>not null, foreign key to <code>fps.job_master.jobid</code></td>
+      <td>Job definition this run belongs to.</td>
+    </tr>
+    <tr>
+      <td><code>statusid</code></td>
+      <td>integer</td>
+      <td>not null, foreign key to <code>fps.job_status.statusid</code></td>
+      <td>Latest execution status.</td>
+    </tr>
+    <tr>
+      <td><code>startdatetime</code></td>
+      <td>timestamp</td>
+      <td>not null</td>
+      <td>Execution start/claim time.</td>
+    </tr>
+    <tr>
+      <td><code>enddatetime</code></td>
+      <td>timestamp</td>
+      <td>null</td>
+      <td>Execution completion time.</td>
+    </tr>
+    <tr>
+      <td><code>errormessage</code></td>
+      <td>varchar(1000)</td>
+      <td>null</td>
+      <td>Terminal or latest error message for the run.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h4>15.15.1.4 Table: fps.job_queue_log</h4>
+<p>
+<b>Purpose:</b> Chronological audit trail for each execution in <code>fps.job_queue</code>.
+</p>
+<table>
+  <thead>
+    <tr>
+      <th>Field Name</th>
+      <th>Data Type</th>
+      <th>Constraints</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>jobqueuelogid</code></td>
+      <td>integer</td>
+      <td>primary key, not null</td>
+      <td>Identity key for each log entry.</td>
+    </tr>
+    <tr>
+      <td><code>jobqueueid</code></td>
+      <td>uuid</td>
+      <td>not null, foreign key to <code>fps.job_queue.jobqueueid</code></td>
+      <td>Execution instance this log entry belongs to.</td>
+    </tr>
+    <tr>
+      <td><code>statusid</code></td>
+      <td>integer</td>
+      <td>not null, foreign key to <code>fps.job_status.statusid</code></td>
+      <td>Status at this step/event.</td>
+    </tr>
+    <tr>
+      <td><code>performedby</code></td>
+      <td>varchar(100)</td>
+      <td>not null</td>
+      <td>Actor performing the action (user/system/service).</td>
+    </tr>
+    <tr>
+      <td><code>logtime</code></td>
+      <td>timestamp</td>
+      <td>not null</td>
+      <td>Event timestamp.</td>
+    </tr>
+    <tr>
+      <td><code>note</code></td>
+      <td>varchar(500)</td>
+      <td>null</td>
+      <td>Optional remarks for transition/context.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h4>15.15.1.5 jobExecutionId and jobQueueId Column Guidance</h4>
+<ul>
+  <li><b>jobQueueId:</b> Runtime and persistence primary key for execution rows. Stored in <code>fps.job_queue.jobqueueid</code> and referenced from <code>fps.job_queue_log.jobqueueid</code>.</li>
+  <li><b>jobExecutionId:</b> External correlation key from API/UI contract. It is returned by trigger APIs and linked to <code>jobQueueId</code> in application/runtime flow.</li>
+  <li><b>Strict mode recommendation:</b> Use <code>jobQueueId</code> as the database source of truth, and keep API correlation deterministic for traceability.</li>
+  <li><b>Indexing recommendation:</b> Keep indexes on <code>fps.job_queue(jobid, startdatetime)</code> and status lookup columns used by polling/status endpoints.</li>
+</ul>
+
+<h4>15.15.1.6 ERD</h4>
+<pre><code>erDiagram
+    JOB_MASTER ||--o{ JOB_STATUS : defines
+    JOB_MASTER ||--o{ JOB_QUEUE : owns_runs
+    JOB_STATUS ||--o{ JOB_QUEUE : current_status
+    JOB_QUEUE ||--o{ JOB_QUEUE_LOG : has_events
+    JOB_STATUS ||--o{ JOB_QUEUE_LOG : event_status
+    JOB_LOCK ||--o{ JOB_QUEUE : lock_instance
+
+    JOB_MASTER {
+        int jobid PK
+        varchar(100) jobname UK
+        varchar(50) frequency
+        varchar(250) note
+        int timetolive
+    }
+
+    JOB_STATUS {
+        int statusid PK
+        int jobid FK
+        varchar(100) status
+    }
+
+    JOB_QUEUE {
+        uuid jobqueueid PK
+        int jobid FK
+        int statusid FK
+        timestamp startdatetime
+        timestamp enddatetime
+        varchar(1000) errormessage
+    }
+
+    JOB_QUEUE_LOG {
+        int jobqueuelogid PK
+        uuid jobqueueid FK
+        int statusid FK
+        varchar(100) performedby
+        timestamp logtime
+        varchar(500) note
+    }
+
+    JOB_LOCK {
+      int lock_id PK
+      varchar(255) job_name
+      timestamp acquired_at
+      timestamp expires_at
+      uuid jobqueueid
+      boolean is_active
+    }
+</code></pre>
+
+  <h4>15.15.1.7 Table: fps.job_lock</h4>
+<p>
+<b>Purpose:</b> Concurrency guard table to prevent multiple active executions for the same job scope when mutual exclusion is required.
+</p>
+<table>
+  <thead>
+    <tr>
+      <th>Field Name</th>
+      <th>Data Type</th>
+      <th>Constraints</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>lock_id</code></td>
+      <td>integer</td>
+      <td>primary key, not null</td>
+      <td>Identity key for lock records.</td>
+    </tr>
+    <tr>
+      <td><code>job_name</code></td>
+      <td>varchar(255)</td>
+      <td>not null</td>
+      <td>Logical job scope for lock uniqueness.</td>
+    </tr>
+    <tr>
+      <td><code>jobqueueid</code></td>
+      <td>uuid</td>
+      <td>not null</td>
+      <td>Execution currently holding the lock (if active).</td>
+    </tr>
+    <tr>
+      <td><code>is_active</code></td>
+      <td>boolean</td>
+      <td>not null, default true</td>
+      <td>Whether the lock is currently active.</td>
+    </tr>
+    <tr>
+      <td><code>acquired_at</code></td>
+      <td>timestamp</td>
+      <td>not null</td>
+      <td>When the lock was acquired.</td>
+    </tr>
+    <tr>
+      <td><code>expires_at</code></td>
+      <td>timestamp</td>
+      <td>not null</td>
+      <td>Optional lease expiration to prevent stale lock deadlocks.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>
+<b>Locking rule:</b> enforce a unique active lock per job by policy (<code>job_name</code> where <code>is_active = true</code>) and release/expire lock on completion or failure handling path.
 </p>
 
 <h2>15.16 Ask from Architect: Solution Structure for BatchJobs</h2>
@@ -2051,12 +2450,14 @@ An authorised user initiates the New Calendar Year Cutover through the user inte
 <p>
 The new calendar year becomes the current operational year.
 </p>
+
     <div class="footer">
       Prepared as updated recommendation and PoC implementation blueprint for EventBridge-based batch job triggering.
     </div>
   </div>
 </body>
 </html>
+
 
 
 

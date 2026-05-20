@@ -1,44 +1,53 @@
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
-WORKDIR /src
+# ================================
+# -------- Development Stage ---------
+# ================================
+ARG PARENT_VERSION=dotnet10.0
+FROM defradigital/dotnetcore-development:$PARENT_VERSION AS development
+ARG PARENT_VERSION=dotnet10.0
 
-COPY BatchJobs.csproj ./
-COPY Apha.BatchJobs.Worker/ ./Apha.BatchJobs.Worker/
-COPY Apha.BatchJobs.Application/ ./Apha.BatchJobs.Application/
-COPY Apha.BatchJobs.Domain/ ./Apha.BatchJobs.Domain/
-COPY Apha.BatchJobs.Infrastructure/ ./Apha.BatchJobs.Infrastructure/
-COPY appsettings.json ./
-# appsettings.Development.json is intentionally NOT copied — production secrets
-# are supplied via ECS task environment variables / Secrets Manager at runtime.
+LABEL uk.gov.defra.parent-image=defra-dotnetcore-development:${PARENT_VERSION}
 
-RUN dotnet publish Apha.BatchJobs.Worker/Apha.BatchJobs.Worker.csproj -c Release -o /app/publish
+WORKDIR /home/dotnet/src
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
-WORKDIR /app
+# Build context is repository root; copy only BatchJobs solution tree.
+COPY --chown=root:dotnet --chmod=640 src/Apha.BatchJobs/ ./
+USER root
+RUN find . -type d -exec chmod g+wx {} \;
+USER dotnet
 
-# Copy published application (does not contain appsettings.Development.json)
-COPY --from=build /app/publish ./
+# Restore, build and publish the worker project.
+RUN dotnet restore ./Apha.BatchJobs.Worker/Apha.BatchJobs.Worker.csproj
+RUN dotnet publish ./Apha.BatchJobs.Worker/Apha.BatchJobs.Worker.csproj -c Release -o /home/dotnet/out /p:UseAppHost=false
 
-# Base configuration only — no Development file in production image
-COPY appsettings.json ./
+# ================================
+# -------- Production Stage --------
+# ================================
+ARG PARENT_VERSION=dotnet10.0
+FROM defradigital/dotnetcore:$PARENT_VERSION AS production
+ARG PARENT_VERSION=dotnet10.0
+LABEL uk.gov.defra.parent-image=defra-dotnetcore:${PARENT_VERSION}
 
-# Runtime environment
+USER 0
+RUN apk update && apk add --no-cache icu-libs krb5-libs
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENV DOTNET_EnableDiagnostics=0
 ENV DOTNET_GCConserveMemory=1
 
-# Npgsql may probe Kerberos/GSSAPI support at runtime.
-RUN apt-get update \
-	&& apt-get install -y --no-install-recommends libgssapi-krb5-2 \
-	&& rm -rf /var/lib/apt/lists/*
+WORKDIR /app
 
-# Run as non-root user
-RUN useradd -m -u 10001 batchjobs && chown -R batchjobs:batchjobs /app
-USER batchjobs
+# Copy published output as root.
+COPY --from=development /home/dotnet/out/ ./
+
+# Files: read only, Dirs: read+execute only.
+RUN find . -type f -exec chmod 444 {} \; && \
+    find . -type d -exec chmod 555 {} \;
+
+USER app
 
 LABEL maintainer="Apha Engineering"
 LABEL managed="true"
-LABEL application="batch-jobs"
-LABEL description="Containerized .NET 10 batch jobs worker for FPS application"
+LABEL application="batch-jobs-worker"
+LABEL description="Containerized .NET 10 BatchJobs worker for ECS/Fargate"
 
 ENTRYPOINT ["dotnet", "Apha.BatchJobs.Worker.dll"]
-CMD []

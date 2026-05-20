@@ -3,12 +3,12 @@
 
 BEGIN;
 
-CREATE SCHEMA IF NOT EXISTS operational;
+CREATE SCHEMA IF NOT EXISTS fps;
 
 -- Create pgcrypto extension for UUID functions if needed
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
-CREATE TABLE IF NOT EXISTS operational.job_lock (
+CREATE TABLE IF NOT EXISTS fps.job_lock (
     lock_id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     job_name VARCHAR(255) NOT NULL,
     acquired_at TIMESTAMPTZ NOT NULL,
@@ -18,19 +18,19 @@ CREATE TABLE IF NOT EXISTS operational.job_lock (
 );
 
 CREATE INDEX IF NOT EXISTS idx_job_lock_job_name
-    ON operational.job_lock (job_name);
+    ON fps.job_lock (job_name);
 
 CREATE INDEX IF NOT EXISTS idx_job_lock_job_name_active
-    ON operational.job_lock (job_name, is_active);
+    ON fps.job_lock (job_name, is_active);
 
 CREATE INDEX IF NOT EXISTS idx_job_lock_expires_at
-    ON operational.job_lock (expires_at);
+    ON fps.job_lock (expires_at);
 
 -- Partial unique index: only one active lock per job
 CREATE UNIQUE INDEX IF NOT EXISTS uq_job_lock_job_name_active
-    ON operational.job_lock (job_name)
+    ON fps.job_lock (job_name)
     WHERE is_active = TRUE;
 
-DROP TABLE IF EXISTS operational.job_execution_record;
+DROP TABLE IF EXISTS fps.job_execution_record;
 
 COMMIT;

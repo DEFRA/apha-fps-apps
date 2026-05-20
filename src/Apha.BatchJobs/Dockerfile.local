@@ -1,0 +1,31 @@
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+
+COPY BatchJobs.csproj ./
+COPY Apha.BatchJobs.Worker/ ./Apha.BatchJobs.Worker/
+COPY Apha.BatchJobs.Application/ ./Apha.BatchJobs.Application/
+COPY Apha.BatchJobs.Domain/ ./Apha.BatchJobs.Domain/
+COPY Apha.BatchJobs.Infrastructure/ ./Apha.BatchJobs.Infrastructure/
+COPY appsettings.json ./
+
+RUN dotnet publish Apha.BatchJobs.Worker/Apha.BatchJobs.Worker.csproj -c Release -o /app/publish
+
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
+WORKDIR /app
+
+COPY --from=build /app/publish ./
+COPY appsettings.json ./
+
+ENV ASPNETCORE_ENVIRONMENT=Production
+ENV DOTNET_EnableDiagnostics=0
+ENV DOTNET_GCConserveMemory=1
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libgssapi-krb5-2 \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN useradd -m -u 10001 batchjobs && chown -R batchjobs:batchjobs /app
+USER batchjobs
+
+ENTRYPOINT ["dotnet", "Apha.BatchJobs.Worker.dll"]
+CMD []

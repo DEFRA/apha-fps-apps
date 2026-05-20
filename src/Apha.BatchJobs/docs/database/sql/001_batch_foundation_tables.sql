@@ -6,10 +6,10 @@ BEGIN;
 -- For gen_random_uuid() default values.
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
-CREATE SCHEMA IF NOT EXISTS operational;
+CREATE SCHEMA IF NOT EXISTS fps;
 
 -- Master table for batch job definitions.
-CREATE TABLE IF NOT EXISTS operational.job_master (
+CREATE TABLE IF NOT EXISTS fps.job_master (
     jobid INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     jobname VARCHAR(100) NOT NULL UNIQUE,
     frequency VARCHAR(50),
@@ -21,20 +21,20 @@ CREATE TABLE IF NOT EXISTS operational.job_master (
 );
 
 -- Reference table for statuses used by each job.
-CREATE TABLE IF NOT EXISTS operational.job_status (
+CREATE TABLE IF NOT EXISTS fps.job_status (
     statusid INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     jobid INTEGER NOT NULL,
     status VARCHAR(100) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT fk_job_status_jobid
         FOREIGN KEY (jobid)
-        REFERENCES operational.job_master(jobid)
+        REFERENCES fps.job_master(jobid)
         ON DELETE CASCADE,
     CONSTRAINT uq_job_status_jobid_status UNIQUE (jobid, status)
 );
 
 -- Queue table that represents one execution instance of a job.
-CREATE TABLE IF NOT EXISTS operational.job_queue (
+CREATE TABLE IF NOT EXISTS fps.job_queue (
     jobqueueid UUID PRIMARY KEY,
     jobid INTEGER NOT NULL,
     statusid INTEGER NOT NULL,
@@ -45,11 +45,11 @@ CREATE TABLE IF NOT EXISTS operational.job_queue (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT fk_job_queue_jobid
         FOREIGN KEY (jobid)
-        REFERENCES operational.job_master(jobid)
+        REFERENCES fps.job_master(jobid)
         ON DELETE RESTRICT,
     CONSTRAINT fk_job_queue_statusid
         FOREIGN KEY (statusid)
-        REFERENCES operational.job_status(statusid)
+        REFERENCES fps.job_status(statusid)
         ON DELETE RESTRICT,
     CONSTRAINT chk_job_queue_end_after_start CHECK (
         enddatetime IS NULL OR enddatetime >= startdatetime
@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS operational.job_queue (
 );
 
 -- Detailed chronological log entries for each job queue item.
-CREATE TABLE IF NOT EXISTS operational.job_queue_log (
+CREATE TABLE IF NOT EXISTS fps.job_queue_log (
     jobqueuelogid INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     jobqueueid UUID NOT NULL,
     statusid INTEGER NOT NULL,
@@ -66,34 +66,34 @@ CREATE TABLE IF NOT EXISTS operational.job_queue_log (
     note VARCHAR(500),
     CONSTRAINT fk_job_queue_log_jobqueueid
         FOREIGN KEY (jobqueueid)
-        REFERENCES operational.job_queue(jobqueueid)
+        REFERENCES fps.job_queue(jobqueueid)
         ON DELETE CASCADE,
     CONSTRAINT fk_job_queue_log_statusid
         FOREIGN KEY (statusid)
-        REFERENCES operational.job_status(statusid)
+        REFERENCES fps.job_status(statusid)
         ON DELETE RESTRICT
 );
 
 -- Useful indexes for common orchestration and monitoring lookups.
 CREATE INDEX IF NOT EXISTS idx_job_queue_jobid_startdatetime
-    ON operational.job_queue (jobid, startdatetime DESC);
+    ON fps.job_queue (jobid, startdatetime DESC);
 
 CREATE INDEX IF NOT EXISTS idx_job_queue_statusid
-    ON operational.job_queue (statusid);
+    ON fps.job_queue (statusid);
 
 CREATE INDEX IF NOT EXISTS idx_job_queue_log_jobqueueid_logtime
-    ON operational.job_queue_log (jobqueueid, logtime DESC);
+    ON fps.job_queue_log (jobqueueid, logtime DESC);
 
 CREATE INDEX IF NOT EXISTS idx_job_status_jobid
-    ON operational.job_status (jobid);
+    ON fps.job_status (jobid);
 
-COMMENT ON TABLE operational.job_master IS
+COMMENT ON TABLE fps.job_master IS
     'Batch job definitions and runtime metadata.';
-COMMENT ON TABLE operational.job_status IS
+COMMENT ON TABLE fps.job_status IS
     'Allowed statuses per job definition.';
-COMMENT ON TABLE operational.job_queue IS
+COMMENT ON TABLE fps.job_queue IS
     'One row per job execution instance.';
-COMMENT ON TABLE operational.job_queue_log IS
+COMMENT ON TABLE fps.job_queue_log IS
     'Chronological audit trail for each execution instance.';
 
 COMMIT;

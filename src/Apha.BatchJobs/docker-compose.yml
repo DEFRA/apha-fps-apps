@@ -25,7 +25,7 @@ services:
   batch-jobs-withdb:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.local
     container_name: batch_jobs_withdb
     profiles:
       - withdb
@@ -44,7 +44,7 @@ services:
   batch-jobs-nodb:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.local
     container_name: batch_jobs_nodb
     profiles:
       - nodb

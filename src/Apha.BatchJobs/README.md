@@ -30,9 +30,33 @@ dotnet build BatchJobs.sln
 - withdb: app + postgres.
 - nodb: app only, in-memory repositories.
 
+Local compose uses `Dockerfile.local` in this folder.
+
 ```bash
 docker-compose --profile withdb up --build
 docker-compose --profile nodb up --build
+```
+
+## Worker Containerization (ECR/ECS)
+
+The production worker image follows the same multi-stage DEFRA pattern used by other root solutions (`Apha.FPS`, `Apha.PACT`, `Apha.PIMS`, `Apha.Costbook`, `Apha.FPSApps`).
+
+- Production Dockerfile: `src/Apha.BatchJobs/Dockerfile`
+- Local-only Dockerfile: `src/Apha.BatchJobs/Dockerfile.local`
+- CI/ECR build context: repository root (`.`)
+- ECR repository: `apha/batchjobs`
+- Runtime target: existing ECS/Fargate worker task definition in the same ECS cluster pattern already used by BatchJobs.
+
+Build image (same pattern as CI):
+
+```bash
+docker build -f src/Apha.BatchJobs/Dockerfile -t batchjobs-worker:local .
+```
+
+Run image locally:
+
+```bash
+docker run --rm -e ASPNETCORE_ENVIRONMENT=Development batchjobs-worker:local HealthCheck
 ```
 
 ## Required Runtime Inputs
