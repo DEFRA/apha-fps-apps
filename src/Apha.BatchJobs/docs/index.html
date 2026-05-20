@@ -1,217 +1,2062 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Apha.BatchJobs - Complete Documentation</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        header {
-            background: white;
-            padding: 40px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 40px;
-            text-align: center;
-        }
-        header h1 {
-            color: #667eea;
-            margin-bottom: 10px;
-            font-size: 2.5em;
-        }
-        header p {
-            color: #666;
-            font-size: 1.1em;
-        }
-        .docs-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            margin-bottom: 40px;
-        }
-        .doc-card {
-            background: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            transition: transform 0.3s, box-shadow 0.3s;
-            border-left: 5px solid #667eea;
-        }
-        .doc-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
-        }
-        .doc-card.devops {
-            border-left-color: #ff6b6b;
-        }
-        .doc-card.architecture {
-            border-left-color: #4ecdc4;
-        }
-        .doc-card.compliance {
-            border-left-color: #ffd93d;
-        }
-        .doc-card.implementation {
-            border-left-color: #6bcf7f;
-        }
-        .doc-card h3 {
-            margin-bottom: 15px;
-            font-size: 1.3em;
-        }
-        .doc-card.devops h3 { color: #ff6b6b; }
-        .doc-card.architecture h3 { color: #4ecdc4; }
-        .doc-card.compliance h3 { color: #f39c12; }
-        .doc-card.implementation h3 { color: #6bcf7f; }
-        .doc-card p {
-            color: #666;
-            margin-bottom: 20px;
-            font-size: 0.95em;
-        }
-        .doc-card ul {
-            list-style-position: inside;
-            margin-bottom: 20px;
-            color: #555;
-        }
-        .doc-card ul li {
-            margin-bottom: 8px;
-            font-size: 0.9em;
-        }
-        .btn {
-            display: inline-block;
-            padding: 12px 24px;
-            background: #667eea;
-            color: white;
-            text-decoration: none;
-            border-radius: 4px;
-            transition: background 0.3s;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-        }
-        .btn:hover {
-            background: #5568d3;
-        }
-        .doc-card.devops .btn { background: #ff6b6b; }
-        .doc-card.devops .btn:hover { background: #ee5a52; }
-        .doc-card.architecture .btn { background: #4ecdc4; }
-        .doc-card.architecture .btn:hover { background: #45b7b3; }
-        .doc-card.compliance .btn { background: #ffd93d; }
-        .doc-card.compliance .btn:hover { background: #f0c830; }
-        .doc-card.implementation .btn { background: #6bcf7f; }
-        .doc-card.implementation .btn:hover { background: #5cbb6f; }
-        footer {
-            text-align: center;
-            color: white;
-            padding: 20px;
-            margin-top: 40px;
-            font-size: 0.9em;
-        }
-        .quick-links {
-            background: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 40px;
-        }
-        .quick-links h2 {
-            color: #667eea;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #667eea;
-            padding-bottom: 10px;
-        }
-        .quick-links p {
-            color: #666;
-            margin-bottom: 15px;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Batch Job Triggering Approach Recommendation - EventBridge Common Model</title>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; color: #222; line-height: 1.55; margin: 0; background: #f6f7f9; }
+    .page { max-width: 1220px; margin: 24px auto; background: #fff; padding: 32px 42px; border: 1px solid #ddd; }
+    h1 { font-size: 26px; margin: 0 0 8px; color: #1f2937; }
+    h2 { font-size: 20px; margin-top: 32px; border-bottom: 2px solid #e5e7eb; padding-bottom: 6px; color: #1f2937; }
+    h3 { font-size: 16px; margin-top: 24px; color: #374151; }
+    h4 { font-size: 14px; margin-top: 18px; color: #374151; }
+    .subtitle { color: #555; margin-bottom: 24px; }
+    .callout { background: #eef6ff; border-left: 4px solid #2563eb; padding: 12px 16px; margin: 18px 0; }
+    .success { background: #f0fdf4; border-left: 4px solid #16a34a; padding: 12px 16px; margin: 18px 0; }
+    .warning { background: #fff7ed; border-left: 4px solid #ea580c; padding: 12px 16px; margin: 18px 0; }
+    .neutral { background: #f9fafb; border-left: 4px solid #6b7280; padding: 12px 16px; margin: 18px 0; }
+    table { border-collapse: collapse; width: 100%; margin: 14px 0 22px; font-size: 13px; }
+    th, td { border: 1px solid #d1d5db; padding: 9px 10px; vertical-align: top; }
+    th { background: #f3f4f6; text-align: left; color: #111827; }
+    pre { background: #111827; color: #f9fafb; padding: 14px 16px; border-radius: 4px; overflow-x: auto; font-size: 13px; line-height: 1.45; }
+    code { background: #f3f4f6; padding: 2px 4px; border-radius: 3px; }
+    pre code { background: transparent; padding: 0; color: inherit; }
+    .flow { font-family: Consolas, Monaco, monospace; background: #f9fafb; border: 1px solid #d1d5db; padding: 14px 16px; margin: 14px 0; white-space: pre-wrap; }
+    ul, ol { margin-top: 8px; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; background: #dcfce7; color: #166534; font-size: 12px; font-weight: bold; }
+    .badge-blue { display: inline-block; padding: 2px 8px; border-radius: 999px; background: #dbeafe; color: #1d4ed8; font-size: 12px; font-weight: bold; }
+    .badge-gray { display: inline-block; padding: 2px 8px; border-radius: 999px; background: #e5e7eb; color: #374151; font-size: 12px; font-weight: bold; }
+    .small { font-size: 12px; color: #555; }
+    .code-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0 8px; }
+    .code-card { border: 1px solid #d1d5db; background: #fafafa; padding: 10px 12px; }
+    .code-card h4 { margin-top: 4px; }
+    .footer { margin-top: 36px; color: #555; font-size: 13px; border-top: 1px solid #e5e7eb; padding-top: 16px; }
+    @media (max-width: 980px) {
+      .code-compare { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>📚 Apha.BatchJobs Documentation</h1>
-            <p>Complete specification and architecture guide for independent GitHub repository setup</p>
-        </header>
+<div class="page">
 
-        <div class="quick-links">
-            <h2>📋 Quick Navigation</h2>
-            <p>Select a document below to explore different aspects of the Apha.BatchJobs project. Each document is designed for a specific audience and purpose.</p>
-        </div>
+<h1>Batch Job Triggering Approach Recommendation</h1>
+    <p class="subtitle">Updated for <b>strict JobQueueId (UUID) and UserId model</b> (May 2026). All triggers - API, UI, and scheduled - must inject <code>BATCH_JOBQUEUE_ID</code> and <code>BATCH_USER_ID</code>. Year context is supported via <code>BATCH_YEAR_CONTEXT</code>. Implementation is complete and live.</p>
 
-        <div class="docs-grid">
-            <!-- DevOps/Infra Document -->
-            <div class="doc-card devops">
-                <h3>🔧 DevOps/Infra Specification</h3>
-                <p>Comprehensive requirements and checklist for setting up the independent GitHub repository, CI/CD pipelines, container registry, and deployment infrastructure.</p>
-                <ul>
-                    <li>Repository structure requirements</li>
-                    <li>Docker and container strategy</li>
-                    <li>CI/CD workflow configuration</li>
-                    <li>Secrets and credentials management</li>
-                    <li>Implementation checklist</li>
-                </ul>
-                <a href="DevOps-Infra-Specification.html" class="btn">View →</a>
-            </div>
-
-            <!-- Architecture Document -->
-            <div class="doc-card architecture">
-                <h3>🏗️ Repository Architecture</h3>
-                <p>Detailed overview of the solution structure, layer organization, project responsibilities, and how Apha.BatchJobs deviates intentionally from standard API projects.</p>
-                <ul>
-                    <li>Project layer structure</li>
-                    <li>API vs Worker architecture</li>
-                    <li>Domain and Infrastructure layers</li>
-                    <li>Test organization</li>
-                    <li>Dependency patterns</li>
-                </ul>
-                <a href="Repository-Architecture.html" class="btn">View →</a>
-            </div>
-
-            <!-- Compliance Document -->
-            <div class="doc-card compliance">
-                <h3>✅ Standards Compliance Matrix</h3>
-                <p>Detailed comparison showing how Apha.BatchJobs aligns with organizational standards and patterns used in other microservices (FPS, Costbook, PACT, PIMS).</p>
-                <ul>
-                    <li>Pattern comparison table</li>
-                    <li>Intentional deviations explained</li>
-                    <li>Justification for design choices</li>
-                    <li>Standards adherence verification</li>
-                </ul>
-                <a href="Standards-Compliance.html" class="btn">View →</a>
-            </div>
-
-            <!-- Implementation Document -->
-            <div class="doc-card implementation">
-                <h3>🚀 Implementation Guide</h3>
-                <p>Step-by-step guide for DevOps teams to implement the infrastructure and repository setup based on the specification and compliance requirements.</p>
-                <ul>
-                    <li>Pre-setup verification</li>
-                    <li>Repository initialization steps</li>
-                    <li>Workflow configuration</li>
-                    <li>Deployment validation</li>
-                    <li>Troubleshooting guide</li>
-                </ul>
-                <a href="Implementation-Checklist.html" class="btn">View →</a>
-            </div>
-        </div>
-
-        <footer>
-            <p>Apha.BatchJobs Documentation | Generated for independent GitHub repository setup | Last updated: May 2026</p>
-        </footer>
+    <div class="neutral">
+      <strong>Canonical document:</strong> This HTML is now the single primary BatchJobs design and delivery document. Earlier standalone repository, DevOps, compliance, and implementation HTML pages have been retired to avoid duplication and drift.
     </div>
+
+    <div class="success">
+      <b>Current Implementation Status (May 2026):</b><br>
+      <ul>
+        <li>Strict mode: <b>worker requires caller-injected <code>jobQueueId</code> (UUID)</b> - no fallback or internal generation.</li>
+        <li><b>userId</b> is always passed from API/UI/scheduler and stored in DB.</li>
+        <li>All orchestrator, domain, repository, API, and test code updated for <b>Guid jobQueueId</b> and <b>userId</b>.</li>
+        <li>FPS/PACT trigger APIs, docs, and migration scripts added.</li>
+        <li>All builds and tests pass.</li>
+        <li>Year context supported: pass <code>BATCH_YEAR_CONTEXT</code> as needed.</li>
+      </ul>
+    </div>
+
+    <div class="callout">
+      <strong>Updated decision:</strong> The preferred approach is now <strong>API -> EventBridge -> ECS Task</strong>. This aligns with the team preference, reduces API-side infrastructure dependency, and creates commonality with scheduled jobs that already use EventBridge to invoke ECS tasks.
+    </div>
+
+    <div class="neutral">
+      <strong>Context:</strong> The worker/batch application already contains orchestration, locking, logging, execution control, status management, and job-specific execution logic. The decision here is only about the trigger/orchestration entry point.
+    </div>
+
+    <h2>1. Approach Comparison</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Approach</th>
+          <th>Flow</th>
+          <th>Infra Dependency in API</th>
+          <th>Best Use Case</th>
+          <th>Pros</th>
+          <th>Cons / Trade-off</th>
+          <th>Updated Fitment</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>1. API -> ECS RunTask</strong></td>
+          <td>API directly invokes ECS Fargate task using <code>RunTask</code>.</td>
+          <td>Medium. Can be minimized using runtime discovery, but API still remains ECS-aware.</td>
+          <td>Manual / adhoc jobs where immediate ECS task ARN is important.</td>
+          <td>Immediate ECS task creation response, task ARN available immediately, simpler direct debugging.</td>
+          <td>API needs ECS permissions and runtime awareness; some infra dependency remains with API.</td>
+          <td><span class="badge-gray">Not Selected</span><br/>Good technically, but not aligned to lower API infra dependency goal.</td>
+        </tr>
+        <tr>
+          <td><strong>2. API -> EventBridge -> ECS Task</strong></td>
+          <td>API emits event; EventBridge rule invokes ECS task.</td>
+          <td>Low. API only knows event bus/source/detail type.</td>
+          <td>Manual/API-triggered jobs where infra routing should be owned outside API.</td>
+          <td>API does not know ECS target details; infra owns routing; same model can be used for scheduled jobs.</td>
+          <td>More moving parts; API gets event accepted response, not immediate ECS task ARN. Correlation must be handled explicitly.</td>
+          <td><span class="badge">Recommended</span><br/>Best fit considering infra-decoupling and common trigger model.</td>
+        </tr>
+        <tr>
+          <td><strong>3. S3 Event -> EventBridge -> ECS Task</strong></td>
+          <td>S3 object/file event triggers ECS task through EventBridge.</td>
+          <td>Very low in API.</td>
+          <td>File-driven batch processing.</td>
+          <td>Good for file arrival automation and future ingestion use cases.</td>
+          <td>Not suitable for user/manual trigger unless S3 is artificially introduced.</td>
+          <td><span class="badge-blue">Future Option</span><br/>Useful only if a job should be triggered by file arrival.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>2. Final Recommendation</h2>
+    <div class="success">
+      Use <strong>API -> EventBridge -> ECS Task</strong> as the standard trigger model for manual/API-triggered batch jobs.
+    </div>
+
+    <h3>2.1 Single-Slide Summary (Presentation Shortcut)</h3>
+    <div class="callout">
+      <strong>Decision in one line:</strong> Keep API as a business-event publisher and move ECS runtime orchestration ownership to infrastructure via EventBridge target configuration.
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>What to Say in Review</th>
+          <th>Where to Show in This Document</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Event-based trigger keeps API simpler and less infra-coupled.</td>
+          <td>Section <strong>8.2.1</strong> (side-by-side code) + <strong>8.2.2</strong> (JSON comparison).</td>
+        </tr>
+        <tr>
+          <td>ECS task definition remains stable; infra controls runtime/network routing externally.</td>
+          <td>Section <strong>8.2.2</strong> (task-definition context and RunTask JSON comparison).</td>
+        </tr>
+        <tr>
+          <td>Infra team becomes clear authority for EventBridge target, IAM, network, retry, and DLQ.</td>
+          <td>Section <strong>10.5</strong> (infra authority model and IaC-style target JSON).</td>
+        </tr>
+        <tr>
+          <td>Result: fewer API redeploys for infra changes and better operational consistency with schedules.</td>
+          <td>Sections <strong>2</strong>, <strong>8.2.2</strong>, and <strong>10.5.2</strong>.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>The key reason for this change is that the preferred trade-off is now tilted towards <strong>lower API infrastructure dependency</strong> and <strong>commonality with scheduled jobs</strong>. Scheduled jobs already use EventBridge to invoke ECS tasks. By using EventBridge for manual/API triggers as well, both scheduled and manual jobs follow the same operational pattern.</p>
+
+    <div class="flow">Manual/API-triggered flow
+
+
+UI / API
+ ->
+PACT API / FPS API
+ ->
+EventBridge PutEvents
+ ->
+EventBridge Rule
+ ->
+ECS RunTask Target
+ ->
+Worker Task (container)
+ ->
+<b>Worker reads:</b>
+  <code>BATCH_JOBQUEUE_ID</code> (required, UUID, generated by caller)
+  <code>BATCH_USER_ID</code> (required, user or system)
+  <code>BATCH_JOB_NAME</code>, <code>BATCH_RUN_MODE</code>, <code>BATCH_YEAR_CONTEXT</code> (optional, as needed)
+ ->
+Job Orchestrator
+ ->
+PostgreSQL + CloudWatch</div>
+
+    <div class="flow">Scheduled job flow
+
+EventBridge Schedule / Rule
+ ->
+ECS RunTask Target
+ ->
+Worker Task (container)
+ ->
+<b>Worker reads:</b>
+  <code>BATCH_JOBQUEUE_ID</code> (required, UUID, generated by scheduler/entrypoint)
+  <code>BATCH_USER_ID</code> (required, e.g. "system" or scheduler identity)
+  <code>BATCH_JOB_NAME</code>, <code>BATCH_RUN_MODE</code>, <code>BATCH_YEAR_CONTEXT</code> (optional, as needed)
+ ->
+Job Orchestrator
+ ->
+PostgreSQL + CloudWatch</div>
+
+    <h2>3. What from Animesh's Homework Can Be Reused</h2>
+    <p>Animesh has already outlined the correct foundation for this approach. The following points can be directly reused and refined for the PoC:</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Animesh's Point</th>
+          <th>How We Will Use It</th>
+          <th>Refinement Needed</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Develop parameterized .NET batch app.</td>
+          <td>Use the existing worker app/orchestrator and pass job details using env variables.</td>
+          <td>Standardize env names: <code>BATCH_JOB_NAME</code>, <code>BATCH_RUN_MODE</code>, <code>BATCH_JOB_EXECUTION_ID</code>.</td>
+        </tr>
+        <tr>
+          <td>Package batch app as Docker container and push to ECR.</td>
+          <td>Use existing GitHub workflow pattern for image build and ECR push.</td>
+          <td>Tag images consistently and update ECS task definition revision during deployment.</td>
+        </tr>
+        <tr>
+          <td>Create ECS Task Definition.</td>
+          <td>Task definition remains the worker blueprint: image, CPU/memory, roles, logs, default env.</td>
+          <td>Keep it Fargate compatible and use <code>awsvpc</code> network mode.</td>
+        </tr>
+        <tr>
+          <td>EventBridge triggers ECS RunTask.</td>
+          <td>This becomes the central model for both manual and scheduled jobs.</td>
+          <td>Infra team owns EventBridge target configuration, ECS networking, role, retry and DLQ.</td>
+        </tr>
+        <tr>
+          <td>Different jobs can be triggered using environment overrides.</td>
+          <td>This matches the current worker design where job name is injected through env variable.</td>
+          <td>Use an EventBridge input transformer to map event detail into ECS container overrides.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>4. Ownership Split</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Area</th>
+          <th>Owner</th>
+          <th>Responsibilities</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>PACT API / FPS API</td>
+          <td>Application team</td>
+          <td>Validate request, generate <code>jobExecutionId</code>, emit EventBridge event, return accepted response to UI.</td>
+        </tr>
+        <tr>
+          <td>EventBridge</td>
+          <td>Infra / platform team</td>
+          <td>Own event bus, rules, targets, input transformer, ECS target, retry and DLQ.</td>
+        </tr>
+        <tr>
+          <td>ECS Task Definition</td>
+          <td>Infra + application team</td>
+          <td>Define image, CPU/memory, roles, logging, environment defaults, container name.</td>
+        </tr>
+        <tr>
+          <td>Worker App</td>
+          <td>Application team</td>
+          <td>Read env variables, perform orchestration, acquire lock, execute handler, update status/logs.</td>
+        </tr>
+        <tr>
+          <td>Status Store</td>
+          <td>Application/data team</td>
+          <td>Store job execution status, correlation id, running/completed/failed state, audit history.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>5. Event Contract</h2>
+    <p>The API publishes a small event to EventBridge. It does not include ECS cluster, subnets, security groups, task definition, or container runtime details.</p>
+
+    <h3>5.1 Event from FPS API</h3>
+    <pre><code>{
+  "source": "fps.api",
+  "detail-type": "BatchJob.TriggerRequested",
+  "detail": {
+    "jobExecutionId": "b8f9d4a16bb64a6c97e44e9c2e09f111",
+    "jobName": "FECProcess",
+    "runMode": "Manual",
+    "requestedBy": "user@atos.net",
+    "requestedAtUtc": "2026-05-07T07:00:00Z"
+  }
+}</code></pre>
+
+    <h3>5.2 Event from PACT API</h3>
+    <pre><code>{
+  "source": "pact.api",
+  "detail-type": "BatchJob.TriggerRequested",
+  "detail": {
+    "jobExecutionId": "51e6c34a83e14d6aa7f96f7b4e1b9f4d",
+    "jobName": "RecreateSummaries",
+    "runMode": "Manual",
+    "requestedBy": "user@atos.net",
+    "requestedAtUtc": "2026-05-07T07:00:00Z"
+  }
+}</code></pre>
+
+    <div class="warning">
+      <strong>Important:</strong> In the EventBridge approach, the API does not get ECS TaskArn immediately. The API should return <code>jobExecutionId</code> and status <code>TriggerAccepted</code>. The worker can later update the database with ECS/container/runtime details when it starts.
+    </div>
+
+    <h2>6. Job Execution ID and Correlation</h2>
+    <p>Since the API may not touch the database before the worker starts, the API can generate a <code>jobExecutionId</code> itself and include it in the event. This ID becomes the business-level correlation key.</p>
+
+    <div class="flow">API generates jobExecutionId
+   ->
+API publishes EventBridge event
+   ->
+API returns jobExecutionId to UI
+   ->
+EventBridge invokes ECS worker task
+   ->
+Worker receives jobExecutionId as env variable
+   ->
+Worker creates/updates job status in DB
+   ->
+UI polls status using jobExecutionId</div>
+
+    <p>If the UI polls before the worker inserts the row, the status API can return <code>PendingStart</code> / <code>TriggerAccepted</code> for that <code>jobExecutionId</code>.</p>
+
+    <h3>6.1 JobExecutionId to JobQueueId Flow (Updated)</h3>
+    <p><strong>Clarification:</strong> <code>jobExecutionId</code> is API-generated correlation ID. <code>jobQueueId</code> is database/runtime execution row identity from <code>operational.tbljobqueue</code>. Both should be linked once worker starts.</p>
+
+    <div class="flow">1) API receives trigger request
+2) API generates jobExecutionId (GUID) and publishes EventBridge event
+3) API returns TriggerAccepted + jobExecutionId to UI
+4) Worker starts with BATCH_JOB_EXECUTION_ID=jobExecutionId
+5) Worker inserts execution row in operational.tbljobqueue
+   - DB generates jobQueueId (identity/sequence)
+   - Row stores correlation/jobExecutionId
+6) Worker and status APIs expose both IDs for traceability
+7) UI continues polling by jobExecutionId (stable external key)
+   - API may additionally return jobQueueId once available</div>
+
+    <h4>6.1.1 Suggested Status Response After Worker Row Exists</h4>
+    <pre><code>{
+  "jobExecutionId": "b8f9d4a16bb64a6c97e44e9c2e09f111",
+  "jobQueueId": 987654,
+  "status": "Running",
+  "message": "Worker started and queue record created."
+}</code></pre>
+
+    <h4>6.1.2 Correlation Rule</h4>
+    <ul>
+      <li>External/UI/API correlation key: <code>jobExecutionId</code>.</li>
+      <li>Internal database/worker key: <code>jobQueueId</code>.</li>
+      <li>Every log line and status payload should include <code>jobExecutionId</code>; include <code>jobQueueId</code> once known.</li>
+    </ul>
+
+    <h2>7. EventBridge Rule and ECS Target</h2>
+
+    <h3>7.1 Event Pattern</h3>
+    <p>One rule can listen to both APIs if they use the same event contract:</p>
+    <pre><code>{
+  "source": ["fps.api", "pact.api"],
+  "detail-type": ["BatchJob.TriggerRequested"]
+}</code></pre>
+
+    <p>Alternatively, separate rules can be created per API/job type if stricter routing or ownership separation is required.</p>
+
+    <h3>7.2 ECS Target Configuration</h3>
+    <p>The EventBridge rule target is configured as an ECS task target. Infra owns these values:</p>
+    <ul>
+      <li>ECS cluster ARN</li>
+      <li>Worker task definition ARN/revision</li>
+      <li>Launch type or capacity provider strategy</li>
+      <li>Subnets</li>
+      <li>Security groups</li>
+      <li>Assign public IP setting</li>
+      <li>EventBridge invoke role</li>
+      <li>Retry policy</li>
+      <li>Dead-letter queue</li>
+    </ul>
+
+    <h3>7.3 Input Transformer to Container Overrides</h3>
+    <p>The input transformer maps the event payload into ECS RunTask overrides so the worker receives job parameters as environment variables.</p>
+
+    <h4>Input Paths</h4>
+    <pre><code>{
+  "jobExecutionId": "$.detail.jobExecutionId",
+  "jobName": "$.detail.jobName",
+  "runMode": "$.detail.runMode",
+  "requestedBy": "$.detail.requestedBy"
+}</code></pre>
+
+    <h4>Input Template</h4>
+    <pre><code>{
+  "containerOverrides": [
+    {
+      "name": "batch-container",
+      "environment": [
+        { "name": "BATCH_JOBQUEUE_ID", "value": "&lt;jobQueueId&gt;" },
+        { "name": "BATCH_USER_ID", "value": "&lt;userId&gt;" },
+        { "name": "BATCH_JOB_NAME", "value": "&lt;jobName&gt;" },
+        { "name": "BATCH_RUN_MODE", "value": "&lt;runMode&gt;" },
+        { "name": "BATCH_YEAR_CONTEXT", "value": "&lt;yearContext&gt;" }
+      ]
+    }
+  ]
+}</code></pre>
+
+    <h2>8. API Implementation Blueprint</h2>
+
+    <h3>8.1 API Configuration</h3>
+    <p>API configuration remains minimal:</p>
+    <pre><code>{
+  "EventBridge": {
+    "EventBusName": "default",
+    "Source": "fps.api",
+    "DetailType": "BatchJob.TriggerRequested"
+  }
+}</code></pre>
+
+    <p>For PACT API:</p>
+    <pre><code>{
+  "EventBridge": {
+    "EventBusName": "default",
+    "Source": "pact.api",
+    "DetailType": "BatchJob.TriggerRequested"
+  }
+}</code></pre>
+
+    <h3>8.2 API Code - Publish Event</h3>
+    <pre><code>using Amazon.EventBridge;
+using Amazon.EventBridge.Model;
+using System.Text.Json;
+
+public async Task&lt;string&gt; TriggerBatchJobAsync(
+    string jobName,
+    string requestedBy,
+    CancellationToken cancellationToken = default)
+{
+    ArgumentException.ThrowIfNullOrWhiteSpace(jobName);
+
+    var jobExecutionId = Guid.NewGuid().ToString("N");
+
+    var detail = JsonSerializer.Serialize(new
+    {
+        jobExecutionId,
+        jobName,
+        runMode = "Manual",
+        requestedBy,
+        requestedAtUtc = DateTime.UtcNow
+    });
+
+    var request = new PutEventsRequest
+    {
+        Entries =
+        [
+            new PutEventsRequestEntry
+            {
+                EventBusName = _configuration["EventBridge:EventBusName"] ?? "default",
+                Source = _configuration["EventBridge:Source"] ?? "fps.api",
+                DetailType = _configuration["EventBridge:DetailType"] ?? "BatchJob.TriggerRequested",
+                Detail = detail
+            }
+        ]
+    };
+
+    var response = await _eventBridge.PutEventsAsync(request, cancellationToken);
+
+    if (response.FailedEntryCount &gt; 0)
+    {
+        var failureText = string.Join("; ", response.Entries
+            .Where(e =&gt; !string.IsNullOrWhiteSpace(e.ErrorCode))
+            .Select(e =&gt; $"{e.ErrorCode}: {e.ErrorMessage}"));
+
+        throw new InvalidOperationException($"Failed to publish batch trigger event. {failureText}");
+    }
+
+    return jobExecutionId;
+}</code></pre>
+
+    <h3>8.2.1 Side-by-Side Code: Event Publish vs Direct ECS RunTask</h3>
+    <div class="neutral">
+      <strong>Why this comparison matters:</strong> both snippets can trigger the worker, but the EventBridge producer code is smaller, cleaner, and avoids hardcoding ECS runtime/network details in the API.
+    </div>
+
+    <div class="code-compare">
+      <div class="code-card">
+        <h4>Option A (Recommended): API publishes EventBridge event</h4>
+        <pre><code>using Amazon.EventBridge;
+using Amazon.EventBridge.Model;
+using System.Text.Json;
+
+public async Task&lt;string&gt; TriggerViaEventAsync(string jobName, string requestedBy)
+{
+    var jobExecutionId = Guid.NewGuid().ToString("N");
+
+    var detail = JsonSerializer.Serialize(new
+    {
+        jobExecutionId,
+        jobName,
+        runMode = "Manual",
+        requestedBy,
+        requestedAtUtc = DateTime.UtcNow
+    });
+
+    await _eventBridge.PutEventsAsync(new PutEventsRequest
+    {
+        Entries =
+        [
+            new PutEventsRequestEntry
+            {
+                EventBusName = _configuration["EventBridge:EventBusName"] ?? "default",
+                Source = "fps.api",
+                DetailType = "BatchJob.TriggerRequested",
+                Detail = detail
+            }
+        ]
+    });
+
+    return jobExecutionId;
+}</code></pre>
+      </div>
+
+      <div class="code-card">
+        <h4>Option B (Direct): API calls ECS RunTask</h4>
+        <pre><code>using Amazon.ECS;
+using Amazon.ECS.Model;
+
+public async Task&lt;string&gt; TriggerViaEcsAsync(string jobName, string requestedBy)
+{
+    var jobExecutionId = Guid.NewGuid().ToString("N");
+
+    var response = await _ecs.RunTaskAsync(new RunTaskRequest
+    {
+        Cluster = _configuration["Ecs:ClusterArn"],
+        TaskDefinition = _configuration["Ecs:TaskDefinitionArn"],
+        LaunchType = LaunchType.FARGATE,
+        NetworkConfiguration = new NetworkConfiguration
+        {
+            AwsvpcConfiguration = new AwsVpcConfiguration
+            {
+                Subnets = _configuration.GetSection("Ecs:Subnets").Get&lt;List&lt;string&gt;&gt;()!,
+                SecurityGroups = _configuration.GetSection("Ecs:SecurityGroups").Get&lt;List&lt;string&gt;&gt;()!,
+                AssignPublicIp = AssignPublicIp.DISABLED
+            }
+        },
+        Overrides = new TaskOverride
+        {
+            ContainerOverrides =
+            [
+                new ContainerOverride
+                {
+                    Name = _configuration["Ecs:ContainerName"],
+                    Environment =
+                    [
+                        new KeyValuePair { Name = "BATCH_JOB_EXECUTION_ID", Value = jobExecutionId },
+                        new KeyValuePair { Name = "BATCH_JOB_NAME", Value = jobName },
+                        new KeyValuePair { Name = "BATCH_RUN_MODE", Value = "Manual" },
+                        new KeyValuePair { Name = "BATCH_REQUESTED_BY", Value = requestedBy }
+                    ]
+                }
+            ]
+        }
+    });
+
+    return response.Tasks.First().TaskArn;
+}</code></pre>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>What API Must Know</th>
+          <th>Event Publish (Recommended)</th>
+          <th>Direct ECS RunTask</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Config footprint in API</td>
+          <td>Small: event bus + source + detail type.</td>
+          <td>Large: cluster ARN, task definition ARN, container name, subnets, security groups, launch settings.</td>
+        </tr>
+        <tr>
+          <td>IAM needed by API</td>
+          <td><code>events:PutEvents</code> only.</td>
+          <td><code>ecs:RunTask</code> + <code>iam:PassRole</code> (+ broader ECS runtime awareness).</td>
+        </tr>
+        <tr>
+          <td>Ownership model</td>
+          <td>Infra owns routing and ECS target details in EventBridge.</td>
+          <td>API must carry and maintain infra/runtime coupling.</td>
+        </tr>
+        <tr>
+          <td>Operational commonality</td>
+          <td>Same trigger layer as scheduled jobs (EventBridge).</td>
+          <td>Separate trigger path from scheduled model.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="success">
+      <strong>Conclusion from code and config:</strong> calling via EventBridge is simpler at the API boundary and materially less infra-dependent. API remains a producer of business events, while infrastructure owns execution routing to ECS.
+    </div>
+
+    <h3>8.2.2 JSON Comparison: ECS Task Definition Context per Trigger Model</h3>
+    <p>In practice, the core worker task definition is largely the same in both approaches. The key difference is <strong>where runtime/network settings are managed</strong>: EventBridge target configuration (infra-owned) vs API-side RunTask payload (application-owned).</p>
+
+    <div class="code-compare">
+      <div class="code-card">
+        <h4>EventBridge Model (Recommended): Stable task definition, infra-owned routing</h4>
+        <pre><code>{
+  "family": "fps-batch-worker",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::&lt;account-id&gt;:role/ecs-task-execution-role",
+  "taskRoleArn": "arn:aws:iam::&lt;account-id&gt;:role/fps-batch-worker-task-role",
+  "containerDefinitions": [
+    {
+      "name": "batch-container",
+      "image": "&lt;ecr-image-uri&gt;",
+      "essential": true,
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/fps-batch-worker",
+          "awslogs-region": "eu-west-2",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "environment": [
+        { "name": "DOTNET_ENVIRONMENT", "value": "Production" }
+      ]
+    }
+  ]
+}</code></pre>
+      </div>
+
+      <div class="code-card">
+        <h4>Direct ECS Model: API must carry infra runtime settings in RunTask JSON</h4>
+        <pre><code>{
+  "cluster": "arn:aws:ecs:&lt;region&gt;:&lt;account-id&gt;:cluster/fps-batch-cluster",
+  "taskDefinition": "fps-batch-worker:42",
+  "launchType": "FARGATE",
+  "networkConfiguration": {
+    "awsvpcConfiguration": {
+      "subnets": ["subnet-a", "subnet-b"],
+      "securityGroups": ["sg-12345"],
+      "assignPublicIp": "DISABLED"
+    }
+  },
+  "overrides": {
+    "containerOverrides": [
+      {
+        "name": "batch-container",
+        "environment": [
+          { "name": "BATCH_JOB_EXECUTION_ID", "value": "&lt;jobExecutionId&gt;" },
+          { "name": "BATCH_JOB_NAME", "value": "&lt;jobName&gt;" },
+          { "name": "BATCH_RUN_MODE", "value": "Manual" },
+          { "name": "BATCH_REQUESTED_BY", "value": "&lt;requestedBy&gt;" }
+        ]
+      }
+    ]
+  }
+}</code></pre>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Comparison Point</th>
+          <th>EventBridge Model</th>
+          <th>Direct ECS Model</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Where networking values live</td>
+          <td>EventBridge target config (infra authority).</td>
+          <td>API RunTask payload (application must carry infra values).</td>
+        </tr>
+        <tr>
+          <td>Task definition churn</td>
+          <td>Low; mostly image/version and worker defaults.</td>
+          <td>Task definition still stable, but API code/config churn increases.</td>
+        </tr>
+        <tr>
+          <td>Blast radius of infra changes</td>
+          <td>Infra can change subnets/SG/capacity via target without API redeploy.</td>
+          <td>Infra change often requires API config/code update and redeploy.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>8.3 API Response to UI</h3>
+    <pre><code>{
+  "jobExecutionId": "b8f9d4a16bb64a6c97e44e9c2e09f111",
+  "jobName": "FECProcess",
+  "status": "TriggerAccepted",
+  "message": "Batch job trigger accepted. Worker task will start asynchronously."
+}</code></pre>
+
+    <h3>8.4 Publish Reliability and Failure Contract</h3>
+    <p>The API publish path uses bounded retry for transient EventBridge ingress failures and returns a deterministic <code>503</code> payload when publish is not accepted.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Behavior</th>
+          <th>Current Contract</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Transient publish handling</td>
+          <td>Up to 3 attempts with exponential backoff and jitter for throttling/timeout/5xx style failures.</td>
+        </tr>
+        <tr>
+          <td>Request cancellation</td>
+          <td>Cancellation token is respected and operation exits immediately when caller cancels.</td>
+        </tr>
+        <tr>
+          <td>Publish failure response</td>
+          <td>API returns <code>503 ServiceUnavailable</code> with machine-readable <code>reasonCode</code>.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h4>8.4.1 503 Response Shape (Publish Not Accepted)</h4>
+    <pre><code>{
+  "accepted": false,
+  "publishAccepted": false,
+  "reason": "Event publish failed",
+  "reasonCode": "PublishTransientFailedAfterRetry",
+  "jobName": "FECProcess",
+  "jobExecutionId": "b8f9d4a16bb64a6c97e44e9c2e09f111",
+  "message": "Unable to publish trigger event to EventBridge. Please retry."
+}</code></pre>
+
+    <h4>8.4.2 reasonCode Values</h4>
+    <table>
+      <thead>
+        <tr>
+          <th>reasonCode</th>
+          <th>Meaning</th>
+          <th>Client Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>PublishTransientFailedAfterRetry</code></td>
+          <td>Transient publish issues persisted after bounded retries.</td>
+          <td>Retry operation from UI/client.</td>
+        </tr>
+        <tr>
+          <td><code>PublishNonRetryableFailed</code></td>
+          <td>Non-transient publish failure was returned by AWS SDK/EventBridge path.</td>
+          <td>Do not auto-retry repeatedly; surface error and investigate.</td>
+        </tr>
+        <tr>
+          <td><code>PublishConfigurationInvalid</code></td>
+          <td>Required EventBridge API configuration is missing/invalid.</td>
+          <td>Fix API configuration before retrying.</td>
+        </tr>
+        <tr>
+          <td><code>PublishInvalidResponse</code></td>
+          <td>EventBridge response shape was invalid (for example, missing entry/event id).</td>
+          <td>Retry once, then investigate service/runtime logs.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>8.5 Implemented Polling Endpoint for Option 2 (No New Lifecycle Table)</h3>
+    <p>To avoid indefinite <code>PendingStart</code> without adding a new API lifecycle table, the API exposes an inference endpoint that combines:</p>
+    <ul>
+      <li><code>jobExecutionId</code> (from trigger response)</li>
+      <li><code>acceptedAtUtc</code> (from trigger response)</li>
+      <li>Execution existence check in <code>operational.tbljobqueue</code></li>
+      <li>Timeout rule: <code>acceptedAtUtc + timeoutSeconds + bufferSeconds</code></li>
+    </ul>
+
+    <pre><code>GET /api/batch-jobs/triggers/{jobExecutionId}/startup-status
+    ?acceptedAtUtc=2026-05-08T10:12:30Z
+    &timeoutSeconds=3600
+    &bufferSeconds=120</code></pre>
+
+    <p>Returned status is one of:</p>
+    <ul>
+      <li><code>PendingStart</code> (no queue row yet, still within timeout window)</li>
+      <li><code>StartFailedTimeoutLikely</code> (no queue row after timeout window)</li>
+      <li><code>Running</code> / <code>Completed</code> / <code>Failed</code> (queue row exists and worker status observed)</li>
+    </ul>
+
+    <div class="warning">
+      <strong>Current option-2 caveat:</strong> API does not programmatically query DLQ. <code>StartFailedTimeoutLikely</code> is an inference based on timeout + missing execution row, while DLQ alarms/operations remain infra-driven.
+    </div>
+
+    <h3>8.6 Failure Handling Approach (Publish Side vs ECS Startup)</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Failure Point</th>
+          <th>Detection</th>
+          <th>API/Infra Response</th>
+          <th>UI/Client Contract</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Publish failure before EventBridge acceptance</td>
+          <td><code>PutEvents</code> exception or failed entry from AWS SDK.</td>
+          <td>API retries bounded (3 attempts). On final failure returns <code>503</code> + <code>reasonCode</code>.</td>
+          <td>Treat as not accepted; safe to retry trigger with same business intent.</td>
+        </tr>
+        <tr>
+          <td>Event accepted but ECS task/container does not start</td>
+          <td>No execution row by startup deadline and/or DLQ signal from exhausted EventBridge target retries.</td>
+          <td>Mark lifecycle as <code>StartFailedTimeout</code> (inferred) or <code>StartFailedDeliveryExhausted</code> (DLQ confirmed).</td>
+          <td>Show startup failure state; allow retry and surface operator guidance.</td>
+        </tr>
+        <tr>
+          <td>Container started but application crashed early</td>
+          <td>ECS task stop reason + worker logs + status row transitions.</td>
+          <td>Status transitions to <code>Failed</code> with failure metadata persisted for troubleshooting.</td>
+          <td>Show execution failed after start (not publish failure).</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h4>8.6.1 Recommended Retry Semantics</h4>
+    <ul>
+      <li><strong>Publish-side failure:</strong> API-level retry only, because EventBridge never accepted the event.</li>
+      <li><strong>Post-accept delivery failure:</strong> EventBridge target retry + DLQ path only, not API retry loop.</li>
+      <li><strong>Startup timeout:</strong> one user/client retrigger action after deadline; avoid aggressive automatic retrigger storms.</li>
+    </ul>
+
+    <h4>8.6.2 Compact Failure Sequence (Review-Friendly)</h4>
+    <div class="flow">Failure Path A: Publish-side failure (before EventBridge acceptance)
+
+UI
+ -> API Trigger Endpoint
+ -> PutEvents attempt #1/#2/#3
+ -> still failed
+ -> API returns 503 + reasonCode=PublishTransientFailedAfterRetry
+ -> UI shows "Not accepted" and offers retry
+
+Failure Path B: Event accepted, but ECS container fails to start
+
+UI
+ -> API Trigger Endpoint
+ -> PutEvents accepted (TriggerAccepted + jobExecutionId)
+ -> EventBridge Rule/Target invokes ECS
+ -> ECS startup fails (image pull/IAM/network/capacity)
+ -> no worker-start signal by startupDeadlineUtc
+ -> API projects StartFailedTimeout
+ -> if DLQ evidence arrives: project StartFailedDeliveryExhausted
+ -> UI shows startup failure with retry + operator diagnostics</div>
+
+    <p class="small">Presenter tip: emphasize that Path A is producer-boundary reliability (API retries), while Path B is post-accept delivery reliability (EventBridge retry/DLQ + startup deadline projection).</p>
+
+    <h2>9. Worker Implementation Blueprint</h2>
+
+    <h3>9.1 Worker Reads Environment Variables</h3>
+    <pre><code>// Strict mode: all callers must provide these
+  var jobQueueId = Environment.GetEnvironmentVariable("BATCH_JOBQUEUE_ID");
+  var userId = Environment.GetEnvironmentVariable("BATCH_USER_ID");
+  var jobName = Environment.GetEnvironmentVariable("BATCH_JOB_NAME");
+  var runMode = Environment.GetEnvironmentVariable("BATCH_RUN_MODE") ?? "Manual";
+  var yearContext = Environment.GetEnvironmentVariable("BATCH_YEAR_CONTEXT");
+
+  if (string.IsNullOrWhiteSpace(jobQueueId) || !Guid.TryParse(jobQueueId, out _))
+    throw new InvalidOperationException("BATCH_JOBQUEUE_ID is required and must be a valid UUID.");
+  if (string.IsNullOrWhiteSpace(userId))
+    throw new InvalidOperationException("BATCH_USER_ID is required.");
+  if (string.IsNullOrWhiteSpace(jobName))
+    throw new InvalidOperationException("BATCH_JOB_NAME is required.");
+
+  // Pass yearContext as needed to orchestrator/domain
+  await orchestrator.RunAsync(jobName, runMode, Guid.Parse(jobQueueId), userId, yearContext, cancellationToken);</code></pre>
+
+    <h3>9.2 Worker Status Handling</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Stage</th>
+          <th>Status</th>
+          <th>Owner</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>API event accepted</td>
+          <td><code>TriggerAccepted</code></td>
+          <td>API response only, or DB if API writes initial record</td>
+        </tr>
+        <tr>
+          <td>Worker starts</td>
+          <td><code>Running</code></td>
+          <td>Worker</td>
+        </tr>
+        <tr>
+          <td>Worker completes</td>
+          <td><code>Completed</code></td>
+          <td>Worker</td>
+        </tr>
+        <tr>
+          <td>Worker fails</td>
+          <td><code>Failed</code></td>
+          <td>Worker</td>
+        </tr>
+        <tr>
+          <td>Worker has not started yet</td>
+          <td><code>PendingStart</code></td>
+          <td>Status API fallback when row not found</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>10. Infra Implementation Blueprint for PoC</h2>
+
+    <h3>10.1 Prerequisites</h3>
+    <ol>
+      <li>Parameterized .NET worker app available.</li>
+      <li>Docker image built and pushed to ECR.</li>
+      <li>ECS cluster available.</li>
+      <li>Fargate-compatible ECS task definition created for worker.</li>
+      <li>CloudWatch log group configured for worker logs.</li>
+      <li>EventBridge rule created for API trigger events.</li>
+      <li>EventBridge target configured to run ECS task.</li>
+      <li>EventBridge invoke role created with permission to run ECS task and pass task roles.</li>
+      <li>DLQ configured for failed EventBridge deliveries.</li>
+    </ol>
+
+    <h3>10.2 EventBridge Invoke Role - Conceptual IAM</h3>
+    <pre><code>{
+  "Effect": "Allow",
+  "Action": [
+    "ecs:RunTask"
+  ],
+  "Resource": "arn:aws:ecs:&lt;region&gt;:&lt;account-id&gt;:task-definition/fps-batch-worker:*"
+}</code></pre>
+
+    <pre><code>{
+  "Effect": "Allow",
+  "Action": [
+    "iam:PassRole"
+  ],
+  "Resource": [
+    "arn:aws:iam::&lt;account-id&gt;:role/&lt;ecs-task-execution-role&gt;",
+    "arn:aws:iam::&lt;account-id&gt;:role/&lt;ecs-task-role&gt;"
+  ]
+}</code></pre>
+
+    <h3>10.3 API Task Role Permission</h3>
+    <p>API no longer needs <code>ecs:RunTask</code>. It only needs permission to publish events:</p>
+    <pre><code>{
+  "Effect": "Allow",
+  "Action": [
+    "events:PutEvents"
+  ],
+  "Resource": "arn:aws:events:&lt;region&gt;:&lt;account-id&gt;:event-bus/default"
+}</code></pre>
+
+    <h3>10.4 PoC Validation Steps</h3>
+    <ol>
+      <li>Deploy worker task definition with a simple job handler, for example <code>HealthCheck</code> or <code>FECProcessMock</code>.</li>
+      <li>Create EventBridge rule for <code>BatchJob.TriggerRequested</code>.</li>
+      <li>Configure ECS task as target with Fargate networking.</li>
+      <li>Configure input transformer to convert event detail into container environment overrides.</li>
+      <li>Call FPS API endpoint to publish event.</li>
+      <li>Confirm API returns <code>jobExecutionId</code> and <code>TriggerAccepted</code>.</li>
+      <li>Verify EventBridge matched the event and invoked ECS task.</li>
+      <li>Verify ECS task started and exited successfully.</li>
+      <li>Verify worker logs show received env variables.</li>
+      <li>Verify worker inserted/updated job execution status.</li>
+      <li>Test invalid job name and verify worker fails safely.</li>
+      <li>Test EventBridge delivery failure path and DLQ behavior.</li>
+    </ol>
+
+    <h3>10.5 Infra Authority Model: What Infra Team Manages</h3>
+    <div class="callout">
+      <strong>Authority shift in recommended model:</strong> API team owns only event contract and publish call; infra team owns execution routing and runtime infrastructure settings end-to-end.
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Infra Setting</th>
+          <th>Managed By Infra In</th>
+          <th>Why This Matters</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Event bus, rules, event patterns</td>
+          <td>IaC (Terraform/CloudFormation) for EventBridge.</td>
+          <td>Routing changes are versioned and auditable without API release.</td>
+        </tr>
+        <tr>
+          <td>ECS target binding (cluster, task definition revision)</td>
+          <td>EventBridge target block in IaC.</td>
+          <td>Infra can roll task revisions without changing API trigger code.</td>
+        </tr>
+        <tr>
+          <td>Fargate networking (subnets, security groups, public IP)</td>
+          <td>EventBridge ECS target network configuration.</td>
+          <td>Network posture is centralized under platform controls.</td>
+        </tr>
+        <tr>
+          <td>Invoke role and pass-role permissions</td>
+          <td>IAM role/policy modules for EventBridge invoke role.</td>
+          <td>Least-privilege is enforced in one place, not duplicated in APIs.</td>
+        </tr>
+        <tr>
+          <td>Retry policy and DLQ behavior</td>
+          <td>EventBridge target retry + SQS DLQ resources.</td>
+          <td>Reliability controls are tuned operationally by infra team.</td>
+        </tr>
+        <tr>
+          <td>Input transformer mapping</td>
+          <td>EventBridge rule target input transformer.</td>
+          <td>Env override mapping can evolve without app-level ECS orchestration code.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h4>10.5.1 Example Infra-Managed ECS Target (IaC-style JSON shape)</h4>
+    <pre><code>{
+  "ruleName": "batch-triggered-jobs",
+  "eventPattern": {
+    "source": ["fps.api", "pact.api"],
+    "detail-type": ["BatchJob.TriggerRequested"]
+  },
+  "target": {
+    "arn": "arn:aws:ecs:&lt;region&gt;:&lt;account-id&gt;:cluster/fps-batch-cluster",
+    "roleArn": "arn:aws:iam::&lt;account-id&gt;:role/eventbridge-ecs-invoke-role",
+    "ecsParameters": {
+      "taskDefinitionArn": "arn:aws:ecs:&lt;region&gt;:&lt;account-id&gt;:task-definition/fps-batch-worker:42",
+      "launchType": "FARGATE",
+      "networkConfiguration": {
+        "awsvpcConfiguration": {
+          "subnets": ["subnet-a", "subnet-b"],
+          "securityGroups": ["sg-12345"],
+          "assignPublicIp": "DISABLED"
+        }
+      }
+    },
+    "retryPolicy": {
+      "maximumRetryAttempts": 24,
+      "maximumEventAgeInSeconds": 3600
+    },
+    "deadLetterConfig": {
+      "arn": "arn:aws:sqs:&lt;region&gt;:&lt;account-id&gt;:batch-trigger-dlq"
+    }
+  }
+}</code></pre>
+
+    <h4>10.5.2 Suggested Infra Change Workflow</h4>
+    <ol>
+      <li>Infra team updates EventBridge/ECS target/IAM settings in IaC module.</li>
+      <li>Change is peer-reviewed and promoted across environments.</li>
+      <li>API remains unchanged unless event contract itself changes.</li>
+      <li>Operations validates with CloudWatch + EventBridge metrics + DLQ alarms.</li>
+      <li>Application team only consumes trigger accepted/result status contract.</li>
+    </ol>
+
+    <h2>11. End-to-End Reliability Flow and Settings</h2>
+
+    <h3>11.0 Ownership Boundary Clarification (PACT vs FPS vs Worker)</h3>
+    <div class="callout">
+      <strong>Important ownership model:</strong> PACT API and FPS API are separate trigger owners with separate UIs. Each API owns its own trigger lifecycle tracking and status projection. The worker domain remains execution-focused and is not the place for API-specific trigger lifecycle states.
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Concern</th>
+          <th>Owner</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Trigger accepted / pending startup / startup timeout / delivery exhausted</td>
+          <td>PACT API or FPS API (independently)</td>
+          <td>Stored and exposed from each API's own trigger lifecycle store.</td>
+        </tr>
+        <tr>
+          <td>EventBridge retry and DLQ routing</td>
+          <td>Infra (per API event route)</td>
+          <td>Each API flow should have clear routing ownership and DLQ handling.</td>
+        </tr>
+        <tr>
+          <td>Job execution runtime status once task starts</td>
+          <td>Worker runtime/domain</td>
+          <td>Worker remains responsible for running/completed/failed execution semantics.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>11.1 Configured Reliability Boundaries</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Boundary</th>
+          <th>Configured Setting</th>
+          <th>Intent</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>API -> EventBridge ingress</td>
+          <td>API-side bounded transient retry: <code>maxAttempts=3</code>, exponential backoff + jitter.</td>
+          <td>Handle throttling/timeouts/5xx before event acceptance.</td>
+        </tr>
+        <tr>
+          <td>EventBridge Rule -> ECS target</td>
+          <td>Retry policy: <code>MaximumRetryAttempts=24</code>, <code>MaximumEventAgeInSeconds=3600</code>.</td>
+          <td>Handle transient target invocation failures after EventBridge has accepted the event.</td>
+        </tr>
+        <tr>
+          <td>EventBridge Rule -> DLQ</td>
+          <td><code>DeadLetterConfig</code> enabled to SQS DLQ (for example <code>batch-trigger-dlq</code>).</td>
+          <td>Capture events that could not be delivered to ECS target within retry window.</td>
+        </tr>
+        <tr>
+          <td>API failure response contract</td>
+          <td><code>503</code> with deterministic <code>reasonCode</code>.</td>
+          <td>Allow UI/client to decide retry vs operator action consistently.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="warning">
+      <strong>Important boundary rule:</strong> EventBridge target retry/DLQ only applies <em>after</em> EventBridge accepts the event. If <code>PutEvents</code> fails at API ingress, only API-side retry/handling applies.
+    </div>
+
+    <h3>11.2 End-to-End Sequence (Manual Trigger)</h3>
+    <div class="flow">1) User triggers job from UI.
+2) API validates request and running-state guard (400/404/409 paths if invalid).
+3) API generates jobExecutionId.
+4) API calls PutEvents to EventBridge.
+   - If ingress transient failure: API retries up to 3 attempts.
+   - If still failed: API returns 503 with reasonCode.
+5) EventBridge accepts event and matches rule.
+6) EventBridge invokes ECS RunTask target.
+   - If target invocation transiently fails: EventBridge retries per policy.
+   - If retries exhaust or event age exceeded: Event pushed to DLQ.
+7) Worker container starts, reads env overrides.
+  8) API-side lifecycle tracker marks startup observed and projects Running based on worker/runtime signals.
+  9) Worker writes execution outcomes (Running/Completed/Failed) and logs with jobExecutionId.
+  10) UI polls its own API and renders lifecycle + execution state.</div>
+
+    <h3>11.3 Scenario Matrix and Handling</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Scenario</th>
+          <th>Where It Fails</th>
+          <th>Observed Signal</th>
+          <th>Handling</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Invalid request or unknown job</td>
+          <td>API validation/status guard</td>
+          <td><code>400</code> / <code>404</code></td>
+          <td>Client corrects request; no EventBridge call is made.</td>
+        </tr>
+        <tr>
+          <td>Job already running</td>
+          <td>API status guard</td>
+          <td><code>409 Conflict</code></td>
+          <td>Client waits/polls current execution; prevent duplicate start.</td>
+        </tr>
+        <tr>
+          <td>Ingress transient publish failure</td>
+          <td>API -> EventBridge PutEvents</td>
+          <td>API warning logs with retry attempts</td>
+          <td>Automatic API retry (3 attempts).</td>
+        </tr>
+        <tr>
+          <td>Ingress transient failure after retries</td>
+          <td>API -> EventBridge PutEvents</td>
+          <td><code>503</code> + <code>reasonCode=PublishTransientFailedAfterRetry</code></td>
+          <td>UI/client can safely retry trigger.</td>
+        </tr>
+        <tr>
+          <td>Ingress non-retryable publish failure</td>
+          <td>API -> EventBridge PutEvents</td>
+          <td><code>503</code> + <code>reasonCode=PublishNonRetryableFailed</code></td>
+          <td>Escalate to operator; verify AWS/EventBridge response and config.</td>
+        </tr>
+        <tr>
+          <td>API EventBridge config missing/invalid</td>
+          <td>API configuration</td>
+          <td><code>503</code> + <code>reasonCode=PublishConfigurationInvalid</code></td>
+          <td>Fix API settings and redeploy/reload config.</td>
+        </tr>
+        <tr>
+          <td>EventBridge accepted but target invoke transiently fails</td>
+          <td>EventBridge Rule -> ECS target</td>
+          <td>EventBridge target failure metrics/logs</td>
+          <td>Automatic EventBridge target retries per policy.</td>
+        </tr>
+        <tr>
+          <td>ECS container failed to start (image pull/IAM/network/capacity)</td>
+          <td>ECS startup/runtime after target invoke</td>
+          <td>No running worker signal, ECS stopped-task reason, possible timeout or DLQ follow-on</td>
+          <td>Project <code>StartFailedTimeout</code> (deadline) or <code>StartFailedDeliveryExhausted</code> (DLQ confirmed); surface retry + operator diagnostics.</td>
+        </tr>
+        <tr>
+          <td>Target retries exhausted / event too old</td>
+          <td>EventBridge Rule -> ECS target</td>
+          <td>Message in DLQ</td>
+          <td>Operate from DLQ: inspect payload, fix cause, replay or retrigger.</td>
+        </tr>
+        <tr>
+          <td>Worker starts but job logic fails</td>
+          <td>Worker runtime</td>
+          <td>Status <code>Failed</code> in DB, worker logs</td>
+          <td>Application-level remediation and possible retrigger by jobExecutionId intent.</td>
+        </tr>
+        <tr>
+          <td>Polling before worker inserts row</td>
+          <td>Status read timing gap</td>
+          <td>Status API returns <code>PendingStart</code> / <code>TriggerAccepted</code></td>
+          <td>Client continues polling with backoff.</td>
+        </tr>
+        <tr>
+          <td>No startup observed after timeout window (option 2)</td>
+          <td>Inference endpoint timeout rule</td>
+          <td><code>StartFailedTimeoutLikely</code></td>
+          <td>Show terminal startup-failure in UI with retry option; investigate CloudWatch + DLQ alarms.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>11.4 DLQ Operational Handling</h3>
+    <ol>
+      <li>Monitor DLQ depth and EventBridge target failure metrics with alerts.</li>
+      <li>On DLQ message, inspect <code>jobExecutionId</code>, <code>jobName</code>, and failure reason metadata.</li>
+      <li>Fix infra/runtime issue (IAM/network/task definition/cluster capacity) before replay.</li>
+      <li>Replay from DLQ or manually retrigger, ensuring idempotency rules are respected.</li>
+      <li>Track incident closure with evidence from CloudWatch and status API records.</li>
+    </ol>
+
+    <h3>11.5 Recommended Execution Status Model</h3>
+    <p>This model prevents indefinite <code>PendingStart</code> behavior when EventBridge accepted the event but ECS task launch could not be completed.</p>
+
+    <p class="small">Note: This status model is API-side lifecycle projection for each API owner (PACT/FPS). It is not a required change to worker domain enums/entities.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Status</th>
+          <th>Set By</th>
+          <th>When</th>
+          <th>UI Meaning</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>TriggerAccepted</code></td>
+          <td>API</td>
+          <td>PutEvents accepted by EventBridge.</td>
+          <td>Request accepted; startup in progress.</td>
+        </tr>
+        <tr>
+          <td><code>PendingStart</code></td>
+          <td>Status API projection</td>
+          <td>Accepted but worker start signal not yet observed.</td>
+          <td>Still waiting for ECS task start.</td>
+        </tr>
+        <tr>
+          <td><code>Running</code></td>
+          <td>API projection from worker/runtime signals</td>
+          <td>Worker task starts and startup has been observed/correlated by API.</td>
+          <td>Job actively executing.</td>
+        </tr>
+        <tr>
+          <td><code>Completed</code></td>
+          <td>API projection from worker/runtime signals</td>
+          <td>Worker finishes successfully and API projects terminal status to UI.</td>
+          <td>Success terminal state.</td>
+        </tr>
+        <tr>
+          <td><code>Failed</code></td>
+          <td>API projection from worker/runtime signals</td>
+          <td>Worker started but job failed; API projects failure to UI.</td>
+          <td>Execution failed after start.</td>
+        </tr>
+        <tr>
+          <td><code>StartFailedTimeout</code></td>
+          <td>Reconciler/timeout evaluator</td>
+          <td>No worker start observed before startup SLA deadline.</td>
+          <td>Startup failure; safe to retry trigger.</td>
+        </tr>
+        <tr>
+          <td><code>StartFailedDeliveryExhausted</code></td>
+          <td>DLQ processor</td>
+          <td>Event landed in DLQ after EventBridge target retries exhausted/age exceeded.</td>
+          <td>Delivery failure; investigate infra and replay/retry.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>11.6 Transition Rules (How It Works End-to-End)</h3>
+    <div class="flow">Trigger request
+ -> API validates
+ -> if invalid: 400/404/409 terminal response
+
+API publishes to EventBridge
+ -> if ingress failure after API retries: 503 with reasonCode (no accepted execution)
+ -> if accepted: create/update execution as TriggerAccepted with startupDeadlineUtc
+
+Polling path before worker starts
+ -> Status API returns PendingStart while nowUtc &lt;= startupDeadlineUtc
+
+Worker starts
+ -> API marks startup observed and projects Running
+ -> API projects Completed or Failed based on worker/runtime outcome signals
+
+Worker did not start in time
+ -> Timeout evaluator sets StartFailedTimeout
+
+EventBridge target delivery exhausted
+ -> DLQ consumer sets StartFailedDeliveryExhausted
+ -> include failure metadata for operations and replay decision</div>
+
+    <h3>11.7 Suggested Startup SLA and Deadlines</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Parameter</th>
+          <th>Suggested Value</th>
+          <th>Rationale</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>startupDeadlineUtc</code></td>
+          <td>AcceptedAt + 10 minutes</td>
+          <td>Long enough for transient target retry and ECS startup latency.</td>
+        </tr>
+        <tr>
+          <td>Status poll interval</td>
+          <td>2-5 seconds with client backoff</td>
+          <td>Avoid aggressive API polling while preserving responsiveness.</td>
+        </tr>
+        <tr>
+          <td>PendingStart auto-timeout</td>
+          <td>Hard transition at deadline</td>
+          <td>Prevents indefinite spinner behavior in UI.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>11.8 API Payload Examples for UI</h3>
+    <h4>11.8.1 Trigger Accepted</h4>
+    <pre><code>{
+  "accepted": true,
+  "jobExecutionId": "b8f9d4a16bb64a6c97e44e9c2e09f111",
+  "status": "TriggerAccepted",
+  "acceptedAtUtc": "2026-05-08T10:12:30Z",
+  "startupDeadlineUtc": "2026-05-08T10:22:30Z",
+  "message": "Request accepted. Waiting for worker startup."
+}</code></pre>
+
+    <h4>11.8.2 Polling While Startup Pending</h4>
+    <pre><code>{
+  "jobExecutionId": "b8f9d4a16bb64a6c97e44e9c2e09f111",
+  "status": "PendingStart",
+  "acceptedAtUtc": "2026-05-08T10:12:30Z",
+  "startupDeadlineUtc": "2026-05-08T10:22:30Z",
+  "message": "Event accepted. ECS task has not started yet."
+}</code></pre>
+
+    <h4>11.8.3 Startup Failure by Timeout</h4>
+    <pre><code>{
+  "jobExecutionId": "b8f9d4a16bb64a6c97e44e9c2e09f111",
+  "status": "StartFailedTimeout",
+  "reason": "Worker start not observed before startup deadline.",
+  "canRetry": true,
+  "message": "Task startup timed out. Please retry or contact support if repeated."
+}</code></pre>
+
+    <h4>11.8.4 Startup Failure by Delivery Exhaustion (DLQ)</h4>
+    <pre><code>{
+  "jobExecutionId": "b8f9d4a16bb64a6c97e44e9c2e09f111",
+  "status": "StartFailedDeliveryExhausted",
+  "reason": "EventBridge could not invoke ECS target within retry policy.",
+  "failureSource": "EventBridgeDLQ",
+  "canRetry": true,
+  "message": "Trigger delivery failed after retries. Operations team has been alerted."
+}</code></pre>
+
+    <h3>11.9 Compact State Diagram</h3>
+    <div class="flow">[Trigger Request]
+   |
+   +-- API validation fails ---------------------------> [400/404/409]
+   |
+   +-- PutEvents ingress fails after API retries ------> [503 + reasonCode]
+   |
+   +-- PutEvents accepted -----------------------------> [TriggerAccepted]
+                                                    |
+                                                    +--> [PendingStart]
+                                                            |
+                                                            +--> Worker starts ----------> [Running] --> [Completed]
+                                                            |                              |
+                                                            |                              +----------> [Failed]
+                                                            |
+                                                            +--> Startup deadline passed -> [StartFailedTimeout]
+                                                            |
+                                                            +--> EventBridge target retries exhausted / DLQ
+                                                                                           -> [StartFailedDeliveryExhausted]</div>
+
+    <p class="small">Operational note: <code>StartFailedDeliveryExhausted</code> is typically set by a DLQ consumer/reconciler that correlates DLQ messages to <code>jobExecutionId</code>.</p>
+    <p class="small">In this sample's option-2 implementation, the API does not set <code>StartFailedDeliveryExhausted</code> itself because it does not query DLQ programmatically.</p>
+
+    <h2>12. PoC Scope</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>PoC Item</th>
+          <th>Included?</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>FPS API publishes EventBridge event</td>
+          <td>Yes</td>
+          <td>Minimum API implementation.</td>
+        </tr>
+        <tr>
+          <td>PACT API publishes EventBridge event</td>
+          <td>Optional</td>
+          <td>Can reuse the same pattern after FPS API PoC succeeds.</td>
+        </tr>
+        <tr>
+          <td>Worker task receives job name using env override</td>
+          <td>Yes</td>
+          <td>Required for current worker model.</td>
+        </tr>
+        <tr>
+          <td>DB job status updates</td>
+          <td>Recommended</td>
+          <td>Can be mocked initially, then connected to actual job tables.</td>
+        </tr>
+        <tr>
+          <td>Scheduled job trigger</td>
+          <td>Yes</td>
+          <td>Validate same worker/task path with EventBridge schedule.</td>
+        </tr>
+        <tr>
+          <td>S3 event trigger</td>
+          <td>No</td>
+          <td>Future use case only.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>13. Key Trade-offs and Mitigations</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Trade-off</th>
+          <th>Impact</th>
+          <th>Mitigation</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>API does not get ECS TaskArn immediately.</td>
+          <td>API cannot prove task started, only that event was accepted.</td>
+          <td>Use <code>jobExecutionId</code> as business tracking ID. Worker updates DB when it starts.</td>
+        </tr>
+        <tr>
+          <td>More moving parts than direct RunTask.</td>
+          <td>EventBridge rule/target needs infra setup.</td>
+          <td>Standardize Terraform/CloudFormation module for scheduled and manual jobs.</td>
+        </tr>
+        <tr>
+          <td>Correlation is indirect.</td>
+          <td>Need to trace API -> EventBridge -> ECS -> Worker logs.</td>
+          <td>Pass <code>BATCH_JOB_EXECUTION_ID</code> and include it in every log/status update.</td>
+        </tr>
+        <tr>
+          <td>Event delivery failure is asynchronous.</td>
+          <td>Failure may not be visible to API immediately.</td>
+          <td>Configure EventBridge retry and DLQ; monitor DLQ and EventBridge metrics.</td>
+        </tr>
+        <tr>
+          <td>Ingress publish can fail before EventBridge accepts event.</td>
+          <td>Target retry/DLQ does not apply for pre-accept failures.</td>
+          <td>Handle at producer boundary with bounded retry and deterministic <code>503 + reasonCode</code>.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>14. Final Design Summary</h2>
+
+    <div class="success">
+      <b>Final direction (2026):</b> <br>
+      <ul>
+        <li>Use <b>EventBridge as the common trigger layer</b> for API/manual jobs and scheduled jobs, with ECS Fargate as the worker execution runtime.</li>
+        <li><b>All triggers (API, UI, scheduled) must inject <code>BATCH_JOBQUEUE_ID</code> (UUID) and <code>BATCH_USER_ID</code> (string).</li>
+        <li>Year context is supported via <code>BATCH_YEAR_CONTEXT</code> (optional, for reporting/partitioning).</li>
+        <li>Worker strictly validates all required env vars and fails fast if missing/invalid.</li>
+        <li>All orchestration, status, and logs are correlated by <code>jobQueueId</code> and <code>userId</code>.</li>
+      </ul>
+    </div>
+
+    <div class="flow">PACT API / FPS API / Scheduler
+  -> Generate <b>jobQueueId = Guid.NewGuid()</b> and <b>userId</b>
+  -> Set <b>BATCH_JOBQUEUE_ID</b> and <b>BATCH_USER_ID</b> (and <b>BATCH_YEAR_CONTEXT</b> if needed)
+  -> PutEvents only (API) or direct container env (scheduler)
+  -> No ECS cluster/subnet/security group config in API
+
+EventBridge
+  -> Owns routing
+  -> Owns ECS target setup
+  -> Passes job details to worker using container overrides
+
+Worker Task
+  -> Reads <b>BATCH_JOBQUEUE_ID</b>, <b>BATCH_USER_ID</b>, <b>BATCH_JOB_NAME</b>, <b>BATCH_RUN_MODE</b>, <b>BATCH_YEAR_CONTEXT</b>
+  -> Executes strict orchestration
+  -> Updates status/logs
+  -> Exits</div>
+
+    <h3>Minimum API Dependency</h3>
+    <ul>
+      <li><code>EventBridge:EventBusName</code></li>
+      <li><code>EventBridge:Source</code></li>
+      <li><code>EventBridge:DetailType</code></li>
+      <li>IAM permission: <code>events:PutEvents</code></li>
+    </ul>
+
+    <h3>Infra-Owned Configuration</h3>
+    <ul>
+      <li>ECS cluster</li>
+      <li>Worker task definition</li>
+      <li>Worker container name</li>
+      <li>Subnets/security groups</li>
+      <li>Launch type/capacity provider</li>
+      <li>EventBridge rule and target</li>
+      <li>Input transformer</li>
+      <li>Retry policy and DLQ</li>
+    </ul>
+
+
+
+    <h2>15. Additional Process and Governance Addendum</h2>
+  <h3>15.1.1 Legacy Manual Process</h3>
+<p>
+The existing FEC Price List update process is a manual, Excel-driven workflow. Data is extracted from database tables (<code>tlkpTestReqmt</code> for AGRUP and <code>TestOrProduct</code> for FEC) using scripts and pasted into an Excel workbook (<b>PriceListsMaster.xlsx</b>). The workbook is shared with business users, who update existing records and add new entries. The updated file is then processed using an ETL tool (FME Form), which generates SQL scripts for inserting and updating records along with corresponding rollback scripts. A summary of changes is validated by the business user before the relevant SQL scripts are manually executed against the database. This process involves multiple manual steps, external dependencies, and limited validation and control mechanisms.
+</p>
+<p>
+Similarly, Staff rates and Animal rates are updated in bulk directly using the database by a single user. The user creates a temporary table in MS Access where new rates are updated, then, based on this temporary table, the main table is updated.
+</p>
+
+<h3>15.1.2 New System Approach</h3>
+<p>
+In the new system, users will not have direct access to the database to update rates. The following section describes the new, controlled process for bulk rate updates, ensuring improved validation, auditability, and security.
+</p>
+
+<h3>15.2.1 Overview</h3>
+<p>
+The <b>MABArchive</b> schema stores project budgeting, milestones/deliverables, and multi-year financial data summaries from FPS for management reporting. This job processes and loads FPS data from the current and previous calendar years to support financial year reporting into the <b>MABArchive</b> schema within the same PostgreSQL database. It runs weekly on weekdays at 8:00 PM, replacing a chain of legacy MSSQL stored procedures (<code>sp_LoadFromFPS</code> and its dependents) with a single managed .NET batch process hosted on AWS ECS Fargate.
+</p>
+
+<h3>15.2.2 Year Resolution Logic</h3>
+<ul>
+  <li><b>Month &gt; 4 (after April):</b> The primary year is the current calendar year; a full archive load is performed for that year.</li>
+  <li><b>Month <= 4 (April or earlier):</b> The primary year is the previous calendar year; a full archive load is performed for that year, and a partial refresh is applied to the actual current calendar year.</li>
+</ul>
+
+<h3>15.2.3 Processing Steps</h3>
+<ul>
+  <li><b>Full Load (primary year):</b>
+    <ul>
+      <li>Rebuild FPS source totals in the source schema to ensure the load draws from up-to-date figures.</li>
+      <li>Delete existing archive data for that year (in dependency order across 24 tables).</li>
+      <li>Load fresh data from the FPS source schema into the corresponding archive tables (24 sequential INSERT-SELECT steps).</li>
+    </ul>
+  </li>
+  <li><b>Partial Refresh (month <= 4 only, current year):</b>
+    <ul>
+      <li>Delete and reload only the <code>my_tlkpproject_all</code> cross-reference table from source. No other archive tables are touched.</li>
+    </ul>
+  </li>
+</ul>
+
+<h3>15.2.4 Transactional Guarantees</h3>
+<p>
+All processing runs inside a single database transaction. If any step fails, the entire run is rolled back, leaving the archive in its previous consistent state.
+</p>
+
+<h3>15.2.5 Concurrency Control</h3>
+<p>
+A database lock table prevents concurrent runs. If a second instance starts while one is already running, it exits immediately.
+</p>
+
+<h3>15.2.6 Failure Notification</h3>
+<p>
+On failure, an email notification is sent to the configured administrator with the <b>jobQueueId</b> and error details, enabling diagnosis via CloudWatch Logs. All tracking and correlation now use <b>jobQueueId</b> (UUID) as per the strict model.
+</p>
+
+<h3>15.3.1 Overview</h3>
+<p>
+<b>Recreate Summaries</b> is a critical financial consolidation process that regenerates summary data for a specified accounting period in the FPS (Financial Planning System) and populates multiple summary tables in the database. It performs a complete refresh of the financial data hierarchy by first clearing out existing summary data through deletion, then systematically rebuilding all financial totals, staff time cost calculations, and project summaries from transactional data.
+</p>
+<p>
+The process begins by removing and recreating FPS totals which aggregate financial information across projects, followed by ensuring all active projects are properly registered in the system through the insertion of any missing project records. It then proceeds to delete and recreate time cost calculations that determine staff costs based on staff hours and rates and subsequently handles project month casework data which tracks the detailed work performed on each project during specific periods.
+</p>
+<p>
+The core financial summarisation occurs through a series of job month queries that calculate both single-period and cumulative financial metrics including costs, invoices, work-in-progress values, and milestone achievements for each project.
+</p>
+<p>
+After completing the primary calculations, the process checks whether the specified period is locked for editing, and if the period remains open (unlocked), it refreshes three additional period-specific tables containing monthly output data, project subcontract information, and test cost calculations to ensure all Oracle integration data remains synchronised.
+</p>
+<p>
+This comprehensive rebuild process ensures that all financial summaries, project costs, and revenue calculations are accurate and up to date for management reports and financial dashboards. This process provides an accurate, complete financial picture of each project for the specified period based on the most current transactional data available in the system.
+</p>
+
+<h3>15.3.2 Year Context Requirement</h3>
+<p>
+The <b>year context</b> (<code>BATCH_YEAR_CONTEXT</code>) is required for this process. It determines the accounting period for which all summary data is rebuilt. The year context must be injected by the caller (API, UI, or scheduler) and is strictly validated by the worker. This ensures that all calculations, deletions, and insertions are performed for the correct financial period, maintaining data integrity and supporting accurate reporting.
+</p>
+
+<h2>15.4 Consolidated Stakeholder Review Matrix</h2>
+<p>
+The following matrix summarises the major asks, ownership areas, and review expectations for the BatchJobs solution. This section is intended to support cross-team planning, approvals, and delivery tracking.
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Team</th>
+      <th>Primary Ask</th>
+      <th>Key Responsibilities</th>
+      <th>Key Decisions / Outputs Required</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Architect</td>
+      <td>Approve solution structure and overall design direction</td>
+      <td>Review BatchJobs architecture, repository model, modular structure, and alignment with enterprise patterns</td>
+      <td>Approved architecture, repository strategy, and design guardrails</td>
+    </tr>
+    <tr>
+      <td>DBA</td>
+      <td>Support schema, migrations, and SQL/database performance</td>
+      <td>Create and maintain required tables, SQL objects, indexes, migration scripts, and performance tuning support</td>
+      <td>Schema readiness, migration approval, performance review, recovery support model</td>
+    </tr>
+    <tr>
+      <td>UI Team</td>
+      <td>Provide initiation, approval, and monitoring experiences</td>
+      <td>Build forms, approval flows, validation, status views, and user-facing error handling</td>
+      <td>Approved UI flows, field definitions, validation rules, and audit visibility</td>
+    </tr>
+    <tr>
+      <td>API Teams</td>
+      <td>Accept UI requests and publish EventBridge triggers</td>
+      <td>Validate requests, generate <code>jobQueueId</code>, capture <code>userId</code>/<code>yearContext</code>, publish events, and expose status APIs</td>
+      <td>Endpoint contracts, request validation rules, event schema, status API contract</td>
+    </tr>
+    <tr>
+      <td>AWS Infra</td>
+      <td>Provide EventBridge, ECS, IAM, scheduling, and monitoring infrastructure</td>
+      <td>Provision EventBridge rules/schedules, ECS Fargate runtime, secret/config handling, input mapping, alarms, and DLQ support</td>
+      <td>Infra design approval, runtime configuration, IAM model, schedule ownership, observability setup</td>
+    </tr>
+    <tr>
+      <td>DevOps / Github</td>
+      <td>Provide repository, CI/CD, and release controls</td>
+      <td>Register repo, configure branch policies, build/test/deploy pipelines, artifact and release traceability</td>
+      <td>Repository setup, pipeline definitions, release governance, deployment automation</td>
+    </tr>
+    <tr>
+      <td>Sonar Team</td>
+      <td>Register and enforce static analysis and quality gates</td>
+      <td>Set up Sonar project, connect to CI, apply quality profiles and gate thresholds</td>
+      <td>Sonar registration, quality gate agreement, rule profile confirmation</td>
+    </tr>
+    <tr>
+      <td>Security Team</td>
+      <td>Approve access, secret handling, and audit controls</td>
+      <td>Review authorization, identity propagation, secret management, audit data, logging, and data protection requirements</td>
+      <td>Security approval, access model, secret management approach, audit requirements</td>
+    </tr>
+    <tr>
+      <td>Support / Operations</td>
+      <td>Own monitoring, incident response, and operational recovery</td>
+      <td>Define dashboards, alarms, runbooks, alert handling, support model, and retry/recovery procedures</td>
+      <td>Operational readiness, alert ownership, runbooks, support handoff model</td>
+    </tr>
+    <tr>
+      <td>Product / Business Owners</td>
+      <td>Confirm process definitions, approvals, schedules, and business rules</td>
+      <td>Own batch process intent, approval rules, year selection rules, scheduling windows, and user-facing workflow expectations</td>
+      <td>Business sign-off, approval rules, schedule confirmation, year-context rules</td>
+    </tr>
+    <tr>
+      <td>Testing Team</td>
+      <td>Deliver exhaustive validation and regression confidence</td>
+      <td>Define automated coverage across unit, integration, parity, API, and end-to-end paths; maintain baseline verification evidence</td>
+      <td>Test plan, coverage targets, parity evidence, release sign-off criteria</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Recommended Next Review Steps</h3>
+<ol>
+  <li>Circulate this document to all identified stakeholder teams for review.</li>
+  <li>Capture named owners for each ask and record any open decisions or constraints.</li>
+  <li>Convert the stakeholder asks into a tracked action plan with target dates.</li>
+  <li>Use the matrix above as the basis for architecture, delivery, and operational readiness sign-off.</li>
+</ol>
+
+<h2>15.5 Testing Strategy and Plan for Batch Jobs</h2>
+<p>
+<b>Testing Principle:</b><br>
+The BatchJobs solution is financially significant, calculation-heavy, and operationally critical. For that reason, the testing strategy must be intentionally exhaustive. The goal is not only to prove that jobs run, but to prove that they produce correct, repeatable, auditable outcomes under both normal and failure conditions.
+</p>
+<ul>
+  <li><b>Calculation Accuracy First:</b> Priority must be given to validating financial calculations, summary regeneration logic, year-based processing, archive loading, and rate update outcomes against known-good baselines.</li>
+  <li><b>Regression Safety:</b> Legacy SQL/stored procedure behavior being migrated into .NET must be regression-tested so the new implementation matches expected business outcomes.</li>
+  <li><b>End-to-End Confidence:</b> Testing must cover UI/API initiation, approval workflows, EventBridge trigger publication, ECS worker execution, database side effects, status projection, notifications, and failure handling.</li>
+  <li><b>Repeatability:</b> Test suites should be runnable repeatedly with deterministic seed data and expected outputs.</li>
+  <li><b>Production Risk Reduction:</b> Every critical batch process should have enough automated coverage to reduce manual verification effort and lower the risk of financial or operational defects escaping to production.</li>
+</ul>
+
+<h3>Recommended Test Layers</h3>
+<ul>
+  <li><b>Unit Tests:</b> Validate domain rules, orchestration branching, year selection logic, approval gating logic, environment variable validation, and status transitions.</li>
+  <li><b>Repository and Database Integration Tests:</b> Validate EF Core mappings, SQL behavior, transaction boundaries, lock handling, data deletion/recreation logic, and schema assumptions against PostgreSQL.</li>
+  <li><b>Parity Tests:</b> Compare .NET orchestration and calculation outputs against legacy SQL/stored procedure expectations or approved baseline datasets.</li>
+  <li><b>API Integration Tests:</b> Validate request handling, validation errors, approval flows, <code>jobQueueId</code> generation, and EventBridge publish contract formation.</li>
+  <li><b>Infrastructure / Trigger Path Tests:</b> Validate EventBridge to ECS triggering, environment variable mapping, schedule execution, DLQ behavior, and startup timeout handling.</li>
+  <li><b>End-to-End Functional Tests:</b> Validate the full path from UI submission to API acceptance to worker execution to database results and surfaced status.</li>
+  <li><b>Non-Functional Tests:</b> Include resilience, concurrency, rollback, recoverability, and operational monitoring validation for long-running or high-impact jobs.</li>
+</ul>
+
+<h3>Critical Coverage Expectations by Process</h3>
+<ul>
+  <li><b>Calendar Year End:</b> Test table copy logic, year creation, configuration-driven field updates, approval flow, and safe cutover behavior.</li>
+  <li><b>Re-Create Summary:</b> Test full summary regeneration, period lock behavior, year-context handling, cumulative calculations, and downstream table refreshes.</li>
+  <li><b>Bulk Rate Updates:</b> Test validation of uploaded or submitted rate changes, insert/update rules, auditability, rollback behavior, and downstream impact on derived calculations.</li>
+  <li><b>Mab Archive:</b> Test year resolution logic, full-load versus partial-refresh paths, transaction rollback, dependency ordering, and archive consistency across all affected tables.</li>
+</ul>
+
+<h3>Test Data and Baseline Requirements</h3>
+<ul>
+  <li>Create representative seed datasets covering multiple years, open and closed periods, active and inactive records, and mixed project/rate conditions.</li>
+  <li>Maintain approved baseline outputs for critical financial calculations so parity and regression checks are objective.</li>
+  <li>Include edge cases such as leap years, year-boundary cutovers, empty data sets, duplicate trigger attempts, invalid year context, and concurrent execution attempts.</li>
+  <li>Support anonymised production-like datasets where needed for confidence in calculation-heavy scenarios.</li>
+</ul>
+
+<h3>Release Gate Recommendation</h3>
+<p>
+No critical batch process should be promoted without successful automated test execution across unit, integration, and parity coverage for the touched area. For high-risk changes affecting calculations or year-based logic, a controlled business verification of output should also be part of the release gate.
+</p>
+
+<h2>15.6 Ask from Testing Team: Exhaustive Coverage and Validation Strategy</h2>
+<p>
+<b>Testing Team Ask:</b><br>
+Please define and execute a comprehensive test plan for BatchJobs covering functional correctness, regression parity, data integrity, approval workflows, API-to-worker orchestration, and operational failure scenarios.
+</p>
+<ul>
+  <li><b>Automation Strategy:</b> Confirm which scenarios will be automated at unit, integration, API, and end-to-end levels.</li>
+  <li><b>Parity Validation:</b> Define the approach for comparing .NET batch outcomes with legacy process outputs or approved reference baselines.</li>
+  <li><b>Coverage Expectations:</b> Identify the minimum acceptable coverage for critical orchestration and calculation paths, with particular attention to financial logic and year-dependent behavior.</li>
+  <li><b>Test Evidence:</b> Confirm what evidence will be required for sign-off, including result snapshots, database output comparisons, and failure-path verification.</li>
+  <li><b>Environment Needs:</b> Confirm the lower-environment data, access, and scheduling support required to exercise API-triggered and scheduled jobs realistically.</li>
+  <li><b>Regression Ownership:</b> Confirm who owns ongoing regression packs as new jobs are added or migrated from legacy SQL-based processes.</li>
+</ul>
+<p>
+Given the financial and operational importance of these jobs, testing must be treated as a primary delivery workstream rather than a final-stage check.
+</p>
+
+<h2>15.7 Ask from Security Team: Access Control, Secrets, and Audit Requirements</h2>
+<p>
+<b>Required Security Controls:</b><br>
+The BatchJobs solution must comply with organizational security policies for access control, secret management, auditability, and operational monitoring.
+</p>
+<ul>
+  <li><b>Authorization:</b> Confirm which user roles are allowed to initiate, approve, reject, and monitor each batch job type.</li>
+  <li><b>Authentication and Identity:</b> Ensure the initiating <code>userId</code> is derived from the authenticated user context and is not spoofable by the client.</li>
+  <li><b>Secret Management:</b> Require secure storage and access control for database credentials, mail settings, AWS access, and any other sensitive configuration.</li>
+  <li><b>Audit Logging:</b> Confirm that audit records capture initiator, approver, timestamps, <code>jobQueueId</code>, year context, job type, and outcome.</li>
+  <li><b>Data Protection:</b> Review whether any personal or sensitive business data is present in job payloads, logs, notifications, or support views, and define masking/redaction requirements.</li>
+  <li><b>Operational Review:</b> Confirm alerting, log retention, access to CloudWatch, and incident response expectations for failed or suspicious job executions.</li>
+</ul>
+<p>
+<b>Security Team Ask:</b><br>
+Please review and approve the access model, secret handling approach, audit requirements, and logging/monitoring controls for the BatchJobs solution.
+</p>
+
+<h2>15.8 Ask from Support and Operations Team: Monitoring, Failure Handling, and Runbook Ownership</h2>
+<p>
+<b>Required Operational Support Model:</b><br>
+The BatchJobs solution requires clear support ownership for monitoring, incident handling, job failure analysis, and operational recovery.
+</p>
+<ul>
+  <li><b>Monitoring:</b> Confirm ownership of CloudWatch dashboards, alarms, EventBridge failure metrics, ECS task failures, and DLQ alerts.</li>
+  <li><b>Runbooks:</b> Create or approve runbooks for common failure scenarios, including publish failures, startup timeout, ECS task failure, batch lock contention, and data processing exceptions.</li>
+  <li><b>Notification Handling:</b> Confirm who receives email alerts and operational notifications when critical jobs fail.</li>
+  <li><b>Support Diagnostics:</b> Ensure support teams can search by <code>jobQueueId</code> across logs, job status records, and notifications.</li>
+  <li><b>Replay and Retry:</b> Define who is allowed to retrigger jobs, replay DLQ events if applicable, or request DBA intervention for recovery.</li>
+  <li><b>Service Ownership:</b> Confirm which team owns first-line support, second-line diagnosis, and out-of-hours response for scheduled critical jobs.</li>
+</ul>
+<p>
+<b>Support and Operations Team Ask:</b><br>
+Please confirm the monitoring model, alert ownership, runbook expectations, and operational support boundaries for BatchJobs across all environments.
+</p>
+
+<h2>15.9 Ask from Product and Business Owners: Process Ownership, Approval Rules, and Scheduling Decisions</h2>
+<p>
+<b>Required Business Decisions and Ownership:</b><br>
+Several batch jobs depend on explicit business rules, approval decisions, year selection, and operational timing. These decisions must be owned and agreed by the relevant business stakeholders.
+</p>
+<ul>
+  <li><b>Process Ownership:</b> Confirm the business owner for each batch job process, including Calendar Year End, Re-Create Summary, Bulk Rate Updates, and Mab Archive.</li>
+  <li><b>Approval Rules:</b> Confirm which jobs require maker-checker approval, who can approve them, and whether rejection requires resubmission.</li>
+  <li><b>Year Context Rules:</b> Confirm how the target year is selected for each process and whether the UI should default or restrict year choices.</li>
+  <li><b>Scheduling Decisions:</b> Confirm which jobs are manual only versus scheduled, and agree the schedule windows and blackout periods for automated runs.</li>
+  <li><b>User Messaging:</b> Review the user-facing descriptions, warnings, and confirmations shown in the UI before critical jobs are submitted.</li>
+  <li><b>Business Sign-off:</b> Confirm that the documented batch behavior, data impacts, and failure/retry semantics match business expectations.</li>
+</ul>
+<p>
+<b>Product and Business Owner Ask:</b><br>
+Please validate the process definitions, approval requirements, year-selection rules, schedules, and user-facing workflow expectations for all supported BatchJobs.
+</p>
+
+<h2>15.10 Ask from API Teams: UI Request Handling and EventBridge Triggering</h2>
+<p>
+<b>Required API Capabilities:</b><br>
+The FPS API and PACT API teams must implement the application-facing entry points that accept requests from the UI, validate the request, generate the required batch context, and publish the trigger to EventBridge.
+</p>
+<ul>
+  <li><b>UI Request Acceptance:</b> Expose API endpoints for each supported batch job so the UI can submit job requests with the required fields and approval context where applicable.</li>
+  <li><b>Validation:</b> Validate job name, required year context, user identity, approval state, and any job-specific inputs before accepting the request.</li>
+  <li><b>Batch Context Creation:</b> Generate a new <code>jobQueueId</code> for each accepted request and capture the requesting <code>userId</code> and <code>yearContext</code> where required.</li>
+  <li><b>EventBridge Publishing:</b> Publish the event to EventBridge using the approved event contract, ensuring that <code>jobQueueId</code>, <code>userId</code>, <code>jobName</code>, <code>runMode</code>, and <code>yearContext</code> are available to the worker as separate environment variables.</li>
+  <li><b>Response Contract:</b> Return deterministic responses to the UI, including accepted/rejected outcomes, reason codes, and the generated <code>jobQueueId</code> for tracking.</li>
+  <li><b>Status API:</b> Provide status endpoints so the UI can poll for job state transitions and correlate results by <code>jobQueueId</code>.</li>
+  <li><b>Audit and Security:</b> Enforce authorization, record who initiated the request, and ensure the request lifecycle is auditable.</li>
+</ul>
+<p>
+<b>API Team Ask:</b><br>
+Please implement the endpoints, validation, request-to-event mapping, and status APIs needed for the UI to submit and monitor batch jobs. The API must be the only layer that accepts UI requests and raises EventBridge triggers for these processes.
+</p>
+
+<h2>15.11 Ask from AWS Infra Team: Cloud Infrastructure for Batch Jobs</h2>
+<p>
+<b>Required AWS Infrastructure:</b><br>
+The AWS infrastructure team is required to provision and manage the runtime components needed for Batch Jobs to execute reliably on ECS Fargate via EventBridge.
+</p>
+<ul>
+  <li><b>EventBridge:</b> Create and manage the event bus, rules, schedules, targets, retry policy, and DLQ configuration for manual and scheduled batch jobs.</li>
+  <li><b>ECS Fargate:</b> Provision the ECS cluster, task definition, container settings, networking, security groups, IAM task roles, execution roles, and logging integration.</li>
+  <li><b>Input Mapping:</b> Configure EventBridge input transformers or target input so the worker receives <code>BATCH_JOBQUEUE_ID</code>, <code>BATCH_USER_ID</code>, <code>BATCH_YEAR_CONTEXT</code>, <code>BATCH_JOB_NAME</code>, and related values as separate environment variables.</li>
+  <li><b>Secrets and Configuration:</b> Provide secure access to database connection strings, mail settings, and other runtime configuration through approved AWS secret/configuration services.</li>
+  <li><b>Observability:</b> Ensure CloudWatch logs, metrics, alarms, and DLQ monitoring are configured for operational support and failure diagnosis.</li>
+  <li><b>Scheduling:</b> For scheduled jobs, implement EventBridge schedules and ensure the correct year context and user identity are injected for each run.</li>
+</ul>
+<p>
+<b>AWS Infra Team Ask:</b><br>
+Please provision and support the AWS resources, IAM permissions, scheduling configuration, and monitoring required for Batch Jobs. Confirm the deployment model and input mapping strategy for both API-triggered and scheduled jobs.
+</p>
+
+<h2>15.12 Ask from DevOps and Github Team: Repository, Pipelines, and Delivery Controls</h2>
+<p>
+<b>Required DevOps and Source Control Setup:</b><br>
+The BatchJobs solution needs dedicated source control, automated build and deployment pipelines, and appropriate branch and release governance.
+</p>
+<ul>
+  <li><b>Github Repository:</b> Register the BatchJobs solution as a dedicated repository or confirm the approved monorepo structure and ownership model.</li>
+  <li><b>Branch Policies:</b> Apply pull request policies, reviewer rules, protected branches, and merge controls in line with organizational standards.</li>
+  <li><b>CI Pipelines:</b> Create build and test pipelines for the BatchJobs solution, including restore, build, unit test, and artifact generation steps.</li>
+  <li><b>CD Pipelines:</b> Implement deployment automation for lower and higher environments, including ECS task definition updates and configuration promotion.</li>
+  <li><b>Secrets Handling:</b> Ensure deployment credentials, AWS access, and environment configuration are managed securely using approved secret management mechanisms.</li>
+  <li><b>Release Traceability:</b> Support release tagging, versioning, deployment history, and rollback mechanisms for operational control.</li>
+</ul>
+<p>
+<b>DevOps and Github Team Ask:</b><br>
+Please set up or confirm the repository model, CI/CD automation, branch policies, and deployment controls required to deliver and operate the BatchJobs solution safely across environments.
+</p>
+
+<h2>15.13 Ask from Sonar Team: Code Quality and Static Analysis Registration</h2>
+<p>
+<b>Required SonarQube / SonarCloud Support:</b><br>
+The BatchJobs solution should be registered with Sonar as required by enterprise engineering standards so that code quality, vulnerabilities, duplication, and maintainability are continuously assessed.
+</p>
+<ul>
+  <li><b>Project Registration:</b> Register the BatchJobs repository or solution in SonarQube/SonarCloud using the approved project key and naming convention.</li>
+  <li><b>Pipeline Integration:</b> Integrate Sonar scanning into the CI pipeline so pull requests and mainline builds are evaluated automatically.</li>
+  <li><b>Quality Gates:</b> Apply the required quality gate thresholds for bugs, vulnerabilities, code smells, duplication, and coverage.</li>
+  <li><b>Reporting:</b> Ensure findings are visible to developers and release teams, and that failures are enforced where required by policy.</li>
+  <li><b>Rule Alignment:</b> Confirm the applicable rule profile for .NET batch applications and align exclusions only where justified.</li>
+</ul>
+<p>
+<b>Sonar Team Ask:</b><br>
+Please register the BatchJobs solution in Sonar, connect it to the CI process, and confirm the quality gate and rule profile expectations for this workload.
+</p>
+
+<h2>15.14 Ask from UI Team: User Experience and Integration for Batch Jobs</h2>
+<p>
+<b>Required UI Capabilities:</b><br>
+The user interface must support secure, auditable initiation and monitoring of Batch Jobs. UI flows should align with the strict batch contract, including required context values such as <code>jobQueueId</code>, <code>userId</code>, and <code>yearContext</code> where applicable.
+</p>
+<ul>
+  <li><b>Job Trigger Forms:</b> Provide screens/forms for users to start supported batch jobs with the required input fields, including job-specific parameters, year context, and confirmation of the requesting user.</li>
+  <li><b>Approval Flows:</b> Support initiation, submission for approval, approval, and rejection flows for jobs that require dual control, such as Calendar Year End and Cutover processes.</li>
+  <li><b>Status Monitoring:</b> Provide status views for submitted jobs, including polling of the API for execution state such as <code>TriggerAccepted</code>, <code>PendingStart</code>, <code>Running</code>, <code>Completed</code>, and <code>Failed</code>.</li>
+  <li><b>Error Handling:</b> Surface deterministic error responses and reason codes returned by the API, and guide users on when retry is allowed versus when operational support is needed.</li>
+  <li><b>Auditability:</b> Display or retain key tracking information such as <code>jobQueueId</code>, requesting user, requested year, submission time, and approval outcome.</li>
+  <li><b>Validation:</b> Validate mandatory inputs before submission, especially year context and other job-specific configuration values.</li>
+</ul>
+<p>
+<b>UI Team Ask:</b><br>
+Please review and confirm the UI requirements for batch job initiation, approval, monitoring, and auditability. Ensure the UI captures and sends all required context values to the API, and that users are given clear, actionable feedback throughout the batch lifecycle.
+</p>
+
+<h2>15.15 Ask from DBA: Tables and SQL Objects for Batch Jobs</h2>
+<p>
+<b>Required Database Tables and SQL Objects:</b><br>
+The following tables and SQL objects are required to support the Batch Jobs solution. These objects must be created, maintained, and versioned in the target PostgreSQL database schema(s):
+</p>
+<ul>
+  <li><b>Job Execution Tracking:</b>
+    <ul>
+      <li><code>JobExecutionRecord</code> (tracks jobQueueId, userId, job name, status, timestamps, etc.)</li>
+      <li><code>BatchLock</code> (prevents concurrent execution of critical jobs)</li>
+    </ul>
+  </li>
+  <li><b>Domain-Specific Tables:</b>
+    <ul>
+      <li>All summary, archive, and rate tables referenced by batch jobs (e.g., <code>MABArchive</code> tables, summary tables, rate tables, etc.)</li>
+      <li>All tables listed in the FPS Calendar Year End, Re-Create Summary, Bulk Rate Updates, and Mab Archive processes</li>
+    </ul>
+  </li>
+  <li><b>Supporting SQL Objects:</b>
+    <ul>
+      <li>Stored procedures, functions, and views required for orchestration, data migration, and reporting</li>
+      <li>Migration scripts for schema changes and data seeding</li>
+    </ul>
+  </li>
+</ul>
+<p>
+<b>DBA Ask:</b><br>
+Please review the required tables and SQL objects, ensure they are created and versioned appropriately, and provide support for schema changes, migrations, and performance tuning as needed for Batch Jobs.
+</p>
+
+<h2>15.16 Ask from Architect: Solution Structure for BatchJobs</h2>
+<p>
+<b>Proposed Solution Structure:</b><br>
+The <b>BatchJobs</b> solution is implemented as a modern .NET console application, designed for cloud-native batch processing and orchestration. The solution is modular, with clear separation of concerns between API, domain, infrastructure, worker, and test projects. All orchestration, job execution, and integration logic is encapsulated within this solution.
+</p>
+<ul>
+  <li>The solution is to be registered as a dedicated repository in Github (<b>apha-fps-apps-BatchJobs</b> or similar naming convention).</li>
+  <li>All source code, configuration, and documentation must be version-controlled in this repository.</li>
+  <li>SonarQube registration is required (if mandated by the organization) for code quality, static analysis, and technical debt tracking.</li>
+  <li>CI/CD pipelines (e.g., Github Actions, Azure DevOps) should be configured for build, test, and deployment automation.</li>
+  <li>All environment-specific secrets and credentials must be managed securely (not in source code).</li>
+</ul>
+<p>
+<b>Architectural Ask:</b><br>
+Please review and approve the proposed solution structure, repository registration, and SonarQube integration plan. Confirm alignment with organizational standards for source control, code quality, and DevOps automation.
+</p>
+
+<h2>15.17 Best Practice: Passing Context to Batch Jobs</h2>
+<p>
+<b>Recommendation:</b> Pass all required context values - such as <code>BATCH_USER_ID</code>, <code>BATCH_YEAR_CONTEXT</code>, <code>BATCH_JOBQUEUE_ID</code>, <code>BATCH_JOB_NAME</code>, etc. - as <b>separate environment variables</b> to the worker container.
+</p>
+<ul>
+  <li>This is the native and recommended pattern for AWS ECS, EventBridge, and containerized batch jobs.</li>
+  <li>It enables simple, language-agnostic access in the worker code (e.g., <code>Environment.GetEnvironmentVariable</code> in .NET).</li>
+  <li>It avoids the need for parsing composite objects or JSON strings.</li>
+  <li>It is transparent for debugging, logging, and operational visibility.</li>
+  <li>It aligns with AWS EventBridge input transformer and ECS task definition best practices.</li>
+</ul>
+<p>
+<b>Summary:</b> <br>
+<i>Always inject each required value as a separate environment variable. Do not combine into a single object or JSON string.</i>
+</p>
+
+<h2>15.18 FPS Calendar Year End Process</h2>
+<p>
+The Calendar Year-End Process prepares the FPS database for the upcoming planning cycle by creating the required data records and enabling the FPS application for the next calendar year. During this process, a predefined set of scripts are executed to populate multiple database tables with records associated with the new FPS year.
+</p>
+<p>
+This process is divided into two main steps:
+<ul>
+  <li><b>Step 1 - New Calendar Year Data Setup Initiation & Approval</b></li>
+  <li><b>Step 2 - New Calendar Year Cutover</b></li>
+</ul>
+</p>
+
+<h3>15.18.1 New Calendar Year Data Setup Initiation & Approval</h3>
+<b>Data Setup Initiation</b>
+<p>
+An authorised user initiates the New Calendar Year process through the user interface. Prior to initiating the process, the user must provide the required configuration values or validate the existing configuration settings. Once the configuration is confirmed, the user submits the request for approval to proceed with the process.
+</p>
+<b>Data Setup Approval and Preparation</b>
+<p>
+An authorised approver receives the request to approve the initiation of the New Calendar Year process. The approver can either approve or reject the request. Upon approval, the system triggers the subsequent automated steps for data preparation and further processing. For data preparation, the application executes a set of SQL scripts to populate data in multiple tables with the next year identifier. The initiator should raise a new request on rejection or failure.
+</p>
+
+<b>Calendar Year End Scripts Info</b>
+<ol>
+  <li>Insert record in <code>tblyearmaster</code> table for new Year, with status "Planned". This table is an FPS "Year" control table.</li>
+  <li>Copy records for current year from the following tables using an <code>INSERT INTO ... SELECT</code> statement and insert them back into the same table with the New Year.</li>
+</ol>
+<div style="margin-left:2em">
+<b>Tables:</b><br>
+CostCentre, DivisionGrade, Grade, Mileston, lanCatWGGrade, ProfitCentreGrade, NonDEFRA, ProjectMonth2, ProjectMonth3, tblAdditionalCosts, tblAdminUsers, tblAnimalReq, tblAnimals, tblContract, tblEmployee, tblkpAccountCategory, tblPeriod, tblStaffJob, tblTestRCCost, tblTestRequirementRCCost, tblTestReqWG, tblTotalBusinessOverheads, tblUser, Category, tblUser_ProfitCentre, tblUser_Program, tblUser_ProjectGroup, tblUser_TestOwner, tblWGEmployee, TestOrProduct, TimeCodeValid, tlkpJobCode, tlkpManager, tlkpProgram, tlkpProject, tlkpTestCapability, tlkpTestReqmt, WorkGroup, WorkGroupGrade, WorkGroupMonth
+</div>
+<p>
+<i>Note:</i>
+<ul>
+  <li><code>tlbsetting</code> & <code>tlkpMonthHours</code> table entries will be inserted from UI and not from script.</li>
+  <li>Post migration, delete ids except (HoursInDay, Ad6000_ID, Ad6000_WG, WRS_File, LeaveEntitlement, SickEntitlement) from <code>tlbsetting</code> table.</li>
+</ul>
+</p>
+<ol start="3">
+  <li>Delete inactive employees from <code>tblWGEmplyeeCopy</code> table who are not general staff.</li>
+  <li>Update new year records as required format in table <code>tblPeriod</code>. There are 12 records in this table.</li>
+  <li>Update multiple columns in table <code>tlkpProject</code> for new year records.</li>
+  <li>Update various columns of <code>tblStaffJob</code>, <code>tlkpTestReqmt</code>, <code>tblAnimalReq</code>, <code>tblAdditionalCosts</code> tables as per configuration.</li>
+</ol>
+
+<h3>15.18.2 New Calendar Year Cutover</h3>
+<p>
+An authorised user initiates the New Calendar Year Cutover through the user interface. Another authorised user receives the Year Cutover request for approval. The approver can either approve or reject the request. Upon approval, the system triggers the subsequent automated steps for further processing. The initiator should raise a new request on rejection or failure.
+</p>
+<ul>
+  <li><b>Close Current Financial Year</b><br>
+    The current year is marked as closed in the system.
+  </li>
+  <li><b>Activate New Financial Year</b><br>
+    The new year is set as the active year for all application operations.<br>
+    System metadata is updated accordingly.
+  </li>
+</ul>
+<p>
+The new calendar year becomes the current operational year.
+</p>
+    <div class="footer">
+      Prepared as updated recommendation and PoC implementation blueprint for EventBridge-based batch job triggering.
+    </div>
+  </div>
 </body>
 </html>
+
+
+
