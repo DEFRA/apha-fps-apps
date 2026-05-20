@@ -26,8 +26,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         public WorkGroupTestCapabilityController(
             IMapper mapper,
             IWorkGroupService workGroupService,
-            ITestCapabilityService testCapabilityService,
-            IExcelExportService excelExportService)
+            ITestCapabilityService testCapabilityService)
         {
             _mapper = mapper;
             _workGroupService = workGroupService;

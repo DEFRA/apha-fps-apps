@@ -190,7 +190,7 @@ function navigateToTestCapabilities() {
         return;
     }
     // Navigate to WorkGroupTestCapability with workgroup as query parameter
-    window.location.href = '/PACT/WorkGroupTestCapability?workgroup=' + encodeURIComponent(currentWorkGroup);
+    window.fpsNavigateTo('/PACT/WorkGroupTestCapability?workgroup=' + encodeURIComponent(currentWorkGroup));
 }
 
 /**

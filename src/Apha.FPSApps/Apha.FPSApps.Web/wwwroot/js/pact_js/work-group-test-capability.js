@@ -94,9 +94,9 @@
     function navigateToTestCapability() {
         var workgroup = currentWorkGroup || $('#selectedWorkgroup').val();
         if (workgroup) {
-            window.location.href = '/PACT/TestCapability?workgroup=' + encodeURIComponent(workgroup);
+            window.fpsNavigateTo('/PACT/TestCapability?workgroup=' + encodeURIComponent(workgroup));
         } else {
-            window.location.href = '/PACT/TestCapability';
+            window.fpsNavigateTo('/PACT/TestCapability');
         }
     }
 
@@ -139,7 +139,7 @@
         if (workgroup) {
             url += '&workgroup=' + encodeURIComponent(workgroup);
         }
-        window.location.href = url;
+        window.fpsNavigateTo(url);
     }
 
     // ── URL Parameter Helper ──────────────────────────────────────────────
