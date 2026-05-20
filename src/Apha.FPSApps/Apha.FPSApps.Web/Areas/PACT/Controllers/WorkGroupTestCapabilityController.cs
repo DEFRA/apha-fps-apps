@@ -14,10 +14,6 @@ using Newtonsoft.Json;
 
 namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 {
-    /// <summary>
-    /// Controller for WorkGroup-focused Test Capability management.
-    /// This is a new controller separate from TestCapabilityController.
-    /// </summary>
     [Area("PACT")]
     [Authorize(Roles = "FPSAdmin,FPSUser,PACTAdmin,PACTUser")]
     [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope, PACTApiSettings:Scope")]
