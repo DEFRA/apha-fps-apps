@@ -35,17 +35,23 @@ var gracefulShutdownWindowSeconds = ResolveIntSetting(
 
 if (builder.Environment.IsEnvironment("local"))
 {
-    Log.Logger = new LoggerConfiguration()
-        .WriteTo.Console()
-        .WriteTo.File("Logs/BatchJobs.log", rollingInterval: RollingInterval.Day)
-        .CreateLogger();
+    builder.Host.UseSerilog((ctx, lc) =>
+    {
+        lc.WriteTo.Console();
+        string srvpath = ctx.Configuration.GetValue<string>("LogsPath") ?? string.Empty;
+        string logpath = $"{(ctx.HostingEnvironment.IsDevelopment() || ctx.HostingEnvironment.IsEnvironment("local") ? "Logs" : srvpath)}\\Logsample.log";
+        lc.WriteTo.File(logpath, Serilog.Events.LogEventLevel.Verbose, rollingInterval: RollingInterval.Day);
+    });
 }
 else
 {
-    Log.Logger = new LoggerConfiguration()
-        .ReadFrom.Configuration(builder.Configuration)
-        .UseStructuredConsoleLogging(builder.Configuration)
-        .CreateLogger();
+    Serilog.Debugging.SelfLog.Enable(Console.Error);
+    builder.Host.UseSerilog((context, services, loggerConfiguration) =>
+    {
+        loggerConfiguration
+        .ReadFrom.Configuration(context.Configuration)  // load min levels from appsettings.json
+        .UseStructuredConsoleLogging();
+    });
 }
 
 builder.Logging.ClearProviders();
