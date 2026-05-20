@@ -84,7 +84,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<bool> DeleteEmployeeAsync(string spNumber)
         {
-            var existingWgEmployee = await _dbContext.WgEmployees
+            var existingWgEmployee = await _dbContext.WorkGroupEmployees
                       .AsNoTracking()
                       .Where(e => e.SpNumber == spNumber && e.FpsYear == _fpsYearContext.FpsYear)
                       .FirstOrDefaultAsync();
@@ -112,7 +112,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             var query = (
                  from staff in _dbContext.StaffActiveView
-                 join grade in _dbContext.WorkgroupGradeGeneralView
+                 join grade in _dbContext.WorkgroupGradeGeneralViews
                      on staff.WorkgroupGrade equals grade.WgGrade
                  where
                     staff.Name != null &&
