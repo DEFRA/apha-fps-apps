@@ -7,6 +7,9 @@
 *.userosscache
 *.sln.docstates
 appsettings.local.json
+appsettings.Local.json
+# Local appsettings file
+src/Apha.BatchJobs/Apha.BatchJobs.Api/appsettings.Local.json
 
 # Build results
 [Bb]in/

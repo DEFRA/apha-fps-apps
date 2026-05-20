@@ -5,6 +5,10 @@ using Microsoft.AspNetCore.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Configuration
+    .AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true)
+    .AddEnvironmentVariables();
+
 // Reuse the exact same service registration as the batch worker.
 // This wires up domain, infrastructure and application layers (repos, factories, etc.)
 ServiceCollectionSetup.ConfigureBatchJobServices(builder.Services, builder.Configuration);
