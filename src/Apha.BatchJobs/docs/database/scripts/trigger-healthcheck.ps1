@@ -53,6 +53,21 @@ if (-not $env:BATCH_RUN_MODE) {
     $env:BATCH_RUN_MODE = "Manual"
 }
 
+if (-not $env:BATCH_JOBQUEUE_ID) {
+    $env:BATCH_JOBQUEUE_ID = [guid]::NewGuid().ToString()
+}
+
+if (-not $env:BATCH_USER_ID) {
+    $env:BATCH_USER_ID = "system"
+}
+
+if (-not $env:ConnectionStrings__BatchJobsConnectionString) {
+    $localSettingsPath = Join-Path $repoRoot "appsettings.local.json"
+    if (-not (Test-Path $localSettingsPath)) {
+        throw "Connection string not set. Provide ConnectionStrings__BatchJobsConnectionString or create appsettings.local.json at $localSettingsPath"
+    }
+}
+
 Push-Location $repoRoot
 try {
     & $dotnetPath run --project $workerProject -- $JobName

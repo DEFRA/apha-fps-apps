@@ -66,19 +66,22 @@ public static class ServiceCollectionSetup
                 ?? throw new InvalidOperationException("Connection string 'BatchJobsConnectionString' not found.");
             var dbCommandTimeoutSeconds = config.GetValue<int?>("BatchJobs:DbCommandTimeoutSeconds") is int v && v > 0 ? v : 30;
 
-            services.AddDbContext<BatchJobsDbContext>(options =>
-            {
-                options.UseNpgsql(
-                    connectionString,
-                    npgsqlOptions =>
-                    {
-                        npgsqlOptions.EnableRetryOnFailure(
-                            maxRetryCount: 5,
-                            maxRetryDelay: TimeSpan.FromSeconds(10),
-                            errorCodesToAdd: null);
-                        npgsqlOptions.CommandTimeout(dbCommandTimeoutSeconds);
-                    });
-            });
+            services.AddDbContext<BatchJobsDbContext>(
+                options =>
+                {
+                    options.UseNpgsql(
+                        connectionString,
+                        npgsqlOptions =>
+                        {
+                            npgsqlOptions.EnableRetryOnFailure(
+                                maxRetryCount: 5,
+                                maxRetryDelay: TimeSpan.FromSeconds(10),
+                                errorCodesToAdd: null);
+                            npgsqlOptions.CommandTimeout(dbCommandTimeoutSeconds);
+                        });
+                },
+                contextLifetime: ServiceLifetime.Scoped,
+                optionsLifetime: ServiceLifetime.Singleton);
 
             // Some jobs resolve DbContext instances through IDbContextFactory for per-operation scopes.
             services.AddDbContextFactory<BatchJobsDbContext>(options =>

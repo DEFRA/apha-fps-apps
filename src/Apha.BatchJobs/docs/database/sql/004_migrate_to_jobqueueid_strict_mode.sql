@@ -23,7 +23,7 @@ ALTER TABLE fps.job_lock
     ADD COLUMN IF NOT EXISTS jobqueueid UUID NOT NULL UNIQUE;
 
 -- Step 4: Recreate partial unique index for strict mode (one active lock per job)
-DROP INDEX IF EXISTS uq_job_lock_job_name_active;
+DROP INDEX IF EXISTS fps.uq_job_lock_job_name_active;
 CREATE UNIQUE INDEX uq_job_lock_job_name_active
     ON fps.job_lock (job_name)
     WHERE is_active = TRUE;

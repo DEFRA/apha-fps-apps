@@ -11,6 +11,7 @@ using Npgsql;
 using Serilog;
 
 var builder = Host.CreateApplicationBuilder(args);
+
 builder.Configuration
     .SetBasePath(AppContext.BaseDirectory)
     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
@@ -35,23 +36,20 @@ var gracefulShutdownWindowSeconds = ResolveIntSetting(
 
 if (builder.Environment.IsEnvironment("local"))
 {
-    builder.Host.UseSerilog((ctx, lc) =>
-    {
-        lc.WriteTo.Console();
-        string srvpath = ctx.Configuration.GetValue<string>("LogsPath") ?? string.Empty;
-        string logpath = $"{(ctx.HostingEnvironment.IsDevelopment() || ctx.HostingEnvironment.IsEnvironment("local") ? "Logs" : srvpath)}\\Logsample.log";
-        lc.WriteTo.File(logpath, Serilog.Events.LogEventLevel.Verbose, rollingInterval: RollingInterval.Day);
-    });
+    string srvpath = builder.Configuration.GetValue<string>("LogsPath") ?? string.Empty;
+    string logpath = $"{(builder.Environment.IsDevelopment() || builder.Environment.IsEnvironment("local") ? "Logs" : srvpath)}\\Logsample.log";
+    Log.Logger = new LoggerConfiguration()
+        .WriteTo.Console()
+        .WriteTo.File(logpath, Serilog.Events.LogEventLevel.Verbose, rollingInterval: RollingInterval.Day)
+        .CreateLogger();
 }
 else
 {
     Serilog.Debugging.SelfLog.Enable(Console.Error);
-    builder.Host.UseSerilog((context, services, loggerConfiguration) =>
-    {
-        loggerConfiguration
-        .ReadFrom.Configuration(context.Configuration)  // load min levels from appsettings.json
-        .UseStructuredConsoleLogging();
-    });
+    Log.Logger = new LoggerConfiguration()
+        .ReadFrom.Configuration(builder.Configuration)
+        .UseStructuredConsoleLogging()
+        .CreateLogger();
 }
 
 builder.Logging.ClearProviders();
