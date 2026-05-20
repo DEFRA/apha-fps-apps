@@ -4,11 +4,11 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Apha.FPS.DataAccess.Data
 {
-    public class WgEmployeeMap : IEntityTypeConfiguration<WgEmployee>
+    public class WgEmployeeMap : IEntityTypeConfiguration<WorkGroupEmployee>
     {
 
 
-        public void Configure(EntityTypeBuilder<WgEmployee> entity)
+        public void Configure(EntityTypeBuilder<WorkGroupEmployee> entity)
         {
             entity.HasKey(e => new { e.PactId, e.FpsYear }).HasName("pk_tblwgemployee");
 

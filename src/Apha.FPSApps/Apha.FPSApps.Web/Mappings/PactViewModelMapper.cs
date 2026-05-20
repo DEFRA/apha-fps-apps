@@ -33,6 +33,10 @@ namespace Apha.FPSApps.Web.Mappings
 
             CreateMap<TestCapabilityItem, TestCapabilityDto>().ReverseMap();
             CreateMap<ConstituentTestItem, TestCapabilityDto>().ReverseMap();
+
+            // Mapping for WorkGroup-focused Test Capability view
+            CreateMap<WorkGroupTestCapabilityItem, TestCapabilityDto>().ReverseMap();
+
             CreateMap<PortfolioTimeCodeViewModel, TimeCodeValidDto>().ReverseMap();
 
             CreateMap<TestRequirementItem, TestRequirementDto>().ReverseMap();
