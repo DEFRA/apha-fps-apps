@@ -27,8 +27,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
             _controller = new WorkGroupTestCapabilityController(
                 _mapper,
                 _workGroupService,
-                _testCapabilityService,
-                Substitute.For<Apha.Common.Utilities.ExcelExport.IExcelExportService>());
+                _testCapabilityService);
         }
 
         private void SetupWorkGroupsResponse(List<WorkGroupDto> workGroups)
