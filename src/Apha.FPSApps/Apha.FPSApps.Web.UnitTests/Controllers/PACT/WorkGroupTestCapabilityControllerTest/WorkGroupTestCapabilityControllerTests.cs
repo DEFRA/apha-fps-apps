@@ -15,28 +15,31 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
     public class WorkGroupTestCapabilityControllerTests
     {
         private readonly IMapper _mapper;
-        private readonly ITestCapabilityService _service;
+        private readonly IWorkGroupService _workGroupService;
+        private readonly ITestCapabilityService _testCapabilityService;
         private readonly WorkGroupTestCapabilityController _controller;
 
         public WorkGroupTestCapabilityControllerTests()
         {
             _mapper = Substitute.For<IMapper>();
-            _service = Substitute.For<ITestCapabilityService>();
+            _workGroupService = Substitute.For<IWorkGroupService>();
+            _testCapabilityService = Substitute.For<ITestCapabilityService>();
             _controller = new WorkGroupTestCapabilityController(
                 _mapper,
-                _service,
+                _workGroupService,
+                _testCapabilityService,
                 Substitute.For<Apha.Common.Utilities.ExcelExport.IExcelExportService>());
         }
 
         private void SetupWorkGroupsResponse(List<WorkGroupDto> workGroups)
         {
-            _service.GetAllWorkGroupsAsync()
+            _workGroupService.GetAllWorkGroupsAsync()
                 .Returns(ApiResponseDto<List<WorkGroupDto>>.SuccessResponse(workGroups));
         }
 
         private void SetupPagedTestCapabilityResponse(List<TestCapabilityDto> testCapabilities, PaginationDto? pagination = null)
         {
-            _service.GetPagedByWorkGroupAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string?>())
+            _testCapabilityService.GetPagedByWorkGroupAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string?>())
                 .Returns(ApiResponseDto<List<TestCapabilityDto>>.SuccessResponse(
                     testCapabilities,
                     pagination ?? new PaginationDto()));
@@ -97,7 +100,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
         public async Task Index_WithFailedWorkGroupsResponse_ReturnsViewWithEmptyWorkGroupOptions()
         {
             // Arrange
-            _service.GetAllWorkGroupsAsync()
+            _workGroupService.GetAllWorkGroupsAsync()
                 .Returns(ApiResponseDto<List<WorkGroupDto>>.FailureResponse(
                     new List<ApiErrorDto> { new() { Code = "ERROR", Message = "Service error" } },
                     new ApiMetaDto { CorrelationId = Guid.NewGuid().ToString(), TimestampUtc = DateTime.UtcNow }));
@@ -116,7 +119,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
         public async Task Index_WithNullWorkGroupsData_ReturnsViewWithEmptyWorkGroupOptions()
         {
             // Arrange
-            _service.GetAllWorkGroupsAsync()
+            _workGroupService.GetAllWorkGroupsAsync()
                 .Returns(ApiResponseDto<List<WorkGroupDto>>.SuccessResponse(null!));
 
             // Act
@@ -305,7 +308,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
             await _controller.LoadTestCapabilityGrid(request, workGroup);
 
             // Assert
-            await _service.Received(1).GetPagedByWorkGroupAsync(
+            await _testCapabilityService.Received(1).GetPagedByWorkGroupAsync(
                 Arg.Any<QueryParameters<string>>(),
                 workGroup);
         }
@@ -354,7 +357,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
         {
             // Arrange
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = "{}" };
-            _service.GetPagedByWorkGroupAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string?>())
+            _testCapabilityService.GetPagedByWorkGroupAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string?>())
                 .Returns(ApiResponseDto<List<TestCapabilityDto>>.SuccessResponse(new List<TestCapabilityDto>(), null));
             SetupMapper();
 
@@ -372,7 +375,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
         {
             // Arrange
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = "{}" };
-            _service.GetPagedByWorkGroupAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string?>())
+            _testCapabilityService.GetPagedByWorkGroupAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string?>())
                 .Returns(ApiResponseDto<List<TestCapabilityDto>>.FailureResponse(
                     new List<ApiErrorDto> { new() { Code = "ERROR", Message = "Service error" } },
                     new ApiMetaDto { CorrelationId = Guid.NewGuid().ToString(), TimestampUtc = DateTime.UtcNow }));
@@ -402,7 +405,78 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
             // Assert
             var partialViewResult = Assert.IsType<PartialViewResult>(result);
             Assert.NotNull(partialViewResult);
-            await _service.Received(1).GetPagedByWorkGroupAsync(Arg.Any<QueryParameters<string>>(), workGroup);
+            await _testCapabilityService.Received(1).GetPagedByWorkGroupAsync(Arg.Any<QueryParameters<string>>(), workGroup);
+        }
+
+        [Fact]
+        public async Task LoadTestCapabilityGrid_WhenExceptionThrown_ReturnsJsonError()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = "{}" };
+            _mapper.When(x => x.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>()))
+                .Do(x => throw new Exception("Mapping error"));
+
+            // Act
+            var result = await _controller.LoadTestCapabilityGrid(request, "WG001");
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = jsonResult.Value;
+            Assert.NotNull(value);
+            var successProperty = value!.GetType().GetProperty("success");
+            Assert.NotNull(successProperty);
+            Assert.False((bool)successProperty.GetValue(value)!);
+
+            var messageProperty = value.GetType().GetProperty("message");
+            Assert.NotNull(messageProperty);
+            Assert.Equal("An error occurred while loading the grid", messageProperty.GetValue(value));
+        }
+
+        [Fact]
+        public async Task LoadTestCapabilityGrid_WhenServiceThrowsException_ReturnsJsonErrorWithExceptionMessage()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = "{}" };
+            var query = new QueryParameters<string>();
+            _mapper.Map<QueryParameters<string>>(request).Returns(query);
+            _testCapabilityService.GetPagedByWorkGroupAsync(query, "WG001")
+                .Returns<ApiResponseDto<List<TestCapabilityDto>>>(x => throw new InvalidOperationException("Service unavailable"));
+
+            // Act
+            var result = await _controller.LoadTestCapabilityGrid(request, "WG001");
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = jsonResult.Value;
+            Assert.NotNull(value);
+
+            var errorsProperty = value!.GetType().GetProperty("errors");
+            Assert.NotNull(errorsProperty);
+            var errors = errorsProperty.GetValue(value) as string[];
+            Assert.NotNull(errors);
+            Assert.Contains("Service unavailable", errors);
+        }
+
+        [Fact]
+        public async Task LoadTestCapabilityGrid_WithInvalidJsonFilter_HandlesGracefully()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> 
+            { 
+                Page = 1, 
+                PageSize = 10, 
+                Filter = "{invalid json}" 
+            };
+            SetupPagedTestCapabilityResponse(new List<TestCapabilityDto>());
+            SetupMapper();
+
+            // Act
+            var result = await _controller.LoadTestCapabilityGrid(request, "WG001");
+
+            // Assert
+            // Should handle gracefully and return partial view (ParseFilterDictionary catches JsonException)
+            var partialViewResult = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partialViewResult.ViewName);
         }
 
         #endregion
@@ -547,7 +621,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
             await _controller.LoadTestCapabilityGrid(request, workGroup);
 
             // Assert
-            await _service.Received(1).GetPagedByWorkGroupAsync(
+            await _testCapabilityService.Received(1).GetPagedByWorkGroupAsync(
                 Arg.Any<QueryParameters<string>>(),
                 workGroup);
         }

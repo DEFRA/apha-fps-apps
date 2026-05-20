@@ -57,12 +57,29 @@
             },
             success: function (html) {
                 $('#gridContainer_testCapabilitiesWGGrid').html(html);
+                // Auto-select the first row after grid loads
+                selectFirstTestCapabilityRow();
             },
             error: function () {
                 console.error('Failed to load Test Capability grid.');
                 showGovukAlert('Failed to load test capabilities. Please try again.');
             }
         });
+    }
+
+    // ── Auto-select first row in Test Capability grid ─────────────────────
+    function selectFirstTestCapabilityRow() {
+        setTimeout(function() {
+            var $firstRow = $('#tbl_' + testCapabilityGridId + ' tbody tr:first');
+            if ($firstRow.length > 0 && $firstRow.find('td').length > 1) {
+                // Check if it's not an empty/message row
+                var hasData = $firstRow.find('[data-property]').length > 0;
+                if (hasData) {
+                    // Trigger click on the first row to select it and populate portfolio
+                    $firstRow.click();
+                }
+            }
+        }, 100);
     }
 
     function clearTestCapabilityGrid() {
@@ -113,8 +130,16 @@
             showGovukAlert('Please select a test capability row first.');
             return;
         }
-        // Navigate to Portfolio Maintenance with selected portfolio
-        window.location.href = '/PACT/PortfolioMaintenance?portfolio=' + encodeURIComponent(portfolio);
+
+        // Get the current workgroup to pass as context for back navigation
+        var workgroup = currentWorkGroup || $('#selectedWorkgroup').val();
+
+        // Navigate to Portfolio Maintenance with selected portfolio and workgroup context
+        var url = '/PACT/PortfolioMaintenance?portfolio=' + encodeURIComponent(portfolio);
+        if (workgroup) {
+            url += '&workgroup=' + encodeURIComponent(workgroup);
+        }
+        window.location.href = url;
     }
 
     // ── URL Parameter Helper ──────────────────────────────────────────────
