@@ -1874,6 +1874,400 @@ The AWS infrastructure team is required to provision and manage the runtime comp
 Please provision and support the AWS resources, IAM permissions, scheduling configuration, and monitoring required for Batch Jobs. Confirm the deployment model and input mapping strategy for both API-triggered and scheduled jobs.
 </p>
 
+<h3>15.11.1 Exact EventBridge Configuration Required</h3>
+<p>
+The following EventBridge setup must be created and maintained by AWS Infra for BatchJobs worker triggering.
+</p>
+
+<h4>15.11.1.1 Event Bus and Rule</h4>
+<ul>
+  <li>Create/use event bus (typically <code>default</code> unless environment policy requires a custom bus).</li>
+  <li>Create rule for API-triggered events with this pattern:</li>
+</ul>
+<pre><code>{
+  "source": ["fps.api", "pact.api"],
+  "detail-type": ["BatchJob.TriggerRequested"]
+}</code></pre>
+
+<h4>15.11.1.2 ECS Target (RunTask) Configuration</h4>
+<p>
+Attach ECS task target to the rule and configure it with all values below:
+</p>
+<pre><code>{
+  "arn": "arn:aws:ecs:&lt;region&gt;:&lt;account-id&gt;:cluster/&lt;batchjobs-cluster&gt;",
+  "roleArn": "arn:aws:iam::&lt;account-id&gt;:role/&lt;eventbridge-ecs-invoke-role&gt;",
+  "ecsParameters": {
+    "taskDefinitionArn": "arn:aws:ecs:&lt;region&gt;:&lt;account-id&gt;:task-definition/&lt;batchjobs-worker&gt;:&lt;revision&gt;",
+    "taskCount": 1,
+    "launchType": "FARGATE",
+    "platformVersion": "LATEST",
+    "networkConfiguration": {
+      "awsvpcConfiguration": {
+        "subnets": ["&lt;subnet-1&gt;", "&lt;subnet-2&gt;"],
+        "securityGroups": ["&lt;sg-1&gt;"],
+        "assignPublicIp": "DISABLED"
+      }
+    }
+  },
+  "retryPolicy": {
+    "maximumRetryAttempts": 24,
+    "maximumEventAgeInSeconds": 3600
+  },
+  "deadLetterConfig": {
+    "arn": "arn:aws:sqs:&lt;region&gt;:&lt;account-id&gt;:&lt;batchjobs-trigger-dlq&gt;"
+  }
+}</code></pre>
+
+<h4>15.11.1.3 Input Transformer (Event to Container Env Mapping)</h4>
+<p>
+Configure input transformer so EventBridge event fields are mapped to worker environment variables.
+</p>
+<pre><code>{
+  "InputPathsMap": {
+    "jobQueueId": "$.detail.jobQueueId",
+    "userId": "$.detail.userId",
+    "jobName": "$.detail.jobName",
+    "runMode": "$.detail.runMode",
+    "yearContext": "$.detail.yearContext"
+  },
+  "InputTemplate": "{\"containerOverrides\":[{\"name\":\"batchjobs-worker\",\"environment\":[{\"name\":\"BATCH_JOBQUEUE_ID\",\"value\":\"&lt;jobQueueId&gt;\"},{\"name\":\"BATCH_USER_ID\",\"value\":\"&lt;userId&gt;\"},{\"name\":\"BATCH_JOB_NAME\",\"value\":\"&lt;jobName&gt;\"},{\"name\":\"BATCH_RUN_MODE\",\"value\":\"&lt;runMode&gt;\"},{\"name\":\"BATCH_YEAR_CONTEXT\",\"value\":\"&lt;yearContext&gt;\"}]}]}"
+}</code></pre>
+
+<h4>15.11.1.4 IAM Permissions for EventBridge Invoke Role</h4>
+<ul>
+  <li><code>ecs:RunTask</code> permission restricted to approved BatchJobs worker task definition(s).</li>
+  <li><code>iam:PassRole</code> permission restricted to ECS task role and execution role used by worker task definition.</li>
+  <li>SQS DLQ policy allowing <code>events.amazonaws.com</code> to send messages to the configured DLQ.</li>
+</ul>
+
+<h4>15.11.1.5 Monitoring and Validation</h4>
+<ul>
+  <li>CloudWatch alarms for EventBridge failed invocations, DLQ message count, and ECS task launch failures.</li>
+  <li>Validate rule matching with sample event payload before go-live.</li>
+  <li>Validate end-to-end trigger path: API event publish -> EventBridge rule match -> ECS task start -> worker logs contain <code>BATCH_JOBQUEUE_ID</code>.</li>
+</ul>
+
+<h4>15.11.1.6 No-Miss Configuration and Environment Variable Matrix</h4>
+<p>
+Use this as the go-live checklist. Any missing mandatory value below should block release.
+</p>
+<table>
+  <thead>
+    <tr>
+      <th>Layer</th>
+      <th>Key / Setting</th>
+      <th>Required</th>
+      <th>Owner</th>
+      <th>Expected Value / Source</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>API config</td>
+      <td><code>EventBridge:EventBusName</code></td>
+      <td>Yes</td>
+      <td>API + Infra</td>
+      <td><code>default</code> or approved custom event bus name.</td>
+    </tr>
+    <tr>
+      <td>API config</td>
+      <td><code>EventBridge:Source</code></td>
+      <td>Yes</td>
+      <td>API</td>
+      <td><code>fps.api</code> or <code>pact.api</code> depending on caller API.</td>
+    </tr>
+    <tr>
+      <td>API config</td>
+      <td><code>EventBridge:DetailType</code></td>
+      <td>Yes</td>
+      <td>API</td>
+      <td><code>BatchJob.TriggerRequested</code>.</td>
+    </tr>
+    <tr>
+      <td>Event payload detail</td>
+      <td><code>jobQueueId</code>, <code>userId</code>, <code>jobName</code>, <code>runMode</code>, <code>yearContext</code></td>
+      <td>Yes</td>
+      <td>API</td>
+      <td>Mandatory trigger contract fields for transformer mapping.</td>
+    </tr>
+    <tr>
+      <td>EventBridge rule</td>
+      <td>Pattern <code>source</code> + <code>detail-type</code></td>
+      <td>Yes</td>
+      <td>Infra</td>
+      <td>Must match API publish contract exactly.</td>
+    </tr>
+    <tr>
+      <td>EventBridge target</td>
+      <td><code>ecsParameters.taskDefinitionArn</code></td>
+      <td>Yes</td>
+      <td>Infra + DevOps</td>
+      <td>Current deployed worker task definition revision.</td>
+    </tr>
+    <tr>
+      <td>EventBridge transformer</td>
+      <td><code>containerOverrides[].name</code></td>
+      <td>Yes</td>
+      <td>Infra</td>
+      <td>Must exactly match container name in ECS worker task definition.</td>
+    </tr>
+    <tr>
+      <td>Worker runtime env</td>
+      <td><code>BATCH_JOBQUEUE_ID</code></td>
+      <td>Yes</td>
+      <td>API + Infra</td>
+      <td>From event detail <code>jobQueueId</code>.</td>
+    </tr>
+    <tr>
+      <td>Worker runtime env</td>
+      <td><code>BATCH_USER_ID</code></td>
+      <td>Yes</td>
+      <td>API + Infra</td>
+      <td>From event detail <code>userId</code>.</td>
+    </tr>
+    <tr>
+      <td>Worker runtime env</td>
+      <td><code>BATCH_JOB_NAME</code></td>
+      <td>Yes</td>
+      <td>API + Infra</td>
+      <td>From event detail <code>jobName</code>.</td>
+    </tr>
+    <tr>
+      <td>Worker runtime env</td>
+      <td><code>BATCH_RUN_MODE</code></td>
+      <td>Yes</td>
+      <td>API + Infra</td>
+      <td>From event detail <code>runMode</code> (for example <code>Manual</code>/<code>Scheduled</code>).</td>
+    </tr>
+    <tr>
+      <td>Worker runtime env</td>
+      <td><code>BATCH_YEAR_CONTEXT</code></td>
+      <td>Conditional</td>
+      <td>API + Infra</td>
+      <td>Required for year-scoped jobs; pass empty only when explicitly not used.</td>
+    </tr>
+    <tr>
+      <td>Worker runtime env</td>
+      <td><code>ASPNETCORE_ENVIRONMENT</code></td>
+      <td>Yes</td>
+      <td>Infra</td>
+      <td><code>Production</code> for ECS runtime.</td>
+    </tr>
+    <tr>
+      <td>Worker runtime secret</td>
+      <td><code>ConnectionStrings__BatchJobsConnectionString</code></td>
+      <td>Yes</td>
+      <td>Infra + Security</td>
+      <td>Inject via Secrets Manager/SSM, not plain text in task definition.</td>
+    </tr>
+    <tr>
+      <td>EventBridge reliability</td>
+      <td><code>retryPolicy</code> + <code>deadLetterConfig</code></td>
+      <td>Yes</td>
+      <td>Infra</td>
+      <td><code>maximumRetryAttempts=24</code>, <code>maximumEventAgeInSeconds=3600</code>, SQS DLQ configured.</td>
+    </tr>
+    <tr>
+      <td>CI/CD secrets</td>
+      <td><code>AWS_ENV_REGION</code>, <code>AWS_ENV_ACCOUNT</code>, <code>AWS_ENV_ROLE</code></td>
+      <td>Yes</td>
+      <td>DevOps</td>
+      <td>Required for GitHub Actions ECR auth and push.</td>
+    </tr>
+    <tr>
+      <td>CI/CD config</td>
+      <td><code>ECR_REPOSITORY</code></td>
+      <td>Yes</td>
+      <td>DevOps</td>
+      <td><code>apha/batchjobs</code>.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>
+<b>Final pre-release check:</b> Trigger one manual API event and one scheduled event, then verify all five runtime env vars are visible in worker startup logs and that <code>jobQueueId</code> traces end-to-end from API response to DB records.
+</p>
+
+<h3>15.11.2 Fargate/ECS Tasks for Manual and Scheduled Jobs</h3>
+<p>
+Use a single worker container image and worker task definition family, with separate EventBridge rule inputs for manual and scheduled execution. The runtime difference is driven by environment variables, not by separate binaries.
+</p>
+
+<h4>15.11.2.1 Common ECS Task Definition Baseline (Both Paths)</h4>
+<ul>
+  <li>Launch type: <code>FARGATE</code></li>
+  <li>Network mode: <code>awsvpc</code></li>
+  <li>Image: <code>&lt;ecr-registry&gt;/apha/batchjobs:&lt;tag&gt;</code></li>
+  <li>Container name: <code>batchjobs-worker</code> (must match EventBridge container override name)</li>
+  <li>Runtime env baseline: <code>ASPNETCORE_ENVIRONMENT=Production</code></li>
+  <li>Secrets: <code>ConnectionStrings__BatchJobsConnectionString</code> via Secrets Manager/SSM</li>
+  <li>Logs: awslogs group + stream prefix configured for worker diagnostics</li>
+</ul>
+
+<h4>15.11.2.1.1 Production Hard Requirements (IAM, VPC, Secrets, Database)</h4>
+<p>
+Use this checklist to align with sibling FPS/PIMS/PACT AWS operating patterns and avoid environment-specific drift.
+</p>
+<ul>
+  <li><b>IAM - EventBridge invoke role:</b> Allow only <code>ecs:RunTask</code> on approved BatchJobs worker task definition family and <code>iam:PassRole</code> only for approved worker task/execution roles.</li>
+  <li><b>IAM - ECS execution role:</b> Pull image from ECR, write logs to CloudWatch, and read referenced Secrets Manager/SSM values.</li>
+  <li><b>IAM - ECS task role:</b> Least-privilege runtime access only (no wildcard admin permissions); include only services actually used by worker code.</li>
+  <li><b>VPC placement:</b> Run tasks in approved private subnets; do not require public IP unless explicitly approved exception.</li>
+  <li><b>Security groups:</b> Outbound allowed to PostgreSQL endpoint/port and required AWS service endpoints; inbound minimized to runtime necessity.</li>
+  <li><b>Egress path:</b> Ensure NAT and/or VPC endpoints exist for ECR image pull, CloudWatch logs, EventBridge, and secret retrieval at startup.</li>
+  <li><b>Database endpoint:</b> Use environment-specific PostgreSQL host, port, and database name managed by infra/DBA ownership model.</li>
+  <li><b>Connection string source:</b> <code>ConnectionStrings__BatchJobsConnectionString</code> must come from Secrets Manager/SSM only; no plain-text secret in task definition, repo, or pipeline logs.</li>
+  <li><b>Connection string format:</b> Include host, port, database, username, password, SSL/TLS mode, and timeout settings as per platform baseline.</li>
+  <li><b>Rotation/readiness:</b> Secret rotation process must be validated with no worker code change; confirm next task launch picks up updated secret value.</li>
+  <li><b>Go-live proof:</b> Evidence must include successful ECS start, DB connectivity, schema access to <code>fps.job_queue</code>/<code>fps.job_execution</code>, and CloudWatch logs with <code>jobQueueId</code> correlation.</li>
+</ul>
+
+<h4>15.11.2.1.2 Sibling Parity Checklist (FPS / PACT / PIMS)</h4>
+<p>
+Use this matrix when wiring non-main and main environments so BatchJobs follows the same convention pattern used by sibling services.
+</p>
+<table>
+  <thead>
+    <tr>
+      <th>Control Area</th>
+      <th>BatchJobs Canonical</th>
+      <th>Sibling Convention Pattern</th>
+      <th>Parity Rule</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>ECR repository</td>
+      <td><code>apha/batchjobs</code></td>
+      <td><code>apha/&lt;service-name&gt;</code></td>
+      <td>Keep same org/repo naming style; only service suffix changes.</td>
+    </tr>
+    <tr>
+      <td>Worker image tag source</td>
+      <td>Git SHA / branch policy driven by CI</td>
+      <td>Same branch-to-tag model used in sibling pipelines</td>
+      <td>Do not introduce custom tag logic for BatchJobs.</td>
+    </tr>
+    <tr>
+      <td>EventBridge invoke role</td>
+      <td><code>eventbridge-ecs-invoke-role</code> (service-scoped)</td>
+      <td><code>&lt;service&gt;-eventbridge-ecs-invoke-role</code></td>
+      <td>Use sibling naming template and least-privilege policy boundaries.</td>
+    </tr>
+    <tr>
+      <td>ECS task execution role</td>
+      <td><code>ecs-task-execution-role</code> (or platform equivalent)</td>
+      <td>Shared platform execution role or service-specific variant</td>
+      <td>Match sibling execution-role strategy per environment.</td>
+    </tr>
+    <tr>
+      <td>ECS task role</td>
+      <td><code>fps-batch-worker-task-role</code></td>
+      <td><code>&lt;service&gt;-worker-task-role</code></td>
+      <td>Follow same role granularity and boundary model as siblings.</td>
+    </tr>
+    <tr>
+      <td>VPC and subnets</td>
+      <td>Private subnets in approved app VPC</td>
+      <td>Same environment VPC/subnet sets used by sibling ECS services</td>
+      <td>BatchJobs must run in same trust/network zones as sibling backend workloads.</td>
+    </tr>
+    <tr>
+      <td>Security groups</td>
+      <td>Worker SG with PostgreSQL + AWS endpoint egress</td>
+      <td>Sibling ECS worker/API SG pattern</td>
+      <td>Apply same ingress/egress hardening baseline.</td>
+    </tr>
+    <tr>
+      <td>Secrets key</td>
+      <td><code>ConnectionStrings__BatchJobsConnectionString</code></td>
+      <td><code>ConnectionStrings__&lt;Service&gt;ConnectionString</code></td>
+      <td>Keep double-underscore .NET key format consistent.</td>
+    </tr>
+    <tr>
+      <td>Secret store</td>
+      <td>Secrets Manager/SSM reference in task definition</td>
+      <td>Same secret delivery mechanism as siblings</td>
+      <td>No plaintext env secrets in task definition or workflow YAML.</td>
+    </tr>
+    <tr>
+      <td>CloudWatch log group</td>
+      <td><code>/ecs/batchjobs-worker</code> (or env-prefixed equivalent)</td>
+      <td><code>/ecs/&lt;service&gt;-*</code></td>
+      <td>Use sibling naming and retention policy standards.</td>
+    </tr>
+    <tr>
+      <td>Alarms</td>
+      <td>EventBridge failed invocations, ECS launch failures, DLQ depth</td>
+      <td>Same alarm families across sibling event-driven workers</td>
+      <td>Parity required for on-call visibility and triage consistency.</td>
+    </tr>
+    <tr>
+      <td>Database endpoint</td>
+      <td>Environment-owned PostgreSQL endpoint</td>
+      <td>Same DBA-owned endpoint promotion and approval pattern</td>
+      <td>No hardcoded per-developer DB endpoints in shared environments.</td>
+    </tr>
+    <tr>
+      <td>CI AWS auth secrets</td>
+      <td><code>AWS_ENV_REGION</code>, <code>AWS_ENV_ACCOUNT</code>, <code>AWS_ENV_ROLE</code></td>
+      <td>Same OIDC/assume-role secret contract in sibling workflows</td>
+      <td>Preserve identical secret names unless platform team mandates change.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h4>15.11.2.2 Manual Jobs (UI/API -> EventBridge -> ECS)</h4>
+<p>
+Manual triggers come from API event publication and must carry caller context.
+</p>
+<pre><code>{
+  "source": ["fps.api", "pact.api"],
+  "detail-type": ["BatchJob.TriggerRequested"],
+  "detail": {
+    "jobQueueId": "uuid",
+    "userId": "requesting-user",
+    "jobName": "RecreateSummaries",
+    "runMode": "Manual",
+    "yearContext": "2026"
+  }
+}</code></pre>
+<ul>
+  <li>Manual run must include all five runtime fields: <code>jobQueueId</code>, <code>userId</code>, <code>jobName</code>, <code>runMode</code>, <code>yearContext</code>.</li>
+  <li>EventBridge transformer maps these values into <code>BATCH_*</code> environment variables.</li>
+  <li>Status tracking must correlate API response and DB records via <code>jobQueueId</code>.</li>
+</ul>
+
+<h4>15.11.2.3 Scheduled Jobs (EventBridge Schedule -> ECS)</h4>
+<p>
+Scheduled jobs are infra-owned schedules and must inject deterministic system context.
+</p>
+<pre><code>{
+  "detail": {
+    "jobQueueId": "&lt;generated-per-run-uuid&gt;",
+    "userId": "system-scheduler",
+    "jobName": "MabArchive",
+    "runMode": "Scheduled",
+    "yearContext": "2026"
+  }
+}</code></pre>
+<ul>
+  <li><code>jobQueueId</code> must be generated uniquely per schedule fire (no reuse across runs).</li>
+  <li><code>userId</code> should be a stable service identity (for example <code>system-scheduler</code>).</li>
+  <li><code>runMode</code> must be <code>Scheduled</code> for operational filtering/audit.</li>
+  <li>Year context should be explicitly injected for year-scoped processes; do not assume application defaults.</li>
+</ul>
+
+<h4>15.11.2.4 Infra Deliverable Checklist (Manual + Scheduled)</h4>
+<ul>
+  <li>One ECS worker task definition family maintained with current image revision.</li>
+  <li>One EventBridge rule for API manual events and one or more EventBridge schedules for scheduled jobs.</li>
+  <li>Both rule/schedule targets wired to the same ECS worker task definition with correct overrides.</li>
+  <li>Retry and DLQ configured identically unless job-specific policy requires deviation.</li>
+  <li>CloudWatch alarms for failed invocations, stopped task failures, and DLQ depth.</li>
+  <li>Operational runbook includes replay/retrigger steps for both manual and scheduled paths.</li>
+</ul>
+
 <h2>15.12 Ask from DevOps and Github Team: Repository, Pipelines, and Delivery Controls</h2>
 <p>
 <b>Required DevOps and Source Control Setup:</b><br>
@@ -1979,6 +2373,50 @@ docker push &lt;ecr-registry&gt;/apha/batchjobs:&lt;tag&gt;</code></pre>
   push image to ECR after build/test success
 else:
   do not push image to ECR</code></pre>
+
+<h4>15.12.1.4 Exact YAML to Implement (from BatchJobs CI)</h4>
+<pre><code>- name: Check last commit message for 'ecrpush'
+  id: check_commit
+  shell: bash
+  run: |
+    COMMIT_MSG="$(git log -1 --pretty=%B)"
+    echo "Last commit message: $COMMIT_MSG"
+
+    # Match sibling app workflows: push image only when commit message contains 'ecrpush'.
+    if [[ "$COMMIT_MSG" == *"ecrpush"* ]]; then
+      echo "should_push=true" >> "$GITHUB_OUTPUT"
+    else
+      echo "should_push=false" >> "$GITHUB_OUTPUT"
+    fi
+
+push-image:
+  name: Push BatchJobs image to ECR
+  needs: build-smoke-and-image
+  # Push only when commit message contains ecrpush (same behavior as sibling repos).
+  if: needs.build-smoke-and-image.outputs.should_push == 'true'
+  runs-on: ubuntu-latest
+  permissions:
+    id-token: write
+    contents: read
+  steps:
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-region: ${{ secrets.AWS_ENV_REGION }}
+        role-to-assume: arn:aws:iam::${{ secrets.AWS_ENV_ACCOUNT }}:role/${{ secrets.AWS_ENV_ROLE }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Build and push image
+      env:
+        IMAGE_TAG: ${{ needs.build-smoke-and-image.outputs.image_tag }}
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+      run: |
+        IMAGE_NAME="$ECR_REGISTRY/${ECR_REPOSITORY}"
+        docker build --file src/Apha.BatchJobs/Dockerfile --tag "$IMAGE_NAME:$IMAGE_TAG" .
+        docker push "$IMAGE_NAME:$IMAGE_TAG"</code></pre>
 
 <p>
 <b>DevOps and Github Team Ask:</b><br>
