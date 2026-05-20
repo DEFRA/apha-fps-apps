@@ -134,6 +134,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 });
             }
 
+            // Ensure rate fields are always stored as positive values
+            if (dto.ChargeRate.HasValue) dto.ChargeRate = Math.Abs(dto.ChargeRate.Value);
+            if (dto.DirectRate.HasValue) dto.DirectRate = Math.Abs(dto.DirectRate.Value);
+            if (dto.PayRate.HasValue) dto.PayRate = Math.Abs(dto.PayRate.Value);
+            if (dto.Npr.HasValue) dto.Npr = Math.Abs(dto.Npr.Value);
+            if (dto.Ohr.HasValue) dto.Ohr = Math.Abs(dto.Ohr.Value);
+
             var result = await _maintDGService.CreateAsync(dto);
 
             if (result.Success)
@@ -197,6 +204,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                         }))
                 });
             }
+
+            // Ensure rate fields are always stored as positive values
+            if (dto.ChargeRate.HasValue) dto.ChargeRate = Math.Abs(dto.ChargeRate.Value);
+            if (dto.DirectRate.HasValue) dto.DirectRate = Math.Abs(dto.DirectRate.Value);
+            if (dto.PayRate.HasValue) dto.PayRate = Math.Abs(dto.PayRate.Value);
+            if (dto.Npr.HasValue) dto.Npr = Math.Abs(dto.Npr.Value);
+            if (dto.Ohr.HasValue) dto.Ohr = Math.Abs(dto.Ohr.Value);
 
             var result = await _maintDGService.UpdateAsync(id, dto);
 
