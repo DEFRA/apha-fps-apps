@@ -38,6 +38,14 @@ namespace Apha.Common.Constants
         public const string UpdateDivision = "api/v1/division/{0}";
         public const string DeleteDivision = "api/v1/division/{0}";
 
+        // Division Grade
+        public const string GetPagedDivisionGrades = "api/v1/divisiongrademaintenance/paged";
+        public const string GetDivisionGradeById = "api/v1/divisiongrademaintenance/{0}";
+        public const string CreateDivisionGrade = "api/v1/divisiongrademaintenance";
+        public const string UpdateDivisionGrade = "api/v1/divisiongrademaintenance/{0}";
+        public const string DeleteDivisionGrade = "api/v1/divisiongrademaintenance/{0}";
+        public const string GetAllDivisionGrades = "api/v1/divisiongrademaintenance/grades";
+
         // Program
         public const string GetAllPrograms = "api/v1/program";
         public const string GetPagedPrograms = "api/v1/program/paged";

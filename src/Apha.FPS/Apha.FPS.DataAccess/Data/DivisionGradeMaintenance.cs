@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Apha.FPS.DataAccess.Data
 {
-    public class DivisionGradeMap : IEntityTypeConfiguration<DivisionGrade>
+    public class DivisionGradeMaintenanceMap : IEntityTypeConfiguration<DivisionGradeMaintenance>
     {
-        public void Configure(EntityTypeBuilder<DivisionGrade> entity)
+        public void Configure(EntityTypeBuilder<DivisionGradeMaintenance> entity)
         {
             entity.HasKey(e => new { e.DivisionGradeCode, e.FpsYear }).HasName("pk_divisiongrade");
 

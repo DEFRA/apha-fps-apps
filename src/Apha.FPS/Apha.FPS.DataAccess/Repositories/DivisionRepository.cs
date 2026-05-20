@@ -173,7 +173,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
             // Check DivisionGrade table (division field references divname)
             // Table: fps.divisiongrade
-            var divisionGradeExists = await _context.Set<DivisionGrade>()
+            var divisionGradeExists = await _context.Set<DivisionGradeMaintenance>()
                 .IgnoreQueryFilters()
                 .AsNoTracking()
                 .AnyAsync(dg => dg.Division == divName);

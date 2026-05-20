@@ -20,6 +20,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
         public IFpsAgencyApiClient FpsAgency { get; }
         public IFpsAdditionalCostApiClient FpsAdditionalCost { get; }
+        public IFpsDivisionGradeMaintenanceApiClient FpsMaintDG { get; }
 
         public FpsApiClient(IFpsHttpExecutor http, IMapper mapper)
         {
@@ -36,6 +37,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             FpsDivision = new FpsDivisionApiClient(http, mapper);
             FpsAgency = new FpsAgencyApiClient(http, mapper);
             FpsAdditionalCost = new FpsAdditionalCostApiClient(http, mapper);
+            FpsMaintDG = new FpsDivisionGradeMaintenanceApiClient(http, mapper);
         }
     }
 }

@@ -14,7 +14,7 @@ namespace Apha.FPS.Application.Mappings
             CreateMap(typeof(PagedData<>), typeof(PaginatedResult<>)).ReverseMap();
 
             CreateMap<PaginationData, PaginationDto>().ReverseMap();
-            CreateMap<StaffJobView, StaffJobViewDto>().ReverseMap();  
+            CreateMap<StaffJobView, StaffJobViewDto>().ReverseMap();
             CreateMap<StaffWorkgroupLookup, StaffWorkgroupLookupDto>().ReverseMap();
             CreateMap<StaffJob, StaffJobDto>().ReverseMap();
             CreateMap<FpsSetting, FpsSettingDto>().ReverseMap();
@@ -38,6 +38,7 @@ namespace Apha.FPS.Application.Mappings
                 .ForMember(d => d.FpsYear, o => o.MapFrom(s => s.FpsCalYear));
             CreateMap<YearMaster, YearMasterDto>().ReverseMap();
             CreateMap<Division, DivisionDto>().ReverseMap();
+            CreateMap<DivisionGradeMaintenance, DivisionGradeMaintenanceDto>().ReverseMap();
             CreateMap<Agency, AgencyDto>().ReverseMap();
             CreateMap<TimeCostCalcsView, TimeCostCalcsViewDto>().ReverseMap();
             CreateMap<AdditionalCost, AdditionalCostDto>().ReverseMap();
