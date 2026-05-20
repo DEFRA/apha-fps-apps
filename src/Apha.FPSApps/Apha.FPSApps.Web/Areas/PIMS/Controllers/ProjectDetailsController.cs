@@ -156,7 +156,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 Title = string.Empty,
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
-                KeyProperty = "Commentno",
+                KeyProperty = "CommentNo",
                 AllowAdd = false,
                 EditFunction = "editComment",
                 DeleteFunction = "deleteComment",
@@ -200,26 +200,26 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
 
 
         [HttpGet]
-        public async Task<IActionResult> GetAddEditCommentPartial(string parentproject, int? commentno, int? selectedYear)
+        public async Task<IActionResult> GetAddEditCommentPartial(string parentproject, int? CommentNo, int? selectedYear)
         {
-            AddEditCommentViewModel model = await LoadAddEditCommentViewModelAsync(parentproject, commentno, selectedYear);
+            AddEditCommentViewModel model = await LoadAddEditCommentViewModelAsync(parentproject, CommentNo, selectedYear);
 
-            if (commentno is not null and not 0)
+            if (CommentNo is not null and not 0)
             {
-                ApiResponseDto<CommentDto> result = await _commentService.GetByIdAsync(commentno.Value);
+                ApiResponseDto<CommentDto> result = await _commentService.GetByIdAsync(CommentNo.Value);
                 if (result is { Success: true, Data: not null })
                 {
-                    model.Commentno = result.Data.Commentno;
+                    model.CommentNo = result.Data.CommentNo;
                     model.Year = result.Data.Year;
                     model.Topic = result.Data.Topic;
-                    model.Commenttext = result.Data.Commenttext;
+                    model.CommentText = result.Data.CommentText;
                 }
             }
 
             return PartialView("_AddEditComment", model);
         }
 
-        private async Task<AddEditCommentViewModel> LoadAddEditCommentViewModelAsync(string parentproject, int? commentno, int? selectedYear)
+        private async Task<AddEditCommentViewModel> LoadAddEditCommentViewModelAsync(string parentproject, int? CommentNo, int? selectedYear)
         {
             ApiResponseDto<List<CommentTopicDto>> topicsResult = await _commentService.GetCommentTopicsAsync();
 
@@ -233,7 +233,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             return new()
             {
                 Project = parentproject,
-                IsAddingNew = commentno is null or 0,
+                IsAddingNew = CommentNo is null or 0,
                 Year = selectedYear,
                 YearOptions =  await GetYearOptions(),
                 TopicOptions = topicOptions
@@ -241,9 +241,9 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetComment(int commentno)
+        public async Task<IActionResult> GetComment(int CommentNo)
         {
-            ApiResponseDto<CommentDto> result = await _commentService.GetByIdAsync(commentno);
+            ApiResponseDto<CommentDto> result = await _commentService.GetByIdAsync(CommentNo);
 
             return result.Success
                 ? Json(new { success = true, data = result.Data, message = "Comment retrieved successfully" })
@@ -263,8 +263,8 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 return Json(new { success = false, errors });
             }
 
-            dto.Madeby = GetCurrentUser();
-            dto.Commenttext = dto.Comment?.Trim();
+            dto.MadeBy = GetCurrentUser();
+            dto.CommentText = dto.Comment?.Trim();
             ApiResponseDto<CommentDto> result = await _commentService.CreateCommentAsync(dto);
             return result.Success
                 ? Json(new { success = true, data = result.Data, message = "Comment added successfully" })
@@ -284,17 +284,17 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 return Json(new { success = false, errors });
             }
 
-            dto.Madeby = GetCurrentUser();
-            ApiResponseDto<CommentDto> result = await _commentService.UpdateCommentAsync(dto.Commentno, dto);
+            dto.MadeBy = GetCurrentUser();
+            ApiResponseDto<CommentDto> result = await _commentService.UpdateCommentAsync(dto.CommentNo, dto);
             return result.Success
                 ? Json(new { success = true, data = result.Data, message = "Comment updated successfully" })
                 : Json(new { success = false, errors = result.Errors });
         }
 
         [HttpDelete]
-        public async Task<IActionResult> DeleteComment(int commentno)
+        public async Task<IActionResult> DeleteComment(int CommentNo)
         {
-            ApiResponseDto<bool> result = await _commentService.DeleteCommentAsync(commentno);
+            ApiResponseDto<bool> result = await _commentService.DeleteCommentAsync(CommentNo);
             return result.Success
                 ? Json(new { success = true, message = "Comment deleted successfully" })
                 : Json(new { success = false, errors = result.Errors });

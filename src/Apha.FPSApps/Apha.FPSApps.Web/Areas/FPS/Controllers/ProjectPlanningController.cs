@@ -4,7 +4,6 @@ using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
-using Azure.Core;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Identity.Web;
@@ -182,7 +181,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 EditFunction = "editAdditionalCost",
                 DeleteFunction = "deleteAdditionalCost",
                 ExtraFilterMethod = "getAdditionalCostExtraFilters",
-                BindGridUrl = "/FPS/AdditionalCostJob/LoadAdditionalCostGrid",
+                BindGridUrl = $"/FPS/AdditionalCostJob/LoadAdditionalCostGrid?title={Uri.EscapeDataString("Exceptional Costs")}",
                 Data = items,
                 Columns = GridDataProvider.GetColumnsDefination<AdditionalCostItemViewModel>(null),
                 Pagination = paginationModel

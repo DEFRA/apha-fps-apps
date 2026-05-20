@@ -21,7 +21,9 @@ namespace Apha.PIMS.DataAccess.Data
             entity.Property(e => e.Publicationprefix)
                 .HasMaxLength(5)
                 .HasColumnName("publicationprefix");
-            entity.Property(e => e.Radtrackprog).HasColumnName("radtrackprog");
+            entity.Property(e => e.Radtrackprog)
+                .HasDefaultValue(true)
+                .HasColumnName("radtrackprog");
         }
     }
 }
