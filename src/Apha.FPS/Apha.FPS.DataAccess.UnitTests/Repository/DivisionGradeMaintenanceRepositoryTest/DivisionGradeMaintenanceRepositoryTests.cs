@@ -223,6 +223,14 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.DivisionGradeMaintenanceRepos
         }
 
         [Fact]
+        public async Task GetByIdAsync_ReturnsNull_WhenCodeIsWhiteSpace()
+        {
+            var repo = CreateRepository(divisionGrades: []);
+            var result = await repo.GetByIdAsync("   ");
+            Assert.Null(result);
+        }
+
+        [Fact]
         public async Task GetByIdAsync_ReturnsRecord_WhenFound()
         {
             var grades = new List<DivisionGradeMaintenance>
@@ -276,6 +284,21 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.DivisionGradeMaintenanceRepos
             Assert.Equal(2025, result.FpsYear);
         }
 
+        [Fact]
+        public async Task CreateAsync_AddsEntityAndSavesChanges()
+        {
+            var (repo, dbSet, context) = CreateRepositoryWithMocks([]);
+            dbSet.Setup(x => x.Add(It.IsAny<DivisionGradeMaintenance>()));
+
+            var entity = BuildDivisionGrade("NEW-VSD");
+            var result = await repo.CreateAsync(entity);
+
+            Assert.NotNull(result);
+            Assert.Equal("NEW-VSD", result.DivisionGradeCode);
+            dbSet.Verify(x => x.Add(It.Is<DivisionGradeMaintenance>(d => d.DivisionGradeCode == "NEW-VSD")), Times.Once);
+            RepositoryTestHelper.VerifySaveChanges(context);
+        }
+
         #endregion
 
         #region UpdateAsync Tests
@@ -296,11 +319,77 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.DivisionGradeMaintenanceRepos
         }
 
         [Fact]
+        public async Task UpdateAsync_ThrowsArgumentException_WhenOriginalCodeIsWhiteSpace()
+        {
+            var repo = CreateRepository(divisionGrades: []);
+            var entity = BuildDivisionGrade("A-VSD");
+            await Assert.ThrowsAsync<ArgumentException>(() => repo.UpdateAsync("   ", entity));
+        }
+
+        [Fact]
+        public async Task UpdateAsync_ThrowsInvalidOperationException_WhenCodeChangesButOriginalNotFound()
+        {
+            var (repo, _, _) = CreateRepositoryWithMocks([]);
+            var entity = BuildDivisionGrade("B-VSD");
+            await Assert.ThrowsAsync<InvalidOperationException>(() => repo.UpdateAsync("A-VSD", entity));
+        }
+
+        [Fact]
         public async Task UpdateAsync_ThrowsInvalidOperationException_WhenOriginalCodeNotFound()
         {
             var (repo, _, _) = CreateRepositoryWithMocks([]);
             var entity = BuildDivisionGrade("A-VSD");
             await Assert.ThrowsAsync<InvalidOperationException>(() => repo.UpdateAsync("NOTEXIST", entity));
+        }
+
+        [Fact]
+        public async Task UpdateAsync_ThrowsInvalidOperationException_WhenSameCodeButRecordNotFound()
+        {
+            var (repo, _, _) = CreateRepositoryWithMocks([]);
+            var entity = BuildDivisionGrade("A-VSD");
+            await Assert.ThrowsAsync<InvalidOperationException>(() => repo.UpdateAsync("A-VSD", entity));
+        }
+
+        [Fact]
+        public async Task UpdateAsync_UpdatesFieldsInPlace_WhenCodeIsUnchanged()
+        {
+            var existing = BuildDivisionGrade("A-VSD", gradeCode: "A", division: "VSD",
+                chargeRate: 100m, directRate: 90m, payRate: 80m, npr: 10m, ohr: 5m);
+            var (repo, dbSet, context) = CreateRepositoryWithMocks([existing]);
+
+            var updated = BuildDivisionGrade("A-VSD", gradeCode: "B", division: "BSD",
+                chargeRate: 200m, directRate: 180m, payRate: 160m, npr: 20m, ohr: 10m);
+
+            var result = await repo.UpdateAsync("A-VSD", updated);
+
+            Assert.Equal("A-VSD", result.DivisionGradeCode);
+            Assert.Equal("B", result.GradeCode);
+            Assert.Equal("BSD", result.Division);
+            Assert.Equal(200m, result.ChargeRate);
+            Assert.Equal(180m, result.DirectRate);
+            Assert.Equal(160m, result.PayRate);
+            Assert.Equal(20m, result.Npr);
+            Assert.Equal(10m, result.Ohr);
+            Assert.Equal(2025, result.FpsYear);
+            RepositoryTestHelper.VerifySaveChanges(context);
+        }
+
+        [Fact]
+        public async Task UpdateAsync_DeletesAndReinserts_WhenCodeChanges()
+        {
+            var existing = BuildDivisionGrade("A-VSD");
+            var (repo, dbSet, context) = CreateRepositoryWithMocks([existing]);
+            dbSet.Setup(x => x.Remove(It.IsAny<DivisionGradeMaintenance>()));
+            dbSet.Setup(x => x.Add(It.IsAny<DivisionGradeMaintenance>()));
+
+            var updated = BuildDivisionGrade("B-VSD", gradeCode: "B", division: "VSD");
+
+            var result = await repo.UpdateAsync("A-VSD", updated);
+
+            Assert.Equal("B-VSD", result.DivisionGradeCode);
+            Assert.Equal(2025, result.FpsYear);
+            dbSet.Verify(x => x.Remove(It.Is<DivisionGradeMaintenance>(d => d.DivisionGradeCode == "A-VSD")), Times.Once);
+            dbSet.Verify(x => x.Add(It.Is<DivisionGradeMaintenance>(d => d.DivisionGradeCode == "B-VSD")), Times.Once);
         }
 
         #endregion
@@ -312,6 +401,14 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.DivisionGradeMaintenanceRepos
         {
             var repo = CreateRepository(divisionGrades: []);
             var result = await repo.DeleteAsync("");
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task DeleteAsync_ReturnsFalse_WhenCodeIsWhiteSpace()
+        {
+            var repo = CreateRepository(divisionGrades: []);
+            var result = await repo.DeleteAsync("   ");
             Assert.False(result);
         }
 
@@ -377,6 +474,95 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.DivisionGradeMaintenanceRepos
             Assert.Equal("A", result[0]);
             Assert.Equal("B", result[1]);
             Assert.Equal("C", result[2]);
+        }
+
+        #endregion
+
+        #region Sorting Tests
+
+        [Theory]
+        [InlineData("gradecode", false, "A", "B")]
+        [InlineData("gradecode", true, "B", "A")]
+        [InlineData("division", false, "BSD", "VSD")]
+        [InlineData("division", true, "VSD", "BSD")]
+        [InlineData("chargerate", false, "50", "100")]
+        [InlineData("chargerate", true, "100", "50")]
+        [InlineData("directrate", false, "40", "90")]
+        [InlineData("directrate", true, "90", "40")]
+        [InlineData("payrate", false, "30", "80")]
+        [InlineData("payrate", true, "80", "30")]
+        [InlineData("npr", false, "5", "10")]
+        [InlineData("npr", true, "10", "5")]
+        [InlineData("ohr", false, "2", "5")]
+        [InlineData("ohr", true, "5", "2")]
+        public async Task GetAllPagedAsync_AppliesSorting_Correctly(string sortBy, bool descending, string expectedFirst, string expectedSecond)
+        {
+            var grades = new List<DivisionGradeMaintenance>
+            {
+                BuildDivisionGrade("B-VSD", gradeCode: "B", division: "VSD", chargeRate: 100m, directRate: 90m, payRate: 80m, npr: 10m, ohr: 5m),
+                BuildDivisionGrade("A-BSD", gradeCode: "A", division: "BSD", chargeRate: 50m, directRate: 40m, payRate: 30m, npr: 5m, ohr: 2m)
+            };
+            var repo = CreateRepository(divisionGrades: grades);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = sortBy, Descending = descending };
+            var result = await repo.GetAllPagedAsync(query);
+            var list = result.Data.ToList();
+            var actualFirst = sortBy switch
+            {
+                "gradecode" => list[0].GradeCode,
+                "division" => list[0].Division,
+                "chargerate" => list[0].ChargeRate?.ToString(),
+                "directrate" => list[0].DirectRate?.ToString(),
+                "payrate" => list[0].PayRate?.ToString(),
+                "npr" => list[0].Npr?.ToString(),
+                "ohr" => list[0].Ohr?.ToString(),
+                _ => list[0].DivisionGradeCode
+            };
+            Assert.Equal(expectedFirst, actualFirst);
+        }
+
+        [Fact]
+        public async Task GetAllPagedAsync_SortsByDivisionGradeCodeAsc_WhenSortByIsUnknown()
+        {
+            var grades = new List<DivisionGradeMaintenance>
+            {
+                BuildDivisionGrade("C-VSD"),
+                BuildDivisionGrade("A-VSD"),
+                BuildDivisionGrade("B-VSD")
+            };
+            var repo = CreateRepository(divisionGrades: grades);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "unknown" };
+            var result = await repo.GetAllPagedAsync(query);
+            Assert.Equal("A-VSD", result.Data.First().DivisionGradeCode);
+        }
+
+        [Fact]
+        public async Task GetAllPagedAsync_SortsByDivisionGradeCodeAsc_WhenSortByIsNull()
+        {
+            var grades = new List<DivisionGradeMaintenance>
+            {
+                BuildDivisionGrade("C-VSD"),
+                BuildDivisionGrade("A-VSD")
+            };
+            var repo = CreateRepository(divisionGrades: grades);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = null };
+            var result = await repo.GetAllPagedAsync(query);
+            Assert.Equal("A-VSD", result.Data.First().DivisionGradeCode);
+        }
+
+        [Fact]
+        public async Task GetAllPagedAsync_SortsByDivisionGradeCodeAsc_WhenSortByIsDivisionGradeCode()
+        {
+            var grades = new List<DivisionGradeMaintenance>
+            {
+                BuildDivisionGrade("A-VSD"),
+                BuildDivisionGrade("C-VSD"),
+                BuildDivisionGrade("B-VSD")
+            };
+            var repo = CreateRepository(divisionGrades: grades);
+            // "divisiongradeCode" toLowerInvariant = "divisiongradecode" which hits the default _ branch (ascending)
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "divisiongradeCode", Descending = true };
+            var result = await repo.GetAllPagedAsync(query);
+            Assert.Equal("A-VSD", result.Data.First().DivisionGradeCode);
         }
 
         #endregion

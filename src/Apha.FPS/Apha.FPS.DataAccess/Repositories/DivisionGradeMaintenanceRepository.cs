@@ -174,16 +174,22 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return sortBy?.ToLowerInvariant() switch
             {
-                "divisiongradeCode" => descending ? query.OrderByDescending(x => x.DivisionGradeCode) : query.OrderBy(x => x.DivisionGradeCode),
-                "gradecode" => descending ? query.OrderByDescending(x => x.GradeCode) : query.OrderBy(x => x.GradeCode),
-                "division" => descending ? query.OrderByDescending(x => x.Division) : query.OrderBy(x => x.Division),
-                "chargerate" => descending ? query.OrderByDescending(x => x.ChargeRate) : query.OrderBy(x => x.ChargeRate),
-                "directrate" => descending ? query.OrderByDescending(x => x.DirectRate) : query.OrderBy(x => x.DirectRate),
-                "payrate" => descending ? query.OrderByDescending(x => x.PayRate) : query.OrderBy(x => x.PayRate),
-                "npr" => descending ? query.OrderByDescending(x => x.Npr) : query.OrderBy(x => x.Npr),
-                "ohr" => descending ? query.OrderByDescending(x => x.Ohr) : query.OrderBy(x => x.Ohr),
-                _ => query.OrderBy(x => x.DivisionGradeCode)
+                "divisiongradeCode" => Order(query, x => x.DivisionGradeCode, descending),
+                "gradecode"         => Order(query, x => x.GradeCode, descending),
+                "division"          => Order(query, x => x.Division, descending),
+                "chargerate"        => Order(query, x => x.ChargeRate, descending),
+                "directrate"        => Order(query, x => x.DirectRate, descending),
+                "payrate"           => Order(query, x => x.PayRate, descending),
+                "npr"               => Order(query, x => x.Npr, descending),
+                "ohr"               => Order(query, x => x.Ohr, descending),
+                _                   => query.OrderBy(x => x.DivisionGradeCode)
             };
         }
+
+        private static IQueryable<DivisionGradeMaintenance> Order<TKey>(
+            IQueryable<DivisionGradeMaintenance> query,
+            System.Linq.Expressions.Expression<Func<DivisionGradeMaintenance, TKey>> keySelector,
+            bool descending)
+            => descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
     }
 }

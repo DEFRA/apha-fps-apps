@@ -214,6 +214,12 @@ namespace Apha.FPS.Application.UnitTests.Services.DivisionGradeMaintenanceServic
         }
 
         [Fact]
+        public async Task UpdateAsync_ThrowsArgumentException_WhenOriginalCodeIsWhiteSpace()
+        {
+            await Assert.ThrowsAsync<ArgumentException>(() => _sut.UpdateAsync("   ", BuildDto()));
+        }
+
+        [Fact]
         public async Task UpdateAsync_ThrowsArgumentNullException_WhenDtoIsNull()
         {
             await Assert.ThrowsAsync<ArgumentNullException>(() => _sut.UpdateAsync("A-VSD", null!));
