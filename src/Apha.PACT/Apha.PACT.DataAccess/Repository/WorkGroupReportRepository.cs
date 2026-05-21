@@ -81,9 +81,7 @@ namespace Apha.PACT.DataAccess.Repository
                         t.ParentProject,
                         StaffName   = s.Name,
                         // IIf(IsNull(JobCode), ItemDescription, JobCodeName)
-                        Description = jc != null ? jc.JobCodeName
-                                    : tp != null ? tp.ItemDescription
-                                    : null
+                        Description = jc != null ? jc.JobCodeName : tp.ItemDescription
                     })
                     .AsNoTracking()
                     .ToListAsync();

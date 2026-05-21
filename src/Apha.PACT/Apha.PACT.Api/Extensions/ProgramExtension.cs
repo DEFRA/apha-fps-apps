@@ -17,6 +17,8 @@ namespace Apha.PACT.Api.Extensions
 {
     public static class ProgramExtension
     {
+        private static readonly string[] GraphScopes = ["https://graph.microsoft.com/.default"];
+
         public static void ConfigureServices(this WebApplicationBuilder builder)
         {
             var services = builder.Services;
@@ -89,7 +91,7 @@ namespace Apha.PACT.Api.Extensions
 
                 return new GraphServiceClient(
                     credential,
-                    new[] { "https://graph.microsoft.com/.default" });
+                    GraphScopes);
             });
 
             // Application services
