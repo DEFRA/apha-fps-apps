@@ -68,7 +68,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
             if (profitCentreGrades != null)
             {
                 var mockSet = RepositoryTestHelper.CreateMockDbSet(profitCentreGrades);
-                mockContext.Setup(x => x.ProfitCentreGrades).Returns(mockSet.Object);
+                mockContext.Setup(x => x.ProfitcentreGrades).Returns(mockSet.Object);
             }
 
             if (projectViews != null)
