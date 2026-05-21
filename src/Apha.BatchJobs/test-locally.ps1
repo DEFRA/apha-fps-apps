@@ -11,7 +11,9 @@ param(
     [switch]$Native,
     [ValidateSet("withdb", "nodb")]
     [string]$DockerProfile = "withdb",
-    [string]$JobName = "HealthCheck"
+    [string]$JobName = "HealthCheck",
+    [string]$JobQueueId,
+    [string]$UserId = "local-dev"
 )
 
 $ErrorActionPreference = "Stop"
@@ -34,6 +36,40 @@ function Write-Success {
 function Write-Failure {
     param([string]$Message)
     Write-Host "[FAIL] $Message" -ForegroundColor Red
+}
+
+function Resolve-JobQueueId {
+    param([string]$InputJobQueueId)
+
+    if (-not [string]::IsNullOrWhiteSpace($InputJobQueueId)) {
+        $parsed = [Guid]::Empty
+        if ([Guid]::TryParse($InputJobQueueId, [ref]$parsed)) {
+            return $parsed.ToString()
+        }
+
+        throw "JobQueueId must be a valid UUID. Received: $InputJobQueueId"
+    }
+
+    return [Guid]::NewGuid().ToString()
+}
+
+function Set-WorkerRuntimeEnvironment {
+    param(
+        [string]$ResolvedJobName,
+        [string]$ResolvedJobQueueId,
+        [string]$ResolvedUserId
+    )
+
+    $env:BATCH_JOB_NAME = $ResolvedJobName
+    $env:BATCH_RUN_MODE = "AdHoc"
+    $env:BATCH_JOBQUEUE_ID = $ResolvedJobQueueId
+    $env:BATCH_USER_ID = $ResolvedUserId
+
+    Write-Host "Simulated trigger payload:" -ForegroundColor Yellow
+    Write-Host "  BATCH_JOB_NAME=$ResolvedJobName"
+    Write-Host "  BATCH_RUN_MODE=AdHoc"
+    Write-Host "  BATCH_JOBQUEUE_ID=$ResolvedJobQueueId"
+    Write-Host "  BATCH_USER_ID=$ResolvedUserId"
 }
 
 function Test-Docker {
@@ -150,6 +186,9 @@ function Show-Status {
 
 Write-Host "Batch Jobs - Local Testing Script" -ForegroundColor Cyan
 Write-Host "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')]" -ForegroundColor Gray
+
+$resolvedJobQueueId = Resolve-JobQueueId -InputJobQueueId $JobQueueId
+Set-WorkerRuntimeEnvironment -ResolvedJobName $JobName -ResolvedJobQueueId $resolvedJobQueueId -ResolvedUserId $UserId
 
 $script:ExecutionMode = Get-ExecutionMode
 Write-Host "Execution mode: $script:ExecutionMode" -ForegroundColor Yellow

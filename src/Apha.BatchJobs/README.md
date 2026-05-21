@@ -63,12 +63,38 @@ docker run --rm -e ASPNETCORE_ENVIRONMENT=Development batchjobs-worker:local Hea
 
 - ASPNETCORE_ENVIRONMENT: Demo or Development.
 - BATCH_JOB_NAME: HealthCheck, ScheduleJobs, FECProcess, or other registered job.
+- BATCH_JOBQUEUE_ID: required UUID for strict mode (simulates API/EventBridge trigger id).
+- BATCH_USER_ID: optional trigger identity (defaults to system if omitted).
 - ConnectionStrings__BatchJobsConnectionString: required for withdb mode.
 - BatchJobs__RecreateSummariesImplementationMode: optional and retained for backward compatibility.
 	Runtime always uses the LINQ-based RecreateSummaries implementation.
 	Retired SQL implementations are preserved under docs/legacy for reference only.
 - BATCH_RECREATE_SUMMARIES_MONTH: optional RecreateSummaries month override (0-12).
 - BATCH_RECREATE_SUMMARIES_TRIGGERED_BY: optional RecreateSummaries user identity override.
+
+## Local Trigger Simulation (No Cloud Dispatch)
+
+Use this when manually debugging worker flows before API-driven dispatch.
+
+PowerShell example:
+
+```powershell
+Set-Location src/Apha.BatchJobs
+
+$env:ASPNETCORE_ENVIRONMENT = "Development"
+$env:BATCH_JOB_NAME = "MABArchive"
+$env:BATCH_RUN_MODE = "AdHoc"
+$env:BATCH_JOBQUEUE_ID = [guid]::NewGuid().ToString()
+$env:BATCH_USER_ID = "local-debug-user"
+
+dotnet run --project Apha.BatchJobs.Worker/Apha.BatchJobs.Worker.csproj
+```
+
+Script shortcut:
+
+```powershell
+./test-locally.ps1 -Native -JobName MABArchive -NoPrompt
+```
 
 ## Canonical Docs
 

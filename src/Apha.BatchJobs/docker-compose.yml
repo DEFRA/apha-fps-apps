@@ -33,8 +33,10 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       DOTNET_ENVIRONMENT: Development
       ConnectionStrings__BatchJobsConnectionString: "Host=postgres;Port=5432;Database=batchjobs;Username=postgres;Password=postgres"
-      BATCH_JOB_NAME: HealthCheck
-      BATCH_RUN_MODE: Manual
+      BATCH_JOB_NAME: ${BATCH_JOB_NAME:-HealthCheck}
+      BATCH_RUN_MODE: ${BATCH_RUN_MODE:-AdHoc}
+      BATCH_JOBQUEUE_ID: ${BATCH_JOBQUEUE_ID:-00000000-0000-0000-0000-000000000010}
+      BATCH_USER_ID: ${BATCH_USER_ID:-local-docker-user}
     depends_on:
       postgres:
         condition: service_healthy
@@ -51,8 +53,10 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Demo
       DOTNET_ENVIRONMENT: Demo
-      BATCH_JOB_NAME: HealthCheck
-      BATCH_RUN_MODE: Manual
+      BATCH_JOB_NAME: ${BATCH_JOB_NAME:-HealthCheck}
+      BATCH_RUN_MODE: ${BATCH_RUN_MODE:-AdHoc}
+      BATCH_JOBQUEUE_ID: ${BATCH_JOBQUEUE_ID:-00000000-0000-0000-0000-000000000011}
+      BATCH_USER_ID: ${BATCH_USER_ID:-local-docker-user}
     networks:
       - batch_jobs_network
 

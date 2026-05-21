@@ -12,14 +12,14 @@ namespace Apha.BatchJobs.Api.Services;
 public sealed class JobTriggerService : IJobTriggerService
 {
     private readonly IAmazonECS _ecsClient;
-    private readonly AwsEcsTriggerOptions _options;
+    private readonly EventBridgeDispatchOptions _options;
     private readonly IConfiguration _configuration;
     private readonly IWebHostEnvironment _hostEnvironment;
     private readonly ILogger<JobTriggerService> _logger;
 
     public JobTriggerService(
         IAmazonECS ecsClient,
-        IOptions<AwsEcsTriggerOptions> options,
+        IOptions<EventBridgeDispatchOptions> options,
         IConfiguration configuration,
         IWebHostEnvironment hostEnvironment,
         ILogger<JobTriggerService> logger)
@@ -51,7 +51,7 @@ public sealed class JobTriggerService : IJobTriggerService
                 // Production call path (kept intentionally commented while AWS execution is disabled).
                 // var ecsResponse = await _ecsClient.RunTaskAsync(request, cancellationToken);
                 // _logger.LogInformation(
-                //     "ECS task started | OperationId={OperationId} | Tasks={TaskCount}",
+                //     "Cloud trigger started | OperationId={OperationId} | Tasks={TaskCount}",
                 //     operationId,
                 //     ecsResponse.Tasks.Count);
 

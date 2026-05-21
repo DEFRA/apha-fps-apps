@@ -11,16 +11,16 @@ namespace Apha.BatchJobs.Api.Controllers;
 public sealed class JobStatusController : ControllerBase
 {
     private readonly IJobStatusService _statusService;
-    private readonly IEcsTaskDispatcher _ecsTaskDispatcher;
+    private readonly IJobDispatchService _jobDispatchService;
     private readonly ILogger<JobStatusController> _logger;
 
     public JobStatusController(
         IJobStatusService statusService,
-        IEcsTaskDispatcher ecsTaskDispatcher,
+        IJobDispatchService jobDispatchService,
         ILogger<JobStatusController> logger)
     {
         _statusService = statusService;
-        _ecsTaskDispatcher = ecsTaskDispatcher;
+        _jobDispatchService = jobDispatchService;
         _logger = logger;
     }
 
@@ -145,12 +145,13 @@ public sealed class JobStatusController : ControllerBase
             });
         }
 
-        var taskArn = await _ecsTaskDispatcher.RunBatchJobAsync(jobName, cancellationToken);
+        var dispatchId = await _jobDispatchService.RunBatchJobAsync(jobName, cancellationToken);
 
         return Accepted(new
         {
             jobName,
-            taskArn,
+            dispatchId,
+            transport = "EventBridge",
             acceptedAt = DateTime.UtcNow
         });
     }

@@ -1,9 +1,9 @@
 namespace Apha.BatchJobs.Api.Services;
 
 /// <summary>
-/// Configuration used to prepare ECS task trigger requests from the API.
+/// Configuration used to prepare EventBridge/cloud dispatch requests from the API.
 /// </summary>
-public sealed class AwsEcsTriggerOptions
+public sealed class EventBridgeDispatchOptions
 {
     public string Cluster { get; set; } = "apha-batchjobs-cluster";
     public string TaskDefinition { get; set; } = "apha-batchjobs-worker";

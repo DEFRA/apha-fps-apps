@@ -1,6 +1,6 @@
 using Apha.BatchJobs.Api.Services;
 using Apha.BatchJobs.Application.DependencyInjection;
-using Amazon.ECS;
+using Amazon.EventBridge;
 using Microsoft.AspNetCore.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,11 +13,10 @@ builder.Configuration
 // This wires up domain, infrastructure and application layers (repos, factories, etc.)
 ServiceCollectionSetup.ConfigureBatchJobServices(builder.Services, builder.Configuration);
 
-builder.Services.Configure<AwsEcsTriggerOptions>(builder.Configuration.GetSection("AwsEcsTrigger"));
-builder.Services.AddSingleton<IAmazonECS>(_ => new AmazonECSClient());
+builder.Services.Configure<EventBridgeDispatchOptions>(builder.Configuration.GetSection("EventBridgeDispatch"));
 builder.Services.AddScoped<IJobStatusService, JobStatusService>();
-builder.Services.AddAWSService<IAmazonECS>();
-builder.Services.AddScoped<IEcsTaskDispatcher, EcsTaskDispatcher>();
+builder.Services.AddAWSService<IAmazonEventBridge>();
+builder.Services.AddScoped<IJobDispatchService, EventBridgeJobDispatcher>();
 builder.Services.AddControllers();
 
 var app = builder.Build();
