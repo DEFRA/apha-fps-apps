@@ -1,0 +1,10 @@
+QUERY NAME: qryrptWorkGroupSum
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW WorkGroup.ProfitCentre, tlkpProject.ProjectWorkGroup, tlkpProject.ParentProject, tlkpMonth.MonthName, ProjectMonthFinal.TotalCost AS MonthCost, tlkpProject.WIP_EOY, ProjectMonthFinal.CumProfile, [wip_eoy]+[cumprofile] AS ForecastCost1, ProjectMonthFinal.CumCost, [cumcost]+[wip_eoy] AS ActualCost1, [forecastcost1]-[actualcost1] AS CostVar, [cuminvoices]+[cumportsales] AS YTDincome, ProjectMonthFinal.CumCOIW, tlkpProject.Budget_Ext AS ContractPrice, ([budget_ext]-[actualcost1]) AS ContPriceLessCost, ProjectMonthFinal.SumOfCostProfile
+FROM WorkGroup INNER JOIN (tlkpMonth INNER JOIN ((qryCurrentMonth INNER JOIN ProjectMonthFinal ON qryCurrentMonth.MaxOfMonthNo = ProjectMonthFinal.MonthNo) INNER JOIN tlkpProject ON ProjectMonthFinal.Project = tlkpProject.ParentProject) ON tlkpMonth.AccntsPeriod = ProjectMonthFinal.MonthNo) ON WorkGroup.WorkGroup = tlkpProject.ProjectWorkGroup
+WHERE ((tlkpProject.PlanCat<>"csg" And tlkpProject.PlanCat<>"TestActivity"))
+ORDER BY tlkpProject.ProjectWorkGroup, tlkpProject.ParentProject;
+

@@ -1,0 +1,9 @@
+QUERY NAME: qryProjectPlanHours
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW WorkGroupGrade_General.WorkGroup, tblStaffJob_MAP.Jobcode, Sum([plannedhours]*[chargerate]) AS PlanCost
+FROM ((tblStaffJob_MAP INNER JOIN tblWGEmployee_general ON tblStaffJob_MAP.StaffID = tblWGEmployee_general.PactID) INNER JOIN WorkGroupGrade_General ON tblWGEmployee_general.WorkGroupGrade = WorkGroupGrade_General.WGGrade) INNER JOIN ProfitCentreGrade_General ON WorkGroupGrade_General.ProfitCentreGrade = ProfitCentreGrade_General.PCGrade
+GROUP BY WorkGroupGrade_General.WorkGroup, tblStaffJob_MAP.Jobcode;
+

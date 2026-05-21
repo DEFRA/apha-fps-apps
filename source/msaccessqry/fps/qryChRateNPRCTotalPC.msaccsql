@@ -1,0 +1,10 @@
+QUERY NAME: qryChRateNPRCTotalPC
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW WorkGroup_General.ProfitCentre, Sum(tblBid.GenBid) AS SumOfGenBid, tblkpAccountCategory.AccountType
+FROM (tblkpAccountCategory INNER JOIN tblBid ON tblkpAccountCategory.AccShortName = tblBid.Account) INNER JOIN WorkGroup_General ON tblBid.WorkGroup = WorkGroup_General.WorkGroup
+GROUP BY WorkGroup_General.ProfitCentre, tblkpAccountCategory.AccountType
+HAVING ((tblkpAccountCategory.AccountType="NPRC"));
+

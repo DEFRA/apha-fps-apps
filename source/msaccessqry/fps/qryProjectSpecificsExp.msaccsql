@@ -1,0 +1,8 @@
+QUERY NAME: qryProjectSpecificsExp
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tlkpProject_General.Program, tlkpProject_General.ParentProject, tlkpProject_General.ProjectTitle, tlkpProject_General.ShortTitle, tlkpProject_General.ProjectStatus, tblAdditionalCosts.Account, tblAdditionalCosts.Description, tblkpAccountCategory.AccountDescription, tblkpAccountCategory.ConstituentAccountCodes, tblAdditionalCosts.Freq, tblAdditionalCosts.Supplier, tblAdditionalCosts.ItemCost, tlkpProject_General.Manager
+FROM (tlkpProject_General INNER JOIN tblAdditionalCosts ON tlkpProject_General.ParentProject = tblAdditionalCosts.JobCode) INNER JOIN tblkpAccountCategory ON tblAdditionalCosts.Account = tblkpAccountCategory.AccShortName;
+

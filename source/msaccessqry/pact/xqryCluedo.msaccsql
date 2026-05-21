@@ -1,0 +1,13 @@
+QUERY NAME: xqryCluedo
+---------------------------------------------
+TYPE: OTHER
+
+SQL:
+PARAMETERS forms![menu-division]!pcpick Text ( 255 );
+TRANSFORM Sum(TimeCostCalcs.Time) AS SumOfTime1
+SELECT WorkGroup.ProfitCentre, tlkpProject.PlanCat, tlkpProject.Manager, tlkpProject.ParentProject, tlkpProject.ProjectTitle, TimeCostCalcs.JobCode, TimeCostCalcs.WorkGroup AS SellWG, TimeCostCalcs.GradeCode, TimeCostCalcs.Name, Min(tlkpJobCode.JobCodeName) AS MinOfJobCodeName, Min(TestOrProduct.ItemDescription) AS MinOfItemDescription, Sum(TimeCostCalcs.Time) AS SumOfTime, Sum(TimeCostCalcs.Cost) AS SumOfCost
+FROM WorkGroup INNER JOIN (tlkpMonth INNER JOIN (((tlkpProject INNER JOIN TimeCostCalcs ON tlkpProject.ParentProject = TimeCostCalcs.Project) LEFT JOIN tlkpJobCode ON TimeCostCalcs.JobCode = tlkpJobCode.JobCode) LEFT JOIN TestOrProduct ON TimeCostCalcs.JobCode = TestOrProduct.ItemCode) ON tlkpMonth.AccntsPeriod = TimeCostCalcs.Month) ON WorkGroup.WorkGroup = tlkpProject.ProjectWorkGroup
+WHERE ((WorkGroup.ProfitCentre=[forms]![menu-division]![pcpick]))
+GROUP BY WorkGroup.ProfitCentre, tlkpProject.PlanCat, tlkpProject.Manager, tlkpProject.ParentProject, tlkpProject.ProjectTitle, TimeCostCalcs.JobCode, TimeCostCalcs.WorkGroup, TimeCostCalcs.GradeCode, TimeCostCalcs.Name
+PIVOT tlkpMonth.MonthName In ("April","May","June","July","August","September","October","November","December","January","February","March");
+

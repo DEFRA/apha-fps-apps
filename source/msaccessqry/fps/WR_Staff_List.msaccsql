@@ -1,0 +1,10 @@
+QUERY NAME: WR_Staff_List
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT vPacttblStaff.Name, vPacttblStaff.SPNumber, vPacttblStaff.WorkGroupGrade, WorkGroupGrade_General.WorkGroup, WorkGroup_MAP.ProfitCentre
+FROM ((WorkGroupGrade_General INNER JOIN vPacttblStaff ON WorkGroupGrade_General.WGGrade = vPacttblStaff.WorkGroupGrade) INNER JOIN WorkGroup_MAP ON WorkGroupGrade_General.WorkGroup = WorkGroup_MAP.WorkGroup) INNER JOIN tblkpProfitCentre_MAP ON WorkGroup_MAP.ProfitCentre = tblkpProfitCentre_MAP.ProfitCentre
+WHERE (((vPacttblStaff.Name) Not Like "*general*" And (vPacttblStaff.Name) Not Like "*vacancy*") AND ((WorkGroupGrade_General.WorkGroup) Like "LT??" Or (WorkGroupGrade_General.WorkGroup) Like "SV??" Or (WorkGroupGrade_General.WorkGroup)="Wildlife") AND ((vPacttblStaff.PersonStatus)="A")) OR (((vPacttblStaff.Name) Not Like "*general*" And (vPacttblStaff.Name) Not Like "*vacancy*") AND ((vPacttblStaff.PersonStatus)="A") AND ((tblkpProfitCentre_MAP.Division)="INSP")) OR (((vPacttblStaff.PersonStatus)="A") AND ((WorkGroup_MAP.ProfitCentre)="Path"))
+ORDER BY vPacttblStaff.Name;
+

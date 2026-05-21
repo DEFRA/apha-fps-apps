@@ -1,0 +1,10 @@
+QUERY NAME: ltdProgrammePurchases
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpProject.Program, tlkpProject.ParentProject, tlkpProject.ShortTitle, tlkpTestReqmt.TestCode, tlkpTestReqmt.UnitPrice, tlkpTestReqmt.NoRequired AS YearReq, [Norequired]*[unitprice] AS YearFee, Sum(MonthlyOutput.Volume) AS YTDvol, [ytdvol]*[unitprice] AS YTDfee, IIf([NoRequired]=0,Null,[ytdvol]/[NoRequired]) AS YTDpercent
+FROM tlkpProject INNER JOIN (tlkpTestReqmt INNER JOIN MonthlyOutput ON (tlkpTestReqmt.Buyer = MonthlyOutput.Buyer) AND (tlkpTestReqmt.TestCode = MonthlyOutput.TestCode)) ON tlkpProject.ParentProject = tlkpTestReqmt.Buyer
+WHERE ((MonthlyOutput.Month<=[forms]![frmLTD_ReportsMenu]![periodPick]))
+GROUP BY tlkpProject.Program, tlkpProject.ParentProject, tlkpProject.ShortTitle, tlkpTestReqmt.TestCode, tlkpTestReqmt.UnitPrice, tlkpTestReqmt.NoRequired;
+

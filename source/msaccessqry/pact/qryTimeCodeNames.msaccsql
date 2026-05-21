@@ -1,0 +1,9 @@
+QUERY NAME: qryTimeCodeNames
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW TimeCodeValid.ParentProject, tlkpProject.Program, TimeCodeValid.TimeCode, First([JobCodeName] & [Itemdescription]) AS Description, tlkpProject.ProjectTitle, tlkpProject.Manager
+FROM ((TimeCodeValid LEFT JOIN tlkpJobCode ON TimeCodeValid.JobCode = tlkpJobCode.JobCode) LEFT JOIN TestorProduct ON TimeCodeValid.TestCode = TestorProduct.ItemCode) INNER JOIN tlkpProject ON TimeCodeValid.ParentProject = tlkpProject.ParentProject
+GROUP BY TimeCodeValid.ParentProject, tlkpProject.Program, TimeCodeValid.TimeCode, tlkpProject.ProjectTitle, tlkpProject.Manager;
+

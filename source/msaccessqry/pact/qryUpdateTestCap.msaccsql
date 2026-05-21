@@ -1,0 +1,10 @@
+QUERY NAME: qryUpdateTestCap
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW ImpTotal.TCCode, ImpTotal.workgroup, "VLAPort" AS Expr1, [tccode] & [workgroup] AS Expr2
+FROM ImpTotal
+GROUP BY ImpTotal.TCCode, ImpTotal.workgroup, [tccode] & [workgroup]
+HAVING ((Not ImpTotal.TCCode="Not avail") AND (ImpTotal.workgroup Not Like "LT??"));
+

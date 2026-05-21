@@ -1,0 +1,13 @@
+QUERY NAME: qryTimeByProgPC
+---------------------------------------------
+TYPE: OTHER
+
+SQL:
+PARAMETERS Forms![Menu-Division]!PeriodPick IEEEDouble;
+TRANSFORM Sum(TimeCostCalcs.Time) AS SumOfTime
+SELECT WorkGroup.ProfitCentre, TimeCostCalcs.Division, TimeCostCalcs.WorkGroup, tblPeriod.PeriodName, Sum(TimeCostCalcs.Time) AS TotalTime
+FROM (tblkPeriodMonth INNER JOIN (tlkpProject INNER JOIN ((TimeCostCalcs INNER JOIN TimeCodeValid ON (TimeCostCalcs.JobCode = TimeCodeValid.TimeCode) AND (TimeCostCalcs.WorkGroup = TimeCodeValid.WorkGroup)) INNER JOIN WorkGroup ON TimeCostCalcs.WorkGroup = WorkGroup.WorkGroup) ON tlkpProject.ParentProject = TimeCodeValid.ParentProject) ON tblkPeriodMonth.MonthNo = TimeCostCalcs.Month) INNER JOIN tblPeriod ON tblkPeriodMonth.EndMonth = tblPeriod.EndPeriod
+WHERE ((tblPeriod.EndPeriod=[Forms]![Menu-Division]![PeriodPick]))
+GROUP BY WorkGroup.ProfitCentre, TimeCostCalcs.Division, TimeCostCalcs.WorkGroup, tblPeriod.PeriodName, tblPeriod.EndPeriod
+PIVOT tlkpProject.Program;
+

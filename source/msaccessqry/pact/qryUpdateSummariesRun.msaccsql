@@ -1,0 +1,8 @@
+QUERY NAME: qryUpdateSummariesRun
+---------------------------------------------
+TYPE: UPDATE
+
+SQL:
+UPDATE DISTINCTROW tblPeriod SET tblPeriod.FinalSummariesRun = True
+WHERE ((tblPeriod.EndPeriod=[Forms]![frmRecreateSummaries]![Period]));
+

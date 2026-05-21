@@ -1,0 +1,10 @@
+QUERY NAME: qryCSGprogramme1
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblkpProfitCentre.Division, tlkpProgram.Directorate, tlkpProject.Program, tlkpProject.PlanCat, tlkpProject.ParentProject, WorkGroup.ProfitCentre, WorkGroup.WorkGroup, tlkpProject.Manager, tlkpProject.Budget_cvl, ProjectMonthFinal.CumProfile, ProjectMonthFinal.CumCost AS ActualCost, [ActualCost]/[CumProfile] AS [%Achieved], ProjectMonthFinal.SumOfMstoneDue AS MstonesDue, ProjectMonthFinal.SumOfDue__Done AS MstonesAch, [MstonesAch]/[MstonesDue] AS [%cmpLT], ProjectMonthFinal.MonthNo
+FROM (tlkpProgram INNER JOIN (ProjectMonthFinal INNER JOIN (WorkGroup INNER JOIN tlkpProject ON WorkGroup.WorkGroup = tlkpProject.ProjectWorkGroup) ON ProjectMonthFinal.Project = tlkpProject.ParentProject) ON tlkpProgram.ProgramNo = tlkpProject.Program) INNER JOIN tblkpProfitCentre ON WorkGroup.ProfitCentre = tblkpProfitCentre.ProfitCentre
+GROUP BY tblkpProfitCentre.Division, tlkpProgram.Directorate, tlkpProject.Program, tlkpProject.PlanCat, tlkpProject.ParentProject, WorkGroup.ProfitCentre, WorkGroup.WorkGroup, tlkpProject.Manager, tlkpProject.Budget_cvl, ProjectMonthFinal.CumProfile, ProjectMonthFinal.CumCost, ProjectMonthFinal.SumOfMstoneDue, ProjectMonthFinal.SumOfDue__Done, ProjectMonthFinal.MonthNo
+HAVING ((ProjectMonthFinal.MonthNo=[forms]![Menu-Division]![PeriodPick]));
+

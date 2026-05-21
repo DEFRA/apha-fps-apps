@@ -1,0 +1,10 @@
+QUERY NAME: qryDeptIncomeTime
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tlkpProject_MAP.ParentProject AS Project, tlkpProject_MAP.OracleProjectCode, tlkpProject_MAP.SubAccountCode, TimeCostCalcsMAP.Month, IIf([IsDefraProject],"Yes","No") AS DefraProject, CostCentre.CostCentre AS OCC, CostCentre.ProfitCentre AS OPC, WorkGroup_MAP.ProfitCentre AS SPC, WorkGroup_MAP.CostCentre AS SCC, TimeCostCalcsMAP.Name, TimeCostCalcsMAP.GradeCode, tblWGEmployeeMAB.SPNumber, TimeCostCalcsMAP.ChargeRate, TimeCostCalcsMAP.Pay, TimeCostCalcsMAP.NonPay, TimeCostCalcsMAP.Overhead, TimeCostCalcsMAP.Time, TimeCostCalcsMAP.Cost AS TotalCost
+FROM tblWGEmployeeMAB INNER JOIN ((tlkpProject_MAP LEFT JOIN CostCentre ON tlkpProject_MAP.CostCentre = CostCentre.CostCentre) INNER JOIN (TimeCostCalcsMAP INNER JOIN WorkGroup_MAP ON TimeCostCalcsMAP.WorkGroup = WorkGroup_MAP.WorkGroup) ON tlkpProject_MAP.ParentProject = TimeCostCalcsMAP.Project) ON tblWGEmployeeMAB.PACTid = TimeCostCalcsMAP.StaffID
+WHERE (((tlkpProject_MAP.ParentProject) Like nz(fnDeptIncomeProject(),"*")) AND ((TimeCostCalcsMAP.Month) Between fnDeptIncomeMonthFrom() And fnDeptIncomeMonthTo()) AND ((TimeCostCalcsMAP.Class)="Charge"))
+ORDER BY tlkpProject_MAP.ParentProject;
+

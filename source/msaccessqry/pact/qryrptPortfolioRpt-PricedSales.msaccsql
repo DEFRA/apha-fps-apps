@@ -1,0 +1,8 @@
+QUERY NAME: qryrptPortfolioRpt-PricedSales
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpTestCapability.PlanPortfolio, MonthlyOutput.Month, MonthlyOutput.TestCode, MonthlyOutput.Buyer, tlkpTestReqmt.UnitPrice, MonthlyOutput.Volume, [unitprice]*[volume] AS Fee
+FROM tlkpTestReqmt INNER JOIN (tlkpTestCapability INNER JOIN MonthlyOutput ON (tlkpTestCapability.WorkGroup = MonthlyOutput.WorkGroup) AND (tlkpTestCapability.TestCode = MonthlyOutput.TestCode)) ON (tlkpTestReqmt.Buyer = MonthlyOutput.Buyer) AND (tlkpTestReqmt.TestCode = MonthlyOutput.TestCode);
+

@@ -1,0 +1,11 @@
+QUERY NAME: qryTestsPCCostPlan_xtab
+---------------------------------------------
+TYPE: OTHER
+
+SQL:
+TRANSFORM Max(nz([tbltestrequirementrccost].[price],[qryTestsPCCostPlan1].[price])) AS Expr1
+SELECT qryTestsPCCostPlan1.JobCode, qryTestsPCCostPlan1.TestCode
+FROM qryTestsPCCostPlan1 LEFT JOIN tblTestRequirementRCCost ON (qryTestsPCCostPlan1.ProfitCentre = tblTestRequirementRCCost.ProfitCentre) AND (qryTestsPCCostPlan1.JobCode = tblTestRequirementRCCost.Buyer) AND (qryTestsPCCostPlan1.TestCode = tblTestRequirementRCCost.TestCode)
+GROUP BY qryTestsPCCostPlan1.JobCode, qryTestsPCCostPlan1.TestCode
+PIVOT qryTestsPCCostPlan1.ProfitCentre In ("LabT","VetR","Viro");
+

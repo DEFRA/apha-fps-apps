@@ -1,0 +1,8 @@
+QUERY NAME: PostMort2
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT *
+FROM POSTMort2_sub1;
+

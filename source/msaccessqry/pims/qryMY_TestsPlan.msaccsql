@@ -1,0 +1,8 @@
+QUERY NAME: qryMY_TestsPlan
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT MY_tlkpTestReqmt.Year, MY_tlkpTestReqmt.Buyer, MY_tlkpTestReqmt.TestCode, MY_tlkpTestReqmt.UnitPrice, MY_tlkpTestReqmt.NoRequired, [NoRequired]*[UnitPrice] AS Cost
+FROM MY_tlkpTestReqmt;
+

@@ -1,0 +1,9 @@
+QUERY NAME: QryAnimalYrs
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblAnimalReq.AnimalType, qryProjectYearProject.FinancialYear, tblAnimalReq.[Number of Days], tblAnimalReq.[Number of Animals], [Number of Days]*[Number of Animals]*[DailyRate] AS [Total Cost], qryProjectYearProject.Project, qryProjectYearProject.ProjectTitle, tblAnimals.DailyRate
+FROM tblAnimals INNER JOIN (tblAnimalReq INNER JOIN qryProjectYearProject ON tblAnimalReq.ProjectYear = qryProjectYearProject.ProjectYear) ON tblAnimals.AnimalType = tblAnimalReq.AnimalType
+WHERE ((tblAnimalReq.AnimalType=[Forms]![FrmAnimalReq]![AnimalReq]) AND (qryProjectYearProject.FinancialYear=[Forms]![FrmAnimalReq]![Select Financial Year]));
+

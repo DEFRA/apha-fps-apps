@@ -1,0 +1,8 @@
+QUERY NAME: qryMY_RadtrackReports
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT MY_Radtrack_Reports.*, NZ(MY_tlkpProject.Program,vProjectLatestDetails.program) AS Program, NZ(MY_tlkpProject.Customer,vProjectLatestDetails.Customer) AS Customer, NZ(MY_tlkpProject.Manager,vProjectLatestDetails.Manager) AS Manager
+FROM (MY_Radtrack_Reports LEFT JOIN MY_tlkpProject ON (MY_Radtrack_Reports.Year = MY_tlkpProject.Year) AND (MY_Radtrack_Reports.Project = MY_tlkpProject.ParentProject)) LEFT JOIN vProjectLatestDetails ON MY_Radtrack_Reports.Project = vProjectLatestDetails.ParentProject;
+

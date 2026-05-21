@@ -1,0 +1,10 @@
+QUERY NAME: qryrptProgramMonthProjectAll
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpProject.Program, tlkpProject.Manager, tlkpProject.ParentProject, tlkpProject.Budget_cvl, Sum(ProjectMonthFinal.TimeCosts) AS [Time], Sum(ProjectMonthFinal.TransferCosts) AS Transfers, Sum(ProjectMonthFinal.Subcontracts) AS Contracted, Sum(ProjectMonthFinal.TotalCost) AS TotalCost, Sum(ProjectMonthFinal.Invoices) AS SumOfInvoices, Sum(ProjectMonthFinal.PortSales) AS SumOfPortSales, [SumofInvoices]+[SumofPortsales] AS totalIncome
+FROM (tlkpProject INNER JOIN ProjectMonthFinal ON tlkpProject.ParentProject = ProjectMonthFinal.Project) INNER JOIN tlkpMonth ON ProjectMonthFinal.MonthNo = tlkpMonth.AccntsPeriod
+WHERE ((tlkpMonth.AccntsPeriod<=[forms]![menu-division]![periodpick]))
+GROUP BY tlkpProject.Program, tlkpProject.Manager, tlkpProject.ParentProject, tlkpProject.Budget_cvl;
+

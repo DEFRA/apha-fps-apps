@@ -1,0 +1,9 @@
+QUERY NAME: qptGetPeriodData
+---------------------------------------------
+TYPE: PASS-THROUGH
+
+SQL:
+SELECT
+    *
+FROM
+    fPeriodTotals (1, 3, 'AA0001')

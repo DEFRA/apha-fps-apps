@@ -1,0 +1,9 @@
+QUERY NAME: Query4
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tblStaffRequ.*
+FROM tblStaffRequ
+WHERE (((tblStaffRequ.Year)>=2010));
+

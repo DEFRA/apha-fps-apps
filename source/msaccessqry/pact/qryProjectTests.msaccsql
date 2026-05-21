@@ -1,0 +1,12 @@
+QUERY NAME: qryProjectTests
+---------------------------------------------
+TYPE: OTHER
+
+SQL:
+TRANSFORM Sum(MonthlyOutput.Volume) AS Volume
+SELECT MonthlyOutput.Buyer, MonthlyOutput.TestCode, Sum(MonthlyOutput.Volume) AS Total
+FROM MonthlyOutput INNER JOIN TestOrProduct ON MonthlyOutput.TestCode = TestOrProduct.ItemCode
+GROUP BY MonthlyOutput.Buyer, MonthlyOutput.TestCode
+ORDER BY MonthlyOutput.Buyer
+PIVOT MonthlyOutput.Month In (1,2,3,4,5,6,7,8,9,10,11,12);
+

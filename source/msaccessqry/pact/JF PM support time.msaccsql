@@ -1,0 +1,9 @@
+QUERY NAME: JF PM support time
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT TimeCostCalcs.WorkGroup, TimeCostCalcs.Project, tlkpProject.ProjectTitle, TimeCostCalcs.JobCode, TimeCostCalcs.GradeCode, TimeCostCalcs.Name, TimeCostCalcs.Month, TimeCostCalcs.Time, TimeCostCalcs.Cost
+FROM TimeCostCalcs INNER JOIN tlkpProject ON TimeCostCalcs.Project = tlkpProject.ParentProject
+WHERE (((TimeCostCalcs.WorkGroup) Like "sv*") AND ((TimeCostCalcs.Project) Like "vsport1*") AND ((TimeCostCalcs.GradeCode) Like "B*" Or (TimeCostCalcs.GradeCode) Like "C*"));
+

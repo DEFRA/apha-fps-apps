@@ -1,0 +1,9 @@
+QUERY NAME: qryContractInvoices
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpProjectParent.Contract AS ParentContract, tlkpProjectParent.ParentProject, Invoice.Month, Sum(Invoice.Amount) AS SumOfAmount1
+FROM tlkpProjectParent INNER JOIN Invoice ON tlkpProjectParent.ParentProject = Invoice.Contract
+GROUP BY tlkpProjectParent.Contract, tlkpProjectParent.ParentProject, Invoice.Month;
+

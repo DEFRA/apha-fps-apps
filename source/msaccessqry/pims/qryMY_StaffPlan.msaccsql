@@ -1,0 +1,8 @@
+QUERY NAME: qryMY_StaffPlan
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT vMY_ProjectStaffPlan.Year, vMY_ProjectStaffPlan.ParentProject, vMY_ProjectStaffPlan.PCGrade, vMY_ProjectStaffPlan.WorkGroupGrade, vMY_ProjectStaffPlan.Name, vMY_ProjectStaffPlan.plannedhours, vMY_ProjectStaffPlan.Rate, vMY_ProjectStaffPlan.Cost
+FROM vMY_ProjectStaffPlan;
+

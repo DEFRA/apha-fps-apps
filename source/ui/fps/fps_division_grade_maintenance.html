@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>2025-2026 : DivisionGrade Maintenance</title>
+    <link rel="stylesheet" href="../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../css/govuk-frontend-6.0.0.min.css">
+    <link rel="stylesheet" href="../css/fps_styles/styles.css">
+    <link rel="stylesheet" href="../css/main_style.css">
+    <link rel="stylesheet" href="../css/supplement_style_for_gov.uk_style.css">
+    <link rel="stylesheet" href="../css/fps_styles/fps_maintenance_pages.css">
+    <link rel="stylesheet" href="../css/common/headernav/navstyle.css" />
+</head>
+<body>
+
+    <header class="govuk-header" role="banner" id="app-header"></header>
+<div id="header"></div>
+        <script src="../js/fps_js/_headernav-config.js"></script>
+    <script src="../js/common/headernav/header-builder.js"></script>
+        <script src="../js/common/headernav/menu-builder.js"></script>
+    <script>
+        buildHeader('app-header', headerConfig);
+        buildNav('header', menuConfig, userConfig);
+    </script>
+
+<main class="govuk-main-wrapper govuk-!-padding-top-0" id="main-content" role="main">
+    <div class="container-fluid">
+
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full">
+                <div class="row fps-sr-breadcrumb-row">
+                    <div class="fps-sr-breadcrumb-flex">
+                        <div class="col-md-8">
+                            <nav class="govuk-breadcrumbs" aria-label="Breadcrumb">
+                                <ol class="govuk-breadcrumbs__list">
+                                    <li class="govuk-breadcrumbs__list-item">
+                                        <a class="govuk-breadcrumbs__link" href="fpshome.html">Home</a>
+                                    </li>
+                                     <li class="govuk-breadcrumbs__list-item">
+                                         <a class="govuk-breadcrumbs__link" href="#">MAB</a>
+                                        
+                                    </li>
+                                    <li class="govuk-breadcrumbs__list-item">
+                                        <a class="govuk-breadcrumbs__link" href="maintain_division.html">Maintenance Menu</a>
+                                    </li>
+                                    <li class="govuk-breadcrumbs__list-item">DivisionGrade Maintenance</li>
+                                </ol>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="govuk-grid-column-full">
+                <h1 class="govuk-grid-row govuk-heading-s sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2 govuk-!-padding-left-4">DivisionGrade Maintenance</h1>
+            </div>
+        </div>
+
+        <div class="govuk-grid-row">
+            <div class="dg-container-fluid">
+                <div class="dg-layout-row">
+
+                    <nav class="sidenav flex-column flex-shrink-0" id="shortnav" aria-label="Maintenance navigation"></nav>
+
+                    <div class="dg-content-column">
+                        <div class="govuk-grid-row">
+                            <div class="govuk-grid-column-full">
+
+                                <div class="dg-header-row">
+                                    <span class="govuk-body govuk-!-font-weight-bold">Division Grades</span>
+                                    <div class="govuk-button-group sup_margin_0 dg-button-group">
+                                        <button type="button" class="govuk-button sup_margin_0 sup_flex_row_center_center"
+                                                data-module="govuk-button"
+                                                id="btnTblDivGradeAdd"
+                                                onclick="openTblDivGradeAddModal()"
+                                                aria-label="Add new division grade">
+                                            <img src="../images/circle-plus-solid-full-white.svg" alt="" aria-hidden="true" width="16px">
+                                            &nbsp; Add
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="dg-table-wrap">
+                                    <table id="tblDivGrade" class="govuk-table custom-table dg-table pp-table-no-margin">
+                                        <caption class="govuk-table__caption govuk-table__caption--s govuk-visually-hidden">DivisionGrade maintenance records</caption>
+                                        <thead class="govuk-table__head">
+                                            <tr class="govuk-table__row">
+                                                <th data-column="divGrade" scope="col" class="govuk-table__header">Div. Grade</th>
+                                                <th data-column="gradeCode" scope="col" class="govuk-table__header">GradeCode</th>
+                                                <th data-column="division" scope="col" class="govuk-table__header">Division</th>
+                                                <th data-column="chargeRate" scope="col" class="govuk-table__header">ChargeRate</th>
+                                                <th data-column="directRate" scope="col" class="govuk-table__header">DirectRate</th>
+                                                <th data-column="payRate" scope="col" class="govuk-table__header">PayRate</th>
+                                                <th data-column="npr" scope="col" class="govuk-table__header">NPR</th>
+                                                <th data-column="ohr" scope="col" class="govuk-table__header">OHR</th>
+                                                <th scope="col" class="govuk-table__header">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="govuk-table__body" id="tblDivGradeBody">
+                                            <!-- rows injected by JS -->
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div class="sup_pagination_footer sup_border">
+                                    <div class="sup_pagination_wrapper">
+                                        <div class="sup_margin_top_bottom_5_10">
+                                            <label for="recordsPerPage">Records per page</label>
+                                            <select id="recordsPerPage" class="govuk-select govuk-select--width-2 govuk-!-font-size-16"
+                                                    aria-label="Select number of records per page">
+                                                <option value="5">5</option>
+                                                <option value="10" selected>10</option>
+                                                <option value="15">15</option>
+                                                <option value="20">20</option>
+                                                <option value="25">25</option>
+                                                <option value="30">30</option>
+                                            </select>
+                                        </div>
+                                        <nav class="govuk-pagination sup_margin_top_bottom_5_10" aria-label="Pagination">
+                                            <ul class="govuk-pagination__list" id="pagination"></ul>
+                                        </nav>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="govuk-grid-row">
+    <div id="app-footer"></div>
+    <script>buildFooter("app-footer", footerConfig);</script>
+        </div>
+
+    </div>
+</main>
+
+<!-- Add / Edit DivisionGrade Modal -->
+<div class="modal fade" id="tblDivGradeModal" tabindex="-1" role="dialog"
+     aria-labelledby="tblDivGradeModalLabel" aria-hidden="true" aria-modal="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header flex-space-center">
+                <h3 class="govuk-heading-s dg-modal-title" id="tblDivGradeModalLabel">Add Division Grade</h3>
+                <button type="button" class="btn-close" onclick="closeTblDivGradeModal()" aria-label="Close">x</button>
+            </div>
+            <div class="modal-body dg-modal-body">
+                <form class="dg-modal-form" id="formTblDivGrade" novalidate>
+                    <div class="govuk-form-group sup_margin_bottom_10">
+                        <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="modal-dg-divgrade">Div. Grade:</label>
+                        <input class="govuk-input govuk-!-font-size-16" id="modal-dg-divgrade" name="divGrade" type="text" aria-required="true">
+                    </div>
+                    <div class="govuk-form-group sup_margin_bottom_10">
+                        <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="modal-dg-gradecode">GradeCode:</label>
+                        <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100" id="modal-dg-gradecode" name="gradeCode" aria-label="Select grade code">
+                            <option value="">-- Select --</option>
+                            <option>A</option><option>B</option><option>C</option>
+                            <option>D</option><option>E</option><option>F</option>
+                            <option>G</option><option>GD5</option>
+                        </select>
+                    </div>
+                    <div class="govuk-form-group sup_margin_bottom_10">
+                        <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="modal-dg-division">Division:</label>
+                        <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100" id="modal-dg-division" name="division" aria-label="Select division">
+                            <option value="">-- Select --</option>
+                            <option>BSD</option><option>CPD</option><option>EU Exit</option>
+                            <option>HNC</option><option>INSP</option><option>Ops</option>
+                            <option>PH-B-Adv</option><option>R&amp;D</option><option>SPI</option>
+                            <option>Surv</option><option>Vet</option>
+                        </select>
+                    </div>
+                    <div class="govuk-form-group sup_margin_bottom_10">
+                        <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="modal-dg-chargerate">ChargeRate:</label>
+                        <div class="govuk-input__wrapper">
+                            <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                            <input class="govuk-input govuk-!-font-size-16 dg-rate-input" id="modal-dg-chargerate" name="chargeRate" type="text">
+                        </div>
+                    </div>
+                    <div class="govuk-form-group sup_margin_bottom_10">
+                        <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="modal-dg-directrate">DirectRate:</label>
+                        <div class="govuk-input__wrapper">
+                            <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                            <input class="govuk-input govuk-!-font-size-16 dg-rate-input" id="modal-dg-directrate" name="directRate" type="text">
+                        </div>
+                    </div>
+                    <div class="govuk-form-group sup_margin_bottom_10">
+                        <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="modal-dg-payrate">PayRate:</label>
+                        <div class="govuk-input__wrapper">
+                            <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                            <input class="govuk-input govuk-!-font-size-16 dg-rate-input" id="modal-dg-payrate" name="payRate" type="text">
+                        </div>
+                    </div>
+                    <div class="govuk-form-group sup_margin_bottom_10">
+                        <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="modal-dg-npr">NPR:</label>
+                        <div class="govuk-input__wrapper">
+                            <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                            <input class="govuk-input govuk-!-font-size-16 dg-rate-input" id="modal-dg-npr" name="npr" type="text">
+                        </div>
+                    </div>
+                    <div class="govuk-form-group sup_margin_bottom_10">
+                        <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="modal-dg-ohr">OHR:</label>
+                        <div class="govuk-input__wrapper">
+                            <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                            <input class="govuk-input govuk-!-font-size-16 dg-rate-input" id="modal-dg-ohr" name="ohr" type="text">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer dg-modal-footer">
+                <button type="button" class="govuk-button govuk-button--secondary sup_margin_0"
+                        data-module="govuk-button" onclick="closeTblDivGradeModal()">Cancel</button>
+                <button type="submit" class="govuk-button sup_margin_0"
+                        data-module="govuk-button" id="tblDivGradeSaveBtn"
+                        onclick="saveTblDivGrade()">Save</button>
+                <button type="submit" class="govuk-button sup_margin_0 dg-hidden"
+                        data-module="govuk-button" id="tblDivGradeUpdateBtn"
+                        onclick="updateTblDivGrade()">Update</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="../js/fps_js/_sidenav-maintenanceMenu-config.js"></script>
+<script src="../js/common/sidenav-builder.js"></script>
+<script>
+    buildSidenav('shortnav', sidenavConfig);
+</script>
+<script src="../js/common/bootstrap.bundle.min.js"></script>
+<script src="../js/fps_js/fps_division_grade_maintenance.js"></script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+QUERY NAME: mrkta0121
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT *
+FROM MonthlyOutput
+WHERE ((MonthlyOutput.TestCode="ta0121"));
+

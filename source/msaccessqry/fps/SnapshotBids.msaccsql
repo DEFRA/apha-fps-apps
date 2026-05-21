@@ -1,0 +1,8 @@
+QUERY NAME: SnapshotBids
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW WorkGroup_General.ProfitCentre, tblBid.*, tblkpAccountCategory_MAP.AccountType
+FROM (tblBid INNER JOIN WorkGroup_General ON tblBid.WorkGroup = WorkGroup_General.WorkGroup) INNER JOIN tblkpAccountCategory_MAP ON tblBid.Account = tblkpAccountCategory_MAP.AccShortName;
+

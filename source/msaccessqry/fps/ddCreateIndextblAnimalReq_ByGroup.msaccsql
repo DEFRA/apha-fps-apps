@@ -1,0 +1,6 @@
+QUERY NAME: ddCreateIndextblAnimalReq_ByGroup
+---------------------------------------------
+TYPE: DDL
+
+SQL:
+CREATE UNIQUE INDEX tblAnimalReq_ByGroup_PK ON tblAnimalReq_ByGroup(IndCounter)

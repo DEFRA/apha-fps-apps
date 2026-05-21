@@ -1,0 +1,11 @@
+QUERY NAME: qryPMFinalRpt
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW ProjectMonthFinal.Project, Sum(ProjectMonthFinal.Animals) AS Animals, Sum(ProjectMonthFinal.NonAnimals) AS Other, Sum(ProjectMonthFinal.TimeCosts) AS Staff, Sum(ProjectMonthFinal.TransferCosts) AS Tests, Sum(ProjectMonthFinal.TotalCost) AS TotalCost, Sum(ProjectMonthFinal.Invoices) AS Invoices
+FROM ProjectMonthFinal
+WHERE ((ProjectMonthFinal.MonthNo<=[Forms]![frmContractMenu]![PeriodPick]))
+GROUP BY ProjectMonthFinal.Project
+ORDER BY ProjectMonthFinal.Project;
+

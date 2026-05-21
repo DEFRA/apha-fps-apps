@@ -1,0 +1,8 @@
+QUERY NAME: qryMY_AnimalPlan
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT vMY_ProjectAnimalPlan.Year, vMY_ProjectAnimalPlan.ParentProject, vMY_ProjectAnimalPlan.AnimalType, vMY_ProjectAnimalPlan.NumberOfDays, vMY_ProjectAnimalPlan.NumberOfAnimals, vMY_ProjectAnimalPlan.Rate, vMY_ProjectAnimalPlan.cost
+FROM vMY_ProjectAnimalPlan;
+

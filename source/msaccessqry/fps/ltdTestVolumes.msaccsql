@@ -1,0 +1,9 @@
+QUERY NAME: ltdTestVolumes
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpProject_General.Program, tlkpTestReqmt.TestCode, Sum(tlkpTestReqmt.NoRequired) AS SumOfNoRequired, Sum([norequired]*[unitprice]) AS PlanFee
+FROM tlkpProject_General INNER JOIN tlkpTestReqmt ON tlkpProject_General.ParentProject = tlkpTestReqmt.Buyer
+GROUP BY tlkpProject_General.Program, tlkpTestReqmt.TestCode;
+

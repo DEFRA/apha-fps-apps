@@ -1,0 +1,10 @@
+QUERY NAME: csg_sum
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpProject.PlanCat, tlkpProject.ParentProject, Sum(ProjectMonthFinal.Animals) AS LgeAnimals, Sum(ProjectMonthFinal.NonAnimals) AS ExcCosts, Sum(ProjectMonthFinal.TimeCosts) AS [Time], Sum(ProjectMonthFinal.TransferCosts) AS Tests
+FROM tlkpProject INNER JOIN ProjectMonthFinal ON tlkpProject.ParentProject = ProjectMonthFinal.Project
+GROUP BY tlkpProject.PlanCat, tlkpProject.ParentProject
+HAVING ((tlkpProject.PlanCat="csg"));
+

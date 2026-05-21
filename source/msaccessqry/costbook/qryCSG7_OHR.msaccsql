@@ -1,0 +1,10 @@
+QUERY NAME: qryCSG7_OHR
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tblStaffRequ.Project, tblStaffRequ.Year AS YearNo, Sum(([NoHours]*[tblstaffRequ].[chargerate])*([OHR]+[NPR])/[chargerate]) AS cost, "Overheads" AS Category
+FROM tblStaffRequ
+GROUP BY tblStaffRequ.Project, tblStaffRequ.Year
+HAVING (((tblStaffRequ.Project)=[Forms]![frmProject1]![Project]));
+

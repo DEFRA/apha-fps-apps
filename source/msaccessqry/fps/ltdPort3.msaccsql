@@ -1,0 +1,9 @@
+QUERY NAME: ltdPort3
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW PortfolioTest.Program, PortfolioTest.PlanPortfolio, PortfolioTest.PlanPortfolio AS ParentProject, PortfolioTest.WorkGroup, PortfolioTest.UnitPriceVLA AS UnitFEC, PortfolioTest.TestCode, ltdPort2.SumOfVolume, ltdPort1.SumOfCost, [sumofcost]/[sumofvolume] AS RawUP, ltdPort2.Fee
+FROM (PortfolioTest LEFT JOIN ltdPort1 ON (PortfolioTest.TestCode = ltdPort1.JobCode) AND (PortfolioTest.WorkGroup = ltdPort1.WorkGroup) AND (PortfolioTest.PlanPortfolio = ltdPort1.ParentProject)) LEFT JOIN ltdPort2 ON (PortfolioTest.WorkGroup = ltdPort2.WorkGroup) AND (PortfolioTest.TestCode = ltdPort2.TestCode) AND (PortfolioTest.PlanPortfolio = ltdPort2.ParentProject)
+WHERE ((ltdPort2.SumOfVolume Is Not Null)) OR ((ltdPort1.SumOfCost Is Not Null));
+

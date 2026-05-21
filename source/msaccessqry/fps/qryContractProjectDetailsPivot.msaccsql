@@ -1,0 +1,8 @@
+QUERY NAME: qryContractProjectDetailsPivot
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW qryJobCodeCust.Contract, qryJobCodeCust.JobCode, (IIf(IsNull([TotalAdditionalCosts]),0,[TotalAdditionalCosts])) AS PlanAdditionalCosts, IIf(IsNull([TotalAnimalCosts]),0,[TotalAnimalCosts]) AS PlanAnimalCosts, IIf(IsNull([TotalStaffCosts]),0,[TotalStaffCosts]) AS PlanStaffCosts, IIf(IsNull([TotalTestCosts]),0,[TotalTestCosts]) AS PlanTestCosts, [PlanAnimalCosts]+[PlanAdditionalCosts]+[PlanStaffCosts]+[planTestCosts] AS PlanTotalCosts, ([budget_cvl]-[PlanTotalCosts]) AS PlanProfit, qryJobCodeCust.Budget_CVL AS Budget, qryPMFinalPivot.Animals, qryPMFinalPivot.Other, qryPMFinalPivot.Staff, qryPMFinalPivot.Tests, qryPMFinalPivot.TotalCost, qryPMFinalPivot.Invoices
+FROM ((((qryJobCodeCust LEFT JOIN qryTotalAdditionalCosts ON qryJobCodeCust.JobCode = qryTotalAdditionalCosts.JobCode) LEFT JOIN qryTotalAnimalCosts ON qryJobCodeCust.JobCode = qryTotalAnimalCosts.JobCode) LEFT JOIN qryTotalStaffCosts ON qryJobCodeCust.JobCode = qryTotalStaffCosts.Jobcode) LEFT JOIN qryTotalTestCosts ON qryJobCodeCust.JobCode = qryTotalTestCosts.JobCode) LEFT JOIN qryPMFinalPivot ON qryJobCodeCust.JobCode = qryPMFinalPivot.Project;
+

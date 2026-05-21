@@ -1,0 +1,9 @@
+QUERY NAME: qryrptBalanceStagesA
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblStaff_General.WorkGroupGrade AS WGGrade, tlkpProject_General.PlanCat AS PlanningCategory, Sum(tblStaffJob_RM.plannedhours) AS SumOfPlannedHours
+FROM (tblStaff_General INNER JOIN tblStaffJob_RM ON tblStaff_General.StaffID = tblStaffJob_RM.StaffID) INNER JOIN tlkpProject_General ON tblStaffJob_RM.Jobcode = tlkpProject_General.ParentProject
+GROUP BY tblStaff_General.WorkGroupGrade, tlkpProject_General.PlanCat;
+

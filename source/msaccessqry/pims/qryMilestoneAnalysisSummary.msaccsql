@@ -1,0 +1,10 @@
+QUERY NAME: qryMilestoneAnalysisSummary
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT qryMilestoneAnalysis.Program, qryMilestoneAnalysis.IDType, Sum(qryMilestoneAnalysis.DueThisYear) AS DueThisYear, Sum(qryMilestoneAnalysis.DueThisMonth) AS DueThisMonth, Sum(qryMilestoneAnalysis.Met) AS Met, Sum(qryMilestoneAnalysis.MetAheadOfSchedule) AS MetAheadOfSchedule, Sum(qryMilestoneAnalysis.MetOnTime) AS MetOnTime, Sum(qryMilestoneAnalysis.DueUnderReview) AS DueUnderReview, Sum(qryMilestoneAnalysis.DueNotUnderReview) AS DueNotUnderReview, Sum(qryMilestoneAnalysis.Unreported) AS Unreported, Sum(qryMilestoneAnalysis.OnTargetNotDue) AS OnTargetNotDue, Sum(qryMilestoneAnalysis.NotOnTargetNotDue) AS NotOnTargetNotDue
+FROM qryMilestoneAnalysis
+WHERE (((qryMilestoneAnalysis.Manager) Like fnGetHiddenManager()) AND ((qryMilestoneAnalysis.Customer) Like fnSummaryCustomer()) AND ((qryMilestoneAnalysis.Contract) Like fnSummaryContract()))
+GROUP BY qryMilestoneAnalysis.Program, qryMilestoneAnalysis.IDType;
+

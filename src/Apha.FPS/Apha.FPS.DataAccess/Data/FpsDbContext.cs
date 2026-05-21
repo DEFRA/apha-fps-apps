@@ -26,7 +26,7 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<Workgroup> Workgroups { get; set; }
         public virtual DbSet<WorkgroupGrade> WorkgroupGrades { get; set; }
         public virtual DbSet<ProfitCentreGrade> ProfitcentreGrades { get; set; }
-        public virtual DbSet<DivisionGradeMaintenance> DivisionGrades { get; set; }
+        public virtual DbSet<DivisionGrade> DivisionGrades { get; set; }
         public virtual DbSet<Grade> Grades { get; set; }
         public virtual DbSet<UserProfitcentre> UserProfitcentres { get; set; }
         public virtual DbSet<ProfitCentre> ProfitCentres { get; set; }
@@ -262,8 +262,8 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.Entity<TimeCostCalcs>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new DivisionMap());
-            modelBuilder.ApplyConfiguration(new DivisionGradeMaintenanceMap());
-            modelBuilder.Entity<DivisionGradeMaintenance>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+            modelBuilder.ApplyConfiguration(new DivisionGradeMap());
+            modelBuilder.Entity<DivisionGrade>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
             modelBuilder.ApplyConfiguration(new GradeCodeMap());
 
             modelBuilder.ApplyConfiguration(new AdditionalCostViewMap());

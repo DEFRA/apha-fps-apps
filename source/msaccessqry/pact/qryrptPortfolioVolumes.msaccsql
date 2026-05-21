@@ -1,0 +1,11 @@
+QUERY NAME: qryrptPortfolioVolumes
+---------------------------------------------
+TYPE: OTHER
+
+SQL:
+TRANSFORM Sum(MonthlyOutput.Volume) AS SumOfVolume
+SELECT tlkpTestCapability.PlanPortfolio, TestOrProduct.ItemDescription, tlkpTestReqmt.UnitPrice, [sumofvolume1]*[unitprice] AS Fee, MonthlyOutput.TestCode, Sum(MonthlyOutput.Volume) AS SumOfVolume1
+FROM tlkpTestReqmt INNER JOIN ((tlkpTestCapability INNER JOIN TestOrProduct ON tlkpTestCapability.TestCode = TestOrProduct.ItemCode) INNER JOIN MonthlyOutput ON (tlkpTestCapability.WorkGroup = MonthlyOutput.WorkGroup) AND (tlkpTestCapability.TestCode = MonthlyOutput.TestCode)) ON (tlkpTestReqmt.Buyer = MonthlyOutput.Buyer) AND (tlkpTestReqmt.TestCode = MonthlyOutput.TestCode)
+GROUP BY tlkpTestCapability.PlanPortfolio, TestOrProduct.ItemDescription, tlkpTestReqmt.UnitPrice, MonthlyOutput.TestCode
+PIVOT MonthlyOutput.Month In (1,2,3,4,5,6,7,8,9,10,11,12);
+

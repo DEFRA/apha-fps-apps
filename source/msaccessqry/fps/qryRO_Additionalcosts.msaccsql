@@ -1,0 +1,8 @@
+QUERY NAME: qryRO_Additionalcosts
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tblAdditionalCosts_General.JobCode, tblAdditionalCosts_General.Account, tblAdditionalCosts_General.Description, tblAdditionalCosts_General.ItemCost
+FROM tblAdditionalCosts_General;
+

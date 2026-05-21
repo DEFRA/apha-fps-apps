@@ -1,0 +1,9 @@
+QUERY NAME: JF PC0006
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT MonthlyOutput.TestCode, MonthlyOutput.Buyer, MonthlyOutput.Month, MonthlyOutput.WorkGroup, MonthlyOutput.Volume, TestorProduct.UnitPriceVLAgen, [Volume]*[UnitPriceVLAgen] AS Total
+FROM MonthlyOutput INNER JOIN TestorProduct ON MonthlyOutput.TestCode = TestorProduct.ItemCode
+WHERE (((MonthlyOutput.TestCode) Like "TC0008")) OR (((MonthlyOutput.TestCode) Like "TC0010")) OR (((MonthlyOutput.TestCode) Like "TC0575"));
+

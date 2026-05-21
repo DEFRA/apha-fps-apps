@@ -1,0 +1,9 @@
+QUERY NAME: qryPortfolio
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpProject.ParentProject AS JobCode, tlkpProject.ProjectTitle AS JobDescription, tlkpProject.PlanCat AS PlanningCategory, tlkpProject.Program AS Programme, tlkpProject.Customer, tlkpProject.Manager AS ProjectManager, tlkpProject.TransferIncome AS Income, tlkpProject.Profit, tlkpProject.DateCreated, tlkpProject.CostBookNo, tlkpProject.ProjectStatus
+FROM tlkpProject
+WHERE ((tlkpProject.PlanCat="TestActivity"));
+

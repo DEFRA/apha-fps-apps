@@ -1,0 +1,9 @@
+QUERY NAME: qryrptNON-CSGProjectHdr
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW ProjectMonthFinal.MonthNo, ProjectMonthFinal.PeriodName, tlkpProject.Manager AS ProjectManager, tlkpProject.ProjectTitle, tlkpProject.ParentProject AS Project, tlkpProject.Budget_Ext AS ContractPrice, [Budget_ext]+[tlkpProject].[transferIncome] AS ForecastIncome, FPSYearTotals.TotalCosts AS ForecastCost, IIf(IsNull([wip_eoy]),0,[wip_eoy]) AS [PreviousYr-WIP], ProjectMonthFinal.CostProfile AS [YTD-ForecastCost], ProjectMonthFinal.CumCost AS [Cost This Year], [CumCost]+[PreviousYr-WIP] AS [YTD-Cost inc WIP], [cuminvoices]+[cumportsales] AS CumIncome, ProjectMonthFinal.MonthNo, tlkpProject.Program, tlkpProject.Budget_CVL, tlkpProject.Customer
+FROM (tlkpProject INNER JOIN ProjectMonthFinal ON tlkpProject.ParentProject = ProjectMonthFinal.Project) LEFT JOIN FPSYearTotals ON tlkpProject.ParentProject = FPSYearTotals.ParentProject
+WHERE (((ProjectMonthFinal.MonthNo)=[forms]![Menu-Division]![PeriodPick]));
+

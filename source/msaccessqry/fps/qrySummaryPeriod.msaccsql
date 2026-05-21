@@ -1,0 +1,8 @@
+QUERY NAME: qrySummaryPeriod
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblPeriod.PeriodName, tblPeriod.EndPeriod
+FROM qrySummaryPeriod_Sub INNER JOIN tblPeriod ON qrySummaryPeriod_Sub.MaxOfEndPeriod = tblPeriod.EndPeriod;
+

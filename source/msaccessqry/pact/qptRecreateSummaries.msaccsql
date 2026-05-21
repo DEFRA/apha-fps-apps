@@ -1,0 +1,6 @@
+QUERY NAME: qptRecreateSummaries
+---------------------------------------------
+TYPE: OTHER
+
+SQL:
+sp_RecreateSummaries 6

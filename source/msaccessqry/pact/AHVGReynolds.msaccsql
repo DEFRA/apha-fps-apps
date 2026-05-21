@@ -1,0 +1,10 @@
+QUERY NAME: AHVGReynolds
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpProgram.ProgramNo, tlkpProgram.ProgramName, tlkpProject.ProjectWorkGroup AS Owner, tlkpProject.Program, tlkpProject.ParentProject, tlkpProject.ProjectTitle, tlkpProject.Manager, tlkpProject.Budget_Ext AS ContractPr, tlkpJobCode.JobCodeWorkGroup AS JobOwner, tlkpJobCode.JobCode, tlkpJobCode.JobCodeName
+FROM tlkpProgram RIGHT JOIN (tlkpProject LEFT JOIN tlkpJobCode ON tlkpProject.ParentProject = tlkpJobCode.ParentProject) ON tlkpProgram.ProgramNo = tlkpProject.Program
+WHERE ((tlkpProject.PlanCat="corecapacity" Or tlkpProject.PlanCat="testcontract"))
+ORDER BY tlkpProject.ProjectWorkGroup, tlkpProject.Program, tlkpProject.ParentProject;
+

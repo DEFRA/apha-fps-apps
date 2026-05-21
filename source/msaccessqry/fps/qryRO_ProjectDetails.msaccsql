@@ -1,0 +1,9 @@
+QUERY NAME: qryRO_ProjectDetails
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tlkpProject_MAP.ParentProject, tlkpProject_MAP.Program, tlkpProject_MAP.ProjectGroup, tlkpProject_MAP.ShortTitle, tlkpProject_MAP.Customer, tlkpProject_MAP.Manager, tlkpProject_MAP.TransferIncome, tlkpProject_MAP.CustIncome, tlkpProject_MAP.ProjectStatus, tlkpProject_MAP.Budget_CVL AS Budget, tlkpProject_MAP.Contract, tlkpProject_MAP.ProjectTitle
+FROM tlkpProject_MAP
+WHERE (((tlkpProject_MAP.ParentProject)=[Forms]![frmRO_ProjectPlans]![pickProject])) OR (((tlkpProject_MAP.Program)=[Forms]![frmRO_ProjectPlans]![PickProg])) OR (((tlkpProject_MAP.ProjectGroup)=[Forms]![frmRO_ProjectPlans]![pickGroup]));
+

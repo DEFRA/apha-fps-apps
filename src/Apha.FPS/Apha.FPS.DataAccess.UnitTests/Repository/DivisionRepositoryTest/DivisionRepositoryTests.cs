@@ -1,4 +1,4 @@
-﻿using Apha.Common.Helpers.Repository;
+using Apha.Common.Helpers.Repository;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -19,7 +19,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.DivisionRepositoryTest
         private static DivisionRepository CreateRepository(
             IEnumerable<Division>? divisions = null,
             IEnumerable<ProfitCentre>? profitCentres = null,
-            IEnumerable<DivisionGradeMaintenance>? divisionGrades = null)
+            IEnumerable<DivisionGrade>? divisionGrades = null)
         {
             var mockFpsYearContext = new Mock<IFpsRequestContext>();
             var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(mockFpsYearContext.Object);
@@ -42,7 +42,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.DivisionRepositoryTest
             {
                 var mockSet = RepositoryTestHelper.CreateMockDbSet(divisionGrades);
                 RepositoryTestHelper.SetupDbSetOperations(mockSet);
-                mockContext.Setup(x => x.Set<DivisionGradeMaintenance>()).Returns(mockSet.Object);
+                mockContext.Setup(x => x.Set<DivisionGrade>()).Returns(mockSet.Object);
             }
 
             RepositoryTestHelper.SetupSaveChanges(mockContext);
@@ -584,7 +584,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.DivisionRepositoryTest
         [Fact]
         public async Task GetDivisionForeignKeyReferencesAsync_ReturnsDivisionGradeTable_WhenReferenced()
         {
-            var divisionGrades = new List<DivisionGradeMaintenance> { new() { Division = "DIV001", GradeCode = "GR01" } };
+            var divisionGrades = new List<DivisionGrade> { new() { Division = "DIV001", GradeCode = "GR01" } };
             var repo = CreateRepository(
                 divisions: [BuildDivision("DIV001")],
                 profitCentres: [],
@@ -598,7 +598,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.DivisionRepositoryTest
         public async Task GetDivisionForeignKeyReferencesAsync_ReturnsBothTables_WhenBothReferenced()
         {
             var profitCentres = new List<ProfitCentre> { new() { Division = "DIV001" } };
-            var divisionGrades = new List<DivisionGradeMaintenance> { new() { Division = "DIV001", GradeCode = "GR01" } };
+            var divisionGrades = new List<DivisionGrade> { new() { Division = "DIV001", GradeCode = "GR01" } };
             var repo = CreateRepository(
                 divisions: [BuildDivision("DIV001")],
                 profitCentres: profitCentres,
@@ -613,7 +613,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.DivisionRepositoryTest
         public async Task GetDivisionForeignKeyReferencesAsync_IgnoresReferences_WhenDivisionNameDoesNotMatch()
         {
             var profitCentres = new List<ProfitCentre> { new() { Division = "OTHER" } };
-            var divisionGrades = new List<DivisionGradeMaintenance> { new() { Division = "OTHER", GradeCode = "GR01" } };
+            var divisionGrades = new List<DivisionGrade> { new() { Division = "OTHER", GradeCode = "GR01" } };
             var repo = CreateRepository(
                 divisions: [BuildDivision("DIV001")],
                 profitCentres: profitCentres,

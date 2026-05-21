@@ -1,0 +1,10 @@
+QUERY NAME: JF monthly total figs
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tblStaff.WorkGroupGrade, tblStaffJob.Jobcode, WorkGroupGrade.WorkGroup, tblStaff.Name, tblStaffJob.plannedhours
+FROM (WorkGroupGrade INNER JOIN tblStaff ON WorkGroupGrade.WG_Grade = tblStaff.WorkGroupGrade) INNER JOIN tblStaffJob ON tblStaff.PACTid = tblStaffJob.StaffID
+GROUP BY tblStaff.WorkGroupGrade, tblStaffJob.Jobcode, WorkGroupGrade.WorkGroup, tblStaff.Name, tblStaffJob.plannedhours
+HAVING (((tblStaff.WorkGroupGrade) Like "B_SVXX" Or (tblStaff.WorkGroupGrade) Like "c_svxx"));
+

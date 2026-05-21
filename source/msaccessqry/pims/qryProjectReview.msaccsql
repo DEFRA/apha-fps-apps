@@ -1,0 +1,9 @@
+QUERY NAME: qryProjectReview
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tblProjectReviewItems.Project, tblProjectReviewItems.ItemID, tblProjectReviewItems.FrequencyID
+FROM tblProjectReviewItems
+WHERE (((tblProjectReviewItems.Project)=[Forms]![frmProjectReview]![pickProject]));
+

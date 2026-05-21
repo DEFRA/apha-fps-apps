@@ -1,0 +1,8 @@
+QUERY NAME: qryJobCodeTotals
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW IIf(IsNull([TotalAdditionalCosts]),0,[TotalAdditionalCosts]) AS JCTotalAdditionalCosts, IIf(IsNull([TotalAnimalCosts]),0,[TotalAnimalCosts]) AS JCTotalAnimalCosts, IIf(IsNull([TotalStaffCosts]),0,[TotalStaffCosts]) AS JCTotalStaffCosts, IIf(IsNull([TotaLTestCosts]),0,[TotaLTestCosts]) AS JCTotaLTestCosts, [JCTotalAnimalCosts]+[JCTotalAdditionalCosts]+[JCTotalStaffCosts]+[JCTotaLTestCosts] AS TotalCosts, [TotalIncome]-[TotalCosts] AS JCProfit, tlkpProject.ParentProject AS JobCode, tlkpProject.Budget_Ext AS Income, tlkpProject.TransferIncome, [Budget_ext]+[Transferincome] AS TotalIncome, tlkpProject.Manager, tlkpProject.Program, tlkpProject.Customer, tlkpProject.ProjectStatus
+FROM tlkpProgram INNER JOIN ((((tlkpProject LEFT JOIN qryTotalAdditionalCosts ON tlkpProject.ParentProject = qryTotalAdditionalCosts.JobCode) LEFT JOIN qryTotalAnimalCosts ON tlkpProject.ParentProject = qryTotalAnimalCosts.JobCode) LEFT JOIN qryTotalStaffCosts ON tlkpProject.ParentProject = qryTotalStaffCosts.Jobcode) LEFT JOIN qryTotaLTestCosts ON tlkpProject.ParentProject = qryTotaLTestCosts.JobCode) ON tlkpProgram.ProgramNo = tlkpProject.Program;
+

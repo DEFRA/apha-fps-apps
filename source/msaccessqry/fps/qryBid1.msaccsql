@@ -1,0 +1,11 @@
+QUERY NAME: qryBid1
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblkpAccountCategory.AccShortName, tblBid.WorkGroup, tblBid.GenBid, WorkGroup_General.ProfitCentre
+FROM (tblkpAccountCategory LEFT JOIN tblBid ON tblkpAccountCategory.AccShortName = tblBid.Account) LEFT JOIN WorkGroup_General ON tblBid.WorkGroup = WorkGroup_General.WorkGroup
+GROUP BY tblkpAccountCategory.AccShortName, tblBid.WorkGroup, tblBid.GenBid, WorkGroup_General.ProfitCentre
+HAVING (((WorkGroup_General.ProfitCentre)=[Forms]![frmBudgetResourceLevel]![ProfitCentre] Or (WorkGroup_General.ProfitCentre) Is Null))
+ORDER BY tblkpAccountCategory.AccShortName, tblBid.WorkGroup;
+

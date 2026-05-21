@@ -1,0 +1,9 @@
+QUERY NAME: pvtExceptionalCostslPlan
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tlkpProject_General.Program, tlkpProject_General.ParentProject, tlkpProject_General.ProjectStatus, tlkpProject_General.Customer, tlkpProject_General.Disease, tblAdditionalCosts_General.Account, tblAdditionalCosts_General.Description, tblAdditionalCosts_General.ItemCost, tblAdditionalCosts_General.Freq, tblAdditionalCosts_General.Supplier
+FROM tlkpProject_General INNER JOIN tblAdditionalCosts_General ON tlkpProject_General.ParentProject = tblAdditionalCosts_General.JobCode
+WHERE (((fnSelectedProg([Program]))=True) AND ((fnselectedproject([parentproject]))=True));
+

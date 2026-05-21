@@ -1,0 +1,9 @@
+QUERY NAME: pvtResourceCentreStaffPlan
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW vProjectStaffPlan.ProfitCentre, vProjectStaffPlan.WorkGroup, vProjectStaffPlan.GradeCode, vProjectStaffPlan.Name, tlkpProject_General.Manager, tlkpProject_General.Program, tlkpProject_General.ProjectStatus, vProjectStaffPlan.plannedhours, vProjectStaffPlan.ChargeRate, vProjectStaffPlan.Cost
+FROM ProfitCentreGrade, tlkpProject_General INNER JOIN vProjectStaffPlan ON tlkpProject_General.ParentProject = vProjectStaffPlan.ParentProject
+WHERE (((vProjectStaffPlan.ProfitCentre)=[Forms]![frmResourceManager]![RCpick]));
+

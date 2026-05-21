@@ -1,0 +1,9 @@
+QUERY NAME: qryStaffSelect
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tblStaff_Pick.StaffID, tblStaff_Pick.Name, tblStaff_Pick.WorkGroupGrade, tblStaff.HrsAvail
+FROM tblStaff_Pick LEFT JOIN tblStaff ON tblStaff_Pick.StaffID = tblStaff.StaffID
+ORDER BY tblStaff_Pick.Name;
+

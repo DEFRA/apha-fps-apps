@@ -1,0 +1,8 @@
+QUERY NAME: qryMY_AdditionalPlan
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT MY_tblAdditionalCosts.Year, MY_tblAdditionalCosts.JobCode, MY_tblAdditionalCosts.Account, MY_tblAdditionalCosts.Description, MY_tblAdditionalCosts.ItemCost
+FROM MY_tblAdditionalCosts;
+

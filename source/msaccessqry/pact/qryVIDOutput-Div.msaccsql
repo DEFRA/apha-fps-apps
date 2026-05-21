@@ -1,0 +1,14 @@
+QUERY NAME: qryVIDOutput-Div
+---------------------------------------------
+TYPE: OTHER
+
+SQL:
+PARAMETERS forms![menu-division]!divisionpick Text ( 255 );
+TRANSFORM Sum(MonthlyOutput.Volume) AS SumOfVolume
+SELECT tblkpProfitCentre.Division, tlkpDivision.DivName, MonthlyOutput.TestCode, TestOrProduct.ItemDescription AS Description, MonthlyOutput.Buyer AS Requirement
+FROM (tlkpDivision INNER JOIN tblkpProfitCentre ON tlkpDivision.DivName = tblkpProfitCentre.Division) INNER JOIN (TestOrProduct INNER JOIN (WorkGroup INNER JOIN MonthlyOutput ON WorkGroup.WorkGroup = MonthlyOutput.WorkGroup) ON TestOrProduct.ItemCode = MonthlyOutput.TestCode) ON tblkpProfitCentre.ProfitCentre = WorkGroup.ProfitCentre
+WHERE ((tlkpDivision.DivName=[Forms]![Menu-Division]![divisionpick]))
+GROUP BY tblkpProfitCentre.Division, tlkpDivision.DivName, MonthlyOutput.TestCode, TestOrProduct.ItemDescription, MonthlyOutput.Buyer
+ORDER BY MonthlyOutput.TestCode, MonthlyOutput.Buyer
+PIVOT MonthlyOutput.Month In (1,2,3);
+

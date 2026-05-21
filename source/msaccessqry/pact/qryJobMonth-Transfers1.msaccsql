@@ -1,0 +1,9 @@
+QUERY NAME: qryJobMonth-Transfers1
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW MonthlyOutput.Buyer AS Project, MonthlyOutput.Month, MonthlyOutput.TestCode, MonthlyOutput.Volume, tlkpTestReqmt.UnitPrice AS IntUnitPrice, [Volume]*[IntUnitPrice] AS TransferCost
+FROM (TestOrProduct INNER JOIN tlkpTestReqmt ON TestOrProduct.ItemCode = tlkpTestReqmt.TestCode) INNER JOIN MonthlyOutput ON (tlkpTestReqmt.Buyer = MonthlyOutput.Buyer) AND (tlkpTestReqmt.TestCode = MonthlyOutput.TestCode)
+GROUP BY MonthlyOutput.Buyer, MonthlyOutput.Month, MonthlyOutput.TestCode, MonthlyOutput.Volume, tlkpTestReqmt.UnitPrice;
+

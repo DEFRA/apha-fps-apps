@@ -1,0 +1,10 @@
+QUERY NAME: qryTestCosting4
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpProject.ParentProject AS Portfolio, Sum(TimeCostCalcs.Cost) AS SpreadCost, tlkpProject.PlanCat
+FROM tlkpProject INNER JOIN (TimeCostCalcs INNER JOIN tlkpJobCode ON (tlkpJobCode.JobCode = TimeCostCalcs.JobCode) AND (TimeCostCalcs.JobCode = tlkpJobCode.JobCode)) ON tlkpProject.ParentProject = tlkpJobCode.ParentProject
+GROUP BY tlkpProject.ParentProject, tlkpProject.PlanCat
+HAVING ((tlkpProject.PlanCat="testactivity"));
+

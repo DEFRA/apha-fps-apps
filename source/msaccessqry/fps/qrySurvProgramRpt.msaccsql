@@ -1,0 +1,10 @@
+QUERY NAME: qrySurvProgramRpt
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpProject_MAP.Program, tlkpProject_MAP.Contract, tlkpProject_MAP.ParentProject, tlkpProject_MAP.ShortTitle, tlkpProject_MAP.CustIncome, qrySurvPMF.SumOfTimeCosts, qrySurvPMF.SumOfTransferCosts, qrySurvPMF.SumOfSubcontracts, qrySurvPMF.SumOfTotalCost, qrySurvPMF.SumOfCWDebit, qrySurvPMF.SumOfCWCredit, IIf(IsNull([SumOfTotalFee]),0,[SumOfTotalFee]) AS PVSInc, qrySurvInvoice.CVOGIncome, [TotalCosts]*([Forms]![frmPactReportMenu]![PeriodPick])/12 AS YTDPlan, IIf(IsNull([CVOGIncome]),0,[CVOGIncome]) AS CVOGInc, tlkpProgram_MAP.ProgramName, tlkpProgram_MAP.Manager, qrySurvPMF.SumOfTotalHours, tlkpProject_MAP.PVSIncome, Left([tlkpProject_Map].[parentproject],5) AS IntGroup, IIf((Left([tlkpProject_Map].[parentproject],5)='it601' Or Left([tlkpProject_Map].[parentproject],5)='it602' Or Left([tlkpProject_Map].[parentproject],5)='it603'),'Int Trade','TDP') AS TDPGroup
+FROM ((((tlkpProject_MAP LEFT JOIN FPSYearTotals ON tlkpProject_MAP.ParentProject = FPSYearTotals.ParentProject) LEFT JOIN qrySurvInvoice ON tlkpProject_MAP.ParentProject = qrySurvInvoice.ProjectParent) LEFT JOIN qrySurvPMF ON tlkpProject_MAP.ParentProject = qrySurvPMF.Project) INNER JOIN tlkpProgram_MAP ON tlkpProject_MAP.Program = tlkpProgram_MAP.ProgramNo) LEFT JOIN qrySurvFFFees ON tlkpProject_MAP.ParentProject = qrySurvFFFees.Contract
+WHERE (((tlkpProject_MAP.Program) Like "*_Surv"))
+ORDER BY tlkpProject_MAP.ParentProject;
+

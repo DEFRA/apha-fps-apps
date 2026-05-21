@@ -1,0 +1,6 @@
+QUERY NAME: ddCreateIndextblStaffJob_ByGroup
+---------------------------------------------
+TYPE: DDL
+
+SQL:
+CREATE UNIQUE INDEX tblStaffJob_ByGroupPK ON tblStaffJob_ByGroup(StaffID,JobCode)

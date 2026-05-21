@@ -1,0 +1,11 @@
+QUERY NAME: qryStaffResource2
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW ProfitCentreGrade_General.ProfitCentre, WorkGroupGrade_General.WorkGroup, WorkGroupGrade_General.WGGrade, tblStaff.StaffID, First(tblStaff.Name) AS Name, tblStaff.HrsAvail, Sum(IIf([program]="zt_prog",[plannedhours],0)) AS PlannedZT, [HrsAvail]-[PlannedZT] AS AvailSOCT, Sum(IIf([projectstatus]="Not approved",[plannedhours],0)) AS NApprovedSOCT, Sum(IIf([projectstatus]="approved",[plannedhours],0))-[PlannedZT] AS ApprovedSOCT, [AvailSOCT]-[ApprovedSOCT]-[NApprovedSOCT] AS [Left], IIf(([HrsAvail]=0),"",Format([ApprovedSOCT]/[HrsAvail],"Percent")) AS AppUtilised, IIf(([HrsAvail]=0),"",Format([NApprovedSOCT]/[HrsAvail],"Percent")) AS NAppUtilised, IIf(([HrsAvail]=0),"",Format(([ApprovedSOCT]+[NApprovedSOCT])/[HrsAvail],"Percent")) AS TotalUtilised
+FROM (WorkGroupGrade_General INNER JOIN ((tblStaff LEFT JOIN tblStaffJob_RM ON tblStaff.StaffID = tblStaffJob_RM.StaffID) LEFT JOIN tlkpProject_General ON tblStaffJob_RM.Jobcode = tlkpProject_General.ParentProject) ON WorkGroupGrade_General.WGGrade = tblStaff.WorkGroupGrade) INNER JOIN ProfitCentreGrade_General ON WorkGroupGrade_General.ProfitCentreGrade = ProfitCentreGrade_General.PCGrade
+WHERE (((tblStaff.Name) Like "*General"))
+GROUP BY ProfitCentreGrade_General.ProfitCentre, WorkGroupGrade_General.WorkGroup, WorkGroupGrade_General.WGGrade, tblStaff.StaffID, tblStaff.HrsAvail
+ORDER BY WorkGroupGrade_General.WGGrade;
+

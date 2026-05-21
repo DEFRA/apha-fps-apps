@@ -1,0 +1,9 @@
+QUERY NAME: qryJobCodeCust
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW JobCode_RO.*
+FROM JobCode_RO
+ORDER BY JobCode_RO.Customer;
+

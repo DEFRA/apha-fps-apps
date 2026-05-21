@@ -1,0 +1,10 @@
+QUERY NAME: qryProfitCentreBidsRep
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblkpProfitCentre.ProfitCentre, tblkpProfitCentre.CONTTARGET, Sum(tblStaffJob_RM.plannedhours) AS SumOfplannedhours, Sum([plannedhours]*[chargerate]) AS Fee
+FROM ((tblkpProfitCentre INNER JOIN ((WorkGroup_General INNER JOIN WorkGroupGrade_General ON (WorkGroup_General.WorkGroup = WorkGroupGrade_General.WorkGroup) AND (WorkGroup_General.WorkGroup = WorkGroupGrade_General.WorkGroup)) INNER JOIN (tblStaffJob_RM INNER JOIN tblStaff_General ON tblStaffJob_RM.StaffID = tblStaff_General.StaffID) ON WorkGroupGrade_General.WGGrade = tblStaff_General.WorkGroupGrade) ON tblkpProfitCentre.ProfitCentre = WorkGroup_General.ProfitCentre) INNER JOIN ProfitCentreGrade_General ON WorkGroupGrade_General.ProfitCentreGrade = ProfitCentreGrade_General.PCGrade) INNER JOIN tlkpProject_General ON tblStaffJob_RM.Jobcode = tlkpProject_General.ParentProject
+WHERE ((tlkpProject_General.Program<>"ZT_Prog"))
+GROUP BY tblkpProfitCentre.ProfitCentre, tblkpProfitCentre.CONTTARGET;
+

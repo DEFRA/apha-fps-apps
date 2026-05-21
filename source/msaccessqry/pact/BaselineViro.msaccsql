@@ -1,0 +1,10 @@
+QUERY NAME: BaselineViro
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW [PC-New].PC, TimeCostCalcs.WorkGroup, TimeCostCalcs.GradeCode, TimeCostCalcs.Name, tlkpProject.PlanCat, IIf(IsNull([newprog]),[oldprog],[newprog]) AS Programme, TimeCostCalcs.Project, TimeCostCalcs.JobCode, IIf(IsNull([itemdescription]),[jobcodename],[itemdescription]) AS Expr1, tlkpProject.Program AS OldProg, CC_Activity.Programme AS NewProg, Sum(TimeCostCalcs.Time) AS SumOfTime, Sum(TimeCostCalcs.Cost) AS SumOfCost
+FROM ((([PC-New] INNER JOIN (tlkpProject INNER JOIN TimeCostCalcs ON tlkpProject.ParentProject = TimeCostCalcs.Project) ON [PC-New].WG = TimeCostCalcs.WorkGroup) LEFT JOIN tlkpJobCode ON TimeCostCalcs.JobCode = tlkpJobCode.JobCode) LEFT JOIN CC_Activity ON TimeCostCalcs.JobCode = CC_Activity.Activity) LEFT JOIN TestOrProduct ON TimeCostCalcs.JobCode = TestOrProduct.ItemCode
+GROUP BY [PC-New].PC, TimeCostCalcs.WorkGroup, TimeCostCalcs.GradeCode, TimeCostCalcs.Name, tlkpProject.PlanCat, TimeCostCalcs.Project, TimeCostCalcs.JobCode, IIf(IsNull([itemdescription]),[jobcodename],[itemdescription]), tlkpProject.Program, CC_Activity.Programme
+HAVING (([PC-New].PC="viro"));
+

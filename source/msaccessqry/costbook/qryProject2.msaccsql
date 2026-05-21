@@ -1,0 +1,9 @@
+QUERY NAME: qryProject2
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblProject.Project, tblProject.PlanCat, tblProject.ProjectTitle, tblProject.ProjectWorkGroup, tblProject.ContractPrice, tblProject.StartDate, tblProject.Disease, TblFinYrs.[Financial Year], tblProject.StartDate, TblFinYrs.StartDate, TblFinYrs.EndDate
+FROM tblProject, TblFinYrs
+WHERE ((TblFinYrs.StartDate<[tblProject]![StartDate]) AND (TblFinYrs.EndDate>[tblProject]![StartDate]));
+

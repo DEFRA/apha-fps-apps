@@ -1,0 +1,8 @@
+QUERY NAME: qryfrmGradeAllocationSt1Sub2
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW PlanCatWGGrade.PlanCategory, WorkGroupGrade.WorkGroup, PlanCatWGGrade.WGGrade, PlanCatWGGrade.Hours AS AllocHrs, ProfitCentreGrade.ChargeRate, IIf(([plancategory]="ZTcodes"),0,[AllocHrs]*[ChargeRate]) AS Cost
+FROM ProfitCentreGrade INNER JOIN (WorkGroupGrade INNER JOIN PlanCatWGGrade ON WorkGroupGrade.WGGrade = PlanCatWGGrade.WGGrade) ON ProfitCentreGrade.PCGrade = WorkGroupGrade.ProfitCentreGrade;
+

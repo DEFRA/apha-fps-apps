@@ -1,0 +1,9 @@
+QUERY NAME: qryTestPriceZero
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblTestRequ.TestCode, tblTestRequ.JobCode, tblTestRequ.NoTests, tblTestRequ.TestPrice, TestOrProduct.UnitPriceVLA, TestOrProduct.DefraUnitPrice, tlkpProject_General.Program, tlkpProject_General.Manager, TestOrProduct.Owner, tlkpProject_General.IsDefraProject, IIf([isdefraProject],[defraunitprice],[unitpricevla]) AS NormalPrice, [testprice]=0 AS IsZeroPrice, [testprice]<>[NormalPrice] AS IsNotStandard
+FROM TestOrProduct INNER JOIN (tlkpProject_General INNER JOIN tblTestRequ ON tlkpProject_General.ParentProject = tblTestRequ.JobCode) ON TestOrProduct.ItemCode = tblTestRequ.TestCode
+ORDER BY tblTestRequ.TestCode;
+

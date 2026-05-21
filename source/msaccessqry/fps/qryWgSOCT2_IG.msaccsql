@@ -1,0 +1,13 @@
+QUERY NAME: qryWgSOCT2_IG
+---------------------------------------------
+TYPE: OTHER
+
+SQL:
+PARAMETERS Forms!frmResouceCentreWorkGroups!ProjectPick Text ( 255 );
+TRANSFORM Sum([plannedhours]*[ChargeRate]*IIf([sector_name]="charge",1,0)) AS Totals
+SELECT WorkGroupGrade_General.WorkGroup, tlkpProject_General.Program, tlkpProject_General.ParentProject, tlkpProject_General.ProjectStatus
+FROM tlkpProgram_MAP RIGHT JOIN (tlkpProject_General RIGHT JOIN ((ProfitCentreGrade_General INNER JOIN (WorkGroupGrade_General INNER JOIN tblStaff_General ON WorkGroupGrade_General.WGGrade = tblStaff_General.WorkGroupGrade) ON ProfitCentreGrade_General.PCGrade = WorkGroupGrade_General.ProfitCentreGrade) LEFT JOIN tblStaffJob_RM ON tblStaff_General.StaffID = tblStaffJob_RM.StaffID) ON tlkpProject_General.ParentProject = tblStaffJob_RM.Jobcode) ON tlkpProgram_MAP.ProgramNo = tlkpProject_General.Program
+WHERE (((WorkGroupGrade_General.WorkGroup)=[Forms]![frmResouceCentreWorkGroups]![ProjectPick]))
+GROUP BY WorkGroupGrade_General.WorkGroup, tlkpProject_General.Program, tlkpProject_General.ParentProject, tlkpProject_General.ProjectStatus, WorkGroupGrade_General.WorkGroup
+PIVOT [tblStaff_General].[name] & "=" & [ChargeRate];
+

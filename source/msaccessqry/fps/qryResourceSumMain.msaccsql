@@ -1,0 +1,10 @@
+QUERY NAME: qryResourceSumMain
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblkpProfitCentre.ProfitCentre, tblkpProfitCentre.CONTTARGET, IIf(IsNull([SumOfItemCost]),0,[SumOfItemCost]) AS TotalExceptCosts, Sum((IIf([account]="pay",[GenBid],0))) AS PayBid, Sum((IIf([account]="pay",0,[GenBid]))) AS NonPayBid
+FROM ((tblkpProfitCentre INNER JOIN WorkGroup_General ON tblkpProfitCentre.ProfitCentre = WorkGroup_General.ProfitCentre) LEFT JOIN tblBid ON WorkGroup_General.WorkGroup = tblBid.WorkGroup) LEFT JOIN qryPCTotalExceptCosts ON tblkpProfitCentre.ProfitCentre = qryPCTotalExceptCosts.ProfitCentre
+GROUP BY tblkpProfitCentre.ProfitCentre, tblkpProfitCentre.CONTTARGET, IIf(IsNull([SumOfItemCost]),0,[SumOfItemCost])
+HAVING ((tblkpProfitCentre.ProfitCentre<>"acu"));
+
