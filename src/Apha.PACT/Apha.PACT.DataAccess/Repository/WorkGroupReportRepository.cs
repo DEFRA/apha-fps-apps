@@ -1,5 +1,4 @@
 using Apha.PACT.Core.Entities;
-using Apha.PACT.Core.ReadModels;
 using Apha.PACT.Core.Interfaces;
 using Apha.PACT.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;

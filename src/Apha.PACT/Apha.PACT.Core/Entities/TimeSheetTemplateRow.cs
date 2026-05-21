@@ -1,4 +1,4 @@
-namespace Apha.PACT.Core.ReadModels
+namespace Apha.PACT.Core.Entities
 {
     /// <summary>
     /// Query projection for the blank time-sheet template sent to work group members.

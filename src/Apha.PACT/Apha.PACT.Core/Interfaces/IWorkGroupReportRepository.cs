@@ -1,5 +1,4 @@
 using Apha.PACT.Core.Entities;
-using Apha.PACT.Core.ReadModels;
 
 namespace Apha.PACT.Core.Interfaces
 {

@@ -2,7 +2,6 @@
 using Apha.Common.Utilities.Email;
 using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Interfaces;
-using Apha.PACT.Core.ReadModels;
 using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
 using ClosedXML.Excel;
