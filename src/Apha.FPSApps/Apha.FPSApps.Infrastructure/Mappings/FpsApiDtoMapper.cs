@@ -85,6 +85,13 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<CostCentreWorkgroupDto, CostCentreWorkgroupRes>().ReverseMap();
             CreateMap<WorkGroupStaffDto, WorkGroupStaffRes>().ReverseMap();
             CreateMap<WorkGroupPersonDto, WorkGroupPersonRes>().ReverseMap();
+
+            // Resource Set-Up
+            CreateMap<ProfitCentreDto, ProfitCentreRes>().ReverseMap();
+            CreateMap<ProfitCentreGradeDto, ProfitCentreGradeRes>().ReverseMap();
+            CreateMap<WorkgroupGradeDto, WorkgroupGradeRes>().ReverseMap();
+            CreateMap<WorkGroupEmployeeDto, WorkGroupEmployeeReq>().ReverseMap();
+            CreateMap<WorkGroupEmployeeDto, WorkGroupEmployeeRes>().ReverseMap();
         }
     }
 }

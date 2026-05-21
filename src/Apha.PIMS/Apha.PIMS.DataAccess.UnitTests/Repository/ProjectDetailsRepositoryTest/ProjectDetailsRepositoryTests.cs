@@ -81,13 +81,13 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectDetailsRepositoryTest
                     Version        = "V1",
                     Fileref        = "FILE001",
                     Customerref    = "CUST001",
-                    Startdate      = new DateOnly(2023, 1, 1),
-                    Enddate        = new DateOnly(2024, 1, 1),
+                    Startdate      = new DateTime(2023, 1, 1),
+                    Enddate        = new DateTime(2024, 1, 1),
                     Costbooknumber = "CB001",
                     Riskid         = 1,
                     Useprojectyear = 1,
-                    Revisedenddate = new DateOnly(2024, 6, 1),
-                    Closeddate     = new DateOnly(2024, 12, 1)
+                    Revisedenddate = new DateTime(2024, 6, 1),
+                    Closeddate     = new DateTime(2024, 12, 1)
                 }
             };
             var repo = CreateRepository(radtrackData: radtrackData);
@@ -101,13 +101,13 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectDetailsRepositoryTest
             Assert.Equal("V1", result.Version);
             Assert.Equal("FILE001", result.FileRef);
             Assert.Equal("CUST001", result.CustomerRef);
-            Assert.Equal(new DateOnly(2023, 1, 1), result.StartDate);
-            Assert.Equal(new DateOnly(2024, 1, 1), result.EndDate);
+            Assert.Equal(new DateTime(2023, 1, 1), result.StartDate);
+            Assert.Equal(new DateTime(2024, 1, 1), result.EndDate);
             Assert.Equal("CB001", result.CostbookNumber);
             Assert.Equal(1, result.Riskid);
             Assert.True(result.UseProjectYears);
-            Assert.Equal(new DateOnly(2024, 6, 1), result.RevisedEndDate);
-            Assert.Equal(new DateOnly(2024, 12, 1), result.ClosedDate);
+            Assert.Equal(new DateTime(2024, 6, 1), result.RevisedEndDate);
+            Assert.Equal(new DateTime(2024, 12, 1), result.ClosedDate);
         }
 
         [Fact]
@@ -282,13 +282,13 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectDetailsRepositoryTest
                 Version         = "V1",
                 FileRef         = "FILE001",
                 CustomerRef     = "CUST001",
-                StartDate       = new DateOnly(2023, 1, 1),
-                EndDate         = new DateOnly(2024, 1, 1),
+                StartDate       = new DateTime(2023, 1, 1),
+                EndDate         = new DateTime(2024, 1, 1),
                 CostbookNumber  = "CB001",
                 Riskid          = 2,
                 UseProjectYears = true,
-                RevisedEndDate  = new DateOnly(2024, 6, 1),
-                ClosedDate      = new DateOnly(2024, 12, 1)
+                RevisedEndDate  = new DateTime(2024, 6, 1),
+                ClosedDate      = new DateTime(2024, 12, 1)
             };
 
             // Act
@@ -300,13 +300,13 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectDetailsRepositoryTest
             Assert.Equal("V1", captured.Version);
             Assert.Equal("FILE001", captured.Fileref);
             Assert.Equal("CUST001", captured.Customerref);
-            Assert.Equal(new DateOnly(2023, 1, 1), captured.Startdate);
-            Assert.Equal(new DateOnly(2024, 1, 1), captured.Enddate);
+            Assert.Equal(new DateTime(2023, 1, 1), captured.Startdate);
+            Assert.Equal(new DateTime(2024, 1, 1), captured.Enddate);
             Assert.Equal("CB001", captured.Costbooknumber);
             Assert.Equal(2, captured.Riskid);
             Assert.Equal((short)1, captured.Useprojectyear);
-            Assert.Equal(new DateOnly(2024, 6, 1), captured.Revisedenddate);
-            Assert.Equal(new DateOnly(2024, 12, 1), captured.Closeddate);
+            Assert.Equal(new DateTime(2024, 6, 1), captured.Revisedenddate);
+            Assert.Equal(new DateTime(2024, 12, 1), captured.Closeddate);
         }
 
         [Fact]
@@ -403,8 +403,8 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectDetailsRepositoryTest
                 Version        = "OLD_V",
                 Fileref        = "OLD_FILE",
                 Customerref    = "OLD_CUST",
-                Startdate      = new DateOnly(2020, 1, 1),
-                Enddate        = new DateOnly(2021, 1, 1),
+                Startdate      = new DateTime(2020, 1, 1),
+                Enddate        = new DateTime(2021, 1, 1),
                 Costbooknumber = "OLD_CB",
                 Riskid         = null,
                 Useprojectyear = 0,
@@ -419,13 +419,13 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectDetailsRepositoryTest
                 Version         = "NEW_V",
                 FileRef         = "NEW_FILE",
                 CustomerRef     = "NEW_CUST",
-                StartDate       = new DateOnly(2023, 3, 1),
-                EndDate         = new DateOnly(2024, 3, 1),
+                StartDate       = new DateTime(2023, 3, 1),
+                EndDate         = new DateTime(2024, 3, 1),
                 CostbookNumber  = "NEW_CB",
                 Riskid          = 3,
                 UseProjectYears = true,
-                RevisedEndDate  = new DateOnly(2024, 9, 1),
-                ClosedDate      = new DateOnly(2025, 1, 1)
+                RevisedEndDate  = new DateTime(2024, 9, 1),
+                ClosedDate      = new DateTime(2025, 1, 1)
             };
 
             // Act
@@ -436,13 +436,13 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectDetailsRepositoryTest
             Assert.Equal("NEW_V", existingRecord.Version);
             Assert.Equal("NEW_FILE", existingRecord.Fileref);
             Assert.Equal("NEW_CUST", existingRecord.Customerref);
-            Assert.Equal(new DateOnly(2023, 3, 1), existingRecord.Startdate);
-            Assert.Equal(new DateOnly(2024, 3, 1), existingRecord.Enddate);
+            Assert.Equal(new DateTime(2023, 3, 1), existingRecord.Startdate);
+            Assert.Equal(new DateTime(2024, 3, 1), existingRecord.Enddate);
             Assert.Equal("NEW_CB", existingRecord.Costbooknumber);
             Assert.Equal(3, existingRecord.Riskid);
             Assert.Equal((short)1, existingRecord.Useprojectyear);
-            Assert.Equal(new DateOnly(2024, 9, 1), existingRecord.Revisedenddate);
-            Assert.Equal(new DateOnly(2025, 1, 1), existingRecord.Closeddate);
+            Assert.Equal(new DateTime(2024, 9, 1), existingRecord.Revisedenddate);
+            Assert.Equal(new DateTime(2025, 1, 1), existingRecord.Closeddate);
         }
 
         [Fact]

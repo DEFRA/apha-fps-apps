@@ -12,8 +12,12 @@ namespace Apha.PIMS.DataAccess.Data
         public void Configure(EntityTypeBuilder<ProjectStatus> entity)
         {
             entity.HasKey(e => e.Projectstatus).HasName("pk_tlkpprojectstatus");
+
             entity.ToTable("tlkpprojectstatus", "mabarchive");
-            entity.Property(e => e.Projectstatus).HasMaxLength(50).HasColumnName("projectstatus");
+
+            entity.Property(e => e.Projectstatus)
+                .HasMaxLength(50)
+                .HasColumnName("projectstatus");
             entity.Property(e => e.IsFps).HasColumnName("is_fps");
             entity.Property(e => e.IsPims).HasColumnName("is_pims");
         }

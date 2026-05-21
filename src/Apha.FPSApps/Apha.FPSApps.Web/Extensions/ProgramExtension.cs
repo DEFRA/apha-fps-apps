@@ -60,7 +60,7 @@ namespace Apha.FPSApps.Web.Extensions
 
             // Authentication
             services.AddAuthenticationServices(configuration);
-           
+
             //API clients
             services.AddApiClient(builder.Configuration);
 
@@ -107,7 +107,7 @@ namespace Apha.FPSApps.Web.Extensions
             // Error handling
             if (env.IsDevelopment() || env.IsEnvironment("local"))
             {
-            app.UseDeveloperExceptionPage();
+                app.UseDeveloperExceptionPage();
             }
             else
             {

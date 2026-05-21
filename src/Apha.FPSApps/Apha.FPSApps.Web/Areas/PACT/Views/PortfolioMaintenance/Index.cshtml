@@ -81,7 +81,9 @@
     <div class="govuk-grid-column-full sup_p_0 sup_border-bottom">
         <div class="govuk-grid-column-one-third">
             <h1 class="heading_with_txtbox govuk-heading-s sup_margin_bottom_0 p-tb-10 p-l-10">
-                <div class="sup_flex_left_center">Portfolio Maintenance</div>
+                <div class="sup_flex_left_center">
+                    Portfolio Maintenance
+                </div>
             </h1>
         </div>
         <div class="govuk-grid-column-two-thirds sup_p_0">
@@ -120,6 +122,15 @@
                         </table>
                     </div>
                 </div>
+                @if (!string.IsNullOrEmpty(ViewBag.SourceWorkGroup as string))
+                {
+                    <a href="@Url.Action("Index", "WorkGroupTestCapability", new { area = "PACT", workgroup = ViewBag.SourceWorkGroup })" 
+                       id="backLink" 
+                       class="govuk-back-link" 
+                       style="margin-left: 140px; align-self: center;">
+                        Back
+                    </a>
+                }
             </div>
         </div>
     </div>

@@ -1,0 +1,84 @@
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.PACT.Models.WorkGroupTestCapabilityViewModel
+
+@{
+    ViewData["Title"] = "PACT : Test Capabilities for WorkGroup";
+    var currentYear = Context.Items["SelectedFPSYear"]?.ToString() ?? DateTime.Now.Year.ToString();
+}
+
+@* Page Title *@
+<div class="govuk-grid-row sup_margin_left_right_0">
+    <div class="govuk-grid-column-full sup_border-bottom">
+        <h1 class="sup_margin_top_10 sup_padding_bottom_10">
+            Test Capabilities for WorkGroup
+            <a href="@Url.Action("Index", "WorkGroupPeople", new { area = "PACT", year = currentYear })" id="backLink" class="govuk-back-link sup_align_right">Back</a>
+        </h1>
+    </div>
+</div>
+
+@* Main Content *@
+<div class="govuk-grid-row sup_margin_left_right_0 sup_margin_top_10 sup_margin_bottom_10">
+
+    @* Left Panel - Selection Controls *@
+    <div class="sup_flex_column govuk-grid-column-one-quarter sup_padding_right_0">
+
+        @* WorkGroup Selection *@
+        <div class="sup_border sup_margin_bottom_15 sup_p_8">
+            <div class="sup_margin_bottom_10">
+                <label for="selectedWorkgroup" class="govuk-label govuk-!-font-weight-bold">I have selected:</label>
+                <select id="selectedWorkgroup" class="govuk-select govuk-!-font-size-16" style="width:100%;"
+                        onchange="onWorkGroupChange(this.value)">
+                    <option value="">-- Select WorkGroup --</option>
+                    @foreach (var item in Model.WorkGroupOptions)
+                    {
+                        <option value="@item.Value">@item.Text</option>
+                    }
+                </select>
+            </div>
+            <div class="sup_flex_column">
+                <button type="button" class="govuk-button sup_margin_bottom_10 sup_p_8" id="btnTestCapability"
+                        aria-label="Show Test Capability Maintenance" data-module="govuk-button"
+                        onclick="navigateToTestCapability()">
+                    Show me Test Capability Maintenance
+                </button>
+            </div>
+        </div>
+
+        @* Portfolio Selection *@
+        <div class="sup_border sup_margin_bottom_15 sup_p_8">
+            <div class="sup_margin_bottom_10">
+                <label for="selectedPortfolio" class="govuk-label govuk-!-font-weight-bold">I have selected:</label>
+                <input type="text" id="selectedPortfolio" class="govuk-input govuk-!-font-size-16" readonly />
+            </div>
+            <div class="sup_flex_column">
+                <button type="button" class="govuk-button sup_margin_bottom_10 sup_p_8" id="btnShowProjectAdministration"
+                        aria-label="Show Portfolio Details" data-module="govuk-button" disabled
+                        onclick="navigateToPortfolioMaintenance()">
+                    Show me Project Administration...
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    @* Right Panel - Grid *@
+    <div class="govuk-grid-column-three-quarters sup_p_0">
+        <div id="gridContainer_testCapabilitiesWGGrid" class="govuk-grid-column-full">
+            @await Html.PartialAsync("_DataGrid", Model.TestCapabilityGrid)
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    <script src="~/js/ajax-form-validation.js"></script>
+    <script src="~/js/pact_js/work-group-test-capability.js"></script>
+    <script>
+        // Initialize the WorkGroup Test Capability module
+        $(document).ready(function () {
+            WorkGroupTestCapability.initialize('@Model.TestCapabilityGrid.GridId');
+        });
+    </script>
+
+    @Html.AntiForgeryToken()
+}

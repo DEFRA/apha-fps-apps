@@ -20,7 +20,7 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<Program> Programs { get; set; }
         public virtual DbSet<Project> Projects { get; set; }
         public virtual DbSet<StaffJob> StaffJobs { get; set; }
-        public virtual DbSet<WgEmployee> WgEmployees { get; set; }
+        public virtual DbSet<WorkGroupEmployee> WorkGroupEmployees { get; set; }
         public virtual DbSet<Employee> Employees { get; set; }
         public virtual DbSet<FpsSetting> TblSettings { get; set; }
         public virtual DbSet<Workgroup> Workgroups { get; set; }
@@ -44,7 +44,7 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<SubAccount> SubAccounts { get; set; }
         public virtual DbSet<UserCategory> UserCategories { get; set; }
         public virtual DbSet<StaffActiveView> StaffActiveView { get; set; }
-        public virtual DbSet<WorkgroupGradeGeneralView> WorkgroupGradeGeneralView { get; set; }
+        public virtual DbSet<WorkgroupGradeGeneralView> WorkgroupGradeGeneralViews { get; set; }
 
         public virtual DbSet<ProgramView> ProgramViews { get; set; }
         public virtual DbSet<ProjectView> ProjectViews { get; set; }
@@ -87,6 +87,10 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<AdditionalCostView> AdditionalCostViews { get; set; }
         public virtual DbSet<AccountCategory> AccountCategories { get; set; }
         public virtual DbSet<WorkGroupStaff> WorkGroupStaffs { get; set; }
+        public virtual DbSet<ProfitCentreView> ProfitCentreViews { get; set; }
+        public virtual DbSet<ProfitCentreGradeView> ProfitCentreGradeViews { get; set; }
+        public virtual DbSet<WorkGroupGradeView> WorkGroupGradeViews { get; set; }
+        public virtual DbSet<WorkGroupEmployeeView> WorkGroupEmployeeViews { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new UserMap());
@@ -104,7 +108,7 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.Entity<StaffJob>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new WgEmployeeMap());
-            modelBuilder.Entity<WgEmployee>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+            modelBuilder.Entity<WorkGroupEmployee>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new EmployeeMap());
             modelBuilder.Entity<Employee>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
@@ -125,6 +129,13 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.Entity<UserProfitcentre>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new ProfitCentreMap());
+            modelBuilder.ApplyConfiguration(new ProfitCentreViewMap());
+            modelBuilder.ApplyConfiguration(new ProfitCentreGradeViewMap());
+            modelBuilder.Entity<ProfitCentreGradeView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+            modelBuilder.ApplyConfiguration(new WorkGroupGradeViewMap());
+            modelBuilder.Entity<WorkGroupGradeView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);  
+            modelBuilder.ApplyConfiguration(new WorkGroupEmployeeViewMap());
+            modelBuilder.Entity<WorkGroupEmployeeView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new JobCodeMap());
             modelBuilder.Entity<JobCode>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
@@ -263,6 +274,9 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new WorkGroupStaffMap());
             modelBuilder.Entity<WorkGroupStaff>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new MonthlyTimeMap());
+            modelBuilder.Entity<MonthlyTime>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
         }
     }
 }
