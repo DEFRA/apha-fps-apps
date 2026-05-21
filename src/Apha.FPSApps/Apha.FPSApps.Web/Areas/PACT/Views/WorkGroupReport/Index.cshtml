@@ -37,19 +37,6 @@
     </div>
 }
 
-@* ── Success flash ───────────────────────────────────────────────────────── *@
-@if (TempData["SuccessMessage"] is string successMsg)
-{
-    <div class="govuk-notification-banner govuk-notification-banner--success" role="alert"
-         aria-labelledby="govuk-notification-banner-title" data-module="govuk-notification-banner">
-        <div class="govuk-notification-banner__header">
-            <h2 class="govuk-notification-banner__title" id="govuk-notification-banner-title">Success</h2>
-        </div>
-        <div class="govuk-notification-banner__content">
-            <p class="govuk-body">@successMsg</p>
-        </div>
-    </div>
-}
 
 @* ── Criteria bar ────────────────────────────────────────────────────────── *@
 <div class="govuk-grid-row sup-pad-top-all-10px sup_border govuk-!-margin-bottom-2 govuk-!-margin-top-0 govuk-!-padding-top-2 govuk-!-padding-bottom-2"

@@ -138,6 +138,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Send(string profitCentre, short monthNumber)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             var response = await _emailSendService.SendEmailsAsync(profitCentre, monthNumber);
 
             if (!response.Success)
@@ -164,6 +167,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         public IActionResult GetWorkGroupEdit(
             string workGroupName, bool flaggedForEmail, string? emailRecipient)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             return PartialView("_WorkGroupEditModal", new WorkGroupEmailItem
             {
                 WorkGroupName  = workGroupName,
@@ -179,6 +185,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         public async Task<IActionResult> UpdateWorkGroupEmail(
             string workGroupName, short sendEmail, string? emailRecipient)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             if (string.IsNullOrWhiteSpace(workGroupName))
                 return BadRequest(new { error = "WorkGroupName is required." });
 
@@ -341,6 +350,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         public async Task<IActionResult> PatchProfitCentreSettings(
             string profitCentre, bool sendTimeSheet, bool sendOutputSheet, bool timesheetLayoutFlat)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             if (string.IsNullOrWhiteSpace(profitCentre))
                 return BadRequest(new { error = "ProfitCentre is required." });
 
