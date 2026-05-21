@@ -256,10 +256,9 @@ SELECT EXISTS(
 
         try
         {
-            var deletedRows = await _context.Database.ExecuteSqlInterpolatedAsync($@"
-DELETE FROM mabarchive.my_tlkpproject_all
-WHERE year = {targetYear}
-", cancellationToken);
+            var deletedRows = await _context.MaDstMyTlkpProjectAll
+                .Where(x => x.Year == targetYear)
+                .ExecuteDeleteAsync(cancellationToken);
             _logger.LogInformation("Deleted {RowCount} rows in my_tlkpproject_all for year {Year} prior to refresh", deletedRows, targetYear);
 
             var rowsAffected = await _projectAllLoader.LoadAsync(_context, targetYear, cancellationToken);

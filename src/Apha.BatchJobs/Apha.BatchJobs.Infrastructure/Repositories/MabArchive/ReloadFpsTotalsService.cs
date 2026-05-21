@@ -65,10 +65,10 @@ public sealed class ReloadFpsTotalsService : IReloadFpsTotalsService
             }
 
             // Year-scoped delete to avoid cross-year data loss in multi-year databases.
-            var deleteRows = await _context.Database.ExecuteSqlInterpolatedAsync($@"
-DELETE FROM fps.fpsyeartotals
-WHERE fpsyear = {targetYear}
-", cancellationToken);
+            var targetYearShort = checked((short)targetYear);
+            var deleteRows = await _context.FpsYearTotals
+                .Where(t => t.Year == targetYearShort)
+                .ExecuteDeleteAsync(cancellationToken);
 
             _logger.LogInformation("Deleted {RowCount} existing totals rows for year {Year}", deleteRows, targetYear);
 
