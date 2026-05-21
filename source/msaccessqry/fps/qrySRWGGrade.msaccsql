@@ -1,9 +1,0 @@
-QUERY NAME: qrySRWGGrade
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW WorkGroupGrade.*
-FROM WorkGroupGrade
-WHERE ((WorkGroupGrade.WGGrade=[Forms]![frmStaffResource]![PickWGGrade]));
-

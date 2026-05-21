@@ -1,9 +1,0 @@
-QUERY NAME: JF AH0033
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT TimeCostCalcs.Project, tlkpProject.ProjectTitle, TimeCostCalcs.JobCode, TimeCostCalcs.WorkGroup, TimeCostCalcs.Month, TimeCostCalcs.Name, TimeCostCalcs.GradeCode, TimeCostCalcs.Time, TimeCostCalcs.ChargeRate, TimeCostCalcs.Cost
-FROM tlkpProject INNER JOIN TimeCostCalcs ON tlkpProject.ParentProject = TimeCostCalcs.Project
-WHERE (((TimeCostCalcs.WorkGroup) Like "PVS*"));
-

@@ -1,9 +1,0 @@
-QUERY NAME: qryAD6000_LTHours
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT tblMTConversion.Hours
-FROM tblMTConversion
-WHERE (((tblMTConversion.OldProject)="ztwork") AND ((tblMTConversion.OldCode)="ad6000") AND ((tblMTConversion.NewProject)="TG0100") AND ((tblMTConversion.NewCode)="ADLTD6000"));
-

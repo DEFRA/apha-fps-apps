@@ -1,9 +1,0 @@
-QUERY NAME: pvtTimeDivBuy
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tlkpProgram.Directorate, TimeCostCalcs.Project, WorkGroupGrade.WorkGroup AS SellingWG, WorkGroupGrade.GradeCode, tblStaff.Name, TimeCostCalcs.Time, TimeCostCalcs.Cost, TimeCostCalcs.Month, TimeCostCalcs.JobCode
-FROM tlkpProgram INNER JOIN (WorkGroupGrade INNER JOIN (tlkpProject INNER JOIN (TimeCostCalcs INNER JOIN tblStaff ON TimeCostCalcs.StaffID = tblStaff.PACTid) ON tlkpProject.ParentProject = TimeCostCalcs.Project) ON WorkGroupGrade.WG_Grade = tblStaff.WorkGroupGrade) ON tlkpProgram.ProgramNo = tlkpProject.Program
-WHERE ((tlkpProgram.Directorate=[Forms]![frmSplash]![DirectoratePick]));
-

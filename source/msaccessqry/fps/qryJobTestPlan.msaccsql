@@ -1,8 +1,0 @@
-QUERY NAME: qryJobTestPlan
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tblTestRequ.JobCode, TestOrProduct.ItemDescription, tblTestRequ.TestCode, TestOrProduct.UnitPriceVLA AS RecUnitPrice, tblTestRequ.NoTests, tblTestRequ.TestPrice AS AgreedUnitPrice, [AgreedUnitPrice]*[NoTests] AS Fee, IIf(IsNull([ContrVolume]),0,-1) AS met
-FROM (TestOrProduct INNER JOIN tblTestRequ ON TestOrProduct.ItemCode = tblTestRequ.TestCode) LEFT JOIN tlkpTestReqMet ON (tblTestRequ.TestCode = tlkpTestReqMet.TestCode) AND (tblTestRequ.JobCode = tlkpTestReqMet.Buyer);
-

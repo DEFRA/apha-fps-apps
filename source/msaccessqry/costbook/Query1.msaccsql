@@ -1,9 +1,0 @@
-QUERY NAME: Query1
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT tblStaffRequ.WGGrade, fnNewWGGrade([tblStaffRequ].[wggrade]) AS Expr1
-FROM tblStaffRequ
-WHERE (((tblStaffRequ.OHR) Is Null Or (tblStaffRequ.OHR)=0) AND ((tblStaffRequ.Year)>2010));
-

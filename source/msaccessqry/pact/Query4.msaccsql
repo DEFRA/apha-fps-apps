@@ -1,9 +1,0 @@
-QUERY NAME: Query4
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT MonthlyTime.WorkGroup, tlkpProject.Program
-FROM MonthlyTime INNER JOIN tlkpProject ON MonthlyTime.ParentProject = tlkpProject.ParentProject
-GROUP BY MonthlyTime.WorkGroup, tlkpProject.Program;
-

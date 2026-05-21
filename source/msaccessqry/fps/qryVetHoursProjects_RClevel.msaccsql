@@ -1,9 +1,0 @@
-QUERY NAME: qryVetHoursProjects_RClevel
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tlkpProject_MAP.ParentProject, tblkpProfitCentre_General.ProfitCentre
-FROM tlkpProject_MAP, tblkpProfitCentre_General
-WHERE ((tblkpProfitCentre_General.ProfitCentre="vetr"));
-

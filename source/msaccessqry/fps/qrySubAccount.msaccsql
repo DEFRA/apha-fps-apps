@@ -1,8 +1,0 @@
-QUERY NAME: qrySubAccount
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT tlkpSubAccount.SubAccountCode, [SubAccountCode] & " - " & [subaccount] AS Expr1
-FROM tlkpSubAccount;
-

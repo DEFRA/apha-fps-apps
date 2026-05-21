@@ -1,6 +1,0 @@
-QUERY NAME: ddCreateIndexWorkgroup
----------------------------------------------
-TYPE: DDL
-
-SQL:
-CREATE UNIQUE INDEX Workgroup_PK ON Workgroup(Workgroup)

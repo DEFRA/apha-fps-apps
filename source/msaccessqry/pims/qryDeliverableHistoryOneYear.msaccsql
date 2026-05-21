@@ -1,9 +1,0 @@
-QUERY NAME: qryDeliverableHistoryOneYear
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT vProjectLatestDetails.ParentProject, vProjectLatestDetails.Program, vProjectLatestDetails.Manager, G_tlkpProject.ProjectTitle, tblMilestone.Number, tblMilestone.Description, tblMilestone.DateDue, tblMilestone.DateCompleted, tblMilestone.OnTarget, tblMilestone.Project, vProjectLatestDetails.Customer, G_tlkpProject.Contract, vProjectLatestDetails.ProjectGroup
-FROM tblMilestone INNER JOIN (G_tlkpProject INNER JOIN vProjectLatestDetails ON G_tlkpProject.ParentProject = vProjectLatestDetails.ParentProject) ON tblMilestone.Project = vProjectLatestDetails.ParentProject
-WHERE (((vProjectLatestDetails.Manager) Like fnGetHiddenManager()) AND ((IsEU_Project([project]))=False) AND ((fnDueYear([DateDue]))=fnYear()));
-

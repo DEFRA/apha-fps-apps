@@ -1,8 +1,0 @@
-QUERY NAME: qryJobCodeTotals4ByGroup
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW IIf(IsNull([TotalAdditionalCosts]),0,[TotalAdditionalCosts]) AS JCTotalAdditionalCosts, IIf(IsNull([TotalAnimalCosts]),0,[TotalAnimalCosts]) AS JCTotalAnimalCosts, IIf(IsNull([TotalStaffCosts]),0,[TotalStaffCosts]) AS JCTotalStaffCosts, IIf(IsNull([TotalTestCosts]),0,[TotalTestCosts]) AS JCTotalTestCosts, [JCTotalAnimalCosts]+[JCTotalAdditionalCosts]+[JCTotalStaffCosts]+[JCTotalTestCosts] AS TotalCosts, [Budget_CVL]-[TotalCosts] AS JCProfit, [transferincome]+[custincome] AS JCIncome, tlkpProject_ByGroup.Customer, tlkpProject_ByGroup.Manager AS ProjectManager, tlkpProject_ByGroup.ParentProject AS Jobcode, tlkpProject_ByGroup.Budget_CVL, tlkpProject_ByGroup.ProjectStatus, tlkpProject_ByGroup.ProjectGroup, tlkpProject_ByGroup.Program, tlkpProject_ByGroup.Profit
-FROM (((tlkpProject_ByGroup LEFT JOIN qryTotalTestCosts ON tlkpProject_ByGroup.ParentProject = qryTotalTestCosts.JobCode) LEFT JOIN qryTotalStaffCosts ON tlkpProject_ByGroup.ParentProject = qryTotalStaffCosts.Jobcode) LEFT JOIN qryTotalAnimalCosts ON tlkpProject_ByGroup.ParentProject = qryTotalAnimalCosts.JobCode) LEFT JOIN qryTotalAdditionalCosts ON tlkpProject_ByGroup.ParentProject = qryTotalAdditionalCosts.JobCode;
-

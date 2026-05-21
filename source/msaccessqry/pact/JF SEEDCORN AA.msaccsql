@@ -1,9 +1,0 @@
-QUERY NAME: JF SEEDCORN AA
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT TimeCostCalcs.WorkGroup, TimeCostCalcs.JobCode, TimeCostCalcs.Project, TimeCostCalcs.Month, TimeCostCalcs.GradeCode, TimeCostCalcs.Name, TimeCostCalcs.Division, TimeCostCalcs.Time, TimeCostCalcs.ChargeRate, TimeCostCalcs.Cost
-FROM tlkpProject INNER JOIN TimeCostCalcs ON tlkpProject.ParentProject = TimeCostCalcs.Project
-WHERE (((TimeCostCalcs.Project) Like "RD0044"));
-

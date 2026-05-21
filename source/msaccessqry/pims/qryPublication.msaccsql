@@ -1,8 +1,0 @@
-QUERY NAME: qryPublication
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT tblPublication.*, fnlate([submitted],[targetdate]) AS IsLate
-FROM tblPublication;
-

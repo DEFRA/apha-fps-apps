@@ -1,8 +1,0 @@
-QUERY NAME: qryRM_replan
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT WorkGroupGrade_General.WorkGroup, WorkGroupGrade_General.GradeCode, tblStaff_General.Name, tblStaffJob_RM.plannedhours, tlkpProject_General.ParentProject, tlkpProject_General.Program, WorkGroupGrade_General.WGGrade
-FROM (tlkpProject_General INNER JOIN (tblStaffJob_RM INNER JOIN tblStaff_General ON tblStaffJob_RM.StaffID = tblStaff_General.StaffID) ON tlkpProject_General.ParentProject = tblStaffJob_RM.Jobcode) INNER JOIN WorkGroupGrade_General ON tblStaff_General.WorkGroupGrade = WorkGroupGrade_General.WGGrade;
-

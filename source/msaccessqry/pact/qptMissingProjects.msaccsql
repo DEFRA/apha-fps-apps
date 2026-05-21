@@ -1,8 +1,0 @@
-QUERY NAME: qptMissingProjects
----------------------------------------------
-TYPE: PASS-THROUGH
-
-SQL:
-sp_MissingProjects
-
-

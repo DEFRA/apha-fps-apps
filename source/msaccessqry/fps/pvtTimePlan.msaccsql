@@ -1,9 +1,0 @@
-QUERY NAME: pvtTimePlan
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW vProjectStaffPlan.ParentProject, vProjectStaffPlan.ProgramNo, vProjectStaffPlan.Contract, vProjectStaffPlan.Name, vProjectStaffPlan.plannedhours, vProjectStaffPlan.ChargeRate, vProjectStaffPlan.Cost, [plannedhours]*[chargerate] AS PlanHrCost, vProjectStaffPlan.ProfitCentre, vProjectStaffPlan.WorkGroup, vProjectStaffPlan.WGGrade, vProjectStaffPlan.PCGrade
-FROM vProjectStaffPlan
-WHERE (((fnSelectedProg([ProgramNo]))=True) AND ((fnselectedproject([parentproject]))=True));
-

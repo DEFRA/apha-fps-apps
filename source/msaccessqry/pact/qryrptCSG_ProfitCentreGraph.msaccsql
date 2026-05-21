@@ -1,9 +1,0 @@
-QUERY NAME: qryrptCSG_ProfitCentreGraph
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tblkpProfitCentre.Division, WorkGroup.ProfitCentre, ProjectMonthFinal.MonthNo, tlkpProject.PlanCat, tlkpProject.Budget_cvl, ProjectMonthFinal.CumCost, ProjectMonthFinal.CumProfile, ProjectMonthFinal.SumOfCostProfile, ProjectMonthFinal.SumOfMstoneDue, ProjectMonthFinal.SumOfDue__Done
-FROM ProjectMonthFinal INNER JOIN ((WorkGroup INNER JOIN tlkpProject ON WorkGroup.WorkGroup = tlkpProject.ProjectWorkGroup) INNER JOIN tblkpProfitCentre ON WorkGroup.ProfitCentre = tblkpProfitCentre.ProfitCentre) ON ProjectMonthFinal.Project = tlkpProject.ParentProject
-WHERE ((tlkpProject.PlanCat="csg"));
-

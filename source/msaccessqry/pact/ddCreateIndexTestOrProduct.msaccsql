@@ -1,7 +1,0 @@
-QUERY NAME: ddCreateIndexTestOrProduct
----------------------------------------------
-TYPE: DDL
-
-SQL:
-CREATE UNIQUE INDEX TestOrProduct_PK ON TestOrProduct(ItemCode)
-

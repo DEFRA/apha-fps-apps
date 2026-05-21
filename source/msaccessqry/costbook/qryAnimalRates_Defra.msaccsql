@@ -1,8 +1,0 @@
-QUERY NAME: qryAnimalRates_Defra
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT tblAnimals.AnimalType, tblAnimals.DefraDailyRate AS DailyRate
-FROM tblAnimals;
-

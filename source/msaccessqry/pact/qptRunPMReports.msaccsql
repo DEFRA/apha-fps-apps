@@ -1,8 +1,0 @@
-QUERY NAME: qptRunPMReports
----------------------------------------------
-TYPE: OTHER
-
-SQL:
-Exec upPM1Report
-Exec usp_FPS_PM_Notification
-

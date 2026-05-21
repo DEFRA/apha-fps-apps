@@ -1,8 +1,0 @@
-QUERY NAME: TempTime
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT *
-FROM MonthlyTime;
-

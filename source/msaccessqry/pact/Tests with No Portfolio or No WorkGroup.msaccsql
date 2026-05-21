@@ -1,9 +1,0 @@
-QUERY NAME: Tests with No Portfolio or No WorkGroup
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW TestOrProduct.ItemCode, tlkpPortfolioTest.TestCode, tlkpPortfolioTest.PlanPortfolio, tlkpTestCapability.WorkGroup
-FROM (TestOrProduct LEFT JOIN tlkpPortfolioTest ON TestOrProduct.ItemCode = tlkpPortfolioTest.TestCode) LEFT JOIN tlkpTestCapability ON (tlkpPortfolioTest.PlanPortfolio = tlkpTestCapability.PlanPortfolio) AND (tlkpPortfolioTest.TestCode = tlkpTestCapability.TestCode)
-WHERE ((tlkpTestCapability.WorkGroup Is Null));
-

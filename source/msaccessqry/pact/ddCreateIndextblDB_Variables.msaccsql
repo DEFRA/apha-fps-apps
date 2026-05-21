@@ -1,7 +1,0 @@
-QUERY NAME: ddCreateIndextblDB_Variables
----------------------------------------------
-TYPE: DDL
-
-SQL:
-CREATE UNIQUE INDEX tblDB_PK ON tblDB_Variables(DB_Var_Name)
-

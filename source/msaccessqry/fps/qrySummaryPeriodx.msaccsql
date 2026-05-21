@@ -1,8 +1,0 @@
-QUERY NAME: qrySummaryPeriodx
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW Last([PeriodName]) AS PeriodName, Last([EndPeriod]) AS EndPeriod
-FROM tblPeriod;
-

@@ -1,9 +1,0 @@
-QUERY NAME: qryStaffResource
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW WorkGroup_General.ProfitCentre, WorkGroup_General.WorkGroup
-FROM WorkGroup_General
-GROUP BY WorkGroup_General.ProfitCentre, WorkGroup_General.WorkGroup;
-

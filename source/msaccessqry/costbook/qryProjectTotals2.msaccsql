@@ -1,9 +1,0 @@
-QUERY NAME: qryProjectTotals2
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW qryProjectYearProject.Project, qryProjectYearProject.YearNo, qryProjectYearProject.ProjectTitle, qryProjectYearProject.StartFYear, qryProjectYearProject.ContractPrice, qryProjectYearProject.Disease, qryProjectYearProject.PlanCat, qryProjectYearProject.ProjectWorkGroup, qryProjectYearProject.StartDate, qryProjectYearProject.Inflation, Sum(qryStaffReqGradeSum.StaffCost) AS SumOfStaffCost, Sum(qryTestReqTestSum.TestCost) AS SumOfTestCost, Sum(qryAnimalTypeAnimalSum.AnimalCost) AS SumOfAnimalCost, Sum(qryAdditionalCostSum.LineCost) AS SumOfLineCost, qryProjectYearProject.FinancialYears, qryProjectYearProject.EuroConvRate, qryProjectYearProject.Programme
-FROM (((qryProjectYearProject LEFT JOIN qryAnimalTypeAnimalSum ON (qryProjectYearProject.YearNo = qryAnimalTypeAnimalSum.Year) AND (qryProjectYearProject.Project = qryAnimalTypeAnimalSum.Project)) LEFT JOIN qryStaffReqGradeSum ON (qryProjectYearProject.YearNo = qryStaffReqGradeSum.Year) AND (qryProjectYearProject.Project = qryStaffReqGradeSum.Project)) LEFT JOIN qryTestReqTestSum ON (qryProjectYearProject.YearNo = qryTestReqTestSum.Year) AND (qryProjectYearProject.Project = qryTestReqTestSum.Project)) LEFT JOIN qryAdditionalCostSum ON (qryProjectYearProject.YearNo = qryAdditionalCostSum.Year) AND (qryProjectYearProject.Project = qryAdditionalCostSum.Project)
-GROUP BY qryProjectYearProject.Project, qryProjectYearProject.YearNo, qryProjectYearProject.ProjectTitle, qryProjectYearProject.StartFYear, qryProjectYearProject.ContractPrice, qryProjectYearProject.Disease, qryProjectYearProject.PlanCat, qryProjectYearProject.ProjectWorkGroup, qryProjectYearProject.StartDate, qryProjectYearProject.Inflation, qryProjectYearProject.FinancialYears, qryProjectYearProject.EuroConvRate, qryProjectYearProject.Programme;
-

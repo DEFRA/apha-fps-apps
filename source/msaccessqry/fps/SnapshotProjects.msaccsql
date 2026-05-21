@@ -1,8 +1,0 @@
-QUERY NAME: SnapshotProjects
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tlkpProject_MAP.Program, tlkpProject_MAP.ParentProject, tlkpProject_MAP.ProjectTitle, tlkpProject_MAP.Contract, tlkpProject_MAP.Customer, tlkpProject_MAP.Manager, tlkpProject_MAP.TransferIncome, tlkpProject_MAP.CustIncome, tlkpProject_MAP.ProjectStatus, tlkpProject_MAP.Budget_CVL, tlkpProject_MAP.CaseworkSub, tlkpProject_MAP.PVSIncome, tlkpProject_MAP.PlanCaseworkDebit
-FROM tlkpProject_MAP;
-

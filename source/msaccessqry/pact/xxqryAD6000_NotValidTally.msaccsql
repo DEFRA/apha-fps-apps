@@ -1,9 +1,0 @@
-QUERY NAME: xxqryAD6000_NotValidTally
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT tblMTConversion.NewProject, tblMTConversion.NewCode
-FROM tblMTConversion LEFT JOIN qryAD6000_NotValid ON (tblMTConversion.NewCode = qryAD6000_NotValid.TimeCode) AND (tblMTConversion.NewProject = qryAD6000_NotValid.ParentProject)
-WHERE (((qryAD6000_NotValid.WorkGroup) Is Null)) OR (((qryAD6000_NotValid.Active) Is Null));
-

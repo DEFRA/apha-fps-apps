@@ -1,9 +1,0 @@
-QUERY NAME: qryMilestone1
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW MILESTONE.Project, MILESTONE.MilestoneRef, MILESTONE.PlanDate, MILESTONE.ActualDate, MILESTONE.MonthNoFin AS DueMonth, IIf(([actualdate]<=[PlanDate]),1,0) AS OnTimeFlag, IIf(IsNull([ActualDate]),0,1) AS CompleteFlag, MILESTONE.Year
-FROM MILESTONE
-WHERE ((MILESTONE.Year="98/99"));
-

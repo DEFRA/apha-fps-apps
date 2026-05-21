@@ -1,9 +1,0 @@
-QUERY NAME: qryWorkGroupGrade
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW WorkGroupGrade.*
-FROM WorkGroupGrade
-ORDER BY WorkGroupGrade.WGGrade;
-

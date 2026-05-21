@@ -1,9 +1,0 @@
-QUERY NAME: qryrptNonMAFFincome
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tlkpProject.PlanCat, tblkpProfitCentre.Division, WorkGroup.ProfitCentre, IIf([parentproject] Like "FT*","Fixed Term",[PlanCat]) AS Expr1, IIf([parentproject] Like "UT*","Utility",[Expr1]) AS Expr2, tlkpProject.ParentProject, tlkpProject.ProjectTitle, tlkpProject.Customer, IIf([parentproject] Like "UT6*","Products",[expr2]) AS Category1, IIf([ParentProject] Like "UT5*","RoyaLTies",[Category1]) AS Category2, IIf([Customer]="EC","EC",[Category2]) AS Category, ProjectMonthFinal.MonthNo, tlkpProject.ProjectWorkGroup, tlkpProject.Budget_Ext AS [ContractPrice(InYear)], ProjectMonthFinal.CumInvoices, tlkpProject.ProjectStatus, ProjectMonthFinal.PeriodName, tlkpProject.Manager
-FROM (WorkGroup INNER JOIN (tlkpProject INNER JOIN ProjectMonthFinal ON tlkpProject.ParentProject = ProjectMonthFinal.Project) ON WorkGroup.WorkGroup = tlkpProject.ProjectWorkGroup) INNER JOIN tblkpProfitCentre ON WorkGroup.ProfitCentre = tblkpProfitCentre.ProfitCentre
-WHERE ((tlkpProject.PlanCat="commercial" Or tlkpProject.PlanCat="othergovt") AND (ProjectMonthFinal.MonthNo=[forms]![menu-division]![periodpick]));
-

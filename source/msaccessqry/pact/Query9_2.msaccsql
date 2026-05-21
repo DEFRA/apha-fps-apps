@@ -1,9 +1,0 @@
-QUERY NAME: Query9_2
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT MonthlyTime.WorkGroup, MonthlyTime.PACTStaffID, MonthlyTime.TimeCode, MonthlyTime.Month, MonthlyTime.ParentProject, MonthlyTime.WorkGroup, MonthlyTime.Hours
-FROM MonthlyTime INNER JOIN _SVChanges ON MonthlyTime.PACTStaffID = [_SVChanges].PACTid
-WHERE (((MonthlyTime.WorkGroup)<>[WG]));
-

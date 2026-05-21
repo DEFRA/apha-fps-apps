@@ -1,9 +1,0 @@
-QUERY NAME: qryPLsReportComments
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT tblComments.Project, tblComments.Year, tblComments.Comment, tblComments.Topic
-FROM tblComments
-WHERE (((tblComments.Topic)=fnReportCommentsFromPL()));
-

@@ -12,24 +12,24 @@ using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using System.Text.Json;
 
-namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DivisionGradeControllerTest
+namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DivisionGradeMaintenanceControllerTest
 {
-    public class DivisionGradeControllerTests
+    public class DivisionGradeMaintenanceControllerTests
     {
         private readonly IMapper _mapper;
         private readonly IDivisionGradeService _maintDGService;
         private readonly IDivisionService _divisionService;
         private readonly IFpsYearContext _fpsYearContext;
-        private readonly DivisionGradeController _controller;
+        private readonly DivisionGradeMaintenanceController _controller;
 
-        public DivisionGradeControllerTests()
+        public DivisionGradeMaintenanceControllerTests()
         {
             _mapper = Substitute.For<IMapper>();
             _maintDGService = Substitute.For<IDivisionGradeService>();
             _divisionService = Substitute.For<IDivisionService>();
             _fpsYearContext = Substitute.For<IFpsYearContext>();
             _fpsYearContext.Year.Returns(2025);
-            _controller = new DivisionGradeController(
+            _controller = new DivisionGradeMaintenanceController(
                 _mapper, _maintDGService, _divisionService, _fpsYearContext);
         }
 
@@ -63,28 +63,28 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DivisionGradeControllerTest
         public void Constructor_ThrowsArgumentNullException_WhenMapperIsNull()
         {
             Assert.Throws<ArgumentNullException>(() =>
-                new DivisionGradeController(null!, _maintDGService, _divisionService, _fpsYearContext));
+                new DivisionGradeMaintenanceController(null!, _maintDGService, _divisionService, _fpsYearContext));
         }
 
         [Fact]
         public void Constructor_ThrowsArgumentNullException_WhenServiceIsNull()
         {
             Assert.Throws<ArgumentNullException>(() =>
-                new DivisionGradeController(_mapper, null!, _divisionService, _fpsYearContext));
+                new DivisionGradeMaintenanceController(_mapper, null!, _divisionService, _fpsYearContext));
         }
 
         [Fact]
         public void Constructor_ThrowsArgumentNullException_WhenDivisionServiceIsNull()
         {
             Assert.Throws<ArgumentNullException>(() =>
-                new DivisionGradeController(_mapper, _maintDGService, null!, _fpsYearContext));
+                new DivisionGradeMaintenanceController(_mapper, _maintDGService, null!, _fpsYearContext));
         }
 
         [Fact]
         public void Constructor_ThrowsArgumentNullException_WhenYearContextIsNull()
         {
             Assert.Throws<ArgumentNullException>(() =>
-                new DivisionGradeController(_mapper, _maintDGService, _divisionService, null!));
+                new DivisionGradeMaintenanceController(_mapper, _maintDGService, _divisionService, null!));
         }
 
         #endregion
@@ -720,3 +720,4 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DivisionGradeControllerTest
     // Local helper record to deserialize JsonResult values
     internal record JsonResponse(bool success, string message, object? data = null, object? errors = null);
 }
+

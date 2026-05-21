@@ -1,9 +1,0 @@
-QUERY NAME: VID TimeCosts by Month 1997/98
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tlkpProject.PlanCat, tlkpProject.ParentProject, tlkpProject.ProjectTitle, TimeCostCalcs.Month, TimeCostCalcs.Cost, TimeCostCalcs.Cost
-FROM tlkpProject RIGHT JOIN ((tblStaff INNER JOIN TimeCostCalcs ON tblStaff.PACTid = TimeCostCalcs.StaffID) INNER JOIN (WorkGroup INNER JOIN WorkGroupGrade ON WorkGroup.WorkGroup = WorkGroupGrade.WorkGroup) ON tblStaff.WorkGroupGrade = WorkGroupGrade.WG_Grade) ON tlkpProject.ParentProject = TimeCostCalcs.Project
-WHERE ((WorkGroup.ProfitCentre="vine" Or WorkGroup.ProfitCentre="visw"));
-

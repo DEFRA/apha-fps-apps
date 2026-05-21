@@ -1,8 +1,0 @@
-QUERY NAME: qryProjectSpecifics
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT tlkpProject_General.Program, tlkpProject_General.ParentProject, tlkpProject_General.ProjectTitle, tlkpProject_General.ShortTitle, tlkpProject_General.ProjectStatus, tblAdditionalCosts.Account, tblAdditionalCosts.Description, tblAdditionalCosts.Freq, tblAdditionalCosts.Supplier, tblAdditionalCosts.ItemCost, tlkpProject_General.Manager
-FROM tlkpProject_General INNER JOIN tblAdditionalCosts ON tlkpProject_General.ParentProject = tblAdditionalCosts.JobCode;
-

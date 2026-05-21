@@ -1,9 +1,0 @@
-QUERY NAME: Create_PCgrade
----------------------------------------------
-TYPE: APPEND
-
-SQL:
-INSERT INTO ProfitCentreGrade ( DivisionGrade, ProfitCentre, GradeCode, PCGrade )
-SELECT DISTINCTROW DivisionGrade.DivisionGrade, tblkpProfitCentre.ProfitCentre, DivisionGrade.GradeCode, [gradecode] & "-" & [profitcentre] AS Expr1
-FROM DivisionGrade INNER JOIN tblkpProfitCentre ON DivisionGrade.Division = tblkpProfitCentre.Division;
-

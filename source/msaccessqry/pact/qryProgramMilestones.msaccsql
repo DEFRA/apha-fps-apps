@@ -1,8 +1,0 @@
-QUERY NAME: qryProgramMilestones
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tlkpProject.Program, JobCodeMonthFinal.MonthNo, JobCodeMonthFinal.SumOfMstoneDue AS MstDue, JobCodeMonthFinal.[SumOfDue__Done] AS MstMet, JobCodeMonthFinal.SumOfOnTime AS MetOnTime
-FROM tlkpProject INNER JOIN JobCodeMonthFinal ON tlkpProject.ParentProject = JobCodeMonthFinal.JobCode;
-

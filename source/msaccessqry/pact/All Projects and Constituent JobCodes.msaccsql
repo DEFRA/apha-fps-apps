@@ -1,9 +1,0 @@
-QUERY NAME: All Projects and Constituent JobCodes
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tlkpProject.PlanCat, tlkpProject.ParentProject AS Project, tlkpProject.ProjectTitle, tlkpProject.Manager, tlkpProject.ProjectWorkGroup AS OwningGrp, tlkpJobCode.JobCode, tlkpJobCode.JobCodeName
-FROM tlkpProject INNER JOIN tlkpJobCode ON tlkpProject.ParentProject = tlkpJobCode.ParentProject
-ORDER BY tlkpProject.PlanCat, tlkpProject.ParentProject;
-

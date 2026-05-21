@@ -1,8 +1,0 @@
-QUERY NAME: qryAdditionalCosts_Com
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tblAdditionalCosts.Project, tblAdditionalCosts.Year, tblAdditionalCosts.Description, tblAdditionalCosts.ItemCost, tblAdditionalCosts.CostEntered, tblAdditionalCosts.AccountCat, tblAdditionalCosts.Freq, tblAdditionalCosts.AC_Identity, tblProject.Programme, tblProjectYear.Markup_Additional, tblProjectYear.Profit_Additional, [ItemCost]*(1+[Markup_Additional]/100) AS CostIncMarkup, 100*[CostIncMarkup]/(100-[Profit_Additional]) AS CostIncProfit
-FROM tblAdditionalCosts INNER JOIN (tblProject INNER JOIN tblProjectYear ON tblProject.Project = tblProjectYear.Project) ON (tblAdditionalCosts.Year = tblProjectYear.YearNo) AND (tblAdditionalCosts.Project = tblProjectYear.Project);
-

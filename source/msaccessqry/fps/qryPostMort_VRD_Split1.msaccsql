@@ -1,9 +1,0 @@
-QUERY NAME: qryPostMort_VRD_Split1
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT qryPostMort_VRD_Split.Month, Sum(qryPostMort_VRD_Split.LTSplitFee) AS TotalLTSplitFee
-FROM qryPostMort_VRD_Split
-GROUP BY qryPostMort_VRD_Split.Month;
-

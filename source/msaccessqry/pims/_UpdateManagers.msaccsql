@@ -1,8 +1,0 @@
-QUERY NAME: _UpdateManagers
----------------------------------------------
-TYPE: UPDATE
-
-SQL:
-UPDATE MY_tlkpProject INNER JOIN _tblManagerTranslate ON MY_tlkpProject.Manager = [_tblManagerTranslate].Manager SET MY_tlkpProject.Manager = [name]
-WHERE ((([_tblManagerTranslate].Name) Is Not Null));
-

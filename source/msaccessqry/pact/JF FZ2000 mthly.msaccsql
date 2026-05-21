@@ -1,9 +1,0 @@
-QUERY NAME: JF FZ2000 mthly
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT ProjectMonthFinal.Project, ProjectMonthFinal.MonthNo, ProjectMonthFinal.Subcontracts, ProjectMonthFinal.TimeCosts, ProjectMonthFinal.TransferCosts, ProjectMonthFinal.TotalCost
-FROM ProjectMonthFinal
-WHERE (((ProjectMonthFinal.Project)="fz2000"));
-

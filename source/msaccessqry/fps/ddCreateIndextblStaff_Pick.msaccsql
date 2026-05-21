@@ -1,6 +1,0 @@
-QUERY NAME: ddCreateIndextblStaff_Pick
----------------------------------------------
-TYPE: DDL
-
-SQL:
-CREATE UNIQUE INDEX tblStaff_PickPK ON tblStaff_Pick(StaffID)

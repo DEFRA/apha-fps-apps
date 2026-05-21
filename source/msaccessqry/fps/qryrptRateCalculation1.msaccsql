@@ -1,9 +1,0 @@
-QUERY NAME: qryrptRateCalculation1
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tblkpProfitCentre.Division, ProfitCentreGrade.ProfitCentre, ProfitCentreGrade.ChargeRate, ProfitCentreGrade.DirectRate, ProfitCentreGrade.PayRate, ProfitCentreGrade.NPR, ProfitCentreGrade.PCGrade, Sum(qryWgGradeHours.TotalHours) AS AvHrs, ProfitCentreGrade.OHR, Grade.AvSalary
-FROM (tblkpProfitCentre INNER JOIN (Grade INNER JOIN ProfitCentreGrade ON Grade.GradeCode = ProfitCentreGrade.GradeCode) ON tblkpProfitCentre.ProfitCentre = ProfitCentreGrade.ProfitCentre) INNER JOIN qryWgGradeHours ON ProfitCentreGrade.PCGrade = qryWgGradeHours.ProfitCentreGrade
-GROUP BY tblkpProfitCentre.Division, ProfitCentreGrade.ProfitCentre, ProfitCentreGrade.ChargeRate, ProfitCentreGrade.DirectRate, ProfitCentreGrade.PayRate, ProfitCentreGrade.NPR, ProfitCentreGrade.PCGrade, ProfitCentreGrade.OHR, Grade.AvSalary;
-

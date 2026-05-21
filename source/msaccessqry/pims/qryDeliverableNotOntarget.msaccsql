@@ -1,9 +1,0 @@
-QUERY NAME: qryDeliverableNotOntarget
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT tblMilestone.Project, tblMilestone.Number, G_tlkpProject.ShortTitle, tblMilestone.Description, tblMilestone.DateDue, tblMilestone.ProjectLeaderComment, tblMilestone.OnTarget, vProjectLatestDetails.Program, vProjectLatestDetails.Manager, G_tlkpProject.ProjectTitle, tblMilestone.DateCompleted, vProjectLatestDetails.Customer, G_tlkpProject.Contract, vProjectLatestDetails.ProjectGroup
-FROM (G_tlkpProject INNER JOIN vProjectLatestDetails ON G_tlkpProject.ParentProject = vProjectLatestDetails.ParentProject) INNER JOIN tblMilestone ON vProjectLatestDetails.ParentProject = tblMilestone.Project
-WHERE (((tblMilestone.OnTarget)=0 Or (tblMilestone.OnTarget) Is Null) AND ((vProjectLatestDetails.Manager) Like fnGetHiddenManager()) AND ((tblMilestone.DateCompleted) Is Null) AND ((fnDoneInPeriod([DateDue]))=True) AND ((IsEU_Project([project]))=False) AND ((fnDeliverableYear([number]))=fnReportYear()));
-

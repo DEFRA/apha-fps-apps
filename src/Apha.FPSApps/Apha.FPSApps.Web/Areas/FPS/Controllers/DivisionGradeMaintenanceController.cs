@@ -17,14 +17,14 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
     [Area("FPS")]
     [Authorize(Roles = "FPSAdmin,FPSUser")]
     [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")]
-    public class DivisionGradeController : Controller
+    public class DivisionGradeMaintenanceController : Controller
     {
         private readonly IMapper _mapper;
         private readonly IDivisionGradeService _maintDGService;
         private readonly IDivisionService _divisionService;
         private readonly IFpsYearContext _fpsYearContext;
 
-        public DivisionGradeController(IMapper mapper, IDivisionGradeService maintDGService, IDivisionService divisionService, IFpsYearContext fpsYearContext)
+        public DivisionGradeMaintenanceController(IMapper mapper, IDivisionGradeService maintDGService, IDivisionService divisionService, IFpsYearContext fpsYearContext)
         {
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _maintDGService = maintDGService ?? throw new ArgumentNullException(nameof(maintDGService));
@@ -94,7 +94,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 EditFunction = "editDivisionGrade",
                 AllowDelete = true,
                 DeleteFunction = "deleteDivisionGrade",
-                BindGridUrl = $"/FPS/DivisionGrade/LoadDivisionGradeGrid?year={_fpsYearContext.Year}",
+                BindGridUrl = $"/FPS/DivisionGradeMaintenance/LoadDivisionGradeGrid?year={_fpsYearContext.Year}",
                 Data = items,
                 Columns = GridDataProvider.GetColumnsDefination<DivisionGradeItem>(null),
                 Pagination = paginationModel,
