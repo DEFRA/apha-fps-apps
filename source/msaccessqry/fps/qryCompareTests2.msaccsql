@@ -1,0 +1,9 @@
+QUERY NAME: qryCompareTests2
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW MonthlyOutput.Buyer, MonthlyOutput.TestCode, MonthlyOutput.Month, MonthlyOutput.Volume, tlkpTestReqmt.UnitPrice AS TestPrice, [unitprice]*[volume] AS Charge, MonthlyOutput.WorkGroup
+FROM MonthlyOutput INNER JOIN tlkpTestReqmt ON (MonthlyOutput.Buyer = tlkpTestReqmt.Buyer) AND (MonthlyOutput.TestCode = tlkpTestReqmt.TestCode)
+ORDER BY MonthlyOutput.TestCode, MonthlyOutput.Month;
+

@@ -1,0 +1,11 @@
+QUERY NAME: qryPCTotalExceptCostsApp
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW qryProgrammeExceptCosts.ProfitCentre, Sum(qryProgrammeExceptCosts.ItemCost) AS SumOfItemCost
+FROM qryProgrammeExceptCosts
+WHERE ((qryProgrammeExceptCosts.ProjectStatus="Approved"))
+GROUP BY qryProgrammeExceptCosts.ProfitCentre
+ORDER BY qryProgrammeExceptCosts.ProfitCentre;
+

@@ -1,0 +1,6 @@
+QUERY NAME: ddCreateIndexvContractAdditionalCosts
+---------------------------------------------
+TYPE: DDL
+
+SQL:
+CREATE UNIQUE INDEX vContractAdditionalCosts_PK ON vContractAdditionalCosts(JobCode,Account)

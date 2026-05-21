@@ -1,0 +1,6 @@
+QUERY NAME: ddCreateIndextlkpProgram
+---------------------------------------------
+TYPE: DDL
+
+SQL:
+CREATE UNIQUE INDEX tlkpProgram_PK ON tlkpProgram(ProgramNo)

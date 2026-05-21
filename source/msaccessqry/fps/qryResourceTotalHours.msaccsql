@@ -1,0 +1,11 @@
+QUERY NAME: qryResourceTotalHours
+---------------------------------------------
+TYPE: OTHER
+
+SQL:
+TRANSFORM Sum(tblStaff.HrsAvail) AS SumOfTotalHours
+SELECT ProfitCentreGrade_General.ProfitCentre, Sum(tblStaff.HrsAvail) AS PCTotalHours
+FROM (WorkGroupGrade_General INNER JOIN tblStaff ON WorkGroupGrade_General.WGGrade = tblStaff.WorkGroupGrade) INNER JOIN ProfitCentreGrade_General ON WorkGroupGrade_General.ProfitCentreGrade = ProfitCentreGrade_General.PCGrade
+GROUP BY ProfitCentreGrade_General.ProfitCentre
+PIVOT ProfitCentreGrade_General.GradeCode In ("GD5","A","B","C","D","E","F","G");
+

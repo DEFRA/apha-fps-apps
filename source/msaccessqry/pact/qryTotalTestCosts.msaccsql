@@ -1,0 +1,9 @@
+QUERY NAME: qryTotalTestCosts
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpTestReqmt.Buyer AS JobCode, Sum([NoRequired]*[UnitPrice]) AS TotalTestCosts
+FROM tlkpTestReqmt
+GROUP BY tlkpTestReqmt.Buyer;
+

@@ -1,0 +1,9 @@
+QUERY NAME: sara-lizcompare
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT [Sara-LizInstructions].LizToDo, Table10.test, Table10.buyer, Sum(Table10.vol) AS SumOfvol
+FROM Table10 INNER JOIN [Sara-LizInstructions] ON (Table10.buyer = [Sara-LizInstructions].Buyer) AND (Table10.test = [Sara-LizInstructions].Tes)
+GROUP BY [Sara-LizInstructions].LizToDo, Table10.test, Table10.buyer;
+

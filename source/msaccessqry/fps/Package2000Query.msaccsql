@@ -1,0 +1,11 @@
+QUERY NAME: Package2000Query
+---------------------------------------------
+TYPE: OTHER
+
+SQL:
+TRANSFORM Sum(tblTestRequ.NoTests) AS SumOfNoTests
+SELECT Package2000.IDENTITY, Package2000.ANALYSIS_ID, TestOrProduct.ItemDescription
+FROM (Package2000 INNER JOIN TestOrProduct ON Package2000.ANALYSIS_ID = TestOrProduct.ItemCode) INNER JOIN tblTestRequ ON TestOrProduct.ItemCode = tblTestRequ.TestCode
+GROUP BY Package2000.IDENTITY, Package2000.ANALYSIS_ID, TestOrProduct.ItemDescription
+PIVOT tblTestRequ.JobCode;
+

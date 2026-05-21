@@ -1,0 +1,9 @@
+QUERY NAME: qryCBSummaryDel2
+---------------------------------------------
+TYPE: DELETE
+
+SQL:
+DELETE DISTINCTROW tblCBSummary.*, tblCBSummary.CBProject
+FROM tblCBSummary
+WHERE ((tblCBSummary.CBProject=[Forms]![frmProject1]![Project]));
+

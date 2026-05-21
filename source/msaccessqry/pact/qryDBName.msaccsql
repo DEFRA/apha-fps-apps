@@ -1,0 +1,6 @@
+QUERY NAME: qryDBName
+---------------------------------------------
+TYPE: PASS-THROUGH
+
+SQL:
+Select db_name() as db_name

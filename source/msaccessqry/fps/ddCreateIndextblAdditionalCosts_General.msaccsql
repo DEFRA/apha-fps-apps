@@ -1,0 +1,6 @@
+QUERY NAME: ddCreateIndextblAdditionalCosts_General
+---------------------------------------------
+TYPE: DDL
+
+SQL:
+CREATE UNIQUE INDEX tblAdditionalCosts_GeneralPK ON tblAdditionalCosts_General(Jobcode,Account,description)

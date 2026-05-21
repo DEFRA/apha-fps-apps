@@ -1,0 +1,8 @@
+QUERY NAME: qryrptPC1Part1C
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW qryrptPC1part1A.ProfitCentre, qryrptPC1part1A.Month, qryrptPC1part1A.SumOfRunningCost, qryrptPC1part1A.SumOfRunCostProfile, qryrptPC1part1B.SumOfCost
+FROM qryrptPC1part1A INNER JOIN qryrptPC1part1B ON qryrptPC1part1A.ProfitCentre = qryrptPC1part1B.ProfitCentre;
+

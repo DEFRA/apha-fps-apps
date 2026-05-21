@@ -1,0 +1,9 @@
+QUERY NAME: qrySara1
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblStaff.WorkGroupGrade, Sum(tblStaff.HrsAvail) AS SumOfHrsAvail
+FROM tblStaff
+GROUP BY tblStaff.WorkGroupGrade;
+

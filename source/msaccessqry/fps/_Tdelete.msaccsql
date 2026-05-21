@@ -1,0 +1,9 @@
+QUERY NAME: _Tdelete
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT TestOrProduct.ItemCode
+FROM Prices RIGHT JOIN TestOrProduct ON Prices.[Test Code] = TestOrProduct.ItemCode
+WHERE (((TestOrProduct.ItemCode) Not Like "PT*") AND ((Prices.[Test Code]) Is Null));
+

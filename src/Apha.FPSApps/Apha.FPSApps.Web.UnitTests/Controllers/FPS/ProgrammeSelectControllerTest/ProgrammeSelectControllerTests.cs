@@ -355,18 +355,17 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgrammeSelectControllerTe
         }
 
         [Fact]
-        public async Task LoadProjectsGrid_WithProjectSearch_FiltersResults()
+        public async Task LoadProjectsGrid_WithProjectSearch_FiltersResultsServerSide()
         {
-            // Arrange
+            // Arrange — mock returns only the API-filtered results (server-side filtering now)
             var request = new PaginationFilter<string>();
-            var projects = new List<ProjectDto>
+            var filteredProjects = new List<ProjectDto>
             {
                 new() { ParentProject = "AH0001", Program = "P001" },
-                new() { ParentProject = "AH0002", Program = "P001" },
-                new() { ParentProject = "BZ0001", Program = "P001" }
+                new() { ParentProject = "AH0002", Program = "P001" }
             };
             _projectService.GetProjectsByProgramAsync(Arg.Any<QueryParameters<string>>(), "P001")
-                .Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse(projects, new PaginationDto()));
+                .Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse(filteredProjects, new PaginationDto()));
             _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string>());
             _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>())

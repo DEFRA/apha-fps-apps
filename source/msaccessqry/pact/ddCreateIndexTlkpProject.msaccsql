@@ -1,0 +1,7 @@
+QUERY NAME: ddCreateIndexTlkpProject
+---------------------------------------------
+TYPE: DDL
+
+SQL:
+CREATE UNIQUE INDEX tlkpproject_PK ON tlkpproject(parentproject)
+

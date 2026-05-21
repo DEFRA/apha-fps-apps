@@ -1,0 +1,9 @@
+QUERY NAME: xtblStaffRequ Without Matching tblPCGrades
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW [tblStaffRequ].[PCGrade], [tblStaffRequ].[ProjectYear], [tblStaffRequ].[StaffRequirement]
+FROM tblStaffRequ LEFT JOIN tblPCGrades ON [tblStaffRequ].[PCGrade] = [tblPCGrades].[PC_Grade]
+WHERE ([tblPCGrades].[PC_Grade] Is Null);
+

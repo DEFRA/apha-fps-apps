@@ -1,0 +1,9 @@
+QUERY NAME: qryProject
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpProject.Program, tlkpProject.ParentProject, tlkpProject.ProjectTitle, tlkpProject.Customer, tlkpProject.Manager, tlkpProject.Budget_CVL, tlkpProject.Budget_Ext, tlkpProject.TransferIncome, tlkpProject.Finished
+FROM tlkpProject
+ORDER BY tlkpProject.Program, tlkpProject.ParentProject;
+

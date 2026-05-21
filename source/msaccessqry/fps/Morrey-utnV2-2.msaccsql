@@ -1,0 +1,8 @@
+QUERY NAME: Morrey-utnV2-2
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT [Morrey-UtnV2-1].ProfitCentre, [Morrey-UtnV2-1].WorkGroup, [Morrey-utnV2-3].SumOfHrsPaid, IIf(IsNull([charge]),0,[charge]) AS SOCT, IIf(IsNull([free]),0,[free]) AS overhead, [soct]/([soct]+[overhead]) AS utn, ([overhead]+[soct]+[free])/([sumofsumofhrspaid]*(5/12)) AS allocation
+FROM [Morrey-utnV2-3] INNER JOIN [Morrey-UtnV2-1] ON ([Morrey-utnV2-3].WorkGroup = [Morrey-UtnV2-1].WorkGroup) AND ([Morrey-utnV2-3].ProfitCentre = [Morrey-UtnV2-1].ProfitCentre);
+

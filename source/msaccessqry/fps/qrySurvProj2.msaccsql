@@ -1,0 +1,10 @@
+QUERY NAME: qrySurvProj2
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW qryAllWgProjects.ParentProject, qryAllWgProjects.WorkGroup, Sum(TimeCostCalcs.Cost) AS HoursCost, Sum(TimeCostCalcs.Cost) AS TotalTimeCost
+FROM qryAllWgProjects LEFT JOIN TimeCostCalcs ON (qryAllWgProjects.ParentProject = TimeCostCalcs.JobCode) AND (qryAllWgProjects.WorkGroup = TimeCostCalcs.WorkGroup)
+WHERE ((TimeCostCalcs.Project="seb4100") AND (qryAllWgProjects.WorkGroup Like "sv??" Or qryAllWgProjects.WorkGroup=[timecostcalcs].[workgroup]))
+GROUP BY qryAllWgProjects.ParentProject, qryAllWgProjects.WorkGroup;
+

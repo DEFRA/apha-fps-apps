@@ -1,0 +1,11 @@
+QUERY NAME: qryrptCSGprogramGraphALL
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpProject.Program, ProjectMonthFinal.MonthNo, Sum(([transferIncome]+[Budget_Ext])*[MonthNo]/12) AS ProfileIncome, Sum(ProjectMonthFinal.CumCost) AS SumOfCumCost, Sum([CumPortSales]+[CumInvoices]) AS CumIncome
+FROM (tlkpProgram LEFT JOIN ProgramTotals ON tlkpProgram.ProgramNo = ProgramTotals.ProgramNo) INNER JOIN (ProjectMonthFinal INNER JOIN tlkpProject ON ProjectMonthFinal.Project = tlkpProject.ParentProject) ON tlkpProgram.ProgramNo = tlkpProject.Program
+GROUP BY tlkpProject.Program, ProjectMonthFinal.MonthNo
+HAVING ((tlkpProject.Program Is Not Null))
+ORDER BY tlkpProject.Program, ProjectMonthFinal.MonthNo;
+

@@ -1,0 +1,9 @@
+QUERY NAME: qryDeliverablesAchieved
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT vProjectLatestDetails.Program, tblMilestone.Project, vProjectLatestDetails.Manager, tblMilestone.Number, tblMilestone.DateCompleted, tblMilestone.CAPSComment, IIf([DateCompleted]<=[DateDue],True,False) AS DoneOnTime, tblMilestone.DateDue, tblMilestone.Description, G_tlkpProject.Contract, vProjectLatestDetails.ProjectGroup
+FROM (tblMilestone INNER JOIN vProjectLatestDetails ON tblMilestone.Project = vProjectLatestDetails.ParentProject) INNER JOIN G_tlkpProject ON (G_tlkpProject.ParentProject = vProjectLatestDetails.ParentProject) AND (vProjectLatestDetails.ParentProject = G_tlkpProject.ParentProject)
+WHERE (((vProjectLatestDetails.Manager) Like fnGetHiddenManager()) AND ((fnDoneInPeriod([datecompleted]))=True) AND ((fnInReportMonthOrBefore([DateDue]))=True));
+

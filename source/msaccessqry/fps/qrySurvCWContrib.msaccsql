@@ -1,0 +1,9 @@
+QUERY NAME: qrySurvCWContrib
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW ProjectMonthFinal.Project, ProjectMonthFinal.CumCWDebit, ProjectMonthFinal.MonthNo
+FROM ProjectMonthFinal
+WHERE (((ProjectMonthFinal.CumCWDebit)<>0) AND ((ProjectMonthFinal.MonthNo)=[Forms]![frmPactReportMenu]![PeriodPick]));
+

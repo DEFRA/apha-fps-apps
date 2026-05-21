@@ -1,0 +1,9 @@
+QUERY NAME: qryAdditionalCostSum
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblAdditionalCosts.Project, tblAdditionalCosts.Year, Sum(tblAdditionalCosts.ItemCost) AS LineCost
+FROM tblAdditionalCosts
+GROUP BY tblAdditionalCosts.Project, tblAdditionalCosts.Year;
+

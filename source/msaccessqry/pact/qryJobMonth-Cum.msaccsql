@@ -1,0 +1,6 @@
+QUERY NAME: qryJobMonth-Cum
+---------------------------------------------
+TYPE: OTHER
+
+SQL:
+sp_qryJobMonthCum 

@@ -1,0 +1,9 @@
+QUERY NAME: TotalHours_Project
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tblStaffJob_MAP.Jobcode, Sum(tblStaffJob_MAP.plannedhours) AS SumOfplannedhours
+FROM tblStaffJob_MAP
+GROUP BY tblStaffJob_MAP.Jobcode;
+

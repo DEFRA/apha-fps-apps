@@ -1,0 +1,11 @@
+QUERY NAME: qryfrmCluedo1
+---------------------------------------------
+TYPE: OTHER
+
+SQL:
+TRANSFORM Sum(TimeCostCalcs.Time) AS SumOfTime
+SELECT WorkGroup.ProfitCentre, WorkGroup.WorkGroup, WorkGroupGrade.WG_Grade, tblStaff.Name, tblStaff.HrsPaid, tlkpJobCode.ParentProject, TimeCostCalcs.JobCode, IIf(IsNull([tlkpjobcode].[jobcode]),[itemdescription],[JobCodeName]) AS JobTitle, IIf([cost]=0,0,1) AS UtFlag, Sum(TimeCostCalcs.Time) AS SumOfTime1, Sum(TimeCostCalcs.Cost) AS SumOfCost
+FROM WorkGroup INNER JOIN (WorkGroupGrade INNER JOIN ((tlkpMonth INNER JOIN (tblStaff INNER JOIN (TimeCostCalcs LEFT JOIN tlkpJobCode ON TimeCostCalcs.JobCode = tlkpJobCode.JobCode) ON tblStaff.PACTid = TimeCostCalcs.StaffID) ON tlkpMonth.AccntsPeriod = TimeCostCalcs.Month) LEFT JOIN TestOrProduct ON TimeCostCalcs.JobCode = TestOrProduct.ItemCode) ON WorkGroupGrade.WG_Grade = tblStaff.WorkGroupGrade) ON WorkGroup.WorkGroup = WorkGroupGrade.WorkGroup
+GROUP BY WorkGroup.ProfitCentre, WorkGroup.WorkGroup, WorkGroupGrade.WG_Grade, tblStaff.Name, tblStaff.HrsPaid, tlkpJobCode.ParentProject, TimeCostCalcs.JobCode, IIf(IsNull([tlkpjobcode].[jobcode]),[itemdescription],[JobCodeName]), IIf([cost]=0,0,1)
+PIVOT tlkpMonth.MonthName In ("April","May","June","July","August","September","October","November","December","January","February","March");
+

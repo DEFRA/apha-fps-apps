@@ -1,0 +1,9 @@
+QUERY NAME: qryVqryBid
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW vQryBid.AccShortName, vQryBid.WorkGroup, vQryBid.GenBid, vQryBid.ProfitCentre
+FROM vQryBid
+WHERE ((vQryBid.ProfitCentre=[Forms]![frmResourceManager]![RCpick]));
+

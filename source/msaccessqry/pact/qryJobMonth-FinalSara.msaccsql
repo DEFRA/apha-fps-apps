@@ -1,0 +1,9 @@
+QUERY NAME: qryJobMonth-FinalSara
+---------------------------------------------
+TYPE: APPEND
+
+SQL:
+INSERT INTO ProjectMonthFinal ( Project, MonthNo, CostProfile, Subcontracts, Animals, NonAnimals, TimeCosts, TransferCosts, TotalCost, Invoices, COIW, PortSales, CumCost, CumProfile, PeriodName, SumOfCostProfile, CumInvoices, CumCOIW, CumPortSales, MstoneDue, Due__Done, OnTime, SumOfMstoneDue, SumOfDue__Done, SumOfOnTime, CumFlag )
+SELECT DISTINCTROW ProjectMonth2sara.Project, ProjectMonth2sara.MonthNo, ProjectMonth2sara.CostProfile, ProjectMonth2sara.Subcontracts, ProjectMonth2sara.Animals, ProjectMonth2sara.NonAnimal, ProjectMonth2sara.TimeCosts, ProjectMonth2sara.TransferCosts, ProjectMonth2sara.TotalCost, ProjectMonth2sara.Invoices, ProjectMonth2sara.COIW, ProjectMonth2sara.PortSales, [CumCost]*[cumflag] AS Expr1, ProjectMonth3sara.CumProfile, ProjectMonth3sara.PeriodName, ProjectMonth3sara.SumOfCostProfile, [CumInvoices]*[cumflag] AS Expr2, [CumCOIW]*[cumflag] AS Expr3, [CumPortSales]*[cumflag] AS Expr4, ProjectMonth2sara.MstoneDue, ProjectMonth2sara.Due__Done, ProjectMonth2sara.OnTime, [SumOfMstoneDue]*[cumflag] AS Expr5, [SumOfDue&&Done]*[cumflag] AS Expr6, [SumOfOnTime]*[cumflag] AS Expr7, IIf([monthno]<=[EnterMonth],1,Null) AS CumFlag
+FROM ProjectMonth2sara INNER JOIN ProjectMonth3sara ON (ProjectMonth2sara.MonthNo = ProjectMonth3sara.EndPeriod) AND (ProjectMonth2sara.Project = ProjectMonth3sara.Project);
+

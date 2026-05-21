@@ -1,0 +1,8 @@
+QUERY NAME: qryTestSupplier
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblTestRequ_TM.TestCode, tlkpProject_General.ParentProject AS JobCode, tlkpProject_General.Manager AS ProjectManager, tblTestRequ_TM.NoTests, tblTestRequ_TM.TestPrice, [NoTests]*[TestPrice] AS TestCost, tlkpProject_General.ProjectStatus
+FROM tblTestRequ_TM INNER JOIN tlkpProject_General ON tblTestRequ_TM.JobCode = tlkpProject_General.ParentProject;
+

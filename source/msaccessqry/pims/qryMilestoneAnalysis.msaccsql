@@ -1,0 +1,9 @@
+QUERY NAME: qryMilestoneAnalysis
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT MY_tlkpProject.Program, tblMilestone.Project, MY_tlkpProject.Manager, tblMilestone.Number, tblMilestone.DateDue, tblMilestone.DateCompleted, MY_tlkpProject.Year, IIf(fnDueYear([datedue])=[Year],1,0) AS DueThisYear, -fnInReportMonthOrBefore([DateDue]) AS DueThisMonth, IIf(IsNull([DateCompleted]) Or Not fnInFinancialYearOrBefore([Datecompleted]),0,1) AS Met, IIf(IsNull([datedue]) Or IsNull([dateCompleted]),0,IIf(([datedue]>[datecompleted]) And ([datedue]>fnReportEndOfMonth()),1,0)) AS MetAheadOfSchedule, IIf([UnderSDReview] And Not [Met] And [DueThisMonth] And [FormRecieved],1,0) AS DueUnderReview, IIf(Not Nz([UnderSDReview],0) And Not [Met] And [DueThisMonth] And [FormRecieved],1,0) AS DueNotUnderReview, IIf(Not [FormRecieved] And [DueThisMonth] And Not [Met],1,0) AS Unreported, Not IsNull(fnDateFormRecieved(MY_tlkpProject.[parentProject],[year])) AS FormRecieved, tblMilestone.UnderSDReview, tblMilestone.IDType, IIf([datedue]<=[datecompleted],1,0) AS MetOnTime, IIf(Not [DueThisMonth] And ([OnTarget] Or [done]),1,0) AS OnTargetNotDue, IIf(Not [DueThisMonth] And Not [OnTarget] And Not [done],1,0) AS NotOnTargetNotDue, IIf(IsNull([DateCompleted]),0,-1) AS Done, MY_tlkpProject.Customer, G_tlkpProject.Contract
+FROM (tblMilestone INNER JOIN MY_tlkpProject ON tblMilestone.Project = MY_tlkpProject.ParentProject) INNER JOIN G_tlkpProject ON MY_tlkpProject.ParentProject = G_tlkpProject.ParentProject
+WHERE (((MY_tlkpProject.Year)=fnReportYear()) AND ((IIf(fnDueYear([datedue])=[Year],1,0))=1) AND ((fnResearchProgram([projectgroup]))=True));
+

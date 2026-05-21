@@ -1,0 +1,9 @@
+QUERY NAME: survTestVolumes
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblTestRequ_TM.JobCode, tblTestRequ_TM.TestCode, tblTestRequ_TM.NoTests, tblTestRequ_TM.TestPrice, Sum(MonthlyOutput.Volume) AS TotVol, [TotVol]*[TestPrice] AS Expr1, TestOrProduct.ShortDescription AS ItemDescription, [notests]*[testprice] AS PlanCost
+FROM TestOrProduct INNER JOIN (tblTestRequ_TM LEFT JOIN MonthlyOutput ON (tblTestRequ_TM.JobCode = MonthlyOutput.Buyer) AND (tblTestRequ_TM.TestCode = MonthlyOutput.TestCode)) ON TestOrProduct.ItemCode = tblTestRequ_TM.TestCode
+GROUP BY tblTestRequ_TM.JobCode, tblTestRequ_TM.TestCode, tblTestRequ_TM.NoTests, tblTestRequ_TM.TestPrice, TestOrProduct.ShortDescription;
+

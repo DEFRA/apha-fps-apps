@@ -1,0 +1,7 @@
+QUERY NAME: _Names
+---------------------------------------------
+TYPE: UPDATE
+
+SQL:
+UPDATE tblProject SET tblProject.SubmittedByFName = fnFirstName([submittedbyfname]), tblProject.SubmittedByLName = fnlastName([submittedbyFName]);
+

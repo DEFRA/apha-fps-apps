@@ -1,0 +1,11 @@
+QUERY NAME: qryOverheadTimeOnlyWorkGroup
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW TimeCostCalcs.WORKGROUP, Sum(TimeCostCalcs.Time) AS Overhead
+FROM TimeCostCalcs INNER JOIN JobCode ON TimeCostCalcs.JOBCODE = JobCode.JobCode
+WHERE ((JobCode.JobCategory=2))
+GROUP BY TimeCostCalcs.WORKGROUP
+HAVING ((TimeCostCalcs.WORKGROUP="VI6"));
+

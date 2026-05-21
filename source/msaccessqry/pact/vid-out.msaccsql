@@ -1,0 +1,9 @@
+QUERY NAME: vid-out
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpTestCapability.PlanPortfolio, tlkpTestCapability.WorkGroup, tlkpTestCapability.TestCode, MonthlyOutput.Buyer, MonthlyOutput.Month, MonthlyOutput.Volume
+FROM tlkpTestCapability INNER JOIN MonthlyOutput ON (tlkpTestCapability.WorkGroup = MonthlyOutput.WorkGroup) AND (tlkpTestCapability.TestCode = MonthlyOutput.TestCode)
+WHERE ((tlkpTestCapability.PlanPortfolio Like "vid*"));
+

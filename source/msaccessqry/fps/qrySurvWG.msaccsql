@@ -1,0 +1,9 @@
+QUERY NAME: qrySurvWG
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW WorkGroup_General.WorkGroup AS SVWG
+FROM WorkGroup_General
+WHERE ((WorkGroup_General.WorkGroup Like "sv??" Or WorkGroup_General.WorkGroup="pa5"));
+

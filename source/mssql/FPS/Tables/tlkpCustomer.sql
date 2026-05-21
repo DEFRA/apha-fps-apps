@@ -1,0 +1,14 @@
+﻿USE [FPS2025]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[tlkpCustomer](
+    [Customer] [varchar](50) NOT NULL
+,    CONSTRAINT [PK___1__15] PRIMARY KEY CLUSTERED
+    (
+        Customer
+    )
+) ON [PRIMARY]
+GO

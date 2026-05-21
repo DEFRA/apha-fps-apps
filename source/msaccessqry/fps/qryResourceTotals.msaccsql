@@ -1,0 +1,11 @@
+QUERY NAME: qryResourceTotals
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblStaff.WorkGroupGrade, tblStaff.StaffID, tblStaff.Name, tblStaff.HrsAvail, IIf(IsNull([SumOfplannedhours]),0,[sumofplannedhours]) AS ZThrs, Sum(IIf(([projectstatus]="approved"),[plannedhours],0)) AS AppPlanHrs, Sum(tblStaffJob_RM.plannedhours) AS PlanHrs, [PlanHrs]-[ZThrs] AS ChargeHrs, [AppPlanHrs]-[ZThrs] AS AppCHargeHrs
+FROM ((tblStaff LEFT JOIN tblStaffJob_RM ON tblStaff.StaffID = tblStaffJob_RM.StaffID) LEFT JOIN qryZTonly ON tblStaff.StaffID = qryZTonly.StaffID) LEFT JOIN tlkpProject_General ON tblStaffJob_RM.Jobcode = tlkpProject_General.ParentProject
+WHERE (((tblStaff.Name) Like "*General"))
+GROUP BY tblStaff.WorkGroupGrade, tblStaff.StaffID, tblStaff.Name, tblStaff.HrsAvail, IIf(IsNull([SumOfplannedhours]),0,[sumofplannedhours])
+ORDER BY tblStaff.WorkGroupGrade, tblStaff.Name;
+

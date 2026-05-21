@@ -1,0 +1,12 @@
+QUERY NAME: qryTimeXtab
+---------------------------------------------
+TYPE: OTHER
+
+SQL:
+TRANSFORM Sum(TimeCostCalcs.Time) AS SumOfTime1
+SELECT tlkpJobCode.JobCode, tlkpJobCode.JobCodeName, TimeCostCalcs.WorkGroup, Sum(TimeCostCalcs.Time) AS SumOfTime
+FROM TimeCostCalcs INNER JOIN tlkpJobCode ON TimeCostCalcs.JobCode = tlkpJobCode.JobCode
+WHERE ((TimeCostCalcs.Class="Charge"))
+GROUP BY tlkpJobCode.JobCode, tlkpJobCode.JobCodeName, TimeCostCalcs.WorkGroup
+PIVOT TimeCostCalcs.Month In (1,2,3,4,5,6,7,8,9,10,11,12);
+

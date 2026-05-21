@@ -1,0 +1,10 @@
+QUERY NAME: qryAHVGcoreCapacity2
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpProject.Program, TimeCostCalcs.Project, TimeCostCalcs.JobCode, tlkpJobCode.JobCodeName, TimeCostCalcs.Name, TimeCostCalcs.GradeCode, Sum(TimeCostCalcs.Time) AS SumOfTime, Sum(TimeCostCalcs.Cost) AS SumOfCost, tblkPeriodMonth.EndMonth
+FROM tblkPeriodMonth INNER JOIN (tlkpProject INNER JOIN (TimeCostCalcs INNER JOIN tlkpJobCode ON TimeCostCalcs.JobCode = tlkpJobCode.JobCode) ON tlkpProject.ParentProject = tlkpJobCode.ParentProject) ON tblkPeriodMonth.MonthNo = TimeCostCalcs.Month
+GROUP BY tlkpProject.Program, TimeCostCalcs.Project, TimeCostCalcs.JobCode, tlkpJobCode.JobCodeName, TimeCostCalcs.Name, TimeCostCalcs.GradeCode, tblkPeriodMonth.EndMonth
+HAVING ((tlkpProject.Program="cc100") AND (tblkPeriodMonth.EndMonth=[Forms]![Menu-Division]![PeriodPick]));
+

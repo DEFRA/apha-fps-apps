@@ -1,0 +1,21 @@
+CREATE TABLE IF NOT EXISTS mabarchive.temptblproject (
+    project integer DEFAULT 0 NOT NULL,
+    programme character varying(10),
+    plancat character varying(50),
+    projecttitle character varying(100),
+    projectworkgroup character varying(50),
+    contractprice double precision,
+    startdate timestamp without time zone,
+    disease character varying(50),
+    startfyear double precision DEFAULT 0,
+    customer_name character varying(50),
+    contract_number character varying(50),
+    submitted_by character varying(50),
+    date_of_submission timestamp without time zone,
+    prepared_by character varying(50),
+    inflation boolean DEFAULT false,
+    ready boolean DEFAULT false,
+    financialyears boolean DEFAULT true,
+    notes character varying(1000),
+    CONSTRAINT pk_temptblproject PRIMARY KEY (project)
+);

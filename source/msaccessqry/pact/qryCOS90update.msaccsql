@@ -1,0 +1,8 @@
+QUERY NAME: qryCOS90update
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpProject.ParentProject, tlkpProject.ProjectTitle, tlkpJobCode.JobCode, tlkpJobCode.JobCodeName
+FROM tlkpProject INNER JOIN tlkpJobCode ON tlkpProject.ParentProject = tlkpJobCode.ParentProject;
+

@@ -1,0 +1,8 @@
+QUERY NAME: JobCode_RO
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpProject_MAP.ParentProject AS JobCode, tlkpProject_MAP.ProjectTitle AS JobDescription, tlkpProject_MAP.Program AS Programme, tlkpProject_MAP.Customer, tlkpProject_MAP.Manager AS ProjectManager, tlkpProject_MAP.CustIncome, tlkpProject_MAP.TransferIncome, tlkpProject_MAP.Profit, tlkpProject_MAP.DateCreated, tlkpProject_MAP.CostBookNo, tlkpProject_MAP.ProjectStatus, tlkpProject_MAP.Disease, tlkpProject_MAP.Contract, tlkpProject_MAP.Budget_CVL, tlkpProject_MAP.PVSIncome, tlkpProject_MAP.CaseworkSub, tlkpProject_MAP.ShortTitle, tlkpProject_MAP.PlanCaseworkDebit, tlkpProject_MAP.Comments, tlkpProject_MAP.CarryOver, tlkpProject_MAP.CarryOverSeed, tlkpProject_MAP.ParentProject
+FROM tlkpProject_MAP;
+

@@ -1,0 +1,6 @@
+QUERY NAME: qryPMonitoringComments_alt
+---------------------------------------------
+TYPE: PASS-THROUGH
+
+SQL:
+exec spMonitoringComments

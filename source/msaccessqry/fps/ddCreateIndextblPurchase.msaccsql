@@ -1,0 +1,6 @@
+QUERY NAME: ddCreateIndextblPurchase
+---------------------------------------------
+TYPE: DDL
+
+SQL:
+CREATE UNIQUE INDEX tblPurchase_PK ON tblPurchase(Workgroup,account,itemdescription)

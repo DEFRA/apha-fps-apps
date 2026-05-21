@@ -1,0 +1,9 @@
+QUERY NAME: pvtTimeDivSell
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblkpProfitCentre.Division AS SellingDiv, tblkpProfitCentre.ProfitCentre AS SellingPC, WorkGroupGrade.WorkGroup AS SellingWG, ProfitCentreGrade.GradeCode AS Grade, tblStaff.Name, TimeCostCalcs.Time, TimeCostCalcs.Cost, TimeCostCalcs.Month, tlkpProject.PlanCat, TimeCostCalcs.Project, TimeCostCalcs.JobCode, tlkpProject.Manager
+FROM tblkpProfitCentre INNER JOIN ((ProfitCentreGrade INNER JOIN WorkGroupGrade ON ProfitCentreGrade.PC_Grade = WorkGroupGrade.ProfitCentreGrade) INNER JOIN (WorkGroup INNER JOIN (tlkpProject INNER JOIN (TimeCostCalcs INNER JOIN tblStaff ON TimeCostCalcs.StaffID = tblStaff.PACTid) ON tlkpProject.ParentProject = TimeCostCalcs.Project) ON WorkGroup.WorkGroup = tlkpProject.ProjectWorkGroup) ON WorkGroupGrade.WG_Grade = tblStaff.WorkGroupGrade) ON tblkpProfitCentre.ProfitCentre = ProfitCentreGrade.ProfitCentre
+WHERE ((tblkpProfitCentre.Division=[Forms]![frmSplash]![DivisionPick]));
+

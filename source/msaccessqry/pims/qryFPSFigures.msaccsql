@@ -1,0 +1,11 @@
+QUERY NAME: qryFPSFigures
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT MY_FPSYearTotals.ParentProject, MY_FPSYearTotals.Year, MY_tlkpProject.CustIncome, qryFPSFigures_Sub.Pay, qryFPSFigures_Sub.NonPayOH
+FROM (MY_FPSYearTotals INNER JOIN MY_tlkpProject ON (MY_FPSYearTotals.Year = MY_tlkpProject.Year) AND (MY_FPSYearTotals.ParentProject = MY_tlkpProject.ParentProject)) LEFT JOIN qryFPSFigures_Sub ON (MY_tlkpProject.Year = qryFPSFigures_Sub.Year) AND (MY_tlkpProject.ParentProject = qryFPSFigures_Sub.Project)
+GROUP BY MY_FPSYearTotals.ParentProject, MY_FPSYearTotals.Year, MY_tlkpProject.CustIncome, qryFPSFigures_Sub.Pay, qryFPSFigures_Sub.NonPayOH
+HAVING (((MY_FPSYearTotals.Year)=fnReportYear()))
+ORDER BY MY_FPSYearTotals.ParentProject, MY_FPSYearTotals.Year;
+

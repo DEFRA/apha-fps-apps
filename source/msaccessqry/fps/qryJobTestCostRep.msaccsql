@@ -1,0 +1,8 @@
+QUERY NAME: qryJobTestCostRep
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblTestRequ_TM.JobCode, tblTestRequ_TM.TestCode, TestOrProduct.ShortDescription AS ItemDescription, tblTestRequ_TM.NoTests, tblTestRequ_TM.TestPrice AS AgreedUnitPrice, TestOrProduct.UnitPriceVLA AS RecUnitPrice, [NoTests]*[agreedUnitPrice] AS TestCost
+FROM TestOrProduct INNER JOIN tblTestRequ_TM ON TestOrProduct.ItemCode = tblTestRequ_TM.TestCode;
+

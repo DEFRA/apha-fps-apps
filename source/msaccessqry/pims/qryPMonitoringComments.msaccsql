@@ -1,0 +1,9 @@
+QUERY NAME: qryPMonitoringComments
+---------------------------------------------
+TYPE: PASS-THROUGH
+
+SQL:
+SELECT tblComments.Project, tblComments.Year, tblComments.Comment
+FROM tblComments
+WHERE (((tblComments.Topic)='P&C Monitoring Report'))
+

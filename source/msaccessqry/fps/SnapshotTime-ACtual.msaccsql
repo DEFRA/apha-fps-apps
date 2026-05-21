@@ -1,0 +1,9 @@
+QUERY NAME: SnapshotTime-ACtual
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW "Actual - " & Date() AS Version, tlkpProgram_MAP.Directorate, tlkpProject_MAP.Program, tlkpProject_MAP.Customer, tlkpProject_MAP.Contract, tlkpProject_MAP.ParentProject AS Project, tlkpProject_MAP.ProjectStatus AS Status, WorkGroup.ProfitCentre AS ResourceCentre, TimeCostCalcsMAP.WorkGroup, TimeCostCalcsMAP.GradeCode, tblStaff_General.Name, Sum(TimeCostCalcsMAP.Time) AS Hours, Sum(TimeCostCalcsMAP.Cost) AS HoursCost
+FROM ((tlkpProgram_MAP INNER JOIN tlkpProject_MAP ON tlkpProgram_MAP.ProgramNo = tlkpProject_MAP.Program) INNER JOIN (TimeCostCalcsMAP INNER JOIN WorkGroup ON TimeCostCalcsMAP.WorkGroup = WorkGroup.WorkGroup) ON tlkpProject_MAP.ParentProject = TimeCostCalcsMAP.Project) INNER JOIN tblStaff_General ON TimeCostCalcsMAP.StaffID = tblStaff_General.StaffID
+GROUP BY tlkpProgram_MAP.Directorate, tlkpProject_MAP.Program, tlkpProject_MAP.Customer, tlkpProject_MAP.Contract, tlkpProject_MAP.ParentProject, tlkpProject_MAP.ProjectStatus, WorkGroup.ProfitCentre, TimeCostCalcsMAP.WorkGroup, TimeCostCalcsMAP.GradeCode, tblStaff_General.Name;
+

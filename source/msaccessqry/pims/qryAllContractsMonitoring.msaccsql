@@ -1,0 +1,10 @@
+QUERY NAME: qryAllContractsMonitoring
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT MY_tlkpProject.Program, MY_tlkpProject.ParentProject, G_tlkpProject.ProjectTitle, MY_tlkpProject.Manager, MY_tlkpProject.ProjectStatus, G_tlkpProject.Contract, MY_FPSYearTotals.TotalCosts AS TotalPlanCosts, MY_ProjectMonthFinal.CumCost AS TotalYTDCosts, qryPMonitoringComments.Comment
+FROM (((tblRadtrackContract INNER JOIN (MY_tlkpProject INNER JOIN G_tlkpProject ON MY_tlkpProject.ParentProject = G_tlkpProject.ParentProject) ON tblRadtrackContract.Contract = G_tlkpProject.Contract) INNER JOIN MY_FPSYearTotals ON (MY_tlkpProject.Year = MY_FPSYearTotals.Year) AND (G_tlkpProject.ParentProject = MY_FPSYearTotals.ParentProject)) INNER JOIN MY_ProjectMonthFinal ON (MY_tlkpProject.ParentProject = MY_ProjectMonthFinal.Project) AND (MY_tlkpProject.Year = MY_ProjectMonthFinal.Year)) LEFT JOIN qryPMonitoringComments ON (MY_tlkpProject.ParentProject = qryPMonitoringComments.Project) AND (MY_tlkpProject.Year = qryPMonitoringComments.Year)
+WHERE (((G_tlkpProject.Contract) Like NZ([Forms]![frmMenuReports]![pickSurvContract],"*")) AND ((MY_tlkpProject.Year)=fnReportYear()) AND ((MY_ProjectMonthFinal.MonthNo)=fnMonthToFMonth([Forms]![frmMenuReports]![cbMonth])) AND ((fnSurvProgram([MY_tlkpProject].[Program]))=True))
+ORDER BY MY_tlkpProject.ParentProject;
+

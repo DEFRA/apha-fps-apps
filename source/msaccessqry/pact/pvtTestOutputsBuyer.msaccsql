@@ -1,0 +1,9 @@
+QUERY NAME: pvtTestOutputsBuyer
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpProgram.ProgramNo, tlkpProject.ParentProject AS Buyer, tblkpProfitCentre.ProfitCentre AS SellerPC, MonthlyOutput.WorkGroup AS SellerWG, MonthlyOutput.TestCode, MonthlyOutput.Month, MonthlyOutput.Volume, [unitprice]*[volume] AS Charge
+FROM tlkpProgram INNER JOIN (tlkpTestReqmt INNER JOIN (tlkpProject INNER JOIN (tblkpProfitCentre INNER JOIN (MonthlyOutput INNER JOIN WorkGroup ON MonthlyOutput.WorkGroup = WorkGroup.WorkGroup) ON tblkpProfitCentre.ProfitCentre = WorkGroup.ProfitCentre) ON tlkpProject.ParentProject = MonthlyOutput.Buyer) ON (tlkpTestReqmt.Buyer = MonthlyOutput.Buyer) AND (tlkpTestReqmt.TestCode = MonthlyOutput.TestCode)) ON tlkpProgram.ProgramNo = tlkpProject.Program
+WHERE (((tlkpProject.ParentProject)=[forms]![frmSplash]![BuyerPick]));
+

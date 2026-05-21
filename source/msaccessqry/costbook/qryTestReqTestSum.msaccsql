@@ -1,0 +1,9 @@
+QUERY NAME: qryTestReqTestSum
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblTestRequ.Project, tblTestRequ.Year, Sum([tblTestRequ].[UnitPrice]*[NoTests]) AS TestCost
+FROM tblTestRequ
+GROUP BY tblTestRequ.Project, tblTestRequ.Year;
+

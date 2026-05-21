@@ -1,0 +1,9 @@
+QUERY NAME: qryWGBid
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblBid.WorkGroup, tblBid.Account, tblBid.GenBid, WorkGroup.ProfitCentre
+FROM tblBid INNER JOIN WorkGroup ON tblBid.WorkGroup = WorkGroup.WorkGroup
+WHERE ((WorkGroup.ProfitCentre=[Forms]![frmBudgetResourceLevel]![ProfitCentre] Or WorkGroup.ProfitCentre Is Null)) OR ((WorkGroup.ProfitCentre Is Null));
+

@@ -1,0 +1,10 @@
+QUERY NAME: qryWorkRecStaff
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT [FirstName] & "_" & [Lastname] AS [Name - Pact], tblWGEmployeeMAB.SPNumber, tblWGEmployeeMAB.WorkGroupGrade, WorkGroupGrade_General.WorkGroup
+FROM (tblWGEmployeeMAB INNER JOIN tblEmployee ON tblWGEmployeeMAB.SPNumber = tblEmployee.SPNumber) INNER JOIN WorkGroupGrade_General ON tblWGEmployeeMAB.WorkGroupGrade = WorkGroupGrade_General.WGGrade
+WHERE ((([FirstName] & "_" & [Lastname]) Not Like "*General*" And ([FirstName] & "_" & [Lastname]) Not Like "*vacancy*") AND ((WorkGroupGrade_General.WorkGroup) Like "LT??" Or (WorkGroupGrade_General.WorkGroup) Like "SV??") AND ((tblWGEmployeeMAB.PersonStatus)="A"))
+ORDER BY WorkGroupGrade_General.WorkGroup;
+

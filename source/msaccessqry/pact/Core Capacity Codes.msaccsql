@@ -1,0 +1,10 @@
+QUERY NAME: Core Capacity Codes
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpProject.PlanCat, tlkpProject.Program, tlkpProject.ParentProject, tlkpProject.Manager, tlkpProject.ProjectTitle, tlkpProject.ProjectWorkGroup AS Owner, tlkpJobCode.JobCode, tlkpJobCode.JobCodeName, tlkpJobCode.JobCodeWorkGroup
+FROM tlkpProject INNER JOIN tlkpJobCode ON tlkpProject.ParentProject = tlkpJobCode.ParentProject
+WHERE ((tlkpProject.PlanCat="corecapacity"))
+ORDER BY tlkpProject.ProjectTitle;
+

@@ -1,0 +1,9 @@
+QUERY NAME: qryManagerLookup
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT WorkGroupGrade.WorkGroup, tblStaff_General.Name
+FROM tblStaff_General INNER JOIN WorkGroupGrade ON tblStaff_General.WorkGroupGrade = WorkGroupGrade.WG_Grade
+WHERE (((tblStaff_General.PersonStatus)="A"));
+

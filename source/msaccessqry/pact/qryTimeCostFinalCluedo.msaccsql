@@ -1,0 +1,8 @@
+QUERY NAME: qryTimeCostFinalCluedo
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpProject.Manager, qryTimeCostPeriodCluedo.Month, WorkGroup.ProfitCentre, WorkGroup.WorkGroup AS BuyWG, tlkpProject.PlanCat, tlkpProject.ParentProject, tlkpProject.ProjectTitle, qryTimeCostCumulativeCluedo.JobCode, qryTimeCostCumulativeCluedo.Description, qryTimeCostCumulativeCluedo.WorkGroup AS SellWG, qryTimeCostCumulativeCluedo.Name, qryTimeCostCumulativeCluedo.GradeCode, qryTimeCostPeriodCluedo.PeriodTime, qryTimeCostPeriodCluedo.PeriodCost, qryTimeCostCumulativeCluedo.CumTime, qryTimeCostCumulativeCluedo.CumCost
+FROM (WorkGroup INNER JOIN tlkpProject ON WorkGroup.WorkGroup = tlkpProject.ProjectWorkGroup) INNER JOIN ((TimeCodeValid INNER JOIN qryTimeCostCumulativeCluedo ON (TimeCodeValid.TimeCode = qryTimeCostCumulativeCluedo.JobCode) AND (TimeCodeValid.ParentProject = qryTimeCostCumulativeCluedo.Project) AND (TimeCodeValid.WorkGroup = qryTimeCostCumulativeCluedo.WorkGroup)) LEFT JOIN qryTimeCostPeriodCluedo ON (qryTimeCostCumulativeCluedo.JobCode = qryTimeCostPeriodCluedo.JobCode) AND (qryTimeCostCumulativeCluedo.Project = qryTimeCostPeriodCluedo.Project) AND (qryTimeCostCumulativeCluedo.StaffID = qryTimeCostPeriodCluedo.StaffID)) ON tlkpProject.ParentProject = TimeCodeValid.ParentProject;
+

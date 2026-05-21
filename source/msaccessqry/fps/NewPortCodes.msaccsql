@@ -1,0 +1,9 @@
+QUERY NAME: NewPortCodes
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT TimeCodeValid_FPS99.TimeCode, TimeCodeValid_FPS99.ParentProject, TimeCodeValid_FPS99.WorkGroup
+FROM TimeCodeValid_FPS99 INNER JOIN tlkpProject_General ON TimeCodeValid_FPS99.ParentProject = tlkpProject_General.ParentProject
+WHERE (((TimeCodeValid_FPS99.WorkGroup) Not Like "lt??" And (TimeCodeValid_FPS99.WorkGroup) Not Like "sv??") AND ((TimeCodeValid_FPS99.TestCode) Is Not Null) AND ((TimeCodeValid_FPS99.Active)=True));
+

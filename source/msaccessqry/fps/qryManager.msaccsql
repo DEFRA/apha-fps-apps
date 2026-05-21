@@ -1,0 +1,10 @@
+QUERY NAME: qryManager
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblStaffActive.Name, WorkGroupGrade_General.WorkGroup, WorkGroupGrade_General.GradeCode, Left([gradecode],1) AS Expr1
+FROM tblStaffActive INNER JOIN WorkGroupGrade_General ON tblStaffActive.WorkGroupGrade = WorkGroupGrade_General.WGGrade
+WHERE (((tblStaffActive.Name) Not Like "*general*" And (tblStaffActive.Name) Not Like "*vacancy*") AND ((Left([gradecode],1))<>"G"))
+ORDER BY tblStaffActive.Name;
+

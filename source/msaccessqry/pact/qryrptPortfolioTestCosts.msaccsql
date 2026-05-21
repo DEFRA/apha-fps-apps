@@ -1,0 +1,13 @@
+QUERY NAME: qryrptPortfolioTestCosts
+---------------------------------------------
+TYPE: OTHER
+
+SQL:
+PARAMETERS [enter profitcentre] Text ( 255 );
+TRANSFORM Sum(TimeCostCalcs.Cost) AS SumOfCost
+SELECT WorkGroup.ProfitCentre, WorkGroup.WorkGroup, tlkpProject.[Budget_cvl], tlkpProject.ParentProject, TimeCodeValid.TimeCode
+FROM (WorkGroup INNER JOIN tlkpProject ON WorkGroup.WorkGroup = tlkpProject.ProjectWorkGroup) INNER JOIN (TimeCodeValid INNER JOIN TimeCostCalcs ON (TimeCodeValid.WorkGroup = TimeCostCalcs.WorkGroup) AND (TimeCodeValid.TimeCode = TimeCostCalcs.JobCode)) ON tlkpProject.ParentProject = TimeCodeValid.ParentProject
+WHERE ((WorkGroup.ProfitCentre=[enter ProfitCentre]) AND (tlkpProject.PlanCat="testactivity"))
+GROUP BY WorkGroup.ProfitCentre, WorkGroup.WorkGroup, tlkpProject.[Budget_cvl], tlkpProject.ParentProject, TimeCodeValid.TimeCode, tlkpProject.PlanCat
+PIVOT TimeCostCalcs.Month In (1,2,3,4,5,6,7,8,9,10,11,12);
+

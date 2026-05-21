@@ -1,0 +1,8 @@
+QUERY NAME: qryWGTestCapability
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tlkpTestCapability.TestCode, WorkGroup_General.WorkGroup, WorkGroup_General.ProfitCentre
+FROM tlkpTestCapability INNER JOIN WorkGroup_General ON tlkpTestCapability.WorkGroup = WorkGroup_General.WorkGroup;
+

@@ -1,0 +1,10 @@
+QUERY NAME: LizCC
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW WorkGroup.ProfitCentre AS BuyingPC, TimeCostCalcs.WorkGroup, Sum(TimeCostCalcs.Time) AS SumOfTime, Sum(TimeCostCalcs.Cost) AS SumOfCost, tlkpProject.PlanCat, TimeCostCalcs.Project, TimeCostCalcs.JobCode
+FROM WorkGroup INNER JOIN (tlkpProject INNER JOIN TimeCostCalcs ON tlkpProject.ParentProject = TimeCostCalcs.Project) ON WorkGroup.WorkGroup = tlkpProject.ProjectWorkGroup
+GROUP BY WorkGroup.ProfitCentre, TimeCostCalcs.WorkGroup, tlkpProject.PlanCat, TimeCostCalcs.Project, TimeCostCalcs.JobCode
+HAVING ((WorkGroup.ProfitCentre="vid"));
+

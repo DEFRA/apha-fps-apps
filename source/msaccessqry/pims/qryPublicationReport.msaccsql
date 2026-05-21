@@ -1,0 +1,8 @@
+QUERY NAME: qryPublicationReport
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT fnProgramGroup([Program]) AS ProgramGroup, tblPublication.*, fnlate([submitted],[targetdate]) AS IsLate
+FROM tblPublication;
+

@@ -1,0 +1,9 @@
+QUERY NAME: qryrptCSGproject
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpProject.Manager, ProjectMonthFinal.MonthNo, tlkpMonth.MonthName, tlkpProject.Program, ProjectMonthFinal.Project, ProjectMonthFinal.TimeCosts, ProjectMonthFinal.TransferCosts, ProjectMonthFinal.Animals, ProjectMonthFinal.NonAnimals, ProjectMonthFinal.TotalCost, [invoices]+[portsales] AS Income, IIf(IsNull([MstoneDue]),0,[mstonedue]) AS MSdue, IIf(IsNull([Due__Done]),0,[Due__Done]) AS MSdone, IIf(IsNull([OnTime]),0,[ontime]) AS MSonTime, tlkpProgram.ProgramNo, tlkpProgram.ProgramName, tlkpProgram.Directorate, tlkpProject.Finished, tlkpProject.ProjectGroup
+FROM ((tlkpProject INNER JOIN ProjectMonthFinal ON tlkpProject.ParentProject = ProjectMonthFinal.Project) INNER JOIN tlkpMonth ON ProjectMonthFinal.MonthNo = tlkpMonth.AccntsPeriod) INNER JOIN tlkpProgram ON tlkpProject.Program = tlkpProgram.ProgramNo
+WHERE (((ProjectMonthFinal.Project) Not Like "FT*" And (ProjectMonthFinal.Project) Not Like "OM*") AND ((tlkpProject.ProjectGroup) Like "*_RES"));
+

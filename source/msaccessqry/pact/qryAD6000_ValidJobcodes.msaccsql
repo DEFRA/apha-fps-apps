@@ -1,0 +1,9 @@
+QUERY NAME: qryAD6000_ValidJobcodes
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT TimeCodeValid.TimeCode, TimeCodeValid.ParentProject
+FROM TimeCodeValid
+WHERE (((TimeCodeValid.WorkGroup)=BESettingsGet("AD6000_WG")) AND ((TimeCodeValid.Active)=True));
+

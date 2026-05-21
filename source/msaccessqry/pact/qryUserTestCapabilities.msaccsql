@@ -1,0 +1,10 @@
+QUERY NAME: qryUserTestCapabilities
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpTestCapability.WorkGroup, tlkpTestCapability.TestCode, TestOrProduct.ItemDescription
+FROM tlkpTestCapability INNER JOIN TestOrProduct ON tlkpTestCapability.TestCode = TestOrProduct.ItemCode
+WHERE ((tlkpTestCapability.WorkGroup=[Forms]![frmSplash]![workgrouppick3]))
+ORDER BY tlkpTestCapability.TestCode;
+

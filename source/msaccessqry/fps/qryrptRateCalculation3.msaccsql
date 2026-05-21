@@ -1,0 +1,9 @@
+QUERY NAME: qryrptRateCalculation3
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW WorkGroup_General.ProfitCentre, tblkpAccountCategory.AccountType, Sum(tblBid.GenBid) AS SumOfGenBid, tblkpProfitCentre.CONTTARGET
+FROM tblkpProfitCentre INNER JOIN ((tblkpAccountCategory INNER JOIN tblBid ON tblkpAccountCategory.AccShortName = tblBid.Account) INNER JOIN WorkGroup_General ON tblBid.WorkGroup = WorkGroup_General.WorkGroup) ON tblkpProfitCentre.ProfitCentre = WorkGroup_General.ProfitCentre
+GROUP BY WorkGroup_General.ProfitCentre, tblkpAccountCategory.AccountType, tblkpProfitCentre.CONTTARGET;
+

@@ -1,0 +1,8 @@
+QUERY NAME: qryfrmWorkGroupPeople
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblStaff.PACTid, tblStaff.StaffID, tblStaff.Name, tblStaff.Title, tblStaff.PersonStatus, tblStaff.PersonClass, tblStaff.HrsPaid, tblStaff.Leave, tblStaff.SickSpecial, tblStaff.HrsAvail, tblStaff.WorkGroupGrade
+FROM tblStaff;
+

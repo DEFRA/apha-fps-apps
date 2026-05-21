@@ -1,0 +1,8 @@
+QUERY NAME: animalPlan
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpProgram_MAP.Directorate, tlkpProgram_MAP.ProgramNo, tlkpProject_MAP.ParentProject, tlkpProject_MAP.Contract, tblAnimalReq.AnimalType, tblAnimalReq.NumberOfDays, tblAnimalReq.NumberOfAnimals, tblAnimals.DailyRate, [numberofdays]*[numberofanimals] AS AnimalDays, [animaldays]*[dailyrate] AS Cost
+FROM (tlkpProject_MAP INNER JOIN (tblAnimalReq INNER JOIN tblAnimals ON tblAnimalReq.AnimalType = tblAnimals.AnimalType) ON tlkpProject_MAP.ParentProject = tblAnimalReq.JobCode) INNER JOIN tlkpProgram_MAP ON tlkpProject_MAP.Program = tlkpProgram_MAP.ProgramNo;
+

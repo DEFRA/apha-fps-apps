@@ -1,0 +1,10 @@
+QUERY NAME: qryrptRateEfficacySt2
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW qryrptRateCalculation1.Division, qryrptRateCalculation1.ProfitCentre, qryrptRateCalculation1.PCGrade, qryrptRateCalculation1.AvHrs, Sum(tblStaffJob_RM.plannedhours) AS PlanHrs, IIf([avhrs]=0,0,[PlanHrs]/[AvHrs]) AS Utilistn, qryrptRateCalculation1.AvSalary, qryrptRateCalculation1.PayRate, [planhrs]*[payrate] AS PayRecovery, qryrptRateCalculation1.NPR, [npr]*[planhrs] AS NonPayRecovery, [Payrecovery]+[nonpayrecovery] AS DirectRecovery, qryrptRateCalculation1.OHR, [ohr]*[planhrs] AS OHeadRecovery, [DirectRecovery]+[oHeadRecovery] AS TotalRecovery
+FROM tlkpProgram_MAP INNER JOIN (tlkpProject_General INNER JOIN (((WorkGroupGrade_General INNER JOIN qryrptRateCalculation1 ON WorkGroupGrade_General.ProfitCentreGrade = qryrptRateCalculation1.PCGrade) INNER JOIN tblStaff_General ON WorkGroupGrade_General.WGGrade = tblStaff_General.WorkGroupGrade) INNER JOIN tblStaffJob_RM ON tblStaff_General.StaffID = tblStaffJob_RM.StaffID) ON tlkpProject_General.ParentProject = tblStaffJob_RM.Jobcode) ON tlkpProgram_MAP.ProgramNo = tlkpProject_General.Program
+WHERE (((tlkpProgram_MAP.SECTOR_NAME)="Charge"))
+GROUP BY qryrptRateCalculation1.Division, qryrptRateCalculation1.ProfitCentre, qryrptRateCalculation1.PCGrade, qryrptRateCalculation1.AvHrs, qryrptRateCalculation1.AvSalary, qryrptRateCalculation1.PayRate, qryrptRateCalculation1.NPR, qryrptRateCalculation1.OHR;
+

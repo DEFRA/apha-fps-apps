@@ -1,0 +1,9 @@
+QUERY NAME: JF VIO all regions AC
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT TimeCostCalcs.WorkGroup, TimeCostCalcs.Name, TimeCostCalcs.GradeCode, TimeCostCalcs.Project, tlkpJobCode.JobCode, tlkpJobCode.JobCodeName, tlkpProject.ProjectTitle, TimeCostCalcs.Month, TimeCostCalcs.Time, TimeCostCalcs.Cost
+FROM (tlkpProject INNER JOIN TimeCostCalcs ON tlkpProject.ParentProject = TimeCostCalcs.Project) INNER JOIN tlkpJobCode ON TimeCostCalcs.JobCode = tlkpJobCode.JobCode
+WHERE (((TimeCostCalcs.WorkGroup) Like "SV*") AND ((TimeCostCalcs.GradeCode) Like "b" Or (TimeCostCalcs.GradeCode)="C"));
+

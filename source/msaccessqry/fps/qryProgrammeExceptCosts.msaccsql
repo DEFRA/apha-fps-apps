@@ -1,0 +1,9 @@
+QUERY NAME: qryProgrammeExceptCosts
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW WorkGroup_General.ProfitCentre, WorkGroup_General.WorkGroup, tlkpProject_General.Program, tlkpProject_General.ProjectStatus, tlkpProject_General.ParentProject, tlkpProject_General.Manager, tblAdditionalCosts_General.Account, tblAdditionalCosts_General.Description, tblAdditionalCosts_General.ItemCost, tblAdditionalCosts_General.Freq, tblAdditionalCosts_General.Supplier
+FROM (tblStaffActive INNER JOIN (tlkpProject_General INNER JOIN tblAdditionalCosts_General ON tlkpProject_General.ParentProject = tblAdditionalCosts_General.JobCode) ON tblStaffActive.Name = tlkpProject_General.Manager) INNER JOIN (WorkGroup_General INNER JOIN WorkGroupGrade_General ON WorkGroup_General.WorkGroup = WorkGroupGrade_General.WorkGroup) ON tblStaffActive.WorkGroupGrade = WorkGroupGrade_General.WGGrade
+ORDER BY WorkGroup_General.ProfitCentre, WorkGroup_General.WorkGroup;
+

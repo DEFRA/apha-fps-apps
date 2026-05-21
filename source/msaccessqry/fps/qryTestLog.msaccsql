@@ -1,0 +1,9 @@
+QUERY NAME: qryTestLog
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT *
+FROM Testreq_Log
+WHERE 1=2;
+

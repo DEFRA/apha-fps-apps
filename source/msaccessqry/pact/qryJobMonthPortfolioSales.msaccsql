@@ -1,0 +1,9 @@
+QUERY NAME: qryJobMonthPortfolioSales
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpTestCapability.PlanPortfolio, MonthlyOutput.Month, Sum([unitprice]*[volume]) AS Fee
+FROM tlkpTestReqmt INNER JOIN (tlkpTestCapability INNER JOIN MonthlyOutput ON (tlkpTestCapability.WorkGroup = MonthlyOutput.WorkGroup) AND (tlkpTestCapability.TestCode = MonthlyOutput.TestCode)) ON (tlkpTestReqmt.Buyer = MonthlyOutput.Buyer) AND (tlkpTestReqmt.TestCode = MonthlyOutput.TestCode)
+GROUP BY tlkpTestCapability.PlanPortfolio, MonthlyOutput.Month;
+

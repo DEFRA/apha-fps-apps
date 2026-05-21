@@ -1,0 +1,8 @@
+QUERY NAME: JF project Output
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT MonthlyOutput.TestCode, TestorProduct.ItemDescription, MonthlyOutput.Buyer, tlkpTestReqmt.UnitPrice, MonthlyOutput.Month, MonthlyOutput.WorkGroup, MonthlyOutput.Volume, MonthlyOutput.WGBuyer
+FROM (TestorProduct INNER JOIN (MonthlyOutput INNER JOIN tlkpTestReqmt ON (MonthlyOutput.Buyer = tlkpTestReqmt.Buyer) AND (MonthlyOutput.TestCode = tlkpTestReqmt.TestCode)) ON TestorProduct.ItemCode = MonthlyOutput.TestCode) INNER JOIN [JF Seedcorn projects 2016-17] ON tlkpTestReqmt.Buyer = [JF Seedcorn projects 2016-17].Field1;
+

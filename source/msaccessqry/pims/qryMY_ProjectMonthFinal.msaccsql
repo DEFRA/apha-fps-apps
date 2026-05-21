@@ -1,0 +1,8 @@
+QUERY NAME: qryMY_ProjectMonthFinal
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT MY_ProjectMonthFinal.Year, MY_ProjectMonthFinal.Project, MY_ProjectMonthFinal.MonthNo, MY_ProjectMonthFinal.PeriodName, MY_ProjectMonthFinal.Subcontracts, MY_ProjectMonthFinal.Animals, MY_ProjectMonthFinal.NonAnimals, MY_ProjectMonthFinal.TimeCosts, MY_ProjectMonthFinal.TransferCosts, MY_ProjectMonthFinal.TotalCost, MY_ProjectMonthFinal.TotalHours, MY_ProjectMonthFinal.Invoices, MY_ProjectMonthFinal.COIW, MY_ProjectMonthFinal.CumCost, MY_ProjectMonthFinal.CumInvoices, MY_ProjectMonthFinal.CumCOIW, MY_ProjectMonthFinal.CumTotalHours, MY_ProjectMonthFinal.CumSubContracts
+FROM MY_ProjectMonthFinal;
+

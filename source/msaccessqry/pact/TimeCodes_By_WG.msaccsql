@@ -1,0 +1,10 @@
+QUERY NAME: TimeCodes_By_WG
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT TimeCodeValid.WorkGroup, TimeCodeValid.ParentProject, TimeCodeValid.TimeCode, IIf(IsNull([ItemDescription]),[JobCodeName],[ItemDescription]) AS Description
+FROM (TimeCodeValid LEFT JOIN tlkpJobCode ON TimeCodeValid.JobCode = tlkpJobCode.JobCode) LEFT JOIN TestorProduct ON TimeCodeValid.TestCode = TestorProduct.ItemCode
+WHERE (((TimeCodeValid.Active)=True))
+ORDER BY TimeCodeValid.WorkGroup, TimeCodeValid.ParentProject;
+

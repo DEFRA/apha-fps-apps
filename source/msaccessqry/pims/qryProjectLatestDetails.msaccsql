@@ -1,0 +1,9 @@
+QUERY NAME: qryProjectLatestDetails
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT vProjectLatestDetails.ParentProject, vProjectLatestDetails.Manager
+FROM vProjectLatestDetails
+ORDER BY vProjectLatestDetails.ParentProject;
+

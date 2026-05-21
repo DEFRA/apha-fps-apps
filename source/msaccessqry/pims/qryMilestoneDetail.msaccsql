@@ -1,0 +1,9 @@
+QUERY NAME: qryMilestoneDetail
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT MY_tlkpProject.ParentProject AS Project, MY_tlkpProject.Program, MY_tlkpProject.Manager, tblMilestone.Number, tblMilestone.Description, tblMilestone.DateDue, tblMilestone.DateCompleted, tblMilestone.ProjectLeaderComment, G_tlkpProject.ProjectTitle, tblMilestone.UnderSDReview, tblMilestone.OnTarget, G_tlkpProject.ParentProject, G_tlkpProject_RadTrackData.Version, G_tlkpProject.ProjectStatus AS Status, MY_tlkpProject.Year
+FROM ((G_tlkpProject INNER JOIN MY_tlkpProject ON G_tlkpProject.ParentProject = MY_tlkpProject.ParentProject) INNER JOIN tblMilestone ON MY_tlkpProject.ParentProject = tblMilestone.Project) INNER JOIN G_tlkpProject_RadTrackData ON G_tlkpProject.ParentProject = G_tlkpProject_RadTrackData.ParentProject
+WHERE (((MY_tlkpProject.Manager) Like fnGetHiddenManager()) AND ((G_tlkpProject.ProjectStatus)<>"Completed") AND ((MY_tlkpProject.Year)=fnReportYear()) AND ((fnDueYear([DateDue]))=fnReportYear()) AND ((fnResearchProgram([projectgroup]))=True) AND ((G_tlkpProject_RadTrackData.FormRequired)=True));
+

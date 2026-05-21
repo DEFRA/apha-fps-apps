@@ -1,0 +1,9 @@
+QUERY NAME: qryAD6000_CodeCheck
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tblMTConversion.*, 0=DCount("*","qryAD6000_validJobcodes","Timecode='" & [newcode] & "' and ParentProject='" & [NewProject] & "'") AS IsInvalid
+FROM tblMTConversion
+ORDER BY tblMTConversion.NewProject;
+

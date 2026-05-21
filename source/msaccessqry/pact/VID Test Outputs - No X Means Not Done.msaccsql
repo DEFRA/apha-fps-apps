@@ -1,0 +1,10 @@
+QUERY NAME: VID Test Outputs - No X Means Not Done
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpTestCapability.TestCode, tlkpTestCapability.WorkGroup, CHECK.WNCH, Sum(MonthlyOutput.Volume) AS SumOfVolume
+FROM (tlkpTestCapability INNER JOIN [CHECK] ON tlkpTestCapability.TestCode = CHECK.TestCode) INNER JOIN MonthlyOutput ON (tlkpTestCapability.WorkGroup = MonthlyOutput.WorkGroup) AND (tlkpTestCapability.TestCode = MonthlyOutput.TestCode)
+GROUP BY tlkpTestCapability.TestCode, tlkpTestCapability.WorkGroup, CHECK.WNCH
+HAVING ((tlkpTestCapability.WorkGroup="wnch"));
+

@@ -1,0 +1,12 @@
+QUERY NAME: qryFPSFigures_Sub
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT MY_TimeCostCalcs.Project, MY_TimeCostCalcs.Year, Sum(MY_TimeCostCalcs.Pay) AS Pay, Sum((([NonPay]+[overhead]))) AS NonPayOH
+FROM MY_TimeCostCalcs
+WHERE (((MY_TimeCostCalcs.Month)<=fnMonthToFMonth([Forms]![frmMenuReports]![cbMonth]) Or (MY_TimeCostCalcs.Month) Is Null))
+GROUP BY MY_TimeCostCalcs.Project, MY_TimeCostCalcs.Year
+HAVING (((MY_TimeCostCalcs.Year)=fnReportYear()))
+ORDER BY MY_TimeCostCalcs.Project, MY_TimeCostCalcs.Year;
+

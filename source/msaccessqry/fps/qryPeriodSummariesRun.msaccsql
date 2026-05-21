@@ -1,0 +1,9 @@
+QUERY NAME: qryPeriodSummariesRun
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblPeriod.PeriodName, tblPeriod.EndPeriod, tblPeriod.FinalSummariesRun
+FROM tblPeriod
+WHERE (((tblPeriod.FinalSummariesRun)=-1));
+

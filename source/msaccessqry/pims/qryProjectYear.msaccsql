@@ -1,0 +1,9 @@
+QUERY NAME: qryProjectYear
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT MY_tlkpProjectRadTrackData.Project, MY_tlkpProjectRadTrackData.Year
+FROM MY_tlkpProjectRadTrackData INNER JOIN qryShowWhichProjects ON MY_tlkpProjectRadTrackData.Project = qryShowWhichProjects.Project
+ORDER BY MY_tlkpProjectRadTrackData.Project, MY_tlkpProjectRadTrackData.Year;
+

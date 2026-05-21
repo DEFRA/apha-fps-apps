@@ -1,0 +1,6 @@
+QUERY NAME: ddCreateIndextblContract
+---------------------------------------------
+TYPE: DDL
+
+SQL:
+CREATE UNIQUE INDEX tblContract_PK ON tblContract(ContractNo)

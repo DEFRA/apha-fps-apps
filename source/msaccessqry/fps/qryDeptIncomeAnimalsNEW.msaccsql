@@ -1,0 +1,9 @@
+QUERY NAME: qryDeptIncomeAnimalsNEW
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tlkpProject_MAP.ParentProject AS Project, tlkpProject_MAP.OracleProjectCode, tlkpProject_MAP.SubAccountCode, tlkpProject_MAP.IsDefraProject, CostCentre.ProfitCentre AS OPC, CostCentre.CostCentre AS OCC, Proj_SubContract.Month, "SSSD" AS SPC, 35227 AS SCC, fnAnimalDesc([description]) AS AnimalType, fnAnimalDays([description]) AS AnimalDays, fnAnimalRate([description]) AS Rate, Proj_SubContract.Amount AS TotalCost, Proj_SubContract.Description
+FROM (CostCentre RIGHT JOIN tlkpProject_MAP ON CostCentre.CostCentre = tlkpProject_MAP.CostCentre) INNER JOIN Proj_SubContract ON tlkpProject_MAP.ParentProject = Proj_SubContract.Project
+WHERE (((tlkpProject_MAP.ParentProject) Like nz([Forms]![frmDeptIncome]![pickProject],"*")) AND ((Proj_SubContract.Month) Between fnDeptIncomeMonthFrom() And fnDeptIncomeMonthTo()) AND ((Proj_SubContract.AcctCode) In ("LargeAnimals","SmallAnimals","Mice")));
+

@@ -1,0 +1,8 @@
+QUERY NAME: qryTestReqTest
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblTestRequ.Project, tblTestRequ.Year, tblTestRequ.TestCode, tblTestRequ.UnitPrice, tblTestRequ.NoTests, [tbltestrequ].[UnitPrice]*[NoTests] AS TestCost, tblTest.ItemDescription AS TestDescription, tblProject.Programme, tblProject.EuroConvRate
+FROM (tblTestRequ LEFT JOIN tblTest ON tblTestRequ.TestCode = tblTest.ItemCode) INNER JOIN tblProject ON tblTestRequ.Project = tblProject.Project;
+

@@ -1,0 +1,10 @@
+QUERY NAME: qryCos90List
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT WorkGroup.WorkGroup, tblStaff.PACTid
+FROM (WorkGroup INNER JOIN WorkGroupGrade ON WorkGroup.WorkGroup = WorkGroupGrade.WorkGroup) INNER JOIN tblStaff ON WorkGroupGrade.WG_Grade = tblStaff.WorkGroupGrade
+WHERE (((WorkGroup.COS90)<>0) AND ((tblStaff.PersonStatus)="A"))
+ORDER BY WorkGroup.WorkGroup;
+

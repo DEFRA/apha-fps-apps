@@ -1,0 +1,10 @@
+QUERY NAME: qryCSG7_Tests
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tblTestRequ.Project, tblTestRequ.Year AS YearNo, Sum([NoTests]*[unitprice]) AS cost, "Other Costs" AS Category
+FROM tblTestRequ
+GROUP BY tblTestRequ.Project, tblTestRequ.Year
+HAVING (((tblTestRequ.Project)=[Forms]![frmProject1]![Project]));
+

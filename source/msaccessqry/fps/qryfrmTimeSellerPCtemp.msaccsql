@@ -1,0 +1,11 @@
+QUERY NAME: qryfrmTimeSellerPCtemp
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW ProfitCentreGrade.ProfitCentre AS SellingPC, WorkGroupGrade.WorkGroup, WorkGroupGrade.WGGrade, WorkGroupGrade.TotalHours AS AvHrs, Sum(tblStaffJob.plannedhours) AS Hrs, ProfitCentreGrade.ChargeRate, ProfitCentreGrade.OHR, [hrs]*[chargerate] AS FEC, [ohr]*[hrs] AS Contribution, tblkpProfitCentre.CONTTARGET, qryTBidSum.SumOfGenBid, WorkGroupGrade.ProfitCentreGrade
+FROM (tlkpProject INNER JOIN tblStaffJob ON tlkpProject.ParentProject = tblStaffJob.Jobcode) INNER JOIN (((tblkpProfitCentre INNER JOIN (ProfitCentreGrade LEFT JOIN qryTBidSum ON ProfitCentreGrade.ProfitCentre = qryTBidSum.ProfitCentre) ON tblkpProfitCentre.ProfitCentre = ProfitCentreGrade.ProfitCentre) INNER JOIN WorkGroupGrade ON ProfitCentreGrade.PCGrade = WorkGroupGrade.ProfitCentreGrade) INNER JOIN tblStaff_General ON WorkGroupGrade.WGGrade = tblStaff_General.WorkGroupGrade) ON tblStaffJob.StaffID = tblStaff_General.StaffID
+WHERE ((tlkpProject.PlanCat Not Like "ZT*"))
+GROUP BY ProfitCentreGrade.ProfitCentre, WorkGroupGrade.WorkGroup, WorkGroupGrade.WGGrade, WorkGroupGrade.TotalHours, ProfitCentreGrade.ChargeRate, ProfitCentreGrade.OHR, tblkpProfitCentre.CONTTARGET, qryTBidSum.SumOfGenBid, WorkGroupGrade.ProfitCentreGrade
+ORDER BY WorkGroupGrade.WorkGroup;
+

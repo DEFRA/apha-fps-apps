@@ -1,0 +1,9 @@
+QUERY NAME: survPracFees
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblSurvFF_Fees.Contract, Sum(tblSurvFF_Fees.TotalFee) AS SumOfTotalFee
+FROM tblSurvFF_Fees
+GROUP BY tblSurvFF_Fees.Contract;
+

@@ -1,0 +1,9 @@
+QUERY NAME: qryJobMonthMilestone
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW qryMilestone1.Project, qryMilestone1.DueMonth, Count(qryMilestone1.MilestoneRef) AS MstoneDue, Sum(qryMilestone1.CompleteFlag) AS Due__Done, Sum(qryMilestone1.OnTimeFlag) AS OnTime
+FROM qryMilestone1
+GROUP BY qryMilestone1.Project, qryMilestone1.DueMonth;
+

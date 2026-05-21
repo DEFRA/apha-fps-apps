@@ -1,0 +1,6 @@
+QUERY NAME: ddCreateIndexWorkgroupGrade_General
+---------------------------------------------
+TYPE: DDL
+
+SQL:
+CREATE UNIQUE INDEX WorkgroupGrade_GeneralPK ON WorkgroupGrade_General(WGGrade)

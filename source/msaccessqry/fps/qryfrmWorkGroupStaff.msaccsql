@@ -1,0 +1,8 @@
+QUERY NAME: qryfrmWorkGroupStaff
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW WorkGroup.WorkGroup, WorkGroup.CostCentre, WorkGroup.ProfitCentre, WorkGroup.Owner
+FROM WorkGroup;
+
