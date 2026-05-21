@@ -3,7 +3,6 @@ using Apha.FPSApps.Application.Dtos;
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.PACT;
 using AutoMapper;
-
 namespace Apha.FPSApps.Infrastructure.Mappings
 {
     public class PactApiDtoMapper : Profile
@@ -17,6 +16,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<TimeCodeValidDto, TimeCodeValidRes>().ReverseMap();
             CreateMap<WorkGroupDto, WorkGroupRes>().ReverseMap();
             CreateMap<MonthDto, MonthRes>().ReverseMap();
+            CreateMap<CalenderMonthDto, CalenderMonthRes>().ReverseMap();
             CreateMap<ProjectInvoiceDto, ProjectInvoiceReq>().ReverseMap();
             CreateMap<ProjectInvoiceDto, ProjectInvoiceRes>().ReverseMap();
             CreateMap<MonthlyInvoicesSummaryItemDto, MonthlyInvoicesSummaryItemRes>().ReverseMap();
@@ -38,6 +38,8 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<MonthDto, MonthRes>().ReverseMap();
             CreateMap<ProjectProfileDto, ProjectProfileRes>().ReverseMap();
             CreateMap<ProjectProfileCumulativeDto, ProjectProfileCumulativeRes>().ReverseMap();
+            CreateMap<WorkGroupReportEmailResultDto, WorkGroupReportEmailResultRes>().ReverseMap();
+            CreateMap<ProfitCentreSettingsDto, ProfitCentreSettingsRes>().ReverseMap();
         }
     }
 }

@@ -10,6 +10,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
         public IPactTimeCodeValidApiClient PactTimeCodeValid { get; }
         public IPactWorkGroupApiClient PactWorkGroup { get; }
         public IPactMonthApiClient PactMonth { get; }
+        public IPactCalenderMonthApiClient PactCalenderMonth { get; }
         public IPactProjectInvoiceApiClient PactProjectInvoice { get; }
         public IPactProjectSubContractApiClient PactProjectSubContract { get; }
         public IPactTestCapabilityApiClient PactWorkGroupTestCapability { get; }
@@ -17,6 +18,8 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
         public IPactTestorProductApiClient PactTestList { get; }
         public IPactProjectMonthApiClient PactProjectMonth { get; }
         public IPactProjectProfileApiClient PactProjectProfile { get; }
+        public IPactWorkGroupReportEmailApiClient PactWorkGroupReportEmail { get; }
+        public IPactProfitCentreApiClient PactProfitCentre { get; }
 
         public PactApiClient(IPactHttpExecutor http, IMapper mapper)
         {
@@ -24,6 +27,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             PactTimeCodeValid = new PactTimeCodeValidApiClient(http, mapper);
             PactWorkGroup = new PactWorkGroupApiClient(http, mapper);
             PactMonth = new PactMonthApiClient(http, mapper);
+            PactCalenderMonth = new PactCalenderMonthApiClient(http, mapper);
             PactProjectInvoice = new PactProjectInvoiceApiClient(http, mapper);
             PactProjectSubContract = new PactProjectSubContractApiClient(http, mapper);
             PactWorkGroupTestCapability = new PactTestCapabilityApiClient(http, mapper);
@@ -31,6 +35,8 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             PactTestList = new PactTestorProductApiClient(http, mapper);
             PactProjectMonth = new PactProjectMonthApiClient(http, mapper);
             PactProjectProfile = new PactProjectProfileApiClient(http, mapper);
+            PactWorkGroupReportEmail = new PactWorkGroupReportEmailApiClient(http, mapper);
+            PactProfitCentre = new PactProfitCentreApiClient(http, mapper);
         }
     }
 }

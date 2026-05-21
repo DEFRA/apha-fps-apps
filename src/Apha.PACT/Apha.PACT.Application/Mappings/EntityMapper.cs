@@ -26,8 +26,10 @@ namespace Apha.PACT.Application.Mappings
             CreateMap<TestRequirementDetail, TestRequirementtDto>();
             CreateMap<TestorProduct, TestorProductDto>().ReverseMap();
             CreateMap<Month, MonthDto>().ReverseMap();
+            CreateMap<CalenderMonth, CalenderMonthDto>().ReverseMap();
             CreateMap<ProjectMonth, ProjectMonthDto>().ReverseMap();
             CreateMap<ProjectMonthFinal, ProjectMonthFinalDto>().ReverseMap();
+            CreateMap<PactProfitCentreView, ProfitCentreSettingsDto>();
         }
     }
 }

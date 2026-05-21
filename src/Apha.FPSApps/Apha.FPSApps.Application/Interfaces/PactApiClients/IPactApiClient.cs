@@ -6,6 +6,7 @@
         IPactTimeCodeValidApiClient PactTimeCodeValid { get; }
         IPactWorkGroupApiClient PactWorkGroup { get; }
         IPactMonthApiClient PactMonth { get; }
+        IPactCalenderMonthApiClient PactCalenderMonth { get; }
         IPactProjectInvoiceApiClient PactProjectInvoice { get; }
         IPactProjectSubContractApiClient PactProjectSubContract { get; }
         IPactTestCapabilityApiClient PactWorkGroupTestCapability { get; }
@@ -13,5 +14,7 @@
         IPactTestorProductApiClient PactTestList { get; }
         IPactProjectMonthApiClient PactProjectMonth { get; }
         IPactProjectProfileApiClient PactProjectProfile { get; }
+        IPactWorkGroupReportEmailApiClient PactWorkGroupReportEmail { get; }
+        IPactProfitCentreApiClient PactProfitCentre { get; }
     }
 }

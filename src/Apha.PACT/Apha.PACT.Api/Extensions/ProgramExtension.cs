@@ -1,12 +1,15 @@
-﻿using Apha.PACT.Api.Filters;
+﻿using Apha.Common.Contracts.Email;
+using Apha.PACT.Api.Filters;
 using Apha.PACT.Api.Mappings;
 using Apha.PACT.Api.Middleware;
 using Apha.PACT.Application.Mappings;
 using Apha.PACT.DataAccess.Data;
 using Asp.Versioning;
+using Azure.Identity;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Graph;
 using Microsoft.OpenApi;
 using System.Globalization;
 
@@ -73,6 +76,20 @@ namespace Apha.PACT.Api.Extensions
             {
                 options.GroupNameFormat = "'v'VVV";
                 options.SubstituteApiVersionInUrl = true;
+            });
+
+            // MS Graph Email
+            var graphSettings = configuration.GetSection("GraphEmailSettings").Get<GraphEmailSettings>()!;
+            services.AddSingleton<GraphServiceClient>(_ =>
+            {
+                var credential = new ClientSecretCredential(
+                    graphSettings.TenantId,
+                    graphSettings.ClientId,
+                    graphSettings.ClientSecret);
+
+                return new GraphServiceClient(
+                    credential,
+                    new[] { "https://graph.microsoft.com/.default" });
             });
 
             // Application services

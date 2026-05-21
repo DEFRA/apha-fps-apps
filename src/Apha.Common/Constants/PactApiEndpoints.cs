@@ -30,9 +30,21 @@ namespace Apha.Common.Constants
 
         // Work Group
         public const string GetAllWorkGroups = "api/v1/workgroup";
+        public const string GetPagedWorkGroupsByProfitCentre = "api/v1/workgroup/profitcentre";
+        public const string SetSendEmailForProfitCentreWorkGroups = "api/v1/workgroup/setsendemail/profitcentre";
+        public const string SetSendEmailForAllWorkGroups = "api/v1/workgroup/setsendemail/all";
+        public const string UpdateWorkGroupEmail = "api/v1/workgroup/{0}/email";
+
+        // Profit Centre
+        public const string GetAllProfitCentres = "api/v1/profitcentre";
+        public const string GetProfitCentreSettings = "api/v1/profitcentre/{0}/settings";
+        public const string PatchProfitCentreSettings = "api/v1/profitcentre/settings";
 
         // Month
         public const string GetAllMonths = "api/v1/months";
+
+        // Calender Month
+        public const string GetAllCalenderMonths = "api/v1/calendermonths";
 
         // Test List
         public const string GetPagedTestOrProducts = "api/v1/testorproduct/paged";
@@ -96,5 +108,8 @@ namespace Apha.Common.Constants
         // Project Profile
         public const string GetProjectProfile = "api/v1/projectprofile/{0}/data";
         public const string GetProjectProfileCumulative = "api/v1/projectprofile/{0}/data/cumulative";
+
+        // Work Group Report Email
+        public const string SendEmails = "api/v1/workgroupreport/send";
     }
 }
