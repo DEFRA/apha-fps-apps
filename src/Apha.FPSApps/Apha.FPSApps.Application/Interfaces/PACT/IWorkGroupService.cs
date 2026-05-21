@@ -8,5 +8,6 @@ namespace Apha.FPSApps.Application.Interfaces.PACT
     {
         Task<ApiResponseDto<List<WorkGroupDto>>> GetAllWorkGroupsAsync();
         Task<ApiResponseDto<List<WorkGroupTimeCodeDto>>> GetPagedWorkGroupTimeCodesAsync(QueryParameters<string> query, string workGroup, int monthNumber);
+        Task<ApiResponseDto<List<WorkGroupValidTimeCodeDto>>> GetPagedWorkGroupValidTimeCodesAsync(QueryParameters<string> query, string workGroup);
     }
 }

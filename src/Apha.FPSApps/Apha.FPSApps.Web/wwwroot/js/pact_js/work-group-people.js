@@ -6,6 +6,7 @@
  */
 
 var peopleGridId = null;
+var preselectedWorkGroup = null;
 
 /**
  * Returns the grid manager instance for the people grid.
@@ -297,7 +298,22 @@ function initWorkGroupPeoplePage() {
         }
         $input.removeClass('govuk-input--error');
         $error.hide();
-        window.location.href = '/PACT/WorkGroupShowTimeRecord?workGroup=' + encodeURIComponent(currentWorkGroup);
+        window.fpsNavigateTo('/PACT/WorkGroupShowTimeRecord?workGroup=' + encodeURIComponent(currentWorkGroup));
+    });
+
+    // ── Show Valid Time Codes button ───────────────────────────────────────
+    $('#btnShowTimeCodes').on('click', function () {
+        var $error = $('#workgroupValidationError');
+        var $input = $('#selectedWorkgroup');
+        if (!currentWorkGroup) {
+            $input.addClass('govuk-input--error');
+            $error.show();
+            alert('Please select a Work Group first.');
+            return;
+        }
+        $input.removeClass('govuk-input--error');
+        $error.hide();
+        window.fpsNavigateTo('/PACT/WorkGroupValidTimeCode?workGroup=' + encodeURIComponent(currentWorkGroup));
     });
 }
 
@@ -306,6 +322,15 @@ $(document).ready(function () {
 
     // Wire up the "Show me valid Test Outputs" button
     $('#btnShowTestOutputs').on('click', navigateToTestCapabilities);
+
+    // ── Pre-select work group when returning from a child page ────────────
+    if (preselectedWorkGroup) {
+        var $matchRow = $('#workGroupDropdownBody tr[data-value="' + preselectedWorkGroup + '"]');
+        if ($matchRow.length) {
+            $('#workGroupSelect').val($matchRow.find('td:first').text().trim());
+        }
+        onWorkGroupPickChange(preselectedWorkGroup);
+    }
 
     // Select first row on initial page load
     selectFirstPersonRow();
