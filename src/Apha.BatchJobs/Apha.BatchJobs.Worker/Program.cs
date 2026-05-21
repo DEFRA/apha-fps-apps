@@ -66,7 +66,7 @@ string runOutcome = "Failed";
 string? requestedJobName = null;
 string requestedRunMode = "Manual";
 string? capturedJobExecutionId = null;
-string? capturedRunId = null;
+string? capturedJobQueueId = null;
 int? capturedExecutionId = null;
 var exitCode = ExitCodeBusinessFailure;
 bool gracefulShutdownCompleted = true; // Assume graceful unless proven otherwise
@@ -175,7 +175,7 @@ try
         var orchestrator = executionScope.ServiceProvider.GetRequiredService<IJobOrchestrator>();
         var result = await orchestrator.RunAsync(jobName, runMode, jobExecutionId, userId, linkedCts.Token);
 
-        capturedRunId = result.JobQueueId.ToString();
+        capturedJobQueueId = result.JobQueueId.ToString();
         capturedExecutionId = result.ExecutionId;
 
         logger.LogInformation("===========================================");
@@ -214,8 +214,8 @@ catch (OperationCanceledException ex)
     var logger = loggerFactory?.CreateLogger("BatchJobs.Error");
     var remainingWindowMs = Math.Max(0, (int)(gracefulShutdownWindowSeconds * 1000 - (DateTime.UtcNow - startedAt).TotalMilliseconds));
     logger?.LogWarning(ex,
-        "Job was cancelled | JobName={JobName} | RunId={RunId} | JobExecutionId={JobExecutionId} | RemainingShutdownWindowMs={RemainingWindowMs}",
-        requestedJobName ?? "Unknown", capturedRunId ?? "N/A", capturedJobExecutionId ?? "N/A", remainingWindowMs);
+        "Job was cancelled | JobName={JobName} | JobQueueId={JobQueueId} | JobExecutionId={JobExecutionId} | RemainingShutdownWindowMs={RemainingWindowMs}",
+        requestedJobName ?? "Unknown", capturedJobQueueId ?? "N/A", capturedJobExecutionId ?? "N/A", remainingWindowMs);
     Console.Error.WriteLine($"CANCELLED: Job execution was cancelled");
     
     // Mark as forced cancellation if we ran out of graceful window (remainingWindowMs near 0)
@@ -259,7 +259,7 @@ finally
             _ => LogLevel.Error
         };
         var humanReadableMessage = GenerateHumanReadableMessage(runOutcome, failureCategory);
-        const string summaryTemplate = "Run completed | StartedAt={StartTime} | EndedAt={EndTime} | Outcome={Outcome} | FailureCategory={FailureCategory} | ExitCode={ExitCode} | Message={Message} | JobName={JobName} | RunId={RunId} | ExecutionId={ExecutionId} | JobExecutionId={JobExecutionId} | RunMode={RunMode} | TotalDurationMs={DurationMs} | GracefulShutdownCompleted={GracefulShutdownCompleted}";
+        const string summaryTemplate = "Run completed | StartedAt={StartTime} | EndedAt={EndTime} | Outcome={Outcome} | FailureCategory={FailureCategory} | ExitCode={ExitCode} | Message={Message} | JobName={JobName} | JobQueueId={JobQueueId} | ExecutionId={ExecutionId} | JobExecutionId={JobExecutionId} | RunMode={RunMode} | TotalDurationMs={DurationMs} | GracefulShutdownCompleted={GracefulShutdownCompleted}";
         var summaryLine = BuildSummaryLine(
             startedAt,
             endedAtUtc,
@@ -268,7 +268,7 @@ finally
             exitCode,
             humanReadableMessage,
             requestedJobName ?? "Unknown",
-            capturedRunId ?? "N/A",
+            capturedJobQueueId ?? "N/A",
             capturedExecutionId?.ToString() ?? "N/A",
             capturedJobExecutionId ?? "N/A",
             requestedRunMode,
@@ -292,7 +292,7 @@ finally
                 exitCode,
                 humanReadableMessage,
                 requestedJobName ?? "Unknown",
-                capturedRunId ?? "N/A",
+                capturedJobQueueId ?? "N/A",
                 capturedExecutionId?.ToString() ?? "N/A",
                 capturedJobExecutionId ?? "N/A",
                 requestedRunMode,
@@ -310,7 +310,7 @@ finally
                 exitCode,
                 humanReadableMessage,
                 requestedJobName ?? "Unknown",
-                capturedRunId ?? "N/A",
+                capturedJobQueueId ?? "N/A",
                 capturedExecutionId?.ToString() ?? "N/A",
                 capturedJobExecutionId ?? "N/A",
                 requestedRunMode,
@@ -328,7 +328,7 @@ finally
                 exitCode,
                 humanReadableMessage,
                 requestedJobName ?? "Unknown",
-                capturedRunId ?? "N/A",
+                capturedJobQueueId ?? "N/A",
                 capturedExecutionId?.ToString() ?? "N/A",
                 capturedJobExecutionId ?? "N/A",
                 requestedRunMode,
@@ -364,14 +364,14 @@ static string BuildSummaryLine(
     int exitCode,
     string message,
     string jobName,
-    string runId,
+    string jobQueueId,
     string executionId,
     string jobExecutionId,
     string runMode,
     double totalDurationMs,
     bool gracefulShutdownCompleted)
 {
-    return $"Run completed | StartedAt={startedAt:O} | EndedAt={endedAt:O} | Outcome={outcome} | FailureCategory={failureCategory} | ExitCode={exitCode} | Message={message} | JobName={jobName} | RunId={runId} | ExecutionId={executionId} | JobExecutionId={jobExecutionId} | RunMode={runMode} | TotalDurationMs={totalDurationMs:F0} | GracefulShutdownCompleted={gracefulShutdownCompleted}";
+    return $"Run completed | StartedAt={startedAt:O} | EndedAt={endedAt:O} | Outcome={outcome} | FailureCategory={failureCategory} | ExitCode={exitCode} | Message={message} | JobName={jobName} | JobQueueId={jobQueueId} | ExecutionId={executionId} | JobExecutionId={jobExecutionId} | RunMode={runMode} | TotalDurationMs={totalDurationMs:F0} | GracefulShutdownCompleted={gracefulShutdownCompleted}";
 }
 
 static string GenerateHumanReadableMessage(string outcome, string failureCategory)

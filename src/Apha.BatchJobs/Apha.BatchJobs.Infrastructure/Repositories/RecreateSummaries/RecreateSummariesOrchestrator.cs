@@ -36,13 +36,13 @@ public sealed class RecreateSummariesOrchestrator
     /// Executes steps 1–14 in order, reads the period-lock flag, and
     /// conditionally executes steps 15–17, all within one transaction.
     /// </summary>
-    /// <param name="runId">Correlation identifier for this execution.</param>
+    /// <param name="correlationId">Correlation identifier for this execution.</param>
     /// <param name="month">FPS period month (1–12).</param>
     /// <param name="triggeredBy">Identity of the triggering user.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Ordered list of <see cref="StepResult"/> for every step attempted.</returns>
     public async Task<IReadOnlyList<StepResult>> ExecuteAsync(
-        string runId,
+        string correlationId,
         int month,
         string triggeredBy,
         CancellationToken cancellationToken = default)
@@ -67,7 +67,7 @@ public sealed class RecreateSummariesOrchestrator
 
             try
             {
-                _logger.LogInformation("[{RunId}] RecreateSummaries implementation: {Implementation}", runId, _stepCatalog.ImplementationName);
+                _logger.LogInformation("[{CorrelationId}] RecreateSummaries implementation: {Implementation}", correlationId, _stepCatalog.ImplementationName);
 
                 // --- Steps 1–14 (mandatory, ordered) ---
                 var mandatorySteps = _stepCatalog.BuildMandatorySteps(month, triggeredBy);
@@ -75,21 +75,21 @@ public sealed class RecreateSummariesOrchestrator
                 foreach (var step in mandatorySteps)
                 {
                     _logger.LogInformation(
-                        "[{RunId}] Executing step: {StepName}", runId, step.StepName);
+                        "[{CorrelationId}] Executing step: {StepName}", correlationId, step.StepName);
 
                     var result = await step.ExecuteAsync(executionContext, cancellationToken);
                     results.Add(result);
 
                     _logger.LogInformation(
-                        "[{RunId}] Step {StepName} → {Status} | RowsAffected={Rows} | Duration={Ms}ms",
-                        runId, result.StepName, result.Status, result.RowsAffected,
+                        "[{CorrelationId}] Step {StepName} -> {Status} | RowsAffected={Rows} | Duration={Ms}ms",
+                        correlationId, result.StepName, result.Status, result.RowsAffected,
                         (int)(result.EndTime - result.StartTime).TotalMilliseconds);
 
                     if (result.Status == Domain.Enums.StepStatus.Failed)
                     {
                         _logger.LogError(
-                            "[{RunId}] Step {StepName} failed: {Error}. Rolling back.",
-                            runId, result.StepName, result.ErrorMessage);
+                            "[{CorrelationId}] Step {StepName} failed: {Error}. Rolling back.",
+                            correlationId, result.StepName, result.ErrorMessage);
 
                         await transaction.RollbackAsync(cancellationToken);
                         _dbContext.ChangeTracker.Clear();
@@ -102,8 +102,8 @@ public sealed class RecreateSummariesOrchestrator
                 var periodLocked = await GetPeriodLockedAsync(month, cancellationToken);
 
                 _logger.LogInformation(
-                    "[{RunId}] Period lock check | Month={Month} | PeriodLocked={PeriodLocked}",
-                    runId, month, periodLocked);
+                    "[{CorrelationId}] Period lock check | Month={Month} | PeriodLocked={PeriodLocked}",
+                    correlationId, month, periodLocked);
 
                 if (periodLocked == 0)
                 {
@@ -113,21 +113,21 @@ public sealed class RecreateSummariesOrchestrator
                     foreach (var step in refreshSteps)
                     {
                         _logger.LogInformation(
-                            "[{RunId}] Executing refresh step: {StepName}", runId, step.StepName);
+                            "[{CorrelationId}] Executing refresh step: {StepName}", correlationId, step.StepName);
 
                         var result = await step.ExecuteAsync(executionContext, cancellationToken);
                         results.Add(result);
 
                         _logger.LogInformation(
-                            "[{RunId}] Step {StepName} → {Status} | RowsAffected={Rows} | Duration={Ms}ms",
-                            runId, result.StepName, result.Status, result.RowsAffected,
+                            "[{CorrelationId}] Step {StepName} -> {Status} | RowsAffected={Rows} | Duration={Ms}ms",
+                            correlationId, result.StepName, result.Status, result.RowsAffected,
                             (int)(result.EndTime - result.StartTime).TotalMilliseconds);
 
                         if (result.Status == Domain.Enums.StepStatus.Failed)
                         {
                             _logger.LogError(
-                                "[{RunId}] Refresh step {StepName} failed: {Error}. Rolling back.",
-                                runId, result.StepName, result.ErrorMessage);
+                                "[{CorrelationId}] Refresh step {StepName} failed: {Error}. Rolling back.",
+                                correlationId, result.StepName, result.ErrorMessage);
 
                             await transaction.RollbackAsync(cancellationToken);
                             _dbContext.ChangeTracker.Clear();
@@ -144,14 +144,14 @@ public sealed class RecreateSummariesOrchestrator
                         var skipped = new StepResult(stepName, 0, DateTime.UtcNow, DateTime.UtcNow,
                             Domain.Enums.StepStatus.Skipped, "Period is locked");
                         results.Add(skipped);
-                        _logger.LogInformation("[{RunId}] Step {StepName} skipped — period is locked.", runId, stepName);
+                        _logger.LogInformation("[{CorrelationId}] Step {StepName} skipped - period is locked.", correlationId, stepName);
                     }
                 }
 
                 await transaction.CommitAsync(cancellationToken);
                 _dbContext.ChangeTracker.Clear();
 
-                _logger.LogInformation("[{RunId}] Transaction committed. All steps completed.", runId);
+                _logger.LogInformation("[{CorrelationId}] Transaction committed. All steps completed.", correlationId);
                 completedResults = results;
             }
             catch (Exception) when (results.Count > 0 &&
@@ -161,7 +161,7 @@ public sealed class RecreateSummariesOrchestrator
                 try { await transaction.RollbackAsync(CancellationToken.None); }
                 catch (Exception rollbackEx)
                 {
-                    _logger.LogError(rollbackEx, "[{RunId}] Rollback failed.", runId);
+                    _logger.LogError(rollbackEx, "[{CorrelationId}] Rollback failed.", correlationId);
                 }
 
                 // Prevent replay of tracked Added/Modified entities by other repositories sharing this scoped context.

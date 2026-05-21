@@ -51,10 +51,10 @@
       <b>Current Implementation Status (May 2026):</b><br>
       <ul>
         <li><b>Worker generates <code>jobQueueId</code> internally</b> at startup for runtime/DB identity.</li>
-        <li><b>userId</b> is always passed from API/UI/scheduler and stored in DB.</li>
+      The user interface must support secure, auditable initiation and monitoring of Batch Jobs. UI flows should align with the strict batch contract, including required context values such as <code>jobExecutionId</code>, <code>userId</code>, and <code>yearContext</code> where applicable.
         <li><b>jobExecutionId</b> is the external API/UI correlation key; <b>jobQueueId</b> is internal worker/database identity.</li>
         <li>FPS/PACT trigger APIs, docs, and migration scripts added.</li>
-        <li>All builds and tests pass.</li>
+        <li><b>Auditability:</b> Display or retain key tracking information such as <code>jobExecutionId</code> (and <code>jobQueueId</code> once available), requesting user, requested year, submission time, and approval outcome.</li>
         <li>Year context supported: pass <code>BATCH_YEAR_CONTEXT</code> as needed.</li>
       </ul>
     </div>
@@ -334,7 +334,7 @@ UI polls status using jobExecutionId</div>
 3) API returns TriggerAccepted + jobExecutionId to UI
 4) Worker starts with BATCH_JOB_EXECUTION_ID=jobExecutionId
 5) Worker inserts execution row in fps.job_queue
-   - DB generates jobQueueId (identity/sequence)
+  - Worker/orchestrator generates jobQueueId (GUID) before lock acquisition
    - Row stores correlation/jobExecutionId
 6) Worker and status APIs expose both IDs for traceability
 7) UI continues polling by jobExecutionId (stable external key)
@@ -343,7 +343,7 @@ UI polls status using jobExecutionId</div>
     <h4>6.1.1 Suggested Status Response After Worker Row Exists</h4>
     <pre><code>{
   "jobExecutionId": "b8f9d4a16bb64a6c97e44e9c2e09f111",
-  "jobQueueId": 987654,
+      "jobQueueId": "6d0b4d2c-9ad5-4df3-b4d8-8f389776cb88",
   "status": "Running",
   "message": "Worker started and queue record created."
 }</code></pre>
@@ -1587,6 +1587,9 @@ The <b>MABArchive</b> schema stores project budgeting, milestones/deliverables, 
 </p>
 
 <h3>15.2.2 Year Resolution Logic</h3>
+<p>
+Caller-provided <code>BATCH_YEAR_CONTEXT</code> is authoritative when present and valid. In that mode, MABArchive targets the supplied year as the primary year and runs deterministic full-load behavior. If <code>BATCH_YEAR_CONTEXT</code> is missing, the worker falls back to legacy calendar-based logic for backward compatibility.
+</p>
 <ul>
   <li><b>Month &gt; 4 (after April):</b> The primary year is the current calendar year; a full archive load is performed for that year.</li>
   <li><b>Month <= 4 (April or earlier):</b> The primary year is the previous calendar year; a full archive load is performed for that year, and a partial refresh is applied to the actual current calendar year.</li>
@@ -1620,7 +1623,7 @@ A database lock table prevents concurrent runs. If a second instance starts whil
 
 <h3>15.2.6 Failure Notification</h3>
 <p>
-On failure, an email notification is sent to the configured administrator with the <b>jobQueueId</b> and error details, enabling diagnosis via CloudWatch Logs. All tracking and correlation now use <b>jobQueueId</b> (UUID) as per the strict model.
+On failure, an email notification is sent to the configured administrator with the <b>CorrelationId</b> (derived from <code>jobExecutionId</code>) and error details, enabling diagnosis via CloudWatch Logs. For runtime tracing, use <b>jobExecutionId</b> as the external key and <b>jobQueueId</b> as the internal execution key.
 </p>
 
 <h3>15.3.1 Overview</h3>
@@ -1681,7 +1684,7 @@ The following matrix summarises the major asks, ownership areas, and review expe
     <tr>
       <td>API Teams</td>
       <td>Accept UI requests and publish EventBridge triggers</td>
-      <td>Validate requests, generate <code>jobQueueId</code>, capture <code>userId</code>/<code>yearContext</code>, publish events, and expose status APIs</td>
+      <td>Validate requests, generate <code>jobExecutionId</code>, capture <code>userId</code>/<code>yearContext</code>, publish events, and expose status APIs</td>
       <td>Endpoint contracts, request validation rules, event schema, status API contract</td>
     </tr>
     <tr>
@@ -1755,7 +1758,7 @@ The BatchJobs solution is financially significant, calculation-heavy, and operat
   <li><b>Unit Tests:</b> Validate domain rules, orchestration branching, year selection logic, approval gating logic, environment variable validation, and status transitions.</li>
   <li><b>Repository and Database Integration Tests:</b> Validate EF Core mappings, SQL behavior, transaction boundaries, lock handling, data deletion/recreation logic, and schema assumptions against PostgreSQL.</li>
   <li><b>Parity Tests:</b> Compare .NET orchestration and calculation outputs against legacy SQL/stored procedure expectations or approved baseline datasets.</li>
-  <li><b>API Integration Tests:</b> Validate request handling, validation errors, approval flows, <code>jobQueueId</code> generation, and EventBridge publish contract formation.</li>
+  <li><b>API Integration Tests:</b> Validate request handling, validation errors, approval flows, <code>jobExecutionId</code> generation, and EventBridge publish contract formation.</li>
   <li><b>Infrastructure / Trigger Path Tests:</b> Validate EventBridge to ECS triggering, environment variable mapping, schedule execution, DLQ behavior, and startup timeout handling.</li>
   <li><b>End-to-End Functional Tests:</b> Validate the full path from UI submission to API acceptance to worker execution to database results and surfaced status.</li>
   <li><b>Non-Functional Tests:</b> Include resilience, concurrency, rollback, recoverability, and operational monitoring validation for long-running or high-impact jobs.</li>
@@ -1861,10 +1864,10 @@ The FPS API and PACT API teams must implement the application-facing entry point
 <ul>
   <li><b>UI Request Acceptance:</b> Expose API endpoints for each supported batch job so the UI can submit job requests with the required fields and approval context where applicable.</li>
   <li><b>Validation:</b> Validate job name, required year context, user identity, approval state, and any job-specific inputs before accepting the request.</li>
-  <li><b>Batch Context Creation:</b> Generate a new <code>jobQueueId</code> for each accepted request and capture the requesting <code>userId</code> and <code>yearContext</code> where required.</li>
-  <li><b>EventBridge Publishing:</b> Publish the event to EventBridge using the approved event contract, ensuring that <code>jobQueueId</code>, <code>userId</code>, <code>jobName</code>, <code>runMode</code>, and <code>yearContext</code> are available to the worker as separate environment variables.</li>
-  <li><b>Response Contract:</b> Return deterministic responses to the UI, including accepted/rejected outcomes, reason codes, and the generated <code>jobQueueId</code> for tracking.</li>
-  <li><b>Status API:</b> Provide status endpoints so the UI can poll for job state transitions and correlate results by <code>jobQueueId</code>.</li>
+  <li><b>Batch Context Creation:</b> Generate a new <code>jobExecutionId</code> for each accepted request and capture the requesting <code>userId</code> and <code>yearContext</code> where required.</li>
+  <li><b>EventBridge Publishing:</b> Publish the event to EventBridge using the approved event contract, ensuring that <code>jobExecutionId</code>, <code>userId</code>, <code>jobName</code>, <code>runMode</code>, and <code>yearContext</code> are available to the worker as separate environment variables.</li>
+  <li><b>Response Contract:</b> Return deterministic responses to the UI, including accepted/rejected outcomes, reason codes, and the generated <code>jobExecutionId</code> for tracking.</li>
+  <li><b>Status API:</b> Provide status endpoints so the UI can poll for job state transitions and correlate results by <code>jobExecutionId</code> (and include <code>jobQueueId</code> once available).</li>
   <li><b>Audit and Security:</b> Enforce authorization, record who initiated the request, and ensure the request lifecycle is auditable.</li>
 </ul>
 <p>
@@ -2101,7 +2104,7 @@ Use this as the go-live checklist. Any missing mandatory value below should bloc
 </table>
 
 <p>
-<b>Final pre-release check:</b> Trigger one manual API event and one scheduled event, then verify all five runtime env vars are visible in worker startup logs and that <code>jobQueueId</code> traces end-to-end from API response to DB records.
+<b>Final pre-release check:</b> Trigger one manual API event and one scheduled event, then verify all five runtime env vars are visible in worker startup logs and that <code>jobExecutionId</code> traces end-to-end from API response to DB records (with <code>jobQueueId</code> linked once worker starts).
 </p>
 
 <h3>15.11.2 Fargate/ECS Tasks for Manual and Scheduled Jobs</h3>
@@ -2241,7 +2244,7 @@ Manual triggers come from API event publication and must carry caller context.
   "source": ["fps.api", "pact.api"],
   "detail-type": ["BatchJob.TriggerRequested"],
   "detail": {
-    "jobQueueId": "uuid",
+    "jobExecutionId": "b8f9d4a16bb64a6c97e44e9c2e09f111",
     "userId": "requesting-user",
     "jobName": "RecreateSummaries",
     "runMode": "Manual",
@@ -2249,9 +2252,9 @@ Manual triggers come from API event publication and must carry caller context.
   }
 }</code></pre>
 <ul>
-  <li>Manual run must include all five runtime fields: <code>jobQueueId</code>, <code>userId</code>, <code>jobName</code>, <code>runMode</code>, <code>yearContext</code>.</li>
+  <li>Manual run must include all five runtime fields: <code>jobExecutionId</code>, <code>userId</code>, <code>jobName</code>, <code>runMode</code>, <code>yearContext</code>.</li>
   <li>EventBridge transformer maps these values into <code>BATCH_*</code> environment variables.</li>
-  <li>Status tracking must correlate API response and DB records via <code>jobQueueId</code>.</li>
+  <li>Status tracking must correlate API response and DB records via <code>jobExecutionId</code>.</li>
 </ul>
 
 <h4>15.11.2.3 Scheduled Jobs (EventBridge Schedule -> ECS)</h4>
@@ -2260,7 +2263,7 @@ Scheduled jobs are infra-owned schedules and must inject deterministic system co
 </p>
 <pre><code>{
   "detail": {
-    "jobQueueId": "&lt;generated-per-run-uuid&gt;",
+    "jobExecutionId": "&lt;generated-per-run-guid&gt;",
     "userId": "system-scheduler",
     "jobName": "MabArchive",
     "runMode": "Scheduled",
@@ -2268,7 +2271,7 @@ Scheduled jobs are infra-owned schedules and must inject deterministic system co
   }
 }</code></pre>
 <ul>
-  <li><code>jobQueueId</code> must be generated uniquely per schedule fire (no reuse across runs).</li>
+  <li><code>jobExecutionId</code> must be generated uniquely per schedule fire (no reuse across runs).</li>
   <li><code>userId</code> should be a stable service identity (for example <code>system-scheduler</code>).</li>
   <li><code>runMode</code> must be <code>Scheduled</code> for operational filtering/audit.</li>
   <li>Year context should be explicitly injected for year-scoped processes; do not assume application defaults.</li>
@@ -2459,14 +2462,14 @@ Please register the BatchJobs solution in Sonar, connect it to the CI process, a
 <h2>15.14 Ask from UI Team: User Experience and Integration for Batch Jobs</h2>
 <p>
 <b>Required UI Capabilities:</b><br>
-The user interface must support secure, auditable initiation and monitoring of Batch Jobs. UI flows should align with the strict batch contract, including required context values such as <code>jobQueueId</code>, <code>userId</code>, and <code>yearContext</code> where applicable.
+The user interface must support secure, auditable initiation and monitoring of Batch Jobs. UI flows should align with the strict batch contract, including required context values such as <code>jobExecutionId</code>, <code>userId</code>, and <code>yearContext</code> where applicable.
 </p>
 <ul>
   <li><b>Job Trigger Forms:</b> Provide screens/forms for users to start supported batch jobs with the required input fields, including job-specific parameters, year context, and confirmation of the requesting user.</li>
   <li><b>Approval Flows:</b> Support initiation, submission for approval, approval, and rejection flows for jobs that require dual control, such as Calendar Year End and Cutover processes.</li>
   <li><b>Status Monitoring:</b> Provide status views for submitted jobs, including polling of the API for execution state such as <code>TriggerAccepted</code>, <code>PendingStart</code>, <code>Running</code>, <code>Completed</code>, and <code>Failed</code>.</li>
   <li><b>Error Handling:</b> Surface deterministic error responses and reason codes returned by the API, and guide users on when retry is allowed versus when operational support is needed.</li>
-  <li><b>Auditability:</b> Display or retain key tracking information such as <code>jobQueueId</code>, requesting user, requested year, submission time, and approval outcome.</li>
+  <li><b>Auditability:</b> Display or retain key tracking information such as <code>jobExecutionId</code> (and <code>jobQueueId</code> once available), requesting user, requested year, submission time, and approval outcome.</li>
   <li><b>Validation:</b> Validate mandatory inputs before submission, especially year context and other job-specific configuration values.</li>
 </ul>
 <p>

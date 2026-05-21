@@ -56,13 +56,11 @@ public sealed class MabArchiveJobHandler : IBatchJob
     /// </summary>
     public async Task ExecuteAsync(CancellationToken cancellationToken = default)
     {
-        var runId = $"run-{DateTime.UtcNow:yyyyMMdd-HHmmss}-{Guid.NewGuid().ToString("N")[..8]}";
         var startedAt = DateTime.UtcNow;
         var correlationId = _correlationService.GetCorrelationId() ?? _correlationService.GenerateCorrelationId();
 
         using var scope = _logger.BeginScope(new Dictionary<string, object>
         {
-            ["RunId"] = runId,
             ["CorrelationId"] = correlationId,
             ["JobName"] = Name
         });
@@ -70,8 +68,8 @@ public sealed class MabArchiveJobHandler : IBatchJob
         _logger.LogInformation("===========================================");
         _logger.LogInformation("MABArchive Job - Starting");
         _logger.LogInformation("===========================================");
-        _logger.LogInformation("RunId: {RunId} | Timestamp: {StartTime:yyyy-MM-dd HH:mm:ss.fff} | ProcessId: {ProcessId}",
-            runId, startedAt, Environment.ProcessId);
+        _logger.LogInformation("CorrelationId: {CorrelationId} | Timestamp: {StartTime:yyyy-MM-dd HH:mm:ss.fff} | ProcessId: {ProcessId}",
+            correlationId, startedAt, Environment.ProcessId);
 
         await using var dbContext = _dbContextFactory.CreateDbContext();
 
@@ -100,7 +98,7 @@ public sealed class MabArchiveJobHandler : IBatchJob
             }
 
             await orchestrator.ExecuteAsync(
-                runId,
+                correlationId,
                 context,
                 TransactionWrapper,
                 cancellationToken);
@@ -108,19 +106,19 @@ public sealed class MabArchiveJobHandler : IBatchJob
             var duration = DateTime.UtcNow - startedAt;
             _logger.LogInformation("===========================================");
             _logger.LogInformation(
-                "MABArchive Job - Completed Successfully | RunId={RunId} | Duration={DurationSeconds}s",
-                runId,
+                "MABArchive Job - Completed Successfully | CorrelationId={CorrelationId} | Duration={DurationSeconds}s",
+                correlationId,
                 (int)duration.TotalSeconds);
             _logger.LogInformation("===========================================");
         }
         catch (OperationCanceledException ex)
         {
-            _logger.LogWarning(ex, "MABArchive job was cancelled | RunId={RunId}", runId);
+            _logger.LogWarning(ex, "MABArchive job was cancelled | CorrelationId={CorrelationId}", correlationId);
             throw;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "MABArchive job failed with unhandled exception | RunId={RunId}", runId);
+            _logger.LogError(ex, "MABArchive job failed with unhandled exception | CorrelationId={CorrelationId}", correlationId);
             throw;
         }
     }

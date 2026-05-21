@@ -12,7 +12,7 @@ namespace Apha.BatchJobs.Application;
 
 /// <summary>
 /// Implements the full execution lifecycle for a batch job:
-/// generate RunId → acquire lock → record start → execute → record result → release lock.
+/// generate JobQueueId -> acquire lock -> record start -> execute -> record result -> release lock.
 /// </summary>
 public sealed class JobOrchestrator : IJobOrchestrator
 {

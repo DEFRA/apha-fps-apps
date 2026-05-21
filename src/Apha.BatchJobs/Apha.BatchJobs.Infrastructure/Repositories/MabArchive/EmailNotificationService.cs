@@ -31,13 +31,13 @@ public sealed class EmailNotificationService : IEmailNotificationService
     /// <summary>
     /// Sends a failure notification for a MABArchive execution.
     /// </summary>
-    /// <param name="runId">Run identifier.</param>
+    /// <param name="correlationId">Correlation identifier.</param>
     /// <param name="jobName">Job name.</param>
     /// <param name="errorMessage">Error message text.</param>
     /// <param name="timestamp">Failure timestamp (UTC).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     public async Task SendFailureNotificationAsync(
-        string runId,
+        string correlationId,
         string jobName,
         string errorMessage,
         DateTime timestamp,
@@ -45,21 +45,21 @@ public sealed class EmailNotificationService : IEmailNotificationService
     {
         if (!_settings.EnableEmailNotifications)
         {
-            _logger.LogInformation("Email notifications disabled. Skipping failure notification for RunId={RunId}", runId);
+            _logger.LogInformation("Email notifications disabled. Skipping failure notification for CorrelationId={CorrelationId}", correlationId);
             return;
         }
 
         if (string.IsNullOrWhiteSpace(_settings.AdminNotificationEmail))
         {
-            _logger.LogWarning("AdminNotificationEmail not configured. Cannot send failure notification for RunId={RunId}", runId);
+            _logger.LogWarning("AdminNotificationEmail not configured. Cannot send failure notification for CorrelationId={CorrelationId}", correlationId);
             return;
         }
 
         try
         {
             _logger.LogInformation(
-                "Sending failure notification | RunId={RunId} | Job={JobName} | To={Email}",
-                runId,
+                "Sending failure notification | CorrelationId={CorrelationId} | Job={JobName} | To={Email}",
+                correlationId,
                 jobName,
                 _settings.AdminNotificationEmail);
 
@@ -68,12 +68,12 @@ public sealed class EmailNotificationService : IEmailNotificationService
 Job Failure Notification
 
 Job Name: {jobName}
-Run ID: {runId}
+Correlation ID: {correlationId}
 Failure Time: {timestamp:yyyy-MM-dd HH:mm:ss} UTC
 Error Message: {errorMessage}
 
 For detailed diagnostics, check:
-- CloudWatch Logs (group: {_settings.CloudWatchLogGroup}) filtered by RunId={runId}
+- CloudWatch Logs (group: {_settings.CloudWatchLogGroup}) filtered by CorrelationId={correlationId}
 - Database lock table (tbl_job_queue) for lock status
 - Recent batch job execution records
 
@@ -88,7 +88,7 @@ Contact your system administrator for assistance.
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to send failure notification for RunId={RunId}", runId);
+            _logger.LogError(ex, "Failed to send failure notification for CorrelationId={CorrelationId}", correlationId);
             throw;
         }
     }

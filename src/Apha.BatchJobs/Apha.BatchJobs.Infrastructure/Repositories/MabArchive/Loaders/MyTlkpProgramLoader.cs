@@ -47,12 +47,14 @@ internal sealed class MyTlkpProgramDotNetLoader : MabArchiveDotNetLoaderBase
             return 0;
         }
 
-        // ✅ VALIDATION: Verify critical fields are not NULL before inserting
-        var invalidRows = rows.Count(r => string.IsNullOrWhiteSpace(r.ProgramNo) || string.IsNullOrWhiteSpace(r.ProgramName));
+        // 2026-05-21: Keep ProgramName nullable to match legacy baseline load behavior
+        // (INSERT-SELECT from fps.tlkpProgram did not enforce ProgramName non-null).
+        // Only ProgramNo is key-critical for my_tlkpprogram parity and integrity.
+        var invalidRows = rows.Count(r => string.IsNullOrWhiteSpace(r.ProgramNo));
         if (invalidRows > 0)
         {
             throw new InvalidOperationException(
-                $"Seq 1 MyTlkpProgram: {invalidRows} rows have NULL critical fields (ProgramNo or ProgramName).");
+            $"Seq 1 MyTlkpProgram: {invalidRows} rows have NULL critical field ProgramNo.");
         }
 
         await context.MaDstMyTlkpProgram.AddRangeAsync(rows, cancellationToken);

@@ -241,17 +241,6 @@ public class JobExecutionRepository : IJobExecutionRepository
         return row.StatusId;
     }
 
-    private static Guid ParseRunId(string runId)
-    {
-        if (Guid.TryParseExact(runId, "N", out var guidN))
-            return guidN;
-
-        if (Guid.TryParse(runId, out var guid))
-            return guid;
-
-        throw new ArgumentException("RunId must be a valid GUID string.", nameof(runId));
-    }
-
     private static string BuildStatusNote(JobStatus status) => status switch
     {
         JobStatus.Completed => "Execution completed",

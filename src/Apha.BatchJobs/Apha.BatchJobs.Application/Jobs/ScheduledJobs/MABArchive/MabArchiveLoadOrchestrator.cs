@@ -43,11 +43,27 @@ public sealed class MabArchiveLoadOrchestrator
     }
 
     /// <summary>
-    /// Builds the execution context based on current date.
+    /// Builds the execution context based on caller-provided year context when available,
+    /// otherwise falls back to legacy calendar-based logic.
     /// </summary>
     /// <returns>Computed execution context for the current run window.</returns>
     public MabArchiveExecutionContext BuildExecutionContext()
     {
+        var yearContext = Environment.GetEnvironmentVariable("BATCH_YEAR_CONTEXT");
+        if (!string.IsNullOrWhiteSpace(yearContext)
+            && int.TryParse(yearContext, out var targetYear)
+            && targetYear > 1900)
+        {
+            // Caller-provided year context is authoritative for year-scoped runs.
+            // Keep a deterministic full-load context (no partial refresh branch).
+            return new MabArchiveExecutionContext(
+                CurrentYear: targetYear,
+                PreviousYear: targetYear - 1,
+                CurrentMonth: 12,
+                PrimaryYear: targetYear,
+                IncludePartialRefreshYear: false);
+        }
+
         var utcNow = DateTime.UtcNow;
 
         // Optional test hook for deterministic local verification of month-branch behavior.
@@ -82,19 +98,19 @@ public sealed class MabArchiveLoadOrchestrator
     /// <summary>
     /// Executes the MABArchive load orchestration within a single transaction.
     /// </summary>
-    /// <param name="runId">Correlation run identifier for this execution.</param>
+    /// <param name="correlationId">Correlation identifier for this execution.</param>
     /// <param name="context">Computed execution context for year/month branching.</param>
     /// <param name="transactionWrapper">Transaction wrapper delegate used to execute all work atomically.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     public async Task ExecuteAsync(
-        string runId,
+        string correlationId,
         MabArchiveExecutionContext context,
         Func<Func<Task>, Task> transactionWrapper,
         CancellationToken cancellationToken)
     {
         using var scope = _logger.BeginScope(new Dictionary<string, object>
         {
-            ["RunId"] = runId,
+            ["CorrelationId"] = correlationId,
             ["PrimaryYear"] = context.PrimaryYear,
             ["CurrentMonth"] = context.CurrentMonth,
             ["IncludePartialRefresh"] = context.IncludePartialRefreshYear
@@ -166,18 +182,18 @@ public sealed class MabArchiveLoadOrchestrator
         }
         catch (OperationCanceledException ex) when (cancellationToken.IsCancellationRequested)
         {
-            _logger.LogWarning(ex, "MABArchive orchestration cancelled | RunId={RunId}", runId);
+            _logger.LogWarning(ex, "MABArchive orchestration cancelled | CorrelationId={CorrelationId}", correlationId);
             throw;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "MABArchive orchestration failed | RunId={RunId}", runId);
+            _logger.LogError(ex, "MABArchive orchestration failed | CorrelationId={CorrelationId}", correlationId);
 
             // Send failure notification
             try
             {
                 await _notificationService.SendFailureNotificationAsync(
-                    runId,
+                    correlationId,
                     "MABArchive",
                     ex.Message,
                     DateTime.UtcNow,
@@ -185,7 +201,7 @@ public sealed class MabArchiveLoadOrchestrator
             }
             catch (Exception notificationEx)
             {
-                _logger.LogWarning(notificationEx, "Failed to send failure notification for RunId={RunId}", runId);
+                _logger.LogWarning(notificationEx, "Failed to send failure notification for CorrelationId={CorrelationId}", correlationId);
             }
 
             throw;

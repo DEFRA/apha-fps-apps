@@ -65,13 +65,11 @@ public sealed class RecreateSummariesJobHandler : IBatchJob
     /// <inheritdoc />
     public async Task ExecuteAsync(CancellationToken cancellationToken = default)
     {
-        var runId = $"run-{DateTime.UtcNow:yyyyMMdd-HHmmss}-{Guid.NewGuid().ToString("N")[..8]}";
         var startedAt = DateTime.UtcNow;
         var correlationId = _correlationService.GetCorrelationId() ?? _correlationService.GenerateCorrelationId();
 
         using var scope = _logger.BeginScope(new Dictionary<string, object>
         {
-            ["RunId"] = runId,
             ["CorrelationId"] = correlationId,
             ["JobName"] = Name,
             ["Month"] = _jobContext.Month,
@@ -82,13 +80,13 @@ public sealed class RecreateSummariesJobHandler : IBatchJob
         _logger.LogInformation("RecreateSummaries Job - Starting");
         _logger.LogInformation("===========================================");
         _logger.LogInformation(
-            "RunId: {RunId} | Month: {Month} | TriggeredBy: {TriggeredBy} | Timestamp: {StartTime:yyyy-MM-dd HH:mm:ss.fff}",
-            runId, _jobContext.Month, _jobContext.TriggeredBy, startedAt);
+            "CorrelationId: {CorrelationId} | Month: {Month} | TriggeredBy: {TriggeredBy} | Timestamp: {StartTime:yyyy-MM-dd HH:mm:ss.fff}",
+            correlationId, _jobContext.Month, _jobContext.TriggeredBy, startedAt);
 
         try
         {
             var results = await _orchestrator.ExecuteAsync(
-                runId,
+                correlationId,
                 _jobContext.Month,
                 _jobContext.TriggeredBy,
                 cancellationToken);
@@ -97,18 +95,18 @@ public sealed class RecreateSummariesJobHandler : IBatchJob
 
             _logger.LogInformation("===========================================");
             _logger.LogInformation(
-                "RecreateSummaries Job - Completed Successfully | RunId={RunId} | Month={Month} | Steps={StepCount} | Duration={DurationSeconds}s",
-                runId, _jobContext.Month, results.Count, (int)duration.TotalSeconds);
+                "RecreateSummaries Job - Completed Successfully | CorrelationId={CorrelationId} | Month={Month} | Steps={StepCount} | Duration={DurationSeconds}s",
+                correlationId, _jobContext.Month, results.Count, (int)duration.TotalSeconds);
             _logger.LogInformation("===========================================");
         }
         catch (OperationCanceledException ex)
         {
-            _logger.LogWarning(ex, "RecreateSummaries job was cancelled | RunId={RunId}", runId);
+            _logger.LogWarning(ex, "RecreateSummaries job was cancelled | CorrelationId={CorrelationId}", correlationId);
             throw;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "RecreateSummaries job failed | RunId={RunId} | Month={Month}", runId, _jobContext.Month);
+            _logger.LogError(ex, "RecreateSummaries job failed | CorrelationId={CorrelationId} | Month={Month}", correlationId, _jobContext.Month);
             throw;
         }
     }
