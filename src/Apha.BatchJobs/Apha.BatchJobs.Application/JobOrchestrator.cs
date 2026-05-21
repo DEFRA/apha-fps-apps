@@ -64,11 +64,11 @@ public sealed class JobOrchestrator : IJobOrchestrator
         string jobName,
         RunMode runMode,
         Guid jobExecutionId,
-        Guid jobQueueId,
         string userId,
         CancellationToken cancellationToken = default)
     {
         var startedAt = DateTime.UtcNow;
+        var jobQueueId = Guid.NewGuid();
         using var runScope = _logger.BeginScope(new Dictionary<string, object>
         {
             ["JobExecutionId"] = jobExecutionId,

@@ -41,7 +41,7 @@
 <div class="page">
 
 <h1>Batch Job Triggering Approach Recommendation</h1>
-    <p class="subtitle">Updated for <b>JobExecutionId external correlation + worker-generated JobQueueId</b> model (May 2026). Triggers must provide <code>BATCH_JOB_EXECUTION_ID</code> and <code>BATCH_USER_ID</code>. Year context is supported via <code>BATCH_YEAR_CONTEXT</code>. Implementation is complete and live.</p>
+    <p class="subtitle">Updated for <b>JobExecutionId external correlation + orchestrator-generated JobQueueId</b> model (May 2026). Triggers must provide <code>BATCH_JOB_EXECUTION_ID</code> and <code>BATCH_USER_ID</code>. Year context is supported via <code>BATCH_YEAR_CONTEXT</code>. Implementation is complete and live.</p>
 
     <div class="neutral">
       <strong>Canonical document:</strong> This HTML is now the single primary BatchJobs design and delivery document. Earlier standalone repository, DevOps, compliance, and implementation HTML pages have been retired to avoid duplication and drift.
@@ -874,13 +874,13 @@ UI
     <h2>9. Worker Implementation Blueprint</h2>
 
     <h3>9.1 Worker Reads Environment Variables</h3>
-    <pre><code>// Caller should provide external correlation key; worker owns internal jobQueueId generation
+    <pre><code>// Caller should provide external correlation key (jobExecutionId).
+  // Worker/orchestrator owns internal jobQueueId generation at execution start.
   var jobExecutionId = Environment.GetEnvironmentVariable("BATCH_JOB_EXECUTION_ID");
   var userId = Environment.GetEnvironmentVariable("BATCH_USER_ID");
   var jobName = Environment.GetEnvironmentVariable("BATCH_JOB_NAME");
   var runMode = Environment.GetEnvironmentVariable("BATCH_RUN_MODE") ?? "Manual";
   var yearContext = Environment.GetEnvironmentVariable("BATCH_YEAR_CONTEXT");
-  var jobQueueId = Guid.NewGuid();
 
   if (string.IsNullOrWhiteSpace(jobExecutionId))
     jobExecutionId = Guid.NewGuid().ToString("D"); // transitional fallback
@@ -890,7 +890,8 @@ UI
     throw new InvalidOperationException("BATCH_JOB_NAME is required.");
 
   // Use jobExecutionId as correlation id and pass it into orchestrator.
-  await orchestrator.RunAsync(jobName, runMode, Guid.Parse(jobExecutionId), jobQueueId, userId, cancellationToken);</code></pre>
+  // Orchestrator creates internal jobQueueId just before lock acquisition.
+  await orchestrator.RunAsync(jobName, runMode, Guid.Parse(jobExecutionId), userId, cancellationToken);</code></pre>
 
     <h3>9.2 Worker Status Handling</h3>
     <table>
