@@ -136,9 +136,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         private async Task<ProgramDto?> GetProgramInfoAsync(string programNo)
         {
             if (string.IsNullOrWhiteSpace(programNo))
-            {
                 return null;
-            }
 
             var result = await _programService.GetProgramByIdAsync(programNo);
             return result.Success ? result.Data : null;

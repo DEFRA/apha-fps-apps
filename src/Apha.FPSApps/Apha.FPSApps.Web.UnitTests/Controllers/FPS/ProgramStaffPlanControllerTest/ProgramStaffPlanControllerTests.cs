@@ -67,13 +67,15 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramStaffPlanControllerT
         }
 
         [Fact]
-        public async Task Index_WithoutProgramNo_UsesEmptySelectedProgramNo()
+        public async Task Index_WithoutProgramNo_FallsBackToFirstProgrammeInList()
         {
             // Arrange
             var programs = BuildProgramList();
 
             _programService.GetAllProgramsAsync()
                 .Returns(ApiResponseDto<IEnumerable<ProgramDto>>.SuccessResponse(programs));
+            _programService.GetProgramByIdAsync("P001")
+                .Returns(ApiResponseDto<ProgramDto?>.SuccessResponse(programs.First()));
 
             // Act
             var result = await _controller.Index(null);
@@ -82,11 +84,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramStaffPlanControllerT
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<ProgramStaffPlanViewModel>(viewResult.Model);
 
-            Assert.Equal(string.Empty, model.SelectedProgramNo);
-            Assert.Equal(string.Empty, model.SelectedProgramme);
-            Assert.Equal(string.Empty, model.Manager);
+            Assert.Equal("P001",       model.SelectedProgramNo);
             Assert.Equal(2,            model.ProgrammeList.Count);
-            await _programService.DidNotReceive().GetProgramByIdAsync(Arg.Any<string>());
         }
 
         [Fact]
@@ -136,6 +135,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramStaffPlanControllerT
 
             _programService.GetAllProgramsAsync()
                 .Returns(ApiResponseDto<IEnumerable<ProgramDto>>.SuccessResponse(programs));
+            _programService.GetProgramByIdAsync("P001")
+                .Returns(ApiResponseDto<ProgramDto?>.SuccessResponse(programs.First()));
 
             // Act
             var result = await _controller.Index(null);
@@ -157,6 +158,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramStaffPlanControllerT
 
             _programService.GetAllProgramsAsync()
                 .Returns(ApiResponseDto<IEnumerable<ProgramDto>>.SuccessResponse(programs));
+            _programService.GetProgramByIdAsync("P001")
+                .Returns(ApiResponseDto<ProgramDto?>.SuccessResponse(programs.First()));
 
             // Act
             var result = await _controller.Index(null);
@@ -179,6 +182,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramStaffPlanControllerT
 
             _programService.GetAllProgramsAsync()
                 .Returns(ApiResponseDto<IEnumerable<ProgramDto>>.SuccessResponse(programs));
+            _programService.GetProgramByIdAsync("P001")
+                .Returns(ApiResponseDto<ProgramDto?>.SuccessResponse(programs.First()));
 
             // Act
             var result = await _controller.Index(null);
@@ -199,6 +204,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramStaffPlanControllerT
 
             _programService.GetAllProgramsAsync()
                 .Returns(ApiResponseDto<IEnumerable<ProgramDto>>.SuccessResponse(programs));
+            _programService.GetProgramByIdAsync("P001")
+                .Returns(ApiResponseDto<ProgramDto?>.SuccessResponse(programs.First()));
 
             // Act
             var result = await _controller.Index(null);
@@ -231,27 +238,24 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramStaffPlanControllerT
         }
 
         [Fact]
-        public async Task Index_WhenProgramInfoNotFound_UsesEmptyDefaults()
+        public async Task Index_WhenProgramInfoNotFound_FallsBackToFirstProgramme()
         {
             // Arrange
             var programs = BuildProgramList();
 
             _programService.GetAllProgramsAsync()
                 .Returns(ApiResponseDto<IEnumerable<ProgramDto>>.SuccessResponse(programs));
-            _programService.GetProgramByIdAsync("P999")
-                .Returns(ApiResponseDto<ProgramDto?>.SuccessResponse(null));
+            _programService.GetProgramByIdAsync("P001")
+                .Returns(ApiResponseDto<ProgramDto?>.SuccessResponse(programs.First()));
 
-            // Act
+            // Act — P999 is not in the list so falls back to first item P001
             var result = await _controller.Index("P999");
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<ProgramStaffPlanViewModel>(viewResult.Model);
 
-            Assert.Equal("P999",       model.SelectedProgramNo);
-            Assert.Equal(string.Empty, model.SelectedProgramme);
-            Assert.Equal(string.Empty, model.Manager);
-            Assert.Equal(0m,           model.Target);
+            Assert.Equal("P001", model.SelectedProgramNo);
         }
 
         #endregion

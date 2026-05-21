@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Identity.Web;
+using Newtonsoft.Json;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 {
@@ -80,6 +81,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             if (!ModelState.IsValid || string.IsNullOrWhiteSpace(programNo))
                 return BadRequest(ModelState);
 
+            // projectSearch may arrive as a standalone param or inside request.Filter as JSON
+            if (string.IsNullOrWhiteSpace(projectSearch) && !string.IsNullOrWhiteSpace(request.Filter))
+            {
+                var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter);
+                filterDict?.TryGetValue("projectSearch", out projectSearch);
+            }
+
             var gridConfig = await BuildProjectsGridAsync(request, programNo, projectSearch);
 
             return PartialView("_DataGrid", gridConfig);
@@ -109,6 +117,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         {
             var queryParameters = _mapper.Map<QueryParameters<string>>(request);
 
+            // Pass projectSearch as a server-side filter so the API filters before paging
+            if (!string.IsNullOrWhiteSpace(projectSearch))
+                queryParameters.Filter = JsonConvert.SerializeObject(new { ParentProject = projectSearch });
+
             var response = !string.IsNullOrWhiteSpace(programNo)
                 ? await _projectService.GetProjectsByProgramAsync(queryParameters, programNo)
                 : null;
@@ -120,14 +132,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                       ParentProject = p.ParentProject ?? string.Empty
                   }).ToList()
                 : new List<ProgrammeSelectProjectItem>();
-
-            if (!string.IsNullOrWhiteSpace(projectSearch))
-            {
-                items = items
-                    .Where(p => p.ParentProject.Contains(projectSearch, StringComparison.OrdinalIgnoreCase)
-                             || p.Program.Contains(projectSearch, StringComparison.OrdinalIgnoreCase))
-                    .ToList();
-            }
 
             var pagination = response?.Pagination != null
                 ? _mapper.Map<PaginationModel>(response.Pagination)

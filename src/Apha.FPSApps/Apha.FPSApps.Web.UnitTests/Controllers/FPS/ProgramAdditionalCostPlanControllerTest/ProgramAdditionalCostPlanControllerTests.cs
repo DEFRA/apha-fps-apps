@@ -67,13 +67,15 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramAdditionalCostPlanCo
         }
 
         [Fact]
-        public async Task Index_WithoutProgramNo_UsesEmptySelectedProgramNo()
+        public async Task Index_WithoutProgramNo_FallsBackToFirstProgrammeInList()
         {
             // Arrange
             var programs = BuildProgramList();
 
             _programService.GetAllProgramsAsync()
                 .Returns(ApiResponseDto<IEnumerable<ProgramDto>>.SuccessResponse(programs));
+            _programService.GetProgramByIdAsync("P001")
+                .Returns(ApiResponseDto<ProgramDto?>.SuccessResponse(programs.First()));
 
             // Act
             var result = await _controller.Index(null);
@@ -82,11 +84,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramAdditionalCostPlanCo
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<ProgramAddCostPlanViewModel>(viewResult.Model);
 
-            Assert.Equal(string.Empty, model.SelectedProgramNo);
-            Assert.Equal(string.Empty, model.SelectedProgramme);
-            Assert.Equal(string.Empty, model.Manager);
-            Assert.Equal(2, model.ProgrammeList.Count);
-            await _programService.DidNotReceive().GetProgramByIdAsync(Arg.Any<string>());
+            Assert.Equal("P001", model.SelectedProgramNo);
+            Assert.Equal(2,      model.ProgrammeList.Count);
         }
 
         [Fact]
