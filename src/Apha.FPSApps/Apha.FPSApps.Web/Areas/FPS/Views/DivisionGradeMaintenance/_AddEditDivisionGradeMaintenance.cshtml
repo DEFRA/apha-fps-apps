@@ -1,4 +1,4 @@
-@model Apha.FPSApps.Web.Areas.FPS.Models.DivisionGradeMaintenanceItem
+@model Apha.FPSApps.Web.Areas.FPS.Models.DivisionGradeItem
 @{
     var isEditMode = !string.IsNullOrWhiteSpace(Model?.DivisionGradeCode);
     var title = isEditMode ? "Edit Division Grade" : "Add Division Grade";
@@ -129,7 +129,7 @@
     function loadMaintDGDropdowns() {
         // Load grade codes
         $.ajax({
-            url: '@Url.Action("GetDistinctGradeCodes", "DivisionGradeMaintenance", new { area = "FPS" })',
+            url: '@Url.Action("GetDistinctGradeCodes", "DivisionGrade", new { area = "FPS" })',
             type: 'GET',
             success: function (response) {
                 if (response.success && response.data) {
@@ -150,7 +150,7 @@
 
         // Load divisions
         $.ajax({
-            url: '@Url.Action("GetDistinctDivisions", "DivisionGradeMaintenance", new { area = "FPS" })',
+            url: '@Url.Action("GetDistinctDivisions", "DivisionGrade", new { area = "FPS" })',
             type: 'GET',
             success: function (response) {
                 if (response.success && response.data) {

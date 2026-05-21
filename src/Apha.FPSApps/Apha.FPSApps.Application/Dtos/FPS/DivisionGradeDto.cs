@@ -1,6 +1,6 @@
 namespace Apha.FPSApps.Application.Dtos.FPS
 {
-    public class DivisionGradeMaintenanceDto
+    public class DivisionGradeDto
     {
         public string DivisionGradeCode { get; set; } = null!;
         public string? GradeCode { get; set; }

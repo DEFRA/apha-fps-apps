@@ -63,8 +63,8 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<DivisionDto, DivisionReq>().ReverseMap();
 
             // Division Grade
-            CreateMap<DivisionGradeMaintenanceDto, DivisionGradeRes>().ReverseMap();
-            CreateMap<DivisionGradeMaintenanceDto, DivisionGradeReq>().ReverseMap();
+            CreateMap<DivisionGradeDto, DivisionGradeRes>().ReverseMap();
+            CreateMap<DivisionGradeDto, DivisionGradeReq>().ReverseMap();
 
            
             // Agency

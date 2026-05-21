@@ -4,15 +4,15 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Models
 {
-    public class DivisionGradeMaintenanceViewModel
+    public class DivisionGradeViewModel
     {
-        public DataGridConfig<DivisionGradeMaintenanceItem> DivisionGradeGrid { get; set; } = new DataGridConfig<DivisionGradeMaintenanceItem>();
+        public DataGridConfig<DivisionGradeItem> DivisionGradeGrid { get; set; } = new DataGridConfig<DivisionGradeItem>();
         public List<SelectListItem> GradeCodeList { get; set; } = new List<SelectListItem>();
         public List<SelectListItem> DivisionList { get; set; } = new List<SelectListItem>();
         public int? SelectedYear { get; set; }
     }
 
-    public class DivisionGradeMaintenanceItem
+    public class DivisionGradeItem
     {
         [Display(Name = "Division Grade")]
         [GridColumn(Width = 120, Type = GridColumnType.ReadOnly, IsVisible = true, IsFilterable = true)]

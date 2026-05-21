@@ -10,19 +10,19 @@ using AutoMapper;
 
 namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 {
-    public class FpsDivisionGradeMaintenanceApiClient : IFpsDivisionGradeMaintenanceApiClient
+    public class FpsDivisionGradeApiClient : IFpsDivisionGradeApiClient
     {
         private readonly IFpsHttpExecutor _http;
         private readonly IMapper _mapper;
         private const string internalCodeError = "INTERNAL_ERROR";
 
-        public FpsDivisionGradeMaintenanceApiClient(IFpsHttpExecutor http, IMapper mapper)
+        public FpsDivisionGradeApiClient(IFpsHttpExecutor http, IMapper mapper)
         {
             _http = http ?? throw new ArgumentNullException(nameof(http));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
-        public async Task<ApiResponseDto<List<DivisionGradeMaintenanceDto>>> GetAllPagedAsync(QueryParameters<string> query)
+        public async Task<ApiResponseDto<List<DivisionGradeDto>>> GetAllPagedAsync(QueryParameters<string> query)
         {
             try
             {
@@ -31,12 +31,12 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
                 if (response.Success)
                 {
-                    return _mapper.Map<ApiResponseDto<List<DivisionGradeMaintenanceDto>>>(response);
+                    return _mapper.Map<ApiResponseDto<List<DivisionGradeDto>>>(response);
                 }
                 else
                 {
-                    var responseDto = _mapper.Map<ApiResponseDto<List<DivisionGradeMaintenanceDto>>>(response);
-                    return ApiResponseDto<List<DivisionGradeMaintenanceDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+                    var responseDto = _mapper.Map<ApiResponseDto<List<DivisionGradeDto>>>(response);
+                    return ApiResponseDto<List<DivisionGradeDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
                 }
             }
             catch (Exception)
@@ -50,11 +50,11 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                         Details = null
                     }
                 };
-                return ApiResponseDto<List<DivisionGradeMaintenanceDto>>.FailureResponse(apiErrorsDto, new ApiMetaDto());
+                return ApiResponseDto<List<DivisionGradeDto>>.FailureResponse(apiErrorsDto, new ApiMetaDto());
             }
         }
 
-        public async Task<ApiResponseDto<DivisionGradeMaintenanceDto>> GetByIdAsync(string divisionGradeCode)
+        public async Task<ApiResponseDto<DivisionGradeDto>> GetByIdAsync(string divisionGradeCode)
         {
             try
             {
@@ -63,12 +63,12 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
                 if (response.Success)
                 {
-                    return _mapper.Map<ApiResponseDto<DivisionGradeMaintenanceDto>>(response);
+                    return _mapper.Map<ApiResponseDto<DivisionGradeDto>>(response);
                 }
                 else
                 {
-                    var responseDto = _mapper.Map<ApiResponseDto<DivisionGradeMaintenanceDto>>(response);
-                    return ApiResponseDto<DivisionGradeMaintenanceDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+                    var responseDto = _mapper.Map<ApiResponseDto<DivisionGradeDto>>(response);
+                    return ApiResponseDto<DivisionGradeDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
                 }
             }
             catch (Exception)
@@ -82,11 +82,11 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                         Details = null
                     }
                 };
-                return ApiResponseDto<DivisionGradeMaintenanceDto>.FailureResponse(apiErrorsDto, new ApiMetaDto());
+                return ApiResponseDto<DivisionGradeDto>.FailureResponse(apiErrorsDto, new ApiMetaDto());
             }
         }
 
-        public async Task<ApiResponseDto<DivisionGradeMaintenanceDto>> CreateAsync(DivisionGradeMaintenanceDto dto)
+        public async Task<ApiResponseDto<DivisionGradeDto>> CreateAsync(DivisionGradeDto dto)
         {
             try
             {
@@ -95,12 +95,12 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
                 if (response.Success)
                 {
-                    return _mapper.Map<ApiResponseDto<DivisionGradeMaintenanceDto>>(response);
+                    return _mapper.Map<ApiResponseDto<DivisionGradeDto>>(response);
                 }
                 else
                 {
-                    var responseDto = _mapper.Map<ApiResponseDto<DivisionGradeMaintenanceDto>>(response);
-                    return ApiResponseDto<DivisionGradeMaintenanceDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+                    var responseDto = _mapper.Map<ApiResponseDto<DivisionGradeDto>>(response);
+                    return ApiResponseDto<DivisionGradeDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
                 }
             }
             catch (Exception)
@@ -114,11 +114,11 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                         Details = null
                     }
                 };
-                return ApiResponseDto<DivisionGradeMaintenanceDto>.FailureResponse(apiErrorsDto, new ApiMetaDto());
+                return ApiResponseDto<DivisionGradeDto>.FailureResponse(apiErrorsDto, new ApiMetaDto());
             }
         }
 
-        public async Task<ApiResponseDto<DivisionGradeMaintenanceDto>> UpdateAsync(string originalCode, DivisionGradeMaintenanceDto dto)
+        public async Task<ApiResponseDto<DivisionGradeDto>> UpdateAsync(string originalCode, DivisionGradeDto dto)
         {
             try
             {
@@ -128,12 +128,12 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
                 if (response.Success)
                 {
-                    return _mapper.Map<ApiResponseDto<DivisionGradeMaintenanceDto>>(response);
+                    return _mapper.Map<ApiResponseDto<DivisionGradeDto>>(response);
                 }
                 else
                 {
-                    var responseDto = _mapper.Map<ApiResponseDto<DivisionGradeMaintenanceDto>>(response);
-                    return ApiResponseDto<DivisionGradeMaintenanceDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+                    var responseDto = _mapper.Map<ApiResponseDto<DivisionGradeDto>>(response);
+                    return ApiResponseDto<DivisionGradeDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
                 }
             }
             catch (Exception)
@@ -147,7 +147,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                         Details = null
                     }
                 };
-                return ApiResponseDto<DivisionGradeMaintenanceDto>.FailureResponse(apiErrorsDto, new ApiMetaDto());
+                return ApiResponseDto<DivisionGradeDto>.FailureResponse(apiErrorsDto, new ApiMetaDto());
             }
         }
 

@@ -6,23 +6,23 @@ using Apha.FPSApps.Application.Services.FPS;
 using NSubstitute;
 using Xunit;
 
-namespace Apha.FPSApps.Application.UnitTests.Services.FPS.DivisionGradeMaintenanceServiceTest
+namespace Apha.FPSApps.Application.UnitTests.Services.FPS.DivisionGradeServiceTest
 {
-    public class DivisionGradeMaintenanceServiceTests
+    public class DivisionGradeServiceTests
     {
         private readonly IFpsApiClient _mockFpsClient;
-        private readonly IFpsDivisionGradeMaintenanceApiClient _mockApiClient;
-        private readonly DivisionGradeMaintenanceService _sut;
+        private readonly IFpsDivisionGradeApiClient _mockApiClient;
+        private readonly DivisionGradeService _sut;
 
-        public DivisionGradeMaintenanceServiceTests()
+        public DivisionGradeServiceTests()
         {
             _mockFpsClient = Substitute.For<IFpsApiClient>();
-            _mockApiClient = Substitute.For<IFpsDivisionGradeMaintenanceApiClient>();
+            _mockApiClient = Substitute.For<IFpsDivisionGradeApiClient>();
             _mockFpsClient.FpsMaintDG.Returns(_mockApiClient);
-            _sut = new DivisionGradeMaintenanceService(_mockFpsClient);
+            _sut = new DivisionGradeService(_mockFpsClient);
         }
 
-        private static DivisionGradeMaintenanceDto BuildDto(string code = "A-VSD") =>
+        private static DivisionGradeDto BuildDto(string code = "A-VSD") =>
             new() { DivisionGradeCode = code, GradeCode = "A", Division = "VSD", ChargeRate = 100m };
 
         #region GetAllPagedAsync Tests
@@ -32,9 +32,9 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.DivisionGradeMaintenan
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var dtos = new List<DivisionGradeMaintenanceDto> { BuildDto() };
+            var dtos = new List<DivisionGradeDto> { BuildDto() };
             var pagination = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1 };
-            var apiResponse = ApiResponseDto<List<DivisionGradeMaintenanceDto>>.SuccessResponse(dtos, pagination);
+            var apiResponse = ApiResponseDto<List<DivisionGradeDto>>.SuccessResponse(dtos, pagination);
 
             _mockApiClient.GetAllPagedAsync(query).Returns(apiResponse);
 
@@ -55,7 +55,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.DivisionGradeMaintenan
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var errors = new List<ApiErrorDto> { new() { Message = "Error", Code = "ERROR" } };
-            var apiResponse = ApiResponseDto<List<DivisionGradeMaintenanceDto>>.FailureResponse(errors, new ApiMetaDto());
+            var apiResponse = ApiResponseDto<List<DivisionGradeDto>>.FailureResponse(errors, new ApiMetaDto());
 
             _mockApiClient.GetAllPagedAsync(query).Returns(apiResponse);
 
@@ -77,7 +77,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.DivisionGradeMaintenan
                 Page = 2, PageSize = 5, SortBy = "DivisionGradeCode", Descending = true,
                 Filter = "{\"DivisionGradeCode\":\"A-VSD\"}"
             };
-            var apiResponse = ApiResponseDto<List<DivisionGradeMaintenanceDto>>.SuccessResponse([]);
+            var apiResponse = ApiResponseDto<List<DivisionGradeDto>>.SuccessResponse([]);
 
             _mockApiClient.GetAllPagedAsync(query).Returns(apiResponse);
 
@@ -100,7 +100,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.DivisionGradeMaintenan
         {
             // Arrange
             var dto = BuildDto("A-VSD");
-            var apiResponse = ApiResponseDto<DivisionGradeMaintenanceDto>.SuccessResponse(dto);
+            var apiResponse = ApiResponseDto<DivisionGradeDto>.SuccessResponse(dto);
 
             _mockApiClient.GetByIdAsync("A-VSD").Returns(apiResponse);
 
@@ -119,7 +119,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.DivisionGradeMaintenan
         {
             // Arrange
             var errors = new List<ApiErrorDto> { new() { Message = "Not found", Code = "NOT_FOUND" } };
-            var apiResponse = ApiResponseDto<DivisionGradeMaintenanceDto>.FailureResponse(errors, new ApiMetaDto());
+            var apiResponse = ApiResponseDto<DivisionGradeDto>.FailureResponse(errors, new ApiMetaDto());
 
             _mockApiClient.GetByIdAsync("NOTEXIST").Returns(apiResponse);
 
@@ -140,7 +140,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.DivisionGradeMaintenan
         {
             // Arrange
             var dto = BuildDto("A-VSD");
-            var apiResponse = ApiResponseDto<DivisionGradeMaintenanceDto>.SuccessResponse(dto);
+            var apiResponse = ApiResponseDto<DivisionGradeDto>.SuccessResponse(dto);
 
             _mockApiClient.CreateAsync(dto).Returns(apiResponse);
 
@@ -160,7 +160,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.DivisionGradeMaintenan
             // Arrange
             var dto = BuildDto();
             var errors = new List<ApiErrorDto> { new() { Message = "Already exists", Code = "CONFLICT" } };
-            var apiResponse = ApiResponseDto<DivisionGradeMaintenanceDto>.FailureResponse(errors, new ApiMetaDto());
+            var apiResponse = ApiResponseDto<DivisionGradeDto>.FailureResponse(errors, new ApiMetaDto());
 
             _mockApiClient.CreateAsync(dto).Returns(apiResponse);
 
@@ -181,7 +181,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.DivisionGradeMaintenan
         {
             // Arrange
             var dto = BuildDto("A-VSD");
-            var apiResponse = ApiResponseDto<DivisionGradeMaintenanceDto>.SuccessResponse(dto);
+            var apiResponse = ApiResponseDto<DivisionGradeDto>.SuccessResponse(dto);
 
             _mockApiClient.UpdateAsync("A-VSD", dto).Returns(apiResponse);
 
@@ -200,7 +200,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.DivisionGradeMaintenan
             // Arrange
             var dto = BuildDto();
             var errors = new List<ApiErrorDto> { new() { Message = "Update failed", Code = "UPDATE_ERROR" } };
-            var apiResponse = ApiResponseDto<DivisionGradeMaintenanceDto>.FailureResponse(errors, new ApiMetaDto());
+            var apiResponse = ApiResponseDto<DivisionGradeDto>.FailureResponse(errors, new ApiMetaDto());
 
             _mockApiClient.UpdateAsync("A-VSD", dto).Returns(apiResponse);
 

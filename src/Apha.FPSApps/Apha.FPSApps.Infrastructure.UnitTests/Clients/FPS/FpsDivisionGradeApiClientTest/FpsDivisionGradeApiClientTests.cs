@@ -11,25 +11,25 @@ using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Xunit;
 
-namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsDivisionGradeMaintenanceApiClientTest
+namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsDivisionGradeApiClientTest
 {
-    public class FpsDivisionGradeMaintenanceApiClientTests
+    public class FpsDivisionGradeApiClientTests
     {
         private readonly IFpsHttpExecutor _http;
         private readonly IMapper _mapper;
-        private readonly FpsDivisionGradeMaintenanceApiClient _client;
+        private readonly FpsDivisionGradeApiClient _client;
 
-        public FpsDivisionGradeMaintenanceApiClientTests()
+        public FpsDivisionGradeApiClientTests()
         {
             _http = Substitute.For<IFpsHttpExecutor>();
             _mapper = Substitute.For<IMapper>();
-            _client = new FpsDivisionGradeMaintenanceApiClient(_http, _mapper);
+            _client = new FpsDivisionGradeApiClient(_http, _mapper);
         }
 
         private static DivisionGradeRes BuildRes(string code = "A-VSD") =>
             new() { DivisionGradeCode = code, GradeCode = "A", Division = "VSD", ChargeRate = 100m };
 
-        private static DivisionGradeMaintenanceDto BuildDto(string code = "A-VSD") =>
+        private static DivisionGradeDto BuildDto(string code = "A-VSD") =>
             new() { DivisionGradeCode = code, GradeCode = "A", Division = "VSD", ChargeRate = 100m };
 
         private static ApiResponse<T> SuccessApiResponse<T>(T data) =>
@@ -48,14 +48,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsDivisionGradeMain
         public void Constructor_ThrowsArgumentNullException_WhenHttpIsNull()
         {
             Assert.Throws<ArgumentNullException>(() =>
-                new FpsDivisionGradeMaintenanceApiClient(null!, _mapper));
+                new FpsDivisionGradeApiClient(null!, _mapper));
         }
 
         [Fact]
         public void Constructor_ThrowsArgumentNullException_WhenMapperIsNull()
         {
             Assert.Throws<ArgumentNullException>(() =>
-                new FpsDivisionGradeMaintenanceApiClient(_http, null!));
+                new FpsDivisionGradeApiClient(_http, null!));
         }
 
         #endregion
@@ -69,13 +69,13 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsDivisionGradeMain
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var resList = new List<DivisionGradeRes> { BuildRes() };
             var apiResponse = SuccessApiResponse(resList);
-            var expected = ApiResponseDto<List<DivisionGradeMaintenanceDto>>.SuccessResponse(
-                new List<DivisionGradeMaintenanceDto> { BuildDto() },
+            var expected = ApiResponseDto<List<DivisionGradeDto>>.SuccessResponse(
+                new List<DivisionGradeDto> { BuildDto() },
                 new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1 });
 
-            _http.GetAsync<List<DivisionGradeRes>>(Arg.Is<string>(u => u.Contains("divisiongrademaintenance/paged")))
+            _http.GetAsync<List<DivisionGradeRes>>(Arg.Is<string>(u => u.Contains("DivisionGrade/paged")))
                 .Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<DivisionGradeMaintenanceDto>>>(apiResponse).Returns(expected);
+            _mapper.Map<ApiResponseDto<List<DivisionGradeDto>>>(apiResponse).Returns(expected);
 
             // Act
             var result = await _client.GetAllPagedAsync(query);
@@ -92,7 +92,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsDivisionGradeMain
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var apiResponse = FailureApiResponse<List<DivisionGradeRes>>();
-            var mappedResponse = new ApiResponseDto<List<DivisionGradeMaintenanceDto>>
+            var mappedResponse = new ApiResponseDto<List<DivisionGradeDto>>
             {
                 Success = false,
                 Errors = new List<ApiErrorDto> { new() { Message = "Error", Code = "ERROR" } },
@@ -100,7 +100,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsDivisionGradeMain
             };
 
             _http.GetAsync<List<DivisionGradeRes>>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<DivisionGradeMaintenanceDto>>>(apiResponse).Returns(mappedResponse);
+            _mapper.Map<ApiResponseDto<List<DivisionGradeDto>>>(apiResponse).Returns(mappedResponse);
 
             // Act
             var result = await _client.GetAllPagedAsync(query);
@@ -138,10 +138,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsDivisionGradeMain
             // Arrange
             var res = BuildRes("A-VSD");
             var apiResponse = SuccessApiResponse(res);
-            var expected = ApiResponseDto<DivisionGradeMaintenanceDto>.SuccessResponse(BuildDto("A-VSD"));
+            var expected = ApiResponseDto<DivisionGradeDto>.SuccessResponse(BuildDto("A-VSD"));
 
             _http.GetAsync<DivisionGradeRes>(Arg.Is<string>(u => u.Contains("A-VSD"))).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<DivisionGradeMaintenanceDto>>(apiResponse).Returns(expected);
+            _mapper.Map<ApiResponseDto<DivisionGradeDto>>(apiResponse).Returns(expected);
 
             // Act
             var result = await _client.GetByIdAsync("A-VSD");
@@ -157,7 +157,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsDivisionGradeMain
         {
             // Arrange
             var apiResponse = FailureApiResponse<DivisionGradeRes>();
-            var mappedResponse = new ApiResponseDto<DivisionGradeMaintenanceDto>
+            var mappedResponse = new ApiResponseDto<DivisionGradeDto>
             {
                 Success = false,
                 Errors = new List<ApiErrorDto> { new() { Message = "Not found", Code = "NOT_FOUND" } },
@@ -165,7 +165,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsDivisionGradeMain
             };
 
             _http.GetAsync<DivisionGradeRes>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<DivisionGradeMaintenanceDto>>(apiResponse).Returns(mappedResponse);
+            _mapper.Map<ApiResponseDto<DivisionGradeDto>>(apiResponse).Returns(mappedResponse);
 
             // Act
             var result = await _client.GetByIdAsync("NOTEXIST");
@@ -203,11 +203,11 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsDivisionGradeMain
             var req = new DivisionGradeReq { DivisionGradeCode = "A-VSD", GradeCode = "A", Division = "VSD" };
             var res = BuildRes("A-VSD");
             var apiResponse = SuccessApiResponse(res);
-            var expected = ApiResponseDto<DivisionGradeMaintenanceDto>.SuccessResponse(dto);
+            var expected = ApiResponseDto<DivisionGradeDto>.SuccessResponse(dto);
 
             _mapper.Map<DivisionGradeReq>(dto).Returns(req);
             _http.PostAsync<DivisionGradeReq, DivisionGradeRes>(Arg.Any<string>(), req).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<DivisionGradeMaintenanceDto>>(apiResponse).Returns(expected);
+            _mapper.Map<ApiResponseDto<DivisionGradeDto>>(apiResponse).Returns(expected);
 
             // Act
             var result = await _client.CreateAsync(dto);
@@ -224,7 +224,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsDivisionGradeMain
             var dto = BuildDto();
             var req = new DivisionGradeReq { DivisionGradeCode = "A-VSD" };
             var apiResponse = FailureApiResponse<DivisionGradeRes>();
-            var mappedResponse = new ApiResponseDto<DivisionGradeMaintenanceDto>
+            var mappedResponse = new ApiResponseDto<DivisionGradeDto>
             {
                 Success = false,
                 Errors = new List<ApiErrorDto> { new() { Message = "Failed", Code = "ERROR" } },
@@ -233,7 +233,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsDivisionGradeMain
 
             _mapper.Map<DivisionGradeReq>(dto).Returns(req);
             _http.PostAsync<DivisionGradeReq, DivisionGradeRes>(Arg.Any<string>(), req).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<DivisionGradeMaintenanceDto>>(apiResponse).Returns(mappedResponse);
+            _mapper.Map<ApiResponseDto<DivisionGradeDto>>(apiResponse).Returns(mappedResponse);
 
             // Act
             var result = await _client.CreateAsync(dto);
@@ -275,12 +275,12 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsDivisionGradeMain
             var req = new DivisionGradeReq { DivisionGradeCode = "A-VSD", GradeCode = "A", Division = "VSD" };
             var res = BuildRes("A-VSD");
             var apiResponse = SuccessApiResponse(res);
-            var expected = ApiResponseDto<DivisionGradeMaintenanceDto>.SuccessResponse(dto);
+            var expected = ApiResponseDto<DivisionGradeDto>.SuccessResponse(dto);
 
             _mapper.Map<DivisionGradeReq>(dto).Returns(req);
             _http.PutAsync<DivisionGradeReq, DivisionGradeRes>(Arg.Is<string>(u => u.Contains("A-VSD")), req)
                 .Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<DivisionGradeMaintenanceDto>>(apiResponse).Returns(expected);
+            _mapper.Map<ApiResponseDto<DivisionGradeDto>>(apiResponse).Returns(expected);
 
             // Act
             var result = await _client.UpdateAsync("A-VSD", dto);

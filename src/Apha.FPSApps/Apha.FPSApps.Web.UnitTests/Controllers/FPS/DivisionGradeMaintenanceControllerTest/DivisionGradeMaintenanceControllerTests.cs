@@ -12,24 +12,24 @@ using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using System.Text.Json;
 
-namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DivisionGradeMaintenanceControllerTest
+namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DivisionGradeControllerTest
 {
-    public class DivisionGradeMaintenanceControllerTests
+    public class DivisionGradeControllerTests
     {
         private readonly IMapper _mapper;
-        private readonly IDivisionGradeMaintenanceService _maintDGService;
+        private readonly IDivisionGradeService _maintDGService;
         private readonly IDivisionService _divisionService;
         private readonly IFpsYearContext _fpsYearContext;
-        private readonly DivisionGradeMaintenanceController _controller;
+        private readonly DivisionGradeController _controller;
 
-        public DivisionGradeMaintenanceControllerTests()
+        public DivisionGradeControllerTests()
         {
             _mapper = Substitute.For<IMapper>();
-            _maintDGService = Substitute.For<IDivisionGradeMaintenanceService>();
+            _maintDGService = Substitute.For<IDivisionGradeService>();
             _divisionService = Substitute.For<IDivisionService>();
             _fpsYearContext = Substitute.For<IFpsYearContext>();
             _fpsYearContext.Year.Returns(2025);
-            _controller = new DivisionGradeMaintenanceController(
+            _controller = new DivisionGradeController(
                 _mapper, _maintDGService, _divisionService, _fpsYearContext);
         }
 
@@ -40,12 +40,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DivisionGradeMaintenanceCon
             return JsonSerializer.Deserialize<T>(json);
         }
 
-        private static DivisionGradeMaintenanceDto BuildDto(string code = "A-VSD") =>
+        private static DivisionGradeDto BuildDto(string code = "A-VSD") =>
             new() { DivisionGradeCode = code, GradeCode = "A", Division = "VSD", ChargeRate = 100m };
 
-        private static ApiResponseDto<List<DivisionGradeMaintenanceDto>> BuildPagedResponse(
-            IEnumerable<DivisionGradeMaintenanceDto>? data = null) =>
-            ApiResponseDto<List<DivisionGradeMaintenanceDto>>.SuccessResponse(
+        private static ApiResponseDto<List<DivisionGradeDto>> BuildPagedResponse(
+            IEnumerable<DivisionGradeDto>? data = null) =>
+            ApiResponseDto<List<DivisionGradeDto>>.SuccessResponse(
                 data?.ToList() ?? [], new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1 });
 
         private void SetupGradeAndDivisionDropdowns()
@@ -63,28 +63,28 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DivisionGradeMaintenanceCon
         public void Constructor_ThrowsArgumentNullException_WhenMapperIsNull()
         {
             Assert.Throws<ArgumentNullException>(() =>
-                new DivisionGradeMaintenanceController(null!, _maintDGService, _divisionService, _fpsYearContext));
+                new DivisionGradeController(null!, _maintDGService, _divisionService, _fpsYearContext));
         }
 
         [Fact]
         public void Constructor_ThrowsArgumentNullException_WhenServiceIsNull()
         {
             Assert.Throws<ArgumentNullException>(() =>
-                new DivisionGradeMaintenanceController(_mapper, null!, _divisionService, _fpsYearContext));
+                new DivisionGradeController(_mapper, null!, _divisionService, _fpsYearContext));
         }
 
         [Fact]
         public void Constructor_ThrowsArgumentNullException_WhenDivisionServiceIsNull()
         {
             Assert.Throws<ArgumentNullException>(() =>
-                new DivisionGradeMaintenanceController(_mapper, _maintDGService, null!, _fpsYearContext));
+                new DivisionGradeController(_mapper, _maintDGService, null!, _fpsYearContext));
         }
 
         [Fact]
         public void Constructor_ThrowsArgumentNullException_WhenYearContextIsNull()
         {
             Assert.Throws<ArgumentNullException>(() =>
-                new DivisionGradeMaintenanceController(_mapper, _maintDGService, _divisionService, null!));
+                new DivisionGradeController(_mapper, _maintDGService, _divisionService, null!));
         }
 
         #endregion
@@ -92,18 +92,18 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DivisionGradeMaintenanceCon
         #region Index Tests
 
         [Fact]
-        public async Task Index_ReturnsViewResult_WithDivisionGradeMaintenanceViewModel()
+        public async Task Index_ReturnsViewResult_WithDivisionGradeViewModel()
         {
             // Arrange
-            var dtos = new List<DivisionGradeMaintenanceDto> { BuildDto() };
+            var dtos = new List<DivisionGradeDto> { BuildDto() };
             var pagedResponse = BuildPagedResponse(dtos);
             SetupGradeAndDivisionDropdowns();
 
             _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string>());
             _maintDGService.GetAllPagedAsync(Arg.Any<QueryParameters<string>>()).Returns(pagedResponse);
-            _mapper.Map<List<DivisionGradeMaintenanceItem>>(Arg.Any<List<DivisionGradeMaintenanceDto>>())
-                .Returns(new List<DivisionGradeMaintenanceItem> { new() { DivisionGradeCode = "A-VSD" } });
+            _mapper.Map<List<DivisionGradeItem>>(Arg.Any<List<DivisionGradeDto>>())
+                .Returns(new List<DivisionGradeItem> { new() { DivisionGradeCode = "A-VSD" } });
             _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(new PaginationModel());
 
             // Act
@@ -111,7 +111,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DivisionGradeMaintenanceCon
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<DivisionGradeMaintenanceViewModel>(viewResult.Model);
+            var model = Assert.IsType<DivisionGradeViewModel>(viewResult.Model);
             Assert.NotNull(model.DivisionGradeGrid);
             Assert.Equal("divisionGradeGrid", model.DivisionGradeGrid.GridId);
         }
@@ -130,8 +130,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DivisionGradeMaintenanceCon
             _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string>());
             _maintDGService.GetAllPagedAsync(Arg.Any<QueryParameters<string>>()).Returns(pagedResponse);
-            _mapper.Map<List<DivisionGradeMaintenanceItem>>(Arg.Any<List<DivisionGradeMaintenanceDto>>())
-                .Returns(new List<DivisionGradeMaintenanceItem> { new() { DivisionGradeCode = "A-VSD" } });
+            _mapper.Map<List<DivisionGradeItem>>(Arg.Any<List<DivisionGradeDto>>())
+                .Returns(new List<DivisionGradeItem> { new() { DivisionGradeCode = "A-VSD" } });
             _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(new PaginationModel());
 
             // Act
@@ -140,7 +140,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DivisionGradeMaintenanceCon
             // Assert
             var partialViewResult = Assert.IsType<PartialViewResult>(result);
             Assert.Equal("_DataGrid", partialViewResult.ViewName);
-            Assert.IsType<DataGridConfig<DivisionGradeMaintenanceItem>>(partialViewResult.Model);
+            Assert.IsType<DataGridConfig<DivisionGradeItem>>(partialViewResult.Model);
         }
 
         [Fact]
@@ -171,7 +171,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DivisionGradeMaintenanceCon
             _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string>());
             _maintDGService.GetAllPagedAsync(Arg.Any<QueryParameters<string>>()).Returns(pagedResponse);
-            _mapper.Map<List<DivisionGradeMaintenanceItem>>(Arg.Any<List<DivisionGradeMaintenanceDto>>())
+            _mapper.Map<List<DivisionGradeItem>>(Arg.Any<List<DivisionGradeDto>>())
                 .Returns([]);
             _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(new PaginationModel());
 
@@ -180,7 +180,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DivisionGradeMaintenanceCon
 
             // Assert
             var partialViewResult = Assert.IsType<PartialViewResult>(result);
-            var gridConfig = Assert.IsType<DataGridConfig<DivisionGradeMaintenanceItem>>(partialViewResult.Model);
+            var gridConfig = Assert.IsType<DataGridConfig<DivisionGradeItem>>(partialViewResult.Model);
             Assert.Empty(gridConfig.Data);
         }
 
@@ -199,8 +199,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DivisionGradeMaintenanceCon
 
             // Assert
             var partialViewResult = Assert.IsType<PartialViewResult>(result);
-            Assert.Equal("_AddEditDivisionGradeMaintenance", partialViewResult.ViewName);
-            Assert.IsType<DivisionGradeMaintenanceItem>(partialViewResult.Model);
+            Assert.Equal("_AddEditDivisionGrade", partialViewResult.ViewName);
+            Assert.IsType<DivisionGradeItem>(partialViewResult.Model);
         }
 
         #endregion
@@ -244,7 +244,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DivisionGradeMaintenanceCon
         {
             // Arrange
             var dto = BuildDto("A-VSD");
-            var apiResponse = ApiResponseDto<DivisionGradeMaintenanceDto>.SuccessResponse(dto);
+            var apiResponse = ApiResponseDto<DivisionGradeDto>.SuccessResponse(dto);
             _maintDGService.CreateAsync(dto).Returns(apiResponse);
 
             // Act
@@ -264,7 +264,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DivisionGradeMaintenanceCon
             // Arrange
             var dto = BuildDto();
             var errors = new List<ApiErrorDto> { new() { Message = "Creation failed", Code = "ERROR" } };
-            var apiResponse = ApiResponseDto<DivisionGradeMaintenanceDto>.FailureResponse(errors, new ApiMetaDto());
+            var apiResponse = ApiResponseDto<DivisionGradeDto>.FailureResponse(errors, new ApiMetaDto());
             _maintDGService.CreateAsync(dto).Returns(apiResponse);
 
             // Act
@@ -282,14 +282,14 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DivisionGradeMaintenanceCon
         public async Task Create_Post_NegativeRates_AreConvertedToPositive()
         {
             // Arrange
-            var dto = new DivisionGradeMaintenanceDto
+            var dto = new DivisionGradeDto
             {
                 DivisionGradeCode = "A-VSD", GradeCode = "A", Division = "VSD",
                 ChargeRate = -100m, DirectRate = -90m, PayRate = -80m, Npr = -10m, Ohr = -5m
             };
-            DivisionGradeMaintenanceDto? capturedDto = null;
-            var apiResponse = ApiResponseDto<DivisionGradeMaintenanceDto>.SuccessResponse(dto);
-            _maintDGService.CreateAsync(Arg.Do<DivisionGradeMaintenanceDto>(d => capturedDto = d))
+            DivisionGradeDto? capturedDto = null;
+            var apiResponse = ApiResponseDto<DivisionGradeDto>.SuccessResponse(dto);
+            _maintDGService.CreateAsync(Arg.Do<DivisionGradeDto>(d => capturedDto = d))
                 .Returns(apiResponse);
 
             // Act
@@ -340,11 +340,11 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DivisionGradeMaintenanceCon
         {
             // Arrange
             var dto = BuildDto("A-VSD");
-            var item = new DivisionGradeMaintenanceItem { DivisionGradeCode = "A-VSD" };
-            var apiResponse = ApiResponseDto<DivisionGradeMaintenanceDto>.SuccessResponse(dto);
+            var item = new DivisionGradeItem { DivisionGradeCode = "A-VSD" };
+            var apiResponse = ApiResponseDto<DivisionGradeDto>.SuccessResponse(dto);
 
             _maintDGService.GetByIdAsync("A-VSD").Returns(apiResponse);
-            _mapper.Map<DivisionGradeMaintenanceItem>(dto).Returns(item);
+            _mapper.Map<DivisionGradeItem>(dto).Returns(item);
             SetupGradeAndDivisionDropdowns();
 
             // Act
@@ -352,8 +352,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DivisionGradeMaintenanceCon
 
             // Assert
             var partialViewResult = Assert.IsType<PartialViewResult>(result);
-            Assert.Equal("_AddEditDivisionGradeMaintenance", partialViewResult.ViewName);
-            var model = Assert.IsType<DivisionGradeMaintenanceItem>(partialViewResult.Model);
+            Assert.Equal("_AddEditDivisionGrade", partialViewResult.ViewName);
+            var model = Assert.IsType<DivisionGradeItem>(partialViewResult.Model);
             Assert.Equal("A-VSD", model.DivisionGradeCode);
         }
 
@@ -362,7 +362,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DivisionGradeMaintenanceCon
         {
             // Arrange
             var errors = new List<ApiErrorDto> { new() { Message = "Not found", Code = "NOT_FOUND" } };
-            var apiResponse = ApiResponseDto<DivisionGradeMaintenanceDto>.FailureResponse(errors, new ApiMetaDto());
+            var apiResponse = ApiResponseDto<DivisionGradeDto>.FailureResponse(errors, new ApiMetaDto());
             _maintDGService.GetByIdAsync("NOTEXIST").Returns(apiResponse);
 
             // Act
@@ -416,7 +416,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DivisionGradeMaintenanceCon
         {
             // Arrange
             var dto = BuildDto("A-VSD");
-            var apiResponse = ApiResponseDto<DivisionGradeMaintenanceDto>.SuccessResponse(dto);
+            var apiResponse = ApiResponseDto<DivisionGradeDto>.SuccessResponse(dto);
             _maintDGService.UpdateAsync("A-VSD", dto).Returns(apiResponse);
 
             // Act
@@ -436,7 +436,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DivisionGradeMaintenanceCon
             // Arrange
             var dto = BuildDto();
             var errors = new List<ApiErrorDto> { new() { Message = "Update failed", Code = "ERROR" } };
-            var apiResponse = ApiResponseDto<DivisionGradeMaintenanceDto>.FailureResponse(errors, new ApiMetaDto());
+            var apiResponse = ApiResponseDto<DivisionGradeDto>.FailureResponse(errors, new ApiMetaDto());
             _maintDGService.UpdateAsync("A-VSD", dto).Returns(apiResponse);
 
             // Act
@@ -454,14 +454,14 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DivisionGradeMaintenanceCon
         public async Task Edit_Post_NegativeRates_AreConvertedToPositive()
         {
             // Arrange
-            var dto = new DivisionGradeMaintenanceDto
+            var dto = new DivisionGradeDto
             {
                 DivisionGradeCode = "A-VSD", GradeCode = "A", Division = "VSD",
                 ChargeRate = -100m, DirectRate = -90m, PayRate = -80m, Npr = -10m, Ohr = -5m
             };
-            DivisionGradeMaintenanceDto? capturedDto = null;
-            var apiResponse = ApiResponseDto<DivisionGradeMaintenanceDto>.SuccessResponse(dto);
-            _maintDGService.UpdateAsync(Arg.Any<string>(), Arg.Do<DivisionGradeMaintenanceDto>(d => capturedDto = d))
+            DivisionGradeDto? capturedDto = null;
+            var apiResponse = ApiResponseDto<DivisionGradeDto>.SuccessResponse(dto);
+            _maintDGService.UpdateAsync(Arg.Any<string>(), Arg.Do<DivisionGradeDto>(d => capturedDto = d))
                 .Returns(apiResponse);
 
             // Act
@@ -675,12 +675,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DivisionGradeMaintenanceCon
         public async Task Create_Post_WithNullRates_HandledGracefully()
         {
             // Arrange
-            var dto = new DivisionGradeMaintenanceDto
+            var dto = new DivisionGradeDto
             {
                 DivisionGradeCode = "A-VSD", GradeCode = "A", Division = "VSD",
                 ChargeRate = null, DirectRate = null, PayRate = null, Npr = null, Ohr = null
             };
-            var apiResponse = ApiResponseDto<DivisionGradeMaintenanceDto>.SuccessResponse(dto);
+            var apiResponse = ApiResponseDto<DivisionGradeDto>.SuccessResponse(dto);
             _maintDGService.CreateAsync(dto).Returns(apiResponse);
 
             // Act
@@ -703,7 +703,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DivisionGradeMaintenanceCon
             _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string>());
             _maintDGService.GetAllPagedAsync(Arg.Any<QueryParameters<string>>()).Returns(pagedResponse);
-            _mapper.Map<List<DivisionGradeMaintenanceItem>>(Arg.Any<List<DivisionGradeMaintenanceDto>>())
+            _mapper.Map<List<DivisionGradeItem>>(Arg.Any<List<DivisionGradeDto>>())
                 .Returns([]);
             _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(new PaginationModel());
 

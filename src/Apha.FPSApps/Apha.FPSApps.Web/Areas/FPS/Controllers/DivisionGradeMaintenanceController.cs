@@ -17,14 +17,14 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
     [Area("FPS")]
     [Authorize(Roles = "FPSAdmin,FPSUser")]
     [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")]
-    public class DivisionGradeMaintenanceController : Controller
+    public class DivisionGradeController : Controller
     {
         private readonly IMapper _mapper;
-        private readonly IDivisionGradeMaintenanceService _maintDGService;
+        private readonly IDivisionGradeService _maintDGService;
         private readonly IDivisionService _divisionService;
         private readonly IFpsYearContext _fpsYearContext;
 
-        public DivisionGradeMaintenanceController(IMapper mapper, IDivisionGradeMaintenanceService maintDGService, IDivisionService divisionService, IFpsYearContext fpsYearContext)
+        public DivisionGradeController(IMapper mapper, IDivisionGradeService maintDGService, IDivisionService divisionService, IFpsYearContext fpsYearContext)
         {
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _maintDGService = maintDGService ?? throw new ArgumentNullException(nameof(maintDGService));
@@ -34,7 +34,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         public async Task<IActionResult> Index(int? year)
         {
-            var viewModel = new DivisionGradeMaintenanceViewModel();
+            var viewModel = new DivisionGradeViewModel();
             viewModel.SelectedYear = year;
             await PopulateDropdownsAsync(viewModel);
 
@@ -61,7 +61,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return PartialView("_DataGrid", gridConfig);
         }
 
-        private async Task<DataGridConfig<DivisionGradeMaintenanceItem>> GetDivisionGradeGridConfigAsync(PaginationFilter<string> request)
+        private async Task<DataGridConfig<DivisionGradeItem>> GetDivisionGradeGridConfigAsync(PaginationFilter<string> request)
         {
             var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}")
                 ?? new Dictionary<string, string>();
@@ -69,10 +69,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var queryParameters = _mapper.Map<QueryParameters<string>>(request);
             var pagedData = await _maintDGService.GetAllPagedAsync(queryParameters);
 
-            var items = new List<DivisionGradeMaintenanceItem>();
+            var items = new List<DivisionGradeItem>();
             if (pagedData.Data != null)
             {
-                items = _mapper.Map<List<DivisionGradeMaintenanceItem>>(pagedData.Data);
+                items = _mapper.Map<List<DivisionGradeItem>>(pagedData.Data);
             }
 
             var paginationModel = pagedData.Pagination == null
@@ -81,7 +81,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             paginationModel.SortColumn = request.SortBy;
             paginationModel.SortDirection = request.Descending;
 
-            return new DataGridConfig<DivisionGradeMaintenanceItem>
+            return new DataGridConfig<DivisionGradeItem>
             {
                 GridId = "divisionGradeGrid",
                 Title = "Division Grade Maintenance",
@@ -94,9 +94,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 EditFunction = "editDivisionGrade",
                 AllowDelete = true,
                 DeleteFunction = "deleteDivisionGrade",
-                BindGridUrl = $"/FPS/DivisionGradeMaintenance/LoadDivisionGradeGrid?year={_fpsYearContext.Year}",
+                BindGridUrl = $"/FPS/DivisionGrade/LoadDivisionGradeGrid?year={_fpsYearContext.Year}",
                 Data = items,
-                Columns = GridDataProvider.GetColumnsDefination<DivisionGradeMaintenanceItem>(null),
+                Columns = GridDataProvider.GetColumnsDefination<DivisionGradeItem>(null),
                 Pagination = paginationModel,
                 CurrentFilters = filterDict
             };
@@ -105,13 +105,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         [HttpGet]
         public async Task<IActionResult> Create()
         {
-            var model = new DivisionGradeMaintenanceItem();
+            var model = new DivisionGradeItem();
             await PopulateModalDropdownsAsync();
-            return PartialView("_AddEditDivisionGradeMaintenance", model);
+            return PartialView("_AddEditDivisionGrade", model);
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] DivisionGradeMaintenanceDto dto)
+        public async Task<IActionResult> Create([FromBody] DivisionGradeDto dto)
         {
             if (dto is null)
             {
@@ -173,16 +173,16 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             if (result.Success && result.Data != null)
             {
-                var item = _mapper.Map<DivisionGradeMaintenanceItem>(result.Data);
+                var item = _mapper.Map<DivisionGradeItem>(result.Data);
                 await PopulateModalDropdownsAsync();
-                return PartialView("_AddEditDivisionGradeMaintenance", item);
+                return PartialView("_AddEditDivisionGrade", item);
             }
 
             return Json(new { success = false, message = $"Division grade '{id}' not found." });
         }
 
         [HttpPost]
-        public async Task<IActionResult> Edit(string id, [FromBody] DivisionGradeMaintenanceDto dto)
+        public async Task<IActionResult> Edit(string id, [FromBody] DivisionGradeDto dto)
         {
             if (dto is null)
             {
@@ -295,7 +295,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             }
         }
 
-        private async Task PopulateDropdownsAsync(DivisionGradeMaintenanceViewModel viewModel)
+        private async Task PopulateDropdownsAsync(DivisionGradeViewModel viewModel)
         {
             var gradesResult = await _maintDGService.GetAllGradeCodesAsync();
             if (gradesResult.Success && gradesResult.Data != null)

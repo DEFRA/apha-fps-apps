@@ -6,31 +6,31 @@ using Apha.FPSApps.Application.Pagination;
 
 namespace Apha.FPSApps.Application.Services.FPS
 {
-    public class DivisionGradeMaintenanceService : IDivisionGradeMaintenanceService
+    public class DivisionGradeService : IDivisionGradeService
     {
         private readonly IFpsApiClient _fpsClient;
 
-        public DivisionGradeMaintenanceService(IFpsApiClient fpsClient)
+        public DivisionGradeService(IFpsApiClient fpsClient)
         {
             _fpsClient = fpsClient ?? throw new ArgumentNullException(nameof(fpsClient));
         }
 
-        public async Task<ApiResponseDto<List<DivisionGradeMaintenanceDto>>> GetAllPagedAsync(QueryParameters<string> query)
+        public async Task<ApiResponseDto<List<DivisionGradeDto>>> GetAllPagedAsync(QueryParameters<string> query)
         {
             return await _fpsClient.FpsMaintDG.GetAllPagedAsync(query);
         }
 
-        public async Task<ApiResponseDto<DivisionGradeMaintenanceDto>> GetByIdAsync(string divisionGradeCode)
+        public async Task<ApiResponseDto<DivisionGradeDto>> GetByIdAsync(string divisionGradeCode)
         {
             return await _fpsClient.FpsMaintDG.GetByIdAsync(divisionGradeCode);
         }
 
-        public async Task<ApiResponseDto<DivisionGradeMaintenanceDto>> CreateAsync(DivisionGradeMaintenanceDto dto)
+        public async Task<ApiResponseDto<DivisionGradeDto>> CreateAsync(DivisionGradeDto dto)
         {
             return await _fpsClient.FpsMaintDG.CreateAsync(dto);
         }
 
-        public async Task<ApiResponseDto<DivisionGradeMaintenanceDto>> UpdateAsync(string originalCode, DivisionGradeMaintenanceDto dto)
+        public async Task<ApiResponseDto<DivisionGradeDto>> UpdateAsync(string originalCode, DivisionGradeDto dto)
         {
             return await _fpsClient.FpsMaintDG.UpdateAsync(originalCode, dto);
         }
