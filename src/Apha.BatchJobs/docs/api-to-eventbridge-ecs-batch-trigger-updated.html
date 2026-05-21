@@ -24,12 +24,62 @@
     a {
       color: #1d4ed8;
     }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 12px;
+      font-size: 14px;
+    }
+    th, td {
+      border: 1px solid #d1d5db;
+      padding: 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #f3f4f6;
+    }
   </style>
 </head>
 <body>
   <div class="card">
     <h1>Apha.BatchJobs Documentation</h1>
     <p>This page has moved to <a href="index.html">index.html</a>.</p>
+    <p><strong>Canonical naming:</strong> API payload fields use <code>jobExecutionId</code> and <code>requestedBy</code>; database columns use <code>jobexecutionid</code> and <code>requestedby</code>.</p>
+    <p><strong>Generation ownership:</strong> API (manual flow) or scheduler/triggering API (scheduled flow) must generate <code>jobExecutionId</code>. Worker uses it as correlation id and only generates a fallback GUID when missing/invalid.</p>
+    <p><strong>Canonical table design (summary):</strong></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Table</th>
+          <th>Purpose</th>
+          <th>Key columns</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>fps.job_master</code></td>
+          <td>Job definition catalog</td>
+          <td><code>jobid</code> (PK), <code>jobname</code></td>
+        </tr>
+        <tr>
+          <td><code>fps.job_status</code></td>
+          <td>Status catalog per job</td>
+          <td><code>statusid</code> (PK), <code>jobid</code> (FK), <code>status</code></td>
+        </tr>
+        <tr>
+          <td><code>fps.job_queue</code></td>
+          <td>One row per execution instance</td>
+          <td><code>jobqueueid</code> (internal PK), <code>jobexecutionid</code> (external UNIQUE), <code>requestedby</code>, <code>statusid</code></td>
+        </tr>
+        <tr>
+          <td><code>fps.job_queue_log</code></td>
+          <td>Execution transition audit trail</td>
+          <td><code>jobqueuelogid</code> (PK), <code>jobqueueid</code> (FK), <code>performedby</code></td>
+        </tr>
+      </tbody>
+    </table>
+    <p><strong>Last updated:</strong> May 2026 (canonical execution identity model).</p>
     <p>If you are not redirected automatically, use the link above.</p>
   </div>
 </body>

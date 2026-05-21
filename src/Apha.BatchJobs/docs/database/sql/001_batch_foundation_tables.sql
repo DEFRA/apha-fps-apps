@@ -35,9 +35,11 @@ CREATE TABLE IF NOT EXISTS fps.job_status (
 
 -- Queue table that represents one execution instance of a job.
 CREATE TABLE IF NOT EXISTS fps.job_queue (
-    jobqueueid UUID PRIMARY KEY,
+    jobqueueid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    jobexecutionid UUID NOT NULL,
     jobid INTEGER NOT NULL,
     statusid INTEGER NOT NULL,
+    requestedby VARCHAR(100) NOT NULL,
     startdatetime TIMESTAMPTZ NOT NULL,
     enddatetime TIMESTAMPTZ,
     errormessage VARCHAR(1000),
@@ -80,6 +82,12 @@ CREATE INDEX IF NOT EXISTS idx_job_queue_jobid_startdatetime
 
 CREATE INDEX IF NOT EXISTS idx_job_queue_statusid
     ON fps.job_queue (statusid);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_job_queue_jobexecutionid
+    ON fps.job_queue (jobexecutionid);
+
+CREATE INDEX IF NOT EXISTS idx_job_queue_requestedby
+    ON fps.job_queue (requestedby);
 
 CREATE INDEX IF NOT EXISTS idx_job_queue_log_jobqueueid_logtime
     ON fps.job_queue_log (jobqueueid, logtime DESC);

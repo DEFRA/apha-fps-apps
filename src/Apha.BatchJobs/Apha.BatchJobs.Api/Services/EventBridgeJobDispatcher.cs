@@ -34,17 +34,19 @@ public sealed class EventBridgeJobDispatcher : IJobDispatchService
         }
 
         var source = _configuration["EventBridge:Source"] ?? "apha.batchjobs.api";
-        var detailType = _configuration["EventBridge:DetailType"] ?? "BatchJobTriggerRequested";
+        var detailType = _configuration["EventBridge:DetailType"] ?? "BatchJob.TriggerRequested";
         var requestedBy = _configuration["EventBridge:RequestedBy"] ?? "api-local";
-        var jobQueueId = Guid.NewGuid();
+        var jobExecutionId = Guid.NewGuid().ToString("N");
+        var requestedAtUtc = DateTime.UtcNow;
 
         var detailPayload = new
         {
+            jobExecutionId,
             jobName,
-            runMode = "AdHoc",
-            jobQueueId = jobQueueId.ToString(),
+            runMode = "Manual",
+            requestedBy,
             userId = requestedBy,
-            requestedAtUtc = DateTime.UtcNow
+            requestedAtUtc
         };
 
         var request = new PutEventsRequest
@@ -77,12 +79,13 @@ public sealed class EventBridgeJobDispatcher : IJobDispatchService
         }
 
         _logger.LogInformation(
-            "Published EventBridge trigger | EventId={EventId} | JobName={JobName} | JobQueueId={JobQueueId} | EventBus={EventBus}",
+            "Published EventBridge trigger | EventId={EventId} | JobName={JobName} | JobExecutionId={JobExecutionId} | RequestedBy={RequestedBy} | EventBus={EventBus}",
             resultEntry.EventId,
             jobName,
-            jobQueueId,
+            jobExecutionId,
+            requestedBy,
             eventBusName);
 
-        return resultEntry.EventId ?? jobQueueId.ToString();
+        return jobExecutionId;
     }
 }

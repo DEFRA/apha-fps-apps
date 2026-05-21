@@ -228,13 +228,17 @@ public class BatchJobsDbContext : DbContext
             entity.ToTable("job_queue", schema: "fps");
             entity.HasKey(e => e.JobQueueId);
             entity.Property(e => e.JobQueueId).HasColumnName("jobqueueid").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.JobExecutionId).HasColumnName("jobexecutionid").IsRequired();
             entity.Property(e => e.JobId).HasColumnName("jobid").IsRequired();
             entity.Property(e => e.StatusId).HasColumnName("statusid").IsRequired();
+            entity.Property(e => e.RequestedBy).HasColumnName("requestedby").IsRequired().HasMaxLength(100);
             entity.Property(e => e.StartDateTime).HasColumnName("startdatetime").IsRequired();
             entity.Property(e => e.EndDateTime).HasColumnName("enddatetime");
             entity.Property(e => e.ErrorMessage).HasColumnName("errormessage").HasMaxLength(1000);
             entity.Property(e => e.CreatedAt).HasColumnName("created_at").IsRequired().HasDefaultValueSql("NOW()");
             entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").IsRequired().HasDefaultValueSql("NOW()");
+            entity.HasIndex(e => e.JobExecutionId).IsUnique().HasDatabaseName("uq_job_queue_jobexecutionid");
+            entity.HasIndex(e => e.RequestedBy).HasDatabaseName("idx_job_queue_requestedby");
             entity.HasOne<TblJobMaster>()
                   .WithMany()
                   .HasForeignKey(e => e.JobId)

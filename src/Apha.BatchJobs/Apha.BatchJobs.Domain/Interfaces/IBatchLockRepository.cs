@@ -11,7 +11,7 @@ public interface IBatchLockRepository
     /// Attempts to acquire a distributed lock for a job.
     /// </summary>
     /// <param name="jobName">The name of the job requiring a lock.</param>
-    /// <param name="jobQueueId">Unique UUID for the job queue entry (caller-injected).</param>
+    /// <param name="jobQueueId">Unique UUID for the job queue execution entry.</param>
     /// <param name="timeoutSeconds">Lock timeout duration.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>True if lock acquired; false if already locked by another process.</returns>

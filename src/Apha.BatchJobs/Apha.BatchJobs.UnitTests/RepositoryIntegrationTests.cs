@@ -87,6 +87,7 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
         {
             ExecutionId = 0,
             JobName = "IntegrationExecutionJob",
+            JobExecutionId = Guid.NewGuid(),
             JobQueueId = jobQueueId,
             UserId = "test-user",
             JobType = JobType.Unknown,
@@ -103,11 +104,11 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
         }
 
         var queueRows = await ScalarIntAsync(
-            "SELECT COUNT(*) FROM operational.job_queue WHERE jobqueueid = @jobQueueId",
+            "SELECT COUNT(*) FROM fps.job_queue WHERE jobqueueid = @jobQueueId",
             new NpgsqlParameter("jobQueueId", jobQueueId));
 
         var logRows = await ScalarIntAsync(
-            "SELECT COUNT(*) FROM operational.job_queue_log ql INNER JOIN operational.job_queue q ON q.jobqueueid = ql.jobqueueid WHERE q.jobqueueid = @jobQueueId",
+            "SELECT COUNT(*) FROM fps.job_queue_log ql INNER JOIN fps.job_queue q ON q.jobqueueid = ql.jobqueueid WHERE q.jobqueueid = @jobQueueId",
             new NpgsqlParameter("jobQueueId", jobQueueId));
 
         Assert.Equal(1, queueRows);
@@ -130,6 +131,7 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
             {
                 ExecutionId = 0,
                 JobName = "IntegrationUpdateJob",
+                JobExecutionId = Guid.NewGuid(),
                 JobQueueId = jobQueueId,
                 UserId = "test-user",
                 JobType = JobType.Unknown,
@@ -143,6 +145,7 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
             {
                 ExecutionId = 0,
                 JobName = "IntegrationUpdateJob",
+                JobExecutionId = Guid.NewGuid(),
                 JobQueueId = jobQueueId,
                 UserId = "test-user",
                 JobType = JobType.Unknown,
@@ -229,6 +232,7 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
             {
                 ExecutionId = 0,
                 JobName = "DegradationPartialFailJob",
+                JobExecutionId = Guid.NewGuid(),
                 JobQueueId = jobQueueId,
                 UserId = "test-user",
                 JobType = JobType.Unknown,
@@ -250,6 +254,7 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
             {
                 ExecutionId = 0,
                 JobName = "DegradationPartialFailJob",
+                JobExecutionId = Guid.NewGuid(),
                 JobQueueId = jobQueueId,
                 UserId = "test-user",
                 JobType = JobType.Unknown,
@@ -303,6 +308,7 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
             {
                 ExecutionId = 0,
                 JobName = "DegradationLockContentionJob",
+                JobExecutionId = Guid.NewGuid(),
                 JobQueueId = firstJobQueueId,
                 UserId = "test-user",
                 JobType = JobType.Unknown,
@@ -362,6 +368,7 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
             {
                 ExecutionId = 0,
                 JobName = "DegradationLogValidationJob",
+                JobExecutionId = Guid.NewGuid(),
                 JobQueueId = jobQueueId,
                 UserId = "test-user",
                 JobType = JobType.Unknown,
@@ -377,6 +384,7 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
             {
                 ExecutionId = 0,
                 JobName = "DegradationLogValidationJob",
+                JobExecutionId = Guid.NewGuid(),
                 JobQueueId = jobQueueId,
                 UserId = "test-user",
                 JobType = JobType.Unknown,
@@ -469,8 +477,10 @@ CREATE TABLE IF NOT EXISTS fps.job_status (
 
 CREATE TABLE IF NOT EXISTS fps.job_queue (
     jobqueueid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    jobexecutionid UUID NOT NULL,
     jobid INTEGER NOT NULL,
     statusid INTEGER NOT NULL,
+    requestedby VARCHAR(100) NOT NULL,
     startdatetime TIMESTAMPTZ NOT NULL,
     enddatetime TIMESTAMPTZ,
     errormessage VARCHAR(1000),
@@ -488,6 +498,9 @@ CREATE TABLE IF NOT EXISTS fps.job_queue (
         enddatetime IS NULL OR enddatetime >= startdatetime
     )
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_job_queue_jobexecutionid ON fps.job_queue (jobexecutionid);
+CREATE INDEX IF NOT EXISTS idx_job_queue_requestedby ON fps.job_queue (requestedby);
 
 CREATE TABLE IF NOT EXISTS fps.job_queue_log (
     jobqueuelogid INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,

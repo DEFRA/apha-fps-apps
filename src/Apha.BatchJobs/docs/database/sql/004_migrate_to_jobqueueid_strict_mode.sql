@@ -1,13 +1,13 @@
--- Migration: Transition from internally-generated RunId to caller-injected JobQueueId (strict mode)
+-- Migration: Canonical execution identity model for polling and auditability
 -- 
 -- Changes:
 -- 1. Update job_lock table schema: replace run_id (varchar) with jobqueueid (UUID)
--- 2. Enforce strict mode: caller must always provide JobQueueId
--- 3. Remove DEFAULT gen_random_uuid() from job_queue table (enforce explicit caller injection)
+-- 2. Add external execution identity and requester metadata on job_queue
+-- 3. Ensure worker-owned jobqueueid has DEFAULT gen_random_uuid()
 --
 -- Backward compatibility: 
 -- - Existing locks in job_lock will be cleared during deployment (assumed not critical for migrations)
--- - Future inserts MUST provide explicit jobqueueid; application fails fast if missing
+-- - Existing queue rows are backfilled with generated jobexecutionid and requestedby='system'
 
 BEGIN;
 
@@ -28,14 +28,33 @@ CREATE UNIQUE INDEX uq_job_lock_job_name_active
     ON fps.job_lock (job_name)
     WHERE is_active = TRUE;
 
--- Step 5: Ensure job_queue.jobqueueid has no DEFAULT (caller must inject)
--- Note: This requires manual DDL review in production; EF Core handles application-layer enforcement
+-- Step 5: Add canonical external execution columns and backfill existing rows.
 ALTER TABLE fps.job_queue
-    ALTER COLUMN jobqueueid DROP DEFAULT IF EXISTS;
+    ADD COLUMN IF NOT EXISTS jobexecutionid UUID,
+    ADD COLUMN IF NOT EXISTS requestedby VARCHAR(100);
+
+UPDATE fps.job_queue
+SET
+    jobexecutionid = COALESCE(jobexecutionid, gen_random_uuid()),
+    requestedby = COALESCE(NULLIF(requestedby, ''), 'system')
+WHERE jobexecutionid IS NULL
+   OR requestedby IS NULL
+   OR requestedby = '';
+
+ALTER TABLE fps.job_queue
+    ALTER COLUMN jobexecutionid SET NOT NULL,
+    ALTER COLUMN requestedby SET NOT NULL,
+    ALTER COLUMN jobqueueid SET DEFAULT gen_random_uuid();
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_job_queue_jobexecutionid
+    ON fps.job_queue (jobexecutionid);
+
+CREATE INDEX IF NOT EXISTS idx_job_queue_requestedby
+    ON fps.job_queue (requestedby);
 
 COMMIT;
 
 -- Verification queries (run after migration to confirm):
 -- SELECT COUNT(*) FROM fps.job_lock;                                 -- Should be 0 after cleanup
 -- SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'job_lock' AND table_schema = 'fps' ORDER BY ordinal_position;
--- SELECT column_name, column_default FROM information_schema.columns WHERE table_name = 'job_queue' AND table_schema = 'fps' AND column_name = 'jobqueueid';
+-- SELECT column_name, column_default FROM information_schema.columns WHERE table_name = 'job_queue' AND table_schema = 'fps' AND column_name IN ('jobqueueid', 'jobexecutionid', 'requestedby');

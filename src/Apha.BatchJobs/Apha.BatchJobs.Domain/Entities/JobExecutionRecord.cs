@@ -18,7 +18,12 @@ public sealed class JobExecutionRecord
     public required string JobName { get; set; }
 
     /// <summary>
-    /// Unique UUID for this job queue entry (caller-injected, strict mode).
+    /// External UUID supplied by caller/API for status polling and correlation.
+    /// </summary>
+    public required Guid JobExecutionId { get; set; }
+
+    /// <summary>
+    /// Internal UUID for this worker-owned job queue entry.
     /// </summary>
     public required Guid JobQueueId { get; set; }
 

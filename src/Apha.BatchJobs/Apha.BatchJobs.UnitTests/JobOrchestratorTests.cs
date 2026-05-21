@@ -61,8 +61,9 @@ public sealed class JobOrchestratorTests
                  .Returns(Task.CompletedTask);
 
         // Act
+        var jobExecutionId = Guid.NewGuid();
         var jobQueueId = Guid.NewGuid();
-        var result = await _orchestrator.RunAsync("TestJob", RunMode.Manual, jobQueueId, "test-user");
+        var result = await _orchestrator.RunAsync("TestJob", RunMode.Manual, jobExecutionId, jobQueueId, "test-user");
 
         // Assert — job was called
         await job.Received(1).ExecuteAsync(Arg.Any<CancellationToken>());
@@ -97,8 +98,9 @@ public sealed class JobOrchestratorTests
                  .Returns(false);
 
         // Act
+        var jobExecutionId = Guid.NewGuid();
         var jobQueueId = Guid.NewGuid();
-        var result = await _orchestrator.RunAsync("TestJob", RunMode.Scheduled, jobQueueId, "test-user");
+        var result = await _orchestrator.RunAsync("TestJob", RunMode.Scheduled, jobExecutionId, jobQueueId, "test-user");
 
         // Assert — job factory was never called
         _factory.DidNotReceive().Create(Arg.Any<string>());
@@ -138,9 +140,10 @@ public sealed class JobOrchestratorTests
                  .Returns(Task.CompletedTask);
 
         // Act — orchestrator should re-throw
+        var jobExecutionId = Guid.NewGuid();
         var jobQueueId = Guid.NewGuid();
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _orchestrator.RunAsync("FailingJob", RunMode.Scheduled, jobQueueId, "test-user"));
+            () => _orchestrator.RunAsync("FailingJob", RunMode.Scheduled, jobExecutionId, jobQueueId, "test-user"));
 
         // Assert — failure record written
         Assert.Single(capturedUpdateStatus);
@@ -178,9 +181,10 @@ public sealed class JobOrchestratorTests
                  .Returns(Task.CompletedTask);
 
         // Act — should re-throw as OperationCanceledException
+        var jobExecutionId = Guid.NewGuid();
         var jobQueueId = Guid.NewGuid();
         await Assert.ThrowsAsync<OperationCanceledException>(
-            () => _orchestrator.RunAsync("CancellableJob", RunMode.Manual, jobQueueId, "test-user"));
+            () => _orchestrator.RunAsync("CancellableJob", RunMode.Manual, jobExecutionId, jobQueueId, "test-user"));
 
         // Assert — cancelled record written
         Assert.Single(capturedUpdateStatus);
@@ -208,10 +212,12 @@ public sealed class JobOrchestratorTests
                  .Returns(1);
 
         // Act — caller provides distinct UUIDs for each execution
+        var jobExecutionId1 = Guid.NewGuid();
+        var jobExecutionId2 = Guid.NewGuid();
         var jobQueueId1 = Guid.NewGuid();
         var jobQueueId2 = Guid.NewGuid();
-        var result1 = await _orchestrator.RunAsync("IdJob", RunMode.Manual, jobQueueId1, "test-user");
-        var result2 = await _orchestrator.RunAsync("IdJob", RunMode.Manual, jobQueueId2, "test-user");
+        var result1 = await _orchestrator.RunAsync("IdJob", RunMode.Manual, jobExecutionId1, jobQueueId1, "test-user");
+        var result2 = await _orchestrator.RunAsync("IdJob", RunMode.Manual, jobExecutionId2, jobQueueId2, "test-user");
 
         // Assert — each run returns the caller-provided jobQueueId
         Assert.Equal(jobQueueId1, result1.JobQueueId);
@@ -249,8 +255,9 @@ public sealed class JobOrchestratorTests
             .Returns(Task.CompletedTask);
 
         // Act
+        var jobExecutionId = Guid.NewGuid();
         var jobQueueId = Guid.NewGuid();
-        var result = await _orchestrator.RunAsync("ConsistentJob", RunMode.Scheduled, jobQueueId, "test-user");
+        var result = await _orchestrator.RunAsync("ConsistentJob", RunMode.Scheduled, jobExecutionId, jobQueueId, "test-user");
 
         // Assert — JobQueueId correlation is preserved across lock acquire, execution record, lock release, and final result.
         Assert.NotNull(capturedLockJobQueueId);
@@ -283,8 +290,8 @@ public sealed class JobOrchestratorTests
                  .Returns(Task.CompletedTask);
 
         // Act — simulate two concurrent runs
-        var task1 = _orchestrator.RunAsync("ConcurrentJob", RunMode.Scheduled, Guid.NewGuid(), "test-user");
-        var task2 = _orchestrator.RunAsync("ConcurrentJob", RunMode.Scheduled, Guid.NewGuid(), "test-user");
+        var task1 = _orchestrator.RunAsync("ConcurrentJob", RunMode.Scheduled, Guid.NewGuid(), Guid.NewGuid(), "test-user");
+        var task2 = _orchestrator.RunAsync("ConcurrentJob", RunMode.Scheduled, Guid.NewGuid(), Guid.NewGuid(), "test-user");
         var results = await Task.WhenAll(task1, task2);
 
         // Assert — exactly one completed, one skipped
@@ -329,7 +336,7 @@ public sealed class JobOrchestratorTests
             .Returns(Task.CompletedTask);
 
         // Act
-        var result = await orchestrator.RunAsync("RetrySuccessJob", RunMode.Manual, Guid.NewGuid(), "test-user");
+        var result = await orchestrator.RunAsync("RetrySuccessJob", RunMode.Manual, Guid.NewGuid(), Guid.NewGuid(), "test-user");
 
         // Assert
         Assert.Equal(JobStatus.Completed, result.Status);
@@ -370,7 +377,7 @@ public sealed class JobOrchestratorTests
 
         // Act
         await Assert.ThrowsAsync<TimeoutException>(
-            () => orchestrator.RunAsync("RetryFailJob", RunMode.Scheduled, Guid.NewGuid(), "test-user"));
+            () => orchestrator.RunAsync("RetryFailJob", RunMode.Scheduled, Guid.NewGuid(), Guid.NewGuid(), "test-user"));
 
         // Assert (first attempt + 2 retries)
         await job.Received(3).ExecuteAsync(Arg.Any<CancellationToken>());
@@ -416,7 +423,7 @@ public sealed class JobOrchestratorTests
 
         // Act
         await Assert.ThrowsAsync(exceptionType,
-            () => orchestrator.RunAsync("NonRetryableJob", RunMode.Manual, Guid.NewGuid(), "test-user"));
+            () => orchestrator.RunAsync("NonRetryableJob", RunMode.Manual, Guid.NewGuid(), Guid.NewGuid(), "test-user"));
 
         // Assert — only one attempt, no retries
         await job.Received(1).ExecuteAsync(Arg.Any<CancellationToken>());
@@ -459,7 +466,7 @@ public sealed class JobOrchestratorTests
             .Returns(Task.CompletedTask);
 
         // Act
-        await orchestrator.RunAsync("TimeoutJob", RunMode.Scheduled, Guid.NewGuid(), "test-user");
+        await orchestrator.RunAsync("TimeoutJob", RunMode.Scheduled, Guid.NewGuid(), Guid.NewGuid(), "test-user");
 
         // Assert
         await _lockRepo.Received(1).TryAcquireLockAsync(

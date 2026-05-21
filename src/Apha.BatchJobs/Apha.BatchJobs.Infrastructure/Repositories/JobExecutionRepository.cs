@@ -16,7 +16,6 @@ public class JobExecutionRepository : IJobExecutionRepository
     private readonly BatchJobsDbContext _context;
     private readonly ILogger<JobExecutionRepository> _logger;
     private const int DefaultTimeToLiveSeconds = 3600;
-    private const string SystemActor = "BatchWorker";
 
     /// <summary>
     /// Initializes a new instance of the JobExecutionRepository.
@@ -37,8 +36,9 @@ public class JobExecutionRepository : IJobExecutionRepository
 
         var now = DateTime.UtcNow;
         _logger.LogInformation(
-            "Create execution record requested | JobName={JobName} | JobQueueId={JobQueueId} | UserId={UserId} | Status={Status}",
+            "Create execution record requested | JobName={JobName} | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | UserId={UserId} | Status={Status}",
             record.JobName,
+            record.JobExecutionId,
             record.JobQueueId,
             record.UserId,
             record.Status);
@@ -49,8 +49,10 @@ public class JobExecutionRepository : IJobExecutionRepository
         var queueRow = new TblJobQueue
         {
             JobQueueId = record.JobQueueId,
+            JobExecutionId = record.JobExecutionId,
             JobId = jobId,
             StatusId = statusId,
+            RequestedBy = record.UserId,
             StartDateTime = record.StartedAt,
             EndDateTime = null,
             ErrorMessage = null,
@@ -71,8 +73,9 @@ public class JobExecutionRepository : IJobExecutionRepository
         await _context.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation(
-            "Execution record created | JobName={JobName} | JobQueueId={JobQueueId} | UserId={UserId} | Status={Status}",
+            "Execution record created | JobName={JobName} | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | UserId={UserId} | Status={Status}",
             record.JobName,
+            record.JobExecutionId,
             record.JobQueueId,
             record.UserId,
             record.Status);
@@ -91,8 +94,9 @@ public class JobExecutionRepository : IJobExecutionRepository
         // The worker uses a shared DbContext across repositories. Do not clear ChangeTracker here to avoid nested transaction errors.
 
         _logger.LogInformation(
-            "Update execution record requested | JobName={JobName} | JobQueueId={JobQueueId} | UserId={UserId} | Status={Status}",
+            "Update execution record requested | JobName={JobName} | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | UserId={UserId} | Status={Status}",
             record.JobName,
+            record.JobExecutionId,
             record.JobQueueId,
             record.UserId,
             record.Status);
@@ -103,8 +107,9 @@ public class JobExecutionRepository : IJobExecutionRepository
         if (queueRow == null)
         {
             _logger.LogInformation(
-                "Execution record not found for update | JobName={JobName} | JobQueueId={JobQueueId} | UserId={UserId}",
+                "Execution record not found for update | JobName={JobName} | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | UserId={UserId}",
                 record.JobName,
+                record.JobExecutionId,
                 record.JobQueueId,
                 record.UserId);
             return;
@@ -114,6 +119,7 @@ public class JobExecutionRepository : IJobExecutionRepository
         var statusId = await EnsureStatusAsync(queueRow.JobId, record.Status.ToString(), cancellationToken);
 
         queueRow.StatusId = statusId;
+        queueRow.RequestedBy = record.UserId;
         queueRow.EndDateTime = record.CompletedAt;
         queueRow.ErrorMessage = record.ErrorMessage;
         queueRow.UpdatedAt = now;
@@ -129,8 +135,9 @@ public class JobExecutionRepository : IJobExecutionRepository
 
         await _context.SaveChangesAsync(cancellationToken);
         _logger.LogInformation(
-            "Execution record updated | JobName={JobName} | JobQueueId={JobQueueId} | UserId={UserId} | Status={Status}",
+            "Execution record updated | JobName={JobName} | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | UserId={UserId} | Status={Status}",
             record.JobName,
+            record.JobExecutionId,
             record.JobQueueId,
             record.UserId,
             record.Status);
@@ -151,7 +158,9 @@ public class JobExecutionRepository : IJobExecutionRepository
             select new
             {
                 m.JobName,
+                q.JobExecutionId,
                 q.JobQueueId,
+                q.RequestedBy,
                 q.StartDateTime,
                 q.EndDateTime,
                 s.Status,
@@ -170,8 +179,9 @@ public class JobExecutionRepository : IJobExecutionRepository
         {
             ExecutionId = 0,
             JobName = last.JobName,
+            JobExecutionId = last.JobExecutionId,
             JobQueueId = last.JobQueueId,
-            UserId = SystemActor,
+            UserId = last.RequestedBy,
             JobType = JobType.Unknown,
             RunMode = RunMode.Manual,
             Status = parsedStatus,

@@ -31,8 +31,10 @@ internal sealed class TblJobStatus
 internal sealed class TblJobQueue
 {
     public Guid JobQueueId { get; set; }
+    public Guid JobExecutionId { get; set; }
     public int JobId { get; set; }
     public int StatusId { get; set; }
+    public required string RequestedBy { get; set; }
     public DateTime StartDateTime { get; set; }
     public DateTime? EndDateTime { get; set; }
     public string? ErrorMessage { get; set; }

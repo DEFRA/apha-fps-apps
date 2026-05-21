@@ -63,6 +63,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
     public async Task<JobExecutionResult> RunAsync(
         string jobName,
         RunMode runMode,
+        Guid jobExecutionId,
         Guid jobQueueId,
         string userId,
         CancellationToken cancellationToken = default)
@@ -70,14 +71,15 @@ public sealed class JobOrchestrator : IJobOrchestrator
         var startedAt = DateTime.UtcNow;
         using var runScope = _logger.BeginScope(new Dictionary<string, object>
         {
+            ["JobExecutionId"] = jobExecutionId,
             ["JobQueueId"] = jobQueueId,
             ["JobName"] = jobName,
             ["RunMode"] = runMode.ToString(),
             ["UserId"] = userId
         });
 
-        _logger.LogInformation("--- Orchestrator: Starting '{JobName}' | JobQueueId={JobQueueId} | Mode={RunMode} | UserId={UserId}",
-            jobName, jobQueueId, runMode, userId);
+        _logger.LogInformation("--- Orchestrator: Starting '{JobName}' | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | Mode={RunMode} | UserId={UserId}",
+            jobName, jobExecutionId, jobQueueId, runMode, userId);
 
         // Step 1 — Acquire distributed lock
         _logger.LogInformation("Acquiring execution lock for '{JobName}'...", jobName);
@@ -99,6 +101,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
         {
             ExecutionId = 0,   // DB assigns real ID on insert
             JobName = jobName,
+            JobExecutionId = jobExecutionId,
             JobQueueId = jobQueueId,
             UserId = userId,
             JobType = JobType.Unknown,

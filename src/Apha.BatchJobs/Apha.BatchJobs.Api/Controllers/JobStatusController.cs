@@ -145,12 +145,12 @@ public sealed class JobStatusController : ControllerBase
             });
         }
 
-        var dispatchId = await _jobDispatchService.RunBatchJobAsync(jobName, cancellationToken);
+        var jobExecutionId = await _jobDispatchService.RunBatchJobAsync(jobName, cancellationToken);
 
         return Accepted(new
         {
             jobName,
-            dispatchId,
+            jobExecutionId,
             transport = "EventBridge",
             acceptedAt = DateTime.UtcNow
         });
