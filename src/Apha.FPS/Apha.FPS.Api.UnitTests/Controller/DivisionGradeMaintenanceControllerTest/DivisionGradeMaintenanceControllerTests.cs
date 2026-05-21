@@ -250,7 +250,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.DivisionGradeMaintenanceControllerTe
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            Assert.Equal(true, okResult.Value);
+            Assert.True((bool)okResult.Value!);
             await _serviceMock.Received(1).DeleteAsync("A-VSD");
         }
 
@@ -308,6 +308,65 @@ namespace Apha.FPS.Api.UnitTests.Controller.DivisionGradeMaintenanceControllerTe
             var okResult = Assert.IsType<OkObjectResult>(result.Result);
             var data = Assert.IsType<List<string>>(okResult.Value);
             Assert.Empty(data);
+        }
+
+        [Fact]
+        public async Task GetAllGradeCodesAsync_WhenServiceThrows_PropagatesException()
+        {
+            // Arrange
+            _serviceMock.GetAllGradeCodesAsync().ThrowsAsync(new InvalidOperationException("error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.GetAllGradeCodesAsync());
+        }
+
+        #endregion
+
+        #region Additional Edge Case Tests
+
+        [Fact]
+        public async Task GetAllPagedAsync_WhenServiceThrows_PropagatesException()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            _serviceMock.GetAllPagedAsync(query).ThrowsAsync(new InvalidOperationException("service error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.GetAllPagedAsync(query));
+        }
+
+        [Fact]
+        public async Task GetByIdAsync_WhenServiceThrows_PropagatesException()
+        {
+            // Arrange
+            _serviceMock.GetByIdAsync("A-VSD").ThrowsAsync(new InvalidOperationException("service error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.GetByIdAsync("A-VSD"));
+        }
+
+        [Fact]
+        public async Task UpdateAsync_WhenServiceThrowsOnUpdate_PropagatesException()
+        {
+            // Arrange
+            var req = BuildReq("B-VSD");
+            var dto = BuildDto("B-VSD");
+
+            _mapperMock.Map<DivisionGradeMaintenanceDto>(req).Returns(dto);
+            _serviceMock.UpdateAsync("A-VSD", dto).ThrowsAsync(new InvalidOperationException("not found"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.UpdateAsync("A-VSD", req));
+        }
+
+        [Fact]
+        public async Task DeleteAsync_WhenServiceThrows_PropagatesException()
+        {
+            // Arrange
+            _serviceMock.DeleteAsync("A-VSD").ThrowsAsync(new InvalidOperationException("service error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.DeleteAsync("A-VSD"));
         }
 
         #endregion
