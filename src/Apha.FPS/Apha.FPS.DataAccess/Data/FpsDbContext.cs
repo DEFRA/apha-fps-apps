@@ -25,7 +25,7 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<FpsSetting> TblSettings { get; set; }
         public virtual DbSet<Workgroup> Workgroups { get; set; }
         public virtual DbSet<WorkgroupGrade> WorkgroupGrades { get; set; }
-        public virtual DbSet<ProfitCentreGrade> ProfitcentreGrades { get; set; }
+        public virtual DbSet<ProfitCentreGrade> ProfitCentreGrades { get; set; }
         public virtual DbSet<DivisionGrade> DivisionGrades { get; set; }
         public virtual DbSet<Grade> Grades { get; set; }
         public virtual DbSet<UserProfitcentre> UserProfitcentres { get; set; }
