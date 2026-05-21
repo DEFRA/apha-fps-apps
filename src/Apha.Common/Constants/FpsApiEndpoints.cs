@@ -108,5 +108,8 @@ namespace Apha.Common.Constants
         public const string GetMonthlyOutputByProject = "api/v1/MonthlyOutput?projectCode={0}";
         public const string GetMonthlyOutputTotalsByProject = "api/v1/MonthlyOutput/totals?projectCode={0}";
         public const string DeleteMonthlyOutput = "api/v1/MonthlyOutput";
+
+        // Project profitability (merged into project route)
+        public const string GetProjectProfitability = "api/v1/project/profitability/{0}";
     }
 }

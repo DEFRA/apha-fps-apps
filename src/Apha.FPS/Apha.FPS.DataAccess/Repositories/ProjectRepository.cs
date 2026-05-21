@@ -330,6 +330,26 @@ namespace Apha.FPS.DataAccess.Repositories
             return query;
         }
 
+        private static IQueryable<Project> ApplyProfitabilityFilter(IQueryable<Project> query, string? filter)
+        {
+            if (string.IsNullOrEmpty(filter))
+                return query;
+
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            if (filterModel == null)
+                return query;
+
+            var dict = (IDictionary<string, object>)filterModel;
+
+            if (dict.TryGetValue("JobCode", out var jobCode) && jobCode != null)
+                query = query.Where(x => EF.Functions.ILike(x.ParentProject, $"%{jobCode}%"));
+
+            if (dict.TryGetValue("ProjectStatus", out var projectStatus) && projectStatus != null)
+                query = query.Where(x => EF.Functions.ILike(x.ProjectStatus!, $"%{projectStatus}%"));
+
+            return query;
+        }
+
         private static IQueryable ApplySorting(IQueryable<Project> query, string? sortBy, bool descending)
         {
             if (string.IsNullOrEmpty(sortBy))
@@ -346,6 +366,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 "parentproject" => ApplyOrder(query, p => p.ParentProject, descending),
                 "projecttitle" => ApplyOrder(query, p => p.ProjectTitle, descending),
                 "program" => ApplyOrder(query, p => p.Program, descending),
+                "manager" => ApplyOrder(query, p => p.Manager, descending),
                 "budgetcvl" => ApplyOrder(query, p => p.BudgetCvl, descending),
                 _ => query.OrderBy(p => p.ParentProject)
             };
@@ -484,42 +505,42 @@ namespace Apha.FPS.DataAccess.Repositories
 
                     var newProject = new Project
                     {
-                        ParentProject     = newCode,
-                        ProjectTitle      = oldProject.ProjectTitle,
-                        Program           = oldProject.Program,
-                        Customer          = oldProject.Customer,
-                        Manager           = oldProject.Manager,
-                        TransferIncome    = oldProject.TransferIncome,
-                        CustIncome        = oldProject.CustIncome,
-                        WipEoy            = oldProject.WipEoy,
-                        WipLimit          = oldProject.WipLimit,
-                        WipCurrent        = oldProject.WipCurrent,
-                        ProjectStatus     = oldProject.ProjectStatus,
-                        CostBookNo        = oldProject.CostBookNo,
-                        FecCost           = oldProject.FecCost,
-                        Profit            = oldProject.Profit,
-                        BudgetCvl         = oldProject.BudgetCvl,
-                        DateCreated       = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
-                        DateCosted        = oldProject.DateCosted,
-                        Disease           = oldProject.Disease,
-                        Contract          = oldProject.Contract,
-                        ProjectParent     = oldProject.ProjectParent,
-                        ShortTitle        = oldProject.ShortTitle,
-                        CaseWorkSub       = oldProject.CaseWorkSub,
-                        PvsIncome         = oldProject.PvsIncome,
+                        ParentProject = newCode,
+                        ProjectTitle = oldProject.ProjectTitle,
+                        Program = oldProject.Program,
+                        Customer = oldProject.Customer,
+                        Manager = oldProject.Manager,
+                        TransferIncome = oldProject.TransferIncome,
+                        CustIncome = oldProject.CustIncome,
+                        WipEoy = oldProject.WipEoy,
+                        WipLimit = oldProject.WipLimit,
+                        WipCurrent = oldProject.WipCurrent,
+                        ProjectStatus = oldProject.ProjectStatus,
+                        CostBookNo = oldProject.CostBookNo,
+                        FecCost = oldProject.FecCost,
+                        Profit = oldProject.Profit,
+                        BudgetCvl = oldProject.BudgetCvl,
+                        DateCreated = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                        DateCosted = oldProject.DateCosted,
+                        Disease = oldProject.Disease,
+                        Contract = oldProject.Contract,
+                        ProjectParent = oldProject.ProjectParent,
+                        ShortTitle = oldProject.ShortTitle,
+                        CaseWorkSub = oldProject.CaseWorkSub,
+                        PvsIncome = oldProject.PvsIncome,
                         PlanCaseWorkDebit = oldProject.PlanCaseWorkDebit,
-                        Finished          = oldProject.Finished,
-                        OwningRc          = oldProject.OwningRc,
-                        Comments          = oldProject.Comments,
-                        CarryOver         = oldProject.CarryOver,
-                        CarryOverSeed     = oldProject.CarryOverSeed,
-                        IsDefraProject    = oldProject.IsDefraProject,
-                        CostCentre        = oldProject.CostCentre,
+                        Finished = oldProject.Finished,
+                        OwningRc = oldProject.OwningRc,
+                        Comments = oldProject.Comments,
+                        CarryOver = oldProject.CarryOver,
+                        CarryOverSeed = oldProject.CarryOverSeed,
+                        IsDefraProject = oldProject.IsDefraProject,
+                        CostCentre = oldProject.CostCentre,
                         OracleProjectCode = oldProject.OracleProjectCode,
-                        SubAccountCode    = oldProject.SubAccountCode,
-                        ProjectGroup      = oldProject.ProjectGroup,
+                        SubAccountCode = oldProject.SubAccountCode,
+                        ProjectGroup = oldProject.ProjectGroup,
                         IncomeAccountCode = oldProject.IncomeAccountCode,
-                        FpsYear           = oldProject.FpsYear
+                        FpsYear = oldProject.FpsYear
                     };
 
                     NormalizeDateTimesToUnspecified(newProject);
@@ -536,13 +557,13 @@ namespace Apha.FPS.DataAccess.Repositories
                         .ToListAsync();
                     var newJobCodes = jobCodesToCopy.Select(jc => new JobCode
                     {
-                        JobCodeId        = jc.JobCodeId == oldCode ? newCode : jc.JobCodeId,
-                        ParentProject    = newCode,
+                        JobCodeId = jc.JobCodeId == oldCode ? newCode : jc.JobCodeId,
+                        ParentProject = newCode,
                         JobCodeWorkGroup = jc.JobCodeWorkGroup,
-                        NewProg          = jc.NewProg,
-                        Type             = jc.Type,
-                        JobCodeName      = jc.JobCodeName,
-                        FpsYear          = jc.FpsYear
+                        NewProg = jc.NewProg,
+                        Type = jc.Type,
+                        JobCodeName = jc.JobCodeName,
+                        FpsYear = jc.FpsYear
                     }).ToList();
                     if (newJobCodes.Count > 0)
                     {
@@ -563,14 +584,14 @@ namespace Apha.FPS.DataAccess.Repositories
                     var newTcvs = tcvToCopy
                         .Select(tcv => new TimeCodeValid
                         {
-                            WorkGroup     = tcv.WorkGroup,
-                            TimeCode      = tcv.TimeCode == oldCode ? newCode : tcv.TimeCode,
+                            WorkGroup = tcv.WorkGroup,
+                            TimeCode = tcv.TimeCode == oldCode ? newCode : tcv.TimeCode,
                             ParentProject = tcv.ParentProject == oldCode ? newCode : tcv.ParentProject,
-                            TestCode      = tcv.TestCode,
-                            JobCode       = tcv.JobCode == oldCode ? newCode : tcv.JobCode,
-                            Portfolio     = tcv.Portfolio == oldCode ? newCode : tcv.Portfolio,
-                            Active        = tcv.Active,
-                            FpsYear       = tcv.FpsYear
+                            TestCode = tcv.TestCode,
+                            JobCode = tcv.JobCode == oldCode ? newCode : tcv.JobCode,
+                            Portfolio = tcv.Portfolio == oldCode ? newCode : tcv.Portfolio,
+                            Active = tcv.Active,
+                            FpsYear = tcv.FpsYear
                         })
                         .DistinctBy(tcv => new { tcv.WorkGroup, tcv.TimeCode, tcv.ParentProject })
                         .ToList();
@@ -587,15 +608,15 @@ namespace Apha.FPS.DataAccess.Repositories
                         .ToListAsync();
                     var newTestReqs = testReqsToCopy.Select(tr => new TestRequirement
                     {
-                        TestCode         = tr.TestCode,
-                        Buyer            = newCode,
-                        UnitPrice        = tr.UnitPrice,
-                        NoRequired       = tr.NoRequired,
+                        TestCode = tr.TestCode,
+                        Buyer = newCode,
+                        UnitPrice = tr.UnitPrice,
+                        NoRequired = tr.NoRequired,
                         ProjectBuyerCode = newCode,
-                        TestBuyerCode    = tr.TestBuyerCode,
-                        DateCreated      = tr.DateCreated,
-                        Active           = tr.Active,
-                        FpsYear          = tr.FpsYear
+                        TestBuyerCode = tr.TestBuyerCode,
+                        DateCreated = tr.DateCreated,
+                        Active = tr.Active,
+                        FpsYear = tr.FpsYear
                     }).ToList();
                     if (newTestReqs.Count > 0)
                     {
@@ -605,17 +626,17 @@ namespace Apha.FPS.DataAccess.Repositories
                         // Derived from UITrig_tlkpTestReqmt: log inserted rows to TestReq_LOG
                         _dbContext.TestRequirementLogs.AddRange(newTestReqs.Select(tr => new TestRequirementLog
                         {
-                            TestCode         = tr.TestCode,
-                            Buyer            = tr.Buyer,
-                            UnitPrice        = tr.UnitPrice,
-                            NoRequired       = tr.NoRequired,
+                            TestCode = tr.TestCode,
+                            Buyer = tr.Buyer,
+                            UnitPrice = tr.UnitPrice,
+                            NoRequired = tr.NoRequired,
                             ProjectBuyerCode = tr.ProjectBuyerCode,
-                            TestBuyerCode    = tr.TestBuyerCode,
-                            Active           = tr.Active,
-                            DateTime         = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
-                            UserId           = _requestContext.UserEmailId,
-                            InsertDelete     = "I",
-                            FpsYear          = tr.FpsYear
+                            TestBuyerCode = tr.TestBuyerCode,
+                            Active = tr.Active,
+                            DateTime = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                            UserId = _requestContext.UserEmailId,
+                            InsertDelete = "I",
+                            FpsYear = tr.FpsYear
                         }));
                         await _dbContext.SaveChangesAsync();
                     }
@@ -632,28 +653,28 @@ namespace Apha.FPS.DataAccess.Repositories
                         _dbContext.MonthlyTimeLogs.AddRange(mtToLog.Select(mt => new MonthlyTimeLog
                         {
                             PactStaffId = mt.PactStaffId,
-                            TimeCode    = mt.TimeCode,
-                            Month       = mt.Month,
+                            TimeCode = mt.TimeCode,
+                            Month = mt.Month,
                             ParentProject = mt.ParentProject,
-                            WorkGroup   = mt.WorkGroup,
-                            Hours       = mt.Hours,
-                            DateTime    = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
-                            UserId      = _requestContext.UserEmailId,
+                            WorkGroup = mt.WorkGroup,
+                            Hours = mt.Hours,
+                            DateTime = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                            UserId = _requestContext.UserEmailId,
                             InsertDelete = "UD",
-                            FpsYear     = mt.FpsYear ?? _requestContext.FpsYear
+                            FpsYear = mt.FpsYear ?? _requestContext.FpsYear
                         }));
                         _dbContext.MonthlyTimeLogs.AddRange(mtToLog.Select(mt => new MonthlyTimeLog
                         {
                             PactStaffId = mt.PactStaffId,
-                            TimeCode    = mt.TimeCode == oldCode ? newCode : mt.TimeCode,
-                            Month       = mt.Month,
+                            TimeCode = mt.TimeCode == oldCode ? newCode : mt.TimeCode,
+                            Month = mt.Month,
                             ParentProject = newCode,
-                            WorkGroup   = mt.WorkGroup,
-                            Hours       = mt.Hours,
-                            DateTime    = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
-                            UserId      = _requestContext.UserEmailId,
+                            WorkGroup = mt.WorkGroup,
+                            Hours = mt.Hours,
+                            DateTime = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                            UserId = _requestContext.UserEmailId,
                             InsertDelete = "UI",
-                            FpsYear     = mt.FpsYear ?? _requestContext.FpsYear
+                            FpsYear = mt.FpsYear ?? _requestContext.FpsYear
                         }));
                         await _dbContext.SaveChangesAsync();
                     }
@@ -672,29 +693,29 @@ namespace Apha.FPS.DataAccess.Repositories
                     {
                         _dbContext.MonthlyOutputLogs.AddRange(moToLog.Select(mo => new MonthlyOutputLog
                         {
-                            TestCode     = mo.TestCode,
-                            Buyer        = mo.Buyer,
-                            Month        = mo.Month,
-                            WorkGroup    = mo.WorkGroup,
-                            Volume       = mo.Volume,
-                            WgBuyer      = mo.WgBuyer,
-                            DateTime     = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
-                            UserId       = _requestContext.UserEmailId,
+                            TestCode = mo.TestCode,
+                            Buyer = mo.Buyer,
+                            Month = mo.Month,
+                            WorkGroup = mo.WorkGroup,
+                            Volume = mo.Volume,
+                            WgBuyer = mo.WgBuyer,
+                            DateTime = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                            UserId = _requestContext.UserEmailId,
                             InsertDelete = "UD",
-                            FpsYear      = mo.FpsYear
+                            FpsYear = mo.FpsYear
                         }));
                         _dbContext.MonthlyOutputLogs.AddRange(moToLog.Select(mo => new MonthlyOutputLog
                         {
-                            TestCode     = mo.TestCode,
-                            Buyer        = newCode,
-                            Month        = mo.Month,
-                            WorkGroup    = mo.WorkGroup,
-                            Volume       = mo.Volume,
-                            WgBuyer      = mo.WgBuyer,
-                            DateTime     = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
-                            UserId       = _requestContext.UserEmailId,
+                            TestCode = mo.TestCode,
+                            Buyer = newCode,
+                            Month = mo.Month,
+                            WorkGroup = mo.WorkGroup,
+                            Volume = mo.Volume,
+                            WgBuyer = mo.WgBuyer,
+                            DateTime = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                            UserId = _requestContext.UserEmailId,
                             InsertDelete = "UI",
-                            FpsYear      = mo.FpsYear
+                            FpsYear = mo.FpsYear
                         }));
                         await _dbContext.SaveChangesAsync();
                     }
@@ -711,16 +732,16 @@ namespace Apha.FPS.DataAccess.Repositories
                     {
                         _dbContext.AdditionalCostLogs.AddRange(acToLog.Select(ac => new AdditionalCostLog
                         {
-                            JobCode      = newCode,
-                            Account      = ac.Account,
-                            Description  = ac.Description,
-                            ItemCost     = ac.ItemCost,
-                            Freq         = ac.Freq,
-                            Supplier     = ac.Supplier,
-                            DateTime     = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
-                            UserId       = _requestContext.UserEmailId,
+                            JobCode = newCode,
+                            Account = ac.Account,
+                            Description = ac.Description,
+                            ItemCost = ac.ItemCost,
+                            Freq = ac.Freq,
+                            Supplier = ac.Supplier,
+                            DateTime = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                            UserId = _requestContext.UserEmailId,
                             InsertDelete = "I",
-                            FpsYear      = ac.FpsYear ?? _requestContext.FpsYear
+                            FpsYear = ac.FpsYear ?? _requestContext.FpsYear
                         }));
                         await _dbContext.SaveChangesAsync();
                     }
@@ -752,14 +773,14 @@ namespace Apha.FPS.DataAccess.Repositories
                     {
                         _dbContext.AnimalRequestLogs.AddRange(arToLog.Select(ar => new AnimalRequestLog
                         {
-                            JobCode        = newCode,
-                            AnimalType     = ar.AnimalType,
-                            NumberOfDays   = ar.NumberOfDays,
+                            JobCode = newCode,
+                            AnimalType = ar.AnimalType,
+                            NumberOfDays = ar.NumberOfDays,
                             NumberOfAnimals = ar.NumberOfAnimals,
-                            DateTime       = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
-                            UserId         = _requestContext.UserEmailId,
-                            InsertDelete   = "I",
-                            FpsYear        = ar.FpsYear ?? _requestContext.FpsYear
+                            DateTime = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                            UserId = _requestContext.UserEmailId,
+                            InsertDelete = "I",
+                            FpsYear = ar.FpsYear ?? _requestContext.FpsYear
                         }));
                         await _dbContext.SaveChangesAsync();
                     }
@@ -780,13 +801,13 @@ namespace Apha.FPS.DataAccess.Repositories
                     {
                         _dbContext.StaffJobLogs.AddRange(sjToLog.Select(sj => new StaffJobLog
                         {
-                            StaffId      = sj.StaffId,
-                            JobCode      = newCode,
+                            StaffId = sj.StaffId,
+                            JobCode = newCode,
                             PlannedHours = sj.PlannedHours,
-                            DateTime     = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
-                            UserId       = _requestContext.UserEmailId,
+                            DateTime = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                            UserId = _requestContext.UserEmailId,
                             InsertDelete = "I",
-                            FpsYear      = sj.FpsYear ?? _requestContext.FpsYear
+                            FpsYear = sj.FpsYear ?? _requestContext.FpsYear
                         }));
                         await _dbContext.SaveChangesAsync();
                     }
@@ -809,17 +830,17 @@ namespace Apha.FPS.DataAccess.Repositories
                     {
                         _dbContext.TestRequirementLogs.AddRange(trToDelete.Select(tr => new TestRequirementLog
                         {
-                            TestCode         = tr.TestCode,
-                            Buyer            = tr.Buyer,
-                            UnitPrice        = tr.UnitPrice,
-                            NoRequired       = tr.NoRequired,
+                            TestCode = tr.TestCode,
+                            Buyer = tr.Buyer,
+                            UnitPrice = tr.UnitPrice,
+                            NoRequired = tr.NoRequired,
                             ProjectBuyerCode = tr.ProjectBuyerCode,
-                            TestBuyerCode    = tr.TestBuyerCode,
-                            Active           = tr.Active,
-                            DateTime         = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
-                            UserId           = _requestContext.UserEmailId,
-                            InsertDelete     = "D",
-                            FpsYear          = tr.FpsYear
+                            TestBuyerCode = tr.TestBuyerCode,
+                            Active = tr.Active,
+                            DateTime = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                            UserId = _requestContext.UserEmailId,
+                            InsertDelete = "D",
+                            FpsYear = tr.FpsYear
                         }));
                         await _dbContext.SaveChangesAsync();
                     }
@@ -894,17 +915,17 @@ namespace Apha.FPS.DataAccess.Repositories
                         {
                             _dbContext.TestRequirementLogs.AddRange(trToDelete.Select(tr => new TestRequirementLog
                             {
-                                TestCode         = tr.TestCode,
-                                Buyer            = tr.Buyer,
-                                UnitPrice        = tr.UnitPrice,
-                                NoRequired       = tr.NoRequired,
+                                TestCode = tr.TestCode,
+                                Buyer = tr.Buyer,
+                                UnitPrice = tr.UnitPrice,
+                                NoRequired = tr.NoRequired,
                                 ProjectBuyerCode = tr.ProjectBuyerCode,
-                                TestBuyerCode    = tr.TestBuyerCode,
-                                Active           = tr.Active,
-                                DateTime         = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
-                                UserId           = _requestContext.UserEmailId,
-                                InsertDelete     = "D",
-                                FpsYear          = tr.FpsYear
+                                TestBuyerCode = tr.TestBuyerCode,
+                                Active = tr.Active,
+                                DateTime = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                                UserId = _requestContext.UserEmailId,
+                                InsertDelete = "D",
+                                FpsYear = tr.FpsYear
                             }));
                             await _dbContext.SaveChangesAsync();
                         }
@@ -921,14 +942,14 @@ namespace Apha.FPS.DataAccess.Repositories
                         {
                             _dbContext.AnimalRequestLogs.AddRange(arToDelete.Select(ar => new AnimalRequestLog
                             {
-                                JobCode         = ar.JobCode,
-                                AnimalType      = ar.AnimalType,
-                                NumberOfDays    = ar.NumberOfDays,
+                                JobCode = ar.JobCode,
+                                AnimalType = ar.AnimalType,
+                                NumberOfDays = ar.NumberOfDays,
                                 NumberOfAnimals = ar.NumberOfAnimals,
-                                DateTime        = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
-                                UserId          = _requestContext.UserEmailId,
-                                InsertDelete    = "D",
-                                FpsYear         = ar.FpsYear ?? _requestContext.FpsYear
+                                DateTime = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                                UserId = _requestContext.UserEmailId,
+                                InsertDelete = "D",
+                                FpsYear = ar.FpsYear ?? _requestContext.FpsYear
                             }));
                             await _dbContext.SaveChangesAsync();
                         }
@@ -945,13 +966,13 @@ namespace Apha.FPS.DataAccess.Repositories
                         {
                             _dbContext.StaffJobLogs.AddRange(sjToDelete.Select(sj => new StaffJobLog
                             {
-                                StaffId      = sj.StaffId,
-                                JobCode      = sj.JobCode,
+                                StaffId = sj.StaffId,
+                                JobCode = sj.JobCode,
                                 PlannedHours = sj.PlannedHours,
-                                DateTime     = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
-                                UserId       = _requestContext.UserEmailId,
+                                DateTime = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                                UserId = _requestContext.UserEmailId,
                                 InsertDelete = "D",
-                                FpsYear      = sj.FpsYear ?? _requestContext.FpsYear
+                                FpsYear = sj.FpsYear ?? _requestContext.FpsYear
                             }));
                             await _dbContext.SaveChangesAsync();
                         }
@@ -968,16 +989,16 @@ namespace Apha.FPS.DataAccess.Repositories
                         {
                             _dbContext.AdditionalCostLogs.AddRange(acToDelete.Select(ac => new AdditionalCostLog
                             {
-                                JobCode      = ac.JobCode,
-                                Account      = ac.Account,
-                                Description  = ac.Description,
-                                ItemCost     = ac.ItemCost,
-                                Freq         = ac.Freq,
-                                Supplier     = ac.Supplier,
-                                DateTime     = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
-                                UserId       = _requestContext.UserEmailId,
+                                JobCode = ac.JobCode,
+                                Account = ac.Account,
+                                Description = ac.Description,
+                                ItemCost = ac.ItemCost,
+                                Freq = ac.Freq,
+                                Supplier = ac.Supplier,
+                                DateTime = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                                UserId = _requestContext.UserEmailId,
                                 InsertDelete = "D",
-                                FpsYear      = ac.FpsYear ?? _requestContext.FpsYear
+                                FpsYear = ac.FpsYear ?? _requestContext.FpsYear
                             }));
                             await _dbContext.SaveChangesAsync();
                         }
@@ -1034,7 +1055,7 @@ namespace Apha.FPS.DataAccess.Repositories
             Comments = p.Comments,
             CarryOver = p.CarryOver,
             CarryOverSeed = p.CarryOverSeed,
-            DateTime = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified), 
+            DateTime = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
             InsertDelete = operation,
             JobCode = p.ParentProject,
             IsDefraProject = p.IsDefraProject,
@@ -1046,5 +1067,173 @@ namespace Apha.FPS.DataAccess.Repositories
             FpsYear = p.FpsYear,
             UserId = userId
         };
+
+        /// <summary>
+        /// Returns paginated project profitability data for a given programme.
+        /// Translates qryProjectProfitability3: Projects + Programs + aggregate cost sub-queries.
+        /// Staff costs sourced from TimeCostCalcsViews (vtimecostcalcs, grouped by Project).
+        /// Animal costs from AnimalRequests joined to Animals for daily rate.
+        /// Test costs from TestRequirements (NoRequired × UnitPrice per vtbltestrequ).
+        /// Additional costs from AdditionalCosts (sum of ItemCost per JobCode).
+        /// workTypeFilter: "all" | "approved" | "not-approved"
+        /// </summary>
+        public async Task<PagedData<ProjectProfitabilityView>> GetProjectProfitabilityAsync(
+            PaginationParameters<string> query, string programNo, string workTypeFilter)
+        {
+            var projectQuery = _dbContext.Projects
+                .AsNoTracking()
+                .Where(p => p.Program == programNo);
+
+            if (workTypeFilter == "approved")
+                projectQuery = projectQuery.Where(p => p.ProjectStatus == "Approved");
+            else if (workTypeFilter == "not-approved")
+                projectQuery = projectQuery.Where(p => p.ProjectStatus == "Not Approved");
+
+            projectQuery = ApplyProfitabilityFilter(projectQuery, query.Filter);
+
+            var projects = await projectQuery
+                .Select(p => new
+                {
+                    p.ParentProject,
+                    p.BudgetCvl,
+                    p.Profit,
+                    p.ProjectStatus,
+                    p.Program
+                })
+                .ToListAsync();
+
+            if (projects.Count == 0)
+                return ApplyPaging(new List<ProjectProfitabilityView>(), query.Page, query.PageSize);
+
+            var projectCodes = projects.Select(p => p.ParentProject).ToList();
+
+            var programme = await _dbContext.Programs
+                .AsNoTracking()
+                .Where(pg => pg.ProgramNo == programNo)
+                .Select(pg => new { pg.ProgramNo, pg.Target })
+                .FirstOrDefaultAsync();
+
+            // Calculate staff costs by summing Cost from TimeCostCalcsViews per Project (JobCode)
+            var staffCosts = await (
+                from sj in _dbContext.StaffJobs
+                join wge in _dbContext.WgEmployees
+                    on sj.StaffId equals wge.PactId                   
+                join wgg in _dbContext.WorkgroupGrades
+                    on wge.WorkGroupGrade equals wgg.WgGrade 
+                join pcg in _dbContext.ProfitcentreGrades
+                    on wgg.ProfitCentreGrade equals pcg.PcGrade                   
+                join p in _dbContext.Projects
+                    on sj.JobCode equals p.ParentProject
+                join pg in _dbContext.Programs
+                    on p.Program equals pg.ProgramNo                                      
+                where projectCodes.Contains(sj.JobCode)                  
+                select new
+                {
+                    ProgramNo = pg.ProgramNo,
+                    JobCode = sj.JobCode,                    
+                    PlannedHours = sj.PlannedHours,
+                    ChargeRate = p.IsDefraProject == 0 ? pcg.ChargeRate : pcg.DefraChargeRate
+                })
+                .ToListAsync();            
+
+            // Additional costs by summing ItemCost per JobCode from AdditionalCosts
+            var additionalCosts = await _dbContext.AdditionalCosts
+                .AsNoTracking()
+                .Where(ac => projectCodes.Contains(ac.JobCode))
+                .GroupBy(ac => ac.JobCode)
+                .Select(g => new { JobCode = g.Key, TotalAdditional = g.Sum(x => x.ItemCost) })
+                .ToListAsync();
+
+            //Calculate test costs by multiplying NoRequired by UnitPrice for each TestRequirement, then summing per JobCode
+            var testCostsRaw = await _dbContext.TestRequirements
+                .AsNoTracking()
+                .Where(tr => projectCodes.Contains(tr.Buyer))
+                .Select(tr => new
+                {
+                    tr.Buyer,
+                    NoRequired = Convert.ToDecimal(tr.NoRequired ?? 0d),
+                    UnitPrice = Convert.ToDecimal(tr.UnitPrice ?? 0m)
+                })
+                .ToListAsync();
+
+            var testCosts = testCostsRaw
+                .GroupBy(tr => tr.Buyer)
+                .Select(g => new { JobCode = g.Key, TotalTest = g.Sum(x => x.NoRequired * x.UnitPrice) })
+                .ToList();
+
+            // Calculate animal costs: NumberOfAnimals × NumberOfDays × (IsDefraProject=0 ? DailyRate : DefraDailyRate)           
+            var animalCostsRaw = await (
+                from ar in _dbContext.AnimalRequests
+                join p in _dbContext.Projects
+                    on ar.JobCode equals p.ParentProject                    
+                join a in _dbContext.Animals
+                    on ar.AnimalType equals a.AnimalType                  
+                where projectCodes.Contains(ar.JobCode)
+                select new
+                {
+                    ar.JobCode,
+                    ar.NumberOfAnimals,
+                    ar.NumberOfDays,
+                    Cost = p.IsDefraProject == 0 ? a.DailyRate : a.DefraDailyRate
+                })
+                .ToListAsync();
+
+            var animalCostByJob = animalCostsRaw
+                .GroupBy(x => x.JobCode)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Sum(x => (decimal)(x.NumberOfAnimals * x.NumberOfDays) * (x.Cost ?? 0m)));
+
+            var staffMap = staffCosts
+                .GroupBy(x => x.JobCode)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Sum(x => (decimal)x.PlannedHours * (x.ChargeRate ?? 0m)));
+            var additionalMap = additionalCosts.ToDictionary(x => x.JobCode, x => x.TotalAdditional);
+            var testMap = testCosts.ToDictionary(x => x.JobCode, x => x.TotalTest);
+
+
+            var results = projects.Select(p =>
+            {
+                var staff = staffMap.TryGetValue(p.ParentProject, out var s) ? s : 0m;
+                var additional = additionalMap.TryGetValue(p.ParentProject, out var a) ? a : 0m;
+                var test = testMap.TryGetValue(p.ParentProject, out var t) ? t : 0m;
+                var animal = animalCostByJob.TryGetValue(p.ParentProject, out var an) ? an : 0m;
+                var total = staff + additional + test + animal;
+                var budget = p.BudgetCvl ?? 0m;
+                var profit = p.Profit ?? 0m;
+                var jcProfit = budget - total;
+                return new ProjectProfitabilityView
+                {
+                    JobCode = p.ParentProject,
+                    JcTotalStaffCosts = staff,
+                    JcTotalTestCosts = test,
+                    JcTotalAnimalCosts = animal,
+                    JcTotalAdditionalCosts = additional,
+                    TotalCosts = total,
+                    BudgetCvl = p.BudgetCvl,
+                    JcProfit = jcProfit,
+                    TargetProfit = profit,
+                    OffTarget = jcProfit - profit,
+                    ProgramNo = p.Program,
+                    ProgrammeTarget = programme?.Target,
+                    ProjectStatus = p.ProjectStatus
+                };
+            }).ToList();
+
+            // Apply sorting
+            results = query.SortBy?.ToLower() switch
+            {
+                "jobcode" => query.Descending ? results.OrderByDescending(r => r.JobCode).ToList() : results.OrderBy(r => r.JobCode).ToList(),
+                "totalcosts" => query.Descending ? results.OrderByDescending(r => r.TotalCosts).ToList() : results.OrderBy(r => r.TotalCosts).ToList(),
+                "budgetcvl" => query.Descending ? results.OrderByDescending(r => r.BudgetCvl).ToList() : results.OrderBy(r => r.BudgetCvl).ToList(),
+                "jcprofit" => query.Descending ? results.OrderByDescending(r => r.JcProfit).ToList() : results.OrderBy(r => r.JcProfit).ToList(),
+                "offtarget" => query.Descending ? results.OrderByDescending(r => r.OffTarget).ToList() : results.OrderBy(r => r.OffTarget).ToList(),
+                "projectstatus" => query.Descending ? results.OrderByDescending(r => r.ProjectStatus).ToList() : results.OrderBy(r => r.ProjectStatus).ToList(),
+                _ => results.OrderBy(r => r.JobCode).ToList()
+            };
+
+            return ApplyPaging(results, query.Page, query.PageSize);
+        }
     }
 }

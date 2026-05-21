@@ -80,8 +80,7 @@
                                                            class="govuk-input govuk-!-font-size-16"
                                                            style="width:160px;">
                                                     <input type="hidden" id="hdnSelectedProject" value="" />
-                                                    <a id="btnPlan" class="govuk-button sup_margin_0" style="display:none;"
-                                                       href="@Url.Action("Index", "ProjectPlanning", new { area = "FPS" })">
+                                                        <a id="btnPlan" href="#" class="govuk-button sup_margin_0" style="display:none;" onclick="planThisProject()">
                                                         <i class="fa fa-cogs" aria-hidden="true"></i> Plan
                                                     </a>
                                                 </div>
@@ -178,8 +177,7 @@
 
             const planBtn = document.getElementById('btnPlan');
             if (planBtn) {
-                planBtn.href          = '@Url.Action("Index", "ProjectPlanning", new { area = "FPS" })?parentProject=' + encodeURIComponent(id);
-                planBtn.style.display = '';
+                 planBtn.style.display = '';
             }
 
             $('a[data-nav-program]').each(function () {
@@ -195,6 +193,11 @@
             updateNavLinks(currentProgramNo);
             const planBtn = document.getElementById('btnPlan');
             if (planBtn) planBtn.style.display = 'none';
+        }
+
+        function planThisProject() {                           
+            if (!currentProjectCode) { window.showGovukAlert('Please select a project first.'); return; }
+                window.fpsNavigateTo('/FPS/ProjectPlanning?projectCode=' + encodeURIComponent(currentProjectCode))
         }
 
         function editProgramProject(btn) {

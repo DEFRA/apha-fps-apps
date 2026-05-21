@@ -164,6 +164,24 @@ namespace Apha.FPS.Api.Controllers
                 throw new ArgumentException($"Project record with ID: {parentProject} not found", nameof(parentProject));
             return Ok(deleted);
         }
+
+        /// <summary>
+        /// Returns paginated project profitability rows for the given programme.
+        /// workTypeFilter: "all" (default) | "approved" | "not-approved"
+        /// </summary>
+        [HttpGet("profitability/{programNo}")]
+        public async Task<IActionResult> GetProjectProfitabilityAsync(
+            [FromQuery] PaginationReq<string> query,
+            string programNo,            
+            [FromQuery] string workTypeFilter = "all")
+        {
+            if (string.IsNullOrWhiteSpace(programNo))
+                return BadRequest("programNo is required.");
+
+            var filter = _mapper.Map<QueryParameters<string>>(query);
+            var result = await _projectService.GetProjectProfitabilityAsync(filter, programNo, workTypeFilter);
+            return Ok(_mapper.Map<PaginationRes<ProjectProfitabilityRes>>(result));
+        }
     }
 
     public record ChangeProjectCodeReq(string OldCode, string NewCode);

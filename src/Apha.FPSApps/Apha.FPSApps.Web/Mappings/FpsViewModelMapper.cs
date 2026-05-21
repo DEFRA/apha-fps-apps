@@ -34,6 +34,9 @@ namespace Apha.FPSApps.Web.Mappings
 
             // ProgrammeNewProject
             CreateMap<ProjectDto, ProgrammeNewProjectViewModel>().ReverseMap();
+
+            // ProjectProfitability
+            CreateMap<ProjectProfitabilityDto, ProjectProfitabilityItem>().ReverseMap();
         }
     }
 }
