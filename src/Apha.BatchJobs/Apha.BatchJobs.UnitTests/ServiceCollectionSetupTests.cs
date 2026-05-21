@@ -79,7 +79,7 @@ public sealed class ServiceCollectionSetupTests
     }
 
     [Fact]
-    public void ConfigureBatchJobServices_DefaultMabArchiveMode_ShouldRegisterDotNetLoadersOnly()
+    public void ConfigureBatchJobServices_DefaultMabArchiveMode_ShouldRegisterMabArchiveLoadersOnly()
     {
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -95,11 +95,11 @@ public sealed class ServiceCollectionSetupTests
         var loaders = serviceProvider.GetServices<IMabArchiveLoader>().ToList();
 
         Assert.Equal(24, loaders.Count);
-        Assert.All(loaders, l => Assert.Contains("DotNetLoader", l.GetType().Name, StringComparison.Ordinal));
+        Assert.All(loaders, l => Assert.EndsWith("Loader", l.GetType().Name, StringComparison.Ordinal));
     }
 
     [Fact]
-    public void ConfigureBatchJobServices_WhenMabArchiveModeIsConfigured_ShouldStillRegisterDotNetLoadersOnly()
+    public void ConfigureBatchJobServices_WhenMabArchiveModeIsConfigured_ShouldStillRegisterMabArchiveLoadersOnly()
     {
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -148,7 +148,7 @@ public sealed class ServiceCollectionSetupTests
                 "my_tlkpproject_all"
             },
             ordered.Select(l => l.Name));
-        Assert.All(ordered, l => Assert.Contains("DotNetLoader", l.GetType().Name, StringComparison.Ordinal));
+        Assert.All(ordered, l => Assert.EndsWith("Loader", l.GetType().Name, StringComparison.Ordinal));
     }
 
     private static string GetBatchJobsRoot()

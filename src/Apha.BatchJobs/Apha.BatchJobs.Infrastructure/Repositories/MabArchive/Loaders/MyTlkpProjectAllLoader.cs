@@ -3,13 +3,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.MabArchive.Loaders;
 
-internal sealed class MyTlkpProjectAllDotNetLoader : MabArchiveDotNetLoaderBase
+internal sealed class MyTlkpProjectAllLoader : MabArchiveLinqLoaderBase
 {
     public override int Sequence => 24;
 
     public override string Name => "my_tlkpproject_all";
 
-    protected override async Task<int> LoadWithDotNetAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
+    protected override async Task<int> LoadCoreAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
     {
         var sourceRows = await context.MaSrcTlkpProject
             .AsNoTracking()

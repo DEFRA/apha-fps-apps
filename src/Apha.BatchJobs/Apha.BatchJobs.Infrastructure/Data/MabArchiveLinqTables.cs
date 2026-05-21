@@ -476,11 +476,11 @@ internal sealed class MaDstMyTimeCostCalcs
 internal sealed class MaSrcTlkpTestReqmt
 {
     public int FpsYear { get; set; }
-    public required string TestCode { get; set; }
+    public string? TestCode { get; set; }
     public string? Buyer { get; set; }
     public decimal? UnitPrice { get; set; }
     public double? NoRequired { get; set; }
-    public required string ProjectBuyerCode { get; set; }
+    public string? ProjectBuyerCode { get; set; }
     public string? TestBuyerCode { get; set; }
 }
 

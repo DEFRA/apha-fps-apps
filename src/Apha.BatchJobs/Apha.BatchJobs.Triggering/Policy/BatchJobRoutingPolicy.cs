@@ -21,7 +21,7 @@ public static class BatchJobRoutingPolicy
     private static readonly IReadOnlyList<BatchJobRoute> Routes =
     [
         new("RecreateSummaries", JobRouteKind.PactApi, "Mapped to PACT API"),
-        new("MABArchive", JobRouteKind.ScheduledOnly, "Scheduled job only; not API-triggered"),
+        new("MABArchive", JobRouteKind.ScheduledOnly, "Scheduled job only; year is derived internally from execution date"),
         new("FECProcess", JobRouteKind.FpsApi, "Mapped to FPS API"),
         new("YearEndProcess", JobRouteKind.FpsApi, "Mapped to FPS API"),
         new("HealthCheck", JobRouteKind.Neutral, "Neutral health trigger; allowed via FPS or PACT API")

@@ -23,7 +23,6 @@ public sealed class MabArchiveJobHandler : IBatchJob
 {
     private readonly IDbContextFactory<BatchJobsDbContext> _dbContextFactory;
     private readonly IServiceProvider _serviceProvider;
-    private readonly IExecutionYearContext _executionYearContext;
     private readonly ILogger<MabArchiveJobHandler> _logger;
     private readonly ICorrelationService _correlationService;
     private readonly MabArchiveSettings _settings;
@@ -37,14 +36,12 @@ public sealed class MabArchiveJobHandler : IBatchJob
     public MabArchiveJobHandler(
         IDbContextFactory<BatchJobsDbContext> dbContextFactory,
         IServiceProvider serviceProvider,
-        IExecutionYearContext executionYearContext,
         ICorrelationService correlationService,
         ILogger<MabArchiveJobHandler> logger,
         IOptions<MabArchiveSettings> settings)
     {
         _dbContextFactory = dbContextFactory ?? throw new ArgumentNullException(nameof(dbContextFactory));
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-        _executionYearContext = executionYearContext ?? throw new ArgumentNullException(nameof(executionYearContext));
         _correlationService = correlationService ?? throw new ArgumentNullException(nameof(correlationService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _settings = settings?.Value ?? new MabArchiveSettings();
@@ -76,10 +73,7 @@ public sealed class MabArchiveJobHandler : IBatchJob
         try
         {
             var orchestrator = _serviceProvider.GetRequiredService<MabArchiveLoadOrchestrator>();
-
             var context = orchestrator.BuildExecutionContext();
-            _executionYearContext.FpsYear = context.PrimaryYear;
-            _executionYearContext.YearSource = "MABArchive.BuildExecutionContext";
             _logger.LogInformation(
                 "Execution context built | PrimaryYear={PrimaryYear} | CurrentMonth={CurrentMonth}",
                 context.PrimaryYear,

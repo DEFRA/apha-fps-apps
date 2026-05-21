@@ -47,7 +47,7 @@ app.MapPost("/api/trigger", async (
 		{
 			accepted = false,
 			jobName = route.JobName,
-			reason = "MABArchive is a scheduled job and is not manually triggered via API."
+			reason = "MABArchive is a scheduled job and is not manually triggered via API. Its execution year is derived internally from the run date."
 		});
 	}
 

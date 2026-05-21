@@ -148,14 +148,14 @@ public static class ServiceCollectionSetup
     private static void RegisterMabArchiveLoaders(IServiceCollection services)
     {
         var loaderType = typeof(IMabArchiveLoader);
-        var loaderAssembly = typeof(MyTlkpProgramDotNetLoader).Assembly;
+        var loaderAssembly = typeof(MyTlkpProgramLoader).Assembly;
 
         var loaderImplementations = loaderAssembly
             .GetTypes()
             .Where(t =>
                 t is { IsClass: true, IsAbstract: false } &&
                 loaderType.IsAssignableFrom(t) &&
-                t.IsSubclassOf(typeof(MabArchiveDotNetLoaderBase)))
+                t.IsSubclassOf(typeof(MabArchiveLinqLoaderBase)))
             .ToList();
 
         foreach (var loader in loaderImplementations)

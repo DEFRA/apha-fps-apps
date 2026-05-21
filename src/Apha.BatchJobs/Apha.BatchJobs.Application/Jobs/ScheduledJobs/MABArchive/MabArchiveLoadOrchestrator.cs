@@ -43,27 +43,11 @@ public sealed class MabArchiveLoadOrchestrator
     }
 
     /// <summary>
-    /// Builds the execution context based on caller-provided year context when available,
-    /// otherwise falls back to legacy calendar-based logic.
+    /// Builds the execution context from the current execution date.
     /// </summary>
     /// <returns>Computed execution context for the current run window.</returns>
     public MabArchiveExecutionContext BuildExecutionContext()
     {
-        var yearContext = Environment.GetEnvironmentVariable("BATCH_YEAR_CONTEXT");
-        if (!string.IsNullOrWhiteSpace(yearContext)
-            && int.TryParse(yearContext, out var targetYear)
-            && targetYear > 1900)
-        {
-            // Caller-provided year context is authoritative for year-scoped runs.
-            // Keep a deterministic full-load context (no partial refresh branch).
-            return new MabArchiveExecutionContext(
-                CurrentYear: targetYear,
-                PreviousYear: targetYear - 1,
-                CurrentMonth: 12,
-                PrimaryYear: targetYear,
-                IncludePartialRefreshYear: false);
-        }
-
         var utcNow = DateTime.UtcNow;
 
         // Optional test hook for deterministic local verification of month-branch behavior.
@@ -82,9 +66,8 @@ public sealed class MabArchiveLoadOrchestrator
         var currentMonth = utcNow.Month;
         var previousYear = currentYear - 1;
 
-        // Primary year determination:
-        // Month > 4 (after April): primaryYear = current calendar year
-        // Month ≤ 4 (April or earlier): primaryYear = previous calendar year
+        // Month > 4 (after April): primary year is current year.
+        // Month <= 4 (April or earlier): primary year is previous year, with current-year partial refresh.
         var primaryYear = currentMonth > 4 ? currentYear : previousYear;
 
         return new MabArchiveExecutionContext(

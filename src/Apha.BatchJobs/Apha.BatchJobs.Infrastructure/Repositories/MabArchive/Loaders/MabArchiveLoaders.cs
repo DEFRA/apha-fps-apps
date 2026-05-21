@@ -17,12 +17,12 @@ internal abstract class MabArchiveLoaderBase : IMabArchiveLoader
     protected abstract Task<int> ExecuteAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken);
 }
 
-internal abstract class MabArchiveDotNetLoaderBase : MabArchiveLoaderBase
+internal abstract class MabArchiveLinqLoaderBase : MabArchiveLoaderBase
 {
     protected override Task<int> ExecuteAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
     {
-        return LoadWithDotNetAsync(context, year, cancellationToken);
+        return LoadCoreAsync(context, year, cancellationToken);
     }
 
-    protected abstract Task<int> LoadWithDotNetAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken);
+    protected abstract Task<int> LoadCoreAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken);
 }

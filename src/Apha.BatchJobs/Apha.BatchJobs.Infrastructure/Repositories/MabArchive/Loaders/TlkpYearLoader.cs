@@ -4,13 +4,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.MabArchive.Loaders;
 
-internal sealed class TlkpYearDotNetLoader : MabArchiveDotNetLoaderBase
+internal sealed class TlkpYearLoader : MabArchiveLinqLoaderBase
 {
     public override int Sequence => 16;
 
     public override string Name => "tlkpyear";
 
-    protected override async Task<int> LoadWithDotNetAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
+    protected override async Task<int> LoadCoreAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
     {
         var monthValues = await context.MaSrcTblDbVariable
             .AsNoTracking()

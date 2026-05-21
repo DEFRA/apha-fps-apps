@@ -3,13 +3,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.MabArchive.Loaders;
 
-internal sealed class MyMonthlyTimeDotNetLoader : MabArchiveDotNetLoaderBase
+internal sealed class MyMonthlyTimeLoader : MabArchiveLinqLoaderBase
 {
     public override int Sequence => 6;
 
     public override string Name => "my_monthlytime";
 
-    protected override async Task<int> LoadWithDotNetAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
+    protected override async Task<int> LoadCoreAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
     {
         var rows = await context.MaSrcMonthlyTime
             .AsNoTracking()

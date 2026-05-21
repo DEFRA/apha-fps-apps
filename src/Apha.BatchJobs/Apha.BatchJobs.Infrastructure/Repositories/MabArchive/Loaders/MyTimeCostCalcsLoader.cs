@@ -3,13 +3,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.MabArchive.Loaders;
 
-internal sealed class MyTimeCostCalcsDotNetLoader : MabArchiveDotNetLoaderBase
+internal sealed class MyTimeCostCalcsLoader : MabArchiveLinqLoaderBase
 {
     public override int Sequence => 14;
 
     public override string Name => "my_timecostcalcs";
 
-    protected override async Task<int> LoadWithDotNetAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
+    protected override async Task<int> LoadCoreAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
     {
         var rows = await context.MaSrcTimeCostCalcs
             .AsNoTracking()

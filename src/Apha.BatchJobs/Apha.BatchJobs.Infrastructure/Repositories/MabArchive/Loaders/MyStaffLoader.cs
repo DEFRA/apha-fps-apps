@@ -3,13 +3,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.MabArchive.Loaders;
 
-internal sealed class MyStaffDotNetLoader : MabArchiveDotNetLoaderBase
+internal sealed class MyStaffLoader : MabArchiveLinqLoaderBase
 {
     public override int Sequence => 21;
 
     public override string Name => "my_staff";
 
-    protected override async Task<int> LoadWithDotNetAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
+    protected override async Task<int> LoadCoreAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
     {
         var rows = await (
             from wge in context.MaSrcTblWgEmployee.AsNoTracking()

@@ -3,13 +3,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.MabArchive.Loaders;
 
-internal sealed class MyTblAdditionalCostsDotNetLoader : MabArchiveDotNetLoaderBase
+internal sealed class MyTblAdditionalCostsLoader : MabArchiveLinqLoaderBase
 {
     public override int Sequence => 10;
 
     public override string Name => "my_tbladditionalcosts";
 
-    protected override async Task<int> LoadWithDotNetAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
+    protected override async Task<int> LoadCoreAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
     {
         var maxAcCounter = await context.MaDstMyTblAdditionalCosts
             .AsNoTracking()

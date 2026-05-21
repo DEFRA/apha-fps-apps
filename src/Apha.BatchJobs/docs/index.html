@@ -41,7 +41,7 @@
 <div class="page">
 
 <h1>Batch Job Triggering Approach Recommendation</h1>
-    <p class="subtitle">Updated for <b>JobExecutionId external correlation + orchestrator-generated JobQueueId</b> model (May 2026). Triggers must provide <code>BATCH_JOB_EXECUTION_ID</code> and <code>BATCH_USER_ID</code>. Year context is supported via <code>BATCH_YEAR_CONTEXT</code>. Implementation is complete and live.</p>
+    <p class="subtitle">Updated for <b>JobExecutionId external correlation + orchestrator-generated JobQueueId</b> model (May 2026). Triggers must provide <code>BATCH_JOB_EXECUTION_ID</code> and <code>BATCH_USER_ID</code>. Use <code>BATCH_YEAR_CONTEXT</code> for caller-scoped jobs such as RecreateSummaries; scheduled MABArchive derives year internally from the execution date. Implementation is complete and live.</p>
 
     <div class="neutral">
       <strong>Canonical document:</strong> This HTML is now the single primary BatchJobs design and delivery document. Earlier standalone repository, DevOps, compliance, and implementation HTML pages have been retired to avoid duplication and drift.
@@ -55,7 +55,7 @@
         <li><b>jobExecutionId</b> is the external API/UI correlation key; <b>jobQueueId</b> is internal worker/database identity.</li>
         <li>FPS/PACT trigger APIs, docs, and migration scripts added.</li>
         <li><b>Auditability:</b> Display or retain key tracking information such as <code>jobExecutionId</code> (and <code>jobQueueId</code> once available), requesting user, requested year, submission time, and approval outcome.</li>
-        <li>Year context supported: pass <code>BATCH_YEAR_CONTEXT</code> as needed.</li>
+        <li><code>BATCH_YEAR_CONTEXT</code> remains caller-provided for caller-scoped jobs such as RecreateSummaries; scheduled MABArchive derives its year internally from the execution date.</li>
       </ul>
     </div>
 
@@ -173,7 +173,7 @@ Worker Task (container)
 <b>Worker reads:</b>
   <code>BATCH_JOB_EXECUTION_ID</code> (caller-generated external correlation key; worker fallback only if missing/invalid)
   <code>BATCH_USER_ID</code> (caller-provided user or system identity)
-  <code>BATCH_JOB_NAME</code>, <code>BATCH_RUN_MODE</code>, <code>BATCH_YEAR_CONTEXT</code> (optional, as needed)
+  <code>BATCH_JOB_NAME</code>, <code>BATCH_RUN_MODE</code>, <code>BATCH_YEAR_CONTEXT</code> (job-specific; required for caller-scoped jobs such as RecreateSummaries)
  ->
 Job Orchestrator
  ->
@@ -190,7 +190,7 @@ Worker Task (container)
 <b>Worker reads:</b>
   <code>BATCH_JOB_EXECUTION_ID</code> (caller-generated external correlation key; worker fallback only if missing/invalid)
   <code>BATCH_USER_ID</code> (caller-provided, e.g. "system" or scheduler identity)
-  <code>BATCH_JOB_NAME</code>, <code>BATCH_RUN_MODE</code>, <code>BATCH_YEAR_CONTEXT</code> (optional, as needed)
+  <code>BATCH_JOB_NAME</code>, <code>BATCH_RUN_MODE</code>, <code>BATCH_YEAR_CONTEXT</code> (job-specific; not required for scheduled MABArchive)
  ->
 Job Orchestrator
  ->
@@ -1521,7 +1521,7 @@ EventBridge target delivery exhausted
       <ul>
         <li>Use <b>EventBridge as the common trigger layer</b> for API/manual jobs and scheduled jobs, with ECS Fargate as the worker execution runtime.</li>
         <li><b>All triggers (API, UI, scheduled) should inject <code>BATCH_JOB_EXECUTION_ID</code> and <code>BATCH_USER_ID</code> (string).</li>
-        <li>Year context is supported via <code>BATCH_YEAR_CONTEXT</code> (optional, for reporting/partitioning).</li>
+        <li>Use <code>BATCH_YEAR_CONTEXT</code> for caller-scoped jobs such as RecreateSummaries. Scheduled MABArchive derives year internally from the execution date.</li>
         <li>Worker uses <code>BATCH_JOB_EXECUTION_ID</code> as canonical correlation id and currently falls back to a generated GUID only when missing/invalid (target state: fail-fast in non-local environments).</li>
         <li>External/UI/API correlation is by <code>jobExecutionId</code>; internal runtime/DB correlation is by worker-generated <code>jobQueueId</code>.</li>
       </ul>
@@ -1588,12 +1588,8 @@ The <b>MABArchive</b> schema stores project budgeting, milestones/deliverables, 
 
 <h3>15.2.2 Year Resolution Logic</h3>
 <p>
-Caller-provided <code>BATCH_YEAR_CONTEXT</code> is authoritative when present and valid. In that mode, MABArchive targets the supplied year as the primary year and runs deterministic full-load behavior. If <code>BATCH_YEAR_CONTEXT</code> is missing, the worker falls back to legacy calendar-based logic for backward compatibility.
+MABArchive derives its year internally from the execution date in a single orchestrator method. The current month decides whether the primary year is the current calendar year or the previous calendar year, matching the legacy month-cutover behavior. The handler does not require caller-provided <code>BATCH_YEAR_CONTEXT</code> for scheduled MABArchive runs.
 </p>
-<ul>
-  <li><b>Month &gt; 4 (after April):</b> The primary year is the current calendar year; a full archive load is performed for that year.</li>
-  <li><b>Month <= 4 (April or earlier):</b> The primary year is the previous calendar year; a full archive load is performed for that year, and a partial refresh is applied to the actual current calendar year.</li>
-</ul>
 
 <h3>15.2.3 Processing Steps</h3>
 <ul>
@@ -1883,7 +1879,7 @@ The AWS infrastructure team is required to provision and manage the runtime comp
 <ul>
   <li><b>EventBridge:</b> Create and manage the event bus, rules, schedules, targets, retry policy, and DLQ configuration for manual and scheduled batch jobs.</li>
   <li><b>ECS Fargate:</b> Provision the ECS cluster, task definition, container settings, networking, security groups, IAM task roles, execution roles, and logging integration.</li>
-  <li><b>Input Mapping:</b> Configure EventBridge input transformers or target input so the worker receives <code>BATCH_JOB_EXECUTION_ID</code>, <code>BATCH_USER_ID</code>, <code>BATCH_YEAR_CONTEXT</code>, <code>BATCH_JOB_NAME</code>, and related values as separate environment variables.</li>
+  <li><b>Input Mapping:</b> Configure EventBridge input transformers or target input so the worker receives <code>BATCH_JOB_EXECUTION_ID</code>, <code>BATCH_USER_ID</code>, <code>BATCH_JOB_NAME</code>, and related values as separate environment variables. Include <code>BATCH_YEAR_CONTEXT</code> only for jobs whose contract requires caller-supplied year context.</li>
   <li><b>Secrets and Configuration:</b> Provide secure access to database connection strings, mail settings, and other runtime configuration through approved AWS secret/configuration services.</li>
   <li><b>Observability:</b> Ensure CloudWatch logs, metrics, alarms, and DLQ monitoring are configured for operational support and failure diagnosis.</li>
   <li><b>Scheduling:</b> For scheduled jobs, implement EventBridge schedules and ensure the correct year context and user identity are injected for each run.</li>
@@ -2261,6 +2257,9 @@ Manual triggers come from API event publication and must carry caller context.
 <p>
 Scheduled jobs are infra-owned schedules and must inject deterministic system context.
 </p>
+<p>
+For <b>MABArchive</b>, the schedule does not need to inject <code>BATCH_YEAR_CONTEXT</code>. The worker derives the execution year internally from the run date and applies the legacy month-cutover rule in one place.
+</p>
 <pre><code>{
   "detail": {
     "jobExecutionId": "&lt;generated-per-run-guid&gt;",
@@ -2274,7 +2273,8 @@ Scheduled jobs are infra-owned schedules and must inject deterministic system co
   <li><code>jobExecutionId</code> must be generated uniquely per schedule fire (no reuse across runs).</li>
   <li><code>userId</code> should be a stable service identity (for example <code>system-scheduler</code>).</li>
   <li><code>runMode</code> must be <code>Scheduled</code> for operational filtering/audit.</li>
-  <li>Year context should be explicitly injected for year-scoped processes; do not assume application defaults.</li>
+  <li>Year context must be explicitly injected only for jobs whose contract requires caller-supplied year context; do not assume application defaults for those jobs.</li>
+  <li><code>MABArchive</code> scheduled runs derive year internally from the execution date, so no schedule-side <code>yearContext</code> injection is required.</li>
 </ul>
 
 <h4>15.11.2.4 Infra Deliverable Checklist (Manual + Scheduled)</h4>

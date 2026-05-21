@@ -3,7 +3,6 @@ using Apha.BatchJobs.Domain.Interfaces;
 using Apha.BatchJobs.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Npgsql;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.MabArchive;
 
@@ -21,40 +20,6 @@ public sealed class MyFpsYearlyDataService : IMyFpsYearlyDataService
     private readonly IReadOnlyList<IMabArchiveLoader> _orderedLoaders;
     private readonly IMabArchiveLoader _projectAllLoader;
     private const int ExpectedLoaderCount = 24;
-
-    private static readonly string[] ArchiveDeleteTables =
-    {
-        // Leaf tables (transaction detail level)
-        "mabarchive.my_timecostcalcs",
-        "mabarchive.my_monthlyoutput",
-        "mabarchive.my_monthlytime",
-        "mabarchive.my_projectmonthfinal",
-        "mabarchive.my_proj_invoice",
-        "mabarchive.my_proj_subcontract",
-        "mabarchive.my_tbladditionalcosts",
-        "mabarchive.my_tblanimalreq",
-        "mabarchive.my_tblcontract",
-        "mabarchive.my_tblstaffjob",
-        "mabarchive.my_tlkptestreqmt",
-
-        // Dimension tables (setup/reference data)
-        "mabarchive.my_testorproduct",
-        "mabarchive.my_staff",
-        "mabarchive.my_workgroup",
-        "mabarchive.my_tblprofitcentre",
-        "mabarchive.my_profitcentregrade",
-        "mabarchive.my_workgroupgrade",
-        "mabarchive.my_tblanimals",
-
-        // Program and project structure
-        "mabarchive.my_tlkpprogram",
-        "mabarchive.my_tlkpproject",
-        "mabarchive.my_tlkpproject_all",
-
-        // Aggregate and year-level tables
-        "mabarchive.my_fpsyeartotals",
-        "mabarchive.tlkpyear"
-    };
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MyFpsYearlyDataService"/> class.
@@ -150,36 +115,51 @@ SELECT EXISTS(
         {
             var totalRowsAffected = 0;
 
+            async Task DeleteWithYearAsync<T>(IQueryable<T> query, string tableName) where T : class
+            {
+                _logger.LogInformation("Deleting table {TableName} for year {Year}", tableName, targetYear);
+                var deleteCount = await query.ExecuteDeleteAsync(cancellationToken);
+                totalRowsAffected += deleteCount;
+                _logger.LogInformation("Deleted {RowCount} rows from {TableName} for year {Year}", deleteCount, tableName, targetYear);
+            }
+
             // Delete order must respect foreign key constraints.
             // Leaf tables first, then parent tables.
-            // This list maps to legacy sp_DeleteYearsFPSData coverage per baseline document.
-            foreach (var table in ArchiveDeleteTables)
-            {
-                _logger.LogInformation("Deleting table {TableName} for year {Year}", table, targetYear);
-                var deleteSql = $@"
-DELETE FROM {table}
-WHERE year = @year
-";
-                var deleteCount = await _context.Database.ExecuteSqlRawAsync(
-                    deleteSql,
-                    [new NpgsqlParameter("year", targetYear)],
-                    cancellationToken);
-
-                totalRowsAffected += deleteCount;
-                _logger.LogInformation("Deleted {RowCount} rows from {TableName} for year {Year}", deleteCount, table, targetYear);
-            }
+            await DeleteWithYearAsync(_context.MaDstMyTimeCostCalcs.Where(x => x.Year == targetYear), "mabarchive.my_timecostcalcs");
+            await DeleteWithYearAsync(_context.MaDstMyMonthlyOutput.Where(x => x.Year == targetYear), "mabarchive.my_monthlyoutput");
+            await DeleteWithYearAsync(_context.MaDstMyMonthlyTime.Where(x => x.Year == targetYear), "mabarchive.my_monthlytime");
+            await DeleteWithYearAsync(_context.MaDstMyProjectMonthFinal.Where(x => x.Year == targetYear), "mabarchive.my_projectmonthfinal");
+            await DeleteWithYearAsync(_context.MaDstMyProjInvoice.Where(x => x.Year == targetYear), "mabarchive.my_proj_invoice");
+            await DeleteWithYearAsync(_context.MaDstMyProjSubContract.Where(x => x.Year == targetYear), "mabarchive.my_proj_subcontract");
+            await DeleteWithYearAsync(_context.MaDstMyTblAdditionalCosts.Where(x => x.Year == targetYear), "mabarchive.my_tbladditionalcosts");
+            await DeleteWithYearAsync(_context.MaDstMyTblAnimalReq.Where(x => x.Year == targetYear), "mabarchive.my_tblanimalreq");
+            await DeleteWithYearAsync(_context.MaDstMyTblContract.Where(x => x.Year == targetYear), "mabarchive.my_tblcontract");
+            await DeleteWithYearAsync(_context.MaDstMyTblStaffJob.Where(x => x.Year == targetYear), "mabarchive.my_tblstaffjob");
+            await DeleteWithYearAsync(_context.MaDstMyTlkpTestReqmt.Where(x => x.Year == targetYear), "mabarchive.my_tlkptestreqmt");
+            await DeleteWithYearAsync(_context.MaDstMyTestOrProduct.Where(x => x.Year == targetYear), "mabarchive.my_testorproduct");
+            await DeleteWithYearAsync(_context.MaDstMyStaff.Where(x => x.Year == targetYear), "mabarchive.my_staff");
+            await DeleteWithYearAsync(_context.MaDstMyWorkGroup.Where(x => x.Year == targetYear), "mabarchive.my_workgroup");
+            await DeleteWithYearAsync(_context.MaDstMyTblProfitCentre.Where(x => x.Year == targetYear), "mabarchive.my_tblprofitcentre");
+            await DeleteWithYearAsync(_context.MaDstMyProfitCentreGrade.Where(x => x.Year == targetYear), "mabarchive.my_profitcentregrade");
+            await DeleteWithYearAsync(_context.MaDstMyWorkGroupGrade.Where(x => x.Year == targetYear), "mabarchive.my_workgroupgrade");
+            await DeleteWithYearAsync(_context.MaDstMyTblAnimals.Where(x => x.Year == targetYear), "mabarchive.my_tblanimals");
+            await DeleteWithYearAsync(_context.MaDstMyTlkpProgram.Where(x => x.Year == targetYear), "mabarchive.my_tlkpprogram");
+            await DeleteWithYearAsync(_context.MaDstMyTlkpProject.Where(x => x.Year == targetYear), "mabarchive.my_tlkpproject");
+            await DeleteWithYearAsync(_context.MaDstMyTlkpProjectAll.Where(x => x.Year == targetYear), "mabarchive.my_tlkpproject_all");
+            await DeleteWithYearAsync(_context.MaDstMyFpsYearTotals.Where(x => x.Year == targetYear), "mabarchive.my_fpsyeartotals");
+            await DeleteWithYearAsync(_context.MaDstTlkpYear.Where(x => x.Year == targetYear), "mabarchive.tlkpyear");
 
             // Special handling for G_tlkpProject: project-based delete matching FPS source projects
             // (not year-based, but included in legacy scope per sp_DeleteYearsFPSData baseline)
             _logger.LogInformation("Deleting table mabarchive.g_tlkpproject using project keys for year {Year}", targetYear);
-            var projectDeleteCount = await _context.Database.ExecuteSqlInterpolatedAsync($@"
-DELETE FROM mabarchive.g_tlkpproject
-WHERE parentproject IN (
-    SELECT DISTINCT parentproject
-    FROM fps.tlkpproject
-    WHERE fpsyear = {targetYear}
-)
-", cancellationToken);
+            var yearProjectKeys = _context.MaSrcTlkpProject
+                .Where(p => p.FpsYear == targetYear)
+                .Select(p => p.ParentProject)
+                .Distinct();
+
+            var projectDeleteCount = await _context.MaDstGTlkpProject
+                .Where(p => yearProjectKeys.Contains(p.ParentProject))
+                .ExecuteDeleteAsync(cancellationToken);
 
             totalRowsAffected += projectDeleteCount;
             _logger.LogInformation("Deleted {RowCount} rows from mabarchive.g_tlkpproject (project-based delete for year {Year})", projectDeleteCount, targetYear);

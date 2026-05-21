@@ -3,13 +3,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.MabArchive.Loaders;
 
-internal sealed class MyTblAnimalsDotNetLoader : MabArchiveDotNetLoaderBase
+internal sealed class MyTblAnimalsLoader : MabArchiveLinqLoaderBase
 {
     public override int Sequence => 23;
 
     public override string Name => "my_tblanimals";
 
-    protected override async Task<int> LoadWithDotNetAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
+    protected override async Task<int> LoadCoreAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
     {
         var rows = await context.MaSrcTblAnimals
             .AsNoTracking()
