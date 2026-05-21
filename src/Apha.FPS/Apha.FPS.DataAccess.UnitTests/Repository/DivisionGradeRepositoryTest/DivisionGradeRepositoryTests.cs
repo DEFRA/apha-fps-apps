@@ -481,6 +481,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.DivisionGradeRepositoryTest
         #region Sorting Tests
 
         [Theory]
+        [InlineData("DivisionGradeCode", false, "A-BSD", "B-VSD")]
+        [InlineData("DivisionGradeCode", true, "B-VSD", "A-BSD")]
         [InlineData("gradecode", false, "A", "B")]
         [InlineData("gradecode", true, "B", "A")]
         [InlineData("division", false, "BSD", "VSD")]
@@ -550,7 +552,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.DivisionGradeRepositoryTest
         }
 
         [Fact]
-        public async Task GetAllPagedAsync_SortsByDivisionGradeCodeAsc_WhenSortByIsDivisionGradeCode()
+        public async Task GetAllPagedAsync_SortsByDivisionGradeCodeDesc_WhenSortByIsDivisionGradeCodeAndDescendingTrue()
         {
             var grades = new List<DivisionGrade>
             {
@@ -559,10 +561,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.DivisionGradeRepositoryTest
                 BuildDivisionGrade("B-VSD")
             };
             var repo = CreateRepository(divisionGrades: grades);
-            // "divisiongradeCode" toLowerInvariant = "divisiongradecode" which hits the default _ branch (ascending)
-            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "divisiongradeCode", Descending = true };
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "DivisionGradeCode", Descending = true };
             var result = await repo.GetAllPagedAsync(query);
-            Assert.Equal("A-VSD", result.Data.First().DivisionGradeCode);
+            Assert.Equal("C-VSD", result.Data.First().DivisionGradeCode);
         }
 
         #endregion

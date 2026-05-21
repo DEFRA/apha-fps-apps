@@ -38,7 +38,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             viewModel.SelectedYear = year;
             await PopulateDropdownsAsync(viewModel);
 
-            var defaultRequest = new PaginationFilter<string> { Filter = "{}" };
+            var defaultRequest = new PaginationFilter<string> { Filter = "{}", SortBy = "DivisionGradeCode", Descending = false };
             viewModel.DivisionGradeGrid = await GetDivisionGradeGridConfigAsync(defaultRequest);
 
             return View(viewModel);

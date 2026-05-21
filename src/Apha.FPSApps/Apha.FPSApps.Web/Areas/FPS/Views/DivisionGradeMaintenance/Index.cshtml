@@ -126,16 +126,18 @@
         }
 
         function saveDivisionGrade() {
-            var isEdit = $('#hdnIsEdit').val() === 'true';
-            var originalCode = $('#hdnOriginalCode').val();
+            clearValidationErrors('#modaPopupBody');
+            var form = $('#addDivisionGradeForm');
 
-            var gradeCodeVal = $('#GradeCode').val();
-            var divisionVal = $('#Division').val();
+            if (!isFormValid(form)) {
+                displayClientValidationErrors(form, '#modaPopupBody');
+                return;
+            }
 
             var dto = {
-                DivisionGradeCode: isEdit ? originalCode : $('#DivisionGradeCode').val(),
-                GradeCode: gradeCodeVal || null,
-                Division: divisionVal || null,
+                DivisionGradeCode: $('#DivisionGradeCode').val(),
+                GradeCode: $('#GradeCode').val() || null,
+                Division: $('#Division').val() || null,
                 ChargeRate: parseDecimalOrNull($('#ChargeRate').val()),
                 DirectRate: parseDecimalOrNull($('#DirectRate').val()),
                 PayRate: parseDecimalOrNull($('#PayRate').val()),
@@ -143,45 +145,72 @@
                 Ohr: parseDecimalOrNull($('#Ohr').val())
             };
 
-            var url = isEdit
-                ? '/FPS/DivisionGradeMaintenance/Edit?id=' + encodeURIComponent(originalCode)
-                : '/FPS/DivisionGradeMaintenance/Create';
-
             $.ajax({
-                url: url,
+                url: '/FPS/DivisionGradeMaintenance/Create',
                 type: 'POST',
                 data: JSON.stringify(dto),
                 contentType: 'application/json; charset=utf-8',
                 success: function (data) {
                     if (data.success) {
-                        var newCode = !isEdit ? dto.DivisionGradeCode : null;
+                        alert(data.message || 'Division grade created successfully.');
                         closeModal();
                         reloadDivisionGradeGrid();
-                        if (newCode) {
-                            // After grid reloads, find the new row by its data-id, move it to top and highlight it
-                            var attempts = 0;
-                            var maxAttempts = 20;
-                            var interval = setInterval(function () {
-                                attempts++;
-                                var $row = $('tr[data-id="' + newCode + '"], td:contains("' + newCode + '")').closest('tr');
-                                if ($row.length) {
-                                    clearInterval(interval);
-                                    var $tbody = $row.closest('tbody');
-                                    $tbody.prepend($row);
-                                    $row.addClass('sup_highlight_new');
-                                    setTimeout(function () { $row.removeClass('sup_highlight_new'); }, 3000);
-                                    $row[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                                } else if (attempts >= maxAttempts) {
-                                    clearInterval(interval);
-                                }
-                            }, 150);
-                        }
                     } else {
-                        alert('Save failed: ' + (data.message || 'Unknown error.'));
+                        displayServerValidationErrors(data.errors, data.message, '#modaPopupBody');
                     }
                 },
-                error: function () {
-                    alert('An error occurred while saving.');
+                error: function (xhr) {
+                    if (xhr.status === 400 && xhr.responseJSON) {
+                        displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
+                    } else {
+                        alert('An error occurred while saving.');
+                    }
+                }
+            });
+        }
+
+        function updateDivisionGrade() {
+            clearValidationErrors('#modaPopupBody');
+            var form = $('#editDivisionGradeForm');
+
+            if (!isFormValid(form)) {
+                displayClientValidationErrors(form, '#modaPopupBody');
+                return;
+            }
+
+            var originalCode = $('#hdnOriginalCode').val();
+
+            var dto = {
+                DivisionGradeCode: originalCode,
+                GradeCode: $('#GradeCode').val() || null,
+                Division: $('#Division').val() || null,
+                ChargeRate: parseDecimalOrNull($('#ChargeRate').val()),
+                DirectRate: parseDecimalOrNull($('#DirectRate').val()),
+                PayRate: parseDecimalOrNull($('#PayRate').val()),
+                Npr: parseDecimalOrNull($('#Npr').val()),
+                Ohr: parseDecimalOrNull($('#Ohr').val())
+            };
+
+            $.ajax({
+                url: '/FPS/DivisionGradeMaintenance/Edit?id=' + encodeURIComponent(originalCode),
+                type: 'POST',
+                data: JSON.stringify(dto),
+                contentType: 'application/json; charset=utf-8',
+                success: function (data) {
+                    if (data.success) {
+                        alert(data.message || 'Division grade updated successfully.');
+                        closeModal();
+                        reloadDivisionGradeGrid();
+                    } else {
+                        displayServerValidationErrors(data.errors, data.message, '#modaPopupBody');
+                    }
+                },
+                error: function (xhr) {
+                    if (xhr.status === 400 && xhr.responseJSON) {
+                        displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
+                    } else {
+                        alert('An error occurred while saving.');
+                    }
                 }
             });
         }

@@ -2,7 +2,9 @@
 @{
     var isEditMode = !string.IsNullOrWhiteSpace(Model?.DivisionGradeCode);
     var title = isEditMode ? "Edit Division Grade" : "Add Division Grade";
+    var formId = isEditMode ? "editDivisionGradeForm" : "addDivisionGradeForm";
     var saveLabel = isEditMode ? "Update" : "Save";
+    var saveAction = isEditMode ? "updateDivisionGrade()" : "saveDivisionGrade()";
 }
 
 <div class="modal-header">
@@ -21,23 +23,23 @@
         </div>
     </div>
     <div class="row g-3">
-        <form id="maintDGForm">
+        <form id="@formId">
             <input type="hidden" id="hdnIsEdit" value="@(isEditMode ? "true" : "false")" />
             <input type="hidden" id="hdnOriginalCode" value="@(Model?.DivisionGradeCode ?? string.Empty)" />
 
             @if (!isEditMode)
             {
                 <div class="govuk-form-group sup_margin_0">
-                    <label class="govuk-label" asp-for="DivisionGradeCode">Division Grade <span class="sup_color_red">*</span></label>
+                    <label class="govuk-label" for="DivisionGradeCode">Division Grade <span class="sup_color_red">*</span></label>
                     <input type="text" id="DivisionGradeCode" name="DivisionGradeCode"
                            class="govuk-input" required maxlength="50">
-                    <span asp-validation-for="DivisionGradeCode" class="govuk-error-message" style="display:none;"></span>
+                    <span data-valmsg-for="DivisionGradeCode" class="govuk-error-message field-validation-valid" style="display:none;"></span>
                 </div>
             }
             else
             {
                 <div class="govuk-form-group sup_margin_0">
-                    <label class="govuk-label" asp-for="DivisionGradeCode">Division Grade</label>
+                    <label class="govuk-label" for="DivisionGradeCode">Division Grade</label>
                     <input type="text" id="DivisionGradeCode" name="DivisionGradeCode"
                            class="govuk-input govuk-input--disabled" readonly
                            value="@Model!.DivisionGradeCode">
@@ -45,68 +47,68 @@
             }
 
             <div class="govuk-form-group sup_margin_0">
-                <label class="govuk-label" asp-for="GradeCode">Grade Code <span class="sup_color_red">*</span></label>
+                <label class="govuk-label" for="GradeCode">Grade Code <span class="sup_color_red">*</span></label>
                 <select id="GradeCode" name="GradeCode" required
                         class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
                         aria-label="Select grade code">
                     <option value="">-- Select --</option>
                 </select>
-                <span asp-validation-for="GradeCode" class="govuk-error-message" style="display:none;"></span>
+                <span data-valmsg-for="GradeCode" class="govuk-error-message field-validation-valid" style="display:none;"></span>
             </div>
 
             <div class="govuk-form-group sup_margin_0">
-                <label class="govuk-label" asp-for="Division">Division <span class="sup_color_red">*</span></label>
+                <label class="govuk-label" for="Division">Division <span class="sup_color_red">*</span></label>
                 <select id="Division" name="Division" required
                         class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
                         aria-label="Select division">
                     <option value="">-- Select --</option>
                 </select>
-                <span asp-validation-for="Division" class="govuk-error-message" style="display:none;"></span>
+                <span data-valmsg-for="Division" class="govuk-error-message field-validation-valid" style="display:none;"></span>
             </div>
 
             <div class="govuk-form-group sup_margin_0">
-                <label class="govuk-label" asp-for="ChargeRate">Charge Rate</label>
+                <label class="govuk-label" for="ChargeRate">Charge Rate</label>
                 <div class="govuk-input__wrapper">
                     <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                    <input type="number" step="0.01" id="ChargeRate" asp-for="ChargeRate" class="govuk-input" min="0">
+                    <input type="number" step="0.01" id="ChargeRate" name="ChargeRate" asp-for="ChargeRate" class="govuk-input" min="0">
                 </div>
-                <span asp-validation-for="ChargeRate" class="govuk-error-message" style="display:none;"></span>
+                <span data-valmsg-for="ChargeRate" class="govuk-error-message field-validation-valid" style="display:none;"></span>
             </div>
 
             <div class="govuk-form-group sup_margin_0">
-                <label class="govuk-label" asp-for="DirectRate">Direct Rate</label>
+                <label class="govuk-label" for="DirectRate">Direct Rate</label>
                 <div class="govuk-input__wrapper">
                     <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                    <input type="number" step="0.01" id="DirectRate" asp-for="DirectRate" class="govuk-input" min="0">
+                    <input type="number" step="0.01" id="DirectRate" name="DirectRate" asp-for="DirectRate" class="govuk-input" min="0">
                 </div>
-                <span asp-validation-for="DirectRate" class="govuk-error-message" style="display:none;"></span>
+                <span data-valmsg-for="DirectRate" class="govuk-error-message field-validation-valid" style="display:none;"></span>
             </div>
 
             <div class="govuk-form-group sup_margin_0">
-                <label class="govuk-label" asp-for="PayRate">Pay Rate</label>
+                <label class="govuk-label" for="PayRate">Pay Rate</label>
                 <div class="govuk-input__wrapper">
                     <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                    <input type="number" step="0.01" id="PayRate" asp-for="PayRate" class="govuk-input" min="0">
+                    <input type="number" step="0.01" id="PayRate" name="PayRate" asp-for="PayRate" class="govuk-input" min="0">
                 </div>
-                <span asp-validation-for="PayRate" class="govuk-error-message" style="display:none;"></span>
+                <span data-valmsg-for="PayRate" class="govuk-error-message field-validation-valid" style="display:none;"></span>
             </div>
 
             <div class="govuk-form-group sup_margin_0">
-                <label class="govuk-label" asp-for="Npr">NPR</label>
+                <label class="govuk-label" for="Npr">NPR</label>
                 <div class="govuk-input__wrapper">
                     <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                    <input type="number" step="0.01" id="Npr" asp-for="Npr" class="govuk-input" min="0">
+                    <input type="number" step="0.01" id="Npr" name="Npr" asp-for="Npr" class="govuk-input" min="0">
                 </div>
-                <span asp-validation-for="Npr" class="govuk-error-message" style="display:none;"></span>
+                <span data-valmsg-for="Npr" class="govuk-error-message field-validation-valid" style="display:none;"></span>
             </div>
 
             <div class="govuk-form-group sup_margin_0">
-                <label class="govuk-label" asp-for="Ohr">OHR</label>
+                <label class="govuk-label" for="Ohr">OHR</label>
                 <div class="govuk-input__wrapper">
                     <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                    <input type="number" step="0.01" id="Ohr" asp-for="Ohr" class="govuk-input" min="0">
+                    <input type="number" step="0.01" id="Ohr" name="Ohr" asp-for="Ohr" class="govuk-input" min="0">
                 </div>
-                <span asp-validation-for="Ohr" class="govuk-error-message" style="display:none;"></span>
+                <span data-valmsg-for="Ohr" class="govuk-error-message field-validation-valid" style="display:none;"></span>
             </div>
         </form>
     </div>
@@ -115,7 +117,7 @@
     <button class="govuk-button govuk-button--secondary sup_margin_0" data-module="govuk-button"
             data-bs-dismiss="modal" onclick="closeModal()">Cancel</button>
     <button class="govuk-button sup_margin_0" data-module="govuk-button"
-            type="button" onclick="if(validateMaintDGForm()) saveDivisionGrade()">@saveLabel</button>
+            type="button" onclick="@saveAction">@saveLabel</button>
 </div>
 
 <script>
@@ -127,7 +129,6 @@
     });
 
     function loadMaintDGDropdowns() {
-        // Load grade codes
         $.ajax({
             url: '@Url.Action("GetDistinctGradeCodes", "DivisionGradeMaintenance", new { area = "FPS" })',
             type: 'GET',
@@ -148,7 +149,6 @@
             }
         });
 
-        // Load divisions
         $.ajax({
             url: '@Url.Action("GetDistinctDivisions", "DivisionGradeMaintenance", new { area = "FPS" })',
             type: 'GET',
@@ -168,54 +168,5 @@
                 $('#Division').append($('<option></option>').text('Error loading divisions'));
             }
         });
-    }
-
-    // ── Client-side validation ──────────────────────────────────────────────
-    function validateMaintDGForm() {
-        var isValid = true;
-        var errorItems = [];
-        var isEdit = $('#hdnIsEdit').val() === 'true';
-
-        // Clear all previous error states
-        $('#maintDGForm .govuk-form-group').removeClass('govuk-form-group--error');
-        $('#maintDGForm .govuk-error-message').text('').hide();
-        $('.govuk-error-summary').hide();
-        $('.govuk-error-summary__list').empty();
-
-        // Helper: mark a field invalid
-        function markInvalid(fieldId, message) {
-            var $field = $('#' + fieldId);
-            $field.closest('.govuk-form-group').addClass('govuk-form-group--error');
-            var $span = $field.closest('.govuk-form-group').find('.govuk-error-message');
-            $span.text(message).show();
-            errorItems.push('<li><a href="#' + fieldId + '">' + message + '</a></li>');
-            isValid = false;
-        }
-
-        // Division Grade Code — add mode only
-        if (!isEdit) {
-            var dgCode = $.trim($('#DivisionGradeCode').val());
-            if (!dgCode) {
-                markInvalid('DivisionGradeCode', 'Division Grade is required.');
-            }
-        }
-
-        // Grade Code
-        if (!$('#GradeCode').val()) {
-            markInvalid('GradeCode', 'Grade code is required.');
-        }
-
-        // Division
-        if (!$('#Division').val()) {
-            markInvalid('Division', 'Division is required.');
-        }
-
-        // Show error summary if any failures
-        if (!isValid) {
-            $('.govuk-error-summary__list').html(errorItems.join(''));
-            $('.govuk-error-summary').show().focus();
-        }
-
-        return isValid;
     }
 </script>

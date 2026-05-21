@@ -174,7 +174,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return sortBy?.ToLowerInvariant() switch
             {
-                "divisiongradeCode" => Order(query, x => x.DivisionGradeCode, descending),
+                "divisiongradecode" => Order(query, x => x.DivisionGradeCode, descending),
                 "gradecode"         => Order(query, x => x.GradeCode, descending),
                 "division"          => Order(query, x => x.Division, descending),
                 "chargerate"        => Order(query, x => x.ChargeRate, descending),
