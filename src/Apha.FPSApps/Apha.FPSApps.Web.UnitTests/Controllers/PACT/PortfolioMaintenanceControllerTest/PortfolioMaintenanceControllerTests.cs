@@ -100,7 +100,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioMaintenanceContro
         {
             SetupIndexDefaults();
 
-            var result = await _controller.Index();
+            var result = await _controller.Index(null, null);
 
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<PortfolioMaintenanceViewModel>(viewResult.Model);
@@ -128,12 +128,58 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioMaintenanceContro
                 .Returns(new QueryParameters<string>());
             _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(new PaginationModel());
 
-            var result = await _controller.Index();
+            var result = await _controller.Index(null, null);
 
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<PortfolioMaintenanceViewModel>(viewResult.Model);
             Assert.Empty(model.PortfolioOptions);
             Assert.Empty(model.Programs);
+        }
+
+        [Fact]
+        public async Task Index_WithPortfolioParameter_SetsViewBagSelectedPortfolio()
+        {
+            SetupIndexDefaults();
+
+            var result = await _controller.Index("PP1", null);
+
+            var viewResult = Assert.IsType<ViewResult>(result);
+            Assert.Equal("PP1", _controller.ViewBag.SelectedPortfolio);
+        }
+
+        [Fact]
+        public async Task Index_WithWorkGroupParameter_SetsViewBagSourceWorkGroup()
+        {
+            SetupIndexDefaults();
+
+            var result = await _controller.Index(null, "WG1");
+
+            var viewResult = Assert.IsType<ViewResult>(result);
+            Assert.Equal("WG1", _controller.ViewBag.SourceWorkGroup);
+        }
+
+        [Fact]
+        public async Task Index_WithBothParameters_SetsBothViewBagValues()
+        {
+            SetupIndexDefaults();
+
+            var result = await _controller.Index("PP1", "WG1");
+
+            var viewResult = Assert.IsType<ViewResult>(result);
+            Assert.Equal("PP1", _controller.ViewBag.SelectedPortfolio);
+            Assert.Equal("WG1", _controller.ViewBag.SourceWorkGroup);
+        }
+
+        [Fact]
+        public async Task Index_WithNullParameters_SetsViewBagValuesToNull()
+        {
+            SetupIndexDefaults();
+
+            var result = await _controller.Index(null, null);
+
+            var viewResult = Assert.IsType<ViewResult>(result);
+            Assert.Null(_controller.ViewBag.SelectedPortfolio);
+            Assert.Null(_controller.ViewBag.SourceWorkGroup);
         }
 
         // ── LOAD CONSTITUENT TEST GRID ─────────────────────────────────────────

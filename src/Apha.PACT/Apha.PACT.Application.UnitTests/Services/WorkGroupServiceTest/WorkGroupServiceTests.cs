@@ -265,5 +265,155 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
         }
 
         #endregion
+
+        #region GetWorkGroupValidTimeCodeAsync
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_WithData_ReturnsMappedPaginatedResult()
+        {
+            var query      = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string>();
+            var pagedData  = new PagedData<WorkGroupValidTimeCode>(
+                [new WorkGroupValidTimeCode { WorkGroup = "WG1", TimeCode = "TC1", ParentProject = "PP1" }],
+                new PaginationData { TotalRecords = 1 });
+            var dto      = new WorkGroupValidTimeCodeDto { WorkGroup = "WG1", TimeCode = "TC1" };
+            var expected = new PaginatedResult<WorkGroupValidTimeCodeDto> { Data = [dto] };
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetWorkGroupValidTimeCodeAsync(mappedParams, "WG1").Returns(pagedData);
+            _mockMapper.Map<PaginatedResult<WorkGroupValidTimeCodeDto>>(pagedData).Returns(expected);
+
+            var result = await _sut.GetWorkGroupValidTimeCodeAsync(query, "WG1");
+
+            result.Should().Be(expected);
+            _mockMapper.Received(1).Map<PaginationParameters<string>>(query);
+            await _mockRepository.Received(1).GetWorkGroupValidTimeCodeAsync(mappedParams, "WG1");
+            _mockMapper.Received(1).Map<PaginatedResult<WorkGroupValidTimeCodeDto>>(pagedData);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_EmptyData_ReturnsMappedEmptyResult()
+        {
+            var query        = new QueryParameters<string> { Page = 2, PageSize = 5 };
+            var mappedParams = new PaginationParameters<string>();
+            var pagedData    = new PagedData<WorkGroupValidTimeCode>([], new PaginationData { TotalRecords = 0 });
+            var expected     = new PaginatedResult<WorkGroupValidTimeCodeDto> { Data = [] };
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetWorkGroupValidTimeCodeAsync(mappedParams, "WG2").Returns(pagedData);
+            _mockMapper.Map<PaginatedResult<WorkGroupValidTimeCodeDto>>(pagedData).Returns(expected);
+
+            var result = await _sut.GetWorkGroupValidTimeCodeAsync(query, "WG2");
+
+            result.Data.Should().BeEmpty();
+            await _mockRepository.Received(1).GetWorkGroupValidTimeCodeAsync(mappedParams, "WG2");
+        }
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_MapsQueryParametersBeforeCallingRepository()
+        {
+            var query        = new QueryParameters<string> { Page = 3, PageSize = 20, SortBy = "TimeCode" };
+            var mappedParams = new PaginationParameters<string> { Page = 3, PageSize = 20, SortBy = "TimeCode" };
+            var pagedData    = new PagedData<WorkGroupValidTimeCode>([], new PaginationData());
+            var expected     = new PaginatedResult<WorkGroupValidTimeCodeDto>();
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetWorkGroupValidTimeCodeAsync(mappedParams, "WG3").Returns(pagedData);
+            _mockMapper.Map<PaginatedResult<WorkGroupValidTimeCodeDto>>(pagedData).Returns(expected);
+
+            await _sut.GetWorkGroupValidTimeCodeAsync(query, "WG3");
+
+            _mockMapper.Received(1).Map<PaginationParameters<string>>(query);
+            await _mockRepository.Received(1).GetWorkGroupValidTimeCodeAsync(mappedParams, "WG3");
+        }
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_RepositoryThrows_PropagatesException()
+        {
+            var query        = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string>();
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetWorkGroupValidTimeCodeAsync(mappedParams, Arg.Any<string>())
+                           .ThrowsAsync(new Exception("DB error"));
+
+            await Assert.ThrowsAsync<Exception>(
+                () => _sut.GetWorkGroupValidTimeCodeAsync(query, "WG1"));
+        }
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_NullWorkGroup_ThrowsBusinessValidationErrorException()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                () => _sut.GetWorkGroupValidTimeCodeAsync(query, null!));
+
+            Assert.Single(ex.Errors);
+            Assert.Equal("WORKGROUP_REQUIRED", ex.Errors[0].Code);
+            Assert.Equal("WorkGroup is required", ex.Errors[0].Message);
+            await _mockRepository.DidNotReceive().GetWorkGroupValidTimeCodeAsync(
+                Arg.Any<PaginationParameters<string>>(), Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_EmptyWorkGroup_ThrowsBusinessValidationErrorException()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                () => _sut.GetWorkGroupValidTimeCodeAsync(query, ""));
+
+            Assert.Single(ex.Errors);
+            Assert.Equal("WORKGROUP_REQUIRED", ex.Errors[0].Code);
+            await _mockRepository.DidNotReceive().GetWorkGroupValidTimeCodeAsync(
+                Arg.Any<PaginationParameters<string>>(), Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_WhitespaceWorkGroup_ThrowsBusinessValidationErrorException()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                () => _sut.GetWorkGroupValidTimeCodeAsync(query, "   "));
+
+            Assert.Single(ex.Errors);
+            Assert.Equal("WORKGROUP_REQUIRED", ex.Errors[0].Code);
+            await _mockRepository.DidNotReceive().GetWorkGroupValidTimeCodeAsync(
+                Arg.Any<PaginationParameters<string>>(), Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_MapperThrowsOnQueryParameters_PropagatesException()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            _mockMapper.Map<PaginationParameters<string>>(query)
+                       .Throws(new InvalidOperationException("Mapping error"));
+
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => _sut.GetWorkGroupValidTimeCodeAsync(query, "WG1"));
+
+            await _mockRepository.DidNotReceive().GetWorkGroupValidTimeCodeAsync(
+                Arg.Any<PaginationParameters<string>>(), Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_MapperThrowsOnResult_PropagatesException()
+        {
+            var query        = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string>();
+            var pagedData    = new PagedData<WorkGroupValidTimeCode>([], new PaginationData());
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetWorkGroupValidTimeCodeAsync(mappedParams, "WG1").Returns(pagedData);
+            _mockMapper.Map<PaginatedResult<WorkGroupValidTimeCodeDto>>(pagedData)
+                       .Throws(new InvalidOperationException("Result mapping error"));
+
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => _sut.GetWorkGroupValidTimeCodeAsync(query, "WG1"));
+        }
+
+        #endregion
     }
 }

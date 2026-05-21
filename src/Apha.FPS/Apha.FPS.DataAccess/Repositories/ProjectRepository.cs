@@ -1116,11 +1116,11 @@ namespace Apha.FPS.DataAccess.Repositories
             // Calculate staff costs by summing Cost from TimeCostCalcsViews per Project (JobCode)
             var staffCosts = await (
                 from sj in _dbContext.StaffJobs
-                join wge in _dbContext.WgEmployees
+                join wge in _dbContext.WorkGroupEmployees
                     on sj.StaffId equals wge.PactId                   
                 join wgg in _dbContext.WorkgroupGrades
                     on wge.WorkGroupGrade equals wgg.WgGrade 
-                join pcg in _dbContext.ProfitcentreGrades
+                join pcg in _dbContext.ProfitCentreGrades
                     on wgg.ProfitCentreGrade equals pcg.PcGrade                   
                 join p in _dbContext.Projects
                     on sj.JobCode equals p.ParentProject

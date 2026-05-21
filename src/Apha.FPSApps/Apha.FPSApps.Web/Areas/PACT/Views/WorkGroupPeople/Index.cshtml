@@ -143,5 +143,6 @@
     <script src="~/js/pact_js/work-group-people.js"></script>
     <script>
         peopleGridId = '@Model.PeopleGrid.GridId';
+        preselectedWorkGroup = '@Html.Raw(Model.SelectedWorkGroup ?? "")';
     </script>
 }

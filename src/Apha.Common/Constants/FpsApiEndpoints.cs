@@ -109,6 +109,22 @@ namespace Apha.Common.Constants
         public const string GetMonthlyOutputTotalsByProject = "api/v1/MonthlyOutput/totals?projectCode={0}";
         public const string DeleteMonthlyOutput = "api/v1/MonthlyOutput";
 
+        // Resource Set-Up — Profit Centres
+        public const string GetProfitCentres = "api/v1/profitcentres";
+
+        // Resource Set-Up — PC Grades
+        public const string GetPcGrades = "api/v1/pcgrades?profitCentre={0}";
+
+        // Resource Set-Up — WG Grades
+        public const string GetWgGrades = "api/v1/wggrades?pcGrade={0}";
+
+        // Resource Set-Up — WG Staff
+        public const string GetWgStaff = "api/v1/wgstaff?wgGrade={0}";
+        public const string GetWgEmployeeById = "api/v1/wgstaff/{0}";
+        public const string UpdateWgEmployee = "api/v1/wgstaff";
+        public const string DeleteWgEmployee = "api/v1/wgstaff/{0}";
+        public const string DeleteWgGrade = "api/v1/wggrades/{0}";
+
         // Project profitability (merged into project route)
         public const string GetProjectProfitability = "api/v1/project/profitability/{0}";
     }
