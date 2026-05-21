@@ -164,7 +164,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProfitCentreControllerTest
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            Assert.Equal(true, okResult.Value);
+            Assert.True((bool)okResult.Value!);
             await _serviceMock.Received(1).UpdateProfitCentreSettingsAsync("PC001", -1, -1, 1);
         }
 
@@ -221,7 +221,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProfitCentreControllerTest
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            Assert.Equal(false, okResult.Value);
+            Assert.False((bool)okResult.Value!);
         }
 
         [Fact]
