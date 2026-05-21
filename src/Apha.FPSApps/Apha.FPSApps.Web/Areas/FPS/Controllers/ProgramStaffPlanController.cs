@@ -1,7 +1,9 @@
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Web.Areas.FPS.Models;
+using Apha.FPSApps.Web.Constants;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
+using Apha.Common.Utilities.StateManagement;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -15,16 +17,28 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
     public class ProgramStaffPlanController : Controller
     {
         private readonly IProgramService _programService;
+        private readonly IAppStateService _appStateService;
 
-        public ProgramStaffPlanController(IProgramService programService)
+        public ProgramStaffPlanController(IProgramService programService, IAppStateService appStateService)
         {
             _programService = programService;
+            _appStateService = appStateService;
         }
 
         public async Task<IActionResult> Index(string? programNo = null)
         {
             var programmeList = await GetProgrammeListAsync();
-            var selectedProgramNo = programNo ?? string.Empty;
+
+            // Fall back to session if no programNo provided
+            if (string.IsNullOrWhiteSpace(programNo))
+                programNo = await _appStateService.GetSessionAsync<string>(SessionKeys.SelectedProgramNo);
+
+            var selectedProgramNo = !string.IsNullOrWhiteSpace(programNo) && programmeList.Any(p => p.Value == programNo)
+                ? programNo
+                : programmeList.FirstOrDefault()?.Value ?? string.Empty;
+
+            await _appStateService.SetSessionAsync(SessionKeys.SelectedProgramNo, selectedProgramNo);
+
             var programInfo = await GetProgramInfoAsync(selectedProgramNo);
 
             var projectsGrid = new DataGridConfig<ProjectViewModel>

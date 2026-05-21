@@ -178,6 +178,13 @@
 
         $('#projectSelect').on('change', function () {
             currentProjectCode = $(this).val();
+            // Persist project code to session
+            $.ajax({
+                url: '@Url.Action("SaveProjectSession", "ProgramProject", new { area = "FPS" })',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(currentProjectCode)
+            });
             $('#summary-project-code').val(currentProjectCode);
             $('#summary-project-description').val('');
             $('#summary-program').val('');

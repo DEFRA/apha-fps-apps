@@ -1,6 +1,7 @@
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
+using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Web.Areas.FPS.Controllers;
 using Apha.FPSApps.Web.Areas.FPS.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -12,12 +13,14 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramAdditionalCostPlanCo
     public class ProgramAdditionalCostPlanControllerTests
     {
         private readonly IProgramService _programService;
+        private readonly IAppStateService _appStateService;
         private readonly ProgramAdditionalCostPlanController _controller;
 
         public ProgramAdditionalCostPlanControllerTests()
         {
             _programService = Substitute.For<IProgramService>();
-            _controller = new ProgramAdditionalCostPlanController(_programService);
+            _appStateService = Substitute.For<IAppStateService>();
+            _controller = new ProgramAdditionalCostPlanController(_programService, _appStateService);
         }
 
         private static JsonElement GetJsonResultElement(JsonResult jsonResult)

@@ -54,6 +54,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             await _appStateService.SetSessionAsync(SessionKeys.SelectedProgramNo, selectedProgramNo);
 
+            var selectedProjectCode = await _appStateService.GetSessionAsync<string>(SessionKeys.SelectedProjectCode)
+                ?? string.Empty;
+
             var projectsGrid = new DataGridConfig<ProgramProjectItem>
             {
                 GridId = "programProjectGrid",
@@ -78,6 +81,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var model = new ProgramProjectViewModel
             {
                 SelectedProgramNo = selectedProgramNo,
+                SelectedProjectCode = selectedProjectCode,
                 ProgrammeList = programmeList,
                 ProjectsGrid = projectsGrid
             };
@@ -257,6 +261,16 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 transferIncome   = result.Data.Sum(p => (decimal)p.TransferIncome),
                 planCaseWorkDebit = result.Data.Sum(p => p.PlanCaseWorkDebit ?? 0M)
             });
+        }
+
+        /// <summary>
+        /// POST: saves the selected project code to session (called client-side via AJAX).
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> SaveProjectSession([FromBody] string projectCode)
+        {
+            await _appStateService.SetSessionAsync(SessionKeys.SelectedProjectCode, projectCode);
+            return Ok();
         }
 
         /// <summary>
