@@ -13,8 +13,7 @@ namespace Apha.PACT.Application.Services
         private const string StatusSent    = "Sent";
         private const string StatusSkipped = "Skipped";
         private const string StatusFailed  = "Failed";
-
-        // Access stores True as -1 for Yes/No fields
+        
         private const int AccessTrue = -1;
 
         private readonly IWorkGroupReportRepository _workGroupReportRepository;
@@ -66,8 +65,7 @@ namespace Apha.PACT.Application.Services
             bool sendOutputSheet,
             short timesheetLayout,
             CancellationToken cancellationToken)
-        {
-            // Access: If IsNull(rst!Email_Recipient) Then MsgBox ... GoTo Next_Record
+        {            
             if (string.IsNullOrWhiteSpace(workGroup.EmailRecipient))
             {
                 return new WorkGroupReportEmailResultDto
@@ -83,10 +81,6 @@ namespace Apha.PACT.Application.Services
 
             try
             {
-                // Access sends two separate emails — one per sheet type.
-                // ldoMakeTimeSheet  → Subject: "MARS Time Sheets - {WG}{MM}TS.xls"
-                // ldoMakeOutputSheet → Subject: "MARS Output Sheets - {WG}{MM}OP.xls"
-
                 if (sendTimeSheet)
                 {
                     var templateRows = await _workGroupReportRepository
@@ -157,19 +151,7 @@ namespace Apha.PACT.Application.Services
                 };
             }
         }
-
-        /// <summary>
-        /// Builds the time-sheet Excel from template rows (blank Hours — recipient fills in).
-        ///
-        /// Flat-file (layout=1) — mirrors Access ldoMakeTimeSheet layout=1:
-        ///   Columns: WorkGroup | Name | TimeCode | ParentProject | Month | Hours
-        ///   One row per (Staff, TimeCode, ParentProject) ordered by WorkGroup, Name, TimeCode, ParentProject.
-        ///
-        /// Cross-tab (layout=2) — mirrors Access TRANSFORM Null AS Hours ... PIVOT tblStaff.Name:
-        ///   Fixed cols : TimeCode | Description | ParentProject | Month
-        ///   Dynamic cols: one blank column per distinct staff name (the pivot)
-        ///   (Description = IIf(IsNull(JobCode), ItemDescription, JobCodeName))
-        /// </summary>
+       
         private static byte[] BuildTimeSheetExcel(
             string workGroupName,
             short monthNumber,
@@ -241,8 +223,7 @@ namespace Apha.PACT.Application.Services
             return stream.ToArray();
         }
         /// <summary>
-        /// Builds the output-sheet Excel from template rows (blank Volume — recipient fills in).
-        /// Mirrors Access ldoMakeOutputSheet:
+        /// Builds the output-sheet Excel from template rows (blank Volume — recipient fills in).       
         ///   Columns: WorkGroup | TestCode | ItemDescription | Buyer | Month | Volume
         /// </summary>
         private static byte[] BuildOutputSheetExcel(

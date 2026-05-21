@@ -24,45 +24,12 @@ namespace Apha.PACT.DataAccess.Repository
                 .OrderBy(w => w.WorkGroupName)
                 .ToListAsync();
         }
-
-        /// <summary>
-        /// Mirrors Access ldoMakeTimeSheet conditional SQL.
-        ///
-        /// Layout=1 (Flat-file):
-        ///   SELECT TimeCodeValid.WorkGroup, tblStaff.Name, TimeCodeValid.TimeCode,
-        ///          TimeCodeValid.ParentProject, &lt;month&gt; AS Month, Null AS Hours
-        ///   FROM (TimeCodeValid INNER JOIN WorkGroupGrade ON TimeCodeValid.WorkGroup = WorkGroupGrade.WorkGroup)
-        ///        INNER JOIN tblStaff ON WorkGroupGrade.WG_Grade = tblStaff.WorkGroupGrade
-        ///   WHERE TimeCodeValid.WorkGroup = ? AND TimeCodeValid.Active &lt;&gt; 0
-        ///   ORDER BY WorkGroup, Name, TimeCode, ParentProject
-        ///   (vPacttblStaff = PactStaffView, vPactWorkGroupGrade = PactWorkGroupGradeView)
-        ///
-        /// Layout=2 (Cross-tab):
-        ///   TRANSFORM Null AS Hours
-        ///   SELECT TimeCodeValid.TimeCode,
-        ///          First(IIf(IsNull(JobCode), ItemDescription, JobCodeName)) AS Description,
-        ///          TimeCodeValid.ParentProject
-        ///   FROM tlkpJobCode RIGHT JOIN ((TimeCodeValid INNER JOIN WorkGroupGrade ...) INNER JOIN tblStaff ...)
-        ///        LEFT JOIN TestOrProduct ON TimeCodeValid.TestCode = TestOrProduct.ItemCode
-        ///   WHERE WorkGroup = ? AND Active &lt;&gt; 0 AND tblStaff.PersonStatus &lt;&gt; 'I'
-        ///   GROUP BY TimeCode, ParentProject
-        ///   PIVOT tblStaff.Name
-        /// </summary>
+        
         public async Task<IEnumerable<TimeSheetTemplateRow>> GetTimeSheetTemplateAsync(
             string workGroup, short month, short layout)
         {
             if (layout == 2)
-            {
-                // Cross-tab: grouped (TimeCode, Description, ParentProject)
-                // Joins: TimeCodeValid → PactWorkGroupGradeView → PactStaffView
-                //        LEFT JOIN JobCodes for JobCodeName
-                //        LEFT JOIN TestorProducts for ItemDescription
-                // Description = IIf(IsNull(JobCode), ItemDescription, JobCodeName)
-                // Filter: PersonStatus <> 'I' (active staff only — mirrors Access XTAB)
-                // Staff names pivot to columns in Access; here they are captured as
-                // comma-separated in StaffName for reference (builder emits one blank Hours col)
-                // Fetch a flat projection first — PostgreSQL cannot do
-                // STRING_AGG(DISTINCT … ORDER BY …) so grouping is done in memory.
+            {                
                 var flat = await (
                     from t  in _context.TimeCodeValids
                     join wg in _context.PactWorkGroupGradeViews on t.WorkGroup equals wg.WorkGroup
@@ -103,10 +70,7 @@ namespace Apha.PACT.DataAccess.Repository
                 return rows;
             }
             else
-            {
-                // Flat-file: one row per (Staff, TimeCode, ParentProject)
-                // Joins: TimeCodeValid → PactWorkGroupGradeView → PactStaffView
-                // ORDER BY WorkGroup, Name, TimeCode, ParentProject
+            {               
                 var rows = await (
                     from t  in _context.TimeCodeValids
                     join wg in _context.PactWorkGroupGradeViews on t.WorkGroup equals wg.WorkGroup
@@ -128,20 +92,7 @@ namespace Apha.PACT.DataAccess.Repository
                 return rows;
             }
         }
-
-        /// <summary>
-        /// Mirrors Access ldoMakeOutputSheet SQL:
-        ///   SELECT tlkpTestCapability.WorkGroup, tlkpTestCapability.TestCode,
-        ///          TestOrProduct.ItemDescription, tlkpTestReqmt.Buyer,
-        ///          &lt;month&gt; AS Month, Null AS Volume
-        ///   FROM TestOrProduct
-        ///        INNER JOIN (tlkpTestReqmt
-        ///             INNER JOIN tlkpTestCapability ON tlkpTestReqmt.TestCode = tlkpTestCapability.TestCode)
-        ///        ON TestOrProduct.ItemCode = tlkpTestCapability.TestCode
-        ///   WHERE tlkpTestReqmt.Active &lt;&gt; 0
-        ///     AND tlkpTestCapability.WorkGroup = ?
-        ///   ORDER BY tlkpTestCapability.WorkGroup, tlkpTestCapability.TestCode, tlkpTestReqmt.Buyer
-        /// </summary>
+        
         public async Task<IEnumerable<OutputSheetTemplateRow>> GetOutputSheetTemplateAsync(
             string workGroup, short month)
         {
