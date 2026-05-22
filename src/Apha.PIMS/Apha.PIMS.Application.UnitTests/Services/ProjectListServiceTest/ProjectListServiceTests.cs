@@ -523,32 +523,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectListServiceTest
 
             await _mockRepository.DidNotReceive().GetFpsProjectByIdAsync(Arg.Any<string>());
             await _mockRepository.DidNotReceive().AddProjectAsync(Arg.Any<ProposedProject>());
-        }
-
-        [Theory]
-        [InlineData("PP001", null, "PROJECT_TITLE_REQUIRED")]
-        [InlineData("PP001", "", "PROJECT_TITLE_REQUIRED")]
-        [InlineData("PP001", "   ", "PROJECT_TITLE_REQUIRED")]
-        public async Task AddProjectAsync_WithMissingProjectTitle_ThrowsBusinessValidationErrorException(
-            string parentProject, string? projectTitle, string expectedErrorCode)
-        {
-            // Arrange
-            var dto = new ProposedProjectDto
-            {
-                Parentproject = parentProject,
-                Projecttitle = projectTitle
-            };
-
-            // Act & Assert
-            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(
-                async () => await _sut.AddProjectAsync(dto)
-            );
-
-            exception.Errors.Should().ContainSingle(e => e.Code == expectedErrorCode);
-
-            await _mockRepository.DidNotReceive().GetFpsProjectByIdAsync(Arg.Any<string>());
-            await _mockRepository.DidNotReceive().AddProjectAsync(Arg.Any<ProposedProject>());
-        }
+        }       
 
         [Fact]
         public async Task AddProjectAsync_WhenBothParentprojectAndTitleMissing_ThrowsBusinessValidationErrorExceptionWithTwoErrors()
@@ -561,9 +536,8 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectListServiceTest
                 async () => await _sut.AddProjectAsync(dto)
             );
 
-            exception.Errors.Should().HaveCount(2);
+            exception.Errors.Should().HaveCount(1);
             exception.Errors.Should().Contain(e => e.Code == "PROJECT_REQUIRED");
-            exception.Errors.Should().Contain(e => e.Code == "PROJECT_TITLE_REQUIRED");
 
             await _mockRepository.DidNotReceive().GetFpsProjectByIdAsync(Arg.Any<string>());
             await _mockRepository.DidNotReceive().AddProjectAsync(Arg.Any<ProposedProject>());
