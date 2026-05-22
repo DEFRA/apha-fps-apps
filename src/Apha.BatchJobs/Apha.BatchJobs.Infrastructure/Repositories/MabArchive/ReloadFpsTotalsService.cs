@@ -94,14 +94,14 @@ public sealed class ReloadFpsTotalsService : IReloadFpsTotalsService
                 {
                     t.ParentProject,
                     t.Program,
-                    TotalAdditionalCosts = a != null ? a.TotalAdditionalCosts ?? 0m : 0m,
-                    TotalAnimalCosts = an != null ? (double?)(an.TotalAnimalCosts ?? 0m) : 0d,
-                    TotalStaffCosts = s != null ? (double?)(s.TotalStaffCosts ?? 0m) : 0d,
-                    TotalTestCosts = tst != null ? (double?)(tst.TotalTestCosts ?? 0m) : 0d,
-                    TotalCosts = (a != null ? (double?)(a.TotalAdditionalCosts ?? 0m) : 0d)
-                        + (an != null ? (double?)(an.TotalAnimalCosts ?? 0m) : 0d)
-                        + (s != null ? (double?)(s.TotalStaffCosts ?? 0m) : 0d)
-                        + (tst != null ? (double?)(tst.TotalTestCosts ?? 0m) : 0d)
+                    TotalAdditionalCosts = a.TotalAdditionalCosts ?? 0m,
+                    TotalAnimalCosts = (double?)(an.TotalAnimalCosts ?? 0m),
+                    TotalStaffCosts = (double?)(s.TotalStaffCosts ?? 0m),
+                    TotalTestCosts = (double?)(tst.TotalTestCosts ?? 0m),
+                    TotalCosts = (double?)(a.TotalAdditionalCosts ?? 0m)
+                        + (double?)(an.TotalAnimalCosts ?? 0m)
+                        + (double?)(s.TotalStaffCosts ?? 0m)
+                        + (double?)(tst.TotalTestCosts ?? 0m)
                         + (double?)(t.PlanCaseworkDebit ?? 0m),
                     t.CustIncome,
                     t.TransferIncome,
@@ -113,7 +113,7 @@ public sealed class ReloadFpsTotalsService : IReloadFpsTotalsService
                     t.ProjectStatus,
                     PvsIncome = t.PvsIncome ?? 0m,
                     PlanCaseworkDebit = t.PlanCaseworkDebit ?? 0m,
-                    TotalPayCosts = s != null ? (double?)(s.TotalPayCosts ?? 0m) : 0d,
+                    TotalPayCosts = (double?)(s.TotalPayCosts ?? 0m),
                     t.FpsYear
                 })
                 .Distinct()
