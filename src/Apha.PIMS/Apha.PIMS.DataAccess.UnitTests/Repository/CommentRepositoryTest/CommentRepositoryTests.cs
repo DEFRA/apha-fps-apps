@@ -57,9 +57,9 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
             // Arrange
             var comments = new List<Comment>
             {
-                new() { Commentno = 1, Project = "PP001", Year = 2023, Topic = "Topic1" },
-                new() { Commentno = 2, Project = "PP001", Year = 2024, Topic = "Topic2" },
-                new() { Commentno = 3, Project = "PP002", Year = 2024, Topic = "Topic3" }
+                new() { CommentNo = 1, Project = "PP001", Year = 2023, Topic = "Topic1" },
+                new() { CommentNo = 2, Project = "PP001", Year = 2024, Topic = "Topic2" },
+                new() { CommentNo = 3, Project = "PP002", Year = 2024, Topic = "Topic3" }
             };
             var repo = CreateRepository(comments: comments);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
@@ -79,7 +79,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
             // Arrange
             var comments = new List<Comment>
             {
-                new() { Commentno = 1, Project = "PP002", Year = 2024, Topic = "Topic1" }
+                new() { CommentNo = 1, Project = "PP002", Year = 2024, Topic = "Topic1" }
             };
             var repo = CreateRepository(comments: comments);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
@@ -114,9 +114,9 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
             // Arrange
             var comments = new List<Comment>
             {
-                new() { Commentno = 1, Project = "PP001", Year = 2024, Topic = "A" },
-                new() { Commentno = 2, Project = "PP002", Year = 2024, Topic = "B" },
-                new() { Commentno = 3, Project = "PP003", Year = 2024, Topic = "C" }
+                new() { CommentNo = 1, Project = "PP001", Year = 2024, Topic = "A" },
+                new() { CommentNo = 2, Project = "PP002", Year = 2024, Topic = "B" },
+                new() { CommentNo = 3, Project = "PP003", Year = 2024, Topic = "C" }
             };
             var repo = CreateRepository(comments: comments);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
@@ -139,9 +139,9 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
             // Arrange
             var comments = new List<Comment>
             {
-                new() { Commentno = 1, Project = "PP001", Year = 2022, Topic = "Topic1" },
-                new() { Commentno = 2, Project = "PP001", Year = 2023, Topic = "Topic2" },
-                new() { Commentno = 3, Project = "PP001", Year = 2024, Topic = "Topic3" }
+                new() { CommentNo = 1, Project = "PP001", Year = 2022, Topic = "Topic1" },
+                new() { CommentNo = 2, Project = "PP001", Year = 2023, Topic = "Topic2" },
+                new() { CommentNo = 3, Project = "PP001", Year = 2024, Topic = "Topic3" }
             };
             var repo = CreateRepository(comments: comments);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
@@ -152,7 +152,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
             // Assert
             Assert.Single(result.Data);
             Assert.Equal((short)2023, result.Data.First().Year);
-            Assert.Equal(2, result.Data.First().Commentno);
+            Assert.Equal(2, result.Data.First().CommentNo);
         }
 
         [Fact]
@@ -161,9 +161,9 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
             // Arrange
             var comments = new List<Comment>
             {
-                new() { Commentno = 1, Project = "PP001", Year = 2022, Topic = "Topic1" },
-                new() { Commentno = 2, Project = "PP001", Year = 2023, Topic = "Topic2" },
-                new() { Commentno = 3, Project = "PP001", Year = 2024, Topic = "Topic3" }
+                new() { CommentNo = 1, Project = "PP001", Year = 2022, Topic = "Topic1" },
+                new() { CommentNo = 2, Project = "PP001", Year = 2023, Topic = "Topic2" },
+                new() { CommentNo = 3, Project = "PP001", Year = 2024, Topic = "Topic3" }
             };
             var repo = CreateRepository(comments: comments);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
@@ -181,8 +181,8 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
             // Arrange
             var comments = new List<Comment>
             {
-                new() { Commentno = 1, Project = "PP001", Year = 2022, Topic = "Topic1" },
-                new() { Commentno = 2, Project = "PP001", Year = 2023, Topic = "Topic2" }
+                new() { CommentNo = 1, Project = "PP001", Year = 2022, Topic = "Topic1" },
+                new() { CommentNo = 2, Project = "PP001", Year = 2023, Topic = "Topic2" }
             };
             var repo = CreateRepository(comments: comments);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
@@ -200,9 +200,9 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
             // Arrange
             var comments = new List<Comment>
             {
-                new() { Commentno = 1, Project = "PP001", Year = 2024, Topic = "Topic1" },
-                new() { Commentno = 2, Project = "PP001", Year = 2024, Topic = "Topic2" },
-                new() { Commentno = 3, Project = "PP001", Year = 2023, Topic = "Topic3" }
+                new() { CommentNo = 1, Project = "PP001", Year = 2024, Topic = "Topic1" },
+                new() { CommentNo = 2, Project = "PP001", Year = 2024, Topic = "Topic2" },
+                new() { CommentNo = 3, Project = "PP001", Year = 2023, Topic = "Topic3" }
             };
             var repo = CreateRepository(comments: comments);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
@@ -220,14 +220,14 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
         #region GetCommentsByProjectAsync — ApplySorting
 
         [Theory]
-        [InlineData("commentno", false)]
-        [InlineData("commentno", true)]
+        [InlineData("CommentNo", false)]
+        [InlineData("CommentNo", true)]
         [InlineData("topic", false)]
         [InlineData("topic", true)]
         [InlineData("year", false)]
         [InlineData("year", true)]
-        [InlineData("madeby", false)]
-        [InlineData("madeby", true)]
+        [InlineData("MadeBy", false)]
+        [InlineData("MadeBy", true)]
         [InlineData("project", false)]
         [InlineData("project", true)]
         public async Task GetCommentsByProjectAsync_WithSorting_ReturnsSortedResults(
@@ -236,9 +236,9 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
             // Arrange — source list is intentionally unsorted to prove sorting takes effect
             var comments = new List<Comment>
             {
-                new() { Commentno = 2, Project = "PP001", Year = 2023, Topic = "Beta",  Madeby = "Bob"     },
-                new() { Commentno = 1, Project = "PP001", Year = 2022, Topic = "Alpha", Madeby = "Alice"   },
-                new() { Commentno = 3, Project = "PP001", Year = 2024, Topic = "Gamma", Madeby = "Charlie" }
+                new() { CommentNo = 2, Project = "PP001", Year = 2023, Topic = "Beta",  MadeBy = "Bob"     },
+                new() { CommentNo = 1, Project = "PP001", Year = 2022, Topic = "Alpha", MadeBy = "Alice"   },
+                new() { CommentNo = 3, Project = "PP001", Year = 2024, Topic = "Gamma", MadeBy = "Charlie" }
             };
             var repo = CreateRepository(comments: comments);
             var query = new PaginationParameters<string>
@@ -258,8 +258,8 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
 
             switch (sortBy.ToLower())
             {
-                case "commentno":
-                    Assert.Equal(descending ? 3 : 1, first.Commentno);
+                case "CommentNo":
+                    Assert.Equal(descending ? 3 : 1, first.CommentNo);
                     break;
                 case "topic":
                     Assert.Equal(descending ? "Gamma" : "Alpha", first.Topic);
@@ -267,8 +267,8 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
                 case "year":
                     Assert.Equal(descending ? (short)2024 : (short)2022, first.Year);
                     break;
-                case "madeby":
-                    Assert.Equal(descending ? "Charlie" : "Alice", first.Madeby);
+                case "MadeBy":
+                    Assert.Equal(descending ? "Charlie" : "Alice", first.MadeBy);
                     break;
                 case "project":
                     // All results share the same project value; sorting by project is a no-op —
@@ -281,21 +281,21 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
-        public async Task GetCommentsByProjectAsync_SortByDateentered_ReturnsSortedResults(bool descending)
+        public async Task GetCommentsByProjectAsync_SortByDateEntered_ReturnsSortedResults(bool descending)
         {
             // Arrange
             var comments = new List<Comment>
             {
-                new() { Commentno = 2, Project = "PP001", Year = 2023, Topic = "Beta",  Dateentered = new DateTime(2023, 6,  1) },
-                new() { Commentno = 1, Project = "PP001", Year = 2022, Topic = "Alpha", Dateentered = new DateTime(2022, 1,  1) },
-                new() { Commentno = 3, Project = "PP001", Year = 2024, Topic = "Gamma", Dateentered = new DateTime(2024, 12, 1) }
+                new() { CommentNo = 2, Project = "PP001", Year = 2023, Topic = "Beta",  DateEntered = new DateTime(2023, 6,  1) },
+                new() { CommentNo = 1, Project = "PP001", Year = 2022, Topic = "Alpha", DateEntered = new DateTime(2022, 1,  1) },
+                new() { CommentNo = 3, Project = "PP001", Year = 2024, Topic = "Gamma", DateEntered = new DateTime(2024, 12, 1) }
             };
             var repo = CreateRepository(comments: comments);
             var query = new PaginationParameters<string>
             {
                 Page = 1,
                 PageSize = 10,
-                SortBy = "dateentered",
+                SortBy = "DateEntered",
                 Descending = descending
             };
 
@@ -305,9 +305,9 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
             // Assert
             Assert.Equal(3, result.Data.Count);
             if (descending)
-                Assert.Equal(new DateTime(2024, 12, 1), result.Data.First().Dateentered);
+                Assert.Equal(new DateTime(2024, 12, 1), result.Data.First().DateEntered);
             else
-                Assert.Equal(new DateTime(2022, 1, 1), result.Data.First().Dateentered);
+                Assert.Equal(new DateTime(2022, 1, 1), result.Data.First().DateEntered);
         }
 
         [Fact]
@@ -316,9 +316,9 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
             // Arrange
             var comments = new List<Comment>
             {
-                new() { Commentno = 3, Project = "PP001", Year = 2024, Topic = "Gamma" },
-                new() { Commentno = 1, Project = "PP001", Year = 2022, Topic = "Alpha" },
-                new() { Commentno = 2, Project = "PP001", Year = 2023, Topic = "Beta"  }
+                new() { CommentNo = 3, Project = "PP001", Year = 2024, Topic = "Gamma" },
+                new() { CommentNo = 1, Project = "PP001", Year = 2022, Topic = "Alpha" },
+                new() { CommentNo = 2, Project = "PP001", Year = 2023, Topic = "Beta"  }
             };
             var repo = CreateRepository(comments: comments);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = null };
@@ -336,8 +336,8 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
             // Arrange
             var comments = new List<Comment>
             {
-                new() { Commentno = 1, Project = "PP001", Year = 2023, Topic = "Alpha" },
-                new() { Commentno = 2, Project = "PP001", Year = 2024, Topic = "Beta"  }
+                new() { CommentNo = 1, Project = "PP001", Year = 2023, Topic = "Alpha" },
+                new() { CommentNo = 2, Project = "PP001", Year = 2024, Topic = "Beta"  }
             };
             var repo = CreateRepository(comments: comments);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = string.Empty };
@@ -355,8 +355,8 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
             // Arrange
             var comments = new List<Comment>
             {
-                new() { Commentno = 1, Project = "PP001", Year = 2023, Topic = "Alpha" },
-                new() { Commentno = 2, Project = "PP001", Year = 2024, Topic = "Beta"  }
+                new() { CommentNo = 1, Project = "PP001", Year = 2023, Topic = "Alpha" },
+                new() { CommentNo = 2, Project = "PP001", Year = 2024, Topic = "Beta"  }
             };
             var repo = CreateRepository(comments: comments);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "invalid_field" };
@@ -377,7 +377,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
         {
             // Arrange
             var comments = Enumerable.Range(1, 5)
-                .Select(i => new Comment { Commentno = i, Project = "PP001", Year = (short)(2020 + i), Topic = $"Topic{i}" })
+                .Select(i => new Comment { CommentNo = i, Project = "PP001", Year = (short)(2020 + i), Topic = $"Topic{i}" })
                 .ToList();
             var repo = CreateRepository(comments: comments);
             var query = new PaginationParameters<string> { Page = 2, PageSize = 2 };
@@ -399,9 +399,9 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
             // Arrange
             var comments = new List<Comment>
             {
-                new() { Commentno = 1, Project = "PP001", Year = 2023, Topic = "Topic1" },
-                new() { Commentno = 2, Project = "PP001", Year = 2024, Topic = "Topic2" },
-                new() { Commentno = 3, Project = "PP001", Year = 2024, Topic = "Topic3" }
+                new() { CommentNo = 1, Project = "PP001", Year = 2023, Topic = "Topic1" },
+                new() { CommentNo = 2, Project = "PP001", Year = 2024, Topic = "Topic2" },
+                new() { CommentNo = 3, Project = "PP001", Year = 2024, Topic = "Topic3" }
             };
             var repo = CreateRepository(comments: comments);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
@@ -421,13 +421,13 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
         #region GetByIdAsync
 
         [Fact]
-        public async Task GetByIdAsync_ReturnsComment_WhenCommentnoExists()
+        public async Task GetByIdAsync_ReturnsComment_WhenCommentNoExists()
         {
             // Arrange
             var comments = new List<Comment>
             {
-                new() { Commentno = 1, Project = "PP001", Year = 2023, Topic = "Topic A", Commenttext = "Text1", Madeby = "User1", Dateentered = new DateTime(2023, 6, 1) },
-                new() { Commentno = 2, Project = "PP001", Year = 2024, Topic = "Topic B", Commenttext = "Text2", Madeby = "User2", Dateentered = new DateTime(2024, 1, 1) }
+                new() { CommentNo = 1, Project = "PP001", Year = 2023, Topic = "Topic A", CommentText = "Text1", MadeBy = "User1", DateEntered = new DateTime(2023, 6, 1) },
+                new() { CommentNo = 2, Project = "PP001", Year = 2024, Topic = "Topic B", CommentText = "Text2", MadeBy = "User2", DateEntered = new DateTime(2024, 1, 1) }
             };
             var repo = CreateRepository(comments: comments);
 
@@ -436,22 +436,22 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
 
             // Assert
             Assert.NotNull(result);
-            Assert.Equal(1, result.Commentno);
+            Assert.Equal(1, result.CommentNo);
             Assert.Equal("PP001", result.Project);
             Assert.Equal((short)2023, result.Year);
             Assert.Equal("Topic A", result.Topic);
-            Assert.Equal("Text1", result.Commenttext);
-            Assert.Equal("User1", result.Madeby);
-            Assert.Equal(new DateTime(2023, 6, 1), result.Dateentered);
+            Assert.Equal("Text1", result.CommentText);
+            Assert.Equal("User1", result.MadeBy);
+            Assert.Equal(new DateTime(2023, 6, 1), result.DateEntered);
         }
 
         [Fact]
-        public async Task GetByIdAsync_ReturnsNull_WhenCommentnoDoesNotExist()
+        public async Task GetByIdAsync_ReturnsNull_WhenCommentNoDoesNotExist()
         {
             // Arrange
             var comments = new List<Comment>
             {
-                new() { Commentno = 1, Project = "PP001", Year = 2023, Topic = "Topic A" }
+                new() { CommentNo = 1, Project = "PP001", Year = 2023, Topic = "Topic A" }
             };
             var repo = CreateRepository(comments: comments);
 
@@ -478,17 +478,17 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
         [Theory]
         [InlineData(0)]
         [InlineData(999)]
-        public async Task GetByIdAsync_ReturnsNull_WhenIdDoesNotMatch(int commentno)
+        public async Task GetByIdAsync_ReturnsNull_WhenIdDoesNotMatch(int CommentNo)
         {
             // Arrange
             var comments = new List<Comment>
             {
-                new() { Commentno = 1, Project = "PP001", Year = 2024, Topic = "Topic" }
+                new() { CommentNo = 1, Project = "PP001", Year = 2024, Topic = "Topic" }
             };
             var repo = CreateRepository(comments: comments);
 
             // Act
-            var result = await repo.GetByIdAsync(commentno);
+            var result = await repo.GetByIdAsync(CommentNo);
 
             // Assert
             Assert.Null(result);
@@ -505,13 +505,13 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
             var (repo, _, _) = CreateRepositoryWithMocks();
             var entity = new Comment
             {
-                Commentno = 1,
+                CommentNo = 1,
                 Project = "PP001",
                 Year = 2024,
                 Topic = "New Topic",
-                Commenttext = "Comment text",
-                Madeby = "User1",
-                Dateentered = new DateTime(2024, 1, 1)
+                CommentText = "Comment text",
+                MadeBy = "User1",
+                DateEntered = new DateTime(2024, 1, 1)
             };
 
             // Act
@@ -520,7 +520,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
             // Assert
             Assert.NotNull(result);
             Assert.Same(entity, result);
-            Assert.Equal(1, result.Commentno);
+            Assert.Equal(1, result.CommentNo);
             Assert.Equal("PP001", result.Project);
             Assert.Equal("New Topic", result.Topic);
         }
@@ -530,7 +530,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
         {
             // Arrange
             var (repo, commentsDbSet, _) = CreateRepositoryWithMocks();
-            var entity = new Comment { Commentno = 1, Project = "PP001", Year = 2024, Topic = "Topic" };
+            var entity = new Comment { CommentNo = 1, Project = "PP001", Year = 2024, Topic = "Topic" };
 
             // Act
             await repo.AddAsync(entity);
@@ -544,7 +544,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
         {
             // Arrange
             var (repo, _, mockContext) = CreateRepositoryWithMocks();
-            var entity = new Comment { Commentno = 1, Project = "PP001", Year = 2024, Topic = "Topic" };
+            var entity = new Comment { CommentNo = 1, Project = "PP001", Year = 2024, Topic = "Topic" };
 
             // Act
             await repo.AddAsync(entity);
@@ -564,12 +564,12 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
             var (repo, _, _) = CreateRepositoryWithMocks();
             var entity = new Comment
             {
-                Commentno = 1,
+                CommentNo = 1,
                 Project = "PP001",
                 Year = 2024,
                 Topic = "Updated Topic",
-                Commenttext = "Updated text",
-                Madeby = "User1"
+                CommentText = "Updated text",
+                MadeBy = "User1"
             };
 
             // Act
@@ -586,7 +586,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
         {
             // Arrange
             var (repo, commentsDbSet, _) = CreateRepositoryWithMocks();
-            var entity = new Comment { Commentno = 1, Project = "PP001", Year = 2024, Topic = "Topic" };
+            var entity = new Comment { CommentNo = 1, Project = "PP001", Year = 2024, Topic = "Topic" };
 
             // Act
             await repo.UpdateAsync(entity);
@@ -600,7 +600,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
         {
             // Arrange
             var (repo, _, mockContext) = CreateRepositoryWithMocks();
-            var entity = new Comment { Commentno = 1, Project = "PP001", Year = 2024, Topic = "Topic" };
+            var entity = new Comment { CommentNo = 1, Project = "PP001", Year = 2024, Topic = "Topic" };
 
             // Act
             await repo.UpdateAsync(entity);
@@ -617,7 +617,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
         public async Task DeleteAsync_ReturnsTrue_WhenEntityFound()
         {
             // Arrange
-            var entity = new Comment { Commentno = 1, Project = "PP001", Year = 2024, Topic = "Topic" };
+            var entity = new Comment { CommentNo = 1, Project = "PP001", Year = 2024, Topic = "Topic" };
             var (repo, commentsDbSet, _) = CreateRepositoryWithMocks();
             commentsDbSet
                 .Setup(x => x.FindAsync(It.IsAny<object[]>()))
@@ -634,7 +634,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
         public async Task DeleteAsync_CallsDbSetRemove_WhenEntityFound()
         {
             // Arrange
-            var entity = new Comment { Commentno = 1, Project = "PP001", Year = 2024, Topic = "Topic" };
+            var entity = new Comment { CommentNo = 1, Project = "PP001", Year = 2024, Topic = "Topic" };
             var (repo, commentsDbSet, _) = CreateRepositoryWithMocks();
             commentsDbSet
                 .Setup(x => x.FindAsync(It.IsAny<object[]>()))
@@ -651,7 +651,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.CommentRepositoryTest
         public async Task DeleteAsync_CallsSaveChangesAsync_WhenEntityFound()
         {
             // Arrange
-            var entity = new Comment { Commentno = 1, Project = "PP001", Year = 2024, Topic = "Topic" };
+            var entity = new Comment { CommentNo = 1, Project = "PP001", Year = 2024, Topic = "Topic" };
             var (repo, commentsDbSet, mockContext) = CreateRepositoryWithMocks();
             commentsDbSet
                 .Setup(x => x.FindAsync(It.IsAny<object[]>()))

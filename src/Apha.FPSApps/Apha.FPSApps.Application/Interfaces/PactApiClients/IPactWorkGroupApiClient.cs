@@ -7,6 +7,8 @@ namespace Apha.FPSApps.Application.Interfaces.PactApiClients
     public interface IPactWorkGroupApiClient
     {
         Task<ApiResponseDto<List<WorkGroupDto>>> GetAllWorkGroupsAsync();
+        Task<ApiResponseDto<List<WorkGroupTimeCodeDto>>> GetPagedWorkGroupTimeCodesAsync(QueryParameters<string> query, string? workGroup, int? monthNumber);
+        Task<ApiResponseDto<List<WorkGroupValidTimeCodeDto>>> GetPagedWorkGroupValidTimeCodesAsync(QueryParameters<string> query, string workGroup);
         Task<ApiResponseDto<List<WorkGroupDto>>> GetWorkGroupsByProfitCentreAsync(QueryParameters<string> query, string profitCentre);
         Task<ApiResponseDto<bool>> SetSendEmailForProfitCentreWorkGroupsAsync(string profitCentre, short flag);
         Task<ApiResponseDto<bool>> SetSendEmailForAllWorkGroupsAsync(short flag);

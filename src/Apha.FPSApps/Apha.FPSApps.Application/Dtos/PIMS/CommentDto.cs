@@ -7,7 +7,7 @@ namespace Apha.FPSApps.Application.Dtos.PIMS
 {
     public class CommentDto
     {
-        public int Commentno { get; set; }
+        public int CommentNo { get; set; }
         [Required(ErrorMessage = "Project is required")]
         public string? Project { get; set; }
         [Required(ErrorMessage = "Year is required")]
@@ -15,9 +15,9 @@ namespace Apha.FPSApps.Application.Dtos.PIMS
         [Required(ErrorMessage = "Topic is required")]
         public string? Topic { get; set; }
         public string? Comment { get; set; }
-        public string? Commenttext { get; set; }
-        public string? Madeby { get; set; }
-        public DateTime? Dateentered { get; set; }
+        public string? CommentText { get; set; }
+        public string? MadeBy { get; set; }
+        public DateTime? DateEntered { get; set; }
 
     }
 }

@@ -34,7 +34,7 @@ namespace Apha.PACT.DataAccess.Data
             entity.Property(e => e.OhrWg)
                 .HasColumnType("money")
                 .HasColumnName("ohr_wg");
-            entity.Property(e => e.PayrateWg)
+            entity.Property(e => e.PayRateWg)
                 .HasColumnType("money")
                 .HasColumnName("payrate_wg");
             entity.Property(e => e.ProfitCentreGrade)

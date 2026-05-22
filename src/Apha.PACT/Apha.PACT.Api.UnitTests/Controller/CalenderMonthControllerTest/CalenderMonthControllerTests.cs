@@ -22,63 +22,64 @@ namespace Apha.PACT.Api.UnitTests.Controller.CalenderMonthControllerTest
             _controller = new CalenderMonthController(_serviceMock, _mapperMock);
         }
 
-        #region GetAll
+        #region GetCalenderMonthsAsync
 
         [Fact]
-        public async Task GetAll_HappyPath_ReturnsOkWithMappedMonths()
+        public async Task GetCalenderMonthsAsync_WithData_ReturnsOkWithMappedResult()
         {
             // Arrange
             var dtos = new List<CalenderMonthDto>
             {
-                new() { MonthNumber = 1, MonthName = "January",  AccntsPeriod = 1 },
+                new() { MonthNumber = 1, MonthName = "January", AccntsPeriod = 1 },
                 new() { MonthNumber = 2, MonthName = "February", AccntsPeriod = 2 }
             };
             var mapped = new List<CalenderMonthRes>
             {
-                new() { MonthNumber = 1, MonthName = "January",  AccntsPeriod = 1 },
+                new() { MonthNumber = 1, MonthName = "January", AccntsPeriod = 1 },
                 new() { MonthNumber = 2, MonthName = "February", AccntsPeriod = 2 }
             };
 
-            _serviceMock.GetAllCalenderMonthsAsync().Returns(dtos);
+            _serviceMock.GetCalenderMonthsAsync().Returns(dtos);
             _mapperMock.Map<IEnumerable<CalenderMonthRes>>(dtos).Returns(mapped);
 
             // Act
-            var result = await _controller.GetAll();
+            var result = await _controller.GetCalenderMonthsAsync();
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            Assert.Equal(mapped, okResult.Value);
-            await _serviceMock.Received(1).GetAllCalenderMonthsAsync();
+            var returnValue = Assert.IsAssignableFrom<IEnumerable<CalenderMonthRes>>(okResult.Value);
+            Assert.Equal(2, returnValue.Count());
+            await _serviceMock.Received(1).GetCalenderMonthsAsync();
+            _mapperMock.Received(1).Map<IEnumerable<CalenderMonthRes>>(dtos);
         }
 
         [Fact]
-        public async Task GetAll_EmptyList_ReturnsOkWithEmptyCollection()
+        public async Task GetCalenderMonthsAsync_EmptyResult_ReturnsOkWithEmptyCollection()
         {
             // Arrange
             var dtos = new List<CalenderMonthDto>();
             var mapped = new List<CalenderMonthRes>();
 
-            _serviceMock.GetAllCalenderMonthsAsync().Returns(dtos);
+            _serviceMock.GetCalenderMonthsAsync().Returns(dtos);
             _mapperMock.Map<IEnumerable<CalenderMonthRes>>(dtos).Returns(mapped);
 
             // Act
-            var result = await _controller.GetAll();
+            var result = await _controller.GetCalenderMonthsAsync();
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var value = okResult.Value as IEnumerable<CalenderMonthRes>;
-            Assert.NotNull(value);
-            Assert.Empty(value);
+            var returnValue = Assert.IsAssignableFrom<IEnumerable<CalenderMonthRes>>(okResult.Value);
+            Assert.Empty(returnValue);
         }
 
         [Fact]
-        public async Task GetAll_ServiceThrows_PropagatesException()
+        public async Task GetCalenderMonthsAsync_ServiceThrows_PropagatesException()
         {
             // Arrange
-            _serviceMock.GetAllCalenderMonthsAsync().ThrowsAsync(new Exception("Service error"));
+            _serviceMock.GetCalenderMonthsAsync().ThrowsAsync(new Exception("Service error"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _controller.GetAll());
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetCalenderMonthsAsync());
         }
 
         #endregion

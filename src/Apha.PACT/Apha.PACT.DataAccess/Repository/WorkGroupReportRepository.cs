@@ -33,7 +33,7 @@ namespace Apha.PACT.DataAccess.Repository
                 var flat = await (
                     from t  in _context.TimeCodeValids
                     join wg in _context.PactWorkGroupGradeViews on t.WorkGroup equals wg.WorkGroup
-                    join s  in _context.PactStaffViews          on wg.WgGrade  equals s.WorkgroupGrade
+                    join s  in _context.WorkGroupStaffViews     on wg.WgGrade  equals s.WorkGroupGrade
                     join jc in _context.JobCodes      on t.JobCode  equals jc.JobCodeId into jcGroup
                     from jc in jcGroup.DefaultIfEmpty()
                     join tp in _context.TestorProducts on t.TestCode equals tp.ItemCode into tpGroup
@@ -74,7 +74,7 @@ namespace Apha.PACT.DataAccess.Repository
                 var rows = await (
                     from t  in _context.TimeCodeValids
                     join wg in _context.PactWorkGroupGradeViews on t.WorkGroup equals wg.WorkGroup
-                    join s  in _context.PactStaffViews          on wg.WgGrade   equals s.WorkgroupGrade
+                    join s  in _context.WorkGroupStaffViews     on wg.WgGrade   equals s.WorkGroupGrade
                     where t.WorkGroup == workGroup && t.Active
                     orderby t.WorkGroup, s.Name, t.TimeCode, t.ParentProject
                     select new TimeSheetTemplateRow

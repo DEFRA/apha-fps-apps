@@ -3,99 +3,106 @@ using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
 using Apha.PACT.DataAccess.Data;
 using Apha.PACT.DataAccess.Repository;
-using Microsoft.EntityFrameworkCore;
-using Moq;
 using NSubstitute;
 
 namespace Apha.PACT.DataAccess.UnitTests.Repository.CalenderMonthRepositoryTest
 {
     public class CalenderMonthRepositoryTests
     {
-        private static (
-            CalenderMonthRepository Repo,
-            Mock<DbSet<CalenderMonth>> CalenderMonthsDbSet,
-            Mock<FpsDbContext> Context)
-            CreateRepositoryWithMocks(IEnumerable<CalenderMonth> calenderMonths)
+        private static CalenderMonthRepository CreateRepository(IEnumerable<CalenderMonth> months)
         {
-            var fpsYearContext = Substitute.For<IFpsRequestContext>();
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);
-            var calenderMonthsMockSet = RepositoryTestHelper.CreateMockDbSet(calenderMonths);
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
+            var mockSet = RepositoryTestHelper.CreateMockDbSet(months);
 
-            mockContext.Setup(x => x.CalenderMonths).Returns(calenderMonthsMockSet.Object);
+            mockContext.Setup(x => x.CalenderMonths).Returns(mockSet.Object);
 
-            var repo = new CalenderMonthRepository(mockContext.Object);
-            return (repo, calenderMonthsMockSet, mockContext);
+            return new CalenderMonthRepository(mockContext.Object);
         }
 
-        private static CalenderMonthRepository CreateRepository(IEnumerable<CalenderMonth> calenderMonths)
-            => CreateRepositoryWithMocks(calenderMonths).Repo;
-
-        #region GetAllCalenderMonthsAsync
+        #region GetCalenderMonthsAsync
 
         [Fact]
-        public async Task GetAllCalenderMonthsAsync_WithData_ReturnsOrderedByMonthNumber()
+        public async Task GetCalenderMonthsAsync_WithData_ReturnsAllMonthsOrderedByAccntsPeriod()
         {
-            var calenderMonths = new List<CalenderMonth>
+            var months = new List<CalenderMonth>
             {
-                new() { MonthNumber = 3, MonthName = "March" },
-                new() { MonthNumber = 1, MonthName = "January" },
-                new() { MonthNumber = 2, MonthName = "February" }
+                new() { MonthNumber = 3, MonthName = "June",  AccntsPeriod = 3, Fquarter = 1 },
+                new() { MonthNumber = 1, MonthName = "April", AccntsPeriod = 1, Fquarter = 1 },
+                new() { MonthNumber = 2, MonthName = "May",   AccntsPeriod = 2, Fquarter = 1 }
             };
-            var repo = CreateRepository(calenderMonths);
+            var repo = CreateRepository(months);
 
-            var result = (await repo.GetAllCalenderMonthsAsync()).ToList();
+            var result = (await repo.GetCalenderMonthsAsync()).ToList();
 
             Assert.Equal(3, result.Count);
-            Assert.Equal((short)1, result[0].MonthNumber);
-            Assert.Equal("January", result[0].MonthName);
-            Assert.Equal((short)2, result[1].MonthNumber);
-            Assert.Equal("February", result[1].MonthName);
-            Assert.Equal((short)3, result[2].MonthNumber);
-            Assert.Equal("March", result[2].MonthName);
+            Assert.Equal((short)1, result[0].AccntsPeriod);
+            Assert.Equal((short)2, result[1].AccntsPeriod);
+            Assert.Equal((short)3, result[2].AccntsPeriod);
         }
 
         [Fact]
-        public async Task GetAllCalenderMonthsAsync_EmptyData_ReturnsEmptyList()
+        public async Task GetCalenderMonthsAsync_EmptyTable_ReturnsEmpty()
         {
             var repo = CreateRepository([]);
 
-            var result = await repo.GetAllCalenderMonthsAsync();
+            var result = await repo.GetCalenderMonthsAsync();
 
             Assert.Empty(result);
         }
 
         [Fact]
-        public async Task GetAllCalenderMonthsAsync_SingleEntry_ReturnsSingleItem()
+        public async Task GetCalenderMonthsAsync_SingleEntry_ReturnsSingleItem()
         {
-            var calenderMonths = new List<CalenderMonth>
+            var months = new List<CalenderMonth>
             {
-                new() { MonthNumber = 7, MonthName = "July" }
+                new() { MonthNumber = 1, MonthName = "April", AccntsPeriod = 1, Fquarter = 1 }
             };
-            var repo = CreateRepository(calenderMonths);
+            var repo = CreateRepository(months);
 
-            var result = (await repo.GetAllCalenderMonthsAsync()).ToList();
+            var result = (await repo.GetCalenderMonthsAsync()).ToList();
 
             Assert.Single(result);
-            Assert.Equal((short)7, result[0].MonthNumber);
-            Assert.Equal("July", result[0].MonthName);
+            Assert.Equal("April",    result[0].MonthName);
+            Assert.Equal((short)1,   result[0].MonthNumber);
+            Assert.Equal((short)1,   result[0].AccntsPeriod);
+            Assert.Equal((short)1,   result[0].Fquarter);
         }
 
         [Fact]
-        public async Task GetAllCalenderMonthsAsync_WithAllTwelveMonths_ReturnsAllOrderedByMonthNumber()
+        public async Task GetCalenderMonthsAsync_AllFieldsPreserved_InReturnedItems()
         {
-            var calenderMonths = Enumerable.Range(1, 12)
-                .Reverse()
-                .Select(n => new CalenderMonth { MonthNumber = (short)n, MonthName = $"Month{n}" })
-                .ToList();
-            var repo = CreateRepository(calenderMonths);
-
-            var result = (await repo.GetAllCalenderMonthsAsync()).ToList();
-
-            Assert.Equal(12, result.Count);
-            for (int i = 0; i < 12; i++)
+            var months = new List<CalenderMonth>
             {
-                Assert.Equal((short)(i + 1), result[i].MonthNumber);
-            }
+                new() { MonthNumber = 5, MonthName = "August", AccntsPeriod = 5, Fquarter = 2 }
+            };
+            var repo = CreateRepository(months);
+
+            var result = (await repo.GetCalenderMonthsAsync()).ToList();
+
+            Assert.Single(result);
+            Assert.Equal((short)5,    result[0].MonthNumber);
+            Assert.Equal("August",    result[0].MonthName);
+            Assert.Equal((short)5,    result[0].AccntsPeriod);
+            Assert.Equal((short)2,    result[0].Fquarter);
+        }
+
+        [Fact]
+        public async Task GetCalenderMonthsAsync_NullableFields_ReturnedAsNull()
+        {
+            var months = new List<CalenderMonth>
+            {
+                new() { MonthNumber = null, MonthName = null, AccntsPeriod = null, Fquarter = null }
+            };
+            var repo = CreateRepository(months);
+
+            var result = (await repo.GetCalenderMonthsAsync()).ToList();
+
+            Assert.Single(result);
+            Assert.Null(result[0].MonthNumber);
+            Assert.Null(result[0].MonthName);
+            Assert.Null(result[0].AccntsPeriod);
+            Assert.Null(result[0].Fquarter);
         }
 
         #endregion

@@ -291,7 +291,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// </summary>
         private async Task<List<CalenderMonthDto>> GetCalenderMonthsAsync()
         {
-            var response = await _calenderMonthService.GetAllCalenderMonthsAsync();
+            var response = await _calenderMonthService.GetCalenderMonthsAsync();
             return response.Success && response.Data != null
                 ? response.Data
                 : new List<CalenderMonthDto>();

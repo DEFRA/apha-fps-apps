@@ -33,16 +33,19 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// <summary>
         /// Renders the Work Group People index page with the initial data grid,
         /// work group dropdown options, and person dropdown options.
+        /// An optional <paramref name="workGroup"/> query parameter pre-selects the work group dropdown.
         /// </summary>
-        public async Task<IActionResult> Index()
+        /// <param name="workGroup">Optional work group name used to pre-select the work group dropdown on page load.</param>
+        public async Task<IActionResult> Index(string workGroup = "")
         {
             var defaultRequest = new PaginationFilter<string> { Filter = "{}" };
-            var peopleGrid = await BuildPeopleGridAsync(defaultRequest, null, null);
+            var peopleGrid = await BuildPeopleGridAsync(defaultRequest, string.IsNullOrWhiteSpace(workGroup) ? null : workGroup, null);
             var workGroupOptions = await GetWorkGroupSelectListAsync();
             var personOptions = await GetPersonSelectListAsync();
 
             var viewModel = new WorkGroupPeopleViewModel
             {
+                SelectedWorkGroup = workGroup,
                 PeopleGrid = peopleGrid,
                 WorkGroupOptions = workGroupOptions,
                 PersonOptions = personOptions

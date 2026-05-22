@@ -14,9 +14,9 @@ namespace Apha.FPSApps.Application.Services.PACT
             _pactClient = pactClient;
         }
 
-        public async Task<ApiResponseDto<List<CalenderMonthDto>>> GetAllCalenderMonthsAsync()
+        public async Task<ApiResponseDto<List<CalenderMonthDto>>> GetCalenderMonthsAsync()
         {
-            return await _pactClient.PactCalenderMonth.GetAllCalenderMonthsAsync();
+            return await _pactClient.PactCalenderMonth.GetCalenderMonthsAsync();
         }
     }
 }

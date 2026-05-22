@@ -4,6 +4,6 @@ namespace Apha.PACT.Core.Interfaces
 {
     public interface ICalenderMonthRepository
     {
-        Task<IEnumerable<CalenderMonth>> GetAllCalenderMonthsAsync();
+        Task<IEnumerable<CalenderMonth>> GetCalenderMonthsAsync();
     }
 }

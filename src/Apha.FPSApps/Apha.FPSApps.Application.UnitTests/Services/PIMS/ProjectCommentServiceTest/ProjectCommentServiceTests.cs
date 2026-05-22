@@ -32,8 +32,8 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS.ProjectCommentService
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var comments = new List<CommentDto>
             {
-                new CommentDto { Commentno = 1, Project = project, Year = year, Topic = "Topic1", Comment = "Comment1" },
-                new CommentDto { Commentno = 2, Project = project, Year = year, Topic = "Topic2", Comment = "Comment2" }
+                new CommentDto { CommentNo = 1, Project = project, Year = year, Topic = "Topic1", Comment = "Comment1" },
+                new CommentDto { CommentNo = 2, Project = project, Year = year, Topic = "Topic2", Comment = "Comment2" }
             };
             var expectedResponse = ApiResponseDto<List<CommentDto>>.SuccessResponse(comments);
 
@@ -123,44 +123,44 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS.ProjectCommentService
         public async Task GetByIdAsync_WithSuccessResponse_ReturnsComment()
         {
             // Arrange
-            var commentno = 1;
+            var CommentNo = 1;
             var comment = new CommentDto
             {
-                Commentno = commentno,
+                CommentNo = CommentNo,
                 Project = "PP001",
                 Topic = "Test Topic",
                 Comment = "Test Comment"
             };
             var expectedResponse = ApiResponseDto<CommentDto>.SuccessResponse(comment);
 
-            _pimsProjectCommentApiClient.GetByIdAsync(commentno).Returns(expectedResponse);
+            _pimsProjectCommentApiClient.GetByIdAsync(CommentNo).Returns(expectedResponse);
 
             // Act
-            var result = await _projectCommentService.GetByIdAsync(commentno);
+            var result = await _projectCommentService.GetByIdAsync(CommentNo);
 
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.NotNull(result.Data);
-            Assert.Equal(commentno, result.Data.Commentno);
-            await _pimsProjectCommentApiClient.Received(1).GetByIdAsync(commentno);
+            Assert.Equal(CommentNo, result.Data.CommentNo);
+            await _pimsProjectCommentApiClient.Received(1).GetByIdAsync(CommentNo);
         }
 
         [Fact]
         public async Task GetByIdAsync_WhenApiFails_ReturnsFailureResponse()
         {
             // Arrange
-            var commentno = 999;
+            var CommentNo = 999;
             var errors = new List<ApiErrorDto>
             {
                 new ApiErrorDto { Message = "Comment not found", Code = "NOT_FOUND" }
             };
             var expectedResponse = ApiResponseDto<CommentDto>.FailureResponse(errors, new ApiMetaDto());
 
-            _pimsProjectCommentApiClient.GetByIdAsync(commentno).Returns(expectedResponse);
+            _pimsProjectCommentApiClient.GetByIdAsync(CommentNo).Returns(expectedResponse);
 
             // Act
-            var result = await _projectCommentService.GetByIdAsync(commentno);
+            var result = await _projectCommentService.GetByIdAsync(CommentNo);
 
             // Assert
             Assert.NotNull(result);
@@ -170,19 +170,19 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS.ProjectCommentService
         }
 
         [Fact]
-        public async Task GetByIdAsync_PassesCorrectCommentno()
+        public async Task GetByIdAsync_PassesCorrectCommentNo()
         {
             // Arrange
-            var commentno = 42;
-            var expectedResponse = ApiResponseDto<CommentDto>.SuccessResponse(new CommentDto { Commentno = commentno });
+            var CommentNo = 42;
+            var expectedResponse = ApiResponseDto<CommentDto>.SuccessResponse(new CommentDto { CommentNo = CommentNo });
 
-            _pimsProjectCommentApiClient.GetByIdAsync(commentno).Returns(expectedResponse);
+            _pimsProjectCommentApiClient.GetByIdAsync(CommentNo).Returns(expectedResponse);
 
             // Act
-            await _projectCommentService.GetByIdAsync(commentno);
+            await _projectCommentService.GetByIdAsync(CommentNo);
 
             // Assert
-            await _pimsProjectCommentApiClient.Received(1).GetByIdAsync(commentno);
+            await _pimsProjectCommentApiClient.Received(1).GetByIdAsync(CommentNo);
         }
 
         #endregion
@@ -199,7 +199,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS.ProjectCommentService
                 Year = 2024,
                 Topic = "New Topic",
                 Comment = "New Comment",
-                Madeby = "user1"
+                MadeBy = "user1"
             };
             var expectedResponse = ApiResponseDto<CommentDto>.SuccessResponse(dto);
 
@@ -248,7 +248,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS.ProjectCommentService
                 Project = "PP123",
                 Year = 2024,
                 Topic = "Topic",
-                Madeby = "user2"
+                MadeBy = "user2"
             };
             var expectedResponse = ApiResponseDto<CommentDto>.SuccessResponse(dto);
 
@@ -259,7 +259,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS.ProjectCommentService
 
             // Assert
             await _pimsProjectCommentApiClient.Received(1).CreateCommentAsync(
-                Arg.Is<CommentDto>(d => d.Project == "PP123" && d.Year == 2024 && d.Madeby == "user2")
+                Arg.Is<CommentDto>(d => d.Project == "PP123" && d.Year == 2024 && d.MadeBy == "user2")
             );
         }
 
@@ -271,45 +271,45 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS.ProjectCommentService
         public async Task UpdateCommentAsync_WithValidData_ReturnsUpdatedComment()
         {
             // Arrange
-            var commentno = 1;
+            var CommentNo = 1;
             var dto = new CommentDto
             {
-                Commentno = commentno,
+                CommentNo = CommentNo,
                 Project = "PP001",
                 Topic = "Updated Topic",
                 Comment = "Updated Comment"
             };
             var expectedResponse = ApiResponseDto<CommentDto>.SuccessResponse(dto);
 
-            _pimsProjectCommentApiClient.UpdateCommentAsync(commentno, dto).Returns(expectedResponse);
+            _pimsProjectCommentApiClient.UpdateCommentAsync(CommentNo, dto).Returns(expectedResponse);
 
             // Act
-            var result = await _projectCommentService.UpdateCommentAsync(commentno, dto);
+            var result = await _projectCommentService.UpdateCommentAsync(CommentNo, dto);
 
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.NotNull(result.Data);
-            Assert.Equal(commentno, result.Data.Commentno);
-            await _pimsProjectCommentApiClient.Received(1).UpdateCommentAsync(commentno, dto);
+            Assert.Equal(CommentNo, result.Data.CommentNo);
+            await _pimsProjectCommentApiClient.Received(1).UpdateCommentAsync(CommentNo, dto);
         }
 
         [Fact]
         public async Task UpdateCommentAsync_WhenApiFails_ReturnsFailureResponse()
         {
             // Arrange
-            var commentno = 999;
-            var dto = new CommentDto { Commentno = commentno };
+            var CommentNo = 999;
+            var dto = new CommentDto { CommentNo = CommentNo };
             var errors = new List<ApiErrorDto>
             {
                 new ApiErrorDto { Message = "Update failed", Code = "UPDATE_ERROR" }
             };
             var expectedResponse = ApiResponseDto<CommentDto>.FailureResponse(errors, new ApiMetaDto());
 
-            _pimsProjectCommentApiClient.UpdateCommentAsync(commentno, dto).Returns(expectedResponse);
+            _pimsProjectCommentApiClient.UpdateCommentAsync(CommentNo, dto).Returns(expectedResponse);
 
             // Act
-            var result = await _projectCommentService.UpdateCommentAsync(commentno, dto);
+            var result = await _projectCommentService.UpdateCommentAsync(CommentNo, dto);
 
             // Assert
             Assert.NotNull(result);
@@ -322,25 +322,25 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS.ProjectCommentService
         public async Task UpdateCommentAsync_PassesCorrectParameters()
         {
             // Arrange
-            var commentno = 7;
+            var CommentNo = 7;
             var dto = new CommentDto
             {
-                Commentno = commentno,
+                CommentNo = CommentNo,
                 Project = "PP123",
                 Topic = "Topic",
-                Madeby = "editor1"
+                MadeBy = "editor1"
             };
             var expectedResponse = ApiResponseDto<CommentDto>.SuccessResponse(dto);
 
-            _pimsProjectCommentApiClient.UpdateCommentAsync(commentno, dto).Returns(expectedResponse);
+            _pimsProjectCommentApiClient.UpdateCommentAsync(CommentNo, dto).Returns(expectedResponse);
 
             // Act
-            await _projectCommentService.UpdateCommentAsync(commentno, dto);
+            await _projectCommentService.UpdateCommentAsync(CommentNo, dto);
 
             // Assert
             await _pimsProjectCommentApiClient.Received(1).UpdateCommentAsync(
-                Arg.Is<int>(c => c == commentno),
-                Arg.Is<CommentDto>(d => d.Commentno == commentno && d.Project == "PP123" && d.Madeby == "editor1")
+                Arg.Is<int>(c => c == CommentNo),
+                Arg.Is<CommentDto>(d => d.CommentNo == CommentNo && d.Project == "PP123" && d.MadeBy == "editor1")
             );
         }
 
@@ -352,36 +352,36 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS.ProjectCommentService
         public async Task DeleteCommentAsync_WithSuccessResponse_ReturnsTrue()
         {
             // Arrange
-            var commentno = 1;
+            var CommentNo = 1;
             var expectedResponse = ApiResponseDto<bool>.SuccessResponse(true);
 
-            _pimsProjectCommentApiClient.DeleteCommentAsync(commentno).Returns(expectedResponse);
+            _pimsProjectCommentApiClient.DeleteCommentAsync(CommentNo).Returns(expectedResponse);
 
             // Act
-            var result = await _projectCommentService.DeleteCommentAsync(commentno);
+            var result = await _projectCommentService.DeleteCommentAsync(CommentNo);
 
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.True(result.Data);
-            await _pimsProjectCommentApiClient.Received(1).DeleteCommentAsync(commentno);
+            await _pimsProjectCommentApiClient.Received(1).DeleteCommentAsync(CommentNo);
         }
 
         [Fact]
         public async Task DeleteCommentAsync_WhenApiFails_ReturnsFailureResponse()
         {
             // Arrange
-            var commentno = 999;
+            var CommentNo = 999;
             var errors = new List<ApiErrorDto>
             {
                 new ApiErrorDto { Message = "Delete failed", Code = "DELETE_ERROR" }
             };
             var expectedResponse = ApiResponseDto<bool>.FailureResponse(errors, new ApiMetaDto());
 
-            _pimsProjectCommentApiClient.DeleteCommentAsync(commentno).Returns(expectedResponse);
+            _pimsProjectCommentApiClient.DeleteCommentAsync(CommentNo).Returns(expectedResponse);
 
             // Act
-            var result = await _projectCommentService.DeleteCommentAsync(commentno);
+            var result = await _projectCommentService.DeleteCommentAsync(CommentNo);
 
             // Assert
             Assert.NotNull(result);
@@ -391,19 +391,19 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS.ProjectCommentService
         }
 
         [Fact]
-        public async Task DeleteCommentAsync_PassesCorrectCommentno()
+        public async Task DeleteCommentAsync_PassesCorrectCommentNo()
         {
             // Arrange
-            var commentno = 15;
+            var CommentNo = 15;
             var expectedResponse = ApiResponseDto<bool>.SuccessResponse(true);
 
-            _pimsProjectCommentApiClient.DeleteCommentAsync(commentno).Returns(expectedResponse);
+            _pimsProjectCommentApiClient.DeleteCommentAsync(CommentNo).Returns(expectedResponse);
 
             // Act
-            await _projectCommentService.DeleteCommentAsync(commentno);
+            await _projectCommentService.DeleteCommentAsync(CommentNo);
 
             // Assert
-            await _pimsProjectCommentApiClient.Received(1).DeleteCommentAsync(commentno);
+            await _pimsProjectCommentApiClient.Received(1).DeleteCommentAsync(CommentNo);
         }
 
         #endregion

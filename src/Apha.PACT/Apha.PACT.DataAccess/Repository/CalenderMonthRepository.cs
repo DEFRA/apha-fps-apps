@@ -11,11 +11,11 @@ namespace Apha.PACT.DataAccess.Repository
         {
         }
 
-        public async Task<IEnumerable<CalenderMonth>> GetAllCalenderMonthsAsync()
+        public async Task<IEnumerable<CalenderMonth>> GetCalenderMonthsAsync()
         {
             return await _context.CalenderMonths
                 .AsNoTracking()
-                .OrderBy(m => m.MonthNumber)
+                .OrderBy(m => m.AccntsPeriod)
                 .ToListAsync();
         }
     }

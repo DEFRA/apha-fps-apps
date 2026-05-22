@@ -16,7 +16,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupReportRepositoryTes
             IEnumerable<WorkGroup>? workGroups = null,
             IEnumerable<TimeCodeValid>? timeCodeValids = null,
             IEnumerable<PactWorkGroupGradeView>? workGroupGradeViews = null,
-            IEnumerable<PactStaffView>? staffViews = null,
+            IEnumerable<WorkGroupStaffView>? workGroupStaffViews = null,
             IEnumerable<JobCode>? jobCodes = null,
             IEnumerable<TestorProduct>? testorProducts = null,
             IEnumerable<TestCapability>? testCapabilities = null,
@@ -33,8 +33,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupReportRepositoryTes
                 .Returns(RepositoryTestHelper.CreateMockDbSet(timeCodeValids ?? []).Object);
             mockContext.Setup(x => x.PactWorkGroupGradeViews)
                 .Returns(RepositoryTestHelper.CreateMockDbSet(workGroupGradeViews ?? []).Object);
-            mockContext.Setup(x => x.PactStaffViews)
-                .Returns(RepositoryTestHelper.CreateMockDbSet(staffViews ?? []).Object);
+            mockContext.Setup(x => x.WorkGroupStaffViews)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(workGroupStaffViews ?? []).Object);
             mockContext.Setup(x => x.JobCodes)
                 .Returns(RepositoryTestHelper.CreateMockDbSet(jobCodes ?? []).Object);
             mockContext.Setup(x => x.TestorProducts)
@@ -169,14 +169,14 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupReportRepositoryTes
             {
                 new() { WorkGroup = "WG1", WgGrade = "GR1" }
             };
-            var staffViews = new List<PactStaffView>
+            var workGroupStaffViews = new List<WorkGroupStaffView>
             {
-                new() { Name = "Alice", WorkgroupGrade = "GR1", PersonStatus = "A" }
+                new() { Name = "Alice", WorkGroupGrade = "GR1", PersonStatus = "A" }
             };
             var repo = CreateRepository(
                 timeCodeValids: timeCodeValids,
                 workGroupGradeViews: gradeViews,
-                staffViews: staffViews);
+                workGroupStaffViews: workGroupStaffViews);
 
             var result = (await repo.GetTimeSheetTemplateAsync("WG1", 3, layout: 1)).ToList();
 
@@ -200,14 +200,14 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupReportRepositoryTes
             {
                 new() { WorkGroup = "WG1", WgGrade = "GR1" }
             };
-            var staffViews = new List<PactStaffView>
+            var workGroupStaffViews = new List<WorkGroupStaffView>
             {
-                new() { Name = "Alice", WorkgroupGrade = "GR1", PersonStatus = "A" }
+                new() { Name = "Alice", WorkGroupGrade = "GR1", PersonStatus = "A" }
             };
             var repo = CreateRepository(
                 timeCodeValids: timeCodeValids,
                 workGroupGradeViews: gradeViews,
-                staffViews: staffViews);
+                workGroupStaffViews: workGroupStaffViews);
 
             var result = (await repo.GetTimeSheetTemplateAsync("WG1", 3, layout: 1)).ToList();
 
@@ -226,14 +226,14 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupReportRepositoryTes
             {
                 new() { WorkGroup = "WG2", WgGrade = "GR1" }
             };
-            var staffViews = new List<PactStaffView>
+            var workGroupStaffViews = new List<WorkGroupStaffView>
             {
-                new() { Name = "Alice", WorkgroupGrade = "GR1", PersonStatus = "A" }
+                new() { Name = "Alice", WorkGroupGrade = "GR1", PersonStatus = "A" }
             };
             var repo = CreateRepository(
                 timeCodeValids: timeCodeValids,
                 workGroupGradeViews: gradeViews,
-                staffViews: staffViews);
+                workGroupStaffViews: workGroupStaffViews);
 
             var result = await repo.GetTimeSheetTemplateAsync("WG1", 3, layout: 1);
 
@@ -252,15 +252,15 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupReportRepositoryTes
                 new() { WorkGroup = "WG1", WgGrade = "GR1" },
                 new() { WorkGroup = "WG1", WgGrade = "GR2" }
             };
-            var staffViews = new List<PactStaffView>
+            var workGroupStaffViews = new List<WorkGroupStaffView>
             {
-                new() { Name = "Alice", WorkgroupGrade = "GR1", PersonStatus = "A" },
-                new() { Name = "Bob",   WorkgroupGrade = "GR2", PersonStatus = "A" }
+                new() { Name = "Alice", WorkGroupGrade = "GR1", PersonStatus = "A" },
+                new() { Name = "Bob",   WorkGroupGrade = "GR2", PersonStatus = "A" }
             };
             var repo = CreateRepository(
                 timeCodeValids: timeCodeValids,
                 workGroupGradeViews: gradeViews,
-                staffViews: staffViews);
+                workGroupStaffViews: workGroupStaffViews);
 
             var result = (await repo.GetTimeSheetTemplateAsync("WG1", 3, layout: 1)).ToList();
 
@@ -282,9 +282,9 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupReportRepositoryTes
             {
                 new() { WorkGroup = "WG1", WgGrade = "GR1" }
             };
-            var staffViews = new List<PactStaffView>
+            var workGroupStaffViews = new List<WorkGroupStaffView>
             {
-                new() { Name = "Alice", WorkgroupGrade = "GR1", PersonStatus = "A" }
+                new() { Name = "Alice", WorkGroupGrade = "GR1", PersonStatus = "A" }
             };
             var jobCodes = new List<JobCode>
             {
@@ -293,7 +293,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupReportRepositoryTes
             var repo = CreateRepository(
                 timeCodeValids: timeCodeValids,
                 workGroupGradeViews: gradeViews,
-                staffViews: staffViews,
+                workGroupStaffViews: workGroupStaffViews,
                 jobCodes: jobCodes);
 
             var result = (await repo.GetTimeSheetTemplateAsync("WG1", 4, layout: 2)).ToList();
@@ -317,10 +317,10 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupReportRepositoryTes
                 new() { WorkGroup = "WG1", WgGrade = "GR1" },
                 new() { WorkGroup = "WG1", WgGrade = "GR2" }
             };
-            var staffViews = new List<PactStaffView>
+            var workGroupStaffViews = new List<WorkGroupStaffView>
             {
-                new() { Name = "Alice",    WorkgroupGrade = "GR1", PersonStatus = "A" },
-                new() { Name = "Inactive", WorkgroupGrade = "GR2", PersonStatus = "I" }
+                new() { Name = "Alice",    WorkGroupGrade = "GR1", PersonStatus = "A" },
+                new() { Name = "Inactive", WorkGroupGrade = "GR2", PersonStatus = "I" }
             };
             var jobCodes = new List<JobCode>
             {
@@ -329,7 +329,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupReportRepositoryTes
             var repo = CreateRepository(
                 timeCodeValids: timeCodeValids,
                 workGroupGradeViews: gradeViews,
-                staffViews: staffViews,
+                workGroupStaffViews: workGroupStaffViews,
                 jobCodes: jobCodes);
 
             var result = (await repo.GetTimeSheetTemplateAsync("WG1", 4, layout: 2)).ToList();
@@ -350,10 +350,10 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupReportRepositoryTes
                 new() { WorkGroup = "WG1", WgGrade = "GR1" },
                 new() { WorkGroup = "WG1", WgGrade = "GR2" }
             };
-            var staffViews = new List<PactStaffView>
+            var workGroupStaffViews = new List<WorkGroupStaffView>
             {
-                new() { Name = "Alice", WorkgroupGrade = "GR1", PersonStatus = "A" },
-                new() { Name = "Bob",   WorkgroupGrade = "GR2", PersonStatus = "A" }
+                new() { Name = "Alice", WorkGroupGrade = "GR1", PersonStatus = "A" },
+                new() { Name = "Bob",   WorkGroupGrade = "GR2", PersonStatus = "A" }
             };
             var jobCodes = new List<JobCode>
             {
@@ -362,7 +362,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupReportRepositoryTes
             var repo = CreateRepository(
                 timeCodeValids: timeCodeValids,
                 workGroupGradeViews: gradeViews,
-                staffViews: staffViews,
+                workGroupStaffViews: workGroupStaffViews,
                 jobCodes: jobCodes);
 
             var result = (await repo.GetTimeSheetTemplateAsync("WG1", 4, layout: 2)).ToList();
@@ -383,9 +383,9 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupReportRepositoryTes
             {
                 new() { WorkGroup = "WG1", WgGrade = "GR1" }
             };
-            var staffViews = new List<PactStaffView>
+            var workGroupStaffViews = new List<WorkGroupStaffView>
             {
-                new() { Name = "Alice", WorkgroupGrade = "GR1", PersonStatus = "A" }
+                new() { Name = "Alice", WorkGroupGrade = "GR1", PersonStatus = "A" }
             };
             var jobCodes = new List<JobCode>
             {
@@ -394,7 +394,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupReportRepositoryTes
             var repo = CreateRepository(
                 timeCodeValids: timeCodeValids,
                 workGroupGradeViews: gradeViews,
-                staffViews: staffViews,
+                workGroupStaffViews: workGroupStaffViews,
                 jobCodes: jobCodes);
 
             var result = (await repo.GetTimeSheetTemplateAsync("WG1", 4, layout: 2)).ToList();
@@ -414,9 +414,9 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupReportRepositoryTes
             {
                 new() { WorkGroup = "WG1", WgGrade = "GR1" }
             };
-            var staffViews = new List<PactStaffView>
+            var workGroupStaffViews = new List<WorkGroupStaffView>
             {
-                new() { Name = "Alice", WorkgroupGrade = "GR1", PersonStatus = "A" }
+                new() { Name = "Alice", WorkGroupGrade = "GR1", PersonStatus = "A" }
             };
             var testorProducts = new List<TestorProduct>
             {
@@ -425,7 +425,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupReportRepositoryTes
             var repo = CreateRepository(
                 timeCodeValids: timeCodeValids,
                 workGroupGradeViews: gradeViews,
-                staffViews: staffViews,
+                workGroupStaffViews: workGroupStaffViews,
                 testorProducts: testorProducts);
 
             var result = (await repo.GetTimeSheetTemplateAsync("WG1", 4, layout: 2)).ToList();

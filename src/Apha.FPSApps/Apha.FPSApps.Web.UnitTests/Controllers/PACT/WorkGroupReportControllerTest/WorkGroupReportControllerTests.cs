@@ -49,7 +49,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupReportControllerT
 
         private void SetupCalenderMonths(List<CalenderMonthDto> data)
         {
-            _calenderMonthService.GetAllCalenderMonthsAsync()
+            _calenderMonthService.GetCalenderMonthsAsync()
                 .Returns(ApiResponseDto<List<CalenderMonthDto>>.SuccessResponse(data));
         }
 
@@ -117,8 +117,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupReportControllerT
             // Arrange
             var months = new List<CalenderMonthDto>
             {
-                new() { Monthnumber = 1, Monthname = "January" },
-                new() { Monthnumber = 2, Monthname = "February" }
+                new() { MonthNumber = 1, MonthName = "January" },
+                new() { MonthNumber = 2, MonthName = "February" }
             };
             SetupProfitCentres([]);
             SetupCalenderMonths(months);

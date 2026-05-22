@@ -10,9 +10,9 @@ namespace Apha.Common.Contracts.PIMS
         public int? Year { get; set; }
         public string? Topic { get; set; }
         public string? Comment { get; set; }
-        public string? Madeby { get; set; }
-        public int Commentno { get; set; }
-        public string? Commenttext { get; set; }
-        public DateTime? Dateentered { get; set; }
+        public string? MadeBy { get; set; }
+        public int CommentNo { get; set; }
+        public string? CommentText { get; set; }
+        public DateTime? DateEntered { get; set; }
     }
 }

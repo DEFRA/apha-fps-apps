@@ -39,21 +39,21 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactCalenderMonthAp
             var expectedDto = ApiResponseDto<List<CalenderMonthDto>>.SuccessResponse(
                 new List<CalenderMonthDto>
                 {
-                    new() { Monthnumber = 1, Monthname = "January", AccntsPeriod = 1, Fquarter = 1 },
-                    new() { Monthnumber = 2, Monthname = "February", AccntsPeriod = 2, Fquarter = 1 }
+                    new() { MonthNumber = 1, MonthName = "January", AccntsPeriod = 1, Fquarter = 1 },
+                    new() { MonthNumber = 2, MonthName = "February", AccntsPeriod = 2, Fquarter = 1 }
                 });
 
-            _http.GetAsync<List<CalenderMonthRes>>(PactApiEndpoints.GetAllCalenderMonths).Returns(apiResponse);
+            _http.GetAsync<List<CalenderMonthRes>>(PactApiEndpoints.GetCalenderMonths).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<CalenderMonthDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
-            var result = await _client.GetAllCalenderMonthsAsync();
+            var result = await _client.GetCalenderMonthsAsync();
 
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(2, result.Data?.Count);
-            await _http.Received(1).GetAsync<List<CalenderMonthRes>>(PactApiEndpoints.GetAllCalenderMonths);
+            await _http.Received(1).GetAsync<List<CalenderMonthRes>>(PactApiEndpoints.GetCalenderMonths);
         }
 
         [Fact]
@@ -67,7 +67,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactCalenderMonthAp
             _mapper.Map<ApiResponseDto<List<CalenderMonthDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
-            var result = await _client.GetAllCalenderMonthsAsync();
+            var result = await _client.GetCalenderMonthsAsync();
 
             // Assert
             Assert.NotNull(result);
@@ -92,7 +92,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactCalenderMonthAp
             _mapper.Map<ApiResponseDto<List<CalenderMonthDto>>>(apiResponse).Returns(mappedResponse);
 
             // Act
-            var result = await _client.GetAllCalenderMonthsAsync();
+            var result = await _client.GetCalenderMonthsAsync();
 
             // Assert
             Assert.NotNull(result);

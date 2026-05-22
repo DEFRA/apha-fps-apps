@@ -5,6 +5,6 @@ namespace Apha.FPSApps.Application.Interfaces.PACT
 {
     public interface ICalenderMonthService
     {
-        Task<ApiResponseDto<List<CalenderMonthDto>>> GetAllCalenderMonthsAsync();
+        Task<ApiResponseDto<List<CalenderMonthDto>>> GetCalenderMonthsAsync();
     }
 }

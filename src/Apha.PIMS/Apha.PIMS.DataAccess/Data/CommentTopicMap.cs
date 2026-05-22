@@ -16,7 +16,7 @@ namespace Apha.PIMS.DataAccess.Data
             entity.ToTable("tlkpcommenttopics", "mabarchive");
 
             entity.Property(e => e.Topic)
-                .HasMaxLength(50)
+                .HasMaxLength(25)
                 .HasColumnName("topic");
         }
     }

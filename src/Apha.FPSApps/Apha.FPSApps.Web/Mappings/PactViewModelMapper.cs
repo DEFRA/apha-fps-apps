@@ -1,6 +1,5 @@
 using Apha.FPSApps.Application.Dtos.FPS;
-using Apha.FPSApps.Application.Dtos.PACT;
-using Apha.FPSApps.Web.Areas.PACT.Models;
+using Apha.FPSApps.Application.Dtos.PACT;using Apha.FPSApps.Web.Areas.PACT.Models;
 using AutoMapper;
 
 namespace Apha.FPSApps.Web.Mappings
@@ -34,6 +33,10 @@ namespace Apha.FPSApps.Web.Mappings
 
             CreateMap<TestCapabilityItem, TestCapabilityDto>().ReverseMap();
             CreateMap<ConstituentTestItem, TestCapabilityDto>().ReverseMap();
+
+            // Mapping for WorkGroup-focused Test Capability view
+            CreateMap<WorkGroupTestCapabilityItem, TestCapabilityDto>().ReverseMap();
+
             CreateMap<PortfolioTimeCodeViewModel, TimeCodeValidDto>().ReverseMap();
 
             CreateMap<TestRequirementItem, TestRequirementDto>().ReverseMap();
@@ -47,6 +50,10 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<WorkGroupStaffDto, WorkGroupPeopleItem>().ReverseMap();
             CreateMap<WorkGroupDto, WorkGroup>().ReverseMap();
             CreateMap<WorkGroupPersonDto, WorkGroupPerson>().ReverseMap();
+            CreateMap<MonthlyOutputLogDto, MonthlyOutputLogItem>().ReverseMap();
+            CreateMap<CalenderMonthDto, CalenderMonth>().ReverseMap();
+            CreateMap<WorkGroupTimeCodeDto, WorkGroupTimeCodeItem>().ReverseMap();
+            CreateMap<WorkGroupValidTimeCodeDto, WorkGroupValidTimeCodeItem>().ReverseMap();
         }
     }
 }

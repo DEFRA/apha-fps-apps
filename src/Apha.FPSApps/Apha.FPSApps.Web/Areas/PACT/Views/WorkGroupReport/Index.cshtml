@@ -84,8 +84,8 @@
                 var periodsJson = System.Text.Json.JsonSerializer.Serialize(
                     Model.CalenderMonthItems.OrderBy(m => m.AccntsPeriod).Select(m => new {
                         period      = m.AccntsPeriod,
-                        monthName   = m.Monthname,
-                        monthNumber = m.Monthnumber
+                        monthName   = m.MonthName,
+                        monthNumber = m.MonthNumber
                     }));
             }
 

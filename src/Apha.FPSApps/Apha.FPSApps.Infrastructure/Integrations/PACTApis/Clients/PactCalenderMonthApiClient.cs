@@ -19,9 +19,9 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             _mapper = mapper;
         }
 
-        public async Task<ApiResponseDto<List<CalenderMonthDto>>> GetAllCalenderMonthsAsync()
+        public async Task<ApiResponseDto<List<CalenderMonthDto>>> GetCalenderMonthsAsync()
         {
-            var response = await _http.GetAsync<List<CalenderMonthRes>>(PactApiEndpoints.GetAllCalenderMonths);
+            var response = await _http.GetAsync<List<CalenderMonthRes>>(PactApiEndpoints.GetCalenderMonths);
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<List<CalenderMonthDto>>>(response);
 

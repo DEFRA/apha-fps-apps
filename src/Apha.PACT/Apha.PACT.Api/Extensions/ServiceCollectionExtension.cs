@@ -36,6 +36,7 @@ namespace Apha.PACT.Api.Extensions
             services.AddScoped<ITestorProductService, TestorProductService>();
             services.AddScoped<IProjectMonthService, ProjectMonthService>();
             services.AddScoped<IProjectProfileService, ProjectProfileService>();
+            services.AddScoped<IMonthlyOutputService, MonthlyOutputService>();            
             services.AddScoped<IWorkGroupReportEmailService, WorkGroupReportEmailService>();
             services.AddSingleton<IGraphEmailService, GraphEmailService>();
             return services;
@@ -59,6 +60,7 @@ namespace Apha.PACT.Api.Extensions
             services.AddScoped<IMonthlyTimeRepository, MonthlyTimeRepository>();
             services.AddScoped<IProjectMonthRepository, ProjectMonthRepository>();
             services.AddScoped<IProjectProfileRepository, ProjectProfileRepository>();
+            services.AddScoped<IMonthlyOutputRepository, MonthlyOutputRepository>();            
             services.AddScoped<IWorkGroupReportRepository, WorkGroupReportRepository>();
 
             return services;

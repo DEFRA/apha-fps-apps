@@ -16,9 +16,9 @@ namespace Apha.PACT.Application.Services
             _mapper = mapper;
         }
 
-        public async Task<IEnumerable<CalenderMonthDto>> GetAllCalenderMonthsAsync()
+        public async Task<IEnumerable<CalenderMonthDto>> GetCalenderMonthsAsync()
         {
-            var items = await _repository.GetAllCalenderMonthsAsync();
+            var items = await _repository.GetCalenderMonthsAsync();
             return _mapper.Map<IEnumerable<CalenderMonthDto>>(items);
         }
     }
