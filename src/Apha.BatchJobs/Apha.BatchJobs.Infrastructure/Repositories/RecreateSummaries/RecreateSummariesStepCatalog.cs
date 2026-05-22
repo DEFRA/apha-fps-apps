@@ -7,8 +7,6 @@ namespace Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
 /// </summary>
 internal sealed class RecreateSummariesStepCatalog : IRecreateSummariesStepCatalog
 {
-    public string ImplementationName => "DotNetLinq";
-
     public IReadOnlyList<IRecreateSummariesExecutionStep> BuildMandatorySteps(int month, string triggeredBy) =>
     [
         new DeleteFpsTotalsStep(),

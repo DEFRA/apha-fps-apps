@@ -67,7 +67,7 @@ public sealed class RecreateSummariesOrchestrator
 
             try
             {
-                _logger.LogInformation("[{CorrelationId}] RecreateSummaries implementation: {Implementation}", correlationId, _stepCatalog.ImplementationName);
+                _logger.LogInformation("[{CorrelationId}] RecreateSummaries implementation: DotNetLinq", correlationId);
 
                 // --- Steps 1–14 (mandatory, ordered) ---
                 var mandatorySteps = _stepCatalog.BuildMandatorySteps(month, triggeredBy);

@@ -6,11 +6,6 @@ namespace Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
 public interface IRecreateSummariesStepCatalog
 {
     /// <summary>
-    /// Human-readable implementation name for diagnostics.
-    /// </summary>
-    string ImplementationName { get; }
-
-    /// <summary>
     /// Builds mandatory steps 1-14.
     /// </summary>
     IReadOnlyList<IRecreateSummariesExecutionStep> BuildMandatorySteps(int month, string triggeredBy);
