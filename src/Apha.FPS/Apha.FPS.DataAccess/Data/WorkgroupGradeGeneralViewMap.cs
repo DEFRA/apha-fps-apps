@@ -6,13 +6,10 @@ namespace Apha.FPS.DataAccess.Data
 {
     public class WorkgroupGradeGeneralViewMap : IEntityTypeConfiguration<WorkgroupGradeGeneralView>
     {
-
-
         public void Configure(EntityTypeBuilder<WorkgroupGradeGeneralView> entity)
         {
-            entity
-                .HasNoKey()
-                .ToView("vworkgroupgrade_general", "fps");
+            entity.HasNoKey();
+            entity.ToView("vworkgroupgrade_general", "fps");
 
             entity.Property(e => e.GradeCode)
                 .HasMaxLength(10)
@@ -26,7 +23,8 @@ namespace Apha.FPS.DataAccess.Data
             entity.Property(e => e.WorkGroup)
                 .HasMaxLength(50)
                 .HasColumnName("workgroup");
-            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
+            entity.Property(e => e.FpsYear)
+                .HasColumnName("fpsyear");
         }
     }
 }

@@ -30,9 +30,14 @@ namespace Apha.Common.Constants
 
         // Work Group
         public const string GetAllWorkGroups = "api/v1/workgroup";
+        public const string GetPagedWorkGroupTimeCodes = "api/v1/workgroup/paged/timecodes";
+        public const string GetPagedWorkGroupValidTimeCodes = "api/v1/workgroup/paged/validtimecodes";
 
         // Month
         public const string GetAllMonths = "api/v1/months";
+
+        // Calender Month
+        public const string GetCalenderMonths = "api/v1/calendermonth";
 
         // Test List
         public const string GetPagedTestOrProducts = "api/v1/testorproduct/paged";
@@ -97,5 +102,8 @@ namespace Apha.Common.Constants
         // Project Profile
         public const string GetProjectProfile = "api/v1/projectprofile/{0}/data";
         public const string GetProjectProfileCumulative = "api/v1/projectprofile/{0}/data/cumulative";
+
+        // Monthly Output Log
+        public const string SearchMonthlyOutputLog = "api/v1/monthlyoutput/log/search";
     }
 }

@@ -6,6 +6,7 @@
  */
 
 var peopleGridId = null;
+var preselectedWorkGroup = null;
 
 /**
  * Returns the grid manager instance for the people grid.
@@ -181,6 +182,19 @@ function selectFirstPersonRow() {
 }
 
 /**
+ * Navigates to the Test Capabilities for WorkGroup page with the currently
+ * selected work group pre-populated.
+ */
+function navigateToTestCapabilities() {
+    if (!currentWorkGroup) {
+        console.warn('No work group selected.');
+        return;
+    }
+    // Navigate to WorkGroupTestCapability with workgroup as query parameter
+    window.fpsNavigateTo('/PACT/WorkGroupTestCapability?workgroup=' + encodeURIComponent(currentWorkGroup));
+}
+
+/**
  * Initialises the WorkGroup and Person searchable dropdowns,
  * and wires up Enter-key support for people grid filter inputs.
  * Intended to be called on document ready.
@@ -215,6 +229,8 @@ function initWorkGroupPeoplePage() {
         var text  = $(this).find('td:first').text().trim();
         $wgInput.val(text);
         $wgPanel.hide();
+        $('#workgroupValidationError').hide();
+        $('#selectedWorkgroup').removeClass('govuk-input--error');
         onWorkGroupPickChange(value);
     });
 
@@ -269,10 +285,52 @@ function initWorkGroupPeoplePage() {
             $(this).trigger('change');
         }
     });
+
+    // ── Show Time Records button ───────────────────────────────────────────
+    $('#btnShowTimeRecords').on('click', function () {
+        var $error = $('#workgroupValidationError');
+        var $input = $('#selectedWorkgroup');
+        if (!currentWorkGroup) {
+            $input.addClass('govuk-input--error');
+            $error.show();
+            alert('Please select a Work Group first.');
+            return;
+        }
+        $input.removeClass('govuk-input--error');
+        $error.hide();
+        window.fpsNavigateTo('/PACT/WorkGroupShowTimeRecord?workGroup=' + encodeURIComponent(currentWorkGroup));
+    });
+
+    // ── Show Valid Time Codes button ───────────────────────────────────────
+    $('#btnShowTimeCodes').on('click', function () {
+        var $error = $('#workgroupValidationError');
+        var $input = $('#selectedWorkgroup');
+        if (!currentWorkGroup) {
+            $input.addClass('govuk-input--error');
+            $error.show();
+            alert('Please select a Work Group first.');
+            return;
+        }
+        $input.removeClass('govuk-input--error');
+        $error.hide();
+        window.fpsNavigateTo('/PACT/WorkGroupValidTimeCode?workGroup=' + encodeURIComponent(currentWorkGroup));
+    });
 }
 
 $(document).ready(function () {
     initWorkGroupPeoplePage();
+
+    // Wire up the "Show me valid Test Outputs" button
+    $('#btnShowTestOutputs').on('click', navigateToTestCapabilities);
+
+    // ── Pre-select work group when returning from a child page ────────────
+    if (preselectedWorkGroup) {
+        var $matchRow = $('#workGroupDropdownBody tr[data-value="' + preselectedWorkGroup + '"]');
+        if ($matchRow.length) {
+            $('#workGroupSelect').val($matchRow.find('td:first').text().trim());
+        }
+        onWorkGroupPickChange(preselectedWorkGroup);
+    }
 
     // Select first row on initial page load
     selectFirstPersonRow();

@@ -46,17 +46,17 @@ namespace Apha.PACT.Api.Controllers
 
         /// <summary>Retrieves a paginated list of animal-category sub-contract records (AcctCode IN LargeAnimals/SmallAnimals/Mice).</summary>
         [HttpGet("animals")]
-        public async Task<IActionResult> GetFpsProjectSubContracts([FromQuery] QueryParameters<string> query, [FromQuery] string? project)
+        public async Task<IActionResult> GetFpsProjectSubContracts([FromQuery] QueryParameters<string> query, [FromQuery] string? project, [FromQuery] bool filterByAnimalAcctCodes = false)
         {
-            PaginatedResult<ProjectSubContractDto> pagedResult = await _service.GetFpsProjectSubContractsAsync(query, project);
+            PaginatedResult<ProjectSubContractDto> pagedResult = await _service.GetFpsProjectSubContractsAsync(query, project, filterByAnimalAcctCodes);
             return Ok(_mapper.Map<PaginationRes<ProjectSubContractRes>>(pagedResult));
         }
 
         /// <summary>Retrieves the total Amount for animal-category sub-contracts.</summary>
         [HttpGet("animals/total")]
-        public async Task<IActionResult> GetFpsProjectTotal([FromQuery] string? project)
+        public async Task<IActionResult> GetFpsProjectTotal([FromQuery] string? project, [FromQuery] bool filterByAnimalAcctCodes = false)
         {
-            decimal total = await _service.GetFpsProjectSubContractTotalAmountAsync(project);
+            decimal total = await _service.GetFpsProjectSubContractTotalAmountAsync(project, filterByAnimalAcctCodes);
             return Ok(total);
         }
 

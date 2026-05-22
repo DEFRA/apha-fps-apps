@@ -5,7 +5,7 @@ public class ProjectHeaderRes
     public string ProjectId { get; set; } = null!;
     public string? ProjectTitle { get; set; }
     public string? Programme { get; set; }
-    public DateOnly? StartDate { get; set; }
+    public DateTime? StartDate { get; set; }
     public double? StartFYear { get; set; }
     public int? Inflation { get; set; }
     public int? FinancialYears { get; set; }

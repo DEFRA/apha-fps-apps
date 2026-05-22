@@ -15,9 +15,9 @@ namespace Apha.Costbook.DataAccess.Data
 
             entity.ToTable("tbltestrequ", DbConstants.MabArchiveSchemaName);
 
-            entity.HasIndex(e => new { e.Project, e.Year }, "tblprojectyeartbltestrequ");
+            entity.HasIndex(e => e.Project, "idx_tbltestrequ_project");
 
-            entity.HasIndex(e => e.Project, "tbltestrequ_tbltestrequproject");
+            entity.HasIndex(e => new { e.Project, e.Year }, "idx_tbltestrequ_project_year");
 
             entity.Property(e => e.Project)
                 .HasMaxLength(50)

@@ -179,8 +179,8 @@ public class ProjectYearRepository : IProjectYearRepository
             .AsNoTracking()
             .Join(
                 _context.ProfitCentreGrades.AsNoTracking(),
-                wg => new { wg.ProfitCentreGrade, wg.FpsYear },
-                pc => new { ProfitCentreGrade = pc.PcGrade, pc.FpsYear },
+                wg => new { ProfitCentreGrade = wg.ProfitCentreGrade, FpsYear = wg.FpsYear },
+                pc => new { ProfitCentreGrade = pc.PcGrade, FpsYear = (int?)pc.FpsYear },
                 (wg, pc) => new { wg.WgGrade, pc.ChargeRate, pc.DefraChargeRate, pc.PayRate, pc.Npr, pc.Ohr })
             .Where(x => isDefra ? x.DefraChargeRate != 0 : x.ChargeRate != 0)
             .ToListAsync();

@@ -7,8 +7,8 @@ namespace Apha.PACT.Core.Interfaces
     {
         Task<PagedData<ProjectSubContract>> GetPagedProjectSubContractsAsync(PaginationParameters<string> query, string? project);
         Task<decimal> GetTotalAmountAsync(string? project);
-        Task<PagedData<ProjectSubContract>> GetFpsProjectSubContractsAsync(PaginationParameters<string> query, string? project);
-        Task<decimal> GetFpsProjectSubContractTotalAmountAsync(string? project);
+        Task<PagedData<ProjectSubContract>> GetFpsProjectSubContractsAsync(PaginationParameters<string> query, string? project, bool filterByAnimalAcctCodes = false);
+        Task<decimal> GetFpsProjectSubContractTotalAmountAsync(string? project, bool filterByAnimalAcctCodes = false);
         Task<ProjectSubContract?> GetByIdAsync(int subContCounter);
         Task<ProjectSubContract> CreateAsync(ProjectSubContract entity);
         Task<ProjectSubContract> UpdateAsync(ProjectSubContract entity);

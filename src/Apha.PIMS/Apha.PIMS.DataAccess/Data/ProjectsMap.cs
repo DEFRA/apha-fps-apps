@@ -16,7 +16,7 @@ namespace Apha.PIMS.DataAccess.Data
 
             entity.ToTable("my_tlkpproject", "mabarchive");
 
-            entity.HasIndex(e => e.Year, "my_p_year");
+            entity.HasIndex(e => e.Year, "idx_my_tlkpproject_year");
 
             entity.Property(e => e.Year).HasColumnName("year");
             entity.Property(e => e.Parentproject)

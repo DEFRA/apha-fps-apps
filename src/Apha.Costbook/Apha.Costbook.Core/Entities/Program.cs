@@ -21,5 +21,5 @@ public partial class Program
 
     public string? Manager { get; set; }
 
-   public int? FpScalYear { get; set; }
+    public int? FpScalYear { get; set; }
 }

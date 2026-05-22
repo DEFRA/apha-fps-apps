@@ -1228,9 +1228,9 @@ public class YearlyDetailsControllerTests
     }
 
     [Fact]
-    public async Task GetYearTotals_UsesIntMaxValuePageSize_ForStaffQuery()
+    public async Task GetYearTotals_UsesPageMinusOne_ForStaffQuery()
     {
-        // Verifies that allStaffQuery is built with PageSize = int.MaxValue so all rows are fetched
+        // Verifies that allStaffQuery is built with Page = -1 so all rows are fetched
         QueryParameters<string>? capturedQuery = null;
         var pagedResult = new PaginatedResult<StaffRequirementDto>(new List<StaffRequirementDto>(), 0);
 
@@ -1259,7 +1259,7 @@ public class YearlyDetailsControllerTests
         await _controller.GetYearTotals("2024/001", 2024);
 
         Assert.NotNull(capturedQuery);
-        Assert.Equal(1, capturedQuery!.Page);
+        Assert.Equal(-1, capturedQuery!.Page);
         Assert.Equal(int.MaxValue, capturedQuery.PageSize);
     }
 
