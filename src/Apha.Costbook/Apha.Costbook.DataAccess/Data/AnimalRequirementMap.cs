@@ -8,15 +8,15 @@ namespace Apha.Costbook.DataAccess.Data
     {
         public void Configure(EntityTypeBuilder<AnimalRequirement> entity)
         {
-            entity.HasKey(e => e.ArIdentity).HasName("aaaaatblanimalreq_pk");
+            entity.HasKey(e => e.ArIdentity).HasName("pk_tblanimalreq");
 
             entity.ToTable("tblanimalreq", DbConstants.MabArchiveSchemaName);
 
-            entity.HasIndex(e => new { e.Project, e.Year, e.AnimalType }, "tblanimalreq_proj_ind");
+            entity.HasIndex(e => e.Project, "idx_tblanimalreq_project");
 
-            entity.HasIndex(e => e.Project, "tblanimalreq_tblanimalreqproject");
+            entity.HasIndex(e => new { e.Project, e.Year }, "idx_tblanimalreq_project_year");
 
-            entity.HasIndex(e => new { e.Project, e.Year }, "tblprojectyeartblanimalreq");
+            entity.HasIndex(e => new { e.Project, e.Year, e.AnimalType }, "idx_tblanimalreq_project_year_animaltype");
 
             entity.Property(e => e.ArIdentity).HasColumnName("ar_identity");
             entity.Property(e => e.AnimalType)
@@ -27,8 +27,10 @@ namespace Apha.Costbook.DataAccess.Data
                 .HasColumnName("dailyrate");
             entity.Property(e => e.NumberOfAnimals)
                 .HasDefaultValueSql("0")
-                .HasColumnName("number of animals");
-            entity.Property(e => e.NumberOfDays).HasColumnName("number of days");
+                .HasColumnName("number_of_animals");
+            entity.Property(e => e.NumberOfDays)
+                .HasDefaultValueSql("0")
+                .HasColumnName("number_of_days");
             entity.Property(e => e.Project)
                 .HasMaxLength(50)
                 .HasColumnName("project");

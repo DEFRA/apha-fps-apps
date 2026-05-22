@@ -1217,17 +1217,17 @@ function initWgGradeDropdown() {
     });
 }
 
-var _hoursPerDay = 8.0;
+var _hoursPerDay = 7.2;
 
 function fetchHoursPerDay() {
-    fetch('/FPS/Setting/GetHoursPerDay')
+         fetch('/CostBook/Settings/GetSettingValueById?id=HoursInDay')
         .then(function (r) { return r.json(); })
         .then(function (result) {
             if (result.success && result.hoursPerDay) {
                 _hoursPerDay = result.hoursPerDay;
             }
         })
-        .catch(function () { /* fallback: keep default 8.0 */ });
+        .catch(function () { /* fallback: keep default 7.2 */ });
 }
 
 var _calcStaffGuard = false;
@@ -1516,5 +1516,11 @@ function filterWgGradeRows(term) {
         row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none';
     });
 }
+function staffGridExtraFilters() 
+{
+                           
+  return { year: selectedYear };
+}
+
     </script>
 }

@@ -16,9 +16,4 @@
     <ProjectReference Include="..\Apha.Costbook.Core\Apha.Costbook.Core.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Interfaces\" />
-    <Folder Include="Services\" />
-  </ItemGroup>
-
 </Project>

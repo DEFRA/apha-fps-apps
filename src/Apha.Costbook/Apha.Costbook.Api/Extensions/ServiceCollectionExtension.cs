@@ -29,6 +29,7 @@ namespace Apha.Costbook.Api.Extensions
             services.AddScoped<IStaffService, StaffService>();
             services.AddScoped<IYearlyDetailsService, YearlyDetailsService>();
             services.AddScoped<IProjectSummaryService, ProjectSummaryService>();
+            services.AddScoped<ISettingsService, SettingsService>();
             return services;
         }
 

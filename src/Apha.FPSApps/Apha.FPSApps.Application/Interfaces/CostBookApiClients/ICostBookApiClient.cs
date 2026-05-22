@@ -12,5 +12,6 @@ namespace Apha.FPSApps.Application.Interfaces.CostBookApiClients
         ICostBookContractApiClient Contracts { get; }
         ICostBookYearlyDetailsApiClient YearlyDetails { get; }
         ICostBookProjectSummaryApiClient ProjectSummary { get; }
+        ICostBookSettingsApiClient CostbookSettings { get; }
     }
 }

@@ -14,6 +14,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.CostBookApis.Clients
         public ICostBookContractApiClient Contracts { get; }
         public ICostBookYearlyDetailsApiClient YearlyDetails { get; }
         public ICostBookProjectSummaryApiClient ProjectSummary { get; }
+        public ICostBookSettingsApiClient CostbookSettings { get; }
 
         public CostBookApiClient(ICostBookHttpExecutor http, IMapper mapper)
         {
@@ -25,6 +26,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.CostBookApis.Clients
             Contracts = new CostBookContractApiClient(http, mapper);
             YearlyDetails = new CostBookYearlyDetailsApiClient(http, mapper);
             ProjectSummary = new CostBookProjectSummaryApiClient(http, mapper);
+            CostbookSettings = new CostBookSettingsApiClient(http, mapper);
         }
     }
 }

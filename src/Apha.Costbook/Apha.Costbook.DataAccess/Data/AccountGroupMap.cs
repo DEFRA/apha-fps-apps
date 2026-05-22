@@ -11,7 +11,7 @@ namespace Apha.Costbook.DataAccess.Data
     {
         public void Configure(EntityTypeBuilder<AccountGroup> entity)
         {
-            entity.HasKey(e => e.Csg7group).HasName("aaaaatblcsg7_accountgroups_pk");
+            entity.HasKey(e => e.Csg7group).HasName("pk_tblcsg7_accountgroups");
 
             entity.ToTable("tblcsg7_accountgroups", DbConstants.MabArchiveSchemaName);
 

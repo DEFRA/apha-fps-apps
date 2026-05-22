@@ -971,7 +971,7 @@ namespace Apha.Costbook.DataAccess.Repositories
                 }
 
                 var fyearStart = new DateTime((int)project.StartFYear.Value, 4, 1);
-                var startDate = project.StartDate.Value.ToDateTime(TimeOnly.MinValue);               
+                var startDate = project.StartDate.Value;               
 
                 int yearGap = year - currentYear;
                 double percentOfYear = Math.Abs((fyearStart - startDate).TotalDays) / 364.0;

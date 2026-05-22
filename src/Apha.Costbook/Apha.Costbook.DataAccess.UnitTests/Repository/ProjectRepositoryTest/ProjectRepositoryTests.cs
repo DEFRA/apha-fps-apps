@@ -333,20 +333,20 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.ProjectRepositoryTest
                     ProjectId = "2024/001",
                     CustomerName = "Customer A",
                     Disease = "Disease A",
-                    StartDate = new DateOnly(2024, 1, 1),
+                    StartDate = new DateTime(2024, 1, 1),
                     ContractPrice = 1000,
                     PreparedBy = "Person A",
-                    DateOfSubmission = new DateOnly(2024, 1, 1)
+                    DateOfSubmission = new DateTime(2024, 1, 1)
                 },
                 new()
                 {
                     ProjectId = "2024/002",
                     CustomerName = "Customer B",
                     Disease = "Disease B",
-                    StartDate = new DateOnly(2024, 2, 1),
+                    StartDate = new DateTime(2024, 2, 1),
                     ContractPrice = 2000,
                     PreparedBy = "Person B",
-                    DateOfSubmission = new DateOnly(2024, 2, 1)
+                    DateOfSubmission = new DateTime(2024, 2, 1)
                 }
             };
             var repo = CreateRepository(projects);

@@ -15,12 +15,14 @@ namespace Apha.Costbook.DataAccess.Data
 
             entity.ToTable("profitcentregrade", DbConstants.FpsSchemaName);
 
-            entity.HasIndex(e => e.ProfitCentre, "profitcentregrade_profitcentre");
+            entity.HasIndex(e => e.ProfitCentre, "profitcentregrade_profitcentre")
+                .HasAnnotation("Npgsql:StorageParameter:deduplicate_items", "true")
+                .HasAnnotation("Npgsql:StorageParameter:fillfactor", "100");
 
             entity.Property(e => e.PcGrade)
-                .HasColumnType(DbConstants.CitextColumnType)
+                .HasMaxLength(20)
                 .HasColumnName("pcgrade");
-            entity.Property(e => e.FpsYear).HasColumnName(DbConstants.FpsYearColumnName);
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.ChargeRate)
                 .HasColumnType(DbConstants.MoneyColumnType)
                 .HasColumnName("chargerate");
@@ -32,13 +34,13 @@ namespace Apha.Costbook.DataAccess.Data
                 .HasColumnType(DbConstants.MoneyColumnType)
                 .HasColumnName("directrate");
             entity.Property(e => e.DivisionGrade)
-                .HasColumnType(DbConstants.CitextColumnType)
+                .HasMaxLength(10)
                 .HasColumnName("divisiongrade");
             entity.Property(e => e.GradeCode)
-                .HasColumnType(DbConstants.CitextColumnType)
+                .HasMaxLength(10)
                 .HasColumnName("gradecode");
             entity.Property(e => e.HrsAvailable)
-                .HasDefaultValueSql("0")
+                .HasDefaultValue(0.0)
                 .HasColumnName("hrsavailable");
             entity.Property(e => e.Npr)
                 .HasDefaultValueSql("0")
@@ -57,7 +59,7 @@ namespace Apha.Costbook.DataAccess.Data
                 .HasColumnType(DbConstants.MoneyColumnType)
                 .HasColumnName("payrate");
             entity.Property(e => e.ProfitCentre)
-                .HasColumnType(DbConstants.CitextColumnType)
+                .HasMaxLength(50)
                 .HasColumnName("profitcentre");
         }
     }

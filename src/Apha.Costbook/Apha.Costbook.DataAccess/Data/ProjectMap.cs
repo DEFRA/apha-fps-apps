@@ -11,7 +11,7 @@ namespace Apha.Costbook.DataAccess.Data
     {
         public void Configure(EntityTypeBuilder<Project> entity)
         {
-            entity.HasKey(e => e.ProjectId).HasName("tblproject_aaaaatblproject_pk");
+            entity.HasKey(e => e.ProjectId).HasName("pk_tblproject");
 
             entity.ToTable("tblproject", DbConstants.MabArchiveSchemaName);
 
@@ -20,12 +20,14 @@ namespace Apha.Costbook.DataAccess.Data
                 .HasColumnName("project");
             entity.Property(e => e.ContractNumber)
                 .HasMaxLength(50)
-                .HasColumnName("contract number");
+                .HasColumnName("contract_number");
             entity.Property(e => e.ContractPrice).HasColumnName("contractprice");
             entity.Property(e => e.CustomerName)
                 .HasMaxLength(50)
-                .HasColumnName("customer name");
-            entity.Property(e => e.DateOfSubmission).HasColumnName("date of submission");
+                .HasColumnName("customer_name");
+            entity.Property(e => e.DateOfSubmission)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("date_of_submission");
             entity.Property(e => e.Disease)
                 .HasMaxLength(50)
                 .HasColumnName("disease");
@@ -43,7 +45,7 @@ namespace Apha.Costbook.DataAccess.Data
                 .HasColumnName("plancat");
             entity.Property(e => e.PreparedBy)
                 .HasMaxLength(50)
-                .HasColumnName("prepared by");
+                .HasColumnName("prepared_by");
             entity.Property(e => e.Programme)
                 .HasMaxLength(50)
                 .HasColumnName("programme");
@@ -53,7 +55,9 @@ namespace Apha.Costbook.DataAccess.Data
             entity.Property(e => e.ProjectWorkgroup)
                 .HasMaxLength(50)
                 .HasColumnName("projectworkgroup");
-            entity.Property(e => e.StartDate).HasColumnName("startdate");
+            entity.Property(e => e.StartDate)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("startdate");
             entity.Property(e => e.StartFYear)
                 .HasDefaultValueSql("0")
                 .HasColumnName("startfyear");

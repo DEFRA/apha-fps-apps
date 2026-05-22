@@ -384,7 +384,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
                 ProjectId = "P001",
                 ProjectTitle = "Test Project",
                 PreparedBy = "John Doe",
-                Startdate = new DateOnly(2024, 4, 1),
+                Startdate = new DateTime(2024, 4, 1),
                 IsDefraProject = 1,
                 Inflation = 2,
                 FinancialYears = 1
@@ -417,7 +417,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
                 ProjectId = "",
                 ProjectTitle = "Test Project",
                 PreparedBy = "John Doe",
-                Startdate = new DateOnly(2024, 4, 1),
+                Startdate = new DateTime(2024, 4, 1),
                 IsDefraProject = 1
             };
 
@@ -448,7 +448,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
                 ProjectId = null!,
                 ProjectTitle = "Test Project",
                 PreparedBy = "John Doe",
-                Startdate = new DateOnly(2024, 4, 1),
+                Startdate = new DateTime(2024, 4, 1),
                 IsDefraProject = 1
             };
 
@@ -479,7 +479,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
                 ProjectId = "P001",
                 ProjectTitle = "Test Project",
                 PreparedBy = "John Doe",
-                Startdate = new DateOnly(2024, 4, 1),
+                Startdate = new DateTime(2024, 4, 1),
                 IsDefraProject = 1,
                 Inflation = null
             };
@@ -530,7 +530,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
                 ProjectId = "P001",
                 ProjectTitle = longTitle,
                 PreparedBy = "John Doe",
-                Startdate = new DateOnly(2024, 4, 1),
+                Startdate = new DateTime(2024, 4, 1),
                 IsDefraProject = 1
             };
 
@@ -559,7 +559,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
                 ProjectId = projectId,
                 ProjectTitle = "Updated Project",
                 PreparedBy = "John Doe",
-                Startdate = new DateOnly(2024, 4, 1),
+                Startdate = new DateTime(2024, 4, 1),
                 IsDefraProject = 1,
                 Inflation = 2
             };
@@ -638,7 +638,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
                 ProjectId = projectId,
                 ProjectTitle = longTitle,
                 PreparedBy = "John Doe",
-                Startdate = new DateOnly(2024, 4, 1),
+                Startdate = new DateTime(2024, 4, 1),
                 IsDefraProject = 1
             };
 
@@ -666,7 +666,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
                 ProjectId = projectId,
                 ProjectTitle = "Updated Project",
                 PreparedBy = "John Doe",
-                Startdate = new DateOnly(2024, 4, 1),
+                Startdate = new DateTime(2024, 4, 1),
                 IsDefraProject = 0,
                 Inflation = 2 // Changed inflation
             };
@@ -705,7 +705,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
                 ProjectId = projectId,
                 ProjectTitle = "Updated Project",
                 PreparedBy = "John Doe",
-                Startdate = new DateOnly(2024, 4, 1),
+                Startdate = new DateTime(2024, 4, 1),
                 IsDefraProject = 1, // Changed defra project flag
                 Inflation = 1
             };
@@ -744,7 +744,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
                 ProjectId = projectId,
                 ProjectTitle = "Updated Project",
                 PreparedBy = "John Doe",
-                Startdate = new DateOnly(2024, 4, 1),
+                Startdate = new DateTime(2024, 4, 1),
                 IsDefraProject = 1, // Changed defra project flag
                 Inflation = 2 // Changed inflation
             };
@@ -788,7 +788,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
                 ProjectId = projectId,
                 ProjectTitle = "Updated Project",
                 PreparedBy = "John Doe",
-                Startdate = new DateOnly(2024, 4, 1),
+                Startdate = new DateTime(2024, 4, 1),
                 IsDefraProject = 0,
                 Inflation = 1
             };
@@ -1096,7 +1096,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
                 ProjectId = "P001",
                 ProjectTitle = "Test Project",
                 PreparedBy = "John Doe",
-                Startdate = new DateOnly(year, month, day),
+                Startdate = new DateTime(year, month, day),
                 FinancialYears = FinancialYears,
                 IsDefraProject = 1
             };
@@ -1147,7 +1147,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
                 ProjectId = "P001",
                 ProjectTitle = "Valid Title",
                 PreparedBy = "John Doe",
-                Startdate = new DateOnly(2024, 4, 1),
+                Startdate = new DateTime(2024, 4, 1),
                 IsDefraProject = 1
             };
 

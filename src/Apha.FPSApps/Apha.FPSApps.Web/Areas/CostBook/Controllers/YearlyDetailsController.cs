@@ -486,7 +486,7 @@ public class YearlyDetailsController : Controller
     private async Task<DataGridConfig<StaffRequirementItem>> BuildStaffGridAsync(
         string projectId, int year, QueryParameters<string>? query = null)
     {
-        query ??= new QueryParameters<string> { Page = 1, PageSize = 10 };
+        query.Page = -1;
 
         var response = await _service.GetStaffRequirementsAsync(projectId, year, query);
         var pagedResult = response.Success ? response.Data : null;
@@ -517,6 +517,7 @@ public class YearlyDetailsController : Controller
             AddFunction = "gridAddStaff",
             EditFunction = "gridEditStaff",
             DeleteFunction = "gridDeleteStaff",
+            ExtraFilterMethod= "staffGridExtraFilters",
             BindGridUrl = Url.Action("LoadStaffGrid", new { projectId, year }) ?? string.Empty,
             Columns = GridDataProvider.GetColumnsDefination<StaffRequirementItem>(null)
         };
@@ -544,7 +545,7 @@ public class YearlyDetailsController : Controller
             {
                 TotalRecords = data.Count,
                 PageNumber = 1,
-                PageSize = data.Count > 0 ? data.Count : 10
+                //PageSize = data.Count > 0 ? data.Count : 10
             },
             AddFunction = "gridAddTest",
             EditFunction = "gridEditTest",
@@ -576,7 +577,7 @@ public class YearlyDetailsController : Controller
             {
                 TotalRecords = data.Count,
                 PageNumber = 1,
-                PageSize = data.Count > 0 ? data.Count : 10
+                //PageSize = data.Count > 0 ? data.Count : 10
             },
             AddFunction = "gridAddAnimal",
             EditFunction = "gridEditAnimal",
@@ -608,7 +609,7 @@ public class YearlyDetailsController : Controller
             {
                 TotalRecords = data.Count,
                 PageNumber = 1,
-                PageSize = data.Count > 0 ? data.Count : 10
+                //PageSize = data.Count > 0 ? data.Count : 10
             },
             AddFunction = "gridAddAdditionalCost",
             EditFunction = "gridEditAdditionalCost",
@@ -641,7 +642,7 @@ public class YearlyDetailsController : Controller
             {
                 TotalRecords = data.Count,
                 PageNumber = 1,
-                PageSize = data.Count > 0 ? data.Count : 10
+                //PageSize = data.Count > 0 ? data.Count : 10
             },
             EditFunction = "gridEditMarkupAndProfit",
             BindGridUrl = Url.Action("LoadMarkupAndProfitGrid", new { projectId, year }) ?? string.Empty,
