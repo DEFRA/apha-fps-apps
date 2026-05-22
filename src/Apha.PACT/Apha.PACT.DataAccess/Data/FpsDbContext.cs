@@ -27,12 +27,16 @@ namespace Apha.PACT.DataAccess.Data
         public virtual DbSet<Month> Months { get; set; }
         public virtual DbSet<TestRequirementLog> TestRequirementLogs { get; set; }
         public virtual DbSet<MonthlyOutput> MonthlyOutputs { get; set; }
+        public virtual DbSet<MonthlyOutputLog> MonthlyOutputLogs { get; set; }
         public virtual DbSet<MonthlyTime> MonthlyTimes { get; set; }
         public virtual DbSet<MonthlyInvoicesSummary> MonthlyInvoicesSummary { get; set; }
         public virtual DbSet<MonthlySubContractsSummary> MonthlySubContractsSummary { get; set; }
         public virtual DbSet<ProjectMonth> ProjectMonths { get; set; }
         public virtual DbSet<ProjectMonthFinal> ProjectMonthFinals { get; set; }
         public virtual DbSet<PeriodMonth> PeriodMonths { get; set; }
+        public virtual DbSet<CalenderMonth> CalenderMonths { get; set; }
+        public virtual DbSet<PactWorkGroupGradeView> PactWorkGroupGradeViews { get; set; }
+        public virtual DbSet<WorkGroupStaffView> WorkGroupStaffViews { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -63,6 +67,9 @@ namespace Apha.PACT.DataAccess.Data
             modelBuilder.ApplyConfiguration(new MonthlyOutputMap());
             modelBuilder.Entity<MonthlyOutput>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
+            modelBuilder.ApplyConfiguration(new MonthlyOutputLogMap());
+            modelBuilder.Entity<MonthlyOutputLog>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
             modelBuilder.ApplyConfiguration(new ProjectInvoiceMap());
             modelBuilder.Entity<ProjectInvoice>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
@@ -87,6 +94,14 @@ namespace Apha.PACT.DataAccess.Data
             modelBuilder.Entity<ProjectMonth>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new PeriodMonthMap());
+
+            modelBuilder.ApplyConfiguration(new CalenderMonthMap());
+
+            modelBuilder.ApplyConfiguration(new PactWorkGroupGradeViewMap());
+            modelBuilder.Entity<PactWorkGroupGradeView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new WorkGroupStaffViewMap());
+            modelBuilder.Entity<WorkGroupStaffView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
         }
     }
 }

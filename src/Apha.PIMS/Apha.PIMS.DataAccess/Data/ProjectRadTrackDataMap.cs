@@ -9,6 +9,7 @@ namespace Apha.PIMS.DataAccess.Data
 {
     public class ProjectRadTrackDataMap : IEntityTypeConfiguration<ProjectRadTrackData>
     {
+        private const string ColumnTypeTimeStamp = "timestamp without time zone";
         public void Configure(EntityTypeBuilder<ProjectRadTrackData> entity)
         {
             entity.HasKey(e => e.Parentproject).HasName("pk_g_tlkpproject_radtrackdata");
@@ -19,7 +20,7 @@ namespace Apha.PIMS.DataAccess.Data
                 .HasMaxLength(20)
                 .HasColumnName("parentproject");
             entity.Property(e => e.Closeddate)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType(ColumnTypeTimeStamp)
                 .HasColumnName("closeddate");
             entity.Property(e => e.Costbooknumber)
                 .HasMaxLength(10)
@@ -28,16 +29,16 @@ namespace Apha.PIMS.DataAccess.Data
                 .HasMaxLength(20)
                 .HasColumnName("customerref");
             entity.Property(e => e.Enddate)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType(ColumnTypeTimeStamp)
                 .HasColumnName("enddate");
             entity.Property(e => e.Fileref)
                 .HasMaxLength(20)
                 .HasColumnName("fileref");
             entity.Property(e => e.Finalreportreceived)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType(ColumnTypeTimeStamp)
                 .HasColumnName("finalreportreceived");
             entity.Property(e => e.Finalreportsent)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType(ColumnTypeTimeStamp)
                 .HasColumnName("finalreportsent");
             entity.Property(e => e.Formrequired)
                 .HasDefaultValue(true)
@@ -50,11 +51,11 @@ namespace Apha.PIMS.DataAccess.Data
                 .HasColumnName("overallcustincome");
             entity.Property(e => e.Pcforecastspend).HasColumnName("pcforecastspend");
             entity.Property(e => e.Revisedenddate)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType(ColumnTypeTimeStamp)
                 .HasColumnName("revisedenddate");
             entity.Property(e => e.Riskid).HasColumnName("riskid");
             entity.Property(e => e.Startdate)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType(ColumnTypeTimeStamp)
                 .HasColumnName("startdate");
             entity.Property(e => e.Status)
                 .HasMaxLength(50)

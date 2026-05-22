@@ -379,7 +379,8 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectCommentControllerTest
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            Assert.Equal(true, okResult.Value);
+            var value = Assert.IsType<bool>(okResult.Value);
+            Assert.True(value);
 
             await _service.Received(1).DeleteAsync(CommentNo);
         }
@@ -396,7 +397,8 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectCommentControllerTest
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            Assert.Equal(false, okResult.Value);
+            var value = Assert.IsType<bool>(okResult.Value);
+            Assert.False(value);
 
             await _service.Received(1).DeleteAsync(CommentNo);
         }
