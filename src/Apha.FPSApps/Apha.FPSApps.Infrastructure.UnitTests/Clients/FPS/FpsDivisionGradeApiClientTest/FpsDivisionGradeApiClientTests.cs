@@ -8,7 +8,6 @@ using Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
 using Xunit;
 
 namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsDivisionGradeApiClientTest
@@ -110,24 +109,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsDivisionGradeApiC
             Assert.False(result.Success);
         }
 
-        [Fact]
-        public async Task GetAllPagedAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            _http.GetAsync<List<DivisionGradeRes>>(Arg.Any<string>())
-                .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetAllPagedAsync(query);
-
-            // Assert
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to retrieve paginated division grade data", error.Message);
-        }
-
         #endregion
 
         #region GetByIdAsync Tests
@@ -172,23 +153,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsDivisionGradeApiC
 
             // Assert
             Assert.False(result.Success);
-        }
-
-        [Fact]
-        public async Task GetByIdAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            _http.GetAsync<DivisionGradeRes>(Arg.Any<string>())
-                .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetByIdAsync("A-VSD");
-
-            // Assert
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Contains("A-VSD", error.Message);
         }
 
         #endregion
@@ -242,27 +206,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsDivisionGradeApiC
             Assert.False(result.Success);
         }
 
-        [Fact]
-        public async Task CreateAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var dto = BuildDto();
-            var req = new DivisionGradeReq { DivisionGradeCode = "A-VSD" };
-
-            _mapper.Map<DivisionGradeReq>(dto).Returns(req);
-            _http.PostAsync<DivisionGradeReq, DivisionGradeRes>(Arg.Any<string>(), req)
-                .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.CreateAsync(dto);
-
-            // Assert
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Equal("Failed to create division grade", error.Message);
-        }
-
         #endregion
 
         #region UpdateAsync Tests
@@ -288,27 +231,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsDivisionGradeApiC
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
-        }
-
-        [Fact]
-        public async Task UpdateAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            var dto = BuildDto();
-            var req = new DivisionGradeReq { DivisionGradeCode = "A-VSD" };
-
-            _mapper.Map<DivisionGradeReq>(dto).Returns(req);
-            _http.PutAsync<DivisionGradeReq, DivisionGradeRes>(Arg.Any<string>(), req)
-                .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.UpdateAsync("A-VSD", dto);
-
-            // Assert
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Contains("A-VSD", error.Message);
         }
 
         #endregion
@@ -355,23 +277,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsDivisionGradeApiC
             Assert.False(result.Success);
         }
 
-        [Fact]
-        public async Task DeleteAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            _http.DeleteAsync<bool?>(Arg.Any<string>())
-                .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.DeleteAsync("A-VSD");
-
-            // Assert
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-            Assert.Contains("A-VSD", error.Message);
-        }
-
         #endregion
 
         #region GetAllGradeCodesAsync Tests
@@ -394,22 +299,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsDivisionGradeApiC
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(3, result.Data!.Count);
-        }
-
-        [Fact]
-        public async Task GetAllGradeCodesAsync_WhenExceptionThrown_ReturnsInternalError()
-        {
-            // Arrange
-            _http.GetAsync<List<string>>(Arg.Any<string>())
-                .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetAllGradeCodesAsync();
-
-            // Assert
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
         }
 
         #endregion

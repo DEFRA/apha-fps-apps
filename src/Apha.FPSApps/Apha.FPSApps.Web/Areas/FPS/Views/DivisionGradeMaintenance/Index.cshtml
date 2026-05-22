@@ -60,23 +60,9 @@
 </main>
 
 @section Scripts {
-    <style>
-        .sup_highlight_new {
-            background-color: #b8d4ea !important;
-            transition: background-color 3s ease;
-        }
-    </style>
     <script src="~/js/ajax-form-validation.js"></script>
     <script>
-        // Override year selector to stay on this page with the new year
-        $(document).ready(function () {
-            $('#yearSelector').off('change').on('change', function () {
-                var year = $(this).val();
-                var url = new URL(window.location.href);
-                url.searchParams.set('year', year);
-                window.location.href = url.toString();
-            });
-        });
+    
 
         function reloadDivisionGradeGrid() {
             var gm = window['gridManager_divisionGradeGrid'];
@@ -88,7 +74,7 @@
                 $('#modaPopupBody').html(html);
                 $('#modalPopup').addClass('show');
             }).fail(function () {
-                alert('An error occurred while loading the form');
+                showGovukAlert('An error occurred while loading the form');
             });
         }
 
@@ -98,7 +84,7 @@
                 $('#modaPopupBody').html(html);
                 $('#modalPopup').addClass('show');
             }).fail(function () {
-                alert('An error occurred while loading the edit form');
+                showGovukAlert('An error occurred while loading the edit form');
             });
         }
 
@@ -152,7 +138,7 @@
                 contentType: 'application/json; charset=utf-8',
                 success: function (data) {
                     if (data.success) {
-                        alert(data.message || 'Division grade created successfully.');
+                        showGovukAlert(data.message || 'Division grade created successfully.');
                         closeModal();
                         reloadDivisionGradeGrid();
                     } else {
@@ -163,7 +149,7 @@
                     if (xhr.status === 400 && xhr.responseJSON) {
                         displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
                     } else {
-                        alert('An error occurred while saving.');
+                        showGovukAlert('An error occurred while saving.');
                     }
                 }
             });
@@ -198,7 +184,7 @@
                 contentType: 'application/json; charset=utf-8',
                 success: function (data) {
                     if (data.success) {
-                        alert(data.message || 'Division grade updated successfully.');
+                        showGovukAlert(data.message || 'Division grade updated successfully.');
                         closeModal();
                         reloadDivisionGradeGrid();
                     } else {
@@ -209,7 +195,7 @@
                     if (xhr.status === 400 && xhr.responseJSON) {
                         displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
                     } else {
-                        alert('An error occurred while saving.');
+                        showGovukAlert('An error occurred while saving.');
                     }
                 }
             });
