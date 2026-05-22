@@ -33,7 +33,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
             IEnumerable<StaffView>? staffViews = null,
             IEnumerable<StaffPickView>? staffPickViews = null,
             IEnumerable<FpsSetting>? settings = null,
-            IEnumerable<WgEmployee>? wgEmployees = null,
+            IEnumerable<WorkGroupEmployee>? wgEmployees = null,
             IEnumerable<Employee>? employees = null,
             IEnumerable<Project>? projects = null,
             int fpsYear = DefaultTestFpsYear)
@@ -68,7 +68,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
             if (profitCentreGrades != null)
             {
                 var mockSet = RepositoryTestHelper.CreateMockDbSet(profitCentreGrades);
-                mockContext.Setup(x => x.ProfitcentreGrades).Returns(mockSet.Object);
+                mockContext.Setup(x => x.ProfitCentreGrades).Returns(mockSet.Object);
             }
 
             if (projectViews != null)
@@ -104,7 +104,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
             if (wgEmployees != null)
             {
                 var mockSet = RepositoryTestHelper.CreateMockDbSet(wgEmployees);
-                mockContext.Setup(x => x.WgEmployees).Returns(mockSet.Object);
+                mockContext.Setup(x => x.WorkGroupEmployees).Returns(mockSet.Object);
             }
 
             if (employees != null)

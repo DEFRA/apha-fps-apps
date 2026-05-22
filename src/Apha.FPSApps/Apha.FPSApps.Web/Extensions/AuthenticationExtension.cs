@@ -37,8 +37,8 @@ namespace Apha.FPSApps.Web.Extensions
             }
 
             var currentTime = DateTime.UtcNow;
-            var userName = identity.Name! ?? string.Empty;            
-           
+            var userName = identity.Name! ?? string.Empty;
+
             var logger = context.HttpContext.RequestServices
                 .GetRequiredService<ILoggerFactory>()
                 .CreateLogger("AuthenticationExtension");
