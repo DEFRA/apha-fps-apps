@@ -88,5 +88,41 @@ namespace Apha.PACT.Api.Controllers
             MonthlyInvoicesPivotDto result = await _service.GetMonthlyInvoicesSummaryAsync(query);
             return Ok(_mapper.Map<MonthlyInvoicesPivotRes>(result));
         }
+
+        /// <summary>Copies project invoices from source month to target month. Supports bulk copy (all invoices) or selective copy (specific invoice IDs).</summary>
+        [HttpPost("copy")]
+        public async Task<IActionResult> CopyInvoices([FromBody] CopyInvoicesReq request,[FromQuery] string sourceMonth, [FromQuery] string destinationMonth)
+        {
+            CopyInvoicesDto dto = _mapper.Map<CopyInvoicesDto>(request);
+
+            // Parse month strings to integers
+            if (!int.TryParse(sourceMonth, out int sourceMth))
+            {
+                return BadRequest("Invalid source month format");
+            }
+
+            if (!int.TryParse(destinationMonth, out int destMth))
+            {
+                return BadRequest("Invalid destination month format");
+            }
+
+            // Validate month range
+            if (sourceMth < 1 || sourceMth > 12)
+            {
+                return BadRequest("Source month must be between 1 and 12");
+            }
+
+            if (destMth < 1 || destMth > 12)
+            {
+                return BadRequest("Destination month must be between 1 and 12");
+            }
+
+            // Override DTO values with query parameters
+            dto.SourceMonth = sourceMth;
+            dto.TargetMonth = destMth;
+  
+            CopyInvoicesResultDto result = await _service.CopyInvoicesAsync(dto);
+            return Ok(_mapper.Map<CopyInvoicesRes>(result));
+        }
     }
 }

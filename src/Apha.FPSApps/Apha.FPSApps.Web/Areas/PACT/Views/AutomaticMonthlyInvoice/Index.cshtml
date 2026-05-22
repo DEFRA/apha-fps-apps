@@ -107,7 +107,7 @@
             <form id="formCopyInvoice" novalidate>
                 <!-- DB-level error banner (hidden by default) -->
                 <div id="formCopyInvoice-db-error" class="govuk-error-summary sup_margin_top_10 sup_margin_bottom_0" role="alert"
-                     aria-labelledby="formCopyInvoice-db-error-title" hidden>
+                     aria-labelledby="formCopyInvoice-db-error-title" style="display: none;">
                     <h2 class="govuk-error-summary__title" id="formCopyInvoice-db-error-title">
                         There is a problem
                     </h2>
@@ -154,7 +154,7 @@
                                         <option value="@month.Value">@month.Text</option>
                                     }
                                 </select>
-                                <p id="modal-targetmonth-error" class="govuk-error-message" hidden>
+                                <p id="modal-targetmonth-error" class="govuk-error-message" style="display: none;">
                                     <span class="govuk-visually-hidden">Error:</span>
                                     <span id="modal-targetmonth-error-msg"></span>
                                 </p>

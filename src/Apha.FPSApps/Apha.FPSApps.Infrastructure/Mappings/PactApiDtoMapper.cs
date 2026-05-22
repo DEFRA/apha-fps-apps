@@ -19,6 +19,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<MonthDto, MonthRes>().ReverseMap();
             CreateMap<ProjectInvoiceDto, ProjectInvoiceReq>().ReverseMap();
             CreateMap<ProjectInvoiceDto, ProjectInvoiceRes>().ReverseMap();
+            CreateMap<CopyInvoicesResultDto, CopyInvoicesRes>().ReverseMap();
             CreateMap<MonthlyInvoicesSummaryItemDto, MonthlyInvoicesSummaryItemRes>().ReverseMap();
             CreateMap<PaginationDto, Pagination>().ReverseMap();
             CreateMap<MonthlyInvoicesPivotDto, MonthlyInvoicesPivotRes>().ReverseMap();

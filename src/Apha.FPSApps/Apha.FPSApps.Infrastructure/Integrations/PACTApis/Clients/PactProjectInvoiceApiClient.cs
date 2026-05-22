@@ -135,5 +135,21 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             var responseDto = _mapper.Map<ApiResponseDto<MonthlyInvoicesPivotDto>>(response);
             return ApiResponseDto<MonthlyInvoicesPivotDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
+
+        public async Task<ApiResponseDto<CopyInvoicesResultDto>> CopyInvoicesAsync(int sourceMonth, int destinationMonth)
+        {
+            var request = new CopyInvoicesReq(); 
+
+            // Convert int months to strings for API endpoint
+            string url = $"{PactApiEndpoints.CopyProjectInvoices}?sourceMonth={sourceMonth.ToString()}&destinationMonth={destinationMonth.ToString()}";
+
+            var response = await _http.PostAsync<CopyInvoicesReq, CopyInvoicesRes>(url, request);
+
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<CopyInvoicesResultDto>>(response);
+
+            var responseDto = _mapper.Map<ApiResponseDto<CopyInvoicesResultDto>>(response);
+            return ApiResponseDto<CopyInvoicesResultDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+        }
     }
 }

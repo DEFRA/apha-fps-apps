@@ -38,6 +38,9 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectInvoiceRepositoryTest
             invoicesMockSet
                 .Setup(x => x.AddAsync(It.IsAny<ProjectInvoice>(), It.IsAny<CancellationToken>()))
                 .Returns((ProjectInvoice _, CancellationToken __) => new ValueTask<EntityEntry<ProjectInvoice>>());
+            invoicesMockSet
+                .Setup(x => x.AddRangeAsync(It.IsAny<IEnumerable<ProjectInvoice>>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
             RepositoryTestHelper.SetupSaveChanges(mockContext);
 
             mockContext.Setup(x => x.ProjectInvoices).Returns(invoicesMockSet.Object);

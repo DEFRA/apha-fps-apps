@@ -153,5 +153,43 @@ namespace Apha.PACT.DataAccess.Repository
                 .ThenBy(x => x.Month)
                 .ToListAsync();
         }
+
+        public async Task<List<ProjectInvoice>> GetInvoicesByMonthAsync(int month)
+        {
+            return await _context.ProjectInvoices
+                .AsNoTracking()
+                .Where(i => i.Month == month && i.FpsYear == _fpsRequestContext.FpsYear)
+                .OrderBy(i => i.ProjectParent)
+                .ToListAsync();
+        }
+
+        public async Task<List<ProjectInvoice>> GetInvoicesByIdsAsync(List<int> invoiceIds)
+        {
+            return await _context.ProjectInvoices
+                .AsNoTracking()
+                .Where(i => invoiceIds.Contains(i.InvoiceCounter) && i.FpsYear == _fpsRequestContext.FpsYear)
+                .ToListAsync();
+        }
+
+        public async Task<bool> HasInvoicesForMonthAsync(int month)
+        {
+            return await _context.ProjectInvoices
+                .AsNoTracking()
+                .AnyAsync(i => i.Month == month && i.FpsYear == _fpsRequestContext.FpsYear);
+        }
+
+        public async Task<int> CreateBulkAsync(IEnumerable<ProjectInvoice> entities)
+        {
+            var invoicesList = entities.ToList();
+
+            // Set FpsYear for all entities
+            foreach (var entity in invoicesList)
+            {
+                entity.FpsYear = _fpsRequestContext.FpsYear;
+            }
+
+            await _context.ProjectInvoices.AddRangeAsync(invoicesList);
+            return await _context.SaveChangesAsync();
+        }
     }
 }

@@ -213,91 +213,109 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// <summary>
         /// Copies invoices from the source month to the target month.
         /// This allows automatic creation of monthly invoices by copying previous month's data.
+        /// Supports both bulk copy (all invoices) and selective copy (specific invoice records).
         /// </summary>
-        /// <param name="sourceMonth">The month number to copy invoices from.</param>
-        /// <param name="targetMonth">The month number to copy invoices to.</param>
+        /// <param name="request">The copy request containing source month, target month, and optional invoice records.</param>
         /// <returns>A JSON response indicating success or failure with the number of invoices copied.</returns>
         [HttpPost]
-        public async Task<IActionResult> CopyInvoices(int sourceMonth, int targetMonth)
+        public async Task<IActionResult> CopyInvoices([FromBody] CopyInvoicesRequest request)
         {
-            if (sourceMonth <= 0 || targetMonth <= 0)
-                return Json(new { success = false, message = "Invalid month selection." });
-
-            if (sourceMonth == targetMonth)
-                return Json(new { success = false, message = "Source and target months must be different." });
-
-            try
+            if (request == null)
             {
-                // Get all invoices for the source month
-                var query = new QueryParameters<string>
+                return Json(new { success = false, message = "Invalid request data." });
+            }
+
+            if (request.SourceMonth <= 0 || request.TargetMonth <= 0)
+            {
+                return Json(new { success = false, message = "Invalid month selection." });
+            }
+
+            if (request.SourceMonth == request.TargetMonth)
+            {
+                return Json(new { success = false, message = "Source and target months must be different." });
+            }
+
+            // Determine if this is a bulk copy (no records or empty list) or selective copy
+            bool isBulkCopy = request.InvoiceRecords == null || request.InvoiceRecords.Count == 0;
+
+            ApiResponseDto<CopyInvoicesResultDto> response;
+
+            if (isBulkCopy)
+            {
+                // Bulk copy - call the API with null invoice IDs
+                response = await _invoiceService.CopyInvoicesAsync(
+                    request.SourceMonth, 
+                    request.TargetMonth);
+
+                if (response == null)
                 {
-                    Page = 1,
-                    PageSize = 1000, // Get all invoices
-                    SortBy = "ProjectParent",
-                    Descending = false,
-                    Filter = $"{{\"Month\":\"{sourceMonth}\"}}"
-                };
-
-                var sourceInvoices = await _invoiceService.GetPagedProjectInvoiceManualAsync(query, null);
-
-                if (!sourceInvoices.Success || sourceInvoices.Data == null || sourceInvoices.Data.Count == 0)
-                {
-                    return Json(new { success = false, message = $"No invoices found for month {sourceMonth}." });
-                }
-
-                // Check if target month already has invoices
-                var targetQuery = new QueryParameters<string>
-                {
-                    Page = 1,
-                    PageSize = 1,
-                    Filter = $"{{\"Month\":\"{targetMonth}\"}}"
-                };
-                var targetInvoices = await _invoiceService.GetPagedProjectInvoiceManualAsync(targetQuery, null);
-
-                if (targetInvoices.Success && targetInvoices.Data != null && targetInvoices.Data.Count > 0)
-                {
-                    return Json(new { success = false, message = $"Target month {targetMonth} already contains invoices. Please delete them first." });
-                }
-
-                // Copy each invoice to the target month
-                int copiedCount = 0;
-                var errors = new List<string>();
-
-                foreach (var sourceInvoice in sourceInvoices.Data)
-                {
-                    var newInvoice = new ProjectInvoiceDto
-                    {
-                        ProjectParent = sourceInvoice.ProjectParent,
-                        Month = targetMonth,
-                        Amount = sourceInvoice.Amount
-                    };
-
-                    var createResult = await _invoiceService.CreateAsync(newInvoice);
-                    if (createResult.Success)
-                    {
-                        copiedCount++;
-                    }
-                    else
-                    {
-                        errors.Add($"Failed to copy invoice for project {sourceInvoice.ProjectParent}");
-                    }
-                }
-
-                if (errors.Any())
-                {
+                    // Handle null response gracefully - no invoices copied
                     return Json(new 
                     { 
-                        success = false, 
-                        message = $"Copied {copiedCount} invoices with {errors.Count} errors.",
-                        errors = errors 
+                        success = true, 
+                        message = "No invoices to copy",
+                        copiedCount = 0,
+                        errors = new List<string>(),
+                        isBulkCopy = true
                     });
                 }
 
-                return Json(new { success = true, message = $"Successfully copied {copiedCount} invoices from month {sourceMonth} to month {targetMonth}." });
+                if (!response.Success || response.Data == null)
+                {
+                    var errorMessages = response?.Errors?.Select(e => e.Message ?? e.Code ?? "Unknown error").ToList() ?? new List<string>();
+                    return Json(new 
+                    { 
+                        success = false, 
+                        message = errorMessages.Count > 0 ? string.Join(", ", errorMessages) : "Failed to copy invoices",
+                        errors = errorMessages
+                    });
+                }
+
+                var bulkResult = response.Data;
+                return Json(new 
+                { 
+                    success = bulkResult.Success, 
+                    message = bulkResult.Message,
+                    copiedCount = bulkResult.CopiedCount,
+                    errors = bulkResult.Errors,
+                    isBulkCopy = true
+                });
             }
-            catch (Exception ex)
+            else
             {
-                return Json(new { success = false, message = $"An error occurred: {ex.Message}" });
+                // Selective copy - batch create invoices in parallel
+                var invoiceDtos = request.InvoiceRecords.Select(item =>
+                {
+                    var dto = _mapper.Map<ProjectInvoiceDto>(item);
+                    dto.Month = request.TargetMonth;
+                    dto.InvoiceCounter = 0;
+                    return dto;
+                }).ToList();
+
+                var createTasks = invoiceDtos.Select(dto => _invoiceService.CreateAsync(dto)).ToArray();
+                var createResponses = await Task.WhenAll(createTasks);
+
+                var successCount = createResponses.Count(r => r.Success);
+                var failCount = createResponses.Length - successCount;
+                var errors = createResponses
+                    .Where(r => !r.Success)
+                    .SelectMany(r => r.Errors ?? new List<ApiErrorDto>())
+                    .Select(e => e.Message ?? "Unknown error")
+                    .ToList();
+
+                var isSuccess = failCount == 0;
+                var message = isSuccess
+                    ? $"Successfully copied {successCount} invoice(s) from month {request.SourceMonth} to month {request.TargetMonth}"
+                    : $"Copied {successCount} invoice(s) with {failCount} failure(s)";
+
+                return Json(new 
+                { 
+                    success = isSuccess, 
+                    message = message,
+                    copiedCount = successCount,
+                    errors = errors,
+                    isBulkCopy = false
+                });
             }
         }
 
@@ -318,7 +336,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                                  ?? new Dictionary<string, string>();
 
                 // Clean up any empty Month values from the filter
-                if (filterDict.TryGetValue("Month", out var monthValue) && string.IsNullOrEmpty(monthValue))
+                if (filterDict.ContainsKey("Month") && string.IsNullOrEmpty(filterDict["Month"]))
                 {
                     filterDict.Remove("Month");
                 }
@@ -357,6 +375,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
             return new DataGridConfig<AutomaticInvoiceItem>
             {
+                ShowCheckboxColumn = true,
                 GridId = "automaticInvoiceGrid",
                 Title = "(for CoreCapcity, Production & Test Activity Projects/Portfolios)",
                 KeyProperty = "InvoiceCounter",

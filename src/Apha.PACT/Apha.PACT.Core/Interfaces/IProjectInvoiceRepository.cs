@@ -12,5 +12,9 @@ namespace Apha.PACT.Core.Interfaces
         Task<ProjectInvoice> UpdateAsync(ProjectInvoice entity);
         Task<bool> DeleteAsync(int invoiceCounter);
         Task<List<MonthlyInvoicesSummary>> GetMonthlyInvoicesSummaryAsync(PaginationParameters<string> parameters);
+        Task<List<ProjectInvoice>> GetInvoicesByMonthAsync(int month);
+        Task<List<ProjectInvoice>> GetInvoicesByIdsAsync(List<int> invoiceIds);
+        Task<bool> HasInvoicesForMonthAsync(int month);
+        Task<int> CreateBulkAsync(IEnumerable<ProjectInvoice> entities);
     }
 }

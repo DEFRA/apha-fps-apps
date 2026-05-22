@@ -156,5 +156,68 @@ namespace Apha.PACT.Application.Services
                 _                               => rows.OrderBy(r => r.Program).ThenBy(r => r.ParentProject)
             };
         }
+
+        public async Task<CopyInvoicesResultDto> CopyInvoicesAsync(CopyInvoicesDto copyDto)
+        {
+            var result = new CopyInvoicesResultDto();
+
+            // Validation
+            if (copyDto.SourceMonth < 1 || copyDto.SourceMonth > 12)
+            {
+                result.Errors.Add("Source month must be between 1 and 12");
+                return result;
+            }
+
+            if (copyDto.TargetMonth < 1 || copyDto.TargetMonth > 12)
+            {
+                result.Errors.Add("Target month must be between 1 and 12");
+                return result;
+            }
+
+            List<ProjectInvoice> invoicesToCopy;
+
+           
+            // Bulk copy: all invoices from source month
+           
+                invoicesToCopy = await _repository.GetInvoicesByMonthAsync(copyDto.SourceMonth);
+
+            if (invoicesToCopy.Count == 0)
+            {
+                result.Errors.Add($"No invoices found for source month {copyDto.SourceMonth}");
+                return result;
+            }
+            
+
+            // Copy invoices to target month using bulk insert
+            var newInvoices = invoicesToCopy.Select(sourceInvoice => new ProjectInvoice
+            {
+                ProjectParent = sourceInvoice.ProjectParent,
+                Month = copyDto.TargetMonth,
+                Amount = sourceInvoice.Amount,
+                CostOfWork = sourceInvoice.CostOfWork,
+                Wip = sourceInvoice.Wip,
+                ProfitLoss = sourceInvoice.ProfitLoss,
+                Detail = sourceInvoice.Detail,
+                FpsYear = sourceInvoice.FpsYear
+            }).ToList();
+
+            try
+            {
+                int inserted = await _repository.CreateBulkAsync(newInvoices);
+                result.CopiedCount = newInvoices.Count;
+            }
+            catch (Exception ex)
+            {
+                result.FailedCount = newInvoices.Count;
+                result.Errors.Add($"Failed to copy invoices: {ex.Message}");
+            }
+
+            result.Success = result.FailedCount == 0;
+            result.Message = result.Success
+                ? $"Successfully copied {result.CopiedCount} invoice(s) from month {copyDto.SourceMonth} to month {copyDto.TargetMonth}"
+                : $"Copied {result.CopiedCount} invoice(s) with {result.FailedCount} failure(s)";
+
+            return result;
+        }
     }
 }

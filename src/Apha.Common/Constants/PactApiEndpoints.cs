@@ -52,6 +52,7 @@ namespace Apha.Common.Constants
         public const string UpdateProjectInvoice = "api/v1/projectinvoice/{0}";
         public const string DeleteProjectInvoice = "api/v1/projectinvoice/{0}";
         public const string GetMonthlyInvoicesSummary = "api/v1/projectinvoice/monthly-summary";
+        public const string CopyProjectInvoices = "api/v1/projectinvoice/copy";
         
         // Project SubContract
         public const string GetPagedProjectSubContracts = "api/v1/projectsubcontract";

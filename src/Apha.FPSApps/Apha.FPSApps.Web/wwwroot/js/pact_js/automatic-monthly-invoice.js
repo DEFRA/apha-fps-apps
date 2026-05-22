@@ -162,16 +162,42 @@ function openCopyInvoiceModal() {
         return;
     }
 
+    // Check if "Select All" checkbox is checked
+    var isSelectAllChecked = $('#automaticInvoiceGrid_selectAll').is(':checked');
+
+    var copyMode;
+    var copyCount;
+
+    if (isSelectAllChecked) {
+        // Select All is checked → Bulk mode (copy all invoices from source month)
+        copyMode = 'bulk';
+        copyCount = ' (All invoices)';
+    } else {
+        // Check individual selections
+        var selectedRecords = getSelectedInvoiceRecords();
+        if (selectedRecords.length > 0) {
+            copyMode = 'selective';
+            copyCount = ` (${selectedRecords.length} invoice${selectedRecords.length > 1 ? 's' : ''})`;
+        } else {
+            // No records selected and Select All is not checked
+            showGovukAlert('Please select at least one invoice or check "Select All" to copy all invoices.');
+            return;
+        }
+    }
+
     // Set the source month in the modal
     var selectedMonthText = $('#monthPick option:selected').text();
     $('#txtSelectedMonth').val(selectedMonthText);
+
+    // Update the modal title based on copy mode
+    $('#copyInvoiceModalLabel').text('Copy Invoice' + copyCount + ' to target month');
 
     // Clear target month selection
     $('#targetMonthSelect').val('');
 
     // Clear all error messages and styles
-    $('#formCopyInvoice-db-error').attr('hidden', true);
-    $('#modal-targetmonth-error').attr('hidden', true);
+    $('#formCopyInvoice-db-error').css('display', 'none');
+    $('#modal-targetmonth-error').css('display', 'none');
     $('#fg-targetmonth').removeClass('govuk-form-group--error');
     $('#targetMonthSelect').removeClass('govuk-select--error');
 
@@ -181,58 +207,121 @@ function openCopyInvoiceModal() {
 
 function closeCopyInvoiceModal() {
     // Clear all error messages and styles when closing
-    $('#formCopyInvoice-db-error').attr('hidden', true);
-    $('#modal-targetmonth-error').attr('hidden', true);
+    $('#formCopyInvoice-db-error').css('display', 'none');
+    $('#modal-targetmonth-error').css('display', 'none');
     $('#fg-targetmonth').removeClass('govuk-form-group--error');
     $('#targetMonthSelect').removeClass('govuk-select--error');
     $('#targetMonthSelect').val('');
+
+    // Reset modal title
+    $('#copyInvoiceModalLabel').text('Copy Invoice to target month');
 
     // Close the modal
     $('#copyInvoiceModal').removeClass('show');
 }
 
+function getSelectedInvoiceRecords() {
+    // Check if "Select All" is checked - if so, return empty array for bulk mode
+    var isSelectAllChecked = $('#automaticInvoiceGrid_selectAll').is(':checked');
+    if (isSelectAllChecked) {
+        return [];
+    }
+
+    var selectedRecords = [];
+
+    // Use the correct table ID with 'tbl_' prefix
+    var $checkboxes = $('#tbl_automaticInvoiceGrid .row-checkbox:checked');
+
+    if ($checkboxes.length === 0) {
+        $checkboxes = $('input[type="checkbox"].row-checkbox:checked');
+    }
+
+    $checkboxes.each(function() {
+        var $row = $(this).closest('tr');
+        var invoiceCounter = parseInt($row.attr('data-id'), 10);
+
+        if (isNaN(invoiceCounter)) {
+            return;
+        }
+
+        var record = { InvoiceCounter: invoiceCounter };
+
+        $row.find('td[data-property]').each(function() {
+            var prop = $(this).attr('data-property');
+            var type = $(this).attr('data-type');
+            var text = $(this).find('span').first().text().trim();
+
+            if (type === 'GbpValue' || type === 'Decimal' || type === 'Number') {
+                record[prop] = text ? parseFloat(text.replace(/[£,\s]/g, '')) : null;
+            } else if (type === 'Integer') {
+                record[prop] = text ? parseInt(text, 10) : null;
+            } else {
+                record[prop] = text || null;
+            }
+        });
+
+        selectedRecords.push(record);
+    });
+
+    return selectedRecords;
+}
+
 function saveCopiedInvoice() {
-    console.log('saveCopiedInvoice called');
+    try {
+        // Clear all previous errors first - use simple CSS display property
+        $('#formCopyInvoice-db-error').css('display', 'none');
+        $('#modal-targetmonth-error').css('display', 'none');
+        $('#fg-targetmonth').removeClass('govuk-form-group--error');
+        $('#targetMonthSelect').removeClass('govuk-select--error');
 
-    // Clear all previous errors first
-    $('#formCopyInvoice-db-error').attr('hidden', true).hide();
-    $('#modal-targetmonth-error').attr('hidden', true).hide();
-    $('#fg-targetmonth').removeClass('govuk-form-group--error');
-    $('#targetMonthSelect').removeClass('govuk-select--error');
+        var targetMonth = $('#targetMonthSelect').val();
 
-    var targetMonth = $('#targetMonthSelect').val();
+        // Validation: Check if target month is selected
+        if (!targetMonth) {
+            $('#modal-targetmonth-error-msg').text('Please select a target month.');
+            $('#modal-targetmonth-error').css('display', 'block');
+            $('#fg-targetmonth').addClass('govuk-form-group--error');
+            $('#targetMonthSelect').addClass('govuk-select--error');
+            return;
+        }
 
-    // Validation: Check if target month is selected
-    if (!targetMonth) {
-        $('#modal-targetmonth-error-msg').text('Please select a target month.');
-        $('#modal-targetmonth-error').removeAttr('hidden').show().css('display', 'block');
-        $('#fg-targetmonth').addClass('govuk-form-group--error');
-        $('#targetMonthSelect').addClass('govuk-select--error');
-        return;
-    }
+        // Validation: Check if source month is selected
+        if (!currentMonth) {
+            $('#formCopyInvoice-db-error-msg').text('Please select a source month first by using the "Select Month" dropdown on the main page.');
+            $('#formCopyInvoice-db-error').css('display', 'block');
+            $('.modal-body').scrollTop(0);
+            return;
+        }
 
-    // Validation: Check if source month is selected
-    if (!currentMonth) {
-        $('#formCopyInvoice-db-error-msg').text('Please select a source month first by using the "Select Month" dropdown on the main page.');
-        $('#formCopyInvoice-db-error').removeAttr('hidden').show();
-        return;
-    }
+        // Validation: Check if source and target are different
+        if (currentMonth === targetMonth) {
+            $('#formCopyInvoice-db-error-msg').text('Source and target months must be different. Please select a different target month.');
+            $('#formCopyInvoice-db-error').css('display', 'block');
+            $('.modal-body').scrollTop(0);
+            return;
+        }
 
-    // Validation: Check if source and target are different
-    if (currentMonth === targetMonth) {
-        $('#formCopyInvoice-db-error-msg').text('Source and target months must be different. Please select a different target month.');
-        $('#formCopyInvoice-db-error').removeAttr('hidden').show();
-        return;
-    }
+        // Check if "Select All" checkbox is checked
+        var isSelectAllChecked = $('#automaticInvoiceGrid_selectAll').is(':checked');
 
-    // Call the copy API
-    $.ajax({
-        url: '/PACT/AutomaticMonthlyInvoice/CopyInvoices',
-        type: 'POST',
-        data: {
-            sourceMonth: currentMonth,
-            targetMonth: targetMonth
-        },
+        var selectedRecords = [];
+
+        if (!isSelectAllChecked) {
+            // Get selected invoice records only if Select All is not checked
+            selectedRecords = getSelectedInvoiceRecords();
+        }
+
+        // Call the copy API
+        $.ajax({
+            url: '/PACT/AutomaticMonthlyInvoice/CopyInvoices',
+            type: 'POST',
+            contentType: 'application/json',
+            dataType: 'json',
+            data: JSON.stringify({
+                sourceMonth: parseInt(currentMonth, 10),
+                targetMonth: parseInt(targetMonth, 10),
+                invoiceRecords: selectedRecords.length > 0 ? selectedRecords : null
+            }),
         success: function (response) {
             if (response.success) {
                 closeCopyInvoiceModal();
@@ -243,13 +332,53 @@ function saveCopiedInvoice() {
                 $('#monthPick').val(targetMonth);
                 reloadAutomaticInvoicesGrid();
             } else {
-                displayServerValidationErrors(response.errors, response.message, '#modaPopupBody');
+                // Display error message in the copy invoice modal
+                $('#formCopyInvoice-db-error-msg').text(response.message || 'Failed to copy invoices.');
+                $('#formCopyInvoice-db-error').css('display', 'block');
+
+                // Scroll to the top of the modal to show the error
+                $('.modal-body').scrollTop(0);
             }
         },
-        error: function () {
-            showGovukAlert('An error occurred while saving.');
+        error: function (xhr, status, error) {
+            var errorMessage = 'An error occurred while copying invoices.';
+
+            if (xhr.status === 0) {
+                errorMessage = 'Network error: Unable to connect to server. Please check your connection and try again.';
+            } else if (xhr.status === 400) {
+                errorMessage = 'Bad request: ' + (xhr.responseText || 'Invalid data sent to server');
+            } else if (xhr.responseText) {
+                try {
+                    var errorResponse = JSON.parse(xhr.responseText);
+                    if (errorResponse.message) {
+                        errorMessage = errorResponse.message;
+                    } else if (errorResponse.errors && errorResponse.errors.length > 0) {
+                        errorMessage = errorResponse.errors.join(', ');
+                    } else if (errorResponse.title) {
+                        errorMessage = errorResponse.title;
+                    }
+                } catch (e) {
+                    // If parsing fails, show the raw text (truncated if too long)
+                    if (xhr.responseText.length > 200) {
+                        errorMessage = 'Error ' + xhr.status + ': ' + xhr.statusText;
+                    } else {
+                        errorMessage += ' ' + xhr.responseText;
+                    }
+                }
+            } else {
+                errorMessage = 'Error ' + xhr.status + ': ' + (xhr.statusText || error);
+            }
+
+            $('#formCopyInvoice-db-error-msg').text(errorMessage);
+            $('#formCopyInvoice-db-error').css('display', 'block');
+
+            // Scroll to the top of the modal to show the error
+            $('.modal-body').scrollTop(0);
         }
     });
+    } catch (ex) {
+        alert('An error occurred: ' + ex.message);
+    }
 }
 
 function copyToPasteBuffer() {
