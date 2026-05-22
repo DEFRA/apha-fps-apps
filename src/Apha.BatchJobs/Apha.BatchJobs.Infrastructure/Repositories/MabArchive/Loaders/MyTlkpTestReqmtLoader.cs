@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.MabArchive.Loaders;
 
-internal sealed class MyTlkpTestReqmtLoader : MabArchiveLinqLoaderBase
+internal sealed class MyTlkpTestReqmtLoader : MabArchiveExecutionLoaderBase
 {
     public override int Sequence => 15;
 
@@ -38,3 +38,4 @@ internal sealed class MyTlkpTestReqmtLoader : MabArchiveLinqLoaderBase
         return await context.SaveChangesAsync(cancellationToken);
     }
 }
+

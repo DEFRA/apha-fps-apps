@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.MabArchive.Loaders;
 
-internal sealed class TlkpYearLoader : MabArchiveLinqLoaderBase
+internal sealed class TlkpYearLoader : MabArchiveExecutionLoaderBase
 {
     public override int Sequence => 16;
 
@@ -37,3 +37,4 @@ internal sealed class TlkpYearLoader : MabArchiveLinqLoaderBase
         return await context.SaveChangesAsync(cancellationToken);
     }
 }
+

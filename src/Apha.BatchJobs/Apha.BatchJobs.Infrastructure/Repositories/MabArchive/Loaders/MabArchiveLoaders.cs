@@ -17,7 +17,7 @@ internal abstract class MabArchiveLoaderBase : IMabArchiveLoader
     protected abstract Task<int> ExecuteAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken);
 }
 
-internal abstract class MabArchiveLinqLoaderBase : MabArchiveLoaderBase
+internal abstract class MabArchiveExecutionLoaderBase : MabArchiveLoaderBase
 {
     protected override Task<int> ExecuteAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
     {
@@ -26,3 +26,4 @@ internal abstract class MabArchiveLinqLoaderBase : MabArchiveLoaderBase
 
     protected abstract Task<int> LoadCoreAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken);
 }
+

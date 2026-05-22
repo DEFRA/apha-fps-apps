@@ -1,9 +1,9 @@
-﻿using Apha.BatchJobs.Infrastructure.Data;
+using Apha.BatchJobs.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.MabArchive.Loaders;
 
-internal sealed class MyTblAnimalReqLoader : MabArchiveLinqLoaderBase
+internal sealed class MyTblAnimalReqLoader : MabArchiveExecutionLoaderBase
 {
     public override int Sequence => 11;
 
@@ -83,5 +83,6 @@ internal sealed class MyTblAnimalReqLoader : MabArchiveLinqLoaderBase
         }
     }
 }
+
 
 

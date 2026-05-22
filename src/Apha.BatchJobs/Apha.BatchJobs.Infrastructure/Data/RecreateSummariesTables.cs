@@ -53,18 +53,21 @@ internal sealed class RsTlkpProgramTable
 
 internal sealed class RsQryTotalAdditionalCostsView
 {
+    public int FpsYear { get; set; }
     public required string JobCode { get; set; }
     public decimal? TotalAdditionalCosts { get; set; }
 }
 
 internal sealed class RsQryTotalAnimalCostsView
 {
+    public int FpsYear { get; set; }
     public required string JobCode { get; set; }
     public decimal? TotalAnimalCosts { get; set; }
 }
 
 internal sealed class RsQryTotalStaffCostsView
 {
+    public int FpsYear { get; set; }
     public required string JobCode { get; set; }
     public decimal? TotalStaffCosts { get; set; }
     public decimal? TotalPayCosts { get; set; }
@@ -72,6 +75,7 @@ internal sealed class RsQryTotalStaffCostsView
 
 internal sealed class RsQryTotalTestCostsView
 {
+    public int FpsYear { get; set; }
     public required string JobCode { get; set; }
     public decimal? TotalTestCosts { get; set; }
 }

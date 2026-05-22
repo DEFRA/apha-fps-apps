@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.MabArchive.Loaders;
 
-internal sealed class MyWorkgroupLoader : MabArchiveLinqLoaderBase
+internal sealed class MyWorkgroupLoader : MabArchiveExecutionLoaderBase
 {
     public override int Sequence => 22;
 
@@ -39,3 +39,4 @@ internal sealed class MyWorkgroupLoader : MabArchiveLinqLoaderBase
         return await context.SaveChangesAsync(cancellationToken);
     }
 }
+

@@ -1,9 +1,9 @@
-﻿using Apha.BatchJobs.Infrastructure.Data;
+using Apha.BatchJobs.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.MabArchive.Loaders;
 
-internal sealed class MyTblAnimalsLoader : MabArchiveLinqLoaderBase
+internal sealed class MyTblAnimalsLoader : MabArchiveExecutionLoaderBase
 {
     public override int Sequence => 23;
 
@@ -35,5 +35,6 @@ internal sealed class MyTblAnimalsLoader : MabArchiveLinqLoaderBase
         return await context.SaveChangesAsync(cancellationToken);
     }
 }
+
 
 

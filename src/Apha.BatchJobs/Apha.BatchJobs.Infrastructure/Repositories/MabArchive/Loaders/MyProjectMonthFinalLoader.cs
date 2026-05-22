@@ -1,9 +1,9 @@
-﻿using Apha.BatchJobs.Infrastructure.Data;
+using Apha.BatchJobs.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.MabArchive.Loaders;
 
-internal sealed class MyProjectMonthFinalLoader : MabArchiveLinqLoaderBase
+internal sealed class MyProjectMonthFinalLoader : MabArchiveExecutionLoaderBase
 {
     public override int Sequence => 9;
 
@@ -65,5 +65,6 @@ internal sealed class MyProjectMonthFinalLoader : MabArchiveLinqLoaderBase
         return await context.SaveChangesAsync(cancellationToken);
     }
 }
+
 
 

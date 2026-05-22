@@ -1,9 +1,9 @@
-﻿using Apha.BatchJobs.Infrastructure.Data;
+using Apha.BatchJobs.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.MabArchive.Loaders;
 
-internal sealed class MyStaffLoader : MabArchiveLinqLoaderBase
+internal sealed class MyStaffLoader : MabArchiveExecutionLoaderBase
 {
     public override int Sequence => 21;
 
@@ -40,7 +40,7 @@ internal sealed class MyStaffLoader : MabArchiveLinqLoaderBase
         await context.MaDstMyStaff.AddRangeAsync(rows, cancellationToken);
            var inserted = await context.SaveChangesAsync(cancellationToken);
 
-           // ✅ VALIDATION: Verify all rows were inserted
+           // ? VALIDATION: Verify all rows were inserted
            if (inserted != rows.Count)
            {
                throw new InvalidOperationException(
@@ -48,7 +48,7 @@ internal sealed class MyStaffLoader : MabArchiveLinqLoaderBase
                    $"but SaveChangesAsync returned {inserted}.");
            }
 
-           // ✅ VALIDATION: Verify JOIN result count against source WgEmployee table
+           // ? VALIDATION: Verify JOIN result count against source WgEmployee table
            var sourceCount = await context.MaSrcTblWgEmployee
                .AsNoTracking()
                .Where(w => w.FpsYear == year)
@@ -61,7 +61,7 @@ internal sealed class MyStaffLoader : MabArchiveLinqLoaderBase
                    $"but source WgEmployee has {sourceCount}. Missing Employee JOIN records?");
            }
 
-           // ✅ VALIDATION: Verify critical fields populated (Name should not be just ", ")
+           // ? VALIDATION: Verify critical fields populated (Name should not be just ", ")
            var invalidNames = rows.Count(r => string.IsNullOrWhiteSpace(r.Name) || r.Name == ", ");
            if (invalidNames > 0)
            {
@@ -72,5 +72,6 @@ internal sealed class MyStaffLoader : MabArchiveLinqLoaderBase
            return inserted;
     }
 }
+
 
 

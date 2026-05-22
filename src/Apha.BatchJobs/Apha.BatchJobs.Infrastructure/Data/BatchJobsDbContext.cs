@@ -1702,6 +1702,7 @@ public class BatchJobsDbContext : DbContext
         {
             entity.ToView("qrytotaladditionalcosts", schema: "fps");
             entity.HasNoKey();
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.JobCode).HasColumnName("jobcode");
             entity.Property(e => e.TotalAdditionalCosts).HasColumnName("totaladditionalcosts");
         });
@@ -1710,6 +1711,7 @@ public class BatchJobsDbContext : DbContext
         {
             entity.ToView("qrytotalanimalcosts", schema: "fps");
             entity.HasNoKey();
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.JobCode).HasColumnName("jobcode");
             entity.Property(e => e.TotalAnimalCosts).HasColumnName("totalanimalcosts");
         });
@@ -1718,6 +1720,7 @@ public class BatchJobsDbContext : DbContext
         {
             entity.ToView("qrytotalstaffcosts", schema: "fps");
             entity.HasNoKey();
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.JobCode).HasColumnName("jobcode");
             entity.Property(e => e.TotalStaffCosts).HasColumnName("totalstaffcosts");
             entity.Property(e => e.TotalPayCosts).HasColumnName("totalpaycosts");
@@ -1727,6 +1730,7 @@ public class BatchJobsDbContext : DbContext
         {
             entity.ToView("qrytotaltestcosts", schema: "fps");
             entity.HasNoKey();
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.JobCode).HasColumnName("jobcode");
             entity.Property(e => e.TotalTestCosts).HasColumnName("totaltestcosts");
         });

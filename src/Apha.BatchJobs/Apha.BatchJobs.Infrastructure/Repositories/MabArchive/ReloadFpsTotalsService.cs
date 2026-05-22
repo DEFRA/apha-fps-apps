@@ -64,112 +64,91 @@ public sealed class ReloadFpsTotalsService : IReloadFpsTotalsService
                 _logger.LogInformation("Strict year isolation check passed for totals source views");
             }
 
-            // Year-scoped delete to avoid cross-year data loss in multi-year databases.
-            var targetYearShort = checked((short)targetYear);
-            var deleteRows = await _context.FpsYearTotals
-                .Where(t => t.Year == targetYearShort)
+            var deleteRows = await _context.RsFpsYearTotals
+                .Where(row => row.FpsYear == targetYear)
                 .ExecuteDeleteAsync(cancellationToken);
 
             _logger.LogInformation("Deleted {RowCount} existing totals rows for year {Year}", deleteRows, targetYear);
 
             // Rebuild totals from source using legacy sp_createFPSTotals formulas and null handling.
-            var insertRows = await _context.Database.ExecuteSqlInterpolatedAsync($@"
-INSERT INTO fps.fpsyeartotals (
-    parentproject,
-    program,
-    totaladditionalcosts,
-    totalanimalcosts,
-    totalstaffcosts,
-    totaltestcosts,
-    totalcosts,
-    custincome,
-    transferincome,
-    totalincome,
-    budget_cvl,
-    requiredprofit,
-    manager,
-    customer,
-    projectstatus,
-    pvsincome,
-    plancaseworkdebit,
-    totalpaycosts,
-    fpsyear
-)
-SELECT DISTINCT
-    t.parentproject,
-    t.program,
-    CASE
-        WHEN a.totaladditionalcosts IS NULL THEN 0::money
-        ELSE a.totaladditionalcosts
-    END AS totaladditionalcosts,
-    CASE
-        WHEN an.totalanimalcosts IS NULL THEN 0
-        ELSE an.totalanimalcosts::numeric::double precision
-    END AS totalanimalcosts,
-    CASE
-        WHEN s.totalstaffcosts IS NULL THEN 0
-        ELSE s.totalstaffcosts::numeric::double precision
-    END AS totalstaffcosts,
-    CASE
-        WHEN tst.totaltestcosts IS NULL THEN 0
-        ELSE tst.totaltestcosts::numeric::double precision
-    END AS totaltestcosts,
-    (CASE
-        WHEN a.totaladditionalcosts IS NULL THEN 0
-        ELSE a.totaladditionalcosts::numeric::double precision
-    END) +
-    (CASE
-        WHEN an.totalanimalcosts IS NULL THEN 0
-        ELSE an.totalanimalcosts::numeric::double precision
-    END) +
-    (CASE
-        WHEN s.totalstaffcosts IS NULL THEN 0
-        ELSE s.totalstaffcosts::numeric::double precision
-    END) +
-    (CASE
-        WHEN tst.totaltestcosts IS NULL THEN 0
-        ELSE tst.totaltestcosts::numeric::double precision
-    END) +
-    (CASE
-        WHEN t.plancaseworkdebit IS NULL THEN 0
-        ELSE t.plancaseworkdebit::numeric::double precision
-    END) AS totalcosts,
-    t.custincome,
-    t.transferincome,
-    t.custincome + t.transferincome AS totalincome,
-    t.budget_cvl,
-    t.profit AS requiredprofit,
-    t.manager,
-    t.customer,
-    t.projectstatus,
-    CASE
-        WHEN t.pvsincome IS NULL THEN 0::money
-        ELSE t.pvsincome
-    END AS pvsincome,
-    CASE
-        WHEN t.plancaseworkdebit IS NULL THEN 0::money
-        ELSE t.plancaseworkdebit
-    END AS plancaseworkdebit,
-    CASE
-        WHEN s.totalpaycosts IS NULL THEN 0
-        ELSE s.totalpaycosts::numeric::double precision
-    END AS totalpaycosts,
-    t.fpsyear
-FROM fps.tlkpproject t
-LEFT JOIN fps.qrytotaladditionalcosts a
-    ON t.parentproject = a.jobcode
-    AND t.fpsyear = a.fpsyear
-LEFT JOIN fps.qrytotalanimalcosts an
-    ON t.parentproject = an.jobcode
-    AND t.fpsyear = an.fpsyear
-LEFT JOIN fps.qrytotalstaffcosts s
-    ON t.parentproject = s.jobcode
-    AND t.fpsyear = s.fpsyear
-LEFT JOIN fps.qrytotaltestcosts tst
-    ON t.parentproject = tst.jobcode
-    AND t.fpsyear = tst.fpsyear
-WHERE t.fpsyear = {targetYear}
-", cancellationToken);
+            var totalsRows = await (
+                from t in _context.RsTlkpProject
+                where t.FpsYear == targetYear
+                join a in _context.RsQryTotalAdditionalCosts
+                    on new { t.ParentProject, t.FpsYear } equals new { ParentProject = a.JobCode, a.FpsYear }
+                    into additionalCostsJoin
+                from a in additionalCostsJoin.DefaultIfEmpty()
+                join an in _context.RsQryTotalAnimalCosts
+                    on new { t.ParentProject, t.FpsYear } equals new { ParentProject = an.JobCode, an.FpsYear }
+                    into animalCostsJoin
+                from an in animalCostsJoin.DefaultIfEmpty()
+                join s in _context.RsQryTotalStaffCosts
+                    on new { t.ParentProject, t.FpsYear } equals new { ParentProject = s.JobCode, s.FpsYear }
+                    into staffCostsJoin
+                from s in staffCostsJoin.DefaultIfEmpty()
+                join tst in _context.RsQryTotalTestCosts
+                    on new { t.ParentProject, t.FpsYear } equals new { ParentProject = tst.JobCode, tst.FpsYear }
+                    into testCostsJoin
+                from tst in testCostsJoin.DefaultIfEmpty()
+                select new
+                {
+                    t.ParentProject,
+                    t.Program,
+                    TotalAdditionalCosts = a != null ? a.TotalAdditionalCosts ?? 0m : 0m,
+                    TotalAnimalCosts = an != null ? (double?)(an.TotalAnimalCosts ?? 0m) : 0d,
+                    TotalStaffCosts = s != null ? (double?)(s.TotalStaffCosts ?? 0m) : 0d,
+                    TotalTestCosts = tst != null ? (double?)(tst.TotalTestCosts ?? 0m) : 0d,
+                    TotalCosts = (a != null ? (double?)(a.TotalAdditionalCosts ?? 0m) : 0d)
+                        + (an != null ? (double?)(an.TotalAnimalCosts ?? 0m) : 0d)
+                        + (s != null ? (double?)(s.TotalStaffCosts ?? 0m) : 0d)
+                        + (tst != null ? (double?)(tst.TotalTestCosts ?? 0m) : 0d)
+                        + (double?)(t.PlanCaseworkDebit ?? 0m),
+                    t.CustIncome,
+                    t.TransferIncome,
+                    TotalIncome = t.CustIncome + t.TransferIncome,
+                    t.BudgetCvl,
+                    RequiredProfit = t.Profit,
+                    t.Manager,
+                    t.Customer,
+                    t.ProjectStatus,
+                    PvsIncome = t.PvsIncome ?? 0m,
+                    PlanCaseworkDebit = t.PlanCaseworkDebit ?? 0m,
+                    TotalPayCosts = s != null ? (double?)(s.TotalPayCosts ?? 0m) : 0d,
+                    t.FpsYear
+                })
+                .Distinct()
+                .Select(r => new RsFpsYearTotalsTable
+                {
+                    ParentProject = r.ParentProject,
+                    Program = r.Program,
+                    TotalAdditionalCosts = r.TotalAdditionalCosts,
+                    TotalAnimalCosts = r.TotalAnimalCosts,
+                    TotalStaffCosts = r.TotalStaffCosts,
+                    TotalTestCosts = r.TotalTestCosts,
+                    TotalCosts = r.TotalCosts,
+                    CustIncome = r.CustIncome,
+                    TransferIncome = r.TransferIncome,
+                    TotalIncome = r.TotalIncome,
+                    BudgetCvl = r.BudgetCvl,
+                    RequiredProfit = r.RequiredProfit,
+                    Manager = r.Manager,
+                    Customer = r.Customer,
+                    ProjectStatus = r.ProjectStatus,
+                    PvsIncome = r.PvsIncome,
+                    PlanCaseworkDebit = r.PlanCaseworkDebit,
+                    TotalPayCosts = r.TotalPayCosts,
+                    FpsYear = r.FpsYear
+                })
+                .ToListAsync(cancellationToken);
+
+            if (totalsRows.Count == 0)
+            {
+                _logger.LogInformation("Inserted 0 rebuilt totals rows for year {Year}", targetYear);
+                return 0;
+            }
+
+            await _context.RsFpsYearTotals.AddRangeAsync(totalsRows, cancellationToken);
+            var insertRows = await _context.SaveChangesAsync(cancellationToken);
 
             _logger.LogInformation("Inserted {RowCount} rebuilt totals rows for year {Year}", insertRows, targetYear);
 

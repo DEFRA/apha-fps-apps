@@ -155,7 +155,7 @@ public static class ServiceCollectionSetup
             .Where(t =>
                 t is { IsClass: true, IsAbstract: false } &&
                 loaderType.IsAssignableFrom(t) &&
-                t.IsSubclassOf(typeof(MabArchiveLinqLoaderBase)))
+                t.IsSubclassOf(typeof(MabArchiveExecutionLoaderBase)))
             .ToList();
 
         foreach (var loader in loaderImplementations)
@@ -212,3 +212,4 @@ public static class ServiceCollectionSetup
         }
     }
 }
+
