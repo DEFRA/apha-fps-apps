@@ -1,8 +1,0 @@
-QUERY NAME: qrytblStaff
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tblWGEmployee.PACTid AS StaffID, [lastname] & "  " & [firstname] AS Name, tblEmployee.Title, tblWGEmployee.PersonStatus, tblWGEmployee.PersonClass, tblWGEmployee.HrsPaid, tblWGEmployee.Leave, tblWGEmployee.SickSpecial, tblWGEmployee.HrsAvail, tblWGEmployee.WorkGroupGrade
-FROM tblEmployee INNER JOIN tblWGEmployee ON tblEmployee.SPNumber = tblWGEmployee.SPNumber;
-

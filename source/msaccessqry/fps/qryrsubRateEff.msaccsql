@@ -1,8 +1,0 @@
-QUERY NAME: qryrsubRateEff
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW qryResurceBids.*, qryPCTotalExceptCosts.SumOfItemCost
-FROM qryResurceBids INNER JOIN qryPCTotalExceptCosts ON qryResurceBids.ProfitCentre = qryPCTotalExceptCosts.ProfitCentre;
-

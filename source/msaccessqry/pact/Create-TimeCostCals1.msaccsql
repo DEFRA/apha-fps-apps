@@ -1,8 +1,0 @@
-QUERY NAME: Create-TimeCostCals1
----------------------------------------------
-TYPE: MAKE TABLE
-
-SQL:
-SELECT DISTINCTROW WorkGroupGrade.WorkGroup, MonthlyTime.TimeCode AS JobCode, TimeCodeValid.ParentProject AS Project, MonthlyTime.Month, tblStaff.PACTid AS StaffID, WorkGroupGrade.GradeCode, tblStaff.Name, ProfitCentreGrade.ChargeRate, IIf([timecodevalid].[parentproject] Like "ZT*","Free","Charge") AS Class, MonthlyTime.Hours AS [Time], IIf([class]="charge",[hours]*[chargerate],0) AS Cost, tblkpProfitCentre.Division, MonthlyTime.JobCodeOld1st AS JobCodeOld INTO TimeCostCalcs
-FROM ((tblkpProfitCentre INNER JOIN ProfitCentreGrade ON tblkpProfitCentre.ProfitCentre = ProfitCentreGrade.ProfitCentre) INNER JOIN WorkGroupGrade ON ProfitCentreGrade.PC_Grade = WorkGroupGrade.ProfitCentreGrade) INNER JOIN (TimeCodeValid INNER JOIN (tblStaff INNER JOIN MonthlyTime ON tblStaff.PACTid = MonthlyTime.PACTStaffID) ON (TimeCodeValid.WorkGroup = MonthlyTime.WorkGroup) AND (TimeCodeValid.TimeCode = MonthlyTime.TimeCode) AND (TimeCodeValid.ParentProject = MonthlyTime.ParentProject)) ON WorkGroupGrade.WG_Grade = tblStaff.WorkGroupGrade;
-

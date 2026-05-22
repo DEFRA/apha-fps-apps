@@ -1,8 +1,0 @@
-QUERY NAME: qrySMG_ResourceSumApproved
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tblkpProfitCentre.ProfitCentre, tblkpProfitCentre.CONTTARGET, qryTotalRAnimalCostsApp.AnimalCosts, qryTotalRStaffCostsApp.TotalStaffCosts AS StaffCosts, qryTotalRBidsApp.SumOfGenBid AS GenBids, IIf(IsNull([SumOfItemCost]),0,[SumOfItemCost]) AS ProjSpecificCosts
-FROM (((tblkpProfitCentre INNER JOIN qryTotalRBidsApp ON tblkpProfitCentre.ProfitCentre = qryTotalRBidsApp.ProfitCentre) INNER JOIN qryTotalRAnimalCostsApp ON tblkpProfitCentre.ProfitCentre = qryTotalRAnimalCostsApp.ProfitCentre) INNER JOIN qryTotalRStaffCostsApp ON tblkpProfitCentre.ProfitCentre = qryTotalRStaffCostsApp.ProfitCentre) INNER JOIN qryPCTotalExceptCostsApp ON tblkpProfitCentre.ProfitCentre = qryPCTotalExceptCostsApp.ProfitCentre;
-

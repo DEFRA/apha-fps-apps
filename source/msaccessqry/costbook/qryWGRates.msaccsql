@@ -1,8 +1,0 @@
-QUERY NAME: qryWGRates
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT WorkGroupGrade.WGGrade, tblPCGrades.ChargeRate, tblPCGrades.PayRate, tblPCGrades.NPR, tblPCGrades.OHR
-FROM WorkGroupGrade INNER JOIN tblPCGrades ON WorkGroupGrade.ProfitCentreGrade = tblPCGrades.PCGrade;
-

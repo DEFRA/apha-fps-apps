@@ -1,6 +1,0 @@
-QUERY NAME: ddCreateIndexvContractAnimalReq
----------------------------------------------
-TYPE: DDL
-
-SQL:
-CREATE UNIQUE INDEX vContractAnimalReq_PK ON vContractAnimalReq(JobCode,AnimalType)

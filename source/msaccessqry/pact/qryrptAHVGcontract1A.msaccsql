@@ -1,9 +1,0 @@
-QUERY NAME: qryrptAHVGcontract1A
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW MonthlyOutput.Buyer, MonthlyOutput.Month, Sum(MonthlyOutput.Volume) AS SumOfVolume
-FROM tlkpTestCapability INNER JOIN MonthlyOutput ON (tlkpTestCapability.WorkGroup = MonthlyOutput.WorkGroup) AND (tlkpTestCapability.TestCode = MonthlyOutput.TestCode)
-GROUP BY MonthlyOutput.Buyer, MonthlyOutput.Month;
-

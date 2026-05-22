@@ -1,8 +1,0 @@
-QUERY NAME: qryErrMsgSuggestions
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tblErrMsgSuggestions.*
-FROM tblErrMsgSuggestions;
-

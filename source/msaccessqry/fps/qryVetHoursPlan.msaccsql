@@ -1,9 +1,0 @@
-QUERY NAME: qryVetHoursPlan
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW WorkGroupGrade_General.WorkGroup, tblStaffJob_MAP.Jobcode, Sum([plannedhours])*([Forms]![frmPactReportMenu]![PeriodPick])/12 AS PlanHours
-FROM (tblStaff_General LEFT JOIN tblStaffJob_MAP ON tblStaff_General.StaffID = tblStaffJob_MAP.StaffID) RIGHT JOIN WorkGroupGrade_General ON tblStaff_General.WorkGroupGrade = WorkGroupGrade_General.WGGrade
-GROUP BY WorkGroupGrade_General.WorkGroup, tblStaffJob_MAP.Jobcode;
-

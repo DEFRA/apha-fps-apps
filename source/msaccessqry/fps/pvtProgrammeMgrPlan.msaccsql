@@ -1,8 +1,0 @@
-QUERY NAME: pvtProgrammeMgrPlan
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW vProjectStaffPlan.*
-FROM vProjectStaffPlan;
-

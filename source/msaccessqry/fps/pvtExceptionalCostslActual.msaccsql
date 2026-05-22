@@ -1,9 +1,0 @@
-QUERY NAME: pvtExceptionalCostslActual
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT tlkpProject_General.Program, tlkpProject_General.ParentProject, tlkpProject_General.ProjectStatus, tlkpProject_General.Customer, tlkpProject_General.Disease, Proj_SubContract.Month, Proj_SubContract.Amount, Proj_SubContract.AcctCode
-FROM tlkpProject_General INNER JOIN Proj_SubContract ON tlkpProject_General.ParentProject = Proj_SubContract.Project
-WHERE (((Proj_SubContract.AcctCode) Not In ("LargeAnimals","SmallAnimals","Mice")) AND ((fnSelectedProg([Program]))=True) AND ((fnselectedproject([parentproject]))=True));
-

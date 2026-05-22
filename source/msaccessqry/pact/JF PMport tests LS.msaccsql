@@ -1,9 +1,0 @@
-QUERY NAME: JF PMport tests LS
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT MonthlyOutput.WorkGroup, MonthlyOutput.TestCode, MonthlyOutput.Buyer, MonthlyOutput.Month, MonthlyOutput.Volume, TestorProduct.UnitPriceVLAgen, [Volume]*[UnitPriceVLAgen] AS Total
-FROM (MonthlyOutput INNER JOIN TestorProduct ON MonthlyOutput.TestCode = TestorProduct.ItemCode) INNER JOIN [Janee tests list] ON MonthlyOutput.TestCode = [Janee tests list].testcode
-WHERE (((MonthlyOutput.WorkGroup) Like "LT*"));
-

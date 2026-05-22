@@ -1,9 +1,0 @@
-QUERY NAME: qryResurceBids
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tblkpProfitCentre.ProfitCentre, tblkpProfitCentre.CONTTARGET, Sum(IIf([accounttype]='pay',[genbid],0)) AS PayBid, Sum(IIf([accounttype]='pay',0,[genbid])) AS NonPayBid
-FROM (tblkpProfitCentre INNER JOIN (tblBid INNER JOIN WorkGroup_General ON tblBid.WorkGroup = WorkGroup_General.WorkGroup) ON tblkpProfitCentre.ProfitCentre = WorkGroup_General.ProfitCentre) INNER JOIN tblkpAccountCategory ON tblBid.Account = tblkpAccountCategory.AccShortName
-GROUP BY tblkpProfitCentre.ProfitCentre, tblkpProfitCentre.CONTTARGET;
-

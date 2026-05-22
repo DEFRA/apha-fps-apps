@@ -1,8 +1,0 @@
-QUERY NAME: qryfrmTestReqMet
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tlkpTestReqMet_TM.SupplierWG, tlkpTestReqMet_TM.TestCode, tlkpTestReqMet_TM.Buyer, tlkpTestReqMet_TM.ContrVolume
-FROM tlkpTestReqMet_TM;
-

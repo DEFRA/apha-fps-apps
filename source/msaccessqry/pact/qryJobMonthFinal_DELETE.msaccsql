@@ -1,6 +1,0 @@
-QUERY NAME: qryJobMonthFinal_DELETE
----------------------------------------------
-TYPE: OTHER
-
-SQL:
-sp_DeleteProjectMonthFinal 

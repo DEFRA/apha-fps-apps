@@ -1,8 +1,0 @@
-QUERY NAME: qryRadTrackProg
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT tblRadTrackProg.Program, tblRadTrackProg.PublicationPrefix
-FROM tblRadTrackProg;
-

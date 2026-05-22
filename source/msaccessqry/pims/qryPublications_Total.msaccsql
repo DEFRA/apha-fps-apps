@@ -1,9 +1,0 @@
-QUERY NAME: qryPublications_Total
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT fnProgramGroup([Program]) AS ProgramGroup, tblPublication.Type, Sum(Abs(fnNowDue([targetdate]))) AS Due, Sum(Abs(Not IsNull([submitted]))) AS NoSubmitted, Sum(Abs([published])) AS NoPublished
-FROM tblPublication
-GROUP BY fnProgramGroup([Program]), tblPublication.Type;
-

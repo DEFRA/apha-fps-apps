@@ -1,8 +1,0 @@
-QUERY NAME: qryJobCodeTotals2
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW qryTotalStaffCosts.TotalStaffCosts AS JCTotalStaffCosts
-FROM tlkpProgram INNER JOIN (tlkpProject LEFT JOIN qryTotalStaffCosts ON tlkpProject.ParentProject = qryTotalStaffCosts.Jobcode) ON tlkpProgram.ProgramNo = tlkpProject.Program;
-

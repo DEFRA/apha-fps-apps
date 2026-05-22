@@ -1,8 +1,0 @@
-QUERY NAME: qryCompareTests1
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tblTestRequ.JobCode, tblTestRequ.TestCode, tblTestRequ.NoTests, tblTestRequ.TestPrice, [testprice]*[notests] AS Charge
-FROM tblTestRequ;
-

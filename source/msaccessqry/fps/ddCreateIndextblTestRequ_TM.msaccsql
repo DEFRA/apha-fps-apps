@@ -1,6 +1,0 @@
-QUERY NAME: ddCreateIndextblTestRequ_TM
----------------------------------------------
-TYPE: DDL
-
-SQL:
-CREATE UNIQUE INDEX tblTestRequ_TMPK ON tblTestRequ_TM(JobCode,TestCode)

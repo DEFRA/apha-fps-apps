@@ -1,8 +1,0 @@
-QUERY NAME: xQryStaffYear
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW qryProjectYearProject.FinancialYear, tblProject.Project, tblProject.ProjectTitle, tblStaffRequ.PCGrade, tblStaffRequ.[Number of Hours], [Number of Hours]*[ChargeRate] AS TotalCost, tblPCGrades.ChargeRate, tblPCGrades.ProfitCentre
-FROM tblPCGrades INNER JOIN ((tblProject INNER JOIN (tblProjectYear INNER JOIN qryProjectYearProject ON tblProjectYear.ProjectYear = qryProjectYearProject.ProjectYear) ON tblProject.Project = tblProjectYear.Project) INNER JOIN tblStaffRequ ON tblProjectYear.ProjectYear = tblStaffRequ.ProjectYear) ON tblPCGrades.PC_Grade = tblStaffRequ.PCGrade;
-

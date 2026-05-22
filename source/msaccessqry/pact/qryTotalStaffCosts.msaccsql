@@ -1,9 +1,0 @@
-QUERY NAME: qryTotalStaffCosts
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tblStaffJob.Jobcode, Sum([plannedhours]*[ChargeRate]) AS TotalStaffCosts
-FROM ((tblStaffJob INNER JOIN tblStaff ON tblStaffJob.StaffID = tblStaff.PACTid) INNER JOIN WorkGroupGrade ON tblStaff.WorkGroupGrade = WorkGroupGrade.WG_Grade) INNER JOIN ProfitCentreGrade ON WorkGroupGrade.ProfitCentreGrade = ProfitCentreGrade.PC_Grade
-GROUP BY tblStaffJob.Jobcode;
-

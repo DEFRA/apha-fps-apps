@@ -1,9 +1,0 @@
-QUERY NAME: JF AS2/3 QTLY
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT tlkpProject.Program, TimeCostCalcs.WorkGroup, TimeCostCalcs.Project, TimeCostCalcs.JobCode, TimeCostCalcs.Name, TimeCostCalcs.Month, TimeCostCalcs.Class, TimeCostCalcs.GradeCode, TimeCostCalcs.Time, TimeCostCalcs.Cost
-FROM TimeCostCalcs INNER JOIN tlkpProject ON TimeCostCalcs.Project = tlkpProject.ParentProject
-WHERE (((TimeCostCalcs.WorkGroup)="AS2" Or (TimeCostCalcs.WorkGroup)="AS3") AND ((TimeCostCalcs.Class)="charge"));
-

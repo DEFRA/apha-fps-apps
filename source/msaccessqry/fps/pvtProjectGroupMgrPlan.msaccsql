@@ -1,9 +1,0 @@
-QUERY NAME: pvtProjectGroupMgrPlan
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tlkpProject_General.ProjectGroup, ProfitCentreGrade_General.ProfitCentre AS ResourceCentre, WorkGroupGrade_General.WorkGroup, WorkGroupGrade_General.GradeCode, tblStaff_General.Name, tlkpProject_General.Manager, tblStaffJob_ByGroup.Jobcode, tlkpProject_General.ProjectStatus, tblStaffJob_ByGroup.plannedhours AS Hrs, ProfitCentreGrade_General.ChargeRate, [Hrs]*[ChargeRate]*IIf([sector_name]="charge",1,0) AS Fee
-FROM (ProfitCentreGrade_General INNER JOIN (((WorkGroupGrade_General INNER JOIN tblStaff_General ON WorkGroupGrade_General.WGGrade = tblStaff_General.WorkGroupGrade) INNER JOIN tblStaffJob_ByGroup ON tblStaff_General.StaffID = tblStaffJob_ByGroup.StaffID) INNER JOIN tlkpProject_General ON tblStaffJob_ByGroup.Jobcode = tlkpProject_General.ParentProject) ON ProfitCentreGrade_General.PCGrade = WorkGroupGrade_General.ProfitCentreGrade) INNER JOIN tlkpProgram_MAP ON tlkpProject_General.Program = tlkpProgram_MAP.ProgramNo
-WHERE (((tlkpProject_General.ProjectGroup)=[Forms]![frmProjectGroupManager]![PickGroup]));
-

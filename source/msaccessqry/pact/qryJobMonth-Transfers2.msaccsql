@@ -1,9 +1,0 @@
-QUERY NAME: qryJobMonth-Transfers2
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW [qryJobMonth-Transfers1].Project, [qryJobMonth-Transfers1].Month, Sum([qryJobMonth-Transfers1].TransferCost) AS SumOfTransferCost
-FROM [qryJobMonth-Transfers1]
-GROUP BY [qryJobMonth-Transfers1].Project, [qryJobMonth-Transfers1].Month;
-

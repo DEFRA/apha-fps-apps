@@ -1,6 +1,0 @@
-QUERY NAME: ddCreateIndexvContractProject
----------------------------------------------
-TYPE: DDL
-
-SQL:
-CREATE UNIQUE INDEX vContractProject_PK ON vContractProject(ParentProject)

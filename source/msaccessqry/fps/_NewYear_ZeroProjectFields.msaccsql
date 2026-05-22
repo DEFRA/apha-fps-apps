@@ -1,7 +1,0 @@
-QUERY NAME: _NewYear_ZeroProjectFields
----------------------------------------------
-TYPE: UPDATE
-
-SQL:
-UPDATE tlkpProject_MAP SET tlkpProject_MAP.TransferIncome = 0, tlkpProject_MAP.CustIncome = 0, tlkpProject_MAP.WIP_EOY = 0, tlkpProject_MAP.FECcost = 0, tlkpProject_MAP.Profit = 0, tlkpProject_MAP.Budget_CVL = 0, tlkpProject_MAP.CarryOver = 0, tlkpProject_MAP.WIP_Limit = Null, tlkpProject_MAP.WIP_Current = Null, tlkpProject_MAP.PVSIncome = Null, tlkpProject_MAP.PlanCaseworkDebit = Null;
-

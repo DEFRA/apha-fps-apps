@@ -1,6 +1,0 @@
-QUERY NAME: qptProjects
----------------------------------------------
-TYPE: PASS-THROUGH
-
-SQL:
-usp_qryProjects

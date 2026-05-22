@@ -1,8 +1,0 @@
-QUERY NAME: qryrptAHVGgraph3
----------------------------------------------
-TYPE: PASS-THROUGH
-
-SQL:
-sp_qryrptAHVGgraph3
-
-

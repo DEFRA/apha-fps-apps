@@ -1,9 +1,0 @@
-QUERY NAME: qryJobMonth-TotProfile
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW ProjectMonth.Project, Sum(ProjectMonth.CostProfile) AS SumOfCostProfile
-FROM ProjectMonth
-GROUP BY ProjectMonth.Project;
-

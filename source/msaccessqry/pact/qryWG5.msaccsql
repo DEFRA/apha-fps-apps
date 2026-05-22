@@ -1,9 +1,0 @@
-QUERY NAME: qryWG5
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tlkpMonth.AccntsPeriod, tlkpMonth.MonthName, tlkpProject.PlanCat, tlkpProject.ParentProject, tlkpProject.ProjectTitle, tlkpMonth.AccntsPeriod AS MonthNo, ProjectMonthFinal.CostProfile AS MonthCostProfile, ProjectMonthFinal.TotalCost AS MonthCost, [Invoices]+[portsales] AS MonthIncome, [monthincome]-[monthcost] AS MonthVar, tlkpProject.Budget_Ext AS ContractPrice, [budget_ext]-[CumCost] AS contpricelesscost, [cumincome]-[cumcost] AS CumVar, ProjectMonthFinal.CumProfile AS CumCostProfile, ProjectMonthFinal.CumCost, [CumInvoices]+[cumPortSales] AS CumIncome, [cumincome]-[cumcost] AS ProfitLoss, [cumcostprofile]-[cumcost] AS PlanVar, tlkpProgram.ProgramNo, tlkpProgram.ProgramName, tlkpProgram.Directorate
-FROM ((tlkpProject INNER JOIN ProjectMonthFinal ON tlkpProject.ParentProject = ProjectMonthFinal.Project) INNER JOIN tlkpMonth ON ProjectMonthFinal.MonthNo = tlkpMonth.AccntsPeriod) INNER JOIN tlkpProgram ON tlkpProject.Program = tlkpProgram.ProgramNo
-WHERE ((tlkpMonth.AccntsPeriod=[forms]![menu-division]![periodpick]) AND (tlkpProject.PlanCat="testactivity"));
-

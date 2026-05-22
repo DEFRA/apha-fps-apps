@@ -1,9 +1,0 @@
-QUERY NAME: Query2
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT MonthlyTime.*
-FROM MonthlyTime
-WHERE (((MonthlyTime.TimeCode)="AD6000"));
-

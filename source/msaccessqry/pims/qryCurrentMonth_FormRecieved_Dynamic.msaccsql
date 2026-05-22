@@ -1,9 +1,0 @@
-QUERY NAME: qryCurrentMonth_FormRecieved_Dynamic
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT ParentProject, [Year], [Jun] AS CurrentMonth
-FROM MY_MilestoneFormDates
-WHERE [Year]=2012;
-

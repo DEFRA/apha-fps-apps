@@ -1,9 +1,0 @@
-QUERY NAME: qryStaffReqGrade_Com
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tblStaffRequ.Project, tblStaffRequ.Year, WorkGroupGrade.WorkGroup, tblStaffRequ.WGGrade, tblStaffRequ.ChargeRate, [ChargeRate]*[NoHours] AS StaffCost, tblStaffRequ.NoHours, tblStaffRequ.NoDays, tblStaffRequ.Name, tblProject.Programme, WorkGroupGrade.GradeCode, tblProjectYear.Markup_Time, tblProjectYear.Profit_Time, [StaffCost]*(1+[Markup_Time]/100) AS CostIncMarkup, 100*[CostIncMarkup]/(100-[Profit_Time]) AS CostIncProfit
-FROM (tblProject INNER JOIN tblProjectYear ON tblProject.Project = tblProjectYear.Project) INNER JOIN (tblStaffRequ LEFT JOIN WorkGroupGrade ON tblStaffRequ.WGGrade = WorkGroupGrade.WGGrade) ON (tblProjectYear.YearNo = tblStaffRequ.Year) AND (tblProjectYear.Project = tblStaffRequ.Project)
-ORDER BY WorkGroupGrade.WorkGroup, tblStaffRequ.WGGrade;
-

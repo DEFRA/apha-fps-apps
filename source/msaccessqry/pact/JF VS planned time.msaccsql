@@ -1,9 +1,0 @@
-QUERY NAME: JF VS planned time
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT ProfitCentreGrade.PC_Grade, ProfitCentreGrade.ProfitCentre, tblStaff.Name, tlkpProject.ParentProject, tlkpProject.ProjectTitle, tblStaffJob.Jobcode, tblStaffJob.plannedhours, ProfitCentreGrade.ChargeRate
-FROM ((ProfitCentreGrade INNER JOIN WorkGroupGrade ON ProfitCentreGrade.PC_Grade = WorkGroupGrade.ProfitCentreGrade) INNER JOIN tblStaff ON WorkGroupGrade.WG_Grade = tblStaff.WorkGroupGrade) INNER JOIN (tblStaffJob INNER JOIN tlkpProject ON tblStaffJob.Jobcode = tlkpProject.ParentProject) ON tblStaff.PACTid = tblStaffJob.StaffID
-WHERE (((ProfitCentreGrade.ProfitCentre) Like "*VSD*") AND ((ProfitCentreGrade.PC_Grade) Like "*B-VSD*")) OR (((ProfitCentreGrade.ProfitCentre) Like "*VSD*") AND ((ProfitCentreGrade.PC_Grade) Like "*C-VSD*"));
-

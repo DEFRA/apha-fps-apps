@@ -1,9 +1,0 @@
-QUERY NAME: QryStaffFinYr
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW qryProjectYearProject.FinancialYear, qryProjectYearProject.Project, qryProjectYearProject.ProjectTitle, qryProjectYearProject.YearIncome, qryStaffReqGrade.PCGrade, qryStaffReqGrade.[Number of Hours], qryStaffReqGrade.StaffCost, qryStaffReqGrade.ChargeRate, qryStaffReqGrade.ProfitCentre
-FROM qryStaffReqGrade INNER JOIN qryProjectYearProject ON qryStaffReqGrade.ProjectYear = qryProjectYearProject.ProjectYear
-WHERE ((qryProjectYearProject.FinancialYear=[Forms]![FrmStaffFinYr]![FinancialYr]));
-

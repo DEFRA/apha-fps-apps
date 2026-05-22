@@ -1,6 +1,0 @@
-QUERY NAME: qptWho
----------------------------------------------
-TYPE: PASS-THROUGH
-
-SQL:
-SELECT USER_NAME()

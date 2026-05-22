@@ -1,9 +1,0 @@
-QUERY NAME: qryMilestoneNotOntarget
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT tblMilestone.Project, tblMilestone.Number, G_tlkpProject.ShortTitle, tblMilestone.Description, tblMilestone.DateDue, tblMilestone.ProjectLeaderComment, tblMilestone.OnTarget, MY_tlkpProject.Program, MY_tlkpProject.Manager, G_tlkpProject.ProjectTitle, tblMilestone.DateCompleted, MY_tlkpProject.Customer, G_tlkpProject.Contract, MY_tlkpProject.ProjectGroup
-FROM (G_tlkpProject INNER JOIN MY_tlkpProject ON G_tlkpProject.ParentProject = MY_tlkpProject.ParentProject) INNER JOIN tblMilestone ON MY_tlkpProject.ParentProject = tblMilestone.Project
-WHERE (((tblMilestone.OnTarget)=0 Or (tblMilestone.OnTarget) Is Null) AND ((MY_tlkpProject.Manager) Like fnGetHiddenManager()) AND ((tblMilestone.DateCompleted) Is Null) AND ((MY_tlkpProject.Year)=fnReportYear()) AND ((fnInReportMonthOrBefore([DateDue]))=True) AND ((IsEU_Project([project]))=False));
-

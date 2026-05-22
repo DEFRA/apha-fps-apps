@@ -1,9 +1,0 @@
-QUERY NAME: xqryAD6000_DeleteTransformed
----------------------------------------------
-TYPE: DELETE
-
-SQL:
-DELETE MonthlyTime.*, Exists (SELECT * FROM tblMTConversion WHERE (MonthlyTime.TimeCode = tblMTConversion.NewCode) AND (MonthlyTime.ParentProject = tblMTConversion.NewProject)) AS Expr1, MonthlyTime.WorkGroup
-FROM MonthlyTime
-WHERE (((Exists (SELECT * FROM tblMTConversion WHERE (MonthlyTime.TimeCode = tblMTConversion.NewCode) AND (MonthlyTime.ParentProject = tblMTConversion.NewProject)))<>False) AND ((MonthlyTime.WorkGroup) Like "SV*"));
-

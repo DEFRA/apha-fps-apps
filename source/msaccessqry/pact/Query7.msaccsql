@@ -1,9 +1,0 @@
-QUERY NAME: Query7
----------------------------------------------
-TYPE: DELETE
-
-SQL:
-DELETE DISTINCTROW tbltmpMonthlyOutput.*, tbltmpMonthlyOutput.Volume, Trim(nz([tbltmpMonthlyOutput].[Volume],''))
-FROM tbltmpMonthlyOutput
-WHERE (((Trim(nz([tbltmpMonthlyOutput].[Volume],'')))<>''));
-

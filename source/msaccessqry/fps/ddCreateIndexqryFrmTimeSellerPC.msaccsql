@@ -1,6 +1,0 @@
-QUERY NAME: ddCreateIndexqryFrmTimeSellerPC
----------------------------------------------
-TYPE: DDL
-
-SQL:
-CREATE UNIQUE INDEX qryfrmtimesellerpc_PK ON qryfrmtimesellerpc(sellingPC,workgroup,wggrade)

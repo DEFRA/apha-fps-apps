@@ -1,9 +1,0 @@
-QUERY NAME: QryFinYr
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW TblFinYrs.[Financial Year], tblProject.StartDate, TblFinYrs.StartDate, TblFinYrs.EndDate, tblProject.Project
-FROM TblFinYrs, tblProject
-WHERE ((TblFinYrs.StartDate<[tblProject]![StartDate]) AND (TblFinYrs.EndDate>[tblProject]![StartDate]));
-

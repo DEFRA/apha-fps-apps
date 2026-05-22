@@ -1,9 +1,0 @@
-QUERY NAME: qryTimeByCategoryDiv_Graph
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW IIf([timecode] Like "cn*","Consultancy",[PlanCat]) AS Category, Sum(TimeCostCalcs.Time) AS SumOfTime
-FROM tblkpProfitCentre INNER JOIN (tlkpProject INNER JOIN ((TimeCostCalcs INNER JOIN TimeCodeValid ON (TimeCostCalcs.JobCode = TimeCodeValid.TimeCode) AND (TimeCostCalcs.WorkGroup = TimeCodeValid.WorkGroup)) INNER JOIN WorkGroup ON TimeCostCalcs.WorkGroup = WorkGroup.WorkGroup) ON tlkpProject.ParentProject = TimeCodeValid.ParentProject) ON tblkpProfitCentre.ProfitCentre = WorkGroup.ProfitCentre
-GROUP BY IIf([timecode] Like "cn*","Consultancy",[PlanCat]);
-

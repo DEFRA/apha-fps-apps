@@ -1,6 +1,0 @@
-QUERY NAME: qryptdelProjectMonth2
----------------------------------------------
-TYPE: OTHER
-
-SQL:
-sp_deleteProjectMonth2 

@@ -1,8 +1,0 @@
-QUERY NAME: qrySnapshotMonth
----------------------------------------------
-TYPE: PASS-THROUGH
-
-SQL:
-Select DB_Var_Value from FPS_Snapshot..tblDB_Variables
-WHERE DB_Var_Name = 'Month'
-

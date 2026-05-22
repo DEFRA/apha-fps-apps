@@ -1,9 +1,0 @@
-QUERY NAME: qryTestCapDuplicates3
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT tlkpTestCapability.TestCode, IIf([WorkGroup] Like "lt*","LT",[workgroup]) AS Expr1, tlkpTestCapability.PlanPortfolio
-FROM qryTestCapDuplicates1 INNER JOIN tlkpTestCapability ON qryTestCapDuplicates1.TestCode = tlkpTestCapability.TestCode
-GROUP BY tlkpTestCapability.TestCode, IIf([WorkGroup] Like "lt*","LT",[workgroup]), tlkpTestCapability.PlanPortfolio;
-

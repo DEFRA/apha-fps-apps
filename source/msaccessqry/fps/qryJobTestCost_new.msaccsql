@@ -1,8 +1,0 @@
-QUERY NAME: qryJobTestCost_new
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tblJobTestCosts_local.JobCode, tblJobTestCosts_local.TestCode, tblJobTestCosts_local.ItemDescription, tblJobTestCosts_local.NoTests, tblJobTestCosts_local.TestPrice AS AgreedUnitPrice, tblJobTestCosts_local.UnitPriceVLA AS RecUnitPrice, [NoTests]*[agreedUnitPrice] AS TestCost, IIf(IsNull([ContrVolume]),0,-1) AS ReqMet
-FROM tblJobTestCosts_local;
-

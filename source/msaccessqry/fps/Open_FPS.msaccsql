@@ -1,6 +1,0 @@
-QUERY NAME: Open_FPS
----------------------------------------------
-TYPE: OTHER
-
-SQL:
-sp_Open_FPS

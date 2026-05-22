@@ -1,8 +1,0 @@
-QUERY NAME: xxqryStaffReqGrade_EU1
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT qryStaffReqGrade_EU.Project, qryStaffReqGrade_EU.Year, qryStaffReqGrade_EU.EUGrade AS GradeCode, qryStaffReqGrade_EU.StaffCost, qryStaffReqGrade_EU.TotalHours, qryStaffReqGrade_EU.TotalDays, IIf([totalhours]=0,0,[AvChargeR_Num]*[ConvFactor]/[TotalHours]) AS AvChargeRate, IIf([totalhours]=0,0,[AvPayRate_Num]*[ConvFactor]/[TotalHours]) AS AvPayRate, IIf([totalhours]=0,0,[AvNPR_Num]*[ConvFactor]/[TotalHours]) AS AvNPR, IIf([totalhours]=0,0,[AvOHR_Num]*[ConvFactor]/[TotalHours]) AS AvOHR, qryStaffReqGrade_EU.ConvFactor, qryStaffReqGrade_EU.EuroConvRate
-FROM qryStaffReqGrade_EU;
-

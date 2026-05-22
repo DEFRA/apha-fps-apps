@@ -1,6 +1,0 @@
-QUERY NAME: zxqptRecreateSummaries
----------------------------------------------
-TYPE: OTHER
-
-SQL:
-sp_RecreateSummaries 1

@@ -1,9 +1,0 @@
-QUERY NAME: qryTestsRequiredThisYear
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT tlkpTestReqmt_MAP.TestCode, Sum(tlkpTestReqmt_MAP.NoRequired) AS NoRequired, First(TestOrProduct.ItemDescription) AS ItemDescription, First(TestOrProduct.UnitPriceVLA) AS UnitPriceVLA
-FROM tlkpTestReqmt_MAP LEFT JOIN TestOrProduct ON tlkpTestReqmt_MAP.TestCode = TestOrProduct.ItemCode
-GROUP BY tlkpTestReqmt_MAP.TestCode;
-

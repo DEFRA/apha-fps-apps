@@ -1,8 +1,0 @@
-QUERY NAME: JobCode
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tlkpProject.ParentProject AS JobCode, tlkpProject.ProjectTitle AS JobDescription, tlkpProject.Program AS Programme, tlkpProject.Customer, tlkpProject.Manager AS ProjectManager, tlkpProject.CustIncome, tlkpProject.TransferIncome, tlkpProject.Profit, tlkpProject.DateCreated, tlkpProject.CostBookNo, tlkpProject.ProjectStatus, tlkpProject.Disease, tlkpProject.Contract, tlkpProject.Budget_CVL, tlkpProject.PVSIncome, tlkpProject.CaseworkSub, tlkpProject.ShortTitle, tlkpProject.PlanCaseworkDebit, tlkpProject.Comments, tlkpProject.CarryOver, tlkpProject.CarryOverSeed, tlkpProject.ParentProject, tlkpProject.IsDefraProject, tlkpProject.CostCentre, tlkpProject.ProjectGroup, tlkpProject.IncomeAccountCode, tlkpProject.SubAccountCode
-FROM tlkpProject;
-

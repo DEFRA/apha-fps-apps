@@ -1,9 +1,0 @@
-QUERY NAME: qryInvoicesCumulative
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW qryContractInvoices.Contract AS Project, tblPeriod.EndPeriod, qryContractInvoices.SumOfAmount1
-FROM (tblPeriod INNER JOIN tblkPeriodMonth ON tblPeriod.PeriodName = tblkPeriodMonth.PeriodName) INNER JOIN qryContractInvoices ON tblkPeriodMonth.MonthNo = qryContractInvoices.Month
-GROUP BY qryContractInvoices.Contract, tblPeriod.EndPeriod, qryContractInvoices.SumOfAmount1;
-

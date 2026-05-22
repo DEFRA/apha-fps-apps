@@ -1,9 +1,0 @@
-QUERY NAME: qryTestReqBreakdown2
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT qryTestReqBreakdown.TestCode, qryTestReqBreakdown.ShortDescription, qryTestReqBreakdown.Program, qryTestReqBreakdown.JobCode AS Project, IIf(IsNull([qryTestReqBreakdown].[ProfitCentre]),[Workgroup_General].[ProfitCentre],[qryTestReqBreakdown].[ProfitCentre]) AS PC, qryTestReqBreakdown.WorkG, qryTestReqBreakdown.WGPrice, [NoReq]*[WGPrice] AS TotalCost
-FROM qryTestReqBreakdown LEFT JOIN WorkGroup_General ON qryTestReqBreakdown.WorkG = WorkGroup_General.WorkGroup
-GROUP BY qryTestReqBreakdown.TestCode, qryTestReqBreakdown.ShortDescription, qryTestReqBreakdown.Program, qryTestReqBreakdown.JobCode, IIf(IsNull([qryTestReqBreakdown].[ProfitCentre]),[Workgroup_General].[ProfitCentre],[qryTestReqBreakdown].[ProfitCentre]), qryTestReqBreakdown.WorkG, qryTestReqBreakdown.WGPrice, [NoReq]*[WGPrice];
-
