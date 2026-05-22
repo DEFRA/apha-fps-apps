@@ -30,6 +30,7 @@ namespace Apha.Costbook.Api.Extensions
             services.AddScoped<IYearlyDetailsService, YearlyDetailsService>();
             services.AddScoped<IProjectSummaryService, ProjectSummaryService>();
             services.AddScoped<ISettingsService, SettingsService>();
+            services.AddScoped<IYearMasterService, YearMasterService>();
             return services;
         }
 
@@ -48,6 +49,7 @@ namespace Apha.Costbook.Api.Extensions
             services.AddScoped<ITestRequirementRepository, TestRequirementRepository>();
             services.AddScoped<IAnimalRequirementRepository, AnimalRequirementRepository>();
             services.AddScoped<IAdditionalCostRepository, AdditionalCostRepository>();
+            services.AddScoped<IYearMasterRepository, YearMasterRepository>();
             return services;
         }
     }

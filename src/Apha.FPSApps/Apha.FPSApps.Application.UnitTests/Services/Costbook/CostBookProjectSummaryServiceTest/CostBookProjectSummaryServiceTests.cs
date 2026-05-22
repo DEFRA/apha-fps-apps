@@ -411,5 +411,109 @@ namespace Apha.FPSApps.Application.UnitTests.Costbook.CostBookProjectSummaryServ
         }
 
         #endregion
+
+        #region ExportProjectSummaryToExcelAsync Tests
+
+        [Fact]
+        public async Task ExportProjectSummaryToExcelAsync_WithValidProjectId_ReturnsExcelData()
+        {
+            // Arrange
+            var projectId = "P001";
+            var expectedExcelData = new byte[] { 0x50, 0x4B, 0x03, 0x04 }; // Simulated Excel file bytes
+
+            _costBookProjectSummaryApiClient.ExportProjectSummaryToExcelAsync(projectId).Returns(expectedExcelData);
+
+            // Act
+            var result = await _costBookProjectSummaryService.ExportProjectSummaryToExcelAsync(projectId);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.NotEmpty(result);
+            Assert.Equal(expectedExcelData, result);
+            await _costBookProjectSummaryApiClient.Received(1).ExportProjectSummaryToExcelAsync(projectId);
+        }
+
+        [Fact]
+        public async Task ExportProjectSummaryToExcelAsync_WithEmptyProjectId_ReturnsEmptyArray()
+        {
+            // Arrange
+            var projectId = string.Empty;
+            var expectedExcelData = Array.Empty<byte>();
+
+            _costBookProjectSummaryApiClient.ExportProjectSummaryToExcelAsync(projectId).Returns(expectedExcelData);
+
+            // Act
+            var result = await _costBookProjectSummaryService.ExportProjectSummaryToExcelAsync(projectId);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Empty(result);
+            await _costBookProjectSummaryApiClient.Received(1).ExportProjectSummaryToExcelAsync(projectId);
+        }
+
+        [Fact]
+        public async Task ExportProjectSummaryToExcelAsync_PassesCorrectProjectId()
+        {
+            // Arrange
+            var projectId = "P123";
+            var expectedExcelData = new byte[] { 0x01, 0x02, 0x03 };
+
+            _costBookProjectSummaryApiClient.ExportProjectSummaryToExcelAsync(projectId).Returns(expectedExcelData);
+
+            // Act
+            await _costBookProjectSummaryService.ExportProjectSummaryToExcelAsync(projectId);
+
+            // Assert
+            await _costBookProjectSummaryApiClient.Received(1).ExportProjectSummaryToExcelAsync(
+                Arg.Is<string>(id => id == projectId)
+            );
+        }
+
+        [Fact]
+        public async Task ExportProjectSummaryToExcelAsync_WithDifferentProjectIds_CallsApiClientMultipleTimes()
+        {
+            // Arrange
+            var projectId1 = "P001";
+            var projectId2 = "P002";
+            var excelData1 = new byte[] { 0x01 };
+            var excelData2 = new byte[] { 0x02 };
+
+            _costBookProjectSummaryApiClient.ExportProjectSummaryToExcelAsync(projectId1).Returns(excelData1);
+            _costBookProjectSummaryApiClient.ExportProjectSummaryToExcelAsync(projectId2).Returns(excelData2);
+
+            // Act
+            var result1 = await _costBookProjectSummaryService.ExportProjectSummaryToExcelAsync(projectId1);
+            var result2 = await _costBookProjectSummaryService.ExportProjectSummaryToExcelAsync(projectId2);
+
+            // Assert
+            Assert.Equal(excelData1, result1);
+            Assert.Equal(excelData2, result2);
+            await _costBookProjectSummaryApiClient.Received(1).ExportProjectSummaryToExcelAsync(projectId1);
+            await _costBookProjectSummaryApiClient.Received(1).ExportProjectSummaryToExcelAsync(projectId2);
+        }
+
+        [Fact]
+        public async Task ExportProjectSummaryToExcelAsync_WithLargeExcelFile_ReturnsCompleteData()
+        {
+            // Arrange
+            var projectId = "P001";
+            var largeExcelData = new byte[10000]; // Simulating a large Excel file
+            for (int i = 0; i < largeExcelData.Length; i++)
+            {
+                largeExcelData[i] = (byte)(i % 256);
+            }
+
+            _costBookProjectSummaryApiClient.ExportProjectSummaryToExcelAsync(projectId).Returns(largeExcelData);
+
+            // Act
+            var result = await _costBookProjectSummaryService.ExportProjectSummaryToExcelAsync(projectId);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(10000, result.Length);
+            Assert.Equal(largeExcelData, result);
+        }
+
+        #endregion
     }
 }

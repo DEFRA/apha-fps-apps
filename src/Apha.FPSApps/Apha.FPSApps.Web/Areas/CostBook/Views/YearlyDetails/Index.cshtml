@@ -422,30 +422,32 @@
 
         function deletetblProjectYear(btn) {
             var year = parseInt(btn.getAttribute('data-year'), 10);
-            if (!confirm('Delete year ' + year + ' and all its data?')) return;
-            fetch('@Url.Action("DeleteProjectYear", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&year=' + year, {
-                method: 'DELETE',
-                headers: { 'RequestVerificationToken': getAntiForgeryToken() }
-            })
-            .then(function(r) { return r.json(); })
-            .then(function(d) {
-                if (d.success) {
-                    var row = btn.closest('.project-year-row');
-                    if (row) row.remove();
-                    // If deleted year was the selected year, redirect to first remaining year
-                    if (year === selectedYear) {
-                        var firstRow = document.querySelector('.project-year-row');
-                        if (firstRow) {
-                            selectYear(projectId, parseInt(firstRow.getAttribute('data-year'), 10));
-                        } else {
-                            window.location.href = '@Url.Action("Index", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId);
+            showGovukConfirm('Delete year ' + year + ' and all its data?').then(function(result) {
+                if (!result) return;
+                fetch('@Url.Action("DeleteProjectYear", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId) + '&year=' + year, {
+                    method: 'DELETE',
+                    headers: { 'RequestVerificationToken': getAntiForgeryToken() }
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                    if (d.success) {
+                        var row = btn.closest('.project-year-row');
+                        if (row) row.remove();
+                        // If deleted year was the selected year, redirect to first remaining year
+                        if (year === selectedYear) {
+                            var firstRow = document.querySelector('.project-year-row');
+                            if (firstRow) {
+                                selectYear(projectId, parseInt(firstRow.getAttribute('data-year'), 10));
+                            } else {
+                                window.location.href = '@Url.Action("Index", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(projectId);
+                            }
                         }
+                    } else {
+                        showGovukAlert(d.message || 'Failed to delete project year.');
                     }
-                } else {
-                    alert(d.message || 'Failed to delete project year.');
-                }
-            })
-            .catch(function(err) { console.error('Delete year error:', err); alert('Failed to delete project year.'); });
+                })
+                .catch(function(err) { console.error('Delete year error:', err); showGovukAlert('Failed to delete project year.'); });
+            });
         }
 
         function addProjectYear(projectId) {
@@ -473,7 +475,7 @@
                 .then(function(r) { return r.json(); })
                 .then(function(data) {
                     if (data.success) { closeModal(); selectYear(pid, data.year); }
-                    else { alert('Failed to add project year.'); }
+                    else { showGovukAlert('Failed to add project year.'); }
                 });
             });
         }
@@ -578,18 +580,20 @@
                     });
                     $summary.show().focus();
                 }
-                else { alert(d.message || 'Failed to save staff requirement.'); }
+                else { showGovukAlert(d.message || 'Failed to save staff requirement.'); }
             })
-            .catch(function(err) { console.error('Staff save error:', err); alert('Failed to save staff requirement.'); });
+            .catch(function(err) { console.error('Staff save error:', err); showGovukAlert('Failed to save staff requirement.'); });
         }
         function deleteStaff(pid, year, srIdentity) {
-            if (!confirm('Delete this staff entry?')) return;
-            fetch('@Url.Action("DeleteStaff", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&srIdentity=' + srIdentity, {
-                method: 'DELETE',
-                headers: { 'RequestVerificationToken': getAntiForgeryToken() }
-            })
-            .then(function(r) { return r.json(); })
-            .then(function(d) { if (d.success) loadStaffGrid(); });
+            showGovukConfirm('Delete this staff entry?').then(function(result) {
+                if (!result) return;
+                fetch('@Url.Action("DeleteStaff", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&srIdentity=' + srIdentity, {
+                    method: 'DELETE',
+                    headers: { 'RequestVerificationToken': getAntiForgeryToken() }
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(d) { if (d.success) loadStaffGrid(); });
+            });
         }
 
         // ── Tests ────────────────────────────────────────────────────────────
@@ -664,18 +668,20 @@
                     });
                     $summary.show().focus();
                 }
-                else { alert(d.message || 'Failed to save test requirement.'); }
+                else { showGovukAlert(d.message || 'Failed to save test requirement.'); }
             })
-            .catch(function(err) { console.error('Test save error:', err); alert('Failed to save test requirement.'); });
+            .catch(function(err) { console.error('Test save error:', err); showGovukAlert('Failed to save test requirement.'); });
         }
         function deleteTest(pid, year, testCode) {
-            if (!confirm('Delete this test entry?')) return;
-            fetch('@Url.Action("DeleteTest", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&testCode=' + encodeURIComponent(testCode), {
-                method: 'DELETE',
-                headers: { 'RequestVerificationToken': getAntiForgeryToken() }
-            })
-            .then(function(r) { return r.json(); })
-            .then(function(d) { if (d.success) loadTestGrid(); });
+            showGovukConfirm('Delete this test entry?').then(function(result) {
+                if (!result) return;
+                fetch('@Url.Action("DeleteTest", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&testCode=' + encodeURIComponent(testCode), {
+                    method: 'DELETE',
+                    headers: { 'RequestVerificationToken': getAntiForgeryToken() }
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(d) { if (d.success) loadTestGrid(); });
+            });
         }
 
         // ── Animals ──────────────────────────────────────────────────────────
@@ -750,18 +756,20 @@
                     });
                     $summary.show().focus();
                 }
-                else { alert(d.message || 'Failed to save animal requirement.'); }
+                else { showGovukAlert(d.message || 'Failed to save animal requirement.'); }
             })
-            .catch(function(err) { console.error('Animal save error:', err); alert('Failed to save animal requirement.'); });
+            .catch(function(err) { console.error('Animal save error:', err); showGovukAlert('Failed to save animal requirement.'); });
         }
         function deleteAnimal(pid, year, arIdentity) {
-            if (!confirm('Delete this animal entry?')) return;
-            fetch('@Url.Action("DeleteAnimal", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&arIdentity=' + arIdentity, {
-                method: 'DELETE',
-                headers: { 'RequestVerificationToken': getAntiForgeryToken() }
-            })
-            .then(function(r) { return r.json(); })
-            .then(function(d) { if (d.success) loadAnimalGrid(); });
+            showGovukConfirm('Delete this animal entry?').then(function(result) {
+                if (!result) return;
+                fetch('@Url.Action("DeleteAnimal", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&arIdentity=' + arIdentity, {
+                    method: 'DELETE',
+                    headers: { 'RequestVerificationToken': getAntiForgeryToken() }
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(d) { if (d.success) loadAnimalGrid(); });
+            });
         }
 
         // ── Additional Costs ─────────────────────────────────────────────────
@@ -836,18 +844,20 @@
                     });
                     $summary.show().focus();
                 }
-                else { alert(d.message || 'Failed to save additional cost.'); }
+                else { showGovukAlert(d.message || 'Failed to save additional cost.'); }
             })
-            .catch(function(err) { console.error('Additional cost save error:', err); alert('Failed to save additional cost.'); });
+            .catch(function(err) { console.error('Additional cost save error:', err); showGovukAlert('Failed to save additional cost.'); });
         }
         function deleteAdditionalCost(pid, year, acIdentity) {
-            if (!confirm('Delete this additional cost entry?')) return;
-            fetch('@Url.Action("DeleteAdditionalCost", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&acIdentity=' + acIdentity, {
-                method: 'DELETE',
-                headers: { 'RequestVerificationToken': getAntiForgeryToken() }
-            })
-            .then(function(r) { return r.json(); })
-            .then(function(d) { if (d.success) loadAdditionalCostGrid(); });
+            showGovukConfirm('Delete this additional cost entry?').then(function(result) {
+                if (!result) return;
+                fetch('@Url.Action("DeleteAdditionalCost", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&acIdentity=' + acIdentity, {
+                    method: 'DELETE',
+                    headers: { 'RequestVerificationToken': getAntiForgeryToken() }
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(d) { if (d.success) loadAdditionalCostGrid(); });
+            });
         }
 
         // ── Markup/Profit ─────────────────────────────────────────────────────
@@ -867,7 +877,7 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': getAntiForgeryToken() },
                 body: JSON.stringify(data)
-            }).then(function(r) { return r.json(); }).then(function(d) { if (!d.success) alert('Failed to save rates.'); });
+            }).then(function(r) { return r.json(); }).then(function(d) { if (!d.success) showGovukAlert('Failed to save rates.'); });
         }
 
         function openEditMarkupAndProfitModal(pid, yearVal) {
@@ -892,7 +902,7 @@
                 .then(function(r) { return r.json(); })
                 .then(function(d) {
                     if (d.success) { closeModal(); loadMarkupAndProfitGrid(); }
-                    else { alert('Failed to save markup and profit rates.'); }
+                    else { showGovukAlert('Failed to save markup and profit rates.'); }
                 });
             });
         }
