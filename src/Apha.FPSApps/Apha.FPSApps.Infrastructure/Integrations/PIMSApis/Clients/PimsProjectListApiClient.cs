@@ -126,6 +126,62 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
                     new ApiMetaDto());
             }
         }
-        
+
+        public async Task<ApiResponseDto<List<string>>> GetProjectProgramsAsync()
+        {
+            try
+            {
+                var response = await _http.GetAsync<List<string>>(PimsApiEndpoints.GetProjectPrograms);
+                if (response.Success && response.Data != null)
+                    return _mapper.Map<ApiResponseDto<List<string>>>(response);
+
+                var dto = _mapper.Map<ApiResponseDto<List<string>>>(response);
+                return ApiResponseDto<List<string>>.FailureResponse(dto.Errors, dto.Meta);
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<List<string>>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to retrieve programs", Code = InternalCodeError }],
+                    new ApiMetaDto());
+            }
+        }
+
+        public async Task<ApiResponseDto<List<string>>> GetProjectCustomersAsync()
+        {
+            try
+            {
+                var response = await _http.GetAsync<List<string>>(PimsApiEndpoints.GetProjectCustomers);
+                if (response.Success && response.Data != null)
+                    return _mapper.Map<ApiResponseDto<List<string>>>(response);
+
+                var dto = _mapper.Map<ApiResponseDto<List<string>>>(response);
+                return ApiResponseDto<List<string>>.FailureResponse(dto.Errors, dto.Meta);
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<List<string>>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to retrieve customers", Code = InternalCodeError }],
+                    new ApiMetaDto());
+            }
+        }
+
+        public async Task<ApiResponseDto<List<string>>> GetProjectStatusesAsync()
+        {
+            try
+            {
+                var response = await _http.GetAsync<List<string>>(PimsApiEndpoints.GetProjectStatuses);
+                if (response.Success && response.Data != null)
+                    return _mapper.Map<ApiResponseDto<List<string>>>(response);
+
+                var dto = _mapper.Map<ApiResponseDto<List<string>>>(response);
+                return ApiResponseDto<List<string>>.FailureResponse(dto.Errors, dto.Meta);
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<List<string>>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to retrieve statuses", Code = InternalCodeError }],
+                    new ApiMetaDto());
+            }
+        }
     }
 }

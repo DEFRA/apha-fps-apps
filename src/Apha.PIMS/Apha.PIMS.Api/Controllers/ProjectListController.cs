@@ -78,5 +78,26 @@ namespace Apha.PIMS.Api.Controllers
                 new { parentproject = result.Parentproject },
                 _mapper.Map<ProposedProjectRes>(result));
         }
+
+        [HttpGet("programs")]
+        public async Task<IActionResult> GetProjectPrograms()
+        {
+            List<string> result = await _service.GetProjectProgramsAsync();
+            return Ok(result);
+        }
+
+        [HttpGet("customers")]
+        public async Task<IActionResult> GetProjectCustomers()
+        {
+            List<string> result = await _service.GetProjectCustomersAsync();
+            return Ok(result);
+        }
+
+        [HttpGet("statuses")]
+        public async Task<IActionResult> GetProjectStatuses()
+        {
+            List<string> result = await _service.GetProjectStatusesAsync();
+            return Ok(result);
+        }
     }
 }

@@ -55,15 +55,45 @@ namespace Apha.PIMS.Application.Services
         {
             var errors = new List<BusinessValidationError>();
             if (string.IsNullOrWhiteSpace(dto.Parentproject))
-                errors.Add(new BusinessValidationError("Project is required.", "PROJECT_REQUIRED"));
-            if (string.IsNullOrWhiteSpace(dto.Projecttitle))
-                errors.Add(new BusinessValidationError("Project title is required.", "PROJECT_TITLE_REQUIRED"));
+                errors.Add(new BusinessValidationError("Project is required.", "PROJECT_REQUIRED"));            
             if (errors.Count > 0)
                 throw new BusinessValidationErrorException(errors);
+
+            // VBA Project_BeforeUpdate: check FPS (MY_tlkpProject) for existing project
+            Project? fpsProject = await _repository.GetFpsProjectByIdAsync(dto.Parentproject!);
+            if (fpsProject != null)
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+            "This project already exists in FPS. Only use this form for projects NOT on FPS.",
+            "PROJECT_EXISTS_IN_FPS")
+                ]);
+
+            // VBA Project_BeforeUpdate: check tblProposedProject for already-planned project
+            ProposedProject? existing = await _repository.GetProposedProjectByIdAsync(dto.Parentproject!);
+            if (existing != null)
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                "This project has already been planned. Please select it from the list.",
+                "PROJECT_ALREADY_PLANNED")
+                ]);
 
             ProposedProject entity = _mapper.Map<ProposedProject>(dto);
             ProposedProject created = await _repository.AddProjectAsync(entity);
             return _mapper.Map<ProposedProjectDto>(created);
+        }
+
+        public async Task<List<string>> GetProjectProgramsAsync()
+            => await _repository.GetProjectProgramsAsync();
+
+        public async Task<List<string>> GetProjectCustomersAsync()
+            => await _repository.GetProjectCustomersAsync();
+
+        public async Task<List<string>> GetProjectStatusesAsync()
+        {
+            var statuses = await _repository.GetProjectStatusesAsync();
+            return statuses.Select(s => s.Projectstatus).ToList();
         }
     }
 }

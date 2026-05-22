@@ -32,6 +32,14 @@ namespace Apha.FPSApps.Application.Services.PIMS
 
         public async Task<ApiResponseDto<ProposedProjectDto>> CreateProjectAsync(ProposedProjectDto dto)
             => await _client.PimsProjectList.CreateProjectAsync(dto);
-      
+
+        public async Task<ApiResponseDto<List<string>>> GetProjectProgramsAsync()
+            => await _client.PimsProjectList.GetProjectProgramsAsync();
+
+        public async Task<ApiResponseDto<List<string>>> GetProjectCustomersAsync()
+            => await _client.PimsProjectList.GetProjectCustomersAsync();
+
+        public async Task<ApiResponseDto<List<string>>> GetProjectStatusesAsync()
+            => await _client.PimsProjectList.GetProjectStatusesAsync();
     }
 }

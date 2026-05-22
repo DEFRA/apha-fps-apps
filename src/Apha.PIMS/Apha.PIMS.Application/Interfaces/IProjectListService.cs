@@ -14,5 +14,8 @@ namespace Apha.PIMS.Application.Interfaces
         Task<ProposedProjectDto?> GetProposedProjectByIdAsync(string parentproject);
         Task<List<ProjectsDto>> GetYearlyDetailsByProjectAsync(string parentproject);
         Task<ProposedProjectDto> AddProjectAsync(ProposedProjectDto dto);
+        Task<List<string>> GetProjectProgramsAsync();
+        Task<List<string>> GetProjectCustomersAsync();
+        Task<List<string>> GetProjectStatusesAsync();
     }
 }

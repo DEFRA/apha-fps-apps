@@ -1,6 +1,7 @@
 ﻿using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Pagination;
 using Apha.PIMS.Application.Services;
+using Apha.PIMS.Application.Validation;
 using Apha.PIMS.Core.Entities;
 using Apha.PIMS.Core.Interfaces;
 using Apha.PIMS.Core.Pagination;
@@ -479,6 +480,8 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectListServiceTest
                 Disease = "FMD"
             };
 
+            _mockRepository.GetFpsProjectByIdAsync("PP001").Returns(Task.FromResult<Project?>(null));
+            _mockRepository.GetProposedProjectByIdAsync("PP001").Returns(Task.FromResult<ProposedProject?>(null));
             _mockMapper.Map<ProposedProject>(dto).Returns(entity);
             _mockRepository.AddProjectAsync(entity).Returns(Task.FromResult(createdEntity));
             _mockMapper.Map<ProposedProjectDto>(createdEntity).Returns(expectedDto);
@@ -497,6 +500,134 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectListServiceTest
             _mockMapper.Received(1).Map<ProposedProjectDto>(createdEntity);
         }
 
+        [Theory]
+        [InlineData(null, "New Project", "PROJECT_REQUIRED")]
+        [InlineData("", "New Project", "PROJECT_REQUIRED")]
+        [InlineData("   ", "New Project", "PROJECT_REQUIRED")]
+        public async Task AddProjectAsync_WithMissingParentproject_ThrowsBusinessValidationErrorException(
+            string? parentProject, string projectTitle, string expectedErrorCode)
+        {
+            // Arrange
+            var dto = new ProposedProjectDto
+            {
+                Parentproject = parentProject,
+                Projecttitle = projectTitle
+            };
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                async () => await _sut.AddProjectAsync(dto)
+            );
+
+            exception.Errors.Should().ContainSingle(e => e.Code == expectedErrorCode);
+
+            await _mockRepository.DidNotReceive().GetFpsProjectByIdAsync(Arg.Any<string>());
+            await _mockRepository.DidNotReceive().AddProjectAsync(Arg.Any<ProposedProject>());
+        }
+
+        [Theory]
+        [InlineData("PP001", null, "PROJECT_TITLE_REQUIRED")]
+        [InlineData("PP001", "", "PROJECT_TITLE_REQUIRED")]
+        [InlineData("PP001", "   ", "PROJECT_TITLE_REQUIRED")]
+        public async Task AddProjectAsync_WithMissingProjectTitle_ThrowsBusinessValidationErrorException(
+            string parentProject, string? projectTitle, string expectedErrorCode)
+        {
+            // Arrange
+            var dto = new ProposedProjectDto
+            {
+                Parentproject = parentProject,
+                Projecttitle = projectTitle
+            };
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                async () => await _sut.AddProjectAsync(dto)
+            );
+
+            exception.Errors.Should().ContainSingle(e => e.Code == expectedErrorCode);
+
+            await _mockRepository.DidNotReceive().GetFpsProjectByIdAsync(Arg.Any<string>());
+            await _mockRepository.DidNotReceive().AddProjectAsync(Arg.Any<ProposedProject>());
+        }
+
+        [Fact]
+        public async Task AddProjectAsync_WhenBothParentprojectAndTitleMissing_ThrowsBusinessValidationErrorExceptionWithTwoErrors()
+        {
+            // Arrange
+            var dto = new ProposedProjectDto { Parentproject = null, Projecttitle = null };
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                async () => await _sut.AddProjectAsync(dto)
+            );
+
+            exception.Errors.Should().HaveCount(2);
+            exception.Errors.Should().Contain(e => e.Code == "PROJECT_REQUIRED");
+            exception.Errors.Should().Contain(e => e.Code == "PROJECT_TITLE_REQUIRED");
+
+            await _mockRepository.DidNotReceive().GetFpsProjectByIdAsync(Arg.Any<string>());
+            await _mockRepository.DidNotReceive().AddProjectAsync(Arg.Any<ProposedProject>());
+        }
+
+        [Fact]
+        public async Task AddProjectAsync_WhenProjectExistsInFps_ThrowsBusinessValidationErrorException()
+        {
+            // Arrange
+            var dto = new ProposedProjectDto { Parentproject = "PP001", Projecttitle = "New Project" };
+
+            var fpsProject = new Project
+            {
+                Parentproject = "PP001",
+                Projecttitle = "Existing FPS Project",
+                Projectstatus = "Active"
+            };
+
+            _mockRepository.GetFpsProjectByIdAsync("PP001").Returns(Task.FromResult<Project?>(fpsProject));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                async () => await _sut.AddProjectAsync(dto)
+            );
+
+            exception.Errors.Should().ContainSingle(e => e.Code == "PROJECT_EXISTS_IN_FPS");
+            exception.Errors.First().Message.Should()
+                .Be("This project already exists in FPS. Only use this form for projects NOT on FPS.");
+
+            await _mockRepository.Received(1).GetFpsProjectByIdAsync("PP001");
+            await _mockRepository.DidNotReceive().GetProposedProjectByIdAsync(Arg.Any<string>());
+            await _mockRepository.DidNotReceive().AddProjectAsync(Arg.Any<ProposedProject>());
+        }
+
+        [Fact]
+        public async Task AddProjectAsync_WhenProjectAlreadyPlanned_ThrowsBusinessValidationErrorException()
+        {
+            // Arrange
+            var dto = new ProposedProjectDto { Parentproject = "PP001", Projecttitle = "New Project" };
+
+            var existingProposedProject = new ProposedProject
+            {
+                Id = 10,
+                Parentproject = "PP001",
+                Projecttitle = "Already Planned Project"
+            };
+
+            _mockRepository.GetFpsProjectByIdAsync("PP001").Returns(Task.FromResult<Project?>(null));
+            _mockRepository.GetProposedProjectByIdAsync("PP001").Returns(Task.FromResult<ProposedProject?>(existingProposedProject));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                async () => await _sut.AddProjectAsync(dto)
+            );
+
+            exception.Errors.Should().ContainSingle(e => e.Code == "PROJECT_ALREADY_PLANNED");
+            exception.Errors.First().Message.Should()
+                .Be("This project has already been planned. Please select it from the list.");
+
+            await _mockRepository.Received(1).GetFpsProjectByIdAsync("PP001");
+            await _mockRepository.Received(1).GetProposedProjectByIdAsync("PP001");
+            await _mockRepository.DidNotReceive().AddProjectAsync(Arg.Any<ProposedProject>());
+        }
+
         [Fact]
         public async Task AddProjectAsync_WhenRepositoryThrowsException_PropagatesException()
         {
@@ -505,6 +636,8 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectListServiceTest
             var entity = new ProposedProject { Parentproject = "PP001", Projecttitle = "New Project" };
             var expectedException = new Exception("Database connection failed");
 
+            _mockRepository.GetFpsProjectByIdAsync("PP001").Returns(Task.FromResult<Project?>(null));
+            _mockRepository.GetProposedProjectByIdAsync("PP001").Returns(Task.FromResult<ProposedProject?>(null));
             _mockMapper.Map<ProposedProject>(dto).Returns(entity);
             _mockRepository.AddProjectAsync(entity)
                 .Returns(Task.FromException<ProposedProject>(expectedException));
@@ -522,6 +655,204 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectListServiceTest
         }
 
         #endregion
-        
+
+        #region GetProjectProgramsAsync
+
+        [Fact]
+        public async Task GetProjectProgramsAsync_WithData_ReturnsListOfPrograms()
+        {
+            // Arrange
+            var expectedPrograms = new List<string> { "PROG1", "PROG2", "PROG3" };
+
+            _mockRepository.GetProjectProgramsAsync().Returns(Task.FromResult(expectedPrograms));
+
+            // Act
+            var result = await _sut.GetProjectProgramsAsync();
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Should().HaveCount(3);
+            result.Should().BeEquivalentTo(expectedPrograms);
+
+            await _mockRepository.Received(1).GetProjectProgramsAsync();
+        }
+
+        [Fact]
+        public async Task GetProjectProgramsAsync_WithEmptyList_ReturnsEmptyList()
+        {
+            // Arrange
+            _mockRepository.GetProjectProgramsAsync().Returns(Task.FromResult(new List<string>()));
+
+            // Act
+            var result = await _sut.GetProjectProgramsAsync();
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Should().BeEmpty();
+
+            await _mockRepository.Received(1).GetProjectProgramsAsync();
+        }
+
+        [Fact]
+        public async Task GetProjectProgramsAsync_WhenRepositoryThrowsException_PropagatesException()
+        {
+            // Arrange
+            var expectedException = new Exception("Database connection failed");
+
+            _mockRepository.GetProjectProgramsAsync()
+                .Returns(Task.FromException<List<string>>(expectedException));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(
+                async () => await _sut.GetProjectProgramsAsync()
+            );
+
+            exception.Message.Should().Be("Database connection failed");
+
+            await _mockRepository.Received(1).GetProjectProgramsAsync();
+        }
+
+        #endregion
+
+        #region GetProjectCustomersAsync
+
+        [Fact]
+        public async Task GetProjectCustomersAsync_WithData_ReturnsListOfCustomers()
+        {
+            // Arrange
+            var expectedCustomers = new List<string> { "CUST1", "CUST2", "CUST3" };
+
+            _mockRepository.GetProjectCustomersAsync().Returns(Task.FromResult(expectedCustomers));
+
+            // Act
+            var result = await _sut.GetProjectCustomersAsync();
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Should().HaveCount(3);
+            result.Should().BeEquivalentTo(expectedCustomers);
+
+            await _mockRepository.Received(1).GetProjectCustomersAsync();
+        }
+
+        [Fact]
+        public async Task GetProjectCustomersAsync_WithEmptyList_ReturnsEmptyList()
+        {
+            // Arrange
+            _mockRepository.GetProjectCustomersAsync().Returns(Task.FromResult(new List<string>()));
+
+            // Act
+            var result = await _sut.GetProjectCustomersAsync();
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Should().BeEmpty();
+
+            await _mockRepository.Received(1).GetProjectCustomersAsync();
+        }
+
+        [Fact]
+        public async Task GetProjectCustomersAsync_WhenRepositoryThrowsException_PropagatesException()
+        {
+            // Arrange
+            var expectedException = new Exception("Database connection failed");
+
+            _mockRepository.GetProjectCustomersAsync()
+                .Returns(Task.FromException<List<string>>(expectedException));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(
+                async () => await _sut.GetProjectCustomersAsync()
+            );
+
+            exception.Message.Should().Be("Database connection failed");
+
+            await _mockRepository.Received(1).GetProjectCustomersAsync();
+        }
+
+        #endregion
+
+        #region GetProjectStatusesAsync
+
+        [Fact]
+        public async Task GetProjectStatusesAsync_WithData_ReturnsListOfStatusStrings()
+        {
+            // Arrange
+            var statusEntities = new List<ProjectStatus>
+            {
+                new ProjectStatus { Projectstatus = "Active", IsFps = true, IsPims = true },
+                new ProjectStatus { Projectstatus = "Proposed", IsFps = false, IsPims = true },
+                new ProjectStatus { Projectstatus = "Closed", IsFps = true, IsPims = false }
+            };
+
+            _mockRepository.GetProjectStatusesAsync().Returns(Task.FromResult(statusEntities));
+
+            // Act
+            var result = await _sut.GetProjectStatusesAsync();
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Should().HaveCount(3);
+            result.Should().BeEquivalentTo(new List<string> { "Active", "Proposed", "Closed" });
+
+            await _mockRepository.Received(1).GetProjectStatusesAsync();
+        }
+
+        [Fact]
+        public async Task GetProjectStatusesAsync_WithEmptyList_ReturnsEmptyList()
+        {
+            // Arrange
+            _mockRepository.GetProjectStatusesAsync().Returns(Task.FromResult(new List<ProjectStatus>()));
+
+            // Act
+            var result = await _sut.GetProjectStatusesAsync();
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Should().BeEmpty();
+
+            await _mockRepository.Received(1).GetProjectStatusesAsync();
+        }
+
+        [Fact]
+        public async Task GetProjectStatusesAsync_ReturnsOnlyProjectstatusStringFromEntity()
+        {
+            // Arrange
+            var statusEntities = new List<ProjectStatus>
+            {
+                new ProjectStatus { Projectstatus = "Active", IsFps = true, IsPims = false },
+                new ProjectStatus { Projectstatus = "Proposed", IsFps = false, IsPims = true }
+            };
+
+            _mockRepository.GetProjectStatusesAsync().Returns(Task.FromResult(statusEntities));
+
+            // Act
+            var result = await _sut.GetProjectStatusesAsync();
+
+            // Assert
+            result.Should().OnlyContain(s => statusEntities.Select(e => e.Projectstatus).Contains(s));
+            result.Should().NotContain(s => string.IsNullOrWhiteSpace(s));
+        }
+
+        [Fact]
+        public async Task GetProjectStatusesAsync_WhenRepositoryThrowsException_PropagatesException()
+        {
+            // Arrange
+            var expectedException = new Exception("Database connection failed");
+
+            _mockRepository.GetProjectStatusesAsync()
+                .Returns(Task.FromException<List<ProjectStatus>>(expectedException));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(
+                async () => await _sut.GetProjectStatusesAsync()
+            );
+
+            exception.Message.Should().Be("Database connection failed");
+
+            await _mockRepository.Received(1).GetProjectStatusesAsync();
+        }
+
+        #endregion
     }
 }

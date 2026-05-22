@@ -11,5 +11,8 @@ namespace Apha.PIMS.Core.Interfaces
         Task<List<Projects>> GetYearlyDetailsByProjectAsync(string parentproject);
         Task<ProposedProject> AddProjectAsync(ProposedProject entity);
         Task<List<ProjectListView>> GetAllProjectsForDropDownAsync();
+        Task<List<string>> GetProjectProgramsAsync();
+        Task<List<string>> GetProjectCustomersAsync();
+        Task<List<ProjectStatus>> GetProjectStatusesAsync();
     }
 }

@@ -12,5 +12,8 @@ namespace Apha.FPSApps.Application.Interfaces.PIMS
         Task<ApiResponseDto<ProposedProjectDto>> GetProposedProjectByIdAsync(string parentproject);
         Task<ApiResponseDto<List<ProjectsDto>>> GetYearlyDetailsByProjectAsync(string parentproject);
         Task<ApiResponseDto<ProposedProjectDto>> CreateProjectAsync(ProposedProjectDto dto);
+        Task<ApiResponseDto<List<string>>> GetProjectProgramsAsync();
+        Task<ApiResponseDto<List<string>>> GetProjectCustomersAsync();
+        Task<ApiResponseDto<List<string>>> GetProjectStatusesAsync();
     }
 }

@@ -157,6 +157,36 @@ namespace Apha.PIMS.DataAccess.Repository
             return entity;
         }
 
+        public async Task<List<string>> GetProjectProgramsAsync()
+        {
+            return await _context.RadtrackProgs
+                .AsNoTracking()
+                .OrderBy(p => p.Program)
+                .Select(p => p.Program)
+                .Distinct()
+                .ToListAsync();
+        }
+
+        public async Task<List<string>> GetProjectCustomersAsync()
+        {
+            return await _context.ProjectLatestDetails
+                .AsNoTracking()
+                .Where(p => p.Customer != null)
+                .Select(p => p.Customer!)
+                .Distinct()
+                .OrderBy(c => c)
+                .ToListAsync();
+        }
+
+        public async Task<List<ProjectStatus>> GetProjectStatusesAsync()
+        {
+            return await _context.ProjectStatuses
+                .AsNoTracking()
+                .Where(s => s.IsPims)
+                .OrderBy(s => s.Projectstatus)
+                .ToListAsync();
+        }
+
         private static IQueryable<ProjectListView> ApplyFilter(IQueryable<ProjectListView> query, string? filter)
         {
             if (string.IsNullOrWhiteSpace(filter) || filter == "{}")
