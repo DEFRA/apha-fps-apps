@@ -219,7 +219,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.Costbook.ProjectCostsController
             var model = Assert.IsType<ProjectCostsViewModel>(
                 Assert.IsType<ViewResult>(result).Model!);
 
-            var yearColumns = model.Grid.Columns.Where(c => c.PropertyName.StartsWith("Y", StringComparison.Ordinal) && c.PropertyName != "Total").ToList();
+            var yearColumns = model.Grid.Columns.Where(c => c.PropertyName.StartsWith('Y') && c.PropertyName != "Total").ToList();
             Assert.Equal(10, yearColumns.Count);
         }
 
@@ -346,7 +346,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.Costbook.ProjectCostsController
             var grid = Assert.IsType<DataGridConfig<ProjectCostsPivotRow>>(
                 Assert.IsType<PartialViewResult>(result).Model!);
 
-            var yearCols = grid.Columns.Where(c => c.PropertyName.StartsWith("Y", StringComparison.Ordinal) && c.PropertyName != "Total").ToList();
+            var yearCols = grid.Columns.Where(c => c.PropertyName.StartsWith('Y') && c.PropertyName != "Total").ToList();
             Assert.Equal("2022", yearCols[0].DisplayName);
             Assert.Equal("2023", yearCols[1].DisplayName);
         }

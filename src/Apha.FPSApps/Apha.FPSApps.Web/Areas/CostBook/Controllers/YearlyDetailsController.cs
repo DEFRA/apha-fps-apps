@@ -486,6 +486,7 @@ public class YearlyDetailsController : Controller
     private async Task<DataGridConfig<StaffRequirementItem>> BuildStaffGridAsync(
         string projectId, int year, QueryParameters<string>? query = null)
     {
+        query ??= new QueryParameters<string>();
         query.Page = -1;
 
         var response = await _service.GetStaffRequirementsAsync(projectId, year, query);
