@@ -7,7 +7,7 @@ using NSubstitute;
 namespace Apha.BatchJobs.UnitTests;
 
 /// <summary>
-/// Task 7 parity tests for legacy sp_LoadFromFPS branch and sequencing behavior.
+/// Task 7 parity tests for baseline sp_LoadFromFPS sequencing behavior.
 /// </summary>
 public sealed class MabArchiveLoadOrchestratorParityTests
 {

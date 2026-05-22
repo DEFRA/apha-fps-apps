@@ -70,8 +70,9 @@ public sealed class ReloadFpsTotalsService : IReloadFpsTotalsService
 
             _logger.LogInformation("Deleted {RowCount} existing totals rows for year {Year}", deleteRows, targetYear);
 
-            // Rebuild totals from source using legacy sp_createFPSTotals formulas and null handling.
-            var totalsRows = await (
+            // Rebuild totals from source using C# logic equivalent to the baseline sp_createFPSTotals formulas and null handling.
+            // Materialize first to avoid PostgreSQL money/numeric COALESCE translation edge cases.
+            var rawRows = await (
                 from t in _context.RsTlkpProject
                 where t.FpsYear == targetYear
                 join a in _context.RsQryTotalAdditionalCosts
@@ -94,27 +95,51 @@ public sealed class ReloadFpsTotalsService : IReloadFpsTotalsService
                 {
                     t.ParentProject,
                     t.Program,
-                    TotalAdditionalCosts = a.TotalAdditionalCosts ?? 0m,
-                    TotalAnimalCosts = (double?)(an.TotalAnimalCosts ?? 0m),
-                    TotalStaffCosts = (double?)(s.TotalStaffCosts ?? 0m),
-                    TotalTestCosts = (double?)(tst.TotalTestCosts ?? 0m),
-                    TotalCosts = (double?)(a.TotalAdditionalCosts ?? 0m)
-                        + (double?)(an.TotalAnimalCosts ?? 0m)
-                        + (double?)(s.TotalStaffCosts ?? 0m)
-                        + (double?)(tst.TotalTestCosts ?? 0m)
-                        + (double?)(t.PlanCaseworkDebit ?? 0m),
+                    AdditionalCosts = a.TotalAdditionalCosts,
+                    AnimalCosts = an.TotalAnimalCosts,
+                    StaffCosts = s.TotalStaffCosts,
+                    TestCosts = tst.TotalTestCosts,
                     t.CustIncome,
                     t.TransferIncome,
-                    TotalIncome = t.CustIncome + t.TransferIncome,
                     t.BudgetCvl,
-                    RequiredProfit = t.Profit,
+                    t.Profit,
                     t.Manager,
                     t.Customer,
                     t.ProjectStatus,
-                    PvsIncome = t.PvsIncome ?? 0m,
-                    PlanCaseworkDebit = t.PlanCaseworkDebit ?? 0m,
-                    TotalPayCosts = (double?)(s.TotalPayCosts ?? 0m),
+                    t.PvsIncome,
+                    t.PlanCaseworkDebit,
+                    s.TotalPayCosts,
                     t.FpsYear
+                })
+                .Distinct()
+                .ToListAsync(cancellationToken);
+
+            var totalsRows = rawRows
+                .Select(r => new
+                {
+                    r.ParentProject,
+                    r.Program,
+                    TotalAdditionalCosts = r.AdditionalCosts ?? 0m,
+                    TotalAnimalCosts = (double?)(r.AnimalCosts ?? 0m),
+                    TotalStaffCosts = (double?)(r.StaffCosts ?? 0m),
+                    TotalTestCosts = (double?)(r.TestCosts ?? 0m),
+                    TotalCosts = (double?)(r.AdditionalCosts ?? 0m)
+                        + (double?)(r.AnimalCosts ?? 0m)
+                        + (double?)(r.StaffCosts ?? 0m)
+                        + (double?)(r.TestCosts ?? 0m)
+                        + (double?)(r.PlanCaseworkDebit ?? 0m),
+                    r.CustIncome,
+                    r.TransferIncome,
+                    TotalIncome = r.CustIncome + r.TransferIncome,
+                    r.BudgetCvl,
+                    RequiredProfit = r.Profit,
+                    r.Manager,
+                    r.Customer,
+                    r.ProjectStatus,
+                    PvsIncome = r.PvsIncome ?? 0m,
+                    PlanCaseworkDebit = r.PlanCaseworkDebit ?? 0m,
+                    TotalPayCosts = (double?)(r.TotalPayCosts ?? 0m),
+                    r.FpsYear
                 })
                 .Distinct()
                 .Select(r => new RsFpsYearTotalsTable
@@ -139,7 +164,7 @@ public sealed class ReloadFpsTotalsService : IReloadFpsTotalsService
                     TotalPayCosts = r.TotalPayCosts,
                     FpsYear = r.FpsYear
                 })
-                .ToListAsync(cancellationToken);
+                .ToList();
 
             if (totalsRows.Count == 0)
             {

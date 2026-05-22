@@ -3,12 +3,12 @@ using Apha.BatchJobs.Infrastructure.Data;
 namespace Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services;
 
 /// <summary>
-/// Represents one legacy MABArchive year-load step.
+/// Represents one MABArchive year-load step.
 /// </summary>
 public interface IMabArchiveLoader
 {
     /// <summary>
-    /// Legacy sequence position from sp_AddYearsFPSData.
+    /// Baseline sequence position aligned with sp_AddYearsFPSData.
     /// </summary>
     int Sequence { get; }
 

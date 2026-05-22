@@ -99,7 +99,7 @@ SELECT EXISTS(
 
     /// <summary>
     /// Deletes archive data for the specified year across archive tables in dependency order.
-    /// Implements legacy SQL parity: full year-based wipe of archive dataset for the chosen year.
+    /// Implements baseline SQL parity: full year-based wipe of archive dataset for the chosen year.
     /// Must be executed inside the caller's orchestration transaction.
     /// </summary>
     /// <param name="year">Target year to delete.</param>
@@ -109,7 +109,7 @@ SELECT EXISTS(
     {
         var targetYear = ResolveYear(year);
 
-        _logger.LogInformation("Deleting archive data for year {Year} across all archive tables in dependency order (legacy parity scope)", targetYear);
+        _logger.LogInformation("Deleting archive data for year {Year} across all archive tables in dependency order (baseline parity scope)", targetYear);
 
         try
         {
@@ -150,7 +150,7 @@ SELECT EXISTS(
             await DeleteWithYearAsync(_context.MaDstTlkpYear.Where(x => x.Year == targetYear), "mabarchive.tlkpyear");
 
             // Special handling for G_tlkpProject: project-based delete matching FPS source projects
-            // (not year-based, but included in legacy scope per sp_DeleteYearsFPSData baseline)
+            // (not year-based, but included in baseline scope per sp_DeleteYearsFPSData)
             _logger.LogInformation("Deleting table mabarchive.g_tlkpproject using project keys for year {Year}", targetYear);
             var yearProjectKeys = _context.MaSrcTlkpProject
                 .Where(p => p.FpsYear == targetYear)
@@ -164,7 +164,7 @@ SELECT EXISTS(
             totalRowsAffected += projectDeleteCount;
             _logger.LogInformation("Deleted {RowCount} rows from mabarchive.g_tlkpproject (project-based delete for year {Year})", projectDeleteCount, targetYear);
 
-            _logger.LogInformation("Deleted {TotalRowCount} total rows from archive tables for year {Year} (legacy parity scope)", totalRowsAffected, targetYear);
+            _logger.LogInformation("Deleted {TotalRowCount} total rows from archive tables for year {Year} (baseline parity scope)", totalRowsAffected, targetYear);
             return totalRowsAffected;
         }
         catch (Exception ex)
@@ -176,7 +176,7 @@ SELECT EXISTS(
 
     /// <summary>
     /// Loads archive data for the specified year from FPS source tables.
-    /// Executes metadata-driven IMabArchiveLoader steps in legacy sequence order.
+    /// Executes metadata-driven IMabArchiveLoader steps in baseline sequence order.
     /// All inserts are insert-only (no upsert); delete-then-insert is the idempotency mechanism per Assumption A3.
     /// Must be executed inside the caller's orchestration transaction.
     /// </summary>
