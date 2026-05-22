@@ -1,10 +1,10 @@
 using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services;
 using Apha.BatchJobs.Domain.Configuration;
-using Apha.BatchJobs.Domain.Interfaces;
 using Apha.BatchJobs.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Npgsql;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.MabArchive;
 
@@ -15,17 +15,8 @@ namespace Apha.BatchJobs.Infrastructure.Repositories.MabArchive;
 public sealed class ReloadFpsTotalsService : IReloadFpsTotalsService
 {
     private readonly BatchJobsDbContext _context;
-    private readonly IExecutionYearContext _executionYearContext;
     private readonly ILogger<ReloadFpsTotalsService> _logger;
     private readonly MabArchiveSettings _settings;
-
-    private static readonly string[] TotalsSourceViews =
-    {
-        "qrytotaladditionalcosts",
-        "qrytotalanimalcosts",
-        "qrytotalstaffcosts",
-        "qrytotaltestcosts"
-    };
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ReloadFpsTotalsService"/> class.
@@ -34,12 +25,10 @@ public sealed class ReloadFpsTotalsService : IReloadFpsTotalsService
     /// <param name="logger">Logger instance.</param>
     public ReloadFpsTotalsService(
         BatchJobsDbContext context,
-        IExecutionYearContext executionYearContext,
         ILogger<ReloadFpsTotalsService> logger,
         IOptions<MabArchiveSettings> settings)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
-        _executionYearContext = executionYearContext ?? throw new ArgumentNullException(nameof(executionYearContext));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _settings = settings?.Value ?? new MabArchiveSettings();
     }
@@ -50,9 +39,9 @@ public sealed class ReloadFpsTotalsService : IReloadFpsTotalsService
     /// <param name="year">Target FPS year.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The number of rows inserted into fps.fpsyeartotals.</returns>
-    public async Task<int> RebuildSourceTotalsAsync(int? year, CancellationToken cancellationToken)
+    public async Task<int> RebuildSourceTotalsAsync(int year, CancellationToken cancellationToken)
     {
-        var targetYear = ResolveYear(year);
+        var targetYear = year;
 
         _logger.LogInformation("Rebuilding FPS source totals for year {Year}", targetYear);
 
@@ -186,39 +175,30 @@ public sealed class ReloadFpsTotalsService : IReloadFpsTotalsService
         }
     }
 
-    private int ResolveYear(int? explicitYear)
-    {
-        if (explicitYear.HasValue)
-        {
-            return explicitYear.Value;
-        }
-
-        if (_executionYearContext.FpsYear.HasValue)
-        {
-            return _executionYearContext.FpsYear.Value;
-        }
-
-        throw new InvalidOperationException("Execution year is not set in scoped context and no explicit year was provided.");
-    }
-
     private async Task EnsureTotalsViewsAreYearScopedAsync(CancellationToken cancellationToken)
     {
-        var missingViews = await _context.Database.SqlQuery<string>($@"
-SELECT v.view_name AS ""Value""
-FROM (VALUES
-    ('qrytotaladditionalcosts'),
-    ('qrytotalanimalcosts'),
-    ('qrytotalstaffcosts'),
-    ('qrytotaltestcosts')
-) AS v(view_name)
-WHERE NOT EXISTS (
-    SELECT 1
-    FROM information_schema.columns c
-    WHERE c.table_schema = 'fps'
-      AND c.table_name = v.view_name
-      AND c.column_name = 'fpsyear'
-)
-").ToListAsync(cancellationToken);
+        var missingViews = new List<string>();
+
+        async Task ProbeViewYearColumnAsync(string viewName, IQueryable<int> yearProbe)
+        {
+            try
+            {
+                _ = await yearProbe
+                    .Take(1)
+                    .ToListAsync(cancellationToken);
+            }
+            catch (PostgresException ex) when (ex.SqlState is "42703" or "42P01")
+            {
+                // 42703: undefined_column, 42P01: undefined_table/relation
+                // Either indicates the expected year-scoped view shape is unavailable.
+                missingViews.Add(viewName);
+            }
+        }
+
+        await ProbeViewYearColumnAsync("qrytotaladditionalcosts", _context.RsQryTotalAdditionalCosts.Select(x => x.FpsYear));
+        await ProbeViewYearColumnAsync("qrytotalanimalcosts", _context.RsQryTotalAnimalCosts.Select(x => x.FpsYear));
+        await ProbeViewYearColumnAsync("qrytotalstaffcosts", _context.RsQryTotalStaffCosts.Select(x => x.FpsYear));
+        await ProbeViewYearColumnAsync("qrytotaltestcosts", _context.RsQryTotalTestCosts.Select(x => x.FpsYear));
 
         if (missingViews.Count == 0)
         {

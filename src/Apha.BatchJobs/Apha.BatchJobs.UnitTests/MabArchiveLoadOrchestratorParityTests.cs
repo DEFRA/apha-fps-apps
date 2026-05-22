@@ -15,7 +15,6 @@ public sealed class MabArchiveLoadOrchestratorParityTests
     private readonly IMyFpsYearlyDataService _dataService = Substitute.For<IMyFpsYearlyDataService>();
     private readonly IExecutionYearContext _executionYearContext = Substitute.For<IExecutionYearContext>();
     private readonly IEmailNotificationService _emailNotificationService = Substitute.For<IEmailNotificationService>();
-    private readonly IBatchLockRepository _lockRepository = Substitute.For<IBatchLockRepository>();
 
     private MabArchiveLoadOrchestrator CreateSubject()
     {
@@ -24,7 +23,6 @@ public sealed class MabArchiveLoadOrchestratorParityTests
             _dataService,
             _executionYearContext,
             _emailNotificationService,
-            _lockRepository,
             NullLogger<MabArchiveLoadOrchestrator>.Instance);
     }
 
@@ -43,7 +41,7 @@ public sealed class MabArchiveLoadOrchestratorParityTests
             PrimaryYear: currentYear,
             IncludePartialRefreshYear: false);
 
-        _dataService.IsYearAvailableAsync(Arg.Any<int?>(), ct).Returns(true, true);
+        _dataService.IsYearAvailableAsync(Arg.Any<int>(), ct).Returns(true, true);
 
         Func<Func<Task>, Task> transactionWrapper = work => work();
 
@@ -51,18 +49,18 @@ public sealed class MabArchiveLoadOrchestratorParityTests
 
         Received.InOrder(() =>
         {
-            _ = _dataService.IsYearAvailableAsync(null, ct);
-            _ = _totalsService.RebuildSourceTotalsAsync(null, ct);
-            _ = _dataService.DeleteYearDataAsync(null, ct);
-            _ = _dataService.LoadYearDataAsync(null, ct);
+            _ = _dataService.IsYearAvailableAsync(previousYear, ct);
+            _ = _totalsService.RebuildSourceTotalsAsync(previousYear, ct);
+            _ = _dataService.DeleteYearDataAsync(previousYear, ct);
+            _ = _dataService.LoadYearDataAsync(previousYear, ct);
 
-            _ = _dataService.IsYearAvailableAsync(null, ct);
-            _ = _totalsService.RebuildSourceTotalsAsync(null, ct);
-            _ = _dataService.DeleteYearDataAsync(null, ct);
-            _ = _dataService.LoadYearDataAsync(null, ct);
+            _ = _dataService.IsYearAvailableAsync(currentYear, ct);
+            _ = _totalsService.RebuildSourceTotalsAsync(currentYear, ct);
+            _ = _dataService.DeleteYearDataAsync(currentYear, ct);
+            _ = _dataService.LoadYearDataAsync(currentYear, ct);
         });
 
-        await _dataService.DidNotReceive().RefreshProjectAllOnlyAsync(Arg.Any<int?>(), ct);
+        await _dataService.DidNotReceive().RefreshProjectAllOnlyAsync(Arg.Any<int>(), ct);
     }
 
     [Fact]
@@ -80,7 +78,7 @@ public sealed class MabArchiveLoadOrchestratorParityTests
             PrimaryYear: previousYear,
             IncludePartialRefreshYear: true);
 
-        _dataService.IsYearAvailableAsync(Arg.Any<int?>(), ct).Returns(true, true);
+        _dataService.IsYearAvailableAsync(Arg.Any<int>(), ct).Returns(true, true);
 
         Func<Func<Task>, Task> transactionWrapper = work => work();
 
@@ -88,18 +86,18 @@ public sealed class MabArchiveLoadOrchestratorParityTests
 
         Received.InOrder(() =>
         {
-            _ = _dataService.IsYearAvailableAsync(null, ct);
-            _ = _totalsService.RebuildSourceTotalsAsync(null, ct);
-            _ = _dataService.DeleteYearDataAsync(null, ct);
-            _ = _dataService.LoadYearDataAsync(null, ct);
+            _ = _dataService.IsYearAvailableAsync(previousYear, ct);
+            _ = _totalsService.RebuildSourceTotalsAsync(previousYear, ct);
+            _ = _dataService.DeleteYearDataAsync(previousYear, ct);
+            _ = _dataService.LoadYearDataAsync(previousYear, ct);
 
-            _ = _dataService.IsYearAvailableAsync(null, ct);
-            _ = _dataService.RefreshProjectAllOnlyAsync(null, ct);
+            _ = _dataService.IsYearAvailableAsync(currentYear, ct);
+            _ = _dataService.RefreshProjectAllOnlyAsync(currentYear, ct);
         });
 
-        await _totalsService.Received(1).RebuildSourceTotalsAsync(null, ct);
-        await _dataService.Received(1).DeleteYearDataAsync(null, ct);
-        await _dataService.Received(1).LoadYearDataAsync(null, ct);
+        await _totalsService.Received(1).RebuildSourceTotalsAsync(previousYear, ct);
+        await _dataService.Received(1).DeleteYearDataAsync(previousYear, ct);
+        await _dataService.Received(1).LoadYearDataAsync(previousYear, ct);
     }
 
     [Fact]
@@ -117,19 +115,19 @@ public sealed class MabArchiveLoadOrchestratorParityTests
             PrimaryYear: currentYear,
             IncludePartialRefreshYear: false);
 
-        _dataService.IsYearAvailableAsync(Arg.Any<int?>(), ct).Returns(false, true);
+        _dataService.IsYearAvailableAsync(Arg.Any<int>(), ct).Returns(false, true);
 
         Func<Func<Task>, Task> transactionWrapper = work => work();
 
         await subject.ExecuteAsync("run-prev-missing", context, transactionWrapper, ct);
 
-        await _totalsService.Received(1).RebuildSourceTotalsAsync(null, ct);
-        await _dataService.Received(1).DeleteYearDataAsync(null, ct);
-        await _dataService.Received(1).LoadYearDataAsync(null, ct);
+        await _totalsService.Received(1).RebuildSourceTotalsAsync(currentYear, ct);
+        await _dataService.Received(1).DeleteYearDataAsync(currentYear, ct);
+        await _dataService.Received(1).LoadYearDataAsync(currentYear, ct);
 
-        await _totalsService.DidNotReceive().RebuildSourceTotalsAsync(Arg.Is<int?>(y => y.HasValue), ct);
-        await _dataService.DidNotReceive().DeleteYearDataAsync(Arg.Is<int?>(y => y.HasValue), ct);
-        await _dataService.DidNotReceive().LoadYearDataAsync(Arg.Is<int?>(y => y.HasValue), ct);
+        await _totalsService.DidNotReceive().RebuildSourceTotalsAsync(previousYear, ct);
+        await _dataService.DidNotReceive().DeleteYearDataAsync(previousYear, ct);
+        await _dataService.DidNotReceive().LoadYearDataAsync(previousYear, ct);
     }
 
     [Fact]
@@ -147,17 +145,17 @@ public sealed class MabArchiveLoadOrchestratorParityTests
             PrimaryYear: previousYear,
             IncludePartialRefreshYear: true);
 
-        _dataService.IsYearAvailableAsync(Arg.Any<int?>(), ct).Returns(true, false);
+        _dataService.IsYearAvailableAsync(Arg.Any<int>(), ct).Returns(true, false);
 
         Func<Func<Task>, Task> transactionWrapper = work => work();
 
         await subject.ExecuteAsync("run-current-missing", context, transactionWrapper, ct);
 
-        await _totalsService.Received(1).RebuildSourceTotalsAsync(null, ct);
-        await _dataService.Received(1).DeleteYearDataAsync(null, ct);
-        await _dataService.Received(1).LoadYearDataAsync(null, ct);
+        await _totalsService.Received(1).RebuildSourceTotalsAsync(previousYear, ct);
+        await _dataService.Received(1).DeleteYearDataAsync(previousYear, ct);
+        await _dataService.Received(1).LoadYearDataAsync(previousYear, ct);
 
-        await _dataService.DidNotReceive().RefreshProjectAllOnlyAsync(Arg.Is<int?>(y => y.HasValue), ct);
+        await _dataService.DidNotReceive().RefreshProjectAllOnlyAsync(currentYear, ct);
     }
 
     [Fact]
@@ -173,8 +171,8 @@ public sealed class MabArchiveLoadOrchestratorParityTests
             PrimaryYear: 2026,
             IncludePartialRefreshYear: false);
 
-        _dataService.IsYearAvailableAsync(Arg.Any<int?>(), ct).Returns(true);
-        _totalsService.RebuildSourceTotalsAsync(null, ct)
+        _dataService.IsYearAvailableAsync(Arg.Any<int>(), ct).Returns(true);
+        _totalsService.RebuildSourceTotalsAsync(2025, ct)
             .Returns(Task.FromException<int>(new InvalidOperationException("boom")));
 
         Func<Func<Task>, Task> transactionWrapper = work => work();

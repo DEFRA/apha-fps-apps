@@ -1,5 +1,4 @@
 using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services;
-using Apha.BatchJobs.Domain.Interfaces;
 using Apha.BatchJobs.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -15,7 +14,6 @@ namespace Apha.BatchJobs.Infrastructure.Repositories.MabArchive;
 public sealed class MyFpsYearlyDataService : IMyFpsYearlyDataService
 {
     private readonly BatchJobsDbContext _context;
-    private readonly IExecutionYearContext _executionYearContext;
     private readonly ILogger<MyFpsYearlyDataService> _logger;
     private readonly IReadOnlyList<IMabArchiveLoader> _orderedLoaders;
     private readonly IMabArchiveLoader _projectAllLoader;
@@ -29,12 +27,10 @@ public sealed class MyFpsYearlyDataService : IMyFpsYearlyDataService
     /// <param name="loaders">Registered MABArchive loaders in metadata-defined sequence.</param>
     public MyFpsYearlyDataService(
         BatchJobsDbContext context,
-        IExecutionYearContext executionYearContext,
         ILogger<MyFpsYearlyDataService> logger,
         IEnumerable<IMabArchiveLoader> loaders)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
-        _executionYearContext = executionYearContext ?? throw new ArgumentNullException(nameof(executionYearContext));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
         var loaderList = (loaders ?? throw new ArgumentNullException(nameof(loaders)))
@@ -73,9 +69,9 @@ public sealed class MyFpsYearlyDataService : IMyFpsYearlyDataService
     /// <param name="year">Target year to verify.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>True if the year is available for processing.</returns>
-    public async Task<bool> IsYearAvailableAsync(int? year, CancellationToken cancellationToken)
+    public async Task<bool> IsYearAvailableAsync(int year, CancellationToken cancellationToken)
     {
-        var targetYear = ResolveYear(year);
+        var targetYear = year;
 
         try
         {
@@ -105,9 +101,9 @@ SELECT EXISTS(
     /// <param name="year">Target year to delete.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Total rows deleted.</returns>
-    public async Task<int> DeleteYearDataAsync(int? year, CancellationToken cancellationToken)
+    public async Task<int> DeleteYearDataAsync(int year, CancellationToken cancellationToken)
     {
-        var targetYear = ResolveYear(year);
+        var targetYear = year;
 
         _logger.LogInformation("Deleting archive data for year {Year} across all archive tables in dependency order (baseline parity scope)", targetYear);
 
@@ -183,9 +179,9 @@ SELECT EXISTS(
     /// <param name="year">Target year to load.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Total rows loaded.</returns>
-    public async Task<int> LoadYearDataAsync(int? year, CancellationToken cancellationToken)
+    public async Task<int> LoadYearDataAsync(int year, CancellationToken cancellationToken)
     {
-        var targetYear = ResolveYear(year);
+        var targetYear = year;
 
         _logger.LogInformation("Loading archive data for year {Year} - full sp_AddYearsFPSData fan-out ({LoaderCount} loaders, metadata sequence)", targetYear, _orderedLoaders.Count);
 
@@ -248,9 +244,9 @@ SELECT EXISTS(
     /// <param name="year">Target year to refresh.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Rows affected in my_tlkpproject_all.</returns>
-    public async Task<int> RefreshProjectAllOnlyAsync(int? year, CancellationToken cancellationToken)
+    public async Task<int> RefreshProjectAllOnlyAsync(int year, CancellationToken cancellationToken)
     {
-        var targetYear = ResolveYear(year);
+        var targetYear = year;
 
         _logger.LogInformation("Refreshing project_all cross-reference only for year {Year}", targetYear);
 
@@ -273,18 +269,4 @@ SELECT EXISTS(
         }
     }
 
-    private int ResolveYear(int? explicitYear)
-    {
-        if (explicitYear.HasValue)
-        {
-            return explicitYear.Value;
-        }
-
-        if (_executionYearContext.FpsYear.HasValue)
-        {
-            return _executionYearContext.FpsYear.Value;
-        }
-
-        throw new InvalidOperationException("Execution year is not set in scoped context and no explicit year was provided.");
-    }
 }
