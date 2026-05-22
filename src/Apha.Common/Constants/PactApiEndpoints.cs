@@ -35,12 +35,7 @@ namespace Apha.Common.Constants
         public const string GetPagedWorkGroupsByProfitCentre = "api/v1/workgroup/profitcentre";
         public const string SetSendEmailForProfitCentreWorkGroups = "api/v1/workgroup/setsendemail/profitcentre";
         public const string SetSendEmailForAllWorkGroups = "api/v1/workgroup/setsendemail/all";
-        public const string UpdateWorkGroupEmail = "api/v1/workgroup/{0}/email";
-
-        // Profit Centre
-        public const string GetAllProfitCentres = "api/v1/profitcentre";
-        public const string GetProfitCentreSettings = "api/v1/profitcentre/{0}/settings";
-        public const string PatchProfitCentreSettings = "api/v1/profitcentre/settings";
+        public const string UpdateWorkGroupEmail = "api/v1/workgroup/{0}/email";        
 
         // Month
         public const string GetAllMonths = "api/v1/months";

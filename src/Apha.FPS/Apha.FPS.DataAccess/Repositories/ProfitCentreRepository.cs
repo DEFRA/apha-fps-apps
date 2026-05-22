@@ -24,5 +24,37 @@ namespace Apha.FPS.DataAccess.Repositories
                 .OrderBy(x => x.ProfitCentreId)
                 .ToListAsync();
         }
+
+        public async Task<IEnumerable<ProfitCentre>> GetAllProfitCentresAsync()
+        {
+            return await _context.ProfitCentres
+                .AsNoTracking()
+                .OrderBy(p => p.ProfitCentreId)
+                .ToListAsync();
+        }
+
+        public async Task<ProfitCentre?> GetProfitCentreByIdAsync(string profitCentre)
+        {
+            return await _context.ProfitCentres
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.ProfitCentreId == profitCentre);
+        }
+
+        public async Task<bool> UpdateProfitCentreSettingsAsync(string profitCentre, int timesheet, int outputsheet, short timesheetlayout)
+        {
+            var entities = await _context.ProfitCentres
+                .Where(p => p.ProfitCentreId == profitCentre)
+                .ToListAsync();
+
+            foreach (var p in entities)
+            {
+                p.Timesheet = timesheet;
+                p.OutputSheet = outputsheet;
+                p.TimesheetLayout = timesheetlayout;
+            }
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
     }
 }

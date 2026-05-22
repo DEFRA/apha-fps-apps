@@ -1,4 +1,5 @@
 using Apha.FPSApps.Application.Dtos.PACT;
+using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.PACT.Models;
@@ -12,8 +13,8 @@ using Newtonsoft.Json;
 namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 {
     [Area("PACT")]
-    [Authorize(Roles = "PACTAdmin,PACTUser")]
-    [AuthorizeForScopes(ScopeKeySection = "PACTApiSettings:Scope")]
+    [Authorize(Roles = "FPSAdmin,FPSUser,PACTAdmin,PACTUser")]
+    [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")]
     public class WorkGroupReportController : Controller
     {
         private readonly IWorkGroupReportEmailService _emailSendService;
@@ -308,10 +309,10 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 return new List<SelectListItem>();
 
             return response.Data
-                .Where(pc => !string.IsNullOrWhiteSpace(pc.ProfitCentre))
+                .Where(pc => !string.IsNullOrWhiteSpace(pc.ProfitCentreId))
                 .Select(pc => new SelectListItem(
-                    pc.ProfitCentre,
-                    pc.ProfitCentre))
+                    pc.ProfitCentreId,
+                    pc.ProfitCentreId))
                 .ToList();
         }
 
@@ -326,7 +327,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             if (string.IsNullOrWhiteSpace(profitCentre))
                 return Json(new { timesheet = false, outputsheet = false, timesheetLayout = 1 });
 
-            var response = await _profitCentreService.GetProfitCentreSettingsAsync(profitCentre);
+            var response = await _profitCentreService.GetProfitCentreByIdAsync(profitCentre);
             if (!response.Success || response.Data == null)
                 return Json(new { timesheet = false, outputsheet = false, timesheetLayout = 1 });
 
@@ -380,7 +381,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             if (string.IsNullOrWhiteSpace(model.SelectedProfitCentre))
                 return;
 
-            var settings = await _profitCentreService.GetProfitCentreSettingsAsync(model.SelectedProfitCentre);
+            var settings = await _profitCentreService.GetProfitCentreByIdAsync(model.SelectedProfitCentre);
             if (!settings.Success || settings.Data == null)
                 return;
 

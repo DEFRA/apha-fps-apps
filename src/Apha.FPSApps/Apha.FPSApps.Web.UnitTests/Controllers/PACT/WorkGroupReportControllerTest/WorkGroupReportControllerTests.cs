@@ -1,5 +1,7 @@
 using Apha.FPSApps.Application.Dtos;
+using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
+using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.PACT.Controllers;
@@ -41,10 +43,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupReportControllerT
             return JsonSerializer.Deserialize<JsonElement>(json);
         }
 
-        private void SetupProfitCentres(List<ProfitCentreSettingsDto> data)
+        private void SetupProfitCentres(List<ProfitCentreDto> data)
         {
             _profitCentreService.GetAllProfitCentresAsync()
-                .Returns(ApiResponseDto<IEnumerable<ProfitCentreSettingsDto>>.SuccessResponse(data));
+                .Returns(ApiResponseDto<IEnumerable<ProfitCentreDto>>.SuccessResponse(data));
         }
 
         private void SetupCalenderMonths(List<CalenderMonthDto> data)
@@ -60,10 +62,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupReportControllerT
                 .Returns(ApiResponseDto<List<WorkGroupDto>>.SuccessResponse(data));
         }
 
-        private void SetupProfitCentreSettings(string profitCentre, ProfitCentreSettingsDto settings)
+        private void SetupProfitCentreSettings(string profitCentre, ProfitCentreDto settings)
         {
-            _profitCentreService.GetProfitCentreSettingsAsync(profitCentre)
-                .Returns(ApiResponseDto<ProfitCentreSettingsDto>.SuccessResponse(settings));
+            _profitCentreService.GetProfitCentreByIdAsync(profitCentre)
+                .Returns(ApiResponseDto<ProfitCentreDto>.SuccessResponse(settings));
         }
 
         // ── Index ─────────────────────────────────────────────────────────────
@@ -74,15 +76,15 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupReportControllerT
         public async Task Index_WithProfitCentres_ReturnsViewWithFirstProfitCentreSelected()
         {
             // Arrange
-            var profitCentres = new List<ProfitCentreSettingsDto>
+            var profitCentres = new List<ProfitCentreDto>
             {
-                new() { ProfitCentre = "PC001" },
-                new() { ProfitCentre = "PC002" }
+                new() { ProfitCentreId = "PC001" },
+                new() { ProfitCentreId = "PC002" }
             };
             SetupProfitCentres(profitCentres);
             SetupCalenderMonths([]);
             SetupWorkGroupsByProfitCentre("PC001", []);
-            SetupProfitCentreSettings("PC001", new ProfitCentreSettingsDto());
+            SetupProfitCentreSettings("PC001", new ProfitCentreDto());
 
             // Act
             var result = await _controller.Index();
@@ -136,10 +138,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupReportControllerT
         public async Task Index_WithProfitCentreSettings_AppliesSettingsToViewModel()
         {
             // Arrange
-            SetupProfitCentres([new() { ProfitCentre = "PC001" }]);
+            SetupProfitCentres([new() { ProfitCentreId = "PC001" }]);
             SetupCalenderMonths([]);
             SetupWorkGroupsByProfitCentre("PC001", []);
-            SetupProfitCentreSettings("PC001", new ProfitCentreSettingsDto
+            SetupProfitCentreSettings("PC001", new ProfitCentreDto
             {
                 Timesheet       = -1,
                 Outputsheet     = -1,
@@ -164,7 +166,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupReportControllerT
             // Arrange
             var errors = new List<ApiErrorDto> { new() { Code = "API_ERROR", Message = "Failed" } };
             _profitCentreService.GetAllProfitCentresAsync()
-                .Returns(ApiResponseDto<IEnumerable<ProfitCentreSettingsDto>>.FailureResponse(errors, new ApiMetaDto()));
+                .Returns(ApiResponseDto<IEnumerable<ProfitCentreDto>>.FailureResponse(errors, new ApiMetaDto()));
             SetupCalenderMonths([]);
 
             // Act
@@ -578,7 +580,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupReportControllerT
         {
             // Arrange
             const string profitCentre = "PC001";
-            SetupProfitCentreSettings(profitCentre, new ProfitCentreSettingsDto
+            SetupProfitCentreSettings(profitCentre, new ProfitCentreDto
             {
                 Timesheet       = -1,
                 Outputsheet     = 0,
@@ -608,7 +610,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupReportControllerT
             Assert.False(json.GetProperty("timesheet").GetBoolean());
             Assert.False(json.GetProperty("outputsheet").GetBoolean());
             Assert.Equal(1, json.GetProperty("timesheetLayout").GetInt32());
-            await _profitCentreService.DidNotReceive().GetProfitCentreSettingsAsync(Arg.Any<string>());
+            await _profitCentreService.DidNotReceive().GetProfitCentreByIdAsync(Arg.Any<string>());
         }
 
         [Fact]
@@ -616,8 +618,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupReportControllerT
         {
             // Arrange
             var errors = new List<ApiErrorDto> { new() { Code = "NOT_FOUND", Message = "Not found" } };
-            _profitCentreService.GetProfitCentreSettingsAsync("PC001")
-                .Returns(ApiResponseDto<ProfitCentreSettingsDto>.FailureResponse(errors, new ApiMetaDto()));
+            _profitCentreService.GetProfitCentreByIdAsync("PC001")
+                .Returns(ApiResponseDto<ProfitCentreDto>.FailureResponse(errors, new ApiMetaDto()));
 
             // Act
             var result = await _controller.GetProfitCentreSettings("PC001");
@@ -633,7 +635,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupReportControllerT
         public async Task GetProfitCentreSettings_WithNullTimesheetLayout_DefaultsToOne()
         {
             // Arrange
-            SetupProfitCentreSettings("PC001", new ProfitCentreSettingsDto
+            SetupProfitCentreSettings("PC001", new ProfitCentreDto
             {
                 Timesheet       = 0,
                 Outputsheet     = 0,

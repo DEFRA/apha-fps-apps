@@ -6,5 +6,8 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
     public interface IFpsProfitCentreApiClient
     {
         Task<ApiResponseDto<List<ProfitCentreDto>>> GetProfitCentresAsync();
+        Task<ApiResponseDto<IEnumerable<ProfitCentreDto>>> GetAllProfitCentresAsync();
+        Task<ApiResponseDto<ProfitCentreDto>> GetProfitCentreByIdAsync(string profitCentre);
+        Task<ApiResponseDto<bool>> UpdateProfitCentreSettingsAsync(string profitCentre, int timesheet, int outputsheet, short timesheetLayout);
     }
 }

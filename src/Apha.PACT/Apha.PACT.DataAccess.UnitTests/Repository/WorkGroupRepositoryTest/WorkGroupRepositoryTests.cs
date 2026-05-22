@@ -1427,5 +1427,106 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
         }
 
         #endregion
+
+        // ════════════════════════════════════════════════════════════════════
+        // GetWorkGroupsByProfitCentreAsync
+        // ════════════════════════════════════════════════════════════════════
+
+        private static WorkGroupRepository CreateWorkGroupsByPcRepository(
+            IEnumerable<WorkGroup> workGroups,
+            int fpsYear = 2024)
+        {
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            fpsRequestContext.FpsYear.Returns(fpsYear);
+
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
+            RepositoryTestHelper.SetupSaveChanges(mockContext);
+
+            var mockSet = RepositoryTestHelper.CreateMockDbSet(workGroups);
+            mockContext.Setup(x => x.WorkGroups).Returns(mockSet.Object);
+
+            return new WorkGroupRepository(mockContext.Object);
+        }
+
+        #region GetWorkGroupsByProfitCentreAsync
+
+        // NOTE: GetWorkGroupsByProfitCentreAsync uses EF.Property<T> for dynamic sorting.
+        // EF.Property<T> is only valid inside a real EF provider query and throws
+        // InvalidOperationException when evaluated by LINQ-to-Objects (mock DbSet).
+        // Only the empty-result case (WHERE filters out all rows before sort) is testable
+        // under the mock-only constraint. All other cases require an integration test.
+
+        [Fact]
+        public async Task GetWorkGroupsByProfitCentreAsync_NoMatchingProfitCentre_ReturnsEmpty()
+        {
+            var workGroups = new List<WorkGroup>
+            {
+                new() { WorkGroupName = "WG1", ProfitCentre = "PC01", FpsYear = 2024 }
+            };
+            var repo  = CreateWorkGroupsByPcRepository(workGroups);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetWorkGroupsByProfitCentreAsync(query, "PC_MISSING");
+
+            Assert.Empty(result.Data);
+        }
+
+        #endregion
+
+        // ════════════════════════════════════════════════════════════════════
+        // SetSendEmailForProfitCentreWorkGroupsAsync
+        // ════════════════════════════════════════════════════════════════════
+
+        private static WorkGroupRepository CreateSendEmailRepository(
+            IEnumerable<WorkGroup>    workGroups,
+            IEnumerable<ProfitCentre> profitCentres,
+            int fpsYear = 2024)
+        {
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            fpsRequestContext.FpsYear.Returns(fpsYear);
+
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
+            RepositoryTestHelper.SetupSaveChanges(mockContext);
+
+            var wgSet = RepositoryTestHelper.CreateMockDbSet(workGroups);
+            var pcSet = RepositoryTestHelper.CreateMockDbSet(profitCentres);
+
+            mockContext.Setup(x => x.WorkGroups).Returns(wgSet.Object);
+            mockContext.Setup(x => x.ProfitCentres).Returns(pcSet.Object);
+
+            return new WorkGroupRepository(mockContext.Object);
+        }
+
+        #region SetSendEmailForProfitCentreWorkGroupsAsync
+
+        // NOTE: SetSendEmailForProfitCentreWorkGroupsAsync uses ExecuteUpdateAsync (EF Core bulk update),
+        // which is not supported by LINQ-to-Objects mock IQueryable. Integration tests with a real
+        // EF provider are required to cover this method.
+
+        #endregion
+
+        // ════════════════════════════════════════════════════════════════════
+        // SetSendEmailForAllWorkGroupsAsync
+        // ════════════════════════════════════════════════════════════════════
+
+        #region SetSendEmailForAllWorkGroupsAsync
+
+        // NOTE: SetSendEmailForAllWorkGroupsAsync uses ExecuteUpdateAsync (EF Core bulk update),
+        // which is not supported by LINQ-to-Objects mock IQueryable. Integration tests with a real
+        // EF provider are required to cover this method.
+
+        #endregion
+
+        // ════════════════════════════════════════════════════════════════════
+        // UpdateWorkGroupEmailAsync
+        // ════════════════════════════════════════════════════════════════════
+
+        #region UpdateWorkGroupEmailAsync
+
+        // NOTE: UpdateWorkGroupEmailAsync uses ExecuteUpdateAsync (EF Core bulk update),
+        // which is not supported by LINQ-to-Objects mock IQueryable. Integration tests with a real
+        // EF provider are required to cover this method.
+
+        #endregion
     }
 }

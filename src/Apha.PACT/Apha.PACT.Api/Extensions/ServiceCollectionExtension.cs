@@ -25,8 +25,7 @@ namespace Apha.PACT.Api.Extensions
             services.AddScoped<IExcelExportService, ExcelExportService>();
             services.AddScoped<IJobCodeService, JobCodeService>();
             services.AddScoped<ITimeCodeValidService, TimeCodeValidService>();
-            services.AddScoped<IWorkGroupService, WorkGroupService>();
-            services.AddScoped<IProfitCentreService, ProfitCentreService>();
+            services.AddScoped<IWorkGroupService, WorkGroupService>();            
             services.AddScoped<IMonthService, MonthService>();
             services.AddScoped<ICalenderMonthService, CalenderMonthService>();
             services.AddScoped<IProjectInvoiceService, ProjectInvoiceService>();
@@ -47,8 +46,7 @@ namespace Apha.PACT.Api.Extensions
             services.AddScoped<ICurrentUserContext, CurrentUserContext>();
             services.AddScoped<IJobCodeRepository, JobCodeRepository>();
             services.AddScoped<ITimeCodeValidRepository, TimeCodeValidRepository>();
-            services.AddScoped<IWorkGroupRepository, WorkGroupRepository>();
-            services.AddScoped<IProfitCentreRepository, ProfitCentreRepository>();
+            services.AddScoped<IWorkGroupRepository, WorkGroupRepository>();            
             services.AddScoped<IMonthRepository, MonthRepository>();
             services.AddScoped<ICalenderMonthRepository, CalenderMonthRepository>();
             services.AddScoped<IProjectInvoiceRepository, ProjectInvoiceRepository>();

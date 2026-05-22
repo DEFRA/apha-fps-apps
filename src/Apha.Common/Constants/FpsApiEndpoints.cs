@@ -110,7 +110,10 @@ namespace Apha.Common.Constants
         public const string DeleteMonthlyOutput = "api/v1/MonthlyOutput";
 
         // Resource Set-Up — Profit Centres
-        public const string GetProfitCentres = "api/v1/profitcentres";
+        public const string GetProfitCentres = "api/v1/profitcentres";        
+        public const string GetAllProfitCentres = "api/v1/profitcentres/all";
+        public const string GetProfitCentreById = "api/v1/profitcentres/{0}";
+        public const string PatchProfitCentreSettings = "api/v1/profitcentres/settings";
 
         // Resource Set-Up — PC Grades
         public const string GetPcGrades = "api/v1/pcgrades?profitCentre={0}";

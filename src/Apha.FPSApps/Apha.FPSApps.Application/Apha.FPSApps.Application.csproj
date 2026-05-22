@@ -6,6 +6,11 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Remove="Interfaces\PACT\IProfitCentreService.cs" />
+    <Compile Remove="Services\PACT\ProfitCentreService.cs" />
+  </ItemGroup>
+
   <ItemGroup>    
     <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="10.1.5" />
   </ItemGroup>

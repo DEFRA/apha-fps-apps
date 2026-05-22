@@ -1,4 +1,4 @@
-namespace Apha.Common.Contracts.PACT
+namespace Apha.Common.Contracts.FPS
 {
     public class UpdateProfitCentreSettingsReq
     {
