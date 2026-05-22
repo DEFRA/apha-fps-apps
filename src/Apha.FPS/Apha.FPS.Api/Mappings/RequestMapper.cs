@@ -46,6 +46,8 @@ namespace Apha.FPS.Api.Mappings
             CreateMap<YearMasterRes, YearMasterDto>().ReverseMap();
             CreateMap<DivisionReq, DivisionDto>().ReverseMap();
             CreateMap<DivisionRes, DivisionDto>().ReverseMap();
+            CreateMap<DivisionGradeReq, DivisionGradeDto>().ReverseMap();
+            CreateMap<DivisionGradeRes, DivisionGradeDto>().ReverseMap();
             CreateMap<AgencyRes, AgencyDto>().ReverseMap();
 
             // ProgrammeNewProject mappings

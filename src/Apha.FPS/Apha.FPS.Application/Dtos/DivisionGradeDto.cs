@@ -1,6 +1,6 @@
-namespace Apha.FPS.Core.Entities
+namespace Apha.FPS.Application.Dtos
 {
-    public partial class DivisionGrade
+    public class DivisionGradeDto
     {
         public string DivisionGradeCode { get; set; } = null!;
         public int FpsYear { get; set; }
