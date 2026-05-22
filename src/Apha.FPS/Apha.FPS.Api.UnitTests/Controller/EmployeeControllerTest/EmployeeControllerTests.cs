@@ -1,4 +1,4 @@
-﻿using Apha.Common.Contracts;
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Api.Controllers;
 using Apha.FPS.Application.Dtos;
@@ -8,7 +8,6 @@ using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
-
 namespace Apha.FPS.Api.UnitTests.Controller.EmployeeControllerTest
 {
     public class EmployeeControllerTests
@@ -443,6 +442,169 @@ namespace Apha.FPS.Api.UnitTests.Controller.EmployeeControllerTest
 
             // Act & Assert
             await Assert.ThrowsAsync<Exception>(() => _controller.GetAllManagersAsync());
+        }
+
+        #endregion
+
+        #region GetAllWorkGroupPersonAsync
+
+        [Fact]
+        public async Task GetAllPersonAsync_HappyPath_ReturnsOk()
+        {
+            // Arrange
+            var serviceResult = new List<WorkGroupPersonDto>
+            {
+                new() { Name = "Alice", WorkGroupGrade = "WG1", WorkGroup = "GroupA" },
+                new() { Name = "Bob",   WorkGroupGrade = "WG2", WorkGroup = "GroupB" }
+            };
+            var mappedResult = new List<WorkGroupPersonRes>
+            {
+                new() { Name = "Alice" },
+                new() { Name = "Bob" }
+            };
+
+            _serviceMock.GetAllWorkGroupPersonAsync().Returns(serviceResult);
+            _mapperMock.Map<List<WorkGroupPersonRes>>(serviceResult).Returns(mappedResult);
+
+            // Act
+            var result = await _controller.GetAllWorkGroupPersonAsync();
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(mappedResult, okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetAllPersonAsync_EdgeCase_EmptyList_ReturnsOk()
+        {
+            // Arrange
+            var serviceResult = new List<WorkGroupPersonDto>();
+            var mappedResult = new List<WorkGroupPersonRes>();
+
+            _serviceMock.GetAllWorkGroupPersonAsync().Returns(serviceResult);
+            _mapperMock.Map<List<WorkGroupPersonRes>>(serviceResult).Returns(mappedResult);
+
+            // Act
+            var result = await _controller.GetAllWorkGroupPersonAsync();
+
+            // Assert
+            Assert.IsType<OkObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task GetAllPersonAsync_Error_ServiceThrows()
+        {
+            // Arrange
+            _serviceMock.GetAllWorkGroupPersonAsync().Throws(new Exception("Service error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetAllWorkGroupPersonAsync());
+        }
+
+        [Fact]
+        public async Task GetAllPersonAsync_Error_MapperThrows()
+        {
+            // Arrange
+            var serviceResult = new List<WorkGroupPersonDto>();
+            _serviceMock.GetAllWorkGroupPersonAsync().Returns(serviceResult);
+            _mapperMock.Map<List<WorkGroupPersonRes>>(serviceResult).Throws(new Exception("Mapping error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetAllWorkGroupPersonAsync());
+        }
+
+        #endregion
+
+        #region GetWorkGroupStaffPaginatedAsync
+
+        [Fact]
+        public async Task GetWorkGroupStaffPaginatedAsync_HappyPath_ReturnsOk()
+        {
+            // Arrange
+            var query = new PaginationReq<string> { Page = 1, PageSize = 10 };
+            var mappedQuery = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var people = new List<WorkGroupStaffDto>
+            {
+                new() { Name = "Alice", WorkGroupGrade = "WG1" }
+            };
+            var pagedResult = new PaginatedResult<WorkGroupStaffDto>(people, new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1, TotalPages = 1 });
+            var mappedRes = new PaginationRes<WorkGroupStaffRes>();
+
+            _mapperMock.Map<QueryParameters<string>>(query).Returns(mappedQuery);
+            _serviceMock.GetWorkGroupStaffAsync(mappedQuery, null).Returns(pagedResult);
+            _mapperMock.Map<PaginationRes<WorkGroupStaffRes>>(pagedResult).Returns(mappedRes);
+
+            // Act
+            var result = await _controller.GetWorkGroupStaffPaginatedAsync(query, null);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(mappedRes, okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupStaffPaginatedAsync_WithWorkGroup_PassesWorkGroupToService()
+        {
+            // Arrange
+            var query = new PaginationReq<string> { Page = 1, PageSize = 10 };
+            var mappedQuery = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var pagedResult = new PaginatedResult<WorkGroupStaffDto>([], new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 0, TotalPages = 0 });
+            var mappedRes = new PaginationRes<WorkGroupStaffRes>();
+
+            _mapperMock.Map<QueryParameters<string>>(query).Returns(mappedQuery);
+            _serviceMock.GetWorkGroupStaffAsync(mappedQuery, "WG1").Returns(pagedResult);
+            _mapperMock.Map<PaginationRes<WorkGroupStaffRes>>(pagedResult).Returns(mappedRes);
+
+            // Act
+            var result = await _controller.GetWorkGroupStaffPaginatedAsync(query, "WG1");
+
+            // Assert
+            Assert.IsType<OkObjectResult>(result);
+            await _serviceMock.Received(1).GetWorkGroupStaffAsync(Arg.Any<QueryParameters<string>>(), "WG1");
+        }
+
+        [Fact]
+        public async Task GetWorkGroupStaffPaginatedAsync_EdgeCase_EmptyResult_ReturnsOk()
+        {
+            // Arrange
+            var query = new PaginationReq<string> { Page = 1, PageSize = 10 };
+            var mappedQuery = new QueryParameters<string>();
+            var pagedResult = new PaginatedResult<WorkGroupStaffDto>([], new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 0, TotalPages = 0 });
+            var mappedRes = new PaginationRes<WorkGroupStaffRes>();
+
+            _mapperMock.Map<QueryParameters<string>>(query).Returns(mappedQuery);
+            _serviceMock.GetWorkGroupStaffAsync(mappedQuery, null).Returns(pagedResult);
+            _mapperMock.Map<PaginationRes<WorkGroupStaffRes>>(pagedResult).Returns(mappedRes);
+
+            // Act
+            var result = await _controller.GetWorkGroupStaffPaginatedAsync(query, null);
+
+            // Assert
+            Assert.IsType<OkObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupStaffPaginatedAsync_Error_ServiceThrows()
+        {
+            // Arrange
+            var query = new PaginationReq<string> { Page = 1, PageSize = 10 };
+            _mapperMock.Map<QueryParameters<string>>(query).Returns(new QueryParameters<string>());
+            _serviceMock.GetWorkGroupStaffAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string?>())
+                .Throws(new Exception("Service error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetWorkGroupStaffPaginatedAsync(query, null));
+        }
+
+        [Fact]
+        public async Task GetWorkGroupStaffPaginatedAsync_Error_MapperThrows()
+        {
+            // Arrange
+            var query = new PaginationReq<string> { Page = 1, PageSize = 10 };
+            _mapperMock.Map<QueryParameters<string>>(query).Throws(new Exception("Mapping error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetWorkGroupStaffPaginatedAsync(query, null));
         }
 
         #endregion

@@ -20,7 +20,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
 
         [Required(ErrorMessage = "Amount is required")]
         [Display(Name = "Amount")]
-        [GridColumn(Order = 3, Width = 117, Type = GridColumnType.UsdValue)]
+        [GridColumn(Order = 3, Width = 117, Type = GridColumnType.GbpValue)]
         public decimal? Amount { get; set; }
 
         [Display(Name = "AcctCode")]

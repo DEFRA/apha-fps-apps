@@ -1,0 +1,107 @@
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.PACT.Models.PortfolioTimeCodesViewModel
+
+@{
+    ViewData["Title"] = "Portfolio Time Codes - PACT";
+    var selectedPortfolio = Model.SelectedPortfolio ?? string.Empty;
+}
+
+<!-- Page title bar -->
+<div class="govuk-grid-row sup_margin_left_right_0">
+    <div class="govuk-grid-column-full">
+        <h1 class="heading_with_txtbox govuk-heading-s sup_border-bottom govuk-!-margin-bottom-2">
+            <div class="sup_flex_left_center">
+                Portfolio Time Codes for:
+                <label class="sup_hidden_label" for="sp-projectcode">project code</label>
+                <select id="sp-projectcode" class="govuk-select govuk-!-font-size-16 govuk-input--width-20" 
+                        style="margin-left: 10px;" onchange="onPortfolioChange(this.value)">
+                    <option value="">-- Select Portfolio --</option>
+                    @foreach (var option in Model.PortfolioOptions)
+                    {
+                        if (option.Value == selectedPortfolio)
+                        {
+                            <option value="@option.Value" selected>@option.Text</option>
+                        }
+                        else
+                        {
+                            <option value="@option.Value">@option.Text</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div>
+                <a asp-area="PACT" asp-controller="PortfolioMaintenance" asp-action="Index" 
+                   class="govuk-back-link">Back</a>
+            </div>
+        </h1>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(selectedPortfolio))
+{
+    <!-- Test Purchase Requirements Button -->
+    <div class="govuk-grid-row sup_margin_left_right_0 sup_margin_bottom_10">
+        <div class="govuk-grid-column-full sup_text_align_right">
+            <a asp-area="PACT" 
+               asp-controller="PortfolioTimeCodes" 
+               asp-action="NavigateToTestPurchaseRequirements" 
+               asp-route-parentProject="@selectedPortfolio"
+               class="govuk-button sup_margin_0"
+               role="button">
+                <img src="~/images/list-solid-full_white.svg" alt="" aria-hidden="true" style="width: 16px; vertical-align: middle;" />
+                Test Purchase Requirements
+            </a>
+        </div>
+    </div>
+}
+
+<!-- Main Content Area -->
+<div class="govuk-grid-row sup_flex_row sup_margin_left_right_0 sup_margin_bottom_10">
+
+    @if (!string.IsNullOrEmpty(selectedPortfolio))
+    {
+        <!-- Side Navigation -->
+        @await Html.PartialAsync("_PactProjectSideNav", new Apha.FPSApps.Web.Areas.PACT.Models.PactProjectSideNavModel
+        {
+            ParentProject = selectedPortfolio
+        })
+    }
+
+    <!-- Main Grid Container -->
+    <div class="govuk-grid-column-full">
+
+        <!-- Project Job Codes Grid -->
+        <div class="govuk-grid-row sup_margin_left_right_0">
+            <div class="sup_border">
+                <div id="@($"gridContainer_{Model.JobCodeGrid.GridId}")">
+                    @await Html.PartialAsync("_DataGrid", Model.JobCodeGrid)
+                </div>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(selectedPortfolio))
+        {
+            <!-- Time Code Validity Grid -->
+            <div class="govuk-grid-row sup_margin_left_right_0 sup_margin_top_10">
+                <div class="sup_border">
+                    <div id="@($"gridContainer_{Model.TimeCodeGrid.GridId}")">
+                        @await Html.PartialAsync("_DataGrid", Model.TimeCodeGrid)
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/pact_js/portfolio-timecodes.js"></script>
+    <script src="~/js/ajax-form-validation.js"></script>
+    <script>
+        // Initialize the Portfolio Time Codes module with current values
+        initPortfolioTimeCodes(
+            '@selectedPortfolio',
+            '@Model.JobCodeGrid.GridId',
+            '@Model.TimeCodeGrid.GridId'
+        );
+    </script>
+}

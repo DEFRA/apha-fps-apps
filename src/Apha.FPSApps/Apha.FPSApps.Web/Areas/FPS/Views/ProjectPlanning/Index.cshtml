@@ -4,318 +4,243 @@
     ViewData["Title"] = $"{Model.SelectedYear} : Project Planning";   
 }
 
-<div style="padding: 5px 5px;  border-bottom: 1px solid #b4b4b4" class="row">
-    <div style="display: flex;  font-size: 14px;   align-items: center; justify-content: space-between; ">
-        <div class="col-md-6">
-            <a class="" href="fpshome.html">Home</a>  &gt; Programme Management &gt; Plan Projects &gt;  Setup A new Project
-        </div>
-        <div style="display: flex;
-                    justify-content: flex-end;" class="col-md-6">
-            <div class="col-sm-4" style="border: 2px solid #1d70b8;
-                        border-radius: 5px;
-                        font-size: 13px;
-                        font-weight: normal;
-                        background-color: #fff;
-                        text-align: left;
-                        display: flex;
+<div class="container-fluid">
 
-                        margin-right: 10px;
-                        align-items: center;
-                        justify-content: space-between;">
-                <div class="col" style="border-right: 1px solid #684e00; text-align: left; padding: 1px 5px;">
-                    Programme:<strong id="resultprogram"> @Model.SelectedProgramme </strong>
+    <div class="govuk-grid-row">
+        <div class="govuk-grid-column-full">
+            <div class="row fps-sr-breadcrumb-row">
+                <div class="fps-sr-breadcrumb-flex">
+                    <div class="col-md-8">
+                        <nav class="govuk-breadcrumbs" aria-label="Breadcrumb">
+                            <ol class="govuk-breadcrumbs__list">
+                                <li class="govuk-breadcrumbs__list-item">
+                                    <a class="govuk-breadcrumbs__link" href="fpshome.html">Home</a>
+                                </li>
+                                <li class="govuk-breadcrumbs__list-item">@Model.SelectedProgramme</li>
+                                <li class="govuk-breadcrumbs__list-item">
+                                    <a class="govuk-breadcrumbs__link" href="program_management.html">Programme Management</a>
+                                </li>
+                                <li class="govuk-breadcrumbs__list-item">Plan Projects</li>
+                                <li class="govuk-breadcrumbs__list-item">Project Planning</li>
+                            </ol>
+                        </nav>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
-<div class="row">
-    <div class="col-lg-6" style="padding:0px;  border-bottom: 2px solid #1d70b8;">
-        <h1 style="padding: 10px 0 0px 17px; font-weight: 700; font-size:16px;
-                                margin-bottom: 10px; ">
-            Project Planning : <span class="projectcode_color">@Model.ProjectCode</span>
-            <input id="hdnProjectCode" type="hidden" value="@Model.ProjectCode" />
-        </h1>
+        <div class="govuk-grid-column-full govuk-!-padding-0">
+            <h1 class="govuk-heading-s sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2 govuk-!-padding-left-4">
+                Project Planning : <span class="projectcode_color">@Model.ProjectCode</span>
+                <input id="hdnProjectCode" type="hidden" value="@Model.ProjectCode" />
+                <a href="program_management.html" class="govuk-back-link sup_align_right">Back</a>
+            </h1>
+        </div>
     </div>
 
-    <div class="col-lg-6" style=" text-align: right; border-bottom: 2px solid #1d70b8;">
-        <a class="btn btn-outline-primary btn-sm" href="program_management.html" style="  margin-top: 5px; margin-right: 10px; border: 1px solid #0d6efd;">Back</a>
+    <div class="project-code-section govuk-!-margin-bottom-2 govuk-!-padding-left-0">
+        <textarea class="govuk-textarea pp-project-description" id="projectDescription" aria-label="Project description" rows="2" asp-for="ProjectDescription">@Model.ProjectDescription</textarea>
+        <button type="button" class="govuk-button sup_margin_0" aria-label="Preview Report">Preview Report</button>
     </div>
-    <div class="col-lg-12">
-        <main class="main-content" style="padding:0px 10px 10px 10px">
-            <div class="project-code-section" style="justify-content: space-between; margin-top: 10px; margin-bottom: 10px; background-color: #efefef; border: 1px solid #cbcbcb; padding: 4px;">
-                <textarea class="form-control projectplan-code form-control-sm" aria-label="Salmonell Surveillance and control programme" style="width: 80%; height: 43px;" rows="2" asp-for="ProjectDescription">@Model.ProjectDescription</textarea>
-                <button aria-label="Preview Report" class="btnBlue">Preview Report</button>
-            </div>
-            <div class="main-grid">
-                <div class="left-column">
-                    <!-- Staff Booked Section -->
-                    <section class="data-section">
-                        <div>
-                            <div id="@($"gridContainer_{Model.StaffBookedGrid.GridId}")">
-                                @await Html.PartialAsync("_DataGrid", Model.StaffBookedGrid)
-                            </div>
-                            <div style=" border-left: 1px solid #1d70b8 !important; border-top: 1px solid #1d70b8 !important; border-right: 1px solid #1d70b8 !important; padding: 9px 20px 0px 20px; display: flex;justify-content: flex-end;align-items: center;">
-                                <span style=" border-right: 0px;  border-bottom: 0px; font-size: 14px;   text-align: right;">
-                                    <span class="me-2">Total Staff Cost: </span>
-                                </span>
-                                <span style=" border-right: 0px;  border-left: 0px; border-bottom: 0px; padding-right: 0px !important;  text-align: right;font-size: 13px;"> <span class="total-amount">  <input type="text" value="@Model.TotalStaffCost.ToString("C")" aria-label="Total Staff Cost" style="padding-right:5px;" class="form-control form-control-sm " asp-for="TotalStaffCost"></span></span>
-                            </div>
-                            <div style="display: flex;
-                                                    margin-top: 0;
-                                                    margin-bottom: 0;
-                                                    border: 1px solid #1d70b8;
-                                                    padding: 5px 10px 5px 10px;
-                                                    border-top: 0;
-                                                    justify-content: space-between;
-                                                    align-items: center;
-                                                    border-radius: 0 0 10px 10px;">
-                            </div>
-                        </div>
-                    </section>
-                    <!-- Animals Booked Section -->
-                    <section class="data-section">
-                        <div style="
-     display: flex;
-     justify-content: space-between;
-     align-items: center;
-     background: #d4ebff;
-     padding: 7px;
-     color: #333;
-     border-radius: 7px 7px 0 0;
-     font-size: 16px;
-     border: 1px solid #1d70b8;">
-                            <h1>Animals Booked</h1>
-                            <button class="btnBlue" id="" aria-label="Add Animals booked"><img alt="plus icon for add Animals booked" src="~/images/circle-plus-solid-full-white.svg" width="16px">&nbsp;Add </button>
-                        </div>
-                        <div class="jobcodediv borderbottom_0 maxheight320">
-                            <table id="" class="table table-striped table-bordered custom-table" style="margin-bottom: 0px;">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Animal Type </th>
-                                        <th>Day </th>
-                                        <th>No.Req </th>
-                                        <th>Daily Rt </th>
-                                        <th>Cost </th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="tableBody">
-                                    @if (Model.AnimalsBookedList != null && Model.AnimalsBookedList.Any())
-                                    {
-                                        @foreach (var animal in Model.AnimalsBookedList)
-                                        {
-                                            <tr>
-                                                <td>@animal.AnimalType</td>
-                                                <td class="text-AlignRight">@animal.Day</td>
-                                                <td class="text-AlignRight">@animal.NoReq</td>
-                                                <td class="text-AlignRight">@animal.DailyRt.ToString("C")</td>
-                                                <td class="text-AlignRight">@animal.Cost.ToString("C")</td>
-                                                <td>
-                                                    <button type="button" aria-label="Edit" class="icon-bg edit-btn "><img src="~/images/edit_gridicon.svg" alt="Edit icon" width="20px" height="20px" title="Edit" /></button>
-                                                    <button type="button" aria-label="Delete" class="icon-bg  delete-btn "><img src="~/images/delete_gridicon.svg" alt="Delete icon" width="20px" height="20px" title="Delete" /></button>
-                                                </td>
-                                            </tr>
-                                        }
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                        <div style=" border-top: 1px solid #1d70b8 !important; border-left: 1px solid #1d70b8 !important; border-right: 1px solid #1d70b8 !important; padding: 9px 20px 0px 20px; display: flex;justify-content: flex-end;align-items: center;">
-                            <span style=" border-right: 0px;  border-bottom: 0px; font-size: 14px;   text-align: right;">
-                                <span class="me-2">Total Animal Cost: </span>
-                            </span>
-                            <span style=" border-right: 0px;  border-left: 0px; border-bottom: 0px; padding-right: 0px !important;  text-align: right;font-size: 13px;"> <span class="total-amount">  <input type="text" value="@Model.TotalAnimalCost.ToString("C")" aria-label="Total Animal Cost" style="padding-right:5px;" class="form-control form-control-sm " asp-for="TotalAnimalCost"></span></span>
-                        </div>
-                        <div style="display: flex;
-                                            margin-top: 0;
-                                            margin-bottom: 0;
-                                            border: 1px solid #1d70b8;
-                                            padding: 5px 10px 5px 10px;
-                                            border-top: 0;
-                                            justify-content: space-between;
-                                            align-items: center;
-                                            border-radius: 0 0 10px 10px;">
-                        </div>
-                    </section>
-                </div>
-                <div class="right-column">
-                    <!-- Tests Booked Section -->
-                    <section class="data-section">
-                        <div style="
-     display: flex;
-     justify-content: space-between;
-     align-items: center;
-     background: #d4ebff;
-     padding: 7px;
-     color: #333;
-     border-radius: 7px 7px 0 0;
-     font-size: 16px;
-     border: 1px solid #1d70b8;">
-                            <h1>Tests Booked</h1>
-                            <button class="btnBlue" id="" aria-label="Add Tests Booked"><img alt="plus icon for add Tests Booked" src="~/images/circle-plus-solid-full-white.svg" width="16px">&nbsp;Add </button>
-                        </div>
-                        <div class="jobcodediv borderbottom_0 maxheight320">
-                            <table id="" class="table table-striped table-bordered custom-table" style="margin-bottom: 0px;">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Test</th>
-                                        <th>Description </th>
-                                        <th>ReCUP </th>
-                                        <th>Num </th>
-                                        <th>AgrUP </th>
-                                        <th>TestCost</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="tableBody">
-                                    @if (Model.TestsBookedList != null && Model.TestsBookedList.Any())
-                                    {
-                                        @foreach (var test in Model.TestsBookedList)
-                                        {
-                                            <tr>
-                                                <td>@test.Test</td>
-                                                <td>@test.Description</td>
-                                                <td class="text-AlignRight">@test.ReCUP.ToString("C")</td>
-                                                <td class="text-AlignRight">@test.Num</td>
-                                                <td class="text-AlignRight">@test.AgrUP.ToString("C")</td>
-                                                <td class="text-AlignRight">@test.TestCost.ToString("C")</td>
-                                                <td>
-                                                    <button type="button" aria-label="Edit" class="icon-bg edit-btn "><img src="~/images/edit_gridicon.svg" alt="Edit icon" width="20px" height="20px" title="Edit" /></button>
-                                                    <button type="button" aria-label="Delete" class="icon-bg  delete-btn "><img src="~/images/delete_gridicon.svg" alt="Delete icon" width="20px" height="20px" title="Delete" /></button>
-                                                </td>
-                                            </tr>
-                                        }
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                        <div style=" border-left: 1px solid #1d70b8 !important;  border-top: 1px solid #1d70b8 !important;  border-right: 1px solid #1d70b8 !important; padding: 9px 20px 0px 20px; display: flex;justify-content: flex-end;align-items: center;">
-                            <span style=" border-right: 0px;  border-bottom: 0px; font-size: 14px;   text-align: right;">
-                                <span class="me-2">Total Test Cost: </span>
-                            </span>
-                            <span style=" border-right: 0px;  border-left: 0px; border-bottom: 0px; padding-right: 0px !important;  text-align: right;font-size: 13px;"> <span class="total-amount">  <input type="text" value="@Model.TotalTestCost.ToString("C")" aria-label="Total Test Cost" style="padding-right:5px;" class="form-control form-control-sm " asp-for="TotalTestCost"> </span></span>
-                        </div>
-                        <div style="display: flex;
-                                            margin-top: 0;
-                                            margin-bottom: 0;
-                                            border: 1px solid #1d70b8;
-                                            padding: 5px 10px 5px 10px;
-                                            border-top: 0;
-                                            justify-content: space-between;
-                                            align-items: center;
-                                            border-radius: 0 0 10px 10px;">
-                        </div>
-                    </section>
-                    <!-- Exceptional Costs Section -->
-                    <section class="data-section">
-                        <div style="
-     display: flex;
-     justify-content: space-between;
-     align-items: center;
-     background: #d4ebff;
-     padding: 7px;
-     color: #333;
-     border-radius: 7px 7px 0 0;
-     font-size: 16px;
-     border: 1px solid #1d70b8;">
 
-                            <h1>Exceptional Costs</h1>
-                            <button class="btnBlue" id="" aria-label="Add Exceptional Cost"><img alt="plus icon for add Exceptional Cost" src="~/images/circle-plus-solid-full-white.svg" width="16px">&nbsp;Add </button>
-                        </div>
-                        <div class="jobcodediv borderbottom_0 maxheight320">
-                            <table id="" class="table table-striped table-bordered custom-table" style="margin-bottom: 0px;">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Description </th>
-                                        <th>Account </th>
-                                        <th>Total Cost </th>
-                                        <th>Freq or Mnth </th>
-                                        <th>Supplier</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="tableBody">
-                                    @if (Model.ExceptionalCostsList != null && Model.ExceptionalCostsList.Any())
-                                    {
-                                        @foreach (var cost in Model.ExceptionalCostsList)
-                                        {
-                                            <tr>
-                                                <td>@cost.Description</td>
-                                                <td>@cost.Account</td>
-                                                <td class="text-AlignRight">@cost.TotalCost.ToString("C")</td>
-                                                <td class="text-AlignRight">@cost.FreqOrMnth</td>
-                                                <td class="">@cost.Supplier</td>
-                                                <td>
-                                                    <button type="button" aria-label="Edit icon" class="icon-bg edit-btn "><img src="~/images/edit_gridicon.svg" width="20px" alt="Edit icon" height="20px" title="Edit" /></button>
-                                                    <button type="button" aria-label="Delete icon" class="icon-bg  delete-btn "><img src="~/images/delete_gridicon.svg" width="20px" alt="Delete icon" height="20px" title="Delete" /></button>
-                                                </td>
-                                            </tr>
-                                        }
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                        <div style=" border-top: 1px solid #1d70b8 !important; border-left: 1px solid #1d70b8 !important; border-right: 1px solid #1d70b8 !important; padding: 9px 20px 0px 20px; display: flex;justify-content: flex-end;align-items: center;">
-                            <span style=" border-right: 0px;  border-bottom: 0px; font-size: 14px;   text-align: right;">
-                                <span class="me-2">Total Additional Cost: </span>
-                            </span>
-                            <span style=" border-right: 0px;  border-left: 0px; border-bottom: 0px; padding-right: 0px !important;  text-align: right;font-size: 13px;"> <span class="total-amount">  <input type="text" value="@Model.TotalAdditionalCost.ToString("C")" aria-label="Total Additional Cost" style="padding-right:5px;" class="form-control form-control-sm " asp-for="TotalAdditionalCost"></span></span>
-                        </div>
-                        <div style="display: flex;
-                                            margin-top: 0;
-                                            margin-bottom: 0;
-                                            border: 1px solid #1d70b8;
-                                            padding: 5px 10px 5px 10px;
-                                            border-top: 0;
-                                            justify-content: space-between;
-                                            align-items: center;
-                                            border-radius: 0 0 10px 10px;">
-                        </div>
-                    </section>
+    <div class="main-grid">
+        <div class="left-column">
+            <!-- Staff Booked Section -->
+            <section class="data-section sup_border govuk-!-padding-0">
+                <div id="@($"gridContainer_{Model.StaffBookedGrid.GridId}")">
+                    @await Html.PartialAsync("_DataGrid", Model.StaffBookedGrid)
                 </div>
-            </div>
-            <footer class="financial-summary">
-                <div class="summary-row">
-                    <div class="summary-item">
-                        <label style="display:block" for="TransferIncome">Transfer Income:</label>
-                        <input type="text" value="@Model.TransferIncome.ToString("C")" aria-label="TransferIncome" id="TransferIncome" class="form-control form-control-sm" name="TransferIncome" asp-for="TransferIncome">
-                    </div>
-                    <div class="summary-item">
-                        <label style="display:block" for="ExternalIncome">External Income:</label>
-                        <input type="text" value="@Model.ExternalIncome.ToString("C")" aria-label="External Income" id="ExternalIncome" class="form-control form-control-sm" name="External Income" asp-for="ExternalIncome">
-                    </div>
-                    <div class="summary-item">
-                        <label style="display:block" for="BudgetCVL">Budget CVL:</label>
-                        <input type="text" value="@Model.BudgetCVL.ToString("C")" aria-label="Budget CVL" id="BudgetCVL" class="form-control form-control-sm" name="Budget CVL" asp-for="BudgetCVL">
-                    </div>
-                    <div class="summary-item">
-                        <label style="display:block" for="TotalCosts">Total Costs:</label>
-                        <input type="text" value="@Model.TotalCosts.ToString("C")" aria-label="Total Costs" id="TotalCosts" class="form-control form-control-sm" name="Total Costs" asp-for="TotalCosts">
-                    </div>
-                    <div class="summary-item">
-                        <label style="display:block" for="ProfitLoss">Profit/(Loss):</label>
-                        <input type="text" value="@(Model.ProfitLoss < 0 ? "(" + Math.Abs(Model.ProfitLoss).ToString("C") + ")" : Model.ProfitLoss.ToString("C"))" aria-label="Profit/(Loss)" id="ProfitLoss" class="form-control form-control-sm" name="Profit/(Loss)" asp-for="ProfitLoss">
-                    </div>
-                    <div class="summary-item">
-                        <label style="display:block" for="TargetProfit">Target Profit:</label>
-                        <input type="text" value="@Model.TargetProfit.ToString("C")" aria-label="Target Profit" id="TargetProfit" class="form-control form-control-sm" name="Target Profit" asp-for="TargetProfit">
-                    </div>
-                    <div class="summary-item">
-                        <label style="display:block" for="OffTarget">Off - Target:</label>
-                        <input type="text" value="@(Model.OffTarget < 0 ? "(" + Math.Abs(Model.OffTarget).ToString("C") + ")" : Model.OffTarget.ToString("C"))" aria-label="Off - Target" id="OffTarget" class="form-control form-control-sm" name="Off - Target" asp-for="OffTarget">
-                    </div>
+                <div class="pva-inline-summary govuk-!-padding-1 sup_top_border_1">
+                    <span class="govuk-body govuk-!-font-size-16 govuk-!-margin-bottom-0">Total Staff Cost:</span>
+                    <input type="text" id="TotalStaffCost" value="@Model.TotalStaffCost.ToString("C0")" aria-label="Total Staff Cost" class="govuk-input text-AlignRight pva-input-160" asp-for="TotalStaffCost" readonly>
                 </div>
-            </footer>
-        </main>
+            </section>
+            <!-- Animals Booked Section -->
+            <section class="data-section sup_border govuk-!-padding-0">
+                <div id="@($"gridContainer_{Model.AnimalsBookedGrid.GridId}")">
+                    @await Html.PartialAsync("_DataGrid", Model.AnimalsBookedGrid)
+                </div>
+                <div class="pva-inline-summary govuk-!-padding-1 sup_top_border_1">
+                    <span class="govuk-body govuk-!-font-size-16 govuk-!-margin-bottom-0">Total Animal Cost:</span>
+                    <input type="text" id="TotalAnimalCost" value="@Model.TotalAnimalCost.ToString("C0")" aria-label="Total Animal Cost" class="govuk-input text-AlignRight pva-input-160" asp-for="TotalAnimalCost" readonly>
+                </div>
+            </section>
+        </div>
+        <div class="right-column">
+            <!-- Tests Booked Section -->
+            <section class="data-section sup_border govuk-!-padding-0">
+                <div id="@($"gridContainer_{Model.TestsBookedGrid.GridId}")">
+                    @await Html.PartialAsync("_DataGrid", Model.TestsBookedGrid)
+                </div>
+                <div class="pva-inline-summary govuk-!-padding-1 sup_top_border_1">
+                    <span class="govuk-body govuk-!-font-size-16 govuk-!-margin-bottom-0">Total Test Cost:</span>
+                    <input type="text" id="TotalTestCost" value="@Model.TotalTestCost.ToString("C0")" aria-label="Total Test Cost" class="govuk-input text-AlignRight pva-input-160" asp-for="TotalTestCost" readonly>
+                </div>
+            </section>
+            <!-- Exceptional Costs Section -->
+            <section class="data-section sup_border govuk-!-padding-0">
+                <div id="@($"gridContainer_{Model.ExceptionalCostsGrid.GridId}")">
+                    @await Html.PartialAsync("_DataGrid", Model.ExceptionalCostsGrid)
+                </div>
+                <div class="pva-inline-summary govuk-!-padding-1 sup_top_border_1">
+                    <span class="govuk-body govuk-!-font-size-16 govuk-!-margin-bottom-0">Total Additional Cost:</span>
+                    <input type="text" id="TotalAdditionalCost" value="@Model.TotalAdditionalCost.ToString("C0")" aria-label="Total Additional Cost" class="govuk-input text-AlignRight pva-input-160" asp-for="TotalAdditionalCost" readonly>
+                </div>
+            </section>
+        </div>
     </div>
+
+    <footer class="financial-summary pp-summary-4-3">
+        <div class="summary-row">
+            <div class="summary-item">
+                <label class="govuk-label--s govuk-!-font-size-16" for="TransferIncome">Transfer Income:</label>
+                <input type="text" value="@Model.TransferIncome.ToString("C0")" aria-label="Transfer Income" id="TransferIncome" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight" name="TransferIncome" asp-for="TransferIncome">
+            </div>
+            <div class="summary-item">
+                <label class="govuk-label--s govuk-!-font-size-16" for="ExternalIncome">External Income:</label>
+                <input type="text" value="@Model.ExternalIncome.ToString("C0")" aria-label="External Income" id="ExternalIncome" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight" name="ExternalIncome" asp-for="ExternalIncome">
+            </div>
+            <div class="summary-item">
+                <label class="govuk-label--s govuk-!-font-size-16" for="BudgetCVL">Budget CVL:</label>
+                <input type="text" value="@Model.BudgetCVL.ToString("C0")" aria-label="Budget CVL" id="BudgetCVL" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight" name="BudgetCVL" asp-for="BudgetCVL">
+            </div>
+            <div class="summary-item">
+                <label class="govuk-label--s govuk-!-font-size-16" for="TotalCosts">Total Costs:</label>
+                <input type="text" value="@Model.TotalCosts.ToString("C0")" aria-label="Total Costs" id="TotalCosts" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight" name="TotalCosts" asp-for="TotalCosts">
+            </div>
+            <div class="summary-item">
+                <label class="govuk-label--s govuk-!-font-size-16" for="ProfitLoss">Profit/(Loss):</label>
+                <input type="text" value="@(Model.ProfitLoss < 0 ? $"(£{Math.Abs(Model.ProfitLoss):N0})" : Model.ProfitLoss.ToString("C0"))" aria-label="Profit/(Loss)" id="ProfitLoss" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight @(Model.ProfitLoss < 0 ? "text-danger" : "text-primary")" name="ProfitLoss" asp-for="ProfitLoss">
+            </div>
+            <div class="summary-item">
+                <label class="govuk-label--s govuk-!-font-size-16" for="TargetProfit">Target Profit:</label>
+                <input type="text" value="@Model.TargetProfit.ToString("C0")" aria-label="Target Profit" id="TargetProfit" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight" name="TargetProfit" asp-for="TargetProfit">
+            </div>
+            <div class="summary-item">
+                <label class="govuk-label--s govuk-!-font-size-16" for="OffTarget">Off - Target:</label>
+                <input type="text" value="@(Model.OffTarget < 0 ? $"(£{Math.Abs(Model.OffTarget):N0})" : Model.OffTarget.ToString("C0"))" aria-label="Off - Target" id="OffTarget" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight @(Model.OffTarget < 0 ? "text-danger" : "text-primary")" name="OffTarget" asp-for="OffTarget">
+            </div>
+        </div>
+    </footer>
+
 </div>
 
 @section Scripts{
     <script src="~/js/ajax-form-validation.js"></script>
     <script src="~/js/fps_js/StaffJob.js"></script>
+    <script src="~/js/fps_js/AnimalJob.js"></script>
+    <script src="~/js/fps_js/TestPlanJob.js"></script>
+    <script src="~/js/fps_js/AdditionalCost.js"></script>
     <script>
-        StaffJobConfig.getJobCode = function () { return $('#hdnProjectCode').val(); };
+        // ---- Currency helpers ----
+
+        function formatGBP(value) {
+            var formatted = new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(Math.abs(value));
+            return value < 0 ? '-(' + formatted + ')' : formatted;
+        }
+
+        function parseCurrency(str) {
+            if (!str) return 0;
+            str = str.toString().replace(/[£,]/g, '').trim();
+            if (str.startsWith('(') && str.endsWith(')')) {
+                str = '-' + str.slice(1, -1);
+            }
+            return parseFloat(str) || 0;
+        }
+
+        function applyValueColour(selector, value) {
+            $(selector).removeClass('text-danger text-primary')
+                       .addClass(value < 0 ? 'text-danger' : 'text-primary');
+        }
+
+        // ---- Financial summary ----
+
+        function refreshFinancialSummary() {
+            var totalCosts = parseCurrency($('#TotalStaffCost').val())
+                           + parseCurrency($('#TotalAnimalCost').val())
+                           + parseCurrency($('#TotalTestCost').val())
+                           + parseCurrency($('#TotalAdditionalCost').val());
+            $('#TotalCosts').val(formatGBP(totalCosts));
+
+            var income = parseCurrency($('#TransferIncome').val())
+                       + parseCurrency($('#ExternalIncome').val())
+                       + parseCurrency($('#BudgetCVL').val());
+            var profitLoss = income - totalCosts;
+            $('#ProfitLoss').val(formatGBP(profitLoss));
+            applyValueColour('#ProfitLoss', profitLoss);
+
+            var offTarget = profitLoss - parseCurrency($('#TargetProfit').val());
+            $('#OffTarget').val(formatGBP(offTarget));
+            applyValueColour('#OffTarget', offTarget);
+        }
+
+        // ---- Total cost refreshers ----
+
+        function refreshStaffTotal() {
+            return $.get('/FPS/StaffJob/GetTotalStaffCost', { jobCode: $('#hdnProjectCode').val() }, function (result) {
+                if (result.success) { $('#TotalStaffCost').val(formatGBP(result.totalStaffCost)); }
+            });
+        }
+
+        function refreshAnimalTotal() {
+            return $.get('/FPS/AnimalJob/GetTotalAnimalCost', { jobCode: $('#hdnProjectCode').val() }, function (result) {
+                if (result.success) { $('#TotalAnimalCost').val(formatGBP(result.totalAnimalCost)); }
+            });
+        }
+
+        function refreshTestTotal() {
+            return $.get('/FPS/TestPlanJob/GetTotalTestCost', { jobCode: $('#hdnProjectCode').val() }, function (result) {
+                if (result.success) { $('#TotalTestCost').val(formatGBP(result.totalTestCost)); }
+            });
+        }
+
+        function refreshAdditionalTotal() {
+            return $.get('/FPS/AdditionalCostJob/GetTotalItemCost', { jobCode: $('#hdnProjectCode').val() }, function (result) {
+                if (result.success) { $('#TotalAdditionalCost').val(formatGBP(result.totalItemCost)); }
+            });
+        }
+
+        // ---- Config: job code ----
+
+        StaffJobConfig.getJobCode      = function () { return $('#hdnProjectCode').val(); };
+        AnimalJobConfig.getJobCode     = function () { return $('#hdnProjectCode').val(); };
+        TestPlanJobConfig.getJobCode   = function () { return $('#hdnProjectCode').val(); };
+        AdditionalCostConfig.getJobCode = function () { return $('#hdnProjectCode').val(); };
+
+        // ---- Config: CRUD callbacks ----
+
+        StaffJobConfig.onSaved = StaffJobConfig.onUpdated = StaffJobConfig.onDeleted = function () {
+            window['gridManager_staffBookedGrid'].reloadGrid({ page: 1 });
+            refreshStaffTotal().done(refreshFinancialSummary);
+        };
+
+        AnimalJobConfig.onSaved = AnimalJobConfig.onUpdated = AnimalJobConfig.onDeleted = function () {
+            window['gridManager_animalBookedGrid'].reloadGrid({ page: 1 });
+            refreshAnimalTotal().done(refreshFinancialSummary);
+        };
+
+        TestPlanJobConfig.onSaved = TestPlanJobConfig.onUpdated = TestPlanJobConfig.onDeleted = function () {
+            window['gridManager_testPlanGrid'].reloadGrid({ page: 1 });
+            refreshTestTotal().done(refreshFinancialSummary);
+        };
+
+        AdditionalCostConfig.onSaved = AdditionalCostConfig.onUpdated = AdditionalCostConfig.onDeleted = function () {
+            window['gridManager_additionalCostGrid'].reloadGrid({ page: 1 });
+            refreshAdditionalTotal().done(refreshFinancialSummary);
+        };
+
+        // ---- On page load: fetch all totals then compute summary ----
+
+        $(document).ready(function () {
+            var jobCode = $('#hdnProjectCode').val();
+            if (jobCode) {
+                $.when(
+                    refreshStaffTotal(),
+                    refreshAnimalTotal(),
+                    refreshTestTotal(),
+                    refreshAdditionalTotal()
+                ).done(refreshFinancialSummary);
+            }
+        });
     </script>
 }
 

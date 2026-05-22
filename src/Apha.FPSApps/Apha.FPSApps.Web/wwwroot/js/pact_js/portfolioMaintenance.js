@@ -1,4 +1,5 @@
 // Portfolio Maintenance page script
+// Last updated: 2025-01-XX (Portfolio Time Codes button navigation)
 
 var currentParentProject = '';
 var currentTestCode = '';
@@ -55,6 +56,39 @@ $(document).ready(function () {
         }
     });
 
+    // ── Check for portfolio parameter and auto-select ─────────────────────
+    var urlParams = new URLSearchParams(window.location.search);
+    var portfolioParam = urlParams.get('portfolio');
+
+    if (portfolioParam) {
+        // Use a slight delay to ensure all event handlers are fully bound
+        setTimeout(function() {
+            // Find the matching row in the dropdown
+            var $matchingRow = $rows.filter(function() {
+                return $(this).data('value') === portfolioParam;
+            });
+
+            if ($matchingRow.length > 0) {
+                // Manually simulate the row click behavior
+                var value = $matchingRow.data('value');
+                var label = $matchingRow.data('label');
+
+                // Update the input display value
+                $input.val(label || value);
+
+                // Close the panel
+                $panel.removeClass('open');
+
+                // Clear search
+                $('#portfolioDropdownPanel .select-search-box').val('');
+                $rows.show();
+
+                // Load the portfolio data
+                loadPortfolioData(value);
+            }
+        }, 100);
+    }
+
     // ── Save portfolio form ───────────────────────────────────────────────────
     $('#btnSavePortfolio').on('click', function () {
         clearValidationErrors('#portfolioDetailForm');
@@ -85,9 +119,18 @@ $(document).ready(function () {
     });
 
     // ── Portfolio Time Codes button ───────────────────────────────────────────
-    $('#btnPortfolioTimeCodes').on('click', function () {
-        if (!currentParentProject) return;
-        loadTimeCodeGrid(currentParentProject, currentTestCode);
+    $('#btnPortfolioTimeCodes').on('click', function (e) {
+        e.preventDefault(); // Prevent any default behavior
+        e.stopPropagation(); // Stop event bubbling
+
+        if (!currentParentProject) {
+            alert('Please select a portfolio first.');
+            return;
+        }
+
+        // Navigate to Portfolio Time Codes page with selected portfolio
+        var url = '/PACT/PortfolioTimeCodes/Index?parentProject=' + encodeURIComponent(currentParentProject);
+        window.location.href = url;
     });
 
     // ── Modal submit ──────────────────────────────────────────────────────────
@@ -159,6 +202,7 @@ function loadPortfolioData(parentProject) {
 
                 // Update sidebar nav links — preserves existing query params (e.g. year)
                 updateNavHref('#sideNavTestPurchase', parentProject);
+                updateNavHref('#sideNavTimeCodes', parentProject);
                 updateNavHref('#sideNavInvoices', parentProject);
 
                 resetFormButtons(true);

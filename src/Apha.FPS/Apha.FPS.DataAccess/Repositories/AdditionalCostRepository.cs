@@ -173,11 +173,23 @@ namespace Apha.FPS.DataAccess.Repositories
 
         private IQueryable<AdditionalCost> BuildAdditionalCostQuery(string jobCode)
         {
-            return _context.AdditionalCosts
+           return _context.AdditionalCostViews
                 .AsNoTracking()
-                .Where(a => a.JobCode == jobCode)
+                .Where(a => a.JobCode == jobCode 
+                    && a.UserEmail != null 
+                    && a.UserEmail.ToLower() == _requestContext.UserEmailId)
+                .Select(a => new AdditionalCost
+                {
+                    JobCode = a.JobCode,
+                    Account = a.Account,
+                    Description = a.Description,
+                    ItemCost = a.ItemCost,
+                    Freq = a.Freq,
+                    Supplier = a.Supplier,
+                    FpsYear = a.FpsYear
+                })
                 .OrderBy(a => a.Description)
-                .AsQueryable();
+                .AsQueryable();           
         }
 
         private static IQueryable ApplySorting(IQueryable<AdditionalCost> query, string? sortBy, bool descending)

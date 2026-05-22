@@ -547,7 +547,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
         }
 
         [Fact]
-        public async Task Index_CommentsGridKeyPropertyIsCommentno()
+        public async Task Index_CommentsGridKeyPropertyIsCommentNo()
         {
             // Arrange
             SetupSuccessfulIndexMocks();
@@ -558,7 +558,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<ProjectDetailsViewModel>(viewResult.Model);
-            Assert.Equal("Commentno", model.CommentsGrid.KeyProperty);
+            Assert.Equal("CommentNo", model.CommentsGrid.KeyProperty);
         }
 
         [Fact]
@@ -783,11 +783,11 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
             var request = new PaginationFilter<string> { Filter = "{}", Page = 1, PageSize = 10 };
             var commentData = new List<CommentDto>
             {
-                new CommentDto { Commentno = 1, Project = "PP001", Topic = "General Comment", Comment = "Test comment" }
+                new CommentDto { CommentNo = 1, Project = "PP001", Topic = "General Comment", Comment = "Test comment" }
             };
             var mappedItems = new List<ProjectCommentItem>
             {
-                new ProjectCommentItem { Commentno = 1, Topic = "General Comment", Comment = "Test comment" }
+                new ProjectCommentItem { CommentNo = 1, Topic = "General Comment", Comment = "Test comment" }
             };
 
             _mapperMock.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
@@ -804,7 +804,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
             var partialViewResult = Assert.IsType<PartialViewResult>(result);
             var model = Assert.IsType<DataGridConfig<ProjectCommentItem>>(partialViewResult.Model);
             Assert.Single(model.Data);
-            Assert.Equal(1, model.Data[0].Commentno);
+            Assert.Equal(1, model.Data[0].CommentNo);
         }
 
         [Fact]
@@ -910,7 +910,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
         }
 
         [Fact]
-        public async Task LoadCommentsGrid_KeyPropertyIsCommentno()
+        public async Task LoadCommentsGrid_KeyPropertyIsCommentNo()
         {
             // Arrange
             var request = new PaginationFilter<string> { Filter = "{}", Page = 1, PageSize = 10 };
@@ -922,7 +922,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
             // Assert
             var partialViewResult = Assert.IsType<PartialViewResult>(result);
             var model = Assert.IsType<DataGridConfig<ProjectCommentItem>>(partialViewResult.Model);
-            Assert.Equal("Commentno", model.KeyProperty);
+            Assert.Equal("CommentNo", model.KeyProperty);
         }
 
         [Fact]
@@ -1215,7 +1215,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
         public async Task GetComment_WhenServiceReturnsSuccess_ReturnsJsonWithSuccessTrue()
         {
             // Arrange
-            var commentDto = new CommentDto { Commentno = 1, Comment = "Test comment" };
+            var commentDto = new CommentDto { CommentNo = 1, Comment = "Test comment" };
             _commentServiceMock.GetByIdAsync(1)
                 .Returns(new ApiResponseDto<CommentDto> { Success = true, Data = commentDto });
 
@@ -1249,11 +1249,11 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
         }
 
         [Fact]
-        public async Task GetComment_CallsGetByIdAsync_WithCorrectCommentno()
+        public async Task GetComment_CallsGetByIdAsync_WithCorrectCommentNo()
         {
             // Arrange
             _commentServiceMock.GetByIdAsync(42)
-                .Returns(new ApiResponseDto<CommentDto> { Success = true, Data = new CommentDto { Commentno = 42 } });
+                .Returns(new ApiResponseDto<CommentDto> { Success = true, Data = new CommentDto { CommentNo = 42 } });
 
             // Act
             await _controller.GetComment(42);
@@ -1305,7 +1305,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
         }
 
         [Fact]
-        public async Task CreateComment_TrimsCommenttext()
+        public async Task CreateComment_TrimsCommentText()
         {
             // Arrange
             var dto = new CommentDto { Project = "PP001", Comment = "  Trimmed comment  " };
@@ -1316,7 +1316,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
             await _controller.CreateComment(dto);
 
             // Assert
-            Assert.Equal("Trimmed comment", dto.Commenttext);
+            Assert.Equal("Trimmed comment", dto.CommentText);
         }
 
         [Fact]
@@ -1342,7 +1342,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
         public async Task UpdateComment_WhenServiceReturnsSuccess_ReturnsJsonWithSuccessTrue()
         {
             // Arrange
-            var dto = new CommentDto { Commentno = 1, Comment = "Updated comment" };
+            var dto = new CommentDto { CommentNo = 1, Comment = "Updated comment" };
             _commentServiceMock.UpdateCommentAsync(Arg.Any<int>(), Arg.Any<CommentDto>())
                 .Returns(new ApiResponseDto<CommentDto> { Success = true, Data = dto });
 
@@ -1359,7 +1359,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
         public async Task UpdateComment_WhenServiceReturnsFailure_ReturnsJsonWithSuccessFalse()
         {
             // Arrange
-            var dto = new CommentDto { Commentno = 1, Comment = "Updated comment" };
+            var dto = new CommentDto { CommentNo = 1, Comment = "Updated comment" };
             _commentServiceMock.UpdateCommentAsync(Arg.Any<int>(), Arg.Any<CommentDto>())
                 .Returns(new ApiResponseDto<CommentDto>
                 {
@@ -1377,10 +1377,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
         }
 
         [Fact]
-        public async Task UpdateComment_CallsUpdateCommentAsync_WithCorrectCommentno()
+        public async Task UpdateComment_CallsUpdateCommentAsync_WithCorrectCommentNo()
         {
             // Arrange
-            var dto = new CommentDto { Commentno = 5, Comment = "Updated comment" };
+            var dto = new CommentDto { CommentNo = 5, Comment = "Updated comment" };
             _commentServiceMock.UpdateCommentAsync(Arg.Any<int>(), Arg.Any<CommentDto>())
                 .Returns(new ApiResponseDto<CommentDto> { Success = true, Data = dto });
 
@@ -1432,7 +1432,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
         }
 
         [Fact]
-        public async Task DeleteComment_CallsDeleteCommentAsync_WithCorrectCommentno()
+        public async Task DeleteComment_CallsDeleteCommentAsync_WithCorrectCommentNo()
         {
             // Arrange
             _commentServiceMock.DeleteCommentAsync(Arg.Any<int>())
@@ -1450,7 +1450,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
         #region GetAddEditCommentPartial Tests
 
         [Fact]
-        public async Task GetAddEditCommentPartial_WithNullCommentno_ReturnsPartialViewResult()
+        public async Task GetAddEditCommentPartial_WithNullCommentNo_ReturnsPartialViewResult()
         {
             // Arrange & Act
             var result = await _controller.GetAddEditCommentPartial("PP001", null, 2024);
@@ -1460,7 +1460,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
         }
 
         [Fact]
-        public async Task GetAddEditCommentPartial_WithNullCommentno_ReturnsAddEditCommentPartialView()
+        public async Task GetAddEditCommentPartial_WithNullCommentNo_ReturnsAddEditCommentPartialView()
         {
             // Arrange & Act
             var result = await _controller.GetAddEditCommentPartial("PP001", null, 2024);
@@ -1471,7 +1471,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
         }
 
         [Fact]
-        public async Task GetAddEditCommentPartial_WithNullCommentno_SetsIsAddingNewTrue()
+        public async Task GetAddEditCommentPartial_WithNullCommentNo_SetsIsAddingNewTrue()
         {
             // Arrange & Act
             var result = await _controller.GetAddEditCommentPartial("PP001", null, 2024);
@@ -1483,7 +1483,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
         }
 
         [Fact]
-        public async Task GetAddEditCommentPartial_WithZeroCommentno_SetsIsAddingNewTrue()
+        public async Task GetAddEditCommentPartial_WithZeroCommentNo_SetsIsAddingNewTrue()
         {
             // Arrange & Act
             var result = await _controller.GetAddEditCommentPartial("PP001", 0, 2024);
@@ -1495,7 +1495,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
         }
 
         [Fact]
-        public async Task GetAddEditCommentPartial_WithNullCommentno_DoesNotCallGetByIdAsync()
+        public async Task GetAddEditCommentPartial_WithNullCommentNo_DoesNotCallGetByIdAsync()
         {
             // Arrange & Act
             await _controller.GetAddEditCommentPartial("PP001", null, 2024);
@@ -1505,7 +1505,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
         }
 
         [Fact]
-        public async Task GetAddEditCommentPartial_WithZeroCommentno_DoesNotCallGetByIdAsync()
+        public async Task GetAddEditCommentPartial_WithZeroCommentNo_DoesNotCallGetByIdAsync()
         {
             // Arrange & Act
             await _controller.GetAddEditCommentPartial("PP001", 0, 2024);
@@ -1515,14 +1515,14 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
         }
 
         [Fact]
-        public async Task GetAddEditCommentPartial_WithValidCommentno_CallsGetByIdAsync()
+        public async Task GetAddEditCommentPartial_WithValidCommentNo_CallsGetByIdAsync()
         {
             // Arrange
             _commentServiceMock.GetByIdAsync(5)
                 .Returns(new ApiResponseDto<CommentDto>
                 {
                     Success = true,
-                    Data = new CommentDto { Commentno = 5, Year = 2024, Topic = "General Comment", Commenttext = "Test" }
+                    Data = new CommentDto { CommentNo = 5, Year = 2024, Topic = "General Comment", CommentText = "Test" }
                 });
 
             // Act
@@ -1533,14 +1533,14 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
         }
 
         [Fact]
-        public async Task GetAddEditCommentPartial_WithValidCommentno_SetsIsAddingNewFalse()
+        public async Task GetAddEditCommentPartial_WithValidCommentNo_SetsIsAddingNewFalse()
         {
             // Arrange
             _commentServiceMock.GetByIdAsync(5)
                 .Returns(new ApiResponseDto<CommentDto>
                 {
                     Success = true,
-                    Data = new CommentDto { Commentno = 5, Year = 2024, Topic = "General Comment", Commenttext = "Test" }
+                    Data = new CommentDto { CommentNo = 5, Year = 2024, Topic = "General Comment", CommentText = "Test" }
                 });
 
             // Act
@@ -1553,14 +1553,14 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
         }
 
         [Fact]
-        public async Task GetAddEditCommentPartial_WithValidCommentno_MapsCommentDataToModel()
+        public async Task GetAddEditCommentPartial_WithValidCommentNo_MapsCommentDataToModel()
         {
             // Arrange
             _commentServiceMock.GetByIdAsync(5)
                 .Returns(new ApiResponseDto<CommentDto>
                 {
                     Success = true,
-                    Data = new CommentDto { Commentno = 5, Year = 2023, Topic = "Contracts", Commenttext = "Some text" }
+                    Data = new CommentDto { CommentNo = 5, Year = 2023, Topic = "Contracts", CommentText = "Some text" }
                 });
 
             // Act
@@ -1569,14 +1569,14 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
             // Assert
             var partialViewResult = Assert.IsType<PartialViewResult>(result);
             var model = Assert.IsType<AddEditCommentViewModel>(partialViewResult.Model);
-            Assert.Equal(5, model.Commentno);
+            Assert.Equal(5, model.CommentNo);
             Assert.Equal(2023, model.Year);
             Assert.Equal("Contracts", model.Topic);
-            Assert.Equal("Some text", model.Commenttext);
+            Assert.Equal("Some text", model.CommentText);
         }
 
         [Fact]
-        public async Task GetAddEditCommentPartial_WithValidCommentno_ServiceFailure_DoesNotMapCommentData()
+        public async Task GetAddEditCommentPartial_WithValidCommentNo_ServiceFailure_DoesNotMapCommentData()
         {
             // Arrange
             _commentServiceMock.GetByIdAsync(5)
@@ -1592,7 +1592,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
             // Assert
             var partialViewResult = Assert.IsType<PartialViewResult>(result);
             var model = Assert.IsType<AddEditCommentViewModel>(partialViewResult.Model);
-            Assert.Equal(0, model.Commentno);
+            Assert.Equal(0, model.CommentNo);
         }
 
         [Fact]

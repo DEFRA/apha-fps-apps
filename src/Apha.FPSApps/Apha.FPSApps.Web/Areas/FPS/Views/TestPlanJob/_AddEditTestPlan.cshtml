@@ -55,7 +55,7 @@
             <!-- Test Code (read-only on edit) -->
             <div class="col-12">
                 <div class="govuk-form-group sup_margin_0">
-                    <label class="govuk-label p-0">Test Code</label>
+                    <label class="govuk-label p-0">Test Code <span class="sup_color_red">*</span></label>
                     <input type="text" class="govuk-input" value="@Model.TestCode" readonly />
                 </div>
             </div>
@@ -111,7 +111,7 @@
                         <div class="govuk-input__wrapper">
                             <div class="govuk-input__prefix" aria-hidden="true">£</div>
                             <input type="number" step="0.01" class="govuk-input" id="TotalCost" readonly
-                                   value="@(((Model.UnitPrice ?? 0) * (decimal)(Model.NoRequired ?? 0)).ToString("F2"))">
+                                   value="@(((Model.UnitPrice ?? 0) * (decimal)(Model.NoRequired)).ToString("F2"))">
                         </div>                       
                     </div>
                 </div>

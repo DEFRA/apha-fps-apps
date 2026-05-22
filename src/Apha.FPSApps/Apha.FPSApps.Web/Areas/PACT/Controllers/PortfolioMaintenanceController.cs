@@ -48,8 +48,14 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
         // ── INDEX — single page with portfolio picker ─────────────────────────
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? portfolio, string? workgroup)
         {
+            TempData["PactOrigin"] = "PortfolioMaintenance";
+
+            // Store parameters in ViewBag for the view to use
+            ViewBag.SelectedPortfolio = portfolio;
+            ViewBag.SourceWorkGroup = workgroup;
+
             var allPortfolios = await _projectService.GetAllPactProjectsAsync();
             var programs = await _programService.GetAllProgramsAsync();
             var managers = await _employeeService.GetAllPactManagersAsync();
