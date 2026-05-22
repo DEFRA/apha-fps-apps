@@ -284,7 +284,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             else
             {
                 // Selective copy - batch create invoices in parallel
-                var invoiceDtos = request.InvoiceRecords.Select(item =>
+                var invoiceDtos = request.InvoiceRecords!.Select(item =>
                 {
                     var dto = _mapper.Map<ProjectInvoiceDto>(item);
                     dto.Month = request.TargetMonth;
@@ -341,9 +341,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                     filterDict.Remove("Month");
                 }
 
-                if (!filterDict.ContainsKey("Month"))
+                // Add Month filter if not already present (avoids double lookup)
+                if (filterDict.TryAdd("Month", month.Value.ToString()))
                 {
-                    filterDict["Month"] = month.Value.ToString();
                     request.Filter = JsonConvert.SerializeObject(filterDict);
                 }
 
