@@ -16,9 +16,8 @@ namespace Apha.Costbook.DataAccess.Data
             entity.ToTable("workgroupgrade", DbConstants.FpsSchemaName);
 
             entity.Property(e => e.WgGrade)
-                .HasColumnType(DbConstants.CitextColumnType)
+                .HasMaxLength(50)
                 .HasColumnName("wggrade");
-            entity.Property(e => e.FpsYear).HasColumnName(DbConstants.FpsYearColumnName);
             entity.Property(e => e.AvSalary)
                 .HasDefaultValueSql("0")
                 .HasColumnType(DbConstants.MoneyColumnType)
@@ -30,8 +29,9 @@ namespace Apha.Costbook.DataAccess.Data
                 .HasDefaultValueSql("0")
                 .HasColumnType(DbConstants.MoneyColumnType)
                 .HasColumnName("directratewg");
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.GradeCode)
-                .HasColumnType(DbConstants.CitextColumnType)
+                .HasMaxLength(10)
                 .HasColumnName("gradecode");
             entity.Property(e => e.HrsChangedBy)
                 .HasMaxLength(50)
@@ -49,16 +49,13 @@ namespace Apha.Costbook.DataAccess.Data
                 .HasColumnType(DbConstants.MoneyColumnType)
                 .HasColumnName("payratewg");
             entity.Property(e => e.ProfitCentreGrade)
-                .HasColumnType(DbConstants.CitextColumnType)
+                .HasMaxLength(20)
                 .HasColumnName("profitcentregrade");
             entity.Property(e => e.WorkGroup)
-                .HasColumnType(DbConstants.CitextColumnType)
+                .HasMaxLength(50)
                 .HasColumnName("workgroup");
 
-            entity.HasOne(d => d.ProfitCentreGradeNavigation).WithMany(p => p.WorkGroupGrades)
-                .HasForeignKey(d => new { d.ProfitCentreGrade, d.FpsYear })
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("fk_workgroupgrade_profitcentregrade");
+            
         }
     }
 }

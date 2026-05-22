@@ -1,0 +1,65 @@
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.CostBook.Models.StaffEffortViewModel
+
+@{
+    ViewData["Title"] = "SID3 Staff Effort";
+    var projectId = Model.ProjectId;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/costbook_styles/styles.css" />
+}
+
+<div class="govuk-template__body govuk-frontend-supported project-requirement-page">
+    <div class="govuk-grid-row sup_margin_left_right_0 govuk-!-margin-top-2">
+        <div class="govuk-grid-column-full">
+            <h1 class="govuk-grid-row govuk-heading-s sup_border-bottom" style="padding:10px 0 0px 10px">
+                qrySummaryStaffEffort
+                <a asp-area="CostBook" asp-controller="YearlyDetails" asp-action="Index"
+                   asp-route-projectId="@projectId" class="govuk-back-link sup_align_right">Back</a>
+            </h1>
+        </div>
+    </div>
+
+    <div class="govuk-grid-row sup_margin_left_right_0 govuk-!-margin-top-2">
+        <div class="govuk-grid-column-full">
+            <div class="row">
+                <div class="container project-layout-container">
+                    <div class="project-layout-row">
+
+                        <!-- Side navigation -->
+                        @await Html.PartialAsync("_SideNav", new Apha.FPSApps.Web.Areas.CostBook.Models.YearlyDetailsViewModel
+                        {
+                            ProjectHeaderDto = Model.ProjectHeaderDto
+                        })
+
+                        <!-- Main column -->
+                        <div class="project-main-column">
+                            <div class="project-year-costs-shell" style="margin:1px; overflow:auto;">
+
+                                <div class="form-header project-year-costs-header">
+                                    <h3 class="govuk-heading-s">SID3 Staff Effort &mdash; @projectId</h3>
+                                </div>
+
+                                <div id="gridContainer_staffEffortGrid">
+                                    @await Html.PartialAsync("_DataGrid", Model.Grid)
+                                </div>
+
+                            </div>
+                        </div><!-- /.project-main-column -->
+
+                    </div><!-- /.project-layout-row -->
+                </div><!-- /.container -->
+            </div><!-- /.row -->
+        </div>
+    </div>
+
+</div><!-- /.govuk-template__body -->
+
+@section Scripts {
+     <script>
+        function toggleSidebar() {
+            document.querySelector('.sidenav')?.classList.toggle('collapsed');
+        }
+    </script>
+}
