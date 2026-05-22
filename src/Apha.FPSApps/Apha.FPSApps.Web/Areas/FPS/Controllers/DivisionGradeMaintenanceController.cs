@@ -36,8 +36,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         {
             var viewModel = new DivisionGradeViewModel();
             viewModel.SelectedYear = year;
-            await PopulateDropdownsAsync(viewModel);
-
             var defaultRequest = new PaginationFilter<string> { Filter = "{}", SortBy = "DivisionGradeCode", Descending = false };
             viewModel.DivisionGradeGrid = await GetDivisionGradeGridConfigAsync(defaultRequest);
 
@@ -106,7 +104,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         public async Task<IActionResult> Create()
         {
             var model = new DivisionGradeItem();
-            await PopulateModalDropdownsAsync();
             return PartialView("_AddEditDivisionGrade", model);
         }
 
@@ -174,7 +171,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             if (result.Success && result.Data != null)
             {
                 var item = _mapper.Map<DivisionGradeItem>(result.Data);
-                await PopulateModalDropdownsAsync();
                 return PartialView("_AddEditDivisionGrade", item);
             }
 
@@ -295,50 +291,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             }
         }
 
-        private async Task PopulateDropdownsAsync(DivisionGradeViewModel viewModel)
-        {
-            var gradesResult = await _maintDGService.GetAllGradeCodesAsync();
-            if (gradesResult.Success && gradesResult.Data != null)
-            {
-                viewModel.GradeCodeList = gradesResult.Data
-                    .Distinct()
-                    .OrderBy(g => g)
-                    .Select(g => new SelectListItem { Value = g, Text = g })
-                    .ToList();
-            }
-
-            var divisionsResult = await _divisionService.GetAllDivisionsAsync();
-            if (divisionsResult.Success && divisionsResult.Data != null)
-            {
-                viewModel.DivisionList = divisionsResult.Data
-                    .DistinctBy(d => d.DivName)
-                    .OrderBy(d => d.DivName)
-                    .Select(d => new SelectListItem { Value = d.DivName, Text = d.DivName })
-                    .ToList();
-            }
-        }
-
-        private async Task PopulateModalDropdownsAsync()
-        {
-            var gradesResult = await _maintDGService.GetAllGradeCodesAsync();
-            if (gradesResult.Success && gradesResult.Data != null)
-            {
-                ViewBag.GradeCodeList = gradesResult.Data
-                    .Distinct()
-                    .OrderBy(g => g)
-                    .Select(g => new SelectListItem { Value = g, Text = g })
-                    .ToList();
-            }
-
-            var divisionsResult = await _divisionService.GetAllDivisionsAsync();
-            if (divisionsResult.Success && divisionsResult.Data != null)
-            {
-                ViewBag.DivisionList = divisionsResult.Data
-                    .DistinctBy(d => d.DivName)
-                    .OrderBy(d => d.DivName)
-                    .Select(d => new SelectListItem { Value = d.DivName, Text = d.DivName })
-                    .ToList();
-            }
-        }
+       
     }
 }
