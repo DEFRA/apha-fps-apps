@@ -2,6 +2,7 @@ using Apha.Common.Utilities.ExcelExport;
 using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Interfaces.Costbook;
 using Apha.FPSApps.Application.Interfaces.FPS;
+using Apha.FPSApps.Application.Services.FPS;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Interfaces.PIMS;
 using Apha.FPSApps.Application.Services.Costbook;
@@ -71,6 +72,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<ICalenderMonthService, CalenderMonthService>();
             services.AddScoped<IWorkGroupService, WorkGroupService>();
             services.AddScoped<IDivisionGradeService, DivisionGradeService>();
+            services.AddScoped<IProjectStaffPlanService, ProjectStaffPlanService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)

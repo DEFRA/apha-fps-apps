@@ -38,6 +38,9 @@ namespace Apha.FPSApps.Web.Mappings
 
             // Resource Set-Up
             CreateMap<WorkGroupEmployeeItem, WorkGroupEmployeeDto>().ReverseMap();
+
+            // Staff Plan view
+            CreateMap<StaffPlanViewItem, ProjectStaffPlanViewDto>().ReverseMap();
         }
     }
 }
