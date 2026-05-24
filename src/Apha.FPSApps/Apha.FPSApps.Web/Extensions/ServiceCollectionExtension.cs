@@ -66,6 +66,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<ITestorProductService, TestorProductService>();
             services.AddScoped<IMonthlyOutputService, MonthlyOutputService>();
             services.AddScoped<IPactMonthlyOutputService, PactMonthlyOutputService>();
+            services.AddScoped<IPactMonthlyTimeService, PactMonthlyTimeService>();
             services.AddScoped<IProjectProfileService, ProjectProfileService>();
             services.AddScoped<IProjectMonthService, ProjectMonthService>();
             services.AddScoped<ICalenderMonthService, CalenderMonthService>();

@@ -1,0 +1,203 @@
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.PACT.Models.MonthlyTimeLogViewModel
+
+@{
+    ViewData["Title"] = "Monthly TIME Log of Imports";
+}
+
+<!-- Page heading -->
+<div class="govuk-grid-row sup_margin_left_right_0">
+    <div class="govuk-grid-column-full">
+        <h1 class="heading_with_txtbox govuk-heading-s sup_border-bottom p-tb-10 p-l-10">
+            <span class="sup_flex_left_center">Monthly TIME Log of Imports</span>
+        </h1>
+    </div>
+</div>
+
+<!-- Validation error summary -->
+<div class="govuk-grid-row sup_margin_left_right_0">
+    <div class="govuk-grid-column-full">
+        <div class="govuk-error-summary" id="mtLogErrorSummary" role="alert"
+             aria-labelledby="mtLogErrorSummaryTitle" tabindex="-1" style="display:none;">
+            <h2 class="govuk-error-summary__title" id="mtLogErrorSummaryTitle">There is a problem</h2>
+            <div class="govuk-error-summary__body">
+                <ul class="govuk-list govuk-error-summary__list" id="mtLogErrorList"></ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search criteria panel -->
+<div class="govuk-grid-row sup_margin_left_right_0 sup_margin_bottom_10">
+    <div class="govuk-grid-column-full">
+        <div class="sup_border sup_padding_16">
+
+            <!-- Row 1: WorkGroup | Project | Month -->
+            <div class="govuk-grid-row">
+                <div class="govuk-grid-column-one-third">
+                    <div class="govuk-form-group sup_margin_bottom_10">
+                        <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="ddWorkGroup">
+                            WorkGroup
+                        </label>
+                        <select id="ddWorkGroup" class="govuk-select sup_select_option_width_100 govuk-!-font-size-16">
+                            <option value="">-- Select WorkGroup --</option>
+                            @foreach (var item in Model.WorkGroupOptions)
+                            {
+                                <option value="@item.Value">@item.Text</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="govuk-grid-column-one-third">
+                    <div class="govuk-form-group sup_margin_bottom_10">
+                        <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="ddProject">
+                            Project
+                        </label>
+                        <select id="ddProject" class="govuk-select sup_select_option_width_100 govuk-!-font-size-16">
+                            <option value="">-- Select Project --</option>
+                            @foreach (var item in Model.ProjectOptions)
+                            {
+                                <option value="@item.Value">@item.Text</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="govuk-grid-column-one-third">
+                    <div class="govuk-form-group sup_margin_bottom_10">
+                        <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="txtMonth">
+                            Month (numeric)
+                        </label>
+                        <input id="txtMonth" type="number" min="1" max="12"
+                               class="govuk-input govuk-!-font-size-16"
+                               placeholder="Enter month (1-12)" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 2: JobCode | OR | TestCode | Staff ID -->
+            <div class="govuk-grid-row sup_flex_between_center">
+                <div class="govuk-grid-column-one-third sup_padding_right_7">
+                    <div class="govuk-form-group sup_margin_bottom_10">
+                        <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="ddJobCode">
+                            Jobcode
+                        </label>
+                        <select id="ddJobCode" class="govuk-select sup_select_option_width_100 govuk-!-font-size-16">
+                            <option value="">-- Select Jobcode --</option>
+                            @foreach (var item in Model.JobCodeOptions)
+                            {
+                                <option value="@item.Value">@item.Text</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <span class="or_text">OR</span>
+                <div class="govuk-grid-column-one-third sup_padding_left_0 sup_padding_right_20">
+                    <div class="govuk-form-group sup_margin_bottom_10">
+                        <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="ddTestCode">
+                            Testcode
+                        </label>
+                        <select id="ddTestCode" class="govuk-select sup_select_option_width_100 govuk-!-font-size-16">
+                            <option value="">-- Select Testcode --</option>
+                            @foreach (var item in Model.TestCodeOptions)
+                            {
+                                <option value="@item.Value">@item.Text</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="govuk-grid-column-one-third sup_padding_left_10">
+                    <div class="govuk-form-group sup_margin_bottom_10">
+                        <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="txtStaffId">
+                            Staff ID
+                        </label>
+                        <input id="txtStaffId" type="text"
+                               class="govuk-input govuk-!-font-size-16"
+                               placeholder="Staff ID" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 3: Date Imported | MAB User SP No. | Action + Buttons -->
+            <div class="govuk-grid-row">
+                <div class="govuk-grid-column-one-third">
+                    <div class="govuk-form-group sup_margin_bottom_10">
+                        <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="dtDateImported">
+                            Date Imported (dd/mm/yy)
+                        </label>
+                        <input id="dtDateImported" type="date"
+                               class="govuk-input govuk-!-font-size-16"
+                               placeholder="dd/mm/yy" />
+                    </div>
+                </div>
+                <div class="govuk-grid-column-one-third">
+                    <div class="govuk-form-group sup_margin_bottom_10">
+                        <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="txtUserId">
+                            MAB User SP No. (include m)
+                        </label>
+                        <input id="txtUserId" type="text"
+                               class="govuk-input govuk-!-font-size-16"
+                               placeholder="MAB User SP No. (include m)" />
+                    </div>
+                </div>
+                <div class="govuk-grid-column-one-third">
+                    <div class="govuk-form-group sup_margin_bottom_10">
+                        <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="ddAction">
+                            Action
+                        </label>
+                        <select id="ddAction" class="govuk-select sup_select_option_width_100 govuk-!-font-size-16">
+                            <option value="">-- Select Action --</option>
+                            @foreach (var item in Model.ActionOptions)
+                            {
+                                <option value="@item.Value">@item.Text</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 4: Info text + Buttons -->
+            <div class="govuk-grid-row">
+                <div class="govuk-grid-column-three-quarters">
+                    <p class="govuk-body govuk-!-font-size-16 sup_margin_0">
+                        Enter as many details of the records you are trying to find and press Search.
+                        (There could be lots of records)<br />
+                        Action:- UD refers to the record that has been removed, UI to the replacement record.
+                    </p>
+                </div>
+                <div class="govuk-grid-column-one-quarter">
+                    <div class="govuk-button-group sup_margin_right_0 sup_p_0_mt_24 sup_margin_bottom_0 sup_float_right">
+                        <button id="btnSearch" type="button"
+                                class="govuk-button govuk-!-font-size-16 sup_p_8 sup_margin_right_10 sup_margin_bottom_0"
+                                aria-label="Search records" data-module="govuk-button">
+                            Search
+                        </button>
+                        <button id="btnClearAll" type="button"
+                                class="govuk-button govuk-button--secondary govuk-!-font-size-16 sup_margin_0 sup_p_8"
+                                aria-label="Clear all filters" data-module="govuk-button">
+                            Clear All
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Grid -->
+<div class="govuk-grid-row sup_margin_left_right_0 sup_margin_top_10 sup_margin_bottom_10">
+    <div class="govuk-grid-column-full sup_padding_right_left_10">
+        <div id="gridContainer_mtLogGrid">
+            @await Html.PartialAsync("_DataGrid", Model.LogGrid)
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // mtLogGridId must be declared here so the external JS file can reference it
+        // at the point _DataGrid.cshtml calls window['getExtraFilters_' + gridId].
+        var mtLogGridId = 'mtLogGrid';
+    </script>
+    <script src="~/js/pact_js/monthly-time-log.js"></script>
+}

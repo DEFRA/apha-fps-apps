@@ -1,4 +1,6 @@
+using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
+using Apha.PACT.Core.Pagination;
 using Apha.PACT.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,6 +15,54 @@ namespace Apha.PACT.DataAccess.Repository
             return await _context.MonthlyTimes
                 .AsNoTracking()
                 .AnyAsync(m => m.WorkGroup == workGroup && m.TimeCode == timeCode && m.ParentProject == parentProject);
+        }
+
+        public async Task<PagedData<MonthlyTimeLog>> SearchAsync(
+            PaginationParameters<string> query,
+            string? workGroup,
+            string? timeCode,
+            string? pactStaffId,
+            string? parentProject,
+            DateTime? dateImported,
+            double? month,
+            string? userId,
+            string? insertDelete)
+        {
+            var baseQuery = _context.MonthlyTimeLogs.AsNoTracking();
+
+            if (!string.IsNullOrWhiteSpace(workGroup))
+                baseQuery = baseQuery.Where(x => x.WorkGroup == workGroup);
+
+            if (!string.IsNullOrWhiteSpace(timeCode))
+                baseQuery = baseQuery.Where(x => x.TimeCode == timeCode);
+
+            if (!string.IsNullOrWhiteSpace(pactStaffId))
+                baseQuery = baseQuery.Where(x => x.PactStaffId == pactStaffId);
+
+            if (!string.IsNullOrWhiteSpace(parentProject))
+                baseQuery = baseQuery.Where(x => x.ParentProject == parentProject);
+
+            if (dateImported.HasValue)
+            {
+                var dateOnly = dateImported.Value.Date;
+                baseQuery = baseQuery.Where(x => x.DateTime.HasValue
+                    && x.DateTime.Value.Date == dateOnly);
+            }
+
+            if (month.HasValue)
+                baseQuery = baseQuery.Where(x => x.Month == month.Value);
+
+            if (!string.IsNullOrWhiteSpace(userId))
+                baseQuery = baseQuery.Where(x => x.UserId != null && x.UserId.Contains(userId));
+
+            if (!string.IsNullOrWhiteSpace(insertDelete))
+                baseQuery = baseQuery.Where(x => x.InsertDelete != null
+                    && x.InsertDelete.StartsWith(insertDelete));
+
+            baseQuery = baseQuery.OrderByDescending(x => x.DateTime).ThenBy(x => x.SequenceNo);
+
+            var result = await baseQuery.ToListAsync();
+            return ApplyPaging(result, query.Page, query.PageSize);
         }
     }
 }

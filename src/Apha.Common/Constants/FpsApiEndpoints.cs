@@ -22,6 +22,7 @@ namespace Apha.Common.Constants
         public const string GetAllPactManagers = "api/v1/employee/pactmanagers";
         public const string GetAllPerson = "api/v1/employee/persons";
         public const string GetWorkGroupStaffPaginated = "api/v1/employee/WorkGroupStaff/paginated";
+        public const string GetpactStaffs = "api/v1/employee/pactstaff";
 
         // Lookup
         public const string GetAllStatuses = "api/v1/status";

@@ -21,6 +21,12 @@ namespace Apha.PACT.Application.Services
             _mapper = mapper;
         }
 
+        public async Task<IEnumerable<JobCodeDto>> GetJobCodesAsync()
+        {
+            var items = await _repository.GetJobCodesAsync();
+            return _mapper.Map<IEnumerable<JobCodeDto>>(items);
+        }
+
         public async Task<IEnumerable<JobCodeDto>> GetJobCodesByProjectAsync(string parentProject)
         {
             var items = await _repository.GetJobCodesByProjectAsync(parentProject);
