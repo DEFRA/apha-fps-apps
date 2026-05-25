@@ -67,17 +67,14 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectControllerTest
         }
 
         [Fact]
-        public async Task GetProjectProfitabilityAsync_WhenProgramNoIsNull_ReturnsBadRequest()
+        public async Task GetProjectProfitabilityAsync_WhenProgramNoIsNull_ThrowsArgumentException()
         {
             // Arrange
             var query = new PaginationReq<string> { Page = 1, PageSize = 10 };
 
-            // Act
-            var result = await _controller.GetProjectProfitabilityAsync(query, null!, "all");
-
-            // Assert
-            var badRequest = Assert.IsType<BadRequestObjectResult>(result);
-            Assert.Equal("programNo is required.", badRequest.Value);
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentException>(
+                () => _controller.GetProjectProfitabilityAsync(query, null!, "all"));
             await _serviceMock.DidNotReceive().GetProjectProfitabilityAsync(
                 Arg.Any<QueryParameters<string>>(), Arg.Any<string>(), Arg.Any<string>());
         }
@@ -85,16 +82,14 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectControllerTest
         [Theory]
         [InlineData("")]
         [InlineData("   ")]
-        public async Task GetProjectProfitabilityAsync_WhenProgramNoIsWhitespace_ReturnsBadRequest(string programNo)
+        public async Task GetProjectProfitabilityAsync_WhenProgramNoIsWhitespace_ThrowsArgumentException(string programNo)
         {
             // Arrange
             var query = new PaginationReq<string> { Page = 1, PageSize = 10 };
 
-            // Act
-            var result = await _controller.GetProjectProfitabilityAsync(query, programNo, "all");
-
-            // Assert
-            Assert.IsType<BadRequestObjectResult>(result);
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentException>(
+                () => _controller.GetProjectProfitabilityAsync(query, programNo, "all"));
             await _serviceMock.DidNotReceive().GetProjectProfitabilityAsync(
                 Arg.Any<QueryParameters<string>>(), Arg.Any<string>(), Arg.Any<string>());
         }

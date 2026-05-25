@@ -194,12 +194,5 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 })
                 .ToList();
         }
-    }
-
-    public sealed class ProjectBudgetProfitRequest
-    {
-        public string JobCode { get; set; } = null!;
-        public decimal? BudgetCvl { get; set; }
-        public decimal? Profit { get; set; }
-    }
+    }   
 }

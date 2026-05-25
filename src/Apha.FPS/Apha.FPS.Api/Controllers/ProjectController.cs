@@ -176,7 +176,7 @@ namespace Apha.FPS.Api.Controllers
             [FromQuery] string workTypeFilter = "all")
         {
             if (string.IsNullOrWhiteSpace(programNo))
-                return BadRequest("programNo is required.");
+                throw new ArgumentException("programNo is required.");
 
             var filter = _mapper.Map<QueryParameters<string>>(query);
             var result = await _projectService.GetProjectProfitabilityAsync(filter, programNo, workTypeFilter);
