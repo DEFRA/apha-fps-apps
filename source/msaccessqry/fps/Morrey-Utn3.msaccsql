@@ -1,0 +1,8 @@
+QUERY NAME: Morrey-Utn3
+---------------------------------------------
+TYPE: MAKE TABLE
+
+SQL:
+SELECT [Morrey-Utilisation1].WorkGroup, [Morrey-Utilisation1].GradeCode, [Morrey-Utilisation1].StaffID, [Morrey-Utilisation1].HrsPaid, [Morrey-Utilisation1].Charge, [Morrey-Utilisation1].leave, IIf(IsNull([free]),0,[free]) AS Overhead, IIf(IsNull([leave]),0,[leave]) AS Hols, IIf(IsNull([charge]),0,[charge]) AS charge1, [charge1]/([charge1]+[overhead]) AS utn, ([Hols]+[overhead]+[charge1])/[hrspaid] AS allocation INTO [Morrey-utntab]
+FROM [Morrey-Utilisation1];
+

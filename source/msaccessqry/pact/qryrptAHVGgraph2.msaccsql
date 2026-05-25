@@ -1,0 +1,9 @@
+QUERY NAME: qryrptAHVGgraph2
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblkPeriodMonth.PeriodName, tblkPeriodMonth.EndMonth, tlkpTestReqMetMonth.TestCode, tlkpTestReqMetMonth.Buyer, Sum(tlkpTestReqMetMonth.MonthVol) AS SumOfMonthVol
+FROM tblkPeriodMonth INNER JOIN tlkpTestReqMetMonth ON tblkPeriodMonth.MonthNo = tlkpTestReqMetMonth.Month
+GROUP BY tblkPeriodMonth.PeriodName, tblkPeriodMonth.EndMonth, tlkpTestReqMetMonth.TestCode, tlkpTestReqMetMonth.Buyer;
+

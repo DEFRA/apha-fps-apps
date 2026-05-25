@@ -1,0 +1,10 @@
+QUERY NAME: Find duplicates for WorkGroup
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW First([WorkGroup]) AS [WorkGroup Field], Count([WorkGroup]) AS NumberOfDups
+FROM WorkGroup
+GROUP BY [WorkGroup]
+HAVING Count([WorkGroup])>1;
+

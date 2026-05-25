@@ -1,0 +1,8 @@
+QUERY NAME: qryJobCodeTotals4
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW IIf(IsNull([TotalStaffCosts]),0,[TotalStaffCosts]) AS JCTotalStaffCosts
+FROM tlkpProgram INNER JOIN ((((tlkpProject LEFT JOIN qryTotalAdditionalCosts ON tlkpProject.ParentProject = qryTotalAdditionalCosts.JobCode) LEFT JOIN qryTotalAnimalCosts ON tlkpProject.ParentProject = qryTotalAnimalCosts.JobCode) LEFT JOIN qryTotalStaffCosts ON tlkpProject.ParentProject = qryTotalStaffCosts.Jobcode) LEFT JOIN qryTotaLTestCosts ON tlkpProject.ParentProject = qryTotaLTestCosts.JobCode) ON tlkpProgram.ProgramNo = tlkpProject.Program;
+

@@ -1,0 +1,8 @@
+QUERY NAME: qryRO_StaffPlans
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT vProjectStaffPlan.ParentProject AS Jobcode, vProjectStaffPlan.plannedhours, vProjectStaffPlan.WGGrade AS WorkGroupGrade, vProjectStaffPlan.Name, vProjectStaffPlan.ChargeRate, vProjectStaffPlan.Cost
+FROM vProjectStaffPlan;
+

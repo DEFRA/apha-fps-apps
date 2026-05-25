@@ -1,0 +1,9 @@
+QUERY NAME: LizTest
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpProject.PlanCat, Left([buyer],2) AS BuyerPrefix, MonthlyOutput.Buyer, MonthlyOutput.TestCode, TestOrProduct1.ItemDescription, TestOrProduct1.NewTC, [nEWtc] & "-" & [16cHAR] AS NewTest, Sum(MonthlyOutput.Volume) AS SumOfVolume1, Sum(MonthlyOutput.Volume) AS 11Month, [11month]/11*12 AS 12Month
+FROM (MonthlyOutput INNER JOIN TestOrProduct1 ON MonthlyOutput.TestCode = TestOrProduct1.ItemCode) INNER JOIN tlkpProject ON MonthlyOutput.Buyer = tlkpProject.ParentProject
+GROUP BY tlkpProject.PlanCat, Left([buyer],2), MonthlyOutput.Buyer, MonthlyOutput.TestCode, TestOrProduct1.ItemDescription, TestOrProduct1.NewTC, [nEWtc] & "-" & [16cHAR];
+

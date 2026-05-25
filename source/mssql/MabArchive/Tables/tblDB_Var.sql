@@ -1,0 +1,10 @@
+﻿USE [MAB_Archive_CM]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[tblDB_Var](
+    [Year] [int] NULL
+) ON [PRIMARY]
+GO

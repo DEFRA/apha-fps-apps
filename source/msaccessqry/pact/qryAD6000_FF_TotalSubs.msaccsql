@@ -1,0 +1,9 @@
+QUERY NAME: qryAD6000_FF_TotalSubs
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT qptAD6000_FF_Contract_Subs.VIC_DR_Month, qptAD6000_FF_Contract_Subs.VIC_DR_Year, Sum(qptAD6000_FF_Contract_Subs.No_Subs) AS Total_No_Subs
+FROM qptAD6000_FF_Contract_Subs
+GROUP BY qptAD6000_FF_Contract_Subs.VIC_DR_Month, qptAD6000_FF_Contract_Subs.VIC_DR_Year;
+

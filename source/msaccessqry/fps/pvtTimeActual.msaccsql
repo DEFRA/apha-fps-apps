@@ -1,0 +1,9 @@
+QUERY NAME: pvtTimeActual
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpProject_general.Disease, tlkpProject_general.Contract, tlkpProgram_MAP.Directorate, tlkpProgram_MAP.ProgramNo, tlkpProject_general.ParentProject, TimeCostCalcsMAP.JobCode, WorkGroup_general.ProfitCentre, TimeCostCalcsMAP.WorkGroup, TimeCostCalcsMAP.Month, TimeCostCalcsMAP.GradeCode, TimeCostCalcsMAP.Name, TimeCostCalcsMAP.Time AS ActualHrs, TimeCostCalcsMAP.Cost AS ActualHrsCost
+FROM ((TimeCostCalcsMAP INNER JOIN tlkpProject_general ON TimeCostCalcsMAP.Project = tlkpProject_general.ParentProject) INNER JOIN tlkpProgram_MAP ON tlkpProject_general.Program = tlkpProgram_MAP.ProgramNo) INNER JOIN WorkGroup_general ON TimeCostCalcsMAP.WorkGroup = WorkGroup_general.WorkGroup
+WHERE (((fnSelectedProg([Program]))=True) AND ((fnselectedproject([parentproject]))=True));
+

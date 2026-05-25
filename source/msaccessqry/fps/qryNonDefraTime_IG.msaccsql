@@ -1,0 +1,9 @@
+QUERY NAME: qryNonDefraTime_IG
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tlkpProject_MAP.ParentProject AS Project, tlkpProject_MAP.OracleProjectCode, tlkpProject_MAP.SubAccountCode, TimeCostCalcsMAP.Month, "No" AS DefraProject, CostCentre.CostCentre AS OCC, CostCentre.ProfitCentre AS OPC, WorkGroup_MAP.ProfitCentre AS SPC, WorkGroup_MAP.CostCentre AS SCC, TimeCostCalcsMAP.Name, TimeCostCalcsMAP.GradeCode, tblWGEmployeeMAB.SPNumber, ProfitCentreGrade_NonDEFRA.ChargeRate, ProfitCentreGrade_NonDEFRA.PayRate, ProfitCentreGrade_NonDEFRA.OHR, TimeCostCalcsMAP.Time, IIf([class]="Charge",[Cost],0) AS TotalCost
+FROM (tblWGEmployeeMAB RIGHT JOIN ((tlkpProject_MAP LEFT JOIN CostCentre ON tlkpProject_MAP.CostCentre = CostCentre.CostCentre) INNER JOIN (TimeCostCalcsMAP INNER JOIN WorkGroup_MAP ON TimeCostCalcsMAP.WorkGroup = WorkGroup_MAP.WorkGroup) ON tlkpProject_MAP.ParentProject = TimeCostCalcsMAP.Project) ON tblWGEmployeeMAB.PACTid = TimeCostCalcsMAP.StaffID) LEFT JOIN ProfitCentreGrade_NonDEFRA ON (TimeCostCalcsMAP.GradeCode = ProfitCentreGrade_NonDEFRA.GradeCode) AND (WorkGroup_MAP.ProfitCentre = ProfitCentreGrade_NonDEFRA.ProfitCentre)
+WHERE (((tlkpProject_MAP.ParentProject) Like nz([Forms]![frmDeptIncome]![pickProject],"*")) AND ((TimeCostCalcsMAP.Month) Between fnDeptIncomeMonthFrom() And fnDeptIncomeMonthTo()) AND ((tlkpProject_MAP.IsDefraProject)=False) AND ((tlkpProject_MAP.Program) Not Like "ZT*"));
+

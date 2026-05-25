@@ -1,0 +1,9 @@
+QUERY NAME: Query8
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tbltmpMonthlyOutput.*, tbltmpMonthlyOutput.Volume
+FROM tbltmpMonthlyOutput
+WHERE ((trim(nz(tbltmpMonthlyOutput.Volume,''))='')) OR ((tbltmpMonthlyOutput.Volume='0'));
+

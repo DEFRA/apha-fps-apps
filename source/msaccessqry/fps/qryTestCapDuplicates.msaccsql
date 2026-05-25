@@ -1,0 +1,9 @@
+QUERY NAME: qryTestCapDuplicates
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tlkpTestCapability.TestCode, (IIf([WorkGroup] Like "lt*","LT",[workgroup])) AS WG
+FROM tlkpTestCapability
+GROUP BY tlkpTestCapability.TestCode, (IIf([WorkGroup] Like "lt*","LT",[workgroup]));
+

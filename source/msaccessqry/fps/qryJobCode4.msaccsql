@@ -1,0 +1,9 @@
+QUERY NAME: qryJobCode4
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpProject.ParentProject AS JobCode, tlkpProject.ProjectTitle AS JobDescription, tlkpProject.Program AS Programme, tlkpProject.Customer, tlkpProject.Manager AS ProjectManager, [TransferIncome]+[custIncome] AS Income, tlkpProject.Profit, tlkpProject.DateCreated, tlkpProject.CostBookNo, tlkpProject.ProjectStatus, tlkpProject.Budget_CVL
+FROM tlkpProject
+WHERE ((tlkpProject.ParentProject=[Forms]![frmJobPlan]![JobCode]));
+

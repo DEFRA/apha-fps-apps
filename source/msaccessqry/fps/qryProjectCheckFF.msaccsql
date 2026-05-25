@@ -1,0 +1,10 @@
+QUERY NAME: qryProjectCheckFF
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+PARAMETERS OldProject Text ( 255 );
+SELECT DISTINCTROW tblSurvFF_Submissions.Contract
+FROM tblSurvFF_Submissions
+WHERE ((tblSurvFF_Submissions.Contract=[OldProject]));
+

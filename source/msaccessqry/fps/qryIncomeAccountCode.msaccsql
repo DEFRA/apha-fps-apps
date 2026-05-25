@@ -1,0 +1,9 @@
+QUERY NAME: qryIncomeAccountCode
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tlkpAccountCode.Code, [Code] & " - " & [Description] AS Descr
+FROM tlkpAccountCode
+ORDER BY tlkpAccountCode.Code;
+

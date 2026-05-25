@@ -1,0 +1,13 @@
+QUERY NAME: qryWGUtilisation2
+---------------------------------------------
+TYPE: OTHER
+
+SQL:
+PARAMETERS Forms!frmResouceCentreWorkGroups!ProjectPick Text ( 255 );
+TRANSFORM Sum(tblStaffJob_RM.plannedhours) AS SumOfplannedhours
+SELECT WorkGroupGrade_General.WorkGroup, tlkpProject_General.Program, tlkpProject_General.ProjectStatus, tlkpProject_General.ParentProject, Sum(tblStaff.HrsAvail) AS totalAvail, Sum(tblStaffJob_RM.plannedhours) AS Totals
+FROM tlkpProject_General RIGHT JOIN ((WorkGroupGrade_General INNER JOIN tblStaff ON WorkGroupGrade_General.WGGrade = tblStaff.WorkGroupGrade) LEFT JOIN tblStaffJob_RM ON tblStaff.StaffID = tblStaffJob_RM.StaffID) ON tlkpProject_General.ParentProject = tblStaffJob_RM.Jobcode
+WHERE (((WorkGroupGrade_General.WorkGroup)=[Forms]![frmResouceCentreWorkGroups]![ProjectPick]) AND ((tblStaff.Name) Like "*General"))
+GROUP BY WorkGroupGrade_General.WorkGroup, tlkpProject_General.Program, tlkpProject_General.ProjectStatus, tlkpProject_General.ParentProject
+PIVOT [tblStaff].[name] & "=" & Int([HrsAvail]);
+

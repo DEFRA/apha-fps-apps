@@ -1,0 +1,9 @@
+QUERY NAME: pvtAnimalPlan
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tlkpProject_General.Program, tlkpProject_General.ParentProject, tlkpProject_General.ProjectStatus, tlkpProject_General.Customer, vProjectAnimalPlan.AnimalType, vProjectAnimalPlan.Species, vProjectAnimalPlan.Security_Level, vProjectAnimalPlan.DailyRate, vProjectAnimalPlan.NumberOfDays, vProjectAnimalPlan.NumberOfAnimals, vProjectAnimalPlan.Cost, vProjectAnimalPlan.IndCounter, tlkpProject_General.Disease
+FROM tlkpProject_General INNER JOIN vProjectAnimalPlan ON tlkpProject_General.ParentProject = vProjectAnimalPlan.ParentProject
+WHERE (((fnSelectedProg([vProjectAnimalPlan].[Program]))=True) AND ((fnselectedproject([vProjectAnimalPlan].[parentproject]))=True));
+

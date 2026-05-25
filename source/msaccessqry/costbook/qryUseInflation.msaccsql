@@ -1,0 +1,8 @@
+QUERY NAME: qryUseInflation
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tblkpAccountCategory.AccShortName, tblCSG7_AccountGroups.UseInflation
+FROM tblCSG7_AccountGroups INNER JOIN tblkpAccountCategory ON tblCSG7_AccountGroups.CSG7Group = tblkpAccountCategory.CSG7_Group;
+

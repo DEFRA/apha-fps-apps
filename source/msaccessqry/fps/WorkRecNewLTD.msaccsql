@@ -1,0 +1,12 @@
+QUERY NAME: WorkRecNewLTD
+---------------------------------------------
+TYPE: APPEND
+
+SQL:
+INSERT INTO wORKrECnEW0600 ( ProfitCentre, ParentProject, TimeCode, Description )
+SELECT WorkGroup_MAP.ProfitCentre, TimeCodeValid.ParentProject, TimeCodeValid.TimeCode, tlkpJobCode.JobCodeName AS dESCRIPTION
+FROM (TimeCodeValid INNER JOIN WorkGroup_MAP ON TimeCodeValid.WorkGroup = WorkGroup_MAP.WorkGroup) INNER JOIN tlkpJobCode ON TimeCodeValid.TimeCode = tlkpJobCode.JobCode
+WHERE (((TimeCodeValid.WorkGroup) Not In ("lt1","lt2","lt3","lt4","ltla")) AND ((TimeCodeValid.Active)=-1))
+GROUP BY WorkGroup_MAP.ProfitCentre, TimeCodeValid.ParentProject, TimeCodeValid.TimeCode, tlkpJobCode.JobCodeName
+HAVING (((WorkGroup_MAP.ProfitCentre)="labt"));
+

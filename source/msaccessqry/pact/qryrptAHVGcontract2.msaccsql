@@ -1,0 +1,10 @@
+QUERY NAME: qryrptAHVGcontract2
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW MonthlyOutput.Month, MonthlyOutput.Buyer, MonthlyOutput.TestCode, Sum(MonthlyOutput.Volume) AS CurrentMonthVol
+FROM tlkpTestCapability INNER JOIN MonthlyOutput ON (tlkpTestCapability.WorkGroup = MonthlyOutput.WorkGroup) AND (tlkpTestCapability.TestCode = MonthlyOutput.TestCode)
+GROUP BY MonthlyOutput.Month, MonthlyOutput.Buyer, MonthlyOutput.TestCode
+HAVING ((MonthlyOutput.Month=[forms]![menu-division]![periodpick]));
+

@@ -1,0 +1,9 @@
+QUERY NAME: IGbudgets
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpProjectPact.ParentProject, tlkpProjectPact.Budget_cvl
+FROM tlkpProjectPact
+WHERE ((tlkpProjectPact.Budget_cvl=[budget_ext] And tlkpProjectPact.Budget_cvl<>0));
+

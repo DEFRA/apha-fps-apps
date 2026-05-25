@@ -1,0 +1,9 @@
+QUERY NAME: qrySurvFFTests
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblSurvFF_Fees.PactCode, tblSurvFF_Fees.Contract, Left([RECORD_ID],6) AS testCode, Sum(tblSurvFF_Fees.Volume) AS Volume, Sum(tblSurvFF_Fees.TotalFee) AS TotalFee, tblSurvFF_Fees.Received
+FROM tblSurvFF_Fees
+GROUP BY tblSurvFF_Fees.PactCode, tblSurvFF_Fees.Contract, Left([RECORD_ID],6), tblSurvFF_Fees.Received;
+

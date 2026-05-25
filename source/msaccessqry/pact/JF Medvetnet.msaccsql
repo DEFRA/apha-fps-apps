@@ -1,0 +1,9 @@
+QUERY NAME: JF Medvetnet
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tlkpProject.ParentProject, TimeCostCalcs.Month, TimeCostCalcs.WorkGroup, TimeCostCalcs.Time, TimeCostCalcs.Name, tlkpProject.ProjectTitle
+FROM TimeCostCalcs INNER JOIN tlkpProject ON TimeCostCalcs.Project = tlkpProject.ParentProject
+WHERE (((tlkpProject.ParentProject) Like "EU*"));
+

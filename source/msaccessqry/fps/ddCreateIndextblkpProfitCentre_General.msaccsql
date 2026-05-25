@@ -1,0 +1,6 @@
+QUERY NAME: ddCreateIndextblkpProfitCentre_General
+---------------------------------------------
+TYPE: DDL
+
+SQL:
+CREATE UNIQUE INDEX tblkpProfitCentre_GeneralPK ON tblkpProfitCentre_General(ProfitCentre)

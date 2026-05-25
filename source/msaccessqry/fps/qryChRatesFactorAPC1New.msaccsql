@@ -1,0 +1,10 @@
+QUERY NAME: qryChRatesFactorAPC1New
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW WorkGroup_General.ProfitCentre, ProfitCentreGrade_General.PCGrade, Grade.AvSalary, Sum(tblStaffJob_RM.plannedhours) AS AllocHrs, [Grade].[AvSalary]*[AllocHrs] AS FactorA
+FROM ((WorkGroupGrade_General INNER JOIN (Grade INNER JOIN ProfitCentreGrade_General ON Grade.GradeCode = ProfitCentreGrade_General.GradeCode) ON WorkGroupGrade_General.ProfitCentreGrade = ProfitCentreGrade_General.PCGrade) INNER JOIN WorkGroup_General ON WorkGroupGrade_General.WorkGroup = WorkGroup_General.WorkGroup) INNER JOIN ((tblStaffJob_RM INNER JOIN tlkpProject_General ON tblStaffJob_RM.Jobcode = tlkpProject_General.ParentProject) INNER JOIN tblStaff_General ON tblStaffJob_RM.StaffID = tblStaff_General.StaffID) ON WorkGroupGrade_General.WGGrade = tblStaff_General.WorkGroupGrade
+WHERE ((tlkpProject_General.PlanCat Not Like "ZT*"))
+GROUP BY WorkGroup_General.ProfitCentre, ProfitCentreGrade_General.PCGrade, Grade.AvSalary;
+

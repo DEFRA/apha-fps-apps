@@ -1,0 +1,8 @@
+QUERY NAME: qryStaffReqGradeOld
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblStaffRequ.StaffRequirement, tblStaffRequ.PCGrade, tblPCGrades.ProfitCentre, tblStaffRequ.ProjectYear, tblStaffRequ.[Number of Hours], tblPCGrades.ChargeRate, [ChargeRate]*[Number of Hours] AS StaffCost
+FROM tblPCGrades INNER JOIN tblStaffRequ ON tblPCGrades.PC_Grade = tblStaffRequ.PCGrade;
+

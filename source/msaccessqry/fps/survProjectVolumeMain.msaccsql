@@ -1,0 +1,9 @@
+QUERY NAME: survProjectVolumeMain
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpProject_MAP.Program, tlkpProject_MAP.ProjectTitle, tlkpProject_MAP.ShortTitle, tblPeriod.PeriodName, survProjectSums.MaxOfMonthNo, survProjectSums.Project, survProjectSums.SumOfSubcontracts AS YTDSubContracts, survProjectSums.SumOfTimeCosts AS YTDtime, survProjectSums.SumOfTransferCosts AS YTDtests, survProjectSums.SumOfTotalCost AS YTDcost, FPSYearTotals.TotalStaffCosts AS PlanStaff, FPSYearTotals.TotalTestCosts AS PlanTests, FPSYearTotals.TotalAdditionalCosts AS PlanSubContracts, FPSYearTotals.TotalCosts AS PlanCost, survPracFees.SumOfTotalFee AS PracInvoices, [fpsyeartotals].[custincome]+[fpsyeartotals].[transferincome]-[fpsyeartotals].[plancaseworkdebit] AS PlanIncome, IIf(IsNull([CVOGIncome]),0,[CVOGIncome])+IIf(IsNull([SumOfTotalFee]),0,[SumOfTotalFee]) AS YTDIncome, qrySurvInvoice.CVOGIncome, survProjectSums.SumOfCWCredit, survProjectSums.SumOfCWDebit
+FROM (((FPSYearTotals RIGHT JOIN tlkpProject_MAP ON FPSYearTotals.ParentProject = tlkpProject_MAP.ParentProject) LEFT JOIN (survProjectSums LEFT JOIN tblPeriod ON survProjectSums.MaxOfMonthNo = tblPeriod.EndPeriod) ON tlkpProject_MAP.ParentProject = survProjectSums.Project) LEFT JOIN survPracFees ON tlkpProject_MAP.ParentProject = survPracFees.Contract) LEFT JOIN qrySurvInvoice ON tlkpProject_MAP.ParentProject = qrySurvInvoice.ProjectParent
+WHERE ((tlkpProject_MAP.Program Like "*surv"));
+

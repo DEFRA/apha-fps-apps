@@ -1,0 +1,9 @@
+QUERY NAME: qryAD6000_Rate
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT ProfitCentreGrade_General.ChargeRate
+FROM ProfitCentreGrade_General INNER JOIN (WorkGroupGrade_General INNER JOIN tblStaff_General ON WorkGroupGrade_General.WGGrade = tblStaff_General.WorkGroupGrade) ON ProfitCentreGrade_General.PCGrade = WorkGroupGrade_General.ProfitCentreGrade
+WHERE (((tblStaff_General.StaffID)=settingsget_be("Ad6000_ID")));
+

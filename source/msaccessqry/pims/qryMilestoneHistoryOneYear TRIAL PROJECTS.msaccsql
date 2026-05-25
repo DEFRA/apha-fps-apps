@@ -1,0 +1,10 @@
+QUERY NAME: qryMilestoneHistoryOneYear TRIAL PROJECTS
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT MY_tlkpProject.ParentProject, MY_tlkpProject.Manager, tblMilestone.Number, tblMilestone.Description, tblMilestone.DateDue, tblMilestone.DateCompleted, tblMilestone.OnTarget, tblMilestone.ProjectLeaderComment, tblMilestone.UnderSDReview
+FROM ((tblMilestone INNER JOIN MY_tlkpProject ON tblMilestone.Project = MY_tlkpProject.ParentProject) INNER JOIN G_tlkpProject ON MY_tlkpProject.ParentProject = G_tlkpProject.ParentProject) INNER JOIN dbo_vtblStaff_General ON MY_tlkpProject.Manager = dbo_vtblStaff_General.Name
+WHERE (((MY_tlkpProject.ParentProject)="MO3007" Or (MY_tlkpProject.ParentProject)="SE0243" Or (MY_tlkpProject.ParentProject)="SE1753" Or (MY_tlkpProject.ParentProject)="SE1847" Or (MY_tlkpProject.ParentProject)="SE1849" Or (MY_tlkpProject.ParentProject)="SE1851" Or (MY_tlkpProject.ParentProject)="SE1930" Or (MY_tlkpProject.ParentProject)="SE1945" Or (MY_tlkpProject.ParentProject)="SE2007" Or (MY_tlkpProject.ParentProject)="SE2010") AND ((MY_tlkpProject.Manager) Like fnGetHiddenManager()) AND ((dbo_vtblStaff_General.WorkGroupGrade) Not Like "Bsci_PA4") AND ((MY_tlkpProject.Year)=fnYear()) AND ((IsEU_Project([project]))=False) AND ((fnDueYear([DateDue]))=fnYear()))
+ORDER BY MY_tlkpProject.ParentProject;
+

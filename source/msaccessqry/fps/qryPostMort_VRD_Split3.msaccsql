@@ -1,0 +1,9 @@
+QUERY NAME: qryPostMort_VRD_Split3
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT qryPostMort_VRD_Split2.Location, Sum([LabLTSplitFee]/[totalLTSplitFee]) AS Split
+FROM qryPostMort_VRD_Split1 INNER JOIN qryPostMort_VRD_Split2 ON qryPostMort_VRD_Split1.Month = qryPostMort_VRD_Split2.Month
+GROUP BY qryPostMort_VRD_Split2.Location;
+

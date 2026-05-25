@@ -1,0 +1,11 @@
+QUERY NAME: qryVetWGUtil
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+PARAMETERS Forms!frmPactReportMenu!PeriodPick IEEEDouble;
+SELECT DISTINCTROW TimeCostCalcsMAP.WorkGroup, tlkpProject_General.Program, tlkpProject_General.ParentProject, tlkpProject_General.ShortTitle, tlkpJobCode.JobCode, Sum(TimeCostCalcsMAP.Time) AS TotalTime, TimeCostCalcsMAP.Name, CInt(([HrsPaid]*([Forms]![frmPactReportMenu]![PeriodPick])/12)) AS PRHrsPaid, [SumOfplannedhours]*([Forms]![frmPactReportMenu]![PeriodPick])/12 AS WGPlanHours
+FROM (((TimeCostCalcsMAP INNER JOIN tlkpJobCode ON (tlkpJobCode.ParentProject = TimeCostCalcsMAP.Project) AND (TimeCostCalcsMAP.JobCode = tlkpJobCode.JobCode)) INNER JOIN tlkpProject_General ON tlkpJobCode.ParentProject = tlkpProject_General.ParentProject) INNER JOIN tblWGEmployeeMAB ON TimeCostCalcsMAP.StaffID = tblWGEmployeeMAB.PACTid) LEFT JOIN qryWGPlanHours ON (TimeCostCalcsMAP.WorkGroup = qryWGPlanHours.WorkGroup) AND (TimeCostCalcsMAP.Project = qryWGPlanHours.Jobcode)
+WHERE (((TimeCostCalcsMAP.Month)<=([Forms]![frmPactReportMenu]![PeriodPick])))
+GROUP BY TimeCostCalcsMAP.WorkGroup, tlkpProject_General.Program, tlkpProject_General.ParentProject, tlkpProject_General.ShortTitle, tlkpJobCode.JobCode, TimeCostCalcsMAP.Name, CInt(([HrsPaid]*([Forms]![frmPactReportMenu]![PeriodPick])/12)), [SumOfplannedhours]*([Forms]![frmPactReportMenu]![PeriodPick])/12;
+

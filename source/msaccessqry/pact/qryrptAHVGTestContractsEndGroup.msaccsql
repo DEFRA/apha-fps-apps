@@ -1,0 +1,11 @@
+QUERY NAME: qryrptAHVGTestContractsEndGroup
+---------------------------------------------
+TYPE: OTHER
+
+SQL:
+TRANSFORM Sum(qryMonthlyOutputENDGroup.Volume) AS SumOfVolume
+SELECT TestOrProduct.ItemCode AS TestCode, First(TestOrProduct.ItemDescription) AS ItemDescription, First(qryTestReqENDgroup.NoRequired) AS NoRequired, Sum(qryMonthlyOutputENDGroup.Volume) AS TotVol, IIf([Norequired]=0,Null,Format([TotVol]/[NoRequired],"0%")) AS [YTD %]
+FROM TestOrProduct INNER JOIN (qryTestReqENDgroup LEFT JOIN (qryMonthlyOutputENDGroup LEFT JOIN tlkpMonth ON qryMonthlyOutputENDGroup.Month = tlkpMonth.AccntsPeriod) ON qryTestReqENDgroup.TestCode = qryMonthlyOutputENDGroup.TestCode) ON TestOrProduct.ItemCode = qryTestReqENDgroup.TestCode
+GROUP BY TestOrProduct.ItemCode
+PIVOT tlkpMonth.MonthName In ("April","May","June","July","August","September","October","November","December","January","February","March");
+

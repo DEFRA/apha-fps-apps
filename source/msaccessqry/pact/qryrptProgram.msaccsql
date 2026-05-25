@@ -1,0 +1,9 @@
+QUERY NAME: qryrptProgram
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpProgram.ProgramNo, tlkpProgram.ProgramName, tlkpProgram.Leader, tlkpProgram.MINIM, tlkpProgram.SECTOR_NAME, tlkpProgram.CUSTOMER, Sum(tlkpProject.Budget_cvl) AS SumOfBudget_cvl, tlkpProgram.Directorate
+FROM tlkpProgram INNER JOIN tlkpProject ON tlkpProgram.ProgramNo = tlkpProject.Program
+GROUP BY tlkpProgram.ProgramNo, tlkpProgram.ProgramName, tlkpProgram.Leader, tlkpProgram.MINIM, tlkpProgram.SECTOR_NAME, tlkpProgram.CUSTOMER, tlkpProgram.Directorate;
+

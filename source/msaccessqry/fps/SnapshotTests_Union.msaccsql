@@ -1,0 +1,12 @@
+QUERY NAME: SnapshotTests_Union
+---------------------------------------------
+TYPE: OTHER
+
+SQL:
+SELECT [SnapshotTests-Actual].*
+FROM [SnapshotTests-Actual]
+
+
+UNION SELECT SnapshotTests.*
+FROM SnapshotTests;
+

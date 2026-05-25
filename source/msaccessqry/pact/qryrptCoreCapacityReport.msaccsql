@@ -1,0 +1,10 @@
+QUERY NAME: qryrptCoreCapacityReport
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpProgram.ProgramNo, tlkpProgram.ProgramName, tlkpProgram.Directorate, tlkpProject.PlanCat, tlkpProject.Manager, tlkpMonth.AccntsPeriod AS MonthNo, tlkpMonth.MonthName, tlkpProject.ParentProject, ProjectMonthFinal.Project, ProjectMonthFinal.TimeCosts, ProjectMonthFinal.TransferCosts, ProjectMonthFinal.Subcontracts, ProjectMonthFinal.TotalCost, IIf(IsNull([invoices]),0,[invoices]) AS Invoiced, ProjectMonthFinal.PortSales, IIf(IsNull([portsales]),0,[portsales]) AS Transfers, [transfers]+[invoiced] AS TotalIncome
+FROM tlkpProgram INNER JOIN ((tlkpProject INNER JOIN ProjectMonthFinal ON tlkpProject.ParentProject = ProjectMonthFinal.Project) INNER JOIN tlkpMonth ON ProjectMonthFinal.MonthNo = tlkpMonth.AccntsPeriod) ON tlkpProgram.ProgramNo = tlkpProject.Program
+GROUP BY tlkpProgram.ProgramNo, tlkpProgram.ProgramName, tlkpProgram.Directorate, tlkpProject.PlanCat, tlkpProject.Manager, tlkpMonth.AccntsPeriod, tlkpMonth.MonthName, tlkpProject.ParentProject, ProjectMonthFinal.Project, ProjectMonthFinal.TimeCosts, ProjectMonthFinal.TransferCosts, ProjectMonthFinal.Subcontracts, ProjectMonthFinal.TotalCost, IIf(IsNull([invoices]),0,[invoices]), ProjectMonthFinal.PortSales
+HAVING ((tlkpProject.PlanCat="corecapacity"));
+

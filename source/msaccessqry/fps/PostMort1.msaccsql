@@ -1,0 +1,11 @@
+QUERY NAME: PostMort1
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tlkpTestCapability.PlanPortfolio, MonthlyOutput.TestCode, TestOrProduct.ShortDescription AS ItemDescription, Sum(MonthlyOutput.Volume) AS TotVol, nz([LabT],0) AS LTUnitCharge, nz([VetR],0) AS SDUnitCharge, [LTUnitCharge]*[totvol] AS LTfee, [SDUnitCharge]*[totvol] AS SDfee, [ltfee]+[sdfee] AS TotalFee, Sum([TestPrice]*[volume]) AS FeeCharged, [FeeCharged]-[totalfee] AS [Profit/(Loss)], IIf(nz([VetR],0)=0,0,1) AS IsPartOfLTFee, [IsPartOfLTFee]*[LTFee] AS LTSplitFee
+FROM ((tblTestRequ INNER JOIN (tlkpTestCapability INNER JOIN MonthlyOutput ON (tlkpTestCapability.WorkGroup = MonthlyOutput.WorkGroup) AND (tlkpTestCapability.TestCode = MonthlyOutput.TestCode)) ON (tblTestRequ.TestCode = MonthlyOutput.TestCode) AND (tblTestRequ.JobCode = MonthlyOutput.Buyer)) INNER JOIN TestOrProduct ON MonthlyOutput.TestCode = TestOrProduct.ItemCode) LEFT JOIN qryTestsPCCostPlan_xtab ON (MonthlyOutput.Buyer = qryTestsPCCostPlan_xtab.JobCode) AND (MonthlyOutput.TestCode = qryTestsPCCostPlan_xtab.TestCode)
+WHERE (((MonthlyOutput.Month)<=[Forms]![frmPactReportMenu]![PeriodPick]))
+GROUP BY tlkpTestCapability.PlanPortfolio, MonthlyOutput.TestCode, TestOrProduct.ShortDescription, nz([LabT],0), nz([VetR],0), IIf(nz([VetR],0)=0,0,1)
+HAVING (((tlkpTestCapability.PlanPortfolio)="tg0100"));
+

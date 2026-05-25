@@ -1,0 +1,7 @@
+QUERY NAME: WorkGroup_Test
+---------------------------------------------
+TYPE: PASS-THROUGH
+
+SQL:
+select
+user_name()

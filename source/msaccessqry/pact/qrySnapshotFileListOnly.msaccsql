@@ -1,0 +1,6 @@
+QUERY NAME: qrySnapshotFileListOnly
+---------------------------------------------
+TYPE: PASS-THROUGH
+
+SQL:
+usp_GetSnapshotFileListOnly

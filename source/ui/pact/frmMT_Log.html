@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../css/govuk-frontend-6.0.0.min.css" />
+    <link rel="stylesheet" href="../css/common/headernav/navstyle.css" />
+    <link rel="stylesheet" href="../css/pact_styles/styles.css" />
+    <link rel="stylesheet" href="../css/supplement_style_for_gov.uk_style.css" />
+    <link rel="stylesheet" href="../css/common/editable-grid.css" />
+    <link rel="stylesheet" href="../css/common/multicolumn-dropdown.css" />
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <style>
+        /* Fix for dropdown overlap issues */
+        .govuk-grid-row.sup_padding_bottom_10 {
+            overflow: visible !important;
+        }
+
+        .govuk-form-group {
+            overflow: visible !important;
+            position: relative;
+        }
+
+        #projectSelectDropdown,
+        #jobCodeSelectDropdown,
+        #staffIDSelectDropdown {
+            position: relative;
+            overflow: visible !important;
+        }
+
+        /* Ensure dropdown panels are always on top */
+        .multicolumn-dropdown-panel {
+            z-index: 10000 !important;
+        }
+    </style>
+
+    <title>2025-2026 : Program Financial Summary - PACT</title>
+
+</head>
+
+<body>
+    <header class="govuk-header" role="banner" id="app-header"></header>
+
+    <div id="header"></div>
+
+    <script src="../js/pact_js/_headernav-config.js"></script>
+    <script src="../js/common/headernav/header-builder.js"></script>
+    <script src="../js/common/headernav/menu-builder.js"></script>
+    <script src="../js/common/datagrid.component.js"></script>
+    <script src="../js/common/multicolumn-dropdown.component.js"></script>
+    <script>
+        buildHeader('app-header', headerConfig);
+        buildNav('header', menuConfig, userConfig);
+    </script>
+    <div class="content-wrapper">
+        <div class="govuk-grid-row sup_margin_left_right_0">
+            <div class="govuk-grid-column-full sup_p_0 sup_margin_bottom_10">
+                <h1
+                    class="heading_with_txtbox govuk-heading-s sup_border-bottom sup_margin_0 sup_padding_top_10 sup_padding_bottom_10">
+                    Monthly TIME Log of Imports
+                </h1>
+            </div>
+        </div>
+
+        <div class="govuk-grid-row sup_margin_left_right_0 sup_padding_bottom_0">
+            <div class="govuk-grid-column-one-third">
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label for="workGroupSelect" class="govuk-label govuk-!-font-weight-bold">WorkGroup</label>
+                    <select id="workGroupSelect" class="govuk-select sup_select_option_width_100 govuk-!-font-size-16">
+                        <option value="">-- Select WorkGroup --</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="govuk-grid-column-one-third">
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <div id="projectSelectDropdown" class="govuk-grid-column-full sup_p_0"></div>
+                </div>
+            </div>
+
+
+
+            <div class="govuk-grid-column-one-third">
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label for="monthInput" class="govuk-label govuk-!-font-weight-bold">Month (numeric)</label>
+                    <input type="number" id="monthInput" class="govuk-input govuk-!-font-size-16"
+                        placeholder="Enter month (1-12)" min="1" max="12">
+                </div>
+            </div>
+        </div>
+
+        <div class="sup_flex_between_center">
+            <div class="govuk-grid-column-one-third sup_padding_right_7">
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <div id="jobCodeSelectDropdown" class="govuk-grid-column-full sup_p_0"></div>
+                </div>
+            </div>
+            <span class="or_text">OR</span>
+            <div class="govuk-grid-column-one-third sup_padding_left_0 sup_padding_right_22">
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label for="testCodeSelect" class="govuk-label govuk-!-font-weight-bold">Testcode</label>
+                    <select id="testCodeSelect" class="govuk-select sup_select_option_width_100 govuk-!-font-size-16">
+                        <option value="">-- Select Testcode --</option>
+                    </select>
+                </div>
+            </div>
+             <div class="govuk-grid-column-one-third sup_padding_left_10">
+            <div class="govuk-form-group sup_margin_bottom_10">
+                <!-- <label for="staffIdSelect" class="govuk-label govuk-!-font-weight-bold">Staff ID</label>
+                    <select id="staffIdSelect" class="govuk-select sup_select_option_width_100 govuk-!-font-size-16">
+                        <option value="">-- Select Staff ID --</option>
+                    </select> -->
+                <div id="staffIDSelectDropdown" class="govuk-grid-column-full sup_p_0 sup_z-index_1"></div>
+            </div>
+        </div>
+        </div>
+       
+
+
+
+
+
+        <div class="govuk-grid-column-one-third">
+            <div class="govuk-form-group sup_margin_bottom_10">
+                <label for="dateImportedInput" class="govuk-label govuk-!-font-weight-bold">Date Imported
+                    (dd/mm/yy)</label>
+                <input type="date" id="dateImportedInput" class="govuk-input govuk-!-font-size-16"
+                    placeholder="dd/mm/yy">
+            </div>
+        </div>
+
+        <div class="govuk-grid-column-one-third">
+            <div class="govuk-form-group sup_margin_bottom_10">
+                <label for="mabUserSPInput" class="govuk-label govuk-!-font-weight-bold">MAB User SP No. (include m)</label>
+                <input type="text" id="mabUserSPInput" class="govuk-input govuk-!-font-size-16"
+                    placeholder="MAB User SP No. (include m)">
+            </div>
+        </div>
+
+        <div class="govuk-grid-column-one-third">
+            <div class="govuk-form-group sup_margin_bottom_10">
+                <label for="actionSelect" class="govuk-label govuk-!-font-weight-bold">Action</label>
+                <select id="actionSelect" class="govuk-select sup_select_option_width_100 govuk-!-font-size-16">
+                    <option value="">-- Select Action --</option>
+                    <option value="I">I - Inserted</option>
+                    <option value="D">D - Deleted</option>
+                    <option value="UI">U - Updated</option>
+                </select>
+
+            </div>
+        </div>
+
+
+
+        <div class="govuk-grid-column-three-quarters">
+            <p class="govuk-body govuk-!-font-size-16 sup_margin_bottom_0">
+                Enter as many details of the records you are trying to find and press Search.
+                (There could be lots of records)<br>
+                Action:- UD refers to the record that has been removed, UI to the replacement
+                record.
+            </p>
+        </div>
+        <!-- <div class="govuk-grid-column-one-quarter">
+                <div class="govuk-button-group sup_margin_0 sup_float_right">
+                    <button type="button" class="govuk-button govuk-button--secondary sup_p_8 sup_margin_right_10"
+                        id="clearAllBtn" aria-label="Clear all filters" data-module="govuk-button">
+                        Clear All
+                    </button>
+                    <button type="button" class="govuk-button sup_margin_0 sup_p_8" id="searchBtn"
+                        aria-label="Search records" data-module="govuk-button">
+                        Search
+                    </button>
+                </div>
+            </div> -->
+
+        <div class="govuk-grid-column-one-quarter">
+            <div class="govuk-button-group sup_margin_right_0 sup_margin_0 sup_float_right">
+                <button type="button" class="govuk-button  sup_p_8 sup_margin_right_10 " id="searchBtn"
+                    aria-label="Search records" data-module="govuk-button">
+                    Search
+                </button>
+                <button type="button" class="govuk-button govuk-button--secondary sup_margin_0 sup_p_8" id="clearAllBtn"
+                    aria-label="Clear all filters" data-module="govuk-button">
+                    Clear All
+                </button>
+
+            </div>
+        </div>
+
+
+    </div>
+
+    <!-- <div class="govuk-grid-row sup_margin_left_right_0 sup_padding_top_10">
+            <div class="govuk-grid-column-full">
+                <p class="govuk-body govuk-!-font-size-16">
+                    Enter as many details of the records you are trying to find and press Search.<br>
+                    (There could be 1000s of records)<br>
+                    <strong>Action:</strong> - UD refers to the record that has been removed, UI to the replacement
+                    record.
+                </p>
+            </div>
+        </div> -->
+
+    <div class="govuk-grid-row sup_margin_left_right_0 sup_margin_top_10 sup_margin_bottom_10">
+        <div class="govuk-grid-column-full sup_padding_right_left_10">
+            <div id="gridContainer_timeLogGrid"></div>
+        </div>
+    </div>
+    </div>
+    <div id="app-footer"></div>
+    <script>buildFooter("app-footer", footerConfig);</script>
+    <!-- Monthly Time Log Script -->
+    <script src="../js/pact_js/monthly_time_log_imports.js"></script>
+</body>
+
+</html>

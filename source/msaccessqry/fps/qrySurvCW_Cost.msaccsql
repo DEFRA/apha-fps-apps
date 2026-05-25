@@ -1,0 +1,10 @@
+QUERY NAME: qrySurvCW_Cost
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW TimeCostCalcsMAP.Project, TimeCostCalcsMAP.JobCode, Sum(TimeCostCalcsMAP.Cost) AS SumOfCost
+FROM TimeCostCalcsMAP
+GROUP BY TimeCostCalcsMAP.Project, TimeCostCalcsMAP.JobCode
+HAVING ((TimeCostCalcsMAP.JobCode Like "cw*"));
+

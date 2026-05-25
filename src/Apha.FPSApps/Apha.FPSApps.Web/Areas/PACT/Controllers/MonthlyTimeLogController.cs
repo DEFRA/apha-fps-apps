@@ -46,7 +46,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var workGroupsResponse = await _workGroupService.GetAllWorkGroupsAsync();
             var testsResponse = await _testorProductService.GetAllTestorProductsAsync();
             var projectsResponse = await _projectService.GetAllPactProjectsAsync();
-            var jobCodesResponse = await _jobCodeService.GetAllJobCodesAsync();
+            var jobCodesResponse = await _jobCodeService.GetJobCodesAsync();
 
             var defaultRequest = new PaginationFilter<string> { Filter = "{}" };
             var grid = await BuildLogGrid(defaultRequest, null, null, null, null, null, null, null, null);

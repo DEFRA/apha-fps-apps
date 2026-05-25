@@ -1,0 +1,8 @@
+QUERY NAME: qryVersionBE
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW Max(tlkpVersion.Version) AS VersionBE, Max(tlkpVersion_local.Version) AS VersionFE
+FROM tlkpVersion, tlkpVersion_local;
+

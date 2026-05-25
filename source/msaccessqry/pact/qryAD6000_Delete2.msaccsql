@@ -1,0 +1,9 @@
+QUERY NAME: qryAD6000_Delete2
+---------------------------------------------
+TYPE: DELETE
+
+SQL:
+DELETE MonthlyTime.*, MonthlyTime.PACTStaffID, Exists (SELECT * FROM tblMTConversion WHERE (MonthlyTime.TimeCode = tblMTConversion.NewCode) AND (MonthlyTime.ParentProject = tblMTConversion.NewProject)) AS Expr1, MonthlyTime.Month
+FROM MonthlyTime
+WHERE (((MonthlyTime.PACTStaffID)=BESettingsGet("AD6000_ID")) AND ((Exists (SELECT * FROM tblMTConversion WHERE (MonthlyTime.TimeCode = tblMTConversion.NewCode) AND (MonthlyTime.ParentProject = tblMTConversion.NewProject)))<>False) AND ((MonthlyTime.Month)<=GetgVarFMonth()));
+

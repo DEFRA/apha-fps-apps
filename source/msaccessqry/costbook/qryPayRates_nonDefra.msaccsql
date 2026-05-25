@@ -1,0 +1,9 @@
+QUERY NAME: qryPayRates_nonDefra
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT WorkGroupGrade.WGGrade, tblPCGrades.ChargeRate, tblPCGrades.PayRate, tblPCGrades.NPR, tblPCGrades.OHR
+FROM tblPCGrades INNER JOIN WorkGroupGrade ON tblPCGrades.PCGrade = WorkGroupGrade.ProfitCentreGrade
+WHERE (((tblPCGrades.ChargeRate)<>0));
+

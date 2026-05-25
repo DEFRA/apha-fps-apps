@@ -1,0 +1,11 @@
+QUERY NAME: qryDeptIncomeTotals
+---------------------------------------------
+TYPE: OTHER
+
+SQL:
+TRANSFORM Sum(qryDeptIncomeTotals_sub.TotalCost) AS SumOfTotalCost
+SELECT qryDeptIncomeTotals_sub.Project, qryDeptIncomeTotals_sub.OracleProjectCode, Sum(qryDeptIncomeTotals_sub.TotalCost) AS TotalCosts
+FROM qryDeptIncomeTotals_sub
+GROUP BY qryDeptIncomeTotals_sub.Project, qryDeptIncomeTotals_sub.OracleProjectCode
+PIVOT qryDeptIncomeTotals_sub.Area In ("Time","Tests","Animals","Project-specifics");
+

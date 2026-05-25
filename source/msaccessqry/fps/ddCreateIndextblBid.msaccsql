@@ -1,0 +1,6 @@
+QUERY NAME: ddCreateIndextblBid
+---------------------------------------------
+TYPE: DDL
+
+SQL:
+CREATE UNIQUE INDEX tblBid_PK ON tblBid(Workgroup,Account)

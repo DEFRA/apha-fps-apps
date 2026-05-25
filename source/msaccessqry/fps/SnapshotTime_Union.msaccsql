@@ -1,0 +1,12 @@
+QUERY NAME: SnapshotTime_Union
+---------------------------------------------
+TYPE: OTHER
+
+SQL:
+SELECT [SnapshotTime-ACtual].*
+FROM [SnapshotTime-ACtual]
+
+
+UNION SELECT SnapshotTime.*
+FROM SnapshotTime;
+

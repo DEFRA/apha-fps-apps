@@ -1,0 +1,12 @@
+QUERY NAME: qryTestPriceCompCheck
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tblTestRequ.JobCode, tblTestRequ.TestCode, tblTestRequ.TestPrice, Sum(tblTestRequirementRCCost.Price) AS SumOfPrice, IIf([isdefraProject],[defraunitprice],[unitpricevla]) AS NormalPrice
+FROM (TestOrProduct_TM INNER JOIN (tblTestRequirementRCCost RIGHT JOIN tblTestRequ ON (tblTestRequirementRCCost.TestCode = tblTestRequ.TestCode) AND (tblTestRequirementRCCost.Buyer = tblTestRequ.JobCode)) ON TestOrProduct_TM.ItemCode = tblTestRequ.TestCode) INNER JOIN tlkpProject_General ON tblTestRequ.JobCode = tlkpProject_General.ParentProject
+WHERE (((tblTestRequ.TestPrice)<>IIf([isdefraProject],[defraunitprice],[unitpricevla])) AND ((Exists (Select * from
+ tblTestRCCost WHERE tblTestRequ.TestCode = tblTestRCCost.TestCode))<>False))
+GROUP BY tblTestRequ.JobCode, tblTestRequ.TestCode, tblTestRequ.TestPrice, IIf([isdefraProject],[defraunitprice],[unitpricevla])
+HAVING (((Sum(tblTestRequirementRCCost.Price))<>[TestPrice] Or (Sum(tblTestRequirementRCCost.Price)) Is Null));
+

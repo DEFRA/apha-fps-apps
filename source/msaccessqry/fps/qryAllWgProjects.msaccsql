@@ -1,0 +1,8 @@
+QUERY NAME: qryAllWgProjects
+---------------------------------------------
+TYPE: PASS-THROUGH
+
+SQL:
+SELECT  tlkpProject.ParentProject, W.WorkGroup
+FROM tlkpProject, WorkGroup w;
+

@@ -1,0 +1,10 @@
+QUERY NAME: QryAnimalOverview
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW qryProjectYearProject.FinancialYear, qryProjectYearProject.Project, tblAnimalReq.[Number of Days], tblAnimalReq.[Number of Animals], Sum([Number of Days]*[Number of Animals]*[DailyRate]) AS AnimalCost
+FROM qryProjectYearProject INNER JOIN tblAnimalReq ON qryProjectYearProject.ProjectYear = tblAnimalReq.ProjectYear
+GROUP BY qryProjectYearProject.FinancialYear, qryProjectYearProject.Project, tblAnimalReq.[Number of Days], tblAnimalReq.[Number of Animals]
+HAVING (((qryProjectYearProject.Project)=[Forms]![frmProject1]![Project]));
+

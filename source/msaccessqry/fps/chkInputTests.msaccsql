@@ -1,0 +1,11 @@
+QUERY NAME: chkInputTests
+---------------------------------------------
+TYPE: OTHER
+
+SQL:
+TRANSFORM Sum(MonthlyOutput.Volume) AS SumOfVolume
+SELECT MonthlyOutput.WorkGroup
+FROM MonthlyOutput
+GROUP BY MonthlyOutput.WorkGroup
+PIVOT MonthlyOutput.Month;
+

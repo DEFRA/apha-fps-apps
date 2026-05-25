@@ -1,0 +1,9 @@
+QUERY NAME: qryRadTrackPMMaintainance
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tblProjectManager.*
+FROM tblProjectManager
+ORDER BY tblProjectManager.ProjectManager;
+

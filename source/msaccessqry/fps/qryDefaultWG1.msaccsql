@@ -1,0 +1,10 @@
+QUERY NAME: qryDefaultWG1
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tlkpTestCapability.TestCode, Max(fnWGplanlevel([workgroup])) AS [Level], Count(tlkpTestCapability.WorkGroup) AS CountOfWorkGroup
+FROM tlkpTestCapability
+GROUP BY tlkpTestCapability.TestCode
+ORDER BY tlkpTestCapability.TestCode;
+

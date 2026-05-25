@@ -1,0 +1,8 @@
+QUERY NAME: kwebster
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW Table1.wg, Table1.name, TimeCostCalcs.Project, TimeCostCalcs.JobCode, tlkpJobCode.JobCodeName, TestOrProduct.ItemDescription, [TIMECOSTCALCS].[jOBcODE] & " - " & IIf(IsNull([ITEMDESCRIPTION]),[JOBCODENAME],[ITEMDESCRIPTION]) AS Expr1, TimeCostCalcs.Month, TimeCostCalcs.Time
+FROM ((Table1 INNER JOIN TimeCostCalcs ON Table1.name = TimeCostCalcs.Name) LEFT JOIN tlkpJobCode ON TimeCostCalcs.JobCode = tlkpJobCode.JobCode) LEFT JOIN TestOrProduct ON TimeCostCalcs.JobCode = TestOrProduct.ItemCode;
+

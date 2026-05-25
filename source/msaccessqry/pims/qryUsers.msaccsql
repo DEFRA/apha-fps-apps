@@ -1,0 +1,9 @@
+QUERY NAME: qryUsers
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tblAccessUsers.NTLogin, tblAccessUsers.UserName, tblAccessUsers.SystemID
+FROM tblAccessUsers INNER JOIN tblAccessSystems ON tblAccessUsers.SystemID = tblAccessSystems.SystemID
+WHERE (((tblAccessSystems.SystemName)=fnSystemName()));
+

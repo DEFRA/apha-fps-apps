@@ -1,0 +1,9 @@
+QUERY NAME: qryVetHoursFinal_RClevel
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW qryVetHoursProjects_RClevel.ParentProject, qryVetHoursPlan_RClevel.YrPlan AS TotalPlan, qryVetHoursPlan_RClevel.YTDPlanHours, qryVetHoursAct_RClevel.SumOfHours, [SumOfHours]/[YTDPlanHours] AS Variance
+FROM (qryVetHoursProjects_RClevel LEFT JOIN qryVetHoursAct_RClevel ON qryVetHoursProjects_RClevel.ParentProject = qryVetHoursAct_RClevel.ParentProject) LEFT JOIN qryVetHoursPlan_RClevel ON qryVetHoursProjects_RClevel.ParentProject = qryVetHoursPlan_RClevel.Jobcode
+WHERE ((qryVetHoursAct_RClevel.SumOfHours Is Not Null)) OR ((qryVetHoursPlan_RClevel.YTDPlanHours Is Not Null));
+

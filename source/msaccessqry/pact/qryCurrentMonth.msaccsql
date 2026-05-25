@@ -1,0 +1,9 @@
+QUERY NAME: qryCurrentMonth
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW Max(ProjectMonthFinal.MonthNo) AS MaxOfMonthNo
+FROM ProjectMonthFinal
+WHERE ((ProjectMonthFinal.CumFlag=1));
+

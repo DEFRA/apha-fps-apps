@@ -1,0 +1,9 @@
+QUERY NAME: qryrptPortfolioHdr
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW ProjectMonthFinal.MonthNo, ProjectMonthFinal.PeriodName, tlkpProject.Manager AS ProjectManager, tlkpProject.ProjectTitle, ProjectMonthFinal.Project, tlkpProject.Budget_Ext AS ContractPrice, tlkpProject.Budget_cvl AS ForecastIncome, tlkpProject.ForecastCost, IIf(IsNull([wip_eoy]),0,[wip_eoy]) AS [PreviousYr-WIP], ProjectMonthFinal.CostProfile AS [YTD-ForecastCost], ProjectMonthFinal.CumCost AS [Cost this Year], [CumCost]+[PreviousYr-WIP] AS [YTD-Cost inc WIP], [cuminvoices]+[cumportsales] AS CumIncome, ProjectMonthFinal.MonthNo
+FROM tlkpProject INNER JOIN ProjectMonthFinal ON tlkpProject.ParentProject = ProjectMonthFinal.Project
+WHERE ((ProjectMonthFinal.MonthNo=[forms]![menu-division]![periodpick]));
+

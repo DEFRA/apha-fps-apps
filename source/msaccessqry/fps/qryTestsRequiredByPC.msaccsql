@@ -1,0 +1,9 @@
+QUERY NAME: qryTestsRequiredByPC
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tempTestsRequiredByWG.ProfitCentre, tempTestsRequiredByWG.TestCode, tempTestsRequiredByWG.ItemDescription, Sum(tempTestsRequiredByWG.ProjectedTotal) AS ProjectedTotal
+FROM tempTestsRequiredByWG
+GROUP BY tempTestsRequiredByWG.ProfitCentre, tempTestsRequiredByWG.TestCode, tempTestsRequiredByWG.ItemDescription;
+

@@ -1,0 +1,9 @@
+QUERY NAME: qryWG2
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW ProjectMonthFinal.MonthNo, ProjectMonthFinal.PeriodName, tlkpProgram.ProgramNo, tlkpProgram.ProgramName, tlkpProgram.Directorate, tlkpProject.PlanCat, tlkpProject.ParentProject, ProjectMonthFinal.TotalCost AS MonthCost, ProjectMonthFinal.CumProfile AS ProfileCost, ProjectMonthFinal.CumCost AS YTDcost, [profilecost]-[ytdcost] AS Var, IIf([var]>0,[var],0) AS YTDUnderspend, IIf([var]<0,[Var],0) AS YTDLoss, tlkpProject.Budget_cvl, ([Budget_cvl]-[ytdcost]) AS Remaining, ProjectMonthFinal.SumOfCostProfile AS YrForecastCost, [Budget_cvl]-[YrForecastCost] AS Diff, IIf([diff]<0,[diff],0) AS YrLoss, IIf([diff]>0,[Diff],0) AS YrUnderspend
+FROM (tlkpProject INNER JOIN ProjectMonthFinal ON tlkpProject.ParentProject = ProjectMonthFinal.Project) INNER JOIN tlkpProgram ON tlkpProject.Program = tlkpProgram.ProgramNo
+WHERE ((ProjectMonthFinal.MonthNo=[forms]![menu-division]![periodpick]) AND (tlkpProject.PlanCat="csg"));
+

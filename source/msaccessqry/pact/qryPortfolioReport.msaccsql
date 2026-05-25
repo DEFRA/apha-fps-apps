@@ -1,0 +1,11 @@
+QUERY NAME: qryPortfolioReport
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpProject.Manager, tlkpMonth.AccntsPeriod AS MonthNo, tlkpMonth.MonthName, tlkpProject.Program, tlkpProject.ParentProject, ProjectMonthFinal.TimeCosts, ProjectMonthFinal.TransferCosts, ProjectMonthFinal.Animals, ProjectMonthFinal.NonAnimals, ProjectMonthFinal.TotalCost, IIf(IsNull([invoices]),0,[invoices]) AS Invoiced, ProjectMonthFinal.PortSales, IIf(IsNull([portsales]),0,[portsales]) AS Transfers, [transfers]+[invoiced] AS TotalIncome, tlkpProject.Finished
+FROM tlkpMonth INNER JOIN (tlkpProject INNER JOIN ProjectMonthFinal ON tlkpProject.ParentProject = ProjectMonthFinal.Project) ON tlkpMonth.AccntsPeriod = ProjectMonthFinal.MonthNo
+WHERE (((tlkpProject.ProjectGroup)="test_port" Or (tlkpProject.ProjectGroup)="prod_port" Or (tlkpProject.ProjectGroup)="VRD_REPORT"))
+GROUP BY tlkpProject.Manager, tlkpMonth.AccntsPeriod, tlkpMonth.MonthName, tlkpProject.Program, tlkpProject.ParentProject, ProjectMonthFinal.TimeCosts, ProjectMonthFinal.TransferCosts, ProjectMonthFinal.Animals, ProjectMonthFinal.NonAnimals, ProjectMonthFinal.TotalCost, IIf(IsNull([invoices]),0,[invoices]), ProjectMonthFinal.PortSales, tlkpProject.Finished
+ORDER BY tlkpProject.Manager;
+

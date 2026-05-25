@@ -1,0 +1,6 @@
+QUERY NAME: ddCreateIndextblTestRequ_ByGroup
+---------------------------------------------
+TYPE: DDL
+
+SQL:
+CREATE UNIQUE INDEX tblTestRequ_ByGroup_PK ON tblTestRequ_ByGroup(JobCode,TestCode)

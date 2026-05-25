@@ -1,0 +1,10 @@
+QUERY NAME: xqryStaffOverviewTest
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW qryProjectYearProject.FinancialYear, qryProjectYearProject.Project, qryStaffReqGrade.ProfitCentre, qryStaffReqGrade.PCGrade, tblPCGrades.ChargeRate, Sum(qryStaffReqGrade.[Number of Hours]) AS [SumOfNumber of Hours], Sum(qryStaffReqGrade.StaffCost) AS SumOfStaffCost
+FROM (qryProjectYearProject INNER JOIN qryStaffReqGrade ON qryProjectYearProject.ProjectYear = qryStaffReqGrade.ProjectYear) INNER JOIN tblPCGrades ON qryStaffReqGrade.PCGrade = tblPCGrades.PC_Grade
+GROUP BY qryProjectYearProject.FinancialYear, qryProjectYearProject.Project, qryStaffReqGrade.ProfitCentre, qryStaffReqGrade.PCGrade, tblPCGrades.ChargeRate
+HAVING ((qryProjectYearProject.Project=[Forms]![frmProject1]![Project]));
+

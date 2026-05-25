@@ -1,0 +1,10 @@
+QUERY NAME: qryVetHoursAct
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW TimeCostCalcsMAP.WorkGroup, TimeCostCalcsMAP.Project AS ParentProject, Sum(TimeCostCalcsMAP.Time) AS SumOfHours
+FROM TimeCostCalcsMAP
+WHERE ((TimeCostCalcsMAP.Month<=[Forms]![frmPactReportMenu]![PeriodPick]))
+GROUP BY TimeCostCalcsMAP.WorkGroup, TimeCostCalcsMAP.Project;
+

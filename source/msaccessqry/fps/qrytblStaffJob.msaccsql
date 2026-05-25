@@ -1,0 +1,8 @@
+QUERY NAME: qrytblStaffJob
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblStaffJob.*, qrytblStaff.Name, qrytblStaff.WorkGroupGrade
+FROM tblStaffJob INNER JOIN qrytblStaff ON tblStaffJob.StaffID = qrytblStaff.StaffID;
+

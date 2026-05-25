@@ -1,0 +1,10 @@
+QUERY NAME: qryjjTestReq
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tlkpProject_MAP.Program, tlkpProject_MAP.ParentProject, tlkpProject_MAP.ProjectTitle, tlkpTestReqmt_MAP.TestCode, tlkpTestReqmt_MAP.NoRequired, tlkpTestReqmt_MAP.UnitPrice, tlkpTestReqmt_MAP.Active
+FROM tlkpProject_MAP INNER JOIN tlkpTestReqmt_MAP ON tlkpProject_MAP.ParentProject = tlkpTestReqmt_MAP.Buyer
+WHERE (((tlkpProject_MAP.ParentProject)="ed1010") AND ((tlkpTestReqmt_MAP.Active)=1))
+ORDER BY tlkpTestReqmt_MAP.TestCode;
+

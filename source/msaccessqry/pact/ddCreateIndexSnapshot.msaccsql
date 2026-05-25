@@ -1,0 +1,7 @@
+QUERY NAME: ddCreateIndexSnapshot
+---------------------------------------------
+TYPE: DDL
+
+SQL:
+CREATE UNIQUE INDEX Snapshot_PK ON Snapshot_tblDB_Variables(DB_Var_Name)
+

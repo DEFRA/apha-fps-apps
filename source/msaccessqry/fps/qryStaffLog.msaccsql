@@ -1,0 +1,9 @@
+QUERY NAME: qryStaffLog
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT StaffJob_Log.*, [LastName] & ', ' & [firstname] AS Name
+FROM StaffJob_Log LEFT JOIN (tblWGEmployee LEFT JOIN tblEmployee ON tblWGEmployee.SPNumber = tblEmployee.SPNumber) ON StaffJob_Log.StaffID = tblWGEmployee.PACTid
+WHERE 1=2;
+

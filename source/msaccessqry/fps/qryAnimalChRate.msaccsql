@@ -1,0 +1,8 @@
+QUERY NAME: qryAnimalChRate
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tblAnimals.AnimalType
+FROM tblAnimals;
+

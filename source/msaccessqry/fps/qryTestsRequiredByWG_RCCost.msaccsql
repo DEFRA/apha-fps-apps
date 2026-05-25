@@ -1,0 +1,8 @@
+QUERY NAME: qryTestsRequiredByWG_RCCost
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tblTestRCCost.TestCode, WorkGroup_General.WorkGroup, tblTestRCCost.Price
+FROM tblTestRCCost INNER JOIN WorkGroup_General ON tblTestRCCost.ProfitCentre = WorkGroup_General.ProfitCentre;
+

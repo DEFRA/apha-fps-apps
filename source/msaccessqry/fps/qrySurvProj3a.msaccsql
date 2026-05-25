@@ -1,0 +1,9 @@
+QUERY NAME: qrySurvProj3a
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW qryTCC_Union_MO.Project, qryTCC_Union_MO.WorkGroup, tlkpJobCode.Type, Sum(TimeCostCalcs.Cost) AS HoursCost, Sum(TimeCostCalcs.Cost) AS TotalTimeCost, TimeCostCalcs.Month
+FROM qryTCC_Union_MO LEFT JOIN (tlkpJobCode RIGHT JOIN TimeCostCalcs ON (tlkpJobCode.JobCode = TimeCostCalcs.JobCode) AND (tlkpJobCode.ParentProject = TimeCostCalcs.Project)) ON (qryTCC_Union_MO.Workgroup = TimeCostCalcs.WorkGroup) AND (qryTCC_Union_MO.Project = TimeCostCalcs.Project)
+GROUP BY qryTCC_Union_MO.Project, qryTCC_Union_MO.WorkGroup, tlkpJobCode.Type, TimeCostCalcs.Month;
+

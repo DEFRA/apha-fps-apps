@@ -1,0 +1,8 @@
+QUERY NAME: UnitCostQuery
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW UnitCostUnion.Test, unitcost3.[9899vol], UNITCOST2.ItemDescription, UNITCOST.[98/99Unit], UNITCOST.[99/00Unit], UNITCOST.Volume AS 6months, [6months]/[9899vol] AS Expr1, UNITCOST.Cost_98_99, UNITCOST.Cost_99_2000, UNITCOST.Increase, UNITCOST.[% Increase], UNITCOST2.fps_Vol, UNITCOST2.[FPS Fee], UNITCOST2.[98/99 Fee], UNITCOST2.[8] AS FPSdiff, UNITCOST2.[9] AS [FPS%Diff]
+FROM unitcost3 RIGHT JOIN ((UnitCostUnion LEFT JOIN UNITCOST ON UnitCostUnion.Test = UNITCOST.ItemCode) LEFT JOIN UNITCOST2 ON UnitCostUnion.Test = UNITCOST2.TestCode) ON unitcost3.test = UnitCostUnion.Test;
+

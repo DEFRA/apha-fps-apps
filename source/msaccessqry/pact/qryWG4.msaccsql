@@ -1,0 +1,9 @@
+QUERY NAME: qryWG4
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpProject.PlanCat, IIf([parentproject] Like "ut6*","Production",[PlanCat]) AS PlanCat1, tlkpProject.ParentProject, tlkpMonth.AccntsPeriod, tlkpMonth.MonthName, ProjectMonthFinal.TotalCost AS MonthCost, tlkpProject.WIP_EOY, ProjectMonthFinal.CumProfile, [wip_eoy]+[cumprofile] AS ForecastCost1, ProjectMonthFinal.CumCost, [cumcost]+[wip_eoy] AS ActualCost1, [forecastcost1]-[actualcost1] AS CostVar, [cuminvoices]+[cumportsales] AS YTDincome, ProjectMonthFinal.CumCOIW, tlkpProject.Budget_Ext AS ContractPrice, ([budget_ext]-[actualcost1]) AS ContPriceLessCost, ProjectMonthFinal.SumOfCostProfile, IIf(([ActualCost1]-[YTDincome])>([ContractPrice]-[ytdincome]),[CONTRACTPRICE]-[YTDINCOME],[ACTUALCOST1]-[YTDINCOME]) AS WIP1, IIf(IsNull([WIP_CURRENT]),[WIP1],[WIP_CURRENT]) AS WIP, [ytdincome]-[CUMCOIW] AS ProfitLoss, tlkpProgram.ProgramNo, tlkpProgram.ProgramName, tlkpProgram.Directorate
+FROM tlkpProgram INNER JOIN ((ProjectMonthFinal INNER JOIN tlkpProject ON ProjectMonthFinal.Project = tlkpProject.ParentProject) INNER JOIN tlkpMonth ON ProjectMonthFinal.MonthNo = tlkpMonth.AccntsPeriod) ON tlkpProgram.ProgramNo = tlkpProject.Program
+WHERE ((tlkpProject.PlanCat<>"csg" And tlkpProject.PlanCat<>"TestActivity") AND (tlkpMonth.AccntsPeriod=[forms]![menu-division]![periodpick]));
+

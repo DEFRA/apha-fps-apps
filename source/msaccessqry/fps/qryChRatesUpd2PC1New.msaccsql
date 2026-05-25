@@ -1,0 +1,7 @@
+QUERY NAME: qryChRatesUpd2PC1New
+---------------------------------------------
+TYPE: UPDATE
+
+SQL:
+UPDATE DISTINCTROW tbltmpGradeCharge INNER JOIN ProfitCentreGrade ON tbltmpGradeCharge.PCGrade = ProfitCentreGrade.PCGrade SET ProfitCentreGrade.OldChargeRate = [FullRate];
+

@@ -1,0 +1,12 @@
+QUERY NAME: qryAD6000_GetExisting
+---------------------------------------------
+TYPE: APPEND
+
+SQL:
+INSERT INTO tempMonthlyTime_Transform ( [Month], Hours, ParentProject, TimeCode )
+SELECT MonthlyTime.Month, Sum(MonthlyTime.Hours) AS SumOfHours, tblMTConversion.NewProject, tblMTConversion.NewCode
+FROM MonthlyTime INNER JOIN tblMTConversion ON (MonthlyTime.ParentProject = tblMTConversion.NewProject) AND (MonthlyTime.TimeCode = tblMTConversion.NewCode)
+WHERE (((MonthlyTime.PACTStaffID)=BESettingsGet("AD6000_ID")))
+GROUP BY MonthlyTime.Month, tblMTConversion.NewProject, tblMTConversion.NewCode
+HAVING (((MonthlyTime.Month)<=GetgVarFMonth()));
+

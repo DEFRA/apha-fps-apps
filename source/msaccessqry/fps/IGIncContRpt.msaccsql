@@ -1,0 +1,10 @@
+QUERY NAME: IGIncContRpt
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW qryfrmTimeSellerPC_MAP.SellingPC, qryfrmTimeSellerPC_MAP.ChargeRate, qryfrmTimeSellerPC_MAP.WorkGroup, qryfrmTimeSellerPC_MAP.WGGrade, qryfrmTimeSellerPC_MAP.AvHrs, qryfrmTimeSellerPC_MAP.FEC, qryfrmTimeSellerPC_MAP.Contribution, qryfrmTimeSellerPC_MAP.CONTTARGET, qryfrmTimeSellerPC_MAP.SumOfGenBid, qryfrmTimeSellerPC_MAP.ProfitCentreGrade, Sum(MonthlyTime.Hours) AS ActualHrs, [ActualHrs]*[chargerate] AS ActualFecHrs, [Hrs]*[Enter Max Financial Month?]/12 AS PlannedYTD, [PlannedYTD]*[chargeRate] AS FecYTD, qryfrmTimeSellerPC_MAP.Hrs
+FROM (qryfrmTimeSellerPC_MAP LEFT JOIN tblStaff_General ON qryfrmTimeSellerPC_MAP.WGGrade = tblStaff_General.WorkGroupGrade) LEFT JOIN MonthlyTime ON tblStaff_General.StaffID = MonthlyTime.PACTStaffID
+WHERE ((MonthlyTime.ParentProject Is Null) AND (MonthlyTime.Month<=[Enter Max Financial Month?])) OR ((MonthlyTime.ParentProject Not Like "zt*") AND (MonthlyTime.Month<=[Enter Max Financial Month?]))
+GROUP BY qryfrmTimeSellerPC_MAP.SellingPC, qryfrmTimeSellerPC_MAP.ChargeRate, qryfrmTimeSellerPC_MAP.WorkGroup, qryfrmTimeSellerPC_MAP.WGGrade, qryfrmTimeSellerPC_MAP.AvHrs, qryfrmTimeSellerPC_MAP.FEC, qryfrmTimeSellerPC_MAP.Contribution, qryfrmTimeSellerPC_MAP.CONTTARGET, qryfrmTimeSellerPC_MAP.SumOfGenBid, qryfrmTimeSellerPC_MAP.ProfitCentreGrade, qryfrmTimeSellerPC_MAP.Hrs, qryfrmTimeSellerPC_MAP.ChargeRate, qryfrmTimeSellerPC_MAP.OHR, qryfrmTimeSellerPC_MAP.Hrs;
+

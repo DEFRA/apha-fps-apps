@@ -1,0 +1,10 @@
+QUERY NAME: qryTimeCostPeriodCluedo
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW TimeCostCalcs.WorkGroup, TimeCostCalcs.Project, TimeCostCalcs.JobCode, TimeCostCalcs.StaffID, Sum(TimeCostCalcs.Time) AS PeriodTime, Sum(TimeCostCalcs.Cost) AS PeriodCost
+FROM TimeCostCalcs
+WHERE ((TimeCostCalcs.Month=[forms]![menu-division]![periodpick]) AND (TimeCostCalcs.Class="Charge"))
+GROUP BY TimeCostCalcs.WorkGroup, TimeCostCalcs.Project, TimeCostCalcs.JobCode, TimeCostCalcs.StaffID;
+

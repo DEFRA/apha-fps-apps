@@ -1,0 +1,9 @@
+QUERY NAME: qrySumProjectTests
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblTestRequ.JobCode, Sum([volume]*[testprice]) AS Cost
+FROM MonthlyOutput INNER JOIN tblTestRequ ON (MonthlyOutput.TestCode = tblTestRequ.TestCode) AND (MonthlyOutput.Buyer = tblTestRequ.JobCode)
+GROUP BY tblTestRequ.JobCode;
+

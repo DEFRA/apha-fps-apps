@@ -1,0 +1,8 @@
+QUERY NAME: qryMY_TestsActual
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT MY_MonthlyOutput.Year, MY_tlkpTestReqmt.Buyer, MY_MonthlyOutput.Month, MY_MonthlyOutput.WorkGroup, MY_MonthlyOutput.Volume, MY_tlkpTestReqmt.UnitPrice, [unitprice]*[volume] AS Charge, MY_tlkpTestReqmt.TestCode
+FROM MY_MonthlyOutput INNER JOIN MY_tlkpTestReqmt ON (MY_MonthlyOutput.Year = MY_tlkpTestReqmt.Year) AND (MY_MonthlyOutput.TestCode = MY_tlkpTestReqmt.TestCode) AND (MY_MonthlyOutput.Buyer = MY_tlkpTestReqmt.Buyer);
+

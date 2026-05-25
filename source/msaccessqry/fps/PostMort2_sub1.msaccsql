@@ -1,0 +1,11 @@
+QUERY NAME: PostMort2_sub1
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT TimeCostCalcsMAP.Project, TimeCostCalcsMAP.JobCode, Sum(TimeCostCalcsMAP.Cost) AS SumOfCost, IIf([ProfitCentre] In ("Path","vetr"),"Surveillance Admin","Laboratory Testing") AS ResourceCentre
+FROM TimeCostCalcsMAP INNER JOIN WorkGroup_General ON TimeCostCalcsMAP.WorkGroup = WorkGroup_General.WorkGroup
+WHERE (((TimeCostCalcsMAP.Month)<=[Forms]![frmPactReportMenu]![PeriodPick]))
+GROUP BY TimeCostCalcsMAP.Project, TimeCostCalcsMAP.JobCode, IIf([ProfitCentre] In ("Path","vetr"),"Surveillance Admin","Laboratory Testing")
+HAVING (((TimeCostCalcsMAP.Project)="tg0100") AND ((IIf([ProfitCentre] In ("Path","vetr"),"Surveillance Admin","Laboratory Testing"))="Laboratory Testing"));
+

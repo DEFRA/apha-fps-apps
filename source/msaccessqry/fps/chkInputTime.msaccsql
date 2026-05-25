@@ -1,0 +1,11 @@
+QUERY NAME: chkInputTime
+---------------------------------------------
+TYPE: OTHER
+
+SQL:
+TRANSFORM Sum(dbo_vTimeCostCalcs.Time) AS SumOfTime
+SELECT dbo_vTimeCostCalcs.WorkGroup
+FROM dbo_vTimeCostCalcs
+GROUP BY dbo_vTimeCostCalcs.WorkGroup
+PIVOT dbo_vTimeCostCalcs.Month;
+

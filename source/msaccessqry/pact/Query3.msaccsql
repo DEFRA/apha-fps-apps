@@ -1,0 +1,9 @@
+QUERY NAME: Query3
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tblStaff.Name, tblStaff.WorkGroupGrade, MonthlyTime.Month, MonthlyTime.ParentProject, MonthlyTime.TimeCode, MonthlyTime.WorkGroup, MonthlyTime.Hours, MonthlyTime.PACTStaffID
+FROM MonthlyTime INNER JOIN tblStaff ON MonthlyTime.PACTStaffID = tblStaff.PACTid
+WHERE (((MonthlyTime.TimeCode)="AD6000")) OR (((MonthlyTime.PACTStaffID)="4464"));
+

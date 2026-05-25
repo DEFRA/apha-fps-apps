@@ -1,0 +1,11 @@
+QUERY NAME: qryTCC_Union_MO
+---------------------------------------------
+TYPE: PASS-THROUGH
+
+SQL:
+SELECT Workgroup, ParentProject as Project FROM Workgroup, tlkpProject
+WHERE Workgroup like 'SV__'
+UNION
+SELECT Workgroup, Project from TimeCostCalcs
+
+

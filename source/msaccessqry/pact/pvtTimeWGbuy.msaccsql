@@ -1,0 +1,9 @@
+QUERY NAME: pvtTimeWGbuy
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpProject.ProjectWorkGroup AS BuyingWG, WorkGroupGrade.WorkGroup AS SellingWG, WorkGroupGrade.GradeCode, tblStaff.Name, TimeCostCalcs.Time, TimeCostCalcs.Cost, TimeCostCalcs.Month, tlkpProject.PlanCat, tlkpProject.Program, TimeCostCalcs.Project, TimeCostCalcs.JobCode, tlkpProject.Manager
+FROM WorkGroupGrade INNER JOIN (tlkpProject INNER JOIN (TimeCostCalcs INNER JOIN tblStaff ON TimeCostCalcs.StaffID = tblStaff.PACTid) ON tlkpProject.ParentProject = TimeCostCalcs.Project) ON WorkGroupGrade.WG_Grade = tblStaff.WorkGroupGrade
+WHERE ((tlkpProject.ProjectWorkGroup=[Forms]![frmSplash]![WorkGroupPick2]));
+

@@ -1,0 +1,10 @@
+QUERY NAME: AppHours
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblWGEmployee_general.WorkGroupGrade, Sum(tblStaffJob.plannedhours) AS SumOfplannedhours
+FROM (tlkpProject INNER JOIN tblStaffJob ON tlkpProject.ParentProject = tblStaffJob.Jobcode) INNER JOIN tblWGEmployee_general ON tblStaffJob.StaffID = tblWGEmployee_general.PactID
+WHERE ((tlkpProject.Program<>"ZT_Prog") AND (tlkpProject.ProjectStatus="approved"))
+GROUP BY tblWGEmployee_general.WorkGroupGrade;
+

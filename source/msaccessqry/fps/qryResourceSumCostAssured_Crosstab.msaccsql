@@ -1,0 +1,12 @@
+QUERY NAME: qryResourceSumCostAssured_Crosstab
+---------------------------------------------
+TYPE: OTHER
+
+SQL:
+TRANSFORM Sum([PlannedHours]*[ChargeRate]) AS cost
+SELECT tlkpProject_General.Program, tblStaffJob_RM.Jobcode, ProfitCentreGrade_General.ProfitCentre, Sum([Cost]) AS RowSummary
+FROM ((ProfitCentreGrade_General INNER JOIN (WorkGroupGrade_General INNER JOIN tblStaff_General ON WorkGroupGrade_General.WGGrade = tblStaff_General.WorkGroupGrade) ON ProfitCentreGrade_General.PCGrade = WorkGroupGrade_General.ProfitCentreGrade) INNER JOIN tblStaffJob_RM ON tblStaff_General.StaffID = tblStaffJob_RM.StaffID) INNER JOIN tlkpProject_General ON tblStaffJob_RM.Jobcode = tlkpProject_General.ParentProject
+WHERE (((tlkpProject_General.Program)<>"zt_prog") AND ((tlkpProject_General.ProjectStatus)="Approved"))
+GROUP BY tlkpProject_General.Program, tblStaffJob_RM.Jobcode, ProfitCentreGrade_General.ChargeRate, ProfitCentreGrade_General.ProfitCentre
+PIVOT ProfitCentreGrade_General.GradeCode In ("GD5","A","B","C","D","E","F","G");
+
