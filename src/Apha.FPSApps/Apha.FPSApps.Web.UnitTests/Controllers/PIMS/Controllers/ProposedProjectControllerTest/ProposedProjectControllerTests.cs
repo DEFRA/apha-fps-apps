@@ -788,7 +788,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProposedProjec
                 .Returns(new ApiResponseDto<ProposedProjectDto>
                 {
                     Success = false,
-                    Errors = [new ApiErrorDto { Message = null, Code = "ERR" }]
+                    Errors = [new ApiErrorDto { Message = null!, Code = "ERR" }]
                 });
 
             // Act
