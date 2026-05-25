@@ -4,7 +4,7 @@ namespace Apha.Common.Contracts.PACT
     /// API response contract for a single row in the Work Group Time By Job Code view,
     /// representing one person / job-code combination with hours per fiscal month.
     /// </summary>
-    public class WorkGroupTimeByJobCodeRowRes
+    public class WgSummarisedStaffTimeUsageRowRes
     {
         public string? ParentProject { get; set; }
         public string? JobCode { get; set; }
@@ -28,7 +28,7 @@ namespace Apha.Common.Contracts.PACT
     }
 
     /// <summary>Pre-computed footer totals returned alongside the row data.</summary>
-    public class WorkGroupTimeByJobCodeSummaryRes
+    public class WgSummarisedStaffTimeUsageSummaryRes
     {
         public double TotalApril          { get; set; }
         public double TotalMay            { get; set; }
@@ -62,10 +62,10 @@ namespace Apha.Common.Contracts.PACT
     }
 
     /// <summary>Wrapper returned by the API containing rows and pre-computed footer summary.</summary>
-    public class WorkGroupTimeByJobCodeRes
+    public class WgSummarisedStaffTimeUsageRes
     {
-        public IEnumerable<WorkGroupTimeByJobCodeRowRes> Rows    { get; set; } = [];
-        public WorkGroupTimeByJobCodeSummaryRes          Summary { get; set; } = new();
+        public IEnumerable<WgSummarisedStaffTimeUsageRowRes> Rows    { get; set; } = [];
+        public WgSummarisedStaffTimeUsageSummaryRes          Summary { get; set; } = new();
         public Pagination                           Pagination { get; set; } = new();
         public double                               HrsPaid    { get; set; }
     }

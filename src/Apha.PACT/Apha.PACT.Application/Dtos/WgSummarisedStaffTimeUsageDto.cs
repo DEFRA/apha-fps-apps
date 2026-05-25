@@ -7,7 +7,7 @@ namespace Apha.PACT.Application.Dtos
     /// with hours recorded against each of the 12 fiscal-year months (April – March).
     /// Mirrors the data shown in the legacy MS-Access form frmCluedo1.
     /// </summary>
-    public class WorkGroupTimeByJobCodeRowDto
+    public class WgSummarisedStaffTimeUsageRowDto
     {
         public string? ParentProject { get; set; }
         public string? JobCode { get; set; }
@@ -35,7 +35,7 @@ namespace Apha.PACT.Application.Dtos
     /// Pre-computed footer totals for the Work Group Time By Job Code view,
     /// calculated once in the service layer.
     /// </summary>
-    public class WorkGroupTimeByJobCodeSummaryDto
+    public class WgSummarisedStaffTimeUsageSummaryDto
     {
         // Row 1 — Total time recorded per month
         public double TotalApril     { get; set; }
@@ -79,10 +79,10 @@ namespace Apha.PACT.Application.Dtos
     /// <summary>
     /// Wrapper returned by the service containing the pivot rows and pre-computed footer summary.
     /// </summary>
-    public class WorkGroupTimeByJobCodeDto
+    public class WgSummarisedStaffTimeUsageDto
     {
-        public IEnumerable<WorkGroupTimeByJobCodeRowDto> Rows    { get; set; } = [];
-        public WorkGroupTimeByJobCodeSummaryDto          Summary { get; set; } = new();
+        public IEnumerable<WgSummarisedStaffTimeUsageRowDto> Rows    { get; set; } = [];
+        public WgSummarisedStaffTimeUsageSummaryDto          Summary { get; set; } = new();
         public PaginationDto Pagination { get; set; } = new();
 
         /// <summary>Total HrsPaid

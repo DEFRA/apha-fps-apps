@@ -25,7 +25,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
             _controller = new WorkGroupTimeByJobCodeController(_mapper, _workGroupService);
         }
 
-        // ── Shared helpers ─────────────────────────────────────────────────────
+        // â”€â”€ Shared helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         /// <summary>
         /// Wires _mapper.Map&lt;QueryParameters&lt;string&gt;&gt; for any PaginationFilter input.
@@ -37,41 +37,41 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
         }
 
         /// <summary>
-        /// Wires _mapper.Map&lt;List&lt;WorkGroupTimeByJobCodeRow&gt;&gt; for any row-list input.
+        /// Wires _mapper.Map&lt;List&lt;WgSummarisedStaffTimeUsageRow&gt;&gt; for any row-list input.
         /// </summary>
-        private void SetupMapperRows(List<WorkGroupTimeByJobCodeRow>? mapped = null)
+        private void SetupMapperRows(List<WgSummarisedStaffTimeUsageRow>? mapped = null)
         {
-            _mapper.Map<List<WorkGroupTimeByJobCodeRow>>(
-                       Arg.Any<IEnumerable<WorkGroupTimeByJobCodeRowDto>>())
+            _mapper.Map<List<WgSummarisedStaffTimeUsageRow>>(
+                       Arg.Any<IEnumerable<WgSummarisedStaffTimeUsageRowDto>>())
                    .Returns(mapped ?? []);
         }
 
         /// <summary>
-        /// Wires _mapper.Map&lt;WorkGroupTimeByJobCodeSummary&gt; for any summary-dto input.
+        /// Wires _mapper.Map&lt;WgSummarisedStaffTimeUsageSummary&gt; for any summary-dto input.
         /// </summary>
-        private void SetupMapperSummary(WorkGroupTimeByJobCodeSummary? mapped = null)
+        private void SetupMapperSummary(WgSummarisedStaffTimeUsageSummary? mapped = null)
         {
-            _mapper.Map<WorkGroupTimeByJobCodeSummary>(
-                       Arg.Any<WorkGroupTimeByJobCodeSummaryDto>())
-                   .Returns(mapped ?? new WorkGroupTimeByJobCodeSummary());
+            _mapper.Map<WgSummarisedStaffTimeUsageSummary>(
+                       Arg.Any<WgSummarisedStaffTimeUsageSummaryDto>())
+                   .Returns(mapped ?? new WgSummarisedStaffTimeUsageSummary());
         }
 
         /// <summary>Builds a success response with the supplied dto (or an empty one).</summary>
-        private static ApiResponseDto<WorkGroupTimeByJobCodeDto> SuccessResponse(
-            WorkGroupTimeByJobCodeDto? dto = null)
-            => ApiResponseDto<WorkGroupTimeByJobCodeDto>.SuccessResponse(
-                   dto ?? new WorkGroupTimeByJobCodeDto());
+        private static ApiResponseDto<WgSummarisedStaffTimeUsageDto> SuccessResponse(
+            WgSummarisedStaffTimeUsageDto? dto = null)
+            => ApiResponseDto<WgSummarisedStaffTimeUsageDto>.SuccessResponse(
+                   dto ?? new WgSummarisedStaffTimeUsageDto());
 
         /// <summary>Builds a failure response.</summary>
-        private static ApiResponseDto<WorkGroupTimeByJobCodeDto> FailureResponse()
-            => ApiResponseDto<WorkGroupTimeByJobCodeDto>.FailureResponse(
+        private static ApiResponseDto<WgSummarisedStaffTimeUsageDto> FailureResponse()
+            => ApiResponseDto<WgSummarisedStaffTimeUsageDto>.FailureResponse(
                    [new ApiErrorDto { Message = "Error", Code = "ERR" }], new ApiMetaDto());
 
-        // ══════════════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // Index
-        // ══════════════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
-        #region Index — return type and view model structure
+        #region Index â€” return type and view model structure
 
         [Fact]
         public async Task Index_Always_ReturnsViewResult()
@@ -92,7 +92,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
         }
 
         [Fact]
-        public async Task Index_Always_ViewModelIsWorkGroupTimeByJobCodeViewModel()
+        public async Task Index_Always_ViewModelIsWgSummarisedStaffTimeUsageViewModel()
         {
             // Arrange
             SetupMapperQueryParameters();
@@ -107,7 +107,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            Assert.IsType<WorkGroupTimeByJobCodeViewModel>(viewResult.Model);
+            Assert.IsType<WgSummarisedStaffTimeUsageViewModel>(viewResult.Model);
         }
 
         [Fact]
@@ -125,7 +125,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
             var result = await _controller.Index("WG1", "Alice");
 
             // Assert
-            var model = (WorkGroupTimeByJobCodeViewModel)((ViewResult)result).Model!;
+            var model = (WgSummarisedStaffTimeUsageViewModel)((ViewResult)result).Model!;
             Assert.Equal("WG1",   model.SelectedWorkGroup);
             Assert.Equal("Alice", model.SelectedPersonName);
         }
@@ -145,7 +145,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
             var result = await _controller.Index("WG1", "Alice");
 
             // Assert
-            var model = (WorkGroupTimeByJobCodeViewModel)((ViewResult)result).Model!;
+            var model = (WgSummarisedStaffTimeUsageViewModel)((ViewResult)result).Model!;
             Assert.Equal("WG1", model.WorkGroupName);
         }
 
@@ -156,7 +156,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
             SetupMapperQueryParameters();
             SetupMapperRows();
             SetupMapperSummary();
-            var dto = new WorkGroupTimeByJobCodeDto { HrsPaid = 120.0 };
+            var dto = new WgSummarisedStaffTimeUsageDto { HrsPaid = 120.0 };
             _workGroupService.GetWgSummarisedStaffTimeUsageAsync(
                     Arg.Any<QueryParameters<string>>(), "WG1")
                 .Returns(SuccessResponse(dto));
@@ -165,7 +165,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
             var result = await _controller.Index("WG1", "Alice");
 
             // Assert
-            var model = (WorkGroupTimeByJobCodeViewModel)((ViewResult)result).Model!;
+            var model = (WgSummarisedStaffTimeUsageViewModel)((ViewResult)result).Model!;
             Assert.Equal(120.0, model.HrsPaid);
         }
 
@@ -176,7 +176,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
             SetupMapperQueryParameters();
             SetupMapperRows();
             SetupMapperSummary();
-            var response = ApiResponseDto<WorkGroupTimeByJobCodeDto>.SuccessResponse(null!);
+            var response = ApiResponseDto<WgSummarisedStaffTimeUsageDto>.SuccessResponse(null!);
             _workGroupService.GetWgSummarisedStaffTimeUsageAsync(
                     Arg.Any<QueryParameters<string>>(), Arg.Any<string>())
                 .Returns(response);
@@ -185,7 +185,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
             var result = await _controller.Index("WG1", "Alice");
 
             // Assert
-            var model = (WorkGroupTimeByJobCodeViewModel)((ViewResult)result).Model!;
+            var model = (WgSummarisedStaffTimeUsageViewModel)((ViewResult)result).Model!;
             Assert.Equal(0, model.HrsPaid);
         }
 
@@ -204,7 +204,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
             var result = await _controller.Index("WG1", "Alice");
 
             // Assert
-            var model = (WorkGroupTimeByJobCodeViewModel)((ViewResult)result).Model!;
+            var model = (WgSummarisedStaffTimeUsageViewModel)((ViewResult)result).Model!;
             Assert.Equal(0, model.HrsPaid);
         }
 
@@ -242,7 +242,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
 
         #endregion
 
-        #region Index — grid config (MapToGridConfig via Index)
+        #region Index â€” grid config (MapToGridConfig via Index)
 
         [Fact]
         public async Task Index_ServiceSuccess_GridContainsMappedRows()
@@ -250,27 +250,27 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
             // Arrange
             SetupMapperQueryParameters();
             SetupMapperSummary();
-            var rows = new List<WorkGroupTimeByJobCodeRow>
+            var rows = new List<WgSummarisedStaffTimeUsageRow>
             {
                 new() { ParentProject = "PP1", JobCode = "JC1" },
                 new() { ParentProject = "PP1", JobCode = "JC2" }
             };
-            var dto = new WorkGroupTimeByJobCodeDto
+            var dto = new WgSummarisedStaffTimeUsageDto
             {
                 Rows    = [new() { ParentProject = "PP1", JobCode = "JC1" }],
-                Summary = new WorkGroupTimeByJobCodeSummaryDto()
+                Summary = new WgSummarisedStaffTimeUsageSummaryDto()
             };
             _workGroupService.GetWgSummarisedStaffTimeUsageAsync(
                     Arg.Any<QueryParameters<string>>(), Arg.Any<string>())
                 .Returns(SuccessResponse(dto));
-            _mapper.Map<List<WorkGroupTimeByJobCodeRow>>(Arg.Any<IEnumerable<WorkGroupTimeByJobCodeRowDto>>())
+            _mapper.Map<List<WgSummarisedStaffTimeUsageRow>>(Arg.Any<IEnumerable<WgSummarisedStaffTimeUsageRowDto>>())
                    .Returns(rows);
 
             // Act
             var result = await _controller.Index("WG1", "Alice");
 
             // Assert
-            var model = (WorkGroupTimeByJobCodeViewModel)((ViewResult)result).Model!;
+            var model = (WgSummarisedStaffTimeUsageViewModel)((ViewResult)result).Model!;
             Assert.Equal(2, model.Grid.Data.Count);
         }
 
@@ -289,7 +289,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
             var result = await _controller.Index("WG1", "Alice");
 
             // Assert
-            var model = (WorkGroupTimeByJobCodeViewModel)((ViewResult)result).Model!;
+            var model = (WgSummarisedStaffTimeUsageViewModel)((ViewResult)result).Model!;
             Assert.Empty(model.Grid.Data);
         }
 
@@ -300,7 +300,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
             SetupMapperQueryParameters();
             SetupMapperRows();
             SetupMapperSummary();
-            var response = ApiResponseDto<WorkGroupTimeByJobCodeDto>.SuccessResponse(null!);
+            var response = ApiResponseDto<WgSummarisedStaffTimeUsageDto>.SuccessResponse(null!);
             _workGroupService.GetWgSummarisedStaffTimeUsageAsync(
                     Arg.Any<QueryParameters<string>>(), Arg.Any<string>())
                 .Returns(response);
@@ -309,7 +309,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
             var result = await _controller.Index("WG1", "Alice");
 
             // Assert
-            var model = (WorkGroupTimeByJobCodeViewModel)((ViewResult)result).Model!;
+            var model = (WgSummarisedStaffTimeUsageViewModel)((ViewResult)result).Model!;
             Assert.Empty(model.Grid.Data);
         }
 
@@ -328,7 +328,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
             var result = await _controller.Index("WG1", "Alice");
 
             // Assert
-            var model = (WorkGroupTimeByJobCodeViewModel)((ViewResult)result).Model!;
+            var model = (WgSummarisedStaffTimeUsageViewModel)((ViewResult)result).Model!;
             Assert.Equal("timeUsageGrid",                                      model.Grid.GridId);
             Assert.Equal("/PACT/WorkGroupTimeByJobCode/LoadGrid",              model.Grid.BindGridUrl);
             Assert.Equal("getWorkGroupTimeByJobCodeExtraFilters",              model.Grid.ExtraFilterMethod);
@@ -347,7 +347,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
             SetupMapperQueryParameters();
             SetupMapperRows();
             SetupMapperSummary();
-            var dto = new WorkGroupTimeByJobCodeDto
+            var dto = new WgSummarisedStaffTimeUsageDto
             {
                 Pagination = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 25 }
             };
@@ -359,7 +359,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
             var result = await _controller.Index("WG1", "Alice");
 
             // Assert
-            var model = (WorkGroupTimeByJobCodeViewModel)((ViewResult)result).Model!;
+            var model = (WgSummarisedStaffTimeUsageViewModel)((ViewResult)result).Model!;
             Assert.Equal(25, model.Grid.Pagination.TotalRecords);
             Assert.Equal(1,  model.Grid.Pagination.PageNumber);
             Assert.Equal(10, model.Grid.Pagination.PageSize);
@@ -380,14 +380,14 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
             var result = await _controller.Index("WG1", "Alice");
 
             // Assert
-            var model = (WorkGroupTimeByJobCodeViewModel)((ViewResult)result).Model!;
+            var model = (WgSummarisedStaffTimeUsageViewModel)((ViewResult)result).Model!;
             Assert.Null(model.Grid.Pagination.SortColumn);
             Assert.False(model.Grid.Pagination.SortDirection);
         }
 
         #endregion
 
-        #region Index — summary (MapToSummary via Index)
+        #region Index â€” summary (MapToSummary via Index)
 
         [Fact]
         public async Task Index_ServiceSuccess_SummaryMappedFromResponseData()
@@ -395,12 +395,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
             // Arrange
             SetupMapperQueryParameters();
             SetupMapperRows();
-            var expectedSummary = new WorkGroupTimeByJobCodeSummary { GrandTotalTime = 200.0 };
-            _mapper.Map<WorkGroupTimeByJobCodeSummary>(Arg.Any<WorkGroupTimeByJobCodeSummaryDto>())
+            var expectedSummary = new WgSummarisedStaffTimeUsageSummary { GrandTotalTime = 200.0 };
+            _mapper.Map<WgSummarisedStaffTimeUsageSummary>(Arg.Any<WgSummarisedStaffTimeUsageSummaryDto>())
                    .Returns(expectedSummary);
-            var dto = new WorkGroupTimeByJobCodeDto
+            var dto = new WgSummarisedStaffTimeUsageDto
             {
-                Summary = new WorkGroupTimeByJobCodeSummaryDto { GrandTotalTime = 200.0 }
+                Summary = new WgSummarisedStaffTimeUsageSummaryDto { GrandTotalTime = 200.0 }
             };
             _workGroupService.GetWgSummarisedStaffTimeUsageAsync(
                     Arg.Any<QueryParameters<string>>(), Arg.Any<string>())
@@ -410,7 +410,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
             var result = await _controller.Index("WG1", "Alice");
 
             // Assert
-            var model = (WorkGroupTimeByJobCodeViewModel)((ViewResult)result).Model!;
+            var model = (WgSummarisedStaffTimeUsageViewModel)((ViewResult)result).Model!;
             Assert.Equal(expectedSummary, model.Summary);
         }
 
@@ -429,7 +429,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
             var result = await _controller.Index("WG1", "Alice");
 
             // Assert
-            var model = (WorkGroupTimeByJobCodeViewModel)((ViewResult)result).Model!;
+            var model = (WgSummarisedStaffTimeUsageViewModel)((ViewResult)result).Model!;
             Assert.Equal(0, model.Summary.GrandTotalTime);
         }
 
@@ -440,7 +440,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
             SetupMapperQueryParameters();
             SetupMapperRows();
             SetupMapperSummary();
-            var response = ApiResponseDto<WorkGroupTimeByJobCodeDto>.SuccessResponse(null!);
+            var response = ApiResponseDto<WgSummarisedStaffTimeUsageDto>.SuccessResponse(null!);
             _workGroupService.GetWgSummarisedStaffTimeUsageAsync(
                     Arg.Any<QueryParameters<string>>(), Arg.Any<string>())
                 .Returns(response);
@@ -449,17 +449,17 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
             var result = await _controller.Index("WG1", "Alice");
 
             // Assert
-            var model = (WorkGroupTimeByJobCodeViewModel)((ViewResult)result).Model!;
+            var model = (WgSummarisedStaffTimeUsageViewModel)((ViewResult)result).Model!;
             Assert.Equal(0, model.Summary.GrandTotalTime);
         }
 
         #endregion
 
-        // ══════════════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // LoadGrid
-        // ══════════════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
-        #region LoadGrid — return type and partial view
+        #region LoadGrid â€” return type and partial view
 
         [Fact]
         public async Task LoadGrid_ValidRequest_ReturnsPartialViewResult()
@@ -514,12 +514,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
-            Assert.IsType<DataGridConfig<WorkGroupTimeByJobCodeRow>>(partial.Model);
+            Assert.IsType<DataGridConfig<WgSummarisedStaffTimeUsageRow>>(partial.Model);
         }
 
         #endregion
 
-        #region LoadGrid — workGroup validation (ArgumentException.ThrowIfNullOrWhiteSpace)
+        #region LoadGrid â€” workGroup validation (ArgumentException.ThrowIfNullOrWhiteSpace)
 
         [Fact]
         public async Task LoadGrid_NullWorkGroup_ThrowsArgumentException()
@@ -570,7 +570,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
 
         #endregion
 
-        #region LoadGrid — service interaction
+        #region LoadGrid â€” service interaction
 
         [Fact]
         public async Task LoadGrid_ValidRequest_CallsServiceOnceWithCorrectWorkGroup()
@@ -627,7 +627,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
 
         #endregion
 
-        #region LoadGrid — MapToGridConfig branches
+        #region LoadGrid â€” MapToGridConfig branches
 
         [Fact]
         public async Task LoadGrid_ServiceSuccess_GridContainsMappedRows()
@@ -635,12 +635,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
             // Arrange
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = "{}" };
             SetupMapperQueryParameters();
-            var rows = new List<WorkGroupTimeByJobCodeRow>
+            var rows = new List<WgSummarisedStaffTimeUsageRow>
             {
                 new() { ParentProject = "PP1", JobCode = "JC1" },
                 new() { ParentProject = "PP2", JobCode = "JC2" }
             };
-            var dto = new WorkGroupTimeByJobCodeDto
+            var dto = new WgSummarisedStaffTimeUsageDto
             {
                 Rows       = [new(), new()],
                 Pagination = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 2 }
@@ -648,8 +648,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
             _workGroupService.GetWgSummarisedStaffTimeUsageAsync(
                     Arg.Any<QueryParameters<string>>(), "WG1")
                 .Returns(SuccessResponse(dto));
-            _mapper.Map<List<WorkGroupTimeByJobCodeRow>>(
-                       Arg.Any<IEnumerable<WorkGroupTimeByJobCodeRowDto>>())
+            _mapper.Map<List<WgSummarisedStaffTimeUsageRow>>(
+                       Arg.Any<IEnumerable<WgSummarisedStaffTimeUsageRowDto>>())
                    .Returns(rows);
 
             // Act
@@ -657,7 +657,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
-            var grid = Assert.IsType<DataGridConfig<WorkGroupTimeByJobCodeRow>>(partial.Model);
+            var grid = Assert.IsType<DataGridConfig<WgSummarisedStaffTimeUsageRow>>(partial.Model);
             Assert.Equal(2, grid.Data.Count);
         }
 
@@ -677,7 +677,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
-            var grid = Assert.IsType<DataGridConfig<WorkGroupTimeByJobCodeRow>>(partial.Model);
+            var grid = Assert.IsType<DataGridConfig<WgSummarisedStaffTimeUsageRow>>(partial.Model);
             Assert.Empty(grid.Data);
         }
 
@@ -688,7 +688,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = "{}" };
             SetupMapperQueryParameters();
             SetupMapperRows();
-            var response = ApiResponseDto<WorkGroupTimeByJobCodeDto>.SuccessResponse(null!);
+            var response = ApiResponseDto<WgSummarisedStaffTimeUsageDto>.SuccessResponse(null!);
             _workGroupService.GetWgSummarisedStaffTimeUsageAsync(
                     Arg.Any<QueryParameters<string>>(), Arg.Any<string>())
                 .Returns(response);
@@ -698,7 +698,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
-            var grid = Assert.IsType<DataGridConfig<WorkGroupTimeByJobCodeRow>>(partial.Model);
+            var grid = Assert.IsType<DataGridConfig<WgSummarisedStaffTimeUsageRow>>(partial.Model);
             Assert.Empty(grid.Data);
         }
 
@@ -709,7 +709,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
             var request = new PaginationFilter<string> { Page = 2, PageSize = 5, Filter = "{}" };
             SetupMapperQueryParameters();
             SetupMapperRows();
-            var dto = new WorkGroupTimeByJobCodeDto
+            var dto = new WgSummarisedStaffTimeUsageDto
             {
                 Pagination = new PaginationDto { PageNumber = 2, PageSize = 5, TotalRecords = 50 }
             };
@@ -722,7 +722,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
-            var grid = Assert.IsType<DataGridConfig<WorkGroupTimeByJobCodeRow>>(partial.Model);
+            var grid = Assert.IsType<DataGridConfig<WgSummarisedStaffTimeUsageRow>>(partial.Model);
             Assert.Equal(50, grid.Pagination.TotalRecords);
             Assert.Equal(2,  grid.Pagination.PageNumber);
             Assert.Equal(5,  grid.Pagination.PageSize);
@@ -748,7 +748,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
-            var grid = Assert.IsType<DataGridConfig<WorkGroupTimeByJobCodeRow>>(partial.Model);
+            var grid = Assert.IsType<DataGridConfig<WgSummarisedStaffTimeUsageRow>>(partial.Model);
             Assert.Equal("JobCode", grid.Pagination.SortColumn);
             Assert.True(grid.Pagination.SortDirection);
         }
@@ -769,7 +769,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
-            var grid = Assert.IsType<DataGridConfig<WorkGroupTimeByJobCodeRow>>(partial.Model);
+            var grid = Assert.IsType<DataGridConfig<WgSummarisedStaffTimeUsageRow>>(partial.Model);
             Assert.Null(grid.Pagination.SortColumn);
             Assert.False(grid.Pagination.SortDirection);
         }
@@ -790,7 +790,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
-            var grid = Assert.IsType<DataGridConfig<WorkGroupTimeByJobCodeRow>>(partial.Model);
+            var grid = Assert.IsType<DataGridConfig<WgSummarisedStaffTimeUsageRow>>(partial.Model);
             Assert.Equal("timeUsageGrid",                                      grid.GridId);
             Assert.Equal("/PACT/WorkGroupTimeByJobCode/LoadGrid",              grid.BindGridUrl);
             Assert.Equal("getWorkGroupTimeByJobCodeExtraFilters",              grid.ExtraFilterMethod);

@@ -5,7 +5,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
     /// <summary>
     /// View model for the Work Group Time By Job Code page (frmCluedo1 equivalent).
     /// </summary>
-    public class WorkGroupTimeByJobCodeViewModel
+    public class WgSummarisedStaffTimeUsageViewModel
     {
         public string? SelectedWorkGroup { get; set; }
 
@@ -21,9 +21,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         public double HrsPaid { get; set; }
 
         /// <summary>Grid of pivot rows driven by _DataGrid.</summary>
-        public DataGridConfig<WorkGroupTimeByJobCodeRow> Grid { get; set; } = new();
+        public DataGridConfig<WgSummarisedStaffTimeUsageRow> Grid { get; set; } = new();
 
         /// <summary>Pre-computed footer totals (Total Time, Standard Hours, % Allocated).</summary>
-        public WorkGroupTimeByJobCodeSummary Summary { get; set; } = new();
+        public WgSummarisedStaffTimeUsageSummary Summary { get; set; } = new();
     }
 }

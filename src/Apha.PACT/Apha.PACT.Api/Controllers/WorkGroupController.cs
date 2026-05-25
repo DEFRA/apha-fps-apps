@@ -92,7 +92,7 @@ namespace Apha.PACT.Api.Controllers
         /// <param name="query">Pagination and sort parameters.</param>
         /// <param name="workGroup">Work group name to filter results by.</param>
         /// <returns>
-        /// <c>200 OK</c> with a <see cref="WorkGroupTimeByJobCodeRes"/> containing paged rows and
+        /// <c>200 OK</c> with a <see cref="WgSummarisedStaffTimeUsageRes"/> containing paged rows and
         /// pre-computed footer summary.
         /// </returns>
         [HttpGet("timeusage")]
@@ -101,7 +101,7 @@ namespace Apha.PACT.Api.Controllers
             [FromQuery] string workGroup)
         {
             var result = await _service.GetWgSummarisedStaffTimeUsageAsync(query, workGroup);
-            return Ok(_mapper.Map<WorkGroupTimeByJobCodeRes>(result));
+            return Ok(_mapper.Map<WgSummarisedStaffTimeUsageRes>(result));
         }
     }
 }

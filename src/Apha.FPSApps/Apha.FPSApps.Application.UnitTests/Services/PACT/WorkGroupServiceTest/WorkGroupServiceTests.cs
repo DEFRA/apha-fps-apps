@@ -410,13 +410,13 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupServiceTest
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var dto = new WorkGroupTimeByJobCodeDto
+            var dto = new WgSummarisedStaffTimeUsageDto
             {
                 Rows    = [new() { ParentProject = "PP1", JobCode = "JC1", April = 10.0 }],
-                Summary = new WorkGroupTimeByJobCodeSummaryDto { GrandTotalTime = 10.0, StandardHoursPerMonth = 10.0 },
+                Summary = new WgSummarisedStaffTimeUsageSummaryDto { GrandTotalTime = 10.0, StandardHoursPerMonth = 10.0 },
                 HrsPaid = 120.0
             };
-            var expectedResponse = ApiResponseDto<WorkGroupTimeByJobCodeDto>.SuccessResponse(dto);
+            var expectedResponse = ApiResponseDto<WgSummarisedStaffTimeUsageDto>.SuccessResponse(dto);
             _pactWorkGroupApiClient.GetWgSummarisedStaffTimeUsageAsync(query, "WG1").Returns(expectedResponse);
 
             // Act
@@ -440,7 +440,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupServiceTest
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 2, PageSize = 5, SortBy = "JobCode" };
-            var expectedResponse = ApiResponseDto<WorkGroupTimeByJobCodeDto>.SuccessResponse(new WorkGroupTimeByJobCodeDto());
+            var expectedResponse = ApiResponseDto<WgSummarisedStaffTimeUsageDto>.SuccessResponse(new WgSummarisedStaffTimeUsageDto());
             _pactWorkGroupApiClient.GetWgSummarisedStaffTimeUsageAsync(query, "WG_ALPHA").Returns(expectedResponse);
 
             // Act
@@ -457,8 +457,8 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupServiceTest
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var dto = new WorkGroupTimeByJobCodeDto { Rows = [], HrsPaid = 0 };
-            var expectedResponse = ApiResponseDto<WorkGroupTimeByJobCodeDto>.SuccessResponse(dto);
+            var dto = new WgSummarisedStaffTimeUsageDto { Rows = [], HrsPaid = 0 };
+            var expectedResponse = ApiResponseDto<WgSummarisedStaffTimeUsageDto>.SuccessResponse(dto);
             _pactWorkGroupApiClient.GetWgSummarisedStaffTimeUsageAsync(query, "WG1").Returns(expectedResponse);
 
             // Act
@@ -477,7 +477,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupServiceTest
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "API_ERROR" } };
-            var expectedResponse = ApiResponseDto<WorkGroupTimeByJobCodeDto>.FailureResponse(errors, new ApiMetaDto());
+            var expectedResponse = ApiResponseDto<WgSummarisedStaffTimeUsageDto>.FailureResponse(errors, new ApiMetaDto());
             _pactWorkGroupApiClient.GetWgSummarisedStaffTimeUsageAsync(query, "WG1").Returns(expectedResponse);
 
             // Act
@@ -571,7 +571,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupServiceTest
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var dto = new WorkGroupTimeByJobCodeDto
+            var dto = new WgSummarisedStaffTimeUsageDto
             {
                 Rows =
                 [
@@ -581,7 +581,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupServiceTest
                 ],
                 HrsPaid = 120.0
             };
-            var expectedResponse = ApiResponseDto<WorkGroupTimeByJobCodeDto>.SuccessResponse(dto);
+            var expectedResponse = ApiResponseDto<WgSummarisedStaffTimeUsageDto>.SuccessResponse(dto);
             _pactWorkGroupApiClient.GetWgSummarisedStaffTimeUsageAsync(query, "WG1").Returns(expectedResponse);
 
             // Act
@@ -599,8 +599,8 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupServiceTest
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var dto = new WorkGroupTimeByJobCodeDto { HrsPaid = 180.0 };
-            var expectedResponse = ApiResponseDto<WorkGroupTimeByJobCodeDto>.SuccessResponse(dto);
+            var dto = new WgSummarisedStaffTimeUsageDto { HrsPaid = 180.0 };
+            var expectedResponse = ApiResponseDto<WgSummarisedStaffTimeUsageDto>.SuccessResponse(dto);
             _pactWorkGroupApiClient.GetWgSummarisedStaffTimeUsageAsync(query, "WG1").Returns(expectedResponse);
 
             // Act
@@ -617,16 +617,16 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupServiceTest
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var dto = new WorkGroupTimeByJobCodeDto
+            var dto = new WgSummarisedStaffTimeUsageDto
             {
-                Summary = new WorkGroupTimeByJobCodeSummaryDto
+                Summary = new WgSummarisedStaffTimeUsageSummaryDto
                 {
                     GrandTotalTime             = 200.0,
                     StandardHoursPerMonth      = 10.0,
                     GrandTotalPercentAllocated = 75.0
                 }
             };
-            var expectedResponse = ApiResponseDto<WorkGroupTimeByJobCodeDto>.SuccessResponse(dto);
+            var expectedResponse = ApiResponseDto<WgSummarisedStaffTimeUsageDto>.SuccessResponse(dto);
             _pactWorkGroupApiClient.GetWgSummarisedStaffTimeUsageAsync(query, "WG1").Returns(expectedResponse);
 
             // Act
@@ -645,8 +645,8 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupServiceTest
         {
             // Arrange — verify the service forwards the exact ApiResponseDto returned by the client
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var dto = new WorkGroupTimeByJobCodeDto { HrsPaid = 60.0 };
-            var expectedResponse = ApiResponseDto<WorkGroupTimeByJobCodeDto>.SuccessResponse(dto);
+            var dto = new WgSummarisedStaffTimeUsageDto { HrsPaid = 60.0 };
+            var expectedResponse = ApiResponseDto<WgSummarisedStaffTimeUsageDto>.SuccessResponse(dto);
             _pactWorkGroupApiClient.GetWgSummarisedStaffTimeUsageAsync(query, "WG1").Returns(expectedResponse);
 
             // Act

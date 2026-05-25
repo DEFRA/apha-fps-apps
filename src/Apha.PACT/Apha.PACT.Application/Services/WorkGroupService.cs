@@ -2,7 +2,6 @@ using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Interfaces;
 using Apha.PACT.Application.Pagination;
 using Apha.PACT.Application.Validation;
-using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
 using AutoMapper;
@@ -43,13 +42,14 @@ namespace Apha.PACT.Application.Services
             return _mapper.Map<PaginatedResult<WorkGroupValidTimeCodeDto>>(pagedData);
         }
 
-        public async Task<WorkGroupTimeByJobCodeDto> GetWgSummarisedStaffTimeUsageAsync(
+        public async Task<WgSummarisedStaffTimeUsageDto> GetWgSummarisedStaffTimeUsageAsync(
             QueryParameters<string> query, string workGroup)
         {
             ValidateWorkGroup(workGroup);
 
-            var staffTimeUsageEntries = await _repository.GetWgSummarisedStaffTimeUsageAsync(workGroup);
-            
+            var rawEntries = await _repository.GetWgSummarisedStaffTimeUsageAsync(workGroup);
+            var staffTimeUsageEntries = _mapper.Map<IEnumerable<WgSummarisedStaffTimeUsageEntryDto>>(rawEntries);
+
             // Derive HrsPaid: sum across all distinct people in the work group (mirrors Access FormHeader HrsPaid)
             var hrsPaid = staffTimeUsageEntries
                 .GroupBy(e => e.Name)
@@ -72,7 +72,7 @@ namespace Apha.PACT.Application.Services
                 .Take(pageSize)
                 .ToList();
 
-            return new WorkGroupTimeByJobCodeDto
+            return new WgSummarisedStaffTimeUsageDto
             {
                 Rows    = pagedRows,
                 Summary = summary,
@@ -87,12 +87,8 @@ namespace Apha.PACT.Application.Services
             };
         }
 
-        /// <summary>
-        /// Groups view entries by ParentProject / JobCode and pivots hours into monthly columns,
-        /// replicating the Detail section of frmCluedo1 (qryfrmCluedo1).
-        /// </summary>
-        private static List<WorkGroupTimeByJobCodeRowDto> BuildRows(
-            IEnumerable<WgSummarisedStaffTimeUsageView> staffTimeUsageEntries)
+        private static List<WgSummarisedStaffTimeUsageRowDto> BuildRows(
+            IEnumerable<WgSummarisedStaffTimeUsageEntryDto> staffTimeUsageEntries)
         {
             return staffTimeUsageEntries
                 .GroupBy(e => new { e.ParentProject, e.JobCode })
@@ -101,7 +97,7 @@ namespace Apha.PACT.Application.Services
                     double HoursForMonth(string monthName) =>
                         g.Where(e => e.MonthName!.ToLower() == monthName.ToLower()).Sum(e => e.TotalTime ?? 0);
 
-                    return new WorkGroupTimeByJobCodeRowDto
+                    return new WgSummarisedStaffTimeUsageRowDto
                     {
                         ParentProject = g.Key.ParentProject,
                         JobCode = g.Key.JobCode,
@@ -138,8 +134,8 @@ namespace Apha.PACT.Application.Services
         ///   Field66  = sum of all 12 standard-hours fields        → total standard hours
         ///   Field80  = [field51] / [field66]                     → overall %
         /// </summary>
-        private static WorkGroupTimeByJobCodeSummaryDto BuildSummary(
-            IReadOnlyList<WorkGroupTimeByJobCodeRowDto> rows, double standardHoursPerMonth)
+        private static WgSummarisedStaffTimeUsageSummaryDto BuildSummary(
+            IReadOnlyList<WgSummarisedStaffTimeUsageRowDto> rows, double standardHoursPerMonth)
         {
             var totalHoursApril = rows.Sum(r => r.April);
             var totalHoursMay = rows.Sum(r => r.May);
@@ -168,7 +164,7 @@ namespace Apha.PACT.Application.Services
                 return standardHours == 0 ? 0 : Math.Round(totalHoursInMonth / standardHours * 100, 1);
             }
 
-            return new WorkGroupTimeByJobCodeSummaryDto
+            return new WgSummarisedStaffTimeUsageSummaryDto
             {
                 TotalApril = totalHoursApril,
                 TotalMay = totalHoursMay,

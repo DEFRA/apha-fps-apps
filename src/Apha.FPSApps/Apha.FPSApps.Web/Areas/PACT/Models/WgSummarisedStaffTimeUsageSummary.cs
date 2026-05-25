@@ -4,7 +4,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
     /// Pre-computed footer totals for the Work Group Time By Job Code view.
     /// Populated from the service layer — no calculation in the view.
     /// </summary>
-    public class WorkGroupTimeByJobCodeSummary
+    public class WgSummarisedStaffTimeUsageSummary
     {
         // Row 1 — Total time per month
         public double TotalApril            { get; set; }

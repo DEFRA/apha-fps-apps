@@ -8,7 +8,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
     /// showing hours recorded against each of the 12 fiscal-year months (April – March),
     /// along with totals and percentages of standard hours. Mirrors the legacy frmCluedo1 form.
     /// </summary>
-    public class WorkGroupTimeByJobCodeRow
+    public class WgSummarisedStaffTimeUsageRow
     {
         //[Display(Name = "Work Group")]
         //[GridColumn(Order = 1, Width = 120, Type = GridColumnType.Text, IsFilterable = true)]

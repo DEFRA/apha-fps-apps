@@ -5,7 +5,7 @@ namespace Apha.FPSApps.Application.Dtos.PACT
     /// with hours recorded against each of the 12 fiscal-year months (April – March).
     /// Mirrors the data shown in the legacy MS-Access form frmCluedo1.
     /// </summary>
-    public class WorkGroupTimeByJobCodeRowDto
+    public class WgSummarisedStaffTimeUsageRowDto
     {
         public string? ParentProject { get; set; }
         public string? JobCode { get; set; }
@@ -29,7 +29,7 @@ namespace Apha.FPSApps.Application.Dtos.PACT
     }
 
     /// <summary>Pre-computed footer totals passed from the PACT API.</summary>
-    public class WorkGroupTimeByJobCodeSummaryDto
+    public class WgSummarisedStaffTimeUsageSummaryDto
     {
         public double TotalApril            { get; set; }
         public double TotalMay              { get; set; }
@@ -63,10 +63,10 @@ namespace Apha.FPSApps.Application.Dtos.PACT
     }
 
     /// <summary>Wrapper containing rows and pre-computed footer summary.</summary>
-    public class WorkGroupTimeByJobCodeDto
+    public class WgSummarisedStaffTimeUsageDto
     {
-        public IEnumerable<WorkGroupTimeByJobCodeRowDto> Rows    { get; set; } = [];
-        public WorkGroupTimeByJobCodeSummaryDto          Summary { get; set; } = new();
+        public IEnumerable<WgSummarisedStaffTimeUsageRowDto> Rows    { get; set; } = [];
+        public WgSummarisedStaffTimeUsageSummaryDto          Summary { get; set; } = new();
         public Apha.FPSApps.Application.Dtos.PaginationDto Pagination { get; set; } = new();
         public double                               HrsPaid    { get; set; }
     }

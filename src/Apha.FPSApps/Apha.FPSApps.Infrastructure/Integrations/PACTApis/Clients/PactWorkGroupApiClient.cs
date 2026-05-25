@@ -63,18 +63,18 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             return ApiResponseDto<List<WorkGroupValidTimeCodeDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
 
-        public async Task<ApiResponseDto<WorkGroupTimeByJobCodeDto>> GetWgSummarisedStaffTimeUsageAsync(
+        public async Task<ApiResponseDto<WgSummarisedStaffTimeUsageDto>> GetWgSummarisedStaffTimeUsageAsync(
             QueryParameters<string> query, string workGroup)
         {
             var url = QueryStringHelper.AddQueryString(PactApiEndpoints.GetWgSummarisedStaffTimeUsage, query);
             url += $"&workGroup={Uri.EscapeDataString(workGroup)}";
 
-            var response = await _http.GetAsync<WorkGroupTimeByJobCodeRes>(url);
+            var response = await _http.GetAsync<WgSummarisedStaffTimeUsageRes>(url);
             if (response.Success)
-                return _mapper.Map<ApiResponseDto<WorkGroupTimeByJobCodeDto>>(response);
+                return _mapper.Map<ApiResponseDto<WgSummarisedStaffTimeUsageDto>>(response);
 
-            var failureResponse = _mapper.Map<ApiResponseDto<WorkGroupTimeByJobCodeDto>>(response);
-            return ApiResponseDto<WorkGroupTimeByJobCodeDto>.FailureResponse(failureResponse.Errors, failureResponse.Meta);
+            var failureResponse = _mapper.Map<ApiResponseDto<WgSummarisedStaffTimeUsageDto>>(response);
+            return ApiResponseDto<WgSummarisedStaffTimeUsageDto>.FailureResponse(failureResponse.Errors, failureResponse.Meta);
         }
     }
 }

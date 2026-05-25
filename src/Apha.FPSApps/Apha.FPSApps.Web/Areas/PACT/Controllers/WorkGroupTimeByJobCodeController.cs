@@ -35,7 +35,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// <param name="personName">Person name passed in from the Work Group People page; stored on
         /// the view model so the view can pre-select the correct person.</param>
         /// <returns>
-        /// A <see cref="ViewResult"/> containing a <see cref="WorkGroupTimeByJobCodeViewModel"/>
+        /// A <see cref="ViewResult"/> containing a <see cref="WgSummarisedStaffTimeUsageViewModel"/>
         /// with the populated grid, summary footer, and header fields.
         /// </returns>
         public async Task<IActionResult> Index(string workGroup, string personName)
@@ -43,7 +43,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var query    = _mapper.Map<QueryParameters<string>>(new PaginationFilter<string> { Filter = "{}" });
             var response = await _workGroupService.GetWgSummarisedStaffTimeUsageAsync(query, workGroup);
 
-            return View(new WorkGroupTimeByJobCodeViewModel
+            return View(new WgSummarisedStaffTimeUsageViewModel
             {
                 SelectedWorkGroup  = workGroup,
                 SelectedPersonName = personName,
@@ -65,7 +65,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// Must not be <see langword="null"/>, empty, or whitespace.</param>
         /// <returns>
         /// A <see cref="PartialViewResult"/> rendering the <c>_DataGrid</c> partial with an updated
-        /// <see cref="DataGridConfig{WorkGroupTimeByJobCodeRow}"/> model.
+        /// <see cref="DataGridConfig{WgSummarisedStaffTimeUsageRow}"/> model.
         /// </returns>
         /// <exception cref="ArgumentException">
         /// Thrown when <paramref name="workGroup"/> is <see langword="null"/>, empty, or whitespace.
@@ -82,7 +82,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         }
 
         /// <summary>
-        /// Builds a <see cref="DataGridConfig{WorkGroupTimeByJobCodeRow}"/> from the service response.
+        /// Builds a <see cref="DataGridConfig{WgSummarisedStaffTimeUsageRow}"/> from the service response.
         /// When the response indicates failure or contains no data, the default empty grid configuration
         /// is returned immediately. On success, the response rows are mapped to view-model rows and the
         /// pagination model is populated from the response metadata together with the supplied sort state.
@@ -91,11 +91,11 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// <param name="sortBy">The column name to sort by, or <see langword="null"/> if no sort is active.</param>
         /// <param name="descending"><see langword="true"/> for a descending sort; <see langword="false"/> for ascending.</param>
         /// <returns>
-        /// A fully populated <see cref="DataGridConfig{WorkGroupTimeByJobCodeRow}"/>, or a default
+        /// A fully populated <see cref="DataGridConfig{WgSummarisedStaffTimeUsageRow}"/>, or a default
         /// empty configuration when <paramref name="response"/> is unsuccessful or has no data.
         /// </returns>
-        private DataGridConfig<WorkGroupTimeByJobCodeRow> MapToGridConfig(
-            ApiResponseDto<WorkGroupTimeByJobCodeDto> response,
+        private DataGridConfig<WgSummarisedStaffTimeUsageRow> MapToGridConfig(
+            ApiResponseDto<WgSummarisedStaffTimeUsageDto> response,
             string? sortBy,
             bool descending)
         {
@@ -104,7 +104,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             if (!response.Success || response.Data is null)
                 return grid;
 
-            grid.Data       = _mapper.Map<List<WorkGroupTimeByJobCodeRow>>(response.Data.Rows);
+            grid.Data       = _mapper.Map<List<WgSummarisedStaffTimeUsageRow>>(response.Data.Rows);
             grid.Pagination = new PaginationModel
             {
                 TotalRecords  = response.Data.Pagination.TotalRecords,
@@ -118,30 +118,30 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         }
 
         /// <summary>
-        /// Maps the service response to the <see cref="WorkGroupTimeByJobCodeSummary"/> footer model.
+        /// Maps the service response to the <see cref="WgSummarisedStaffTimeUsageSummary"/> footer model.
         /// Returns a default (zero-valued) summary when the response is unsuccessful or contains no data,
         /// mirroring the three-row footer of the legacy MS-Access form frmCluedo1.
         /// </summary>
         /// <param name="response">The API response whose <c>Summary</c> property is mapped to the view model.</param>
         /// <returns>
-        /// A mapped <see cref="WorkGroupTimeByJobCodeSummary"/> on success, or a new default instance
+        /// A mapped <see cref="WgSummarisedStaffTimeUsageSummary"/> on success, or a new default instance
         /// when <paramref name="response"/> is unsuccessful or its data is <see langword="null"/>.
         /// </returns>
-        private WorkGroupTimeByJobCodeSummary MapToSummary(ApiResponseDto<WorkGroupTimeByJobCodeDto> response)
+        private WgSummarisedStaffTimeUsageSummary MapToSummary(ApiResponseDto<WgSummarisedStaffTimeUsageDto> response)
         {
             return response.Success && response.Data is not null
-                ? _mapper.Map<WorkGroupTimeByJobCodeSummary>(response.Data.Summary)
-                : new WorkGroupTimeByJobCodeSummary();
+                ? _mapper.Map<WgSummarisedStaffTimeUsageSummary>(response.Data.Summary)
+                : new WgSummarisedStaffTimeUsageSummary();
         }
 
         /// <summary>
-        /// Returns the static <see cref="DataGridConfig{WorkGroupTimeByJobCodeRow}"/> skeleton shared by
+        /// Returns the static <see cref="DataGridConfig{WgSummarisedStaffTimeUsageRow}"/> skeleton shared by
         /// both <see cref="Index"/> and <see cref="LoadGrid"/>. The configuration defines the grid identity,
         /// bound URL, column definitions, and interaction flags; it intentionally contains no data or
         /// pagination state so callers can populate those fields independently.
         /// </summary>
-        /// <returns>A new <see cref="DataGridConfig{WorkGroupTimeByJobCodeRow}"/> with static configuration applied.</returns>
-        private static DataGridConfig<WorkGroupTimeByJobCodeRow> TimeByJobCodeGridConfig() => new()
+        /// <returns>A new <see cref="DataGridConfig{WgSummarisedStaffTimeUsageRow}"/> with static configuration applied.</returns>
+        private static DataGridConfig<WgSummarisedStaffTimeUsageRow> TimeByJobCodeGridConfig() => new()
         {
             GridId            = "timeUsageGrid",
             Title             = string.Empty,
@@ -153,7 +153,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             AllowDelete       = false,
             AllowRowSelection = false,
             ShowPagination    = true,
-            Columns           = GridDataProvider.GetColumnsDefination<WorkGroupTimeByJobCodeRow>()
+            Columns           = GridDataProvider.GetColumnsDefination<WgSummarisedStaffTimeUsageRow>()
         };
     }
 }
