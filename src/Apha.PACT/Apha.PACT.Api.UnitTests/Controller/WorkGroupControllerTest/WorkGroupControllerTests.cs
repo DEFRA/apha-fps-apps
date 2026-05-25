@@ -239,5 +239,255 @@ namespace Apha.PACT.Api.UnitTests.Controller.WorkGroupControllerTest
         }
 
         #endregion
+
+        #region GetWgSummarisedStaffTimeUsage
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsage_HappyPath_ReturnsOkWithMappedResult()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var serviceResult = new WorkGroupTimeByJobCodeDto
+            {
+                Rows    = [new() { ParentProject = "PP1", JobCode = "JC1" }],
+                Summary = new WorkGroupTimeByJobCodeSummaryDto { GrandTotalTime = 100.0 },
+                HrsPaid = 120.0
+            };
+            var mapped = new WorkGroupTimeByJobCodeRes
+            {
+                Rows    = [new() { ParentProject = "PP1", JobCode = "JC1" }],
+                Summary = new WorkGroupTimeByJobCodeSummaryRes { GrandTotalTime = 100.0 },
+                HrsPaid = 120.0
+            };
+
+            _serviceMock.GetWgSummarisedStaffTimeUsageAsync(query, "WG1").Returns(serviceResult);
+            _mapperMock.Map<WorkGroupTimeByJobCodeRes>(serviceResult).Returns(mapped);
+
+            // Act
+            var result = await _controller.GetWgSummarisedStaffTimeUsage(query, "WG1");
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(mapped, okResult.Value);
+            await _serviceMock.Received(1).GetWgSummarisedStaffTimeUsageAsync(query, "WG1");
+            _mapperMock.Received(1).Map<WorkGroupTimeByJobCodeRes>(serviceResult);
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsage_EmptyRows_ReturnsOkWithEmptyRowsCollection()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var serviceResult = new WorkGroupTimeByJobCodeDto { Rows = [], HrsPaid = 0 };
+            var mapped = new WorkGroupTimeByJobCodeRes { Rows = [], HrsPaid = 0 };
+
+            _serviceMock.GetWgSummarisedStaffTimeUsageAsync(query, "WG1").Returns(serviceResult);
+            _mapperMock.Map<WorkGroupTimeByJobCodeRes>(serviceResult).Returns(mapped);
+
+            // Act
+            var result = await _controller.GetWgSummarisedStaffTimeUsage(query, "WG1");
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var returnValue = Assert.IsType<WorkGroupTimeByJobCodeRes>(okResult.Value);
+            Assert.Empty(returnValue.Rows);
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsage_PassesQueryAndWorkGroupToService()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 2, PageSize = 5, SortBy = "JobCode" };
+            var serviceResult = new WorkGroupTimeByJobCodeDto();
+            var mapped = new WorkGroupTimeByJobCodeRes();
+
+            _serviceMock.GetWgSummarisedStaffTimeUsageAsync(query, "WG_ALPHA").Returns(serviceResult);
+            _mapperMock.Map<WorkGroupTimeByJobCodeRes>(serviceResult).Returns(mapped);
+
+            // Act
+            await _controller.GetWgSummarisedStaffTimeUsage(query, "WG_ALPHA");
+
+            // Assert
+            await _serviceMock.Received(1).GetWgSummarisedStaffTimeUsageAsync(query, "WG_ALPHA");
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsage_PassesServiceResultToMapper()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var serviceResult = new WorkGroupTimeByJobCodeDto { HrsPaid = 240.0 };
+            var mapped = new WorkGroupTimeByJobCodeRes { HrsPaid = 240.0 };
+
+            _serviceMock.GetWgSummarisedStaffTimeUsageAsync(query, "WG1").Returns(serviceResult);
+            _mapperMock.Map<WorkGroupTimeByJobCodeRes>(serviceResult).Returns(mapped);
+
+            // Act
+            await _controller.GetWgSummarisedStaffTimeUsage(query, "WG1");
+
+            // Assert
+            _mapperMock.Received(1).Map<WorkGroupTimeByJobCodeRes>(serviceResult);
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsage_ReturnedDtoContainsHrsPaid()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var serviceResult = new WorkGroupTimeByJobCodeDto { HrsPaid = 180.0 };
+            var mapped = new WorkGroupTimeByJobCodeRes { HrsPaid = 180.0 };
+
+            _serviceMock.GetWgSummarisedStaffTimeUsageAsync(query, "WG1").Returns(serviceResult);
+            _mapperMock.Map<WorkGroupTimeByJobCodeRes>(serviceResult).Returns(mapped);
+
+            // Act
+            var result = await _controller.GetWgSummarisedStaffTimeUsage(query, "WG1");
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var returnValue = Assert.IsType<WorkGroupTimeByJobCodeRes>(okResult.Value);
+            Assert.Equal(180.0, returnValue.HrsPaid);
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsage_ReturnedDtoContainsSummary()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var serviceResult = new WorkGroupTimeByJobCodeDto
+            {
+                Summary = new WorkGroupTimeByJobCodeSummaryDto
+                {
+                    GrandTotalTime           = 200.0,
+                    StandardHoursPerMonth    = 10.0,
+                    GrandTotalPercentAllocated = 75.0
+                }
+            };
+            var mapped = new WorkGroupTimeByJobCodeRes
+            {
+                Summary = new WorkGroupTimeByJobCodeSummaryRes
+                {
+                    GrandTotalTime           = 200.0,
+                    StandardHoursPerMonth    = 10.0,
+                    GrandTotalPercentAllocated = 75.0
+                }
+            };
+
+            _serviceMock.GetWgSummarisedStaffTimeUsageAsync(query, "WG1").Returns(serviceResult);
+            _mapperMock.Map<WorkGroupTimeByJobCodeRes>(serviceResult).Returns(mapped);
+
+            // Act
+            var result = await _controller.GetWgSummarisedStaffTimeUsage(query, "WG1");
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var returnValue = Assert.IsType<WorkGroupTimeByJobCodeRes>(okResult.Value);
+            Assert.Equal(200.0, returnValue.Summary.GrandTotalTime);
+            Assert.Equal(10.0,  returnValue.Summary.StandardHoursPerMonth);
+            Assert.Equal(75.0,  returnValue.Summary.GrandTotalPercentAllocated);
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsage_ServiceThrows_PropagatesException()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+
+            _serviceMock.GetWgSummarisedStaffTimeUsageAsync(query, Arg.Any<string>())
+                        .ThrowsAsync(new Exception("Service error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(
+                () => _controller.GetWgSummarisedStaffTimeUsage(query, "WG1"));
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsage_ServiceThrowsBusinessValidation_PropagatesException()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+
+            _serviceMock.GetWgSummarisedStaffTimeUsageAsync(query, Arg.Any<string>())
+                        .ThrowsAsync(new InvalidOperationException("Validation error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => _controller.GetWgSummarisedStaffTimeUsage(query, "WG1"));
+
+            _mapperMock.DidNotReceiveWithAnyArgs().Map<WorkGroupTimeByJobCodeRes>(default!);
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsage_MapperThrows_PropagatesException()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var serviceResult = new WorkGroupTimeByJobCodeDto();
+
+            _serviceMock.GetWgSummarisedStaffTimeUsageAsync(query, "WG1").Returns(serviceResult);
+            _mapperMock.Map<WorkGroupTimeByJobCodeRes>(serviceResult)
+                       .Throws(new AutoMapperMappingException("Mapping error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<AutoMapperMappingException>(
+                () => _controller.GetWgSummarisedStaffTimeUsage(query, "WG1"));
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsage_ReturnsOkStatusCode()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var serviceResult = new WorkGroupTimeByJobCodeDto();
+            var mapped = new WorkGroupTimeByJobCodeRes();
+
+            _serviceMock.GetWgSummarisedStaffTimeUsageAsync(query, "WG1").Returns(serviceResult);
+            _mapperMock.Map<WorkGroupTimeByJobCodeRes>(serviceResult).Returns(mapped);
+
+            // Act
+            var result = await _controller.GetWgSummarisedStaffTimeUsage(query, "WG1");
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(200, okResult.StatusCode);
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsage_MultipleRows_AllRowsReturnedInResult()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var serviceResult = new WorkGroupTimeByJobCodeDto
+            {
+                Rows =
+                [
+                    new() { ParentProject = "PP1", JobCode = "JC1", April = 10.0 },
+                    new() { ParentProject = "PP1", JobCode = "JC2", April = 5.0  },
+                    new() { ParentProject = "PP2", JobCode = "JC1", April = 8.0  }
+                ]
+            };
+            var mapped = new WorkGroupTimeByJobCodeRes
+            {
+                Rows =
+                [
+                    new() { ParentProject = "PP1", JobCode = "JC1", April = 10.0 },
+                    new() { ParentProject = "PP1", JobCode = "JC2", April = 5.0  },
+                    new() { ParentProject = "PP2", JobCode = "JC1", April = 8.0  }
+                ]
+            };
+
+            _serviceMock.GetWgSummarisedStaffTimeUsageAsync(query, "WG1").Returns(serviceResult);
+            _mapperMock.Map<WorkGroupTimeByJobCodeRes>(serviceResult).Returns(mapped);
+
+            // Act
+            var result = await _controller.GetWgSummarisedStaffTimeUsage(query, "WG1");
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var returnValue = Assert.IsType<WorkGroupTimeByJobCodeRes>(okResult.Value);
+            Assert.Equal(3, returnValue.Rows.Count());
+        }
+
+        #endregion
     }
 }

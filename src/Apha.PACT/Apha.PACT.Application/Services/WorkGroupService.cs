@@ -48,11 +48,10 @@ namespace Apha.PACT.Application.Services
         {
             ValidateWorkGroup(workGroup);
 
-            var entries = await _repository.GetWgSummarisedStaffTimeUsageAsync(workGroup);
-            var entryList = entries.ToList();
-
+            var staffTimeUsageEntries = await _repository.GetWgSummarisedStaffTimeUsageAsync(workGroup);
+            
             // Derive HrsPaid: sum across all distinct people in the work group (mirrors Access FormHeader HrsPaid)
-            var hrsPaid = entryList
+            var hrsPaid = staffTimeUsageEntries
                 .GroupBy(e => e.Name)
                 .Select(g => g.First())
                 .Sum(e => e.HrsPaid ?? 0);
@@ -60,7 +59,7 @@ namespace Apha.PACT.Application.Services
             var standardHoursPerMonth = hrsPaid > 0 ? hrsPaid / 12.0 : 0;
 
             // Build ALL rows first — summary must reflect the full dataset, not just the current page
-            var allRows = BuildRows(entryList);
+            var allRows = BuildRows(staffTimeUsageEntries);
             var summary = BuildSummary(allRows, standardHoursPerMonth);
 
             // Paginate rows after summary is computed
@@ -93,14 +92,14 @@ namespace Apha.PACT.Application.Services
         /// replicating the Detail section of frmCluedo1 (qryfrmCluedo1).
         /// </summary>
         private static List<WorkGroupTimeByJobCodeRowDto> BuildRows(
-            IEnumerable<WgSummarisedStaffTimeUsageView> entries)
+            IEnumerable<WgSummarisedStaffTimeUsageView> staffTimeUsageEntries)
         {
-            return entries
+            return staffTimeUsageEntries
                 .GroupBy(e => new { e.ParentProject, e.JobCode })
                 .Select(g =>
                 {
                     double HoursForMonth(string monthName) =>
-                        g.Where(e => e.MonthName == monthName).Sum(e => e.TotalTime ?? 0);
+                        g.Where(e => e.MonthName!.ToLower() == monthName.ToLower()).Sum(e => e.TotalTime ?? 0);
 
                     return new WorkGroupTimeByJobCodeRowDto
                     {

@@ -73,8 +73,8 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<WorkGroupTimeByJobCodeDto>>(response);
 
-            var dto = _mapper.Map<ApiResponseDto<WorkGroupTimeByJobCodeDto>>(response);
-            return ApiResponseDto<WorkGroupTimeByJobCodeDto>.FailureResponse(dto.Errors, dto.Meta);
+            var failureResponse = _mapper.Map<ApiResponseDto<WorkGroupTimeByJobCodeDto>>(response);
+            return ApiResponseDto<WorkGroupTimeByJobCodeDto>.FailureResponse(failureResponse.Errors, failureResponse.Meta);
         }
     }
 }

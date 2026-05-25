@@ -1,3 +1,5 @@
+using Apha.PACT.Application.Pagination;
+
 namespace Apha.PACT.Application.Dtos
 {
     /// <summary>
@@ -81,7 +83,7 @@ namespace Apha.PACT.Application.Dtos
     {
         public IEnumerable<WorkGroupTimeByJobCodeRowDto> Rows    { get; set; } = [];
         public WorkGroupTimeByJobCodeSummaryDto          Summary { get; set; } = new();
-        public Apha.PACT.Application.Pagination.PaginationDto Pagination { get; set; } = new();
+        public PaginationDto Pagination { get; set; } = new();
 
         /// <summary>Total HrsPaid
         public double HrsPaid { get; set; }
