@@ -1,8 +1,0 @@
-QUERY NAME: qrySMG_ResourceSum
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tblkpProfitCentre.ProfitCentre, tblkpProfitCentre.CONTTARGET, qryTotalRAnimalCosts.AnimalCosts, qryTotalRStaffCosts.TotalStaffCosts AS StaffCosts, qryTotalRBids.SumOfGenBid AS GenBids, IIf(IsNull([SumOfItemCost]),0,[SumOfItemCost]) AS ProjSpecificCosts
-FROM (((tblkpProfitCentre LEFT JOIN qryTotalRAnimalCosts ON tblkpProfitCentre.ProfitCentre = qryTotalRAnimalCosts.ProfitCentre) LEFT JOIN qryTotalRBids ON tblkpProfitCentre.ProfitCentre = qryTotalRBids.ProfitCentre) LEFT JOIN qryTotalRStaffCosts ON tblkpProfitCentre.ProfitCentre = qryTotalRStaffCosts.ProfitCentre) LEFT JOIN qryPCTotalExceptCosts ON tblkpProfitCentre.ProfitCentre = qryPCTotalExceptCosts.ProfitCentre;
-

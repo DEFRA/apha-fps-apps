@@ -1,9 +1,0 @@
-QUERY NAME: qrySingleProjectSummary
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tblProject.Project, tblProject.PlanCat, tblProject.ProjectTitle, tblProject.ProjectWorkGroup, tblProject.ContractPrice, tblProject.StartDate, tblProject.Disease, tblProject.StartFYear, tblProject.[Customer Name], tblProject.[Contract Number], tblProject.[Submitted by], tblProject.[Date of Submission], tblProject.[Prepared by]
-FROM tblProject
-WHERE ((tblProject.Project=[Forms]![frmProject1]![Project]));
-

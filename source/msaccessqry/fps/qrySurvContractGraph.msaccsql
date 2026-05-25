@@ -1,9 +1,0 @@
-QUERY NAME: qrySurvContractGraph
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW ProjectMonthFinal.MonthNo, tblkpMonth.MonthName, Sum(tlkpProject_MAP.Budget_CVL) AS Budget, Sum(([CumCost]+IIf(IsNull([CumCWDebit]),0,[CumCWDebit]))) AS Cost, IIf([monthNo]<=[Forms]![frmPactReportMenu]![PeriodPick],Sum([CumInvoices]+IIf(IsNull([CumCWCredit]),0,[CumCWCredit])),Null) AS Income, tlkpProject_MAP.Contract
-FROM (ProjectMonthFinal INNER JOIN tlkpProject_MAP ON ProjectMonthFinal.Project = tlkpProject_MAP.ParentProject) INNER JOIN tblkpMonth ON ProjectMonthFinal.MonthNo = tblkpMonth.MonthNumber
-GROUP BY ProjectMonthFinal.MonthNo, tblkpMonth.MonthName, tlkpProject_MAP.Contract;
-

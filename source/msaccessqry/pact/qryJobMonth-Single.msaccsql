@@ -1,7 +1,0 @@
-QUERY NAME: qryJobMonth-Single
----------------------------------------------
-TYPE: OTHER
-
-SQL:
-sp_qryJobMonth_Single
-

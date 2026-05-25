@@ -1,9 +1,0 @@
-QUERY NAME: qryRadtrackProjectYearColours
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT MY_tlkpProjectRadTrackData.Year, MY_tlkpProjectRadTrackData.Project, tblImages.Image AS Pink, tblImages.ImageID, tblImages_1.Image AS Green, tblImages_1.ImageID, IIf([SeedcornChanged],[pink],[green]) AS SeedCornColour, IIf([ManHoursChanged],[pink],[green]) AS ManHoursColour, IIf([TimeCostsChanged],[pink],[green]) AS TimeCostsColour, IIf([TestCostsChanged],[pink],[green]) AS TestCostsColour, IIf([AnimalCostsChanged],[pink],[green]) AS AnimalCostsColour, IIf([NonAnimalCostsChanged],[pink],[green]) AS NonAnimalCostsColour
-FROM MY_tlkpProjectRadTrackData, tblImages, tblImages AS tblImages_1
-WHERE (((tblImages.ImageID)=0) AND ((tblImages_1.ImageID)=-1));
-

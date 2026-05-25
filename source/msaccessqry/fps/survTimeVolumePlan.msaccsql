@@ -1,9 +1,0 @@
-QUERY NAME: survTimeVolumePlan
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tblStaffJob.Jobcode, Sum([plannedhours]*[chargerate]) AS TimeFee
-FROM ((tblStaffJob INNER JOIN tblStaff ON tblStaffJob.StaffID = tblStaff.StaffID) INNER JOIN WorkGroupGrade_MAP ON tblStaff.WorkGroupGrade = WorkGroupGrade_MAP.WGGrade) INNER JOIN ProfitCentreGrade_MAP ON WorkGroupGrade_MAP.ProfitCentreGrade = ProfitCentreGrade_MAP.PCGrade
-GROUP BY tblStaffJob.Jobcode;
-

@@ -1,9 +1,0 @@
-QUERY NAME: Query6
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT tlkpTestReqmt.*, tlkpTestReqmt.NoRequired
-FROM tlkpProject INNER JOIN tlkpTestReqmt ON tlkpProject.ParentProject = tlkpTestReqmt.Buyer
-WHERE (((tlkpProject.Program)<>"Commercial") AND ((tlkpTestReqmt.NoRequired)<>0));
-

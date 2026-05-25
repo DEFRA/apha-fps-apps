@@ -1,7 +1,0 @@
-QUERY NAME: UpdateTests_Temp
----------------------------------------------
-TYPE: UPDATE
-
-SQL:
-UPDATE FEC_04_01_99 INNER JOIN TestOrProduct ON FEC_04_01_99.[TC code] = TestOrProduct.ItemCode SET TestOrProduct.ItemDescription = [32 character description], TestOrProduct.UnitPriceVLA = [fec 00/01];
-

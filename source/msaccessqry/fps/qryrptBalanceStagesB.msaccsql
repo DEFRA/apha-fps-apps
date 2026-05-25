@@ -1,8 +1,0 @@
-QUERY NAME: qryrptBalanceStagesB
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW PlanCatWGGrade.WGGrade, PlanCatWGGrade.PlanCategory
-FROM PlanCatWGGrade;
-

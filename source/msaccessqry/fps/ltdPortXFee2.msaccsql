@@ -1,9 +1,0 @@
-QUERY NAME: ltdPortXFee2
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW ltdPortXfee.SubsidisedPortfolio, Sum(ltdPortXfee.PortTransferFee) AS TransferReceipt
-FROM ltdPortXfee
-GROUP BY ltdPortXfee.SubsidisedPortfolio;
-

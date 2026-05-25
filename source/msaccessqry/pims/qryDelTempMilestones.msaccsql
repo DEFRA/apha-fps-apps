@@ -1,8 +1,0 @@
-QUERY NAME: qryDelTempMilestones
----------------------------------------------
-TYPE: DELETE
-
-SQL:
-DELETE tempMilestone.*
-FROM tempMilestone;
-

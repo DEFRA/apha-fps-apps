@@ -1,8 +1,0 @@
-QUERY NAME: qryTestCostByGroup
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT TestOrProduct.ItemCode, TestOrProduct.ItemDescription, IIf([Forms]![frmJobPlanByGroup]![IsDefraProject]=0,[testorproduct].[UnitPriceVLA],[DefraUnitprice]) AS UnitPriceVLA
-FROM TestOrProduct;
-

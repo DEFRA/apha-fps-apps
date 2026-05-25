@@ -1,9 +1,0 @@
-QUERY NAME: morrey-utn4
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT WorkGroup.ProfitCentre, [Morrey-Utn3].WorkGroup, Min([Morrey-Utn3].utn) AS MinOfutn, Max([Morrey-Utn3].utn) AS MaxOfutn, Avg([Morrey-Utn3].utn) AS AvgOfutn
-FROM [Morrey-Utn3] INNER JOIN WorkGroup ON [Morrey-Utn3].WorkGroup = WorkGroup.WorkGroup
-GROUP BY WorkGroup.ProfitCentre, [Morrey-Utn3].WorkGroup;
-

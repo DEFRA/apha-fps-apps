@@ -1,9 +1,0 @@
-QUERY NAME: qryMAB_SendEmail
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT [MAB_tbl Settings].Setting
-FROM [MAB_tbl Settings]
-WHERE ((([MAB_tbl Settings].ID)="SendEmail"));
-

@@ -1,9 +1,0 @@
-QUERY NAME: qryfrmUtilisationPersonJob
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW TimeCostCalcs.StaffID, TimeCostCalcs.WorkGroup, tlkpProject.PlanCat, TimeCostCalcs.Project, tlkpProject.ProjectTitle, TimeCostCalcs.Class, Sum(TimeCostCalcs.Time) AS TotTime, IIf([class]="Free",[categtime],0) AS Overhead, IIf(([class]="charge"),[CategTime],0) AS Chargeable, Sum(TimeCostCalcs.Cost) AS CategCost, Sum(TimeCostCalcs.Time) AS CAtegTime, IIf([plancat]="ZTleave",[CategTime],0) AS leave
-FROM tlkpProject INNER JOIN TimeCostCalcs ON tlkpProject.ParentProject = TimeCostCalcs.Project
-GROUP BY TimeCostCalcs.StaffID, TimeCostCalcs.WorkGroup, tlkpProject.PlanCat, TimeCostCalcs.Project, tlkpProject.ProjectTitle, TimeCostCalcs.Class;
-

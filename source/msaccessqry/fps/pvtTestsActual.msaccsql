@@ -1,9 +1,0 @@
-QUERY NAME: pvtTestsActual
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW TestOrProduct.Owner, WorkGroup_General.ProfitCentre, tlkpTestCapability_TM.PlanPortfolio AS Portfolio, tlkpTestCapability_TM.WorkGroup, tlkpTestCapability_TM.TestCode, MonthlyOutput.Buyer, tlkpProject_General.Program, tlkpProject_General.Contract, tlkpProject_General.Disease, MonthlyOutput.Month, MonthlyOutput.Volume AS ActualTests, [volume]*[UnitPrice] AS ActualCharge
-FROM (((tlkpTestReqmt_MAP INNER JOIN (tlkpTestCapability_TM INNER JOIN MonthlyOutput ON (tlkpTestCapability_TM.TestCode = MonthlyOutput.TestCode) AND (tlkpTestCapability_TM.WorkGroup = MonthlyOutput.WorkGroup)) ON (tlkpTestReqmt_MAP.TestCode = MonthlyOutput.TestCode) AND (tlkpTestReqmt_MAP.Buyer = MonthlyOutput.Buyer)) INNER JOIN WorkGroup_General ON MonthlyOutput.WorkGroup = WorkGroup_General.WorkGroup) INNER JOIN TestOrProduct ON tlkpTestReqmt_MAP.TestCode = TestOrProduct.ItemCode) INNER JOIN tlkpProject_General ON tlkpTestReqmt_MAP.Buyer = tlkpProject_General.ParentProject
-WHERE (((fnSelectedProg([Program]))=True) AND ((fnselectedproject([parentproject]))=True));
-

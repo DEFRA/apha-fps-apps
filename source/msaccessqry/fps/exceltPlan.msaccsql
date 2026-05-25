@@ -1,8 +1,0 @@
-QUERY NAME: exceltPlan
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tlkpProgram_MAP.Directorate, tlkpProgram_MAP.ProgramNo, tlkpProject_MAP.ParentProject, tlkpProject_MAP.Contract, tblAdditionalCosts.Account, tblAdditionalCosts.Description, tblAdditionalCosts.ItemCost
-FROM (tlkpProject_MAP INNER JOIN tlkpProgram_MAP ON tlkpProject_MAP.Program = tlkpProgram_MAP.ProgramNo) INNER JOIN tblAdditionalCosts ON tlkpProject_MAP.ParentProject = tblAdditionalCosts.JobCode;
-

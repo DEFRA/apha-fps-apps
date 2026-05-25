@@ -1,8 +1,0 @@
-QUERY NAME: qryRO_AnimalPlans
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT vProjectAnimalPlan.ParentProject AS JobCode, vProjectAnimalPlan.AnimalType, vProjectAnimalPlan.NumberOfDays, vProjectAnimalPlan.NumberOfAnimals, vProjectAnimalPlan.DailyRate, vProjectAnimalPlan.Cost AS TotalCost
-FROM vProjectAnimalPlan;
-

@@ -1,8 +1,0 @@
-QUERY NAME: portlist
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW Left([parentproject],2) AS Prefix, tlkpProject.Program, tlkpProject.Budget_CVL, [ParentProject] & " - " & [projecttitle] AS Project, [TestCode] & " - " & [ItemDescription] AS Test, TestOrProduct.UnitPriceVLA, tlkpTestCapability.WorkGroup
-FROM TestOrProduct INNER JOIN (tlkpProject INNER JOIN tlkpTestCapability ON tlkpProject.ParentProject = tlkpTestCapability.PlanPortfolio) ON TestOrProduct.ItemCode = tlkpTestCapability.TestCode;
-

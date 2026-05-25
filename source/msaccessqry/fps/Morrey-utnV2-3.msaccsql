@@ -1,9 +1,0 @@
-QUERY NAME: Morrey-utnV2-3
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT ProfitCentreGrade.ProfitCentre, WorkGroupGrade.WorkGroup, Sum(tblStaff.HrsPaid) AS SumOfHrsPaid
-FROM ProfitCentreGrade INNER JOIN (WorkGroupGrade INNER JOIN tblStaff ON WorkGroupGrade.WGGrade = tblStaff.WorkGroupGrade) ON ProfitCentreGrade.PCGrade = WorkGroupGrade.ProfitCentreGrade
-GROUP BY ProfitCentreGrade.ProfitCentre, WorkGroupGrade.WorkGroup;
-

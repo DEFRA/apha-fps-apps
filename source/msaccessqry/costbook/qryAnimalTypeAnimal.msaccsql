@@ -1,8 +1,0 @@
-QUERY NAME: qryAnimalTypeAnimal
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tblAnimalReq.Project, tblAnimalReq.Year, tblAnimalReq.AnimalType, tblAnimalReq.[Number of Days], tblAnimalReq.[Number of Animals], tblAnimalReq.DailyRate, [Number of Days]*[Number of Animals]*[tblAnimalReq].[DailyRate] AS AnimalCost, tblAnimalReq.AR_Identity, tblProject.Programme, tblProject.EuroConvRate
-FROM tblAnimalReq INNER JOIN tblProject ON tblAnimalReq.Project = tblProject.Project;
-

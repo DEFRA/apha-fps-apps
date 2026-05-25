@@ -1,9 +1,0 @@
-QUERY NAME: qptMAB_SendEmail
----------------------------------------------
-TYPE: PASS-THROUGH
-
-SQL:
-Select Setting
-From [tbl Settings]
-Where id='SendEmail'
-

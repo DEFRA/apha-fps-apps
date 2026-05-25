@@ -1,9 +1,0 @@
-QUERY NAME: qryTotalTestCosts
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tblTestRequ_TM.JobCode, Sum([NoTests]*[TestPrice]) AS TotalTestCosts
-FROM tblTestRequ_TM
-GROUP BY tblTestRequ_TM.JobCode;
-

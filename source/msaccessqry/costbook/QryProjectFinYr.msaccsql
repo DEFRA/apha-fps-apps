@@ -1,9 +1,0 @@
-QUERY NAME: QryProjectFinYr
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW QryTotalByYear.FinancialYear, QryTotalByYear.Project, QryTotalByYear.ProjectTitle, QryTotalByYear.Disease, QryTotalByYear.StartDate, QryTotalByYear.YearIncome, QryTotalByYear.SumOfAnimalCost, QryTotalByYear.SumOfTestCost, QryTotalByYear.SumOfStaffCost, QryTotalByYear.SumOfLineCost
-FROM QryTotalByYear
-WHERE ((QryTotalByYear.FinancialYear=[Forms]![FrmProjFinYr]![FinancialYr]));
-

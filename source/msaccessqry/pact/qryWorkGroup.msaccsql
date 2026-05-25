@@ -1,9 +1,0 @@
-QUERY NAME: qryWorkGroup
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW WorkGroup.*
-FROM WorkGroup
-ORDER BY WorkGroup.WorkGroup;
-

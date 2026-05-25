@@ -1,8 +1,0 @@
-QUERY NAME: qryOutturn
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT qryOutturn1.*, qryCustomerReportComments.Comment
-FROM qryOutturn1 LEFT JOIN qryCustomerReportComments ON (qryOutturn1.ParentProject = qryCustomerReportComments.Project) AND (qryOutturn1.Year = qryCustomerReportComments.Year);
-

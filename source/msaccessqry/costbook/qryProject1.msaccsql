@@ -1,9 +1,0 @@
-QUERY NAME: qryProject1
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tblProject.*
-FROM tblProject
-WHERE (((tblProject.Project)=[Forms]![frmProject]![Project]));
-

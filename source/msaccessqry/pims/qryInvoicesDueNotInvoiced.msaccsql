@@ -1,9 +1,0 @@
-QUERY NAME: qryInvoicesDueNotInvoiced
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT MY_tlkpProject.ParentProject, MY_tlkpProject.Program, tblRadTrackInvoice.PlannedAmount, tblRadTrackInvoice.DueDate, tblRadTrackInvoice.ActualAmount, MY_tlkpProject.Manager, tblRadTrackInvoice.Project, MY_tlkpProject.Customer, tblRadTrackInvoice.DueAmount, tblRadTrackInvoice.Contract
-FROM MY_tblContract RIGHT JOIN (tblRadTrackInvoice LEFT JOIN MY_tlkpProject ON tblRadTrackInvoice.Project = MY_tlkpProject.ParentProject) ON MY_tblContract.ContractNo = tblRadTrackInvoice.Contract
-WHERE (((tblRadTrackInvoice.DueDate)<=fnReportEndOfMonth()) AND ((MY_tlkpProject.Manager) Like fnGetHiddenManager() Or (MY_tlkpProject.Manager) Is Null) AND ((tblRadTrackInvoice.DateInvoiced) Is Null) AND ((MY_tlkpProject.Year)=fnReportYear()) AND ((MY_tblContract.Year) Is Null)) OR (((tblRadTrackInvoice.DueDate)<=fnReportEndOfMonth()) AND ((MY_tlkpProject.Manager) Is Null) AND ((tblRadTrackInvoice.DateInvoiced) Is Null) AND ((MY_tlkpProject.Year) Is Null) AND ((MY_tblContract.Year)=fnReportYear()));
-

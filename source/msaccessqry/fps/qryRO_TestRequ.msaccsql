@@ -1,8 +1,0 @@
-QUERY NAME: qryRO_TestRequ
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT tlkpTestReqmt_MAP.Buyer, tlkpTestReqmt_MAP.TestCode, tlkpTestReqmt_MAP.UnitPrice, tlkpTestReqmt_MAP.NoRequired, [NoRequired]*[UnitPrice] AS Cost
-FROM tlkpTestReqmt_MAP;
-

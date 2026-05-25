@@ -1,9 +1,0 @@
-QUERY NAME: SnapshotExceptionalCosts
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tlkpProgram_MAP.Directorate, tlkpProject_MAP.Program, tlkpProject_MAP.Contract, tlkpProject_MAP.ParentProject AS Project, tlkpProject_MAP.ProjectStatus, tblAdditionalCosts.Account, tblAdditionalCosts.Description, tblAdditionalCosts.ItemCost
-FROM (tlkpProject_MAP INNER JOIN tlkpProgram_MAP ON tlkpProject_MAP.Program = tlkpProgram_MAP.ProgramNo) INNER JOIN tblAdditionalCosts ON tlkpProject_MAP.ParentProject = tblAdditionalCosts.JobCode
-ORDER BY tlkpProgram_MAP.Directorate, tlkpProject_MAP.Program, tlkpProject_MAP.ParentProject;
-

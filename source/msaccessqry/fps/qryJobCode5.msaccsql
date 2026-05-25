@@ -1,8 +1,0 @@
-QUERY NAME: qryJobCode5
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tlkpProject_MAP.ParentProject AS JobCode, tlkpProject_MAP.ProjectTitle AS JobDescription, tlkpProject_MAP.Program AS Programme, tlkpProject_MAP.Customer, tlkpProject_MAP.Manager AS ProjectManager, [TransferIncome]+[custIncome] AS Income, tlkpProject_MAP.Profit, tlkpProject_MAP.DateCreated, tlkpProject_MAP.CostBookNo, tlkpProject_MAP.ProjectStatus, tlkpProject_MAP.Budget_CVL
-FROM tlkpProject_MAP;
-

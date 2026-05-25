@@ -1,8 +1,0 @@
-QUERY NAME: qryJobMonth-incbudget
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW ProjectMonthFinal.Project, ProjectMonthFinal.MonthNo, tlkpProject.Budget_cvl, ProjectMonthFinal.CumCost, [cuminvoices]+[cumportsales] AS CumIncome, (([Budget_CVL])*[MonthNo]/12) AS CumProfile, ProjectMonthFinal.SumOfMstoneDue AS MstDue, ProjectMonthFinal.SumOfDue__Done AS MstDue__Done, ProjectMonthFinal.SumOfOnTime AS MstOnTime, tlkpProject.Budget_Ext, tlkpProject.TransferIncome
-FROM tlkpProject INNER JOIN ProjectMonthFinal ON tlkpProject.ParentProject = ProjectMonthFinal.Project;
-

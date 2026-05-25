@@ -1,8 +1,0 @@
-QUERY NAME: qryJobAdditionalCost2ByGroup
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tblAdditionalCosts_ByGroup.JobCode, tblAdditionalCosts_ByGroup.Description, tblAdditionalCosts_ByGroup.Account, tblAdditionalCosts_ByGroup.ItemCost, tblAdditionalCosts_ByGroup.Freq, tblAdditionalCosts_ByGroup.Supplier
-FROM tblAdditionalCosts_ByGroup;
-

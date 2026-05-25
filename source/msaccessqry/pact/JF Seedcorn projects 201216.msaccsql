@@ -1,8 +1,0 @@
-QUERY NAME: JF Seedcorn projects 201216
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT TimeCostCalcs.Project, tlkpProject.ProjectTitle, TimeCostCalcs.JobCode, TimeCostCalcs.WorkGroup, TimeCostCalcs.Month, TimeCostCalcs.Name, TimeCostCalcs.Time, TimeCostCalcs.ChargeRate, TimeCostCalcs.Cost
-FROM (tlkpProject INNER JOIN TimeCostCalcs ON tlkpProject.ParentProject = TimeCostCalcs.Project) INNER JOIN [JF Seedcorn projects 2016-17] ON TimeCostCalcs.Project = [JF Seedcorn projects 2016-17].Field1;
-

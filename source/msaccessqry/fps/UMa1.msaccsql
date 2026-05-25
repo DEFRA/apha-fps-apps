@@ -1,9 +1,0 @@
-QUERY NAME: UMa1
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT qryJobCodeTotalsNew.Program, qryJobCodeTotalsNew.Customer, Sum(qryJobCodeTotalsNew.TotalCosts) AS [Total Costs], Sum(qryJobCodeTotalsNew.JCTotalStaffCosts) AS [Staff Costs], Sum(IIf(IsNull([SumOfplannedhours]),0,[sumofplannedhours])) AS [Time]
-FROM qryJobCodeTotalsNew LEFT JOIN TotalHours_Project ON qryJobCodeTotalsNew.JobCode = TotalHours_Project.Jobcode
-GROUP BY qryJobCodeTotalsNew.Program, qryJobCodeTotalsNew.Customer;
-

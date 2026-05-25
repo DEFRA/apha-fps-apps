@@ -1,9 +1,0 @@
-QUERY NAME: NewCodes_IG
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT IIf([JobCode]=[tlkpjobcode_FPS99].[parentProject],[NewCode],[JobCode]) AS NewJOBCode, ProjectCodeConv.NewCode AS Project, tlkpJobCode_FPS99.JobCodeWorkGroup, tlkpJobCode_FPS99.NewProg, tlkpJobCode_FPS99.Type, tlkpJobCode_FPS99.JobCodeName, ProjectCodeConv.OldCode AS OldProject, tlkpJobCode_FPS99.JobCode AS OldJobCode
-FROM tlkpProject_General INNER JOIN (tlkpJobCode_FPS99 INNER JOIN ProjectCodeConv ON tlkpJobCode_FPS99.ParentProject = ProjectCodeConv.OldCode) ON tlkpProject_General.ParentProject = ProjectCodeConv.NewCode
-WHERE (((ProjectCodeConv.NewCode)<>"no"));
-

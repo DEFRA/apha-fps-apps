@@ -1,8 +1,0 @@
-QUERY NAME: snaptime3
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT snaptime1.*, snaptime2.[Actual - 23/08/00], snaptime2.[Plan - 23/08/00]
-FROM snaptime1 INNER JOIN snaptime2 ON (snaptime1.Name = snaptime2.Name) AND (snaptime1.Project = snaptime2.Project);
-

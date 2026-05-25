@@ -1,9 +1,0 @@
-QUERY NAME: SM_TRIAL DATA
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT MY_ProjectMonthFinal.Year, MY_ProjectMonthFinal.Project, MY_ProjectMonthFinal.MonthNo, MY_ProjectMonthFinal.TimeCosts, MY_ProjectMonthFinal.TransferCosts, MY_ProjectMonthFinal.NonAnimals, MY_ProjectMonthFinal.Animals, MY_ProjectMonthFinal.TotalCost
-FROM MY_ProjectMonthFinal INNER JOIN MY_tlkpProject ON (MY_ProjectMonthFinal.Project = MY_tlkpProject.ParentProject) AND (MY_ProjectMonthFinal.Year = MY_tlkpProject.Year)
-WHERE (((MY_ProjectMonthFinal.Year)=2007) AND ((MY_ProjectMonthFinal.Project)="MO3007" Or (MY_ProjectMonthFinal.Project)="SE0243" Or (MY_ProjectMonthFinal.Project)="SE1753" Or (MY_ProjectMonthFinal.Project)="SE1847" Or (MY_ProjectMonthFinal.Project)="SE1849" Or (MY_ProjectMonthFinal.Project)="SE1851" Or (MY_ProjectMonthFinal.Project)="SE1930" Or (MY_ProjectMonthFinal.Project)="SE1945" Or (MY_ProjectMonthFinal.Project)="SE2007" Or (MY_ProjectMonthFinal.Project)="SE2010"));
-

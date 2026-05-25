@@ -1,9 +1,0 @@
-QUERY NAME: xqryPayRates_Defra
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT WorkGroupGrade.WGGrade, tblPCGrades_DEFRA.DEFRA_ChargeRate, tblPCGrades_DEFRA.DEFRA_PayRate, tblPCGrades_DEFRA.DEFRA_NPR, tblPCGrades_DEFRA.DEFRA_OHR
-FROM WorkGroupGrade INNER JOIN tblPCGrades_DEFRA ON WorkGroupGrade.ProfitCentreGrade = tblPCGrades_DEFRA.PCGrade
-WHERE (((tblPCGrades_DEFRA.DEFRA_ChargeRate)<>0));
-

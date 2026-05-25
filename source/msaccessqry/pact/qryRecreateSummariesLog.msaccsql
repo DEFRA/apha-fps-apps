@@ -1,9 +1,0 @@
-QUERY NAME: qryRecreateSummariesLog
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT RecreateSummaries_Log.ID, RecreateSummaries_Log.DateDone, RecreateSummaries_Log.UserID, tblUsers.Comments AS [User], RecreateSummaries_Log.Period
-FROM RecreateSummaries_Log LEFT JOIN tblUsers ON "CVLNT\" & RecreateSummaries_Log.UserID = tblUsers.UserName
-ORDER BY RecreateSummaries_Log.DateDone;
-

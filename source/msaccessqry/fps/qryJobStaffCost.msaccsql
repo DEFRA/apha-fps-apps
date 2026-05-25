@@ -1,9 +1,0 @@
-QUERY NAME: qryJobStaffCost
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tblStaffJob.StaffID, tblStaffJob.Jobcode, tblStaffJob.plannedhours, tblStaff_General.Name, tblStaff_General.WorkGroupGrade, IIf([isdefraproject]=0,[profitcentregrade_general].[chargeRate],[defrachargerate]) AS ChargeRate, [PlannedHours]*IIf([isdefraproject]=0,[profitcentregrade_general].[chargeRate],[defrachargerate])*IIf([sector_name]="charge",1,0) AS StaffCost, WorkGroupGrade_General.GradeCode, WorkGroupGrade_General.WorkGroup, tlkpProgram_MAP.SECTOR_NAME
-FROM (((tblStaffJob INNER JOIN tblStaff_General ON tblStaffJob.StaffID = tblStaff_General.StaffID) INNER JOIN (WorkGroupGrade_General INNER JOIN ProfitCentreGrade_General ON WorkGroupGrade_General.ProfitCentreGrade = ProfitCentreGrade_General.PCGrade) ON tblStaff_General.WorkGroupGrade = WorkGroupGrade_General.WGGrade) INNER JOIN tlkpProject_General ON tblStaffJob.Jobcode = tlkpProject_General.ParentProject) INNER JOIN tlkpProgram_MAP ON tlkpProject_General.Program = tlkpProgram_MAP.ProgramNo
-ORDER BY WorkGroupGrade_General.WorkGroup;
-

@@ -1,9 +1,0 @@
-QUERY NAME: qryJobMonth-CumSara
----------------------------------------------
-TYPE: MAKE TABLE
-
-SQL:
-SELECT DISTINCTROW tblPeriod.EndPeriod, tblPeriod.PeriodName, ProjectMonth2sara.Project, Sum(ProjectMonth2sara.TotalCost) AS CumCost, Sum(ProjectMonth2sara.Invoices) AS CumInvoices, Sum(ProjectMonth2sara.COIW) AS CumCOIW, Sum(ProjectMonth2sara.PortSales) AS CumPortSales, Sum(ProjectMonth2sara.CostProfile) AS CumProfile, ProjectMonth2sara.SumOfCostProfile, Sum(ProjectMonth2sara.MstoneDue) AS SumOfMstoneDue, Sum(ProjectMonth2sara.Due__Done) AS [SumOfDue&&Done], Sum(ProjectMonth2sara.OnTime) AS SumOfOnTime INTO ProjectMonth3sara
-FROM (tblPeriod INNER JOIN tblkPeriodMonth ON tblPeriod.PeriodName = tblkPeriodMonth.PeriodName) INNER JOIN ProjectMonth2sara ON tblkPeriodMonth.MonthNo = ProjectMonth2sara.MonthNo
-GROUP BY tblPeriod.EndPeriod, tblPeriod.PeriodName, ProjectMonth2sara.Project, ProjectMonth2sara.SumOfCostProfile;
-

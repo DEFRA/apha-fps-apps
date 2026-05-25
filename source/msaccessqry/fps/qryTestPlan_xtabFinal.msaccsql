@@ -1,8 +1,0 @@
-QUERY NAME: qryTestPlan_xtabFinal
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT qryTestsPCPlan_xtab.*, qryTestReqBreakdown2_xtab.*
-FROM qryTestsPCPlan_xtab INNER JOIN qryTestReqBreakdown2_xtab ON qryTestsPCPlan_xtab.TestCode = qryTestReqBreakdown2_xtab.TestCode;
-

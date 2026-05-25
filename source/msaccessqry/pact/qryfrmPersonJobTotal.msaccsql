@@ -1,9 +1,0 @@
-QUERY NAME: qryfrmPersonJobTotal
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tlkpProject.ParentProject, tlkpProject.ProjectTitle, tlkpProject.PlanCat, TimeCostCalcs.StaffID, Sum(TimeCostCalcs.Time) AS SumOfTime, Sum(TimeCostCalcs.Cost) AS SumOfCost
-FROM tlkpProject INNER JOIN TimeCostCalcs ON tlkpProject.ParentProject = TimeCostCalcs.Project
-GROUP BY tlkpProject.ParentProject, tlkpProject.ProjectTitle, tlkpProject.PlanCat, TimeCostCalcs.StaffID;
-

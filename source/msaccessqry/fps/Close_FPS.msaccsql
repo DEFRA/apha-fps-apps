@@ -1,6 +1,0 @@
-QUERY NAME: Close_FPS
----------------------------------------------
-TYPE: OTHER
-
-SQL:
-sp_Close_FPS

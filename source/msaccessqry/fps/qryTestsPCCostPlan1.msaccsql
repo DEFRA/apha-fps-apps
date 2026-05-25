@@ -1,9 +1,0 @@
-QUERY NAME: qryTestsPCCostPlan1
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT tblTestRequ_TM.JobCode, tblTestRequ_TM.TestCode, tblTestRCCost.ProfitCentre, nz([tbltestrccost].[price],[testprice]) AS price
-FROM tblTestRequ_TM LEFT JOIN tblTestRCCost ON tblTestRequ_TM.TestCode = tblTestRCCost.TestCode
-ORDER BY tblTestRequ_TM.JobCode, tblTestRequ_TM.TestCode;
-

@@ -1,8 +1,0 @@
-QUERY NAME: qryTestCost2
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT TestOrProduct.ItemCode, TestOrProduct.ItemDescription, IIf([Forms]![frmprogramtestPlan]![IsDefraProject]=0,[testorproduct].[UnitPriceVLA],[DefraUnitprice]) AS UnitPrice
-FROM TestOrProduct;
-

@@ -1,9 +1,0 @@
-QUERY NAME: TotalCost by Person
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tblStaff.GradeCode, tblStaff.WorkGroup AS WGroup, tblStaff.Surname AS Name, WorkGroupGrade.ChargeRate, Sum(MonthlyTime.Hours) AS TotTime, [ChargeRate]*[TotTime] AS TotCost
-FROM (WorkGroupGrade INNER JOIN tblStaff ON (tblStaff.WorkGroup = WorkGroupGrade.WorkGroup) AND (WorkGroupGrade.GradeCode = tblStaff.GradeCode)) INNER JOIN MonthlyTime ON tblStaff.StaffID = MonthlyTime.StaffID
-GROUP BY tblStaff.GradeCode, tblStaff.WorkGroup, tblStaff.Surname, WorkGroupGrade.ChargeRate;
-

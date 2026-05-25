@@ -1,6 +1,0 @@
-QUERY NAME: ddCreateIndexvContractTestRequ
----------------------------------------------
-TYPE: DDL
-
-SQL:
-CREATE UNIQUE INDEX vContractTestRequ_PK ON vContractTestRequ(JobCode,TestCode)

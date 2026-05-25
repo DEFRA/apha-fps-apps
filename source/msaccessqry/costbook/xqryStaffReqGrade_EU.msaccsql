@@ -1,9 +1,0 @@
-QUERY NAME: xqryStaffReqGrade_EU
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tblStaffRequ.Project, tblStaffRequ.Year, WorkGroupGrade.GradeCode, Sum([tblStaffRequ].[ChargeRate]*[NoHours]) AS StaffCost, Sum(tblStaffRequ.NoHours) AS TotalHours, Sum(tblStaffRequ.NoDays) AS TotalDays, Sum([PayRate]*[NoHours]) AS AvPayRate_Num, Sum([NPR]*[NoHours]) AS AvNPR_Num, Sum([OHR]*[NoHours]) AS AvOHR_Num, Sum([tblPCGrades].[ChargeRate]*[NoHours]) AS AvChargeR_Num, Avg([tblStaffRequ].[ChargeRate]/[tblPCGrades].[ChargeRate]) AS ConvFactor
-FROM (tblStaffRequ LEFT JOIN WorkGroupGrade ON tblStaffRequ.WGGrade = WorkGroupGrade.WGGrade) LEFT JOIN tblPCGrades ON WorkGroupGrade.ProfitCentreGrade = tblPCGrades.PCGrade
-GROUP BY tblStaffRequ.Project, tblStaffRequ.Year, WorkGroupGrade.GradeCode;
-

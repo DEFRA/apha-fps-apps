@@ -1,6 +1,0 @@
-QUERY NAME: ddCreateIndextblkpProfitCentre
----------------------------------------------
-TYPE: DDL
-
-SQL:
-CREATE UNIQUE INDEX tblkpProfitCentre_PK ON tblkpProfitCentre(ProfitCentre)

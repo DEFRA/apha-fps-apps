@@ -1,9 +1,0 @@
-QUERY NAME: qrySurvProjectRpt
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tlkpProject_MAP.Program, qrySurvProj1.ParentProject, qrySurvProj1.WorkGroup, qrySurvProj1.TotalTimeCost, qrySurvProj1.Consultancy, qrySurvProj1.Database, qrySurvProj1.Expertise, qrySurvProj1.ReferenceLab, qrySurvProj1.Visits, qrySurvProj1.Casework, qrySurvTests.InvoiceFee, qrySurvTests.TestsBoughtCost, IsSurv([Workgroup]) AS IsSV, tblSurvFF_Submissions.CountOfJobName AS SubmissionsTested, tlkpProject_MAP.ShortTitle, qrySurvFFFees.SumOfTotalFee AS PVSIncome, qrySurvInvoice.CVOGIncome, ProjectMonthFinalMAP.CumCWDebit, ProjectMonthFinalMAP.CumCWCredit, ProjectMonthFinalMAP.MonthNo, tlkpProject_MAP.Manager, tlkpProject_MAP.Program, tlkpProject_MAP.CustIncome, tlkpProject_MAP.PVSIncome AS PlanPVSIncome, FPSYearTotals.TotalCosts, ProjectMonthFinalMAP.CumTestCosts, ProjectMonthFinalMAP.CumSubContracts AS CumSubCont, qrySurvInvoice.PVSIncome AS BasPVSIncome
-FROM ((((((qrySurvProj1 LEFT JOIN qrySurvTests ON (qrySurvProj1.ParentProject = qrySurvTests.Contract) AND (qrySurvProj1.WorkGroup = qrySurvTests.PactCode)) LEFT JOIN tblSurvFF_Submissions ON (qrySurvProj1.ParentProject = tblSurvFF_Submissions.Contract) AND (qrySurvProj1.WorkGroup = tblSurvFF_Submissions.SD_Pact_WG)) INNER JOIN tlkpProject_MAP ON qrySurvProj1.ParentProject = tlkpProject_MAP.ParentProject) LEFT JOIN qrySurvInvoice ON tlkpProject_MAP.ParentProject = qrySurvInvoice.ProjectParent) INNER JOIN ProjectMonthFinalMAP ON tlkpProject_MAP.ParentProject = ProjectMonthFinalMAP.Project) LEFT JOIN FPSYearTotals ON tlkpProject_MAP.ParentProject = FPSYearTotals.ParentProject) LEFT JOIN qrySurvFFFees ON tlkpProject_MAP.ParentProject = qrySurvFFFees.Contract
-WHERE (((tlkpProject_MAP.Program) Like "*surv") AND ((ProjectMonthFinalMAP.MonthNo)=[Forms]![frmPactReportMenu]![PeriodPick]));
-

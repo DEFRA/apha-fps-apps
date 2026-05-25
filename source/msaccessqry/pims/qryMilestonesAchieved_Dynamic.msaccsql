@@ -1,9 +1,0 @@
-QUERY NAME: qryMilestonesAchieved_Dynamic
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT *
-FROM qryMilestonesAchieved
-WHERE fnResearchProgram(projectgroup)=true;
-

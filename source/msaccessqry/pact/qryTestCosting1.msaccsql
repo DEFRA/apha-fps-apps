@@ -1,9 +1,0 @@
-QUERY NAME: qryTestCosting1
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW WorkGroup.ProfitCentre, tlkpPortfolioTest.PlanPortfolio, tlkpPortfolioTest.TestCode, Sum(TimeCostCalcs.Cost) AS SumOfCost
-FROM WorkGroup INNER JOIN (tlkpProject INNER JOIN (tlkpPortfolioTest LEFT JOIN TimeCostCalcs ON (tlkpPortfolioTest.PlanPortfolio = TimeCostCalcs.Project) AND (tlkpPortfolioTest.TestCode = TimeCostCalcs.JobCode)) ON tlkpProject.ParentProject = tlkpPortfolioTest.PlanPortfolio) ON WorkGroup.WorkGroup = tlkpProject.ProjectWorkGroup
-GROUP BY WorkGroup.ProfitCentre, tlkpPortfolioTest.PlanPortfolio, tlkpPortfolioTest.TestCode;
-

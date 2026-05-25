@@ -1,8 +1,0 @@
-QUERY NAME: qryJobCodeTotals2
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tlkpProgram.Manager, tlkpProgram.Target, tlkpProgram.ProgramNo, qryJobCodeCust.*, IIf(IsNull([TotalAdditionalCosts]),0,[TotalAdditionalCosts]) AS JCTotalAdditionalCosts, IIf(IsNull([TotalAnimalCosts]),0,[TotalAnimalCosts]) AS JCTotalAnimalCosts, IIf(IsNull([TotalStaffCosts]),0,[TotalStaffCosts]) AS JCTotalStaffCosts, IIf(IsNull([TotalTestCosts]),0,[TotalTestCosts]) AS JCTotalTestCosts, [JCTotalAnimalCosts]+[JCTotalAdditionalCosts]+[JCTotalStaffCosts]+[JCTotalTestCosts] AS TotalCosts, [Budget_cvl]-[TotalCosts] AS JCProfit, [transferincome]+[Custincome] AS JCIncome
-FROM tlkpProgram INNER JOIN ((((qryJobCodeCust LEFT JOIN qryTotalAdditionalCosts ON qryJobCodeCust.JobCode = qryTotalAdditionalCosts.JobCode) LEFT JOIN qryTotalAnimalCosts ON qryJobCodeCust.JobCode = qryTotalAnimalCosts.JobCode) LEFT JOIN qryTotalStaffCosts ON qryJobCodeCust.JobCode = qryTotalStaffCosts.Jobcode) LEFT JOIN qryTotalTestCosts ON qryJobCodeCust.JobCode = qryTotalTestCosts.JobCode) ON tlkpProgram.ProgramNo = qryJobCodeCust.Programme;
-

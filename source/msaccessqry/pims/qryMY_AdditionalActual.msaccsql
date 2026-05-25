@@ -1,9 +1,0 @@
-QUERY NAME: qryMY_AdditionalActual
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT MY_Proj_SubContract.Year, MY_Proj_SubContract.Project, MY_Proj_SubContract.Month, MY_Proj_SubContract.AcctCode, MY_Proj_SubContract.Amount, MY_Proj_SubContract.Supplier, MY_Proj_SubContract.Description, MY_Proj_SubContract.SupplierNumber
-FROM MY_Proj_SubContract
-WHERE (((MY_Proj_SubContract.AcctCode) Not In ("LargeAnimals","SmallAnimals","Mice")));
-

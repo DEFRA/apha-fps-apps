@@ -1,9 +1,0 @@
-QUERY NAME: qryrptPC1part1A
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW WorkGroup.ProfitCentre, WorkGroupMonth.Month, Sum(WorkGroupMonth.RunningCost) AS SumOfRunningCost, Sum(WorkGroupMonth.RunCostProfile) AS SumOfRunCostProfile
-FROM qryCurrentMonth INNER JOIN (WorkGroupMonth INNER JOIN WorkGroup ON WorkGroupMonth.WorkGroup = WorkGroup.WorkGroup) ON qryCurrentMonth.MaxOfMonthNo = WorkGroupMonth.Month
-GROUP BY WorkGroup.ProfitCentre, WorkGroupMonth.Month;
-

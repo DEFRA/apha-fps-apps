@@ -1,8 +1,0 @@
-QUERY NAME: qryPublications_Final
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT qryPublications_Total.ProgramGroup, qryPublications_Total.Type, qryPublications_Total.Due, qryPublications_Total.NoSubmitted, qryPublications_Total.NoPublished, qryPublications_ThisYear.DueInYear, qryPublications_ThisYear.DueToDate, qryPublications_ThisYear.NoPublishedThisYear, qryPublications_ThisYear.DueAndSubOnTime, qryPublications_ThisYear.DueAndSub
-FROM qryPublications_Total LEFT JOIN qryPublications_ThisYear ON (qryPublications_Total.Type = qryPublications_ThisYear.Type) AND (qryPublications_Total.ProgramGroup = qryPublications_ThisYear.ProgramGroup);
-

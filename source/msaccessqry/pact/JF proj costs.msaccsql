@@ -1,9 +1,0 @@
-QUERY NAME: JF proj costs
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT TimeCostCalcs.WorkGroup, TimeCostCalcs.JobCode, TimeCostCalcs.Project, TimeCostCalcs.Month, TimeCostCalcs.StaffID, TimeCostCalcs.GradeCode, TimeCostCalcs.Name, TimeCostCalcs.ChargeRate, TimeCostCalcs.Class, TimeCostCalcs.Time, TimeCostCalcs.Cost, TimeCostCalcs.Division, TimeCostCalcs.JobCodeOld, TimeCostCalcs.Pay, TimeCostCalcs.NonPay, TimeCostCalcs.Overhead
-FROM TimeCostCalcs
-WHERE (((TimeCostCalcs.Project)="SB4080"));
-
