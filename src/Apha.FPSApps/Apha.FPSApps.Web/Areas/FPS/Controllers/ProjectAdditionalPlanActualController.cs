@@ -4,7 +4,9 @@ using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
+using Apha.FPSApps.Web.Constants;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
+using Apha.Common.Utilities.StateManagement;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -24,23 +26,30 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         private readonly IAdditionalCostService _additionalCostService;
         private readonly IProjectService _projectService;
         private readonly IProjectSubContractService _projectSubContractService;
+        private readonly IAppStateService _appStateService;
 
         public ProjectAdditionalPlanActualController(
             IMapper mapper,
             IAdditionalCostService additionalCostService,
             IProjectService projectService,
-            IProjectSubContractService projectSubContractService)
+            IProjectSubContractService projectSubContractService,
+            IAppStateService appStateService)
         {
             _mapper = mapper;
             _additionalCostService = additionalCostService;
             _projectService = projectService;
             _projectSubContractService = projectSubContractService;
+            _appStateService = appStateService;
         }
 
         [HttpGet]
         public async Task<IActionResult> Index(string? projectCode = null)
         {
             List<SelectListItem> projectList = await GetProjectListAsync();
+
+            if (string.IsNullOrWhiteSpace(projectCode))
+                projectCode = await _appStateService.GetSessionAsync<string>(SessionKeys.SelectedProjectCode);
+
             string selectedProjectCode = !string.IsNullOrWhiteSpace(projectCode)
                 && projectList.Any(p => p.Value == projectCode)
                 ? projectCode
