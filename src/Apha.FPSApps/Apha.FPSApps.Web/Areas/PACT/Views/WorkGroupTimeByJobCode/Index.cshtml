@@ -34,6 +34,144 @@
     function getWorkGroupTimeByJobCodeExtraFilters() {
         return { workGroup: currentWorkGroup, personName: currentPersonName };
     }
+
+                function alignColumnTotals() {
+                const table = document.querySelector('#gridContainer_timeUsageGrid table');
+                if (!table) return;
+
+                const tableRect = table.getBoundingClientRect();
+                const headers = table.querySelectorAll('thead th');
+
+                if (headers.length === 0) return;
+
+                // Map of column field names to their index in the table
+                const columnMap = {
+                            'ParentProject': 0,
+                            'JobCode': 1,
+                            'April': 2,
+                            'May': 3,
+                            'June': 4,
+                            'July': 5,
+                            'August': 6,
+                            'September': 7,
+                            'October': 8,
+                            'November': 9,
+                            'December': 10,
+                            'January': 11,
+                            'February': 12,
+                            'March': 13,
+                            'TotalTime': 14,
+                            'TotalCost': 15
+                };
+
+                // Function to align a specific container
+                const alignContainer = (containerId) => {
+                    const container = document.getElementById(containerId);
+                    if (!container) return;
+
+                    const label = container.querySelector('.column-total-label');
+                    const columns = container.querySelectorAll('.column-total');
+
+                    if (!label || columns.length === 0) return;
+
+                    // Position label to align with Project + JobCode columns
+                    const projectHeader = headers[columnMap['ParentProject']];
+                    const jobCodeHeader = headers[columnMap['JobCode']];
+
+                    if (projectHeader && jobCodeHeader) {
+                        const projectRect = projectHeader.getBoundingClientRect();
+                        const jobCodeRect = jobCodeHeader.getBoundingClientRect();
+                        const labelLeft = projectRect.left - tableRect.left;
+                        const labelWidth = (jobCodeRect.right - projectRect.left);
+
+                        label.style.position = 'absolute';
+                        label.style.left = labelLeft + 'px';
+                        label.style.width = labelWidth + 'px';
+                    }
+
+                    // Position each column total div
+                    const monthColumns = ['April', 'May', 'June', 'July', 'August', 'September',
+                                        'October', 'November', 'December', 'January', 'February', 'March',
+                                        'TotalTime', 'TotalCost'];
+
+                    columns.forEach((col, index) => {
+                        if (index >= monthColumns.length) return;
+
+                        const columnName = monthColumns[index];
+                        const headerIndex = columnMap[columnName];
+                        const header = headers[headerIndex];
+
+                        if (header) {
+                            const headerRect = header.getBoundingClientRect();
+                            const colLeft = headerRect.left - tableRect.left;
+                            const colWidth = headerRect.width;
+
+                            col.style.position = 'absolute';
+                            col.style.left = colLeft + 'px';
+                            col.style.width = colWidth + 'px';
+                        }
+                    });
+                };
+
+                // Align all three containers
+                alignContainer('columnTotalsContainer');
+                alignContainer('columnStandardHoursContainer');
+                alignContainer('columnStndHrsAllocatedContainer');
+            }
+
+            // Wrap setup in DOMContentLoaded to ensure grid is rendered
+            document.addEventListener('DOMContentLoaded', function() {
+                // Setup column totals alignment
+                const table = document.querySelector('#gridContainer_timeUsageGrid table');
+                if (table) {
+                    // Align after grid is rendered
+                    window.addEventListener('load', () => requestAnimationFrame(alignColumnTotals));
+                    window.addEventListener('resize', () => requestAnimationFrame(alignColumnTotals));
+
+                    // Use ResizeObserver to watch for table changes
+                    const observer = new ResizeObserver(() => requestAnimationFrame(alignColumnTotals));
+                    observer.observe(table);
+
+                    // Listen for mouseup to catch column resize completion
+                    let isResizing = false;
+                    document.addEventListener('mousedown', function(e) {
+                        if (e.target.classList.contains('column-resizer')) {
+                            isResizing = true;
+                        }
+                    });
+
+                    document.addEventListener('mouseup', function(e) {
+                        if (isResizing) {
+                            isResizing = false;
+                            requestAnimationFrame(alignColumnTotals);
+                        }
+                    });
+
+                    // Use MutationObserver to watch for style changes on table headers
+                    const mutationObserver = new MutationObserver(function(mutations) {
+                        let shouldRealign = false;
+                        mutations.forEach(function(mutation) {
+                            if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                                shouldRealign = true;
+                            }
+                        });
+                        if (shouldRealign) {
+                            requestAnimationFrame(alignColumnTotals);
+                        }
+                    });
+
+                    // Observe all th elements for style changes
+                    const headers = table.querySelectorAll('th');
+                    headers.forEach(function(th) {
+                        mutationObserver.observe(th, { attributes: true, attributeFilter: ['style'] });
+                    });
+
+                    // Also align after initial render with a slight delay
+                    setTimeout(() => alignColumnTotals(), 100);
+                    setTimeout(() => alignColumnTotals(), 500); // Extra delay for grid initialization
+                }
+            });
+
 </script>
 
 @* ── Data Grid ──────────────────────────────────────────────────────────── *@
@@ -52,53 +190,46 @@
                 var totals = new[] { s.TotalApril, s.TotalMay, s.TotalJune, s.TotalJuly, s.TotalAugust, s.TotalSeptember, s.TotalOctober, s.TotalNovember, s.TotalDecember, s.TotalJanuary, s.TotalFebruary, s.TotalMarch };
                 var pcts   = new[] { s.PercentAllocatedApril, s.PercentAllocatedMay, s.PercentAllocatedJune, s.PercentAllocatedJuly, s.PercentAllocatedAugust, s.PercentAllocatedSeptember, s.PercentAllocatedOctober, s.PercentAllocatedNovember, s.PercentAllocatedDecember, s.PercentAllocatedJanuary, s.PercentAllocatedFebruary, s.PercentAllocatedMarch };
 
-                <div style="overflow-x:auto; margin-top:8px;">
-                    <table class="govuk-table govuk-!-font-size-14" style="white-space:nowrap; min-width:900px; border-collapse:collapse;">
-                        <thead style="background:#4A0080; color:#fff;">
-                            <tr>
-                                <th style="padding:6px 10px; text-align:left; color:#fff; min-width:260px;">Summary</th>
-                                @foreach (var m in months)
-                                {
-                                    <th style="padding:6px 8px; text-align:right; color:#fff; min-width:55px;">@m</th>
-                                }
-                                <th style="padding:6px 8px; text-align:right; color:#fff;">Total Time</th>
-                                <th style="padding:6px 8px; text-align:right; color:#fff;">Total Cost</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @* Row 1 — Total time for the month *@
-                            <tr style="background:#f3f2f1;">
-                                <td style="padding:6px 10px; font-weight:600;">Total time for the Month:</td>
-                                @for (int i = 0; i < 12; i++)
-                                {
-                                    <td style="padding:6px 8px; text-align:right;">@(totals[i] == 0 ? "" : totals[i].ToString("0.##"))</td>
-                                }
-                                <td style="padding:6px 8px; text-align:right; font-weight:700; color:#4A0080;">@s.GrandTotalTime.ToString("0.##")</td>
-                                <td style="padding:6px 8px; text-align:right; font-weight:700; color:#4A0080;">£@s.GrandTotalCost.ToString("N2")</td>
-                            </tr>
-                            @* Row 2 — Standard hours per month *@
-                            <tr style="background:#fff;">
-                                <td style="padding:6px 10px; font-weight:600;">Standard Hours:</td>
-                                @for (int i = 0; i < 12; i++)
-                                {
-                                    <td style="padding:6px 8px; text-align:right;">@(totals[i] == 0 ? "" : s.StandardHoursPerMonth.ToString("0.##"))</td>
-                                }
-                                <td style="padding:6px 8px; text-align:right;">@(s.TotalStandardHours == 0 ? "" : s.TotalStandardHours.ToString("0.##"))</td>
-                                <td></td>
-                            </tr>
-                            @* Row 3 — % of Standard Hours Allocated *@
-                            <tr style="background:#f3f2f1;">
-                                <td style="padding:6px 10px; font-weight:600;">% of Standard Hrs Allocated:</td>
-                                @for (int i = 0; i < 12; i++)
-                                {
-                                    <td style="padding:6px 8px; text-align:right;">@(totals[i] == 0 ? "" : pcts[i].ToString("0.#") + "%")</td>
-                                }
-                                <td style="padding:6px 8px; text-align:right;">@(s.GrandTotalPercentAllocated == 0 ? "" : s.GrandTotalPercentAllocated.ToString("0.#") + "%")</td>
-                                <td></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                        
+                                <div id="columnTotalsContainer" class="column-totals-container">
+                                    <div class="column-total-label">Total time for the Month:</div>
+                                    @for (int i = 0; i < 12; i++)
+                                    {
+                                        <div class="column-total">@(totals[i] == 0 ? "" : totals[i].ToString("0.##"))</div>
+                                    }
+                                    <div class="column-total">@s.GrandTotalTime.ToString("0.##")</div>
+                                    <div class="column-total">£@s.GrandTotalCost.ToString("N2")</div>
+                                    
+                                </div>
+
+                        <div id="columnStandardHoursContainer" class="column-totals-container">
+                            <div class="column-total-label">Standard Hours:</div>
+                            @for (int i = 0; i < 12; i++)
+                                    {
+                                <div class="column-total" id="stndHrs_april">
+                                    @(totals[i] == 0 ? "" : s.StandardHoursPerMonth.ToString("0.##"))
+                                </div>                        
+                                        }
+                             <div class="column-total" id="stndHrs_time">@(s.TotalStandardHours == 0 ? "" : s.TotalStandardHours.ToString("0.##"))</div>
+                            <div class="column-total" id="stndHrs_cost">&nbsp;</div>
+                         </div>
+                     
+                        <div id="columnStndHrsAllocatedContainer" class="column-totals-container">
+                            <div class="column-total-label">% of Standard Hrs Allocated</div>
+                    
+                            
+                   
+                        @for (int i = 0; i < 12; i++)
+                        {
+                                <div class="column-total">
+                                    
+                                    @(totals[i] == 0 ? "" : pcts[i].ToString("0.#") + "%")</div>
+                        }
+                            <div class="column-total">@(s.GrandTotalPercentAllocated == 0 ? "" : s.GrandTotalPercentAllocated.ToString("0.#") + "%")</div>
+                            <div class="column-total"></div>
+                     
+                        </div> 
+           
             }
         </div>
     </div>
