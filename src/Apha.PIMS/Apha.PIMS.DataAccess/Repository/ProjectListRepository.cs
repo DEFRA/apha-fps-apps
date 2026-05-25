@@ -161,9 +161,9 @@ namespace Apha.PIMS.DataAccess.Repository
         {
             return await _context.RadtrackProgs
                 .AsNoTracking()
-                .OrderBy(p => p.Program)
                 .Select(p => p.Program)
                 .Distinct()
+                .OrderBy(p => p)
                 .ToListAsync();
         }
 
@@ -172,8 +172,8 @@ namespace Apha.PIMS.DataAccess.Repository
             return await _context.ProjectLatestDetails
                 .AsNoTracking()
                 .Where(p => p.Customer != null)
-                .Select(p => p.Customer!)
-                .Distinct()
+                .GroupBy(p => p.Customer)
+                .Select(g => g.Key!)
                 .OrderBy(c => c)
                 .ToListAsync();
         }
@@ -182,8 +182,7 @@ namespace Apha.PIMS.DataAccess.Repository
         {
             return await _context.ProjectStatuses
                 .AsNoTracking()
-                .Where(s => s.IsPims)
-                .OrderBy(s => s.Projectstatus)
+                .Where(s => s.IsPims && s.Projectstatus != "Completed")
                 .ToListAsync();
         }
 
