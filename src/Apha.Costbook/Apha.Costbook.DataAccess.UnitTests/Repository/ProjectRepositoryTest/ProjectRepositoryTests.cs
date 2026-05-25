@@ -45,6 +45,60 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             return new ProjectRepository(mockContext.Object, mockSettingsRepository.Object);
         }
 
+        /// <summary>
+        /// Creates a ProjectRepository with full pivot-related data sets.
+        /// </summary>
+        private static ProjectRepository CreateRepositoryWithPivotData(
+            IEnumerable<StaffRequirement> staffRequirements,
+            IEnumerable<WorkGroupGrade>? workGroupGrades = null,
+            IEnumerable<AnimalRequirement>? animalRequirements = null,
+            IEnumerable<AdditionalCost>? additionalCosts = null,
+            IEnumerable<TestRequirement>? testRequirements = null,
+            IEnumerable<FpsAccountCategory>? accountCategories = null,
+            IEnumerable<Project>? projects = null)
+        {
+            var mockFPSYearContext = new Mock<IFPSYearContext>();
+            var mockSettingsRepository = new Mock<ISettingsRepository>();
+            mockSettingsRepository
+                .Setup(s => s.GetSettingValueByIdAsync("DaysInYear"))
+                .ReturnsAsync("220");
+
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<CostbookDbContext>(mockFPSYearContext.Object);
+
+            var projectsMockSet = RepositoryTestHelper.CreateMockDbSet(projects ?? new List<Project>());
+            mockContext.Setup(x => x.Projects).Returns(projectsMockSet.Object);
+            mockContext.Setup(x => x.Set<Project>()).Returns(projectsMockSet.Object);
+
+            var staffMockSet = RepositoryTestHelper.CreateMockDbSet(staffRequirements);
+            mockContext.Setup(x => x.StaffRequirements).Returns(staffMockSet.Object);
+            mockContext.Setup(x => x.Set<StaffRequirement>()).Returns(staffMockSet.Object);
+
+            var wgMockSet = RepositoryTestHelper.CreateMockDbSet(workGroupGrades ?? new List<WorkGroupGrade>());
+            mockContext.Setup(x => x.WorkGroupGrades).Returns(wgMockSet.Object);
+
+            var animalMockSet = RepositoryTestHelper.CreateMockDbSet(animalRequirements ?? new List<AnimalRequirement>());
+            mockContext.Setup(x => x.AnimalRequirements).Returns(animalMockSet.Object);
+            mockContext.Setup(x => x.Set<AnimalRequirement>()).Returns(animalMockSet.Object);
+
+            var additionalCostMockSet = RepositoryTestHelper.CreateMockDbSet(additionalCosts ?? new List<AdditionalCost>());
+            mockContext.Setup(x => x.AdditionalCosts).Returns(additionalCostMockSet.Object);
+            mockContext.Setup(x => x.Set<AdditionalCost>()).Returns(additionalCostMockSet.Object);
+
+            var testReqMockSet = RepositoryTestHelper.CreateMockDbSet(testRequirements ?? new List<TestRequirement>());
+            mockContext.Setup(x => x.TestRequirements).Returns(testReqMockSet.Object);
+            mockContext.Setup(x => x.Set<TestRequirement>()).Returns(testReqMockSet.Object);
+
+            var accountCatMockSet = RepositoryTestHelper.CreateMockDbSet(accountCategories ?? new List<FpsAccountCategory>());
+            mockContext.Setup(x => x.FpsAccountCategories).Returns(accountCatMockSet.Object);
+
+            var emptyProjectYears = RepositoryTestHelper.CreateMockDbSet(new List<ProjectYear>());
+            mockContext.Setup(x => x.Set<ProjectYear>()).Returns(emptyProjectYears.Object);
+
+            RepositoryTestHelper.SetupSaveChanges(mockContext);
+
+            return new ProjectRepository(mockContext.Object, mockSettingsRepository.Object);
+        }
+
         #region GetPaginatedProjectsAsync
 
         [Fact]
@@ -279,20 +333,20 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.ProjectRepositoryTest
                     ProjectId = "2024/001",
                     CustomerName = "Customer A",
                     Disease = "Disease A",
-                    StartDate = new DateOnly(2024, 1, 1),
+                    StartDate = new DateTime(2024, 1, 1),
                     ContractPrice = 1000,
                     PreparedBy = "Person A",
-                    DateOfSubmission = new DateOnly(2024, 1, 1)
+                    DateOfSubmission = new DateTime(2024, 1, 1)
                 },
                 new()
                 {
                     ProjectId = "2024/002",
                     CustomerName = "Customer B",
                     Disease = "Disease B",
-                    StartDate = new DateOnly(2024, 2, 1),
+                    StartDate = new DateTime(2024, 2, 1),
                     ContractPrice = 2000,
                     PreparedBy = "Person B",
-                    DateOfSubmission = new DateOnly(2024, 2, 1)
+                    DateOfSubmission = new DateTime(2024, 2, 1)
                 }
             };
             var repo = CreateRepository(projects);
@@ -498,7 +552,7 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.ProjectRepositoryTest
 
         #endregion
 
-      
+
 
         #region GetNextProjectNumberAsync
 
@@ -729,6 +783,1189 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.ProjectRepositoryTest
 
             // Assert
             Assert.NotNull(result);
+        }
+
+        #endregion
+
+        #region GetStaffYearsPivotAsync
+
+        [Fact]
+        public async Task GetStaffYearsPivotAsync_WithNoData_ReturnsEmptyPivot()
+        {
+            // Arrange
+            var repo = CreateRepositoryWithPivotData(new List<StaffRequirement>());
+
+            // Act
+            var result = await repo.GetStaffYearsPivotAsync("2024/001");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Empty(result.Rows);
+            Assert.Empty(result.Years);
+            Assert.Equal(0, result.TotalCount);
+        }
+
+        [Fact]
+        public async Task GetStaffYearsPivotAsync_ReturnsCorrectYears()
+        {
+            // Arrange
+            var staffRequirements = new List<StaffRequirement>
+            {
+                new() { Project = "2024/001", WgGrade = "A1", Year = 2024, Nodays = 110.0 },
+                new() { Project = "2024/001", WgGrade = "A1", Year = 2025, Nodays = 220.0 }
+            };
+            var repo = CreateRepositoryWithPivotData(staffRequirements);
+
+            // Act
+            var result = await repo.GetStaffYearsPivotAsync("2024/001");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(2, result.Years.Count);
+            Assert.Contains(2024, result.Years);
+            Assert.Contains(2025, result.Years);
+        }
+
+        [Fact]
+        public async Task GetStaffYearsPivotAsync_GroupsByFirstLetterOfGrade()
+        {
+            // Arrange — different grades with same first letter are grouped together
+            var staffRequirements = new List<StaffRequirement>
+            {
+                new() { Project = "2024/001", WgGrade = "A1", Year = 2024, Nodays = 110.0 },
+                new() { Project = "2024/001", WgGrade = "A2", Year = 2024, Nodays = 220.0 }
+            };
+            var repo = CreateRepositoryWithPivotData(staffRequirements);
+
+            // Act
+            var result = await repo.GetStaffYearsPivotAsync("2024/001");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Single(result.Rows);
+            Assert.Equal("A", result.Rows[0].Grade);
+        }
+
+        [Fact]
+        public async Task GetStaffYearsPivotAsync_GroupsGD5GradesSeparately()
+        {
+            // Arrange — GD5 grades should be grouped as "GD5" not "G"
+            var staffRequirements = new List<StaffRequirement>
+            {
+                new() { Project = "2024/001", WgGrade = "GD5A", Year = 2024, Nodays = 110.0 },
+                new() { Project = "2024/001", WgGrade = "GD5B", Year = 2024, Nodays = 110.0 },
+                new() { Project = "2024/001", WgGrade = "G1",   Year = 2024, Nodays = 110.0 }
+            };
+            var repo = CreateRepositoryWithPivotData(staffRequirements);
+
+            // Act
+            var result = await repo.GetStaffYearsPivotAsync("2024/001");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(2, result.Rows.Count);
+            Assert.Contains(result.Rows, r => r.Grade == "GD5");
+            Assert.Contains(result.Rows, r => r.Grade == "G");
+        }
+
+        [Fact]
+        public async Task GetStaffYearsPivotAsync_CalculatesTotalAsFractionOfDaysInYear()
+        {
+            // Arrange — DaysInYear = 220, Nodays = 110 → Total = 110/220 = 0.5
+            var staffRequirements = new List<StaffRequirement>
+            {
+                new() { Project = "2024/001", WgGrade = "B1", Year = 2024, Nodays = 110.0 }
+            };
+            var repo = CreateRepositoryWithPivotData(staffRequirements);
+
+            // Act
+            var result = await repo.GetStaffYearsPivotAsync("2024/001");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Single(result.Rows);
+            Assert.Equal(0.5, result.Rows[0].Total, precision: 5);
+        }
+
+        [Fact]
+        public async Task GetStaffYearsPivotAsync_PopulatesYearlyAmounts_PerGrade()
+        {
+            // Arrange
+            var staffRequirements = new List<StaffRequirement>
+            {
+                new() { Project = "2024/001", WgGrade = "C1", Year = 2024, Nodays = 220.0 },
+                new() { Project = "2024/001", WgGrade = "C2", Year = 2025, Nodays = 110.0 }
+            };
+            var repo = CreateRepositoryWithPivotData(staffRequirements);
+
+            // Act
+            var result = await repo.GetStaffYearsPivotAsync("2024/001");
+
+            // Assert
+            Assert.NotNull(result);
+            var row = Assert.Single(result.Rows);
+            Assert.Equal("C", row.Grade);
+            Assert.Equal(1.0, row.YearlyAmounts[2024], precision: 5);
+            Assert.Equal(0.5, row.YearlyAmounts[2025], precision: 5);
+        }
+
+        [Fact]
+        public async Task GetStaffYearsPivotAsync_OnlyIncludesRecordsForRequestedProject()
+        {
+            // Arrange
+            var staffRequirements = new List<StaffRequirement>
+            {
+                new() { Project = "2024/001", WgGrade = "D1", Year = 2024, Nodays = 220.0 },
+                new() { Project = "2024/002", WgGrade = "D1", Year = 2024, Nodays = 220.0 }
+            };
+            var repo = CreateRepositoryWithPivotData(staffRequirements);
+
+            // Act
+            var result = await repo.GetStaffYearsPivotAsync("2024/001");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Single(result.Rows);
+            Assert.All(result.Rows, r => Assert.Equal("2024/001", r.Project));
+        }
+
+        [Fact]
+        public async Task GetStaffYearsPivotAsync_WithGradeFilter_ReturnsFilteredRows()
+        {
+            // Arrange
+            var staffRequirements = new List<StaffRequirement>
+            {
+                new() { Project = "2024/001", WgGrade = "A1", Year = 2024, Nodays = 220.0 },
+                new() { Project = "2024/001", WgGrade = "B1", Year = 2024, Nodays = 220.0 }
+            };
+            var repo = CreateRepositoryWithPivotData(staffRequirements);
+            var parameters = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = "{\"Grade\":\"A\"}"
+            };
+
+            // Act
+            var result = await repo.GetStaffYearsPivotAsync("2024/001", parameters);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Single(result.Rows);
+            Assert.Equal("A", result.Rows[0].Grade);
+        }
+
+        [Fact]
+        public async Task GetStaffYearsPivotAsync_WithPaging_ReturnsCorrectPage()
+        {
+            // Arrange — 3 distinct grade groups; request page 2 with page size 1
+            var staffRequirements = new List<StaffRequirement>
+            {
+                new() { Project = "2024/001", WgGrade = "A1", Year = 2024, Nodays = 110.0 },
+                new() { Project = "2024/001", WgGrade = "B2", Year = 2024, Nodays = 220.0 },
+                new() { Project = "2024/001", WgGrade = "C1", Year = 2024, Nodays = 330.0 }
+            };
+            var repo = CreateRepositoryWithPivotData(staffRequirements);
+            var parameters = new PaginationParameters<string> { Page = 2, PageSize = 1 };
+
+            // Act
+            var result = await repo.GetStaffYearsPivotAsync("2024/001", parameters);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Single(result.Rows);
+            Assert.Equal(3, result.TotalCount);
+        }
+
+        [Fact]
+        public async Task GetStaffYearsPivotAsync_HandlesUrlEncodedProjectId()
+        {
+            // Arrange
+            var staffRequirements = new List<StaffRequirement>
+            {
+                new() { Project = "2024/001", WgGrade = "E1", Year = 2024, Nodays = 220.0 }
+            };
+            var repo = CreateRepositoryWithPivotData(staffRequirements);
+            var encodedId = HttpUtility.UrlEncode("2024/001");
+
+            // Act
+            var result = await repo.GetStaffYearsPivotAsync(encodedId);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Single(result.Rows);
+        }
+
+        [Fact]
+        public async Task GetStaffYearsPivotAsync_WithNullParameters_ReturnsTotalCount()
+        {
+            // Arrange
+            var staffRequirements = new List<StaffRequirement>
+            {
+                new() { Project = "2024/001", WgGrade = "F1", Year = 2024, Nodays = 220.0 }
+            };
+            var repo = CreateRepositoryWithPivotData(staffRequirements);
+
+            // Act
+            var result = await repo.GetStaffYearsPivotAsync("2024/001", null);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(1, result.TotalCount);
+            Assert.Single(result.Rows);
+        }
+
+        [Fact]
+        public async Task GetStaffYearsPivotAsync_UsesDaysInYearSettingForCalculation()
+        {
+            // Arrange — DaysInYear = 220, Nodays = 220 → fraction = 1.0
+            var staffRequirements = new List<StaffRequirement>
+            {
+                new() { Project = "2024/001", WgGrade = "G1", Year = 2024, Nodays = 220.0 }
+            };
+            var repo = CreateRepositoryWithPivotData(staffRequirements);
+
+            // Act
+            var result = await repo.GetStaffYearsPivotAsync("2024/001");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Single(result.Rows);
+            Assert.Equal(1.0, result.Rows[0].Total, precision: 5);
+        }
+
+        #endregion
+
+        #region GetStaffEffortAsync
+
+        [Fact]
+        public async Task GetStaffEffortAsync_WithNoData_ReturnsEmptyPivot()
+        {
+            // Arrange
+            var repo = CreateRepositoryWithPivotData(new List<StaffRequirement>());
+
+            // Act
+            var result = await repo.GetStaffEffortAsync("2024/001");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Empty(result.Rows);
+            Assert.Empty(result.Years);
+            Assert.Equal(0, result.TotalCount);
+        }
+
+        [Fact]
+        public async Task GetStaffEffortAsync_ReturnsCorrectYears()
+        {
+            // Arrange
+            var staffRequirements = new List<StaffRequirement>
+            {
+                new() { Project = "2024/001", WgGrade = "A1", Name = "Alice", Year = 2024, Nodays = 10.0 },
+                new() { Project = "2024/001", WgGrade = "A1", Name = "Alice", Year = 2025, Nodays = 20.0 }
+            };
+            var workGroupGrades = new List<WorkGroupGrade>
+            {
+                new() { WgGrade = "A1", WorkGroup = "Science", ProfitCentreGrade = "PCG1" }
+            };
+            var repo = CreateRepositoryWithPivotData(staffRequirements, workGroupGrades);
+
+            // Act
+            var result = await repo.GetStaffEffortAsync("2024/001");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(2, result.Years.Count);
+            Assert.Contains(2024, result.Years);
+            Assert.Contains(2025, result.Years);
+        }
+
+        [Fact]
+        public async Task GetStaffEffortAsync_GroupsByProjectWorkGroupGradeCodeAndName()
+        {
+            // Arrange — two rows with same Project/WorkGroup/GradeCode/Name should merge into one
+            var staffRequirements = new List<StaffRequirement>
+            {
+                new() { Project = "2024/001", WgGrade = "A1", Name = "Alice", Year = 2024, Nodays = 10.0 },
+                new() { Project = "2024/001", WgGrade = "A1", Name = "Alice", Year = 2025, Nodays = 15.0 }
+            };
+            var workGroupGrades = new List<WorkGroupGrade>
+            {
+                new() { WgGrade = "A1", WorkGroup = "Science", ProfitCentreGrade = "PCG1" }
+            };
+            var repo = CreateRepositoryWithPivotData(staffRequirements, workGroupGrades);
+
+            // Act
+            var result = await repo.GetStaffEffortAsync("2024/001");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Single(result.Rows);
+            Assert.Equal(25.0, result.Rows[0].Total, precision: 5);
+        }
+
+        [Fact]
+        public async Task GetStaffEffortAsync_PopulatesWorkGroupFromLookup()
+        {
+            // Arrange
+            var staffRequirements = new List<StaffRequirement>
+            {
+                new() { Project = "2024/001", WgGrade = "B2", Name = "Bob", Year = 2024, Nodays = 5.0 }
+            };
+            var workGroupGrades = new List<WorkGroupGrade>
+            {
+                new() { WgGrade = "B2", WorkGroup = "Virology", ProfitCentreGrade = "PCG2" }
+            };
+            var repo = CreateRepositoryWithPivotData(staffRequirements, workGroupGrades);
+
+            // Act
+            var result = await repo.GetStaffEffortAsync("2024/001");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Single(result.Rows);
+            Assert.Equal("Virology", result.Rows[0].WorkGroup);
+        }
+
+        [Fact]
+        public async Task GetStaffEffortAsync_UsesEmptyWorkGroup_WhenGradeNotInLookup()
+        {
+            // Arrange — WgGrade not in WorkGroupGrades lookup
+            var staffRequirements = new List<StaffRequirement>
+            {
+                new() { Project = "2024/001", WgGrade = "Z9", Name = "Zara", Year = 2024, Nodays = 5.0 }
+            };
+            var repo = CreateRepositoryWithPivotData(staffRequirements, new List<WorkGroupGrade>());
+
+            // Act
+            var result = await repo.GetStaffEffortAsync("2024/001");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Single(result.Rows);
+            Assert.Equal(string.Empty, result.Rows[0].WorkGroup);
+        }
+
+        [Fact]
+        public async Task GetStaffEffortAsync_GD5GradeCode_IsGroupedAsGD5()
+        {
+            // Arrange
+            var staffRequirements = new List<StaffRequirement>
+            {
+                new() { Project = "2024/001", WgGrade = "GD5X", Name = "Carol", Year = 2024, Nodays = 10.0 }
+            };
+            var repo = CreateRepositoryWithPivotData(staffRequirements, new List<WorkGroupGrade>());
+
+            // Act
+            var result = await repo.GetStaffEffortAsync("2024/001");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Single(result.Rows);
+            Assert.Equal("GD5", result.Rows[0].GradeCode);
+        }
+
+        [Fact]
+        public async Task GetStaffEffortAsync_OnlyIncludesRecordsForRequestedProject()
+        {
+            // Arrange
+            var staffRequirements = new List<StaffRequirement>
+            {
+                new() { Project = "2024/001", WgGrade = "A1", Name = "Alice", Year = 2024, Nodays = 10.0 },
+                new() { Project = "2024/002", WgGrade = "A1", Name = "Bob",   Year = 2024, Nodays = 10.0 }
+            };
+            var repo = CreateRepositoryWithPivotData(staffRequirements, new List<WorkGroupGrade>());
+
+            // Act
+            var result = await repo.GetStaffEffortAsync("2024/001");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Single(result.Rows);
+            Assert.All(result.Rows, r => Assert.Equal("2024/001", r.Project));
+        }
+
+        [Fact]
+        public async Task GetStaffEffortAsync_WithGradeCodeFilter_ReturnsFilteredRows()
+        {
+            // Arrange
+            var staffRequirements = new List<StaffRequirement>
+            {
+                new() { Project = "2024/001", WgGrade = "A1", Name = "Alice", Year = 2024, Nodays = 10.0 },
+                new() { Project = "2024/001", WgGrade = "B1", Name = "Bob",   Year = 2024, Nodays = 10.0 }
+            };
+            var repo = CreateRepositoryWithPivotData(staffRequirements, new List<WorkGroupGrade>());
+            var parameters = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = "{\"GradeCode\":\"A\"}"
+            };
+
+            // Act
+            var result = await repo.GetStaffEffortAsync("2024/001", parameters);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Single(result.Rows);
+            Assert.Equal("A", result.Rows[0].GradeCode);
+        }
+
+        [Fact]
+        public async Task GetStaffEffortAsync_WithNameFilter_ReturnsFilteredRows()
+        {
+            // Arrange
+            var staffRequirements = new List<StaffRequirement>
+            {
+                new() { Project = "2024/001", WgGrade = "A1", Name = "Alice",  Year = 2024, Nodays = 10.0 },
+                new() { Project = "2024/001", WgGrade = "A1", Name = "Bob",    Year = 2024, Nodays = 10.0 }
+            };
+            var repo = CreateRepositoryWithPivotData(staffRequirements, new List<WorkGroupGrade>());
+            var parameters = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = "{\"Name\":\"Alice\"}"
+            };
+
+            // Act
+            var result = await repo.GetStaffEffortAsync("2024/001", parameters);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Single(result.Rows);
+            Assert.Equal("Alice", result.Rows[0].Name);
+        }
+
+        [Fact]
+        public async Task GetStaffEffortAsync_WithWorkGroupFilter_ReturnsFilteredRows()
+        {
+            // Arrange
+            var staffRequirements = new List<StaffRequirement>
+            {
+                new() { Project = "2024/001", WgGrade = "A1", Name = "Alice", Year = 2024, Nodays = 10.0 },
+                new() { Project = "2024/001", WgGrade = "B1", Name = "Bob",   Year = 2024, Nodays = 10.0 }
+            };
+            var workGroupGrades = new List<WorkGroupGrade>
+            {
+                new() { WgGrade = "A1", WorkGroup = "Science",  ProfitCentreGrade = "PCG1" },
+                new() { WgGrade = "B1", WorkGroup = "Virology", ProfitCentreGrade = "PCG2" }
+            };
+            var repo = CreateRepositoryWithPivotData(staffRequirements, workGroupGrades);
+            var parameters = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = "{\"WorkGroup\":\"Science\"}"
+            };
+
+            // Act
+            var result = await repo.GetStaffEffortAsync("2024/001", parameters);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Single(result.Rows);
+            Assert.Equal("Science", result.Rows[0].WorkGroup);
+        }
+
+        [Fact]
+        public async Task GetStaffEffortAsync_WithPaging_ReturnsCorrectPage()
+        {
+            // Arrange — 3 distinct name rows; request page 2 with page size 1
+            var staffRequirements = new List<StaffRequirement>
+            {
+                new() { Project = "2024/001", WgGrade = "A1", Name = "Alice",   Year = 2024, Nodays = 10.0 },
+                new() { Project = "2024/001", WgGrade = "A1", Name = "Bob",     Year = 2024, Nodays = 10.0 },
+                new() { Project = "2024/001", WgGrade = "A1", Name = "Charlie", Year = 2024, Nodays = 10.0 }
+            };
+            var repo = CreateRepositoryWithPivotData(staffRequirements, new List<WorkGroupGrade>());
+            var parameters = new PaginationParameters<string> { Page = 2, PageSize = 1 };
+
+            // Act
+            var result = await repo.GetStaffEffortAsync("2024/001", parameters);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Single(result.Rows);
+            Assert.Equal(3, result.TotalCount);
+        }
+
+        [Fact]
+        public async Task GetStaffEffortAsync_HandlesUrlEncodedProjectId()
+        {
+            // Arrange
+            var staffRequirements = new List<StaffRequirement>
+            {
+                new() { Project = "2024/001", WgGrade = "A1", Name = "Alice", Year = 2024, Nodays = 10.0 }
+            };
+            var repo = CreateRepositoryWithPivotData(staffRequirements, new List<WorkGroupGrade>());
+            var encodedId = HttpUtility.UrlEncode("2024/001");
+
+            // Act
+            var result = await repo.GetStaffEffortAsync(encodedId);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Single(result.Rows);
+        }
+
+        [Fact]
+        public async Task GetStaffEffortAsync_YearlyAmounts_SummedCorrectlyPerRow()
+        {
+            // Arrange — same person, two records in same year
+            var staffRequirements = new List<StaffRequirement>
+            {
+                new() { Project = "2024/001", WgGrade = "A1", Name = "Alice", Year = 2024, Nodays = 30.0 },
+                new() { Project = "2024/001", WgGrade = "A1", Name = "Alice", Year = 2024, Nodays = 20.0 }
+            };
+            var repo = CreateRepositoryWithPivotData(staffRequirements, new List<WorkGroupGrade>());
+
+            // Act
+            var result = await repo.GetStaffEffortAsync("2024/001");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Single(result.Rows);
+            Assert.Equal(50.0, result.Rows[0].YearlyAmounts[2024], precision: 5);
+            Assert.Equal(50.0, result.Rows[0].Total, precision: 5);
+        }
+
+        #endregion
+
+        #region GetProjectCostsPivotAsync
+
+        [Fact]
+        public async Task GetProjectCostsPivotAsync_WithNoData_ReturnsEmptyPivot()
+        {
+            // Arrange
+            var repo = CreateRepositoryWithPivotData(new List<StaffRequirement>());
+
+            // Act
+            var result = await repo.GetProjectCostsPivotAsync("2024/001");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Empty(result.Rows);
+            Assert.Empty(result.Years);
+            Assert.Equal(0, result.TotalCount);
+        }
+
+        [Fact]
+        public async Task GetProjectCostsPivotAsync_AnimalCosts_AreGroupedAsOtherCosts()
+        {
+            // Arrange — NumberOfDays=2, NumberOfAnimals=3, DailyRate=10 → Cost = 60
+            var animalRequirements = new List<AnimalRequirement>
+            {
+                new() { Project = "2024/001", Year = 2024, NumberOfDays = 2, NumberOfAnimals = 3, DailyRate = 10.0 }
+            };
+            var repo = CreateRepositoryWithPivotData(
+                new List<StaffRequirement>(),
+                animalRequirements: animalRequirements);
+
+            // Act
+            var result = await repo.GetProjectCostsPivotAsync("2024/001");
+
+            // Assert
+            Assert.NotNull(result);
+            var otherRow = result.Rows.FirstOrDefault(r => r.Category == "Other Costs");
+            Assert.NotNull(otherRow);
+            Assert.Equal(60.0, otherRow.YearlyAmounts[2024], precision: 5);
+        }
+
+        [Fact]
+        public async Task GetProjectCostsPivotAsync_TestCosts_AreAggregatedIntoOtherCosts()
+        {
+            // Arrange — NumberOfTests=5, UnitPrice=20 → Cost = 100
+            var testRequirements = new List<TestRequirement>
+            {
+                new() { Project = "2024/001", Year = 2024, NumberOfTests = 5, UnitPrice = 20.0 }
+            };
+            var repo = CreateRepositoryWithPivotData(
+                new List<StaffRequirement>(),
+                testRequirements: testRequirements);
+
+            // Act
+            var result = await repo.GetProjectCostsPivotAsync("2024/001");
+
+            // Assert
+            Assert.NotNull(result);
+            var otherRow = result.Rows.FirstOrDefault(r => r.Category == "Other Costs");
+            Assert.NotNull(otherRow);
+            Assert.Equal(100.0, otherRow.YearlyAmounts[2024], precision: 5);
+        }
+
+        [Fact]
+        public async Task GetProjectCostsPivotAsync_StaffOHRRows_AreGroupedAsOverheads()
+        {
+            // Arrange — Nohours=10, Chargerate=50, Ohr=0.2, Npr=0.1
+            // Cost = 10*50*(0.2+0.1)/50 = 10*0.3 = 3
+            var staffRequirements = new List<StaffRequirement>
+            {
+                new()
+                {
+                    Project = "2024/001", WgGrade = "A1", Year = 2024,
+                    Nohours = 10.0, Chargerate = 50.0, Ohr = 0.2, Npr = 0.1, Payrate = 0.0, Nodays = 0.0
+                }
+            };
+            var repo = CreateRepositoryWithPivotData(staffRequirements);
+
+            // Act
+            var result = await repo.GetProjectCostsPivotAsync("2024/001");
+
+            // Assert
+            Assert.NotNull(result);
+            var overheadsRow = result.Rows.FirstOrDefault(r => r.Category == "Overheads");
+            Assert.NotNull(overheadsRow);
+            Assert.Equal(3.0, overheadsRow.YearlyAmounts[2024], precision: 5);
+        }
+
+        [Fact]
+        public async Task GetProjectCostsPivotAsync_StaffPayRows_AreGroupedAsPay()
+        {
+            // Arrange — Nohours=10, Chargerate=50, Payrate=30
+            // Cost = 10*50*30/50 = 10*30 = 300
+            var staffRequirements = new List<StaffRequirement>
+            {
+                new()
+                {
+                    Project = "2024/001", WgGrade = "A1", Year = 2024,
+                    Nohours = 10.0, Chargerate = 50.0, Payrate = 30.0, Ohr = 0.0, Npr = 0.0, Nodays = 0.0
+                }
+            };
+            var repo = CreateRepositoryWithPivotData(staffRequirements);
+
+            // Act
+            var result = await repo.GetProjectCostsPivotAsync("2024/001");
+
+            // Assert
+            Assert.NotNull(result);
+            var payRow = result.Rows.FirstOrDefault(r => r.Category == "Pay");
+            Assert.NotNull(payRow);
+            Assert.Equal(300.0, payRow.YearlyAmounts[2024], precision: 5);
+        }
+
+        [Fact]
+        public async Task GetProjectCostsPivotAsync_AdditionalCosts_UseCsg7GroupAsCategory()
+        {
+            // Arrange
+            var additionalCosts = new List<AdditionalCost>
+            {
+                new() { Project = "2024/001", Year = 2024, AccountCat = "TRAVEL", ItemCost = 500.0 }
+            };
+            var accountCategories = new List<FpsAccountCategory>
+            {
+                new() { AccShortName = "TRAVEL", Csg7Group = "Travel & Subsistence", FpsYear = 2024 }
+            };
+            var repo = CreateRepositoryWithPivotData(
+                new List<StaffRequirement>(),
+                additionalCosts: additionalCosts,
+                accountCategories: accountCategories);
+
+            // Act
+            var result = await repo.GetProjectCostsPivotAsync("2024/001");
+
+            // Assert
+            Assert.NotNull(result);
+            var travelRow = result.Rows.FirstOrDefault(r => r.Category == "Travel & Subsistence");
+            Assert.NotNull(travelRow);
+            Assert.Equal(500.0, travelRow.YearlyAmounts[2024], precision: 5);
+        }
+
+        [Fact]
+        public async Task GetProjectCostsPivotAsync_AdditionalCosts_WithNullCsg7Group_FallsBackToOther()
+        {
+            // Arrange
+            var additionalCosts = new List<AdditionalCost>
+            {
+                new() { Project = "2024/001", Year = 2024, AccountCat = "MISC", ItemCost = 250.0 }
+            };
+            var accountCategories = new List<FpsAccountCategory>
+            {
+                new() { AccShortName = "MISC", Csg7Group = null, FpsYear = 2024 }
+            };
+            var repo = CreateRepositoryWithPivotData(
+                new List<StaffRequirement>(),
+                additionalCosts: additionalCosts,
+                accountCategories: accountCategories);
+
+            // Act
+            var result = await repo.GetProjectCostsPivotAsync("2024/001");
+
+            // Assert
+            Assert.NotNull(result);
+            var otherRow = result.Rows.FirstOrDefault(r => r.Category == "Other");
+            Assert.NotNull(otherRow);
+            Assert.Equal(250.0, otherRow.YearlyAmounts[2024], precision: 5);
+        }
+
+        [Fact]
+        public async Task GetProjectCostsPivotAsync_OnlyIncludesRecordsForRequestedProject()
+        {
+            // Arrange
+            var animalRequirements = new List<AnimalRequirement>
+            {
+                new() { Project = "2024/001", Year = 2024, NumberOfDays = 1, NumberOfAnimals = 1, DailyRate = 100.0 },
+                new() { Project = "2024/002", Year = 2024, NumberOfDays = 1, NumberOfAnimals = 1, DailyRate = 100.0 }
+            };
+            var repo = CreateRepositoryWithPivotData(
+                new List<StaffRequirement>(),
+                animalRequirements: animalRequirements);
+
+            // Act
+            var result = await repo.GetProjectCostsPivotAsync("2024/001");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.All(result.Rows, r => Assert.Equal("2024/001", r.Project));
+        }
+
+        [Fact]
+        public async Task GetProjectCostsPivotAsync_WithCategoryFilter_ReturnsFilteredRows()
+        {
+            // Arrange
+            var animalRequirements = new List<AnimalRequirement>
+            {
+                new() { Project = "2024/001", Year = 2024, NumberOfDays = 1, NumberOfAnimals = 1, DailyRate = 100.0 }
+            };
+            var staffRequirements = new List<StaffRequirement>
+            {
+                new()
+                {
+                    Project = "2024/001", WgGrade = "A1", Year = 2024,
+                    Nohours = 5.0, Chargerate = 20.0, Payrate = 10.0, Ohr = 0.0, Npr = 0.0, Nodays = 0.0
+                }
+            };
+            var repo = CreateRepositoryWithPivotData(
+                staffRequirements,
+                animalRequirements: animalRequirements);
+            var parameters = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = "{\"Category\":\"Pay\"}"
+            };
+
+            // Act
+            var result = await repo.GetProjectCostsPivotAsync("2024/001", parameters);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Single(result.Rows);
+            Assert.Equal("Pay", result.Rows[0].Category);
+        }
+
+        [Fact]
+        public async Task GetProjectCostsPivotAsync_WithPaging_ReturnsCorrectPage()
+        {
+            // Arrange — generate Pay + Overheads + Other Costs categories
+            var staffRequirements = new List<StaffRequirement>
+            {
+                new()
+                {
+                    Project = "2024/001", WgGrade = "A1", Year = 2024,
+                    Nohours = 10.0, Chargerate = 50.0, Payrate = 30.0, Ohr = 0.2, Npr = 0.1, Nodays = 0.0
+                }
+            };
+            var animalRequirements = new List<AnimalRequirement>
+            {
+                new() { Project = "2024/001", Year = 2024, NumberOfDays = 1, NumberOfAnimals = 1, DailyRate = 100.0 }
+            };
+            var repo = CreateRepositoryWithPivotData(
+                staffRequirements,
+                animalRequirements: animalRequirements);
+            var parameters = new PaginationParameters<string> { Page = 1, PageSize = 1 };
+
+            // Act
+            var result = await repo.GetProjectCostsPivotAsync("2024/001", parameters);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Single(result.Rows);
+            Assert.True(result.TotalCount >= 2); // At least Pay, Overheads, Other Costs
+        }
+
+        [Fact]
+        public async Task GetProjectCostsPivotAsync_HandlesUrlEncodedProjectId()
+        {
+            // Arrange
+            var animalRequirements = new List<AnimalRequirement>
+            {
+                new() { Project = "2024/001", Year = 2024, NumberOfDays = 1, NumberOfAnimals = 1, DailyRate = 50.0 }
+            };
+            var repo = CreateRepositoryWithPivotData(
+                new List<StaffRequirement>(),
+                animalRequirements: animalRequirements);
+            var encodedId = HttpUtility.UrlEncode("2024/001");
+
+            // Act
+            var result = await repo.GetProjectCostsPivotAsync(encodedId);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.NotEmpty(result.Rows);
+        }
+
+        [Fact]
+        public async Task GetProjectCostsPivotAsync_TotalIsSum_AcrossAllYears()
+        {
+            // Arrange — animal cost in two different years
+            var animalRequirements = new List<AnimalRequirement>
+            {
+                new() { Project = "2024/001", Year = 2024, NumberOfDays = 1, NumberOfAnimals = 1, DailyRate = 100.0 },
+                new() { Project = "2024/001", Year = 2025, NumberOfDays = 1, NumberOfAnimals = 1, DailyRate = 200.0 }
+            };
+            var repo = CreateRepositoryWithPivotData(
+                new List<StaffRequirement>(),
+                animalRequirements: animalRequirements);
+
+            // Act
+            var result = await repo.GetProjectCostsPivotAsync("2024/001");
+
+            // Assert
+            Assert.NotNull(result);
+            var otherRow = result.Rows.FirstOrDefault(r => r.Category == "Other Costs");
+            Assert.NotNull(otherRow);
+            Assert.Equal(300.0, otherRow.Total, precision: 5);
+        }
+
+        [Fact]
+        public async Task GetProjectCostsPivotAsync_StaffWithZeroChargeRate_IsExcluded()
+        {
+            // Arrange — Chargerate = 0 should be excluded from Pay/Overheads
+            var staffRequirements = new List<StaffRequirement>
+            {
+                new()
+                {
+                    Project = "2024/001", WgGrade = "A1", Year = 2024,
+                    Nohours = 10.0, Chargerate = 0.0, Payrate = 30.0, Ohr = 0.2, Npr = 0.1, Nodays = 0.0
+                }
+            };
+            var repo = CreateRepositoryWithPivotData(staffRequirements);
+
+            // Act
+            var result = await repo.GetProjectCostsPivotAsync("2024/001");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.DoesNotContain(result.Rows, r => r.Category == "Pay");
+            Assert.DoesNotContain(result.Rows, r => r.Category == "Overheads");
+        }
+
+        #endregion
+
+        #region GetProjectSummaryExportDataAsync
+
+        /// <summary>
+        /// Creates a ProjectRepository with all data sets required by GetProjectSummaryExportDataAsync.
+        /// </summary>
+        private static ProjectRepository CreateRepositoryForExport(
+            IEnumerable<Project>? projects = null,
+            IEnumerable<ProjectYear>? projectYears = null,
+            IEnumerable<StaffRequirement>? staffRequirements = null,
+            IEnumerable<TestRequirement>? testRequirements = null,
+            IEnumerable<AnimalRequirement>? animalRequirements = null,
+            IEnumerable<AdditionalCost>? additionalCosts = null)
+        {
+            var mockFPSYearContext = new Mock<IFPSYearContext>();
+            var mockSettingsRepository = new Mock<ISettingsRepository>();
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<CostbookDbContext>(mockFPSYearContext.Object);
+
+            var projectsMockSet = RepositoryTestHelper.CreateMockDbSet(projects ?? new List<Project>());
+            mockContext.Setup(x => x.Projects).Returns(projectsMockSet.Object);
+            mockContext.Setup(x => x.Set<Project>()).Returns(projectsMockSet.Object);
+
+            var projectYearsMockSet = RepositoryTestHelper.CreateMockDbSet(projectYears ?? new List<ProjectYear>());
+            mockContext.Setup(x => x.ProjectYears).Returns(projectYearsMockSet.Object);
+            mockContext.Setup(x => x.Set<ProjectYear>()).Returns(projectYearsMockSet.Object);
+
+            var staffMockSet = RepositoryTestHelper.CreateMockDbSet(staffRequirements ?? new List<StaffRequirement>());
+            mockContext.Setup(x => x.StaffRequirements).Returns(staffMockSet.Object);
+            mockContext.Setup(x => x.Set<StaffRequirement>()).Returns(staffMockSet.Object);
+
+            var testReqMockSet = RepositoryTestHelper.CreateMockDbSet(testRequirements ?? new List<TestRequirement>());
+            mockContext.Setup(x => x.TestRequirements).Returns(testReqMockSet.Object);
+            mockContext.Setup(x => x.Set<TestRequirement>()).Returns(testReqMockSet.Object);
+
+            var animalMockSet = RepositoryTestHelper.CreateMockDbSet(animalRequirements ?? new List<AnimalRequirement>());
+            mockContext.Setup(x => x.AnimalRequirements).Returns(animalMockSet.Object);
+            mockContext.Setup(x => x.Set<AnimalRequirement>()).Returns(animalMockSet.Object);
+
+            var additionalCostMockSet = RepositoryTestHelper.CreateMockDbSet(additionalCosts ?? new List<AdditionalCost>());
+            mockContext.Setup(x => x.AdditionalCosts).Returns(additionalCostMockSet.Object);
+            mockContext.Setup(x => x.Set<AdditionalCost>()).Returns(additionalCostMockSet.Object);
+
+            RepositoryTestHelper.SetupSaveChanges(mockContext);
+
+            return new ProjectRepository(mockContext.Object, mockSettingsRepository.Object);
+        }
+        #endregion
+
+        #region GetProjectSummaryExportDataAsync
+
+        [Fact]
+        public async Task GetProjectSummaryExportDataAsync_WithAllData_ReturnsPopulatedExportData()
+        {
+            // Arrange
+            var projects = new List<Project>
+            {
+                new() { ProjectId = "2024/001", ProjectTitle = "Test Project", Inflation = 3 }
+            };
+            var projectYears = new List<ProjectYear>
+            {
+                new() { Project = "2024/001", YearValue = 2024 },
+                new() { Project = "2024/001", YearValue = 2025 }
+            };
+            var staffRequirements = new List<StaffRequirement>
+            {
+                new() { Project = "2024/001", WgGrade = "A1", Year = 2024, Nohours = 100.0, Chargerate = 50.0 }
+            };
+            var testRequirements = new List<TestRequirement>
+            {
+                new() { Project = "2024/001", TestCode = "BLOOD", Year = 2024, UnitPrice = 15.0, NumberOfTests = 10.0 }
+            };
+            var animalRequirements = new List<AnimalRequirement>
+            {
+                new() { Project = "2024/001", AnimalType = "Mouse", Year = 2024, DailyRate = 5.0, NumberOfDays = 30.0, NumberOfAnimals = 3.0 }
+            };
+            var additionalCosts = new List<AdditionalCost>
+            {
+                new() { Project = "2024/001", Description = "Consumables", AccountCat = "CAT1", Year = 2024, ItemCost = 200.0 }
+            };
+            var repo = CreateRepositoryForExport(projects, projectYears, staffRequirements, testRequirements, animalRequirements, additionalCosts);
+
+            // Act
+            var result = await repo.GetProjectSummaryExportDataAsync("2024/001");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.NotNull(result.Project);
+            Assert.Equal("2024/001", result.Project.ProjectId);
+            Assert.Equal(2, result.Years.Count);
+            Assert.Single(result.StaffRequirements);
+            Assert.Single(result.TestRequirements);
+            Assert.Single(result.AnimalRequirements);
+            Assert.Single(result.AdditionalCosts);
+        }
+
+        [Fact]
+        public async Task GetProjectSummaryExportDataAsync_WithNoMatchingProject_ReturnsNullProject()
+        {
+            // Arrange — project list is empty; all child collections also empty
+            var repo = CreateRepositoryForExport();
+
+            // Act
+            var result = await repo.GetProjectSummaryExportDataAsync("NONEXISTENT");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Null(result.Project);
+        }
+
+        [Fact]
+        public async Task GetProjectSummaryExportDataAsync_OnlyReturnsDataForRequestedProject()
+        {
+            // Arrange — two projects; only data for "2024/001" should appear in results
+            var projects = new List<Project>
+            {
+                new() { ProjectId = "2024/001" },
+                new() { ProjectId = "2024/002" }
+            };
+            var projectYears = new List<ProjectYear>
+            {
+                new() { Project = "2024/001", YearValue = 2024 },
+                new() { Project = "2024/002", YearValue = 2024 }
+            };
+            var staffRequirements = new List<StaffRequirement>
+            {
+                new() { Project = "2024/001", WgGrade = "A1", Year = 2024, Nodays = 10.0 },
+                new() { Project = "2024/002", WgGrade = "B1", Year = 2024, Nodays = 10.0 }
+            };
+            var testRequirements = new List<TestRequirement>
+            {
+                new() { Project = "2024/001", TestCode = "BLOOD", Year = 2024 },
+                new() { Project = "2024/002", TestCode = "URINE", Year = 2024 }
+            };
+            var animalRequirements = new List<AnimalRequirement>
+            {
+                new() { Project = "2024/001", AnimalType = "Mouse", Year = 2024 },
+                new() { Project = "2024/002", AnimalType = "Rat",   Year = 2024 }
+            };
+            var additionalCosts = new List<AdditionalCost>
+            {
+                new() { Project = "2024/001", Description = "Cost A", AccountCat = "CAT1", Year = 2024 },
+                new() { Project = "2024/002", Description = "Cost B", AccountCat = "CAT2", Year = 2024 }
+            };
+            var repo = CreateRepositoryForExport(projects, projectYears, staffRequirements, testRequirements, animalRequirements, additionalCosts);
+
+            // Act
+            var result = await repo.GetProjectSummaryExportDataAsync("2024/001");
+
+            // Assert
+            Assert.All(result.Years, y => Assert.Equal("2024/001", y.Project));
+            Assert.All(result.StaffRequirements, sr => Assert.Equal("2024/001", sr.Project));
+            Assert.All(result.TestRequirements, tr => Assert.Equal("2024/001", tr.Project));
+            Assert.All(result.AnimalRequirements, ar => Assert.Equal("2024/001", ar.Project));
+            Assert.All(result.AdditionalCosts, ac => Assert.Equal("2024/001", ac.Project));
+        }
+
+        [Fact]
+        public async Task GetProjectSummaryExportDataAsync_YearsOrderedAscendingByYearValue()
+        {
+            // Arrange — years inserted out of order
+            var projects = new List<Project> { new() { ProjectId = "2024/001" } };
+            var projectYears = new List<ProjectYear>
+            {
+                new() { Project = "2024/001", YearValue = 2026 },
+                new() { Project = "2024/001", YearValue = 2024 },
+                new() { Project = "2024/001", YearValue = 2025 }
+            };
+            var repo = CreateRepositoryForExport(projects, projectYears);
+
+            // Act
+            var result = await repo.GetProjectSummaryExportDataAsync("2024/001");
+
+            // Assert
+            Assert.Equal(3, result.Years.Count);
+            Assert.Equal(2024, result.Years[0].YearValue);
+            Assert.Equal(2025, result.Years[1].YearValue);
+            Assert.Equal(2026, result.Years[2].YearValue);
+        }
+
+        [Fact]
+        public async Task GetProjectSummaryExportDataAsync_StaffOrderedByYearThenWgGrade()
+        {
+            // Arrange — staff inserted out of order
+            var projects = new List<Project> { new() { ProjectId = "2024/001" } };
+            var staffRequirements = new List<StaffRequirement>
+            {
+                new() { Project = "2024/001", WgGrade = "C1", Year = 2024, Nodays = 10.0 },
+                new() { Project = "2024/001", WgGrade = "A1", Year = 2025, Nodays = 10.0 },
+                new() { Project = "2024/001", WgGrade = "B1", Year = 2024, Nodays = 10.0 }
+            };
+            var repo = CreateRepositoryForExport(projects, staffRequirements: staffRequirements);
+
+            // Act
+            var result = await repo.GetProjectSummaryExportDataAsync("2024/001");
+
+            // Assert
+            Assert.Equal(3, result.StaffRequirements.Count);
+            Assert.Equal(2024, result.StaffRequirements[0].Year);
+            Assert.Equal("B1", result.StaffRequirements[0].WgGrade);
+            Assert.Equal(2024, result.StaffRequirements[1].Year);
+            Assert.Equal("C1", result.StaffRequirements[1].WgGrade);
+            Assert.Equal(2025, result.StaffRequirements[2].Year);
+            Assert.Equal("A1", result.StaffRequirements[2].WgGrade);
+        }
+
+        [Fact]
+        public async Task GetProjectSummaryExportDataAsync_TestsOrderedByYearThenTestCode()
+        {
+            // Arrange
+            var projects = new List<Project> { new() { ProjectId = "2024/001" } };
+            var testRequirements = new List<TestRequirement>
+            {
+                new() { Project = "2024/001", TestCode = "URINE", Year = 2024 },
+                new() { Project = "2024/001", TestCode = "BLOOD", Year = 2024 },
+                new() { Project = "2024/001", TestCode = "BLOOD", Year = 2025 }
+            };
+            var repo = CreateRepositoryForExport(projects, testRequirements: testRequirements);
+
+            // Act
+            var result = await repo.GetProjectSummaryExportDataAsync("2024/001");
+
+            // Assert
+            Assert.Equal(3, result.TestRequirements.Count);
+            Assert.Equal(2024, result.TestRequirements[0].Year);
+            Assert.Equal("BLOOD", result.TestRequirements[0].TestCode);
+            Assert.Equal(2024, result.TestRequirements[1].Year);
+            Assert.Equal("URINE", result.TestRequirements[1].TestCode);
+            Assert.Equal(2025, result.TestRequirements[2].Year);
+        }
+
+        [Fact]
+        public async Task GetProjectSummaryExportDataAsync_AnimalsOrderedByYearThenAnimalType()
+        {
+            // Arrange
+            var projects = new List<Project> { new() { ProjectId = "2024/001" } };
+            var animalRequirements = new List<AnimalRequirement>
+            {
+                new() { Project = "2024/001", AnimalType = "Rat",   Year = 2024 },
+                new() { Project = "2024/001", AnimalType = "Mouse", Year = 2024 },
+                new() { Project = "2024/001", AnimalType = "Mouse", Year = 2025 }
+            };
+            var repo = CreateRepositoryForExport(projects, animalRequirements: animalRequirements);
+
+            // Act
+            var result = await repo.GetProjectSummaryExportDataAsync("2024/001");
+
+            // Assert
+            Assert.Equal(3, result.AnimalRequirements.Count);
+            Assert.Equal(2024, result.AnimalRequirements[0].Year);
+            Assert.Equal("Mouse", result.AnimalRequirements[0].AnimalType);
+            Assert.Equal(2024, result.AnimalRequirements[1].Year);
+            Assert.Equal("Rat", result.AnimalRequirements[1].AnimalType);
+            Assert.Equal(2025, result.AnimalRequirements[2].Year);
+        }
+
+        [Fact]
+        public async Task GetProjectSummaryExportDataAsync_AdditionalCostsOrderedByYearThenDescription()
+        {
+            // Arrange
+            var projects = new List<Project> { new() { ProjectId = "2024/001" } };
+            var additionalCosts = new List<AdditionalCost>
+            {
+                new() { Project = "2024/001", Description = "Travel",      AccountCat = "T", Year = 2024 },
+                new() { Project = "2024/001", Description = "Consumables", AccountCat = "C", Year = 2024 },
+                new() { Project = "2024/001", Description = "Travel",      AccountCat = "T", Year = 2025 }
+            };
+            var repo = CreateRepositoryForExport(projects, additionalCosts: additionalCosts);
+
+            // Act
+            var result = await repo.GetProjectSummaryExportDataAsync("2024/001");
+
+            // Assert
+            Assert.Equal(3, result.AdditionalCosts.Count);
+            Assert.Equal(2024, result.AdditionalCosts[0].Year);
+            Assert.Equal("Consumables", result.AdditionalCosts[0].Description);
+            Assert.Equal(2024, result.AdditionalCosts[1].Year);
+            Assert.Equal("Travel", result.AdditionalCosts[1].Description);
+            Assert.Equal(2025, result.AdditionalCosts[2].Year);
+        }
+
+        [Fact]
+        public async Task GetProjectSummaryExportDataAsync_WithNoChildData_ReturnsEmptyCollections()
+        {
+            // Arrange — project exists but no related records in any child table
+            var projects = new List<Project> { new() { ProjectId = "2024/001" } };
+            var repo = CreateRepositoryForExport(projects);
+
+            // Act
+            var result = await repo.GetProjectSummaryExportDataAsync("2024/001");
+
+            // Assert
+            Assert.NotNull(result.Project);
+            Assert.Equal("2024/001", result.Project.ProjectId);
+            Assert.Empty(result.Years);
+            Assert.Empty(result.StaffRequirements);
+            Assert.Empty(result.TestRequirements);
+            Assert.Empty(result.AnimalRequirements);
+            Assert.Empty(result.AdditionalCosts);
+        }
+
+        [Fact]
+        public async Task GetProjectSummaryExportDataAsync_HandlesUrlEncodedProjectId()
+        {
+            // Arrange
+            var projects = new List<Project> { new() { ProjectId = "2024/001" } };
+            var repo = CreateRepositoryForExport(projects);
+            var encodedId = HttpUtility.UrlEncode("2024/001");
+
+            // Act
+            var result = await repo.GetProjectSummaryExportDataAsync(encodedId);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.NotNull(result.Project);
+            Assert.Equal("2024/001", result.Project.ProjectId);
         }
 
         #endregion

@@ -495,6 +495,271 @@ namespace Apha.Costbook.DataAccess.Repositories
             result = true;
             return result;
         }
+
+        public async Task<StaffYearsPivotData> GetStaffYearsPivotAsync(string projectId, PaginationParameters<string>? parameters = null)
+        {
+            var decodedProjectId = HttpUtility.UrlDecode(projectId);
+
+            var daysInYearSetting = await _settingsRepository.GetSettingValueByIdAsync("DaysInYear");
+            double daysInYear = !string.IsNullOrEmpty(daysInYearSetting) && double.TryParse(daysInYearSetting, out double d) ? d : 220.0;
+
+            var rows = await _context.StaffRequirements
+                .AsNoTracking()
+                .Where(s => s.Project == decodedProjectId && s.Year.HasValue && s.Nodays.HasValue)
+                .ToListAsync();
+
+            var years = rows.Select(s => s.Year!.Value).Distinct().OrderBy(y => y).ToList();
+
+            var pivotRows = rows
+                .GroupBy(s => s.WgGrade.StartsWith("GD5", StringComparison.OrdinalIgnoreCase)
+                    ? "GD5"
+                    : s.WgGrade.Length > 0 ? s.WgGrade[..1] : s.WgGrade)
+                .Select(g => new StaffYearsRowData
+                {
+                    Project = decodedProjectId,
+                    Grade = g.Key,
+                    YearlyAmounts = g.GroupBy(s => s.Year!.Value)
+                        .ToDictionary(yg => yg.Key, yg => yg.Sum(s => s.Nodays!.Value / daysInYear)),
+                    Total = g.Sum(s => s.Nodays!.Value / daysInYear)
+                })
+                .OrderBy(r => r.Grade)
+                .ToList();
+
+
+            if (!string.IsNullOrWhiteSpace(parameters?.Filter))
+            {
+                dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(parameters.Filter);
+                if (filterModel != null)
+                {
+                    IDictionary<string, object> dict = (IDictionary<string, object>)filterModel;
+
+                    if (dict.TryGetValue("Grade", out object? grade) && grade != null)
+                        pivotRows = pivotRows
+                            .Where(r => r.Grade.Contains(grade.ToString()!, StringComparison.OrdinalIgnoreCase))
+                            .ToList();
+                }
+            }
+
+            var totalCount = pivotRows.Count;
+
+            if (parameters?.Page > 0 && parameters.PageSize > 0)
+            {
+                pivotRows = pivotRows
+                    .Skip((parameters.Page - 1) * parameters.PageSize)
+                    .Take(parameters.PageSize)
+                    .ToList();
+            }
+
+            return new StaffYearsPivotData { Years = years, Rows = pivotRows, TotalCount = totalCount };
+        }
+
+        public async Task<StaffEffortPivotData> GetStaffEffortAsync(string projectId, PaginationParameters<string>? parameters = null)
+        {
+            var decodedProjectId = HttpUtility.UrlDecode(projectId);
+
+            var staffRows = await _context.StaffRequirements
+                .AsNoTracking()
+                .Where(s => s.Project == decodedProjectId && s.Year.HasValue && s.Nodays.HasValue)
+                .ToListAsync();
+
+            var wgLookup = await _context.WorkGroupGrades
+                .AsNoTracking()
+                .ToDictionaryAsync(w => w.WgGrade, w => w.WorkGroup);
+
+            var joined = staffRows.Select(s => new
+            {
+                Project = s.Project ?? decodedProjectId,
+                WorkGroup = wgLookup.TryGetValue(s.WgGrade, out var wg) ? wg : string.Empty,
+                GradeCode = s.WgGrade.StartsWith("GD5", StringComparison.OrdinalIgnoreCase)
+                    ? "GD5"
+                    : s.WgGrade.Length > 0 ? s.WgGrade[..1] : s.WgGrade,
+                Name = s.Name ?? string.Empty,
+                Year = s.Year!.Value,
+                NoDays = s.Nodays!.Value
+            }).ToList();
+
+            var years = joined.Select(r => r.Year).Distinct().OrderBy(y => y).ToList();
+
+            var pivotRows = joined
+                .GroupBy(r => new { r.Project, r.WorkGroup, r.GradeCode, r.Name })
+                .Select(g => new StaffEffortRowData
+                {
+                    Project = g.Key.Project,
+                    WorkGroup = g.Key.WorkGroup,
+                    GradeCode = g.Key.GradeCode,
+                    Name = g.Key.Name,
+                    YearlyAmounts = g.GroupBy(r => r.Year)
+                        .ToDictionary(yg => yg.Key, yg => yg.Sum(r => r.NoDays)),
+                    Total = g.Sum(r => r.NoDays)
+                })
+                .OrderBy(r => r.GradeCode)
+                .ThenBy(r => r.Name)
+                .ToList();
+
+            if (!string.IsNullOrWhiteSpace(parameters?.Filter))
+            {
+                dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(parameters.Filter);
+                if (filterModel != null)
+                {
+                    IDictionary<string, object> dict = (IDictionary<string, object>)filterModel;
+
+                    if (dict.TryGetValue("GradeCode", out object? gradeCode) && gradeCode != null)
+                        pivotRows = pivotRows
+                            .Where(r => r.GradeCode.Contains(gradeCode.ToString()!, StringComparison.OrdinalIgnoreCase))
+                            .ToList();
+
+                    if (dict.TryGetValue("Name", out object? name) && name != null)
+                        pivotRows = pivotRows
+                            .Where(r => r.Name.Contains(name.ToString()!, StringComparison.OrdinalIgnoreCase))
+                            .ToList();
+
+                    if (dict.TryGetValue("WorkGroup", out object? workGroup) && workGroup != null)
+                        pivotRows = pivotRows
+                            .Where(r => r.WorkGroup.Contains(workGroup.ToString()!, StringComparison.OrdinalIgnoreCase))
+                            .ToList();
+                }
+            }
+
+            var totalCount = pivotRows.Count;
+
+            if (parameters?.Page > 0 && parameters.PageSize > 0)
+            {
+                pivotRows = pivotRows
+                    .Skip((parameters.Page - 1) * parameters.PageSize)
+                    .Take(parameters.PageSize)
+                    .ToList();
+            }
+
+            return new StaffEffortPivotData { Years = years, Rows = pivotRows, TotalCount = totalCount };
+        }
+
+        public async Task<ProjectCostsPivotData> GetProjectCostsPivotAsync(string projectId, PaginationParameters<string>? parameters = null)
+        {
+            var decodedProjectId = HttpUtility.UrlDecode(projectId);
+
+            // qryCSG7_Animals: Sum(NumberOfDays * NumberOfAnimals * DailyRate) AS Cost, "Other Costs"
+            var animalsRows = await _context.AnimalRequirements
+                .AsNoTracking()
+                .Where(a => a.Project == decodedProjectId && a.Year.HasValue)
+                .GroupBy(a => new { a.Project, a.Year })
+                .Select(g => new
+                {
+                    Project = g.Key.Project,
+                    YearNo = g.Key.Year!.Value,
+                    Cost = g.Sum(a => (a.NumberOfDays ?? 0) * (a.NumberOfAnimals ?? 0) * (a.DailyRate ?? 0)),
+                    Category = "Other Costs"
+                })
+                .ToListAsync();
+
+            // qryCSG7_Exceptional: Sum(ItemCost), CSG7_Group from tblkpAccountCategory
+            var exceptionalRows = await (
+                from ac in _context.AdditionalCosts.AsNoTracking()
+                join cat in _context.FpsAccountCategories.AsNoTracking()
+                    on ac.AccountCat equals cat.AccShortName
+                where ac.Project == decodedProjectId && ac.Year.HasValue
+                group new { ac, cat } by new { ac.Project, ac.Year, cat.Csg7Group } into g
+                select new
+                {
+                    Project = g.Key.Project,
+                    YearNo = g.Key.Year!.Value,
+                    Cost = g.Sum(x => x.ac.ItemCost ?? 0.0),
+                    Category = g.Key.Csg7Group ?? "Other"
+                }
+            ).ToListAsync();
+
+            // qryCSG7_OHR: Sum((NoHours * ChargeRate) * (OHR + NPR) / ChargeRate) AS Cost, "Overheads"
+            var ohrRows = await _context.StaffRequirements
+                .AsNoTracking()
+                .Where(s => s.Project == decodedProjectId && s.Year.HasValue && s.Chargerate != 0)
+                .GroupBy(s => new { s.Project, s.Year })
+                .Select(g => new
+                {
+                    Project = g.Key.Project,
+                    YearNo = g.Key.Year!.Value,
+                    Cost = g.Sum(s => (s.Nohours ?? 0) * (s.Chargerate ?? 0) * ((s.Ohr ?? 0) + (s.Npr ?? 0)) / (s.Chargerate ?? 1)),
+                    Category = "Overheads"
+                })
+                .ToListAsync();
+
+            // qryCSG7_Pay: Sum((NoHours * ChargeRate) * PayRate / ChargeRate) AS Cost, "Pay"
+            var payRows = await _context.StaffRequirements
+                .AsNoTracking()
+                .Where(s => s.Project == decodedProjectId && s.Year.HasValue && s.Chargerate != 0)
+                .GroupBy(s => new { s.Project, s.Year })
+                .Select(g => new
+                {
+                    Project = g.Key.Project,
+                    YearNo = g.Key.Year!.Value,
+                    Cost = g.Sum(s => (s.Nohours ?? 0) * (s.Chargerate ?? 0) * (s.Payrate ?? 0) / (s.Chargerate ?? 1)),
+                    Category = "Pay"
+                })
+                .ToListAsync();
+
+            // qryCSG7_Tests: Sum(NoTests * UnitPrice) AS Cost, "Other Costs"
+            var testsRows = await _context.TestRequirements
+                .AsNoTracking()
+                .Where(t => t.Project == decodedProjectId)
+                .GroupBy(t => new { t.Project, t.Year })
+                .Select(g => new
+                {
+                    Project = g.Key.Project,
+                    YearNo = g.Key.Year,
+                    Cost = g.Sum(t => (t.NumberOfTests ?? 0) * (t.UnitPrice ?? 0)),
+                    Category = "Other Costs"
+                })
+                .ToListAsync();
+
+            // UNION ALL in memory then GROUP BY Project, Category, pivot by YearNo
+            var union = animalsRows
+                .Concat(exceptionalRows.Select(r => new { r.Project, r.YearNo, r.Cost, r.Category }))
+                .Concat(ohrRows.Select(r => new { r.Project, r.YearNo, r.Cost, r.Category }))
+                .Concat(payRows.Select(r => new { r.Project, r.YearNo, r.Cost, r.Category }))
+                .Concat(testsRows.Select(r => new { r.Project, r.YearNo, r.Cost, r.Category }))
+                .ToList();
+
+            var years = union.Select(r => r.YearNo).Distinct().OrderBy(y => y).ToList();
+
+            var pivotRows = union
+                .GroupBy(r => new { r.Project, r.Category })
+                .Select(g => new ProjectCostsRowData
+                {
+                    Project = g.Key.Project ?? decodedProjectId,
+                    Category = g.Key.Category,
+                    YearlyAmounts = g.GroupBy(r => r.YearNo)
+                        .ToDictionary(yg => yg.Key, yg => yg.Sum(r => r.Cost)),
+                    Total = g.Sum(r => r.Cost)
+                })
+                .OrderBy(r => r.Category)
+                .ToList();
+
+            // Apply filter
+            if (!string.IsNullOrWhiteSpace(parameters?.Filter))
+            {
+                dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(parameters.Filter);
+                if (filterModel != null)
+                {
+                    IDictionary<string, object> dict = (IDictionary<string, object>)filterModel;
+
+                    if (dict.TryGetValue("Category", out object? category) && category != null)
+                        pivotRows = pivotRows
+                            .Where(r => r.Category.Contains(category.ToString()!, StringComparison.OrdinalIgnoreCase))
+                            .ToList();
+                }
+            }
+
+            var totalCount = pivotRows.Count;
+
+            if (parameters?.Page > 0 && parameters.PageSize > 0)
+            {
+                pivotRows = pivotRows
+                    .Skip((parameters.Page - 1) * parameters.PageSize)
+                    .Take(parameters.PageSize)
+                    .ToList();
+            }
+
+            return new ProjectCostsPivotData { Years = years, Rows = pivotRows, TotalCount = totalCount };
+        }
+
         private static int GetCurrentFinancialYear()
         {
             var now = DateTime.Now;
@@ -584,6 +849,55 @@ namespace Apha.Costbook.DataAccess.Repositories
             return new PagedData<Project>(pagedItems, paginationData);
         }
 
+        public async Task<ProjectSummaryExportData> GetProjectSummaryExportDataAsync(string projectId)
+        {
+            var decodedProjectId = HttpUtility.UrlDecode(projectId);
+
+            var project = await _context.Projects
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.ProjectId == decodedProjectId);
+
+            var years = await _context.ProjectYears
+                .AsNoTracking()
+                .Where(py => py.Project == decodedProjectId)
+                .OrderBy(py => py.YearValue)
+                .ToListAsync();
+
+            var staffRows = await _context.StaffRequirements
+                .AsNoTracking()
+                .Where(s => s.Project == decodedProjectId)
+                .OrderBy(s => s.Year).ThenBy(s => s.WgGrade)
+                .ToListAsync();
+
+            var testRows = await _context.TestRequirements
+                .AsNoTracking()
+                .Where(t => t.Project == decodedProjectId)
+                .OrderBy(t => t.Year).ThenBy(t => t.TestCode)
+                .ToListAsync();
+
+            var animalRows = await _context.AnimalRequirements
+                .AsNoTracking()
+                .Where(a => a.Project == decodedProjectId)
+                .OrderBy(a => a.Year).ThenBy(a => a.AnimalType)
+                .ToListAsync();
+
+            var additionalRows = await _context.AdditionalCosts
+                .AsNoTracking()
+                .Where(ac => ac.Project == decodedProjectId)
+                .OrderBy(ac => ac.Year).ThenBy(ac => ac.Description)
+                .ToListAsync();
+
+            return new ProjectSummaryExportData
+            {
+                Project = project,
+                Years = years,
+                StaffRequirements = staffRows,
+                TestRequirements = testRows,
+                AnimalRequirements = animalRows,
+                AdditionalCosts = additionalRows
+            };
+        }
+
         private static int fnYearGapSign(int yearGap)
         {
             if (yearGap == 0) return 0;
@@ -657,7 +971,7 @@ namespace Apha.Costbook.DataAccess.Repositories
                 }
 
                 var fyearStart = new DateTime((int)project.StartFYear.Value, 4, 1);
-                var startDate = project.StartDate.Value.ToDateTime(TimeOnly.MinValue);               
+                var startDate = project.StartDate.Value;               
 
                 int yearGap = year - currentYear;
                 double percentOfYear = Math.Abs((fyearStart - startDate).TotalDays) / 364.0;
@@ -684,6 +998,57 @@ namespace Apha.Costbook.DataAccess.Repositories
 
                 return inflation + inflation2;
             }
+        }
+
+        public async Task<double> GetProfitIncludedTotalAsync(string projectId, int year)
+        {
+            var decodedId = HttpUtility.UrlDecode(projectId);
+
+            double staffCostTotal = await _context.StaffRequirements
+                .Where(sr => sr.Project == decodedId && sr.Year == year)
+                .SumAsync(sr => sr.Chargerate.HasValue && sr.Nohours.HasValue
+                    ? sr.Chargerate.Value * sr.Nohours.Value
+                    : 0.0);
+
+            double testCostTotal = await _context.TestRequirements
+                .Where(tr => tr.Project == decodedId && tr.Year == year)
+                .SumAsync(tr => tr.UnitPrice.HasValue && tr.NumberOfTests.HasValue
+                    ? tr.UnitPrice.Value * tr.NumberOfTests.Value
+                    : 0.0);
+
+            double animalCostTotal = await _context.AnimalRequirements
+                .Where(ar => ar.Project == decodedId && ar.Year == year)
+                .SumAsync(ar => ar.DailyRate.HasValue && ar.NumberOfDays.HasValue && ar.NumberOfAnimals.HasValue
+                    ? ar.DailyRate.Value * ar.NumberOfDays.Value * ar.NumberOfAnimals.Value
+                    : 0.0);
+
+            double additionalCostTotal = (double)await _context.AdditionalCosts
+                .Where(ac => ac.Project == decodedId && ac.Year == year)
+                .SumAsync(ac => ac.ItemCost);            
+
+            double profitStaff       = await GetProfitFactorAsync("Profitstaff");
+            double profitTests       = await GetProfitFactorAsync("Profittests");
+            double profitExceptional = await GetProfitFactorAsync("ProfitExceptional");
+            double profitAnimals     = await GetProfitFactorAsync("Profitanimals");            
+
+            return (staffCostTotal      * profitStaff)       +
+                   (testCostTotal       * profitTests)       +
+                   (additionalCostTotal * profitExceptional) +
+                   (animalCostTotal     * profitAnimals);
+        }
+
+        private async Task<double> GetProfitFactorAsync(string ptype)
+        {
+            var settingValue = await _settingsRepository.GetSettingValueByIdAsync(ptype);
+
+            if (string.IsNullOrEmpty(settingValue) || !double.TryParse(settingValue, out double rate))
+                return 1.0; // fallback: no markup if setting missing
+
+            double p = rate / 100.0;
+
+            if (p >= 1.0) return 1.0; // guard against division by zero
+
+            return 1.0 + (p / (1.0 - p));
         }
     }
 }

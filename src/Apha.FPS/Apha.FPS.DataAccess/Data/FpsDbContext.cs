@@ -27,6 +27,7 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<WorkgroupGrade> WorkgroupGrades { get; set; }
         public virtual DbSet<ProfitCentreGrade> ProfitCentreGrades { get; set; }
         public virtual DbSet<DivisionGrade> DivisionGrades { get; set; }
+        public virtual DbSet<Grade> Grades { get; set; }
         public virtual DbSet<UserProfitcentre> UserProfitcentres { get; set; }
         public virtual DbSet<ProfitCentre> ProfitCentres { get; set; }
         public virtual DbSet<JobCode> JobCodes { get; set; }
@@ -263,21 +264,13 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new DivisionMap());
             modelBuilder.ApplyConfiguration(new DivisionGradeMap());
             modelBuilder.Entity<DivisionGrade>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
-
-            modelBuilder.ApplyConfiguration(new AdditionalCostMap());
-            modelBuilder.Entity<AdditionalCost>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+            modelBuilder.ApplyConfiguration(new GradeCodeMap());
 
             modelBuilder.ApplyConfiguration(new AdditionalCostViewMap());
             modelBuilder.Entity<AdditionalCostView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
-            modelBuilder.ApplyConfiguration(new AdditionalCostLogMap());
-            modelBuilder.Entity<AdditionalCostLog>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
-
             modelBuilder.ApplyConfiguration(new AccountCategoryMap());
             modelBuilder.Entity<AccountCategory>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
-
-            modelBuilder.ApplyConfiguration(new MonthlyOutputMap());
-            modelBuilder.Entity<MonthlyOutput>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new WorkGroupStaffMap());
             modelBuilder.Entity<WorkGroupStaff>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);

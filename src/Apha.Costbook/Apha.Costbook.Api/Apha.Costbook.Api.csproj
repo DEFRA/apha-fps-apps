@@ -24,8 +24,4 @@
     <ProjectReference Include="..\Apha.Costbook.DataAccess\Apha.Costbook.DataAccess.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Controllers\" />
-  </ItemGroup>
-
 </Project>

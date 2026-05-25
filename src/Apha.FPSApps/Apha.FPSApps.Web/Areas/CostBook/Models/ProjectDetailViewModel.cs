@@ -10,14 +10,14 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Models
         public string? Programme { get; set; }
         public string? Projectworkgroup { get; set; }
         public double? Contractprice { get; set; }
-        public DateOnly?  Startdate { get; set; }
+        public DateTime?  Startdate { get; set; }
         public string? Disease { get; set; }
         public double? Startfyear { get; set; }
         public string? CustomerName { get; set; }
         public string? ContractNumber { get; set; }
         public string? Submittedbyfname { get; set; }
         public string? Submittedbylname { get; set; }
-        public DateOnly? DateOfSubmission { get; set; }
+        public DateTime? DateOfSubmission { get; set; }
         public string? PreparedBy { get; set; }
         public int? Inflation { get; set; }
         public int? Financialyears { get; set; }

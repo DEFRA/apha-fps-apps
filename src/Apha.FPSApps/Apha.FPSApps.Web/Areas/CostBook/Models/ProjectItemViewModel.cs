@@ -16,7 +16,7 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Models
         public required string ContractNumber { get; set; }
        
         [GridColumn(Width = 271, Type = GridColumnType.Date)]
-        public DateOnly? StartDate { get; set; }
+        public DateTime? StartDate { get; set; }
 
         [GridColumn(IsVisible =false)]
         public bool IsDefraProject { get; set; }
