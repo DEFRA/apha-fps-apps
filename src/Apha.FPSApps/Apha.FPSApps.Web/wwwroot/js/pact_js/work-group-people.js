@@ -156,6 +156,7 @@ function reloadPeopleGridByPerson(personName) {
  */
 function onPersonRowSelect(rowData) {
     var name = $(rowData).find('[data-property="Name"]').text().trim();
+    currentPersonName = name || null;
     document.getElementById('selectedPerson').value = name;
     document.getElementById('btnShowTimeByJob').disabled = !name;
 }
@@ -284,6 +285,22 @@ function initWorkGroupPeoplePage() {
             e.preventDefault();
             $(this).trigger('change');
         }
+    });
+
+    // ── Show Time by JobCode and Month button ──────────────────────────────
+    $('#btnShowTimeByJob').on('click', function () {
+        var $error = $('#workgroupValidationError');
+        var $input = $('#selectedWorkgroup');
+        if (!currentWorkGroup) {
+            $input.addClass('govuk-input--error');
+            $error.show();
+            alert('Please select a Work Group first.');
+            return;
+        }
+        $input.removeClass('govuk-input--error');
+        $error.hide();
+        var url = '/PACT/WorkGroupTimeByJobCode?workGroup=' + encodeURIComponent(currentWorkGroup) + '&personName=' + encodeURIComponent(currentPersonName || '');
+        window.fpsNavigateTo(url);
     });
 
     // ── Show Time Records button ───────────────────────────────────────────

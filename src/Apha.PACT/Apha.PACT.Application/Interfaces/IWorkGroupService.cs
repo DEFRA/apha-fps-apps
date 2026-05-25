@@ -8,5 +8,6 @@ namespace Apha.PACT.Application.Interfaces
         Task<IEnumerable<WorkGroupDto>> GetAllWorkGroupsAsync();
         Task<PaginatedResult<WorkGroupTimeCodeDto>> GetWorkGroupTimeCodeAsync(QueryParameters<string> query, string workGroup, int monthNumber);
         Task<PaginatedResult<WorkGroupValidTimeCodeDto>> GetWorkGroupValidTimeCodeAsync(QueryParameters<string> query, string workGroup);
+        Task<WorkGroupTimeByJobCodeDto> GetWgSummarisedStaffTimeUsageAsync(QueryParameters<string> query, string workGroup);
     }
 }

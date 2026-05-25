@@ -1,0 +1,105 @@
+@model Apha.FPSApps.Web.Areas.PACT.Models.WorkGroupTimeByJobCodeViewModel
+
+@{
+    ViewData["Title"] = "PACT : Work Group Time By Job Code";
+}
+
+@* ── Header info (mirrors Access FormHeader: WorkGroup / HrsPaid) ── *@
+
+<div class="govuk-grid-row sup_margin_left_right_0">
+    <div class="govuk-grid-column-full  sup_flex_space_center sup_border-bottom">
+        <div class="sup_flex_center_start govuk-grid-column-full sup_p_0 sup_margin_0">
+            <h1 class="sup_padding_bottom_10 govuk-grid-column-one-third sup_p_0">Time Usage "Spreadsheet" for </h1>
+            <div class="govuk-grid-column-three-quarters sup_margin_tb_5 sup_padding_right_8 sup_flex_gap_10">
+                <div class="govuk-!-width-one-half">
+                    <input type="text" id="txtselectedPersonname" class="govuk-input govuk-!-font-size-16" asp-for="@Model.SelectedPersonName" readonly="" disabled="">
+                </div>
+                <div>
+                    <input type="text" id="txtselectedWG" class="govuk-input govuk-!-font-size-16" asp-for="@Model.SelectedWorkGroup" readonly="" disabled="">
+                </div>
+                <div class="govuk-grid-column-two-thirds sup_flex_align_center">
+                    <span class="sup_bold_100">Standard Hours</span>
+                    <input type="text" id="txtStandardhours" class="govuk-input govuk-!-font-size-16" value="@Model.HrsPaid.ToString("0.##")" readonly="" disabled="">
+                </div>
+            </div>
+        </div>
+        <div class="govuk-grid-column-one-half"><a href="#" id="backLink" class="govuk-back-link sup_align_right sup_margin_0">Back</a></div>
+    </div>
+</div>
+
+@* ── Grid extra-filter: keeps workGroup and personName in every sort/pagination POST ── *@
+<script>
+    var currentWorkGroup = '@Html.Raw(Model.SelectedWorkGroup ?? "")';
+    var currentPersonName = '@Html.Raw(Model.SelectedPersonName ?? "")';
+    function getWorkGroupTimeByJobCodeExtraFilters() {
+        return { workGroup: currentWorkGroup, personName: currentPersonName };
+    }
+</script>
+
+@* ── Data Grid ──────────────────────────────────────────────────────────── *@
+<div class="govuk-grid-row sup_margin_left_right_0" style="margin-top:20px;">
+    <div class="govuk-grid-column-full">
+        <div id="spreadsheetContainer1">
+            <div id="gridContainer_timeUsageGrid">
+                @await Html.PartialAsync("_DataGrid", Model.Grid)
+            </div>
+
+            @* ── Footer Summary ──────────────────────────────────────────────── *@
+            @if (Model.Grid.Data != null && Model.Grid.Data.Any())
+            {
+                var s      = Model.Summary;
+                var months = new[] { "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar" };
+                var totals = new[] { s.TotalApril, s.TotalMay, s.TotalJune, s.TotalJuly, s.TotalAugust, s.TotalSeptember, s.TotalOctober, s.TotalNovember, s.TotalDecember, s.TotalJanuary, s.TotalFebruary, s.TotalMarch };
+                var pcts   = new[] { s.PercentAllocatedApril, s.PercentAllocatedMay, s.PercentAllocatedJune, s.PercentAllocatedJuly, s.PercentAllocatedAugust, s.PercentAllocatedSeptember, s.PercentAllocatedOctober, s.PercentAllocatedNovember, s.PercentAllocatedDecember, s.PercentAllocatedJanuary, s.PercentAllocatedFebruary, s.PercentAllocatedMarch };
+
+                <div style="overflow-x:auto; margin-top:8px;">
+                    <table class="govuk-table govuk-!-font-size-14" style="white-space:nowrap; min-width:900px; border-collapse:collapse;">
+                        <thead style="background:#4A0080; color:#fff;">
+                            <tr>
+                                <th style="padding:6px 10px; text-align:left; color:#fff; min-width:260px;">Summary</th>
+                                @foreach (var m in months)
+                                {
+                                    <th style="padding:6px 8px; text-align:right; color:#fff; min-width:55px;">@m</th>
+                                }
+                                <th style="padding:6px 8px; text-align:right; color:#fff;">Total Time</th>
+                                <th style="padding:6px 8px; text-align:right; color:#fff;">Total Cost</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @* Row 1 — Total time for the month *@
+                            <tr style="background:#f3f2f1;">
+                                <td style="padding:6px 10px; font-weight:600;">Total time for the Month:</td>
+                                @for (int i = 0; i < 12; i++)
+                                {
+                                    <td style="padding:6px 8px; text-align:right;">@(totals[i] == 0 ? "" : totals[i].ToString("0.##"))</td>
+                                }
+                                <td style="padding:6px 8px; text-align:right; font-weight:700; color:#4A0080;">@s.GrandTotalTime.ToString("0.##")</td>
+                                <td style="padding:6px 8px; text-align:right; font-weight:700; color:#4A0080;">£@s.GrandTotalCost.ToString("N2")</td>
+                            </tr>
+                            @* Row 2 — Standard hours per month *@
+                            <tr style="background:#fff;">
+                                <td style="padding:6px 10px; font-weight:600;">Standard Hours:</td>
+                                @for (int i = 0; i < 12; i++)
+                                {
+                                    <td style="padding:6px 8px; text-align:right;">@(totals[i] == 0 ? "" : s.StandardHoursPerMonth.ToString("0.##"))</td>
+                                }
+                                <td style="padding:6px 8px; text-align:right;">@(s.TotalStandardHours == 0 ? "" : s.TotalStandardHours.ToString("0.##"))</td>
+                                <td></td>
+                            </tr>
+                            @* Row 3 — % of Standard Hours Allocated *@
+                            <tr style="background:#f3f2f1;">
+                                <td style="padding:6px 10px; font-weight:600;">% of Standard Hrs Allocated:</td>
+                                @for (int i = 0; i < 12; i++)
+                                {
+                                    <td style="padding:6px 8px; text-align:right;">@(totals[i] == 0 ? "" : pcts[i].ToString("0.#") + "%")</td>
+                                }
+                                <td style="padding:6px 8px; text-align:right;">@(s.GrandTotalPercentAllocated == 0 ? "" : s.GrandTotalPercentAllocated.ToString("0.#") + "%")</td>
+                                <td></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>

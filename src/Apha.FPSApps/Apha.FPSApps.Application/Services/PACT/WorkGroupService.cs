@@ -33,6 +33,13 @@ namespace Apha.FPSApps.Application.Services.PACT
             return await _pactClient.PactWorkGroup.GetPagedWorkGroupValidTimeCodesAsync(query, workGroup);
         }
 
+        public async Task<ApiResponseDto<WorkGroupTimeByJobCodeDto>> GetWgSummarisedStaffTimeUsageAsync(
+            QueryParameters<string> query, string workGroup)
+        {
+            ValidateWorkGroup(workGroup);
+            return await _pactClient.PactWorkGroup.GetWgSummarisedStaffTimeUsageAsync(query, workGroup);
+        }
+
         private static void ValidateWorkGroup(string workGroup)
         {
             var errors = new List<BusinessValidationError>();

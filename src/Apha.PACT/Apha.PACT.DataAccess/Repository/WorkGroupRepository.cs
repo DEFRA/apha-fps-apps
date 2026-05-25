@@ -121,6 +121,15 @@ namespace Apha.PACT.DataAccess.Repository
             return ApplyPaging(result, query.Page, query.PageSize);
         }
 
+        public async Task<IEnumerable<WgSummarisedStaffTimeUsageView>> GetWgSummarisedStaffTimeUsageAsync(
+            string workGroup)
+        {
+            return await _context.WgSummarisedStaffTimeUsageViews
+                .AsNoTracking()
+                .Where(e => e.WorkGroup == workGroup)
+                .ToListAsync();
+        }
+
         private static IQueryable<WorkGroupValidTimeCode> ApplyWorkGroupValidTimeCodeFilter(
             IQueryable<WorkGroupValidTimeCode> query, string? filterJson)
         {
