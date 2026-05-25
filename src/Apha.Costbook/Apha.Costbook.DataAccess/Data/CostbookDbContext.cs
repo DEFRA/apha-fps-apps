@@ -47,6 +47,8 @@ public partial class CostbookDbContext : DbContext
     public virtual DbSet<FpsAdditionalCost> FpsAdditionalCosts { get; set; }
 
     public virtual DbSet<EuGradeConversion> EuGradeConversions { get; set; }
+
+    public virtual DbSet<YearMaster> YearMasters { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfiguration(new DiseaseMap());
@@ -88,6 +90,7 @@ public partial class CostbookDbContext : DbContext
 
         modelBuilder.ApplyConfiguration(new SettingsMap());
         modelBuilder.ApplyConfiguration(new ProjectYearMap());
-        
+        modelBuilder.ApplyConfiguration(new YearMasterMap());
+
     }
 }

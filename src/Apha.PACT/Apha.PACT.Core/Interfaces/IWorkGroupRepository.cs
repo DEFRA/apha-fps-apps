@@ -7,5 +7,6 @@ namespace Apha.PACT.Core.Interfaces
     {
         Task<IEnumerable<WorkGroup>> GetAllWorkGroupsAsync();
         Task<PagedData<WorkGroupTimeCode>> GetWorkGroupTimeCodeAsync(PaginationParameters<string> query, string? workGroup, int? monthNumber);
+        Task<PagedData<WorkGroupValidTimeCode>> GetWorkGroupValidTimeCodeAsync(PaginationParameters<string> query, string workGroup);
     }
 }

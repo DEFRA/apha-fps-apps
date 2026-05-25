@@ -70,7 +70,34 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.AdditionalCostJobController
             Assert.Equal("additionalCostGrid", gridConfig.GridId);
             Assert.Equal("Additional Cost Plan", gridConfig.Title);
             Assert.Equal("Description", gridConfig.KeyProperty);
+            Assert.Equal($"/FPS/AdditionalCostJob/LoadAdditionalCostGrid?title={Uri.EscapeDataString("Additional Cost Plan")}", gridConfig.BindGridUrl);
             Assert.Single(gridConfig.Data);
+        }
+
+        [Fact]
+        public async Task LoadAdditionalCostGrid_WithCustomTitle_UsesTitleInGridAndBindGridUrl()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
+            var jobCode = "JOB001";
+            var customTitle = "Planned Additional Costs (FPS)";
+            var queryParameters = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var serviceResponse = ApiResponseDto<List<AdditionalCostDto>>.SuccessResponse(
+                new List<AdditionalCostDto>(), new PaginationDto());
+
+            _mapper.Map<QueryParameters<string>>(request).Returns(queryParameters);
+            _additionalCostService.GetAdditionalCostsAsync(queryParameters, jobCode).Returns(serviceResponse);
+            _mapper.Map<List<AdditionalCostItemViewModel>>(Arg.Any<List<AdditionalCostDto>>()).Returns(new List<AdditionalCostItemViewModel>());
+            _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(new PaginationModel());
+
+            // Act
+            var result = await _controller.LoadAdditionalCostGrid(request, jobCode, customTitle);
+
+            // Assert
+            var partialView = Assert.IsType<PartialViewResult>(result);
+            var gridConfig = Assert.IsType<DataGridConfig<AdditionalCostItemViewModel>>(partialView.Model);
+            Assert.Equal(customTitle, gridConfig.Title);
+            Assert.Equal($"/FPS/AdditionalCostJob/LoadAdditionalCostGrid?title={Uri.EscapeDataString(customTitle)}", gridConfig.BindGridUrl);
         }
 
         [Fact]
