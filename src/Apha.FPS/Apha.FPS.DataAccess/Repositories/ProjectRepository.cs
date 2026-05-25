@@ -23,7 +23,7 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<IEnumerable<ProjectView>> GetAllProjectsAsync()
         {
             return await _dbContext.ProjectViews
-                .Where(p => p.UserEmail != null && p.UserEmail.ToLower() == _requestContext.UserEmailId).ToListAsync();
+                .Where(p => EF.Functions.ILike(p.UserEmail!, _requestContext.UserEmailId)).ToListAsync();
         }
 
         public async Task<IEnumerable<PactProjectView>> GetAllPactProjectsAsync()
@@ -38,7 +38,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             var projectQuery = _dbContext.ProjectViews
                 .AsNoTracking()
-                .Where(p => p.UserEmail != null && p.UserEmail.ToLower() == _requestContext.UserEmailId && p.Program == programNo)
+                .Where(p => EF.Functions.ILike(p.UserEmail!, _requestContext.UserEmailId) && p.Program == programNo)
                 .Select(pv => new Project
                 {
                     ParentProject = pv.ParentProject ?? string.Empty,
@@ -80,8 +80,8 @@ namespace Apha.FPS.DataAccess.Repositories
             {
                 var search = query.Search.ToLower();
                 queryable = queryable.Where(p =>
-                    p.ParentProject.ToLower().Contains(search) ||
-                    p.ProjectTitle.ToLower().Contains(search));
+                    EF.Functions.ILike(p.ParentProject!, $"%{search}%") ||
+                    EF.Functions.ILike(p.ProjectTitle!, $"%{search}%"));
             }
 
             queryable = query.SortBy?.ToLower() switch
