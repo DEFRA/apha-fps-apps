@@ -89,6 +89,73 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectInvoiceService
 
         #endregion
 
+        #region GetPagedProjectInvoiceManualAsync Tests
+
+        [Fact]
+        public async Task GetPagedProjectInvoiceManualAsync_WithValidQuery_ReturnsPaginatedInvoices()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var parentProject = "PP001";
+            var invoices = new List<ProjectInvoiceDto>
+            {
+                new ProjectInvoiceDto { InvoiceCounter = 1, ProjectParent = parentProject, Amount = 100.00m },
+                new ProjectInvoiceDto { InvoiceCounter = 2, ProjectParent = parentProject, Amount = 200.00m }
+            };
+            var expectedResponse = ApiResponseDto<List<ProjectInvoiceDto>>.SuccessResponse(
+                invoices,
+                new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 2 }
+            );
+            _pactProjectInvoiceApiClient.GetPagedProjectInvoiceManualAsync(query, parentProject).Returns(expectedResponse);
+
+            // Act
+            var result = await _service.GetPagedProjectInvoiceManualAsync(query, parentProject);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data?.Count);
+            await _pactProjectInvoiceApiClient.Received(1).GetPagedProjectInvoiceManualAsync(query, parentProject);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectInvoiceManualAsync_WithNullProject_ReturnsSuccessWithEmptyList()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var expectedResponse = ApiResponseDto<List<ProjectInvoiceDto>>.SuccessResponse(new List<ProjectInvoiceDto>());
+            _pactProjectInvoiceApiClient.GetPagedProjectInvoiceManualAsync(query, null).Returns(expectedResponse);
+
+            // Act
+            var result = await _service.GetPagedProjectInvoiceManualAsync(query, null);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectInvoiceManualAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "API Error", Code = "API_ERROR" } };
+            var expectedResponse = ApiResponseDto<List<ProjectInvoiceDto>>.FailureResponse(errors, new ApiMetaDto());
+            _pactProjectInvoiceApiClient.GetPagedProjectInvoiceManualAsync(query, null).Returns(expectedResponse);
+
+            // Act
+            var result = await _service.GetPagedProjectInvoiceManualAsync(query, null);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+        }
+
+        #endregion
+
         #region GetTotalAmountAsync Tests
 
         [Fact]
@@ -294,6 +361,121 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectInvoiceService
 
             // Act
             var result = await _service.DeleteAsync(invoiceCounter);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+        }
+
+        #endregion
+
+        #region GetMonthlyInvoicesSummaryAsync Tests
+
+        [Fact]
+        public async Task GetMonthlyInvoicesSummaryAsync_WithValidQuery_ReturnsSummary()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var summary = new MonthlyInvoicesPivotDto();
+            var expectedResponse = ApiResponseDto<MonthlyInvoicesPivotDto>.SuccessResponse(summary);
+            _pactProjectInvoiceApiClient.GetMonthlyInvoicesSummaryAsync(query).Returns(expectedResponse);
+
+            // Act
+            var result = await _service.GetMonthlyInvoicesSummaryAsync(query);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.NotNull(result.Data);
+            await _pactProjectInvoiceApiClient.Received(1).GetMonthlyInvoicesSummaryAsync(query);
+        }
+
+        [Fact]
+        public async Task GetMonthlyInvoicesSummaryAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "API Error", Code = "API_ERROR" } };
+            var expectedResponse = ApiResponseDto<MonthlyInvoicesPivotDto>.FailureResponse(errors, new ApiMetaDto());
+            _pactProjectInvoiceApiClient.GetMonthlyInvoicesSummaryAsync(query).Returns(expectedResponse);
+
+            // Act
+            var result = await _service.GetMonthlyInvoicesSummaryAsync(query);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+        }
+
+        #endregion
+
+        #region CopyInvoicesAsync Tests
+
+        [Fact]
+        public async Task CopyInvoicesAsync_WithValidMonths_ReturnsSuccessResult()
+        {
+            // Arrange
+            var sourceMonth = 5;
+            var destinationMonth = 6;
+            var copyResult = new CopyInvoicesResultDto
+            {
+                Success = true,
+                CopiedCount = 10,
+                Message = "Successfully copied 10 invoices"
+            };
+            var expectedResponse = ApiResponseDto<CopyInvoicesResultDto>.SuccessResponse(copyResult);
+            _pactProjectInvoiceApiClient.CopyInvoicesAsync(sourceMonth, destinationMonth).Returns(expectedResponse);
+
+            // Act
+            var result = await _service.CopyInvoicesAsync(sourceMonth, destinationMonth);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(10, result.Data?.CopiedCount);
+            await _pactProjectInvoiceApiClient.Received(1).CopyInvoicesAsync(sourceMonth, destinationMonth);
+        }
+
+        [Fact]
+        public async Task CopyInvoicesAsync_WithPartialFailure_ReturnsPartialSuccessResult()
+        {
+            // Arrange
+            var sourceMonth = 5;
+            var destinationMonth = 6;
+            var copyResult = new CopyInvoicesResultDto
+            {
+                Success = false,
+                CopiedCount = 8,
+                Message = "Copied 8 invoices with some failures",
+                Errors = new List<string> { "Error 1", "Error 2" }
+            };
+            var expectedResponse = ApiResponseDto<CopyInvoicesResultDto>.SuccessResponse(copyResult);
+            _pactProjectInvoiceApiClient.CopyInvoicesAsync(sourceMonth, destinationMonth).Returns(expectedResponse);
+
+            // Act
+            var result = await _service.CopyInvoicesAsync(sourceMonth, destinationMonth);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(8, result.Data?.CopiedCount);
+            Assert.Equal(2, result.Data?.Errors.Count);
+        }
+
+        [Fact]
+        public async Task CopyInvoicesAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var sourceMonth = 5;
+            var destinationMonth = 6;
+            var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "API Error", Code = "API_ERROR" } };
+            var expectedResponse = ApiResponseDto<CopyInvoicesResultDto>.FailureResponse(errors, new ApiMetaDto());
+            _pactProjectInvoiceApiClient.CopyInvoicesAsync(sourceMonth, destinationMonth).Returns(expectedResponse);
+
+            // Act
+            var result = await _service.CopyInvoicesAsync(sourceMonth, destinationMonth);
 
             // Assert
             Assert.NotNull(result);
