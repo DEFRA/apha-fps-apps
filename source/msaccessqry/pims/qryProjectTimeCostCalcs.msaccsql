@@ -1,9 +1,0 @@
-QUERY NAME: qryProjectTimeCostCalcs
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT MY_TimeCostCalcs.Year, MY_TimeCostCalcs.Project, MY_TimeCostCalcs.Month, Sum(MY_TimeCostCalcs.Pay) AS Pay, Sum(MY_TimeCostCalcs.NonPay) AS NonPay, Sum(MY_TimeCostCalcs.Cost) AS [Staff Costs], Sum(MY_TimeCostCalcs.Overhead) AS Overhead
-FROM MY_TimeCostCalcs
-GROUP BY MY_TimeCostCalcs.Year, MY_TimeCostCalcs.Project, MY_TimeCostCalcs.Month;
-

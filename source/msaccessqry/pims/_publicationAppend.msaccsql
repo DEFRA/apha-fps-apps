@@ -1,9 +1,0 @@
-QUERY NAME: _publicationAppend
----------------------------------------------
-TYPE: APPEND
-
-SQL:
-INSERT INTO tblPublication ( Identifier, Type, Program, Subject, LeadAuthor, OtherAuthors, TargetDate, Submitted, Published, Comments )
-SELECT [_ImportPublication].[Unique Identifier], Left([Type],3) AS Expr2, [_ImportPublication].Prog, [_ImportPublication].Subject, [_ImportPublication].[Lead Author], [_ImportPublication].[Other Authors], [_ImportPublication].[Target Date], [_ImportPublication].[Submitted/ Delivered], IIf([Published_Y/N]="Y",True,False) AS Expr1, [_ImportPublication].Comments
-FROM _ImportPublication;
-

@@ -1,9 +1,0 @@
-QUERY NAME: qryTotalAdditionalCosts
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tblAdditionalCosts_General.JobCode, Sum(tblAdditionalCosts_General.ItemCost) AS TotalAdditionalCosts
-FROM tblAdditionalCosts_General
-GROUP BY tblAdditionalCosts_General.JobCode;
-

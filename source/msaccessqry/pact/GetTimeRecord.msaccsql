@@ -1,6 +1,0 @@
-QUERY NAME: GetTimeRecord
----------------------------------------------
-TYPE: PASS-THROUGH
-
-SQL:
-sp_GetTimeRecord '9385', 'EF202511', 'EF001', 'BAC1', 9

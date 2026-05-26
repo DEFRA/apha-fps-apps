@@ -1,8 +1,0 @@
-QUERY NAME: qryJobCodeByProjectGroup
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tlkpProject_byGroup.ParentProject AS JobCode, tlkpProject_byGroup.ProjectTitle AS JobDescription, tlkpProject_byGroup.Program AS Programme, tlkpProject_byGroup.Customer, tlkpProject_byGroup.Manager AS ProjectManager, tlkpProject_byGroup.CustIncome, tlkpProject_byGroup.TransferIncome, tlkpProject_byGroup.Profit, tlkpProject_byGroup.DateCreated, tlkpProject_byGroup.CostBookNo, tlkpProject_byGroup.ProjectStatus, tlkpProject_byGroup.Disease, tlkpProject_byGroup.Contract, tlkpProject_byGroup.Budget_CVL, tlkpProject_byGroup.PVSIncome, tlkpProject_byGroup.CaseworkSub, tlkpProject_byGroup.ShortTitle, tlkpProject_byGroup.PlanCaseworkDebit, tlkpProject_byGroup.Comments, tlkpProject_byGroup.CarryOver, tlkpProject_byGroup.CarryOverSeed, tlkpProject_byGroup.ParentProject, tlkpProject_byGroup.IsDefraProject, tlkpProject_byGroup.CostCentre, tlkpProject_byGroup.ProjectGroup, tlkpProject_byGroup.IncomeAccountCode, tlkpProject_byGroup.SubAccountCode
-FROM tlkpProject_byGroup;
-

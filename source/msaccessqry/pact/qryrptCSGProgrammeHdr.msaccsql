@@ -1,9 +1,0 @@
-QUERY NAME: qryrptCSGProgrammeHdr
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tlkpProject.Program, tlkpProject.Manager, tblPeriod.EndPeriod, Sum(tlkpProject.Budget_cvl) AS CVLbudget, Sum(tlkpProject.ForecastCost) AS FullYearForecast, Sum(ProjectMonthFinal.CumProfile) AS [YTD-forecast], Sum(ProjectMonthFinal.CumCost) AS [YTD-Cost], [FullYearForecast]/[CVLbudget] AS [Forecast % Spend], [YTD-Cost]-[YTD-Forecast] AS [YTD-Variance]
-FROM tlkpProject INNER JOIN (qryCurrentMonth INNER JOIN (tblPeriod INNER JOIN ProjectMonthFinal ON tblPeriod.PeriodName = ProjectMonthFinal.PeriodName) ON qryCurrentMonth.MaxOfMonthNo = ProjectMonthFinal.MonthNo) ON tlkpProject.ParentProject = ProjectMonthFinal.Project
-GROUP BY tlkpProject.Program, tlkpProject.Manager, tblPeriod.EndPeriod;
-

@@ -1,9 +1,0 @@
-QUERY NAME: VIDMgmtAccts
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW WorkGroup.ProfitCentre, WorkGroup.WorkGroup, TimeCostCalcs.GradeCode, TimeCostCalcs.Name, tlkpProject.PlanCat, TimeCostCalcs.Project, [tlkpjobcode].[JobCode] & " - " & [jobcodename] AS JobName, TimeCostCalcs.JobCode, [tlkpProject].[parentproject] & " / " & [ProjectTitle] AS ProjName, TimeCostCalcs.Month, TimeCostCalcs.Time, TimeCostCalcs.Cost
-FROM (tlkpProject INNER JOIN (WorkGroup INNER JOIN TimeCostCalcs ON WorkGroup.WorkGroup = TimeCostCalcs.WorkGroup) ON tlkpProject.ParentProject = TimeCostCalcs.Project) LEFT JOIN tlkpJobCode ON TimeCostCalcs.JobCode = tlkpJobCode.JobCode
-WHERE ((WorkGroup.ProfitCentre="vine" Or WorkGroup.ProfitCentre="visw"));
-

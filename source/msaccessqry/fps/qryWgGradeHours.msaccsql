@@ -1,9 +1,0 @@
-QUERY NAME: qryWgGradeHours
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW WorkGroupGrade.WGGrade, Sum(tblStaff.HrsAvail) AS TotalHours, WorkGroupGrade.ProfitCentreGrade, WorkGroupGrade.GradeCode, WorkGroupGrade.WorkGroup, WorkGroupGrade.ChargeRateWG, WorkGroupGrade.DirectRateWG, WorkGroupGrade.PayRateWG, WorkGroupGrade.NPRWG, WorkGroupGrade.OHRWG, WorkGroupGrade.AvSalary, WorkGroupGrade.HrsChangedBy
-FROM tblStaff INNER JOIN WorkGroupGrade ON tblStaff.WorkGroupGrade = WorkGroupGrade.WGGrade
-GROUP BY WorkGroupGrade.WGGrade, WorkGroupGrade.ProfitCentreGrade, WorkGroupGrade.GradeCode, WorkGroupGrade.WorkGroup, WorkGroupGrade.ChargeRateWG, WorkGroupGrade.DirectRateWG, WorkGroupGrade.PayRateWG, WorkGroupGrade.NPRWG, WorkGroupGrade.OHRWG, WorkGroupGrade.AvSalary, WorkGroupGrade.HrsChangedBy;
-

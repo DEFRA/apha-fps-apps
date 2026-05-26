@@ -1,8 +1,0 @@
-QUERY NAME: BaselineTestReq
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tblTestReqBaseline.Program, tblTestReqBaseline.TestCode, tblTestReqBaseline.Buyer, tblTestReqBaseline.NoRequired AS BaselineNo, tblTestReqBaseline.UnitPrice AS BaselinePrice
-FROM tblTestReqBaseline;
-

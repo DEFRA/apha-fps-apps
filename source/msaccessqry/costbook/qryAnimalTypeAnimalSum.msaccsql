@@ -1,9 +1,0 @@
-QUERY NAME: qryAnimalTypeAnimalSum
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tblAnimalReq.Project, tblAnimalReq.Year, Sum([Number of Days]*[Number of Animals]*[DailyRate]) AS AnimalCost
-FROM tblAnimalReq
-GROUP BY tblAnimalReq.Project, tblAnimalReq.Year;
-

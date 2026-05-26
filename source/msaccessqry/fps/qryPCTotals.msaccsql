@@ -1,8 +1,0 @@
-QUERY NAME: qryPCTotals
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW qryfrmTimeSellerPC.*, qryPCTotalExceptCosts.SumOfItemCost
-FROM qryfrmTimeSellerPC LEFT JOIN qryPCTotalExceptCosts ON qryfrmTimeSellerPC.SellingPC = qryPCTotalExceptCosts.ProfitCentre;
-

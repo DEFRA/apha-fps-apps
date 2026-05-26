@@ -1,6 +1,0 @@
-QUERY NAME: qptMT_Log
----------------------------------------------
-TYPE: PASS-THROUGH
-
-SQL:
-SELECT * FROM MT_LOG WHERE  [Date_Time] > '06/08/2004' AND [Date_Time] -1  < '06/08/2004' AND  [month] = '2'  AND  [user_id] = 'CVLNT\m159379' 

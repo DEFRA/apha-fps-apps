@@ -1,8 +1,0 @@
-QUERY NAME: Query1
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT Grade.GradeCode, Grade.DESC_LONG
-FROM Grade;
-

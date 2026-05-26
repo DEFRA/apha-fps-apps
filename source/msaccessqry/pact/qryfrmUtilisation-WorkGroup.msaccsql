@@ -1,9 +1,0 @@
-QUERY NAME: qryfrmUtilisation-WorkGroup
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW TimeCostCalcs.WorkGroup, tlkpProject.PlanCat AS PlanningCategory, Sum(TimeCostCalcs.Time) AS CategTime, IIf(([PlanningCategory]) Like "ZT*",[CategTime],0) AS Leave, IIf(([leave])=0,[CategTime],0) AS Chargeable
-FROM tlkpProject INNER JOIN (TimeCostCalcs INNER JOIN tlkpJobCode ON TimeCostCalcs.JobCode = tlkpJobCode.JobCode) ON tlkpProject.ParentProject = tlkpJobCode.ParentProject
-GROUP BY TimeCostCalcs.WorkGroup, tlkpProject.PlanCat;
-

@@ -1,9 +1,0 @@
-QUERY NAME: qryPortfolioDetail
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tlkpProject.ParentProject, tlkpProject.ProjectTitle, tlkpTestCapability_TM.TestCode, TestOrProduct.ShortDescription AS ItemDescription, TestOrProduct.UnitPriceVLA, tlkpTestCapability_TM.WorkGroup
-FROM (tlkpProject INNER JOIN tlkpTestCapability_TM ON tlkpProject.ParentProject = tlkpTestCapability_TM.PlanPortfolio) INNER JOIN TestOrProduct ON tlkpTestCapability_TM.TestCode = TestOrProduct.ItemCode
-WHERE (((tlkpProject.ParentProject)=[Forms]![frmTestCapabilities]![ProjectPick]));
-

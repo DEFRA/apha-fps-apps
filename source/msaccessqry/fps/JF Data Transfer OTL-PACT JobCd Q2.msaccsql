@@ -1,9 +1,0 @@
-QUERY NAME: JF Data Transfer OTL-PACT JobCd Q2
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT tlkpJobCode.JobCode, tlkpJobCode.ParentProject
-FROM tlkpJobCode
-ORDER BY tlkpJobCode.JobCode, tlkpJobCode.ParentProject;
-

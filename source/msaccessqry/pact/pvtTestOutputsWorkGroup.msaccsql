@@ -1,9 +1,0 @@
-QUERY NAME: pvtTestOutputsWorkGroup
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tlkpProgram.ProgramNo, IIf([Buyer] Like "FT*" Or [buyer] Like "UT*","Commercial",[buyer]) AS BuyerType, tlkpProject.ParentProject AS Buyer, MonthlyOutput.WorkGroup AS SellerWG, tlkpTestCapability.PlanPortfolio AS Portfolio, MonthlyOutput.TestCode, MonthlyOutput.Month, MonthlyOutput.Volume, [volume]*[unitprice] AS Fee
-FROM (tlkpTestReqmt INNER JOIN (tlkpTestCapability INNER JOIN (tlkpProject INNER JOIN (tblkpProfitCentre INNER JOIN (MonthlyOutput INNER JOIN WorkGroup ON MonthlyOutput.WorkGroup = WorkGroup.WorkGroup) ON tblkpProfitCentre.ProfitCentre = WorkGroup.ProfitCentre) ON tlkpProject.ParentProject = MonthlyOutput.Buyer) ON (tlkpTestCapability.WorkGroup = MonthlyOutput.WorkGroup) AND (tlkpTestCapability.TestCode = MonthlyOutput.TestCode)) ON (tlkpTestReqmt.Buyer = MonthlyOutput.Buyer) AND (tlkpTestReqmt.TestCode = MonthlyOutput.TestCode)) INNER JOIN tlkpProgram ON tlkpProject.Program = tlkpProgram.ProgramNo
-WHERE (((MonthlyOutput.WorkGroup)=[forms]![frmSplash]![workgrouppick3]));
-

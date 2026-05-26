@@ -1,9 +1,0 @@
-QUERY NAME: qrySurvTests
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW qrySurvFFTests.PactCode, qrySurvFFTests.Contract, Sum(qrySurvFFTests.TotalFee) AS InvoiceFee, Sum([UnitPrice]*[Volume]) AS TestsBoughtCost
-FROM qrySurvFFTests LEFT JOIN tlkpTestReqmt ON (qrySurvFFTests.Contract = tlkpTestReqmt.Buyer) AND (qrySurvFFTests.testCode = tlkpTestReqmt.TestCode)
-GROUP BY qrySurvFFTests.PactCode, qrySurvFFTests.Contract;
-

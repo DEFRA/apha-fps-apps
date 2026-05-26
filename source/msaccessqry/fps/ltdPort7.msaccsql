@@ -1,8 +1,0 @@
-QUERY NAME: ltdPort7
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW ltdPort6.ParentProject, ltdPort6.WorkGroup, IIf(IsNull([SumOfTime]),0,[sumoftime]) AS TestTime, IIf(IsNull([sumofCost]),0,[sumofcost]) AS OverheadTime, [testtime]+[overheadtime] AS Total, [Overheadtime]/[total] AS [%Overhead]
-FROM (ltdPort6 LEFT JOIN ltdTestTime ON (ltdPort6.WorkGroup = ltdTestTime.WorkGroup) AND (ltdPort6.ParentProject = ltdTestTime.Project)) LEFT JOIN ltdPort4 ON (ltdPort6.ParentProject = ltdPort4.Project) AND (ltdPort6.WorkGroup = ltdPort4.WorkGroup);
-

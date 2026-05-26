@@ -1,9 +1,0 @@
-QUERY NAME: qryAD6000_Hours
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT tempMonthlyTime_Transform.Month, Sum(tempMonthlyTime_Transform.Hours) AS SumOfHours, DSum("Hours","tblMTConversion") AS StandardHours, Sum([Hours])-[StandardHours] AS ExtraHours
-FROM tempMonthlyTime_Transform
-GROUP BY tempMonthlyTime_Transform.Month;
-

@@ -1,6 +1,0 @@
-QUERY NAME: qptMO_LOG
----------------------------------------------
-TYPE: PASS-THROUGH
-
-SQL:
-SELECT * FROM MO_LOG WHERE  [Workgroup] = 'BAC5' 

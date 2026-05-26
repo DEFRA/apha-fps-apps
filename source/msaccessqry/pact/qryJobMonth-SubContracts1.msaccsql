@@ -1,9 +1,0 @@
-QUERY NAME: qryJobMonth-SubContracts1
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW Proj_SubContract.Project, Proj_SubContract.Month, Proj_SubContract.AcctCode, Sum(Proj_SubContract.Amount) AS Total, IIf([acctcode]="LargeAnimals",[Total],0) AS Animals1, IIf([acctcode]="largeanimals",0,[total]) AS Other1
-FROM Proj_SubContract
-GROUP BY Proj_SubContract.Project, Proj_SubContract.Month, Proj_SubContract.AcctCode;
-

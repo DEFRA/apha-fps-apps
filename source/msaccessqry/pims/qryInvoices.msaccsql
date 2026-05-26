@@ -1,9 +1,0 @@
-QUERY NAME: qryInvoices
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT MY_tlkpProject.ParentProject, MY_tlkpProject.Program, tblRadTrackInvoice.PlannedAmount, tblRadTrackInvoice.DueAmount, tblRadTrackInvoice.DueDate, tblRadTrackInvoice.ActualAmount, tblRadTrackInvoice.DateInvoiced, MY_tlkpProject.Manager, tblRadTrackInvoice.Project, MY_tlkpProject.Customer, tblRadTrackInvoice.Contract
-FROM MY_tblContract RIGHT JOIN (tblRadTrackInvoice LEFT JOIN MY_tlkpProject ON tblRadTrackInvoice.Project = MY_tlkpProject.ParentProject) ON MY_tblContract.ContractNo = tblRadTrackInvoice.Contract
-WHERE (((MY_tlkpProject.Manager) Like fnGetHiddenManager()) AND ((MY_tlkpProject.Year)=fnReportYear()) AND ((fnInReportMonthOrBefore([Duedate]))=True) AND ((MY_tblContract.Year) Is Null)) OR (((MY_tlkpProject.Manager) Is Null) AND ((MY_tlkpProject.Year) Is Null) AND ((fnInReportMonthOrBefore([Duedate]))=True) AND ((MY_tblContract.Year)=fnReportYear()));
-

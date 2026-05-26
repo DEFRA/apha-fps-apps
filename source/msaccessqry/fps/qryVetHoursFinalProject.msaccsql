@@ -1,9 +1,0 @@
-QUERY NAME: qryVetHoursFinalProject
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW qryVetHoursProjects.WorkGroup, qryVetHoursProjects.ParentProject, qryVetHoursAct.SumOfHours, qryVetHoursPlan.PlanHours, [SumOfHours]/[PlanHours] AS Variance, IIf(Left([tlkpProject_General].[ParentProject],2)>'FS',True,False) AS Break
-FROM (qryVetHoursProjects LEFT JOIN qryVetHoursAct ON (qryVetHoursProjects.ParentProject = qryVetHoursAct.ParentProject) AND (qryVetHoursProjects.WorkGroup = qryVetHoursAct.WorkGroup)) LEFT JOIN qryVetHoursPlan ON (qryVetHoursProjects.ParentProject = qryVetHoursPlan.Jobcode) AND (qryVetHoursProjects.WorkGroup = qryVetHoursPlan.WorkGroup)
-WHERE ((qryVetHoursAct.SumOfHours Is Not Null)) OR ((qryVetHoursPlan.PlanHours Is Not Null));
-

@@ -1,9 +1,0 @@
-QUERY NAME: ltd2000-B
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT MonthlyOutput.WorkGroup, Sum([volume]*[testprice]) AS TestSales
-FROM MonthlyOutput INNER JOIN tblTestRequ ON (MonthlyOutput.Buyer = tblTestRequ.JobCode) AND (MonthlyOutput.TestCode = tblTestRequ.TestCode)
-GROUP BY MonthlyOutput.WorkGroup;
-

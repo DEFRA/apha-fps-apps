@@ -1,6 +1,0 @@
-QUERY NAME: dd_VPactProjectDetailsInd
----------------------------------------------
-TYPE: DDL
-
-SQL:
-Create index  vPactProjectYearCosts_ind on vPactProjectYearCosts(Year,MonthNo,Project)

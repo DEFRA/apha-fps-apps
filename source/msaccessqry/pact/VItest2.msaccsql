@@ -1,9 +1,0 @@
-QUERY NAME: VItest2
----------------------------------------------
-TYPE: MAKE TABLE
-
-SQL:
-SELECT DISTINCTROW tlkpPortfolioTest.PlanPortfolio, MonthlyOutput.TestCode, Sum(MonthlyOutput.Volume) AS SumOfVolume INTO TestVols
-FROM ((tlkpPortfolioTest INNER JOIN TestOrProduct ON tlkpPortfolioTest.TestCode = TestOrProduct.ItemCode) INNER JOIN tlkpTestCapability ON (tlkpPortfolioTest.TestCode = tlkpTestCapability.TestCode) AND (tlkpPortfolioTest.PlanPortfolio = tlkpTestCapability.PlanPortfolio)) INNER JOIN MonthlyOutput ON (tlkpTestCapability.WorkGroup = MonthlyOutput.WorkGroup) AND (tlkpTestCapability.TestCode = MonthlyOutput.TestCode)
-GROUP BY tlkpPortfolioTest.PlanPortfolio, MonthlyOutput.TestCode;
-

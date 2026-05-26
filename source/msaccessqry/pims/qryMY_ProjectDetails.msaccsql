@@ -1,8 +1,0 @@
-QUERY NAME: qryMY_ProjectDetails
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT MY_tlkpProject.Year, MY_tlkpProject.ParentProject, MY_tlkpProject.Manager, MY_tlkpProject.TransferIncome, MY_tlkpProject.CustIncome, MY_tlkpProject.FECcost, MY_tlkpProject.Profit, MY_tlkpProject.Budget_CVL, MY_tlkpProject.CaseworkSub, MY_tlkpProject.PVSIncome, MY_tlkpProject.PlanCaseworkDebit, MY_tlkpProject.Source, MY_tlkpProject.Disease, MY_tlkpProject.Contract, MY_tlkpProject.Finished, MY_tlkpProject.Comments, MY_tlkpProject.CarryOver, MY_tlkpProject.IsDefraProject, MY_tlkpProject.CostCentre, MY_tlkpProject.OracleProjectCode, MY_tlkpProject.SubAccountCode, MY_tlkpProject.ProjectGroup
-FROM MY_tlkpProject;
-

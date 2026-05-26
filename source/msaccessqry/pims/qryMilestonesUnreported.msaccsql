@@ -1,9 +1,0 @@
-QUERY NAME: qryMilestonesUnreported
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT MY_tlkpProject.Program, tblMilestone.Project, MY_tlkpProject.Manager, tblMilestone.Number, tblMilestone.DateDue, tblMilestone.UnderSDReview, tblMilestone.CAPSComment, tblMilestone.Description, tblMilestone.ProjectLeaderComment, MY_tlkpProject.Customer, G_tlkpProject.Contract, MY_tlkpProject.ProjectGroup
-FROM ((tblMilestone INNER JOIN MY_tlkpProject ON tblMilestone.Project = MY_tlkpProject.ParentProject) LEFT JOIN qryCurrentMonth_FormRecieved_Dynamic ON (MY_tlkpProject.ParentProject = qryCurrentMonth_FormRecieved_Dynamic.ParentProject) AND (MY_tlkpProject.Year = qryCurrentMonth_FormRecieved_Dynamic.Year)) INNER JOIN G_tlkpProject ON MY_tlkpProject.ParentProject = G_tlkpProject.ParentProject
-WHERE (((MY_tlkpProject.Manager) Like fnGetHiddenManager()) AND ((IsNull([currentMonth]))=True) AND ((fnInFinancialYearOrBefore([DateCompleted]))=False) AND ((MY_tlkpProject.Year)=fnReportYear()) AND ((fnInReportMonthOrBefore([DateDue]))=True) AND ((fnDueYear([DateDue]))=fnReportYear()));
-

@@ -1,9 +1,0 @@
-QUERY NAME: Query1
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT qryProgramAndCustomerMonitoring.Project, qryProgramAndCustomerMonitoring.CustomerComment
-FROM qryProgramAndCustomerMonitoring
-WHERE (((qryProgramAndCustomerMonitoring.Project)in("OZ0150","OZ0343","SE0314")));
-

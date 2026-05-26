@@ -1,8 +1,0 @@
-QUERY NAME: qryAnimalRates_NonDefra
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT tblAnimals.AnimalType, tblAnimals.DailyRate
-FROM tblAnimals;
-

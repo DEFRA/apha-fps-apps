@@ -1,9 +1,0 @@
-QUERY NAME: VItest1
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tlkpProject.PlanCat, tlkpProject.ParentProject, TimeCostCalcs.GradeCode, Sum(TimeCostCalcs.Time) AS SumOfTime, Sum(TimeCostCalcs.Cost) AS SumOfCost
-FROM tlkpProject INNER JOIN TimeCostCalcs ON tlkpProject.ParentProject = TimeCostCalcs.Project
-GROUP BY tlkpProject.PlanCat, tlkpProject.ParentProject, TimeCostCalcs.GradeCode;
-

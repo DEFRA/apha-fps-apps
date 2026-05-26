@@ -1,8 +1,0 @@
-QUERY NAME: qryAdditionalCosts
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tblAdditionalCosts.Project, tblAdditionalCosts.Year, tblAdditionalCosts.Description, tblAdditionalCosts.ItemCost, tblAdditionalCosts.CostEntered, tblAdditionalCosts.AccountCat, tblAdditionalCosts.Freq, tblAdditionalCosts.AC_Identity, tblProject.Programme, tblProject.EuroConvRate
-FROM tblAdditionalCosts INNER JOIN tblProject ON tblAdditionalCosts.Project = tblProject.Project;
-

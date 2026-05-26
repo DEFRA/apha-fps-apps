@@ -1,6 +1,0 @@
-QUERY NAME: ddCreateIndexProfitCentreGrade
----------------------------------------------
-TYPE: DDL
-
-SQL:
-CREATE UNIQUE INDEX ProfitCentreGrade_PK ON ProfitCentreGrade(PCGrade)

@@ -1,7 +1,0 @@
-QUERY NAME: Query9
----------------------------------------------
-TYPE: UPDATE
-
-SQL:
-UPDATE MonthlyTime INNER JOIN _SVChanges ON MonthlyTime.PACTStaffID = [_SVChanges].PACTid SET MonthlyTime.WorkGroup = [WG];
-

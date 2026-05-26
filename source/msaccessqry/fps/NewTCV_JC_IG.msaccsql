@@ -1,9 +1,0 @@
-QUERY NAME: NewTCV_JC_IG
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT NewCodes_IG.NewJOBCode, NewCodes_IG.Project, TimeCodeValid_FPS99.WorkGroup
-FROM TimeCodeValid_FPS99 INNER JOIN NewCodes_IG ON (TimeCodeValid_FPS99.ParentProject = NewCodes_IG.OldProject) AND (TimeCodeValid_FPS99.JobCode = NewCodes_IG.OldJobCode)
-WHERE (((TimeCodeValid_FPS99.WorkGroup) Not Like "SV??" And (TimeCodeValid_FPS99.WorkGroup) Not Like "LT??") AND ((TimeCodeValid_FPS99.Active)=True));
-

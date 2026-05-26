@@ -1,9 +1,0 @@
-QUERY NAME: qryProfitCentreBids
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tblkpProfitCentre.ProfitCentre, tblkpProfitCentre.CONTTARGET, Sum(tblStaffJob.plannedhours) AS SumOfplannedhours
-FROM (((tblkpProfitCentre INNER JOIN WorkGroup_General ON tblkpProfitCentre.ProfitCentre = WorkGroup_General.ProfitCentre) INNER JOIN WorkGroupGrade_General ON WorkGroup_General.WorkGroup = WorkGroupGrade_General.WorkGroup) INNER JOIN tblStaff_General ON WorkGroupGrade_General.WGGrade = tblStaff_General.WorkGroupGrade) INNER JOIN tblStaffJob ON tblStaff_General.StaffID = tblStaffJob.StaffID
-GROUP BY tblkpProfitCentre.ProfitCentre, tblkpProfitCentre.CONTTARGET;
-

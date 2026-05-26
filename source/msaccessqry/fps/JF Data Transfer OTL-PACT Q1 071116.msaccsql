@@ -1,9 +1,0 @@
-QUERY NAME: JF Data Transfer OTL-PACT Q1 071116
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT tblWGEmployeeMAB.SPNumber, WorkGroupGrade_MAP.WorkGroup
-FROM tblWGEmployeeMAB INNER JOIN WorkGroupGrade_MAP ON tblWGEmployeeMAB.WorkGroupGrade = WorkGroupGrade_MAP.WGGrade
-ORDER BY tblWGEmployeeMAB.SPNumber;
-

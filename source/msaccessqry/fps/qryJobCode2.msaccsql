@@ -1,8 +1,0 @@
-QUERY NAME: qryJobCode2
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW JobCode.*
-FROM JobCode;
-

@@ -1,9 +1,0 @@
-QUERY NAME: JF ZT0019 H&S query
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT TimeCostCalcs.WorkGroup, TimeCostCalcs.Name, TimeCostCalcs.GradeCode, TimeCostCalcs.Project, TimeCostCalcs.JobCode, tlkpJobCode.JobCodeName, tlkpProject.ProjectTitle, TimeCostCalcs.Month, tlkpJobCode.JobCodeName, TimeCostCalcs.Time, TimeCostCalcs.GradeCode, TimeCostCalcs.ChargeRate, TimeCostCalcs.Cost, TimeCostCalcs.Overhead
-FROM (TimeCostCalcs INNER JOIN tlkpJobCode ON TimeCostCalcs.JobCode = tlkpJobCode.JobCode) INNER JOIN tlkpProject ON tlkpJobCode.ParentProject = tlkpProject.ParentProject
-WHERE (((TimeCostCalcs.JobCode) Like "ZT0019*"));
-

@@ -1,9 +1,0 @@
-QUERY NAME: Create_DivGrade
----------------------------------------------
-TYPE: APPEND
-
-SQL:
-INSERT INTO DivisionGrade ( GradeCode, Division, DivisionGrade )
-SELECT DISTINCTROW Grade.GradeCode, "Surv" AS Expr1, [gradecode] & "-" & [Expr1] AS Expr2
-FROM Grade;
-

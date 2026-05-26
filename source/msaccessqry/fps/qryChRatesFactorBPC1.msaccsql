@@ -1,9 +1,0 @@
-QUERY NAME: qryChRatesFactorBPC1
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tblkpProfitCentre.ProfitCentre, Sum(qryChRatesFactorAPC1.AllocHrs) AS TotHrs, Sum(qryChRatesFactorAPC1.FactorA) AS TotFactorA, qryChRatePayTotalPC.SumOfGenBid AS TotPay, IIf(IsNull([TotFactorA]) Or [TotFactorA]=0,0,[TotPay]/[TotFactorA]) AS FactorB, qryChRateNPRCTotalPC.SumOfGenBid AS NPRC, tblkpProfitCentre.CONTTARGET, IIf(IsNull([TotHrs]) Or [TotHrs]=0,0,[NPRC]/[TotHrs]) AS NPR, IIf(IsNull([TotHrs]) Or [TotHrs]=0,0,[ContTarget]/[TotHrs]) AS OHR
-FROM ((tblkpProfitCentre INNER JOIN qryChRatesFactorAPC1 ON tblkpProfitCentre.ProfitCentre = qryChRatesFactorAPC1.ProfitCentre) INNER JOIN qryChRateNPRCTotalPC ON tblkpProfitCentre.ProfitCentre = qryChRateNPRCTotalPC.ProfitCentre) INNER JOIN qryChRatePayTotalPC ON tblkpProfitCentre.ProfitCentre = qryChRatePayTotalPC.ProfitCentre
-GROUP BY tblkpProfitCentre.ProfitCentre, qryChRatePayTotalPC.SumOfGenBid, qryChRateNPRCTotalPC.SumOfGenBid, tblkpProfitCentre.CONTTARGET;
-
