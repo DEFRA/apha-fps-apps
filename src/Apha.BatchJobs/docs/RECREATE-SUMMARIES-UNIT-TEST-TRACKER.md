@@ -52,11 +52,11 @@ Legend:
 | RS-005 | Phase 1 | P1 | RecreateSummariesContext rejects invalid month values | Done | Covered in RecreateSummariesContextTests |
 | RS-006 | Phase 1 | P1 | ExecutionStepBase success result mapping | Done | Covered in RecreateSummariesExecutionStepContractTests via derived test step |
 | RS-007 | Phase 1 | P1 | ExecutionStepBase failure result mapping | Done | Covered in RecreateSummariesExecutionStepContractTests via throwing derived test step |
-| RS-008 | Phase 2 | P0 | Orchestrator executes mandatory steps in order | Not Started | End-to-end within transaction |
-| RS-009 | Phase 2 | P0 | Orchestrator rolls back when mandatory step fails | Not Started | Failure path correctness |
-| RS-010 | Phase 2 | P0 | Orchestrator executes refresh steps when period unlocked | Not Started | periodLocked == 0 branch |
-| RS-011 | Phase 2 | P0 | Orchestrator marks refresh steps skipped when period locked | Not Started | periodLocked != 0 branch |
-| RS-012 | Phase 2 | P1 | Orchestrator handles unexpected exception with rollback attempt | Not Started | Catch guard branch |
+| RS-008 | Phase 2 | P0 | Orchestrator executes mandatory steps in order | Done | Covered in RecreateSummariesOrchestratorIntegrationTests (unlocked flow with ordered mandatory + refresh execution) |
+| RS-009 | Phase 2 | P0 | Orchestrator rolls back when mandatory step fails | Done | Covered in RecreateSummariesOrchestratorIntegrationTests (failed mandatory step throws and short-circuits remaining pipeline) |
+| RS-010 | Phase 2 | P0 | Orchestrator executes refresh steps when period unlocked | Done | Covered in RecreateSummariesOrchestratorIntegrationTests (periodLocked == 0 executes refresh list) |
+| RS-011 | Phase 2 | P0 | Orchestrator marks refresh steps skipped when period locked | Done | Covered in RecreateSummariesOrchestratorIntegrationTests (periodLocked != 0 returns skipped refresh StepResults) |
+| RS-012 | Phase 2 | P1 | Orchestrator handles unexpected exception with rollback attempt | Done | Covered in RecreateSummariesOrchestratorIntegrationTests (unexpected exception after first success propagates via catch-guard branch) |
 | RS-013 | Phase 2 | P1 | Orchestrator tracker-clearing behavior (start/failure/commit) | Not Started | No tracked-entity leak |
 | RS-014 | Phase 3 | P0 | CreateFpsTotals null handling parity (`ISNULL`/`COALESCE` vs `??`) | Not Started | Financial baseline sensitivity |
 | RS-015 | Phase 3 | P0 | CreateFpsTotals left joins preserve rows | Not Started | Missing related aggregates still keep projects |
