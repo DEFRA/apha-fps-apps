@@ -656,6 +656,314 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupServiceTest
             Assert.Same(expectedResponse, result);
         }
 
+        // ── WgSummarisedStaffTimeUsageRowDto coverage ─────────────────────
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_RowDto_AllMonthPropertiesAreMapped()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var row = new WgSummarisedStaffTimeUsageRowDto
+            {
+                ParentProject = "PP1",
+                JobCode       = "JC1",
+                JobTitle      = "Senior Scientist",
+                April         = 1.0,
+                May           = 2.0,
+                June          = 3.0,
+                July          = 4.0,
+                August        = 5.0,
+                September     = 6.0,
+                October       = 7.0,
+                November      = 8.0,
+                December      = 9.0,
+                January       = 10.0,
+                February      = 11.0,
+                March         = 12.0,
+                TotalTime     = 78.0,
+                TotalCost     = 3900.0
+            };
+            var dto = new WgSummarisedStaffTimeUsageDto { Rows = [row], HrsPaid = 120.0 };
+            _pactWorkGroupApiClient.GetWgSummarisedStaffTimeUsageAsync(query, "WG1")
+                .Returns(ApiResponseDto<WgSummarisedStaffTimeUsageDto>.SuccessResponse(dto));
+
+            // Act
+            var result = await _service.GetWgSummarisedStaffTimeUsageAsync(query, "WG1");
+
+            // Assert
+            var returned = result.Data!.Rows.Single();
+            Assert.Equal("PP1",              returned.ParentProject);
+            Assert.Equal("JC1",              returned.JobCode);
+            Assert.Equal("Senior Scientist", returned.JobTitle);
+            Assert.Equal(1.0,  returned.April);
+            Assert.Equal(2.0,  returned.May);
+            Assert.Equal(3.0,  returned.June);
+            Assert.Equal(4.0,  returned.July);
+            Assert.Equal(5.0,  returned.August);
+            Assert.Equal(6.0,  returned.September);
+            Assert.Equal(7.0,  returned.October);
+            Assert.Equal(8.0,  returned.November);
+            Assert.Equal(9.0,  returned.December);
+            Assert.Equal(10.0, returned.January);
+            Assert.Equal(11.0, returned.February);
+            Assert.Equal(12.0, returned.March);
+            Assert.Equal(78.0,   returned.TotalTime);
+            Assert.Equal(3900.0, returned.TotalCost);
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_RowDto_DefaultValues_MonthsAndTotalsAreZero()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var dto = new WgSummarisedStaffTimeUsageDto { Rows = [new WgSummarisedStaffTimeUsageRowDto()] };
+            _pactWorkGroupApiClient.GetWgSummarisedStaffTimeUsageAsync(query, "WG1")
+                .Returns(ApiResponseDto<WgSummarisedStaffTimeUsageDto>.SuccessResponse(dto));
+
+            // Act
+            var result = await _service.GetWgSummarisedStaffTimeUsageAsync(query, "WG1");
+
+            // Assert
+            var returned = result.Data!.Rows.Single();
+            Assert.Null(returned.ParentProject);
+            Assert.Null(returned.JobCode);
+            Assert.Null(returned.JobTitle);
+            Assert.Equal(0, returned.April);
+            Assert.Equal(0, returned.May);
+            Assert.Equal(0, returned.June);
+            Assert.Equal(0, returned.July);
+            Assert.Equal(0, returned.August);
+            Assert.Equal(0, returned.September);
+            Assert.Equal(0, returned.October);
+            Assert.Equal(0, returned.November);
+            Assert.Equal(0, returned.December);
+            Assert.Equal(0, returned.January);
+            Assert.Equal(0, returned.February);
+            Assert.Equal(0, returned.March);
+            Assert.Equal(0, returned.TotalTime);
+            Assert.Equal(0, returned.TotalCost);
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_RowDto_FractionalHours_ArePreserved()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var dto = new WgSummarisedStaffTimeUsageDto
+            {
+                Rows = [new WgSummarisedStaffTimeUsageRowDto { April = 7.5, May = 3.25, TotalTime = 10.75 }]
+            };
+            _pactWorkGroupApiClient.GetWgSummarisedStaffTimeUsageAsync(query, "WG1")
+                .Returns(ApiResponseDto<WgSummarisedStaffTimeUsageDto>.SuccessResponse(dto));
+
+            // Act
+            var result = await _service.GetWgSummarisedStaffTimeUsageAsync(query, "WG1");
+
+            // Assert
+            var returned = result.Data!.Rows.Single();
+            Assert.Equal(7.5,  returned.April);
+            Assert.Equal(3.25, returned.May);
+            Assert.Equal(10.75, returned.TotalTime);
+        }
+
+        // ── WgSummarisedStaffTimeUsageSummaryDto coverage ─────────────────
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_SummaryDto_AllTotalMonthsAreMapped()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var summary = new WgSummarisedStaffTimeUsageSummaryDto
+            {
+                TotalApril     = 10.0, TotalMay       = 11.0, TotalJune      = 12.0,
+                TotalJuly      = 13.0, TotalAugust    = 14.0, TotalSeptember = 15.0,
+                TotalOctober   = 16.0, TotalNovember  = 17.0, TotalDecember  = 18.0,
+                TotalJanuary   = 19.0, TotalFebruary  = 20.0, TotalMarch     = 21.0
+            };
+            var dto = new WgSummarisedStaffTimeUsageDto { Summary = summary };
+            _pactWorkGroupApiClient.GetWgSummarisedStaffTimeUsageAsync(query, "WG1")
+                .Returns(ApiResponseDto<WgSummarisedStaffTimeUsageDto>.SuccessResponse(dto));
+
+            // Act
+            var result = await _service.GetWgSummarisedStaffTimeUsageAsync(query, "WG1");
+
+            // Assert
+            var s = result.Data!.Summary;
+            Assert.Equal(10.0, s.TotalApril);
+            Assert.Equal(11.0, s.TotalMay);
+            Assert.Equal(12.0, s.TotalJune);
+            Assert.Equal(13.0, s.TotalJuly);
+            Assert.Equal(14.0, s.TotalAugust);
+            Assert.Equal(15.0, s.TotalSeptember);
+            Assert.Equal(16.0, s.TotalOctober);
+            Assert.Equal(17.0, s.TotalNovember);
+            Assert.Equal(18.0, s.TotalDecember);
+            Assert.Equal(19.0, s.TotalJanuary);
+            Assert.Equal(20.0, s.TotalFebruary);
+            Assert.Equal(21.0, s.TotalMarch);
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_SummaryDto_AllPercentAllocatedFieldsAreMapped()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var summary = new WgSummarisedStaffTimeUsageSummaryDto
+            {
+                PercentAllocatedApril     = 80.0, PercentAllocatedMay       = 81.0,
+                PercentAllocatedJune      = 82.0, PercentAllocatedJuly      = 83.0,
+                PercentAllocatedAugust    = 84.0, PercentAllocatedSeptember = 85.0,
+                PercentAllocatedOctober   = 86.0, PercentAllocatedNovember  = 87.0,
+                PercentAllocatedDecember  = 88.0, PercentAllocatedJanuary   = 89.0,
+                PercentAllocatedFebruary  = 90.0, PercentAllocatedMarch     = 91.0
+            };
+            var dto = new WgSummarisedStaffTimeUsageDto { Summary = summary };
+            _pactWorkGroupApiClient.GetWgSummarisedStaffTimeUsageAsync(query, "WG1")
+                .Returns(ApiResponseDto<WgSummarisedStaffTimeUsageDto>.SuccessResponse(dto));
+
+            // Act
+            var result = await _service.GetWgSummarisedStaffTimeUsageAsync(query, "WG1");
+
+            // Assert
+            var s = result.Data!.Summary;
+            Assert.Equal(80.0, s.PercentAllocatedApril);
+            Assert.Equal(81.0, s.PercentAllocatedMay);
+            Assert.Equal(82.0, s.PercentAllocatedJune);
+            Assert.Equal(83.0, s.PercentAllocatedJuly);
+            Assert.Equal(84.0, s.PercentAllocatedAugust);
+            Assert.Equal(85.0, s.PercentAllocatedSeptember);
+            Assert.Equal(86.0, s.PercentAllocatedOctober);
+            Assert.Equal(87.0, s.PercentAllocatedNovember);
+            Assert.Equal(88.0, s.PercentAllocatedDecember);
+            Assert.Equal(89.0, s.PercentAllocatedJanuary);
+            Assert.Equal(90.0, s.PercentAllocatedFebruary);
+            Assert.Equal(91.0, s.PercentAllocatedMarch);
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_SummaryDto_StandardHoursFields_AreMapped()
+        {
+            // Arrange — 120 HrsPaid → StandardHoursPerMonth = 10, TotalStandardHours = 120
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var summary = new WgSummarisedStaffTimeUsageSummaryDto
+            {
+                StandardHoursPerMonth = 10.0,
+                TotalStandardHours    = 120.0
+            };
+            var dto = new WgSummarisedStaffTimeUsageDto { Summary = summary, HrsPaid = 120.0 };
+            _pactWorkGroupApiClient.GetWgSummarisedStaffTimeUsageAsync(query, "WG1")
+                .Returns(ApiResponseDto<WgSummarisedStaffTimeUsageDto>.SuccessResponse(dto));
+
+            // Act
+            var result = await _service.GetWgSummarisedStaffTimeUsageAsync(query, "WG1");
+
+            // Assert
+            Assert.Equal(10.0,  result.Data!.Summary.StandardHoursPerMonth);
+            Assert.Equal(120.0, result.Data.Summary.TotalStandardHours);
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_SummaryDto_ZeroHrsPaid_StandardHoursAreZero()
+        {
+            // Arrange — mirrors service rule: hrsPaid == 0 → standardHoursPerMonth = 0
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var summary = new WgSummarisedStaffTimeUsageSummaryDto
+            {
+                StandardHoursPerMonth = 0,
+                TotalStandardHours    = 0
+            };
+            var dto = new WgSummarisedStaffTimeUsageDto { Summary = summary, HrsPaid = 0 };
+            _pactWorkGroupApiClient.GetWgSummarisedStaffTimeUsageAsync(query, "WG1")
+                .Returns(ApiResponseDto<WgSummarisedStaffTimeUsageDto>.SuccessResponse(dto));
+
+            // Act
+            var result = await _service.GetWgSummarisedStaffTimeUsageAsync(query, "WG1");
+
+            // Assert
+            Assert.Equal(0, result.Data!.Summary.StandardHoursPerMonth);
+            Assert.Equal(0, result.Data.Summary.TotalStandardHours);
+            Assert.Equal(0, result.Data.HrsPaid);
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_SummaryDto_DefaultValues_AllFieldsAreZero()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var dto = new WgSummarisedStaffTimeUsageDto { Summary = new WgSummarisedStaffTimeUsageSummaryDto() };
+            _pactWorkGroupApiClient.GetWgSummarisedStaffTimeUsageAsync(query, "WG1")
+                .Returns(ApiResponseDto<WgSummarisedStaffTimeUsageDto>.SuccessResponse(dto));
+
+            // Act
+            var result = await _service.GetWgSummarisedStaffTimeUsageAsync(query, "WG1");
+
+            // Assert
+            var s = result.Data!.Summary;
+            Assert.Equal(0, s.TotalApril);     Assert.Equal(0, s.TotalMay);
+            Assert.Equal(0, s.TotalJune);      Assert.Equal(0, s.TotalJuly);
+            Assert.Equal(0, s.TotalAugust);    Assert.Equal(0, s.TotalSeptember);
+            Assert.Equal(0, s.TotalOctober);   Assert.Equal(0, s.TotalNovember);
+            Assert.Equal(0, s.TotalDecember);  Assert.Equal(0, s.TotalJanuary);
+            Assert.Equal(0, s.TotalFebruary);  Assert.Equal(0, s.TotalMarch);
+            Assert.Equal(0, s.GrandTotalTime); Assert.Equal(0, s.GrandTotalCost);
+            Assert.Equal(0, s.GrandTotalPercentAllocated);
+            Assert.Equal(0, s.StandardHoursPerMonth);
+            Assert.Equal(0, s.TotalStandardHours);
+            Assert.Equal(0, s.PercentAllocatedApril);
+            Assert.Equal(0, s.PercentAllocatedMarch);
+        }
+
+        // ── WgSummarisedStaffTimeUsageDto (wrapper) coverage ──────────────
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_WrapperDto_DefaultRows_IsEmptyCollection()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var dto = new WgSummarisedStaffTimeUsageDto();
+            _pactWorkGroupApiClient.GetWgSummarisedStaffTimeUsageAsync(query, "WG1")
+                .Returns(ApiResponseDto<WgSummarisedStaffTimeUsageDto>.SuccessResponse(dto));
+
+            // Act
+            var result = await _service.GetWgSummarisedStaffTimeUsageAsync(query, "WG1");
+
+            // Assert
+            Assert.NotNull(result.Data!.Rows);
+            Assert.Empty(result.Data.Rows);
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_WrapperDto_DefaultSummary_IsNotNull()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var dto = new WgSummarisedStaffTimeUsageDto();
+            _pactWorkGroupApiClient.GetWgSummarisedStaffTimeUsageAsync(query, "WG1")
+                .Returns(ApiResponseDto<WgSummarisedStaffTimeUsageDto>.SuccessResponse(dto));
+
+            // Act
+            var result = await _service.GetWgSummarisedStaffTimeUsageAsync(query, "WG1");
+
+            // Assert
+            Assert.NotNull(result.Data!.Summary);
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_WrapperDto_DefaultPagination_IsNotNull()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var dto = new WgSummarisedStaffTimeUsageDto();
+            _pactWorkGroupApiClient.GetWgSummarisedStaffTimeUsageAsync(query, "WG1")
+                .Returns(ApiResponseDto<WgSummarisedStaffTimeUsageDto>.SuccessResponse(dto));
+
+            // Act
+            var result = await _service.GetWgSummarisedStaffTimeUsageAsync(query, "WG1");
+
+            // Assert
+            Assert.NotNull(result.Data!.Pagination);
+        }
+
         #endregion
     }
 }
