@@ -9,6 +9,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
 
         public string SelectedProgramme { get; set; } = string.Empty;
 
+        public string SelectedProjectCode { get; set; } = string.Empty;
+
         public List<SelectListItem> ProgrammeList { get; set; } = new List<SelectListItem>();
 
         public DataGridConfig<ProgramProjectItem> ProjectsGrid { get; set; } = new DataGridConfig<ProgramProjectItem>();

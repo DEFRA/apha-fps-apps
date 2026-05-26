@@ -52,19 +52,18 @@
                                         </button>
                                         <ul>
                                             <li><a class="dropdown-item sidenav-title">Plan vs Actuals</a></li>
-                                            <li><a class="dropdown-item"                                                  
-                                                   asp-area="FPS" asp-controller="ProjectStaffPlanActual" asp-action="Index"
-                                                   asp-route-programNo="@Model.SelectedProgramNo">Staff</a>
-                                                </li>
-                                            <li><a class="dropdown-item" 
-                                                    asp-area="FPS" asp-controller="ProjectTestPlanActual" asp-action="Index"  asp-route-programNo="@Model.SelectedProgramNo">Tests</a>
-                                                </li>
-                                            <li><a class="dropdown-item"
-                                                    asp-area="FPS" asp-controller="ProjectAnimalPlanActual" asp-action="Index"  asp-route-programNo="@Model.SelectedProgramNo">Animals</a>
-                                                </li>
-                                            <li><a class="dropdown-item" 
-                                                       asp-area="FPS" asp-controller="ProjectAdditionalPlanActual" asp-action="Index" asp-route-programNo="@Model.SelectedProgramNo">Additional</a>
-                                                </li>
+                                            <li><a class="dropdown-item nav-updatable"
+                                                   asp-area="FPS" asp-controller="ProjectStaffPlanActual" asp-action="Index">Staff</a>
+                                            </li>
+                                            <li><a class="dropdown-item nav-updatable"
+                                                   asp-area="FPS" asp-controller="ProjectTestPlanActual" asp-action="Index">Tests</a>
+                                            </li>
+                                            <li><a class="dropdown-item nav-updatable"
+                                                   asp-area="FPS" asp-controller="ProjectAnimalPlanActual" asp-action="Index">Animals</a>
+                                            </li>
+                                            <li><a class="dropdown-item nav-updatable"
+                                                   asp-area="FPS" asp-controller="ProjectAdditionalPlanActual" asp-action="Index">Additional</a>
+                                            </li>
                                         </ul>
                                     </nav>
 
@@ -81,7 +80,7 @@
                                                            style="width:160px;">
                                                     <input type="hidden" id="hdnSelectedProject" value="" />
                                                     <a id="btnPlan" class="govuk-button sup_margin_0" style="display:none;"
-                                                       href="@Url.Action("Index", "ProjectPlanning", new { area = "FPS" })">
+                                                       asp-area="FPS" asp-controller="ProjectPlanning" asp-action="Index">
                                                         <i class="fa fa-cogs" aria-hidden="true"></i> Plan
                                                     </a>
                                                 </div>
@@ -139,7 +138,12 @@
     <script src="~/js/ajax-form-validation.js"></script>
     <script>
         var currentProgramNo = '@Html.Raw(Model.SelectedProgramNo)';
-        var currentProjectCode = '';
+        var currentProjectCode = '@Html.Raw(Model.SelectedProjectCode)';
+
+        // Disable nav links until a project is selected
+        document.querySelectorAll('a.nav-updatable').forEach(function (link) {
+            link.classList.add('nav-disabled');
+        });
 
         function toggleSidebar() {
             const sidebar = document.querySelector('.sidenav');
@@ -147,11 +151,8 @@
         }
 
         function updateNavLinks(programNo) {
-            document.querySelectorAll('a[data-nav-program]').forEach(function (link) {
-                const base = link.getAttribute('data-nav-program');
-                var url = base + '?programNo=' + encodeURIComponent(programNo);
-                if (currentProjectCode) url += '&projectCode=' + encodeURIComponent(currentProjectCode);
-                link.href = url;
+            document.querySelectorAll('a.nav-updatable').forEach(function (link) {
+                link.href = link.pathname + (programNo ? '?programNo=' + encodeURIComponent(programNo) : '');
             });
         }
 
@@ -159,6 +160,13 @@
             const val = $(this).val();
             if (!val) return;
             currentProgramNo = val;
+            // Persist selection to session for other pages
+            $.ajax({
+                url: '@Url.Action("SaveProgrammeSession", "ProgrammeSelect", new { area = "FPS" })',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(val)
+            });
             updateNavLinks(val);
             resetSelectedProject();
             window['gridManager_@Model.ProjectsGrid.GridId'].reloadGrid({ page: 1 });
@@ -175,17 +183,22 @@
             document.getElementById('hdnSelectedProject').value     = id;
             currentProjectCode = id;
             updateNavLinks(currentProgramNo);
+            document.querySelectorAll('a.nav-updatable').forEach(function (link) {
+                link.classList.remove('nav-disabled');
+            });
+            // Persist project code to session for target pages
+            $.ajax({
+                url: '@Url.Action("SaveProjectSession", "ProgramProject", new { area = "FPS" })',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(id)
+            });
 
             const planBtn = document.getElementById('btnPlan');
             if (planBtn) {
-                planBtn.href          = '@Url.Action("Index", "ProjectPlanning", new { area = "FPS" })?parentProject=' + encodeURIComponent(id);
+                planBtn.href          = planBtn.pathname + '?projectCode=' + encodeURIComponent(document.getElementById('selected-project-input').value);
                 planBtn.style.display = '';
             }
-
-            $('a[data-nav-program]').each(function () {
-                var base = $(this).data('nav-program');
-                $(this).attr('href', base + '?projectCode=' + encodeURIComponent(id));
-            });
         }
 
         function resetSelectedProject() {
@@ -195,6 +208,16 @@
             updateNavLinks(currentProgramNo);
             const planBtn = document.getElementById('btnPlan');
             if (planBtn) planBtn.style.display = 'none';
+            document.querySelectorAll('a.nav-updatable').forEach(function (link) {
+                link.classList.add('nav-disabled');
+            });
+            // Clear project code from session
+            $.ajax({
+                url: '@Url.Action("SaveProjectSession", "ProgramProject", new { area = "FPS" })',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify('')
+            });
         }
 
         function editProgramProject(btn) {
@@ -320,11 +343,42 @@
         }
 
         document.addEventListener('DOMContentLoaded', function () {
+            // Auto-select first project whenever the grid content changes
+            var autoSelectDebounce;
+            var observer = new MutationObserver(function (mutations) {
+                var hasNewNodes = mutations.some(function (m) {
+                    return Array.from(m.addedNodes).some(function (n) { return n.nodeType === 1; });
+                });
+                if (hasNewNodes) {
+                    clearTimeout(autoSelectDebounce);
+                    autoSelectDebounce = setTimeout(autoSelectFirstProject, 50);
+                }
+            });
+            var container = document.getElementById('gridContainer_@Model.ProjectsGrid.GridId');
+            if (container) observer.observe(container, { childList: true, subtree: true });
+
             if (currentProgramNo) {
                 updateNavLinks(currentProgramNo);
                 window['gridManager_@Model.ProjectsGrid.GridId'].reloadGrid({ page: 1 });
                 loadProjectTotals();
             }
         });
+
+        function autoSelectFirstProject() {
+            // If session has a project code, try to select that row first
+            var targetRow = null;
+            if (currentProjectCode) {
+                targetRow = document.querySelector(
+                    '#gridContainer_@Model.ProjectsGrid.GridId .selectable-row[data-id="' + currentProjectCode + '"]'
+                );
+            }
+            var rowToSelect = targetRow
+                || document.querySelector('#gridContainer_@Model.ProjectsGrid.GridId .selectable-row');
+            if (rowToSelect) {
+                selectProgramProject(rowToSelect);
+            } else {
+                resetSelectedProject();
+            }
+        }
     </script>
 }
