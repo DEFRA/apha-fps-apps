@@ -41,6 +41,7 @@
     --black-tint-95: #f3f3f3;
     --blue-tint-80: #d2e2f1;
     --blue-tint-50: #8eb8dc;
+
 }
 
 html,
@@ -110,7 +111,7 @@ a {
     margin-top: 10px;
 }
 
-.sup_margin_top_neg_10 {
+.sup_margin_top_neg_10{
     margin-top: -10px;
 }
 
@@ -329,8 +330,16 @@ a {
     padding-left: 0px !important;
 }
 
-.sup_padding_left_6 {
-    padding-left: 6px;
+.sup_padding_left_10 {
+    padding-left: 10px;
+}
+
+.sup_padding_right_22 {
+    padding-right: 22px;
+}
+
+.sup_padding_right_20 {
+    padding-right: 20px;
 }
 
 .sup_padding_left_10 {
@@ -621,6 +630,11 @@ a {
     font-weight: bold;
 }
 
+.sup_bold_100 {
+    width: 100%;
+    font-weight: bold;
+}
+
 .sup_gap_8 {
     gap: 8px;
 }
@@ -816,49 +830,6 @@ a {
 .govuk-table__head > tr > th {
     text-align: center !important;
 }
-
-.govuk-tabs__list {
-    display: flex;
-    padding-left: 0;
-    list-style: none;
-}
-
-.govuk-tabs__list-item {
-    border: 1px solid var(--govuk-border-colour);
-    margin-right: 5px;
-    border-bottom: 1px solid #ffffff;
-}
-
-.govuk-tabs__tab {
-    display: block;
-    text-decoration: none;
-    border: 0;
-    border-bottom: none;
-    color: #0b0c0c;
-}
-
-.govuk-tabs__list-item--selected .govuk-tabs__tab {
-    font-weight: normal;
-    background-color: var(--govuk-focus-colour, #fd0);
-}
-
-.govuk-tabs__panel {
-    border: 1px solid var(--govuk-border-colour);
-    padding: 15px;
-}
-
-.govuk-tabs__panel--hidden {
-    display: none;
-}
-
-.govuk-tabs__list-item--selected,
-.govuk-tabs__list-item {
-    padding: 5px !important;
-}
-
-    .govuk-tabs__list-item:before {
-        display: none;
-    }
 
 .sup_gov_yellow_bg {
     background-color: var(--primary-yellow, #ffdd00);
@@ -1083,6 +1054,7 @@ a {
     width: 0px !important;
 }
 
+
 .tableselectdropdown {
     position: relative;
     z-index: 930;
@@ -1229,10 +1201,6 @@ table#tblMonthPeriod > tbody > tr > td {
 .sup_overflow_y_400 {
     overflow-y: auto;
     max-height: 400px;
-}
-
-.sup_overflow_hidden {
-    overflow: hidden;
 }
 
 .sup_flex_row_gap_10 {
@@ -1456,11 +1424,12 @@ table#tblMonthPeriod > tbody > tr > td {
     top: 3px;
     right: 3px;
     border: 1px solid var(--govuk-border-colour);
-    height: 28px;
+    height: 24px;
     margin: 0;
+    padding: 8px;
     text-align: center;
     display: flex;
-    width: 32px;
+    width: 28px;
     text-align: center;
     z-index: 1;
 }

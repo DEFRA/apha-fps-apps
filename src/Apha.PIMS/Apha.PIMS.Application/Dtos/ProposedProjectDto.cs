@@ -6,7 +6,7 @@ namespace Apha.PIMS.Application.Dtos
 {
     public class ProposedProjectDto
     {
-        public int Id { get; set; }
+        public int? Id { get; set; }
 
         public string Parentproject { get; set; } = null!;
 
