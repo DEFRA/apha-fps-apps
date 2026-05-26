@@ -189,7 +189,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return new DataGridConfig<MonthlyTimeLogItem>
             {
                 GridId = "mtLogGrid",
-                Title = "Monthly Time Log of Imports",
+                Title = "Monthly Time Log",
                 ShowCheckboxColumn = false,
                 AllowAdd = false,
                 AllowEdit = false,
@@ -200,7 +200,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 Pagination = pagination,
                 CurrentFilters = filterDict,
                 ExtraFilterMethod = "getExtraFilters_mtLogGrid",
-                BindGridUrl = "/PACT/MonthlyTimeLogImports/Search"
+                BindGridUrl = "/PACT/MonthlyTimeLog/Search"
             };
         }
     }
