@@ -10,6 +10,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         public List<SelectListItem> TestCodeOptions { get; set; } = new();
         public List<SelectListItem> ProjectOptions { get; set; } = new();
         public List<SelectListItem> JobCodeOptions { get; set; } = new();
+        public List<SelectListItem> StaffOptions { get; set; } = new();
         public List<SelectListItem> ActionOptions { get; set; } = new()
         {
             new SelectListItem("Inserted", "I"),

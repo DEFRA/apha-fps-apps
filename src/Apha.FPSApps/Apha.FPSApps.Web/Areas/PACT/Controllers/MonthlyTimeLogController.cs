@@ -24,6 +24,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         private readonly ITestorProductService _testorProductService;
         private readonly IProjectService _projectService;
         private readonly IProjectJobCodeService _jobCodeService;
+        private readonly IEmployeeService _employeeService;
 
         public MonthlyTimeLogController(
             IMapper mapper,
@@ -31,7 +32,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             IWorkGroupService workGroupService,
             ITestorProductService testorProductService,
             IProjectService projectService,
-            IProjectJobCodeService jobCodeService)
+            IProjectJobCodeService jobCodeService,
+            IEmployeeService employeeService)
         {
             _mapper = mapper;
             _logService = logService;
@@ -39,6 +41,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             _testorProductService = testorProductService;
             _projectService = projectService;
             _jobCodeService = jobCodeService;
+            _employeeService = employeeService;
         }
 
         public async Task<IActionResult> Index()
@@ -47,6 +50,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var testsResponse = await _testorProductService.GetAllTestorProductsAsync();
             var projectsResponse = await _projectService.GetAllPactProjectsAsync();
             var jobCodesResponse = await _jobCodeService.GetJobCodesAsync();
+            var staffResponse = await _employeeService.GetPactStaffAsync();
 
             var defaultRequest = new PaginationFilter<string> { Filter = "{}" };
             var grid = await BuildLogGrid(defaultRequest, null, null, null, null, null, null, null, null);
@@ -80,6 +84,14 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                             $"{j.JobCodeId} — {j.JobCodeName}", j.JobCodeId))
                         .DistinctBy(x => x.Value)
                         .OrderBy(x => x.Value)
+                        .ToList()
+                    : new List<SelectListItem>(),
+                StaffOptions = staffResponse.Success && staffResponse.Data != null
+                    ? staffResponse.Data
+                        .Where(s => !string.IsNullOrWhiteSpace(s.PactId))
+                        .Select(s => new SelectListItem(
+                            $"{s.PactId} — {s.Name}", s.PactId))
+                        .OrderBy(x => x.Text)
                         .ToList()
                     : new List<SelectListItem>()
             };

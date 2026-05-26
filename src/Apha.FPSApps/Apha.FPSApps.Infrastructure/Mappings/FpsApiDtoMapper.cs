@@ -92,6 +92,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<WorkgroupGradeDto, WorkgroupGradeRes>().ReverseMap();
             CreateMap<WorkGroupEmployeeDto, WorkGroupEmployeeReq>().ReverseMap();
             CreateMap<WorkGroupEmployeeDto, WorkGroupEmployeeRes>().ReverseMap();
+            CreateMap<PactStaffDto,PactStaffRes>().ReverseMap();
         }
     }
 }

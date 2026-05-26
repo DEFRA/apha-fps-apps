@@ -24,7 +24,7 @@ function hasMtLogCriteria() {
         $('#txtMonth').val()       ||
         $('#ddJobCode').val()      ||
         $('#ddTestCode').val()     ||
-        $('#txtStaffId').val()     ||
+        $('#ddStaffId').val()     ||
         $('#dtDateImported').val() ||
         $('#txtUserId').val()      ||
         $('#ddAction').val()
@@ -45,7 +45,7 @@ function getExtraFilters_mtLogGrid() {
         workGroup:    $('#ddWorkGroup').val()    || null,
         timeCode:     timeCode,
         parentProject: $('#ddProject').val()    || null,
-        pactStaffId:  $('#txtStaffId').val()    || null,
+        pactStaffId:  $('#ddStaffId').val()     || null,
         dateImported: $('#dtDateImported').val() || null,
         month:        $('#txtMonth').val()       || null,
         userId:       $('#txtUserId').val()      || null,
@@ -87,7 +87,7 @@ $(function () {
         $('#txtMonth').val('');
         $('#ddJobCode').val('');
         $('#ddTestCode').val('');
-        $('#txtStaffId').val('');
+        $('#ddStaffId').val('');
         $('#dtDateImported').val('');
         $('#txtUserId').val('');
         $('#ddAction').val('');

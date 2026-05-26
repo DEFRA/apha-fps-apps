@@ -107,12 +107,16 @@
                 </div>
                 <div class="govuk-grid-column-one-third sup_padding_left_10">
                     <div class="govuk-form-group sup_margin_bottom_10">
-                        <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="txtStaffId">
+                        <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="ddStaffId">
                             Staff ID
                         </label>
-                        <input id="txtStaffId" type="text"
-                               class="govuk-input govuk-!-font-size-16"
-                               placeholder="Staff ID" />
+                        <select id="ddStaffId" class="govuk-select sup_select_option_width_100 govuk-!-font-size-16">
+                            <option value="">-- Select Staff ID --</option>
+                            @foreach (var item in Model.StaffOptions)
+                            {
+                                <option value="@item.Value">@item.Text</option>
+                            }
+                        </select>
                     </div>
                 </div>
             </div>
