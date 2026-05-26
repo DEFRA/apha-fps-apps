@@ -79,10 +79,9 @@
                                                            class="govuk-input govuk-!-font-size-16"
                                                            style="width:160px;">
                                                     <input type="hidden" id="hdnSelectedProject" value="" />
-                                                    <a id="btnPlan" class="govuk-button sup_margin_0" style="display:none;"
-                                                       asp-area="FPS" asp-controller="ProjectPlanning" asp-action="Index">
+                                                        <button type="button" id="btnPlan" class="govuk-button sup_margin_0" style="display:none;" onclick="planThisProject()">
                                                         <i class="fa fa-cogs" aria-hidden="true"></i> Plan
-                                                    </a>
+                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
@@ -196,8 +195,7 @@
 
             const planBtn = document.getElementById('btnPlan');
             if (planBtn) {
-                planBtn.href          = planBtn.pathname + '?projectCode=' + encodeURIComponent(document.getElementById('selected-project-input').value);
-                planBtn.style.display = '';
+                 planBtn.style.display = '';
             }
         }
 
@@ -218,6 +216,11 @@
                 contentType: 'application/json',
                 data: JSON.stringify('')
             });
+        }
+
+        function planThisProject() {                           
+            if (!currentProjectCode) { window.showGovukAlert('Please select a project first.'); return; }
+                window.fpsNavigateTo('/FPS/ProjectPlanning?projectCode=' + encodeURIComponent(currentProjectCode))
         }
 
         function editProgramProject(btn) {

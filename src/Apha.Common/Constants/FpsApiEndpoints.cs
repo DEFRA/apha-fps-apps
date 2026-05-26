@@ -132,5 +132,8 @@ namespace Apha.Common.Constants
         public const string UpdateWgEmployee = "api/v1/wgstaff";
         public const string DeleteWgEmployee = "api/v1/wgstaff/{0}";
         public const string DeleteWgGrade = "api/v1/wggrades/{0}";
+
+        // Project profitability (merged into project route)
+        public const string GetProjectProfitability = "api/v1/project/profitability/{0}";
     }
 }

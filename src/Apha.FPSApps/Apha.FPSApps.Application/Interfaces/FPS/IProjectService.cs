@@ -36,5 +36,6 @@ namespace Apha.FPSApps.Application.Interfaces.FPS
         Task<ApiResponseDto<List<ProjectGroupDto>>> GetProjectGroupsByUserAsync();
         Task<ApiResponseDto<List<AccountCodeDto>>> GetAccountCodesAsync();
         Task<ApiResponseDto<List<SubAccountDto>>> GetSubAccountsAsync();
+        Task<ApiResponseDto<List<ProjectProfitabilityDto>>> GetProjectProfitabilityAsync(QueryParameters<string> query, string programNo, string workTypeFilter);
     }
 }
