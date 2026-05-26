@@ -1,0 +1,10 @@
+QUERY NAME: qryAnimalSummaryByOracleCode
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT qryDeptIncomeAnimals.OracleProjectCode, qryDeptIncomeAnimals.Project AS [VLA Project], qryDeptIncomeAnimals.OCC, qryDeptIncomeAnimals.SubAccountCode, Sum(qryDeptIncomeAnimals.TotalCost) AS SumOfTotalCost
+FROM qryDeptIncomeAnimals
+GROUP BY qryDeptIncomeAnimals.OracleProjectCode, qryDeptIncomeAnimals.Project, qryDeptIncomeAnimals.OCC, qryDeptIncomeAnimals.SubAccountCode
+ORDER BY qryDeptIncomeAnimals.OracleProjectCode;
+

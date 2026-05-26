@@ -1,0 +1,10 @@
+QUERY NAME: qryCSG7_Pay
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tblStaffRequ.Project, tblStaffRequ.Year AS YearNo, Sum(([NoHours]*[tblstaffRequ].[chargerate])*([payRate])/[chargerate]) AS cost, "Pay" AS Category
+FROM tblStaffRequ
+GROUP BY tblStaffRequ.Project, tblStaffRequ.Year
+HAVING (((tblStaffRequ.Project)=[Forms]![frmProject1]![Project]));
+

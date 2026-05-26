@@ -1,0 +1,9 @@
+QUERY NAME: qryAdditionalLog
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT *
+FROM additionalcosts_Log
+WHERE 1=2;
+

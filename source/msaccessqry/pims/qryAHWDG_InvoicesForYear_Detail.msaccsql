@@ -1,0 +1,9 @@
+QUERY NAME: qryAHWDG_InvoicesForYear_Detail
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tblRadTrackInvoice.*
+FROM MY_tblContract INNER JOIN tblRadTrackInvoice ON MY_tblContract.ContractNo = tblRadTrackInvoice.Contract
+WHERE (((MY_tblContract.Year)=fnReportYear()) AND ((fnInReportMonthOrBefore([Duedate]))=True));
+

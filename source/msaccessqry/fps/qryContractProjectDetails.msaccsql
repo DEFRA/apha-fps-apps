@@ -1,0 +1,8 @@
+QUERY NAME: qryContractProjectDetails
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW qryJobCodeCust.JobCode, (IIf(IsNull([TotalAdditionalCosts]),0,[TotalAdditionalCosts]))*[MONTH]/12 AS JCTotalAdditionalCosts, IIf(IsNull([TotalAnimalCosts]),0,[TotalAnimalCosts])*[month]/12 AS JCTotalAnimalCosts, IIf(IsNull([TotalStaffCosts]),0,[TotalStaffCosts])*[MONTH]/12 AS JCTotalStaffCosts, IIf(IsNull([TotalTestCosts]),0,[TotalTestCosts])*[month]/12 AS JCTotalTestCosts, [JCTotalAnimalCosts]+[JCTotalAdditionalCosts]+[JCTotalStaffCosts]+[JCTotalTestCosts] AS JCTotalCosts, ([budget_cvl]-[jcTotalCosts])*[month]/12 AS JCProfit, ([budget_cvl])*[month]/12 AS JCIncome, qryPMFinal.Animals, qryPMFinal.Other, qryPMFinal.Staff, qryPMFinal.Tests, qryPMFinal.TotalCost, [Forms]![frmContractDetails]![PeriodPick] AS [Month], qryJobCodeCust.Contract
+FROM ((((qryJobCodeCust LEFT JOIN qryTotalAdditionalCosts ON qryJobCodeCust.JobCode = qryTotalAdditionalCosts.JobCode) LEFT JOIN qryTotalAnimalCosts ON qryJobCodeCust.JobCode = qryTotalAnimalCosts.JobCode) LEFT JOIN qryTotalStaffCosts ON qryJobCodeCust.JobCode = qryTotalStaffCosts.Jobcode) LEFT JOIN qryTotalTestCosts ON qryJobCodeCust.JobCode = qryTotalTestCosts.JobCode) LEFT JOIN qryPMFinal ON qryJobCodeCust.JobCode = qryPMFinal.Project;
+

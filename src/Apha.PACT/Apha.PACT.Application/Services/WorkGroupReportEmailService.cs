@@ -16,11 +16,11 @@ namespace Apha.PACT.Application.Services
         
         private const int AccessTrue = -1;
 
-        private readonly IWorkGroupReportRepository _workGroupReportRepository;
+        private readonly IWorkGroupRepository _workGroupReportRepository;
         private readonly IGraphEmailService _emailService;
 
         public WorkGroupReportEmailService(
-            IWorkGroupReportRepository workGroupReportRepository,
+            IWorkGroupRepository workGroupReportRepository,
             IGraphEmailService emailService)
         {
             _workGroupReportRepository = workGroupReportRepository;

@@ -1,0 +1,9 @@
+QUERY NAME: qryPublications_Final_Total
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT qryPublications_Total.Type, Sum(qryPublications_Total.Due) AS Due, Sum(qryPublications_Total.NoSubmitted) AS NoSubmitted, Sum(qryPublications_Total.NoPublished) AS NoPublished, Sum(qryPublications_ThisYear.DueInYear) AS DueInYear, Sum(qryPublications_ThisYear.DueToDate) AS DueToDate, Sum(qryPublications_ThisYear.NoPublishedThisYear) AS NoPublishedThisYear, Sum(qryPublications_ThisYear.DueAndSubOnTime) AS DueAndSubOnTime, Sum(qryPublications_ThisYear.DueAndSub) AS DueAndSub
+FROM qryPublications_Total LEFT JOIN qryPublications_ThisYear ON (qryPublications_Total.Type = qryPublications_ThisYear.Type) AND (qryPublications_Total.ProgramGroup = qryPublications_ThisYear.ProgramGroup)
+GROUP BY qryPublications_Total.Type;
+

@@ -1,0 +1,10 @@
+QUERY NAME: xxqryStaffReqGrade_EU
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblStaffRequ.Project, tblStaffRequ.Year, tblEUGrade_Conversion.EUGrade, Sum([tblStaffRequ].[ChargeRate]*[NoHours]) AS StaffCost, Sum(tblStaffRequ.NoHours) AS TotalHours, Sum(tblStaffRequ.NoDays) AS TotalDays, Sum([PayRate]*[NoHours]) AS AvPayRate_Num, Sum([NPR]*[NoHours]) AS AvNPR_Num, Sum([OHR]*[NoHours]) AS AvOHR_Num, Sum([tblPCGrades].[ChargeRate]*[NoHours]) AS AvChargeR_Num, Avg([tblStaffRequ].[ChargeRate]/[tblPCGrades].[ChargeRate]) AS ConvFactor, tblProject.EuroConvRate, IIf([WGGrade] Like "GD5*","GD5",Left([WGGrade],1)) AS Grade
+FROM tblEUGrade_Conversion, ((tblStaffRequ INNER JOIN WorkGroupGrade ON tblStaffRequ.WGGrade = WorkGroupGrade.WGGrade) INNER JOIN tblPCGrades ON WorkGroupGrade.ProfitCentreGrade = tblPCGrades.PCGrade) INNER JOIN tblProject ON tblStaffRequ.Project = tblProject.Project
+GROUP BY tblStaffRequ.Project, tblStaffRequ.Year, tblEUGrade_Conversion.EUGrade, tblProject.EuroConvRate, IIf([WGGrade] Like "GD5*","GD5",Left([WGGrade],1))
+HAVING (((IIf([WGGrade] Like "GD5*","GD5",Left([WGGrade],1)))=[VLAGRade]));
+

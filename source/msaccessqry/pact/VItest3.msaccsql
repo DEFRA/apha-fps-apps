@@ -1,0 +1,8 @@
+QUERY NAME: VItest3
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW TestVols.PlanPortfolio, TestVols.TestCode, TestOrProduct.ItemDescription, TestVols.SumOfVolume, TestOrProduct.UnitPriceVLAgen, [sumofvolume]*[unitpricevlagen] AS Expr1
+FROM TestOrProduct INNER JOIN TestVols ON TestOrProduct.ItemCode = TestVols.TestCode;
+

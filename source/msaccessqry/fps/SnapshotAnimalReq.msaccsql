@@ -1,0 +1,8 @@
+QUERY NAME: SnapshotAnimalReq
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tlkpProgram_MAP.Directorate, tlkpProject_General.Program, tlkpProject_General.Contract, tlkpProject_General.ParentProject AS Project, tlkpProject_General.ProjectStatus, tblAnimals.Species, tblAnimals.Security_Level, tblAnimals.AnimalType, tblAnimals.DailyRate, tblAnimalReq.JobCode, tblAnimalReq.NumberOfDays, tblAnimalReq.NumberOfAnimals, [dailyrate]*[numberofanimals]*[numberofdays] AS Cost
+FROM tlkpProgram_MAP INNER JOIN (tlkpProject_General INNER JOIN (tblAnimalReq INNER JOIN tblAnimals ON tblAnimalReq.AnimalType = tblAnimals.AnimalType) ON tlkpProject_General.ParentProject = tblAnimalReq.JobCode) ON tlkpProgram_MAP.ProgramNo = tlkpProject_General.Program;
+

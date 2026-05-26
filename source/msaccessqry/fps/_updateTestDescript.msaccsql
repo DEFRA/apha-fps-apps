@@ -1,0 +1,7 @@
+QUERY NAME: _updateTestDescript
+---------------------------------------------
+TYPE: UPDATE
+
+SQL:
+UPDATE [copy Med & Short Desc] INNER JOIN TestOrProduct ON [copy Med & Short Desc].[Test Code] = TestOrProduct.ItemCode SET TestOrProduct.ItemDescription = [medium description], TestOrProduct.ShortDescription = [short description];
+

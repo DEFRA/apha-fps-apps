@@ -1,0 +1,10 @@
+QUERY NAME: qryProgram
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT MY_tlkpProject.Program
+FROM MY_tlkpProject
+GROUP BY MY_tlkpProject.Program
+ORDER BY MY_tlkpProject.Program;
+

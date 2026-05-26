@@ -1,0 +1,10 @@
+QUERY NAME: qryAD6000_FlatRateHours
+---------------------------------------------
+TYPE: APPEND
+
+SQL:
+INSERT INTO tempMonthlyTime_TransformFinal ( ParentProject, TimeCode, Hours, [Month], PACTStaffID, WorkGroup )
+SELECT tblMTConversion.NewProject, tblMTConversion.NewCode, tblMTConversion.Hours, tblkpMonth.MonthNumber, BESettingsGet("AD6000_ID") AS Expr1, BESettingsGet("AD6000_WG") AS Expr2
+FROM tblMTConversion, tblkpMonth
+WHERE (((tblkpMonth.MonthNumber)<=GetgVarFMonth()));
+

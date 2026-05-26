@@ -1,0 +1,9 @@
+QUERY NAME: survTimeVolumes
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW TimeCostCalcsMAP.Project, TimeCostCalcsMAP.WorkGroup, TimeCostCalcsMAP.Name, TimeCostCalcsMAP.ChargeRate, Sum(TimeCostCalcsMAP.Time) AS SumOfTime, Sum(TimeCostCalcsMAP.Cost) AS SumOfCost, TimeCostCalcsMAP.GradeCode
+FROM TimeCostCalcsMAP
+GROUP BY TimeCostCalcsMAP.Project, TimeCostCalcsMAP.WorkGroup, TimeCostCalcsMAP.Name, TimeCostCalcsMAP.ChargeRate, TimeCostCalcsMAP.GradeCode;
+

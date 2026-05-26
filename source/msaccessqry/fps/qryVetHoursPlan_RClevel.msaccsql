@@ -1,0 +1,10 @@
+QUERY NAME: qryVetHoursPlan_RClevel
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW WorkGroup_General.ProfitCentre, tblStaffJob_MAP.Jobcode, Sum(tblStaffJob_MAP.plannedhours) AS YrPlan, Sum([plannedhours])*([Forms]![frmPactReportMenu]![PeriodPick])/12 AS YTDPlanHours
+FROM ((tblStaff_General LEFT JOIN tblStaffJob_MAP ON tblStaff_General.StaffID = tblStaffJob_MAP.StaffID) RIGHT JOIN WorkGroupGrade_General ON tblStaff_General.WorkGroupGrade = WorkGroupGrade_General.WGGrade) INNER JOIN WorkGroup_General ON WorkGroupGrade_General.WorkGroup = WorkGroup_General.WorkGroup
+GROUP BY WorkGroup_General.ProfitCentre, tblStaffJob_MAP.Jobcode
+HAVING ((WorkGroup_General.ProfitCentre="vetr"));
+

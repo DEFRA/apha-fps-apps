@@ -1,0 +1,9 @@
+QUERY NAME: qryProjectYearProject
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblProjectYear.Project, tblProjectYear.YearNo, tblProject.ProjectTitle, tblProject.ContractPrice, tblProject.StartDate, tblProject.Disease, tblProject.PlanCat, tblProject.ProjectWorkGroup, tblProject.StartFYear, tblProject.Inflation, tblProjectYear.YearNo AS FinancialYear, tblProject.FinancialYears, tblProject.EuroConvRate, tblProject.Programme
+FROM tblProject INNER JOIN tblProjectYear ON tblProject.Project = tblProjectYear.Project
+WHERE (((tblProjectYear.Project)=[Forms]![frmProject1]![Project]));
+

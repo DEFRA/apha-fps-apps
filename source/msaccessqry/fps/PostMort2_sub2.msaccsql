@@ -1,0 +1,8 @@
+QUERY NAME: PostMort2_sub2
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT "TG0100" AS Project, "VRD Admin" AS JobCode, [Forms]![frmPactReportMenu]![PeriodPick]*[ChargeRate]*[Hours] AS Cost, "Surveillance Admin" AS RC
+FROM qryAD6000_LTHours, qryAD6000_Rate;
+

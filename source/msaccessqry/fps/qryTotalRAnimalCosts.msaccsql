@@ -1,0 +1,9 @@
+QUERY NAME: qryTotalRAnimalCosts
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblkpProfitCentre_General.ProfitCentre, Sum(([cost])) AS TAC, IIf([ProfitCentre]="ASU",[TAC],0) AS AnimalCosts
+FROM tblkpProfitCentre_General, vProjectAnimalPlan
+GROUP BY tblkpProfitCentre_General.ProfitCentre;
+

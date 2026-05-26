@@ -1,0 +1,10 @@
+QUERY NAME: qryTimeCostCumulative
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW WorkGroup.ProfitCentre, First(WorkGroup.WorkGroup) AS WG, WorkGroup.WorkGroup, qryTimeCodeNames.Program, TimeCostCalcs.Project, TimeCostCalcs.JobCode, First(Left([description],50)) AS Descript, Sum(TimeCostCalcs.Time) AS CumTime, Sum(TimeCostCalcs.Cost) AS CumCost, First(qryTimeCostPeriod.PeriodTime) AS PeriodTime, First(qryTimeCostPeriod.PeriodCost) AS PeriodCost, qryTimeCostPeriod.Month
+FROM ((qryTimeCodeNames INNER JOIN TimeCostCalcs ON (qryTimeCodeNames.TimeCode = TimeCostCalcs.JobCode) AND (qryTimeCodeNames.ParentProject = TimeCostCalcs.Project)) LEFT JOIN qryTimeCostPeriod ON (TimeCostCalcs.WorkGroup = qryTimeCostPeriod.WorkGroup) AND (TimeCostCalcs.JobCode = qryTimeCostPeriod.JobCode) AND (TimeCostCalcs.Project = qryTimeCostPeriod.Project)) INNER JOIN WorkGroup ON TimeCostCalcs.WorkGroup = WorkGroup.WorkGroup
+WHERE (((TimeCostCalcs.Class)="Charge") AND ((TimeCostCalcs.Month)<=[Forms]![Menu-Division]![PeriodPick]))
+GROUP BY WorkGroup.ProfitCentre, WorkGroup.WorkGroup, qryTimeCodeNames.Program, TimeCostCalcs.Project, TimeCostCalcs.JobCode, qryTimeCostPeriod.Month;
+

@@ -1,0 +1,10 @@
+QUERY NAME: qryAddPactProj
+---------------------------------------------
+TYPE: APPEND
+
+SQL:
+INSERT INTO tlkpProjectPact ( ParentProject, PlanCat, ProjectStatus, ProjectWorkGroup )
+SELECT DISTINCTROW tlkpProject.ParentProject, tlkpProject.PlanCat, tlkpProject.ProjectStatus, "dummy" AS Expr1
+FROM tlkpProject LEFT JOIN tlkpProjectPact ON tlkpProject.ParentProject = tlkpProjectPact.ParentProject
+WHERE ((tlkpProjectPact.ParentProject Is Null) AND (tlkpProject.ProjectStatus="agreed"));
+

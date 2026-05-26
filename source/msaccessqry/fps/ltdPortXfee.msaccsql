@@ -1,0 +1,9 @@
+QUERY NAME: ltdPortXfee
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW PortfolioXcharge.PayingPortfolio, PortfolioXcharge.SubsidisedPortfolio, PortfolioXcharge.PercentSubsidy, ProjectMonthFinal.CumCost, [cumcost]*([percentsubsidy]/100) AS PortTransferFee, ProjectMonthFinal.MonthNo
+FROM PortfolioXcharge INNER JOIN ProjectMonthFinal ON PortfolioXcharge.SubsidisedPortfolio = ProjectMonthFinal.Project
+WHERE ((ProjectMonthFinal.MonthNo=[forms]![frmLTD-ReportsMenu]![PeriodPick]));
+

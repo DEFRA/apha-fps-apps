@@ -1,0 +1,8 @@
+QUERY NAME: qryJobAdditionalCostRep
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblAdditionalCosts.JobCode, tblAdditionalCosts.Description, tblAdditionalCosts.Account, tblAdditionalCosts.ItemCost
+FROM tblAdditionalCosts;
+

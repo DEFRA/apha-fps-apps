@@ -1,0 +1,8 @@
+QUERY NAME: qryMilestonesNotUnderReview_Dynamic
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT *
+FROM qryMilestonesNotUnderReview;
+

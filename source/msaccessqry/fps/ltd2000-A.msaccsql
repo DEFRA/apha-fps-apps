@@ -1,0 +1,10 @@
+QUERY NAME: ltd2000-A
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tlkpProject.Program, IIf([workgroup_map].[ProfitCentre]="labt" And [timecostcalcs].[workgroup] In ("lt1","lt2","lt3","lt4"),"LTD-Weybridge",IIf([workgroup_map].[ProfitCentre]="labt","LTD-Regions",[workgroup_map].[ProfitCentre])) AS Expr1, TimeCostCalcs.WorkGroup, Sum(TimeCostCalcs.Cost) AS TestingCost, [ltd2000-B].TestSales, [TestSales]-[testingcost] AS Profit, [Profit]/[testsales] AS [%Profit], [ltd2000-C].SOCT, [SOCT]+[TEstsales] AS TotalIncome
+FROM ((tlkpProject INNER JOIN (TimeCostCalcs INNER JOIN WorkGroup_MAP ON TimeCostCalcs.WorkGroup = WorkGroup_MAP.WorkGroup) ON tlkpProject.ParentProject = TimeCostCalcs.Project) INNER JOIN [ltd2000-B] ON WorkGroup_MAP.WorkGroup = [ltd2000-B].WorkGroup) INNER JOIN [ltd2000-C] ON WorkGroup_MAP.WorkGroup = [ltd2000-C].WorkGroup
+GROUP BY tlkpProject.Program, IIf([workgroup_map].[ProfitCentre]="labt" And [timecostcalcs].[workgroup] In ("lt1","lt2","lt3","lt4"),"LTD-Weybridge",IIf([workgroup_map].[ProfitCentre]="labt","LTD-Regions",[workgroup_map].[ProfitCentre])), TimeCostCalcs.WorkGroup, [ltd2000-B].TestSales, [ltd2000-C].SOCT
+HAVING (((tlkpProject.Program)="Test_Port"));
+

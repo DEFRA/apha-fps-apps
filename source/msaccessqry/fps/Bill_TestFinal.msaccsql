@@ -1,0 +1,9 @@
+QUERY NAME: Bill_TestFinal
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpProject_General.Program, tblTestRequ.TestCode, tblTestRequ.JobCode, tblTestRequ.NoTests AS NoRequired, tblTestRequ.TestPrice, [NoTests]*[TestPrice] AS AnnualFee, BillsMOSummary.SumOfVolume AS VolDone, [VolDone]*[testprice] AS YTDFee, IIf((IsNull([Norequired]) Or [Norequired]=0),Null,([VolDone]/[NoRequired])) AS [YTD/Plan]
+FROM (tblTestRequ INNER JOIN tlkpProject_General ON tblTestRequ.JobCode = tlkpProject_General.ParentProject) LEFT JOIN BillsMOSummary ON (tblTestRequ.JobCode = BillsMOSummary.Buyer) AND (tblTestRequ.TestCode = BillsMOSummary.TestCode)
+ORDER BY tblTestRequ.TestCode;
+

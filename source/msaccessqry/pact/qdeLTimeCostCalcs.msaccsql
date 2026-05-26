@@ -1,0 +1,7 @@
+QUERY NAME: qdeLTimeCostCalcs
+---------------------------------------------
+TYPE: OTHER
+
+SQL:
+sp_deleteTimeCostCalcs 
+

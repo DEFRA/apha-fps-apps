@@ -1,0 +1,6 @@
+QUERY NAME: ddCreateIndexvContractStaffJob
+---------------------------------------------
+TYPE: DDL
+
+SQL:
+CREATE UNIQUE INDEX vContractStaffJob_PK ON vContractStaffJob(JobCode,StaffID)

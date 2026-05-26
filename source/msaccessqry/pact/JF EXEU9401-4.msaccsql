@@ -1,0 +1,9 @@
+QUERY NAME: JF EXEU9401-4
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT TimeCostCalcs.Project, tlkpProject.ProjectTitle, TimeCostCalcs.JobCode, TimeCostCalcs.WorkGroup, TimeCostCalcs.Month, TimeCostCalcs.Name, TimeCostCalcs.GradeCode, TimeCostCalcs.Time, TimeCostCalcs.ChargeRate, TimeCostCalcs.Cost
+FROM tlkpProject INNER JOIN TimeCostCalcs ON tlkpProject.ParentProject = TimeCostCalcs.Project
+WHERE (((TimeCostCalcs.Project) Like "eu94*") AND ((TimeCostCalcs.Month)>9));
+

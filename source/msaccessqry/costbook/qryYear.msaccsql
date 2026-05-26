@@ -1,0 +1,8 @@
+QUERY NAME: qryYear
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblYear.PickYear
+FROM tblYear;
+

@@ -1,0 +1,12 @@
+QUERY NAME: qryProjectCostsQuery
+---------------------------------------------
+TYPE: OTHER
+
+SQL:
+PARAMETERS Forms![frmProject1]![Project] Text ( 255 );
+TRANSFORM Sum(qryCSG7_Union.Cost) AS SumOfCost
+SELECT qryCSG7_Union.Project, qryCSG7_Union.Category, Sum(qryCSG7_Union.Cost) AS Total
+FROM qryCSG7_Union
+GROUP BY qryCSG7_Union.Project, qryCSG7_Union.Category
+PIVOT qryCSG7_Union.YearNo;
+

@@ -1,0 +1,9 @@
+QUERY NAME: qryTotalAnimalCosts
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblAnimalReq.JobCode, Sum(([NumberOfDays]*[NumberOfAnimals]*[DailyRate])) AS TotalAnimalCosts
+FROM tblAnimals RIGHT JOIN tblAnimalReq ON tblAnimals.AnimalType = tblAnimalReq.AnimalType
+GROUP BY tblAnimalReq.JobCode;
+

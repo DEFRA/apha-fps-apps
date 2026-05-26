@@ -1,0 +1,10 @@
+QUERY NAME: ldoTest
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblStaff.WorkGroupGrade, tblStaff.Name, MonthlyTime.ParentProject, MonthlyTime.TimeCode, Sum(MonthlyTime.Hours) AS Hrs, [hrs]*4/3 AS Expr1
+FROM tblStaff INNER JOIN MonthlyTime ON tblStaff.PACTid = MonthlyTime.PACTStaffID
+GROUP BY tblStaff.WorkGroupGrade, tblStaff.Name, MonthlyTime.ParentProject, MonthlyTime.TimeCode, MonthlyTime.Month
+HAVING ((MonthlyTime.Month<>10));
+

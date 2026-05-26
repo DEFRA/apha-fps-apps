@@ -1,0 +1,9 @@
+QUERY NAME: qryBid
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblBid.WorkGroup, tblBid.Account, tblBid.GenBid
+FROM WorkGroup INNER JOIN tblBid ON WorkGroup.WorkGroup = tblBid.WorkGroup
+WHERE ((WorkGroup.ProfitCentre=[Forms]![frmBidMain]![PickResourceCentre]));
+

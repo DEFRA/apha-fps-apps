@@ -1,0 +1,8 @@
+QUERY NAME: qryJobTestCostPlanByGroup
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblTestRequ_ByGroup.JobCode, tblTestRequ_ByGroup.TestCode, TestOrProduct.ItemDescription, tblTestRequ_ByGroup.NoTests, tblTestRequ_ByGroup.TestPrice AS AgreedUnitPrice, IIf([isdefraproject]=0,[UnitPriceVLA],[defraunitprice]) AS RecUnitPrice, [NoTests]*[agreedUnitPrice] AS TestCost, tblTestRequ_ByGroup.ProjectBuyerCode
+FROM (TestOrProduct INNER JOIN tblTestRequ_ByGroup ON TestOrProduct.ItemCode = tblTestRequ_ByGroup.TestCode) INNER JOIN tlkpProject_ByGroup ON tblTestRequ_ByGroup.JobCode = tlkpProject_ByGroup.ParentProject;
+

@@ -1,0 +1,8 @@
+QUERY NAME: qrytblBid
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblBid.*
+FROM tblBid;
+

@@ -58,8 +58,7 @@ namespace Apha.PACT.Api.Extensions
             services.AddScoped<IMonthlyTimeRepository, MonthlyTimeRepository>();
             services.AddScoped<IProjectMonthRepository, ProjectMonthRepository>();
             services.AddScoped<IProjectProfileRepository, ProjectProfileRepository>();
-            services.AddScoped<IMonthlyOutputRepository, MonthlyOutputRepository>();            
-            services.AddScoped<IWorkGroupReportRepository, WorkGroupReportRepository>();
+            services.AddScoped<IMonthlyOutputRepository, MonthlyOutputRepository>();
 
             return services;
         }

@@ -1,0 +1,8 @@
+QUERY NAME: JF seedcorn proj spec costs
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT Proj_SubContract.SubContCounter, Proj_SubContract.Project, Proj_SubContract.TestJob, Proj_SubContract.Month, Proj_SubContract.Amount, Proj_SubContract.AcctCode, Proj_SubContract.TimeStamp, Proj_SubContract.Supplier, Proj_SubContract.Description, Proj_SubContract.SupplierNumber, Proj_SubContract.DailyRate, Proj_SubContract.AnimalDays
+FROM Proj_SubContract INNER JOIN [janee's Seedcorn 220916] ON Proj_SubContract.Project = [janee's Seedcorn 220916].Field2;
+

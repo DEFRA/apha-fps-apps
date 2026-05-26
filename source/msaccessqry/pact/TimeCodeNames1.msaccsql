@@ -1,0 +1,9 @@
+QUERY NAME: TimeCodeNames1
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW TimeCodeValid.TimeCode, TimeCodeValid.ParentProject, TimeCodeValid.TestCode, TimeCodeValid.JobCode
+FROM TimeCodeValid
+GROUP BY TimeCodeValid.TimeCode, TimeCodeValid.ParentProject, TimeCodeValid.TestCode, TimeCodeValid.JobCode;
+

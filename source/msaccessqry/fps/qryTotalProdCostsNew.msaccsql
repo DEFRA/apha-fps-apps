@@ -1,0 +1,10 @@
+QUERY NAME: qryTotalProdCostsNew
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblTestRequ.JobCode, Sum([NoTests]*[TestPrice]) AS TotalProdCosts
+FROM tblTestRequ
+WHERE (((tblTestRequ.TestCode) Like "P*"))
+GROUP BY tblTestRequ.JobCode;
+

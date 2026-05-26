@@ -1,0 +1,12 @@
+QUERY NAME: qryDeptIncomeExceptional
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tlkpProject_MAP.ParentProject AS Project, tlkpProject_MAP.OracleProjectCode, tlkpProject_MAP.SubAccountCode, IIf([IsDefraProject],"Yes","No") AS DefraProject, CostCentre.ProfitCentre AS OPC, CostCentre.CostCentre AS OCC, Proj_SubContract.Month, Sum(Proj_SubContract.Amount) AS TotalCost
+FROM (CostCentre RIGHT JOIN tlkpProject_MAP ON CostCentre.CostCentre = tlkpProject_MAP.CostCentre) INNER JOIN Proj_SubContract ON tlkpProject_MAP.ParentProject = Proj_SubContract.Project
+WHERE (((Proj_SubContract.AcctCode) Not In ("LargeAnimals","SmallAnimals","Mice")))
+GROUP BY tlkpProject_MAP.ParentProject, tlkpProject_MAP.OracleProjectCode, tlkpProject_MAP.SubAccountCode, IIf([IsDefraProject],"Yes","No"), CostCentre.ProfitCentre, CostCentre.CostCentre, Proj_SubContract.Month
+HAVING (((tlkpProject_MAP.ParentProject) Like nz(fnDeptIncomeProject(),"*")) AND ((Proj_SubContract.Month) Between fnDeptIncomeMonthFrom() And fnDeptIncomeMonthTo()))
+ORDER BY tlkpProject_MAP.ParentProject;
+

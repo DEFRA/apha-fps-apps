@@ -1,0 +1,9 @@
+QUERY NAME: qryAllTccWG_And_Surv
+---------------------------------------------
+TYPE: PASS-THROUGH
+
+SQL:
+SELECT workgroup from TimeCostCalcs
+UNION
+SELECT Workgroup from Workgroup
+WHERE workgroup.workgroup like 'SV??'

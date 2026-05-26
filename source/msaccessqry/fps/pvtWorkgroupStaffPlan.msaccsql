@@ -1,0 +1,9 @@
+QUERY NAME: pvtWorkgroupStaffPlan
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW WorkGroupGrade_General.WorkGroup, WorkGroupGrade_General.GradeCode, tblStaff_General.Name, tlkpProject_General.Manager, tlkpProject_General.Program, tblStaffJob_RM.Jobcode, tlkpProject_General.ProjectStatus, tblStaffJob_RM.plannedhours AS Hrs, [Hrs]*[ChargeRate]*IIf([sector_name]="charge",1,0) AS Fee
+FROM ((((ProfitCentreGrade INNER JOIN WorkGroupGrade_General ON ProfitCentreGrade.PCGrade = WorkGroupGrade_General.ProfitCentreGrade) INNER JOIN tblStaff_General ON WorkGroupGrade_General.WGGrade = tblStaff_General.WorkGroupGrade) INNER JOIN tblStaffJob_RM ON tblStaff_General.StaffID = tblStaffJob_RM.StaffID) INNER JOIN tlkpProject_General ON tblStaffJob_RM.Jobcode = tlkpProject_General.ParentProject) INNER JOIN tlkpProgram_MAP ON tlkpProject_General.Program = tlkpProgram_MAP.ProgramNo
+WHERE (((WorkGroupGrade_General.WorkGroup)=[Forms]![frmResouceCentreWorkGroups]![ProjectPick]));
+

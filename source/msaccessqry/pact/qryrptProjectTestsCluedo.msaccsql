@@ -1,0 +1,8 @@
+QUERY NAME: qryrptProjectTestsCluedo
+---------------------------------------------
+TYPE: OTHER
+
+SQL:
+SELECT DISTINCTROW tlkpTestReqmt.Buyer, tlkpTestReqmt.TestCode, TestOrProduct.ItemDescription, MonthlyOutput.WorkGroup, tlkpTestReqmt.UnitPrice, MonthlyOutput.Volume, [UnitPrice]*[Volume] AS Cost, MonthlyOutput.Month
+FROM tlkpTestCapability INNER JOIN (TestOrProduct INNER JOIN (tlkpTestReqmt INNER JOIN MonthlyOutput ON (tlkpTestReqmt.Buyer = MonthlyOutput.Buyer) AND (tlkpTestReqmt.TestCode = MonthlyOutput.TestCode)) ON TestOrProduct.ItemCode = tlkpTestReqmt.TestCode) ON (tlkpTestCapability.WorkGroup = MonthlyOutput.WorkGroup) AND (tlkpTestCapability.TestCode = MonthlyOutput.TestCode);
+

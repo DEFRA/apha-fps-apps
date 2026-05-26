@@ -1,0 +1,12 @@
+QUERY NAME: qryTimeByCategory
+---------------------------------------------
+TYPE: OTHER
+
+SQL:
+TRANSFORM Sum(TimeCostCalcs.Time) AS SumOfTime
+SELECT WorkGroup.ProfitCentre, TimeCostCalcs.Division, TimeCostCalcs.WorkGroup, tblPeriod.PeriodName, Sum(TimeCostCalcs.Time) AS TotaLTime
+FROM (tblkPeriodMonth INNER JOIN (tlkpProject INNER JOIN ((TimeCostCalcs INNER JOIN TimeCodeValid ON (TimeCostCalcs.WorkGroup = TimeCodeValid.WorkGroup) AND (TimeCostCalcs.JobCode = TimeCodeValid.TimeCode)) INNER JOIN WorkGroup ON TimeCostCalcs.WorkGroup = WorkGroup.WorkGroup) ON tlkpProject.ParentProject = TimeCodeValid.ParentProject) ON tblkPeriodMonth.MonthNo = TimeCostCalcs.Month) INNER JOIN tblPeriod ON tblkPeriodMonth.EndMonth = tblPeriod.EndPeriod
+WHERE ((tblPeriod.EndPeriod=[forms]![menu-division]![periodpick]))
+GROUP BY WorkGroup.ProfitCentre, TimeCostCalcs.Division, TimeCostCalcs.WorkGroup, tblPeriod.PeriodName, tblPeriod.EndPeriod
+PIVOT IIf([timecode] Like "cn*","ConsuLTancy",[PlanCat]) In ("ConsuLTancy","CoreCapacity","TestActivity","Production","OtherAHVG","CSG","OtherMAFF","OtherGovt","Commercial","ZTleave","ZTwork","Pending");
+

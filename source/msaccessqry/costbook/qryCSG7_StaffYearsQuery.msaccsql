@@ -1,0 +1,12 @@
+QUERY NAME: qryCSG7_StaffYearsQuery
+---------------------------------------------
+TYPE: OTHER
+
+SQL:
+TRANSFORM Sum([NoDays]/settingsGet_BE("DaysInYear")) AS StaffYears
+SELECT tblStaffRequ.Project, IIf([WGGrade] Like "GD5*","GD5",Left([WGGrade],1)) AS Grade, Sum([NoDays]/settingsGet_BE("DaysInYear")) AS Total
+FROM tblStaffRequ
+WHERE (((tblStaffRequ.Project)=fnProjectSelected()))
+GROUP BY tblStaffRequ.Project, IIf([WGGrade] Like "GD5*","GD5",Left([WGGrade],1))
+PIVOT tblStaffRequ.Year;
+

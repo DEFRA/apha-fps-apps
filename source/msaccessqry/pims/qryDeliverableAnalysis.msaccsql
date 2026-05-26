@@ -1,0 +1,9 @@
+QUERY NAME: qryDeliverableAnalysis
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT vProjectLatestDetails.Program, tblMilestone.Project, vProjectLatestDetails.Manager, tblMilestone.Number, tblMilestone.DateDue, tblMilestone.DateCompleted, vProjectLatestDetails.LastYear AS [Year], -fnDoneInPeriod([DateDue]) AS DueNow, IIf(IsNull([DateCompleted]) Or Not fnDoneInPeriod([Datecompleted]),0,1) AS Met, IIf([Met]=0,0,IIf(([datedue]>[datecompleted]) And ([datedue]>fnReportEndOfMonth()),1,0)) AS MetAheadOfSchedule, IIf([UnderSDReview] And Not [Met] And [DueNow] And [FormRecieved],1,0) AS DueUnderReview, IIf(Not Nz([UnderSDReview],0) And Not [Met] And [DueNow] And [FormRecieved],1,0) AS DueNotUnderReview, IIf(Not [FormRecieved] And [DueNow] And Not [Met],1,0) AS Unreported, Not IsNull(fnDateFormRecieved(vProjectLatestDetails.[parentProject],fnreportyear())) AS FormRecieved, tblMilestone.UnderSDReview, tblMilestone.IDType, [DueNow]*IIf([datedue]>=[datecompleted],1,0) AS MetOnTime, 1 AS DueThisYear, IIf(IsNull([DateCompleted]),0,-1) AS Done, IIf([datedue]<[datecompleted],1,0) AS DoneLate, vProjectLatestDetails.Customer, G_tlkpProject.Contract
+FROM (tblMilestone INNER JOIN vProjectLatestDetails ON tblMilestone.Project = vProjectLatestDetails.ParentProject) INNER JOIN G_tlkpProject ON vProjectLatestDetails.ParentProject = G_tlkpProject.ParentProject
+WHERE (((fnDueYear([DateDue]))=fnReportYear()) AND ((fnSurvProgram([projectgroup]))=True));
+

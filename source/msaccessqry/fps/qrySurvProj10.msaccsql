@@ -1,0 +1,12 @@
+QUERY NAME: qrySurvProj10
+---------------------------------------------
+TYPE: OTHER
+
+SQL:
+TRANSFORM Sum(TimeCostCalcs.Cost) AS HoursCost
+SELECT TimeCostCalcs.Project AS ParentProject, WorkGroup_General.WorkGroup, Sum(TimeCostCalcs.Cost) AS TotalTimeCost
+FROM (tlkpJobCode RIGHT JOIN TimeCostCalcs ON (tlkpJobCode.ParentProject = TimeCostCalcs.Project) AND (tlkpJobCode.JobCode = TimeCostCalcs.JobCode)) RIGHT JOIN WorkGroup_General ON TimeCostCalcs.WorkGroup = WorkGroup_General.WorkGroup
+WHERE ((TimeCostCalcs.Project="seb4100") AND (WorkGroup_General.WorkGroup Like "SV??" Or WorkGroup_General.WorkGroup=[TimeCostCalcs].[workgroup]) AND (TimeCostCalcs.Month<=[Forms]![frmPactReportMenu]![PeriodPick]) AND (tlkpJobCode.Type Is Null Or tlkpJobCode.Type<>"Primary Spread"))
+GROUP BY TimeCostCalcs.Project, WorkGroup_General.WorkGroup
+PIVOT tlkpJobCode.Type In ('Consultancy','Database','Expertise','PlannedSurveill','ReferenceLab','Visits','Casework');
+

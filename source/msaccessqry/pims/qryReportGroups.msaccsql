@@ -1,0 +1,8 @@
+QUERY NAME: qryReportGroups
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblReportGroup.GroupID, tblReportGroup.Description
+FROM tblReportGroup;
+

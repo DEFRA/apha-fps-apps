@@ -1,0 +1,8 @@
+QUERY NAME: qryProjectReview1
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tlkpReviewItem.ItemID, qryProjectReview.Project, qryProjectReview.FrequencyID, qryProjectReview.ItemID AS IID
+FROM qryProjectReview RIGHT JOIN tlkpReviewItem ON qryProjectReview.ItemID = tlkpReviewItem.ItemID;
+

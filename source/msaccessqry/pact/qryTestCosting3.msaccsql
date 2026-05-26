@@ -1,0 +1,10 @@
+QUERY NAME: qryTestCosting3
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpTestCapability.PlanPortfolio, ProjectMonthFinal.CumCost, Sum(MonthlyOutput.Volume) AS SumOfVolume, ProjectMonthFinal.MonthNo, tlkpProject.PlanCat
+FROM (tlkpProject INNER JOIN ProjectMonthFinal ON tlkpProject.ParentProject = ProjectMonthFinal.Project) INNER JOIN (tlkpTestCapability LEFT JOIN MonthlyOutput ON (tlkpTestCapability.WorkGroup = MonthlyOutput.WorkGroup) AND (tlkpTestCapability.TestCode = MonthlyOutput.TestCode)) ON ProjectMonthFinal.Project = tlkpTestCapability.PlanPortfolio
+GROUP BY tlkpTestCapability.PlanPortfolio, ProjectMonthFinal.CumCost, ProjectMonthFinal.MonthNo, tlkpProject.PlanCat
+HAVING ((ProjectMonthFinal.MonthNo=12) AND (tlkpProject.PlanCat="testactivity"));
+

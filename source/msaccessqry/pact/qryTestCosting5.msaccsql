@@ -1,0 +1,10 @@
+QUERY NAME: qryTestCosting5
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblkpProfitCentre.Division, tblkpProfitCentre.ProfitCentre, WorkGroup.WorkGroup, ProjectMonthFinal.MonthNo, TimeCostCalcs.Project, ProjectMonthFinal.CumCost, TimeCostCalcs.JobCode, Sum(TimeCostCalcs.Cost) AS SumOfCost, tlkpProject.PlanCat
+FROM (ProjectMonthFinal INNER JOIN (tblkpProfitCentre INNER JOIN (WorkGroup INNER JOIN tlkpProject ON WorkGroup.WorkGroup = tlkpProject.ProjectWorkGroup) ON tblkpProfitCentre.ProfitCentre = WorkGroup.ProfitCentre) ON ProjectMonthFinal.Project = tlkpProject.ParentProject) INNER JOIN TimeCostCalcs ON ProjectMonthFinal.Project = TimeCostCalcs.Project
+GROUP BY tblkpProfitCentre.Division, tblkpProfitCentre.ProfitCentre, WorkGroup.WorkGroup, ProjectMonthFinal.MonthNo, TimeCostCalcs.Project, ProjectMonthFinal.CumCost, TimeCostCalcs.JobCode, tlkpProject.PlanCat
+HAVING ((tblkpProfitCentre.ProfitCentre="viro") AND (TimeCostCalcs.JobCode Like "tp*") AND (ProjectMonthFinal.MonthNo=12) AND (tlkpProject.PlanCat="testactivity"));
+

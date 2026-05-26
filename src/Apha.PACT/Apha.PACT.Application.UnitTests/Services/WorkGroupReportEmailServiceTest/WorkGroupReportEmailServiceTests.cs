@@ -11,7 +11,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupReportEmailServiceTe
 {
     public class WorkGroupReportEmailServiceTests
     {
-        private readonly IWorkGroupReportRepository _mockRepository;
+        private readonly IWorkGroupRepository _mockRepository;
         private readonly IGraphEmailService _mockEmailService;
         private readonly WorkGroupReportEmailService _sut;
 
@@ -61,7 +61,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupReportEmailServiceTe
 
         public WorkGroupReportEmailServiceTests()
         {
-            _mockRepository   = Substitute.For<IWorkGroupReportRepository>();
+            _mockRepository   = Substitute.For<IWorkGroupRepository>();
             _mockEmailService = Substitute.For<IGraphEmailService>();
             _sut = new WorkGroupReportEmailService(_mockRepository, _mockEmailService);
         }

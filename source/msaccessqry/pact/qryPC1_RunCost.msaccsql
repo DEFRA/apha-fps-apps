@@ -1,0 +1,9 @@
+QUERY NAME: qryPC1_RunCost
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW WorkGroup.ProfitCentre, Sum(WorkGroupMonth.RunningCost) AS SumOfRunningCost, Sum(WorkGroupMonth.RunCostProfile) AS SumOfRunCostProfile
+FROM WorkGroupMonth INNER JOIN WorkGroup ON WorkGroupMonth.WorkGroup = WorkGroup.WorkGroup
+GROUP BY WorkGroup.ProfitCentre;
+

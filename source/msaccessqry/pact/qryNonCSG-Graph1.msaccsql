@@ -1,0 +1,8 @@
+QUERY NAME: qryNonCSG-Graph1
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW ProjectMonthFinal.MonthNo AS EndPeriod, ProjectMonthFinal.Project, ProjectMonthFinal.CumProfile, [CumCost]+[wip_eoy] AS TotCumCost, [cuminvoices]+[cumportsales] AS CumIncome, tlkpProject.[Budget_cvl] AS ContractPrice
+FROM tlkpProject INNER JOIN ProjectMonthFinal ON tlkpProject.ParentProject = ProjectMonthFinal.Project;
+

@@ -1,0 +1,9 @@
+QUERY NAME: qrySurvWGProjectRpt
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW qrySurvProj1.ParentProject, qrySurvProj1.WorkGroup, qrySurvProj1.TotalTimeCost, qrySurvProj1.Consultancy, qrySurvProj1.Database, qrySurvProj1.Expertise, qrySurvProj1.ReferenceLab, qrySurvProj1.Visits, qrySurvProj1.Casework, qrySurvTests.InvoiceFee, qrySurvTests.TestsBoughtCost, tlkpProject_General.SHortTitle, qrySurvInvoice.PVSIncome, qrySurvInvoice.CVOGIncome, ConvertNullDouble([CumSubContracts]) AS CumSubCont, ProjectMonthFinal.CumCWDebit, ProjectMonthFinal.CumCWCredit, ProjectMonthFinal.MonthNo, tlkpProject_General.Manager, tlkpProject_General.Program, ConvertNullDouble([PlanCost])*[Forms]![frmPactReportMenu]![PeriodPick]/12 AS FPSPlanCost, qryProjectPlanHours.PlanCost
+FROM ((((qrySurvProj1 LEFT JOIN qrySurvTests ON (qrySurvProj1.ParentProject = qrySurvTests.Contract) AND (qrySurvProj1.WorkGroup = qrySurvTests.PactCode)) INNER JOIN tlkpProject_General ON qrySurvProj1.ParentProject = tlkpProject_General.ParentProject) LEFT JOIN qrySurvInvoice ON tlkpProject_General.ParentProject = qrySurvInvoice.ProjectParent) INNER JOIN ProjectMonthFinal ON tlkpProject_General.ParentProject = ProjectMonthFinal.Project) LEFT JOIN qryProjectPlanHours ON (qrySurvProj1.WorkGroup = qryProjectPlanHours.WorkGroup) AND (qrySurvProj1.ParentProject = qryProjectPlanHours.Jobcode)
+WHERE ((qrySurvProj1.WorkGroup Like "sv*") AND (qrySurvProj1.TotalTimeCost Is Not Null) AND (ProjectMonthFinal.MonthNo=[Forms]![frmPactReportMenu]![PeriodPick]) AND (tlkpProject_General.Program<>"zt_prog"));
+

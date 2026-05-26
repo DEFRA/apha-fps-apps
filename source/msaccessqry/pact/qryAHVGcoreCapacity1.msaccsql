@@ -1,0 +1,9 @@
+QUERY NAME: qryAHVGcoreCapacity1
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW qryAHVGcoreCapacity.Directorate, qryAHVGcoreCapacity.ProgramNo, qryAHVGcoreCapacity.ProgramName, qryAHVGcoreCapacity.Group, Sum(qryAHVGcoreCapacity.Budget_cvl) AS [SumOfBudget-cvl], Sum(qryAHVGcoreCapacity.CumCost) AS SumOfCumCost, qryAHVGcoreCapacity.PeriodName
+FROM qryAHVGcoreCapacity
+GROUP BY qryAHVGcoreCapacity.Directorate, qryAHVGcoreCapacity.ProgramNo, qryAHVGcoreCapacity.ProgramName, qryAHVGcoreCapacity.Group, qryAHVGcoreCapacity.PeriodName;
+

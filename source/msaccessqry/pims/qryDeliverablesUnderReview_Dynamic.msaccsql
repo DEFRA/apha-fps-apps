@@ -1,0 +1,9 @@
+QUERY NAME: qryDeliverablesUnderReview_Dynamic
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT *
+FROM qryDeliverablesUnderReview
+WHERE fnSurvProgram(projectgroup)=true;
+

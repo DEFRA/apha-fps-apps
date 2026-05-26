@@ -1,0 +1,7 @@
+QUERY NAME: qryTimeByCategorySQLPT
+---------------------------------------------
+TYPE: PASS-THROUGH
+
+SQL:
+sp_TimeByCategory
+

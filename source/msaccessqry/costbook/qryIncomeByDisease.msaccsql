@@ -1,0 +1,9 @@
+QUERY NAME: qryIncomeByDisease
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblYear.PickYear AS FinancialYear, tblProject.Project, tblProject.ProjectTitle, tblProject.Disease, IIf(IsNull([YearIncome]),0,[YearIncome]) AS SYearIncome
+FROM tblYear, tblProject INNER JOIN tblProjectYear ON tblProject.Project = tblProjectYear.Project
+WHERE ((tblYear.PickYear=[StartFYear]+[YearNo]-1));
+

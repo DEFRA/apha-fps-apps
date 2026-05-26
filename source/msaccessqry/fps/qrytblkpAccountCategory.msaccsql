@@ -1,0 +1,8 @@
+QUERY NAME: qrytblkpAccountCategory
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblkpAccountCategory.*
+FROM tblkpAccountCategory;
+

@@ -1,0 +1,10 @@
+QUERY NAME: qryPublications_ThisYear
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT fnProgramGroup([Program]) AS ProgramGroup, tblPublication.Type, Sum(1) AS DueInYear, Sum(Abs(fnNowDue([targetdate]))) AS DueToDate, Sum(Abs([published])) AS NoPublishedThisYear, Sum(Abs((fnSubmittedOnTime([Submitted],[targetdate])) And (fnNowDue([targetdate])))) AS DueAndSubOnTime, Sum(Abs(Not (IsNull([submitted])) And (fnNowDue([targetdate])))) AS DueAndSub
+FROM tblPublication
+WHERE (((fnInThisFinancialYear([TargetDate]))=True))
+GROUP BY fnProgramGroup([Program]), tblPublication.Type;
+

@@ -1,0 +1,9 @@
+QUERY NAME: ltdPortfolioWorkgroups
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpTestCapability.PlanPortfolio, tlkpTestCapability.WorkGroup
+FROM tlkpTestCapability
+GROUP BY tlkpTestCapability.PlanPortfolio, tlkpTestCapability.WorkGroup;
+

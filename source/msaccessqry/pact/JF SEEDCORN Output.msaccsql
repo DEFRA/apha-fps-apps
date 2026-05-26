@@ -1,0 +1,8 @@
+QUERY NAME: JF SEEDCORN Output
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT MonthlyOutput.TestCode, TestorProduct.ItemDescription, MonthlyOutput.Buyer, tlkpTestReqmt.UnitPrice, MonthlyOutput.Month, MonthlyOutput.WorkGroup, MonthlyOutput.Volume, MonthlyOutput.WGBuyer
+FROM [janee's Seedcorn 220916] INNER JOIN (TestorProduct INNER JOIN (MonthlyOutput INNER JOIN tlkpTestReqmt ON (MonthlyOutput.Buyer = tlkpTestReqmt.Buyer) AND (MonthlyOutput.TestCode = tlkpTestReqmt.TestCode)) ON TestorProduct.ItemCode = MonthlyOutput.TestCode) ON [janee's Seedcorn 220916].Field2 = tlkpTestReqmt.Buyer;
+

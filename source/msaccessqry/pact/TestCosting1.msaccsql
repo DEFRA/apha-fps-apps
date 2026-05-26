@@ -1,0 +1,10 @@
+QUERY NAME: TestCosting1
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpProject.PlanCat, TimeCostCalcs.Project, TimeCostCalcs.JobCode, Sum(TimeCostCalcs.Cost) AS CostSum, IIf([jobcode] Like "tp*",[costsum],0) AS TP, IIf([jobcode] Like "ta*",[CostSum],0) AS TA
+FROM tlkpProject INNER JOIN TimeCostCalcs ON tlkpProject.ParentProject = TimeCostCalcs.Project
+GROUP BY tlkpProject.PlanCat, TimeCostCalcs.Project, TimeCostCalcs.JobCode
+HAVING ((tlkpProject.PlanCat="TestActivity"));
+

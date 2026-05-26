@@ -1,0 +1,9 @@
+QUERY NAME: _DeleteMY_RadTrackRept
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT MY_Radtrack_Reports.*
+FROM MY_Radtrack_Reports
+WHERE (((MY_Radtrack_Reports.Year)=2005)) OR (((MY_Radtrack_Reports.Year)=2006));
+

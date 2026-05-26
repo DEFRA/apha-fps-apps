@@ -1,0 +1,9 @@
+QUERY NAME: qryTestReqVActual
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tblTestRequ.JobCode, tblTestRequ.TestCode, tblTestRequ.NoTests, Sum(MonthlyOutput.Volume) AS SumOfVolume, TestOrProduct.ItemDescription
+FROM (tblTestRequ LEFT JOIN MonthlyOutput ON (tblTestRequ.JobCode = MonthlyOutput.Buyer) AND (tblTestRequ.TestCode = MonthlyOutput.TestCode)) INNER JOIN TestOrProduct ON tblTestRequ.TestCode = TestOrProduct.ItemCode
+GROUP BY tblTestRequ.JobCode, tblTestRequ.TestCode, tblTestRequ.NoTests, TestOrProduct.ItemDescription;
+

@@ -1,0 +1,8 @@
+QUERY NAME: qryJobAnimalCost
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tlkpProject_General.Program AS Programme, tblAnimalReq_MAP.AnimalType, tblAnimalReq_MAP.JobCode, tblAnimalReq_MAP.NumberOfDays, tblAnimalReq_MAP.NumberOfAnimals, IIf([isdefraproject]=0,[tblAnimals].[DailyRate],[defradailyrate]) AS DailyRate, [NumberOfDays]*[NumberOfAnimals]*IIf([isdefraproject]=0,[tblAnimals].[DailyRate],[defradailyrate]) AS AnimalCost, [NumberOfAnimals]*[NumberOfDays] AS TotalDays, tblAnimalReq_MAP.IndCounter
+FROM tlkpProject_General INNER JOIN (tblAnimals INNER JOIN tblAnimalReq_MAP ON tblAnimals.AnimalType = tblAnimalReq_MAP.AnimalType) ON tlkpProject_General.ParentProject = tblAnimalReq_MAP.JobCode;
+
