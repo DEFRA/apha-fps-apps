@@ -2507,6 +2507,30 @@ The following tables and SQL objects are required to support the Batch Jobs solu
   </li>
 </ul>
 <p>
+<b>Additional Ask for RecreateSummaries PostgreSQL Integration Tests:</b><br>
+These tests require existing <code>fps</code> tables:
+</p>
+<ul>
+  <li><code>projectmonth2</code></li>
+  <li><code>projectmonth3</code></li>
+  <li><code>projectmonthcasework</code></li>
+  <li><code>projectmonthfinal</code></li>
+  <li><code>tlkpproject</code></li>
+  <li><code>period_monthlyoutput</code></li>
+  <li><code>monthlyoutput</code></li>
+  <li><code>workgroup</code></li>
+  <li><code>tlkptestreqmt</code></li>
+  <li><code>costcentre</code></li>
+  <li><code>period_proj_subcontract</code></li>
+  <li><code>proj_subcontract</code></li>
+  <li><code>period_timecostcalcs</code></li>
+  <li><code>timecostcalcs</code></li>
+  <li><code>tblwgemployee</code></li>
+</ul>
+<p>
+Ensure not-null constraints are respected, especially <code>timecostcalcs.fpsyear</code>.
+</p>
+<p>
 <b>DBA Ask:</b><br>
 Please review the required tables and SQL objects, ensure they are created and versioned appropriately, and provide support for schema changes, migrations, and performance tuning as needed for Batch Jobs.
 </p>

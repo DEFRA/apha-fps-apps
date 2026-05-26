@@ -1,6 +1,6 @@
 # RecreateSummaries Unit Test Tracker
 
-Last updated: 2026-05-22
+Last updated: 2026-05-26
 Owner: BatchJobs team
 Scope: RecreateSummaries process (LINQ implementation)
 
@@ -50,8 +50,8 @@ Legend:
 | RS-003 | Phase 1 | P1 | RecreateSummariesContext defaults (Month=1, TriggeredBy=system) | Done | Covered in RecreateSummariesContextTests |
 | RS-004 | Phase 1 | P1 | RecreateSummariesContext env overrides valid values | Done | Covered in RecreateSummariesContextTests |
 | RS-005 | Phase 1 | P1 | RecreateSummariesContext rejects invalid month values | Done | Covered in RecreateSummariesContextTests |
-| RS-006 | Phase 1 | P1 | ExecutionStepBase success result mapping | Blocked | Direct base-type access blocked by internal visibility; revisit with friend-access or component-level success path tests |
-| RS-007 | Phase 1 | P1 | ExecutionStepBase failure result mapping | Done | Covered via reflection-based step contract test |
+| RS-006 | Phase 1 | P1 | ExecutionStepBase success result mapping | Done | Covered in RecreateSummariesExecutionStepContractTests via derived test step |
+| RS-007 | Phase 1 | P1 | ExecutionStepBase failure result mapping | Done | Covered in RecreateSummariesExecutionStepContractTests via throwing derived test step |
 | RS-008 | Phase 2 | P0 | Orchestrator executes mandatory steps in order | Not Started | End-to-end within transaction |
 | RS-009 | Phase 2 | P0 | Orchestrator rolls back when mandatory step fails | Not Started | Failure path correctness |
 | RS-010 | Phase 2 | P0 | Orchestrator executes refresh steps when period unlocked | Not Started | periodLocked == 0 branch |
@@ -62,12 +62,12 @@ Legend:
 | RS-015 | Phase 3 | P0 | CreateFpsTotals left joins preserve rows | Not Started | Missing related aggregates still keep projects |
 | RS-016 | Phase 3 | P0 | CreateProjectMonthSingle left joins + default values | Not Started | High risk for row loss |
 | RS-017 | Phase 3 | P0 | CreateProjectMonthCumulative aggregation and defaults | Not Started | Numeric parity checks |
-| RS-018 | Phase 3 | P0 | CreateProjectMonthFinal month cutoff logic (`MonthNo <= month` else null) | Not Started | Critical cumulative rule |
+| RS-018 | Phase 3 | P0 | CreateProjectMonthFinal month cutoff logic (`MonthNo <= month` else null) | In Progress | PostgreSQL-backed assertion test added in RecreateSummariesPostgresStepIntegrationTests with strict skip semantics when DB prerequisites are missing |
 | RS-019 | Phase 3 | P1 | CreateTimeCostCalcs defra vs non-defra charge rate path | Not Started | Branch correctness |
-| RS-020 | Phase 3 | P1 | LogRecreateSummaries writes user + period + timestamp | Not Started | Audit integrity |
+| RS-020 | Phase 3 | P1 | LogRecreateSummaries writes user + period + timestamp | Done | Covered in RecreateSummariesExecutionStepContractTests success-path execution |
 | RS-021 | Phase 4 | P0 | Sparse-data scenario does not silently drop expected rows | Not Started | Join/null regression guard |
 | RS-022 | Phase 4 | P0 | Locked-period scenario does not refresh period tables | Not Started | Safety guarantee |
-| RS-023 | Phase 4 | P1 | Unlocked-period scenario refreshes all period tables | Not Started | Completeness guarantee |
+| RS-023 | Phase 4 | P1 | Unlocked-period scenario refreshes all period tables | In Progress | PostgreSQL-backed refresh step tests added for MO/PSC/TCC in RecreateSummariesPostgresStepIntegrationTests with strict skip semantics when DB prerequisites are missing |
 | RS-024 | Phase 4 | P1 | Boundary month scenarios (1, 12) | Not Started | Edge-case reliability |
 | RS-025 | Phase 4 | P1 | Failure injection mid-pipeline leaves no partial writes | Not Started | Atomicity guarantee |
 
