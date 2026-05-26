@@ -861,10 +861,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectInvoiceA
             };
 
             _http.PostAsync<CopyInvoicesReq, CopyInvoicesRes>(
-                Arg.Is<string>(url => 
-                    url.Contains("copy") && 
-                    url.Contains($"sourceMonth={copyDto.SourceMonth}") && 
-                    url.Contains($"destinationMonth={copyDto.TargetMonth}")),
+                Arg.Any<string>(),
                 Arg.Is<CopyInvoicesReq>(req => req.InvoiceRecords == null))
                 .Returns(apiResponse);
             _mapper.Map<ApiResponseDto<CopyInvoicesResultDto>>(apiResponse).Returns(expectedDto);
@@ -878,9 +875,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectInvoiceA
             Assert.Equal(10, result.Data?.CopiedCount);
             Assert.Equal(0, result.Data?.FailedCount);
             await _http.Received(1).PostAsync<CopyInvoicesReq, CopyInvoicesRes>(
-                Arg.Is<string>(url => 
-                    url.Contains($"sourceMonth={copyDto.SourceMonth}") && 
-                    url.Contains($"destinationMonth={copyDto.TargetMonth}")),
+                Arg.Any<string>(),
                 Arg.Is<CopyInvoicesReq>(req => req.InvoiceRecords == null));
         }
 
@@ -982,10 +977,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectInvoiceA
                 TargetMonth = 8,
                 InvoiceRecords = null
             };
-            var apiResponse = new ApiResponse<CopyInvoicesRes> 
-            { 
-                Success = true, 
-                Data = new CopyInvoicesRes { Success = true } 
+            var apiResponse = new ApiResponse<CopyInvoicesRes>
+            {
+                Success = true,
+                Data = new CopyInvoicesRes { Success = true }
             };
             _http.PostAsync<CopyInvoicesReq, CopyInvoicesRes>(Arg.Any<string>(), Arg.Any<CopyInvoicesReq>())
                 .Returns(apiResponse);
@@ -995,12 +990,9 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectInvoiceA
             // Act
             await _client.CopyInvoicesAsync(copyDto);
 
-            // Assert
+            // Assert - Verify correct endpoint is called
             await _http.Received(1).PostAsync<CopyInvoicesReq, CopyInvoicesRes>(
-                Arg.Is<string>(url => 
-                    url.StartsWith(PactApiEndpoints.CopyProjectInvoices) &&
-                    url.Contains($"sourceMonth={copyDto.SourceMonth}") &&
-                    url.Contains($"destinationMonth={copyDto.TargetMonth}")),
+                Arg.Is<string>(url => url == PactApiEndpoints.CopyProjectInvoices),
                 Arg.Any<CopyInvoicesReq>());
         }
 
@@ -1138,7 +1130,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectInvoiceA
         [InlineData(1, 2)]
         [InlineData(5, 6)]
         [InlineData(11, 12)]
-        public async Task CopyInvoicesAsync_WithDifferentMonths_ConstructsCorrectUrl(int source, int destination)
+        public async Task CopyInvoicesAsync_WithDifferentMonths_SendsCorrectRequestBody(int source, int destination)
         {
             // Arrange
             var copyDto = new CopyInvoicesDto
@@ -1147,10 +1139,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectInvoiceA
                 TargetMonth = destination,
                 InvoiceRecords = null
             };
-            var apiResponse = new ApiResponse<CopyInvoicesRes> 
-            { 
-                Success = true, 
-                Data = new CopyInvoicesRes { Success = true } 
+            var apiResponse = new ApiResponse<CopyInvoicesRes>
+            {
+                Success = true,
+                Data = new CopyInvoicesRes { Success = true }
             };
             _http.PostAsync<CopyInvoicesReq, CopyInvoicesRes>(Arg.Any<string>(), Arg.Any<CopyInvoicesReq>())
                 .Returns(apiResponse);
@@ -1160,12 +1152,12 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectInvoiceA
             // Act
             await _client.CopyInvoicesAsync(copyDto);
 
-            // Assert
+            // Assert - Verify the request body contains correct months
             await _http.Received(1).PostAsync<CopyInvoicesReq, CopyInvoicesRes>(
-                Arg.Is<string>(url => 
-                    url.Contains($"sourceMonth={source}") &&
-                    url.Contains($"destinationMonth={destination}")),
-                Arg.Any<CopyInvoicesReq>());
+                Arg.Any<string>(),
+                Arg.Is<CopyInvoicesReq>(req =>
+                    req.SourceMonth == source &&
+                    req.TargetMonth == destination));
         }
 
         [Fact]
@@ -1305,6 +1297,363 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectInvoiceA
 
         #endregion
 
+        #region CopyInvoicesAsync - Additional Edge Case Tests
+
+        [Fact]
+        public async Task CopyInvoicesAsync_WithNullDto_ThrowsNullReferenceException()
+        {
+            // Act & Assert - Implementation doesn't have null check, so it throws NullReferenceException
+            await Assert.ThrowsAsync<NullReferenceException>(() => _client.CopyInvoicesAsync(null!));
+        }
+
+        [Fact]
+        public async Task CopyInvoicesAsync_WithZeroMonth_SendsToApi()
+        {
+            // Arrange
+            var copyDto = new CopyInvoicesDto
+            {
+                SourceMonth = 0,
+                TargetMonth = 1,
+                InvoiceRecords = null
+            };
+            var apiResponse = new ApiResponse<CopyInvoicesRes>
+            {
+                Success = true,
+                Data = new CopyInvoicesRes { Success = true, CopiedCount = 0 }
+            };
+            _http.PostAsync<CopyInvoicesReq, CopyInvoicesRes>(Arg.Any<string>(), Arg.Any<CopyInvoicesReq>())
+                .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<CopyInvoicesResultDto>>(apiResponse)
+                .Returns(new ApiResponseDto<CopyInvoicesResultDto> { Success = true });
+
+            // Act
+            await _client.CopyInvoicesAsync(copyDto);
+
+            // Assert - Verify the request object has the correct months
+            await _http.Received(1).PostAsync<CopyInvoicesReq, CopyInvoicesRes>(
+                Arg.Any<string>(),
+                Arg.Is<CopyInvoicesReq>(req => req.SourceMonth == 0 && req.TargetMonth == 1));
+        }
+
+        [Fact]
+        public async Task CopyInvoicesAsync_WithNegativeMonth_SendsToApi()
+        {
+            // Arrange
+            var copyDto = new CopyInvoicesDto
+            {
+                SourceMonth = -1,
+                TargetMonth = 1,
+                InvoiceRecords = null
+            };
+            var apiResponse = new ApiResponse<CopyInvoicesRes>
+            {
+                Success = false,
+                Errors = [new ApiError { Message = "Invalid month" }]
+            };
+            _http.PostAsync<CopyInvoicesReq, CopyInvoicesRes>(Arg.Any<string>(), Arg.Any<CopyInvoicesReq>())
+                .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<CopyInvoicesResultDto>>(apiResponse)
+                .Returns(new ApiResponseDto<CopyInvoicesResultDto>
+                {
+                    Success = false,
+                    Errors = [new ApiErrorDto { Message = "Invalid month" }]
+                });
+
+            // Act
+            var result = await _client.CopyInvoicesAsync(copyDto);
+
+            // Assert
+            Assert.False(result.Success);
+        }
+
+        [Fact]
+        public async Task CopyInvoicesAsync_WithSameSourceAndTargetMonth_ProcessesCorrectly()
+        {
+            // Arrange
+            var copyDto = new CopyInvoicesDto
+            {
+                SourceMonth = 6,
+                TargetMonth = 6,
+                InvoiceRecords = null
+            };
+            var apiResponse = new ApiResponse<CopyInvoicesRes>
+            {
+                Success = true,
+                Data = new CopyInvoicesRes { Success = true, CopiedCount = 0 }
+            };
+            _http.PostAsync<CopyInvoicesReq, CopyInvoicesRes>(Arg.Any<string>(), Arg.Any<CopyInvoicesReq>())
+                .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<CopyInvoicesResultDto>>(apiResponse)
+                .Returns(new ApiResponseDto<CopyInvoicesResultDto>
+                {
+                    Success = true,
+                    Data = new CopyInvoicesResultDto { Success = true, CopiedCount = 0 }
+                });
+
+            // Act
+            var result = await _client.CopyInvoicesAsync(copyDto);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+        }
+
+        [Fact]
+        public async Task CopyInvoicesAsync_WithAllFailures_ReturnsCorrectCounts()
+        {
+            // Arrange
+            var invoiceDtos = new List<ProjectInvoiceDto>
+            {
+                new() { InvoiceCounter = 1, ProjectParent = "PP001" },
+                new() { InvoiceCounter = 2, ProjectParent = "PP002" }
+            };
+            var copyDto = new CopyInvoicesDto
+            {
+                SourceMonth = 5,
+                TargetMonth = 6,
+                InvoiceRecords = invoiceDtos
+            };
+            var copyRes = new CopyInvoicesRes
+            {
+                Success = false,
+                Message = "All copies failed",
+                CopiedCount = 0,
+                FailedCount = 2,
+                Errors = ["Failed to copy invoice 1", "Failed to copy invoice 2"]
+            };
+            var apiResponse = new ApiResponse<CopyInvoicesRes> { Success = true, Data = copyRes };
+            var expectedDto = new ApiResponseDto<CopyInvoicesResultDto>
+            {
+                Success = true,
+                Data = new CopyInvoicesResultDto
+                {
+                    Success = false,
+                    CopiedCount = 0,
+                    FailedCount = 2,
+                    Errors = ["Failed to copy invoice 1", "Failed to copy invoice 2"]
+                }
+            };
+
+            _mapper.Map<ProjectInvoiceReq>(Arg.Any<ProjectInvoiceDto>())
+                .Returns(new ProjectInvoiceReq());
+            _http.PostAsync<CopyInvoicesReq, CopyInvoicesRes>(Arg.Any<string>(), Arg.Any<CopyInvoicesReq>())
+                .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<CopyInvoicesResultDto>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.CopyInvoicesAsync(copyDto);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.False(result.Data?.Success);
+            Assert.Equal(0, result.Data?.CopiedCount);
+            Assert.Equal(2, result.Data?.FailedCount);
+            Assert.Equal(2, result.Data?.Errors.Count);
+        }
+
+        [Fact]
+        public async Task CopyInvoicesAsync_WithHttpException_PropagatesException()
+        {
+            // Arrange
+            var copyDto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6 };
+            _http.PostAsync<CopyInvoicesReq, CopyInvoicesRes>(Arg.Any<string>(), Arg.Any<CopyInvoicesReq>())
+                .Returns<ApiResponse<CopyInvoicesRes>>(_ => throw new HttpRequestException("Network error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<HttpRequestException>(() => _client.CopyInvoicesAsync(copyDto));
+        }
+
+        [Fact]
+        public async Task CopyInvoicesAsync_WithInvoiceRecordsContainingNullValues_HandlesGracefully()
+        {
+            // Arrange
+            var invoiceDtos = new List<ProjectInvoiceDto>
+            {
+                new() { InvoiceCounter = 1, ProjectParent = null, Amount = 1000m },
+                new() { InvoiceCounter = 2, ProjectParent = "", Amount = 2000m }
+            };
+            var copyDto = new CopyInvoicesDto
+            {
+                SourceMonth = 5,
+                TargetMonth = 6,
+                InvoiceRecords = invoiceDtos
+            };
+            var copyRes = new CopyInvoicesRes { Success = true, CopiedCount = 2 };
+            var apiResponse = new ApiResponse<CopyInvoicesRes> { Success = true, Data = copyRes };
+            var expectedDto = new ApiResponseDto<CopyInvoicesResultDto>
+            {
+                Success = true,
+                Data = new CopyInvoicesResultDto { Success = true, CopiedCount = 2 }
+            };
+
+            _mapper.Map<ProjectInvoiceReq>(Arg.Any<ProjectInvoiceDto>())
+                .Returns(new ProjectInvoiceReq());
+            _http.PostAsync<CopyInvoicesReq, CopyInvoicesRes>(Arg.Any<string>(), Arg.Any<CopyInvoicesReq>())
+                .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<CopyInvoicesResultDto>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.CopyInvoicesAsync(copyDto);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data?.CopiedCount);
+        }
+
+        [Fact]
+        public async Task CopyInvoicesAsync_WithInvalidMonthsGreaterThan12_SendsToApi()
+        {
+            // Arrange
+            var copyDto = new CopyInvoicesDto
+            {
+                SourceMonth = 13,
+                TargetMonth = 14,
+                InvoiceRecords = null
+            };
+            var apiResponse = new ApiResponse<CopyInvoicesRes>
+            {
+                Success = false,
+                Errors = [new ApiError { Message = "Month must be between 1 and 12" }]
+            };
+            _http.PostAsync<CopyInvoicesReq, CopyInvoicesRes>(Arg.Any<string>(), Arg.Any<CopyInvoicesReq>())
+                .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<CopyInvoicesResultDto>>(apiResponse)
+                .Returns(new ApiResponseDto<CopyInvoicesResultDto>
+                {
+                    Success = false,
+                    Errors = [new ApiErrorDto { Message = "Month must be between 1 and 12" }]
+                });
+
+            // Act
+            var result = await _client.CopyInvoicesAsync(copyDto);
+
+            // Assert
+            Assert.False(result.Success);
+        }
+
+        [Theory]
+        [InlineData(1)]
+        [InlineData(25)]
+        [InlineData(100)]
+        public async Task CopyInvoicesAsync_WithVariousInvoiceCounts_ProcessesCorrectly(int count)
+        {
+            // Arrange
+            var invoiceDtos = Enumerable.Range(1, count)
+                .Select(i => new ProjectInvoiceDto
+                {
+                    InvoiceCounter = i,
+                    ProjectParent = $"PP{i:000}",
+                    Amount = i * 100m
+                })
+                .ToList();
+            var copyDto = new CopyInvoicesDto
+            {
+                SourceMonth = 3,
+                TargetMonth = 4,
+                InvoiceRecords = invoiceDtos
+            };
+            var copyRes = new CopyInvoicesRes { Success = true, CopiedCount = count };
+            var apiResponse = new ApiResponse<CopyInvoicesRes> { Success = true, Data = copyRes };
+            var expectedDto = new ApiResponseDto<CopyInvoicesResultDto>
+            {
+                Success = true,
+                Data = new CopyInvoicesResultDto { Success = true, CopiedCount = count }
+            };
+
+            _mapper.Map<ProjectInvoiceReq>(Arg.Any<ProjectInvoiceDto>())
+                .Returns(new ProjectInvoiceReq());
+            _http.PostAsync<CopyInvoicesReq, CopyInvoicesRes>(Arg.Any<string>(), Arg.Any<CopyInvoicesReq>())
+                .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<CopyInvoicesResultDto>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.CopyInvoicesAsync(copyDto);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(count, result.Data?.CopiedCount);
+        }
+
+        [Fact]
+        public async Task CopyInvoicesAsync_WithApiReturningMultipleErrors_ReturnsAllErrors()
+        {
+            // Arrange
+            var copyDto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6 };
+            var errors = new List<ApiError>
+            {
+                new() { Message = "Error 1", Code = "ERR_001" },
+                new() { Message = "Error 2", Code = "ERR_002" },
+                new() { Message = "Error 3", Code = "ERR_003" }
+            };
+            var apiResponse = new ApiResponse<CopyInvoicesRes> { Success = false, Errors = errors };
+            var mappedResponse = new ApiResponseDto<CopyInvoicesResultDto>
+            {
+                Success = false,
+                Errors = errors.Select(e => new ApiErrorDto { Message = e.Message, Code = e.Code }).ToList(),
+                Meta = new ApiMetaDto()
+            };
+
+            _http.PostAsync<CopyInvoicesReq, CopyInvoicesRes>(Arg.Any<string>(), Arg.Any<CopyInvoicesReq>())
+                .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<CopyInvoicesResultDto>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.CopyInvoicesAsync(copyDto);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.Equal(3, result.Errors?.Count);
+        }
+
+        [Fact]
+        public async Task CopyInvoicesAsync_WithEmptyErrorsInSuccessResponse_HandlesCorrectly()
+        {
+            // Arrange
+            var copyDto = new CopyInvoicesDto
+            {
+                SourceMonth = 5,
+                TargetMonth = 6,
+                InvoiceRecords = null
+            };
+            var copyRes = new CopyInvoicesRes
+            {
+                Success = true,
+                Message = "Successfully copied",
+                CopiedCount = 5,
+                FailedCount = 0,
+                Errors = new List<string>()
+            };
+            var apiResponse = new ApiResponse<CopyInvoicesRes> { Success = true, Data = copyRes };
+            var expectedDto = new ApiResponseDto<CopyInvoicesResultDto>
+            {
+                Success = true,
+                Data = new CopyInvoicesResultDto
+                {
+                    Success = true,
+                    CopiedCount = 5,
+                    Errors = new List<string>()
+                }
+            };
+
+            _http.PostAsync<CopyInvoicesReq, CopyInvoicesRes>(Arg.Any<string>(), Arg.Any<CopyInvoicesReq>())
+                .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<CopyInvoicesResultDto>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.CopyInvoicesAsync(copyDto);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!.Errors);
+        }
+
+        #endregion
+
         #region GetMonthlyInvoicesSummaryAsync Tests
 
         [Fact]
@@ -1381,6 +1730,158 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectInvoiceA
             // Assert
             await _http.Received(1).GetAsync<MonthlyInvoicesPivotRes>(
                 Arg.Is<string>(url => url.StartsWith(PactApiEndpoints.GetMonthlyInvoicesSummary)));
+        }
+
+        [Fact]
+        public async Task GetMonthlyInvoicesSummaryAsync_WithComplexData_ReturnsMappedData()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 50 };
+            var pivotRes = new MonthlyInvoicesPivotRes
+            {
+                Months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+                Rows = [],
+                Pagination = new Pagination { PageNumber = 1, PageSize = 50, TotalRecords = 100 }
+            };
+            var apiResponse = new ApiResponse<MonthlyInvoicesPivotRes> { Success = true, Data = pivotRes };
+            var expectedDto = new ApiResponseDto<MonthlyInvoicesPivotDto>
+            {
+                Success = true,
+                Data = new MonthlyInvoicesPivotDto
+                {
+                    Months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                },
+                Pagination = new PaginationDto { PageNumber = 1, PageSize = 50, TotalRecords = 100 }
+            };
+
+            _http.GetAsync<MonthlyInvoicesPivotRes>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<MonthlyInvoicesPivotDto>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.GetMonthlyInvoicesSummaryAsync(query);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(12, result.Data?.Months.Count);
+        }
+
+        [Fact]
+        public async Task GetMonthlyInvoicesSummaryAsync_WithNullData_HandlesGracefully()
+        {
+            // Arrange
+            var query = new QueryParameters<string>();
+            var apiResponse = new ApiResponse<MonthlyInvoicesPivotRes> { Success = true, Data = null };
+            var expectedDto = new ApiResponseDto<MonthlyInvoicesPivotDto>
+            {
+                Success = true,
+                Data = null
+            };
+
+            _http.GetAsync<MonthlyInvoicesPivotRes>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<MonthlyInvoicesPivotDto>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.GetMonthlyInvoicesSummaryAsync(query);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Null(result.Data);
+        }
+
+        [Fact]
+        public async Task GetMonthlyInvoicesSummaryAsync_WithEmptyMonthsList_ReturnsEmptyList()
+        {
+            // Arrange
+            var query = new QueryParameters<string>();
+            var pivotRes = new MonthlyInvoicesPivotRes
+            {
+                Months = [],
+                Rows = [],
+                Pagination = new Pagination()
+            };
+            var apiResponse = new ApiResponse<MonthlyInvoicesPivotRes> { Success = true, Data = pivotRes };
+            var expectedDto = new ApiResponseDto<MonthlyInvoicesPivotDto>
+            {
+                Success = true,
+                Data = new MonthlyInvoicesPivotDto { Months = [] }
+            };
+
+            _http.GetAsync<MonthlyInvoicesPivotRes>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<MonthlyInvoicesPivotDto>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.GetMonthlyInvoicesSummaryAsync(query);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!.Months);
+        }
+
+        [Fact]
+        public async Task GetMonthlyInvoicesSummaryAsync_WithQueryParameters_AppendsCorrectly()
+        {
+            // Arrange
+            var query = new QueryParameters<string>
+            {
+                Page = 2,
+                PageSize = 25,
+                SortBy = "ProjectParent",
+                Descending = true
+            };
+            var apiResponse = new ApiResponse<MonthlyInvoicesPivotRes>
+            {
+                Success = true,
+                Data = new MonthlyInvoicesPivotRes()
+            };
+            _http.GetAsync<MonthlyInvoicesPivotRes>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<MonthlyInvoicesPivotDto>>(apiResponse)
+                .Returns(new ApiResponseDto<MonthlyInvoicesPivotDto> { Success = true });
+
+            // Act
+            await _client.GetMonthlyInvoicesSummaryAsync(query);
+
+            // Assert
+            await _http.Received(1).GetAsync<MonthlyInvoicesPivotRes>(
+                Arg.Is<string>(url =>
+                    url.Contains("Page=2") &&
+                    url.Contains("PageSize=25")));
+        }
+
+        [Fact]
+        public async Task GetMonthlyInvoicesSummaryAsync_WithMultipleErrors_ReturnsAllErrors()
+        {
+            // Arrange
+            var query = new QueryParameters<string>();
+            var errors = new List<ApiError>
+            {
+                new() { Message = "Error 1", Code = "ERR_001" },
+                new() { Message = "Error 2", Code = "ERR_002" }
+            };
+            var apiResponse = new ApiResponse<MonthlyInvoicesPivotRes>
+            {
+                Success = false,
+                Errors = errors
+            };
+            var mappedResponse = new ApiResponseDto<MonthlyInvoicesPivotDto>
+            {
+                Success = false,
+                Errors = errors.Select(e => new ApiErrorDto { Message = e.Message, Code = e.Code }).ToList(),
+                Meta = new ApiMetaDto()
+            };
+
+            _http.GetAsync<MonthlyInvoicesPivotRes>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<MonthlyInvoicesPivotDto>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.GetMonthlyInvoicesSummaryAsync(query);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.Equal(2, result.Errors?.Count);
         }
 
         #endregion

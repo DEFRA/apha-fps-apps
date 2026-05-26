@@ -3,9 +3,6 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Apha.FPSApps.Web.Areas.PACT.Models
 {
-    /// <summary>
-    /// View model for the Automatic Monthly Invoice Creation page
-    /// </summary>
     public class AutomaticMonthlyInvoiceViewModel
     {
         public int? SelectedMonth { get; set; }

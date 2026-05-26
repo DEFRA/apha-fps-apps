@@ -3,9 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Apha.FPSApps.Web.Areas.PACT.Models
 {
-    /// <summary>
-    /// Represents an invoice item in the Automatic Monthly Invoice Creation grid
-    /// </summary>
+    
     public class AutomaticInvoiceItem
     {
         [GridColumn(Type = GridColumnType.ReadOnly, IsVisible = false)]

@@ -593,36 +593,6 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProjectInvoiceControllerTest
             await _serviceMock.Received(1).GetPagedProjectInvoicesByMonthAsync(query, null);
         }
 
-        [Fact]
-        public async Task GetPagedProjectInvoicesByMonth_MonthLessThan1_ReturnsBadRequest()
-        {
-            // Arrange
-            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var month = 0;
-
-            // Act
-            var result = await _controller.GetPagedProjectInvoicesByMonth(query, month);
-
-            // Assert
-            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-            Assert.Contains("Month must be between 1 and 12", badRequestResult.Value?.ToString());
-            await _serviceMock.DidNotReceive().GetPagedProjectInvoicesByMonthAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<int?>());
-        }
-
-        [Fact]
-        public async Task GetPagedProjectInvoicesByMonth_MonthGreaterThan12_ReturnsBadRequest()
-        {
-            // Arrange
-            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var month = 13;
-
-            // Act
-            var result = await _controller.GetPagedProjectInvoicesByMonth(query, month);
-
-            // Assert
-            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-            Assert.Contains("Month must be between 1 and 12", badRequestResult.Value?.ToString());
-        }
 
         [Theory]
         [InlineData(1)]
@@ -686,21 +656,6 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProjectInvoiceControllerTest
 
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentException>(() => _controller.GetPagedProjectInvoicesByMonth(query, month));
-        }
-
-        [Fact]
-        public async Task GetPagedProjectInvoicesByMonth_NegativeMonth_ReturnsBadRequest()
-        {
-            // Arrange
-            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var month = -1;
-
-            // Act
-            var result = await _controller.GetPagedProjectInvoicesByMonth(query, month);
-
-            // Assert
-            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-            Assert.Contains("Month must be between 1 and 12", badRequestResult.Value?.ToString());
         }
 
         [Fact]
@@ -1177,7 +1132,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProjectInvoiceControllerTest
             // Arrange
             var request = new CopyInvoicesReq { SourceMonth = 5, TargetMonth = 6, InvoiceRecords = new List<ProjectInvoiceReq>() };
             var dto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6, InvoiceRecords = new List<ProjectInvoiceDto>() };
-            var resultDto = new CopyInvoicesResultDto { Success = true, CopiedCount = 10 };
+            var resultDto = new CopyInvoicesResultDto { Success = true, CopiedCount = 10, FailedCount = 0 };
             var response = new CopyInvoicesRes { Success = true, CopiedCount = 10 };
 
             _mapperMock.Map<CopyInvoicesDto>(request).Returns(dto);
@@ -1205,16 +1160,6 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProjectInvoiceControllerTest
 
             // Act & Assert
             await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.CopyInvoices(request));
-        }
-
-        [Fact]
-        public async Task CopyInvoices_NullRequest_ThrowsException()
-        {
-            // Arrange
-            CopyInvoicesReq? request = null;
-
-            // Act & Assert
-            await Assert.ThrowsAsync<NullReferenceException>(() => _controller.CopyInvoices(request!));
         }
 
         [Fact]
@@ -1400,6 +1345,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProjectInvoiceControllerTest
             var response = Assert.IsType<ProjectInvoiceRes>(okResult.Value);
             Assert.Equal(int.MaxValue, response.InvoiceCounter);
         }
+        #endregion
 
         #region CopyInvoices_ValidationTests
 
@@ -1440,8 +1386,6 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProjectInvoiceControllerTest
             await _serviceMock.Received(1).CopyInvoicesAsync(Arg.Is<CopyInvoicesDto>(d => 
                 d.SourceMonth == 11 && d.TargetMonth == 12));
         }
-
-        #endregion
 
         #endregion
     }

@@ -173,7 +173,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             };
 
             // Convert int months to strings for API endpoint
-            string url = $"{PactApiEndpoints.CopyProjectInvoices}?sourceMonth={copyDto.SourceMonth}&destinationMonth={copyDto.TargetMonth}";
+            string url = $"{PactApiEndpoints.CopyProjectInvoices}";
 
             var response = await _http.PostAsync<CopyInvoicesReq, CopyInvoicesRes>(url, request);
 
