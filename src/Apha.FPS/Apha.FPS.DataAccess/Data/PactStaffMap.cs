@@ -10,7 +10,7 @@ namespace Apha.FPS.DataAccess.Data
         {
             entity
                .HasNoKey()
-               .ToView("vpacttblstaff", "fps");
+               .ToSqlQuery("SELECT pactid, spnumber, name, workgroupgrade, title, personstatus, personclass, hrspaid, leave, sickspecial, hrsavail, fpsyear FROM fps.vpacttblstaff");
 
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.HrsAvail).HasColumnName("hrsavail");
