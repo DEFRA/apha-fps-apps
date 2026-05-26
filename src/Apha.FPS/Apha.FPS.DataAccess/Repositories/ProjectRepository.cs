@@ -1130,8 +1130,8 @@ namespace Apha.FPS.DataAccess.Repositories
                     && pg != null
                     && EF.Functions.ILike(pg.SectorName!, "%charge%")
                 select new
-                {
-                    ProgramNo = pg.ProgramNo,
+                {                    
+                    sectorCharge = (pg.SectorName ?? "").Trim().ToLower() == "charge" ? 1m : 0m,
                     JobCode = sj.JobCode,                    
                     PlannedHours = sj.PlannedHours,
                     ChargeRate = p.IsDefraProject == 0 ? pcg.ChargeRate : pcg.DefraChargeRate
@@ -1187,10 +1187,11 @@ namespace Apha.FPS.DataAccess.Repositories
                     g => g.Sum(x => (decimal)(x.NumberOfAnimals * x.NumberOfDays) * (x.Cost ?? 0m)));
 
             var staffMap = staffCosts
+                .Where(e=>e.sectorCharge == 1m)
                 .GroupBy(x => x.JobCode)
                 .ToDictionary(
                     g => g.Key,
-                    g => g.Sum(x => (decimal)x.PlannedHours * (x.ChargeRate ?? 0m)));
+                    g => g.Sum(x => (decimal)x.PlannedHours * (x.ChargeRate ?? 0m) * x.sectorCharge));
             var additionalMap = additionalCosts.ToDictionary(x => x.JobCode, x => x.TotalAdditional);
             var testMap = testCosts.ToDictionary(x => x.JobCode, x => x.TotalTest);
 
