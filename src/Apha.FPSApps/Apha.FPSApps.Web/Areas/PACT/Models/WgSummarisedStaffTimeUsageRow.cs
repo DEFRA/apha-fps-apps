@@ -10,29 +10,13 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
     /// </summary>
     public class WgSummarisedStaffTimeUsageRow
     {
-        //[Display(Name = "Work Group")]
-        //[GridColumn(Order = 1, Width = 120, Type = GridColumnType.Text, IsFilterable = true)]
-        //public string? WorkGroup { get; set; }
-
-        //[Display(Name = "Name")]
-        //[GridColumn(Order = 2, Width = 160, Type = GridColumnType.Text, IsFilterable = true)]
-        //public string? Name { get; set; }
-
-        //[Display(Name = "Hrs Paid")]
-        //[GridColumn(Order = 3, Width = 80, Type = GridColumnType.DecimalNumber)]
-        //public double? HrsPaid { get; set; }
-
         [Display(Name = "Project")]
-        [GridColumn(Order = 4, Width = 130, Type = GridColumnType.Text, IsFilterable = true)]
+        [GridColumn(Order = 4, Width = 130, Type = GridColumnType.Text)]
         public string? ParentProject { get; set; }
 
         [Display(Name = "Job Code")]
-        [GridColumn(Order = 5, Width = 90, Type = GridColumnType.Text, IsFilterable = true)]
+        [GridColumn(Order = 5, Width = 90, Type = GridColumnType.Text)]
         public string? JobCode { get; set; }
-
-        //[Display(Name = "Job Title")]
-        //[GridColumn(Order = 6, Width = 160, Type = GridColumnType.Text, IsFilterable = true)]
-        //public string? JobTitle { get; set; }
 
         [Display(Name = "Apr")]
         [GridColumn(Order = 7, Width = 55, Type = GridColumnType.DecimalNumber)]

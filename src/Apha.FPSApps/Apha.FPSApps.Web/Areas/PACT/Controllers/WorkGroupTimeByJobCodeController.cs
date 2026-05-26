@@ -50,7 +50,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 WorkGroupName      = workGroup,
                 HrsPaid            = response.Data?.HrsPaid ?? 0,
                 Grid               = MapToGridConfig(response, sortBy: null, descending: false),
-                Summary            = MapToSummary(response)
+                Summary            = MapToSummary(response),
+                JobTitleLookup     = BuildJobTitleLookup(response)
             });
         }
 
@@ -151,9 +152,26 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             AllowAdd          = false,
             AllowEdit         = false,
             AllowDelete       = false,
-            AllowRowSelection = false,
+            AllowRowSelection = true,
+            RowSelectFunction = "onTimeByJobCodeRowSelected",
             ShowPagination    = true,
             Columns           = GridDataProvider.GetColumnsDefination<WgSummarisedStaffTimeUsageRow>()
         };
+
+        /// <summary>
+        /// Builds a JobCode → JobTitle lookup from the full (unpaged) response rows so the view
+        /// can expose it to JavaScript without adding a hidden column to the grid.
+        /// </summary>
+        private static Dictionary<string, string> BuildJobTitleLookup(
+            ApiResponseDto<WgSummarisedStaffTimeUsageDto> response)
+        {
+            if (!response.Success || response.Data is null)
+                return new Dictionary<string, string>();
+
+            return response.Data.Rows
+                .Where(r => !string.IsNullOrWhiteSpace(r.JobCode))
+                .DistinctBy(r => r.JobCode)
+                .ToDictionary(r => r.JobCode!, r => r.JobTitle ?? string.Empty);
+        }
     }
 }

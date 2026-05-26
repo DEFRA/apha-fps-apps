@@ -101,7 +101,7 @@ namespace Apha.PACT.Application.Services
                     {
                         ParentProject = g.Key.ParentProject,
                         JobCode = g.Key.JobCode,
-                        JobTitle = g.First().JobTitle,
+                        JobTitle = string.IsNullOrWhiteSpace(g.First().JobTitle) ? "No description available" : g.First().JobTitle,
                         April = HoursForMonth("April"),
                         May = HoursForMonth("May"),
                         June = HoursForMonth("June"),

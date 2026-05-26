@@ -27,153 +27,6 @@
     </div>
 </div>
 
-@* ── Grid extra-filter: keeps workGroup and personName in every sort/pagination POST ── *@
-<script>
-    var currentWorkGroup = '@Html.Raw(Model.SelectedWorkGroup ?? "")';
-    var currentPersonName = '@Html.Raw(Model.SelectedPersonName ?? "")';
-    function getWorkGroupTimeByJobCodeExtraFilters() {
-        return { workGroup: currentWorkGroup, personName: currentPersonName };
-    }
-
-                function alignColumnTotals() {
-                const table = document.querySelector('#gridContainer_timeUsageGrid table');
-                if (!table) return;
-
-                const tableRect = table.getBoundingClientRect();
-                const headers = table.querySelectorAll('thead th');
-
-                if (headers.length === 0) return;
-
-                // Map of column field names to their index in the table
-                const columnMap = {
-                            'ParentProject': 0,
-                            'JobCode': 1,
-                            'April': 2,
-                            'May': 3,
-                            'June': 4,
-                            'July': 5,
-                            'August': 6,
-                            'September': 7,
-                            'October': 8,
-                            'November': 9,
-                            'December': 10,
-                            'January': 11,
-                            'February': 12,
-                            'March': 13,
-                            'TotalTime': 14,
-                            'TotalCost': 15
-                };
-
-                // Function to align a specific container
-                const alignContainer = (containerId) => {
-                    const container = document.getElementById(containerId);
-                    if (!container) return;
-
-                    const label = container.querySelector('.column-total-label');
-                    const columns = container.querySelectorAll('.column-total');
-
-                    if (!label || columns.length === 0) return;
-
-                    // Position label to align with Project + JobCode columns
-                    const projectHeader = headers[columnMap['ParentProject']];
-                    const jobCodeHeader = headers[columnMap['JobCode']];
-
-                    if (projectHeader && jobCodeHeader) {
-                        const projectRect = projectHeader.getBoundingClientRect();
-                        const jobCodeRect = jobCodeHeader.getBoundingClientRect();
-                        const labelLeft = projectRect.left - tableRect.left;
-                        const labelWidth = (jobCodeRect.right - projectRect.left);
-
-                        label.style.position = 'absolute';
-                        label.style.left = labelLeft + 'px';
-                        label.style.width = labelWidth + 'px';
-                    }
-
-                    // Position each column total div
-                    const monthColumns = ['April', 'May', 'June', 'July', 'August', 'September',
-                                        'October', 'November', 'December', 'January', 'February', 'March',
-                                        'TotalTime', 'TotalCost'];
-
-                    columns.forEach((col, index) => {
-                        if (index >= monthColumns.length) return;
-
-                        const columnName = monthColumns[index];
-                        const headerIndex = columnMap[columnName];
-                        const header = headers[headerIndex];
-
-                        if (header) {
-                            const headerRect = header.getBoundingClientRect();
-                            const colLeft = headerRect.left - tableRect.left;
-                            const colWidth = headerRect.width;
-
-                            col.style.position = 'absolute';
-                            col.style.left = colLeft + 'px';
-                            col.style.width = colWidth + 'px';
-                        }
-                    });
-                };
-
-                // Align all three containers
-                alignContainer('columnTotalsContainer');
-                alignContainer('columnStandardHoursContainer');
-                alignContainer('columnStndHrsAllocatedContainer');
-            }
-
-            // Wrap setup in DOMContentLoaded to ensure grid is rendered
-            document.addEventListener('DOMContentLoaded', function() {
-                // Setup column totals alignment
-                const table = document.querySelector('#gridContainer_timeUsageGrid table');
-                if (table) {
-                    // Align after grid is rendered
-                    window.addEventListener('load', () => requestAnimationFrame(alignColumnTotals));
-                    window.addEventListener('resize', () => requestAnimationFrame(alignColumnTotals));
-
-                    // Use ResizeObserver to watch for table changes
-                    const observer = new ResizeObserver(() => requestAnimationFrame(alignColumnTotals));
-                    observer.observe(table);
-
-                    // Listen for mouseup to catch column resize completion
-                    let isResizing = false;
-                    document.addEventListener('mousedown', function(e) {
-                        if (e.target.classList.contains('column-resizer')) {
-                            isResizing = true;
-                        }
-                    });
-
-                    document.addEventListener('mouseup', function(e) {
-                        if (isResizing) {
-                            isResizing = false;
-                            requestAnimationFrame(alignColumnTotals);
-                        }
-                    });
-
-                    // Use MutationObserver to watch for style changes on table headers
-                    const mutationObserver = new MutationObserver(function(mutations) {
-                        let shouldRealign = false;
-                        mutations.forEach(function(mutation) {
-                            if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
-                                shouldRealign = true;
-                            }
-                        });
-                        if (shouldRealign) {
-                            requestAnimationFrame(alignColumnTotals);
-                        }
-                    });
-
-                    // Observe all th elements for style changes
-                    const headers = table.querySelectorAll('th');
-                    headers.forEach(function(th) {
-                        mutationObserver.observe(th, { attributes: true, attributeFilter: ['style'] });
-                    });
-
-                    // Also align after initial render with a slight delay
-                    setTimeout(() => alignColumnTotals(), 100);
-                    setTimeout(() => alignColumnTotals(), 500); // Extra delay for grid initialization
-                }
-            });
-
-</script>
-
 @* ── Data Grid ──────────────────────────────────────────────────────────── *@
 <div class="govuk-grid-row sup_margin_left_right_0" style="margin-top:20px;">
     <div class="govuk-grid-column-full">
@@ -233,4 +86,29 @@
             }
         </div>
     </div>
+    <div class="govuk-grid-row sup_margin_left_right_0 sup_margin_bottom_10">
+        <div class="govuk-grid-column-one-quarter sup_mr_0_pr_0">
+            <div class="sup_flex_between_center">
+                <label class="govuk-label govuk-!-font-weight-bold sup_visually_hidden">Selected Project:</label>
+                <input type="text" id="txtJobCode" class="govuk-input govuk-!-font-size-16" readonly="">
+                <span class="sup_margin_left_10">is</span>
+            </div>
+        </div>
+
+        <div class="govuk-grid-column-one-half">
+            <label class="govuk-label govuk-!-font-weight-bold sup_visually_hidden">Project Description:</label>
+            <input type="text" id="txtJobTitle" class="govuk-input govuk-!-font-size-16" readonly="">
+        </div>
+    </div>
 </div>
+
+@* ── Grid extra-filter: server-rendered values consumed by the external JS file ── *@
+<script>
+    var currentWorkGroup   = '@Html.Raw(Model.SelectedWorkGroup ?? "")';
+    var currentPersonName  = '@Html.Raw(Model.SelectedPersonName ?? "")';
+    var jobTitleLookup     = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.JobTitleLookup))
+</script>
+
+@section Scripts {
+    <script src="~/js/pact_js/work-group-time-by-job-code.js"></script>
+}

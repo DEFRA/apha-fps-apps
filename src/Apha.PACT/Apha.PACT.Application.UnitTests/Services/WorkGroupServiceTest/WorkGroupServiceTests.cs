@@ -703,6 +703,78 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
         }
 
         [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_JobTitle_NullValue_ShowsNoDescriptionAvailable()
+        {
+            var entries = new List<WgSummarisedStaffTimeUsageView>
+            {
+                TimeUsageEntry(parentProject: "PP1", jobCode: "JC1", jobTitle: null!, monthName: "April")
+            };
+            var mappedEntries = entries.Select(e => new WgSummarisedStaffTimeUsageEntryDto
+            {
+                ParentProject = e.ParentProject,
+                JobCode       = e.JobCode,
+                JobTitle      = e.JobTitle,
+                MonthName     = e.MonthName,
+                TotalTime     = e.TotalTime,
+                TotalCost     = e.TotalCost
+            });
+            _mockRepository.GetWgSummarisedStaffTimeUsageAsync("WG1").Returns(entries);
+            _mockMapper.Map<IEnumerable<WgSummarisedStaffTimeUsageEntryDto>>(entries).Returns(mappedEntries);
+
+            var result = await _sut.GetWgSummarisedStaffTimeUsageAsync(DefaultQuery(), "WG1");
+
+            result.Rows.Single().JobTitle.Should().Be("No description available");
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_JobTitle_EmptyString_ShowsNoDescriptionAvailable()
+        {
+            var entries = new List<WgSummarisedStaffTimeUsageView>
+            {
+                TimeUsageEntry(parentProject: "PP1", jobCode: "JC1", jobTitle: "", monthName: "April")
+            };
+            var mappedEntries = entries.Select(e => new WgSummarisedStaffTimeUsageEntryDto
+            {
+                ParentProject = e.ParentProject,
+                JobCode       = e.JobCode,
+                JobTitle      = e.JobTitle,
+                MonthName     = e.MonthName,
+                TotalTime     = e.TotalTime,
+                TotalCost     = e.TotalCost
+            });
+            _mockRepository.GetWgSummarisedStaffTimeUsageAsync("WG1").Returns(entries);
+            _mockMapper.Map<IEnumerable<WgSummarisedStaffTimeUsageEntryDto>>(entries).Returns(mappedEntries);
+
+            var result = await _sut.GetWgSummarisedStaffTimeUsageAsync(DefaultQuery(), "WG1");
+
+            result.Rows.Single().JobTitle.Should().Be("No description available");
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_JobTitle_WhitespaceOnly_ShowsNoDescriptionAvailable()
+        {
+            var entries = new List<WgSummarisedStaffTimeUsageView>
+            {
+                TimeUsageEntry(parentProject: "PP1", jobCode: "JC1", jobTitle: "   ", monthName: "April")
+            };
+            var mappedEntries = entries.Select(e => new WgSummarisedStaffTimeUsageEntryDto
+            {
+                ParentProject = e.ParentProject,
+                JobCode       = e.JobCode,
+                JobTitle      = e.JobTitle,
+                MonthName     = e.MonthName,
+                TotalTime     = e.TotalTime,
+                TotalCost     = e.TotalCost
+            });
+            _mockRepository.GetWgSummarisedStaffTimeUsageAsync("WG1").Returns(entries);
+            _mockMapper.Map<IEnumerable<WgSummarisedStaffTimeUsageEntryDto>>(entries).Returns(mappedEntries);
+
+            var result = await _sut.GetWgSummarisedStaffTimeUsageAsync(DefaultQuery(), "WG1");
+
+            result.Rows.Single().JobTitle.Should().Be("No description available");
+        }
+
+        [Fact]
         public async Task GetWgSummarisedStaffTimeUsageAsync_AllTwelveMonthsPivotedCorrectly()
         {
             var months = new[]
