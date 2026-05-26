@@ -72,6 +72,21 @@
     <script>
         var projectGridId = '@Model.ProjectGrid.GridId';
 
+        $(document).ready(function () {
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <text>showGovukAlert('@Html.Raw(TempData["SuccessMessage"])');</text>
+            }
+            @if (TempData["Error"] != null)
+            {
+                <text>showGovukAlert('@Html.Raw(TempData["Error"])');</text>
+            }
+
+            $('#addBtn').on('click', function () {
+                window.location.href = '@Url.Action("Index", "ProposedProject", new { area = "PIMS" })';
+            });
+        });
+
         function getGridManager() {
             return window['gridManager_' + projectGridId];
         }

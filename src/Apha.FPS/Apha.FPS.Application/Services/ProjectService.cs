@@ -208,5 +208,13 @@ namespace Apha.FPS.Application.Services
 
             await _projectRepository.DeleteProjectAndChildrenAsync(parentProject);
         }
+
+        public async Task<PaginatedResult<ProjectProfitabilityDto>> GetProjectProfitabilityAsync(
+            QueryParameters<string> query, string programNo, string workTypeFilter)
+        {
+            var pagedResult = await _projectRepository.GetProjectProfitabilityAsync(
+                _mapper.Map<PaginationParameters<string>>(query), programNo, workTypeFilter);
+            return _mapper.Map<PaginatedResult<ProjectProfitabilityDto>>(pagedResult);
+        }
     }
 }

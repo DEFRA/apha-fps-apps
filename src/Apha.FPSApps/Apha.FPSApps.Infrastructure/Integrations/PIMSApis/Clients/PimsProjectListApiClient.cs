@@ -107,25 +107,5 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        public async Task<ApiResponseDto<ProposedProjectDto>> CreateProjectAsync(ProposedProjectDto dto)
-        {
-            try
-            {
-                ProposedProjectReq request = _mapper.Map<ProposedProjectReq>(dto);
-                var response = await _http.PostAsync<ProposedProjectReq, ProposedProjectRes>(PimsApiEndpoints.CreateProject, request);
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<ProposedProjectDto>>(response);
-
-                var responseDto = _mapper.Map<ApiResponseDto<ProposedProjectDto>>(response);
-                return ApiResponseDto<ProposedProjectDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<ProposedProjectDto>.FailureResponse(
-                    [new ApiErrorDto { Message = "Failed to create project", Code = InternalCodeError }],
-                    new ApiMetaDto());
             }
         }
-        
-    }
-}
