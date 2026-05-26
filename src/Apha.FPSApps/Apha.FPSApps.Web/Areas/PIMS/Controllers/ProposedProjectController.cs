@@ -15,12 +15,12 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
     public class ProposedProjectController : Controller
     {
         private readonly IMapper _mapper;
-        private readonly IProjectListService _projectListService;
+        private readonly IProposedProjectService _proposedProjectService;
 
-        public ProposedProjectController(IMapper mapper, IProjectListService projectListService)
+        public ProposedProjectController(IMapper mapper, IProposedProjectService proposedProjectService)
         {
             _mapper = mapper;
-            _projectListService = projectListService;
+            _proposedProjectService = proposedProjectService;
         }
 
         public async Task<IActionResult> Index()
@@ -49,7 +49,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             }
 
             ProposedProjectDto dto = _mapper.Map<ProposedProjectDto>(model);
-            var result = await _projectListService.CreateProjectAsync(dto);
+            var result = await _proposedProjectService.CreateProposedProjectAsync(dto);
 
             if (result.Success)
             {
@@ -61,7 +61,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 foreach (var error in result.Errors)
                 {
                     ModelState.AddModelError(string.Empty, error.Message ?? "An error occurred.");
-                    TempData["Error"] = error.Message ?? "An error occurred."; // ← triggers showGovukAlert for errors
+                    TempData["Error"] = error.Message ?? "An error occurred.";
                 }
             }
 
@@ -87,9 +87,9 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
 
         private async Task<ProposedProjectViewModel> BuildViewModelAsync()
         {
-            var programsTask = _projectListService.GetProjectProgramsAsync();
-            var customersTask = _projectListService.GetProjectCustomersAsync();
-            var statusesTask = _projectListService.GetProjectStatusesAsync();
+            var programsTask = _proposedProjectService.GetProjectProgramsAsync();
+            var customersTask = _proposedProjectService.GetProjectCustomersAsync();
+            var statusesTask = _proposedProjectService.GetProjectStatusesAsync();
 
             await Task.WhenAll(programsTask, customersTask, statusesTask);
 
@@ -114,3 +114,4 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
         }
     }
 }
+

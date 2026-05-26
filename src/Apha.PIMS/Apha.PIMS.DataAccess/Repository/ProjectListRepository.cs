@@ -127,62 +127,12 @@ namespace Apha.PIMS.DataAccess.Repository
             return ApplyPaging(result, queryFilter.Page, queryFilter.PageSize);
         }
 
-        public async Task<Project?> GetFpsProjectByIdAsync(string parentproject)
-        {
-            return await _context.Projects
-                .AsNoTracking()
-                .FirstOrDefaultAsync(p => p.Parentproject == parentproject);
-        }
-
-        public async Task<ProposedProject?> GetProposedProjectByIdAsync(string parentproject)
-        {
-            return await _context.ProposedProjects
-                .AsNoTracking()
-                .FirstOrDefaultAsync(p => p.Parentproject == parentproject);
-        }
-
         public async Task<List<Projects>> GetYearlyDetailsByProjectAsync(string parentproject)
         {
             return await _context.MyTlkpProjects
                 .AsNoTracking()
                 .Where(p => p.Parentproject == parentproject)
                 .OrderByDescending(p => p.Year)
-                .ToListAsync();
-        }
-
-        public async Task<ProposedProject> AddProjectAsync(ProposedProject entity)
-        {
-            _context.ProposedProjects.Add(entity);
-            await _context.SaveChangesAsync();
-            return entity;
-        }
-
-        public async Task<List<string>> GetProjectProgramsAsync()
-        {
-            return await _context.RadtrackProgs
-                .AsNoTracking()
-                .Select(p => p.Program)
-                .Distinct()
-                .OrderBy(p => p)
-                .ToListAsync();
-        }
-
-        public async Task<List<string>> GetProjectCustomersAsync()
-        {
-            return await _context.ProjectLatestDetails
-                .AsNoTracking()
-                .Where(p => p.Customer != null)
-                .GroupBy(p => p.Customer)
-                .Select(g => g.Key!)
-                .OrderBy(c => c)
-                .ToListAsync();
-        }
-
-        public async Task<List<ProjectStatus>> GetProjectStatusesAsync()
-        {
-            return await _context.ProjectStatuses
-                .AsNoTracking()
-                .Where(s => s.IsPims && s.Projectstatus != "Completed")
                 .ToListAsync();
         }
 
