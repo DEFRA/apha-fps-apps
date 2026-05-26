@@ -62,6 +62,13 @@ namespace Apha.FPSApps.Application.Dtos.PACT
         public double PercentAllocatedMarch { get; set; }
     }
 
+    /// <summary>A single JobCode → JobTitle pair used in the client-side lookup.</summary>
+    public class JobTitleLookupItemDto
+    {
+        public string JobCode  { get; set; } = string.Empty;
+        public string JobTitle { get; set; } = string.Empty;
+    }
+
     /// <summary>Wrapper containing rows and pre-computed footer summary.</summary>
     public class WgSummarisedStaffTimeUsageDto
     {
@@ -69,5 +76,11 @@ namespace Apha.FPSApps.Application.Dtos.PACT
         public WgSummarisedStaffTimeUsageSummaryDto Summary { get; set; } = new();
         public Apha.FPSApps.Application.Dtos.PaginationDto Pagination { get; set; } = new();
         public double HrsPaid { get; set; }
+
+        /// <summary>
+        /// Complete JobCode → JobTitle list built from all rows (pre-pagination)
+        /// so clients can resolve job titles across any page without an extra round-trip.
+        /// </summary>
+        public List<JobTitleLookupItemDto> JobTitleLookup { get; set; } = [];
     }
 }

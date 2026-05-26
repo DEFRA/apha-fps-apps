@@ -809,6 +809,176 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
 
         #endregion
 
+        #region GetWgSummarisedStaffTimeUsageAsync — JobTitleLookup
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_SingleJobCode_LookupContainsOneItem()
+        {
+            _mockRepository.GetWgSummarisedStaffTimeUsageAsync("WG1").Returns(
+            [
+                TimeUsageEntry(jobCode: "JC1", jobTitle: "Analyst", monthName: "April"),
+                TimeUsageEntry(jobCode: "JC1", jobTitle: "Analyst", monthName: "May")   // same code, different month
+            ]);
+
+            var result = await _sut.GetWgSummarisedStaffTimeUsageAsync(DefaultQuery(), "WG1");
+
+            result.JobTitleLookup.Should().HaveCount(1);
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_SingleJobCode_LookupItemHasCorrectJobCodeAndTitle()
+        {
+            _mockRepository.GetWgSummarisedStaffTimeUsageAsync("WG1").Returns(
+            [
+                TimeUsageEntry(jobCode: "JC1", jobTitle: "Analyst", monthName: "April")
+            ]);
+
+            var result = await _sut.GetWgSummarisedStaffTimeUsageAsync(DefaultQuery(), "WG1");
+
+            var item = result.JobTitleLookup.Single();
+            item.JobCode.Should().Be("JC1");
+            item.JobTitle.Should().Be("Analyst");
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_MultipleDistinctJobCodes_LookupContainsOneItemPerCode()
+        {
+            _mockRepository.GetWgSummarisedStaffTimeUsageAsync("WG1").Returns(
+            [
+                TimeUsageEntry(parentProject: "PP1", jobCode: "JC1", jobTitle: "Analyst",   monthName: "April"),
+                TimeUsageEntry(parentProject: "PP1", jobCode: "JC2", jobTitle: "Developer", monthName: "April"),
+                TimeUsageEntry(parentProject: "PP2", jobCode: "JC3", jobTitle: "Tester",    monthName: "April")
+            ]);
+
+            var result = await _sut.GetWgSummarisedStaffTimeUsageAsync(DefaultQuery(), "WG1");
+
+            result.JobTitleLookup.Should().HaveCount(3);
+            result.JobTitleLookup.Should().Contain(x => x.JobCode == "JC1" && x.JobTitle == "Analyst");
+            result.JobTitleLookup.Should().Contain(x => x.JobCode == "JC2" && x.JobTitle == "Developer");
+            result.JobTitleLookup.Should().Contain(x => x.JobCode == "JC3" && x.JobTitle == "Tester");
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_DuplicateJobCodes_LookupDeduplicatesByJobCode()
+        {
+            // Same JobCode appears in multiple rows (different ParentProject or month)
+            _mockRepository.GetWgSummarisedStaffTimeUsageAsync("WG1").Returns(
+            [
+                TimeUsageEntry(parentProject: "PP1", jobCode: "JC1", jobTitle: "Analyst", monthName: "April"),
+                TimeUsageEntry(parentProject: "PP2", jobCode: "JC1", jobTitle: "Analyst", monthName: "April"),
+                TimeUsageEntry(parentProject: "PP1", jobCode: "JC1", jobTitle: "Analyst", monthName: "May")
+            ]);
+
+            var result = await _sut.GetWgSummarisedStaffTimeUsageAsync(DefaultQuery(), "WG1");
+
+            result.JobTitleLookup.Should().HaveCount(1);
+            result.JobTitleLookup.Single().JobCode.Should().Be("JC1");
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_NullJobCode_ExcludedFromLookup()
+        {
+            _mockRepository.GetWgSummarisedStaffTimeUsageAsync("WG1").Returns(
+            [
+                TimeUsageEntry(jobCode: "JC1",  jobTitle: "Analyst", monthName: "April"),
+                TimeUsageEntry(jobCode: null!,   jobTitle: "Unknown", monthName: "April")
+            ]);
+
+            var result = await _sut.GetWgSummarisedStaffTimeUsageAsync(DefaultQuery(), "WG1");
+
+            result.JobTitleLookup.Should().HaveCount(1);
+            result.JobTitleLookup.Should().NotContain(x => x.JobCode == null);
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_WhitespaceJobCode_ExcludedFromLookup()
+        {
+            _mockRepository.GetWgSummarisedStaffTimeUsageAsync("WG1").Returns(
+            [
+                TimeUsageEntry(jobCode: "JC1", jobTitle: "Analyst", monthName: "April"),
+                TimeUsageEntry(jobCode: "   ", jobTitle: "Unknown", monthName: "April")
+            ]);
+
+            var result = await _sut.GetWgSummarisedStaffTimeUsageAsync(DefaultQuery(), "WG1");
+
+            result.JobTitleLookup.Should().HaveCount(1);
+            result.JobTitleLookup.Single().JobCode.Should().Be("JC1");
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_NullJobTitle_LookupItemJobTitleIsNoDescriptionAvailable()
+        {
+            _mockRepository.GetWgSummarisedStaffTimeUsageAsync("WG1").Returns(
+            [
+                TimeUsageEntry(jobCode: "JC1", jobTitle: null!, monthName: "April")
+            ]);
+
+            var result = await _sut.GetWgSummarisedStaffTimeUsageAsync(DefaultQuery(), "WG1");
+
+            result.JobTitleLookup.Single().JobTitle.Should().Be("No description available");
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_EmptyJobTitle_LookupItemJobTitleIsNoDescriptionAvailable()
+        {
+            _mockRepository.GetWgSummarisedStaffTimeUsageAsync("WG1").Returns(
+            [
+                TimeUsageEntry(jobCode: "JC1", jobTitle: "", monthName: "April")
+            ]);
+
+            var result = await _sut.GetWgSummarisedStaffTimeUsageAsync(DefaultQuery(), "WG1");
+
+            result.JobTitleLookup.Single().JobTitle.Should().Be("No description available");
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_WhitespaceJobTitle_LookupItemJobTitleIsNoDescriptionAvailable()
+        {
+            _mockRepository.GetWgSummarisedStaffTimeUsageAsync("WG1").Returns(
+            [
+                TimeUsageEntry(jobCode: "JC1", jobTitle: "   ", monthName: "April")
+            ]);
+
+            var result = await _sut.GetWgSummarisedStaffTimeUsageAsync(DefaultQuery(), "WG1");
+
+            result.JobTitleLookup.Single().JobTitle.Should().Be("No description available");
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_EmptyData_LookupIsEmpty()
+        {
+            _mockRepository.GetWgSummarisedStaffTimeUsageAsync("WG1")
+                           .Returns(new List<WgSummarisedStaffTimeUsageView>());
+
+            var result = await _sut.GetWgSummarisedStaffTimeUsageAsync(DefaultQuery(), "WG1");
+
+            result.JobTitleLookup.Should().BeEmpty();
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_LookupBuiltFromAllRows_NotJustCurrentPage()
+        {
+            // Seed 15 distinct job codes with a page size of 10 — page 1 only contains 10,
+            // but the lookup should reflect all 15 (built pre-pagination).
+            var entries = Enumerable.Range(1, 15)
+                .Select(i => TimeUsageEntry(
+                    jobCode:  $"JC{i:D2}",
+                    jobTitle: $"Title {i}",
+                    monthName: "April"))
+                .ToList();
+
+            _mockRepository.GetWgSummarisedStaffTimeUsageAsync("WG1").Returns(entries);
+
+            var result = await _sut.GetWgSummarisedStaffTimeUsageAsync(
+                new QueryParameters<string> { Page = 1, PageSize = 10 }, "WG1");
+
+            // Paged rows = 10, but lookup must have all 15
+            result.Rows.Should().HaveCount(10);
+            result.JobTitleLookup.Should().HaveCount(15);
+        }
+
+        #endregion
+
         #region GetWgSummarisedStaffTimeUsageAsync — BuildSummary
 
         [Fact]

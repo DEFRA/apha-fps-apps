@@ -8,6 +8,18 @@ var currentPersonName = currentPersonName || null;
 var jobTitleLookup    = jobTitleLookup    || {};
 
 /**
+ * Retrieves the job title for a given job code from the lookup dictionary.
+ * @param {string} jobCode - The job code to look up.
+ * @returns {string} The corresponding job title, or an empty string if not found.
+ */
+function getJobTitleByJobCode(jobCode) {
+    if (!jobCode || !jobTitleLookup) {
+        return '';
+    }
+    return jobTitleLookup[jobCode] || '';
+}
+
+/**
  * Returns the current work group and person name as extra filter parameters
  * for every grid request (initial load, sort, pagination, and filter events).
  * Called by the _DataGrid partial via the ExtraFilterMethod hook.
@@ -24,7 +36,7 @@ function getWorkGroupTimeByJobCodeExtraFilters() {
  */
 function onTimeByJobCodeRowSelected(row) {
     var jobCode  = $(row).find('td[data-property="JobCode"] span').text().trim();
-    var jobTitle = (jobTitleLookup && jobTitleLookup[jobCode]) ? jobTitleLookup[jobCode] : '';
+    var jobTitle = getJobTitleByJobCode(jobCode);
     $('#txtJobCode').val(jobCode);
     $('#txtJobTitle').val(jobTitle);
 }
@@ -173,7 +185,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // Auto-select the first row on initial page load
     selectFirstRow();
 
-    // Re-select the first row of each new page after pagination / sort reloads
+    // Re-select the first row of each new page after pagination / sort reloads.
+    // jobTitleLookup is fully populated on page load (PageSize=1000), so no
+    // further round-trips are needed to resolve the job title on any page.
     document.addEventListener('gridReloaded', function (e) {
         if (e.detail && e.detail.gridId === 'timeUsageGrid') {
             selectFirstRow();

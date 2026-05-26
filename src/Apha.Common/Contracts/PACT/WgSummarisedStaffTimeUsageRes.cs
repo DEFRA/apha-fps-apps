@@ -27,6 +27,13 @@ namespace Apha.Common.Contracts.PACT
         public double TotalCost { get; set; }
     }
 
+    /// <summary>A single JobCode → JobTitle pair in the API response contract.</summary>
+    public class JobTitleLookupItemRes
+    {
+        public string JobCode  { get; set; } = string.Empty;
+        public string JobTitle { get; set; } = string.Empty;
+    }
+
     /// <summary>Pre-computed footer totals returned alongside the row data.</summary>
     public class WgSummarisedStaffTimeUsageSummaryRes
     {
@@ -68,5 +75,11 @@ namespace Apha.Common.Contracts.PACT
         public WgSummarisedStaffTimeUsageSummaryRes          Summary { get; set; } = new();
         public Pagination                           Pagination { get; set; } = new();
         public double                               HrsPaid    { get; set; }
+
+        /// <summary>
+        /// Complete JobCode → JobTitle list built from all rows (pre-pagination)
+        /// so clients can resolve job titles across any page without an extra round-trip.
+        /// </summary>
+        public List<JobTitleLookupItemRes> JobTitleLookup { get; set; } = [];
     }
 }

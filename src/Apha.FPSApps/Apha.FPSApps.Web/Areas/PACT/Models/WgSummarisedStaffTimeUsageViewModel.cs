@@ -25,11 +25,5 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
 
         /// <summary>Pre-computed footer totals (Total Time, Standard Hours, % Allocated).</summary>
         public WgSummarisedStaffTimeUsageSummary Summary { get; set; } = new();
-
-        /// <summary>
-        /// Maps each JobCode to its display title so the view can expose it to JavaScript
-        /// without adding a hidden column to the grid.  Key = JobCode, Value = JobTitle.
-        /// </summary>
-        public Dictionary<string, string> JobTitleLookup { get; set; } = [];
     }
 }

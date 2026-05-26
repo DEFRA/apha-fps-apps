@@ -19,49 +19,62 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         private readonly IMapper _mapper;
         private readonly IWorkGroupService _workGroupService;
 
+        /// <summary>
+        /// Initialises a new instance of <see cref="WorkGroupTimeByJobCodeController"/>.
+        /// </summary>
+        /// <param name="mapper">AutoMapper instance used to map pagination filters, row collections, and summary DTOs to their corresponding view-model types.</param>
+        /// <param name="workGroupService">Application service that retrieves summarised staff time-usage data from the PACT API.</param>
         public WorkGroupTimeByJobCodeController(IMapper mapper, IWorkGroupService workGroupService)
         {
             _mapper = mapper;
             _workGroupService = workGroupService;
         }
 
+
         /// <summary>
         /// Renders the Work Group Time By Job Code page (frmCluedo1 equivalent).
         /// Fetches the full summarised staff time-usage dataset for the supplied work group,
-        /// builds the initial data-grid configuration with no sort applied, and computes the
-        /// pre-aggregated footer summary before passing everything to the view.
+        /// builds the initial data-grid configuration with no sort applied, computes the
+        /// pre-aggregated footer summary, and populates <c>ViewBag.JobTitleLookup</c> with a
+        /// server-side dictionary that the client-side row-selection handler uses to resolve
+        /// job titles without additional round-trips.
         /// </summary>
         /// <param name="workGroup">Work group name whose time-usage data should be displayed.</param>
         /// <param name="personName">Person name passed in from the Work Group People page; stored on
         /// the view model so the view can pre-select the correct person.</param>
         /// <returns>
         /// A <see cref="ViewResult"/> containing a <see cref="WgSummarisedStaffTimeUsageViewModel"/>
-        /// with the populated grid, summary footer, and header fields.
+        /// with the populated grid, summary footer, header fields, and job-title lookup.
         /// </returns>
         public async Task<IActionResult> Index(string workGroup, string personName)
         {
-            var query    = _mapper.Map<QueryParameters<string>>(new PaginationFilter<string> { Filter = "{}" });
+            var query = _mapper.Map<QueryParameters<string>>(new PaginationFilter<string> { Filter = "{}" });
             var response = await _workGroupService.GetWgSummarisedStaffTimeUsageAsync(query, workGroup);
 
+            ViewBag.JobTitleLookup = response.Data?.JobTitleLookup
+                .ToDictionary(x => x.JobCode, x => x.JobTitle)
+                ?? new Dictionary<string, string>();
             return View(new WgSummarisedStaffTimeUsageViewModel
             {
-                SelectedWorkGroup  = workGroup,
+                SelectedWorkGroup = workGroup,
                 SelectedPersonName = personName,
-                WorkGroupName      = workGroup,
-                HrsPaid            = response.Data?.HrsPaid ?? 0,
-                Grid               = MapToGridConfig(response, sortBy: null, descending: false),
-                Summary            = MapToSummary(response),
-                JobTitleLookup     = BuildJobTitleLookup(response)
+                WorkGroupName = workGroup,
+                HrsPaid = response.Data?.HrsPaid ?? 0,
+                Grid = MapToGridConfig(response, sortBy: null, descending: false),
+                Summary = MapToSummary(response)
             });
         }
 
         /// <summary>
-        /// Handles partial-page grid refreshes triggered by the client-side data-grid component.
+        /// Handles partial-page grid refreshes triggered by the client-side data-grid component
+        /// (<c>_DataGrid.cshtml</c>) whenever the user pages, sorts, or filters the grid.
         /// Maps the incoming pagination/filter/sort request to query parameters, fetches an updated
-        /// page of summarised staff time-usage data, and returns only the grid partial view so the
-        /// page can be updated without a full reload.
+        /// page of summarised staff time-usage data, and returns only the <c>_DataGrid</c> partial
+        /// view so the page can be updated in-place without a full reload.
+        /// After the partial is injected the grid fires a <c>gridReloaded</c> custom event which
+        /// <c>work-group-time-by-job-code.js</c> listens to in order to auto-select the first row.
         /// </summary>
-        /// <param name="request">Pagination, sort, and column-filter parameters submitted by the grid.</param>
+        /// <param name="request">Pagination, sort, and column-filter parameters submitted by the grid via AJAX POST.</param>
         /// <param name="workGroup">Work group name used to scope the data query.
         /// Must not be <see langword="null"/>, empty, or whitespace.</param>
         /// <returns>
@@ -72,11 +85,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// Thrown when <paramref name="workGroup"/> is <see langword="null"/>, empty, or whitespace.
         /// </exception>
         [HttpPost]
-        public async Task<IActionResult> LoadGrid(PaginationFilter<string> request, string workGroup)
+        public async Task<IActionResult> LoadSummarisedStaffTimeGrid(PaginationFilter<string> request, string workGroup)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(workGroup);
-
-            var query    = _mapper.Map<QueryParameters<string>>(request);
+            var query = _mapper.Map<QueryParameters<string>>(request);
             var response = await _workGroupService.GetWgSummarisedStaffTimeUsageAsync(query, workGroup);
 
             return PartialView("_DataGrid", MapToGridConfig(response, request.SortBy, request.Descending));
@@ -84,8 +95,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
         /// <summary>
         /// Builds a <see cref="DataGridConfig{WgSummarisedStaffTimeUsageRow}"/> from the service response.
-        /// When the response indicates failure or contains no data, the default empty grid configuration
-        /// is returned immediately. On success, the response rows are mapped to view-model rows and the
+        /// When the response indicates failure or contains no data the default empty grid configuration
+        /// is returned immediately.  On success, the response rows are mapped to view-model rows and the
         /// pagination model is populated from the response metadata together with the supplied sort state.
         /// </summary>
         /// <param name="response">The API response containing pivot rows and pagination metadata.</param>
@@ -105,13 +116,13 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             if (!response.Success || response.Data is null)
                 return grid;
 
-            grid.Data       = _mapper.Map<List<WgSummarisedStaffTimeUsageRow>>(response.Data.Rows);
+            grid.Data = _mapper.Map<List<WgSummarisedStaffTimeUsageRow>>(response.Data.Rows);
             grid.Pagination = new PaginationModel
             {
-                TotalRecords  = response.Data.Pagination.TotalRecords,
-                PageNumber    = response.Data.Pagination.PageNumber,
-                PageSize      = response.Data.Pagination.PageSize,
-                SortColumn    = sortBy,
+                TotalRecords = response.Data.Pagination.TotalRecords,
+                PageNumber = response.Data.Pagination.PageNumber,
+                PageSize = response.Data.Pagination.PageSize,
+                SortColumn = sortBy,
                 SortDirection = descending
             };
 
@@ -121,7 +132,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// <summary>
         /// Maps the service response to the <see cref="WgSummarisedStaffTimeUsageSummary"/> footer model.
         /// Returns a default (zero-valued) summary when the response is unsuccessful or contains no data,
-        /// mirroring the three-row footer of the legacy MS-Access form frmCluedo1.
+        /// mirroring the three-row footer of the legacy MS-Access form <c>frmCluedo1</c>.
         /// </summary>
         /// <param name="response">The API response whose <c>Summary</c> property is mapped to the view model.</param>
         /// <returns>
@@ -137,41 +148,26 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
         /// <summary>
         /// Returns the static <see cref="DataGridConfig{WgSummarisedStaffTimeUsageRow}"/> skeleton shared by
-        /// both <see cref="Index"/> and <see cref="LoadGrid"/>. The configuration defines the grid identity,
-        /// bound URL, column definitions, and interaction flags; it intentionally contains no data or
-        /// pagination state so callers can populate those fields independently.
+        /// both <see cref="Index"/> and <see cref="LoadSummarisedStaffTimeGrid"/>.
+        /// The configuration defines the grid identity, bound AJAX URL, column definitions, row-selection
+        /// callback, and interaction flags; it intentionally contains no data or pagination state so
+        /// callers can populate those fields independently after calling this method.
         /// </summary>
         /// <returns>A new <see cref="DataGridConfig{WgSummarisedStaffTimeUsageRow}"/> with static configuration applied.</returns>
         private static DataGridConfig<WgSummarisedStaffTimeUsageRow> TimeByJobCodeGridConfig() => new()
         {
-            GridId            = "timeUsageGrid",
-            Title             = string.Empty,
-            BindGridUrl       = "/PACT/WorkGroupTimeByJobCode/LoadGrid",
+            GridId = "timeUsageGrid",
+            Title = string.Empty,
+            BindGridUrl = "/PACT/WorkGroupTimeByJobCode/LoadSummarisedStaffTimeGrid",
             ExtraFilterMethod = "getWorkGroupTimeByJobCodeExtraFilters",
             ShowCheckboxColumn = false,
-            AllowAdd          = false,
-            AllowEdit         = false,
-            AllowDelete       = false,
+            AllowAdd = false,
+            AllowEdit = false,
+            AllowDelete = false,
             AllowRowSelection = true,
             RowSelectFunction = "onTimeByJobCodeRowSelected",
-            ShowPagination    = true,
-            Columns           = GridDataProvider.GetColumnsDefination<WgSummarisedStaffTimeUsageRow>()
+            ShowPagination = true,
+            Columns = GridDataProvider.GetColumnsDefination<WgSummarisedStaffTimeUsageRow>()
         };
-
-        /// <summary>
-        /// Builds a JobCode → JobTitle lookup from the full (unpaged) response rows so the view
-        /// can expose it to JavaScript without adding a hidden column to the grid.
-        /// </summary>
-        private static Dictionary<string, string> BuildJobTitleLookup(
-            ApiResponseDto<WgSummarisedStaffTimeUsageDto> response)
-        {
-            if (!response.Success || response.Data is null)
-                return new Dictionary<string, string>();
-
-            return response.Data.Rows
-                .Where(r => !string.IsNullOrWhiteSpace(r.JobCode))
-                .DistinctBy(r => r.JobCode)
-                .ToDictionary(r => r.JobCode!, r => r.JobTitle ?? string.Empty);
-        }
     }
 }

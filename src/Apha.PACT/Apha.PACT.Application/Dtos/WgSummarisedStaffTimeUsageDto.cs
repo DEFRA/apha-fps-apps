@@ -77,6 +77,16 @@ namespace Apha.PACT.Application.Dtos
     }
 
     /// <summary>
+    /// Represents a single JobCode → JobTitle pair used in the client-side lookup.
+    /// Avoids Dictionary serialisation quirks through AutoMapper mapping chains.
+    /// </summary>
+    public class JobTitleLookupItem
+    {
+        public string JobCode  { get; set; } = string.Empty;
+        public string JobTitle { get; set; } = string.Empty;
+    }
+
+    /// <summary>
     /// Wrapper returned by the service containing the pivot rows and pre-computed footer summary.
     /// </summary>
     public class WgSummarisedStaffTimeUsageDto
@@ -85,7 +95,13 @@ namespace Apha.PACT.Application.Dtos
         public WgSummarisedStaffTimeUsageSummaryDto          Summary { get; set; } = new();
         public PaginationDto Pagination { get; set; } = new();
 
-        /// <summary>Total HrsPaid
+        /// <summary>Total HrsPaid</summary>
         public double HrsPaid { get; set; }
+
+        /// <summary>
+        /// Complete JobCode → JobTitle list built from all rows (pre-pagination)
+        /// so clients can resolve job titles across any page without an extra round-trip.
+        /// </summary>
+        public List<JobTitleLookupItem> JobTitleLookup { get; set; } = [];
     }
 }

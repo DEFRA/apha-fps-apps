@@ -103,10 +103,12 @@
 </div>
 
 @* ── Grid extra-filter: server-rendered values consumed by the external JS file ── *@
+<input type="hidden" id="hiddenJobTitleLookup" value='@Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.JobTitleLookup ?? new Dictionary<string, string>()))' />
+
 <script>
     var currentWorkGroup   = '@Html.Raw(Model.SelectedWorkGroup ?? "")';
     var currentPersonName  = '@Html.Raw(Model.SelectedPersonName ?? "")';
-    var jobTitleLookup     = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.JobTitleLookup))
+    var jobTitleLookup     = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.JobTitleLookup ?? new Dictionary<string, string>()))
 </script>
 
 @section Scripts {

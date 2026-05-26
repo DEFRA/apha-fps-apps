@@ -2,6 +2,7 @@ using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Interfaces;
 using Apha.PACT.Application.Pagination;
 using Apha.PACT.Application.Validation;
+using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
 using AutoMapper;
@@ -48,10 +49,9 @@ namespace Apha.PACT.Application.Services
             ValidateWorkGroup(workGroup);
 
             var rawEntries = await _repository.GetWgSummarisedStaffTimeUsageAsync(workGroup);
-            var staffTimeUsageEntries = _mapper.Map<IEnumerable<WgSummarisedStaffTimeUsageEntryDto>>(rawEntries);
 
             // Derive HrsPaid: sum across all distinct people in the work group (mirrors Access FormHeader HrsPaid)
-            var hrsPaid = staffTimeUsageEntries
+            var hrsPaid = rawEntries
                 .GroupBy(e => e.Name)
                 .Select(g => g.First())
                 .Sum(e => e.HrsPaid ?? 0);
@@ -59,7 +59,7 @@ namespace Apha.PACT.Application.Services
             var standardHoursPerMonth = hrsPaid > 0 ? hrsPaid / 12.0 : 0;
 
             // Build ALL rows first — summary must reflect the full dataset, not just the current page
-            var allRows = BuildRows(staffTimeUsageEntries);
+            var allRows = BuildRows(rawEntries);
             var summary = BuildSummary(allRows, standardHoursPerMonth);
 
             // Paginate rows after summary is computed
@@ -77,6 +77,15 @@ namespace Apha.PACT.Application.Services
                 Rows    = pagedRows,
                 Summary = summary,
                 HrsPaid = hrsPaid,
+                JobTitleLookup = rawEntries
+                    .Where(r => !string.IsNullOrWhiteSpace(r.JobCode))
+                    .DistinctBy(r => r.JobCode)
+                    .Select(r => new JobTitleLookupItem
+                    {
+                        JobCode  = r.JobCode!,
+                        JobTitle = string.IsNullOrWhiteSpace(r.JobTitle) ? "No description available" : r.JobTitle
+                    })
+                    .ToList(),
                 Pagination = new PaginationDto
                 {
                     PageNumber   = page,
@@ -88,7 +97,7 @@ namespace Apha.PACT.Application.Services
         }
 
         private static List<WgSummarisedStaffTimeUsageRowDto> BuildRows(
-            IEnumerable<WgSummarisedStaffTimeUsageEntryDto> staffTimeUsageEntries)
+            IEnumerable<WgSummarisedStaffTimeUsageView> staffTimeUsageEntries)
         {
             return staffTimeUsageEntries
                 .GroupBy(e => new { e.ParentProject, e.JobCode })
