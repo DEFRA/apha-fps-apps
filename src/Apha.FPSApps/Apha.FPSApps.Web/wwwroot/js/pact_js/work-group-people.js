@@ -62,10 +62,11 @@ function onWorkGroupPickChange(workGroup) {
  * Clears the work group selection, updates the information panel,
  * and reloads the grid filtered to the selected person.
  * @param {string|null} personName - The selected person name, or null to clear.
+ * @param {string|null} personWorkGroup - The work group associated with the selected person.
  */
-function onPersonPickChange(personName) {
+function onPersonPickChange(personName, personWorkGroup) {
     currentPersonName = personName || null;
-    currentWorkGroup  = null;
+    currentWorkGroup  = personWorkGroup || null;
 
     document.getElementById('workGroupSelect').value = '';
     document.getElementById('selectedWorkgroup').value = '';
@@ -83,7 +84,7 @@ function onPersonPickChange(personName) {
         return;
     }
 
-    reloadPeopleGridByPerson(personName);
+    reloadPeopleGridByPerson(personName, personWorkGroup);
 }
 
 /**
@@ -125,8 +126,9 @@ function reloadAllPeopleGrid() {
  * Reloads the people grid filtered by the specified person name via AJAX,
  * replacing the grid container HTML with the returned partial view.
  * @param {string} personName - The person name to filter by.
+ * @param {string|null} personWorkGroup - The work group associated with the selected person.
  */
-function reloadPeopleGridByPerson(personName) {
+function reloadPeopleGridByPerson(personName, personWorkGroup) {
     $.ajax({
         url: '/PACT/WorkGroupPeople/LoadPeopleGrid',
         type: 'POST',
@@ -137,7 +139,8 @@ function reloadPeopleGridByPerson(personName) {
             Descending: false,
             Page: 1,
             PageSize: 10,
-            personName: personName
+            personName: personName,
+            workGroup: personWorkGroup || null
         },
         success: function (html) {
             $('#gridContainer_peopleGrid').html(html);
@@ -266,11 +269,12 @@ function initWorkGroupPeoplePage() {
     });
 
     $(document).on('click', '#personDropdownBody tr', function () {
-        var value = $(this).data('value');
-        var text  = $(this).find('td:first').text().trim();
+        var value     = $(this).attr('data-value');
+        var workGroup = $(this).attr('data-workgroup') || null;
+        var text      = $(this).find('td:first').text().trim();
         $pInput.val(text);
         $pPanel.hide();
-        onPersonPickChange(value);
+        onPersonPickChange(value, workGroup);
     });
 
     $(document).on('click', function (e) {
