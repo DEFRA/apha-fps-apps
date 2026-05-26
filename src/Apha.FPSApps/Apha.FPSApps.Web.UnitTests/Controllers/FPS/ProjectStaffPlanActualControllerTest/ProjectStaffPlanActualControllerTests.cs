@@ -2,6 +2,7 @@ using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Pagination;
+using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Web.Areas.FPS.Controllers;
 using Apha.FPSApps.Web.Areas.FPS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
@@ -19,6 +20,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectStaffPlanActualContr
         private readonly ITimeCostCalcsService _projPlanVsActualsStaffService;
         private readonly IProjectService _projectService;
         private readonly IStaffJobService _staffJobService;
+        private readonly IAppStateService _appStateService;
         private readonly ProjectStaffPlanActualController _controller;
 
         public ProjectStaffPlanActualControllerTests()
@@ -27,11 +29,13 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectStaffPlanActualContr
             _projPlanVsActualsStaffService = Substitute.For<ITimeCostCalcsService>();
             _projectService = Substitute.For<IProjectService>();
             _staffJobService = Substitute.For<IStaffJobService>();
+            _appStateService = Substitute.For<IAppStateService>();
             _controller = new ProjectStaffPlanActualController(
                 _mapper,
                 _projPlanVsActualsStaffService,
                 _projectService,
-                _staffJobService);
+                _staffJobService,
+                _appStateService);
         }
 
         private static T? GetJsonResultValue<T>(JsonResult jsonResult)
