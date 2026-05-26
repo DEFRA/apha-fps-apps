@@ -30,8 +30,8 @@ public class StaffRequirementRepository : RepositoryBase<StaffRequirement>, ISta
             from sr in _context.StaffRequirements.AsNoTracking()
 
             join wgg in _context.WorkGroupGrades.AsNoTracking().IgnoreQueryFilters()
-                on new { sr.WgGrade, FpsYear = fpsYear }
-                equals new { wgg.WgGrade, wgg.FpsYear } into wggJoin
+              on new { sr.WgGrade, FpsYear = (int?)fpsYear }
+              equals new { wgg.WgGrade, FpsYear = wgg.FpsYear } into wggJoin
             from wgg in wggJoin.DefaultIfEmpty()
 
             join proj in _context.Projects.AsNoTracking()

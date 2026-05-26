@@ -17,7 +17,7 @@ public partial class FpsAdditionalCost
 
     public string? Supplier { get; set; }
 
-    public int FpsYear { get; set; }
+    public int? FpsYear { get; set; }
 
-    
+
 }

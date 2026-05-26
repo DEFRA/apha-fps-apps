@@ -104,8 +104,8 @@
                             </div>
                         </div>
 
-                        @* Change Project Code section - Edit mode only *@
-                        @if (isEditMode)
+                        @* Change Project Code section - Edit mode, FPSAdmin only *@
+                        @if (isEditMode && User.IsInRole("FPSAdmin"))
                         {
                             <div class="govuk-form-group sup_margin_0 mt-2 mb-3"
                                  style="border: 1px solid #1d70b8; padding: 8px; border-radius: 4px; display: flex; align-items: center; gap: 10px;">
@@ -457,6 +457,8 @@
             ['TransferIncome', 'CustIncome', 'IsDefraProject'].forEach(field => {
                 if (data[field] === null || data[field] === undefined) data[field] = 0;
             });
+            // ProjectGroup is optional — send null when blank to avoid FK constraint violation
+            if (data['ProjectGroup'] === '' || data['ProjectGroup'] === undefined) data['ProjectGroup'] = null;
 
             const url = isEdit
                 ? '@Url.Action("Edit", "Project", new { area = "FPS" })' + '?parentProject=' + encodeURIComponent(parentProject)

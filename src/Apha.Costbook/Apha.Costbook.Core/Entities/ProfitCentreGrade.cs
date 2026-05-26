@@ -9,12 +9,14 @@ public partial class ProfitCentreGrade
 
     public string DivisionGrade { get; set; } = null!;
 
-    public string GradeCode { get; set; } = null!;  
+    public string GradeCode { get; set; } = null!;
+
     public string ProfitCentre { get; set; } = null!;
 
     public decimal? ChargeRate { get; set; }
 
     public decimal? DirectRate { get; set; }
+
     public decimal? PayRate { get; set; }
 
     public decimal? Npr { get; set; }
@@ -27,7 +29,5 @@ public partial class ProfitCentreGrade
 
     public decimal? DefraChargeRate { get; set; }
 
-    public int FpsYear { get; set; }   
-
-    public virtual ICollection<WorkGroupGrade> WorkGroupGrades { get; set; } = new List<WorkGroupGrade>();
+    public int FpsYear { get; set; }
 }

@@ -1,4 +1,4 @@
-﻿using Apha.Common.Helpers.Repository;
+using Apha.Common.Helpers.Repository;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -120,7 +120,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.DivisionRepositoryTest
             var result = await repo.GetAllDivisionsAsync();
             Assert.Equal("ALPHA", result[0].DivName);
             Assert.Equal("MANGO", result[1].DivName);
-            Assert.Equal("ZETA",  result[2].DivName);
+            Assert.Equal("ZETA", result[2].DivName);
         }
 
         [Fact]
@@ -134,9 +134,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.DivisionRepositoryTest
             var result = await repo.GetAllDivisionsAsync();
             var division = Assert.Single(result);
             Assert.Equal("DIV001", division.DivName);
-            Assert.Equal(5,        division.AgencyId);
-            Assert.Equal(42,       division.DivisionId);
-            Assert.Equal(750m,     division.CentOverhead);
+            Assert.Equal(5, division.AgencyId);
+            Assert.Equal(42, division.DivisionId);
+            Assert.Equal(750m, division.CentOverhead);
         }
 
         #endregion
@@ -229,15 +229,15 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.DivisionRepositoryTest
         }
 
         [Theory]
-        [InlineData("divname",      false)]
-        [InlineData("divname",      true)]
-        [InlineData("divisionid",   false)]
-        [InlineData("divisionid",   true)]
-        [InlineData("agencyid",     false)]
-        [InlineData("agencyid",     true)]
+        [InlineData("divname", false)]
+        [InlineData("divname", true)]
+        [InlineData("divisionid", false)]
+        [InlineData("divisionid", true)]
+        [InlineData("agencyid", false)]
+        [InlineData("agencyid", true)]
         [InlineData("centoverhead", false)]
         [InlineData("centoverhead", true)]
-        [InlineData("unknown",      false)]
+        [InlineData("unknown", false)]
         public async Task GetAllDivisionsPagedAsync_AppliesSortingWithoutException(string sortBy, bool descending)
         {
             var divisions = new List<Division>
@@ -265,7 +265,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.DivisionRepositoryTest
             var result = await repo.GetAllDivisionsPagedAsync(query);
             Assert.Equal("ALPHA", result.Data.ElementAt(0).DivName);
             Assert.Equal("MANGO", result.Data.ElementAt(1).DivName);
-            Assert.Equal("ZETA",  result.Data.ElementAt(2).DivName);
+            Assert.Equal("ZETA", result.Data.ElementAt(2).DivName);
         }
 
         [Fact]
@@ -312,9 +312,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.DivisionRepositoryTest
             var result = await repo.GetDivisionByNameAsync("DIV001");
             Assert.NotNull(result);
             Assert.Equal("DIV001", result.DivName);
-            Assert.Equal(5,        result.AgencyId);
-            Assert.Equal(42,       result.DivisionId);
-            Assert.Equal(750m,     result.CentOverhead);
+            Assert.Equal(5, result.AgencyId);
+            Assert.Equal(42, result.DivisionId);
+            Assert.Equal(750m, result.CentOverhead);
         }
 
         [Fact]
@@ -349,9 +349,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.DivisionRepositoryTest
             var result = await repo.CreateDivisionAsync(newDivision);
             Assert.NotNull(result);
             Assert.Equal("DIV_NEW", result.DivName);
-            Assert.Equal(3,         result.AgencyId);
-            Assert.Equal(99,        result.DivisionId);
-            Assert.Equal(1000m,     result.CentOverhead);
+            Assert.Equal(3, result.AgencyId);
+            Assert.Equal(99, result.DivisionId);
+            Assert.Equal(1000m, result.CentOverhead);
             divisionsMockSet.Verify(x => x.Add(It.IsAny<Division>()), Times.Once);
             RepositoryTestHelper.VerifySaveChanges(mockContext);
         }
@@ -421,9 +421,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.DivisionRepositoryTest
 
             Assert.NotNull(result);
             Assert.Equal("DIV001", result.DivName);
-            Assert.Equal(9,        result.AgencyId);
-            Assert.Equal(99,       result.DivisionId);
-            Assert.Equal(999m,     result.CentOverhead);
+            Assert.Equal(9, result.AgencyId);
+            Assert.Equal(99, result.DivisionId);
+            Assert.Equal(999m, result.CentOverhead);
             RepositoryTestHelper.VerifySaveChanges(mockContext);
         }
 
@@ -445,7 +445,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.DivisionRepositoryTest
 
             Assert.NotNull(result);
             Assert.Equal("NEW_NAME", result.DivName);
-            Assert.Equal(2,          result.AgencyId);
+            Assert.Equal(2, result.AgencyId);
             divisionsMockSet.Verify(x => x.Remove(It.IsAny<Division>()), Times.Once);
             divisionsMockSet.Verify(x => x.Add(It.Is<Division>(d => d.DivName == "NEW_NAME")), Times.Once);
             RepositoryTestHelper.VerifySaveChanges(mockContext, times: 2);
@@ -534,7 +534,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.DivisionRepositoryTest
         public async Task DivisionExistsAsync_ReturnsTrue_OnlyForExactMatch()
         {
             var repo = CreateRepository(divisions: [BuildDivision("DIV001")]);
-            var exists    = await repo.DivisionExistsAsync("DIV001");
+            var exists = await repo.DivisionExistsAsync("DIV001");
             var notExists = await repo.DivisionExistsAsync("DIV002");
             Assert.True(exists);
             Assert.False(notExists);
@@ -560,8 +560,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.DivisionRepositoryTest
         public async Task GetDivisionForeignKeyReferencesAsync_ReturnsEmptyList_WhenNoReferences()
         {
             var repo = CreateRepository(
-                divisions:      [BuildDivision("DIV001")],
-                profitCentres:  [],
+                divisions: [BuildDivision("DIV001")],
+                profitCentres: [],
                 divisionGrades: []);
             var result = await repo.GetDivisionForeignKeyReferencesAsync("DIV001");
             Assert.NotNull(result);
@@ -573,8 +573,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.DivisionRepositoryTest
         {
             var profitCentres = new List<ProfitCentre> { new() { Division = "DIV001" } };
             var repo = CreateRepository(
-                divisions:      [BuildDivision("DIV001")],
-                profitCentres:  profitCentres,
+                divisions: [BuildDivision("DIV001")],
+                profitCentres: profitCentres,
                 divisionGrades: []);
             var result = await repo.GetDivisionForeignKeyReferencesAsync("DIV001");
             Assert.Contains("tblkpprofitcentre", result);
@@ -586,8 +586,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.DivisionRepositoryTest
         {
             var divisionGrades = new List<DivisionGrade> { new() { Division = "DIV001", GradeCode = "GR01" } };
             var repo = CreateRepository(
-                divisions:      [BuildDivision("DIV001")],
-                profitCentres:  [],
+                divisions: [BuildDivision("DIV001")],
+                profitCentres: [],
                 divisionGrades: divisionGrades);
             var result = await repo.GetDivisionForeignKeyReferencesAsync("DIV001");
             Assert.Contains("divisiongrade", result);
@@ -597,26 +597,26 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.DivisionRepositoryTest
         [Fact]
         public async Task GetDivisionForeignKeyReferencesAsync_ReturnsBothTables_WhenBothReferenced()
         {
-            var profitCentres  = new List<ProfitCentre>  { new() { Division = "DIV001" } };
+            var profitCentres = new List<ProfitCentre> { new() { Division = "DIV001" } };
             var divisionGrades = new List<DivisionGrade> { new() { Division = "DIV001", GradeCode = "GR01" } };
             var repo = CreateRepository(
-                divisions:      [BuildDivision("DIV001")],
-                profitCentres:  profitCentres,
+                divisions: [BuildDivision("DIV001")],
+                profitCentres: profitCentres,
                 divisionGrades: divisionGrades);
             var result = await repo.GetDivisionForeignKeyReferencesAsync("DIV001");
             Assert.Equal(2, result.Count);
             Assert.Contains("tblkpprofitcentre", result);
-            Assert.Contains("divisiongrade",     result);
+            Assert.Contains("divisiongrade", result);
         }
 
         [Fact]
         public async Task GetDivisionForeignKeyReferencesAsync_IgnoresReferences_WhenDivisionNameDoesNotMatch()
         {
-            var profitCentres  = new List<ProfitCentre>  { new() { Division = "OTHER" } };
+            var profitCentres = new List<ProfitCentre> { new() { Division = "OTHER" } };
             var divisionGrades = new List<DivisionGrade> { new() { Division = "OTHER", GradeCode = "GR01" } };
             var repo = CreateRepository(
-                divisions:      [BuildDivision("DIV001")],
-                profitCentres:  profitCentres,
+                divisions: [BuildDivision("DIV001")],
+                profitCentres: profitCentres,
                 divisionGrades: divisionGrades);
             var result = await repo.GetDivisionForeignKeyReferencesAsync("DIV001");
             Assert.Empty(result);

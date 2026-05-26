@@ -28,12 +28,14 @@ namespace Apha.Costbook.Api.Extensions
             services.AddScoped<ICustomerService, CustomerService>();
             services.AddScoped<IStaffService, StaffService>();
             services.AddScoped<IYearlyDetailsService, YearlyDetailsService>();
-
+            services.AddScoped<IProjectSummaryService, ProjectSummaryService>();
+            services.AddScoped<ISettingsService, SettingsService>();
+            services.AddScoped<IYearMasterService, YearMasterService>();
             return services;
         }
+
         public static IServiceCollection AddRepositories(this IServiceCollection services)
         {
-            // Add your data access services here
             services.AddScoped<IFPSYearContext, FPSYearContext>();
             services.AddScoped<IProjectRepository, ProjectRepository>();
             services.AddScoped<IContractRepository, ContractRepository>();
@@ -47,6 +49,7 @@ namespace Apha.Costbook.Api.Extensions
             services.AddScoped<ITestRequirementRepository, TestRequirementRepository>();
             services.AddScoped<IAnimalRequirementRepository, AnimalRequirementRepository>();
             services.AddScoped<IAdditionalCostRepository, AdditionalCostRepository>();
+            services.AddScoped<IYearMasterRepository, YearMasterRepository>();
             return services;
         }
     }

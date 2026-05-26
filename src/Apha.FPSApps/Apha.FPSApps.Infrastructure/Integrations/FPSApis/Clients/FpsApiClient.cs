@@ -17,9 +17,9 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public IFpsProjectStaffPlanActualApiClient FpsProjectStaffPlanActual { get; }
         public IFpsMonthlyOutputApiClient FpsMonthlyOutput { get; }
         public IFpsDivisionApiClient FpsDivision { get; }
-
         public IFpsAgencyApiClient FpsAgency { get; }
         public IFpsAdditionalCostApiClient FpsAdditionalCost { get; }
+        public IFpsDivisionGradeApiClient FpsMaintDG { get; }
 
         public IFpsProfitCentreApiClient FpsProfitCentre { get; }
         public IFpsProfitCentreGradeApiClient FpsProfitCentreGrade { get; }
@@ -45,6 +45,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             FpsProfitCentreGrade = new FpsProfitCentreGradeApiClient(http, mapper);
             FpsWorkGroupGrade = new FpsWorkGroupGradeApiClient(http, mapper);
             FpsWorkGroupEmployee = new FpsWorkGroupEmployeeApiClient(http, mapper);
+            FpsMaintDG = new FpsDivisionGradeApiClient(http, mapper);
         }
     }
 }

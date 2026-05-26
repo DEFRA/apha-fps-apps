@@ -15,14 +15,14 @@ namespace Apha.FPSApps.Application.Dtos.CostBook
         public string? Programme { get; set; }
         public string? ProjectWorkgroup { get; set; }
         public double? ContractPrice { get; set; }
-        public DateOnly? StartDate { get; set; }
+        public DateTime? StartDate { get; set; }
         public string? Disease { get; set; }
         public double? StartFYear { get; set; }
         public string? CustomerName { get; set; }
         public string? ContractNumber { get; set; }
         public string? SubmittedByFName { get; set; }
         public string? SubmittedByLName { get; set; }
-        public DateOnly? DateOfSubmission { get; set; }
+        public DateTime? DateOfSubmission { get; set; }
         public string? PreparedBy { get; set; }
         public int? Inflation { get; set; }
         public int? FinancialYears { get; set; }
