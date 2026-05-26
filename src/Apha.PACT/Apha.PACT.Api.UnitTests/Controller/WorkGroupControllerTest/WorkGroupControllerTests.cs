@@ -61,7 +61,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.WorkGroupControllerTest
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var returnValue = Assert.IsAssignableFrom<IEnumerable<WorkGroupRes>>(okResult.Value);
+            var returnValue = Assert.IsType<IEnumerable<WorkGroupRes>>(okResult.Value, exactMatch: false);
             Assert.Empty(returnValue);
         }
 

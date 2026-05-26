@@ -74,7 +74,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             var workGroupSet   = RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<WorkGroup>());
 
             mockContext.Setup(x => x.PactWorkGroupGradeViews).Returns(gradeViewSet.Object);
-            mockContext.Setup(x => x.WorkGroupStaffViews).Returns(staffViewSet.Object);
+            mockContext.Setup(x => x.PactStaffViews).Returns(staffViewSet.Object);
             mockContext.Setup(x => x.MonthlyTimes).Returns(monthlyTimeSet.Object);
             mockContext.Setup(x => x.WorkGroups).Returns(workGroupSet.Object);
 
@@ -1555,7 +1555,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
                 .Returns(RepositoryTestHelper.CreateMockDbSet(timeCodeValids ?? []).Object);
             mockContext.Setup(x => x.PactWorkGroupGradeViews)
                 .Returns(RepositoryTestHelper.CreateMockDbSet(workGroupGradeViews ?? []).Object);
-            mockContext.Setup(x => x.WorkGroupStaffViews)
+            mockContext.Setup(x => x.PactStaffViews)
                 .Returns(RepositoryTestHelper.CreateMockDbSet(workGroupStaffViews ?? []).Object);
             mockContext.Setup(x => x.JobCodes)
                 .Returns(RepositoryTestHelper.CreateMockDbSet(jobCodes ?? []).Object);
