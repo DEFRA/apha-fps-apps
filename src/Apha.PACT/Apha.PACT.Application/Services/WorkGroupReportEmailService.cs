@@ -14,8 +14,7 @@ namespace Apha.PACT.Application.Services
     {
         private const string StatusSent    = "Sent";
         private const string StatusSkipped = "Skipped";
-        private const string StatusFailed  = "Failed";
-        
+        private const string StatusFailed  = "Failed";        
         private const int AccessTrue = -1;
 
         private readonly IWorkGroupRepository _workGroupReportRepository;
