@@ -28,6 +28,7 @@ internal sealed class CreateProjectMonthFinalStep : RecreateSummariesExecutionSt
             {
                 Project = pm2.Project,
                 MonthNo = pm2.MonthNo,
+                FpsYear = pm2.FpsYear,
                 CostProfile = pm2.CostProfile,
                 SubContracts = pm2.SubContracts,
                 Animals = pm2.Animals,

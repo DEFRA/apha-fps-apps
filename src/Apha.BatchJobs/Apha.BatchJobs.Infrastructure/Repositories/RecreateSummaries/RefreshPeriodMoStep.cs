@@ -47,7 +47,7 @@ internal sealed class RefreshPeriodMoStep : RecreateSummariesExecutionStepBase
                 TestCode = mo.TestCode,
                 Volume = mo.Volume,
                 TestPrice = tr.UnitPrice,
-                TotalCost = (tr.UnitPrice ?? 0m) * (decimal)(mo.Volume ?? 0d)
+                TotalCost = tr.UnitPrice * (decimal?)mo.Volume
             })
             .ToListAsync(cancellationToken);
 

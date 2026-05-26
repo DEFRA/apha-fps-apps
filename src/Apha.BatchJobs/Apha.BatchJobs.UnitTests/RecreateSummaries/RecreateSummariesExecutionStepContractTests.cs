@@ -3,6 +3,7 @@ using Apha.BatchJobs.Infrastructure.Data;
 using Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using System.Reflection;
 
 namespace Apha.BatchJobs.UnitTests.RecreateSummaries;
 
@@ -30,9 +31,34 @@ public sealed class RecreateSummariesExecutionStepContractTests
         // Assert
         Assert.Equal("LogRecreateSummaries", result.StepName);
         Assert.Equal(1, result.RowsAffected);
-        Assert.Equal(StepStatus.Success, result.Status);
+        Assert.True(result.Status == StepStatus.Success, result.ErrorMessage ?? "Expected success status");
         Assert.Null(result.ErrorMessage);
         Assert.True(result.EndTime >= result.StartTime);
+    }
+
+    [Fact]
+    public async Task LogRecreateSummariesStep_WhenTriggeredByContainsDomainPrefix_ShouldPersistUserPartOnly()
+    {
+        var stepType = typeof(IRecreateSummariesExecutionStep).Assembly
+            .GetType("Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries.LogRecreateSummariesStep");
+
+        Assert.NotNull(stepType);
+
+        var step = Activator.CreateInstance(stepType!, args: [6, "DOMAIN\\unit-test-user"]) as IRecreateSummariesExecutionStep;
+        Assert.NotNull(step);
+
+        using var dbContext = CreateDbContext();
+        using var connection = new NpgsqlConnection();
+        var executionContext = new RecreateSummariesExecutionContext(dbContext, connection);
+
+        var result = await step!.ExecuteAsync(executionContext, cancellationToken: CancellationToken.None);
+
+        Assert.Equal(StepStatus.Success, result.Status);
+
+        var logEntry = dbContext.ChangeTracker.Entries()
+            .Single(entry => entry.Metadata.ClrType.Name == "RsRecreateSummariesLogTable");
+
+        Assert.Equal("unit-test-user", logEntry.Property("UserId").CurrentValue);
     }
 
     [Fact]
@@ -110,4 +136,5 @@ public sealed class RecreateSummariesExecutionStepContractTests
 
         return new BatchJobsDbContext(options);
     }
+
 }

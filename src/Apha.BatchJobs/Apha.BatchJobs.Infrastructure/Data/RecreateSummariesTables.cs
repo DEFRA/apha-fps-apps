@@ -176,6 +176,7 @@ internal sealed class RsProjectMonth2Table
 {
     public required string Project { get; set; }
     public int MonthNo { get; set; }
+    public int FpsYear { get; set; }
     public decimal? CostProfile { get; set; }
     public decimal? SubContracts { get; set; }
     public decimal? Animals { get; set; }
@@ -220,6 +221,7 @@ internal sealed class RsProjectMonthFinalTable
 {
     public required string Project { get; set; }
     public int MonthNo { get; set; }
+    public int FpsYear { get; set; }
     public decimal? CostProfile { get; set; }
     public decimal? SubContracts { get; set; }
     public decimal? Animals { get; set; }
@@ -342,7 +344,7 @@ internal sealed class RsMonthlyOutputTable
     public required string Buyer { get; set; }
     public required string WorkGroup { get; set; }
     public required string TestCode { get; set; }
-    public int Month { get; set; }
+    public double Month { get; set; }
     public double? Volume { get; set; }
 }
 
@@ -369,7 +371,7 @@ internal sealed class RsPeriodMonthlyOutputTable
     public string? IsDefraProject { get; set; }
     public string? Opc { get; set; }
     public double? Occ { get; set; }
-    public int Month { get; set; }
+    public double Month { get; set; }
     public string? Spc { get; set; }
     public string? WorkGroup { get; set; }
     public double? Scc { get; set; }

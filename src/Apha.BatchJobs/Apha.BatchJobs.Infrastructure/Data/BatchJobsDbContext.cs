@@ -1383,7 +1383,7 @@ public class BatchJobsDbContext : DbContext
             entity.Property(e => e.WorkGroup).HasColumnName("workgroup");
             entity.Property(e => e.JobCode).HasColumnName("jobcode");
             entity.Property(e => e.Project).HasColumnName("project");
-            entity.Property(e => e.Month).HasColumnName("month");
+            entity.Property(e => e.Month).HasColumnName("month").HasConversion<double>();
             entity.Property(e => e.StaffId).HasColumnName("staffid");
             entity.Property(e => e.GradeCode).HasColumnName("gradecode");
             entity.Property(e => e.Name).HasColumnName("name");
@@ -1413,7 +1413,7 @@ public class BatchJobsDbContext : DbContext
             entity.ToTable("projectmonth2", schema: "fps");
             entity.HasKey(e => new { e.Project, e.MonthNo });
             entity.Property(e => e.Project).HasColumnName("project");
-            entity.Property(e => e.MonthNo).HasColumnName("monthno");
+            entity.Property(e => e.MonthNo).HasColumnName("monthno").HasConversion<double>();
             entity.Property(e => e.CostProfile).HasColumnName("costprofile");
             entity.Property(e => e.SubContracts).HasColumnName("subcontracts");
             entity.Property(e => e.Animals).HasColumnName("animals");
@@ -1430,6 +1430,7 @@ public class BatchJobsDbContext : DbContext
             entity.Property(e => e.OnTime).HasColumnName("ontime");
             entity.Property(e => e.TotalHours).HasColumnName("totalhours");
             entity.Property(e => e.PayCosts).HasColumnName("paycosts");
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
         });
 
         modelBuilder.Entity<RsProjectMonth3Table>(entity =>
@@ -1437,12 +1438,12 @@ public class BatchJobsDbContext : DbContext
             entity.ToTable("projectmonth3", schema: "fps");
             entity.HasKey(e => new { e.Project, e.EndPeriod });
             entity.Property(e => e.Project).HasColumnName("project");
-            entity.Property(e => e.EndPeriod).HasColumnName("endperiod");
+            entity.Property(e => e.EndPeriod).HasColumnName("endperiod").HasConversion<double>();
             entity.Property(e => e.PeriodName).HasColumnName("periodname");
             entity.Property(e => e.CumCost).HasColumnName("cumcost");
             entity.Property(e => e.CumInvoices).HasColumnName("cuminvoices");
             entity.Property(e => e.CumCoiw).HasColumnName("cumcoiw");
-            entity.Property(e => e.CumPortSales).HasColumnName("cumportsales");
+            entity.Property(e => e.CumPortSales).HasColumnName("cumportsales").HasConversion<double?>();
             entity.Property(e => e.CumProfile).HasColumnName("cumprofile");
             entity.Property(e => e.SumOfCostProfile).HasColumnName("sumofcostprofile").HasColumnType("money");
             entity.Property(e => e.SumOfMstoneDue).HasColumnName("sumofmstonedue");
@@ -1461,7 +1462,7 @@ public class BatchJobsDbContext : DbContext
             entity.ToTable("projectmonthfinal", schema: "fps");
             entity.HasKey(e => new { e.Project, e.MonthNo });
             entity.Property(e => e.Project).HasColumnName("project");
-            entity.Property(e => e.MonthNo).HasColumnName("monthno");
+            entity.Property(e => e.MonthNo).HasColumnName("monthno").HasConversion<double>();
             entity.Property(e => e.CostProfile).HasColumnName("costprofile");
             entity.Property(e => e.SubContracts).HasColumnName("subcontracts");
             entity.Property(e => e.Animals).HasColumnName("animals");
@@ -1485,7 +1486,7 @@ public class BatchJobsDbContext : DbContext
             entity.Property(e => e.SumOfMstoneDue).HasColumnName("sumofmstonedue");
             entity.Property(e => e.SumOfDueDone).HasColumnName("sumofdue__done");
             entity.Property(e => e.SumOfOnTime).HasColumnName("sumofontime");
-            entity.Property(e => e.CumFlag).HasColumnName("cumflag");
+            entity.Property(e => e.CumFlag).HasColumnName("cumflag").HasConversion<double?>();
             entity.Property(e => e.CwDebit).HasColumnName("cwdebit");
             entity.Property(e => e.CwCredit).HasColumnName("cwcredit");
             entity.Property(e => e.CumCwDebit).HasColumnName("cumcwdebit");
@@ -1496,6 +1497,7 @@ public class BatchJobsDbContext : DbContext
             entity.Property(e => e.CumTestCosts).HasColumnName("cumtestcosts");
             entity.Property(e => e.PayCosts).HasColumnName("paycosts");
             entity.Property(e => e.CumPayCosts).HasColumnName("cumpaycosts");
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
         });
 
         modelBuilder.Entity<RsTblPeriodTable>(entity =>
@@ -1633,7 +1635,7 @@ public class BatchJobsDbContext : DbContext
             entity.HasKey(e => e.SubContCounter);
             entity.Property(e => e.SubContCounter).HasColumnName("subcontcounter");
             entity.Property(e => e.Project).HasColumnName("project");
-            entity.Property(e => e.Month).HasColumnName("month");
+            entity.Property(e => e.Month).HasColumnName("month").HasConversion<double>();
             entity.Property(e => e.Amount).HasColumnName("amount");
             entity.Property(e => e.AcctCode).HasColumnName("acctcode");
         });
@@ -1650,7 +1652,7 @@ public class BatchJobsDbContext : DbContext
             entity.Property(e => e.IsDefraProject).HasColumnName("isdefraproject");
             entity.Property(e => e.Opc).HasColumnName("opc");
             entity.Property(e => e.Occ).HasColumnName("occ");
-            entity.Property(e => e.Month).HasColumnName("month");
+            entity.Property(e => e.Month).HasColumnName("month").HasConversion<double>();
             entity.Property(e => e.Amount).HasColumnName("amount");
             entity.Property(e => e.AcctCode).HasColumnName("acctcode");
         });
@@ -1671,7 +1673,7 @@ public class BatchJobsDbContext : DbContext
             entity.Property(e => e.Project).HasColumnName("project");
             entity.Property(e => e.OracleProjectCode).HasColumnName("oracleprojectcode");
             entity.Property(e => e.SubAccountCode).HasColumnName("subaccountcode");
-            entity.Property(e => e.Month).HasColumnName("month");
+            entity.Property(e => e.Month).HasColumnName("month").HasConversion<double>();
             entity.Property(e => e.DefraProject).HasColumnName("defraproject");
             entity.Property(e => e.Occ).HasColumnName("occ");
             entity.Property(e => e.Opc).HasColumnName("opc");

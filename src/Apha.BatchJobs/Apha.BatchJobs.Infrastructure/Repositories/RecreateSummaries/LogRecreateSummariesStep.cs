@@ -19,11 +19,24 @@ internal sealed class LogRecreateSummariesStep : RecreateSummariesExecutionStepB
     {
         await context.DbContext.RsRecreateSummariesLog.AddAsync(new RsRecreateSummariesLogTable
         {
-            UserId = _triggeredBy,
+            UserId = NormalizeTriggeredBy(_triggeredBy),
             Period = _month,
             DateDone = DateTime.UtcNow
         }, cancellationToken);
 
         return await context.DbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private static string NormalizeTriggeredBy(string triggeredBy)
+    {
+        var trimmed = triggeredBy?.Trim() ?? string.Empty;
+        var slashIndex = trimmed.IndexOf('\\');
+
+        if (slashIndex >= 0 && slashIndex < trimmed.Length - 1)
+        {
+            return trimmed[(slashIndex + 1)..];
+        }
+
+        return trimmed;
     }
 }
