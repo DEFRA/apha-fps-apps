@@ -51,26 +51,26 @@ Legend:
 | MA-005 | Phase 1 | P0 | Orchestrator failure path sends notification and rethrows | Done | Covered in MabArchiveLoadOrchestratorParityTests |
 | MA-006 | Phase 1 | P1 | Loader metadata contract: 24 execution loaders, unique names, contiguous sequence 1..24 | Done | Covered in MabArchiveLoaderMetadataTests |
 | MA-007 | Phase 1 | P1 | DI registers only MABArchive loaders in default/configured mode | Done | Covered in ServiceCollectionSetupTests |
-| MA-008 | Phase 2 | P0 | BuildExecutionContext month branch parity from runtime clock (`>4` vs `<=4`) | Not Started | Includes optional test override `MABARCHIVE_TEST_UTCNOW` |
-| MA-009 | Phase 2 | P1 | BuildExecutionContext override parsing fallback behavior for invalid env values | Not Started | Guard against brittle month-branch test hooks |
-| MA-010 | Phase 2 | P1 | MabArchiveJobHandler resolves orchestrator, builds context, executes transaction wrapper once | Not Started | Happy-path orchestration glue |
-| MA-011 | Phase 2 | P1 | MabArchiveJobHandler cancellation/exception propagation behavior | Not Started | Logs and rethrow semantics |
-| MA-012 | Phase 2 | P1 | ExecutionYearContext default `YearSource` and mutable year behavior | Not Started | Lightweight context coverage |
-| MA-013 | Phase 3 | P0 | MyFpsYearlyDataService constructor rejects loader registration mismatch count | Not Started | Expected loader count = 24 |
-| MA-014 | Phase 3 | P0 | MyFpsYearlyDataService constructor rejects duplicate sequence values | Not Started | Strict sequence uniqueness |
-| MA-015 | Phase 3 | P0 | MyFpsYearlyDataService constructor rejects non-contiguous sequence values | Not Started | Strict 1..24 contract |
-| MA-016 | Phase 3 | P1 | IsYearAvailableAsync handles missing year and positive year cases | Not Started | SQL query contract |
-| MA-017 | Phase 3 | P1 | RefreshProjectAllOnlyAsync deletes target year and runs loader seq 24 only | Not Started | Partial refresh contract |
-| MA-018 | Phase 3 | P1 | LoadYearDataAsync executes loaders in sequence order and aggregates rows | Not Started | Baseline fan-out behavior |
-| MA-019 | Phase 3 | P1 | LoadYearDataAsync stops on failing loader and includes loader metadata in error path | Not Started | Diagnostic quality |
-| MA-020 | Phase 4 | P0 | ReloadFpsTotalsService strict-year-isolation view checks fail on missing fpsyear columns | Not Started | Prevent cross-year bleed |
-| MA-021 | Phase 4 | P0 | ReloadFpsTotalsService rebuild totals formula parity (null handling and computed totals) | Not Started | Financial parity critical |
-| MA-022 | Phase 4 | P1 | ReloadFpsTotalsService no-source-rows path returns zero without insert | Not Started | Empty-year behavior |
-| MA-023 | Phase 5 | P0 | PostgreSQL integration: DeleteYearDataAsync year-scoped deletes preserve out-of-year rows | Not Started | Regression guard for destructive ops |
-| MA-024 | Phase 5 | P0 | PostgreSQL integration: g_tlkpproject project-key delete semantics | Not Started | Special-case baseline behavior |
-| MA-025 | Phase 5 | P0 | PostgreSQL integration: high-risk loader 10 (`my_tbladditionalcosts`) counter semantics | Not Started | Counter/order parity |
-| MA-026 | Phase 5 | P1 | PostgreSQL integration: `my_staff` name composition parity | Not Started | String composition drift guard |
-| MA-027 | Phase 5 | P1 | PostgreSQL integration: `tlkpyear` month lookup/cast parity | Not Started | Medium-risk mapping guard |
+| MA-008 | Phase 2 | P0 | BuildExecutionContext month branch parity from runtime clock (`>4` vs `<=4`) | Done | Covered in MabArchiveExecutionContextTests |
+| MA-009 | Phase 2 | P1 | BuildExecutionContext override parsing fallback behavior for invalid env values | Done | Covered in MabArchiveExecutionContextTests |
+| MA-010 | Phase 2 | P1 | MabArchiveJobHandler resolves orchestrator, builds context, executes transaction wrapper once | Done | Covered in MabArchiveJobHandlerTests |
+| MA-011 | Phase 2 | P1 | MabArchiveJobHandler cancellation/exception propagation behavior | Done | Covered in MabArchiveJobHandlerTests |
+| MA-012 | Phase 2 | P1 | ExecutionYearContext default `YearSource` and mutable year behavior | Done | Covered in ExecutionYearContextTests |
+| MA-013 | Phase 3 | P0 | MyFpsYearlyDataService constructor rejects loader registration mismatch count | Done | Covered in MyFpsYearlyDataServiceTests |
+| MA-014 | Phase 3 | P0 | MyFpsYearlyDataService constructor rejects duplicate sequence values | Done | Covered in MyFpsYearlyDataServiceTests |
+| MA-015 | Phase 3 | P0 | MyFpsYearlyDataService constructor rejects non-contiguous sequence values | Done | Covered in MyFpsYearlyDataServiceTests |
+| MA-016 | Phase 3 | P1 | IsYearAvailableAsync handles missing year and positive year cases | Done | Covered in MabArchivePostgresIntegrationTests (SkippableFact) |
+| MA-017 | Phase 3 | P1 | RefreshProjectAllOnlyAsync deletes target year and runs loader seq 24 only | Done | Covered in MabArchivePostgresIntegrationTests (SkippableFact) |
+| MA-018 | Phase 3 | P1 | LoadYearDataAsync executes loaders in sequence order and aggregates rows | Done | Covered in MyFpsYearlyDataServiceTests |
+| MA-019 | Phase 3 | P1 | LoadYearDataAsync stops on failing loader and includes loader metadata in error path | Done | Covered in MyFpsYearlyDataServiceTests |
+| MA-020 | Phase 4 | P0 | ReloadFpsTotalsService strict-year-isolation view checks fail on missing fpsyear columns | Done | Covered in MabArchivePostgresIntegrationTests (SkippableFact, transactional view-shape mutation) |
+| MA-021 | Phase 4 | P0 | ReloadFpsTotalsService rebuild totals formula parity (null handling and computed totals) | Done | Covered in MabArchivePostgresIntegrationTests (SkippableFact) |
+| MA-022 | Phase 4 | P1 | ReloadFpsTotalsService no-source-rows path returns zero without insert | Done | Covered in MabArchivePostgresIntegrationTests (SkippableFact) |
+| MA-023 | Phase 5 | P0 | PostgreSQL integration: DeleteYearDataAsync year-scoped deletes preserve out-of-year rows | Done | Covered in MabArchivePostgresIntegrationTests (SkippableFact, transactional) |
+| MA-024 | Phase 5 | P0 | PostgreSQL integration: g_tlkpproject project-key delete semantics | Done | Covered in MabArchivePostgresIntegrationTests (SkippableFact, transactional) |
+| MA-025 | Phase 5 | P0 | PostgreSQL integration: high-risk loader 10 (`my_tbladditionalcosts`) counter semantics | Done | Covered in MabArchivePostgresIntegrationTests (SkippableFact, transactional) |
+| MA-026 | Phase 5 | P1 | PostgreSQL integration: `my_staff` name composition parity | Done | Covered in MabArchivePostgresIntegrationTests (SkippableFact, transactional) |
+| MA-027 | Phase 5 | P1 | PostgreSQL integration: `tlkpyear` month lookup/cast parity | Done | Covered in MabArchivePostgresIntegrationTests (SkippableFact, transactional) |
 
 ## 5) Suggested Test File Layout
 
@@ -78,12 +78,12 @@ Suggested location: `src/Apha.BatchJobs/Apha.BatchJobs.UnitTests/MabArchive/`
 
 - MabArchiveLoadOrchestratorParityTests.cs (existing)
 - MabArchiveLoaderMetadataTests.cs (existing)
-- MabArchiveExecutionContextTests.cs
-- MabArchiveJobHandlerTests.cs
-- ExecutionYearContextTests.cs
-- MyFpsYearlyDataServiceTests.cs
+- MabArchiveExecutionContextTests.cs (new)
+- MabArchiveJobHandlerTests.cs (new)
+- ExecutionYearContextTests.cs (new)
+- MyFpsYearlyDataServiceTests.cs (new)
 - ReloadFpsTotalsServiceTests.cs
-- MabArchivePostgresIntegrationTests.cs
+- MabArchivePostgresIntegrationTests.cs (new)
 
 Note:
 - Existing MABArchive tests currently live at the UnitTests root. Moving into a dedicated `MabArchive` folder is optional and can be done later without behavior changes.

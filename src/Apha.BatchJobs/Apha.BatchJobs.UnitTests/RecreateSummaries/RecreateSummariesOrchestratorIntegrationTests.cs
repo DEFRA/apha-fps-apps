@@ -205,8 +205,8 @@ public sealed class RecreateSummariesOrchestratorIntegrationTests : IAsyncLifeti
     {
         await context.Database.ExecuteSqlAsync($@"
             DELETE FROM fps.tblperiod WHERE endperiod = {month};
-            INSERT INTO fps.tblperiod (endperiod, periodlocked)
-            VALUES ({month}, {periodLocked});
+            INSERT INTO fps.tblperiod (periodname, endperiod, periodlocked, fpsyear)
+            VALUES ('P{month:00}', {month}, {periodLocked}, 2026);
         ");
     }
 
