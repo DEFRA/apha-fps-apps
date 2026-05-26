@@ -330,7 +330,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return query;
         }
 
-        private static IQueryable<Project> ApplyProfitabilityFilter(IQueryable<Project> query, string? filter)
+        private static IQueryable<ProjectView> ApplyProfitabilityFilter(IQueryable<ProjectView> query, string? filter)
         {
             if (string.IsNullOrEmpty(filter))
                 return query;
@@ -342,7 +342,7 @@ namespace Apha.FPS.DataAccess.Repositories
             var dict = (IDictionary<string, object>)filterModel;
 
             if (dict.TryGetValue("JobCode", out var jobCode) && jobCode != null)
-                query = query.Where(x => EF.Functions.ILike(x.ParentProject, $"%{jobCode}%"));
+                query = query.Where(x => EF.Functions.ILike(x.ParentProject!, $"%{jobCode}%"));
 
             if (dict.TryGetValue("ProjectStatus", out var projectStatus) && projectStatus != null)
                 query = query.Where(x => EF.Functions.ILike(x.ProjectStatus!, $"%{projectStatus}%"));
@@ -1080,9 +1080,9 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<PagedData<ProjectProfitabilityView>> GetProjectProfitabilityAsync(
             PaginationParameters<string> query, string programNo, string workTypeFilter)
         {
-            var projectQuery = _dbContext.Projects
+            var projectQuery = _dbContext.ProjectViews
                 .AsNoTracking()
-                .Where(p => p.Program == programNo);
+                .Where(p => EF.Functions.ILike(p.UserEmail!, _requestContext.UserEmailId) && p.Program == programNo);
 
             if (workTypeFilter == "approved")
                 projectQuery = projectQuery.Where(p => p.ProjectStatus == "Approved");
