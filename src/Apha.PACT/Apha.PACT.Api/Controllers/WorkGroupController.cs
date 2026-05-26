@@ -142,6 +142,10 @@ namespace Apha.PACT.Api.Controllers
             if (string.IsNullOrWhiteSpace(workGroupName))
                 return BadRequest("WorkGroupName is required.");
 
+            if (!string.IsNullOrWhiteSpace(request.WorkGroupName) &&
+                !string.Equals(request.WorkGroupName, workGroupName, StringComparison.OrdinalIgnoreCase))
+                return BadRequest("WorkGroupName in the request body does not match the route parameter.");
+
             var success = await _service.UpdateWorkGroupEmailAsync(workGroupName, request.SendEmail, request.EmailRecipient);
             return Ok(success);
         }

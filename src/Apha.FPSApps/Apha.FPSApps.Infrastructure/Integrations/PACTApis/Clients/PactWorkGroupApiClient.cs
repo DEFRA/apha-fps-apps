@@ -7,6 +7,7 @@ using Apha.FPSApps.Application.Interfaces.PactApiClients;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
+using Microsoft.AspNetCore.WebUtilities;
 
 namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
 {
@@ -36,9 +37,9 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
         {
             var url = QueryStringHelper.AddQueryString(PactApiEndpoints.GetPagedWorkGroupTimeCodes, query);
             if (!string.IsNullOrWhiteSpace(workGroup))
-                url += $"&workGroup={Uri.EscapeDataString(workGroup)}";
+                url = QueryHelpers.AddQueryString(url, "workGroup", workGroup);
             if (monthNumber.HasValue)
-                url += $"&monthNumber={monthNumber.Value}";
+                url = QueryHelpers.AddQueryString(url, "monthNumber", monthNumber.Value.ToString());
 
             var response = await _http.GetAsync<List<WorkGroupTimeCodeRes>>(url);
             if (response.Success)
@@ -53,7 +54,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
         {
             var url = QueryStringHelper.AddQueryString(PactApiEndpoints.GetPagedWorkGroupValidTimeCodes, query);
             if (!string.IsNullOrWhiteSpace(workGroup))
-                url += $"&workGroup={Uri.EscapeDataString(workGroup)}";
+                url = QueryHelpers.AddQueryString(url, "workGroup", workGroup);
 
             var response = await _http.GetAsync<List<WorkGroupValidTimeCodeRes>>(url);
             if (response.Success)
@@ -67,7 +68,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             QueryParameters<string> query, string profitCentre)
         {
             var url = QueryStringHelper.AddQueryString(PactApiEndpoints.GetPagedWorkGroupsByProfitCentre, query);
-            url += $"&profitCentre={Uri.EscapeDataString(profitCentre)}";
+            url = QueryHelpers.AddQueryString(url, "profitCentre", profitCentre);
 
             var response = await _http.GetAsync<List<WorkGroupRes>>(url);
             if (response.Success)

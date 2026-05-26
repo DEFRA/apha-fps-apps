@@ -253,33 +253,33 @@ namespace Apha.PACT.DataAccess.Repository
         public async Task<bool> SetSendEmailForProfitCentreWorkGroupsAsync(string profitCentre, short flag)
         {
             var fpsYear = _context.FilterFpsYear;
-            await _context.WorkGroups
+            var affectedRows = await _context.WorkGroups
                 .Where(wg => wg.FpsYear == fpsYear
                           && _context.ProfitCentres
                                 .Any(pc => pc.ProfitCentreId == profitCentre
                                         && pc.ProfitCentreId == wg.ProfitCentre))
                 .ExecuteUpdateAsync(s => s.SetProperty(w => w.SendEmail, flag));
-            return true;
+            return affectedRows >= 0;
         }
 
         public async Task<bool> SetSendEmailForAllWorkGroupsAsync(short flag)
         {
             var fpsYear = _context.FilterFpsYear;
-            await _context.WorkGroups
+            var affectedRows = await _context.WorkGroups
                 .Where(w => w.FpsYear == fpsYear)
                 .ExecuteUpdateAsync(s => s.SetProperty(w => w.SendEmail, flag));
-            return true;
+            return affectedRows >= 0;
         }
 
         public async Task<bool> UpdateWorkGroupEmailAsync(string workGroupName, short sendEmail, string? emailRecipient)
         {
             var fpsYear = _context.FilterFpsYear;
-            await _context.WorkGroups
+            var affectedRows = await _context.WorkGroups
                 .Where(w => w.WorkGroupName == workGroupName && w.FpsYear == fpsYear)
                 .ExecuteUpdateAsync(s => s
                     .SetProperty(w => w.SendEmail, sendEmail)
                     .SetProperty(w => w.EmailRecipient, emailRecipient));
-            return true;
+            return affectedRows >= 0;
         }
 
         private static IQueryable<WorkGroup> ApplyWorkGroupFilter(

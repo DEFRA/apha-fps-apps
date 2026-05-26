@@ -42,7 +42,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
         private static PactWorkGroupGradeView GradeView(string wgGrade, string workGroup) =>
             new() { WgGrade = wgGrade, WorkGroup = workGroup };
 
-        private static WorkGroupStaffView StaffView(string pactId, string name, string workGroupGrade) =>
+        private static PactStaffView StaffView(string pactId, string name, string workGroupGrade) =>
             new() { PactId = pactId, Name = name, WorkGroupGrade = workGroupGrade };
 
         private static MonthlyTime TimeRecord(
@@ -62,7 +62,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
 
         private static WorkGroupRepository CreateTimeCodeRepository(
             IEnumerable<PactWorkGroupGradeView> gradeViews,
-            IEnumerable<WorkGroupStaffView>     staffViews,
+            IEnumerable<PactStaffView>     staffViews,
             IEnumerable<MonthlyTime>            monthlyTimes)
         {
             var fpsRequestContext = Substitute.For<IFpsRequestContext>();
@@ -1538,7 +1538,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             IEnumerable<WorkGroup>? workGroups = null,
             IEnumerable<TimeCodeValid>? timeCodeValids = null,
             IEnumerable<PactWorkGroupGradeView>? workGroupGradeViews = null,
-            IEnumerable<WorkGroupStaffView>? workGroupStaffViews = null,
+            IEnumerable<PactStaffView>? workGroupStaffViews = null,
             IEnumerable<JobCode>? jobCodes = null,
             IEnumerable<TestorProduct>? testorProducts = null,
             IEnumerable<TestCapability>? testCapabilities = null,
@@ -1699,7 +1699,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             {
                 new() { WorkGroup = "WG1", WgGrade = "GR1" }
             };
-            var workGroupStaffViews = new List<WorkGroupStaffView>
+            var workGroupStaffViews = new List<PactStaffView>
             {
                 new() { Name = "Alice", WorkGroupGrade = "GR1", PersonStatus = "A" }
             };
@@ -1730,7 +1730,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             {
                 new() { WorkGroup = "WG1", WgGrade = "GR1" }
             };
-            var workGroupStaffViews = new List<WorkGroupStaffView>
+            var workGroupStaffViews = new List<PactStaffView>
             {
                 new() { Name = "Alice", WorkGroupGrade = "GR1", PersonStatus = "A" }
             };
@@ -1756,7 +1756,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             {
                 new() { WorkGroup = "WG2", WgGrade = "GR1" }
             };
-            var workGroupStaffViews = new List<WorkGroupStaffView>
+            var workGroupStaffViews = new List<PactStaffView>
             {
                 new() { Name = "Alice", WorkGroupGrade = "GR1", PersonStatus = "A" }
             };
@@ -1782,7 +1782,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
                 new() { WorkGroup = "WG1", WgGrade = "GR1" },
                 new() { WorkGroup = "WG1", WgGrade = "GR2" }
             };
-            var workGroupStaffViews = new List<WorkGroupStaffView>
+            var workGroupStaffViews = new List<PactStaffView>
             {
                 new() { Name = "Alice", WorkGroupGrade = "GR1", PersonStatus = "A" },
                 new() { Name = "Bob",   WorkGroupGrade = "GR2", PersonStatus = "A" }
@@ -1812,7 +1812,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             {
                 new() { WorkGroup = "WG1", WgGrade = "GR1" }
             };
-            var workGroupStaffViews = new List<WorkGroupStaffView>
+            var workGroupStaffViews = new List<PactStaffView>
             {
                 new() { Name = "Alice", WorkGroupGrade = "GR1", PersonStatus = "A" }
             };
@@ -1847,7 +1847,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
                 new() { WorkGroup = "WG1", WgGrade = "GR1" },
                 new() { WorkGroup = "WG1", WgGrade = "GR2" }
             };
-            var workGroupStaffViews = new List<WorkGroupStaffView>
+            var workGroupStaffViews = new List<PactStaffView>
             {
                 new() { Name = "Alice",    WorkGroupGrade = "GR1", PersonStatus = "A" },
                 new() { Name = "Inactive", WorkGroupGrade = "GR2", PersonStatus = "I" }
@@ -1880,7 +1880,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
                 new() { WorkGroup = "WG1", WgGrade = "GR1" },
                 new() { WorkGroup = "WG1", WgGrade = "GR2" }
             };
-            var workGroupStaffViews = new List<WorkGroupStaffView>
+            var workGroupStaffViews = new List<PactStaffView>
             {
                 new() { Name = "Alice", WorkGroupGrade = "GR1", PersonStatus = "A" },
                 new() { Name = "Bob",   WorkGroupGrade = "GR2", PersonStatus = "A" }
@@ -1913,7 +1913,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             {
                 new() { WorkGroup = "WG1", WgGrade = "GR1" }
             };
-            var workGroupStaffViews = new List<WorkGroupStaffView>
+            var workGroupStaffViews = new List<PactStaffView>
             {
                 new() { Name = "Alice", WorkGroupGrade = "GR1", PersonStatus = "A" }
             };
@@ -1944,7 +1944,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             {
                 new() { WorkGroup = "WG1", WgGrade = "GR1" }
             };
-            var workGroupStaffViews = new List<WorkGroupStaffView>
+            var workGroupStaffViews = new List<PactStaffView>
             {
                 new() { Name = "Alice", WorkGroupGrade = "GR1", PersonStatus = "A" }
             };

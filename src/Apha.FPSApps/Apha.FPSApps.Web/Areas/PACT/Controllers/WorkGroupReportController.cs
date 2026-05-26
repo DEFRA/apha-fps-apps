@@ -90,6 +90,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// by setting their <c>SendEmail</c> flag to <c>1</c>.
         /// </summary>
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> SelectPCWorkGroups(string profitCentre)
         {
             if (string.IsNullOrWhiteSpace(profitCentre))
@@ -106,6 +107,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// <paramref name="profitCentre"/>.
         /// </summary>
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> ClearPCWorkGroups(string profitCentre)
         {
             if (string.IsNullOrWhiteSpace(profitCentre))
@@ -122,6 +124,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// profit centres.
         /// </summary>
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> ClearAllWorkGroups()
         {
             var result = await _workGroupService.SetSendEmailForAllWorkGroupsAsync(0);
@@ -183,6 +186,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// Updates the <c>SendEmail</c> flag and <c>EmailRecipient</c> for a single work group.
         /// </summary>
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateWorkGroupEmail(
             string workGroupName, short sendEmail, string? emailRecipient)
         {

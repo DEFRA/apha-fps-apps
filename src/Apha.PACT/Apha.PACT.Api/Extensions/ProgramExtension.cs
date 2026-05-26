@@ -35,7 +35,7 @@ namespace Apha.PACT.Api.Extensions
                                  maxRetryDelay: TimeSpan.FromSeconds(10),
                                  errorCodesToAdd: null);
                              // Structural safeguard: avoid hanging commands under load
-                             npgsqlOptions.CommandTimeout(30);                             
+                             npgsqlOptions.CommandTimeout(30);
                          }
                         ), ServiceLifetime.Scoped);
 
@@ -81,7 +81,16 @@ namespace Apha.PACT.Api.Extensions
             });
 
             // MS Graph Email
-            var graphSettings = configuration.GetSection("GraphEmailSettings").Get<GraphEmailSettings>()!;
+            var graphSettings = configuration.GetRequiredSection("GraphEmailSettings").Get<GraphEmailSettings>()
+                ?? throw new InvalidOperationException("GraphEmailSettings configuration section is missing or could not be bound.");
+
+            if (string.IsNullOrWhiteSpace(graphSettings.TenantId))
+                throw new InvalidOperationException("GraphEmailSettings:TenantId is required but was not configured.");
+            if (string.IsNullOrWhiteSpace(graphSettings.ClientId))
+                throw new InvalidOperationException("GraphEmailSettings:ClientId is required but was not configured.");
+            if (string.IsNullOrWhiteSpace(graphSettings.ClientSecret))
+                throw new InvalidOperationException("GraphEmailSettings:ClientSecret is required but was not configured.");
+
             services.AddSingleton<GraphServiceClient>(_ =>
             {
                 var credential = new ClientSecretCredential(
@@ -95,6 +104,9 @@ namespace Apha.PACT.Api.Extensions
             });
 
             // Application services
+            services.AddOptions<WorkGroupReportEmailSettings>()
+                .Bind(configuration.GetRequiredSection(WorkGroupReportEmailSettings.SectionName))
+                .ValidateOnStart();
             services.AddApplicationServices();
 
             // Authentication
@@ -149,7 +161,7 @@ namespace Apha.PACT.Api.Extensions
                 {
                     options.SwaggerEndpoint("/swagger/v1/swagger.json", "PACT API v1");
                 });
-            }            
+            }
 
             app.UseHsts();
             app.UseHttpsRedirection();

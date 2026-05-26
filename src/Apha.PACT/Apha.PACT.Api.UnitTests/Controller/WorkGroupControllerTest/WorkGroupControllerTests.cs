@@ -480,6 +480,22 @@ namespace Apha.PACT.Api.UnitTests.Controller.WorkGroupControllerTest
                 _controller.UpdateWorkGroupEmail("WG1", new UpdateWorkGroupEmailReq { WorkGroupName = "WG1", SendEmail = 1 }));
         }
 
+        [Fact]
+        public async Task UpdateWorkGroupEmail_BodyWorkGroupNameMismatch_ReturnsBadRequest()
+        {
+            // Arrange
+            const string routeName = "WG1";
+            var request = new UpdateWorkGroupEmailReq { WorkGroupName = "WG_OTHER", SendEmail = 1 };
+
+            // Act
+            var result = await _controller.UpdateWorkGroupEmail(routeName, request);
+
+            // Assert
+            Assert.IsType<BadRequestObjectResult>(result);
+            await _serviceMock.DidNotReceive()
+                .UpdateWorkGroupEmailAsync(Arg.Any<string>(), Arg.Any<short>(), Arg.Any<string>());
+        }
+
         #endregion
     }
 }

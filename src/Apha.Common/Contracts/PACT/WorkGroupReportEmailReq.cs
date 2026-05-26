@@ -4,6 +4,5 @@ namespace Apha.Common.Contracts.PACT
     {
         public string ProfitCentre { get; set; } = string.Empty;
         public short MonthNumber { get; set; }
-        public int FpsYear { get; set; }
     }
 }

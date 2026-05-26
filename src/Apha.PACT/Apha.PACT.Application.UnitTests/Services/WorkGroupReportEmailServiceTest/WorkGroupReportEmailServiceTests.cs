@@ -1,8 +1,11 @@
 using Apha.Common.Contracts.Email;
 using Apha.Common.Utilities.Email;
+using Apha.Common.Utilities.ExcelExport;
 using Apha.PACT.Application.Services;
 using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -13,6 +16,8 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupReportEmailServiceTe
     {
         private readonly IWorkGroupRepository _mockRepository;
         private readonly IGraphEmailService _mockEmailService;
+        private readonly IExcelExportService _mockExcelService;
+        private readonly ILogger<WorkGroupReportEmailService> _mockLogger;
         private readonly WorkGroupReportEmailService _sut;
 
         private const short Month4 = 4;
@@ -63,7 +68,22 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupReportEmailServiceTe
         {
             _mockRepository   = Substitute.For<IWorkGroupRepository>();
             _mockEmailService = Substitute.For<IGraphEmailService>();
-            _sut = new WorkGroupReportEmailService(_mockRepository, _mockEmailService);
+            _mockExcelService = Substitute.For<IExcelExportService>();
+            _mockLogger       = Substitute.For<ILogger<WorkGroupReportEmailService>>();
+            _mockExcelService
+                .BuildTimeSheetExcel(Arg.Any<string>(), Arg.Any<short>(), Arg.Any<IEnumerable<WorkGroupTimeSheetRow>>(), Arg.Any<short>())
+                .Returns(Array.Empty<byte>());
+            _mockExcelService
+                .BuildOutputSheetExcel(Arg.Any<string>(), Arg.Any<short>(), Arg.Any<IEnumerable<WorkGroupOutputSheetRow>>())
+                .Returns(Array.Empty<byte>());
+
+            var emailSettings = Options.Create(new WorkGroupReportEmailSettings
+            {
+                GatekeeperMailbox = "CAPSMailbox@vla.defra.gsi.gov.uk",
+                EmailBodyTemplate = "Please complete and return to APHA Gatekeeper - OTL Mailbox. [Mailto:{0}]. Thank you."
+            });
+
+            _sut = new WorkGroupReportEmailService(_mockRepository, _mockEmailService, _mockExcelService, emailSettings, _mockLogger);
         }
 
         #region SendEmailsAsync — empty work groups
@@ -244,7 +264,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupReportEmailServiceTe
             // Assert
             results.Should().HaveCount(1);
             results[0].Status.Should().Be("Failed");
-            results[0].Reason.Should().Be("SMTP failure");
+            results[0].Reason.Should().Be("An error occurred while sending the email. Please contact support if the problem persists.");
         }
 
         #endregion

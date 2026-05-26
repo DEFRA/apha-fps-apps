@@ -1,10 +1,12 @@
 ﻿using Apha.Common.Contracts.Email;
 using Apha.Common.Utilities.Email;
+using Apha.Common.Utilities.ExcelExport;
 using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Interfaces;
 using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
-using ClosedXML.Excel;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Apha.PACT.Application.Services
 {
@@ -18,13 +20,24 @@ namespace Apha.PACT.Application.Services
 
         private readonly IWorkGroupRepository _workGroupReportRepository;
         private readonly IGraphEmailService _emailService;
+        private readonly IExcelExportService _excelService;
+        private readonly ILogger<WorkGroupReportEmailService> _logger;
+        private readonly string _emailBody;
 
         public WorkGroupReportEmailService(
             IWorkGroupRepository workGroupReportRepository,
-            IGraphEmailService emailService)
+            IGraphEmailService emailService,
+            IExcelExportService excelService,
+            IOptions<WorkGroupReportEmailSettings> emailSettings,
+            ILogger<WorkGroupReportEmailService> logger)
         {
             _workGroupReportRepository = workGroupReportRepository;
             _emailService = emailService;
+            _excelService = excelService;
+            _logger = logger;
+
+            var settings = emailSettings.Value;
+            _emailBody = string.Format(settings.EmailBodyTemplate, settings.GatekeeperMailbox);
         }
 
         public async Task<IEnumerable<WorkGroupReportEmailResultDto>> SendEmailsAsync(
@@ -54,10 +67,6 @@ namespace Apha.PACT.Application.Services
             return results;
         }
 
-        private static readonly string EmailBody =
-            "Please complete and return to APHA Gatekeeper - OTL Mailbox. " +
-            "[Mailto:CAPSMailbox@vla.defra.gsi.gov.uk]. Thank you.";
-
         private async Task<WorkGroupReportEmailResultDto> ProcessWorkGroupAsync(
             WorkGroup workGroup,
             short monthNumber,
@@ -65,7 +74,7 @@ namespace Apha.PACT.Application.Services
             bool sendOutputSheet,
             short timesheetLayout,
             CancellationToken cancellationToken)
-        {            
+        {
             if (string.IsNullOrWhiteSpace(workGroup.EmailRecipient))
             {
                 return new WorkGroupReportEmailResultDto
@@ -77,61 +86,15 @@ namespace Apha.PACT.Application.Services
                 };
             }
 
-            var month = monthNumber < 10 ? $"0{monthNumber}" : $"{monthNumber}";
+            var month = monthNumber.ToString("D2");
 
             try
             {
                 if (sendTimeSheet)
-                {
-                    var templateRows = await _workGroupReportRepository
-                        .GetTimeSheetTemplateAsync(workGroup.WorkGroupName, monthNumber, timesheetLayout);
-
-                    var fileName = $"{workGroup.WorkGroupName}{month}TS.xlsx";
-                    var bytes    = BuildTimeSheetExcel(workGroup.WorkGroupName, monthNumber, templateRows, timesheetLayout);
-
-                    await _emailService.SendEmailAsync(new EmailMessageModel
-                    {
-                        To          = [workGroup.EmailRecipient],
-                        Subject     = $"MARS Time Sheets - {fileName}",
-                        Body        = EmailBody,
-                        IsBodyHtml  = false,
-                        Attachments =
-                        [
-                            new EmailAttachmentModel
-                            {
-                                FileName     = fileName,
-                                ContentBytes = bytes,
-                                ContentType  = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                            }
-                        ]
-                    }, cancellationToken);
-                }
+                    await SendTimeSheetEmailAsync(workGroup, monthNumber, month, timesheetLayout, cancellationToken);
 
                 if (sendOutputSheet)
-                {
-                    var templateRows = await _workGroupReportRepository
-                        .GetOutputSheetTemplateAsync(workGroup.WorkGroupName, monthNumber);
-
-                    var fileName = $"{workGroup.WorkGroupName}{month}OP.xlsx";
-                    var bytes    = BuildOutputSheetExcel(workGroup.WorkGroupName, monthNumber, templateRows);
-
-                    await _emailService.SendEmailAsync(new EmailMessageModel
-                    {
-                        To          = [workGroup.EmailRecipient],
-                        Subject     = $"MARS Output Sheets - {fileName}",
-                        Body        = EmailBody,
-                        IsBodyHtml  = false,
-                        Attachments =
-                        [
-                            new EmailAttachmentModel
-                            {
-                                FileName     = fileName,
-                                ContentBytes = bytes,
-                                ContentType  = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                            }
-                        ]
-                    }, cancellationToken);
-                }
+                    await SendOutputSheetEmailAsync(workGroup, monthNumber, month, cancellationToken);
 
                 return new WorkGroupReportEmailResultDto
                 {
@@ -142,162 +105,99 @@ namespace Apha.PACT.Application.Services
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex,
+                    "Failed to send email for work group {WorkGroupName} (recipient: {EmailRecipient}, month: {MonthNumber})",
+                    workGroup.WorkGroupName, workGroup.EmailRecipient, monthNumber);
+
                 return new WorkGroupReportEmailResultDto
                 {
                     WorkGroupName  = workGroup.WorkGroupName,
                     EmailRecipient = workGroup.EmailRecipient,
                     Status         = StatusFailed,
-                    Reason         = ex.Message
+                    Reason         = "An error occurred while sending the email. Please contact support if the problem persists."
                 };
             }
         }
-       
-        private static byte[] BuildTimeSheetExcel(
-            string workGroupName,
+
+        private async Task SendTimeSheetEmailAsync(
+            WorkGroup workGroup,
             short monthNumber,
-            IEnumerable<TimeSheetTemplateRow> rows,
-            short layout)
+            string month,
+            short timesheetLayout,
+            CancellationToken cancellationToken)
         {
-            using var workbook = new XLWorkbook();
-            var ws   = workbook.Worksheets.Add("TimeSheet");
-            var data = rows.ToList();
+            var templateRows = await _workGroupReportRepository
+                .GetTimeSheetTemplateAsync(workGroup.WorkGroupName, monthNumber, timesheetLayout);
 
-            if (layout == 2)
-            {
-                // Cross-tab: fixed cols + one column per staff name (PIVOT tblStaff.Name)
-                // StaffName on each row is the comma-separated list of staff for that
-                // (TimeCode, ParentProject) group — extract the full distinct staff set
-                // across all rows to build the pivot column headers.
-                var staffNames = data
-                    .SelectMany(r => r.StaffName.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-                    .Distinct()
-                    .OrderBy(n => n)
-                    .ToList();
-
-                // Header row
-                ws.Cell(1, 1).Value = "Time Code";
-                ws.Cell(1, 2).Value = "Description";
-                ws.Cell(1, 3).Value = "Parent Project";
-                ws.Cell(1, 4).Value = "Month";
-                for (int c = 0; c < staffNames.Count; c++)
-                    ws.Cell(1, 5 + c).Value = staffNames[c];
-
-                int row = 2;
-                foreach (var item in data)
+            var fileName = $"{workGroup.WorkGroupName}{month}TS.xlsx";
+            var bytes    = _excelService.BuildTimeSheetExcel(
+                workGroup.WorkGroupName,
+                monthNumber,
+                templateRows.Select(r => new WorkGroupTimeSheetRow
                 {
-                    ws.Cell(row, 1).Value = item.TimeCode;
-                    ws.Cell(row, 2).Value = item.Description ?? string.Empty;
-                    ws.Cell(row, 3).Value = item.ParentProject;
-                    ws.Cell(row, 4).Value = item.Month;
-                    // Staff pivot columns are blank — recipient fills in Hours per staff member
-                    row++;
-                }
-            }
-            else
-            {
-                // Flat-file: WorkGroup | Name | TimeCode | ParentProject | Month | Hours
-                ws.Cell(1, 1).Value = "Work Group";
-                ws.Cell(1, 2).Value = "Name";
-                ws.Cell(1, 3).Value = "Time Code";
-                ws.Cell(1, 4).Value = "Parent Project";
-                ws.Cell(1, 5).Value = "Month";
-                ws.Cell(1, 6).Value = "Hours";
+                    StaffName     = r.StaffName,
+                    TimeCode      = r.TimeCode,
+                    Description   = r.Description,
+                    ParentProject = r.ParentProject,
+                    Month         = r.Month
+                }),
+                timesheetLayout);
 
-                int row = 2;
-                foreach (var item in data)
+            await _emailService.SendEmailAsync(new EmailMessageModel
+            {
+                To          = [workGroup.EmailRecipient!],
+                Subject     = $"MARS Time Sheets - {fileName}",
+                Body        = _emailBody,
+                IsBodyHtml  = false,
+                Attachments =
+                [
+                    new EmailAttachmentModel
+                    {
+                        FileName     = fileName,
+                        ContentBytes = bytes,
+                        ContentType  = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    }
+                ]
+            }, cancellationToken);
+        }
+
+        private async Task SendOutputSheetEmailAsync(
+            WorkGroup workGroup,
+            short monthNumber,
+            string month,
+            CancellationToken cancellationToken)
+        {
+            var templateRows = await _workGroupReportRepository
+                .GetOutputSheetTemplateAsync(workGroup.WorkGroupName, monthNumber);
+
+            var fileName = $"{workGroup.WorkGroupName}{month}OP.xlsx";
+            var bytes    = _excelService.BuildOutputSheetExcel(
+                workGroup.WorkGroupName,
+                monthNumber,
+                templateRows.Select(r => new WorkGroupOutputSheetRow
                 {
-                    ws.Cell(row, 1).Value = workGroupName;
-                    ws.Cell(row, 2).Value = item.StaffName;
-                    ws.Cell(row, 3).Value = item.TimeCode;
-                    ws.Cell(row, 4).Value = item.ParentProject;
-                    ws.Cell(row, 5).Value = item.Month;
-                    ws.Cell(row, 6).Value = string.Empty; // blank — recipient fills in
-                    row++;
-                }
-            }
+                    TestCode        = r.TestCode,
+                    ItemDescription = r.ItemDescription,
+                    Buyer           = r.Buyer,
+                    Month           = r.Month
+                }));
 
-            ws.Columns().AdjustToContents();
-
-            using var stream = new MemoryStream();
-            workbook.SaveAs(stream);
-            return stream.ToArray();
-        }
-        /// <summary>
-        /// Builds the output-sheet Excel from template rows (blank Volume — recipient fills in).       
-        ///   Columns: WorkGroup | TestCode | ItemDescription | Buyer | Month | Volume
-        /// </summary>
-        private static byte[] BuildOutputSheetExcel(
-            string workGroupName,
-            short monthNumber,
-            IEnumerable<OutputSheetTemplateRow> rows)
-        {
-            using var workbook = new XLWorkbook();
-            var ws = workbook.Worksheets.Add("OutputSheet");
-
-            ws.Cell(1, 1).Value = "Work Group";
-            ws.Cell(1, 2).Value = "Test Code";
-            ws.Cell(1, 3).Value = "Item Description";
-            ws.Cell(1, 4).Value = "Buyer";
-            ws.Cell(1, 5).Value = "Month";
-            ws.Cell(1, 6).Value = "Volume";
-
-            int row = 2;
-            foreach (var item in rows)
+            await _emailService.SendEmailAsync(new EmailMessageModel
             {
-                ws.Cell(row, 1).Value = workGroupName;
-                ws.Cell(row, 2).Value = item.TestCode;
-                ws.Cell(row, 3).Value = item.ItemDescription ?? string.Empty;
-                ws.Cell(row, 4).Value = item.Buyer;
-                ws.Cell(row, 5).Value = item.Month;
-                ws.Cell(row, 6).Value = string.Empty;   // blank — recipient fills in
-                row++;
-            }
-
-            ws.Columns().AdjustToContents();
-
-            using var stream = new MemoryStream();
-            workbook.SaveAs(stream);
-            return stream.ToArray();
-        }
-
-
-        #if DEBUG
-        public async Task<IEnumerable<string>> SaveExcelFilesAsync(
-            string profitCentre,
-            string workGroupName,
-            short monthNumber,
-            string outputFolder,
-            CancellationToken cancellationToken = default)
-        {
-            var profitCentreView = await _workGroupReportRepository.GetProfitCentreAsync(profitCentre);
-            var sendTimeSheet   = profitCentreView?.Timesheet   == AccessTrue;
-            var sendOutputSheet = profitCentreView?.Outputsheet == AccessTrue;
-            var timesheetLayout = profitCentreView?.TimesheetLayout ?? (short)1;
-
-            Directory.CreateDirectory(outputFolder);
-            var saved = new List<string>();
-            var month = monthNumber < 10 ? $"0{monthNumber}" : $"{monthNumber}";
-
-            if (sendTimeSheet)
-            {
-                var rows  = await _workGroupReportRepository.GetTimeSheetTemplateAsync(workGroupName, monthNumber, timesheetLayout);
-                var bytes = BuildTimeSheetExcel(workGroupName, monthNumber, rows, timesheetLayout);
-                var path  = Path.Combine(outputFolder, $"{workGroupName}{month}TS.xlsx");
-                await File.WriteAllBytesAsync(path, bytes, cancellationToken);
-                saved.Add(path);
-            }
-
-            if (sendOutputSheet)
-            {
-                var rows  = await _workGroupReportRepository.GetOutputSheetTemplateAsync(workGroupName, monthNumber);
-                var bytes = BuildOutputSheetExcel(workGroupName, monthNumber, rows);
-                var path  = Path.Combine(outputFolder, $"{workGroupName}{month}OP.xlsx");
-                await File.WriteAllBytesAsync(path, bytes, cancellationToken);
-                saved.Add(path);
-            }
-
-            return saved;
-        }
-#endif
+                To          = [workGroup.EmailRecipient!],
+                Subject     = $"MARS Output Sheets - {fileName}",
+                Body        = _emailBody,
+                IsBodyHtml  = false,
+                Attachments =
+                [
+                    new EmailAttachmentModel
+                    {
+                        FileName     = fileName,
+                        ContentBytes = bytes,
+                        ContentType  = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    }
+                ]
+            }, cancellationToken);
+        }       
     }
 }

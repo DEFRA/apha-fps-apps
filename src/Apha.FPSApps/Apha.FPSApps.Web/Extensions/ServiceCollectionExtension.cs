@@ -67,8 +67,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IMonthlyOutputService, MonthlyOutputService>();
             services.AddScoped<IPactMonthlyOutputService, PactMonthlyOutputService>();
             services.AddScoped<IProjectProfileService, ProjectProfileService>();
-            services.AddScoped<IProjectMonthService, ProjectMonthService>();
-            services.AddScoped<ICalenderMonthService, CalenderMonthService>();
+            services.AddScoped<IProjectMonthService, ProjectMonthService>();            
             services.AddScoped<IWorkGroupService, WorkGroupService>();
             services.AddScoped<IWorkGroupReportEmailService, WorkGroupReportEmailService>();
             services.AddScoped<IWorkGroupService, WorkGroupService>();

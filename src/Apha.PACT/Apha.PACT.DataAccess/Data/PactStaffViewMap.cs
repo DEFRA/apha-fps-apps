@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Apha.PACT.DataAccess.Data
 {
-    public class WorkGroupStaffViewMap : IEntityTypeConfiguration<WorkGroupStaffView>
+    public class PactStaffViewMap : IEntityTypeConfiguration<PactStaffView>
     {
-        public void Configure(EntityTypeBuilder<WorkGroupStaffView> entity)
+        public void Configure(EntityTypeBuilder<PactStaffView> entity)
         {
             entity
                 .HasNoKey()

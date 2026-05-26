@@ -1,5 +1,4 @@
-﻿using Apha.Common.Contracts.Email;
-using Apha.Common.Utilities.Email;
+﻿using Apha.Common.Utilities.Email;
 using Apha.Common.Utilities.ExcelExport;
 using Apha.Common.Utilities.StateManagement;
 using Apha.PACT.Api.Context;
