@@ -73,27 +73,40 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                     : new List<SelectListItem>(),
                 ProjectOptions = projectsResponse.Success && projectsResponse.Data != null
                     ? projectsResponse.Data
-                        .Select(p => new SelectListItem(
-                            $"{p.ParentProject} — {p.ProjectTitle}", p.ParentProject))
-                        .OrderBy(x => x.Value)
+                        .Select(p => new ProjectDropdownItem
+                        {
+                            Value = p.ParentProject ?? string.Empty,
+                            Code  = p.ParentProject ?? string.Empty,
+                            Title = p.ProjectTitle  ?? string.Empty
+                        })
+                        .OrderBy(x => x.Code)
                         .ToList()
-                    : new List<SelectListItem>(),
+                    : new List<ProjectDropdownItem>(),
                 JobCodeOptions = jobCodesResponse.Success && jobCodesResponse.Data != null
                     ? jobCodesResponse.Data
-                        .Select(j => new SelectListItem(
-                            $"{j.JobCodeId} — {j.JobCodeName}", j.JobCodeId))
-                        .DistinctBy(x => x.Value)
-                        .OrderBy(x => x.Value)
+                        .DistinctBy(j => j.JobCodeId)
+                        .Select(j => new JobCodeDropdownItem
+                        {
+                            Value   = j.JobCodeId      ?? string.Empty,
+                            Code    = j.JobCodeId      ?? string.Empty,
+                            Project = j.ParentProject  ?? string.Empty
+                        })
+                        .OrderBy(x => x.Code)
                         .ToList()
-                    : new List<SelectListItem>(),
+                    : new List<JobCodeDropdownItem>(),
                 StaffOptions = staffResponse.Success && staffResponse.Data != null
                     ? staffResponse.Data
                         .Where(s => !string.IsNullOrWhiteSpace(s.PactId))
-                        .Select(s => new SelectListItem(
-                            $"{s.PactId} — {s.Name}", s.PactId))
-                        .OrderBy(x => x.Text)
+                        .Select(s => new StaffDropdownItem
+                        {
+                            Value    = s.PactId   ?? string.Empty,
+                            PactId   = s.PactId   ?? string.Empty,
+                            SpNumber = s.SpNumber ?? string.Empty,
+                            Name     = s.Name     ?? string.Empty
+                        })
+                        .OrderBy(x => x.Name)
                         .ToList()
-                    : new List<SelectListItem>()
+                    : new List<StaffDropdownItem>()
             };
 
             return View(viewModel);

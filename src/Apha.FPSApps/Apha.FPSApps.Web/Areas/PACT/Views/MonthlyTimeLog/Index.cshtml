@@ -5,6 +5,17 @@
     ViewData["Title"] = "Monthly TIME Log of Imports";
 }
 
+<style>
+    /* Ensure multicolumn dropdown panels always float above sibling content */
+    #projectPickerWrapper,
+    #jobCodePickerWrapper,
+    #staffPickerWrapper {
+        position: relative;
+        overflow: visible !important;
+    }
+    .govuk-form-group { overflow: visible !important; }
+</style>
+
 <!-- Page heading -->
 <div class="govuk-grid-row sup_margin_left_right_0">
     <div class="govuk-grid-column-full">
@@ -50,16 +61,36 @@
                 </div>
                 <div class="govuk-grid-column-one-third">
                     <div class="govuk-form-group sup_margin_bottom_10">
-                        <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="ddProject">
+                        <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="txtProjectPick">
                             Project
                         </label>
-                        <select id="ddProject" class="govuk-select sup_select_option_width_100 govuk-!-font-size-16">
-                            <option value="">-- Select Project --</option>
-                            @foreach (var item in Model.ProjectOptions)
-                            {
-                                <option value="@item.Value">@item.Text</option>
-                            }
-                        </select>
+                        <div id="projectPickerWrapper" class="tableselectdropdown input-group">
+                            <input type="text" id="txtProjectPick"
+                                   placeholder="-- Select Project --"
+                                   class="dropdown-input down-arrow-img govuk-input govuk-!-font-size-16"
+                                   autocomplete="off" readonly style="cursor:pointer;" />
+                            <input type="hidden" id="hdnProject" />
+                            <div class="multicolumn-dropdown-panel" id="projectDropdownPanel">
+                                <div class="search-box-wrapper">
+                                    <input type="text" class="search-box" placeholder="Search project..." />
+                                    <button type="button" class="govuk-button govuk-button--secondary clear-search-btn" aria-label="Clear">
+                                        <span class="sup_error_text_color govuk-!-font-size-19">&times;</span>
+                                    </button>
+                                </div>
+                                <table>
+                                    <thead><tr><th>Code</th><th>Title</th></tr></thead>
+                                    <tbody id="projectDropdownBody">
+                                        @foreach (var item in Model.ProjectOptions)
+                                        {
+                                            <tr data-value="@item.Value">
+                                                <td>@item.Code</td>
+                                                <td>@item.Title</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="govuk-grid-column-one-third">
@@ -78,16 +109,36 @@
             <div class="govuk-grid-row sup_flex_between_center">
                 <div class="govuk-grid-column-one-third sup_padding_right_7">
                     <div class="govuk-form-group sup_margin_bottom_10">
-                        <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="ddJobCode">
+                        <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="txtJobCodePick">
                             Jobcode
                         </label>
-                        <select id="ddJobCode" class="govuk-select sup_select_option_width_100 govuk-!-font-size-16">
-                            <option value="">-- Select Jobcode --</option>
-                            @foreach (var item in Model.JobCodeOptions)
-                            {
-                                <option value="@item.Value">@item.Text</option>
-                            }
-                        </select>
+                        <div id="jobCodePickerWrapper" class="tableselectdropdown input-group">
+                            <input type="text" id="txtJobCodePick"
+                                   placeholder="-- Select Jobcode --"
+                                   class="dropdown-input down-arrow-img govuk-input govuk-!-font-size-16"
+                                   autocomplete="off" readonly style="cursor:pointer;" />
+                            <input type="hidden" id="hdnJobCode" />
+                            <div class="multicolumn-dropdown-panel" id="jobCodeDropdownPanel">
+                                <div class="search-box-wrapper">
+                                    <input type="text" class="search-box" placeholder="Search jobcode..." />
+                                    <button type="button" class="govuk-button govuk-button--secondary clear-search-btn" aria-label="Clear">
+                                        <span class="sup_error_text_color govuk-!-font-size-19">&times;</span>
+                                    </button>
+                                </div>
+                                <table>
+                                    <thead><tr><th>Jobcode</th><th>Project</th></tr></thead>
+                                    <tbody id="jobCodeDropdownBody">
+                                        @foreach (var item in Model.JobCodeOptions)
+                                        {
+                                            <tr data-value="@item.Value">
+                                                <td>@item.Code</td>
+                                                <td>@item.Project</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <span class="or_text">OR</span>
@@ -107,16 +158,37 @@
                 </div>
                 <div class="govuk-grid-column-one-third sup_padding_left_10">
                     <div class="govuk-form-group sup_margin_bottom_10">
-                        <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="ddStaffId">
+                        <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="txtStaffPick">
                             Staff ID
                         </label>
-                        <select id="ddStaffId" class="govuk-select sup_select_option_width_100 govuk-!-font-size-16">
-                            <option value="">-- Select Staff ID --</option>
-                            @foreach (var item in Model.StaffOptions)
-                            {
-                                <option value="@item.Value">@item.Text</option>
-                            }
-                        </select>
+                        <div id="staffPickerWrapper" class="tableselectdropdown input-group">
+                            <input type="text" id="txtStaffPick"
+                                   placeholder="-- Select Staff ID --"
+                                   class="dropdown-input down-arrow-img govuk-input govuk-!-font-size-16"
+                                   autocomplete="off" readonly style="cursor:pointer;" />
+                            <input type="hidden" id="hdnStaffId" />
+                            <div class="multicolumn-dropdown-panel" id="staffDropdownPanel">
+                                <div class="search-box-wrapper">
+                                    <input type="text" class="search-box" placeholder="Search staff..." />
+                                    <button type="button" class="govuk-button govuk-button--secondary clear-search-btn" aria-label="Clear">
+                                        <span class="sup_error_text_color govuk-!-font-size-19">&times;</span>
+                                    </button>
+                                </div>
+                                <table>
+                                    <thead><tr><th>Pact ID</th><th>SP No.</th><th>Name</th></tr></thead>
+                                    <tbody id="staffDropdownBody">
+                                        @foreach (var item in Model.StaffOptions)
+                                        {
+                                            <tr data-value="@item.Value">
+                                                <td>@item.PactId</td>
+                                                <td>@item.SpNumber</td>
+                                                <td>@item.Name</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
